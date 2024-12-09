@@ -32,7 +32,7 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 ## TODO 
 
-drizzle y prisma ORM
+
 
 - [x]: Probar que corra tu app web Next.js Start CLI usando npm run dev
 - [x]: Crear el repositorio con GitHub CLI y hacer PUSH
