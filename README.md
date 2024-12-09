@@ -32,8 +32,13 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 
 ## TODO
 
-- [ ]: Make it deploy (vercel)
-- [ ]: Scaffold basic ui with mock data
+- [x]: Crear el repositorio con GutHub CLI y hacer PUSH
+- [x]: Desplegar (vercel)
+- [x]: Configurar la carpeta .vscode/settings.json
+- [x]: Configurar el archivo .prettierignore 
+- [x]: instalar prettier-plugin-tailwindcss
+- [x]: Verificar que funcionen los 3 scripts para el formateo del codigo, elint, prettier y typecheck
+- [x]: Scaffold basic ui with mock data
 - [ ]: Actually set ip a database (vercel postgres)
 - [ ]: Attach database to UI
 - [ ]: Add authentication (w/ clerk)
