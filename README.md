@@ -33,16 +33,15 @@ Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/ver
 ## TODO 
 
 
-
 - [x]: Probar que corra tu app web Next.js Start CLI usando npm run dev
 - [x]: Crear el repositorio con GitHub CLI y hacer PUSH
 - [x]: Desplegar (vercel)
 - [x]: Configurar la carpeta .vscode/settings.json
 - [x]: Configurar el archivo .prettierignore 
-- [x]: instalar prettier-plugin-tailwindcss
 - [x]: Verificar que funcionen los 3 scripts para el formateo del codigo, elint, prettier y typecheck
 - [x]: Crear una interfaz basica para probar tu base de datos
 - [x]: Crear tu base de datos en vercel con PostgreSQL usando Neon
 - [x]: Añadir las variables de entorno a tu proyecto de (vercel)
-- [x]: Configurar drizzle y conectar tu base de datos
+- [x]: Conectar tu base de datos con drizzle en el archivo index.ts
+- [x]: Añadir las variables de entorno a tu proyecto de (next) .env
 - [x]: Probar que funcione tu base de datos usando npm run db:push y npm run db:studio
