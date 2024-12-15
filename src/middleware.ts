@@ -14,8 +14,11 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Si no hay sesión iniciada, redirigir a la página de login
   if (!sessionClaims && (isAdminRoute || isProfesorRoute)) {
-    // Redirigir a /sign-in si no hay sesión
-    return NextResponse.redirect(new URL('/sign-in', req.url));
+    // Redirigir a /sign-in si no hay sesión, pasando la ruta original como parámetro de redirección
+    const redirectUrl = req.nextUrl.pathname + req.nextUrl.search;  // Obtener la ruta actual con parámetros
+    const signInUrl = new URL('/sign-in', req.url);
+    signInUrl.searchParams.set('redirect_url', redirectUrl);  // Añadir la URL de redirección al parámetro
+    return NextResponse.redirect(signInUrl);
   }
 
   // Rutas públicas no requieren autenticación
