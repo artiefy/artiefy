@@ -46,9 +46,6 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
-  if (isEstudianteRoute && !(await checkRole("estudiante", sessionClaims))) {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
-  }
 
   return NextResponse.next();
 });
