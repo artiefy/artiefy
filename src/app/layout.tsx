@@ -10,7 +10,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider localization={esMX}>
+    <ClerkProvider localization={esMX}
+      >
       <html lang="es">
         <body>
           {/* Coloca el componente aquí para ejecutar el hook */}

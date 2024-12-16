@@ -1,43 +1,55 @@
-// src/middleware.ts
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { checkRole } from "~/utils/roles";  // Importa la función checkRole
+import { checkRole } from "~/utils/roles";
 
 export default clerkMiddleware(async (auth, req) => {
-  const { sessionClaims } = await auth();  // Obtén los claims de la sesión
+  const { sessionClaims } = await auth();
+  const url = req.nextUrl.clone();
+  const pathname = url.pathname;
 
-  const isAdminRoute = req.nextUrl.pathname.startsWith("/dashboard/admin");
-  const isProfesorRoute = req.nextUrl.pathname.startsWith("/dashboard/profesores");
-  const isPublicRoute = req.nextUrl.pathname.startsWith("/sign-in") ||
-    req.nextUrl.pathname.startsWith("/sign-up") ||
-    req.nextUrl.pathname === "/";
+  const isAdminRoute = pathname.startsWith("/dashboard/admin");
+  const isProfesorRoute = pathname.startsWith("/dashboard/profesores");
+  const isEstudianteRoute = pathname.startsWith("/dashboard/estudiantes");
 
-  // Si no hay sesión iniciada, redirigir a la página de login
-  if (!sessionClaims && (isAdminRoute || isProfesorRoute)) {
-    // Redirigir a /sign-in si no hay sesión, pasando la ruta original como parámetro de redirección
-    const redirectUrl = req.nextUrl.pathname + req.nextUrl.search;  // Obtener la ruta actual con parámetros
-    const signInUrl = new URL('/sign-in', req.url);
-    signInUrl.searchParams.set('redirect_url', redirectUrl);  // Añadir la URL de redirección al parámetro
-    return NextResponse.redirect(signInUrl);
+  const isPublicRoute =
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up") ||
+    pathname === "/";
+
+  if (!sessionClaims && !isPublicRoute) {
+    const redirectUrl = `${pathname}${url.search}`;
+    let signInUrl;
+
+    if (isAdminRoute) {
+      signInUrl = new URL("/sign-in/admin", req.url);
+    } else if (isProfesorRoute) {
+      signInUrl = new URL("/sign-in/profesores", req.url);
+    } else if (isEstudianteRoute) {
+      signInUrl = new URL("/sign-in/estudiantes", req.url);
+    }
+
+    if (signInUrl) {
+      signInUrl.searchParams.set("redirect_url", redirectUrl);
+      return NextResponse.redirect(signInUrl);
+    }
   }
 
-  // Rutas públicas no requieren autenticación
   if (isPublicRoute) {
     return NextResponse.next();
   }
 
-  // Verificación de acceso a las rutas con roles específicos
   if (isAdminRoute && !(await checkRole("admin", sessionClaims))) {
-    // Si no es admin, redirigir a una página de "No autorizado"
-    return NextResponse.redirect(new URL('/unauthorized', req.url)); 
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
   if (isProfesorRoute && !(await checkRole("profesor", sessionClaims))) {
-    // Si no es profesor, redirigir a una página de "No autorizado"
-    return NextResponse.redirect(new URL('/unauthorized', req.url)); 
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
-  // Permitir el acceso a rutas autorizadas
+  if (isEstudianteRoute && !(await checkRole("estudiante", sessionClaims))) {
+    return NextResponse.redirect(new URL("/unauthorized", req.url));
+  }
+
   return NextResponse.next();
 });
 

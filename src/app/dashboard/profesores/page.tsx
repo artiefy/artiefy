@@ -1,13 +1,14 @@
-import { UserButton } from '@clerk/nextjs'
+import { UserButton } from "@clerk/nextjs";
 
-export default async function DashboardProfesores() {
+export default function DashboardProfesores() {
   return (
     <div>
-      <header className="flex justify-between items-center p-4 bg-gray-100">
+      <header className="flex items-center justify-between bg-gray-100 p-4">
         <h1>Dashboard Profesores</h1>
-        {/* Botón de usuario de Clerk */}
+
+        {/* Botón de usuario de Clerk con redirección configurada */}
         <UserButton showName />
       </header>
     </div>
-  )
+  );
 }
