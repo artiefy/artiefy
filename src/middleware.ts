@@ -7,37 +7,30 @@ export default clerkMiddleware(async (auth, req) => {
   const url = req.nextUrl.clone();
   const pathname = url.pathname;
 
+  // Rutas protegidas específicas
   const isAdminRoute = pathname.startsWith("/dashboard/admin");
   const isProfesorRoute = pathname.startsWith("/dashboard/profesores");
-  const isEstudianteRoute = pathname.startsWith("/dashboard/estudiantes");
 
+  // Rutas públicas (no requieren autenticación)
   const isPublicRoute =
     pathname.startsWith("/sign-in") ||
     pathname.startsWith("/sign-up") ||
     pathname === "/";
 
+  // Si no hay sesión activa y la ruta no es pública
   if (!sessionClaims && !isPublicRoute) {
-    const redirectUrl = `${pathname}${url.search}`;
-    let signInUrl;
-
-    if (isAdminRoute) {
-      signInUrl = new URL("/sign-in/admin", req.url);
-    } else if (isProfesorRoute) {
-      signInUrl = new URL("/sign-in/profesores", req.url);
-    } else if (isEstudianteRoute) {
-      signInUrl = new URL("/sign-in/estudiantes", req.url);
-    }
-
-    if (signInUrl) {
-      signInUrl.searchParams.set("redirect_url", redirectUrl);
-      return NextResponse.redirect(signInUrl);
-    }
+    const redirectUrl = `${pathname}${url.search}`; // Guardar la ruta original con parámetros
+    const signInUrl = new URL("/sign-in", req.url); // Redirigir siempre al único endpoint
+    signInUrl.searchParams.set("redirect_url", redirectUrl); // Pasar la ruta original como parámetro
+    return NextResponse.redirect(signInUrl);
   }
 
+  // Permitir acceso a rutas públicas
   if (isPublicRoute) {
     return NextResponse.next();
   }
 
+  // Verificar roles según las rutas protegidas
   if (isAdminRoute && !(await checkRole("admin", sessionClaims))) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
@@ -46,7 +39,8 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
-
+ 
+  // Permitir acceso si las condiciones se cumplen
   return NextResponse.next();
 });
 
