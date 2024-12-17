@@ -42,7 +42,7 @@ export function Header() {
               <li>
                 <Link
                   href="/cursos"
-                  className="text-shadow px-2 py-1 hover:text-primary/70"
+                  className="text-shadow px-2 py-1 hover:text-orange-500"
                 >
                   Cursos
                 </Link>
@@ -50,7 +50,7 @@ export function Header() {
               <li>
                 <Link
                   href="/proyectos"
-                  className="text-shadow px-2 py-1 hover:text-primary/70"
+                  className="text-shadow px-2 py-1 hover:text-orange-500"
                 >
                   Proyectos
                 </Link>
@@ -58,7 +58,7 @@ export function Header() {
               <li>
                 <Link
                   href="/comunidad"
-                  className="text-shadow px-2 py-1 hover:text-primary/70"
+                  className="text-shadow px-2 py-1 hover:text-orange-500"
                 >
                   Comunidad
                 </Link>
