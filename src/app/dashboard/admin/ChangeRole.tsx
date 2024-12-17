@@ -33,7 +33,11 @@ export const ChangeRole: React.FC<UserCardProps> = ({ user }) => {
         <form action={setRoleWrapper} className="flex items-center space-x-4">
           <input type="hidden" value={user.id} name="id" />
           <input type="hidden" value="admin" name="role" />
-          <Button type="submit" variant="default">
+          <Button
+            type="submit"
+            variant="default"
+            className="bg-green-600 text-white hover:bg-green-600/90"
+          >
             Cambiar a Admin
           </Button>
         </form>
@@ -41,7 +45,11 @@ export const ChangeRole: React.FC<UserCardProps> = ({ user }) => {
         <form action={setRoleWrapper} className="flex items-center space-x-4">
           <input type="hidden" value={user.id} name="id" />
           <input type="hidden" value="profesor" name="role" />
-          <Button type="submit" variant="secondary">
+          <Button
+            type="submit"
+            variant="secondary"
+            className="border border-white bg-yellow-600 text-white hover:bg-yellow-600/90"
+          >
             Cambiar a Profesor
           </Button>
         </form>
@@ -51,7 +59,11 @@ export const ChangeRole: React.FC<UserCardProps> = ({ user }) => {
           className="flex items-center space-x-4"
         >
           <input type="hidden" value={user.id} name="id" />
-          <Button type="submit" variant="destructive">
+          <Button
+            type="submit"
+            variant="destructive"
+            className="border border-white"
+          >
             Eliminar Role
           </Button>
         </form>

@@ -1,0 +1,2 @@
+[alias]
+    push-branches = push origin develop main dev/jose

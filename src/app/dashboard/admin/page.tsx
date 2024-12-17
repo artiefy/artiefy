@@ -27,10 +27,13 @@ export default async function AdminDashboard(params: {
 
   return (
     <>
-      <header className="flex items-center justify-between bg-gray-100 p-4">
-        <h1 className="text-xl font-semibold">Admin Dashboard</h1>
-        <UserButton showName />
-      </header>
+      <div>
+        <header className="bg-[#ffff] p-5 text-2xl font-extrabold text-black">
+          <h1>Dashboard Admin</h1>
+          {/* Botón de usuario de Clerk */}
+          <UserButton showName />
+        </header>
+      </div>
       <p className="mt-4 text-lg text-white">
         This is the protected admin dashboard restricted to users with the
         `admin` role.
