@@ -1,3 +1,5 @@
+import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
 import { Header } from "~/components/layout/Header";
 import { Button } from "~/components/ui/button";
 
@@ -16,7 +18,20 @@ export default function Home() {
             impulsar <br /> tus proyectos con conocimientos de tecnología e
             innovación
           </p>
-          <Button className="p-7 text-2xl font-semibold">COMIENZA YA</Button>
+          <div>
+            <SignedOut>
+              <SignInButton>
+                <Button className="p-7 text-2xl font-semibold">
+                  COMIENZA YA
+                </Button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <Button asChild className="p-7 text-2xl font-semibold">
+                <Link href="/dashboard/estudiantes">DASHBOARD</Link>
+              </Button>
+            </SignedIn>
+          </div>
         </section>
       </main>
     </div>

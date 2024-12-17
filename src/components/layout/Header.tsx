@@ -70,7 +70,9 @@ export function Header() {
           <div className="hidden md:block">
             <SignedOut>
               <SignInButton>
-                <Button>Iniciar Sesión</Button>
+                <Button className="text-xl font-extralight">
+                  Iniciar Sesión
+                </Button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
