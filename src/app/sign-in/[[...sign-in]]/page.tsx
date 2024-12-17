@@ -1,29 +1,49 @@
 "use client";
 import { SignIn } from "@clerk/nextjs";
+import Image from "next/image";
+import { AspectRatio } from "~/components/ui/aspect-ratio"; // Asegúrate de importar el componente
 
 export default function SignInPage() {
-
   return (
-    <div className="flex h-screen">
-      {/* Imagen del lado izquierdo */}
-      <div
-        className="flex-1 bg-cover bg-center"
-        style={{ backgroundImage: "url('/login-bg.webp')" }}
-      ></div>
+    <div className="flex h-screen flex-col md:flex-row">
+      {/* Imagen a la izquierda en pantallas grandes y abajo en pantallas pequeñas */}
+      <div className="relative order-2 h-1/2 w-full md:order-1 md:h-full md:w-1/2">
+        {/* En pantallas grandes (md o superiores) no usamos AspectRatio */}
+        <div className="hidden h-full md:block">
+          <Image
+            src="/login-estudiantes.webp"
+            alt="Imagen de login"
+            fill
+            style={{ objectFit: "cover" }} // Asegura que la imagen ocupe toda la mitad
+            priority
+            quality={100}
+          />
+        </div>
+        {/* En pantallas pequeñas usamos AspectRatio */}
+        <div className="block md:hidden">
+          <AspectRatio ratio={16 / 9}>
+            <Image
+              src="/login-estudiantes.webp"
+              alt="Imagen de login"
+              fill
+              style={{ objectFit: "cover" }}
+              priority
+              quality={100}
+            />
+          </AspectRatio>
+        </div>
+      </div>
 
-      {/* Formulario del lado derecho */}
-      <div className="flex-1 flex flex-col justify-center items-center p-8">
+      {/* Formulario de inicio de sesión */}
+      <div className="order-1 flex flex-1 flex-col items-center justify-center p-8 md:order-2 md:w-1/2">
         {/* Título estático */}
-        <div className="text-center mb-6">
-          <h1 className="text-6xl font-extrabold text-[#3AF4EF] mb-4">ARTIEFY</h1>
-          <h2 className="text-2xl font-medium text-gray-700">BIENVENIDO</h2>
+        <div className="mb-6 text-center">
+          <h1 className="mb-4 text-6xl font-extrabold">ARTIEFY</h1>
+          <h2 className="text-2xl font-medium">BIENVENIDO</h2>
         </div>
 
         {/* Componente de inicio de sesión */}
-        <SignIn
-          routing="path"
-          path="/sign-in"
-        />
+        <SignIn routing="path" path="/sign-in" />
       </div>
     </div>
   );

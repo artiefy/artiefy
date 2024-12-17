@@ -1,12 +1,3 @@
 ~ Next.js 15, Tailwind CSS, shadcn/ui, Drizzle ORM, PostgreSQL, Neon, Vercel y TypeScript. 
 
 
-module.exports = {
-  theme: {
-    screens: {
-      'sm': '640px',
-      // ... otros breakpoints
-    }
-  }
-  // ... resto de la configuración
-}
