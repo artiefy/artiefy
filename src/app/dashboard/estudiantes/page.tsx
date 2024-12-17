@@ -4,7 +4,7 @@ import { UserButton } from "@clerk/nextjs";
 export default async function DashboardEstudiantes() {
   return (
     <div>
-      <header className="flex items-center justify-between bg-gray-100 p-4">
+      <header className="bg-[#ffff] p-5 text-2xl font-extrabold text-black">
         <h1>Dashboard Estudiantes</h1>
         {/* Botón de usuario de Clerk */}
         <UserButton showName />

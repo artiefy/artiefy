@@ -1,32 +1,68 @@
 {
+  // 1. Formateador Predeterminado y Configuración de Guardado
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always",
     "source.organizeImports": "always"
   },
+
+  // 2. Validación de ESLint
   "eslint.validate": [
     "javascript",
     "javascriptreact",
-    "astro",
     "typescript",
-    "typescriptreact"
+    "typescriptreact",
+    "astro"
   ],
-  "files.associations": {
-    "*.css": "tailwindcss"
+  "eslint.options": {
+    "extensions": [".js", ".jsx", ".ts", ".tsx"]
   },
-  "typescript.tsdk": "node_modules/typescript/lib",
 
-  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  // Tailwind CSS Autocomplete, add more if used in projects
-  "tailwindCSS.classAttributes": [
-    "class",
-    "className",
-    "classNames",
-    "containerClassName"
+  // 3. Integración Avanzada con TailwindCSS
+  "files.associations": {
+    "*.css": "tailwindcss",
+    "*.sql": "sql",
+    "*.drizzle.ts": "typescript"
+  },
+  "tailwindCSS.emmetCompletions": true,
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  },
+  "tailwindCSS.experimental.configFile": "./tailwind.config.ts",
+  "tailwindCSS.experimental.classRegex": [
+    ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*?)(?:'|\"|`)"]
   ],
+
+  // 4. Configuración para TypeScript y Resolución de Módulos
+  "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.updateImportsOnFileMove.enabled": "always",
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+
+  // 7. Integración con Markdown para Documentación del Proyecto
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // 8. Configuración de Git
+  "git.enableSmartCommit": true,
+  "git.autofetch": true,
+
+  // 9. Configuración para SQL y Drizzle ORM
+  "[sql]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // 10. Mejoras de Desempeño del Editor
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.inlineSuggest.enabled": true,
+  "files.autoSave": "onFocusChange"
 }

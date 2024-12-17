@@ -1,46 +1,54 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { checkRole } from "~/utils/roles";
+
+const isAdminRoute = createRouteMatcher(["/dashboard/admin(.*)"]);
+const isProfesorRoute = createRouteMatcher(["/dashboard/profesores(.*)"]);
+const isEstudianteRoute = createRouteMatcher(["/dashboard/estudiantes(.*)"]);
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/",
+  "/unauthorized",
+]);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { sessionClaims } = await auth();
-  const url = req.nextUrl.clone();
-  const pathname = url.pathname;
+  const sessionClaims = await auth();
 
-  // Rutas protegidas específicas
-  const isAdminRoute = pathname.startsWith("/dashboard/admin");
-  const isProfesorRoute = pathname.startsWith("/dashboard/profesores");
+  // Verifica el rol del usuario
+  const userRole = sessionClaims?.sessionClaims?.metadata?.role;
 
-  // Rutas públicas (no requieren autenticación)
-  const isPublicRoute =
-    pathname.startsWith("/sign-in") ||
-    pathname.startsWith("/sign-up") ||
-    pathname === "/";
+  // Construir la URL base
+  const baseUrl = new URL(req.url).origin;
 
-  // Si no hay sesión activa y la ruta no es pública
-  if (!sessionClaims && !isPublicRoute) {
-    const redirectUrl = `${pathname}${url.search}`; // Guardar la ruta original con parámetros
-    const signInUrl = new URL("/sign-in", req.url); // Redirigir siempre al único endpoint
-    signInUrl.searchParams.set("redirect_url", redirectUrl); // Pasar la ruta original como parámetro
-    return NextResponse.redirect(signInUrl);
+  // Redirección automática basado en el rol
+  if (userRole === "admin" && !isAdminRoute(req)) {
+    // Redirigir a la URL absoluta para el rol admin
+    return NextResponse.redirect(`${baseUrl}/dashboard/admin`);
   }
 
-  // Permitir acceso a rutas públicas
-  if (isPublicRoute) {
+  if (userRole === "profesor" && !isProfesorRoute(req)) {
+    // Redirigir a la URL absoluta para el rol profesor
+    return NextResponse.redirect(`${baseUrl}/dashboard/profesores`);
+  }
+
+  // Rutas de estudiantes
+  if (isEstudianteRoute(req)) {
     return NextResponse.next();
   }
 
-  // Verificar roles según las rutas protegidas
-  if (isAdminRoute && !(await checkRole("admin", sessionClaims))) {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
+  // Rutas públicas no necesitan protección
+  if (isPublicRoute(req)) {
+    return NextResponse.next();
   }
 
-  if (isProfesorRoute && !(await checkRole("profesor", sessionClaims))) {
-    return NextResponse.redirect(new URL("/unauthorized", req.url));
+  // Si el usuario no está autenticado y accede a una ruta privada
+  if (!userRole) {
+    // Redirigir a la URL de inicio de sesión si el usuario no tiene un rol
+    const url = new URL("/unauthorized", req.url);
+    return NextResponse.redirect(url.toString());
   }
 
- 
-  // Permitir acceso si las condiciones se cumplen
+  // Permitir el acceso a otras rutas no protegidas
   return NextResponse.next();
 });
 
