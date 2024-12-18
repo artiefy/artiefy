@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // src/app/layout.tsx
 import { esMX } from "@clerk/localizations"; // Importa la localización en español
 import { ClerkProvider } from "@clerk/nextjs";
+import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
+
 import "../styles/globals.css";
 
 const montserrat = Montserrat({
@@ -22,7 +25,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider localization={esMX}>
+    <ClerkProvider
+      localization={esMX}
+      appearance={{
+        signIn: { baseTheme: neobrutalism },
+        signUp: { baseTheme: neobrutalism },
+      }}
+    >
       <html
         lang="es"
         className={`${montserrat.variable} ${josefinSans.variable}`}

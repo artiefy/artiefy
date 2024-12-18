@@ -6,6 +6,9 @@ export default {
   content: ["./src/**/*.tsx"],
   theme: {
     extend: {
+      animation: {
+        "spin-slow": "spin 3s linear infinite",
+      },
       // Fuentes personalizadas
       fontFamily: {
         montserrat: ["Montserrat", "sans-serif"],

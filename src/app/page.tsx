@@ -21,13 +21,16 @@ export default function Home() {
           <div>
             <SignedOut>
               <SignInButton>
-                <Button className="p-7 text-2xl font-semibold">
+                <Button className="p-7 text-2xl font-semibold active:scale-95">
                   COMIENZA YA
                 </Button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <Button asChild className="p-7 text-2xl font-semibold">
+              <Button
+                asChild
+                className="p-7 text-2xl font-semibold active:scale-95"
+              >
                 <Link href="/dashboard/estudiantes">DASHBOARD</Link>
               </Button>
             </SignedIn>

@@ -43,7 +43,22 @@ export default function SignInPage() {
         </div>
 
         {/* Componente de inicio de sesión */}
-        <SignIn routing="path" path="/sign-in" />
+        <SignIn
+          routing="path"
+          path="/sign-in"
+          appearance={{
+            layout: {
+              logoPlacement: "inside", // Ubicación del logo: 'inside' o 'outside'
+              privacyPageUrl: "https://clerk.com/legal/privacy", // URL de tu política de privacidad
+              animations: true, // Activa/desactiva las animaciones
+              logoImageUrl: "/logo-artiefy.webp", // URL de tu logo personalizado
+              logoLinkUrl: "/", // URL al hacer clic en el logo
+              socialButtonsPlacement: "bottom",
+              socialButtonsVariant: "blockButton",
+              termsPageUrl: "https://clerk.com/terms",
+            },
+          }}
+        />
       </div>
     </div>
   );

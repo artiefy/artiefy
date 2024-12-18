@@ -11,106 +11,108 @@ import { Button } from "~/components/ui/button";
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const navItems = [
+    { href: "/", label: "Inicio" },
+    { href: "/dashboard/estudiantes", label: "Cursos" },
+    { href: "/proyectos", label: "Proyectos" },
+    { href: "/comunidad", label: "Comunidad" },
+  ];
+
   return (
-    <header>
-      <div className="container mx-auto max-w-5xl p-6">
-        {/* Contenedor principal con distribución equitativa de los elementos en pantallas grandes */}
-        <div className="flex items-center justify-between space-x-16 lg:space-x-16">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Image
-              src="/logo-artiefy.webp"
-              alt="Logo Artiefy"
-              width={100}
-              height={100}
-            />
+    <header className="py-4">
+      <div className="container mx-auto max-w-7xl px-4">
+        <div className="flex items-center justify-between">
+          {/* All header items are now in a single flex container */}
+          <div className="hidden w-full items-center justify-between md:flex">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <div className="relative h-[100px] w-[100px]">
+                <Image
+                  src="/logo-artiefy.webp"
+                  alt="Logo Artiefy"
+                  fill
+                  style={{ objectFit: "contain" }}
+                  priority
+                  quality={100}
+                />
+              </div>
+            </div>
+
+            {/* Navigation items */}
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-shadow transform transition-colors hover:text-orange-500 active:scale-95"
+              >
+                {item.label}
+              </Link>
+            ))}
+
+            {/* Auth Button */}
+            <div>
+              <SignedOut>
+                <SignInButton>
+                  <Button className="transform text-lg font-light transition-transform active:scale-95">
+                    Iniciar Sesión
+                  </Button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton showName />
+              </SignedIn>
+            </div>
           </div>
 
-          {/* Menú de navegación en pantallas grandes */}
-          <nav className="hidden flex-grow md:flex">
-            <ul className="flex w-full justify-between gap-x-8">
-              {" "}
-              {/* Espaciado igual entre los elementos */}
-              <li>
-                <Link
-                  href="/"
-                  className="text-shadow px-2 py-1 hover:text-orange-500"
-                >
-                  Inicio
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/cursos"
-                  className="text-shadow px-2 py-1 hover:text-orange-500"
-                >
-                  Cursos
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/proyectos"
-                  className="text-shadow px-2 py-1 hover:text-orange-500"
-                >
-                  Proyectos
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/comunidad"
-                  className="text-shadow px-2 py-1 hover:text-orange-500"
-                >
-                  Comunidad
-                </Link>
-              </li>
-            </ul>
-          </nav>
-
-          {/* Botón de inicio de sesión o usuario */}
-          <div className="hidden md:block">
-            <SignedOut>
-              <SignInButton>
-                <Button className="text-xl font-extralight">
-                  Iniciar Sesión
-                </Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton showName />
-            </SignedIn>
-          </div>
-
-          {/* Botón para abrir el menú en pantallas pequeñas */}
-          <div className="md:hidden">
+          {/* Mobile view */}
+          <div className="flex w-full items-center justify-between md:hidden">
+            <div className="flex-shrink-0">
+              <div className="relative h-[100px] w-[100px]">
+                <Image
+                  src="/logo-artiefy.webp"
+                  alt="Logo Artiefy"
+                  fill
+                  style={{ objectFit: "contain" }}
+                  priority
+                  quality={100}
+                />
+              </div>
+            </div>
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex items-center justify-center p-2"
+              className="inline-flex transform items-center justify-center p-2 transition-transform active:scale-95"
+              aria-label="Open main menu"
             >
-              <span className="sr-only">Open main menu</span>
               <Bars3Icon className="h-6 w-6" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Menú desplegable para móviles */}
+      {/* Mobile Menu */}
       <Dialog
+        as="div"
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        className="lg:hidden"
+        className="fixed inset-0 z-50 md:hidden"
       >
-        <div className="fixed inset-0 z-10 opacity-30" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-20 w-3/4 max-w-xs bg-white p-6">
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <DialogPanel className="fixed inset-y-0 right-0 z-50 w-[75%] max-w-sm bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between">
-            <Image
-              src="/logo-artiefy.webp"
-              alt="Logo Artiefy"
-              width={150}
-              height={150}
-            />
+            <div className="relative h-[100px] w-[100px]">
+              <Image
+                src="/logo-artiefy.webp"
+                alt="Logo Artiefy"
+                fill
+                style={{ objectFit: "contain" }}
+                priority
+                quality={100}
+              />
+            </div>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="inline-flex items-center justify-center p-2 text-background"
+              className="transform rounded-full p-1 text-gray-400 transition-transform hover:bg-gray-100 active:scale-95"
+              aria-label="Close menu"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>
@@ -118,50 +120,24 @@ export function Header() {
 
           <nav className="mt-6">
             <ul className="space-y-4">
-              <li>
-                <Link
-                  href="/"
-                  className="text-background hover:text-orange-500"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Inicio
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/cursos"
-                  className="text-background hover:text-orange-500"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Cursos
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/proyectos"
-                  className="text-background hover:text-orange-500"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Proyectos
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/comunidad"
-                  className="text-background hover:text-orange-500"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Comunidad
-                </Link>
-              </li>
+              {navItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="block transform text-lg text-gray-900 transition-colors hover:text-orange-500 active:scale-95"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
 
-          {/* Botón de inicio de sesión en móviles con estilo personalizado */}
           <div className="mt-6">
             <SignedOut>
               <SignInButton>
-                <Button className="w-full rounded-md bg-primary py-2 text-black transition duration-300 hover:bg-background">
+                <Button className="w-full transform justify-center border-background bg-[#00BDD8] text-lg font-semibold text-white transition-colors hover:bg-background active:scale-95">
                   Iniciar Sesión
                 </Button>
               </SignInButton>

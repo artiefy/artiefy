@@ -1,3 +1,4 @@
 ~ Next.js 15, Tailwind CSS, shadcn/ui, Drizzle ORM, PostgreSQL, Neon, Vercel y TypeScript. 
 
 
+#01142B #3AF4EF #00BDD8

@@ -9,6 +9,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/",
   "/unauthorized",
+  "/dashboard/estudiantes",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {

@@ -67,3 +67,15 @@
     text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
   }
 }
+
+.cl-formButtonPrimary {
+  font-size: 14px;
+  text-transform: none;
+  background-color: #00bdd8;
+}
+
+.cl-formButtonPrimary:hover,
+.cl-formButtonPrimary:focus,
+.cl-formButtonPrimary:active {
+  background-color: #3af4ef;
+}
