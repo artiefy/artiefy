@@ -1,13 +1,18 @@
-// /pages/api/upload.ts
+//src\app\api\upload\route.ts
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
 import { S3Client } from '@aws-sdk/client-s3'
 import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request: Request) {
-  const { contentType } = await request.json()
+  const { filename, contentType } = await request.json()
 
   try {
     const client = new S3Client({ region: process.env.AWS_REGION })
+    if (!process.env.AWS_BUCKET_NAME) {
+      throw new Error('AWS_BUCKET_NAME is not defined');
+    }
     const { url, fields } = await createPresignedPost(client, {
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: uuidv4(),
@@ -19,22 +24,11 @@ export async function POST(request: Request) {
         acl: 'public-read',
         'Content-Type': contentType,
       },
-      Expires: 600, // Seconds before the presigned post expires. 600 seconds = 10 minutes.
+      Expires: 600, // Seconds before the presigned post expires. 3600 by default.
     })
 
-    if (!url || !fields) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to generate presigned URL or fields.' }),
-        { status: 500 }
-      )
-    }
-
-    return new Response(JSON.stringify({ url, fields }), { status: 200 })
+    return Response.json({ url, fields })
   } catch (error) {
-    console.error('Error creating presigned post:', error)
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500 }
-    )
+    return Response.json({ error: (error as Error).message })
   }
 }

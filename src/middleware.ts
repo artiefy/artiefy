@@ -1,7 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
+// Incluir la ruta raíz ("/") como pública
+const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"]);
 const isAdminRoute = createRouteMatcher(["/dashboard/admin(.*)"]);
 const isProfesorRoute = createRouteMatcher(["/dashboard/profesores(.*)"]);
 const isEstudianteRoute = createRouteMatcher(["/dashboard/estudiantes(.*)"]);
@@ -42,7 +43,8 @@ export const config = {
   matcher: [
     // Coincide con todas las rutas relevantes
     "/dashboard/(admin|profesores|estudiantes)(.*)",
-    // Asegurarse de que las rutas de inicio de sesión y registro sean públicas
+    // Asegurarse de que las rutas públicas incluyan la raíz "/"
+    "/",
     "/sign-in(.*)",
     "/sign-up(.*)",
     // Excluir Next.js internos y archivos estáticos

@@ -1,8 +1,12 @@
-// src/models/courseModels.ts
 import { db } from "~/server/db/index";
-import { courses, lessons } from "~/server/db/schema";
+import { courses, lessons, users } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 
+
+export const getAllUsers = async () => {
+  const result = await db.select().from(users);
+  return result;
+};
 // Crear un nuevo curso
 export const createCourse = async (title: string, description: string, creatorId: string, coverImageKey: string) => {
   const result = await db.insert(courses).values({
