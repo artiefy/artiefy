@@ -1,4 +1,3 @@
-//src\server\db\schema.ts
 import { relations } from "drizzle-orm";
 import {
   pgTable,
@@ -12,7 +11,7 @@ import {
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable("users", {
-  id: text("id").primaryKey(), // Usando el ID de Clerk como clave primaria
+  id: serial("id").primaryKey(), // ID autoincremental del usuario
   role: text("role").notNull().default("estudiante"), // Rol del usuario (estudiante/profesor, etc.)
   name: text("name"), // Nombre opcional del usuario
   email: text("email").notNull(), // Email obligatorio
@@ -28,7 +27,7 @@ export const courses = pgTable("courses", {
   coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
   createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
-  creatorId: text("creator_id")
+  creatorId: integer("creator_id")
     .references(() => users.id)
     .notNull(), // Referencia al creador del curso (usuario existente)
 });
@@ -49,7 +48,7 @@ export const lessons = pgTable("lessons", {
 // Tabla de inscripciones (relación muchos a muchos entre usuarios y cursos)
 export const enrollments = pgTable("enrollments", {
   id: serial("id").primaryKey(), // ID autoincremental de la inscripción
-  userId: text("user_id")
+  userId: integer("user_id")
     .references(() => users.id)
     .notNull(), // Relación con usuarios
   courseId: integer("course_id")
