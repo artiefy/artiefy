@@ -1,18 +1,18 @@
 import { relations } from "drizzle-orm";
 import {
   pgTable,
-  serial,
   text,
   timestamp,
   varchar,
   boolean,
   integer,
+  serial,
 } from "drizzle-orm/pg-core";
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(), // ID autoincremental del usuario
-  role: text("role").notNull().default("estudiante"), // Rol del usuario (estudiante/profesor, etc.)
+  id: text("id").primaryKey(), // ID del usuario proporcionado por Clerk
+  role: text("role").notNull(), // Rol del usuario (estudiante/profesor, etc.)
   name: text("name"), // Nombre opcional del usuario
   email: text("email").notNull(), // Email obligatorio
   createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
@@ -27,7 +27,7 @@ export const courses = pgTable("courses", {
   coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
   createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
-  creatorId: integer("creator_id")
+  creatorId: text("creator_id")
     .references(() => users.id)
     .notNull(), // Referencia al creador del curso (usuario existente)
 });
@@ -48,7 +48,7 @@ export const lessons = pgTable("lessons", {
 // Tabla de inscripciones (relación muchos a muchos entre usuarios y cursos)
 export const enrollments = pgTable("enrollments", {
   id: serial("id").primaryKey(), // ID autoincremental de la inscripción
-  userId: integer("user_id")
+  userId: text("user_id")
     .references(() => users.id)
     .notNull(), // Relación con usuarios
   courseId: integer("course_id")

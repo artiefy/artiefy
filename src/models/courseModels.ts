@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 
 // Tipos
 interface User {
-  id: number
+  id: string
   email: string
   name: string | null
   role: string
@@ -17,14 +17,14 @@ interface Course {
   title: string
   description: string | null
   coverImageKey: string | null
-  creatorId: number
+  creatorId: string
 }
 
 // Obtener un usuario por ID
-export const getUserById = async (id: number): Promise<User | null> => {
+export const getUserById = async (id: string): Promise<User | null> => {
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result.length > 0 ? result[0] ?? null : null;
-};
+}; 
 
 // Obtener todos los usuarios
 export const getAllUsers = async (): Promise<User[]> => {
@@ -33,16 +33,31 @@ export const getAllUsers = async (): Promise<User[]> => {
 };
 
 // Crear un nuevo usuario
-export const createUser = async (id: number, email: string, name: string): Promise<void> => {
+export const createUser = async (id: string, email: string, name: string, role: string): Promise<void> => {
   await db.insert(users).values({
     id,
     email,
     name,
+    role,
   });
 };
 
+// Eliminar un usuario por ID
+export const deleteUserById = async (id: string): Promise<void> => {
+  // Primero eliminar los cursos creados por el usuario
+  await db.delete(courses).where(eq(courses.creatorId, id));
+  // Luego eliminar el usuario
+  await db.delete(users).where(eq(users.id, id));
+};
+
 // Crear un nuevo curso
-export const createCourse = async (title: string, description: string, creatorId: number, coverImageKey: string): Promise<void> => {
+export const createCourse = async (title: string, description: string, creatorId: string, coverImageKey: string): Promise<void> => {
+  // Verificar el rol del usuario
+  const user = await getUserById(creatorId);
+  if (!user || user.role !== 'profesor') {
+    throw new Error('Solo los profesores pueden crear cursos.');
+  }
+
   await db.insert(courses).values({
     title,
     description,

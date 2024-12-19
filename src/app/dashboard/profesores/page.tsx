@@ -1,24 +1,17 @@
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
-import Image from "next/image";
 import { useEffect, useState } from "react";
-import { AspectRatio } from "~/components/ui/aspect-ratio";
-import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import { Progress } from "~/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import CourseForm from "~/components/layout/CourseForm";
+import CourseList from "~/components/layout/CourseList";
 import {
   createCourse,
   createUser,
   deleteCourse,
   getAllCourses,
   getUserById,
+  deleteUserById,
   updateCourse,
 } from "~/models/courseModels";
 
@@ -37,7 +30,6 @@ interface ClerkUser {
 
 export default function Page() {
   const { user } = useUser();
-  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -77,18 +69,21 @@ export default function Page() {
     const { id, emailAddresses, fullName } = user;
     const email = emailAddresses[0]?.emailAddress;
     if (id && email && fullName) {
-      const existingUser = await getUserById(Number(id));
-      if (!existingUser) {
-        await createUser(Number(id), email, fullName);
+      const existingUser = await getUserById(id);
+      if (existingUser) {
+        if (existingUser.role === "estudiante") {
+          await deleteUserById(id);
+          await createUser(id, email, fullName, "profesor");
+        }
+      } else {
+        await createUser(id, email, fullName, "profesor");
       }
     } else {
       console.error("User ID, email, or full name is missing");
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
+  const handleSubmit = async (title: string, description: string, file: File | null) => {
     if (!file) {
       alert("Please select a file to upload.");
       return;
@@ -140,7 +135,7 @@ export default function Page() {
           );
           setEditingCourseId(null);
         } else {
-          await createCourse(title, description, Number(creatorId), coverImageKey ?? "");
+          await createCourse(title, description, creatorId, coverImageKey ?? "");
         }
         alert("Upload successful!");
         await fetchCourses();
@@ -177,78 +172,19 @@ export default function Page() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
-            <input
-              type="text"
-              placeholder="Course Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              className="mb-4 w-full rounded border border-gray-300 p-2"
-            />
-            <textarea
-              placeholder="Course Description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              className="mb-4 w-full rounded border border-gray-300 p-2"
-            />
-            <input
-              id="file"
-              type="file"
-              onChange={(e) => {
-                const files = e.target.files;
-                if (files) {
-                  if (files[0]) {
-                    setFile(files[0]);
-                  }
-                }
-              }}
-              accept="image/png, image/jpeg, video/mp4"
-              className="mb-4 w-full rounded border border-gray-300 p-2"
-            />
-            {uploading && <Progress value={0} className="mb-4" />}
-            <Button type="submit" disabled={uploading} className="w-full">
-              {editingCourseId ? "Update Course" : "Create Course"}
-            </Button>
-          </form>
+          <CourseForm
+            onSubmit={handleSubmit}
+            uploading={uploading}
+            editingCourseId={editingCourseId}
+            title={title}
+            setTitle={setTitle}
+            description={description}
+            setDescription={setDescription}
+          />
         </CardContent>
       </Card>
       <h2 className="mb-4 text-2xl font-bold">Courses List</h2>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => (
-          <Card key={course.id} className="overflow-hidden">
-            <CardHeader className="p-0">
-              <AspectRatio ratio={16 / 9}>
-                <Image
-                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
-                  alt={course.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-              </AspectRatio>
-            </CardHeader>
-            <CardContent className="p-4">
-              <CardTitle className="mb-2 text-xl">{course.title}</CardTitle>
-              <p className="line-clamp-2 text-sm text-gray-600">
-                {course.description}
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={() => handleEdit(course)} className="mr-2">
-                Edit
-              </Button>
-              <Button
-                onClick={() => handleDelete(course.id)}
-                variant="destructive"
-              >
-                Delete
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      <CourseList courses={courses} onEdit={handleEdit} onDelete={handleDelete} />
     </main>
   );
 }
