@@ -1,9 +1,20 @@
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+"use client";
+import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Header } from "~/components/layout/Header";
 import { Button } from "~/components/ui/button";
 
 export default function Home() {
+  const { user } = useUser();
+
+  // Determinar la ruta del dashboard según el rol del usuario
+  const dashboardRoute =
+    user?.publicMetadata?.role === "admin"
+      ? "/dashboard/admin"
+      : user?.publicMetadata?.role === "profesor"
+      ? "/dashboard/profesores"
+      : "/dashboard/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -31,7 +42,7 @@ export default function Home() {
                 asChild
                 className="p-7 text-2xl font-semibold active:scale-95"
               >
-                <Link href="/dashboard/estudiantes">DASHBOARD</Link>
+                <Link href={dashboardRoute}>DASHBOARD</Link>
               </Button>
             </SignedIn>
           </div>

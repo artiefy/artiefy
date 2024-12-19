@@ -7,7 +7,7 @@ export default async function DashboardEstudiantes() {
       <header className="bg-[#ffff] p-5 text-2xl font-extrabold text-black">
         <h1>Dashboard Estudiantes</h1>
         {/* Botón de usuario de Clerk */}
-        <UserButton showName />
+        <UserButton showName/>
       </header>
     </div>
   );

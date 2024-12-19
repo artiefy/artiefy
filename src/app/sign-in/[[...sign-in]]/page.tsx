@@ -56,6 +56,7 @@ export default function SignInPage() {
               socialButtonsPlacement: "bottom",
               socialButtonsVariant: "blockButton",
               termsPageUrl: "https://clerk.com/terms",
+              unsafe_disableDevelopmentModeWarnings: true
             },
           }}
         />
