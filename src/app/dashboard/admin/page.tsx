@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { UserButton } from "@clerk/nextjs"; // Botón de usuario de Clerk
-import { redirect } from "next/navigation";
 import { getAdminUsers } from "~/server/queries/queries"; // Importar la función de la lógica del servidor
 import { ChangeRole } from "./ChangeRole";
 import { SearchUsers } from "./SearchUsers"; // Componente de búsqueda

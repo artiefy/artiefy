@@ -1,4 +1,60 @@
-~ Next.js 15, Tailwind CSS, shadcn/ui, Drizzle ORM, PostgreSQL, Neon, Vercel y TypeScript. 
+~ Next.js 15, Clerk, Tailwind CSS, shadcn/ui, Drizzle ORM, PostgreSQL, Neon, Vercel y TypeScript. 
 
-
+📦src
+ ┣ 📂api
+ ┣ 📂app
+ ┃ ┣ 📂dashboard
+ ┃ ┃ ┣ 📂admin
+ ┃ ┃ ┃ ┣ 📜ChangeRole.tsx
+ ┃ ┃ ┃ ┣ 📜page.tsx
+ ┃ ┃ ┃ ┗ 📜SearchUsers.tsx
+ ┃ ┃ ┣ 📂estudiantes
+ ┃ ┃ ┃ ┗ 📜page.tsx
+ ┃ ┃ ┗ 📂profesores
+ ┃ ┃ ┃ ┗ 📜page.tsx
+ ┃ ┣ 📂sign-in
+ ┃ ┃ ┗ 📂[[...sign-in]]
+ ┃ ┃ ┃ ┗ 📜page.tsx
+ ┃ ┣ 📂sign-up
+ ┃ ┃ ┗ 📂[[...sign-up]]
+ ┃ ┃ ┃ ┗ 📜page.tsx
+ ┃ ┣ 📂unauthorized
+ ┃ ┃ ┗ 📜page.tsx
+ ┃ ┣ 📂user-profile
+ ┃ ┃ ┗ 📂[[...user-profile]]
+ ┃ ┃ ┃ ┗ 📜page.tsx
+ ┃ ┣ 📜layout.tsx
+ ┃ ┣ 📜loading.tsx
+ ┃ ┣ 📜not-found.tsx
+ ┃ ┗ 📜page.tsx
+ ┣ 📂components
+ ┃ ┣ 📂layout
+ ┃ ┃ ┗ 📜Header.tsx
+ ┃ ┗ 📂ui
+ ┃ ┃ ┣ 📜aspect-ratio.tsx
+ ┃ ┃ ┗ 📜button.tsx
+ ┣ 📂hooks
+ ┃ ┗ 📜use-mobile.tsx
+ ┣ 📂lib
+ ┃ ┗ 📜utils.ts
+ ┣ 📂server
+ ┃ ┣ 📂actions
+ ┃ ┃ ┣ 📜s3Actions.ts
+ ┃ ┃ ┗ 📜_actions.ts
+ ┃ ┣ 📂controllers
+ ┃ ┣ 📂db
+ ┃ ┃ ┣ 📜index.ts
+ ┃ ┃ ┗ 📜schema.ts
+ ┃ ┣ 📂queries
+ ┃ ┃ ┗ 📜queries.ts
+ ┃ ┗ 📂wrappers
+ ┃ ┃ ┗ 📜serverWrappers.ts
+ ┣ 📂styles
+ ┃ ┗ 📜globals.css
+ ┣ 📂types
+ ┃ ┗ 📜globals.d.ts
+ ┣ 📂utils
+ ┃ ┗ 📜roles.ts
+ ┣ 📜env.js
+ ┗ 📜middleware.ts
 #01142B #3AF4EF #00BDD8
