@@ -16,6 +16,14 @@ import {
 } from "~/components/ui/carousel";
 import { Input } from "~/components/ui/input";
 import { getAllCourses } from "~/models/courseModels";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "~/components/ui/pagination";
 
 interface Course {
   id: number;
@@ -32,6 +40,18 @@ export default function StudentDashboard() {
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 6;
+  const totalPages = Math.ceil(filteredCourses.length / coursesPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * coursesPerPage,
+    currentPage * coursesPerPage
+  );
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -69,7 +89,7 @@ export default function StudentDashboard() {
         <div className="flex flex-col space-y-12">
           {/* Carousel Grande */}
           <div className="relative">
-            <h2 className="text-xl md:text-2xl text-primary">Featured Courses</h2>
+            <h2 className="text-xl md:text-2xl text-primary">Cursos Destacados</h2>
             <Carousel className="w-full">
               <CarouselContent>
                 {courses.slice(0, 5).map((course, _index) => (
@@ -104,8 +124,8 @@ export default function StudentDashboard() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="flex h-12 w-12 items-center justify-center rounded-full bg-black bg-opacity-50 text-white" />
-              <CarouselNext className="flex h-12 w-12 items-center justify-center rounded-full bg-black bg-opacity-50 text-white" />
+              <CarouselPrevious className="flex h-12 w-12 items-center justify-center rounded-full bg-black bg-opacity-50 text-white ml-12" />
+              <CarouselNext className="flex h-12 w-12 items-center justify-center rounded-full bg-black bg-opacity-50 text-white mr-12" />
             </Carousel>
             <div className="absolute bottom-0 left-0 right-0 flex justify-center p-2">
               {courses.slice(0, 5).map((_, index) => (
@@ -119,7 +139,7 @@ export default function StudentDashboard() {
           </div>
           {/* Carousel Pequeño */}
           <div className="relative">
-            <h2 className="text-xl md:text-2xl text-primary">All Courses</h2>
+            <h2 className="text-xl md:text-2xl text-primary">Todos Los Cursos</h2>
             <Carousel className="w-full">
               <CarouselContent className="-ml-4">
                 {courses.map((course) => (
@@ -156,7 +176,7 @@ export default function StudentDashboard() {
           </div>
           {/* Search Bar */}
           <div className="my-4">
-            <h2 className="text-xl md:text-2xl text-primary">Search Courses</h2>
+            <h2 className="text-xl md:text-2xl text-primary">Buscar Cursos</h2>
             <Input
               type="text"
               placeholder="Search courses..."
@@ -167,8 +187,40 @@ export default function StudentDashboard() {
           </div>
           {/* Course List */}
           <div>
-            <h2 className="text-xl md:text-2xl text-primary">Course List</h2>
-            <CourseListStudent courses={filteredCourses} />
+            <h2 className="text-xl md:text-2xl text-primary">Cursos</h2>
+            <CourseListStudent courses={paginatedCourses} />
+            <Pagination className="py-4">
+              <PaginationContent>
+                <PaginationItem>
+                  {currentPage > 1 && (
+                    <PaginationPrevious
+                      href="#"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                    />
+                  )}
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <PaginationItem key={index}>
+                    <PaginationLink
+                    className="text-primary border-primary"
+                      href="#"
+                      isActive={currentPage === index + 1}
+                      onClick={() => handlePageChange(index + 1)}
+                    >
+                      {index + 1} 
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  {currentPage < totalPages && (
+                    <PaginationNext
+                      href="#"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                    />
+                  )}
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       </main>

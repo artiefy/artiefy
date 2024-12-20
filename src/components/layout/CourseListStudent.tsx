@@ -1,9 +1,10 @@
 //src\components\layout\CourseListStudent.tsx
 
 import Image from "next/image";
+import Link from "next/link";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { type Course } from "~/models/courseModels"; 
 
 interface CourseListProps {
@@ -38,7 +39,15 @@ export default function CourseListStudent({ courses }: CourseListProps) {
             <p className="line-clamp-2 text-sm text-gray-600">
               {course.description}
             </p>
+            <p className="text-sm text-gray-600">
+              Instructor: {course.instructor}
+            </p>
           </CardContent>
+          <CardFooter className="p-4">
+            <Link href={`/cursos/${course.id}`} legacyBehavior>
+              <a className="text-background hover:underline">Ver Curso</a>
+            </Link>
+          </CardFooter>
         </Card>
       ))}
     </div>
