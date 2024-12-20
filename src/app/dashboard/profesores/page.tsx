@@ -1,3 +1,4 @@
+//src\app\dashboard\profesores\page.tsx
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
@@ -131,7 +132,7 @@ export default function Page() {
             coverImageKey ?? "",
             category,
             instructor,
-            rating // Nuevo campo
+            parseFloat(rating.toFixed(1)) // Asegurarse de que el rating sea un float con un decimal
           );
           setEditingCourseId(null);
         } else {
@@ -142,7 +143,7 @@ export default function Page() {
             coverImageKey ?? "",
             category,
             instructor, // Nuevo campo
-            rating // Nuevo campo
+            parseFloat(rating.toFixed(1)) // Asegurarse de que el rating sea un float con un decimal
           );
         }
         alert("Upload successful!");

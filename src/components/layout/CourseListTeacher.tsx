@@ -1,3 +1,4 @@
+//src\components\layout\CourseListTeacher.tsx
 import Image from "next/image";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
@@ -37,6 +38,9 @@ export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseL
             </p>
             <p className="text-sm text-gray-600">
               Instructor: {course.instructor}
+            </p>
+            <p className="text-sm text-gray-600">
+              Rating: {course.rating?.toFixed(1)}
             </p>
           </CardContent>
           <CardFooter >

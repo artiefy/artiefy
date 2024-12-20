@@ -1,21 +1,18 @@
-//src\app\dashboard\estudiantes\page.tsx
-
 "use client";
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import CourseCategories from "~/components/layout/CourseCategories";
 import CourseListStudent from "~/components/layout/CourseListStudent";
+import Footer from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
 import { Badge } from "~/components/ui/badge";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "~/components/ui/carousel";
 import { Input } from "~/components/ui/input";
-import { getAllCourses } from "~/models/courseModels";
 import {
   Pagination,
   PaginationContent,
@@ -24,8 +21,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
-import CourseCategories from "~/components/layout/CourseCategories";
-import Footer from "~/components/layout/Footer";
+import { getAllCourses } from "~/models/courseModels";
 
 interface Course {
   id: number;
@@ -35,7 +31,7 @@ interface Course {
   creatorId: string;
   category: string;
   instructor: string;
-  rating: number | null; // Nuevo campo de rating
+  rating: number | null;
 }
 
 export default function StudentDashboard() {
@@ -53,7 +49,7 @@ export default function StudentDashboard() {
 
   const paginatedCourses = filteredCourses.slice(
     (currentPage - 1) * coursesPerPage,
-    currentPage * coursesPerPage
+    currentPage * coursesPerPage,
   );
 
   useEffect(() => {
@@ -62,7 +58,6 @@ export default function StudentDashboard() {
       setCourses(allCourses);
       setFilteredCourses(allCourses);
     };
-
     fetchCourses().catch((error) =>
       console.error("Error fetching courses:", error),
     );
@@ -77,13 +72,17 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex(
-        (prevIndex) => (prevIndex + 1) % courses.slice(0, 5).length,
+      setCurrentIndex((prevIndex) =>
+        (prevIndex + 1) % Math.min(courses.length, 5)
       );
-    }, 5000);
+    }, 5000); // Cambia cada 5 segundos
 
     return () => clearInterval(interval);
   }, [courses]);
+
+  const handleDotClick = (index: number) => {
+    setCurrentIndex(index);
+  };
 
   return (
     <div>
@@ -95,7 +94,12 @@ export default function StudentDashboard() {
             <Carousel className="w-full">
               <CarouselContent>
                 {courses.slice(0, 5).map((course, index) => (
-                  <CarouselItem key={course.id} className={`basis-full transition-opacity duration-1000 ${index === currentIndex ? "opacity-100" : "opacity-0"}`}>
+                  <CarouselItem
+                    key={course.id}
+                    className={`basis-full ${
+                      index === currentIndex ? "block" : "hidden"
+                    } cursor-pointer hover:brightness-90`}
+                  >
                     <div className="relative h-64 w-full md:h-96">
                       <Image
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
@@ -106,7 +110,7 @@ export default function StudentDashboard() {
                         quality={100}
                       />
                       <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-4 text-white">
-                        <h2 className="text-xl md:text-2xl text-primary">
+                        <h2 className="text-xl text-primary md:text-2xl">
                           {course.title}
                         </h2>
                         <Badge
@@ -115,34 +119,37 @@ export default function StudentDashboard() {
                         >
                           {course.category}
                         </Badge>
-                        <p className="hidden md:block text-primary">
+                        <p className="hidden text-primary md:block">
                           {course.description}
                         </p>
-                        <p className="hidden md:block text-primary">
+                        <p className="hidden text-primary md:block">
                           Instructor: {course.instructor}
                         </p>
+                        <span className="ml-1 text-sm text-gray-600">{(course.rating ?? 0).toFixed(1)}</span>
                       </div>
                     </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="flex h-12 w-12 items-center justify-center rounded-full bg-black bg-opacity-50 text-white ml-12" />
-              <CarouselNext className="flex h-12 w-12 items-center justify-center rounded-full bg-black bg-opacity-50 text-white mr-12" />
             </Carousel>
-            <div className="absolute bottom-0 left-0 right-0 flex justify-center p-2">
+            {/* Navigation Dots */}
+            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
               {courses.slice(0, 5).map((_, index) => (
                 <button
                   key={index}
-                  className={`mx-1 h-3 w-3 rounded-full ${index === currentIndex ? "bg-white" : "bg-gray-400"}`}
-                  onClick={() => setCurrentIndex(index)}
+                  className={`h-3 w-3 rounded-full ${
+                    index === currentIndex ? "bg-white" : "bg-gray-400"
+                  }`}
+                  onClick={() => handleDotClick(index)}
                 />
               ))}
             </div>
           </div>
+          
           <CourseCategories />
           {/* Carousel Pequeño */}
           <div className="relative">
-            <h2 className="text-3xl font-bold text-center mb-12">Top Cursos</h2>
+            <h2 className="mb-12 text-center text-3xl font-bold">Top Cursos</h2>
             <Carousel className="w-full">
               <CarouselContent className="-ml-4">
                 {courses.map((course) => (
@@ -167,19 +174,22 @@ export default function StudentDashboard() {
                         >
                           {course.category}
                         </Badge>
-                        <p className="text-primary">Instructor: {course.instructor}</p>
+                        <p className="text-primary">
+                          Instructor: {course.instructor}
+                        </p>
+                        <span className="ml-1 text-sm text-gray-600">{(course.rating ?? 0).toFixed(1)}</span>
                       </div>
                     </div>
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="flex h-12 w-12 items-center justify-center rounded-full bg-black bg-opacity-50 text-white" />
-              <CarouselNext className="flex h-12 w-12 items-center justify-center rounded-full bg-black bg-opacity-50 text-white" />
             </Carousel>
           </div>
           {/* Search Bar */}
           <div className="my-4">
-            <h2 className="text-3xl font-bold text-center mb-12">Buscar Cursos</h2>
+            <h2 className="mb-12 text-center text-3xl font-bold">
+              Buscar Cursos
+            </h2>
             <Input
               type="text"
               placeholder="Buscar Cursos..."
@@ -190,7 +200,7 @@ export default function StudentDashboard() {
           </div>
           {/* Course List */}
           <div>
-            <h2 className="text-3xl font-bold mb-12">Cursos Disponibles</h2>
+            <h2 className="mb-12 text-3xl font-bold">Cursos Disponibles</h2>
             <CourseListStudent courses={paginatedCourses} />
             <Pagination className="py-4">
               <PaginationContent>
@@ -205,12 +215,12 @@ export default function StudentDashboard() {
                 {Array.from({ length: totalPages }, (_, index) => (
                   <PaginationItem key={index}>
                     <PaginationLink
-                    className="text-primary border-primary"
+                      className="border-primary text-primary"
                       href="#"
                       isActive={currentPage === index + 1}
                       onClick={() => handlePageChange(index + 1)}
                     >
-                      {index + 1} 
+                      {index + 1}
                     </PaginationLink>
                   </PaginationItem>
                 ))}
@@ -231,3 +241,4 @@ export default function StudentDashboard() {
     </div>
   );
 }
+

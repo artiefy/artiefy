@@ -20,7 +20,7 @@ interface Course {
   creatorId: string;
   category: string;
   instructor: string; // Nombre del instructor
-  rating: number | null; // Nuevo campo de rating
+  rating: number | null; // Asegurarse de que el rating sea un número (float)
 }
 export type { Course };
 
@@ -62,7 +62,7 @@ export const createCourse = async (
   coverImageKey: string,
   category: string,
   instructor: string,
-  rating: number // Nuevo parámetro
+  rating: number // Asegurarse de que el rating sea un número (float)
 ): Promise<void> => {
   // Verificar el rol del usuario
   const user = await getUserById(creatorId);
@@ -101,7 +101,7 @@ export const updateCourse = async (
   coverImageKey: string,
   category: string,
   instructor: string, // Nuevo parámetro
-  rating: number // Nuevo parámetro
+  rating: number // Asegurarse de que el rating sea un número (float)
 ): Promise<void> => {
   await db
     .update(courses)
