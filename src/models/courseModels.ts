@@ -4,27 +4,30 @@ import { eq } from "drizzle-orm";
 
 // Tipos
 interface User {
-  id: string
-  email: string
-  name: string | null
-  role: string
-  createdAt: Date
-  updatedAt: Date
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface Course {
-  id: number
-  title: string
-  description: string | null
-  coverImageKey: string | null
-  creatorId: string
+  id: number;
+  title: string;
+  description: string | null;
+  coverImageKey: string | null;
+  creatorId: string;
+  category: string;
+  instructor: string; // Nombre del instructor
 }
+export type { Course };
 
 // Obtener un usuario por ID
 export const getUserById = async (id: string): Promise<User | null> => {
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result.length > 0 ? result[0] ?? null : null;
-}; 
+};
 
 // Obtener todos los usuarios
 export const getAllUsers = async (): Promise<User[]> => {
@@ -51,11 +54,18 @@ export const deleteUserById = async (id: string): Promise<void> => {
 };
 
 // Crear un nuevo curso
-export const createCourse = async (title: string, description: string, creatorId: string, coverImageKey: string): Promise<void> => {
+export const createCourse = async (
+  title: string,
+  description: string,
+  creatorId: string,
+  coverImageKey: string,
+  category: string,
+  instructor: string
+): Promise<void> => {
   // Verificar el rol del usuario
   const user = await getUserById(creatorId);
-  if (!user || user.role !== 'profesor') {
-    throw new Error('Solo los profesores pueden crear cursos.');
+  if (!user || user.role !== "profesor") {
+    throw new Error("Solo los profesores pueden crear cursos.");
   }
 
   await db.insert(courses).values({
@@ -63,6 +73,8 @@ export const createCourse = async (title: string, description: string, creatorId
     description,
     creatorId,
     coverImageKey,
+    category,
+    instructor, // Nuevo campo
   });
 };
 
@@ -79,8 +91,18 @@ export const getCourseById = async (courseId: number): Promise<Course | null> =>
 };
 
 // Actualizar un curso
-export const updateCourse = async (courseId: number, title: string, description: string, coverImageKey: string): Promise<void> => {
-  await db.update(courses).set({ title, description, coverImageKey }).where(eq(courses.id, courseId));
+export const updateCourse = async (
+  courseId: number,
+  title: string,
+  description: string,
+  coverImageKey: string,
+  category: string,
+  instructor: string // Nuevo parámetro
+): Promise<void> => {
+  await db
+    .update(courses)
+    .set({ title, description, coverImageKey, category, instructor }) // Nuevo campo
+    .where(eq(courses.id, courseId));
 };
 
 // Eliminar un curso

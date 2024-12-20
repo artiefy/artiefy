@@ -142,8 +142,8 @@ export function Header() {
                 </Button>
               </SignInButton>
             </SignedOut>
-            <SignedIn>
-              <UserButton showName />
+            <SignedIn >
+              <UserButton showName/>
             </SignedIn>
           </div>
         </DialogPanel>

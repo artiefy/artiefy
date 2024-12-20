@@ -2,25 +2,19 @@
 
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import CourseForm from "~/components/layout/CourseForm";
-import CourseList from "~/components/layout/CourseList";
+import CourseListTeacher from "~/components/layout/CourseListTeacher";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   createCourse,
   createUser,
   deleteCourse,
+  deleteUserById,
   getAllCourses,
   getUserById,
-  deleteUserById,
   updateCourse,
+  type Course as CourseModel,
 } from "~/models/courseModels";
-
-interface Course {
-  id: number;
-  title: string;
-  description: string | null;
-  coverImageKey: string | null;
-}
 
 interface ClerkUser {
   id: string;
@@ -33,14 +27,16 @@ export default function Page() {
   const [uploading, setUploading] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [category, setCategory] = useState("");
+  const [instructor, setInstructor] = useState(""); // Nuevo estado
+  const [courses, setCourses] = useState<CourseModel[]>([]);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       const savedCourses = localStorage.getItem("courses");
       if (savedCourses) {
-        setCourses(JSON.parse(savedCourses) as Course[]);
+        setCourses(JSON.parse(savedCourses) as CourseModel[]);
       } else {
         await fetchCourses();
       }
@@ -83,7 +79,13 @@ export default function Page() {
     }
   };
 
-  const handleSubmit = async (title: string, description: string, file: File | null) => {
+  const handleSubmit = async (
+    title: string,
+    description: string,
+    file: File | null,
+    category: string,
+    instructor: string, // Nuevo parámetro
+  ) => {
     if (!file) {
       alert("Please select a file to upload.");
       return;
@@ -103,7 +105,10 @@ export default function Page() {
     );
 
     if (response.ok) {
-      const jsonResponse = await response.json() as { url: string; fields: Record<string, string> };
+      const jsonResponse = (await response.json()) as {
+        url: string;
+        fields: Record<string, string>;
+      };
       const { url, fields } = jsonResponse;
 
       const formData = new FormData();
@@ -132,10 +137,19 @@ export default function Page() {
             title,
             description,
             coverImageKey ?? "",
+            category,
+            instructor
           );
           setEditingCourseId(null);
         } else {
-          await createCourse(title, description, creatorId, coverImageKey ?? "");
+          await createCourse(
+            title,
+            description,
+            creatorId,
+            coverImageKey ?? "",
+            category,
+            instructor, // Nuevo campo
+          );
         }
         alert("Upload successful!");
         await fetchCourses();
@@ -150,15 +164,19 @@ export default function Page() {
     setUploading(false);
   };
 
-  const handleEdit = (course: Course) => {
+  const handleEdit = (course: CourseModel) => {
     setTitle(course.title);
     setDescription(course.description ?? "");
+    setCategory(course.category);
+    setInstructor(course.instructor); // Establece el instructor
     setEditingCourseId(course.id);
   };
 
   const handleDelete = async (courseId: number) => {
     await deleteCourse(courseId);
-    fetchCourses().catch((error) => console.error("Error fetching courses:", error));
+    fetchCourses().catch((error) =>
+      console.error("Error fetching courses:", error),
+    );
   };
 
   return (
@@ -173,18 +191,33 @@ export default function Page() {
         </CardHeader>
         <CardContent>
           <CourseForm
-            onSubmit={handleSubmit}
+            onSubmit={(title, description, file, category, instructor) => handleSubmit(title, description, file, category, instructor)}
             uploading={uploading}
             editingCourseId={editingCourseId}
             title={title}
             setTitle={setTitle}
             description={description}
             setDescription={setDescription}
+            category={category}
+            setCategory={setCategory}
+            instructor={instructor}
+            setInstructor={setInstructor}
+          />
+          <input
+            type="text"
+            placeholder="Category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="input"
           />
         </CardContent>
       </Card>
       <h2 className="mb-4 text-2xl font-bold">Courses List</h2>
-      <CourseList courses={courses} onEdit={handleEdit} onDelete={handleDelete} />
+      <CourseListTeacher
+        courses={courses}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </main>
   );
 }

@@ -25,6 +25,8 @@ export const courses = pgTable("courses", {
   title: varchar("title", { length: 255 }).notNull(), // Título del curso
   description: text("description"), // Descripción del curso
   coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
+  category: varchar("category", { length: 255 }).notNull(), // Categoría del curso
+  instructor: text("instructor").notNull(), // Nombre del instructor
   createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
   creatorId: text("creator_id")

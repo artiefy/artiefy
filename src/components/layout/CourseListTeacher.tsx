@@ -1,14 +1,9 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import { AspectRatio } from "~/components/ui/aspect-ratio";
 import Image from "next/image";
-
-interface Course {
-  id: number;
-  title: string;
-  description: string | null;
-  coverImageKey: string | null;
-}
+import { AspectRatio } from "~/components/ui/aspect-ratio";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { type Course } from "~/models/courseModels"; 
 
 interface CourseListProps {
   courses: Course[];
@@ -16,7 +11,7 @@ interface CourseListProps {
   onDelete: (courseId: number) => void;
 }
 
-export default function CourseList({ courses, onEdit, onDelete }: CourseListProps) {
+export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseListProps) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => (
@@ -34,8 +29,14 @@ export default function CourseList({ courses, onEdit, onDelete }: CourseListProp
           </CardHeader>
           <CardContent className="p-4">
             <CardTitle className="mb-2 text-xl">{course.title}</CardTitle>
+            <Badge variant="outline" className="mb-2">
+              {course.category}
+            </Badge>
             <p className="line-clamp-2 text-sm text-gray-600">
               {course.description}
+            </p>
+            <p className="text-sm text-gray-600">
+              Instructor: {course.instructor}
             </p>
           </CardContent>
           <CardFooter>

@@ -4,13 +4,17 @@ import { Progress } from "~/components/ui/progress";
 import FileUpload from "./FileUpload";
 
 interface CourseFormProps {
-  onSubmit: (title: string, description: string, file: File | null) => void;
+  onSubmit: (title: string, description: string, file: File | null, category: string, instructor: string) => void;
   uploading: boolean;
   editingCourseId: number | null;
   title: string;
   setTitle: (title: string) => void;
   description: string;
   setDescription: (description: string) => void;
+  category: string;
+  setCategory: (category: string) => void;
+  instructor: string;
+  setInstructor: (instructor: string) => void;
 }
 
 export default function CourseForm({
@@ -21,12 +25,16 @@ export default function CourseForm({
   setTitle,
   description,
   setDescription,
+  category,
+  setCategory,
+  instructor,
+  setInstructor,
 }: CourseFormProps) {
   const [file, setFile] = useState<File | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit(title, description, file);
+    onSubmit(title, description, file, category, instructor);
   };
 
   return (
@@ -43,6 +51,22 @@ export default function CourseForm({
         placeholder="Course Description"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        required
+        className="mb-4 w-full rounded border border-gray-300 p-2"
+      />
+      <input
+        type="text"
+        placeholder="Category"
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        required
+        className="mb-4 w-full rounded border border-gray-300 p-2"
+      />
+      <input
+        type="text"
+        placeholder="Instructor"
+        value={instructor}
+        onChange={(e) => setInstructor(e.target.value)}
         required
         className="mb-4 w-full rounded border border-gray-300 p-2"
       />
