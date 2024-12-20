@@ -4,7 +4,7 @@ import { Progress } from "~/components/ui/progress";
 import FileUpload from "./FileUpload";
 
 interface CourseFormProps {
-  onSubmit: (title: string, description: string, file: File | null, category: string, instructor: string, rating: number) => Promise<void>;
+  onSubmit: (title: string, description: string, file: File | null, category: string, instructor: string, rating: number) => void;
   uploading: boolean;
   editingCourseId: number | null;
   title: string;
@@ -44,13 +44,13 @@ export default function CourseForm({
     }
   }, [uploading]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await onSubmit(title, description, file, category, instructor, rating);
+    onSubmit(title, description, file, category, instructor, rating);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-background p-6 rounded-lg shadow-md">
+    <form onSubmit={handleSubmit} className="bg-background p-6 rounded-lg shadow-md text-black">
       <input
         type="text"
         placeholder="Titulo Del Curso"

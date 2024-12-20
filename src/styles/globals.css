@@ -68,6 +68,19 @@
   }
 }
 
+@keyframes bounce-right {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-bounce-right {
+  animation: bounce-right 1s infinite;
+}
+
 .cl-formButtonPrimary {
   font-size: 14px;
   text-transform: none;

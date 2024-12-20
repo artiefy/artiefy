@@ -14,4 +14,3 @@ const sql = neon(process.env.NEXT_PUBLIC_DATABASE_URL!);
 // Exporta la conexión Drizzle para usarla en otros lugares del proyecto
 export const db = drizzle(sql, { schema });
 
-console.log("Database URL:", process.env.NEXT_PUBLIC_DATABASE_URL);

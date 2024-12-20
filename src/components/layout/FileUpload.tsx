@@ -29,7 +29,6 @@ export default function FileUpload({ setFileAction, setUploadProgressAction }: F
           cursor: pointer;
         }
         input[type='file']::file-selector-button:hover {
-          background-color: black;
           color: white;
         }
       `}</style>

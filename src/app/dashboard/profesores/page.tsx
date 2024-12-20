@@ -19,9 +19,9 @@ export default function Page() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [instructor, setInstructor] = useState(""); // Nuevo estado
+  const [rating, setRating] = useState(0); // Nuevo estado
   const [courses, setCourses] = useState<CourseModel[]>([]);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
-  const [rating, setRating] = useState(0); // Nuevo estado
 
   useEffect(() => {
     const fetchData = async () => {

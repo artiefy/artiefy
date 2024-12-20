@@ -24,7 +24,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
-import { StarIcon } from "@heroicons/react/24/solid"; // Importar el icono de estrella
+import CourseCategories from "~/components/layout/CourseCategories";
+import Footer from "~/components/layout/Footer";
 
 interface Course {
   id: number;
@@ -85,17 +86,16 @@ export default function StudentDashboard() {
   }, [courses]);
 
   return (
-    <div className="px-12">
+    <div>
       <main className="container mx-auto pl-12 pr-12 md:px-16">
         <Header />
         <div className="flex flex-col space-y-12">
           {/* Carousel Grande */}
           <div className="relative">
-            <h2 className="text-xl md:text-2xl text-primary">Cursos Destacados</h2>
             <Carousel className="w-full">
               <CarouselContent>
-                {courses.slice(0, 5).map((course, _index) => (
-                  <CarouselItem key={course.id} className="basis-full">
+                {courses.slice(0, 5).map((course, index) => (
+                  <CarouselItem key={course.id} className={`basis-full transition-opacity duration-1000 ${index === currentIndex ? "opacity-100" : "opacity-0"}`}>
                     <div className="relative h-64 w-full md:h-96">
                       <Image
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
@@ -139,9 +139,10 @@ export default function StudentDashboard() {
               ))}
             </div>
           </div>
+          <CourseCategories />
           {/* Carousel Pequeño */}
           <div className="relative">
-            <h2 className="text-xl md:text-2xl text-primary">Todos Los Cursos</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">Top Cursos</h2>
             <Carousel className="w-full">
               <CarouselContent className="-ml-4">
                 {courses.map((course) => (
@@ -167,10 +168,6 @@ export default function StudentDashboard() {
                           {course.category}
                         </Badge>
                         <p className="text-primary">Instructor: {course.instructor}</p>
-                        <div className="flex items-center">
-                          <StarIcon className="h-5 w-5 text-yellow-500" />
-                          <span className="ml-1 text-sm text-primary">{course.rating}</span>
-                        </div>
                       </div>
                     </div>
                   </CarouselItem>
@@ -182,10 +179,10 @@ export default function StudentDashboard() {
           </div>
           {/* Search Bar */}
           <div className="my-4">
-            <h2 className="text-xl md:text-2xl text-primary">Buscar Cursos</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">Buscar Cursos</h2>
             <Input
               type="text"
-              placeholder="Search courses..."
+              placeholder="Buscar Cursos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="mt-2"
@@ -193,7 +190,7 @@ export default function StudentDashboard() {
           </div>
           {/* Course List */}
           <div>
-            <h2 className="text-xl md:text-2xl text-primary">Cursos</h2>
+            <h2 className="text-3xl font-bold mb-12">Cursos Disponibles</h2>
             <CourseListStudent courses={paginatedCourses} />
             <Pagination className="py-4">
               <PaginationContent>
@@ -230,6 +227,7 @@ export default function StudentDashboard() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

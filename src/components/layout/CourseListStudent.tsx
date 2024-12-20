@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button"; // Importar el componente Button
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { type Course } from "~/models/courseModels"; 
-import { StarIcon } from "@heroicons/react/24/solid";
+import { StarIcon, ArrowRightIcon } from "@heroicons/react/24/solid"; // Importar el icono de estrella y flecha
 
 interface CourseListProps {
   courses: Course[];
@@ -43,15 +44,20 @@ export default function CourseListStudent({ courses }: CourseListProps) {
             <p className="text-sm text-gray-600">
               Instructor: {course.instructor}
             </p>
+          </CardContent>
+          <CardFooter className="p-4 flex justify-between items-center">
+            <Link href={`/dashboard/estudiantes/cursos/${course.id}`} legacyBehavior>
+              <a className="flex items-center">
+                <Button className="flex items-center bg-background text-primary hover:bg-black/70">
+                  Ver Curso
+                  <ArrowRightIcon className="h-5 w-5 ml-2 animate-bounce-right" />
+                </Button>
+              </a>
+            </Link>
             <div className="flex items-center">
               <StarIcon className="h-5 w-5 text-yellow-500" />
-              <span className="ml-1 text-sm text-gray-600">{course.rating}</span>
+              <span className="ml-1 text-sm text-gray-600">{(course.rating ?? 0).toFixed(1)}</span>
             </div>
-          </CardContent>
-          <CardFooter className="p-4">
-            <Link href={`/dashboard/estudiantes/cursos/${course.id}`} legacyBehavior>
-              <a className="text-background hover:underline">Ver Curso</a>
-            </Link>
           </CardFooter>
         </Card>
       ))}
