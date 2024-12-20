@@ -32,6 +32,7 @@ export const courses = pgTable("courses", {
   creatorId: text("creator_id")
     .references(() => users.id)
     .notNull(), // Referencia al creador del curso (usuario existente)
+  rating: integer("rating").default(0), // Nuevo campo de rating
 });
 
 // Tabla de lecciones

@@ -4,7 +4,7 @@ import { Progress } from "~/components/ui/progress";
 import FileUpload from "./FileUpload";
 
 interface CourseFormProps {
-  onSubmit: (title: string, description: string, file: File | null, category: string, instructor: string) => void;
+  onSubmit: (title: string, description: string, file: File | null, category: string, instructor: string, rating: number) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
   title: string;
@@ -15,6 +15,8 @@ interface CourseFormProps {
   setCategory: (category: string) => void;
   instructor: string;
   setInstructor: (instructor: string) => void;
+  rating: number;
+  setRating: (rating: number) => void;
 }
 
 export default function CourseForm({
@@ -29,6 +31,8 @@ export default function CourseForm({
   setCategory,
   instructor,
   setInstructor,
+  rating,
+  setRating,
 }: CourseFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -40,9 +44,9 @@ export default function CourseForm({
     }
   }, [uploading]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSubmit(title, description, file, category, instructor);
+    await onSubmit(title, description, file, category, instructor, rating);
   };
 
   return (
@@ -75,6 +79,14 @@ export default function CourseForm({
         placeholder="Profesor"
         value={instructor}
         onChange={(e) => setInstructor(e.target.value)}
+        required
+        className="mb-4 w-full rounded border border-primary p-2"
+      />
+      <input
+        type="number"
+        placeholder="Rating"
+        value={rating}
+        onChange={(e) => setRating(Number(e.target.value))}
         required
         className="mb-4 w-full rounded border border-primary p-2"
       />

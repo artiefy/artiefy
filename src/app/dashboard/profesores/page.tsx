@@ -21,6 +21,7 @@ export default function Page() {
   const [instructor, setInstructor] = useState(""); // Nuevo estado
   const [courses, setCourses] = useState<CourseModel[]>([]);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
+  const [rating, setRating] = useState(0); // Nuevo estado
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +76,7 @@ export default function Page() {
     file: File | null,
     category: string,
     instructor: string, // Nuevo parámetro
+    rating: number // Nuevo parámetro
   ) => {
     if (!file) {
       alert("Please select a file to upload.");
@@ -128,7 +130,8 @@ export default function Page() {
             description,
             coverImageKey ?? "",
             category,
-            instructor
+            instructor,
+            rating // Nuevo campo
           );
           setEditingCourseId(null);
         } else {
@@ -139,6 +142,7 @@ export default function Page() {
             coverImageKey ?? "",
             category,
             instructor, // Nuevo campo
+            rating // Nuevo campo
           );
         }
         alert("Upload successful!");
@@ -159,6 +163,7 @@ export default function Page() {
     setDescription(course.description ?? "");
     setCategory(course.category);
     setInstructor(course.instructor); // Establece el instructor
+    setRating(course.rating ?? 0); // Establece el rating
     setEditingCourseId(course.id);
   };
 
@@ -178,7 +183,7 @@ export default function Page() {
         </header>
         <div className="mb-6 bg-background p-6 rounded-lg shadow-md">
           <CourseForm
-            onSubmit={(title, description, file, category, instructor) => handleSubmit(title, description, file, category, instructor)}
+            onSubmit={(title, description, file, category, instructor, rating) => handleSubmit(title, description, file, category, instructor, rating)}
             uploading={uploading}
             editingCourseId={editingCourseId}
             title={title}
@@ -189,6 +194,8 @@ export default function Page() {
             setCategory={setCategory}
             instructor={instructor}
             setInstructor={setInstructor}
+            rating={rating}
+            setRating={setRating}
           />
         </div>
         <h2 className="mb-4 text-2xl font-bold">Lista De Curos Creados</h2>

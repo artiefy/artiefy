@@ -1,12 +1,13 @@
+//src\app\dashboard\estudiantes\cursos\[id]\page.tsx
+
 "use client";
-import { useRouter } from "next/router";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Header } from "~/components/layout/Header";
 import { getCourseById } from "~/models/courseModels";
 
 export default function CoursePage() {
-  const router = useRouter();
-  const { id } = router.query;
+  const { id } = useParams();
   const [course, setCourse] = useState<{ title: string; description: string | null } | null>(null);
 
   useEffect(() => {

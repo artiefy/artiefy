@@ -6,6 +6,7 @@ import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { type Course } from "~/models/courseModels"; 
+import { StarIcon } from "@heroicons/react/24/solid";
 
 interface CourseListProps {
   courses: Course[];
@@ -42,6 +43,10 @@ export default function CourseListStudent({ courses }: CourseListProps) {
             <p className="text-sm text-gray-600">
               Instructor: {course.instructor}
             </p>
+            <div className="flex items-center">
+              <StarIcon className="h-5 w-5 text-yellow-500" />
+              <span className="ml-1 text-sm text-gray-600">{course.rating}</span>
+            </div>
           </CardContent>
           <CardFooter className="p-4">
             <Link href={`/dashboard/estudiantes/cursos/${course.id}`} legacyBehavior>

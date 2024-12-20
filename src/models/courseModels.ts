@@ -20,6 +20,7 @@ interface Course {
   creatorId: string;
   category: string;
   instructor: string; // Nombre del instructor
+  rating: number | null; // Nuevo campo de rating
 }
 export type { Course };
 
@@ -60,7 +61,8 @@ export const createCourse = async (
   creatorId: string,
   coverImageKey: string,
   category: string,
-  instructor: string
+  instructor: string,
+  rating: number // Nuevo parámetro
 ): Promise<void> => {
   // Verificar el rol del usuario
   const user = await getUserById(creatorId);
@@ -75,6 +77,7 @@ export const createCourse = async (
     coverImageKey,
     category,
     instructor, // Nuevo campo
+    rating, // Nuevo campo
   });
 };
 
@@ -97,11 +100,12 @@ export const updateCourse = async (
   description: string,
   coverImageKey: string,
   category: string,
-  instructor: string // Nuevo parámetro
+  instructor: string, // Nuevo parámetro
+  rating: number // Nuevo parámetro
 ): Promise<void> => {
   await db
     .update(courses)
-    .set({ title, description, coverImageKey, category, instructor }) // Nuevo campo
+    .set({ title, description, coverImageKey, category, instructor, rating }) // Nuevo campo
     .where(eq(courses.id, courseId));
 };
 

@@ -24,6 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
+import { StarIcon } from "@heroicons/react/24/solid"; // Importar el icono de estrella
 
 interface Course {
   id: number;
@@ -33,6 +34,7 @@ interface Course {
   creatorId: string;
   category: string;
   instructor: string;
+  rating: number | null; // Nuevo campo de rating
 }
 
 export default function StudentDashboard() {
@@ -165,6 +167,10 @@ export default function StudentDashboard() {
                           {course.category}
                         </Badge>
                         <p className="text-primary">Instructor: {course.instructor}</p>
+                        <div className="flex items-center">
+                          <StarIcon className="h-5 w-5 text-yellow-500" />
+                          <span className="ml-1 text-sm text-primary">{course.rating}</span>
+                        </div>
                       </div>
                     </div>
                   </CarouselItem>
