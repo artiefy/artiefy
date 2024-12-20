@@ -7,7 +7,7 @@ import { getCourseById } from "~/models/courseModels";
 export default function CoursePage() {
   const router = useRouter();
   const { id } = router.query;
-  const [course, setCourse] = useState<{ title: string; description: string } | null>(null);
+  const [course, setCourse] = useState<{ title: string; description: string | null } | null>(null);
 
   useEffect(() => {
     if (id) {

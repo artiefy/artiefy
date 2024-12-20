@@ -44,7 +44,7 @@ export default function CourseListStudent({ courses }: CourseListProps) {
             </p>
           </CardContent>
           <CardFooter className="p-4">
-            <Link href={`/cursos/${course.id}`} legacyBehavior>
+            <Link href={`/dashboard/estudiantes/cursos/${course.id}`} legacyBehavior>
               <a className="text-background hover:underline">Ver Curso</a>
             </Link>
           </CardFooter>
