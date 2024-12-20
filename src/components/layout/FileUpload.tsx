@@ -1,24 +1,45 @@
+"use client"
+
 import { type ChangeEvent } from "react";
 
 interface FileUploadProps {
-  setFile: (file: File | null) => void;
+  setFileAction: (file: File | null) => void;
+  setUploadProgressAction: (progress: number) => void; // Añadir esta prop
 }
 
-export default function FileUpload({ setFile }: FileUploadProps) {
+export default function FileUpload({ setFileAction, setUploadProgressAction }: FileUploadProps) {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files?.[0]) {
-      setFile(files[0]);
+      setFileAction(files[0]);
+      // Simular progreso de carga
+      setUploadProgressAction(50); // Puedes ajustar esto según tu lógica de carga
     }
   };
 
   return (
-    <input
-      id="file"
-      type="file"
-      onChange={handleFileChange}
-      accept="image/png, image/jpeg, video/mp4"
-      className="mb-4 w-full rounded border border-gray-300 p-2"
-    />
+    <div className="mb-4 w-full">
+      <style jsx>{`
+        input[type='file']::file-selector-button {
+          background-color: green;
+          border: 1px solid black;
+          color: var(--primary);
+          padding: 0.5rem 1rem;
+          border-radius: 0.25rem;
+          cursor: pointer;
+        }
+        input[type='file']::file-selector-button:hover {
+          background-color: black;
+          color: white;
+        }
+      `}</style>
+      <input
+        id="file"
+        type="file"
+        onChange={handleFileChange}
+        accept="image/png, image/jpeg, video/mp4"
+        className="w-full rounded border border-primary p-2"
+      />
+    </div>
   );
 }

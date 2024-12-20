@@ -29,7 +29,7 @@ export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseL
           </CardHeader>
           <CardContent className="p-4">
             <CardTitle className="mb-2 text-xl">{course.title}</CardTitle>
-            <Badge variant="outline" className="mb-2">
+            <Badge variant="outline" className="border-primary bg-background text-primary hover:bg-black/70">
               {course.category}
             </Badge>
             <p className="line-clamp-2 text-sm text-gray-600">
@@ -39,9 +39,9 @@ export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseL
               Instructor: {course.instructor}
             </p>
           </CardContent>
-          <CardFooter>
-            <Button onClick={() => onEdit(course)} className="mr-2">
-              Edit
+          <CardFooter >
+            <Button onClick={() => onEdit(course)} className="border-primary bg-orange-500 text-primary hover:bg-orange-500/70 mr-4">
+              Editar
             </Button>
             <Button onClick={() => onDelete(course.id)} variant="destructive">
               Delete

@@ -4,17 +4,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  createCourse,
-  createUser,
-  deleteCourse,
-  deleteUserById,
-  getAllCourses,
-  getUserById,
-  updateCourse,
-  type Course as CourseModel,
-} from "~/models/courseModels";
+import { createCourse, createUser, deleteCourse, deleteUserById, getAllCourses, getUserById, updateCourse, type Course as CourseModel } from "~/models/courseModels";
 
 interface ClerkUser {
   id: string;
@@ -180,16 +170,13 @@ export default function Page() {
   };
 
   return (
-    <main className="container mx-auto py-10">
-      <h1 className="mb-6 text-3xl font-bold">Manage Courses</h1>
-      <UserButton />
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>
-            {editingCourseId ? "Update Course" : "Create Course"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div className="px-16">
+      <main className="container mx-auto px-16">
+        <header className="flex justify-between items-center mt-4 px-7">
+          <h1 className="text-3xl font-bold">Subir Cursos</h1>
+          <UserButton showName/>
+        </header>
+        <div className="mb-6 bg-background p-6 rounded-lg shadow-md">
           <CourseForm
             onSubmit={(title, description, file, category, instructor) => handleSubmit(title, description, file, category, instructor)}
             uploading={uploading}
@@ -203,21 +190,14 @@ export default function Page() {
             instructor={instructor}
             setInstructor={setInstructor}
           />
-          <input
-            type="text"
-            placeholder="Category"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="input"
-          />
-        </CardContent>
-      </Card>
-      <h2 className="mb-4 text-2xl font-bold">Courses List</h2>
-      <CourseListTeacher
-        courses={courses}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-    </main>
+        </div>
+        <h2 className="mb-4 text-2xl font-bold">Lista De Curos Creados</h2>
+        <CourseListTeacher
+          courses={courses}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      </main>
+    </div>
   );
 }

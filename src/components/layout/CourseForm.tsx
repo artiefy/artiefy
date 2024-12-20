@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Progress } from "~/components/ui/progress";
 import FileUpload from "./FileUpload";
@@ -31,6 +31,14 @@ export default function CourseForm({
   setInstructor,
 }: CourseFormProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  useEffect(() => {
+    if (uploading) {
+      const timer = setTimeout(() => setUploadProgress(100), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [uploading]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -38,42 +46,42 @@ export default function CourseForm({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="bg-background p-6 rounded-lg shadow-md">
       <input
         type="text"
-        placeholder="Course Title"
+        placeholder="Titulo Del Curso"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         required
-        className="mb-4 w-full rounded border border-gray-300 p-2"
+        className="mb-4 w-full rounded border border-primary p-2"
       />
       <textarea
-        placeholder="Course Description"
+        placeholder="Descripcion"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         required
-        className="mb-4 w-full rounded border border-gray-300 p-2"
+        className="mb-4 w-full rounded border border-primary p-2"
       />
       <input
         type="text"
-        placeholder="Category"
+        placeholder="Categoria"
         value={category}
         onChange={(e) => setCategory(e.target.value)}
         required
-        className="mb-4 w-full rounded border border-gray-300 p-2"
+        className="mb-4 w-full rounded border border-primary p-2"
       />
       <input
         type="text"
-        placeholder="Instructor"
+        placeholder="Profesor"
         value={instructor}
         onChange={(e) => setInstructor(e.target.value)}
         required
-        className="mb-4 w-full rounded border border-gray-300 p-2"
+        className="mb-4 w-full rounded border border-primary p-2"
       />
-      <FileUpload setFile={setFile} />
-      {uploading && <Progress value={0} className="mb-4" />}
-      <Button type="submit" disabled={uploading} className="w-full">
-        {editingCourseId ? "Update Course" : "Create Course"}
+      <FileUpload setFileAction={setFile} setUploadProgressAction={setUploadProgress} />
+      {uploading && <Progress value={uploadProgress} className="w-[33%] text-primary mb-4" />}
+      <Button type="submit" disabled={uploading} className="w-full bg-primary text-background hover:bg-primary-dark">
+        {editingCourseId ? "Editar Curso" : "Subir Curso"}
       </Button>
     </form>
   );
