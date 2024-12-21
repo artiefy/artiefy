@@ -24,16 +24,17 @@ export default function Page() {
   const [courses, setCourses] = useState<CourseModel[]>([]);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
 
+  const fetchData = async () => {
+    const response = await fetch("/api/courses");
+    if (response.ok) {
+      const data = await response.json();
+      setCourses(data);
+    } else {
+      console.error("Failed to fetch courses:", response.statusText);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      const response = await fetch("/api/courses");
-      if (response.ok) {
-        const data = await response.json();
-        setCourses(data);
-      } else {
-        console.error("Failed to fetch courses:", response.statusText);
-      }
-    };
     fetchData().catch((error) => console.error("Error fetching data:", error));
   }, [user]);
 
