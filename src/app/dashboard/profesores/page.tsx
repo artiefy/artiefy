@@ -5,7 +5,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { createCourse, createUser, deleteCourse, deleteUserById, getAllCourses, getUserById, updateCourse, type Course as CourseModel } from "~/models/courseModels";
+import { type Course as CourseModel } from "~/models/courseModels";
 
 interface ClerkUser {
   id: string;
@@ -26,50 +26,16 @@ export default function Page() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const savedCourses = localStorage.getItem("courses");
-      if (savedCourses) {
-        setCourses(JSON.parse(savedCourses) as CourseModel[]);
+      const response = await fetch("/api/courses");
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data);
       } else {
-        await fetchCourses();
-      }
-      if (user) {
-        if (user.fullName) {
-          await registerUser({
-            id: user.id,
-            emailAddresses: user.emailAddresses,
-            fullName: user.fullName,
-          });
-        } else {
-          console.error("User full name is missing");
-        }
+        console.error("Failed to fetch courses:", response.statusText);
       }
     };
     fetchData().catch((error) => console.error("Error fetching data:", error));
   }, [user]);
-
-  const fetchCourses = async () => {
-    const allCourses = await getAllCourses();
-    setCourses(allCourses);
-    localStorage.setItem("courses", JSON.stringify(allCourses));
-  };
-
-  const registerUser = async (user: ClerkUser) => {
-    const { id, emailAddresses, fullName } = user;
-    const email = emailAddresses[0]?.emailAddress;
-    if (id && email && fullName) {
-      const existingUser = await getUserById(id);
-      if (existingUser) {
-        if (existingUser.role === "estudiante") {
-          await deleteUserById(id);
-          await createUser(id, email, fullName, "profesor");
-        }
-      } else {
-        await createUser(id, email, fullName, "profesor");
-      }
-    } else {
-      console.error("User ID, email, or full name is missing");
-    }
-  };
 
   const handleSubmit = async (
     title: string,
@@ -125,29 +91,41 @@ export default function Page() {
           return;
         }
         if (editingCourseId) {
-          await updateCourse(
-            editingCourseId,
-            title,
-            description,
-            coverImageKey ?? "",
-            category,
-            instructor,
-            parseFloat(rating.toFixed(1)) // Asegurarse de que el rating sea un float con un decimal
-          );
+          await fetch("/api/courses", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id: editingCourseId,
+              title,
+              description,
+              coverImageKey,
+              category,
+              instructor,
+              rating,
+            }),
+          });
           setEditingCourseId(null);
         } else {
-          await createCourse(
-            title,
-            description,
-            creatorId,
-            coverImageKey ?? "",
-            category,
-            instructor, // Nuevo campo
-            parseFloat(rating.toFixed(1)) // Asegurarse de que el rating sea un float con un decimal
-          );
+          await fetch("/api/courses", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title,
+              description,
+              creatorId,
+              coverImageKey,
+              category,
+              instructor,
+              rating,
+            }),
+          });
         }
         alert("Upload successful!");
-        await fetchCourses();
+        await fetchData();
       } else {
         console.error("S3 Upload Error:", uploadResponse);
         alert("Upload failed.");
@@ -169,10 +147,14 @@ export default function Page() {
   };
 
   const handleDelete = async (courseId: number) => {
-    await deleteCourse(courseId);
-    fetchCourses().catch((error) =>
-      console.error("Error fetching courses:", error),
-    );
+    await fetch("/api/courses", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: courseId }),
+    });
+    await fetchData();
   };
 
   return (

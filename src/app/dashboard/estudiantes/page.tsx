@@ -23,7 +23,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
-import { getAllCourses } from "~/models/courseModels";
 import { StarIcon } from "@heroicons/react/24/solid";
 
 interface Course {
@@ -57,9 +56,14 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      const allCourses = await getAllCourses();
-      setCourses(allCourses);
-      setFilteredCourses(allCourses);
+      const response = await fetch("/api/courses");
+      if (response.ok) {
+        const data = await response.json();
+        setCourses(data);
+        setFilteredCourses(data);
+      } else {
+        console.error("Failed to fetch courses:", response.statusText);
+      }
     };
     fetchCourses().catch((error) =>
       console.error("Error fetching courses:", error),
