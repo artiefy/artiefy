@@ -31,32 +31,32 @@ export default function CourseListStudent({ courses }: CourseListProps) {
             </AspectRatio>
           </CardHeader>
           <CardContent className="p-4">
-            <CardTitle className="mb-2 text-xl">{course.title}</CardTitle>
-            <div className="flex justify-between items-center mb-2">
+            <CardTitle className="mb-2 text-xl text-background">{course.title}</CardTitle>
+            <div className="flex items-center mb-2">
               <Badge variant="outline" className="border-primary bg-background text-primary hover:bg-black/70">
                 {course.category}
               </Badge>
-              <span className="text-sm text-gray-600">Categoría</span>
+              <span className="ml-2 text-sm text-gray-600 font-bold">Categoría</span>
             </div>
-            <p className="line-clamp-2 text-sm text-gray-600">
+            <p className="line-clamp-2 text-sm text-gray-600 mb-2">
               {course.description}
             </p>
-            <p className="text-sm text-gray-600">
-              Instructor: {course.instructor}
+            <p className="text-sm font-bold italic  text-gray-600">
+              Instructor: <span className="font-bold italic underline">{course.instructor}</span>
             </p>
           </CardContent>
-          <CardFooter className="p-4 flex justify-between items-center">
+          <CardFooter className="px-4 flex justify-between items-center">
             <Link href={`/dashboard/estudiantes/cursos/${course.id}`} legacyBehavior>
               <a className="flex items-center">
-                <Button className="flex items-center bg-background text-primary hover:bg-black/70">
-                  Ver Curso
-                  <ArrowRightIcon className="h-5 w-5 ml-2 animate-bounce-right" />
+                <Button className="flex items-center  bg-background text-primary hover:bg-black/70 p-2">
+                  <p className="ml-2">Ver Curso</p>
+                  <ArrowRightIcon className="h-5 w-5 mr-2 animate-bounce-right" />
                 </Button>
               </a>
             </Link>
             <div className="flex items-center">
               <StarIcon className="h-5 w-5 text-yellow-500" />
-              <span className="ml-1 text-sm text-gray-600">{(course.rating ?? 0).toFixed(1)}</span>
+              <span className="ml-1 text-sm text-yellow-500 font-bold">{(course.rating ?? 0).toFixed(1)}</span>
             </div>
           </CardFooter>
         </Card>

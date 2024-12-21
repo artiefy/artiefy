@@ -107,8 +107,8 @@ export default function StudentDashboard() {
                   fill
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center text-white">
-                  <h2 className="text-4xl font-bold mb-4">{course.title}</h2>
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center text-primary">
+                  <h2 className="text-4xl font-semibold mb-4">{course.title}</h2>
                   <Badge
                     variant="outline"
                     className="mb-2 border-primary bg-background text-primary"
@@ -163,14 +163,14 @@ export default function StudentDashboard() {
                           quality={100}
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
-                          <h3 className="text-lg text-primary">{course.title}</h3>
+                          <h3 className="text-lg font-bold text-primary">{course.title}</h3>
                           <Badge
                             variant="outline"
                             className="mb-2 border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
                           >
                             {course.category}
                           </Badge>
-                          <p className="text-primary">
+                          <p className="text-primary font-bold">
                             Instructor: {course.instructor}
                           </p>
                           <div className="flex items-center">
