@@ -191,7 +191,7 @@ export default function StudentDashboard() {
           </div>
           {/* Search Bar */}
           <div className="my-4">
-            <h2 className="mb-12 text-center text-3xl font-bold">
+            <h2 className="mb-12 text-3xl font-bold">
               Buscar Cursos
             </h2>
             <Input

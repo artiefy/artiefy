@@ -23,17 +23,13 @@ export default function CoursePage() {
     }
   }, [id]);
 
-  if (!course) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <div className="px-12">
       <main className="container mx-auto pl-12 pr-12 md:px-16">
         <Header />
         <div className="flex flex-col space-y-12">
-          <h1 className="text-3xl text-primary">{course.title}</h1>
-          <p className="text-lg text-gray-600">{course.description}</p>
+          <h1 className="text-3xl text-primary">{course?.title}</h1>
+          <p className="text-lg text-gray-600">{course?.description}</p>
           {/* Add more course details here */}
         </div>
       </main>
