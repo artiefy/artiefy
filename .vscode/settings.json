@@ -63,5 +63,6 @@
     "comments": false,
     "strings": true
   },
-  "editor.inlineSuggest.enabled": true
+  "editor.inlineSuggest.enabled": true,
+  "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": true
 }

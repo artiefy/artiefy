@@ -1,17 +1,10 @@
-//src\app\dashboard\profesores\page.tsx
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { type Course as CourseModel } from "~/models/courseModels";
-
-interface ClerkUser {
-  id: string;
-  emailAddresses: { emailAddress: string }[];
-  fullName: string;
-}
+import { type CourseModel } from "~/types";
 
 export default function Page() {
   const { user } = useUser();
@@ -27,7 +20,7 @@ export default function Page() {
   const fetchData = async () => {
     const response = await fetch("/api/courses");
     if (response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as CourseModel[];
       setCourses(data);
     } else {
       console.error("Failed to fetch courses:", response.statusText);
@@ -148,15 +141,23 @@ export default function Page() {
   };
 
   const handleDelete = async (courseId: number) => {
+    const userId = user?.id;
+    if (!userId) {
+      console.error("User ID is missing");
+      alert("User ID is missing");
+      return;
+    }
     await fetch("/api/courses", {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ id: courseId }),
+      body: JSON.stringify({ id: courseId, userId }),
     });
     await fetchData();
   };
+
+  const [coverImageKey, setCoverImageKey] = useState<string | null>(null);
 
   return (
     <div className="px-16">
@@ -180,6 +181,8 @@ export default function Page() {
             setInstructor={setInstructor}
             rating={rating}
             setRating={setRating}
+            coverImageKey={coverImageKey}
+            setCoverImageKey={setCoverImageKey}
           />
         </div>
         <h2 className="mb-4 text-2xl font-bold">Lista De Curos Creados</h2>

@@ -1,5 +1,6 @@
 "use client";
 
+import { StarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import CourseCategories from "~/components/layout/CourseCategories";
@@ -23,18 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
-import { StarIcon } from "@heroicons/react/24/solid";
-
-interface Course {
-  id: number;
-  title: string;
-  description: string | null;
-  coverImageKey: string | null;
-  creatorId: string;
-  category: string;
-  instructor: string;
-  rating: number | null;
-}
+import { type Course } from "~/types";
 
 export default function StudentDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -58,7 +48,7 @@ export default function StudentDashboard() {
     const fetchCourses = async () => {
       const response = await fetch("/api/courses");
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as Course[];
         setCourses(data);
         setFilteredCourses(data);
       } else {

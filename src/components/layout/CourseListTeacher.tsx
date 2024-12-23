@@ -4,15 +4,9 @@ import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import { type Course } from "~/models/courseModels"; 
+import type { CourseListTeacherProps } from "~/types";
 
-interface CourseListProps {
-  courses: Course[];
-  onEdit: (course: Course) => void;
-  onDelete: (courseId: number) => void;
-}
-
-export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseListProps) {
+export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseListTeacherProps) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => (
@@ -43,7 +37,7 @@ export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseL
               Rating: {course.rating?.toFixed(1)}
             </p>
           </CardContent>
-          <CardFooter >
+          <CardFooter>
             <Button onClick={() => onEdit(course)} className="border-primary bg-orange-500 text-primary hover:bg-orange-500/70 mr-4">
               Editar
             </Button>

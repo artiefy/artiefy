@@ -1,13 +1,12 @@
-"use client"
+"use client";
 
 import { type ChangeEvent } from "react";
+import { type FileUploadProps } from "~/types";
 
-interface FileUploadProps {
-  setFileAction: (file: File | null) => void;
-  setUploadProgressAction: (progress: number) => void; // Añadir esta prop
-}
-
-export default function FileUpload({ setFileAction, setUploadProgressAction }: FileUploadProps) {
+export default function FileUpload({
+  setFileAction,
+  setUploadProgressAction,
+}: FileUploadProps) {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files?.[0]) {
@@ -20,7 +19,7 @@ export default function FileUpload({ setFileAction, setUploadProgressAction }: F
   return (
     <div className="mb-4 w-full">
       <style jsx>{`
-        input[type='file']::file-selector-button {
+        input[type="file"]::file-selector-button {
           background-color: green;
           border: 1px solid black;
           color: var(--primary);
@@ -28,7 +27,7 @@ export default function FileUpload({ setFileAction, setUploadProgressAction }: F
           border-radius: 0.25rem;
           cursor: pointer;
         }
-        input[type='file']::file-selector-button:hover {
+        input[type="file"]::file-selector-button:hover {
           color: white;
         }
       `}</style>

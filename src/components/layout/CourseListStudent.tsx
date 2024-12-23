@@ -1,11 +1,11 @@
 //src\components\layout\CourseListStudent.tsx
 
-import { ArrowRightIcon, StarIcon } from "@heroicons/react/24/solid"; // Importar el icono de estrella y flecha
+import { ArrowRightIcon, StarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button"; // Importar el componente Button
+import { Button } from "~/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,13 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { type Course } from "~/models/courseModels";
+import { type CourseListStudentProps } from "~/types";
 
-interface CourseListProps {
-  courses: Course[];
-}
-
-export default function CourseListStudent({ courses }: CourseListProps) {
+export default function CourseListStudent({ courses }: CourseListStudentProps) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => (
@@ -37,7 +33,7 @@ export default function CourseListStudent({ courses }: CourseListProps) {
             </AspectRatio>
           </CardHeader>
           <CardContent className="p-4">
-            <CardTitle className="mb-2 text-xl text-background bg-primary rounded-lg bg-opacity-50">
+            <CardTitle className="mb-2 rounded-lg bg-primary bg-opacity-50 text-xl text-background">
               <span className="ml-2 font-bold">{course.title}</span>{" "}
             </CardTitle>
             <div className="mb-2 flex items-center">
