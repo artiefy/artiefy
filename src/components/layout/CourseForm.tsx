@@ -4,49 +4,27 @@ import { useState, type ChangeEvent, useEffect } from "react";
 import { Progress } from "~/components/ui/progress";
 
 interface CourseFormProps {
-
   onSubmitAction: (
-
     title: string,
-
     description: string,
-
     file: File | null,
-
     category: string,
-
     instructor: string,
-
     rating: number
-
   ) => Promise<void>;
-
   uploading: boolean;
-
   editingCourseId: string | null;
-
   title: string;
-
   setTitle: (title: string) => void;
-
   setDescription: (description: string) => void;
-
   category: string;
-
   setCategory: (category: string) => void;
-
   instructor: string;
-
   setInstructor: (instructor: string) => void;
-
   rating: number;
-
   setRating: (rating: number) => void;
-
   coverImageKey: string;
-
   setCoverImageKey: (coverImageKey: string) => void;
-
 }
 
 

@@ -4,8 +4,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Header } from "~/components/layout/Header";
-import { getCourseById } from "~/models/courseModels";
-import { type Course } from "~/types";
+import { getCourseById, type Course } from "~/models/courseModels";
 
 export default function CoursePage() {
   const params = useParams<{ id: string }>();
