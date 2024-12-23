@@ -1,108 +1,92 @@
 import { type NextRequest, NextResponse } from "next/server";
-import {
-  createCourse,
-  deleteCourse,
-  getAllCourses,
-  updateCourse,
-} from "~/models/courseModels";
+import { createCourse, deleteCourse, getAllCourses, updateCourse } from "~/models/courseModels";
 import { getUserById } from "~/models/userModels";
-import { type Course } from "~/types";
 
-// GET: Fetch all courses
+const respondWithError = (message: string, status: number) =>
+  NextResponse.json({ error: message }, { status });
+
+const validateUser = async (userId: string, role: string) => {
+  const user = await getUserById(userId);
+  if (!user || user.role !== role) {
+    return false;
+  }
+  return true;
+};
+
+// Obtener todos los cursos
 export async function GET() {
   try {
-    const result = await getAllCourses();
-    return NextResponse.json(result);
+    const courses = await getAllCourses();
+    return NextResponse.json(courses);
   } catch (error) {
-    console.error("Failed to fetch courses:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch courses" },
-      { status: 500 },
-    );
+    console.error("Error al obtener los cursos:", error);
+    return respondWithError("Error al obtener los cursos", 500);
   }
 }
 
-// POST: Create a new course
+// Crear un nuevo curso
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as Course;
-    const {
-      title,
-      description,
-      creatorId,
-      coverImageKey,
-      category,
-      instructor,
-      rating,
-    } = body;
+    const body = await request.json();
+    const { title, description, coverImageKey, category, instructor, rating, userId } = body;
+
+    const isValidUser = await validateUser(userId, "profesor");
+    if (!isValidUser) {
+      return respondWithError("No autorizado", 403);
+    }
+
     await createCourse({
       title,
-      description: description ?? "",
-      creatorId,
-      coverImageKey: coverImageKey ?? "",
-      category,
-      instructor,
-      rating: rating ?? 0,
-    });
-    return NextResponse.json({ message: "Course created successfully" });
-  } catch (error) {
-    console.error("Failed to create course:", error);
-    return NextResponse.json(
-      { error: "Failed to create course" },
-      { status: 500 },
-    );
-  }
-}
-
-// PUT: Update a course by ID
-export async function PUT(request: NextRequest) {
-  try {
-    const body = (await request.json()) as Course & { id: number };
-    const {
-      id,
-      title,
       description,
+      creatorId: userId,
       coverImageKey,
       category,
       instructor,
       rating,
-    } = body;
-    await updateCourse(id, {
-      title,
-      description: description ?? "",
-      coverImageKey: coverImageKey ?? "",
-      category,
-      instructor,
-      rating: rating ?? 0,
     });
-    return NextResponse.json({ message: "Course updated successfully" });
+
+    return NextResponse.json({ message: "Curso creado exitosamente" });
   } catch (error) {
-    console.error("Failed to update course:", error);
-    return NextResponse.json(
-      { error: "Failed to update course" },
-      { status: 500 },
-    );
+    console.error("Error al crear el curso:", error);
+    return respondWithError("Error al crear el curso", 500);
   }
 }
 
-// DELETE: Delete a course by ID
+// Actualizar un curso
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, title, description, coverImageKey, category, instructor, rating, userId } = body;
+
+    const isValidUser = await validateUser(userId, "profesor");
+    if (!isValidUser) {
+      return respondWithError("No autorizado", 403);
+    }
+
+    await updateCourse(id, { title, description, coverImageKey, category, instructor, rating });
+
+    return NextResponse.json({ message: "Curso actualizado exitosamente" });
+  } catch (error) {
+    console.error("Error al actualizar el curso:", error);
+    return respondWithError("Error al actualizar el curso", 500);
+  }
+}
+
+// Eliminar un curso
 export async function DELETE(request: NextRequest) {
   try {
-    const { id, userId } = (await request.json()) as {
-      id: number;
-      userId: string;
-    };
-    const user = await getUserById(userId);
-    if (!user || user.role !== "profesor") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    const { id, userId } = await request.json();
+
+    const isValidUser = await validateUser(userId, "profesor");
+    if (!isValidUser) {
+      return respondWithError("No autorizado", 403);
     }
+
     await deleteCourse(id);
-    return NextResponse.json({ message: "Course deleted successfully" });
+
+    return NextResponse.json({ message: "Curso eliminado exitosamente" });
   } catch (error) {
-    console.error("Failed to delete course:", error);
-    return NextResponse.json(
-      { error: "Failed to delete course" },
-      { status: 500 },
-    );
+    console.error("Error al eliminar el curso:", error);
+    return respondWithError("Error al eliminar el curso", 500);
   }
 }

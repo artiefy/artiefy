@@ -1,18 +1,22 @@
 "use client";
 
-import { type ChangeEvent } from "react";
-import { type FileUploadProps } from "~/types";
+import { type ChangeEvent, useState } from "react";
 
-export default function FileUpload({
-  setFileAction,
-  setUploadProgressAction,
-}: FileUploadProps) {
+type FileUploadProps = {
+  setFileAction: (file: File | null) => void;
+};
+
+export default function FileUpload({ setFileAction }: FileUploadProps) {
+  const [fileName, setFileName] = useState<string | null>(null);
+
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files?.[0]) {
       setFileAction(files[0]);
-      // Simular progreso de carga
-      setUploadProgressAction(50); // Puedes ajustar esto según tu lógica de carga
+      setFileName(files[0].name);
+    } else {
+      setFileAction(null);
+      setFileName(null);
     }
   };
 
@@ -20,15 +24,23 @@ export default function FileUpload({
     <div className="mb-4 w-full">
       <style jsx>{`
         input[type="file"]::file-selector-button {
-          background-color: green;
-          border: 1px solid black;
-          color: var(--primary);
-          padding: 0.5rem 1rem;
-          border-radius: 0.25rem;
-          cursor: pointer;
-        }
-        input[type="file"]::file-selector-button:hover {
+          background-color: #007bff;
           color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 16px;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+          background-color: #0056b3;
+        }
+
+        input[type="file"] {
+          font-size: 14px; /* Cambia el estilo del texto al lado del botón */
+          color: #555;
+          font-family: Arial, sans-serif;
         }
       `}</style>
       <input
@@ -38,6 +50,11 @@ export default function FileUpload({
         accept="image/png, image/jpeg, video/mp4"
         className="w-full rounded border border-primary p-2"
       />
+      {fileName && (
+        <p className="mt-2 text-sm text-gray-600">
+          Archivo seleccionado: {fileName}
+        </p>
+      )}
     </div>
   );
 }
