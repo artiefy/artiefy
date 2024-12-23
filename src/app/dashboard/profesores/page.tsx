@@ -127,7 +127,7 @@ export default function Page() {
         </header>
         <div className="mb-6 bg-background p-6 rounded-lg shadow-md">
           <CourseForm
-            onSubmit={handleCreateOrEditCourse}
+            onSubmitAction={handleCreateOrEditCourse}
             uploading={uploading}
             editingCourseId={editingCourse?.id ?? null}
             title={editingCourse?.title ?? ""}

@@ -4,7 +4,7 @@ import { useState, type ChangeEvent, useEffect } from "react";
 import { Progress } from "~/components/ui/progress";
 
 type CourseFormProps = {
-  onSubmit: (
+  onSubmitAction: (
     title: string,
     description: string,
     file: File | null,
@@ -16,7 +16,7 @@ type CourseFormProps = {
   editingCourseId: number | null;
 };
 
-export default function CourseForm({ onSubmit, uploading, editingCourseId }: CourseFormProps) {
+export default function CourseForm({ onSubmitAction, uploading, editingCourseId }: CourseFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -40,7 +40,7 @@ export default function CourseForm({ onSubmit, uploading, editingCourseId }: Cou
 
   const handleSubmit = () => {
     setIsEditing(true);
-    onSubmit(title, description, file, category, instructor, rating);
+    onSubmitAction(title, description, file, category, instructor, rating);
   };
 
   useEffect(() => {
