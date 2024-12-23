@@ -131,7 +131,7 @@ export default function CourseForm({ onSubmitAction, uploading, editingCourseId 
 
           input[type="file"] {
             font-size: 14px; /* Cambia el estilo del texto al lado del botón */
-            color: #555;
+            color: hsl(var(--primary));
             font-family: Arial, sans-serif;
           }
         `}</style>
@@ -143,7 +143,7 @@ export default function CourseForm({ onSubmitAction, uploading, editingCourseId 
           className="w-full rounded border border-primary p-2"
         />
         {fileName && (
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-primary">
             Archivo seleccionado: {fileName}
           </p>
         )}
