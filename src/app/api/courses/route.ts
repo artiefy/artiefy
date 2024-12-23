@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createCourse, deleteCourse, getAllCourses, updateCourse } from "~/models/courseModels";
 import { getUserById } from "~/models/userModels";
+import { CourseModel, CourseFormProps } from "~/types";
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
@@ -16,7 +17,7 @@ const validateUser = async (userId: string, role: string) => {
 // Obtener todos los cursos
 export async function GET() {
   try {
-    const courses = await getAllCourses();
+    const courses: CourseModel[] = await getAllCourses();
     return NextResponse.json(courses);
   } catch (error) {
     console.error("Error al obtener los cursos:", error);
@@ -27,7 +28,7 @@ export async function GET() {
 // Crear un nuevo curso
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json() as CourseFormProps;
     const { title, description, coverImageKey, category, instructor, rating, userId } = body;
 
     const isValidUser = await validateUser(userId, "profesor");
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
 // Actualizar un curso
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body: CourseFormProps = await request.json();
     const { id, title, description, coverImageKey, category, instructor, rating, userId } = body;
 
     const isValidUser = await validateUser(userId, "profesor");

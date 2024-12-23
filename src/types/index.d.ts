@@ -16,7 +16,7 @@ export interface ClerkUser {
 export interface Course {
   id: number;
   title: string;
-  description?: string | null;
+  description: string | null;
   coverImageKey?: string | null;
   creatorId: string;
   category: string;
@@ -29,7 +29,7 @@ export interface Course {
 export type CourseModel = {
   id: number;
   title: string;
-  description?: string;
+  description: string | null;
   category: string;
   instructor: string;
   rating?: number;

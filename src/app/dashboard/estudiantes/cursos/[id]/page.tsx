@@ -5,16 +5,26 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Header } from "~/components/layout/Header";
 import { getCourseById } from "~/models/courseModels";
+import { type Course } from "~/types";
 
 export default function CoursePage() {
-  const { id } = useParams();
-  const [course, setCourse] = useState<{ title: string; description: string | null } | null>(null);
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
+  const [course, setCourse] = useState<{
+    title: string;
+    description: string | null;
+  } | null>(null);
 
   useEffect(() => {
     if (id) {
       const fetchCourse = async () => {
-        const courseData = await getCourseById(Number(id));
-        setCourse(courseData);
+        const courseData: Course | null = await getCourseById(Number(id));
+        if (courseData) {
+          setCourse({
+            title: courseData.title,
+            description: courseData.description ?? null,
+          });
+        }
       };
 
       fetchCourse().catch((error) =>
