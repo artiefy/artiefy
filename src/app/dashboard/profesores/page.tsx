@@ -1,14 +1,16 @@
 "use client";
 
 interface CourseModel {
-  id: number;
+  id: string;
   title: string;
   description: string;
   category: string;
   instructor: string;
-  rating: number;
-  coverImageKey?: string;
+  rating?: number;
+  coverImageKey: string;
 }
+
+
 
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
@@ -25,7 +27,10 @@ export default function Page() {
     const response = await fetch("/api/courses");
     if (response.ok) {
       const data = (await response.json()) as CourseModel[];
-      setCourses(data);
+      setCourses(data.map(course => ({
+        ...course,
+        coverImageKey: course.coverImageKey ?? ""
+      })) as CourseModel[]);
     } else {
       console.error("Failed to fetch courses:", response.statusText);
     }
@@ -86,7 +91,7 @@ export default function Page() {
       setCourses((prevCourses) =>
         prevCourses.map((course) =>
           course.id === editingCourse.id
-            ? { ...course, title, description, category, instructor, rating }
+            ? { ...course, title, description, category, instructor, rating, coverImageKey }
             : course
         )
       );
@@ -107,25 +112,25 @@ export default function Page() {
       });
       setCourses((prevCourses) => [
         ...prevCourses,
-        { id: Date.now(), title, description, category, instructor, rating },
+        { id: Date.now().toString(), title, description, category, instructor, rating, coverImageKey },
       ]);
     }
 
-    fetchCourses();
+    fetchCourses().catch((error) => console.error("Error fetching courses:", error));
   };
 
   const handleEditCourse = (course: CourseModel) => {
     setEditingCourse(course);
   };
 
-  const handleDeleteCourse = async (id: number) => {
+  const handleDeleteCourse = async (id: string) => {
     if (!user) return;
     await fetch("/api/courses", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, userId: user.id }),
     });
-    fetchCourses();
+    fetchCourses().catch((error) => console.error("Error fetching courses:", error));
   };
 
   return (
@@ -139,19 +144,18 @@ export default function Page() {
           <CourseForm
             onSubmitAction={handleCreateOrEditCourse}
             uploading={uploading}
-            editingCourseId={editingCourse?.id ?? null}
+            editingCourseId={editingCourse ? editingCourse.id : null}
             title={editingCourse?.title ?? ""}
-            setTitle={(title) => setEditingCourse((prev) => prev ? { ...prev, title } : null)}
-            description={editingCourse?.description ?? ""}
-            setDescription={(description) => setEditingCourse((prev) => prev ? { ...prev, description } : null)}
+            setTitle={(title: string) => setEditingCourse((prev) => prev ? { ...prev, title } : null)}
+            setDescription={(description: string) => setEditingCourse((prev) => prev ? { ...prev, description } : null)}
             category={editingCourse?.category ?? ""}
-            setCategory={(category) => setEditingCourse((prev) => prev ? { ...prev, category } : null)}
+            setCategory={(category: string) => setEditingCourse((prev) => prev ? { ...prev, category } : null)}
             instructor={editingCourse?.instructor ?? ""}
-            setInstructor={(instructor) => setEditingCourse((prev) => prev ? { ...prev, instructor } : null)}
+            setInstructor={(instructor: string) => setEditingCourse((prev) => prev ? { ...prev, instructor } : null)}
             rating={editingCourse?.rating ?? 0}
-            setRating={(rating) => setEditingCourse((prev) => prev ? { ...prev, rating } : null)}
-            coverImageKey={editingCourse?.coverImageKey ?? null}
-            setCoverImageKey={(coverImageKey) => setEditingCourse((prev) => prev ? { ...prev, coverImageKey } : null)}
+            setRating={(rating: number) => setEditingCourse((prev) => prev ? { ...prev, rating } : null)}
+            coverImageKey={editingCourse?.coverImageKey ?? ""}
+            setCoverImageKey={(coverImageKey: string) => setEditingCourse((prev) => prev ? { ...prev, coverImageKey } : null)}
           />
         </div>
         <h2 className="mb-4 text-2xl font-bold">Lista De Cursos Creados</h2>

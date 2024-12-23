@@ -3,18 +3,52 @@
 import { useState, type ChangeEvent, useEffect } from "react";
 import { Progress } from "~/components/ui/progress";
 
-type CourseFormProps = {
+interface CourseFormProps {
+
   onSubmitAction: (
+
     title: string,
+
     description: string,
+
     file: File | null,
+
     category: string,
+
     instructor: string,
+
     rating: number
-  ) => void;
+
+  ) => Promise<void>;
+
   uploading: boolean;
-  editingCourseId: number | null;
-};
+
+  editingCourseId: string | null;
+
+  title: string;
+
+  setTitle: (title: string) => void;
+
+  setDescription: (description: string) => void;
+
+  category: string;
+
+  setCategory: (category: string) => void;
+
+  instructor: string;
+
+  setInstructor: (instructor: string) => void;
+
+  rating: number;
+
+  setRating: (rating: number) => void;
+
+  coverImageKey: string;
+
+  setCoverImageKey: (coverImageKey: string) => void;
+
+}
+
 
 export default function CourseForm({ onSubmitAction, uploading, editingCourseId }: CourseFormProps) {
   const [title, setTitle] = useState("");
@@ -38,9 +72,9 @@ export default function CourseForm({ onSubmitAction, uploading, editingCourseId 
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsEditing(true);
-    onSubmitAction(title, description, file, category, instructor, rating);
+    await onSubmitAction(title, description, file, category, instructor, rating);
   };
 
   useEffect(() => {

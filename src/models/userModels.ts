@@ -1,8 +1,15 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/server/db/index";
 import { users, courses } from "~/server/db/schema";
-import { type User } from "~/types";
 
+export interface User {
+  id: string;
+  role: string;
+  name: string | null;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 export async function getUserById(id: string): Promise<User | null> {
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result[0] ?? null;
