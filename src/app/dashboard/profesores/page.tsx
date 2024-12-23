@@ -24,7 +24,7 @@ export default function Page() {
 
   useEffect(() => {
     fetchCourses().catch((error) => console.error("Error fetching courses:", error));
-  }, []);
+  }, [user]);
 
   const handleCreateOrEditCourse = async (
     title: string,
