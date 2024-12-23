@@ -10,6 +10,7 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
 }
+
 export async function getUserById(id: string): Promise<User | null> {
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result[0] ?? null;

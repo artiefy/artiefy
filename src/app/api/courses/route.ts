@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createCourse, deleteCourse, getAllCourses, updateCourse } from "~/models/courseModels";
-import { getUserById } from "~/models/userModels";
+import { getUserById, createUser } from "~/models/userModels";
+import { auth } from "@clerk/nextjs/server";
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
-const validateUser = async (userId: string, role: string): Promise<boolean> => {
-  const user = await getUserById(userId) as { role: string } | null;
+const validateUser = async (userId: string, role: string) => {
+  const user = await getUserById(userId);
   if (!user || user.role !== role) {
     return false;
   }
@@ -14,7 +15,7 @@ const validateUser = async (userId: string, role: string): Promise<boolean> => {
 };
 
 // Obtener todos los cursos
-export async function GET(): Promise<NextResponse> {
+export async function GET() {
   try {
     const courses = await getAllCourses();
     return NextResponse.json(courses);
@@ -25,14 +26,39 @@ export async function GET(): Promise<NextResponse> {
 }
 
 // Crear un nuevo curso
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest) {
   try {
-    type CourseRequestBody = { title: string; description: string; coverImageKey: string; category: string; instructor: string; rating: number; userId: string };
-    const body: CourseRequestBody = await request.json() as CourseRequestBody;
-    const { title, description, coverImageKey, category, instructor, rating, userId } = body;
+    const { userId } = await auth();
+    const user = await auth();
+    if (!userId || !user) {
+      return respondWithError("No autorizado", 403);
+    }
 
-    const isValidUser = await validateUser(userId, "profesor");
-    if (!isValidUser) {
+    type CourseRequestBody = {
+      title: string;
+      description: string;
+      coverImageKey: string;
+      category: string;
+      instructor: string;
+      rating: number;
+    };
+
+    const body: CourseRequestBody = await request.json() as CourseRequestBody;
+    const { title, description, coverImageKey, category, instructor, rating } = body;
+
+    // Check if the user exists, if not, create the user
+    let existingUser = await getUserById(userId);
+    if (!existingUser) {
+      await createUser({
+        id: userId,
+        role: "profesor",
+        name: user.fullName,
+        email: user.primaryEmailAddress?.emailAddress ?? "",
+      });
+      existingUser = await getUserById(userId);
+    }
+
+    if (!existingUser || existingUser.role !== "profesor") {
       return respondWithError("No autorizado", 403);
     }
 
@@ -54,19 +80,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 // Actualizar un curso
-export async function PUT(request: NextRequest): Promise<NextResponse> {
+export async function PUT(request: NextRequest) {
   try {
-    type UpdateCourseRequestBody = { id: number; title: string; description: string; coverImageKey: string; category: string; instructor: string; rating: number; userId: string };
-    const body: UpdateCourseRequestBody = await request.json() as UpdateCourseRequestBody;
-    const { id: idString, title, description, coverImageKey, category, instructor, rating, userId } = body;
-    const id = Number(idString);
+    const { userId } = await auth();
+    if (!userId) {
+      return respondWithError("No autorizado", 403);
+    }
+
+    const body = await request.json() as { id: number, title: string, description: string, coverImageKey: string, category: string, instructor: string, rating: number };
+    const { id, title, description, coverImageKey, category, instructor, rating } = body;
 
     const isValidUser = await validateUser(userId, "profesor");
     if (!isValidUser) {
       return respondWithError("No autorizado", 403);
     }
 
-    await updateCourse(id, { title, description, coverImageKey, category, instructor, rating });
+    await updateCourse(id, {
+      title,
+      description,
+      coverImageKey,
+      category,
+      instructor,
+      rating,
+    });
 
     return NextResponse.json({ message: "Curso actualizado exitosamente" });
   } catch (error) {
@@ -76,10 +112,14 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 }
 
 // Eliminar un curso
-export async function DELETE(request: NextRequest): Promise<NextResponse> {
+export async function DELETE(request: NextRequest) {
   try {
-    type DeleteCourseRequestBody = { id: number; userId: string };
-    const { id, userId }: DeleteCourseRequestBody = await request.json() as DeleteCourseRequestBody;
+    const { userId } = await auth();
+    if (!userId) {
+      return respondWithError("No autorizado", 403);
+    }
+
+    const { id }: { id: number } = await request.json() as { id: number };
 
     const isValidUser = await validateUser(userId, "profesor");
     if (!isValidUser) {

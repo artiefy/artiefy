@@ -10,10 +10,8 @@ interface CourseModel {
   coverImageKey: string;
 }
 
-
-
 import { UserButton, useUser } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
 
@@ -23,7 +21,8 @@ export default function Page() {
   const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
+    if (!user) return;
     const response = await fetch("/api/courses");
     if (response.ok) {
       const data = (await response.json()) as CourseModel[];
@@ -34,11 +33,11 @@ export default function Page() {
     } else {
       console.error("Failed to fetch courses:", response.statusText);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchCourses().catch((error) => console.error("Error fetching courses:", error));
-  }, [user]);
+  }, [user, fetchCourses]);
 
   const handleCreateOrEditCourse = async (
     title: string,

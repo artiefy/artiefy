@@ -18,7 +18,7 @@ import {
   PaginationPrevious,
 } from "~/components/ui/pagination";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 9;
 
 interface Course {
   id: string;
