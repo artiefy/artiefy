@@ -1,10 +1,19 @@
 "use client";
 
+interface CourseModel {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  instructor: string;
+  rating: number;
+  coverImageKey?: string;
+}
+
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { type CourseModel } from "~/types";
 
 export default function Page() {
   const { user } = useUser();
@@ -15,7 +24,7 @@ export default function Page() {
   const fetchCourses = async () => {
     const response = await fetch("/api/courses");
     if (response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as CourseModel[];
       setCourses(data);
     } else {
       console.error("Failed to fetch courses:", response.statusText);
@@ -45,7 +54,8 @@ export default function Page() {
         body: JSON.stringify({ contentType: file.type }),
       });
 
-      const { url, fields } = await uploadResponse.json();
+      type UploadResponse = { url: string; fields: Record<string, string> };
+      const { url, fields } = (await uploadResponse.json()) as UploadResponse;
 
       const formData = new FormData();
       Object.entries(fields).forEach(([key, value]) =>
@@ -54,7 +64,7 @@ export default function Page() {
       formData.append("file", file);
 
       await fetch(url, { method: "POST", body: formData });
-      coverImageKey = fields.key;
+      coverImageKey = fields.key ?? "";
       setUploading(false);
     }
 
