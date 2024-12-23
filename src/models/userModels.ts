@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/server/db/index";
 import { users, courses } from "~/server/db/schema";
+import { currentUser } from "@clerk/nextjs/server"; // Importa Clerk para acceder al usuario actual
 
 export interface User {
   id: string;
@@ -20,10 +21,22 @@ export async function getAllUsers(): Promise<User[]> {
   return db.select().from(users);
 }
 
-export async function createUser(
-  user: Omit<User, "createdAt" | "updatedAt">,
-): Promise<void> {
-  await db.insert(users).values(user);
+// Crear un nuevo usuario, llenando automáticamente nombre y correo desde Clerk
+export async function createUser(id: string, role: string): Promise<void> {
+  const clerkUser = await currentUser();
+  if (!clerkUser) {
+    throw new Error("No se pudo obtener información del usuario desde Clerk.");
+  }
+
+  const name = clerkUser.fullName ?? clerkUser.firstName ?? "Usuario sin nombre";
+  const email = clerkUser.emailAddresses[0]?.emailAddress ?? "";
+
+  await db.insert(users).values({
+    id,
+    role,
+    name,
+    email,
+  });
 }
 
 export async function deleteUserById(id: string): Promise<void> {
