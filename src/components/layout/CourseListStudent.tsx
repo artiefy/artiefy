@@ -13,7 +13,20 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { type CourseListStudentProps } from "~/types";
+
+interface Course {
+  id: string;
+  coverImageKey: string;
+  title: string;
+  category: string;
+  description: string;
+  instructor: string;
+  rating?: number;
+}
+
+interface CourseListStudentProps {
+  courses: Course[];
+}
 
 export default function CourseListStudent({ courses }: CourseListStudentProps) {
   return (

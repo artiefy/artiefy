@@ -4,7 +4,22 @@ import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
-import type { CourseListTeacherProps } from "~/types";
+
+interface Course {
+  id: string;
+  coverImageKey: string;
+  title: string;
+  category: string;
+  description: string;
+  instructor: string;
+  rating?: number;
+}
+
+interface CourseListTeacherProps {
+  courses: Course[];
+  onEdit: (course: Course) => void;
+  onDelete: (id: string) => void;
+}
 
 export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseListTeacherProps) {
   return (

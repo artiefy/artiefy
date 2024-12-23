@@ -1,7 +1,18 @@
 import { db } from "~/server/db/index";
 import { courses, lessons } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
-import { type Course } from "~/types";
+
+export interface Course {
+  id: number;
+  title: string;
+  description: string | null;
+  creatorId: string;
+  coverImageKey: string | null;
+  category: string;
+  instructor: string;
+  rating: number | null;
+  userId: string; // Add this line
+}
 
 // Crear un nuevo curso
 export const createCourse = async ({
@@ -35,13 +46,16 @@ export const createCourse = async ({
 // Obtener todos los cursos
 export const getAllCourses = async (): Promise<Course[]> => {
   const result = await db.select().from(courses);
-  return result;
+  return result.map(course => ({
+    ...course,
+    userId: course.creatorId // Assuming userId is the same as creatorId
+  }));
 };
 
 // Obtener un curso por ID
 export const getCourseById = async (courseId: number): Promise<Course | null> => {
   const result = await db.select().from(courses).where(eq(courses.id, courseId));
-  return result.length > 0 ? result[0] ?? null : null;
+  return result.length > 0 && result[0] ? { ...result[0], userId: result[0].creatorId } : null;
 };
 
 // Actualizar un curso
@@ -77,3 +91,4 @@ export const deleteCourse = async (courseId: number): Promise<void> => {
   // Luego eliminar el curso
   await db.delete(courses).where(eq(courses.id, courseId));
 };
+

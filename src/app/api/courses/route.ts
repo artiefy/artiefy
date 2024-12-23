@@ -1,13 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createCourse, deleteCourse, getAllCourses, updateCourse } from "~/models/courseModels";
 import { getUserById } from "~/models/userModels";
-import { CourseModel, CourseFormProps } from "~/types";
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
-const validateUser = async (userId: string, role: string) => {
-  const user = await getUserById(userId);
+const validateUser = async (userId: string, role: string): Promise<boolean> => {
+  const user = await getUserById(userId) as { role: string } | null;
   if (!user || user.role !== role) {
     return false;
   }
@@ -15,9 +14,9 @@ const validateUser = async (userId: string, role: string) => {
 };
 
 // Obtener todos los cursos
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   try {
-    const courses: CourseModel[] = await getAllCourses();
+    const courses = await getAllCourses();
     return NextResponse.json(courses);
   } catch (error) {
     console.error("Error al obtener los cursos:", error);
@@ -26,9 +25,10 @@ export async function GET() {
 }
 
 // Crear un nuevo curso
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = await request.json() as CourseFormProps;
+    type CourseRequestBody = { title: string; description: string; coverImageKey: string; category: string; instructor: string; rating: number; userId: string };
+    const body: CourseRequestBody = await request.json() as CourseRequestBody;
     const { title, description, coverImageKey, category, instructor, rating, userId } = body;
 
     const isValidUser = await validateUser(userId, "profesor");
@@ -54,10 +54,12 @@ export async function POST(request: NextRequest) {
 }
 
 // Actualizar un curso
-export async function PUT(request: NextRequest) {
+export async function PUT(request: NextRequest): Promise<NextResponse> {
   try {
-    const body: CourseFormProps = await request.json();
-    const { id, title, description, coverImageKey, category, instructor, rating, userId } = body;
+    type UpdateCourseRequestBody = { id: number; title: string; description: string; coverImageKey: string; category: string; instructor: string; rating: number; userId: string };
+    const body: UpdateCourseRequestBody = await request.json() as UpdateCourseRequestBody;
+    const { id: idString, title, description, coverImageKey, category, instructor, rating, userId } = body;
+    const id = Number(idString);
 
     const isValidUser = await validateUser(userId, "profesor");
     if (!isValidUser) {
@@ -74,9 +76,10 @@ export async function PUT(request: NextRequest) {
 }
 
 // Eliminar un curso
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
   try {
-    const { id, userId } = await request.json();
+    type DeleteCourseRequestBody = { id: number; userId: string };
+    const { id, userId }: DeleteCourseRequestBody = await request.json() as DeleteCourseRequestBody;
 
     const isValidUser = await validateUser(userId, "profesor");
     if (!isValidUser) {

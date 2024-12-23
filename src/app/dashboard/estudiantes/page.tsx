@@ -17,9 +17,18 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
-import { type Course } from "~/types";
 
 const ITEMS_PER_PAGE = 6;
+
+interface Course {
+  id: string;
+  title: string;
+  coverImageKey: string;
+  category: string;
+  description: string;
+  instructor: string;
+  rating?: number;
+}
 
 export default function StudentDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
