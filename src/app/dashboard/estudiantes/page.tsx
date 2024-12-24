@@ -9,6 +9,7 @@ import Footer from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
+import { SkeletonCard } from "~/components/layout/SkeletonCard";
 import {
   Carousel,
   CarouselContent,
@@ -25,7 +26,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
-import Loading from "./loading"; // Import Loading component
 
 const ITEMS_PER_PAGE = 9;
 
@@ -37,6 +37,16 @@ interface Course {
   description: string;
   instructor: string;
   rating?: number;
+}
+
+function LoadingCourses() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 9 }).map((_, index) => (
+        <SkeletonCard key={index} />
+      ))}
+    </div>
+  );
 }
 
 export default function StudentDashboard() {
@@ -212,7 +222,7 @@ export default function StudentDashboard() {
           </div>
 
           <h2 className="text-3xl font-bold">Cursos Disponibles</h2>
-          <Suspense fallback={<Loading />}>
+          <Suspense fallback={<LoadingCourses />}>
             <CourseListStudent courses={paginatedCourses} />
           </Suspense>
 

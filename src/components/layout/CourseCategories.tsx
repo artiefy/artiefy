@@ -2,12 +2,12 @@ import React from "react";
 import { FiCode, FiPenTool, FiBarChart, FiCamera, FiMusic, FiDatabase } from "react-icons/fi";
 
 const categories = [
-  { icon: <FiCode />, name: "Programacion", courses: "150+ courses" },
-  { icon: <FiPenTool />, name: "Diseño", courses: "200+ courses" },
-  { icon: <FiBarChart />, name: "Marketing", courses: "120+ courses" },
-  { icon: <FiCamera />, name: "Fotografia", courses: "80+ courses" },
-  { icon: <FiMusic />, name: "Musica", courses: "90+ courses" },
-  { icon: <FiDatabase />, name: "Ciencia De Datos", courses: "100+ courses" }
+  { icon: <FiCode />, name: "Programacion", courses: "150+ cursos" },
+  { icon: <FiPenTool />, name: "Diseño", courses: "200+ cursos" },
+  { icon: <FiBarChart />, name: "Marketing", courses: "120+ cursos" },
+  { icon: <FiCamera />, name: "Fotografia", courses: "80+ cursos" },
+  { icon: <FiMusic />, name: "Musica", courses: "90+ cursos" },
+  { icon: <FiDatabase />, name: "Ciencia De Datos", courses: "100+ cursos" }
 ];
 
 const CourseCategories = () => {
