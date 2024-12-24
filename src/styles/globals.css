@@ -97,6 +97,18 @@
   color: #ff6347; /* Cambia este color al que prefieras */
 }
 
+.custom-padding {
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+@media (min-width: 768px) {
+  .custom-padding {
+    padding-left: 36px;
+    padding-right: 36px;
+  }
+}
+
 
 
 
