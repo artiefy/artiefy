@@ -1,13 +1,13 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import { StarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import CourseCategories from "~/components/layout/CourseCategories";
 import CourseListStudent from "~/components/layout/CourseListStudent";
 import Footer from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
-import { AspectRatio } from "~/components/ui/aspect-ratio"; // Import AspectRatio
+import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
 import {
   Carousel,
@@ -25,6 +25,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
+import Loading from "./loading"; // Import Loading component
 
 const ITEMS_PER_PAGE = 9;
 
@@ -211,17 +212,19 @@ export default function StudentDashboard() {
           </div>
 
           <h2 className="text-3xl font-bold">Cursos Disponibles</h2>
-          <CourseListStudent courses={paginatedCourses} />
+          <Suspense fallback={<Loading />}>
+            <CourseListStudent courses={paginatedCourses} />
+          </Suspense>
 
           <Pagination className="pb-8">
-            <PaginationContent>
+            <PaginationContent className="cursor-pointer">
               {currentPage > 1 && (
                 <PaginationPrevious
                   onClick={() => setCurrentPage(currentPage - 1)}
                 />
               )}
               {Array.from({ length: totalPages }, (_, index) => (
-                <PaginationItem key={index} className="cursor-pointer">
+                <PaginationItem key={index} >
                   <PaginationLink
                     onClick={() => setCurrentPage(index + 1)}
                     isActive={currentPage === index + 1}

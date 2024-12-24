@@ -9,6 +9,9 @@ import {
 } from "~/models/courseModels";
 import { getUserById, createUser } from "~/models/userModels";
 
+export const dynamic = 'force-dynamic'; // Forzar el estado dinámico
+
+// Función de utilidad para responder con un error
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
