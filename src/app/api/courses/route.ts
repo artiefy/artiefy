@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
       return respondWithError("No se pudo obtener información del usuario", 500);
     }
 
-    const userName = clerkUser.fullName ?? clerkUser.firstName ?? "Usuario sin nombre";
-    const userEmail = clerkUser.emailAddresses[0]?.emailAddress ?? "";
+    const userName: string = clerkUser.fullName ?? clerkUser.firstName ?? "Usuario sin nombre";
+    const userEmail: string = clerkUser.emailAddresses[0]?.emailAddress ?? "";
 
     let existingUser = await getUserById(userId);
     if (!existingUser) {
@@ -57,7 +57,14 @@ export async function POST(request: NextRequest) {
       return respondWithError("No autorizado para crear cursos", 403);
     }
 
-    const body = await request.json();
+    const body = await request.json() as {
+      title: string;
+      description: string;
+      coverImageKey: string;
+      category: string;
+      instructor: string;
+      rating: number;
+    };
     const { title, description, coverImageKey, category, instructor, rating } = body;
 
     await createCourse({
@@ -88,7 +95,15 @@ export async function PUT(request: NextRequest) {
       return respondWithError("No autorizado", 403);
     }
 
-    const body = await request.json();
+    const body = await request.json() as {
+      id: number;
+      title: string;
+      description: string;
+      coverImageKey: string;
+      category: string;
+      instructor: string;
+      rating: number;
+    };
     const { id, title, description, coverImageKey, category, instructor, rating } = body;
 
     const course = await getCourseById(id);
@@ -124,7 +139,7 @@ export async function DELETE(request: NextRequest) {
       return respondWithError("No autorizado", 403);
     }
 
-    const body = await request.json();
+    const body = await request.json() as { id: number };
     const { id } = body;
 
     const course = await getCourseById(id);
