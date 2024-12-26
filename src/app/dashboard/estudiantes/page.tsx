@@ -65,6 +65,7 @@ export default function StudentDashboard() {
       const data = (await response.json()) as Course[];
       setCourses(data);
       setFilteredCourses(data);
+      setCarouselIndex(0); 
     } catch (error) {
       console.error("Error al obtener los cursos:", error);
     }

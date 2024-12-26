@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent, useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
 import { Progress } from "~/components/ui/progress";
 
 interface CourseFormProps {
@@ -27,12 +28,12 @@ interface CourseFormProps {
   setCoverImageKey: (coverImageKey: string) => void;
 }
 
-
 export default function CourseForm({ onSubmitAction, uploading, editingCourseId }: CourseFormProps) {
+  const { user } = useUser();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [instructor, setInstructor] = useState("");
+  const [instructor, setInstructor] = useState(user?.fullName ?? "");
   const [rating, setRating] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -53,6 +54,7 @@ export default function CourseForm({ onSubmitAction, uploading, editingCourseId 
   const handleSubmit = async () => {
     setIsEditing(true);
     await onSubmitAction(title, description, file, category, instructor, rating);
+    alert("El curso se creó con éxito");
   };
 
   useEffect(() => {
@@ -76,7 +78,7 @@ export default function CourseForm({ onSubmitAction, uploading, editingCourseId 
     if (progress === 100) {
       const timeout = setTimeout(() => {
         setProgress(0);
-      }, 500); // Mantén la barra visible durante 500ms después de alcanzar el 100%
+      }, 500); 
 
       return () => clearTimeout(timeout);
     }
@@ -88,9 +90,17 @@ export default function CourseForm({ onSubmitAction, uploading, editingCourseId 
     }
   }, [uploading, isEditing]);
 
+  useEffect(() => {
+    if (user) {
+      if (user.fullName) {
+        setInstructor(user.fullName);
+      }
+    }
+  }, [user]);
+
   return (
     <div className="bg-background p-6 rounded-lg shadow-md text-black">
-      <h2 className="text-2xl font-bold mb-4">{editingCourseId ? "Editar Curso" : "Crear Curso"}</h2>
+      <h2 className="text-2xl font-bold mb-4 text-primary">{editingCourseId ? "Editar Curso" : "Crear Curso"}</h2>
       <input
         type="text"
         placeholder="Título"
