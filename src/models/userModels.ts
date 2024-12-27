@@ -20,7 +20,6 @@ export async function getAllUsers(): Promise<User[]> {
   return db.select().from(users);
 }
 
-// Crear un nuevo usuario, llenando automáticamente nombre y correo desde Clerk
 export async function createUser(id: string, role: string, name: string, email: string): Promise<void> {
   await db.insert(users).values({
     id,

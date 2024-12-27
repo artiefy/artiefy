@@ -11,7 +11,7 @@ export interface Course {
   category: string;
   instructor: string;
   rating: number | null;
-  userId: string; // Add this line
+  userId: string; 
 }
 
 // Crear un nuevo curso
@@ -48,7 +48,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
   const result = await db.select().from(courses);
   return result.map(course => ({
     ...course,
-    userId: course.creatorId // Assuming userId is the same as creatorId
+    userId: course.creatorId 
   }));
 };
 

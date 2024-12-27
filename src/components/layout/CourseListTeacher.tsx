@@ -53,7 +53,7 @@ export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseL
             </p>
           </CardContent>
           <CardFooter>
-            <Button onClick={() => onEdit(course)} className="border-primary bg-orange-500 text-primary hover:bg-orange-500/70 mr-4">
+            <Button onClick={() => onEdit(course)} className="border-primary bg-orange-500 text-white hover:bg-orange-500/90 mr-4">
               Editar
             </Button>
             <Button onClick={() => onDelete(course.id)} variant="destructive">

@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 // src/app/layout.tsx
-import { esMX } from "@clerk/localizations"; // Importa la localización en español
+import { esMX } from "@clerk/localizations"; 
 import { ClerkProvider } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
-
+import { CSPostHogProvider } from "./_analytics/provider";
 import "../styles/globals.css";
 
 const montserrat = Montserrat({
@@ -36,10 +35,11 @@ export default function RootLayout({
         lang="es"
         className={`${montserrat.variable} ${josefinSans.variable}`}
       >
-        <body>
-          {/* Coloca el componente aquí para ejecutar el hook */}
-          <main>{children}</main>
-        </body>
+        <CSPostHogProvider>
+          <body>
+            <main>{children}</main>
+          </body>
+        </CSPostHogProvider>
       </html>
     </ClerkProvider>
   );
