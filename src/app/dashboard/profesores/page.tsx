@@ -14,6 +14,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { useEffect, useState, useCallback } from "react";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
+import { toast } from "~/hooks/use-toast";
 
 export default function Page() {
   const { user } = useUser();
@@ -72,50 +73,36 @@ export default function Page() {
       setUploading(false);
     }
 
-    if (editingCourse) {
-      await fetch("/api/courses", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: editingCourse.id,
-          title,
-          description,
-          coverImageKey,
-          category,
-          instructor,
-          rating,
-          userId: user.id,
-        }),
+    const response = await fetch("/api/courses", {
+      method: editingCourse ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editingCourse?.id,
+        title,
+        description,
+        coverImageKey,
+        category,
+        instructor,
+        rating,
+        userId: user.id,
+      }),
+    });
+
+    if (response.ok) {
+      toast({
+        title: editingCourse ? "Curso actualizado" : "Curso creado",
+        description: editingCourse ? "El curso se actualizó con éxito" : "El curso se creó con éxito",
       });
-      setCourses((prevCourses) =>
-        prevCourses.map((course) =>
-          course.id === editingCourse.id
-            ? { ...course, title, description, category, instructor, rating, coverImageKey }
-            : course
-        )
-      );
+      fetchCourses().catch((error) => console.error("Error fetching courses:", error));
       setEditingCourse(null);
     } else {
-      await fetch("/api/courses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          category,
-          instructor,
-          rating,
-          userId: user.id,
-          coverImageKey,
-        }),
+      const errorData = (await response.json()) as { error?: string };
+      toast({
+        title: "Error",
+        description: errorData.error ?? "Ocurrió un error al procesar la solicitud",
+        variant: "destructive",
       });
-      setCourses((prevCourses) => [
-        ...prevCourses,
-        { id: Date.now().toString(), title, description, category, instructor, rating, coverImageKey },
-      ]);
     }
-
-    fetchCourses().catch((error) => console.error("Error fetching courses:", error));
   };
 
   const handleEditCourse = (course: CourseModel) => {

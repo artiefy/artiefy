@@ -1,9 +1,11 @@
 // src/app/layout.tsx
-import { esMX } from "@clerk/localizations"; 
+import { esMX } from "@clerk/localizations";
 import { ClerkProvider } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
+import { Toaster } from "~/components/ui/toaster"
 import { CSPostHogProvider } from "./_analytics/provider";
+
 import "../styles/globals.css";
 
 const montserrat = Montserrat({
@@ -38,7 +40,8 @@ export default function RootLayout({
         <CSPostHogProvider>
           <body>
             <main>{children}</main>
-          </body>
+            <Toaster />
+            </body>
         </CSPostHogProvider>
       </html>
     </ClerkProvider>

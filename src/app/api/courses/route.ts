@@ -8,6 +8,7 @@ import {
   deleteCourse,
 } from "~/models/courseModels";
 import { getUserById, createUser } from "~/models/userModels";
+import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 export const dynamic = 'force-dynamic'; // Forzar el estado dinámico
 
@@ -40,6 +41,14 @@ export async function POST(request: NextRequest) {
     const { userId } = await auth();
     if (!userId) {
       return respondWithError("No autorizado", 403);
+    }
+
+    // Implement rate limiting
+    const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const { success } = await ratelimit.limit(ip);
+
+    if (!success) {
+      return respondWithError("Demasiadas solicitudes", 429);
     }
 
     const clerkUser = await currentUser();

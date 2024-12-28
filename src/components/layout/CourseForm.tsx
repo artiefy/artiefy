@@ -54,7 +54,6 @@ export default function CourseForm({ onSubmitAction, uploading, editingCourseId 
   const handleSubmit = async () => {
     setIsEditing(true);
     await onSubmitAction(title, description, file, category, instructor, rating);
-    alert("El curso se creó con éxito");
   };
 
   useEffect(() => {
@@ -174,6 +173,7 @@ export default function CourseForm({ onSubmitAction, uploading, editingCourseId 
       <button
         onClick={handleSubmit}
         className="w-full bg-primary text-background hover:bg-primary-dark p-2 rounded"
+        disabled={uploading}
       >
         {uploading ? "Subiendo..." : editingCourseId ? (isEditing ? "Editando..." : "Editar") : "Guardar"}
       </button>
