@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { AspectRatio } from "~/components/ui/aspect-ratio";
-import { Badge } from "~/components/ui/badge";
+import { FaStar, FaChevronDown, FaChevronUp, FaClock, FaCalendar, FaUserGraduate } from "react-icons/fa";
 import { Button } from "~/components/ui/button";
 import { Header } from "~/components/layout/Header";
 import Footer from "~/components/layout/Footer";
@@ -17,11 +16,21 @@ interface Course {
   description: string;
   instructor: string;
   rating?: number;
+  createdAt: string;
+  updatedAt: string;
+  totalStudents: number;
+  lessons: {
+    id: number;
+    title: string;
+    duration: string;
+    description: string;
+  }[];
 }
 
 export default function CourseDetails() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
+  const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
   const { id } = useParams(); // Obtener el ID de los parámetros de la URL
 
   useEffect(() => {
@@ -50,6 +59,10 @@ export default function CourseDetails() {
     void fetchCourse();
   }, [id]); // Ejecutar cuando el ID cambie
 
+  const toggleLesson = (lessonId: number) => {
+    setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
+  };
+
   if (loading) {
     return <div className="text-center">Cargando curso...</div>; // Mensaje mientras se carga el curso
   }
@@ -59,40 +72,95 @@ export default function CourseDetails() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-40 md:px-48">
-        <div className="my-12">
-          <AspectRatio ratio={16 / 9}>
+      <main className="max-w-7xl mx-auto pb-4 md:pb-6 lg:pb-8">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          {/* Course Header */}
+          <div className="relative h-72 overflow-hidden">
             <Image
               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
               alt={course.title}
               fill
               className="object-cover"
             />
-          </AspectRatio>
-          <div className="mt-8 flex flex-col space-y-4">
-            <h1 className="text-4xl font-bold text-primary">{course.title}</h1>
-            <div className="flex items-center space-x-4">
-              <Badge
-                variant="outline"
-                className="border-primary bg-background text-primary"
-              >
-                {course.category}
-              </Badge>
-              <span className="text-sm font-bold text-gray-600">
-                Categoría
-              </span>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+              <h1 className="text-white text-3xl font-bold">{course.title}</h1>
             </div>
-            <p className="text-lg text-gray-700">{course.description}</p>
-            <p className="text-lg font-bold text-gray-800">
-              Instructor: <span className="italic underline">{course.instructor}</span>
-            </p>
-            <div className="flex items-center">
-              <span className="text-lg font-bold text-yellow-500">
-                {(course.rating ?? 0).toFixed(1)}
-              </span>
-              <span className="ml-2 text-gray-600">/ 5.0</span>
+          </div>
+
+          {/* Course Info */}
+          <div className="p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div className="flex items-center space-x-4">
+                <div>
+                  <h3 className="text-lg font-semibold">{course.instructor}</h3>
+                  <p className="text-gray-600">Instructor</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center">
+                  <FaUserGraduate className="text-blue-600 mr-2" />
+                  <span>{course.totalStudents} estudiantes</span>
+                </div>
+                <div className="flex items-center">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <FaStar
+                      key={index}
+                      className={`w-5 h-5 ${index < Math.floor(course.rating ?? 0) ? "text-yellow-400" : "text-gray-300"}`}
+                    />
+                  ))}
+                  <span className="ml-2 text-lg font-semibold">{course.rating?.toFixed(1)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="prose max-w-none mb-8">
+              <p className="text-gray-700 leading-relaxed">{course.description}</p>
+            </div>
+
+            <div className="flex flex-wrap gap-4 mb-8 text-sm text-gray-600">
+              <div className="flex items-center">
+                <FaCalendar className="mr-2" />
+                <span>Creado: {course.createdAt}</span>
+              </div>
+              <div className="flex items-center">
+                <FaClock className="mr-2" />
+                <span>Última actualización: {course.updatedAt}</span>
+              </div>
+            </div>
+
+            {/* Lessons */}
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-6">Contenido del curso</h2>
+              <div className="space-y-4">
+                {course.lessons?.map((lesson) => (
+                  <div
+                    key={lesson.id}
+                    className="border rounded-lg overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <button
+                      className="w-full px-6 py-4 flex items-center justify-between"
+                      onClick={() => toggleLesson(lesson.id)}
+                    >
+                      <div className="flex items-center">
+                        <span className="font-medium">{lesson.title}</span>
+                        <span className="ml-4 text-sm text-gray-500">{lesson.duration}</span>
+                      </div>
+                      {expandedLesson === lesson.id ? (
+                        <FaChevronUp className="text-gray-400" />
+                      ) : (
+                        <FaChevronDown className="text-gray-400" />
+                      )}
+                    </button>
+                    {expandedLesson === lesson.id && (
+                      <div className="px-6 py-4 bg-white border-t">
+                        <p className="text-gray-700">{lesson.description}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
             <Button className="mt-4 w-full bg-primary text-white hover:bg-primary-dark">
               Inscribirse en el curso
