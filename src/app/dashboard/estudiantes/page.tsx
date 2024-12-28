@@ -26,6 +26,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "~/components/ui/pagination";
+import { Skeleton } from "~/components/ui/skeleton";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -55,6 +56,7 @@ export default function StudentDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
 
@@ -65,9 +67,11 @@ export default function StudentDashboard() {
       const data = (await response.json()) as Course[];
       setCourses(data);
       setFilteredCourses(data);
-      setCarouselIndex(0); 
+      setCarouselIndex(0);
     } catch (error) {
       console.error("Error al obtener los cursos:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,46 +113,50 @@ export default function StudentDashboard() {
         <div className="flex flex-col space-y-12">
           {/* Carousel */}
           <div className="relative h-[500px] overflow-hidden">
-            {courses.slice(0, 5).map((course, index) => (
-              <div
-                key={course.id}
-                className={`absolute h-full w-full transition-opacity duration-500 ${
-                  index === carouselIndex ? "opacity-100" : "opacity-0"
-                }`}
-              >
-                <AspectRatio ratio={16 / 9}>
-                  <Image
-                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
-                    alt={course.title}
-                    fill
-                    className="object-cover"
-                  />
-                </AspectRatio>
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 text-primary">
-                  <h2 className="mb-4 text-4xl font-semibold">
-                    {course.title}
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="mb-2 border-primary text-primary"
-                  >
-                    {course.category}
-                  </Badge>
-                  <p className="hidden text-xl md:block">
-                    {course.description}
-                  </p>
-                  <p className="hidden text-xl md:block">
-                    Instructor: {course.instructor}
-                  </p>
-                  <div className="flex items-center">
-                    <StarIcon className="h-5 w-5 text-yellow-500" />
-                    <span className="ml-1 text-sm text-yellow-500">
-                      {(course.rating ?? 0).toFixed(1)}
-                    </span>
+            {loading ? (
+              <Skeleton className="h-full w-full rounded-lg" />
+            ) : (
+              courses.slice(0, 5).map((course, index) => (
+                <div
+                  key={course.id}
+                  className={`absolute h-full w-full transition-opacity duration-500 ${
+                    index === carouselIndex ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  <AspectRatio ratio={16 / 9}>
+                    <Image
+                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+                      alt={course.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </AspectRatio>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 text-primary">
+                    <h2 className="mb-4 text-4xl font-semibold">
+                      {course.title}
+                    </h2>
+                    <Badge
+                      variant="outline"
+                      className="mb-2 border-primary text-primary"
+                    >
+                      {course.category}
+                    </Badge>
+                    <p className="hidden text-xl md:block">
+                      {course.description}
+                    </p>
+                    <p className="hidden text-xl md:block">
+                      Instructor: {course.instructor}
+                    </p>
+                    <div className="flex items-center">
+                      <StarIcon className="h-5 w-5 text-yellow-500" />
+                      <span className="ml-1 text-sm text-yellow-500">
+                        {(course.rating ?? 0).toFixed(1)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
             <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
               {courses.slice(0, 5).map((_, index) => (
                 <button
@@ -168,44 +176,53 @@ export default function StudentDashboard() {
           <div className="relative">
             <h2 className="text-xl text-primary md:text-2xl">Top Cursos</h2>
             <Carousel className="w-full p-4">
-              <CarouselContent className="-ml-4">
-                {courses.map((course) => (
-                  <CarouselItem
-                    key={course.id}
-                    className="pl-4 md:basis-1/2 lg:basis-1/3"
-                  >
-                    <div className="relative h-48 w-full md:h-64">
-                      <AspectRatio ratio={16 / 9}>
-                        <Image
-                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
-                          alt={course.title}
-                          fill
-                          className="object-cover"
-                          priority
-                          quality={100}
-                        />
-                      </AspectRatio>
-                      <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
-                        <h3 className="text-lg text-primary">{course.title}</h3>
-                        <Badge
-                          variant="outline"
-                          className="mb-2 border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
-                        >
-                          {course.category}
-                        </Badge>
-                        <p className="text-primary italic">
-                          Instructor: <span className=" underline">{course.instructor}</span>
-                        </p>
-                        <div className="flex items-center">
-                          <StarIcon className="h-5 w-5 text-yellow-500" />
-                          <span className="ml-1 text-sm font-bold text-yellow-500">
-                            {(course.rating ?? 0).toFixed(1)}
-                          </span>
+              <CarouselContent>
+                {loading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <Skeleton
+                      key={index}
+                      className="h-48 w-full md:h-64 rounded-lg ml-2 mx-4"
+                    />
+                  ))
+                ) : (
+                  courses.map((course) => (
+                    <CarouselItem
+                      key={course.id}
+                      className="pl-4 md:basis-1/2 lg:basis-1/3"
+                    >
+                      <div className="relative h-48 w-full md:h-64">
+                        <AspectRatio ratio={16 / 9}>
+                          <Image
+                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+                            alt={course.title}
+                            fill
+                            className="object-cover"
+                            priority
+                            quality={100}
+                          />
+                        </AspectRatio>
+                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
+                          <h3 className="text-lg text-primary">{course.title}</h3>
+                          <Badge
+                            variant="outline"
+                            className="mb-2 border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
+                          >
+                            {course.category}
+                          </Badge>
+                          <p className="text-primary italic">
+                            Instructor: <span className=" underline">{course.instructor}</span>
+                          </p>
+                          <div className="flex items-center">
+                            <StarIcon className="h-5 w-5 text-yellow-500" />
+                            <span className="ml-1 text-sm font-bold text-yellow-500">
+                              {(course.rating ?? 0).toFixed(1)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CarouselItem>
-                ))}
+                    </CarouselItem>
+                  ))
+                )}
               </CarouselContent>
               <CarouselPrevious className="mr-7 h-12 w-12 bg-black bg-opacity-50 text-white" />
               <CarouselNext className="ml-4 h-12 w-12 bg-black bg-opacity-50 text-white" />
@@ -223,6 +240,7 @@ export default function StudentDashboard() {
           </div>
 
           <h2 className="text-3xl font-bold">Cursos Disponibles</h2>
+          {loading && <LoadingCourses />}
           <Suspense fallback={<LoadingCourses />}>
             <CourseListStudent courses={paginatedCourses} />
           </Suspense>
@@ -234,7 +252,7 @@ export default function StudentDashboard() {
                   onClick={() => setCurrentPage(currentPage - 1)}
                 />
               )}
-              {Array.from({ length: totalPages }, (_, index) => (
+              {Array.from({ length: totalPages }).map((_, index) => (
                 <PaginationItem key={index} >
                   <PaginationLink
                     onClick={() => setCurrentPage(index + 1)}

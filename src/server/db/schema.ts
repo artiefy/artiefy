@@ -40,7 +40,8 @@ export const courses = pgTable("courses", {
 export const lessons = pgTable("lessons", {
   id: serial("id").primaryKey(), // ID autoincremental de la lección
   title: varchar("title", { length: 255 }).notNull(), // Título de la lección
-  content: text("content"), // Contenido de la lección
+  duration: real("duration").notNull(), // Duración de la lección en horas
+  description: text("description"), // Descripción de la lección
   order: integer("order").notNull(), // Orden de la lección en el curso
   courseId: integer("course_id")
     .references(() => courses.id)

@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // Incluir la ruta raíz ("/") como pública
-const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"]);
+const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)", "/planes(.*)"]);
 const isAdminRoute = createRouteMatcher(["/dashboard/admin(.*)"]);
 const isProfesorRoute = createRouteMatcher(["/dashboard/profesores(.*)"]);
 const isEstudianteRoute = createRouteMatcher(["/dashboard/estudiantes(.*)"]);

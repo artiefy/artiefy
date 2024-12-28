@@ -5,6 +5,7 @@ import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster"
 import { CSPostHogProvider } from "./_analytics/provider";
+import type { Metadata } from 'next';
 
 import "../styles/globals.css";
 
@@ -19,6 +20,11 @@ const josefinSans = Josefin_Sans({
   display: "swap",
   variable: "--font-josefin-sans",
 });
+
+export const metadata: Metadata = {
+  title: 'Artiefy',
+  description: 'App web educativa basado en cursos online',
+};
 
 export default function RootLayout({
   children,
