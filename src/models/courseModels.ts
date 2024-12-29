@@ -1,6 +1,6 @@
 import { db } from "~/server/db/index";
-import { courses, lessons } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { courses, lessons, enrollments } from "~/server/db/schema";
+import { eq, count } from "drizzle-orm";
 
 export interface Lesson {
   id: number;
@@ -24,6 +24,7 @@ export interface Course {
   rating: number | null;
   userId: string;
   lessons?: Lesson[];
+  totalStudents?: number;
 }
 
 // Crear un nuevo curso
@@ -64,6 +65,15 @@ export const getAllCourses = async (): Promise<Course[]> => {
   }));
 };
 
+// Obtener el número total de estudiantes inscritos en un curso
+export const getTotalStudents = async (courseId: number): Promise<number> => {
+  const result = await db
+    .select({ totalStudents: count() })
+    .from(enrollments)
+    .where(eq(enrollments.courseId, courseId));
+  return result[0]?.totalStudents ?? 0;
+};
+
 // Obtener un curso por ID
 export const getCourseById = async (courseId: number): Promise<Course | null> => {
   const courseResult = await db.select().from(courses).where(eq(courses.id, courseId));
@@ -80,6 +90,8 @@ export const getCourseById = async (courseId: number): Promise<Course | null> =>
     updatedAt: lesson.updatedAt.toISOString(),
   }));
 
+  // Obtener el número total de estudiantes inscritos
+  course.totalStudents = await getTotalStudents(courseId);
 
   return course;
 };

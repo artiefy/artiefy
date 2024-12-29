@@ -15,7 +15,7 @@ import {
 } from "~/components/ui/card";
 
 interface Course {
-  id: string;
+  id: number;  
   coverImageKey: string;
   title: string;
   category: string;
@@ -27,7 +27,6 @@ interface Course {
 interface CourseListStudentProps {
   courses: Course[];
 }
-
 
 export default function CourseListStudent({ courses }: CourseListStudentProps) {
   return (

@@ -10,7 +10,7 @@ import Footer from "~/components/layout/Footer";
 import { Skeleton } from "~/components/ui/skeleton";
 
 interface Course {
-  id: string;
+  id: number; 
   title: string;
   coverImageKey: string;
   category: string;
@@ -19,11 +19,11 @@ interface Course {
   rating?: number;
   createdAt: string;
   updatedAt: string;
-  totalStudents: number;
+  totalStudents: number;  // Asegúrate de que este campo esté presente
   lessons: {
     id: number;
     title: string;
-    duration: number; // Duración de la lección en horas
+    duration: number; 
     description: string;
   }[];
 }
@@ -32,10 +32,9 @@ export default function CourseDetails() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
-  const { id } = useParams(); // Obtener el ID de los parámetros de la URL
+  const { id } = useParams(); 
 
   useEffect(() => {
-    // Verificar si el ID está presente
     if (!id) {
       console.error("No se ha proporcionado un ID válido.");
       setLoading(false);
@@ -44,16 +43,16 @@ export default function CourseDetails() {
 
     const fetchCourse = async () => {
       try {
-        // Realizar la petición para obtener los detalles del curso
-        const response = await fetch(`/api/courses/${Array.isArray(id) ? id[0] : id}`);
-        console.log("Status de la respuesta:", response.status); // Agregar registro para depurar
-        if (!response.ok) throw new Error("Curso no encontrado"); // Manejo de errores si la respuesta no es exitosa
+        const courseId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : id;
+        const response = await fetch(`/api/courses/${Number(courseId)}`);  
+        console.log("Status de la respuesta:", response.status); 
+        if (!response.ok) throw new Error("Curso no encontrado"); 
         const data = (await response.json()) as Course;
-        setCourse(data); // Guardar los datos del curso
+        setCourse(data); 
       } catch (error) {
         console.error("Error al obtener los detalles del curso:", error);
       } finally {
-        setLoading(false); // Finalizar el estado de carga
+        setLoading(false); 
       }
     };
 

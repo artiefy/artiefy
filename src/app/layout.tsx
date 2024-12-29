@@ -3,9 +3,9 @@ import { esMX } from "@clerk/localizations";
 import { ClerkProvider } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
-import { Toaster } from "~/components/ui/toaster"
+import { Toaster } from "~/components/ui/toaster";
 import { CSPostHogProvider } from "./_analytics/provider";
-import type { Metadata } from 'next';
+import { globalMetadata } from '../lib/metadata';
 
 import "../styles/globals.css";
 
@@ -21,10 +21,7 @@ const josefinSans = Josefin_Sans({
   variable: "--font-josefin-sans",
 });
 
-export const metadata: Metadata = {
-  title: 'Artiefy',
-  description: 'App web educativa basado en cursos online',
-};
+export const metadata = globalMetadata;
 
 export default function RootLayout({
   children,

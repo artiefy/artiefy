@@ -31,7 +31,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 const ITEMS_PER_PAGE = 9;
 
 interface Course {
-  id: string;
+  id: number;
   title: string;
   coverImageKey: string;
   category: string;

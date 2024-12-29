@@ -7,7 +7,15 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
   const { id } = await context.params;
   
   try {
-    const course = await getCourseById(Number(id));
+    const courseId = Number(id);
+    if (isNaN(courseId)) {
+      return NextResponse.json(
+        { error: "ID de curso inválido" },
+        { status: 400 },
+      );
+    }
+    
+    const course = await getCourseById(courseId);
     if (!course) {
       return NextResponse.json(
         { error: "Curso no encontrado" },
