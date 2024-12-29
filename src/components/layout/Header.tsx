@@ -13,7 +13,7 @@ export function Header() {
 
   const navItems = [
     { href: "/", label: "Inicio" },
-    { href: "/dashboard/estudiantes", label: "Cursos" },
+    { href: "/estudiantes", label: "Cursos" },
     { href: "/proyectos", label: "Proyectos" },
     { href: "/comunidad", label: "Comunidad" },
   ];

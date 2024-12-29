@@ -73,7 +73,7 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
           </CardContent>
           <CardFooter className="flex items-center justify-between px-3">
             <Link
-              href={`/dashboard/estudiantes/cursos/${course.id}`}
+              href={`/estudiantes/cursos/${course.id}`}
               legacyBehavior
             >
               <a className="flex items-center">
