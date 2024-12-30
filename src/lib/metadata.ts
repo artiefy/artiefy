@@ -1,4 +1,3 @@
-// src/lib/metadata.ts
 import type { Metadata } from 'next';
 
 export const globalMetadata: Metadata = {
@@ -32,5 +31,9 @@ export const globalMetadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  icons: {
+    icon: '/artiefy-icon.png', // Ruta al favicon estático
+    apple: '/artiefy-icon.png', // Ícono para Apple Touch
   },
 };

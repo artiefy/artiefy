@@ -9,8 +9,8 @@ export interface Lesson {
   description: string | null;
   order: number;
   courseId: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | number | Date;
+  updatedAt: string | number | Date;
 }
 
 export interface Course {
@@ -25,6 +25,8 @@ export interface Course {
   userId: string;
   lessons?: Lesson[];
   totalStudents?: number;
+  createdAt: string | number | Date;
+  updatedAt: string | number | Date;
 }
 
 // Crear un nuevo curso
