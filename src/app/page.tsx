@@ -3,9 +3,14 @@ import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Header } from "~/components/layout/Header";
 import { Button } from "~/components/ui/button";
+import { useState } from "react";
+import { Info } from "lucide-react";
+import { ModalError } from "~/components/modals/modalError";
+
 
 export default function Home() {
   const { user } = useUser();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Determinar la ruta del dashboard según el rol del usuario
   const dashboardRoute =
@@ -46,6 +51,14 @@ export default function Home() {
               </Button>
             </SignedIn>
           </div>
+          <div
+              onClick={() => setIsModalOpen(true)}
+              className="fixed bottom-4 right-6 hover:cursor-pointer"
+              title="Información"
+            >
+              <Info className="size-10" />
+            </div>
+            <ModalError isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </section>
       </main>
     </div>

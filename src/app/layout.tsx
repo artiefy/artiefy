@@ -4,8 +4,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
+import { globalMetadata } from "../lib/metadata";
 import { CSPostHogProvider } from "./_analytics/provider";
-import { globalMetadata } from '../lib/metadata';
 
 import "../styles/globals.css";
 
@@ -44,7 +44,7 @@ export default function RootLayout({
           <body>
             <main>{children}</main>
             <Toaster />
-            </body>
+          </body>
         </CSPostHogProvider>
       </html>
     </ClerkProvider>

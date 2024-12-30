@@ -1,6 +1,6 @@
+import { count, eq } from "drizzle-orm";
 import { db } from "~/server/db/index";
-import { courses, lessons, enrollments } from "~/server/db/schema";
-import { eq, count } from "drizzle-orm";
+import { courses, enrollments, lessons } from "~/server/db/schema";
 
 export interface Lesson {
   id: number;
@@ -19,7 +19,7 @@ export interface Course {
   description: string | null;
   creatorId: string;
   coverImageKey: string | null;
-  category: string;
+  categoriaId: number;
   instructor: string;
   rating: number | null;
   userId: string;
@@ -33,7 +33,7 @@ export const createCourse = async ({
   description,
   creatorId,
   coverImageKey,
-  category,
+  categoriaId,
   instructor,
   rating,
 }: {
@@ -41,7 +41,7 @@ export const createCourse = async ({
   description: string;
   creatorId: string;
   coverImageKey: string;
-  category: string;
+  categoriaId: number;
   instructor: string;
   rating: number;
 }): Promise<void> => {
@@ -50,7 +50,7 @@ export const createCourse = async ({
     description,
     creatorId,
     coverImageKey,
-    category,
+    categoriaId,
     instructor,
     rating,
   });
@@ -59,9 +59,9 @@ export const createCourse = async ({
 // Obtener todos los cursos
 export const getAllCourses = async (): Promise<Course[]> => {
   const result = await db.select().from(courses);
-  return result.map(course => ({
+  return result.map((course) => ({
     ...course,
-    userId: course.creatorId 
+    userId: course.creatorId,
   }));
 };
 
@@ -75,16 +75,25 @@ export const getTotalStudents = async (courseId: number): Promise<number> => {
 };
 
 // Obtener un curso por ID
-export const getCourseById = async (courseId: number): Promise<Course | null> => {
-  const courseResult = await db.select().from(courses).where(eq(courses.id, courseId));
+export const getCourseById = async (
+  courseId: number,
+): Promise<Course | null> => {
+  const courseResult = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, courseId));
   if (courseResult.length === 0) return null;
 
   const courseData = courseResult[0];
   if (!courseData) return null;
   const course = { ...courseData, userId: courseData.creatorId } as Course;
 
-  const lessonsResult = await db.select().from(lessons).where(eq(lessons.courseId, courseId)).orderBy(lessons.order);
-  course.lessons = lessonsResult.map(lesson => ({
+  const lessonsResult = await db
+    .select()
+    .from(lessons)
+    .where(eq(lessons.courseId, courseId))
+    .orderBy(lessons.order);
+  course.lessons = lessonsResult.map((lesson) => ({
     ...lesson,
     createdAt: lesson.createdAt.toISOString(),
     updatedAt: lesson.updatedAt.toISOString(),
@@ -103,21 +112,21 @@ export const updateCourse = async (
     title,
     description,
     coverImageKey,
-    category,
+    categoriaId,
     instructor,
     rating,
   }: {
     title: string;
     description: string;
     coverImageKey: string;
-    category: string;
+    categoriaId: number;
     instructor: string;
     rating: number;
-  }
+  },
 ): Promise<void> => {
   await db
     .update(courses)
-    .set({ title, description, coverImageKey, category, instructor, rating })
+    .set({ title, description, coverImageKey, categoriaId, instructor, rating })
     .where(eq(courses.id, courseId));
 };
 
