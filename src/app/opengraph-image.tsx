@@ -13,7 +13,7 @@ export const contentType = "image/png";
 export default async function Image() {
   // Font
   const montserratBold = fetch(
-    new URL("../fonts/Montserrat-Bold.ttf", import.meta.url),
+    new URL("./fonts/Montserrat-Bold.ttf", import.meta.url),
   ).then((res) => res.arrayBuffer());
 
   // Obtener la URL base

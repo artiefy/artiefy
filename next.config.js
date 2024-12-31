@@ -3,7 +3,7 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const coreConfig = {
   images: {
-    unoptimized: true, // Desactiva la optimización de imágenes
+    unoptimized: false, // Desactiva la optimización de imágenes
     remotePatterns: [
       {
         protocol: 'https',
