@@ -1,8 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // Cambiar a next/navigation
-import { useAuth } from "@clerk/nextjs";
 import { StarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import CourseCategories from "~/components/layout/CourseCategories";
@@ -59,8 +57,6 @@ export default function StudentDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const { isSignedIn } = useAuth();
-  const router = useRouter();
 
   const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
 
@@ -82,7 +78,7 @@ export default function StudentDashboard() {
   const handleSearch = (search: string) => {
     setSearchTerm(search);
     const filtered = courses.filter((course) =>
-      course.title.toLowerCase().includes(search.toLowerCase())
+      course.title.toLowerCase().includes(search.toLowerCase()),
     );
     setFilteredCourses(filtered);
     setCurrentPage(1);
@@ -90,7 +86,7 @@ export default function StudentDashboard() {
 
   const paginatedCourses = filteredCourses.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    currentPage * ITEMS_PER_PAGE,
   );
 
   const handleCarouselChange = (index: number) => {
@@ -104,18 +100,11 @@ export default function StudentDashboard() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCarouselIndex(
-        (prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5)
+        (prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5),
       );
     }, 5000);
     return () => clearInterval(interval);
   }, [courses]);
-
-  // Redirigir a la página de inicio cuando el usuario cierra sesión
-  useEffect(() => {
-    if (!isSignedIn) {
-      router.push("/");
-    }
-  }, [isSignedIn, router]);
 
   return (
     <div>
@@ -155,7 +144,7 @@ export default function StudentDashboard() {
                     <p className="hidden text-xl md:block">
                       {course.description}
                     </p>
-                    <p className="hidden text-xl md.block">
+                    <p className="hidden text-xl md:block">
                       Instructor: {course.instructor}
                     </p>
                     <div className="flex items-center">
@@ -264,7 +253,7 @@ export default function StudentDashboard() {
                 />
               )}
               {Array.from({ length: totalPages }).map((_, index) => (
-                <PaginationItem key={index}>
+                <PaginationItem key={index} >
                   <PaginationLink
                     onClick={() => setCurrentPage(index + 1)}
                     isActive={currentPage === index + 1}
