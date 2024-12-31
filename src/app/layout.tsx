@@ -1,3 +1,4 @@
+// filepath: /c:/Users/ADMIN/OneDrive/Escritorio/ARCHIVOS DAVID/DEVELOPER/MIS PAGINAS WEB/APP WEB NEXT.JS 15 FULL 2/artiefy/src/app/layout.tsx
 import { esMX } from "@clerk/localizations";
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
@@ -35,14 +36,13 @@ export default function RootLayout({
         signIn: { baseTheme: neobrutalism },
         signUp: { baseTheme: neobrutalism },
       }}
-      afterSignOutUrl={process.env.NEXT_PUBLIC_BASE_URL ?? "/"}
+      afterSignOutUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_OUT_URL ?? "/"}
     >
       <html
         lang="es"
         className={`${montserrat.variable} ${josefinSans.variable}`}
       >
-        <CSPostHogProvider 
-        >
+        <CSPostHogProvider>
           <body>
             <ClerkLoading>
               <Loading />
