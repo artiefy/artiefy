@@ -33,13 +33,13 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Redirigir a la ruta principal si no hay sesión activa
   if (!session) {
-    const url = new URL("/", req.url);
+    const url = new URL("/", process.env.NEXT_PUBLIC_BASE_URL ?? req.url);
     return NextResponse.redirect(url);
   }
 
   // Verificar acceso a rutas de admin
   if (isAdminRoute(req) && session.sessionClaims?.metadata?.role !== "admin") {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_BASE_URL ?? req.url));
   }
 
   // Verificar acceso a rutas de profesor
@@ -47,7 +47,7 @@ export default clerkMiddleware(async (auth, req) => {
     isProfesorRoute(req) &&
     session.sessionClaims?.metadata?.role !== "profesor"
   ) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_BASE_URL ?? req.url));
   }
 
   // Verificar si el usuario tiene el rol de 'admin' o 'profesor' y está intentando acceder a la ruta de estudiantes
@@ -56,7 +56,7 @@ export default clerkMiddleware(async (auth, req) => {
     (session.sessionClaims?.metadata?.role === "admin" ||
       session.sessionClaims?.metadata?.role === "profesor")
   ) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_BASE_URL ?? req.url));
   }
 });
 
