@@ -1,30 +1,22 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Definir rutas públicas y específicas de roles
-const publicRoutes = [
-  "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/planes(.*)",
-  "/opengraph-image(.*)",
-  "/sitemap(.*)",
-  "/robots(.*)",
-  
+// Definir rutas privadas y específicas de roles
+const protectedRoutes = [
+  "/dashboard(.*)",
+  "/estudiantes(.*)"
 ];
 const adminRoutes = ["/dashboard/admin(.*)"];
 const profesorRoutes = ["/dashboard/profesores(.*)"];
-const estudianteRoutes = ["/estudiantes(.*)"];
 
 // Crear matchers para las rutas
-const isPublicRoute = createRouteMatcher(publicRoutes);
+const isProtectedRoute = createRouteMatcher(protectedRoutes);
 const isAdminRoute = createRouteMatcher(adminRoutes);
 const isProfesorRoute = createRouteMatcher(profesorRoutes);
-const isEstudianteRoute = createRouteMatcher(estudianteRoutes);
 
 export default clerkMiddleware(async (auth, req) => {
-  // Proteger rutas privadas si no son públicas
-  if (!isPublicRoute(req)) {
+  // Proteger rutas privadas
+  if (isProtectedRoute(req)) {
     await auth.protect();
   }
 
@@ -33,13 +25,13 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Redirigir a la ruta principal si no hay sesión activa
   if (!session) {
-    const url = new URL("/", process.env.NEXT_PUBLIC_BASE_URL ?? req.url);
-    return NextResponse.redirect(url);
+    const redirectUrl = new URL("/", req.nextUrl.origin);
+    return NextResponse.redirect(redirectUrl);
   }
-
+  
   // Verificar acceso a rutas de admin
   if (isAdminRoute(req) && session.sessionClaims?.metadata?.role !== "admin") {
-    return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_BASE_URL ?? req.url));
+    return NextResponse.redirect(new URL("/", req.nextUrl.origin));
   }
 
   // Verificar acceso a rutas de profesor
@@ -47,16 +39,16 @@ export default clerkMiddleware(async (auth, req) => {
     isProfesorRoute(req) &&
     session.sessionClaims?.metadata?.role !== "profesor"
   ) {
-    return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_BASE_URL ?? req.url));
+    return NextResponse.redirect(new URL("/", req.nextUrl.origin));
   }
 
   // Verificar si el usuario tiene el rol de 'admin' o 'profesor' y está intentando acceder a la ruta de estudiantes
   if (
-    isEstudianteRoute(req) &&
+    isProtectedRoute(req) &&
     (session.sessionClaims?.metadata?.role === "admin" ||
       session.sessionClaims?.metadata?.role === "profesor")
   ) {
-    return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_BASE_URL ?? req.url));
+    return NextResponse.redirect(new URL("/", req.nextUrl.origin));
   }
 });
 

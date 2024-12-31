@@ -1,11 +1,11 @@
 import { esMX } from "@clerk/localizations";
-import { ClerkProvider, ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
+import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
+import { globalMetadata } from "../lib/metadata";
 import { CSPostHogProvider } from "./_analytics/provider";
-import { globalMetadata } from '../lib/metadata';
-import Loading from './loading';
+import Loading from "./loading";
 
 import "../styles/globals.css";
 
@@ -35,12 +35,14 @@ export default function RootLayout({
         signIn: { baseTheme: neobrutalism },
         signUp: { baseTheme: neobrutalism },
       }}
+      afterSignOutUrl={process.env.NEXT_PUBLIC_BASE_URL ?? "/"}
     >
       <html
         lang="es"
         className={`${montserrat.variable} ${josefinSans.variable}`}
       >
-        <CSPostHogProvider>
+        <CSPostHogProvider 
+        >
           <body>
             <ClerkLoading>
               <Loading />
