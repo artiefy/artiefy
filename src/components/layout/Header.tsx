@@ -59,7 +59,7 @@ export function Header() {
                 </SignInButton>
               </SignedOut>
               <SignedIn>
-                <UserButton showName />
+              <UserButton showName/>
               </SignedIn>
             </div>
           </div>

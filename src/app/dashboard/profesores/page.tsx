@@ -6,6 +6,7 @@ import { FiPlus } from "react-icons/fi";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
 import { Button } from "~/components/ui/button";
+import { SkeletonCard } from "~/components/layout/SkeletonCard";
 import { toast } from "~/hooks/use-toast";
 
 interface CourseModel {
@@ -18,12 +19,23 @@ interface CourseModel {
   coverImageKey: string;
 }
 
+function LoadingCourses() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 9 }).map((_, index) => (
+        <SkeletonCard key={index} />
+      ))}
+    </div>
+  );
+}
+
 export default function Page() {
   const { user } = useUser();
   const [courses, setCourses] = useState<CourseModel[]>([]);
   const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchCourses = useCallback(async () => {
     if (!user) return;
@@ -39,6 +51,7 @@ export default function Page() {
     } else {
       console.error("Failed to fetch courses:", response.statusText);
     }
+    setLoading(false);
   }, [user]);
 
   useEffect(() => {
@@ -160,11 +173,15 @@ export default function Page() {
           </Button>
         </div>
         <h2 className="mb-4 text-2xl font-bold">Lista De Cursos Creados</h2>
-        <CourseListTeacher
-          courses={courses}
-          onEdit={handleEditCourse}
-          onDelete={handleDeleteCourse}
-        />
+        {loading ? (
+          <LoadingCourses />
+        ) : (
+          <CourseListTeacher
+            courses={courses}
+            onEdit={handleEditCourse}
+            onDelete={handleDeleteCourse}
+          />
+        )}
         {isModalOpen && (
           <CourseForm
             onSubmitAction={handleCreateOrEditCourse}
