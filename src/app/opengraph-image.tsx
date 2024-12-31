@@ -3,6 +3,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
+export const alt = 'Artiefy - Aprende y Crea';
 export const size = {
   width: 1200,
   height: 630,
@@ -10,16 +11,10 @@ export const size = {
 
 export const contentType = 'image/png';
 
-export default async function handler() {
-  const logoUrl = 'https://localhost:3000/artiefy-icon.png'; // Update to a valid public URL
-  const logoResponse = await fetch(logoUrl);
-
-  if (!logoResponse.ok) {
-    throw new Error(`Failed to fetch image: ${logoResponse.statusText}`);
-  }
-
-  const logoArrayBuffer = await logoResponse.arrayBuffer();
-  const logoBase64 = Buffer.from(logoArrayBuffer).toString('base64');
+export default async function Image() {
+  const logoSrc = await fetch(new URL('/artiefy-icon.png', import.meta.url)).then(
+    (res) => res.arrayBuffer()
+  );
 
   return new ImageResponse(
     (
@@ -36,7 +31,7 @@ export default async function handler() {
           color: '#333',
         }}
       >
-        <img src={`data:image/png;base64,${logoBase64}`} height="100" alt="Artiefy Logo" />
+        <img src={`data:image/png;base64,${Buffer.from(logoSrc).toString('base64')}`} height="100" alt="Artiefy Logo" />
         <span>Artiefy - An Educational Tool for Online Courses</span>
       </div>
     ),
