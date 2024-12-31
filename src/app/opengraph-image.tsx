@@ -12,7 +12,8 @@ export const size = {
 export const contentType = 'image/png';
 
 export default async function Image() {
-  const logoSrc = await fetch(new URL('/artiefy-icon.png', import.meta.url)).then(
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+  const logoSrc = await fetch(new URL('/artiefy-icon.png', baseUrl)).then(
     (res) => res.arrayBuffer()
   );
 
