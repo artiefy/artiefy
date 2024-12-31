@@ -52,7 +52,6 @@ export default function Page() {
     description: string,
     file: File | null,
     category: string,
-    instructor: string,
     rating: number,
   ) => {
     if (!user) return;
@@ -89,7 +88,7 @@ export default function Page() {
         description,
         coverImageKey,
         category,
-        instructor,
+        instructor: user.fullName, // Use user.fullName directly
         rating,
         userId: user.id,
       }),
@@ -148,7 +147,7 @@ export default function Page() {
     <div className="px-16">
       <main className="container mx-auto px-16">
         <header className="mt-4 flex items-center justify-between px-7">
-          <h1 className="text-3xl font-bold">Subir Cursos</h1>
+          <h1 className="text-3xl font-bold">Dashboard Profesores</h1>
           <UserButton showName />
         </header>
         <div className="flex justify-end mt-6">
@@ -183,12 +182,6 @@ export default function Page() {
             category={editingCourse?.category ?? ""}
             setCategory={(category: string) =>
               setEditingCourse((prev) => (prev ? { ...prev, category } : null))
-            }
-            instructor={editingCourse?.instructor ?? ""}
-            setInstructor={(instructor: string) =>
-              setEditingCourse((prev) =>
-                prev ? { ...prev, instructor } : null,
-              )
             }
             rating={editingCourse?.rating ?? 0}
             setRating={(rating: number) =>

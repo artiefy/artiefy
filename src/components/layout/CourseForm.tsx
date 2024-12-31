@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Progress } from "~/components/ui/progress";
+import { Button } from "~/components/ui/button";
 
 interface CourseFormProps {
   onSubmitAction: (
@@ -21,7 +22,6 @@ interface CourseFormProps {
     description: string,
     file: File | null,
     category: string,
-    instructor: string,
     rating: number,
   ) => Promise<void>;
   uploading: boolean;
@@ -31,8 +31,6 @@ interface CourseFormProps {
   setDescription: (description: string) => void;
   category: string;
   setCategory: (category: string) => void;
-  instructor: string;
-  setInstructor: (instructor: string) => void;
   rating: number;
   setRating: (rating: number) => void;
   coverImageKey: string;
@@ -52,7 +50,6 @@ export default function CourseForm({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
-  const [instructor, setInstructor] = useState(user?.fullName ?? "");
   const [rating, setRating] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -60,6 +57,13 @@ export default function CourseForm({
   const [progress, setProgress] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [errors, setErrors] = useState({
+    title: false,
+    description: false,
+    category: false,
+    rating: false,
+    file: false,
+  });
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -67,10 +71,12 @@ export default function CourseForm({
       setFile(files[0]);
       setFileName(files[0].name);
       setFileSize(files[0].size);
+      setErrors((prev) => ({ ...prev, file: false }));
     } else {
       setFile(null);
       setFileName(null);
       setFileSize(null);
+      setErrors((prev) => ({ ...prev, file: true }));
     }
   };
 
@@ -92,23 +98,31 @@ export default function CourseForm({
       setFile(files[0]);
       setFileName(files[0].name);
       setFileSize(files[0].size);
+      setErrors((prev) => ({ ...prev, file: false }));
     } else {
       setFile(null);
       setFileName(null);
       setFileSize(null);
+      setErrors((prev) => ({ ...prev, file: true }));
     }
   };
 
   const handleSubmit = async () => {
+    const newErrors = {
+      title: !title,
+      description: !description,
+      category: !category,
+      rating: !rating,
+      file: !file,
+    };
+    setErrors(newErrors);
+
+    if (Object.values(newErrors).some((error) => error)) {
+      return;
+    }
+
     setIsEditing(true);
-    await onSubmitAction(
-      title,
-      description,
-      file,
-      category,
-      instructor,
-      rating,
-    );
+    await onSubmitAction(title, description, file, category, rating);
   };
 
   useEffect(() => {
@@ -144,18 +158,10 @@ export default function CourseForm({
     }
   }, [uploading, isEditing]);
 
-  useEffect(() => {
-    if (user) {
-      if (user.fullName) {
-        setInstructor(user.fullName);
-      }
-    }
-  }, [user]);
-
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto py-4">
-        <DialogHeader>
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+        <DialogHeader className="mt-4">
           <DialogTitle>
             {editingCourseId ? "Editar Curso" : "Crear Curso"}
           </DialogTitle>
@@ -165,43 +171,58 @@ export default function CourseForm({
               : "Llena los detalles para crear un nuevo curso"}
           </DialogDescription>
         </DialogHeader>
-        <div className="rounded-lg bg-background p-6 text-black shadow-md">
+        <div className="rounded-lg bg-background px-6 text-black shadow-md">
+          {errors.title && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
           <input
             type="text"
             placeholder="Título"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="mb-4 w-full rounded border border-primary p-2"
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setErrors((prev) => ({ ...prev, title: !e.target.value }));
+            }}
+            className={`mb-4 w-full rounded border p-2 ${errors.title ? "border-red-500" : "border-primary"}`}
           />
+          {errors.description && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
           <textarea
             placeholder="Descripción"
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="mb-4 w-full rounded border border-primary p-2"
+            onChange={(e) => {
+              setDescription(e.target.value);
+              setErrors((prev) => ({ ...prev, description: !e.target.value }));
+            }}
+            className={`mb-3 w-full rounded border p-2 ${errors.description ? "border-red-500" : "border-primary"}`}
           />
+          {errors.category && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
           <input
             type="text"
             placeholder="Categoría"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="mb-4 w-full rounded border border-primary p-2"
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setErrors((prev) => ({ ...prev, category: !e.target.value }));
+            }}
+            className={`mb-4 w-full rounded border p-2 ${errors.category ? "border-red-500" : "border-primary"}`}
           />
-          <input
-            type="text"
-            placeholder="Instructor"
-            value={instructor}
-            onChange={(e) => setInstructor(e.target.value)}
-            className="mb-4 w-full rounded border border-primary p-2"
-          />
+          <div className="mb-4 w-full rounded border border-primary p-2">
+            <h3 className="text-lg font-medium text-primary">
+              Instructor: {user?.fullName}
+            </h3>
+          </div>
+          {errors.rating && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
           <input
             type="number"
             placeholder="Calificación"
             value={rating}
-            onChange={(e) => setRating(Number(e.target.value))}
-            className="mb-4 w-full rounded border border-primary p-2"
+            onChange={(e) => {
+              setRating(Number(e.target.value));
+              setErrors((prev) => ({ ...prev, rating: !e.target.value }));
+            }}
+            className={`mb-4 w-full rounded border p-2 ${errors.rating ? "border-red-500" : "border-primary"}`}
           />
+          {errors.file && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
           <div
-            className={`rounded-lg border-2 border-dashed p-8 ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
+            className={`rounded-lg border-2 border-dashed p-8 ${isDragging ? "border-blue-500 bg-blue-50" : errors.file ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -234,7 +255,7 @@ export default function CourseForm({
           </div>
           {fileName && (
             <div className="mt-8">
-              <h3 className="mb-4 text-lg font-medium text-gray-700">
+              <h3 className="mb-4 text-lg font-medium text-primary">
                 Vista previa de la imagen
               </h3>
               <div className="group relative overflow-hidden rounded-lg bg-gray-100">
@@ -252,24 +273,27 @@ export default function CourseForm({
                     setFile(null);
                     setFileName(null);
                     setFileSize(null);
+                    setErrors((prev) => ({ ...prev, file: true }));
                   }}
                   className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 >
                   <MdClose className="h-5 w-5" />
                 </button>
-                <div className="p-2 flex justify-between">
+                <div className="flex justify-between p-2">
                   <p className="truncate text-sm text-gray-500">{fileName}</p>
-                  <p className="text-sm text-gray-500">{((fileSize ?? 0) / 1024).toFixed(2)} KB</p>
+                  <p className="text-sm text-gray-500">
+                    {((fileSize ?? 0) / 1024).toFixed(2)} KB
+                  </p>
                 </div>
               </div>
             </div>
           )}
-          {uploading && <Progress value={progress} className="mb-4 w-full" />}
+          {uploading && <Progress value={progress} className="my-4 w-full" />}
         </div>
         <DialogFooter>
-          <button
+          <Button
             onClick={handleSubmit}
-            className="hover:bg-primary-dark w-full rounded bg-primary p-2 text-background"
+            variant="save"
             disabled={uploading}
           >
             {uploading
@@ -279,7 +303,7 @@ export default function CourseForm({
                   ? "Editando..."
                   : "Editar"
                 : "Guardar"}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
