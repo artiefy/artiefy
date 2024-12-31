@@ -1,11 +1,11 @@
-// src/app/layout.tsx
 import { esMX } from "@clerk/localizations";
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
 import { CSPostHogProvider } from "./_analytics/provider";
 import { globalMetadata } from '../lib/metadata';
+import LoadingIcon from '~/components/layout/LoadingIcon';
 
 import "../styles/globals.css";
 
@@ -42,9 +42,17 @@ export default function RootLayout({
       >
         <CSPostHogProvider>
           <body>
-            <main>{children}</main>
-            <Toaster />
-            </body>
+            <ClerkLoading>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+                <LoadingIcon />
+                <div className="p-4">Cargando Login Artiefy...</div>
+              </div>
+            </ClerkLoading>
+            <ClerkLoaded>
+              <main>{children}</main>
+              <Toaster />
+            </ClerkLoaded>
+          </body>
         </CSPostHogProvider>
       </html>
     </ClerkProvider>
