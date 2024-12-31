@@ -1,13 +1,16 @@
 "use client";
 
-import { SignInButton, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FiPlus } from "react-icons/fi";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
 import { Button } from "~/components/ui/button";
 import { SkeletonCard } from "~/components/layout/SkeletonCard";
 import { toast } from "~/hooks/use-toast";
+import { checkRole } from "~/utils/roles";
+import { redirect } from "next/navigation";
 
 interface CourseModel {
   id: string;
@@ -30,12 +33,29 @@ function LoadingCourses() {
 }
 
 export default function Page() {
-  const { user } = useUser();
+  const { user, isLoaded, isSignedIn } = useUser();
+  const router = useRouter();
   const [courses, setCourses] = useState<CourseModel[]>([]);
   const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push("/");
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      const isTeacher = await checkRole("profesor");
+      if (!isTeacher) {
+        redirect("/");
+      }
+    };
+    checkUserRole().catch((error) => console.error("Error checking user role:", error));
+  }, []);
 
   const fetchCourses = useCallback(async () => {
     if (!user) return;
@@ -161,11 +181,8 @@ export default function Page() {
       <main className="container mx-auto px-16">
         <header className="mt-4 flex items-center justify-between px-7">
           <h1 className="text-3xl font-bold">Dashboard Profesores</h1>
-          <SignedOut>
-              <SignInButton />
-            </SignedOut>
-              <UserButton showName />    
-            </header>
+          <UserButton showName />
+        </header>
         <div className="flex justify-end mt-6">
           <Button
             onClick={handleCreateCourse}
