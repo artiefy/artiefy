@@ -61,16 +61,6 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Coincide con todas las rutas relevantes
-    "/dashboard/(admin|profesores|estudiantes)(.*)",
-    // Asegurarse de que las rutas públicas incluyan la raíz "/"
-    "/",
-    "/sign-in(.*)",
-    "/sign-up(.*)",
-    "/planes(.*)",
-    "/opengraph-image(.*)",
-    "/sitemap(.*)",
-    "/robots(.*)",
     // Excluir Next.js internos y archivos estáticos
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Siempre ejecutar para rutas API

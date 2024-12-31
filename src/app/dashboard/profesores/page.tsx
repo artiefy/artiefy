@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { SignInButton, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import CourseForm from "~/components/layout/CourseForm";
@@ -164,9 +164,7 @@ export default function Page() {
           <SignedOut>
               <SignInButton />
             </SignedOut>
-            <SignedIn>
-              <UserButton showName />
-            </SignedIn>        
+              <UserButton showName />    
             </header>
         <div className="flex justify-end mt-6">
           <Button
