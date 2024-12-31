@@ -27,7 +27,7 @@ export default function Page() {
 
   const fetchCourses = useCallback(async () => {
     if (!user) return;
-    const response = await fetch("/api/courses");
+    const response = await fetch(`/api/courses?userId=${user.id}`);
     if (response.ok) {
       const data = (await response.json()) as CourseModel[];
       setCourses(

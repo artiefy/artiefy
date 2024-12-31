@@ -58,9 +58,9 @@ export const createCourse = async ({
   });
 };
 
-// Obtener todos los cursos
-export const getAllCourses = async (): Promise<Course[]> => {
-  const result = await db.select().from(courses);
+// Obtener todos los cursos de un profesor
+export const getCoursesByUserId = async (userId: string): Promise<Course[]> => {
+  const result = await db.select().from(courses).where(eq(courses.creatorId, userId));
   return result.map(course => ({
     ...course,
     userId: course.creatorId 
@@ -96,6 +96,15 @@ export const getCourseById = async (courseId: number): Promise<Course | null> =>
   course.totalStudents = await getTotalStudents(courseId);
 
   return course;
+};
+
+// Obtener todos los cursos
+export const getAllCourses = async (): Promise<Course[]> => {
+  const result = await db.select().from(courses);
+  return result.map(course => ({
+    ...course,
+    userId: course.creatorId 
+  }));
 };
 
 // Actualizar un curso

@@ -62,7 +62,7 @@ export default function StudentDashboard() {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch("/api/courses");
+      const response = await fetch("/api/courses"); // No pasar userId
       if (!response.ok) throw new Error(response.statusText);
       const data = (await response.json()) as Course[];
       setCourses(data);
