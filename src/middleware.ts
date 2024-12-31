@@ -10,6 +10,8 @@ const publicRoutes = [
   "/opengraph-image(.*)",
   "/sitemap(.*)",
   "/robots(.*)",
+  // Agrega tu dominio aquí si es necesario
+  // "https://tu-dominio.com(.*)"
 ];
 const adminRoutes = ["/dashboard/admin(.*)"];
 const profesorRoutes = ["/dashboard/profesores(.*)"];
