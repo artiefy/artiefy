@@ -154,7 +154,7 @@ export default function CourseForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-h-screen max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto py-4">
         <DialogHeader>
           <DialogTitle>
             {editingCourseId ? "Editar Curso" : "Crear Curso"}

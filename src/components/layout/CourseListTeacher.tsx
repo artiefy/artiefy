@@ -21,6 +21,7 @@ interface CourseListTeacherProps {
   onDelete: (id: string) => void;
 }
 
+
 export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseListTeacherProps) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
