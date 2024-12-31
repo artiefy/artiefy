@@ -36,7 +36,7 @@ export default function RootLayout({
         signIn: { baseTheme: neobrutalism },
         signUp: { baseTheme: neobrutalism },
       }}
-      afterSignOutUrl={process.env.NEXT_PUBLIC_CLERK_SIGN_OUT_URL ?? "/"}
+      afterSignOutUrl="/"
     >
       <html
         lang="es"
