@@ -16,7 +16,7 @@ export const globalMetadata: Metadata = {
     description: 'Artiefy es la plataforma de aprendizaje más innovadora.',
     images: [
       {
-        url: 'https://artiefy.vercel.app/opengraph-image', // URL de la imagen generada
+        url: 'https://artiefy.vercel.app/opengraph-image.png', // Asegúrate de que esta URL sea válida y accesible
         width: 1200,
         height: 630,
         alt: 'Artiefy - App Web Educativa de Cursos Online',

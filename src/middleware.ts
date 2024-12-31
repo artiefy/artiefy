@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // Definir rutas públicas y específicas de roles
-const publicRoutes = ["/", "/sign-in(.*)", "/sign-up(.*)", "/planes(.*)"];
+const publicRoutes = ["/", "/sign-in(.*)", "/sign-up(.*)", "/planes(.*)", "/opengraph-image(.*)"];
 const adminRoutes = ["/dashboard/admin(.*)"];
 const profesorRoutes = ["/dashboard/profesores(.*)"];
 const estudianteRoutes = ["/estudiantes(.*)"];
