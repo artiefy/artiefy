@@ -1,6 +1,6 @@
 "use client";
 
-import { UserButton, useUser } from "@clerk/nextjs";
+import { SignInButton, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiPlus } from "react-icons/fi";
@@ -181,6 +181,9 @@ export default function Page() {
       <main className="container mx-auto px-16">
         <header className="mt-4 flex items-center justify-between px-7">
           <h1 className="text-3xl font-bold">Dashboard Profesores</h1>
+          <SignedOut>
+            <SignInButton />
+          </SignedOut>
           <UserButton showName />
         </header>
         <div className="flex justify-end mt-6">
