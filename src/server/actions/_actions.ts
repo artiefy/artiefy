@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 "use server";
 
 import { clerkClient } from "@clerk/nextjs/server";

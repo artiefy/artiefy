@@ -7,8 +7,10 @@ const coreConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'artiefy-upload.s3.us-east-2.amazonaws.com',
-        pathname: '/**', // Permite todos los archivos del bucket
+        hostname: 's3.amazonaws.com',
+        port: '',
+        pathname: '/artiefy-bucket/**',
+        search: '',
       },
     ],
   },
