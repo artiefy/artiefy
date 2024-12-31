@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation"; // Cambiar a next/navigation
 import { useAuth } from "@clerk/nextjs";
 import { StarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
@@ -113,7 +113,7 @@ export default function StudentDashboard() {
   // Redirigir a la página de inicio cuando el usuario cierra sesión
   useEffect(() => {
     if (!isSignedIn) {
-      void router.push("/");
+      router.push("/");
     }
   }, [isSignedIn, router]);
 
