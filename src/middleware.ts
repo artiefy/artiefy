@@ -10,7 +10,7 @@ const publicRoutes = [
   "/opengraph-image(.*)",
   "/sitemap(.*)",
   "/robots(.*)",
-  "https://artiefy.vercel.app(.*)",
+  
 ];
 const adminRoutes = ["/dashboard/admin(.*)"];
 const profesorRoutes = ["/dashboard/profesores(.*)"];
