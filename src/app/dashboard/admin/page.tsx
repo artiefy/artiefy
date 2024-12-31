@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { UserButton } from "@clerk/nextjs"; // Botón de usuario de Clerk
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { getAdminUsers } from "~/server/queries/queries"; // Importar la función de la lógica del servidor
 import { ChangeRole } from "./ChangeRole";
 import { SearchUsers } from "./SearchUsers"; // Componente de búsqueda
@@ -31,8 +31,13 @@ export default async function AdminDashboard(params: {
         <header className="bg-primary p-5 text-2xl font-extrabold text-background">
           <h1>Dashboard Admin</h1>
           {/* Botón de usuario de Clerk */}
-          <UserButton showName />
-        </header>
+          <SignedOut>
+              <SignInButton />
+            </SignedOut>
+            <SignedIn>
+              <UserButton showName />
+            </SignedIn>           
+            </header>
       </div>
       <p className="mt-4 text-lg">
         This is the protected admin dashboard restricted to users with the

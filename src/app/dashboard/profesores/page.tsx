@@ -166,7 +166,8 @@ export default function Page() {
             </SignedOut>
             <SignedIn>
               <UserButton showName />
-            </SignedIn>        </header>
+            </SignedIn>        
+            </header>
         <div className="flex justify-end mt-6">
           <Button
             onClick={handleCreateCourse}
