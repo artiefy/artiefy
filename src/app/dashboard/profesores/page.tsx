@@ -15,12 +15,14 @@ import { useEffect, useState, useCallback } from "react";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
 import { toast } from "~/hooks/use-toast";
+import { Button } from "~/components/ui/button";
 
 export default function Page() {
   const { user } = useUser();
   const [courses, setCourses] = useState<CourseModel[]>([]);
   const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchCourses = useCallback(async () => {
     if (!user) return;
@@ -95,6 +97,7 @@ export default function Page() {
       });
       fetchCourses().catch((error) => console.error("Error fetching courses:", error));
       setEditingCourse(null);
+      setIsModalOpen(false);
     } else {
       const errorData = (await response.json()) as { error?: string };
       toast({
@@ -105,8 +108,14 @@ export default function Page() {
     }
   };
 
+  const handleCreateCourse = () => {
+    setEditingCourse(null);
+    setIsModalOpen(true);
+  };
+
   const handleEditCourse = (course: CourseModel) => {
     setEditingCourse(course);
+    setIsModalOpen(true);
   };
 
   const handleDeleteCourse = async (id: string) => {
@@ -119,6 +128,10 @@ export default function Page() {
     fetchCourses().catch((error) => console.error("Error fetching courses:", error));
   };
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="px-16">
       <main className="container mx-auto px-16">
@@ -127,6 +140,17 @@ export default function Page() {
           <UserButton showName />
         </header>
         <div className="mb-6 bg-background p-6 rounded-lg shadow-md">
+          <Button onClick={handleCreateCourse} className="bg-primary text-background hover:bg-primary-dark">
+            Crear Curso
+          </Button>
+        </div>
+        <h2 className="mb-4 text-2xl font-bold">Lista De Cursos Creados</h2>
+        <CourseListTeacher
+          courses={courses}
+          onEdit={handleEditCourse}
+          onDelete={handleDeleteCourse}
+        />
+        {isModalOpen && (
           <CourseForm
             onSubmitAction={handleCreateOrEditCourse}
             uploading={uploading}
@@ -142,14 +166,10 @@ export default function Page() {
             setRating={(rating: number) => setEditingCourse((prev) => prev ? { ...prev, rating } : null)}
             coverImageKey={editingCourse?.coverImageKey ?? ""}
             setCoverImageKey={(coverImageKey: string) => setEditingCourse((prev) => prev ? { ...prev, coverImageKey } : null)}
+            isOpen={isModalOpen}
+            onCloseAction={handleCloseModal}
           />
-        </div>
-        <h2 className="mb-4 text-2xl font-bold">Lista De Cursos Creados</h2>
-        <CourseListTeacher
-          courses={courses}
-          onEdit={handleEditCourse}
-          onDelete={handleDeleteCourse}
-        />
+        )}
       </main>
     </div>
   );
