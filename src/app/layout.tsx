@@ -5,7 +5,7 @@ import { Josefin_Sans, Montserrat } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
 import { CSPostHogProvider } from "./_analytics/provider";
 import { globalMetadata } from '../lib/metadata';
-import LoadingIcon from '~/components/layout/LoadingIcon';
+import Loading from './loading';
 
 import "../styles/globals.css";
 
@@ -43,10 +43,7 @@ export default function RootLayout({
         <CSPostHogProvider>
           <body>
             <ClerkLoading>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-                <LoadingIcon />
-                <div className="p-4">Cargando Login Artiefy...</div>
-              </div>
+              <Loading />
             </ClerkLoading>
             <ClerkLoaded>
               <main>{children}</main>
