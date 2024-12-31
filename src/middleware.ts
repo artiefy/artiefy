@@ -30,6 +30,12 @@ export default clerkMiddleware(async (auth, req) => {
   // Obtener la sesión del usuario
   const session = await auth();
 
+  // Redirigir a la ruta principal si no hay sesión activa
+  if (!session) {
+    const url = new URL("/", req.url);
+    return NextResponse.redirect(url);
+  }
+
   // Verificar acceso a rutas de admin
   if (isAdminRoute(req) && session.sessionClaims?.metadata?.role !== "admin") {
     return NextResponse.redirect(new URL("/", req.url));
