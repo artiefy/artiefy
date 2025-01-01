@@ -1,5 +1,6 @@
 import { type Metadata, type ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
+import { type Course, type WithContext } from "schema-dts";
 import { getCourseById } from "~/models/courseModels";
 import CourseDetails from "./CourseDetails";
 
@@ -8,7 +9,9 @@ type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-async function getValidCoverImageUrl(coverImageKey: string | null): Promise<string> {
+async function getValidCoverImageUrl(
+  coverImageKey: string | null,
+): Promise<string> {
   const coverImageUrl = coverImageKey
     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
     : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`;
@@ -26,7 +29,7 @@ async function getValidCoverImageUrl(coverImageKey: string | null): Promise<stri
 
 export async function generateMetadata(
   { params }: Props,
-  parent: ResolvingMetadata
+  parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const id = (await params).id;
 
@@ -74,13 +77,45 @@ export async function generateMetadata(
   }
 }
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   try {
     const course = await getCourseById(Number(id));
     if (!course) {
       notFound();
     }
+
+    const jsonLd: WithContext<Course> = {
+      "@context": "https://schema.org",
+      "@type": "Course",
+      name: course.title,
+      description: course.description ?? "No hay descripción disponible.",
+      provider: {
+        "@type": "Organization",
+        name: "Artiefy",
+        sameAs: process.env.NEXT_PUBLIC_BASE_URL,
+        member: {
+          "@type": "Person",
+          name: course.instructor,
+        },
+      },
+      dateCreated: new Date(course.createdAt).toISOString(),
+      dateModified: new Date(course.updatedAt).toISOString(),
+      aggregateRating: course.rating
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: course.rating,
+            ratingCount: course.totalStudents,
+          }
+        : undefined,
+      image: course.coverImageKey
+        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+        : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`,
+    };
 
     return (
       <>
@@ -94,34 +129,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Course",
-              name: course.title,
-              description:
-                course.description ?? "No hay descripción disponible.",
-              provider: {
-                "@type": "Organization",
-                name: "Artiefy",
-                sameAs: process.env.NEXT_PUBLIC_BASE_URL,
-              },
-              instructor: {
-                "@type": "Person",
-                name: course.instructor,
-              },
-              dateCreated: new Date(course.createdAt).toISOString(),
-              dateModified: new Date(course.updatedAt).toISOString(),
-              aggregateRating: course.rating
-                ? {
-                    "@type": "AggregateRating",
-                    ratingValue: course.rating,
-                    ratingCount: course.totalStudents,
-                  }
-                : undefined,
-              image: course.coverImageKey
-                ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`,
-            }),
+            __html: JSON.stringify(jsonLd),
           }}
         />
       </>
