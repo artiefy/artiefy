@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const globalMetadata: Metadata = {
   metadataBase: new URL('https://artiefy.vercel.app'),
-  title: 'Artiefy',
+  title: 'Artiefy - Tu Plataforma de Educacion Definitiva',
   description: 'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
   keywords: ['cursos', 'aprendizaje', 'educación', 'profesores', 'estudiantes'],
   applicationName: 'Artiefy',
