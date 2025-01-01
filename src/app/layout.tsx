@@ -51,11 +51,6 @@ export default function RootLayout({
                 "@type": "WebSite",
                 name: "Artiefy",
                 url: "https://artiefy.vercel.app",
-                sameAs: [
-                  "https://www.facebook.com/artiefy",
-                  "https://www.twitter.com/artiefy",
-                  "https://www.instagram.com/artiefy",
-                ],
                 potentialAction: {
                   "@type": "SearchAction",
                   target:
