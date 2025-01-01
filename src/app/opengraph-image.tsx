@@ -10,6 +10,9 @@ export const size = {
 
 export const contentType = "image/png";
 
+// Add fb:app_id property
+export const fbAppId = process.env.NEXT_PUBLIC_FB_APP_ID ?? "default_fb_app_id";
+
 export default async function Image() {
   // Font
   const montserratBold = fetch(
@@ -63,6 +66,10 @@ export default async function Image() {
           weight: 400,
         },
       ],
+      // Add fb:app_id to the response
+      headers: {
+        'fb:app_id': fbAppId,
+      },
     },
   );
 }
