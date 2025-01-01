@@ -18,7 +18,7 @@ export async function generateMetadata({
       };
     }
 
-    const coverImageUrl = course.coverImageKey 
+    const coverImageUrl = course.coverImageKey
       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
       : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`; // Asegúrate de tener una imagen de placeholder
 
@@ -63,7 +63,13 @@ export default async function Page({ params }: { params: { id: string } }) {
 
     return (
       <>
-        <CourseDetails course={{ ...course, totalStudents: course.totalStudents ?? 0, lessons: course.lessons ?? [] }} />
+        <CourseDetails
+          course={{
+            ...course,
+            totalStudents: course.totalStudents ?? 0,
+            lessons: course.lessons ?? [],
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -71,7 +77,8 @@ export default async function Page({ params }: { params: { id: string } }) {
               "@context": "https://schema.org",
               "@type": "Course",
               name: course.title,
-              description: course.description ?? "No hay descripción disponible.",
+              description:
+                course.description ?? "No hay descripción disponible.",
               provider: {
                 "@type": "Organization",
                 name: "Artiefy",
@@ -90,7 +97,7 @@ export default async function Page({ params }: { params: { id: string } }) {
                     ratingCount: course.totalStudents,
                   }
                 : undefined,
-              image: course.coverImageKey 
+              image: course.coverImageKey
                 ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
                 : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`,
             }),
@@ -103,4 +110,3 @@ export default async function Page({ params }: { params: { id: string } }) {
     notFound();
   }
 }
-
