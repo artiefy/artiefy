@@ -13,6 +13,7 @@ const coreConfig = {
         search: '',
       },
     ],
+    domains: ['s3.us-east-2.amazonaws.com'],
   },
 };
 
