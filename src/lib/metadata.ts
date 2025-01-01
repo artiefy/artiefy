@@ -1,14 +1,13 @@
-// src/lib/metadata.ts
 import type { Metadata } from 'next';
 
 export const globalMetadata: Metadata = {
+  metadataBase: new URL('https://artiefy.vercel.app'),
   title: 'Artiefy',
   description: 'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
   keywords: ['cursos', 'aprendizaje', 'educación', 'profesores', 'estudiantes'],
   applicationName: 'Artiefy',
   authors: [{ name: 'Equipo Artiefy', url: 'https://artiefy.vercel.app' }],
   creator: 'Equipo Artiefy',
-  manifest: '/manifest.json',
   openGraph: {
     type: 'website',
     locale: 'es_ES',
@@ -17,10 +16,10 @@ export const globalMetadata: Metadata = {
     description: 'Artiefy es la plataforma de aprendizaje más innovadora.',
     images: [
       {
-        url: '/og-image.jpg',
+        url: 'https://artiefy.vercel.app/opengraph-image', // Asegúrate de que esta URL sea válida y accesible
         width: 1200,
         height: 630,
-        alt: 'Artiefy - Aprende y Crea',
+        alt: 'Artiefy - App Web Educativa de Cursos Online',
       },
     ],
   },
@@ -32,5 +31,9 @@ export const globalMetadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  icons: {
+    icon: '/artiefy-icon.png',
+    apple: '/artiefy-icon.png',
   },
 };

@@ -2,10 +2,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import {
   createCourse,
-  getAllCourses,
+  getCoursesByUserId,
   getCourseById,
   updateCourse,
   deleteCourse,
+  getAllCourses, // Importar la función getAllCourses
 } from "~/models/courseModels";
 import { getUserById, createUser } from "~/models/userModels";
 import { ratelimit } from '~/server/ratelimit/ratelimit';
@@ -16,10 +17,18 @@ export const dynamic = 'force-dynamic'; // Forzar el estado dinámico
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
-// Obtener todos los cursos con datos del creador
-export async function GET() {
+// Obtener todos los cursos de un profesor o todos los cursos si no se proporciona userId
+export async function GET(request: NextRequest) {
   try {
-    const courses = await getAllCourses();
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+
+    let courses;
+    if (userId) {
+      courses = await getCoursesByUserId(userId);
+    } else {
+      courses = await getAllCourses(); // Obtener todos los cursos si no se proporciona userId
+    }
 
     const coursesWithCreators = await Promise.all(
       courses.map(async (course) => {

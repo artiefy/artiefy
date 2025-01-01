@@ -1,5 +1,14 @@
 "use client";
 
+import {UserButton, useUser } from "@clerk/nextjs";
+import { useCallback, useEffect, useState } from "react";
+import { FiPlus } from "react-icons/fi";
+import CourseForm from "~/components/layout/CourseForm";
+import CourseListTeacher from "~/components/layout/CourseListTeacher";
+import { Button } from "~/components/ui/button";
+import { SkeletonCard } from "~/components/layout/SkeletonCard";
+import { toast } from "~/hooks/use-toast";
+
 interface CourseModel {
   id: string;
   title: string;
@@ -10,34 +19,45 @@ interface CourseModel {
   coverImageKey: string;
 }
 
-import { UserButton, useUser } from "@clerk/nextjs";
-import { useEffect, useState, useCallback } from "react";
-import CourseForm from "~/components/layout/CourseForm";
-import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { toast } from "~/hooks/use-toast";
+function LoadingCourses() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 9 }).map((_, index) => (
+        <SkeletonCard key={index} />
+      ))}
+    </div>
+  );
+}
 
 export default function Page() {
   const { user } = useUser();
   const [courses, setCourses] = useState<CourseModel[]>([]);
   const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchCourses = useCallback(async () => {
     if (!user) return;
-    const response = await fetch("/api/courses");
+    const response = await fetch(`/api/courses?userId=${user.id}`);
     if (response.ok) {
       const data = (await response.json()) as CourseModel[];
-      setCourses(data.map(course => ({
-        ...course,
-        coverImageKey: course.coverImageKey ?? ""
-      })) as CourseModel[]);
+      setCourses(
+        data.map((course) => ({
+          ...course,
+          coverImageKey: course.coverImageKey ?? "",
+        })) as CourseModel[],
+      );
     } else {
       console.error("Failed to fetch courses:", response.statusText);
     }
+    setLoading(false);
   }, [user]);
 
   useEffect(() => {
-    fetchCourses().catch((error) => console.error("Error fetching courses:", error));
+    fetchCourses().catch((error) =>
+      console.error("Error fetching courses:", error),
+    );
   }, [user, fetchCourses]);
 
   const handleCreateOrEditCourse = async (
@@ -45,8 +65,7 @@ export default function Page() {
     description: string,
     file: File | null,
     category: string,
-    instructor: string,
-    rating: number
+    rating: number,
   ) => {
     if (!user) return;
 
@@ -64,7 +83,7 @@ export default function Page() {
 
       const formData = new FormData();
       Object.entries(fields).forEach(([key, value]) =>
-        formData.append(key, value)
+        formData.append(key, value),
       );
       formData.append("file", file);
 
@@ -82,7 +101,7 @@ export default function Page() {
         description,
         coverImageKey,
         category,
-        instructor,
+        instructor: user.fullName, // Use user.fullName directly
         rating,
         userId: user.id,
       }),
@@ -91,22 +110,34 @@ export default function Page() {
     if (response.ok) {
       toast({
         title: editingCourse ? "Curso actualizado" : "Curso creado",
-        description: editingCourse ? "El curso se actualizó con éxito" : "El curso se creó con éxito",
+        description: editingCourse
+          ? "El curso se actualizó con éxito"
+          : "El curso se creó con éxito",
       });
-      fetchCourses().catch((error) => console.error("Error fetching courses:", error));
+      fetchCourses().catch((error) =>
+        console.error("Error fetching courses:", error),
+      );
       setEditingCourse(null);
+      setIsModalOpen(false);
     } else {
       const errorData = (await response.json()) as { error?: string };
       toast({
         title: "Error",
-        description: errorData.error ?? "Ocurrió un error al procesar la solicitud",
+        description:
+          errorData.error ?? "Ocurrió un error al procesar la solicitud",
         variant: "destructive",
       });
     }
   };
 
+  const handleCreateCourse = () => {
+    setEditingCourse(null);
+    setIsModalOpen(true);
+  };
+
   const handleEditCourse = (course: CourseModel) => {
     setEditingCourse(course);
+    setIsModalOpen(true);
   };
 
   const handleDeleteCourse = async (id: string) => {
@@ -116,40 +147,73 @@ export default function Page() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, userId: user.id }),
     });
-    fetchCourses().catch((error) => console.error("Error fetching courses:", error));
+    fetchCourses().catch((error) =>
+      console.error("Error fetching courses:", error),
+    );
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
   };
 
   return (
     <div className="px-16">
       <main className="container mx-auto px-16">
-        <header className="flex justify-between items-center mt-4 px-7">
-          <h1 className="text-3xl font-bold">Subir Cursos</h1>
-          <UserButton showName />
-        </header>
-        <div className="mb-6 bg-background p-6 rounded-lg shadow-md">
+        <header className="mt-4 flex items-center justify-between px-7">
+          <h1 className="text-3xl font-bold">Dashboard Profesores</h1>
+              <UserButton showName />    
+            </header>
+        <div className="flex justify-end mt-6">
+          <Button
+            onClick={handleCreateCourse}
+            className="transform bg-primary text-background transition-transform hover:text-primary active:scale-95"
+          >
+            <FiPlus className="mr-2" />
+            Crear Curso
+          </Button>
+        </div>
+        <h2 className="mb-4 text-2xl font-bold">Lista De Cursos Creados</h2>
+        {loading ? (
+          <LoadingCourses />
+        ) : (
+          <CourseListTeacher
+            courses={courses}
+            onEdit={handleEditCourse}
+            onDelete={handleDeleteCourse}
+          />
+        )}
+        {isModalOpen && (
           <CourseForm
             onSubmitAction={handleCreateOrEditCourse}
             uploading={uploading}
             editingCourseId={editingCourse ? editingCourse.id : null}
             title={editingCourse?.title ?? ""}
-            setTitle={(title: string) => setEditingCourse((prev) => prev ? { ...prev, title } : null)}
-            setDescription={(description: string) => setEditingCourse((prev) => prev ? { ...prev, description } : null)}
+            setTitle={(title: string) =>
+              setEditingCourse((prev) => (prev ? { ...prev, title } : null))
+            }
+            setDescription={(description: string) =>
+              setEditingCourse((prev) =>
+                prev ? { ...prev, description } : null,
+              )
+            }
             category={editingCourse?.category ?? ""}
-            setCategory={(category: string) => setEditingCourse((prev) => prev ? { ...prev, category } : null)}
-            instructor={editingCourse?.instructor ?? ""}
-            setInstructor={(instructor: string) => setEditingCourse((prev) => prev ? { ...prev, instructor } : null)}
+            setCategory={(category: string) =>
+              setEditingCourse((prev) => (prev ? { ...prev, category } : null))
+            }
             rating={editingCourse?.rating ?? 0}
-            setRating={(rating: number) => setEditingCourse((prev) => prev ? { ...prev, rating } : null)}
+            setRating={(rating: number) =>
+              setEditingCourse((prev) => (prev ? { ...prev, rating } : null))
+            }
             coverImageKey={editingCourse?.coverImageKey ?? ""}
-            setCoverImageKey={(coverImageKey: string) => setEditingCourse((prev) => prev ? { ...prev, coverImageKey } : null)}
+            setCoverImageKey={(coverImageKey: string) =>
+              setEditingCourse((prev) =>
+                prev ? { ...prev, coverImageKey } : null,
+              )
+            }
+            isOpen={isModalOpen}
+            onCloseAction={handleCloseModal}
           />
-        </div>
-        <h2 className="mb-4 text-2xl font-bold">Lista De Cursos Creados</h2>
-        <CourseListTeacher
-          courses={courses}
-          onEdit={handleEditCourse}
-          onDelete={handleDeleteCourse}
-        />
+        )}
       </main>
     </div>
   );

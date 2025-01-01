@@ -9,8 +9,8 @@ export interface Lesson {
   description: string | null;
   order: number;
   courseId: number;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | number | Date;
+  updatedAt: string | number | Date;
 }
 
 export interface Course {
@@ -25,6 +25,8 @@ export interface Course {
   userId: string;
   lessons?: Lesson[];
   totalStudents?: number;
+  createdAt: string | number | Date;
+  updatedAt: string | number | Date;
 }
 
 // Crear un nuevo curso
@@ -56,9 +58,12 @@ export const createCourse = async ({
   });
 };
 
-// Obtener todos los cursos
-export const getAllCourses = async (): Promise<Course[]> => {
-  const result = await db.select().from(courses);
+// Obtener todos los cursos de un profesor
+export const getCoursesByUserId = async (userId: string): Promise<Course[]> => {
+  const result = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.creatorId, userId));
   return result.map((course) => ({
     ...course,
     userId: course.creatorId,
@@ -103,6 +108,15 @@ export const getCourseById = async (
   course.totalStudents = await getTotalStudents(courseId);
 
   return course;
+};
+
+// Obtener todos los cursos
+export const getAllCourses = async (): Promise<Course[]> => {
+  const result = await db.select().from(courses);
+  return result.map((course) => ({
+    ...course,
+    userId: course.creatorId,
+  }));
 };
 
 // Actualizar un curso

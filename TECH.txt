@@ -4,3 +4,9 @@ Tecnologias Que Se Usan:
 ~ Next.js 15, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM, 
 PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Sentry, PostHog
 y Upstash
+
+
+CORREO SOPORTE:
+artiefysupport@gmail.com
+
+-agregar sistema de search query e integrarlo en el json ld schema
