@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { FiUploadCloud } from "react-icons/fi";
 import { MdClose } from "react-icons/md";
+import { Button } from "~/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,6 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Progress } from "~/components/ui/progress";
-import { Button } from "~/components/ui/button";
 
 interface CourseFormProps {
   onSubmitAction: (
@@ -160,19 +160,21 @@ export default function CourseForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-5/6 overflow-y-auto">
         <DialogHeader className="mt-4">
-          <DialogTitle>
+          <DialogTitle className="text-4xl font-bold">
             {editingCourseId ? "Editar Curso" : "Crear Curso"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm text-white">
             {editingCourseId
               ? "Edita los detalles del curso"
               : "Llena los detalles para crear un nuevo curso"}
           </DialogDescription>
         </DialogHeader>
         <div className="rounded-lg bg-background px-6 text-black shadow-md">
-          {errors.title && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          <label htmlFor="title" className="text-sm text-primary">
+            Título
+          </label>
           <input
             type="text"
             placeholder="Título"
@@ -183,7 +185,13 @@ export default function CourseForm({
             }}
             className={`mb-4 w-full rounded border p-2 ${errors.title ? "border-red-500" : "border-primary"}`}
           />
-          {errors.description && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          {errors.title && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
+          <label htmlFor="description" className="text-sm text-primary">
+            Descripción
+          </label>
+          
           <textarea
             placeholder="Descripción"
             value={description}
@@ -193,7 +201,12 @@ export default function CourseForm({
             }}
             className={`mb-3 w-full rounded border p-2 ${errors.description ? "border-red-500" : "border-primary"}`}
           />
-          {errors.category && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          {errors.description && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
+          <label htmlFor="category" className="text-sm text-primary">
+            Categoría
+          </label>
           <input
             type="text"
             placeholder="Categoría"
@@ -204,12 +217,20 @@ export default function CourseForm({
             }}
             className={`mb-4 w-full rounded border p-2 ${errors.category ? "border-red-500" : "border-primary"}`}
           />
+          {errors.category && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
+          <label htmlFor="instructor" className="text-sm text-primary">
+            Instructor
+          </label>
           <div className="mb-4 w-full rounded border border-primary p-2">
             <h3 className="text-lg font-medium text-primary">
               Instructor: {user?.fullName}
             </h3>
           </div>
-          {errors.rating && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          <label htmlFor="rating" className="text-sm text-primary">
+            Calificación
+          </label>
           <input
             type="number"
             placeholder="Calificación"
@@ -220,15 +241,20 @@ export default function CourseForm({
             }}
             className={`mb-4 w-full rounded border p-2 ${errors.rating ? "border-red-500" : "border-primary"}`}
           />
-          {errors.file && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          {errors.rating && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
+          <label htmlFor="file" className="mt-4 text-sm text-primary">
+            Imagen de portada:
+          </label>
           <div
-            className={`rounded-lg border-2 border-dashed p-8 ${isDragging ? "border-blue-500 bg-blue-50" : errors.file ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
+            className={`mx-auto w-1/2 rounded-lg border-2 border-dashed border-primary bg-gray-50 p-8 ${isDragging ? "border-blue-500 bg-blue-50" : errors.file ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             <div className="text-center">
-              <FiUploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+              <FiUploadCloud className="mx-auto h-12 w-12 text-primary" />
               <h2 className="mt-4 text-xl font-medium text-gray-700">
                 Arrastra y suelta tu imagen aquí
               </h2>
@@ -247,55 +273,52 @@ export default function CourseForm({
               />
               <label
                 htmlFor="file-upload"
-                className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary hover:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Seleccionar Archivo
               </label>
             </div>
-          </div>
-          {fileName && (
-            <div className="mt-8">
-              <h3 className="mb-4 text-lg font-medium text-primary">
-                Vista previa de la imagen
-              </h3>
-              <div className="group relative overflow-hidden rounded-lg bg-gray-100">
-                {file && (
-                  <Image
-                    src={URL.createObjectURL(file)}
-                    alt="preview"
-                    width={500}
-                    height={200}
-                    className="h-48 w-full object-cover"
-                  />
-                )}
-                <button
-                  onClick={() => {
-                    setFile(null);
-                    setFileName(null);
-                    setFileSize(null);
-                    setErrors((prev) => ({ ...prev, file: true }));
-                  }}
-                  className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                >
-                  <MdClose className="h-5 w-5" />
-                </button>
-                <div className="flex justify-between p-2">
-                  <p className="truncate text-sm text-gray-500">{fileName}</p>
-                  <p className="text-sm text-gray-500">
-                    {((fileSize ?? 0) / 1024).toFixed(2)} KB
-                  </p>
+            {/* Vista previa de la imagen */}
+            {fileName && (
+              <div className="mt-4">
+                <div className="group relative overflow-hidden rounded-lg bg-gray-100">
+                  {file && (
+                    <Image
+                      src={URL.createObjectURL(file)}
+                      alt="preview"
+                      width={500}
+                      height={200}
+                      className="h-48 w-full object-cover"
+                    />
+                  )}
+                  <button
+                    onClick={() => {
+                      setFile(null);
+                      setFileName(null);
+                      setFileSize(null);
+                      setErrors((prev) => ({ ...prev, file: true }));
+                    }}
+                    className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                  >
+                    <MdClose className="h-5 w-5" />
+                  </button>
+                  <div className="flex justify-between p-2">
+                    <p className="truncate text-sm text-gray-500">{fileName}</p>
+                    <p className="text-sm text-gray-500">
+                      {((fileSize ?? 0) / 1024).toFixed(2)} KB
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+          </div>
+          {errors.file && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
           {uploading && <Progress value={progress} className="my-4 w-full" />}
         </div>
         <DialogFooter>
-          <Button
-            onClick={handleSubmit}
-            variant="save"
-            disabled={uploading}
-          >
+          <Button onClick={handleSubmit} variant="save" disabled={uploading}>
             {uploading
               ? "Subiendo..."
               : editingCourseId

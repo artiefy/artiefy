@@ -160,10 +160,10 @@ export default function Page() {
     <div className="px-16">
       <main className="container mx-auto px-16">
         <header className="mt-4 flex items-center justify-between px-7">
-          <h1 className="text-3xl font-bold">Dashboard Profesores</h1>
               <UserButton showName />    
             </header>
-        <div className="flex justify-end mt-6">
+        <div className="flex justify-between mt-6">
+        <h1 className="text-3xl font-bold">Panel de control de cursos</h1>
           <Button
             onClick={handleCreateCourse}
             className="transform bg-primary text-background transition-transform hover:text-primary active:scale-95"

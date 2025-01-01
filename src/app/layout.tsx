@@ -5,7 +5,8 @@ import { Josefin_Sans, Montserrat } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
 import { globalMetadata } from "../lib/metadata";
 import { CSPostHogProvider } from "./_analytics/provider";
-import { globalMetadata } from '../lib/metadata';
+import Loading from "./loading";
+import Head from 'next/head';
 
 import "../styles/globals.css";
 
@@ -21,12 +22,13 @@ const josefinSans = Josefin_Sans({
   variable: "--font-josefin-sans",
 });
 
+export const metadata = globalMetadata;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  
   return (
     <ClerkProvider
       localization={esMX}
@@ -71,9 +73,14 @@ export default function RootLayout({
         </Head>
         <CSPostHogProvider>
           <body>
-            <main>{children}</main>
-            <Toaster />
-            </body>
+            <ClerkLoading>
+              <Loading />
+            </ClerkLoading>
+            <ClerkLoaded>
+              <main>{children}</main>
+              <Toaster />
+            </ClerkLoaded>
+          </body>
         </CSPostHogProvider>
       </html>
     </ClerkProvider>
