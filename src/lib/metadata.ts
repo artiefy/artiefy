@@ -37,4 +37,3 @@ export const globalMetadata: Metadata = {
     apple: '/artiefy-icon.png',
   },
 };
-

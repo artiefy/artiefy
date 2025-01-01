@@ -8,3 +8,5 @@ y Upstash
 
 CORREO SOPORTE:
 artiefysupport@gmail.com
+
+-agregar sistema de search query e integrarlo en el json ld schema
