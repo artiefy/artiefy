@@ -8,8 +8,9 @@ export async function generateMetadata({
 }: {
   params: { id: string };
 }): Promise<Metadata> {
+  const { id } = params;
   try {
-    const course = await getCourseById(Number(params.id));
+    const course = await getCourseById(Number(id));
     if (!course) {
       return {
         title: "Curso no encontrado",
@@ -17,7 +18,9 @@ export async function generateMetadata({
       };
     }
 
-    const ogImageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}/opengraph-image`;
+    const coverImageUrl = course.coverImageKey 
+      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+      : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`; // Asegúrate de tener una imagen de placeholder
 
     return {
       title: `${course.title} | Artiefy`,
@@ -25,13 +28,20 @@ export async function generateMetadata({
       openGraph: {
         title: `${course.title} | Artiefy`,
         description: course.description ?? "No hay descripción disponible.",
-        images: [ogImageUrl],
+        images: [
+          {
+            url: coverImageUrl,
+            width: 1200,
+            height: 630,
+            alt: `Portada del curso: ${course.title}`,
+          },
+        ],
       },
       twitter: {
         card: "summary_large_image",
         title: `${course.title} | Artiefy`,
         description: course.description ?? "No hay descripción disponible.",
-        images: [ogImageUrl],
+        images: [coverImageUrl],
       },
     };
   } catch (error) {
@@ -44,8 +54,9 @@ export async function generateMetadata({
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
+  const { id } = params;
   try {
-    const course = await getCourseById(Number(params.id));
+    const course = await getCourseById(Number(id));
     if (!course) {
       notFound();
     }
@@ -60,8 +71,7 @@ export default async function Page({ params }: { params: { id: string } }) {
               "@context": "https://schema.org",
               "@type": "Course",
               name: course.title,
-              description:
-                course.description ?? "No hay descripción disponible.",
+              description: course.description ?? "No hay descripción disponible.",
               provider: {
                 "@type": "Organization",
                 name: "Artiefy",
@@ -80,6 +90,9 @@ export default async function Page({ params }: { params: { id: string } }) {
                     ratingCount: course.totalStudents,
                   }
                 : undefined,
+              image: course.coverImageKey 
+                ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+                : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`,
             }),
           }}
         />
@@ -90,3 +103,4 @@ export default async function Page({ params }: { params: { id: string } }) {
     notFound();
   }
 }
+
