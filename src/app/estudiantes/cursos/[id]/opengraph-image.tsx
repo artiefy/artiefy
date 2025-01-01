@@ -1,18 +1,19 @@
 import { ImageResponse } from 'next/og'
-import { getCourseById } from "~/models/courseModels"
- 
+
 export const runtime = 'edge'
- 
+
 export const alt = 'Curso en Artiefy'
 export const size = {
   width: 1200,
   height: 630,
 }
- 
+
 export const contentType = 'image/png'
- 
+
 export default async function Image({ params }: { params: { id: string } }) {
-  const course = await getCourseById(Number(params.id))
+  const course: { title: string; description: string; instructor: string } | null = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/courses/${params.id}`).then((res) =>
+    res.json() as Promise<{ title: string; description: string; instructor: string } | null>
+  )
 
   if (!course) {
     return new ImageResponse(
