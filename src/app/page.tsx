@@ -1,12 +1,11 @@
 "use client";
 import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
-import Link from "next/link";
-import { Header } from "~/components/layout/Header";
-import { Button } from "~/components/ui/button";
-import { useState } from "react";
 import { Info } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { Header } from "~/components/layout/Header";
 import { ModalError } from "~/components/modals/modalError";
-
+import { Button } from "~/components/ui/button";
 
 export default function Home() {
   const { user } = useUser();
@@ -17,8 +16,8 @@ export default function Home() {
     user?.publicMetadata?.role === "admin"
       ? "/dashboard/admin"
       : user?.publicMetadata?.role === "profesor"
-      ? "/dashboard/profesores"
-      : "/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
+        ? "/dashboard/profesores"
+        : "/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -52,13 +51,16 @@ export default function Home() {
             </SignedIn>
           </div>
           <div
-              onClick={() => setIsModalOpen(true)}
-              className="fixed bottom-4 right-6 hover:cursor-pointer"
-              title="Información"
-            >
-              <Info className="size-10" />
-            </div>
-            <ModalError isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            onClick={() => setIsModalOpen(true)}
+            className="fixed bottom-4 right-6 hover:cursor-pointer"
+            title="Información"
+          >
+            <Info className="size-10" />
+          </div>
+          <ModalError
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+          />
         </section>
       </main>
     </div>

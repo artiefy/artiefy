@@ -86,7 +86,7 @@ export const ModalError = ({
                 htmlFor="description"
                 className="block text-sm font-medium text-gray-700"
               >
-                Descripcion del error *
+                <span className="text-red-500">*</span>Descripcion del error
               </label>
               <textarea
                 id="description"
@@ -127,7 +127,7 @@ export const ModalError = ({
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700"
               >
-                Correo electrónico *
+                <span className="text-red-500">*</span>Correo electrónico
               </label>
               <input
                 type="email"
@@ -148,7 +148,7 @@ export const ModalError = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
                 Cancelar
               </button>

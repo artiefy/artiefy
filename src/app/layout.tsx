@@ -1,4 +1,5 @@
 // src/app/layout.tsx
+
 import { esMX } from "@clerk/localizations";
 import { ClerkProvider } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
@@ -6,7 +7,6 @@ import { Josefin_Sans, Montserrat } from "next/font/google";
 import { Toaster } from "~/components/ui/toaster";
 import { globalMetadata } from "../lib/metadata";
 import { CSPostHogProvider } from "./_analytics/provider";
-
 import "../styles/globals.css";
 
 const montserrat = Montserrat({
@@ -21,13 +21,12 @@ const josefinSans = Josefin_Sans({
   variable: "--font-josefin-sans",
 });
 
-export const metadata = globalMetadata;
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  
   return (
     <ClerkProvider
       localization={esMX}

@@ -180,8 +180,12 @@ export const scoresRelations = relations(scores, ({ one }) => ({
 
 export const preferencesRelations = relations(preferences, ({ one }) => ({
   user: one(users, {
-    fields: [preferences.userId], // Campo que referencia al usuario
-    references: [users.id], // ID del usuario
+    fields: [preferences.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [preferences.categoryId],
+    references: [categories.id],
   }),
 }));
 
@@ -224,3 +228,7 @@ export const coursesTakenRelations = relations(coursesTaken, ({ one }) => ({
 //     references: [lessons.id], // ID de la lección
 //   }),
 // }));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  preferences: many(preferences), // Relación con preferencias
+}));
