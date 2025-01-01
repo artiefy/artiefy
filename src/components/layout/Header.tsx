@@ -15,7 +15,7 @@ export function Header() {
     { href: "/", label: "Inicio" },
     { href: "/estudiantes", label: "Cursos" },
     { href: "/proyectos", label: "Proyectos" },
-    { href: "/comunidad", label: "Comunidad" },
+    { href: "/comunidad", label: "Nosotros" },
   ];
 
   return (

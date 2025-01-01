@@ -2,11 +2,11 @@ import { esMX } from "@clerk/localizations";
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { neobrutalism } from "@clerk/themes";
 import { Josefin_Sans, Montserrat } from "next/font/google";
+import Head from "next/head";
 import { Toaster } from "~/components/ui/toaster";
 import { globalMetadata } from "../lib/metadata";
 import { CSPostHogProvider } from "./_analytics/provider";
 import Loading from "./loading";
-import Head from 'next/head';
 
 import "../styles/globals.css";
 
@@ -54,16 +54,14 @@ export default function RootLayout({
                 sameAs: [
                   "https://www.facebook.com/artiefy",
                   "https://www.twitter.com/artiefy",
-                  "https://www.instagram.com/artiefy"
+                  "https://www.instagram.com/artiefy",
                 ],
                 potentialAction: {
                   "@type": "SearchAction",
-                  target: {
-                    "@type": "EntryPoint",
-                    urlTemplate: "https://artiefy.vercel.app/search?query={search_term_string}"
-                  },
-                  "query-input": "required name=search_term_string"
-                }
+                  target:
+                    "https://artiefy.vercel.app/search?query={search_term_string}",
+                  "query-input": "required name=search_term_string",
+                },
               }),
             }}
           />
