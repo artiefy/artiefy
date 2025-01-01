@@ -8,9 +8,8 @@ export async function generateMetadata({
 }: {
   params: { id: string };
 }): Promise<Metadata> {
-  const { id } = params; // Usar params directamente
   try {
-    const course = await getCourseById(Number(id));
+    const course = await getCourseById(Number(params.id));
     if (!course) {
       return {
         title: "Curso no encontrado",
@@ -18,7 +17,7 @@ export async function generateMetadata({
       };
     }
 
-    const ogImageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}/opengraph-image`;
+    const ogImageUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}/opengraph-image`;
 
     return {
       title: `${course.title} | Artiefy`,
@@ -45,9 +44,8 @@ export async function generateMetadata({
 }
 
 export default async function Page({ params }: { params: { id: string } }) {
-  const { id } = params; // Usar params directamente
   try {
-    const course = await getCourseById(Number(id));
+    const course = await getCourseById(Number(params.id));
     if (!course) {
       notFound();
     }
