@@ -41,13 +41,13 @@ export async function generateMetadata(
 
     const coverImageUrl = await getValidCoverImageUrl(course.coverImageKey);
     const previousImages = (await parent).openGraph?.images ?? [];
-
+    const motivationalMessage = "¡Subscríbete ya en este curso excelente!";
     return {
       title: `${course.title} | Artiefy`,
-      description: course.description ?? "No hay descripción disponible.",
+      description: `${course.description ?? "No hay descripción disponible."} ${motivationalMessage}`,
       openGraph: {
         title: `${course.title} | Artiefy`,
-        description: course.description ?? "No hay descripción disponible.",
+        description: `${course.description ?? "No hay descripción disponible."} ${motivationalMessage}`,
         images: [
           {
             url: coverImageUrl,
@@ -61,7 +61,7 @@ export async function generateMetadata(
       twitter: {
         card: "summary_large_image",
         title: `${course.title} | Artiefy`,
-        description: course.description ?? "No hay descripción disponible.",
+        description: `${course.description ?? "No hay descripción disponible."} ${motivationalMessage}`,
         images: [coverImageUrl],
       },
     };
