@@ -3,8 +3,8 @@ import { getCourseById } from "~/models/courseModels";
 
 export const dynamic = 'force-dynamic'; 
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   
   try {
     const courseId = Number(id);
