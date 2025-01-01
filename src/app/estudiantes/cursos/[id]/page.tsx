@@ -74,8 +74,8 @@ export async function generateMetadata(
   }
 }
 
-export default async function Page({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     const course = await getCourseById(Number(id));
     if (!course) {
