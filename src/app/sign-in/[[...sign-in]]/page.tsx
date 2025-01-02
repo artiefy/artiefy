@@ -1,7 +1,9 @@
 "use client";
-import { SignIn } from "@clerk/nextjs";
 import Image from "next/image";
 import { AspectRatio } from "~/components/ui/aspect-ratio"; // Asegúrate de importar el componente
+
+import * as Clerk from '@clerk/elements/common';
+import * as SignInElements from '@clerk/elements/sign-in';
 
 export default function SignInPage() {
   return (
@@ -42,24 +44,50 @@ export default function SignInPage() {
           <h2 className="text-2xl font-medium">BIENVENIDO</h2>
         </div>
 
-        {/* Componente de inicio de sesión */}
-        <SignIn
-          routing="path"
-          path="/sign-in"
-          appearance={{
-            layout: {
-              logoPlacement: "inside", // Ubicación del logo: 'inside' o 'outside'
-              privacyPageUrl: "https://clerk.com/legal/privacy", // URL de tu política de privacidad
-              animations: true, // Activa/desactiva las animaciones
-              logoImageUrl: "/logo-artiefy.webp", // URL de tu logo personalizado
-              logoLinkUrl: "/", // URL al hacer clic en el logo
-              socialButtonsPlacement: "bottom",
-              socialButtonsVariant: "blockButton",
-              termsPageUrl: "https://clerk.com/terms",
-              unsafe_disableDevelopmentModeWarnings: true
-            },
-          }}
-        />
+        {/* Componente de inicio de sesión personalizado */}
+        <SignInElements.Root>
+          <SignInElements.Step
+            name="start"
+            className="bg-white w-96 rounded-2xl py-10 px-8 shadow-sm border space-y-6"
+          >
+            <div className="grid grid-cols-2 gap-x-4">
+              <Clerk.Connection
+                name="google"
+                className="flex items-center gap-x-3 justify-center font-medium border shadow-sm py-1.5 px-2.5 rounded-md"
+              >
+                <Clerk.Icon className="size-4" />
+                Google
+              </Clerk.Connection>
+              <Clerk.Connection
+                name="github"
+                className="flex items-center gap-x-3 justify-center font-medium border shadow-sm py-1.5 px-2.5 rounded-md"
+              >
+                <Clerk.Icon className="size-4" />
+                GitHub
+              </Clerk.Connection>
+            </div>
+            <Clerk.Field name="identifier" className="space-y-2">
+              <Clerk.Label className="text-sm font-medium">Email</Clerk.Label>
+              <Clerk.Input className="w-full border rounded-md py-1.5 px-2.5" />
+              <Clerk.FieldError className="block text-red-500 text-sm" />
+            </Clerk.Field>
+            <SignInElements.Action submit className="bg-black text-white rounded-md py-1.5 px-2.5">
+              Continue
+            </SignInElements.Action>
+          </SignInElements.Step>
+          <SignInElements.Step name="verifications">
+            <SignInElements.Strategy name="email_code">
+              <Clerk.Field name="code" className="space-y-2">
+                <Clerk.Label className="text-sm font-medium">Code</Clerk.Label>
+                <Clerk.Input className="w-full border rounded-md py-1.5 px-2.5" />
+                <Clerk.FieldError className="block text-red-500 text-sm" />
+              </Clerk.Field>
+              <SignInElements.Action submit className="bg-black text-white rounded-md py-1.5 px-2.5">
+                Continue
+              </SignInElements.Action>
+            </SignInElements.Strategy>
+          </SignInElements.Step>
+        </SignInElements.Root>
       </div>
     </div>
   );
