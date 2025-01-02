@@ -22,7 +22,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 
-interface CourseModel {
+interface Course {
   id: number;
   title: string;
   description: string;
@@ -38,8 +38,8 @@ interface CourseModel {
 }
 
 interface CourseListTeacherProps {
-  courses: CourseModel[];
-  onEdit: (course: CourseModel) => void;
+  courses: Course[];
+  onEdit: (course: Course) => void;
   onDelete: (id: string) => void;
 }
 
@@ -104,7 +104,7 @@ export default function CourseListTeacher({
           <CardFooter className="flex items-center justify-between px-3">
             <Button
               onClick={() => onEdit(course)}
-              className="mr-4 bg-orange-500 text-white hover:bg-orange-500/90 border-orange-500 hover:border-orange-500/90"
+              className="mr-4 border-orange-500 bg-orange-500 text-white hover:border-orange-500/90 hover:bg-orange-500/90"
             >
               Editar
             </Button>
@@ -117,15 +117,16 @@ export default function CourseListTeacher({
                   <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
                     Esta acción no se puede deshacer. Se eliminará
-                    permanentemente el curso <span className="font-bold">{course.title}</span> y todos los datos
-                    asociados a este.
+                    permanentemente el curso{" "}
+                    <span className="font-bold">{course.title}</span> y todos
+                    los datos asociados a este.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={() => handleDelete(course.id.toString())}
-                    className="bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
+                    className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-red-700"
                   >
                     Eliminar
                   </AlertDialogAction>

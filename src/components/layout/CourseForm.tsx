@@ -227,7 +227,10 @@ export default function CourseForm({
           {errors.category && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <label htmlFor="instructor" className="text-lg font-medium text-primary">
+          <label
+            htmlFor="instructor"
+            className="text-lg font-medium text-primary"
+          >
             Instructor
           </label>
           <div className="mb-4 w-full rounded border border-primary p-2">
@@ -255,45 +258,46 @@ export default function CourseForm({
             Imagen de portada
           </label>
           <div
-            className={`mx-auto w-1/2 rounded-lg border-2 border-dashed border-primary p-8 ${isDragging ? "border-blue-500 bg-blue-50" : errors.file ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
+            className={`mx-auto w-1/2 rounded-lg border-2 border-dashed border-primary p-8 ${
+              isDragging
+                ? "border-blue-500 bg-blue-50"
+                : errors.file
+                  ? "border-red-500 bg-red-50"
+                  : "border-gray-300 bg-gray-50"
+            } transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             <div className="text-center">
-              <FiUploadCloud className="mx-auto h-12 w-12 text-primary" />
-              <h2 className="mt-4 text-xl font-medium text-gray-700">
-                Arrastra y suelta tu imagen aquí
-              </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                o haz clic para seleccionar un archivo desde tu computadora
-              </p>
-              <p className="mt-1 text-sm text-gray-500">
-                Supports: JPG, PNG, GIF (Max size: 5MB)
-              </p>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-                id="file-upload"
-              />
-
-              <label
-                htmlFor="file-upload"
-                className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Seleccionar Archivo
-              </label>
-            </div>
-          </div>
-          {fileName && (
-            <div className="mt-8">
-              <h3 className="mb-4 text-lg font-medium text-primary">
-                Vista previa de la imagen
-              </h3>
-              <div className="group relative overflow-hidden rounded-lg bg-gray-100">
-                {file && (
+              {!file ? (
+                <>
+                  <FiUploadCloud className="mx-auto h-12 w-12 text-primary" />
+                  <h2 className="mt-4 text-xl font-medium text-gray-700">
+                    Arrastra y suelta tu imagen aquí
+                  </h2>
+                  <p className="mt-2 text-sm text-gray-500">
+                    o haz clic para seleccionar un archivo desde tu computadora
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Supports: JPG, PNG, GIF (Max size: 5MB)
+                  </p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    id="file-upload"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Seleccionar Archivo
+                  </label>
+                </>
+              ) : (
+                <div className="relative overflow-hidden rounded-lg bg-gray-100">
                   <Image
                     src={URL.createObjectURL(file)}
                     alt="preview"
@@ -301,32 +305,32 @@ export default function CourseForm({
                     height={200}
                     className="h-48 w-full object-cover"
                   />
-                )}
-                <button
-                  onClick={() => {
-                    setFile(null);
-                    setFileName(null);
-                    setFileSize(null);
-                    setErrors((prev) => ({ ...prev, file: true }));
-                  }}
-                  className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                >
-                  <MdClose className="h-5 w-5" />
-                </button>
-                <div className="flex justify-between p-2">
-                  <p className="truncate text-sm text-gray-500">{fileName}</p>
-                  <p className="text-sm text-gray-500">
-                    {((fileSize ?? 0) / 1024).toFixed(2)} KB
-                  </p>
+                  <button
+                    onClick={() => {
+                      setFile(null);
+                      setFileName(null);
+                      setFileSize(null);
+                      setErrors((prev) => ({ ...prev, file: true }));
+                    }}
+                    className="absolute right-2 top-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                  >
+                    <MdClose className="z-20 h-5 w-5" />
+                  </button>
+                  <div className="flex justify-between p-2">
+                    <p className="truncate text-sm text-gray-500">{fileName}</p>
+                    <p className="text-sm text-gray-500">
+                      {((fileSize ?? 0) / 1024).toFixed(2)} KB
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-          )}
-          {errors.file && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
+          </div>
           {uploading && <Progress value={progress} className="my-4 w-full" />}
         </div>
+        {errors.file && (
+          <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+        )}
         <DialogFooter>
           <Button onClick={handleSubmit} variant="save" disabled={uploading}>
             {uploading
