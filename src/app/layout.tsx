@@ -1,13 +1,12 @@
-import { type Metadata } from 'next'
+import type { Metadata } from 'next'
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { esMX } from "@clerk/localizations"
 import { neobrutalism } from "@clerk/themes"
 import { Montserrat } from 'next/font/google'
 import { Toaster } from "~/components/ui/toaster"
 import { CSPostHogProvider } from "./_analytics/provider"
-import { globalMetadata } from '~/lib/metadata'
+import { metadata as siteMetadata } from '~/lib/metadata'
 import Loading from "./loading"
-import Head from 'next/head'
 
 import "~/styles/globals.css"
 
@@ -17,7 +16,7 @@ const montserrat = Montserrat({
   variable: "--font-montserrat",
 })
 
-export const metadata: Metadata = globalMetadata
+export const metadata: Metadata = siteMetadata
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -46,12 +45,10 @@ export default function RootLayout({
       }}
     >
       <html lang="es" className={montserrat.variable}>
-        <Head>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
-        </Head>
         <CSPostHogProvider>
           <body>
             <ClerkLoading>
