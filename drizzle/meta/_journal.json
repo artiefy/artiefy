@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1735855339045,
+      "tag": "0000_brief_millenium_guard",
+      "breakpoints": true
+    }
+  ]
 }

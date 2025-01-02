@@ -1,20 +1,25 @@
+import { auth } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
 import { getCourseById } from "~/models/courseModels";
 
-export const dynamic = 'force-dynamic'; 
-
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const { id } = await context.params;
-  
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
   try {
-    const courseId = Number(id);
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+
+    const courseId = parseInt(params.id);
     if (isNaN(courseId)) {
       return NextResponse.json(
         { error: "ID de curso inválido" },
         { status: 400 },
       );
     }
-    
+
     const course = await getCourseById(courseId);
     if (!course) {
       return NextResponse.json(
@@ -22,8 +27,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         { status: 404 },
       );
     }
+
     return NextResponse.json(course);
-  } catch {    
+  } catch (error) {
+    console.error("Error al obtener el curso:", error);
     return NextResponse.json(
       { error: "Error al obtener el curso" },
       { status: 500 },

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
-import { db } from "~/server/db/index";
-import { users, courses } from "~/server/db/schema";
+import { db } from "~/server/db";
+import { courses, users } from "~/server/db/schema";
 
 export interface User {
   id: string;
@@ -12,15 +12,41 @@ export interface User {
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  const result = await db
+    .select({
+      id: users.id,
+      role: users.role,
+      name: users.name,
+      email: users.email,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+    })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+
   return result[0] ?? null;
 }
 
 export async function getAllUsers(): Promise<User[]> {
-  return db.select().from(users);
+  return db
+    .select({
+      id: users.id,
+      role: users.role,
+      name: users.name,
+      email: users.email,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+    })
+    .from(users);
 }
 
-export async function createUser(id: string, role: string, name: string, email: string): Promise<void> {
+export async function createUser(
+  id: string,
+  role: string,
+  name: string,
+  email: string,
+): Promise<void> {
   await db.insert(users).values({
     id,
     role,

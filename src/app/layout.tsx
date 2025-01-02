@@ -47,26 +47,23 @@ export default function RootLayout({
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
-                '@context': 'https://schema.org',
-                '@type': 'WebSite',
-                name: 'Artiefy',
-                url: 'https://artiefy.vercel.app',
-                logo: 'https://artiefy.vercel.app/artiefy-icon.png',
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "Artiefy",
+                url: "https://artiefy.vercel.app",
                 sameAs: [
-                  'https://www.facebook.com/artiefy',
-                  'https://www.twitter.com/artiefy',
-                  'https://www.instagram.com/artiefy',
+                  "https://www.facebook.com/artiefy",
+                  "https://www.twitter.com/artiefy",
+                  "https://www.instagram.com/artiefy"
                 ],
-                contactPoint: {
-                  '@type': 'ContactPoint',
-                  telephone: '+1-800-555-5555',
-                  contactType: 'Customer Service',
-                },
                 potentialAction: {
-                  '@type': 'SearchAction',
-                  target: 'https://artiefy.vercel.app/search?query={search_term_string}',
-                  'query-input': 'required name=search_term_string',
-                },
+                  "@type": "SearchAction",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate: "https://artiefy.vercel.app/search?query={search_term_string}"
+                  },
+                  "query-input": "required name=search_term_string"
+                }
               }),
             }}
           />

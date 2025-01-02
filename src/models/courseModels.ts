@@ -1,6 +1,6 @@
 import { count, eq } from "drizzle-orm";
 import { db } from "~/server/db/index";
-import { courses, enrollments, lessons } from "~/server/db/schema";
+import { categories, courses, enrollments, lessons } from "~/server/db/schema";
 
 export interface Lesson {
   id: number;
@@ -19,7 +19,7 @@ export interface Course {
   description: string | null;
   creatorId: string;
   coverImageKey: string | null;
-  categoriaId: number;
+  categoryid: number;
   instructor: string;
   rating: number | null;
   userId: string;
@@ -30,44 +30,64 @@ export interface Course {
 }
 
 // Crear un nuevo curso
-export const createCourse = async ({
+export async function createCourse({
   title,
   description,
   creatorId,
-  coverImageKey,
-  categoriaId,
+  categoryid,
   instructor,
   rating,
+  coverImageKey,
 }: {
   title: string;
   description: string;
   creatorId: string;
-  coverImageKey: string;
-  categoriaId: number;
+  categoryid: number;
   instructor: string;
   rating: number;
-}): Promise<void> => {
-  await db.insert(courses).values({
-    title,
-    description,
-    creatorId,
-    coverImageKey,
-    categoriaId,
-    instructor,
-    rating,
-  });
-};
+  coverImageKey?: string;
+}) {
+  try {
+    const newCourse = await db.insert(courses).values({
+      title,
+      description,
+      creatorId,
+      categoryid,
+      instructor,
+      rating,
+      coverImageKey,
+    });
+
+    console.log("Curso creado:", newCourse);
+    return newCourse;
+  } catch (error) {
+    console.error("Error al crear el curso:", error);
+    throw error;
+  }
+}
 
 // Obtener todos los cursos de un profesor
-export const getCoursesByUserId = async (userId: string): Promise<Course[]> => {
-  const result = await db
-    .select()
+export const getCoursesByUserId = async (userId: string) => {
+  return db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      coverImageKey: courses.coverImageKey,
+      categoryid: {
+        id: categories.id,
+        name: categories.name,
+        description: categories.description,
+      },
+      instructor: courses.instructor,
+      createdAt: courses.createdAt,
+      updatedAt: courses.updatedAt,
+      creatorId: courses.creatorId,
+      rating: courses.rating,
+    })
     .from(courses)
+    .leftJoin(categories, eq(courses.categoryid, categories.id))
     .where(eq(courses.creatorId, userId));
-  return result.map((course) => ({
-    ...course,
-    userId: course.creatorId,
-  }));
 };
 
 // Obtener el número total de estudiantes inscritos en un curso
@@ -126,21 +146,31 @@ export const updateCourse = async (
     title,
     description,
     coverImageKey,
-    categoriaId,
+
+    categoryid,
     instructor,
     rating,
   }: {
     title: string;
     description: string;
     coverImageKey: string;
-    categoriaId: number;
+
+    categoryid: number;
     instructor: string;
     rating: number;
   },
 ): Promise<void> => {
   await db
     .update(courses)
-    .set({ title, description, coverImageKey, categoriaId, instructor, rating })
+    .set({
+      title,
+      description,
+      coverImageKey,
+
+      categoryid,
+      instructor,
+      rating,
+    })
     .where(eq(courses.id, courseId));
 };
 

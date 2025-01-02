@@ -29,22 +29,20 @@ export const users = pgTable("users", {
 
 // Tabla de cursos
 export const courses = pgTable("courses", {
-  id: serial("id").primaryKey(), // ID autoincremental del curso
-  title: varchar("title", { length: 255 }).notNull(), // Título del curso
-  description: text("description"), // Descripción del curso
-  coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
-  coverVideoKey: text("cover_video_key"), // Clave del video en S3
-  categoriaId: integer("categoria_id")
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  coverImageKey: text("cover_image_key"),
+  categoryid: integer("categoryid")
     .references(() => categories.id)
-    .notNull(), // Relación con la tabla categorías
-  instructor: text("instructor").notNull(), // Nombre del instructor
-  createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
-  updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
+    .notNull(),
+  instructor: text("instructor").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
   creatorId: text("creator_id")
     .references(() => users.id)
-    .notNull(), // Referencia al creador del curso (usuario existente)
-  rating: real("rating").default(0), // Nuevo campo de rating
-  porcentajeCompletado: real("porcentaje_completado").default(0), // Nuevo campo de porcentaje completado
+    .notNull(),
+  rating: real("rating").default(0),
 });
 
 //tabla de categorias

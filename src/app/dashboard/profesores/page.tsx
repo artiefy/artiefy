@@ -1,22 +1,27 @@
 "use client";
 
-import {UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
 import CourseForm from "~/components/layout/CourseForm";
 import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { Button } from "~/components/ui/button";
 import { SkeletonCard } from "~/components/layout/SkeletonCard";
+import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
 
 interface CourseModel {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  category: string;
+  categoryid: {
+    id: number;
+    name: string;
+    description: string;
+  };
   instructor: string;
   rating?: number;
   coverImageKey: string;
+  creatorId: string;
 }
 
 function LoadingCourses() {
@@ -64,7 +69,7 @@ export default function Page() {
     title: string,
     description: string,
     file: File | null,
-    category: string,
+    categoryId: number,
     rating: number,
   ) => {
     if (!user) return;
@@ -100,8 +105,8 @@ export default function Page() {
         title,
         description,
         coverImageKey,
-        category,
-        instructor: user.fullName, // Use user.fullName directly
+        categoryid: categoryId,
+        instructor: user.fullName,
         rating,
         userId: user.id,
       }),
@@ -160,10 +165,10 @@ export default function Page() {
     <div className="px-16">
       <main className="container mx-auto px-16">
         <header className="mt-4 flex items-center justify-between px-7">
-              <UserButton showName />    
-            </header>
-        <div className="flex justify-between mt-6">
-        <h1 className="text-3xl font-bold">Panel de control de cursos</h1>
+          <UserButton showName />
+        </header>
+        <div className="mt-6 flex justify-between">
+          <h1 className="text-3xl font-bold">Panel de control de cursos</h1>
           <Button
             onClick={handleCreateCourse}
             className="transform bg-primary text-background transition-transform hover:text-primary active:scale-95"
@@ -177,7 +182,7 @@ export default function Page() {
           <LoadingCourses />
         ) : (
           <CourseListTeacher
-            courses={courses}
+            courses={courses as CourseModel[]}
             onEdit={handleEditCourse}
             onDelete={handleDeleteCourse}
           />
@@ -191,14 +196,22 @@ export default function Page() {
             setTitle={(title: string) =>
               setEditingCourse((prev) => (prev ? { ...prev, title } : null))
             }
+            description={editingCourse?.description ?? ""}
             setDescription={(description: string) =>
               setEditingCourse((prev) =>
                 prev ? { ...prev, description } : null,
               )
             }
-            category={editingCourse?.category ?? ""}
-            setCategory={(category: string) =>
-              setEditingCourse((prev) => (prev ? { ...prev, category } : null))
+            category={editingCourse?.categoryid.id ?? 0}
+            setCategory={(categoryId: number) =>
+              setEditingCourse((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      categoryid: { ...prev.categoryid, id: categoryId },
+                    }
+                  : null,
+              )
             }
             rating={editingCourse?.rating ?? 0}
             setRating={(rating: number) =>

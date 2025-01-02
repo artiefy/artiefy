@@ -1,27 +1,65 @@
 //src\components\layout\CourseListTeacher.tsx
 import Image from "next/image";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 
-interface Course {
-  id: string;
-  coverImageKey: string;
+interface CourseModel {
+  id: number;
   title: string;
-  category: string;
   description: string;
+  coverImageKey: string;
+  categoryid: {
+    id: number;
+    name: string;
+    description: string;
+  };
   instructor: string;
   rating?: number;
+  creatorId: string;
 }
 
 interface CourseListTeacherProps {
-  courses: Course[];
-  onEdit: (course: Course) => void;
+  courses: CourseModel[];
+  onEdit: (course: CourseModel) => void;
   onDelete: (id: string) => void;
 }
 
-export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseListTeacherProps) {
+export default function CourseListTeacher({
+  courses,
+  onEdit,
+  onDelete,
+}: CourseListTeacherProps) {
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/courses?id=${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Error al eliminar el curso");
+      onDelete(id);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => (
@@ -47,7 +85,7 @@ export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseL
                 variant="outline"
                 className="border-primary bg-background text-primary hover:bg-black/70"
               >
-                {course.category}
+                {course.categoryid.name}
               </Badge>
               <span className="ml-2 text-sm font-bold text-gray-600">
                 Categoría
@@ -64,12 +102,36 @@ export default function CourseListTeacher({ courses, onEdit, onDelete }: CourseL
             </p>
           </CardContent>
           <CardFooter className="flex items-center justify-between px-3">
-            <Button onClick={() => onEdit(course)} className="bg-orange-500 text-white hover:bg-orange-500/90 mr-4">
+            <Button
+              onClick={() => onEdit(course)}
+              className="mr-4 bg-orange-500 text-white hover:bg-orange-500/90 border-orange-500 hover:border-orange-500/90"
+            >
               Editar
             </Button>
-            <Button onClick={() => onDelete(course.id)} variant="destructive">
-              Delete
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">Eliminar</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminará
+                    permanentemente el curso <span className="font-bold">{course.title}</span> y todos los datos
+                    asociados a este.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDelete(course.id.toString())}
+                    className="bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardFooter>
         </Card>
       ))}

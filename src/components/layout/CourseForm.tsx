@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { FiUploadCloud } from "react-icons/fi";
 import { MdClose } from "react-icons/md";
+import CategoryDropdown from "~/components/layout/CategoryDropdown";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -21,16 +22,17 @@ interface CourseFormProps {
     title: string,
     description: string,
     file: File | null,
-    category: string,
+    category: number,
     rating: number,
   ) => Promise<void>;
   uploading: boolean;
-  editingCourseId: string | null;
+  editingCourseId: number | null;
   title: string;
   setTitle: (title: string) => void;
+  description: string;
   setDescription: (description: string) => void;
-  category: string;
-  setCategory: (category: string) => void;
+  category: number;
+  setCategory: (category: number) => void;
   rating: number;
   setRating: (rating: number) => void;
   coverImageKey: string;
@@ -49,7 +51,7 @@ export default function CourseForm({
   const { user } = useUser();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(0);
   const [rating, setRating] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -122,7 +124,18 @@ export default function CourseForm({
     }
 
     setIsEditing(true);
-    await onSubmitAction(title, description, file, category, rating);
+    try {
+      await onSubmitAction(title, description, file, category, rating);
+      console.log("Datos enviados:", {
+        title,
+        description,
+        file,
+        categoryid: category,
+        rating,
+      });
+    } catch (error) {
+      console.error("Error al enviar:", error);
+    }
   };
 
   useEffect(() => {
@@ -160,19 +173,19 @@ export default function CourseForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-h-[90vh] w-5/6 overflow-y-auto">
+      <DialogContent className="max-w-5/6 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="mt-4">
-          <DialogTitle className="text-4xl font-bold">
+          <DialogTitle className="text-4xl">
             {editingCourseId ? "Editar Curso" : "Crear Curso"}
           </DialogTitle>
-          <DialogDescription className="text-sm text-white">
+          <DialogDescription className="text-xl text-white">
             {editingCourseId
               ? "Edita los detalles del curso"
               : "Llena los detalles para crear un nuevo curso"}
           </DialogDescription>
         </DialogHeader>
         <div className="rounded-lg bg-background px-6 text-black shadow-md">
-          <label htmlFor="title" className="text-sm text-primary">
+          <label htmlFor="title" className="text-lg font-medium text-primary">
             Título
           </label>
           <input
@@ -183,15 +196,17 @@ export default function CourseForm({
               setTitle(e.target.value);
               setErrors((prev) => ({ ...prev, title: !e.target.value }));
             }}
-            className={`mb-4 w-full rounded border p-2 ${errors.title ? "border-red-500" : "border-primary"}`}
+            className={`mb-4 w-full rounded border p-2 text-black outline-none ${errors.title ? "border-red-500" : "border-primary"}`}
           />
           {errors.title && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <label htmlFor="description" className="text-sm text-primary">
+          <label
+            htmlFor="description"
+            className="text-lg font-medium text-primary"
+          >
             Descripción
           </label>
-          
           <textarea
             placeholder="Descripción"
             value={description}
@@ -199,28 +214,20 @@ export default function CourseForm({
               setDescription(e.target.value);
               setErrors((prev) => ({ ...prev, description: !e.target.value }));
             }}
-            className={`mb-3 w-full rounded border p-2 ${errors.description ? "border-red-500" : "border-primary"}`}
+            className={`mb-3 w-full rounded border p-2 text-black outline-none ${errors.description ? "border-red-500" : "border-primary"}`}
           />
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <label htmlFor="category" className="text-sm text-primary">
-            Categoría
-          </label>
-          <input
-            type="text"
-            placeholder="Categoría"
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setErrors((prev) => ({ ...prev, category: !e.target.value }));
-            }}
-            className={`mb-4 w-full rounded border p-2 ${errors.category ? "border-red-500" : "border-primary"}`}
+          <CategoryDropdown
+            category={category}
+            setCategory={setCategory}
+            errors={errors}
           />
           {errors.category && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <label htmlFor="instructor" className="text-sm text-primary">
+          <label htmlFor="instructor" className="text-lg font-medium text-primary">
             Instructor
           </label>
           <div className="mb-4 w-full rounded border border-primary p-2">
@@ -228,7 +235,7 @@ export default function CourseForm({
               Instructor: {user?.fullName}
             </h3>
           </div>
-          <label htmlFor="rating" className="text-sm text-primary">
+          <label htmlFor="rating" className="text-lg font-medium text-primary">
             Calificación
           </label>
           <input
@@ -239,16 +246,16 @@ export default function CourseForm({
               setRating(Number(e.target.value));
               setErrors((prev) => ({ ...prev, rating: !e.target.value }));
             }}
-            className={`mb-4 w-full rounded border p-2 ${errors.rating ? "border-red-500" : "border-primary"}`}
+            className={`mb-4 w-full rounded border p-2 text-black outline-none ${errors.rating ? "border-red-500" : "border-primary"}`}
           />
           {errors.rating && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <label htmlFor="file" className="mt-4 text-sm text-primary">
-            Imagen de portada:
+          <label htmlFor="file" className="text-lg font-medium text-primary">
+            Imagen de portada
           </label>
           <div
-            className={`mx-auto w-1/2 rounded-lg border-2 border-dashed border-primary bg-gray-50 p-8 ${isDragging ? "border-blue-500 bg-blue-50" : errors.file ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
+            className={`mx-auto w-1/2 rounded-lg border-2 border-dashed border-primary p-8 ${isDragging ? "border-blue-500 bg-blue-50" : errors.file ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -271,47 +278,50 @@ export default function CourseForm({
                 onChange={handleFileChange}
                 id="file-upload"
               />
+
               <label
                 htmlFor="file-upload"
-                className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary hover:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Seleccionar Archivo
               </label>
             </div>
-            {/* Vista previa de la imagen */}
-            {fileName && (
-              <div className="mt-4">
-                <div className="group relative overflow-hidden rounded-lg bg-gray-100">
-                  {file && (
-                    <Image
-                      src={URL.createObjectURL(file)}
-                      alt="preview"
-                      width={500}
-                      height={200}
-                      className="h-48 w-full object-cover"
-                    />
-                  )}
-                  <button
-                    onClick={() => {
-                      setFile(null);
-                      setFileName(null);
-                      setFileSize(null);
-                      setErrors((prev) => ({ ...prev, file: true }));
-                    }}
-                    className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                  >
-                    <MdClose className="h-5 w-5" />
-                  </button>
-                  <div className="flex justify-between p-2">
-                    <p className="truncate text-sm text-gray-500">{fileName}</p>
-                    <p className="text-sm text-gray-500">
-                      {((fileSize ?? 0) / 1024).toFixed(2)} KB
-                    </p>
-                  </div>
+          </div>
+          {fileName && (
+            <div className="mt-8">
+              <h3 className="mb-4 text-lg font-medium text-primary">
+                Vista previa de la imagen
+              </h3>
+              <div className="group relative overflow-hidden rounded-lg bg-gray-100">
+                {file && (
+                  <Image
+                    src={URL.createObjectURL(file)}
+                    alt="preview"
+                    width={500}
+                    height={200}
+                    className="h-48 w-full object-cover"
+                  />
+                )}
+                <button
+                  onClick={() => {
+                    setFile(null);
+                    setFileName(null);
+                    setFileSize(null);
+                    setErrors((prev) => ({ ...prev, file: true }));
+                  }}
+                  className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                >
+                  <MdClose className="h-5 w-5" />
+                </button>
+                <div className="flex justify-between p-2">
+                  <p className="truncate text-sm text-gray-500">{fileName}</p>
+                  <p className="text-sm text-gray-500">
+                    {((fileSize ?? 0) / 1024).toFixed(2)} KB
+                  </p>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
           {errors.file && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
@@ -325,7 +335,7 @@ export default function CourseForm({
                 ? isEditing
                   ? "Editando..."
                   : "Editar"
-                : "Guardar"}
+                : "Subir Curso"}
           </Button>
         </DialogFooter>
       </DialogContent>
