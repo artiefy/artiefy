@@ -45,10 +45,12 @@ export default function RootLayout({
       }}
     >
       <html lang="es" className={montserrat.variable}>
+        <head>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
+          </head>
         <CSPostHogProvider>
           <body>
             <ClerkLoading>
