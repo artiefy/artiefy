@@ -1,33 +1,27 @@
-import { esMX } from "@clerk/localizations";
+import { type Metadata } from 'next'
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
-import { neobrutalism } from "@clerk/themes";
-import { Josefin_Sans, Montserrat } from "next/font/google";
-import Head from "next/head";
-import { Toaster } from "~/components/ui/toaster";
-import { globalMetadata } from "../lib/metadata";
-import { CSPostHogProvider } from "./_analytics/provider";
-import Loading from "./loading";
+import { esMX } from "@clerk/localizations"
+import { neobrutalism } from "@clerk/themes"
+import { Montserrat } from 'next/font/google'
+import { Toaster } from "~/components/ui/toaster"
+import { CSPostHogProvider } from "./_analytics/provider"
+import { globalMetadata } from '~/lib/metadata'
+import  Loading  from "./loading"
 
-import "../styles/globals.css";
+import "~/styles/globals.css"
 
 const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-montserrat",
-});
+})
 
-const josefinSans = Josefin_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-josefin-sans",
-});
-
-export const metadata = globalMetadata;
+export const metadata: Metadata = globalMetadata
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <ClerkProvider
@@ -36,33 +30,49 @@ export default function RootLayout({
         signIn: { baseTheme: neobrutalism },
         signUp: { baseTheme: neobrutalism },
       }}
-      afterSignOutUrl="/"
     >
-      <html
-        lang="es"
-        className={`${montserrat.variable} ${josefinSans.variable}`}
-      >
-        <Head>
+      <html lang="es" className={montserrat.variable}>
+        <head>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
-                name: "Artiefy",
-                url: "https://artiefy.vercel.app",
+                name: globalMetadata.title,
+                description: globalMetadata.description,
+                url: globalMetadata.metadataBase?.toString(),
                 potentialAction: {
                   "@type": "SearchAction",
-                  target:
-                    "https://artiefy.vercel.app/search?query={search_term_string}",
-                  "query-input": "required name=search_term_string",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate: `${globalMetadata.metadataBase?.toString()}search?q={search_term_string}`
+                  },
+                  "query-input": "required name=search_term_string"
                 },
-              }),
+                sameAs: [
+                  "https://twitter.com/artiefy",
+                  // Add other social media profiles here
+                ],
+                author: {
+                  "@type": "Organization",
+                  name: "Equipo Artiefy",
+                  url: globalMetadata.metadataBase?.toString()
+                },
+                publisher: {
+                  "@type": "Organization",
+                  name: "Artiefy",
+                  logo: {
+                    "@type": "ImageObject",
+                    url: `${globalMetadata.metadataBase?.toString()}artiefy-icon.png`
+                  }
+                }
+              })
             }}
           />
-        </Head>
+        </head>
         <CSPostHogProvider>
-          <body>
+        <body>
             <ClerkLoading>
               <Loading />
             </ClerkLoading>
@@ -74,5 +84,6 @@ export default function RootLayout({
         </CSPostHogProvider>
       </html>
     </ClerkProvider>
-  );
+  )
 }
+
