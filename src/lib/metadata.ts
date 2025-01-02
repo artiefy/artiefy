@@ -8,6 +8,10 @@ export const globalMetadata: Metadata = {
   applicationName: 'Artiefy',
   authors: [{ name: 'Equipo Artiefy', url: 'https://artiefy.vercel.app' }],
   creator: 'Equipo Artiefy',
+  category: 'Educacion',
+  alternates: {
+    canonical: 'https://artiefy.vercel.app',
+},
   openGraph: {
     type: 'website',
     locale: 'es_ES',

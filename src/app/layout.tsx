@@ -32,39 +32,30 @@ export default function RootLayout({
       }}
     >
       <html lang="es" className={montserrat.variable}>
-        <head>
+      <head>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
                 "@type": "WebSite",
-                name: globalMetadata.title,
-                description: globalMetadata.description,
-                url: globalMetadata.metadataBase?.toString(),
-                potentialAction: {
+                "name": "Artiefy",
+                "description": "Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.",
+                "url": "https://artiefy.vercel.app",
+                "inLanguage": "es",
+                "potentialAction": {
                   "@type": "SearchAction",
-                  target: {
-                    "@type": "EntryPoint",
-                    urlTemplate: `${globalMetadata.metadataBase?.toString()}search?q={search_term_string}`
-                  },
+                  "target": "https://artiefy.vercel.app/search?q={search_term_string}",
                   "query-input": "required name=search_term_string"
                 },
-                sameAs: [
-                  "https://twitter.com/artiefy",
-                  // Add other social media profiles here
-                ],
-                author: {
+                "publisher": {
                   "@type": "Organization",
-                  name: "Equipo Artiefy",
-                  url: globalMetadata.metadataBase?.toString()
-                },
-                publisher: {
-                  "@type": "Organization",
-                  name: "Artiefy",
-                  logo: {
+                  "name": "Artiefy",
+                  "logo": {
                     "@type": "ImageObject",
-                    url: `${globalMetadata.metadataBase?.toString()}artiefy-icon.png`
+                    "url": "https://artiefy.vercel.app/artiefy-icon.png",
+                    "width": "512",
+                    "height": "512"
                   }
                 }
               })
