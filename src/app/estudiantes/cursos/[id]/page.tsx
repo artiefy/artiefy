@@ -14,16 +14,16 @@ async function getValidCoverImageUrl(
 ): Promise<string> {
   const coverImageUrl = coverImageKey
     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
-    : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`;
+    : `https://via.placeholder.com/600x400`; // URL de Placeholder.com
 
   try {
     const response = await fetch(coverImageUrl);
     if (response.status === 403) {
-      return `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`;
+      return `https://via.placeholder.com/600x400`; // URL de Placeholder.com
     }
     return coverImageUrl;
   } catch {
-    return `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`;
+    return `https://via.placeholder.com/600x400`; // URL de Placeholder.com
   }
 }
 
@@ -114,11 +114,11 @@ export default async function Page({
         : undefined,
       image: course.coverImageKey
         ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-        : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course-image.jpg`,
+        : `https://placehold.co/600x400/00BDD8/FFFFFF/png`, // URL de Placeholder.com
     };
 
     return (
-      <>
+      <section>
         <CourseDetails
           course={{
             ...course,
@@ -132,7 +132,7 @@ export default async function Page({
             __html: JSON.stringify(jsonLd),
           }}
         />
-      </>
+      </section>
     );
   } catch (error) {
     console.error("Error fetching course:", error);
