@@ -17,17 +17,17 @@ export const dynamic = 'force-dynamic'; // Forzar el estado dinámico
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
-// Obtener todos los cursos de un profesor o todos los cursos si no se proporciona userId
+// Obtener todos los cursos de un profesor o todos los cursos si no se proporciona user_id
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+    const user_id = searchParams.get("user_id");
 
     let courses;
-    if (userId) {
-      courses = await getCoursesByUserId(userId);
+    if (user_id) {
+      courses = await getCoursesByUserId(user_id);
     } else {
-      courses = await getAllCourses(); // Obtener todos los cursos si no se proporciona userId
+      courses = await getAllCourses(); // Obtener todos los cursos si no se proporciona user_id
     }
 
     const coursesWithCreators = await Promise.all(

@@ -29,7 +29,7 @@ export interface Course {
   category: Category;
   instructor: string;
   rating: number | null;
-  userId: string;
+  user_id: string;
   lessons?: Lesson[];
   totalStudents?: number;
   createdAt: string | number | Date;
@@ -66,14 +66,14 @@ export const createCourse = async ({
 };
 
 // Obtener todos los cursos de un profesor
-export const getCoursesByUserId = async (userId: string): Promise<Course[]> => {
-  const result = await db.select().from(courses).where(eq(courses.creatorId, userId));
+export const getCoursesByUserId = async (user_id: string): Promise<Course[]> => {
+  const result = await db.select().from(courses).where(eq(courses.creatorId, user_id));
   const categoriesResult = await db.select().from(categories);
   const categoriesMap = new Map(categoriesResult.map(category => [category.id, category]));
 
   return result.map(course => ({
     ...course,
-    userId: course.creatorId,
+    user_id: course.creatorId,
     category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null }
   }));
 };
@@ -94,7 +94,7 @@ export const getCourseById = async (course_id: number): Promise<Course | null> =
 
   const courseData = courseResult[0];
   if (!courseData) return null;
-  const course = { ...courseData, userId: courseData.creatorId } as Course;
+  const course = { ...courseData, user_id: courseData.creatorId } as Course;
 
   const categoryResult = await db.select().from(categories).where(eq(categories.id, course.categoryid));
   if (categoryResult.length > 0 && categoryResult[0]) {
@@ -124,7 +124,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
 
   return result.map(course => ({
     ...course,
-    userId: course.creatorId,
+    user_id: course.creatorId,
     category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null }
   }));
 };

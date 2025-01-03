@@ -62,7 +62,7 @@ export const lessons = pgTable("lessons", {
 // Tabla de inscripciones (relación muchos a muchos entre usuarios y cursos)
 export const enrollments = pgTable("enrollments", {
   id: serial("id").primaryKey(), // ID autoincremental de la inscripción
-  userId: text("user_id")
+  user_id: text("user_id")
     .references(() => users.id)
     .notNull(), // Relación con usuarios
   course_id: integer("course_id")
@@ -104,7 +104,7 @@ export const lessonsRelations = relations(lessons, ({ one }) => ({
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
   user: one(users, {
-    fields: [enrollments.userId], // Campo que referencia al usuario
+    fields: [enrollments.user_id], // Campo que referencia al usuario
     references: [users.id], // ID del usuario
   }),
   course: one(courses, {
