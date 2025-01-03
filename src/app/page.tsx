@@ -3,6 +3,7 @@ import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Header } from "~/components/layout/Header";
 import { Button } from "~/components/ui/button";
+import Image from "next/image";
 
 export default function Home() {
   const { user } = useUser();
@@ -16,7 +17,17 @@ export default function Home() {
       : "/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
 
   return (
-    <div className="flex min-h-screen flex-col bg-main-bg bg-cover bg-center">
+    <div className="relative flex min-h-screen flex-col">
+      <div className="absolute inset-0 z-[-1]">
+        <Image
+          src="/index-fondo.webp"
+          alt="Fondo de la página principal"
+          layout="fill"
+          objectFit="cover"
+          quality={100}
+          priority
+        />
+      </div>
       <Header />
       <main className="flex flex-grow items-center justify-center">
         <section className="container mx-auto px-4 py-16 text-center">
