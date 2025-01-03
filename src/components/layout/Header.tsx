@@ -69,7 +69,7 @@ export function Header() {
             <div className="flex-shrink-0">
               <div className="relative h-[100px] w-[100px]">
                 <Image
-                  src="/logo-artiefy.webp"
+                  src="/artiefy-logo.png"
                   alt="Logo Artiefy"
                   fill
                   style={{ objectFit: "contain" }}

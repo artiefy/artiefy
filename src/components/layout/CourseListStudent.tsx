@@ -34,7 +34,7 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => (
-        <Card key={course.id} className="overflow-hidden">
+        <Card key={course.id} className="overflow-hidden zoom-in">
           <CardHeader>
             <AspectRatio ratio={16 / 9}>
               <Image
