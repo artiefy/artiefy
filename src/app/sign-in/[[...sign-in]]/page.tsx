@@ -91,11 +91,12 @@ export default function SignInPage() {
                     </Button>
                   </div>
                 </SignIn.Step>
+
                 <SignIn.Step name="verifications">
                   <SignIn.Strategy name="password">
                     <div className="w-96 space-y-10 rounded-2xl px-8 py-10">
                       <div className="mb-6 text-center">
-                        <h2 className="text-3xl font-bold">Verificación</h2>
+                        <h2 className="text-3xl font-bold">Contraseña</h2>
                       </div>
                       <Clerk.Field name="password" className="space-y-2">
                         <Clerk.Input asChild>
@@ -144,51 +145,10 @@ export default function SignInPage() {
                     </div>
                   </SignIn.Strategy>
                 </SignIn.Step>
-                <SignIn.Step name="forgot-password">
-                  <div className="w-96 space-y-10 rounded-2xl px-8 py-10">
-                    <div className="mb-6 text-center">
-                      <h2 className="text-3xl font-bold">Forgot Password</h2>
-                    </div>
-                    <SignIn.SupportedStrategy name="reset_password_email_code">
-                      Reset your password via Email
-                    </SignIn.SupportedStrategy>
-                    <SignIn.Action navigate="previous" asChild>
-                      <Button type="button" size="sm" variant="link">
-                        Go back
-                      </Button>
-                    </SignIn.Action>
-                  </div>
-                </SignIn.Step>
-                <SignIn.Step name="reset-password">
-                  <div className="w-96 space-y-10 rounded-2xl px-8 py-10">
-                    <div className="mb-6 text-center">
-                      <h2 className="text-3xl font-bold">Reset Password</h2>
-                    </div>
-                    <Clerk.Field name="password">
-                      <Clerk.Label>New password</Clerk.Label>
-                      <Clerk.Input />
-                      <Clerk.FieldError>
-                        {({ message, code }) => (
-                          <span className="block text-sm text-destructive">
-                            {code === 'weak_password' ? 'La nueva contraseña es demasiado débil.' : message}
-                          </span>
-                        )}
-                      </Clerk.FieldError>
-                    </Clerk.Field>
-                    <Clerk.Field name="confirmPassword">
-                      <Clerk.Label>Confirm password</Clerk.Label>
-                      <Clerk.Input />
-                      <Clerk.FieldError>
-                        {({ message, code }) => (
-                          <span className="block text-sm text-destructive">
-                            {code === 'password_mismatch' ? 'Las contraseñas no coinciden.' : message}
-                          </span>
-                        )}
-                      </Clerk.FieldError>
-                    </Clerk.Field>
-                    <SignIn.Action submit>Reset password</SignIn.Action>
-                  </div>
-                </SignIn.Step>
+
+               
+
+               
               </>
             )}
           </Clerk.Loading>
