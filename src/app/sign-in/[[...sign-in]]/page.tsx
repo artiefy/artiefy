@@ -2,16 +2,23 @@
 import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
 import { Icons } from "~/components/ui/icons";
+import Image from "next/image";
+import { AspectRatio } from "~/components/ui/aspect-ratio";
 
 export default function SignInPage() {
   return (
-    <div
-      className="flex h-screen flex-col md:flex-row"
-      style={{
-        background: "linear-gradient(70deg, #01142B 65%, #00BDD8 100%)",
-      }}
-    >
-      <div className="order-1 h-1/2 w-full md:order-1 md:h-full md:w-1/2"></div>
+    <div className="flex h-screen flex-col md:flex-row bg-login-bg bg-cover bg-center">
+      <div className="order-1 flex h-1/2 w-full items-center justify-center pl-12 md:order-1 md:h-full md:w-1/2">
+        <AspectRatio ratio={16 / 9} className="relative">
+          <Image
+            src="/imagen-login.webp"
+            alt="Imagen de inicio de sesión"
+            fill
+            className="h-full w-full object-contain"
+            priority
+          />
+        </AspectRatio>
+      </div>
 
       <div className="order-2 flex flex-1 flex-col items-center justify-center p-8 md:order-2 md:w-1/2">
         <SignIn.Root>
@@ -82,7 +89,7 @@ export default function SignInPage() {
                             ) : (
                               <>
                                 <Clerk.Icon className="size-8" />
-                                </>
+                              </>
                             )
                           }
                         </Clerk.Loading>{" "}
@@ -116,20 +123,20 @@ export default function SignInPage() {
                             ) : (
                               <>
                                 <Clerk.Icon className="size-8" />
-                                </>
+                              </>
                             )
                           }
                         </Clerk.Loading>
                       </Clerk.Connection>
                     </div>
-                      <div className="mt-6 text-sm">
-                        <Clerk.Link
+                    <div className="mt-6 text-sm">
+                      <Clerk.Link
                         navigate="sign-up"
                         className="font-medium text-primary decoration-primary underline-offset-4 outline-none hover:text-secondary hover:underline focus-visible:underline"
-                        >
-                          ¿Aun no tienes cuenta? Registrate Aquí
-                        </Clerk.Link>
-                      </div>
+                      >
+                        ¿Aun no tienes cuenta? Registrate Aquí
+                      </Clerk.Link>
+                    </div>
                   </div>
                 </SignIn.Step>
               </>

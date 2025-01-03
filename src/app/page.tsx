@@ -16,7 +16,7 @@ export default function Home() {
       : "/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-main-bg bg-cover bg-center">
       <Header />
       <main className="flex flex-grow items-center justify-center">
         <section className="container mx-auto px-4 py-16 text-center">
