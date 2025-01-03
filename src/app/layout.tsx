@@ -43,6 +43,8 @@ export default function RootLayout({
         signIn: { baseTheme: neobrutalism },
         signUp: { baseTheme: neobrutalism },
       }}
+      signUpFallbackRedirectUrl="/"
+      signInFallbackRedirectUrl="/"
     >
       <html lang="es" className={montserrat.variable}>
         <head>
