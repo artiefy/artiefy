@@ -121,7 +121,7 @@ export default function StudentDashboard() {
               courses.slice(0, 5).map((course, index) => (
                 <div
                   key={course.id}
-                  className={`absolute h-full w-full transition-opacity duration-500 ${
+                  className={`absolute h-full w-full transition-opacity duration-500 zoom-in ${
                     index === carouselIndex ? "opacity-100" : "opacity-0"
                   }`}
                 >
@@ -190,7 +190,7 @@ export default function StudentDashboard() {
                   courses.map((course) => (
                     <CarouselItem
                       key={course.id}
-                      className="pl-4 md:basis-1/2 lg:basis-1/3"
+                      className="pl-4 md:basis-1/2 lg:basis-1/3 zoom-in"
                     >
                       <div className="relative h-48 w-full md:h-64">
                         <AspectRatio ratio={16 / 9}>
