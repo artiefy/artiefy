@@ -18,7 +18,9 @@ interface Course {
   id: number;  
   coverImageKey: string;
   title: string;
-  category: string;
+  category: {
+    name: string;
+  };
   description: string;
   instructor: string;
   rating?: number;
@@ -54,7 +56,7 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
                 variant="outline"
                 className="border-primary bg-background text-primary hover:bg-black/70"
               >
-                {course.category}
+                {course.category.name}
               </Badge>
               <span className="ml-2 text-sm font-bold text-gray-600">
                 Categoría

@@ -6,7 +6,7 @@ import {
   getCourseById,
   updateCourse,
   deleteCourse,
-  getAllCourses, // Importar la función getAllCourses
+  getAllCourses,
 } from "~/models/courseModels";
 import { getUserById, createUser } from "~/models/userModels";
 import { ratelimit } from '~/server/ratelimit/ratelimit';
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       return respondWithError("No autorizado", 403);
     }
 
-    // Implement rate limiting
+    // Implementar limitación de tasa
     const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
     const { success } = await ratelimit.limit(ip);
 
@@ -82,18 +82,18 @@ export async function POST(request: NextRequest) {
       title: string;
       description: string;
       coverImageKey: string;
-      category: string;
+      categoryid: number;
       instructor: string;
       rating: number;
     };
-    const { title, description, coverImageKey, category, instructor, rating } = body;
+    const { title, description, coverImageKey, categoryid, instructor, rating } = body;
 
     await createCourse({
       title,
       description,
       creatorId: userId,
       coverImageKey,
-      category,
+      categoryid,
       instructor,
       rating,
     });
@@ -121,11 +121,11 @@ export async function PUT(request: NextRequest) {
       title: string;
       description: string;
       coverImageKey: string;
-      category: string;
+      categoryid: number;
       instructor: string;
       rating: number;
     };
-    const { id, title, description, coverImageKey, category, instructor, rating } = body;
+    const { id, title, description, coverImageKey, categoryid, instructor, rating } = body;
 
     const course = await getCourseById(id);
     if (!course) {
@@ -140,7 +140,7 @@ export async function PUT(request: NextRequest) {
       title,
       description,
       coverImageKey,
-      category,
+      categoryid,
       instructor,
       rating,
     });

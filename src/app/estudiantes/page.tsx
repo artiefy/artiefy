@@ -34,7 +34,9 @@ interface Course {
   id: number;
   title: string;
   coverImageKey: string;
-  category: string;
+  category: {
+    name: string;
+  };
   description: string;
   instructor: string;
   rating?: number;
@@ -139,7 +141,7 @@ export default function StudentDashboard() {
                       variant="outline"
                       className="mb-2 border-primary text-primary"
                     >
-                      {course.category}
+                      {course.category.name}
                     </Badge>
                     <p className="hidden text-xl md:block">
                       {course.description}
@@ -207,7 +209,7 @@ export default function StudentDashboard() {
                             variant="outline"
                             className="mb-2 border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
                           >
-                            {course.category}
+                            {course.category.name}
                           </Badge>
                           <p className="text-primary italic">
                             Instructor: <span className=" underline">{course.instructor}</span>

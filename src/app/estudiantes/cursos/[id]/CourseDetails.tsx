@@ -18,10 +18,13 @@ export interface Course {
   id: number;
   title: string;
   coverImageKey: string | null;
-  category: string;
+  category: {
+    id: number;
+    name: string;
+  };
   description: string | null;
   instructor: string;
-  rating: number | null; // Update this line
+  rating: number | null;
   createdAt: string | number | Date;
   updatedAt: string | number | Date;
   totalStudents: number;

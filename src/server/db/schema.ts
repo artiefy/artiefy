@@ -20,13 +20,22 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
 });
 
+// Tabla de categorías
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(), // ID autoincremental de la categoría
+  name: varchar("name", { length: 255 }).notNull(), // Nombre de la categoría
+  description: text("description"), // Descripción de la categoría
+});
+
 // Tabla de cursos
 export const courses = pgTable("courses", {
   id: serial("id").primaryKey(), // ID autoincremental del curso
   title: varchar("title", { length: 255 }).notNull(), // Título del curso
   description: text("description"), // Descripción del curso
   coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
-  category: varchar("category", { length: 255 }).notNull(), // Categoría del curso
+  categoryid: integer("categoryid")
+    .references(() => categories.id)
+    .notNull(), // Relación con la tabla categorías
   instructor: text("instructor").notNull(), // Nombre del instructor
   createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
@@ -43,7 +52,7 @@ export const lessons = pgTable("lessons", {
   duration: real("duration").notNull(), // Duración de la lección en horas
   description: text("description"), // Descripción de la lección
   order: integer("order").notNull(), // Orden de la lección en el curso
-  courseId: integer("course_id")
+  course_id: integer("course_id")
     .references(() => courses.id)
     .notNull(), // Relación con la tabla cursos
   createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
@@ -56,7 +65,7 @@ export const enrollments = pgTable("enrollments", {
   userId: text("user_id")
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  courseId: integer("course_id")
+  course_id: integer("course_id")
     .references(() => courses.id)
     .notNull(), // Relación con cursos
   enrolledAt: timestamp("enrolled_at").defaultNow().notNull(), // Fecha de inscripción
@@ -69,6 +78,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   createdCourses: many(courses), // Relación con cursos creados
 }));
 
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  courses: many(courses), // Relación con cursos
+}));
+
 export const coursesRelations = relations(courses, ({ many, one }) => ({
   lessons: many(lessons), // Relación con lecciones
   enrollments: many(enrollments), // Relación con inscripciones
@@ -76,11 +89,15 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
     fields: [courses.creatorId], // Campo que referencia al creador
     references: [users.id], // ID del creador en usuarios
   }),
+  category: one(categories, {
+    fields: [courses.categoryid], // Campo que referencia a la categoría
+    references: [categories.id], // ID de la categoría en categorías
+  }),
 }));
 
 export const lessonsRelations = relations(lessons, ({ one }) => ({
   course: one(courses, {
-    fields: [lessons.courseId], // Campo que referencia al curso
+    fields: [lessons.course_id], // Campo que referencia al curso
     references: [courses.id], // ID del curso
   }),
 }));
@@ -91,7 +108,7 @@ export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
     references: [users.id], // ID del usuario
   }),
   course: one(courses, {
-    fields: [enrollments.courseId], // Campo que referencia al curso
+    fields: [enrollments.course_id], // Campo que referencia al curso
     references: [courses.id], // ID del curso
   }),
 }));
