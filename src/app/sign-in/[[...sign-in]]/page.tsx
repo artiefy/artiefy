@@ -1,93 +1,96 @@
 "use client";
-import Image from "next/image";
-import { AspectRatio } from "~/components/ui/aspect-ratio"; // Asegúrate de importar el componente
+import * as Clerk from "@clerk/elements/common";
+import Link from 'next/link';
+import * as SignIn from "@clerk/elements/sign-in";
 
-import * as Clerk from '@clerk/elements/common';
-import * as SignInElements from '@clerk/elements/sign-in';
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 export default function SignInPage() {
   return (
-    <div className="flex h-screen flex-col md:flex-row">
-      {/* Imagen a la izquierda en pantallas grandes y abajo en pantallas pequeñas */}
-      <div className="relative order-2 h-1/2 w-full md:order-1 md:h-full md:w-1/2">
-        {/* En pantallas grandes (md o superiores) no usamos AspectRatio */}
-        <div className="hidden h-full md:block">
-          <Image
-            src="/login-estudiantes.webp"
-            alt="Imagen de login"
-            fill
-            style={{ objectFit: "cover" }} // Asegura que la imagen ocupe toda la mitad
-            priority
-            quality={100}
-          />
-        </div>
-        {/* En pantallas pequeñas usamos AspectRatio */}
-        <div className="block md:hidden">
-          <AspectRatio ratio={16 / 9}>
-            <Image
-              src="/login-estudiantes.webp"
-              alt="Imagen de login"
-              fill
-              style={{ objectFit: "cover" }}
-              priority
-              quality={100}
-            />
-          </AspectRatio>
-        </div>
-      </div>
+    <div className="flex h-screen flex-col md:flex-row" style={{ background: 'linear-gradient(70deg, #01142B 65%, #00BDD8 100%)' }}>
+      <div className="order-1 h-1/2 w-full md:order-1 md:h-full md:w-1/2"></div>
 
       {/* Formulario de inicio de sesión */}
-      <div className="order-1 flex flex-1 flex-col items-center justify-center p-8 md:order-2 md:w-1/2">
-        {/* Título estático */}
-        <div className="mb-6 text-center">
-          <h1 className="mb-4 text-6xl font-extrabold">ARTIEFY</h1>
-          <h2 className="text-2xl font-medium">BIENVENIDO</h2>
-        </div>
-
+      <div className="order-2 flex flex-1 flex-col items-center justify-center p-8 md:order-2 md:w-1/2">
         {/* Componente de inicio de sesión personalizado */}
-        <SignInElements.Root>
-          <SignInElements.Step
+        <SignIn.Root>
+          <SignIn.Step
             name="start"
-            className="bg-white w-96 rounded-2xl py-10 px-8 shadow-sm border space-y-6"
+            className="w-96 rounded-2xl py-10 px-8 space-y-10"
           >
-            <div className="grid grid-cols-2 gap-x-4">
-              <Clerk.Connection
-                name="google"
-                className="flex items-center gap-x-3 justify-center font-medium border shadow-sm py-1.5 px-2.5 rounded-md"
-              >
-                <Clerk.Icon className="size-4" />
-                Google
-              </Clerk.Connection>
-              <Clerk.Connection
-                name="github"
-                className="flex items-center gap-x-3 justify-center font-medium border shadow-sm py-1.5 px-2.5 rounded-md"
-              >
-                <Clerk.Icon className="size-4" />
-                GitHub
-              </Clerk.Connection>
+            <div className="mb-6 text-center">
+              <h2 className="text-3xl font-bold">INICIAR SESIÓN</h2>
             </div>
-            <Clerk.Field name="identifier" className="space-y-2">
-              <Clerk.Label className="text-sm font-medium">Email</Clerk.Label>
-              <Clerk.Input className="w-full border rounded-md py-1.5 px-2.5" />
-              <Clerk.FieldError className="block text-red-500 text-sm" />
+            <Clerk.Field name="identifier" className="space-y-4">
+              <Clerk.Input asChild>
+                <Input
+                  placeholder="Correo Electrónico"
+                  className="w-full rounded-none border-2 border-primary px-2.5 py-1.5"
+                />
+              </Clerk.Input>
+              <Clerk.FieldError className="block text-sm text-red-500" />
             </Clerk.Field>
-            <SignInElements.Action submit className="bg-black text-white rounded-md py-1.5 px-2.5">
-              Continue
-            </SignInElements.Action>
-          </SignInElements.Step>
-          <SignInElements.Step name="verifications">
-            <SignInElements.Strategy name="email_code">
-              <Clerk.Field name="code" className="space-y-2">
-                <Clerk.Label className="text-sm font-medium">Code</Clerk.Label>
-                <Clerk.Input className="w-full border rounded-md py-1.5 px-2.5" />
-                <Clerk.FieldError className="block text-red-500 text-sm" />
+            <Clerk.Field name="password" className="space-y-4">
+              <Clerk.Input asChild>
+                <Input
+                  type="password"
+                  placeholder="Contraseña"
+                  className="w-full rounded-none border-2 border-primary px-2.5 py-1.5"
+                />
+              </Clerk.Input>
+              <Clerk.FieldError className="block text-sm text-red-500" />
+            </Clerk.Field>
+            <div className="flex justify-center">
+              <SignIn.Action submit asChild>
+                <Button className="font-semibold italic w-auto rounded-none border border-primary p-5 text-primary">
+                  COMIENZA YA
+                </Button>
+              </SignIn.Action>
+            </div>
+            <div className="mt-4 text-center">
+              <p>O ingresa con tu cuenta:</p>
+              <div className="mt-2 flex justify-center space-x-4">
+                <Clerk.Connection
+                  name="google"
+                  className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
+                >
+                  <Clerk.Icon className="size-8" />
+                </Clerk.Connection>
+                <Clerk.Connection
+                  name="facebook"
+                  className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
+                >
+                  <Clerk.Icon className="size-8" />
+                </Clerk.Connection>
+                <Clerk.Connection
+                  name="github"
+                  className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
+                >
+                  <Clerk.Icon className="size-8" />
+                </Clerk.Connection>
+              </div>
+              <p className="w-96 mt-8 text-left">¿Aun no tienes cuenta?<Link href="/sign-up" className="text-primary underline">Regístrate Aquí</Link></p>            </div>
+          </SignIn.Step>
+          <SignIn.Step name="verifications">
+            <SignIn.Strategy name="email_code">
+              <Clerk.Field name="unique-name" className="space-y-4">
+                <Clerk.Input asChild>
+                  <Input
+                    placeholder="Code"
+                    className="w-full rounded-none border border-primary px-2.5 py-1.5"
+                  />
+                </Clerk.Input>
+                <Clerk.FieldError className="block text-sm text-red-500" />
               </Clerk.Field>
-              <SignInElements.Action submit className="bg-black text-white rounded-md py-1.5 px-2.5">
-                Continue
-              </SignInElements.Action>
-            </SignInElements.Strategy>
-          </SignInElements.Step>
-        </SignInElements.Root>
+              <SignIn.Action submit asChild>
+                <Button className="rounded-md bg-black px-2.5 py-1.5 text-white">
+                  Continue
+                </Button>
+              </SignIn.Action>
+            </SignIn.Strategy>
+          </SignIn.Step>
+        </SignIn.Root>
       </div>
     </div>
   );
