@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LoadingCourses } from "~/app/dashboard/educadores/(inicio)/cursos/page";
 import ModalFormCourse from "~/components/modals/ModalFormCourse";
@@ -40,6 +41,7 @@ interface CourseDetailProps {
 }
 
 export default function CourseDetail({ courseId }: CourseDetailProps) {
+  const router = useRouter();
   const [course, setCourse] = useState<Course | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -152,15 +154,16 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
       const response = await fetch(`/api/courses?id=${id}`, {
         method: "DELETE",
       });
+
       if (!response.ok) throw new Error("Error al eliminar el curso");
-      window.location.href = "/dashboard/profesores/cursos";
+      router.push("/dashboard/educadores/cursos");
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
   return (
-    <div className="container mx-auto h-auto w-full rounded-lg bg-white p-6">
+    <div className="container mx-auto h-auto w-full rounded-lg bg-white p-6 mt-4">
       <Card className="overflow-hidden bg-gray-300 px-4">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
@@ -218,7 +221,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
 
           {/* Columna derecha - Información */}
           <div className="pb-6">
-            <h2 className="text-xl font-bold">Información del curso</h2>
+            <h2 className="text-2xl font-bold">Información del curso</h2>
             <br />
             <div className="grid grid-cols-2">
               <div className="flex flex-col">

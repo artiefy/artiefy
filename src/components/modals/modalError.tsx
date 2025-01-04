@@ -94,7 +94,7 @@ export const ModalError = ({
                 rows={4}
                 value={formData.description}
                 onChange={handleInputChange}
-                className={`mt-1 p-2 block w-full rounded-md border border-gray-400 shadow-sm text-black focus:border-red-500 focus:ring-red-500 ${
+                className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500 ${
                   errors.description ? "border-red-500" : ""
                 }`}
               />
@@ -118,7 +118,7 @@ export const ModalError = ({
                 rows={3}
                 value={formData.comments}
                 onChange={handleInputChange}
-                className="mt-1 p-2 border border-gray-400 block w-full rounded-md text-black shadow-sm focus:border-red-500 focus:ring-red-500"
+                className="mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500"
               />
             </div>
 
@@ -135,7 +135,7 @@ export const ModalError = ({
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`mt-1 p-2 border border-gray-400 block w-full rounded-md text-black shadow-sm focus:border-red-500 focus:ring-red-500 ${
+                className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500 ${
                   errors.email ? "border-red-500" : ""
                 }`}
               />
@@ -148,7 +148,7 @@ export const ModalError = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-gray-500 focus:ring-offset-2"
               >
                 Cancelar
               </button>

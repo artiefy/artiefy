@@ -8,6 +8,13 @@ import { SkeletonCard } from "~/components/layout/SkeletonCard";
 import ModalFormCourse from "~/components/modals/ModalFormCourse";
 import { Button } from "~/components/ui/button";
 import { toast } from "~/hooks/use-toast";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
 
 export interface CourseModel {
   id: number;
@@ -184,6 +191,16 @@ export default function Page() {
   return (
     <>
       <main className="h-auto">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink className="hover:text-gray-300" href="/">
+              Cursos
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+        </BreadcrumbList>
+      </Breadcrumb>
         <div className="container mx-auto px-2">
           <div className="mt-2 flex justify-between">
             <h1 className="text-3xl font-bold">Panel de control de cursos</h1>
@@ -204,7 +221,7 @@ export default function Page() {
           ) : courses.length === 0 ? (
             <div className="mt-10 flex flex-col items-center justify-center py-10 text-center">
               <h2 className="mb-4 text-2xl font-bold">
-                Lista De Cursos Creados
+                Lista de cursos creados
               </h2>
               <p className="text-xl text-gray-600">
                 No hay cursos creados todavía
@@ -217,7 +234,7 @@ export default function Page() {
           ) : (
             <>
               <h2 className="mb-4 mt-10 text-2xl font-bold">
-                Lista De Cursos Creados
+                Lista de cursos creados
               </h2>
               <CourseListTeacher
                 courses={courses as CourseModel[]}
