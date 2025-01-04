@@ -16,7 +16,7 @@ export default function Home() {
     user?.publicMetadata?.role === "admin"
       ? "/dashboard/admin"
       : user?.publicMetadata?.role === "profesor"
-        ? "/dashboard/profesores"
+        ? "/dashboard/educadores"
         : "/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
 
   return (

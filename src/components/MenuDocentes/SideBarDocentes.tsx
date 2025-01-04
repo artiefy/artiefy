@@ -27,12 +27,12 @@ export default function LeftSidebar({
     {
       title: "Panel de control",
       icon: <MdDashboard className="h-7 w-7" />,
-      url: "/dashboard/profesores",
+      url: "/dashboard/educadores",
     },
     {
       title: "Cursos",
       icon: <FaChalkboardTeacher className="h-7 w-7" />,
-      url: "/dashboard/profesores/cursos",
+      url: "/dashboard/educadores/cursos",
     },
     {
       title: "Alumnos",
@@ -121,7 +121,7 @@ export default function LeftSidebar({
               ) : (
                 <>
                   <p className="text-sm font-medium text-primary">
-                    Portal de profesores
+                    Portal de educadores
                   </p>
                   <p className="mt-1 text-sm text-gray-300">v1.0.0</p>
                 </>

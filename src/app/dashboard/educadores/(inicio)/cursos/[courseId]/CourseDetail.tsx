@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { LoadingCourses } from "~/app/dashboard/profesores/(inicio)/cursos/page";
+import { LoadingCourses } from "~/app/dashboard/educadores/(inicio)/cursos/page";
 import ModalFormCourse from "~/components/modals/ModalFormCourse";
 import {
   AlertDialog,
@@ -161,7 +161,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
 
   return (
     <div className="container mx-auto h-auto w-full rounded-lg bg-white p-6">
-      <Card className="overflow-hidden px-4 bg-gray-300">
+      <Card className="overflow-hidden bg-gray-300 px-4">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
             Curso: {course.title}
@@ -236,7 +236,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
             </div>
             <div className="grid grid-cols-2">
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold">Instructor:</h2>
+                <h2 className="text-lg font-semibold">Educador:</h2>
                 <p className="text-gray-600">{course.instructor}</p>
               </div>
               <div className="flex flex-col">

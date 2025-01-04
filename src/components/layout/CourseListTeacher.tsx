@@ -1,7 +1,7 @@
 //src\components\layout\CourseListTeacher.tsx
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import type { CourseModel } from "~/app/dashboard/profesores/(inicio)/cursos/page";
+import type { CourseModel } from "~/app/dashboard/educadores/(inicio)/cursos/page";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -57,7 +57,7 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
               {course.description}
             </p>
             <p className="text-sm font-bold italic text-gray-600">
-              Instructor:{" "}
+              Educador:{" "}
               <span className="font-bold italic underline">
                 {course.instructor}
               </span>
@@ -72,7 +72,7 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
           <CardFooter className="flex items-center justify-between px-3">
             <Button
               onClick={() =>
-                router.push(`/dashboard/profesores/cursos/${course.id}`)
+                router.push(`/dashboard/educadores/cursos/${course.id}`)
               }
               className="mx-auto rounded-lg border-orange-500 bg-orange-500 text-white hover:border-orange-500/90 hover:bg-orange-500/90"
             >
