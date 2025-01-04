@@ -9,10 +9,19 @@ import {
   FaClock,
   FaStar,
   FaUserGraduate,
+  FaHome,
 } from "react-icons/fa";
 import Footer from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
 import { Button } from "~/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
 
 export interface Course {
   id: number;
@@ -51,6 +60,25 @@ export default function CourseDetails({ course }: { course: Course }) {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
+        <Breadcrumb className="pb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">
+                <FaHome className="inline-block mr-1" /> Home
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/estudiantes/">
+              <FaUserGraduate className="inline-block mr-1" /> Cursos
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{course.title}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <div className="overflow-hidden rounded-xl bg-white shadow-lg">
           {/* Course Header */}
           <div className="relative h-72 overflow-hidden">
