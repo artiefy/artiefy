@@ -1,10 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
-import { type NextRequest, NextResponse } from "next/server";
-import { getCourseById } from "~/models/courseModels";
+import { NextResponse } from "next/server";
+import { getCourseById, updateCourse } from "~/models/courseModels";
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { userId } = await auth();
@@ -12,7 +12,8 @@ export async function GET(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const courseId = parseInt(params.id);
+    const resolvedParams = await params;
+    const courseId = parseInt(resolvedParams.id);
     if (isNaN(courseId)) {
       return NextResponse.json(
         { error: "ID de curso inválido" },
@@ -33,6 +34,42 @@ export async function GET(
     console.error("Error al obtener el curso:", error);
     return NextResponse.json(
       { error: "Error al obtener el curso" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    }
+
+    const resolvedParams = await params;
+    const courseId = parseInt(resolvedParams.id);
+    const data = await request.json();
+
+    await updateCourse(courseId, {
+      title: data.title,
+      description: data.description,
+      coverImageKey: data.coverImageKey,
+      categoryid: data.categoryId,
+      instructor: data.instructor,
+      rating: data.rating,
+      modalidadesid: data.modalidadesid,
+    });
+
+    // Obtener el curso actualizado
+    const updatedCourse = await getCourseById(courseId);
+    return NextResponse.json(updatedCourse);
+  } catch (error) {
+    console.error("Error al actualizar el curso:", error);
+    return NextResponse.json(
+      { error: "Error al actualizar el curso" },
       { status: 500 },
     );
   }

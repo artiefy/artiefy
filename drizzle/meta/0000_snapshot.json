@@ -1,5 +1,5 @@
 {
-  "id": "6449924c-1c01-4fb8-8535-1fa7c454702e",
+  "id": "a625cd53-9c98-431b-a9d5-dc288ce93b16",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -152,6 +152,12 @@
           "primaryKey": false,
           "notNull": false,
           "default": 0
+        },
+        "modalidadesid": {
+          "name": "modalidadesid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -175,6 +181,19 @@
           "tableTo": "users",
           "columnsFrom": [
             "creator_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "courses_modalidadesid_modalidades_id_fk": {
+          "name": "courses_modalidadesid_modalidades_id_fk",
+          "tableFrom": "courses",
+          "tableTo": "modalidades",
+          "columnsFrom": [
+            "modalidadesid"
           ],
           "columnsTo": [
             "id"
@@ -403,6 +422,34 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
+    "public.modalidades": {
+      "name": "modalidades",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
     "public.preferences": {
       "name": "preferences",
       "schema": "",
@@ -431,8 +478,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "category_id": {
-          "name": "category_id",
+        "categoryid": {
+          "name": "categoryid",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -453,12 +500,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "preferences_category_id_categories_id_fk": {
-          "name": "preferences_category_id_categories_id_fk",
+        "preferences_categoryid_categories_id_fk": {
+          "name": "preferences_categoryid_categories_id_fk",
           "tableFrom": "preferences",
           "tableTo": "categories",
           "columnsFrom": [
-            "category_id"
+            "categoryid"
           ],
           "columnsTo": [
             "id"
@@ -492,8 +539,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "categoria_id": {
-          "name": "categoria_id",
+        "categoryid": {
+          "name": "categoryid",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -514,12 +561,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "scores_categoria_id_categories_id_fk": {
-          "name": "scores_categoria_id_categories_id_fk",
+        "scores_categoryid_categories_id_fk": {
+          "name": "scores_categoryid_categories_id_fk",
           "tableFrom": "scores",
           "tableTo": "categories",
           "columnsFrom": [
-            "categoria_id"
+            "categoryid"
           ],
           "columnsTo": [
             "id"

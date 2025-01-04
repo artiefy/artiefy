@@ -43,6 +43,9 @@ export const courses = pgTable("courses", {
     .references(() => users.id)
     .notNull(),
   rating: real("rating").default(0),
+  modalidadesid: integer("modalidadesid")
+    .references(() => modalidades.id)
+    .notNull(),
 });
 
 //tabla de categorias
@@ -60,9 +63,9 @@ export const preferences = pgTable("preferences", {
   userId: text("user_id")
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  categoryId: integer("category_id")
+  categoryid: integer("categoryid")
     .references(() => categories.id)
-    .notNull(), // Relación con categorías
+    .notNull(),
 });
 
 //tabla de cursos tomados
@@ -93,6 +96,12 @@ export const lessons = pgTable("lessons", {
   porcentajeCompletado: real("porcentaje_completado").default(0), // Nuevo campo de porcentaje completado
 });
 
+export const modalidades = pgTable("modalidades", {
+  id: serial("id").primaryKey(), // ID autoincremental de la modalidad
+  name: varchar("name", { length: 255 }).notNull(), // Nombre de la modalidad
+  description: text("description"), // Descripción de la modalidad
+});
+
 //tabla de puntajes
 export const scores = pgTable("scores", {
   id: serial("id").primaryKey(), // ID autoincremental del puntaje
@@ -100,9 +109,9 @@ export const scores = pgTable("scores", {
   userId: text("user_id")
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  categoriaId: integer("categoria_id")
+  categoryid: integer("categoryid")
     .references(() => categories.id)
-    .notNull(), // Relación con categorías
+    .notNull(),
 });
 
 //tabla de actividades
@@ -136,11 +145,15 @@ export const usersRelations = relations(users, ({ many }) => ({
 }));
 
 export const coursesRelations = relations(courses, ({ many, one }) => ({
-  lessons: many(lessons), // Relación con lecciones
-  enrollments: many(enrollments), // Relación con inscripciones
+  lessons: many(lessons),
+  enrollments: many(enrollments),
   creator: one(users, {
-    fields: [courses.creatorId], // Campo que referencia al creador
-    references: [users.id], // ID del creador en usuarios
+    fields: [courses.creatorId],
+    references: [users.id],
+  }),
+  modalidad: one(modalidades, {
+    fields: [courses.modalidadesid],
+    references: [modalidades.id],
   }),
 }));
 
@@ -182,7 +195,7 @@ export const preferencesRelations = relations(preferences, ({ one }) => ({
     references: [users.id],
   }),
   category: one(categories, {
-    fields: [preferences.categoryId],
+    fields: [preferences.categoryid],
     references: [categories.id],
   }),
 }));
@@ -229,4 +242,8 @@ export const coursesTakenRelations = relations(coursesTaken, ({ one }) => ({
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   preferences: many(preferences), // Relación con preferencias
+}));
+
+export const modalidadesRelations = relations(modalidades, ({ many }) => ({
+  courses: many(courses),
 }));

@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS "courses" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"creator_id" text NOT NULL,
-	"rating" real DEFAULT 0
+	"rating" real DEFAULT 0,
+	"modalidadesid" integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "courses_taken" (
@@ -53,19 +54,25 @@ CREATE TABLE IF NOT EXISTS "lessons" (
 	"porcentaje_completado" real DEFAULT 0
 );
 --> statement-breakpoint
+CREATE TABLE IF NOT EXISTS "modalidades" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"description" text
+);
+--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "preferences" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"area_conocimiento" text,
 	"user_id" text NOT NULL,
-	"category_id" integer NOT NULL
+	"categoryid" integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "scores" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"score" real NOT NULL,
 	"user_id" text NOT NULL,
-	"categoria_id" integer NOT NULL
+	"categoryid" integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "users" (
@@ -97,6 +104,12 @@ END $$;
 --> statement-breakpoint
 DO $$ BEGIN
  ALTER TABLE "courses" ADD CONSTRAINT "courses_creator_id_users_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ ALTER TABLE "courses" ADD CONSTRAINT "courses_modalidadesid_modalidades_id_fk" FOREIGN KEY ("modalidadesid") REFERENCES "public"."modalidades"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -138,7 +151,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "preferences" ADD CONSTRAINT "preferences_category_id_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE no action ON UPDATE no action;
+ ALTER TABLE "preferences" ADD CONSTRAINT "preferences_categoryid_categories_id_fk" FOREIGN KEY ("categoryid") REFERENCES "public"."categories"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -150,7 +163,7 @@ EXCEPTION
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "scores" ADD CONSTRAINT "scores_categoria_id_categories_id_fk" FOREIGN KEY ("categoria_id") REFERENCES "public"."categories"("id") ON DELETE no action ON UPDATE no action;
+ ALTER TABLE "scores" ADD CONSTRAINT "scores_categoryid_categories_id_fk" FOREIGN KEY ("categoryid") REFERENCES "public"."categories"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

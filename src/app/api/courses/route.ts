@@ -8,7 +8,6 @@ import {
   getCoursesByUserId,
   updateCourse,
 } from "~/models/courseModels";
-import { getUserById } from "~/models/userModels";
 import { ratelimit } from "~/server/ratelimit/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -17,29 +16,24 @@ const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
 // GET endpoint para obtener cursos
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId");
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const userId = searchParams.get("userId");
 
+  try {
     let courses;
     if (userId) {
       courses = await getCoursesByUserId(userId);
     } else {
       courses = await getAllCourses();
     }
-
-    const coursesWithCreators = await Promise.all(
-      courses.map(async (course) => {
-        const creator = await getUserById(course.creatorId);
-        return { ...course, creator };
-      }),
-    );
-
-    return NextResponse.json(coursesWithCreators);
+    return NextResponse.json(courses);
   } catch (error) {
-    console.error("Error al obtener los cursos:", error);
-    return respondWithError("Error al obtener los cursos", 500);
+    console.error("Error:", error);
+    return NextResponse.json(
+      { error: "Error al obtener los cursos" },
+      { status: 500 },
+    );
   }
 }
 
@@ -74,6 +68,7 @@ export async function POST(request: NextRequest) {
       description,
       coverImageKey,
       categoryid,
+      modalidadesid,
       instructor,
       rating,
     } = body;
@@ -84,6 +79,7 @@ export async function POST(request: NextRequest) {
       creatorId: userId,
       coverImageKey,
       categoryid,
+      modalidadesid,
       instructor,
       rating,
     });
@@ -93,6 +89,7 @@ export async function POST(request: NextRequest) {
       description,
       coverImageKey,
       categoryid,
+      modalidadesid,
       instructor,
       rating,
     });
@@ -120,6 +117,7 @@ export async function PUT(request: NextRequest) {
       description: string;
       coverImageKey: string;
       categoryid: number;
+      modalidadesid: number;
       instructor: string;
       rating: number;
     };
@@ -128,6 +126,7 @@ export async function PUT(request: NextRequest) {
       title,
       description,
       coverImageKey,
+      modalidadesid,
       categoryid,
       instructor,
       rating,
@@ -147,6 +146,7 @@ export async function PUT(request: NextRequest) {
       description,
       coverImageKey,
       categoryid,
+      modalidadesid,
       instructor,
       rating,
     });

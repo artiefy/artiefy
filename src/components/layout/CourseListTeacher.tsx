@@ -1,16 +1,7 @@
 //src\components\layout\CourseListTeacher.tsx
 import Image from "next/image";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
+import { useRouter } from "next/navigation";
+import type { CourseModel } from "~/app/dashboard/profesores/(inicio)/cursos/page";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -22,43 +13,14 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 
-interface Course {
-  id: number;
-  title: string;
-  description: string;
-  coverImageKey: string;
-  categoryid: {
-    id: number;
-    name: string;
-    description: string;
-  };
-  instructor: string;
-  rating?: number;
-  creatorId: string;
-}
-
 interface CourseListTeacherProps {
-  courses: Course[];
-  onEdit: (course: Course) => void;
+  courses: CourseModel[];
+  onEdit: (course: CourseModel) => void;
   onDelete: (id: string) => void;
 }
 
-export default function CourseListTeacher({
-  courses,
-  onEdit,
-  onDelete,
-}: CourseListTeacherProps) {
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await fetch(`/api/courses?id=${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Error al eliminar el curso");
-      onDelete(id);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
+export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
+  const router = useRouter();
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -100,39 +62,22 @@ export default function CourseListTeacher({
                 {course.instructor}
               </span>
             </p>
+            <p className="text-sm font-bold italic text-gray-600">
+              Modalidad:
+              <span className="font-bold italic underline">
+                {course.modalidadesid?.name}
+              </span>
+            </p>
           </CardContent>
           <CardFooter className="flex items-center justify-between px-3">
             <Button
-              onClick={() => onEdit(course)}
-              className="mr-4 border-orange-500 bg-orange-500 text-white hover:border-orange-500/90 hover:bg-orange-500/90"
+              onClick={() =>
+                router.push(`/dashboard/profesores/cursos/${course.id}`)
+              }
+              className="mx-auto rounded-lg border-orange-500 bg-orange-500 text-white hover:border-orange-500/90 hover:bg-orange-500/90"
             >
-              Editar
+              Ver Curso
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">Eliminar</Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará
-                    permanentemente el curso{" "}
-                    <span className="font-bold">{course.title}</span> y todos
-                    los datos asociados a este.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => handleDelete(course.id.toString())}
-                    className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-red-700"
-                  >
-                    Eliminar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </CardFooter>
         </Card>
       ))}

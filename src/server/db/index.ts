@@ -13,4 +13,3 @@ const sql = neon(process.env.POSTGRES_URL!);
 
 // Exporta la conexión Drizzle para usarla en otros lugares del proyecto
 export const db = drizzle(sql, { schema });
-

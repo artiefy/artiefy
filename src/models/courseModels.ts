@@ -1,6 +1,12 @@
 import { count, eq } from "drizzle-orm";
 import { db } from "~/server/db/index";
-import { categories, courses, enrollments, lessons } from "~/server/db/schema";
+import {
+  categories,
+  courses,
+  enrollments,
+  lessons,
+  modalidades,
+} from "~/server/db/schema";
 
 export interface Lesson {
   id: number;
@@ -19,7 +25,15 @@ export interface Course {
   description: string | null;
   creatorId: string;
   coverImageKey: string | null;
-  categoryid: number;
+  categoryid: {
+    id: number;
+    name: string;
+    description: string | null;
+  } | null;
+  modalidadesid: {
+    id: number;
+    name: string;
+  } | null;
   instructor: string;
   rating: number | null;
   userId: string;
@@ -38,6 +52,7 @@ export async function createCourse({
   instructor,
   rating,
   coverImageKey,
+  modalidadesid,
 }: {
   title: string;
   description: string;
@@ -46,6 +61,7 @@ export async function createCourse({
   instructor: string;
   rating: number;
   coverImageKey?: string;
+  modalidadesid: number;
 }) {
   try {
     const newCourse = await db.insert(courses).values({
@@ -56,6 +72,7 @@ export async function createCourse({
       instructor,
       rating,
       coverImageKey,
+      modalidadesid,
     });
 
     console.log("Curso creado:", newCourse);
@@ -84,9 +101,14 @@ export const getCoursesByUserId = async (userId: string) => {
       updatedAt: courses.updatedAt,
       creatorId: courses.creatorId,
       rating: courses.rating,
+      modalidadesid: {
+        id: modalidades.id,
+        name: modalidades.name,
+      },
     })
     .from(courses)
     .leftJoin(categories, eq(courses.categoryid, categories.id))
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
     .where(eq(courses.creatorId, userId));
 };
 
@@ -103,36 +125,84 @@ export const getTotalStudents = async (courseId: number): Promise<number> => {
 export const getCourseById = async (
   courseId: number,
 ): Promise<Course | null> => {
-  const courseResult = await db
-    .select()
+  const courseData = await db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      coverImageKey: courses.coverImageKey,
+      categoryid: {
+        id: categories.id,
+        name: categories.name,
+        description: categories.description,
+      },
+      instructor: courses.instructor,
+      createdAt: courses.createdAt,
+      updatedAt: courses.updatedAt,
+      creatorId: courses.creatorId,
+      rating: courses.rating,
+      modalidadesid: {
+        id: modalidades.id,
+        name: modalidades.name,
+      },
+    })
     .from(courses)
-    .where(eq(courses.id, courseId));
-  if (courseResult.length === 0) return null;
+    .where(eq(courses.id, courseId))
+    .leftJoin(categories, eq(courses.categoryid, categories.id))
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+    .then((rows) => rows[0]);
 
-  const courseData = courseResult[0];
   if (!courseData) return null;
+
   const course = { ...courseData, userId: courseData.creatorId } as Course;
 
   const lessonsResult = await db
-    .select()
+    .select({
+      id: lessons.id,
+      title: lessons.title,
+      description: lessons.description,
+      duration: lessons.duration,
+      order: lessons.order,
+      courseId: lessons.courseId,
+      createdAt: lessons.createdAt,
+      updatedAt: lessons.updatedAt,
+    })
     .from(lessons)
-    .where(eq(lessons.courseId, courseId))
-    .orderBy(lessons.order);
-  course.lessons = lessonsResult.map((lesson) => ({
-    ...lesson,
-    createdAt: lesson.createdAt.toISOString(),
-    updatedAt: lesson.updatedAt.toISOString(),
-  }));
+    .where(eq(lessons.courseId, courseId));
 
-  // Obtener el número total de estudiantes inscritos
-  course.totalStudents = await getTotalStudents(courseId);
-
-  return course;
+  return {
+    ...course,
+    lessons: lessonsResult,
+  };
 };
 
 // Obtener todos los cursos
 export const getAllCourses = async (): Promise<Course[]> => {
-  const result = await db.select().from(courses);
+  const result = await db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      coverImageKey: courses.coverImageKey,
+      categoryid: {
+        id: categories.id,
+        name: categories.name,
+        description: categories.description,
+      },
+      instructor: courses.instructor,
+      creatorId: courses.creatorId,
+      rating: courses.rating,
+      modalidadesid: {
+        id: modalidades.id,
+        name: modalidades.name,
+      },
+      createdAt: courses.createdAt,
+      updatedAt: courses.updatedAt,
+    })
+    .from(courses)
+    .leftJoin(categories, eq(courses.categoryid, categories.id))
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id));
+
   return result.map((course) => ({
     ...course,
     userId: course.creatorId,
@@ -146,7 +216,7 @@ export const updateCourse = async (
     title,
     description,
     coverImageKey,
-
+    modalidadesid,
     categoryid,
     instructor,
     rating,
@@ -154,7 +224,7 @@ export const updateCourse = async (
     title: string;
     description: string;
     coverImageKey: string;
-
+    modalidadesid: number;
     categoryid: number;
     instructor: string;
     rating: number;
@@ -166,7 +236,7 @@ export const updateCourse = async (
       title,
       description,
       coverImageKey,
-
+      modalidadesid,
       categoryid,
       instructor,
       rating,
