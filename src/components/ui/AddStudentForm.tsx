@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Student, FechaNacimiento, Address } from '~/types/user';
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { Label } from "~/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Address, FechaNacimiento, Student } from '~/types/user';
 
 export function AddStudentForm() {
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -22,7 +22,7 @@ export function AddStudentForm() {
         ...prev,
         [parent as string]: {
           ...((prev[parent as keyof typeof prev] as object) || {}),
-          [child]: value
+          [child as string]: value
         }
       }));
     } else {
