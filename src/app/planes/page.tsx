@@ -27,24 +27,6 @@ const PricingPlans: React.FC = () => {
 
   const plans = [
     {
-      name: "Free",
-      icon: BsCheck2Circle,
-      price: "$0",
-      period: "/mes",
-      courses: 5,
-      bgColor: "bg-emerald-50",
-      buttonColor: "bg-emerald-600",
-      borderColor: "border-emerald-200",
-      hoverColor: "hover:border-emerald-400",
-      features: [
-        "Acceso a 5 cursos básicos",
-        "Materiales de curso básicos",
-        "Acceso al foro comunitario",
-        "Soporte por correo electrónico",
-        "Certificado de finalización del curso",
-      ],
-    },
-    {
       name: "Pro",
       icon: BsStars,
       price: "$29",
@@ -60,6 +42,7 @@ const PricingPlans: React.FC = () => {
         "Soporte comunitario prioritario",
         "Sesiones de mentoría 1 a 1",
         "Certificados avanzados",
+        "Certificaciones con el Ciadet",
       ],
     },
     {
@@ -78,6 +61,25 @@ const PricingPlans: React.FC = () => {
         "Acceso directo a instructores",
         "Sesiones de orientación profesional",
         "Actualizaciones de cursos de por vida",
+        "Certificaciones con el Ciadet",
+      ],
+    },
+    {
+      name: "Enterprise",
+      icon: AiOutlineCrown,
+      price: "$99",
+      period: "/mes",
+      courses: 50,
+      bgColor: "bg-purple-50",
+      buttonColor: "bg-purple-600",
+      borderColor: "border-purple-200",
+      hoverColor: "hover:border-purple-400",
+      features: [
+        "Todo en el plan Premium",
+        "Soporte técnico dedicado",
+        "Acceso a cursos exclusivos",
+        "Consultoría personalizada",
+        "Certificaciones con el Ciadet",
       ],
     },
   ];

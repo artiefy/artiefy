@@ -1,68 +1,58 @@
-/* eslint-disable @next/next/no-img-element */
-import { ImageResponse } from "next/og";
+import { ImageResponse } from 'next/og'
 
-export const runtime = "edge";
-export const alt = "OG Artiefy";
+export const runtime = 'edge'
+
+// Image metadata
+export const alt = 'My Open Graph Image'
 export const size = {
   width: 1200,
   height: 630,
-};
+}
+export const contentType = 'image/png'
 
-export const contentType = "image/png";
-
+// Image generation
 export default async function Image() {
-  // Font
-  const montserratBold = fetch(
-    new URL("./fonts/Montserrat-Bold.ttf", import.meta.url),
-  ).then((res) => res.arrayBuffer());
-
-  // Obtener la URL base
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  // Load Montserrat font
+  const montserrat = fetch(
+    'https://fonts.gstatic.com/s/montserrat/v15/JTURjIg1_i6t8kCHKm45_dJE3gnD-w.ttf'
+  ).then((res) => res.arrayBuffer())
 
   return new ImageResponse(
     (
       <div
         style={{
-          fontSize: 128,
-          background: "white",
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundImage: "linear-gradient(to bottom, #3AF4EF, #00BDD8)",
-          textAlign: "center",
-          padding: 50,
+          fontSize: 48,
+          fontFamily: 'Montserrat',
+          backgroundImage: 'url(http://artiefy.vercel.app/og-fondo.png)',
+          backgroundSize: 'cover',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end', // Justifica el contenido al lado derecho
+          padding: '20px',
+          color: 'white',
         }}
       >
-        <img
-          src={new URL("/artiefy-icon.png", baseUrl).toString()}
-          alt="Logo"
-          style={{ width: 200, height: 200, marginBottom: 20 }}
-        />
-        <div style={{ fontSize: 64, fontWeight: "bold", color: "#01142B" }}>
-          Artiefy
-        </div>
-        <div style={{ fontSize: 32, fontWeight: "normal", color: "#01142B", marginTop: 20 }}>
-          Bienvenido a Artiefy, donde el aprendizaje nunca se detiene. ¡Inspírate y crece con nosotros!
-        </div>
-        <div style={{ fontSize: 48, marginTop: 20 }}>
-          🎓 📚
+        <div style={{ textAlign: 'justify', textAlignLast: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', maxWidth: '40%', wordWrap: 'break-word' }}>
+          <div style={{ fontSize: 40, marginTop: 10 }}>
+            Descubre tu potencial creativo con nuestros cursos online en Artiefy. ¡Empieza hoy! 🎓 📚
+          </div>
+          
         </div>
       </div>
     ),
     {
       ...size,
-      emoji: 'blobmoji',
+      emoji:"noto",
       fonts: [
         {
-          name: "Inter",
-          data: await montserratBold,
-          style: "normal",
+          name: 'Montserrat',
+          data: await montserrat,
+          style: 'italic',
           weight: 400,
         },
       ],
-    },
-  );
+    }
+  )
 }

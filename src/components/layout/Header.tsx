@@ -7,9 +7,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
+import { Icons } from "~/components/ui/icons";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navItems = [
     { href: "/", label: "Inicio" },
@@ -17,6 +19,12 @@ export function Header() {
     { href: "/proyectos", label: "Proyectos" },
     { href: "/comunidad", label: "Nosotros" },
   ];
+
+  const handleSignInClick = () => {
+    setIsLoading(true);
+    // Simulate loading
+    setTimeout(() => setIsLoading(false), 2000);
+  };
 
   return (
     <header className="py-4">
@@ -28,7 +36,7 @@ export function Header() {
             <div className="flex-shrink-0">
               <div className="relative h-[100px] w-[100px]">
                 <Image
-                  src="/artiefy-logo.png"
+                  src="/artiefy-logo.svg"
                   alt="Logo Artiefy"
                   fill
                   style={{ objectFit: "contain" }}
@@ -53,13 +61,23 @@ export function Header() {
             <div>
               <SignedOut>
                 <SignInButton>
-                  <Button className="transform text-lg font-light transition-transform active:scale-95">
-                    Iniciar Sesión
+                  <Button
+                    className="transform text-lg font-light transition-transform active:scale-95"
+                    onClick={handleSignInClick}
+                    style={{ width: "150px" }} 
+                  >
+                    <span className="inline-flex items-center justify-center">
+                      {isLoading ? (
+                        <Icons.spinner className="size-5 animate-spin" />
+                      ) : (
+                        "Iniciar Sesión"
+                      )}
+                    </span>
                   </Button>
                 </SignInButton>
               </SignedOut>
               <SignedIn>
-              <UserButton showName/>
+                <UserButton showName />
               </SignedIn>
             </div>
           </div>
@@ -101,7 +119,7 @@ export function Header() {
           <div className="flex items-center justify-between">
             <div className="relative h-[100px] w-[100px]">
               <Image
-                src="/logo-artiefy.webp"
+                src="/logo-artiefy.svg"
                 alt="Logo Artiefy"
                 fill
                 style={{ objectFit: "contain" }}
@@ -137,12 +155,21 @@ export function Header() {
           <div className="mt-6">
             <SignedOut>
               <SignInButton>
-                <Button className="w-full transform justify-center border-background bg-[#00BDD8] text-lg font-semibold text-white transition-colors hover:bg-background active:scale-95">
-                  Iniciar Sesión
+                <Button
+                  className="w-full transform justify-center border-background bg-[#00BDD8] text-lg font-semibold text-white transition-colors hover:bg-background active:scale-95"
+                  onClick={handleSignInClick}
+                >
+                  <span className="inline-flex items-center justify-center">
+                    {isLoading ? (
+                      <Icons.spinner className="size-4 animate-spin" />
+                    ) : (
+                      "Iniciar Sesión"
+                    )}
+                  </span>
                 </Button>
               </SignInButton>
             </SignedOut>
-            <SignedIn >
+            <SignedIn>
               <UserButton showName />
             </SignedIn>
           </div>

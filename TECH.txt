@@ -10,3 +10,9 @@ CORREO SOPORTE:
 artiefysupport@gmail.com
 
 -agregar sistema de search query e integrarlo en el json ld schema
+
+Colores del manual de marca:
+
+#01142B
+#3AF4EF
+#00BDD8

@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   icons: {
-    icon: '/artiefy-icon.png',
+    icon: '/favicon.ico',
     apple: '/artiefy-icon.png',
   },
 };

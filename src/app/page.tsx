@@ -3,7 +3,7 @@ import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Header } from "~/components/layout/Header";
 import { Button } from "~/components/ui/button";
-import Image from "next/image";
+import SmoothGradient from "~/components/layout/Gradient";
 
 export default function Home() {
   const { user } = useUser();
@@ -18,47 +18,40 @@ export default function Home() {
 
   return (
     <div className="relative flex min-h-screen flex-col">
-      <div className="absolute inset-0 z-[-1]">
-        <Image
-          src="/index-fondo.webp"
-          alt="Fondo de la página principal"
-          layout="fill"
-          objectFit="cover"
-          quality={100}
-          priority
-        />
-      </div>
-      <Header />
-      <main className="flex flex-grow items-center justify-center">
-        <section className="container mx-auto px-4 py-16 text-center">
-          <h1 className="mb-7 text-5xl font-bold">
-            Únete a nosotros y transforma tus ideas en
-            <br /> realidades con el poder del conocimiento
-          </h1>
-          <p className="mb-7 text-xl">
-            Bienvenido a Artiefy, tu plataforma digital educativa dedicada a
-            impulsar <br /> tus proyectos con conocimientos de tecnología e
-            innovación
-          </p>
-          <div>
-            <SignedOut>
-              <SignInButton>
-                <Button className="p-7 text-2xl font-semibold active:scale-95">
-                  COMIENZA YA
+      <SmoothGradient />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+        <main className="flex flex-grow items-center justify-center">
+          <section className="container mx-auto px-4 py-16 text-center">
+            <h1 className="mb-7 text-5xl font-bold">
+              Únete a nosotros y transforma tus ideas en
+              <br /> realidades con el poder del conocimiento
+            </h1>
+            <p className="mb-7 text-xl">
+              Bienvenido a Artiefy, tu plataforma digital educativa dedicada a
+              impulsar <br /> tus proyectos con conocimientos de tecnología e
+              innovación
+            </p>
+            <div>
+              <SignedOut>
+                <SignInButton>
+                  <Button className="italic p-7 text-2xl font-semibold active:scale-95">
+                    COMIENZA YA
+                  </Button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <Button
+                  asChild
+                  className="p-7 text-2xl font-semibold active:scale-95"
+                >
+                  <Link href={dashboardRoute}>DASHBOARD</Link>
                 </Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <Button
-                asChild
-                className="p-7 text-2xl font-semibold active:scale-95"
-              >
-                <Link href={dashboardRoute}>DASHBOARD</Link>
-              </Button>
-            </SignedIn>
-          </div>
-        </section>
-      </main>
+              </SignedIn>
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
   );
 }

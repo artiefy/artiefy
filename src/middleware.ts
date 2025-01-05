@@ -14,7 +14,7 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(url)
   }
 
-  if (isProfesorRoute(req) && role !== 'profesor') {
+  if (isProfesorRoute(req) && role !== 'educador') {
     const url = new URL('/', req.url)
     return NextResponse.redirect(url)
   }
