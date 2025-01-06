@@ -64,5 +64,4 @@
     "strings": true
   },
   "editor.inlineSuggest.enabled": true,
-  "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": true
 }

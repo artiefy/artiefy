@@ -222,7 +222,7 @@ export default function StudentDashboard() {
                             />
                           </AspectRatio>
                           <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
-                            <h3 className="text-lg font-bold text-primary">
+                            <h3 className="text-lg font-bold text-white">
                               {course.title}
                             </h3>
                             <Badge
@@ -293,7 +293,7 @@ export default function StudentDashboard() {
                     onClick={() => setCurrentPage(index + 1)}
                     isActive={currentPage === index + 1}
                   >
-                    {index + 1}
+                    {index + 1} 
                   </PaginationLink>
                 </PaginationItem>
               ))}
