@@ -13,7 +13,7 @@ import {
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ModeToggle } from "~/components/ui/mode-toggle"
-import { Breadcrumbs } from "~/components/ui/Breadcrumb"
+import { Breadcrumb } from "~/components/ui/breadcrumb"
 import { NotificationsDropdown } from "~/components/ui/NotificationsDropdown"
 
 export function Header() {
@@ -35,7 +35,7 @@ export function Header() {
             </span>
           </a>
         </div>
-        <Breadcrumbs />
+        <Breadcrumb />
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <nav className="flex items-center space-x-2">
             <NotificationsDropdown />

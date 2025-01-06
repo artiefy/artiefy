@@ -1,10 +1,10 @@
 'use client'
 
+import { GraduationCap, TrendingUp, Users } from 'lucide-react'
 import { useState } from 'react'
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { GenericTable } from '~/components/ui/GenericTable'
 import { AddStudentForm } from '~/components/ui/AddStudentForm'
+import { Button } from "~/components/ui/button"
+import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog"
-import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
-import { Users, GraduationCap, TrendingUp } from 'lucide-react'
 import { EstudianteDetalle } from '~/components/ui/EstudianteDetalle'
+import { GenericTable } from '~/components/ui/GenericTable'
+import { Input } from "~/components/ui/input"
 import { Estudiante } from '~/types/user'
+
+// Ensure AddStudentForm is correctly imported and exported
+export { AddStudentForm } from '~/components/ui/AddStudentForm'
 
 export default function Estudiantes() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([
