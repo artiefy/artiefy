@@ -37,7 +37,7 @@ export default function Home() {
               <SignedOut>
                 <SignInButton>
                   <UiButton
-                    className="cta rounded-none relative p-7 text-2xl font-semibold italic text-background active:scale-95 bg-primary transform skew-x-[-15deg] hover:text-white"
+                    className="cta rounded-none relative p-7 text-2xl font-semibold italic text-background active:scale-95 bg-primary transform skew-x-[-20deg] hover:text-white"
                     style={{
                       boxShadow: "6px 6px 0 black",
                       transition: "0.5s",

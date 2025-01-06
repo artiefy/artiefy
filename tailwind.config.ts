@@ -40,8 +40,8 @@ export default {
       },
       // Colores personalizados
       colors: {
-        background: "hsl(var(--background))", // Utiliza la variable CSS de fondo
-        foreground: "hsl(var(--foreground))", // Utiliza la variable CSS de texto
+        background: "hsl(var(--background))", 
+        foreground: "hsl(var(--foreground))", 
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
@@ -51,7 +51,7 @@ export default {
           foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))", // Utiliza la variable CSS para el color primario
+          DEFAULT: "hsl(var(--primary))", 
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -81,7 +81,7 @@ export default {
           "5": "hsl(var(--chart-5))",
         },
       },
-      // Puntos de ruptura para diseño responsivo
+      
       screens: {
         sm: "640px",
         md: "768px",

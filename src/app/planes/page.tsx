@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { AiOutlineCrown } from "react-icons/ai";
 import { BsCheck2Circle, BsStars } from "react-icons/bs";
-import { FaTimes, FaBook } from "react-icons/fa";
+import { FaBook, FaTimes } from "react-icons/fa";
 import Footer from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
 import { Button } from "~/components/ui/button";
@@ -15,11 +15,6 @@ const PricingPlans: React.FC = () => {
     price: string;
     period: string;
     courses: number;
-    bgColor: string;
-    buttonColor: string;
-    hoverButtonColor: string;
-    borderColor: string;
-    hoverColor: string;
     features: string[];
   }
 
@@ -33,16 +28,12 @@ const PricingPlans: React.FC = () => {
       price: "$15mil",
       period: "/mes",
       courses: 10,
-      bgColor: "bg-green-50", // Cambiado a verde
-      buttonColor: "bg-green-600",
-      hoverButtonColor: "hover:bg-green-700",
-      borderColor: "border-green-200",
-      hoverColor: "hover:border-green-400",
       features: [
         "Acceso a todos los cursos",
         "Materiales de curso premium",
         "Soporte comunitario prioritario",
         "Sesiones de mentoría 1 a 1",
+        "Acceso a foros exclusivos",
       ],
     },
     {
@@ -51,14 +42,8 @@ const PricingPlans: React.FC = () => {
       price: "$30mil",
       period: "/mes",
       courses: 20,
-      bgColor: "bg-blue-50", // Cambiado a azul
-      buttonColor: "bg-blue-600",
-      hoverButtonColor: "hover:bg-blue-700",
-      borderColor: "border-blue-200",
-      hoverColor: "hover:border-blue-400",
       features: [
         "Todo en el plan Pro",
-        "Acceso exclusivo a talleres",
         "Acceso directo a instructores",
         "Sesiones de orientación profesional",
         "Actualizaciones de cursos de por vida",
@@ -71,11 +56,6 @@ const PricingPlans: React.FC = () => {
       price: "$50mil",
       period: "/mes",
       courses: 50,
-      bgColor: "bg-purple-50", // Cambiado a morado
-      buttonColor: "bg-purple-600",
-      hoverButtonColor: "hover:bg-purple-700",
-      borderColor: "border-purple-200",
-      hoverColor: "hover:border-purple-400",
       features: [
         "Todo en el plan Premium",
         "Soporte técnico dedicado",
@@ -108,22 +88,29 @@ const PricingPlans: React.FC = () => {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`flex flex-col justify-between rounded-lg shadow-lg ${plan.bgColor} border-2 ${plan.borderColor} ${plan.hoverColor} transform transition-all duration-200 hover:scale-105`}
+                className={`relative flex transform flex-col justify-between rounded-lg bg-gradient-to-r from-primary to-secondary p-4 shadow-lg transition-all duration-200 hover:scale-105 ${
+                  plan.name === "Pro" || plan.name === "Enterprise"
+                    ? "justify-center items-center"
+                    : ""
+                }`}
               >
+                <div className="absolute inset-0 z-[-10] overflow-hidden rounded-lg border-2 border-white">
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-50"></div>
+                </div>
                 <div className="flex-grow p-8">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-background">
                       {plan.name}
                     </h3>
-                    <plan.icon className="h-8 w-8 text-gray-700" />
+                    <plan.icon className="h-8 w-8 text-background" />
                   </div>
                   <div className="mt-4">
-                    <span className="text-4xl font-extrabold text-gray-900">
+                    <span className="text-4xl font-extrabold text-background">
                       {plan.price}
                     </span>
-                    <span className="text-gray-600">{plan.period}</span>
+                    <span className="text-background">{plan.period}</span>
                   </div>
-                  <p className="mt-2 text-gray-600">
+                  <p className="mt-2 text-background">
                     Cursos disponibles:{" "}
                     <span className="text-2xl font-semibold">
                       {plan.courses}
@@ -132,18 +119,21 @@ const PricingPlans: React.FC = () => {
                   <ul className="mt-6 space-y-4">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-center">
-                        <BsCheck2Circle className="h-5 w-5 text-green-500" />
-                        <span className="ml-3 text-gray-600">{feature}</span>
+                        <BsCheck2Circle className="h-6 w-6 text-green-500" />
+                        <span className="ml-3 text-background">{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <Button
-                  onClick={() => handlePlanSelect(plan)}
-                  className={`m-5 ${plan.buttonColor} ${plan.hoverButtonColor} text-white rounded-md font-semibold transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg`}
-                >
-                  Seleccionar Plan {plan.name}
-                </Button>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => handlePlanSelect(plan)}
+                    className="bg-background text-white border border-white border-b-4 font-medium overflow-hidden relative px-4 py-2 rounded-md hover:brightness-150 hover:border-t-4 hover:border-b active:opacity-75 outline-none duration-300 group"
+                  >
+                    <span className="bg-white shadow-white absolute -top-[150%] left-0 inline-flex w-80 h-[5px] rounded-md opacity-50 group-hover:top-[150%] duration-500 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)]"></span>
+                    Seleccionar Plan {plan.name}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -172,7 +162,7 @@ const PricingPlans: React.FC = () => {
               <ul className="space-y-3">
                 {selectedPlan.features.map((feature: string) => (
                   <li key={feature} className="flex items-center">
-                    <BsCheck2Circle className="h-5 w-5 text-green-500" />
+                    <BsCheck2Circle className="h-6 w-6 font-bold text-green-400" />
                     <span className="ml-3 text-gray-600">{feature}</span>
                   </li>
                 ))}
@@ -180,7 +170,7 @@ const PricingPlans: React.FC = () => {
               <div className="mt-6">
                 <Button
                   onClick={() => setShowModal(false)}
-                  className={`w-full ${selectedPlan.buttonColor} ${selectedPlan.hoverButtonColor} rounded-md px-6 py-3 font-semibold text-white transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg`}
+                  className="w-full rounded-md bg-background px-6 py-3 font-semibold text-white transition-all duration-300 ease-in-out hover:bg-white hover:bg-opacity-30 hover:text-background hover:shadow-lg"
                 >
                   Proceder con el Plan {selectedPlan.name}
                 </Button>

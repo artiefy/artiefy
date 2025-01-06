@@ -65,7 +65,7 @@ export function Header() {
                     className="cta rounded-none relative p-5 font-light text-xl italic text-primary active:scale-95 transform skew-x-[-15deg] hover:text-white"
                     style={{
                       transition: "0.5s",
-                      width: "170px", 
+                      width: "175px", 
                     }}
                     onClick={handleSignInClick}
                   >
