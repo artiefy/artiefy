@@ -87,9 +87,12 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
             <div className="flex items-center justify-between w-full">
               <Link href={`/estudiantes/cursos/${course.id}`} legacyBehavior>
                 <a className="flex items-center">
-                  <Button className="flex items-center bg-background p-2 text-primary hover:bg-black/70 active:scale-95">
+                  <Button className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md bg-background p-2 text-primary hover:bg-black/70 active:scale-95 border border-white/20">
                     <p className="ml-2">Ver Curso</p>
                     <ArrowRightIcon className="animate-bounce-right mr-2 h-5 w-5" />
+                    <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+                      <div className="relative h-full w-10 bg-white/30"></div>
+                    </div>
                   </Button>
                 </a>
               </Link>
