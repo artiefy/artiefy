@@ -1,15 +1,15 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { StarIcon } from "@heroicons/react/24/solid";
+import { MagnifyingGlassIcon, StarIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
+import { Suspense, useEffect, useState } from "react";
 import CourseCategories from "~/components/layout/CourseCategories";
 import CourseListStudent from "~/components/layout/CourseListStudent";
 import Footer from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
+import { SkeletonCard } from "~/components/layout/SkeletonCard";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Badge } from "~/components/ui/badge";
-import { SkeletonCard } from "~/components/layout/SkeletonCard";
 import {
   Carousel,
   CarouselContent,
@@ -40,6 +40,10 @@ interface Course {
   description: string;
   instructor: string;
   rating?: number;
+  modalidad: {
+    name: string;
+  };
+  createdAt: string; // Añadido para la fecha de creación
 }
 
 function LoadingCourses() {
@@ -64,9 +68,13 @@ export default function StudentDashboard() {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch("/api/courses"); // No pasar userId
+      const response = await fetch("/api/courses");
       if (!response.ok) throw new Error(response.statusText);
       const data = (await response.json()) as Course[];
+      data.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ); // Ordenar por fecha de creación descendente
       setCourses(data);
       setFilteredCourses(data);
       setCarouselIndex(0);
@@ -143,11 +151,20 @@ export default function StudentDashboard() {
                     >
                       {course.category.name}
                     </Badge>
-                    <p className="hidden text-xl md:block">
+                    <p
+                      className="hidden text-center text-xl md:block"
+                      style={{
+                        maxWidth: "600px",
+                        wordWrap: "break-word",
+                      }}
+                    >
                       {course.description}
                     </p>
-                    <p className="hidden text-xl md:block">
-                      Instructor: {course.instructor}
+                    <p className="hidden text-xl font-bold md:block">
+                      Educador: {course.instructor}
+                    </p>
+                    <p className="hidden text-xl text-red-500 md:block">
+                      {course.modalidad.name}
                     </p>
                     <div className="flex items-center">
                       <StarIcon className="h-5 w-5 text-yellow-500" />
@@ -176,55 +193,67 @@ export default function StudentDashboard() {
 
           {/* Carousel Pequeño */}
           <div className="relative">
-            <h2 className="text-xl text-primary md:text-2xl">Top Cursos</h2>
+            <h2 className="ml-4 text-xl text-primary md:text-2xl">
+              Top Cursos
+            </h2>
             <Carousel className="w-full p-4">
               <CarouselContent>
-                {loading ? (
-                  Array.from({ length: 3 }).map((_, index) => (
-                    <Skeleton
-                      key={index}
-                      className="h-48 w-full md:h-64 rounded-lg ml-2 mx-4"
-                    />
-                  ))
-                ) : (
-                  courses.map((course) => (
-                    <CarouselItem
-                      key={course.id}
-                      className="pl-4 md:basis-1/2 lg:basis-1/3 zoom-in"
-                    >
-                      <div className="relative h-48 w-full md:h-64">
-                        <AspectRatio ratio={16 / 9}>
-                          <Image
-                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
-                            alt={course.title}
-                            fill
-                            className="object-cover"
-                            priority
-                            quality={100}
-                          />
-                        </AspectRatio>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
-                          <h3 className="text-lg text-primary">{course.title}</h3>
-                          <Badge
-                            variant="outline"
-                            className="mb-2 border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
-                          >
-                            {course.category.name}
-                          </Badge>
-                          <p className="text-primary italic">
-                            Instructor: <span className=" underline">{course.instructor}</span>
-                          </p>
-                          <div className="flex items-center">
-                            <StarIcon className="h-5 w-5 text-yellow-500" />
-                            <span className="ml-1 text-sm font-bold text-yellow-500">
-                              {(course.rating ?? 0).toFixed(1)}
-                            </span>
+                {loading
+                  ? Array.from({ length: 3 }).map((_, index) => (
+                      <Skeleton
+                        key={index}
+                        className="mx-4 ml-2 h-48 w-full rounded-lg md:h-64"
+                      />
+                    ))
+                  : courses.map((course) => (
+                      <CarouselItem
+                        key={course.id}
+                        className="pl-4 zoom-in md:basis-1/2 lg:basis-1/3"
+                      >
+                        <div className="relative h-48 w-full md:h-64">
+                          <AspectRatio ratio={16 / 9}>
+                            <Image
+                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+                              alt={course.title}
+                              fill
+                              className="object-cover"
+                              priority
+                              quality={100}
+                            />
+                          </AspectRatio>
+                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
+                            <h3 className="text-lg font-bold text-primary">
+                              {course.title}
+                            </h3>
+                            <Badge
+                              variant="outline"
+                              className="mb-2 border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
+                            >
+                              {course.category.name}
+                            </Badge>
+                            <div className="flex w-full justify-between">
+                              <p className="italic text-primary">
+                                Educador:{" "}
+                                <span className="underline">
+                                  {course.instructor}
+                                </span>
+                              </p>
+                              <p className="text-primary">
+                                <span className="text-red-500">
+                                  {course.modalidad.name}
+                                </span>
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <StarIcon className="h-5 w-5 text-yellow-500" />
+                              <span className="ml-1 text-sm font-bold text-yellow-500">
+                                {(course.rating ?? 0).toFixed(1)}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CarouselItem>
-                  ))
-                )}
+                      </CarouselItem>
+                    ))}
               </CarouselContent>
               <CarouselPrevious className="mr-7 h-12 w-12 bg-black bg-opacity-50 text-white" />
               <CarouselNext className="ml-4 h-12 w-12 bg-black bg-opacity-50 text-white" />
@@ -232,12 +261,16 @@ export default function StudentDashboard() {
           </div>
 
           <div>
-            <h2 className="text-xl text-primary md:text-2xl">Buscar Cursos</h2>
+            <h2 className="text-xl text-primary md:text-2xl flex items-center">
+              Buscar Cursos
+              <MagnifyingGlassIcon className="h-6 w-6 ml-2" />
+            </h2>
             <Input
               type="text"
               placeholder="Buscar..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
+              className="border border-primary"
             />
           </div>
 
@@ -255,7 +288,7 @@ export default function StudentDashboard() {
                 />
               )}
               {Array.from({ length: totalPages }).map((_, index) => (
-                <PaginationItem key={index} >
+                <PaginationItem key={index}>
                   <PaginationLink
                     onClick={() => setCurrentPage(index + 1)}
                     isActive={currentPage === index + 1}

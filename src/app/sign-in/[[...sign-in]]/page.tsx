@@ -28,7 +28,7 @@ export default function SignInPage() {
             fill
             className="h-full w-full object-contain"
             priority
-            style={{ maxWidth: '500px', maxHeight: '500px' }} // Ajusta el tamaño aquí
+            style={{ maxWidth: '500px', maxHeight: '500px' }} 
           />
         </AspectRatio>
       </div>

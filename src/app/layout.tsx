@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { esMX } from "@clerk/localizations"
-import { neobrutalism } from "@clerk/themes"
 import { Montserrat } from 'next/font/google'
 import { Toaster } from "~/components/ui/toaster"
 import { CSPostHogProvider } from "./_analytics/provider"
@@ -39,10 +38,6 @@ export default function RootLayout({
   return (
     <ClerkProvider
       localization={esMX}
-      appearance={{
-        signIn: { baseTheme: neobrutalism },
-        signUp: { baseTheme: neobrutalism },
-      }}
       signUpFallbackRedirectUrl="/"
       signInFallbackRedirectUrl="/"
     >

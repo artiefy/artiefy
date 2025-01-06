@@ -85,8 +85,9 @@ export async function POST(request: NextRequest) {
       categoryid: number;
       instructor: string;
       rating: number;
+      modalidadesid: number; // Add this line
     };
-    const { title, description, coverImageKey, categoryid, instructor, rating } = body;
+    const { title, description, coverImageKey, categoryid, instructor, rating, modalidadesid } = body;
 
     await createCourse({
       title,
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
       categoryid,
       instructor,
       rating,
+      modalidadesid, // Add this line
     });
 
     return NextResponse.json({
@@ -124,8 +126,9 @@ export async function PUT(request: NextRequest) {
       categoryid: number;
       instructor: string;
       rating: number;
+      modalidadesid: number; // Add this line
     };
-    const { id, title, description, coverImageKey, categoryid, instructor, rating } = body;
+    const { id, title, description, coverImageKey, categoryid, instructor, rating, modalidadesid } = body;
 
     const course = await getCourseById(id);
     if (!course) {
@@ -143,6 +146,7 @@ export async function PUT(request: NextRequest) {
       categoryid,
       instructor,
       rating,
+      modalidadesid, // Add this line
     });
 
     return NextResponse.json({ message: "Curso actualizado exitosamente" });

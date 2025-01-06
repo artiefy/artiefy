@@ -1,11 +1,11 @@
 import { db } from "~/server/db/index";
-import { courses, lessons, enrollments, categories } from "~/server/db/schema";
+import { courses, lessons, enrollments, categories, modalidades } from "~/server/db/schema"; // Add modalidades
 import { eq, count } from "drizzle-orm";
 
 export interface Lesson {
   id: number;
   title: string;
-  duration: number; // Duración de la lección en horas
+  duration: number; 
   description: string | null;
   order: number;
   course_id: number;
@@ -14,6 +14,12 @@ export interface Lesson {
 }
 
 export interface Category {
+  id: number;
+  name: string;
+  description: string | null;
+}
+
+export interface Modalidad {
   id: number;
   name: string;
   description: string | null;
@@ -30,6 +36,7 @@ export interface Course {
   instructor: string;
   rating: number | null;
   user_id: string;
+  modalidad: Modalidad; 
   lessons?: Lesson[];
   totalStudents?: number;
   createdAt: string | number | Date;
@@ -45,6 +52,7 @@ export const createCourse = async ({
   categoryid,
   instructor,
   rating,
+  modalidadesid, 
 }: {
   title: string;
   description: string;
@@ -53,15 +61,17 @@ export const createCourse = async ({
   categoryid: number;
   instructor: string;
   rating: number;
+  modalidadesid: number; 
 }): Promise<void> => {
   await db.insert(courses).values({
     title,
     description,
     creatorId,
-    coverImageKey,
+    coverImageKey, 
     categoryid,
     instructor,
     rating,
+    modalidadesid, 
   });
 };
 
@@ -71,10 +81,15 @@ export const getCoursesByUserId = async (user_id: string): Promise<Course[]> => 
   const categoriesResult = await db.select().from(categories);
   const categoriesMap = new Map(categoriesResult.map(category => [category.id, category]));
 
+  const modalidadesResult = await db.select().from(modalidades);
+  const modalidadesMap = new Map(modalidadesResult.map(modalidad => [modalidad.id, modalidad]));
+
   return result.map(course => ({
     ...course,
+    coverImageKey: course.coverImageKey, // Map from database column
     user_id: course.creatorId,
-    category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null }
+    category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null },
+    modalidad: modalidadesMap.get(course.modalidadesid) ?? { id: course.modalidadesid, name: '', description: null } // Add this line
   }));
 };
 
@@ -83,7 +98,7 @@ export const getTotalStudents = async (course_id: number): Promise<number> => {
   const result = await db
     .select({ totalStudents: count() })
     .from(enrollments)
-    .where(eq(enrollments.course_id, course_id));
+    .where(eq(enrollments.courseId, course_id));
   return result[0]?.totalStudents ?? 0;
 };
 
@@ -94,7 +109,13 @@ export const getCourseById = async (course_id: number): Promise<Course | null> =
 
   const courseData = courseResult[0];
   if (!courseData) return null;
-  const course = { ...courseData, user_id: courseData.creatorId } as Course;
+  const course = { 
+    ...courseData, 
+    coverImageKey: courseData.coverImageKey, // Map from database column
+    user_id: courseData.creatorId,
+    category: { id: courseData.categoryid, name: '', description: null },
+    modalidad: { id: courseData.modalidadesid, name: '', description: null }
+  } as Course;
 
   const categoryResult = await db.select().from(categories).where(eq(categories.id, course.categoryid));
   if (categoryResult.length > 0 && categoryResult[0]) {
@@ -103,9 +124,17 @@ export const getCourseById = async (course_id: number): Promise<Course | null> =
     course.category = { id: course.categoryid, name: '', description: null };
   }
 
-  const lessonsResult = await db.select().from(lessons).where(eq(lessons.course_id, course_id)).orderBy(lessons.order);
+  const modalidadResult = await db.select().from(modalidades).where(eq(modalidades.id, courseData.modalidadesid));
+  if (modalidadResult.length > 0 && modalidadResult[0]) {
+    course.modalidad = modalidadResult[0];
+  } else {
+    course.modalidad = { id: courseData.modalidadesid, name: '', description: null };
+  }
+
+  const lessonsResult = await db.select().from(lessons).where(eq(lessons.courseId, course_id)).orderBy(lessons.order);
   course.lessons = lessonsResult.map(lesson => ({
     ...lesson,
+    course_id: lesson.courseId,
     createdAt: lesson.createdAt.toISOString(),
     updatedAt: lesson.updatedAt.toISOString(),
   }));
@@ -122,10 +151,15 @@ export const getAllCourses = async (): Promise<Course[]> => {
   const categoriesResult = await db.select().from(categories);
   const categoriesMap = new Map(categoriesResult.map(category => [category.id, category]));
 
+  const modalidadesResult = await db.select().from(modalidades);
+  const modalidadesMap = new Map(modalidadesResult.map(modalidad => [modalidad.id, modalidad]));
+
   return result.map(course => ({
     ...course,
+    coverImageKey: course.coverImageKey, // Map from database column
     user_id: course.creatorId,
-    category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null }
+    category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null },
+    modalidad: modalidadesMap.get(course.modalidadesid) ?? { id: course.modalidadesid, name: '', description: null }
   }));
 };
 
@@ -139,6 +173,7 @@ export const updateCourse = async (
     categoryid,
     instructor,
     rating,
+    modalidadesid, 
   }: {
     title: string;
     description: string;
@@ -146,18 +181,19 @@ export const updateCourse = async (
     categoryid: number;
     instructor: string;
     rating: number;
+    modalidadesid: number; 
   }
 ): Promise<void> => {
   await db
     .update(courses)
-    .set({ title, description, coverImageKey, categoryid, instructor, rating })
+    .set({ title, description, coverImageKey, categoryid, instructor, rating, modalidadesid }) // Map to database column
     .where(eq(courses.id, course_id));
 };
 
 // Eliminar un curso
 export const deleteCourse = async (course_id: number): Promise<void> => {
   // Primero eliminar las lecciones asociadas al curso
-  await db.delete(lessons).where(eq(lessons.course_id, course_id));
+  await db.delete(lessons).where(eq(lessons.courseId, course_id));
 
   // Luego eliminar el curso
   await db.delete(courses).where(eq(courses.id, course_id));
