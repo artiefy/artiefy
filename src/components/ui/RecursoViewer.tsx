@@ -25,7 +25,6 @@ export function RecursoViewer({ recurso, isOpen, onClose }: RecursoViewerProps) 
         return (
           <div className="aspect-video w-full">
             <ReactPlayer
-              key={recurso.url} // Add key prop here
               url={recurso.url}
               width="100%"
               height="100%"

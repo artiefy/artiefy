@@ -4,50 +4,38 @@ import { useState } from 'react'
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { GenericTable } from '~/components/ui/GenericTable'
-import { GenericForm } from '~/components/ui/GenericForm'
 import { AddStudentForm } from '~/components/ui/AddStudentForm'
-
-  import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "~/components/ui/dialog"
-import { Label } from "~/components/ui/label"
 import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
 import { Users, GraduationCap, TrendingUp } from 'lucide-react'
 import { EstudianteDetalle } from '~/components/ui/EstudianteDetalle'
-
-// Tipo para representar a un estudiante
-type Estudiante = {
-  id: number;
-  nombre: string;
-  email: string;
-  fechaNacimiento: string;
-  cursos: { nombre: string; progreso: number }[];
-  contraseña?: string;
-  telefono?: string;
-  edad?: number;
-}
-
-function EstudiantesPage() {
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Gestión de Estudiantes</h1>
-      <AddStudentForm />
-      {/* Aquí puedes añadir una lista de estudiantes existentes si lo deseas */}
-    </div>
-  )
-}
+import { Estudiante } from '~/types/user'
 
 export default function Estudiantes() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([
     { 
       id: 1, 
-      nombre: 'Ana García', 
-      email: 'ana.garcia@ejemplo.com', 
-      fechaNacimiento: '1995-05-15',
+      idEstudiante: 'EST001',
+      nombreCompleto: 'Ana María García López',
+      nombre: 'Ana María',
+      apellido: 'García López',
+      numeroDocumento: '1234567890',
+      fechaNacimiento: { dia: '15', mes: '05', año: '1995' },
+      correo: 'ana.garcia@ejemplo.com',
+      password: 'contraseña123',
+      edad: 28,
+      info_residencia: {
+        ciudad: 'Madrid',
+        pais: 'España',
+        vecindario: 'Centro',
+        direccion: 'Calle Mayor 123'
+      },
       cursos: [
         { nombre: 'Introducción a la Programación', progreso: 75 },
         { nombre: 'Diseño UX/UI', progreso: 50 },
@@ -55,9 +43,21 @@ export default function Estudiantes() {
     },
     { 
       id: 2, 
-      nombre: 'Carlos Rodríguez', 
-      email: 'carlos.rodriguez@ejemplo.com', 
-      fechaNacimiento: '1998-09-22',
+      idEstudiante: 'EST002',
+      nombreCompleto: 'Carlos Alberto Rodríguez Sánchez',
+      nombre: 'Carlos Alberto',
+      apellido: 'Rodríguez Sánchez',
+      numeroDocumento: '0987654321',
+      fechaNacimiento: { dia: '22', mes: '09', año: '1998' },
+      correo: 'carlos.rodriguez@ejemplo.com',
+      password: 'contraseña456',
+      edad: 25,
+      info_residencia: {
+        ciudad: 'Barcelona',
+        pais: 'España',
+        vecindario: 'Gracia',
+        direccion: 'Avenida Diagonal 456'
+      },
       cursos: [
         { nombre: 'Marketing Digital', progreso: 90 },
         { nombre: 'Introducción a la Programación', progreso: 30 },
@@ -71,14 +71,17 @@ export default function Estudiantes() {
     setEstudiantes([...estudiantes, { ...nuevoEstudiante, id: estudiantes.length + 1 }])
   }
 
-  const handleEditEstudiante = (estudianteEditado: Estudiante) => {
-    setEstudiantes(estudiantes.map(est => est.id === estudianteEditado.id ? estudianteEditado : est))
+  const handleEditEstudiante = (estudianteEditado: Omit<Estudiante, 'id'>) => {
+    setEstudiantes(estudiantes.map(est => est.id === estudianteSeleccionado?.id ? { ...estudianteEditado, id: est.id } : est))
+    setEstudianteSeleccionado(null)
   }
 
   const columns = [
-    { header: 'Nombre', accessor: 'nombre' },
-    { header: 'Email', accessor: 'email' },
-    { header: 'Fecha de Nacimiento', accessor: 'fechaNacimiento' },
+    { header: 'ID Estudiante', accessor: 'idEstudiante' },
+    { header: 'Nombre Completo', accessor: 'nombreCompleto' },
+    { header: 'Correo', accessor: 'correo' },
+    { header: 'Edad', accessor: 'edad' },
+    { header: 'Ciudad', accessor: 'info_residencia.ciudad' },
   ]
 
   return (
@@ -102,19 +105,11 @@ export default function Estudiantes() {
           <DialogTrigger asChild>
             <Button>Agregar Estudiante</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[625px]">
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Estudiante</DialogTitle>
             </DialogHeader>
-            <GenericForm
-              fields={[
-                { name: 'nombre', label: 'Nombre', type: 'text' },
-                { name: 'email', label: 'Email', type: 'text' },
-                { name: 'fechaNacimiento', label: 'Fecha de Nacimiento', type: 'text' },
-              ]}
-              onSubmit={handleAddEstudiante}
-              submitLabel="Agregar Estudiante"
-            />
+            <AddStudentForm onSubmit={handleAddEstudiante} />
           </DialogContent>
         </Dialog>
       </div>
@@ -130,20 +125,11 @@ export default function Estudiantes() {
               <DialogTrigger asChild>
                 <Button variant="outline">Editar</Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
+              <DialogContent className="sm:max-w-[625px]">
                 <DialogHeader>
                   <DialogTitle>Editar Estudiante</DialogTitle>
                 </DialogHeader>
-                <GenericForm
-                  fields={[
-                    { name: 'nombre', label: 'Nombre', type: 'text' },
-                    { name: 'email', label: 'Email', type: 'text' },
-                    { name: 'fechaNacimiento', label: 'Fecha de Nacimiento', type: 'text' },
-                  ]}
-                  onSubmit={handleEditEstudiante}
-                  initialData={estudiante}
-                  submitLabel="Actualizar Estudiante"
-                />
+                <AddStudentForm onSubmit={handleEditEstudiante} initialData={estudiante} />
               </DialogContent>
             </Dialog>
           </>
