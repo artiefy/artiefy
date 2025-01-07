@@ -135,6 +135,7 @@ export const getCourseById = async (course_id: number): Promise<Course | null> =
   course.lessons = lessonsResult.map(lesson => ({
     ...lesson,
     course_id: lesson.courseId,
+    duration: lesson.duration, // Ensure duration is included
     createdAt: lesson.createdAt.toISOString(),
     updatedAt: lesson.updatedAt.toISOString(),
   }));

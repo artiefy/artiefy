@@ -186,7 +186,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                             {lesson.title}
                           </span>
                           <span className="ml-4 text-sm text-gray-500">
-                            {lesson.duration} hrs
+                            {lesson.duration} mins
                           </span>
                         </div>
                         {expandedLesson === lesson.id ? (
