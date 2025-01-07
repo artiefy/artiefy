@@ -45,8 +45,8 @@ const PricingPlans: React.FC = () => {
       features: [
         "Todo en el plan Pro",
         "Acceso directo a instructores",
-        "Sesiones de orientación profesional",
-        "Actualizaciones de cursos de por vida",
+        "Orientación profesional",
+        "Actualizaciones de cursos",
         "Certificaciones con el Ciadet",
       ],
     },
@@ -77,7 +77,7 @@ const PricingPlans: React.FC = () => {
       <div className="mb-12 px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-primary sm:text-4xl">
+            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
               Planes Artiefy
             </h2>
             <p className="mt-4 text-xl text-primary">
@@ -90,7 +90,7 @@ const PricingPlans: React.FC = () => {
                 key={plan.name}
                 className={`relative flex transform flex-col justify-between rounded-lg bg-gradient-to-r from-primary to-secondary p-4 shadow-lg transition-all duration-200 hover:scale-105 ${
                   plan.name === "Pro" || plan.name === "Enterprise"
-                    ? "justify-center items-center"
+                    ? "items-center justify-center"
                     : ""
                 }`}
               >
@@ -116,23 +116,23 @@ const PricingPlans: React.FC = () => {
                       {plan.courses}
                     </span>
                   </p>
-                  <ul className="mt-6 space-y-4">
+                  <ul className="mt-6 space-y-3">
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-center">
-                        <BsCheck2Circle className="h-6 w-6 text-green-500" />
+                        <BsCheck2Circle className="h-6 w-6 text-green-600" />
                         <span className="ml-3 text-background">{feature}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="flex justify-center">
-                  <button
+                <div className="mb-4 flex justify-center">
+                  <Button
                     onClick={() => handlePlanSelect(plan)}
-                    className="bg-background text-white border border-white border-b-4 font-medium overflow-hidden relative px-4 py-2 rounded-md hover:brightness-150 hover:border-t-4 hover:border-b active:opacity-75 outline-none duration-300 group"
+                    className="h-full group hover:bg-background relative overflow-hidden rounded-md border border-b-4 border-white bg-background px-4 py-3 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:brightness-150 active:scale-95 active:opacity-75"
                   >
-                    <span className="bg-white shadow-white absolute -top-[150%] left-0 inline-flex w-80 h-[5px] rounded-md opacity-50 group-hover:top-[150%] duration-500 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)]"></span>
+                    <span className="absolute -top-[150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
                     Seleccionar Plan {plan.name}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -154,12 +154,12 @@ const PricingPlans: React.FC = () => {
                 <FaTimes className="h-6 w-6" />
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-5">
               <p className="text-gray-600">
                 Comienza con nuestro plan {selectedPlan.name} y desbloquea
                 características increíbles:
               </p>
-              <ul className="space-y-3">
+              <ul className="space-y-3 pb-1">
                 {selectedPlan.features.map((feature: string) => (
                   <li key={feature} className="flex items-center">
                     <BsCheck2Circle className="h-6 w-6 font-bold text-green-400" />
@@ -167,14 +167,17 @@ const PricingPlans: React.FC = () => {
                   </li>
                 ))}
               </ul>
-              <div className="mt-6">
+              ...
+              <div className="flex justify-center">
                 <Button
                   onClick={() => setShowModal(false)}
-                  className="w-full rounded-md bg-background px-6 py-3 font-semibold text-white transition-all duration-300 ease-in-out hover:bg-white hover:bg-opacity-30 hover:text-background hover:shadow-lg"
+                  className="-my-6 group relative h-full overflow-hidden rounded-md border border-b-4 border-secondary bg-background px-5 py-3 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:bg-background active:scale-95 active:opacity-75"
                 >
+                  <span className="absolute -top-[150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
                   Proceder con el Plan {selectedPlan.name}
                 </Button>
               </div>
+              ...
             </div>
           </div>
         </div>
