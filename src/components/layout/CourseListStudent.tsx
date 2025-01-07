@@ -53,8 +53,8 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
               </AspectRatio>
             </CardHeader>
             <CardContent>
-              <CardTitle className="mb-2 rounded-lg bg-primary bg-opacity-50 text-lg text-background">
-                <div className="m-2 font-bold">{course.title}</div>
+              <CardTitle className="mb-2 rounded-lg text-lg text-background">
+                <div className="font-bold">{course.title}</div>
               </CardTitle>
               <div className="mb-2 flex items-center">
                 <Badge
@@ -63,9 +63,7 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
                 >
                   {course.category.name}
                 </Badge>
-                <span className="ml-2 text-sm font-bold text-gray-600">
-                  Categoría
-                </span>
+             
               </div>
               <p className="mb-2 line-clamp-2 text-sm text-gray-600">
                 {course.description}

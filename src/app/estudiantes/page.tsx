@@ -1,6 +1,6 @@
 "use client";
 
-import { MagnifyingGlassIcon, StarIcon } from "@heroicons/react/24/solid";
+import { MagnifyingGlassIcon, RocketLaunchIcon, StarIcon, AcademicCapIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
 import CourseCategories from "~/components/layout/CourseCategories";
@@ -17,7 +17,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "~/components/ui/carousel";
-import { Input } from "~/components/ui/input";
 import {
   Pagination,
   PaginationContent,
@@ -120,7 +119,7 @@ export default function StudentDashboard() {
     <div>
       <main className="container mx-auto px-40 md:px-48">
         <Header />
-        <div className="flex flex-col space-y-12">
+        <div className="flex flex-col space-y-8">
           {/* Carousel */}
           <div className="relative h-[500px] overflow-hidden">
             {loading ? (
@@ -187,6 +186,36 @@ export default function StudentDashboard() {
                 />
               ))}
             </div>
+          </div>
+
+          {/* Search Bar Below Carousel */}
+          <div className="flex justify-end">
+            <form className="flex items-center max-w-lg">
+            <div className="flex items-center mr-4 h-full">
+                <RocketLaunchIcon className="size-6 h-6 w-6 text-gray-500 dark:text-gray-400" />
+                <span className="ml-2 text-xl text-gray-500 dark:text-gray-400 whitespace-nowrap">IA</span>
+                </div>
+             
+              <div className="relative w-full max-w-xs">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <MagnifyingGlassIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                </div>
+                <input
+                  required
+                  placeholder="Buscar..."
+                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary dark:focus:ring-primary"
+                  type="text"
+                />
+              </div>
+              <button
+                className="ml-2 inline-flex items-center rounded-lg border border-primary bg-primary px-3 py-2.5 text-sm font-medium text-background hover:bg-primary/90 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/50 dark:bg-primary dark:hover:bg-primary/90 dark:focus:ring-primary/50"
+                type="submit"
+              >
+                <MagnifyingGlassIcon className="mr-2 h-4 w-4" />
+                Buscar
+              </button>
+             
+            </form>
           </div>
 
           <CourseCategories />
@@ -260,20 +289,40 @@ export default function StudentDashboard() {
             </Carousel>
           </div>
 
-          <div>
-            <h2 className="text-xl text-primary md:text-2xl flex items-center">
-              Buscar Cursos
-              <MagnifyingGlassIcon className="h-6 w-6 ml-2" />
-            </h2>
-            <Input
-              type="text"
-              placeholder="Buscar..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="border border-primary"
-            />
+          {/* Search Bar Above Cursos Disponibles */}
+          <div className="flex justify-end">      
+            <form className="flex max-w-lg items-center">
+            <div className="flex items-center mr-4 h-full">
+              <AcademicCapIcon className="size-5 h-6 w-6 text-gray-500 dark:text-gray-400" />
+              <span className="ml-2 text-xl text-gray-500 dark:text-gray-400 whitespace-nowrap">Busca Tu Curso</span>              </div>
+              <label className="sr-only" htmlFor="course-search">
+                Buscar...
+              </label>
+              <div className="relative w-full max-w-xs">
+              
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <MagnifyingGlassIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                </div>
+                <input
+                  required
+                  placeholder="Search..."
+                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary dark:focus:ring-primary"
+                  type="search"
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </div>
+              
+              <button
+                className="ml-2 inline-flex items-center rounded-lg border border-primary bg-primary px-3 py-2.5 text-sm font-medium text-background hover:bg-primary/90 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/50 dark:bg-primary dark:hover:bg-primary/90 dark:focus:ring-primary/50"
+                type="submit"
+              >
+                <MagnifyingGlassIcon className="mr-2 h-4 w-4" />
+                Buscar
+              </button>
+             
+            </form>
           </div>
-
           <h2 className="text-3xl font-bold">Cursos Disponibles</h2>
           {loading && <LoadingCourses />}
           <Suspense fallback={<LoadingCourses />}>
@@ -293,7 +342,7 @@ export default function StudentDashboard() {
                     onClick={() => setCurrentPage(index + 1)}
                     isActive={currentPage === index + 1}
                   >
-                    {index + 1} 
+                    {index + 1}
                   </PaginationLink>
                 </PaginationItem>
               ))}

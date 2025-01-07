@@ -15,6 +15,11 @@ const SmoothGradient = () => {
               #00BDD866 0%,
               transparent 70%
             ),
+            radial-gradient(
+              100% 100% at 0% 100%,
+              #2ecc71 0%,
+              transparent 70%
+            ),
             #01142B
           `,
           backgroundBlendMode: "screen, screen, normal",
