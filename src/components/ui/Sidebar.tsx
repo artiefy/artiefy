@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import { Home, BookOpen, Users, GraduationCap, FileText, MessageSquare, Settings, HelpCircle, Award, BarChart, PenToolIcon as Tool, Zap, Sun, Moon } from 'lucide-react'
 import { Button } from "~/components/ui/button"
 import { useTheme } from "next-themes"
 
 const menuItems = [
-  { icon: Home, text: 'Inicio', href: '/' },
-  { icon: BookOpen, text: 'Cursos', href: './app/cursos' },
+  { icon: Home, text: 'Inicio', href: './' },
+  { icon: BookOpen, text: 'Cursos', href: './cursos' },
   { icon: Users, text: 'Estudiantes', href: './estudiantes' },
   { icon: GraduationCap, text: 'Tutores', href: './tutores' },
   { icon: FileText, text: 'Recursos', href: './recursos' },
@@ -28,7 +29,16 @@ export const Sidebar = () => {
     <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
       <div className="py-4">
         <div className="px-4 py-2">
-          <h1 className="text-2xl font-bold">EduDash</h1>
+          {/* Logo en lugar del texto */}
+          <Link href="./app">
+            <Image 
+              src="/imagen-login.webp" // Cambia esta ruta por la ruta de tu logo
+              alt="Logo de la empresa"
+              width={150} // Ajusta el tamaño del logo
+              height={150} // Ajusta el tamaño del logo
+              className="h-10 w-auto" // Ajusta el tamaño del logo
+            />
+          </Link>
         </div>
         <nav className="mt-4">
           {menuItems.map((item, index) => (
@@ -73,4 +83,3 @@ export const Sidebar = () => {
     </aside>
   )
 }
-

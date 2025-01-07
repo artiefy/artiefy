@@ -1,10 +1,13 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { GenericTable } from '~/components/ui/GenericTable'
+import { BookOpen, Download, FileText, Search } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
+import ConfirmDialog from '~/components/ui/ConfirmDialog'
+import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
 import { GenericForm } from '~/components/ui/GenericForm'
+import { GenericTable } from '~/components/ui/GenericTable'
+import { RecursoViewer } from '~/components/ui/RecursoViewer'
+import { Button } from "~/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -12,13 +15,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog"
-import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
-import { FileText, BookOpen, Download, Search } from 'lucide-react'
-import { RecursoViewer } from '~/components/ui/RecursoViewer'
+import { Input } from "~/components/ui/input"
 import { Pagination } from '~/components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
-import { ConfirmationDialog } from '~/components/ui/confirmationDialog'
-import ConfirmDialog from '~/components/ui/ConfirmDialog'
 
 
 type Recurso = {

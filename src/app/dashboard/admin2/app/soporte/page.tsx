@@ -3,108 +3,163 @@
 import { useState } from 'react'
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog"
+import { TicketList } from '~/components/ui/TicketList'
+import { TicketDetail } from '~/components/ui/TicketDetail'
+import { NewTicketForm } from '~/components/ui/NewTicketForm'
+import { LiveChat } from '~/components/ui/LiveChat'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog"
 import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
-import { HelpCircle, Clock, CheckCircle } from 'lucide-react'
-import { TicketForm } from '~/components/ui/TicketForm'
-
-type Ticket = {
-  id: number;
-  asunto: string;
-  estudiante: string;
-  estado: 'Abierto' | 'En Progreso' | 'Resuelto';
-  prioridad: 'Baja' | 'Media' | 'Alta';
-  fechaCreacion: string;
-}
+import { TicketIcon, CheckCircleIcon, ClockIcon, MessageCircle } from 'lucide-react'
+import { ConfirmationDialog } from '~/components/ui/confirmationDialog'
+import { Ticket } from '~/types/Tickets'
 
 export default function Soporte() {
   const [tickets, setTickets] = useState<Ticket[]>([
     { 
       id: 1, 
-      asunto: 'No puedo acceder al curso', 
-      estudiante: 'Juan Pérez',
+      estudiante: 'Ana García',
+      asunto: 'Problema con el acceso al curso',
+      descripcion: 'No puedo acceder al material del curso de Programación Avanzada',
       estado: 'Abierto',
-      prioridad: 'Alta',
       fechaCreacion: '2023-06-15'
     },
     { 
       id: 2, 
-      asunto: 'Error en la descarga de material', 
-      estudiante: 'María García',
+      estudiante: 'Carlos Rodríguez',
+      asunto: 'Error en la subida de tareas',
+      descripcion: 'Al intentar subir mi tarea, recibo un error de "archivo no soportado"',
       estado: 'En Progreso',
-      prioridad: 'Media',
       fechaCreacion: '2023-06-14'
     },
   ])
 
-  const handleAddTicket = (nuevoTicket: Omit<Ticket, 'id' | 'fechaCreacion'>) => {
-    setTickets([...tickets, { 
-      ...nuevoTicket, 
-      id: tickets.length + 1, 
-      fechaCreacion: new Date().toISOString().split('T')[0] || '' 
-    }])
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+
+  const handleAddTicket = async (newTicket: Omit<Ticket, 'id' | 'fechaCreacion' | 'estado' | 'imagen'> & { imagen?: File }) => {
+    let imagenUrl = undefined;
+    if (newTicket.imagen) {
+      // Aquí iría la lógica para subir la imagen a un servidor
+      // Por ahora, simularemos esto con una URL local
+      imagenUrl = URL.createObjectURL(newTicket.imagen);
+    }
+
+    const ticket: Ticket = {
+      ...newTicket,
+      id: tickets.length + 1,
+      fechaCreacion: new Date().toISOString().split('T')[0],
+      estado: 'Abierto',
+      imagen: imagenUrl ?? ''
+    }
+    setTickets([...tickets, ticket])
+  }
+
+  const handleUpdateTicket = async (updatedTicket: Ticket, newImage?: File) => {
+    let imagenUrl = updatedTicket.imagen;
+    if (newImage) {
+      // Aquí iría la lógica para subir la nueva imagen a un servidor
+      // Por ahora, simularemos esto con una URL local
+      imagenUrl = URL.createObjectURL(newImage);
+    }
+
+    const finalUpdatedTicket = {
+      ...updatedTicket,
+      imagen: imagenUrl
+    };
+
+    setTickets(tickets.map(ticket => 
+      ticket.id === finalUpdatedTicket.id ? finalUpdatedTicket : ticket
+    ))
+    if (finalUpdatedTicket.estado === 'Resuelto') {
+      setIsDeleteDialogOpen(true)
+    } else {
+      setSelectedTicket(null)
+    }
+  }
+
+  const handleDeleteTicket = (id: number) => {
+    setTickets(tickets.filter(ticket => ticket.id !== id))
+    setSelectedTicket(null)
+    setIsDeleteDialogOpen(false)
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">Coordinación de Soporte Técnico</h2>
+    <div className="space-y-6 bg-background text-foreground min-h-screen p-6">
+      <h2 className="text-3xl font-bold tracking-tight text-foreground">Soporte a Estudiantes</h2>
 
       <DashboardMetrics
         metrics={[
-          { title: "Tickets Abiertos", value: tickets.filter(t => t.estado === 'Abierto').length.toString(), icon: HelpCircle, href: "/soporte" },
-          { title: "Tiempo Promedio de Resolución", value: "2h 30m", icon: Clock, href: "/analisis" },
-          { title: "Tickets Resueltos (Hoy)", value: "15", icon: CheckCircle, href: "/soporte" },
+          { title: "Tickets Abiertos", value: tickets.filter(t => t.estado === 'Abierto').length.toString(), icon: TicketIcon, href: "/soporte" },
+          { title: "Tickets Resueltos", value: tickets.filter(t => t.estado === 'Resuelto').length.toString(), icon: CheckCircleIcon, href: "/soporte" },
+          { title: "Tiempo Promedio de Resolución", value: "2 días", icon: ClockIcon, href: "/soporte" },
         ]}
       />
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <Input
           placeholder="Buscar tickets..."
-          className="max-w-sm"
+          className="max-w-sm bg-background text-foreground border-input"
         />
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>Crear Ticket</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Crear Nuevo Ticket</DialogTitle>
-            </DialogHeader>
-            <TicketForm onSubmit={handleAddTicket} />
-          </DialogContent>
-        </Dialog>
+        <div className="space-x-2">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">Nuevo Ticket</Button>
+            </DialogTrigger>
+            <DialogContent className="bg-background text-foreground">
+              <DialogHeader>
+                <DialogTitle className="text-foreground">Crear Nuevo Ticket</DialogTitle>
+              </DialogHeader>
+              <NewTicketForm onSubmit={handleAddTicket} />
+            </DialogContent>
+          </Dialog>
+          <Button 
+            onClick={() => setIsChatOpen(true)}
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
+          >
+            <MessageCircle className="mr-2 h-4 w-4" /> Chat en Vivo
+          </Button>
+        </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>ID</TableHead>
-            <TableHead>Asunto</TableHead>
-            <TableHead>Estudiante</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Prioridad</TableHead>
-            <TableHead>Fecha de Creación</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tickets.map((ticket) => (
-            <TableRow key={ticket.id}>
-              <TableCell>{ticket.id}</TableCell>
-              <TableCell>{ticket.asunto}</TableCell>
-              <TableCell>{ticket.estudiante}</TableCell>
-              <TableCell>{ticket.estado}</TableCell>
-              <TableCell>{ticket.prioridad}</TableCell>
-              <TableCell>{ticket.fechaCreacion}</TableCell>
-              <TableCell>
-                <Button variant="outline" className="mr-2">Ver Detalles</Button>
-                <Button variant="outline">Asignar</Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="flex space-x-6">
+        <div className={`flex-grow transition-all duration-300 ${selectedTicket || isChatOpen ? 'w-2/3' : 'w-full'}`}>
+          <TicketList 
+            tickets={tickets} 
+            onSelectTicket={setSelectedTicket}
+            onDeleteTicket={handleDeleteTicket}
+          />
+        </div>
+        {selectedTicket && !isChatOpen && (
+          <div className="w-1/3 transition-all duration-300">
+            <TicketDetail 
+              ticket={selectedTicket} 
+              onUpdateTicket={handleUpdateTicket}
+              onDeleteTicket={() => setIsDeleteDialogOpen(true)}
+            />
+          </div>
+        )}
+        {isChatOpen && (
+          <div className="w-1/3 transition-all duration-300">
+            <LiveChat />
+            <Button onClick={() => setIsChatOpen(false)} className="mt-4 w-full">Cerrar Chat</Button>
+          </div>
+        )}
+      </div>
+
+      <ConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={() => selectedTicket && handleDeleteTicket(selectedTicket.id)}
+        title="Eliminar Ticket"
+        description="¿Estás seguro de que quieres eliminar este ticket? Esta acción no se puede deshacer."
+      />
     </div>
   )
 }

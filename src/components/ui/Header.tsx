@@ -22,7 +22,7 @@ export function Header() {
   const handleLogout = () => {
     // Aquí iría la lógica para limpiar la sesión (por ejemplo, eliminar tokens del localStorage)
     localStorage.removeItem('userToken')
-    router.push('/login')
+    router.push('./login')
   }
 
   return (
@@ -51,10 +51,10 @@ export function Header() {
                 <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">Ver Perfil</Link>
+                  <Link href="./profile">Ver Perfil</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">Configuración</Link>
+                  <Link href="./settings">Configuración</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout}>
                   Cerrar Sesión
