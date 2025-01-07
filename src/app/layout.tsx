@@ -6,7 +6,7 @@ import { Toaster } from "~/components/ui/toaster"
 import { CSPostHogProvider } from "./_analytics/provider"
 import { metadata as siteMetadata } from '~/lib/metadata'
 import Loading from "./loading"
-
+import Providers from '~/components/layout/ProgressBarProvider';
 import "~/styles/globals.css"
 
 const montserrat = Montserrat({
@@ -54,8 +54,8 @@ export default function RootLayout({
               <Loading />
             </ClerkLoading>
             <ClerkLoaded>
-              <main>{children}</main>
-              <Toaster />
+            <Providers>{children}</Providers>
+            <Toaster />
             </ClerkLoaded>
           </body>
         </CSPostHogProvider>
