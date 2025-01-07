@@ -29,14 +29,14 @@ export default async function Image() {
           height: '100%',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end', // Justifica el contenido al lado derecho
+          justifyContent: 'flex-end', 
           padding: '20px',
           color: 'white',
         }}
       >
         <div style={{ textAlign: 'justify', textAlignLast: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', maxWidth: '40%', wordWrap: 'break-word' }}>
           <div style={{ fontSize: 40, marginTop: 10 }}>
-            Descubre tu potencial creativo con nuestros cursos online en Artiefy. ¡Empieza hoy! 🎓 📚
+            Unete a nosotros y transforma tus ideas en realidades con el poder del conocimineto. ¡Empieza hoy! 🎓 📚
           </div>
           
         </div>
