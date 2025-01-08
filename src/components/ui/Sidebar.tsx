@@ -8,10 +8,10 @@ import { Button } from "~/components/ui/button"
 import { useTheme } from "next-themes"
 
 const menuItems = [
-  { icon: Home, text: 'Inicio', href: '/' },
+  { icon: Home, text: 'Inicio', href: './' },
   { icon: BookOpen, text: 'Cursos', href: './cursos' },
   { icon: Users, text: 'Estudiantes', href: './estudiantes' },
-  { icon: GraduationCap, text: 'Tutores', href: './atutores' },
+  { icon: GraduationCap, text: 'Tutores', href: './tutores' },
   { icon: FileText, text: 'Recursos', href: './recursos' },
   { icon: MessageSquare, text: 'Foros', href: './foros' },
   { icon: LifeBuoy, text: 'Soporte', href: './soporte' },
