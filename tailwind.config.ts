@@ -13,10 +13,6 @@ export default {
   ],
   theme: {
     extend: {
-      backgroundImage: {
-        'main-bg': "url('/index-fondo.webp')",
-        'login-bg': "url('/login-fondo.webp')",
-      },
       animation: {
         "spin-slow": "spin 3s linear infinite",
         'caret-blink': 'caret-blink 1.25s ease-out infinite',
@@ -80,14 +76,6 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-      },
-      
-      screens: {
-        sm: "640px",
-        md: "768px",
-        lg: "1024px",
-        xl: "1280px",
-        "2xl": "1536px",
       },
     },
   },

@@ -1,8 +1,12 @@
+import type { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs';
 import "./src/env.js";
 
-/** @type {import("next").NextConfig} */
-const coreConfig = {
+const coreConfig: NextConfig = {
   images: {
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'inline',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',
@@ -21,8 +25,6 @@ const coreConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 };
-
-import { withSentryConfig } from '@sentry/nextjs';
 
 const config = withSentryConfig(
   coreConfig,
@@ -43,4 +45,3 @@ const config = withSentryConfig(
 );
 
 export default config;
-

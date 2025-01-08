@@ -14,16 +14,16 @@ async function getValidCoverImageUrl(
 ): Promise<string> {
   const coverImageUrl = coverImageKey
     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
-    : `https://via.placeholder.com/600x400`; // URL de Placeholder.com
+    : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`; // 
 
   try {
     const response = await fetch(coverImageUrl);
     if (response.status === 403) {
-      return `https://via.placeholder.com/600x400`; // URL de Placeholder.com
+      return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`; 
     }
     return coverImageUrl;
   } catch {
-    return `https://via.placeholder.com/600x400`; // URL de Placeholder.com
+    return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`; 
   }
 }
 
@@ -114,7 +114,7 @@ export default async function Page({
         : undefined,
       image: course.coverImageKey
         ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-        : `https://placehold.co/600x400/EEE/31343C?font=montserrat&text=Curso-Artiefy`, // URL de Placeholder.com
+        : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`,
     };
 
     return (
