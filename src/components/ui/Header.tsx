@@ -1,6 +1,9 @@
 'use client'
 
 import { User } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { Breadcrumb } from "~/components/ui/breadcrumb"
 import { Button } from '~/components/ui/button'
 import {
   DropdownMenu,
@@ -10,10 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu"
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { ModeToggle } from "~/components/ui/mode-toggle"
-import { Breadcrumb } from "~/components/ui/breadcrumb"
 import { NotificationsDropdown } from "~/components/ui/NotificationsDropdown"
 
 export function Header() {

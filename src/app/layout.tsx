@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { esMX } from "@clerk/localizations"
-import { neobrutalism } from "@clerk/themes"
 import { Montserrat } from 'next/font/google'
 import { Toaster } from "~/components/ui/toaster"
 import { CSPostHogProvider } from "./_analytics/provider"
 import { metadata as siteMetadata } from '~/lib/metadata'
 import Loading from "./loading"
-
+import Providers from '~/components/layout/ProgressBarProvider';
 import "~/styles/globals.css"
 
 const montserrat = Montserrat({
@@ -39,10 +38,6 @@ export default function RootLayout({
   return (
     <ClerkProvider
       localization={esMX}
-      appearance={{
-        signIn: { baseTheme: neobrutalism },
-        signUp: { baseTheme: neobrutalism },
-      }}
       signUpFallbackRedirectUrl="/"
       signInFallbackRedirectUrl="/"
     >
@@ -59,8 +54,8 @@ export default function RootLayout({
               <Loading />
             </ClerkLoading>
             <ClerkLoaded>
-              <main>{children}</main>
-              <Toaster />
+            <Providers>{children}</Providers>
+            <Toaster />
             </ClerkLoaded>
           </body>
         </CSPostHogProvider>

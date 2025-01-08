@@ -39,10 +39,7 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.updateImportsOnFileMove.enabled": "always",
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-
+ 
   // 7. Integración con Markdown para Documentación del Proyecto
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -64,5 +61,4 @@
     "strings": true
   },
   "editor.inlineSuggest.enabled": true,
-  "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": true
 }
