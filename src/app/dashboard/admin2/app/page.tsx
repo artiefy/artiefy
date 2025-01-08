@@ -29,17 +29,11 @@ export default function Home() {
     { title: "Gestionar Tutores", href: "./app/tutores" },
   ]
 
-  const [insignias, setInsignias] = useState([
-    { id: 1, nombre: 'Explorador Novato', descripcion: 'Completar el primer curso', puntos: 50 },
-    { id: 2, nombre: 'Maestro del Foro', descripcion: 'Hacer 100 publicaciones útiles', puntos: 200 },
-    { id: 3, nombre: 'Estudiante Estrella', descripcion: 'Obtener calificación perfecta en 5 cursos', puntos: 500 },
-  ])
-
   return (
-    <div className="container mx-auto px-6 py-8">
-      <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-6">Dashboard Educativo</h2>
+    <div className="container mx-auto px-4 py-8">
+      <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-6">Dashboard Educativo</h2>
       
-      <div className="grid gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -58,8 +52,8 @@ export default function Home() {
         ))}
       </div>
 
-      <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Accesos Rápidos</h3>
-      <div className="grid gap-4 mb-8 md:grid-cols-2 lg:grid-cols-4">
+      <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4 mt-8">Accesos Rápidos</h3>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {quickAccess.map((item) => (
           <Link key={item.title} href={item.href} passHref>
             <Button className="w-full">{item.title}</Button>
@@ -67,7 +61,7 @@ export default function Home() {
         ))}
       </div>
 
-      <Card>
+      <Card className="mt-8">
         <CardHeader>
           <CardTitle>Actividad Reciente</CardTitle>
         </CardHeader>

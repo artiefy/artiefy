@@ -15,9 +15,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  isPublicRoute,
 }: {
   children: React.ReactNode
+  isPublicRoute: boolean
 }) {
+  //const publicRoutes = ['/login', '/register']
+  //const pathname = usePathname()
+  //const isPublicRoute = publicRoutes.includes(pathname)
+
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
@@ -29,15 +35,18 @@ export default function RootLayout({
           storageKey="edudash-theme"
         >
           <ThemeEffect />
-          <div className="flex h-screen bg-background">
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <Header />
-              <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
-                {children}
-              </main>
+          {!isPublicRoute && (
+            <div className="flex flex-col md:flex-row h-screen bg-background">
+              <Sidebar />
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <Header />
+                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-4 md:p-6">
+                  {children}
+                </main>
+              </div>
             </div>
-          </div>
+          )}
+          {isPublicRoute && children}
         </ThemeProvider>
       </body>
     </html>
