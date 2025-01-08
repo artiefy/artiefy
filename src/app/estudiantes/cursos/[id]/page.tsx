@@ -1,7 +1,7 @@
 import { type Metadata, type ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { type Course, type WithContext } from "schema-dts";
-import { getCourseById } from "~/models/courseModels";
+import { getCourseById } from "~/models/courseModelsStudent";
 import CourseDetails from "./CourseDetails";
 
 type Props = {
@@ -114,7 +114,7 @@ export default async function Page({
         : undefined,
       image: course.coverImageKey
         ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-        : `https://placehold.co/600x400/00BDD8/FFFFFF/png`, // URL de Placeholder.com
+        : `https://placehold.co/600x400/EEE/31343C?font=montserrat&text=Curso-Artiefy`, // URL de Placeholder.com
     };
 
     return (

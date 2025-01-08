@@ -104,11 +104,12 @@ export default function CourseDetails({ course }: { course: Course }) {
                 src={
                   course.coverImageKey
                     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                    : "/placeholder.jpg"
+                    : "https://placehold.co/600x400/EEE/31343C?font=montserrat&text=Curso-Artiefy"
                 }
                 alt={course.title}
                 fill
                 className="object-cover"
+                priority
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
                 <h1 className="text-3xl font-bold text-white">{course.title}</h1>
