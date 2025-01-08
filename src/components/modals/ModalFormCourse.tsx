@@ -25,7 +25,6 @@ interface CourseFormProps {
     file: File | null,
     category: number,
     modalidad: number,
-    rating: number,
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -37,8 +36,6 @@ interface CourseFormProps {
   setCategory: (category: number) => void;
   modalidad: number;
   setModalidad: (modalidad: number) => void;
-  rating: number;
-  setRating: (rating: number) => void;
   coverImageKey: string;
   setCoverImageKey: (coverImageKey: string) => void;
   isOpen: boolean;
@@ -51,13 +48,13 @@ export default function ModalFormCourse({
   editingCourseId,
   isOpen,
   onCloseAction,
+  coverImageKey,
 }: CourseFormProps) {
   const { user } = useUser();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState(0);
   const [modalidad, setModalidad] = useState(0);
-  const [rating, setRating] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -69,9 +66,13 @@ export default function ModalFormCourse({
     description: false,
     category: false,
     modalidad: false,
-    rating: false,
     file: false,
   });
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set());
+  const [currentCoverImageKey, setCurrentCoverImageKey] =
+    useState(coverImageKey);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -117,13 +118,21 @@ export default function ModalFormCourse({
 
   const handleSubmit = async () => {
     const newErrors = {
-      title: !title,
-      description: !description,
-      category: !category,
-      modalidad: !modalidad,
-      rating: !rating,
-      file: !file,
+      title: !editingCourseId && !title,
+      description: !editingCourseId && !description,
+      category: !editingCourseId && !category,
+      modalidad: !editingCourseId && !modalidad,
+      file: !editingCourseId && !file && !currentCoverImageKey,
     };
+
+    if (editingCourseId) {
+      newErrors.title = modifiedFields.has("title") && !title;
+      newErrors.description = modifiedFields.has("description") && !description;
+      newErrors.category = modifiedFields.has("category") && !category;
+      newErrors.modalidad = modifiedFields.has("modalidad") && !modalidad;
+      newErrors.file = modifiedFields.has("file") && !file;
+    }
+
     setErrors(newErrors);
 
     if (Object.values(newErrors).some((error) => error)) {
@@ -131,25 +140,44 @@ export default function ModalFormCourse({
     }
 
     setIsEditing(true);
+    setIsUploading(true);
     try {
-      await onSubmitAction(
-        title,
-        description,
-        file,
-        category,
-        modalidad,
-        rating,
-      );
+      await onSubmitAction(title, description, file, category, modalidad);
+      setIsUploading(false);
       console.log("Datos enviados:", {
         title,
         description,
         file,
         categoryid: category,
         modalidadesid: modalidad,
-        rating,
       });
     } catch (error) {
+      setIsUploading(false);
       console.error("Error al enviar:", error);
+    }
+  };
+
+  const handleFieldChange = (
+    field: string,
+    value: string | number | File | null,
+  ) => {
+    setModifiedFields((prev) => new Set(prev).add(field));
+    switch (field) {
+      case "title":
+        setTitle(value as string);
+        break;
+      case "description":
+        setDescription(value as string);
+        break;
+      case "category":
+        setCategory(value as number);
+        break;
+      case "modalidad":
+        setModalidad(value as number);
+        break;
+      case "file":
+        setFile(value as File);
+        break;
     }
   };
 
@@ -186,6 +214,23 @@ export default function ModalFormCourse({
     }
   }, [uploading, isEditing]);
 
+  useEffect(() => {
+    if (isUploading) {
+      setUploadProgress(0);
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 10; // Incrementar de 10 en 10
+        });
+      }, 500);
+
+      return () => clearInterval(interval);
+    }
+  }, [isUploading]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
       <DialogContent className="max-w-5/6 max-h-[90vh] overflow-y-auto">
@@ -207,10 +252,7 @@ export default function ModalFormCourse({
             type="text"
             placeholder="Título"
             value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              setErrors((prev) => ({ ...prev, title: !e.target.value }));
-            }}
+            onChange={(e) => handleFieldChange("title", e.target.value)}
             className={`mb-4 w-full rounded border p-2 text-black outline-none ${errors.title ? "border-red-500" : "border-primary"}`}
           />
           {errors.title && (
@@ -225,44 +267,49 @@ export default function ModalFormCourse({
           <textarea
             placeholder="Descripción"
             value={description}
-            onChange={(e) => {
-              setDescription(e.target.value);
-              setErrors((prev) => ({ ...prev, description: !e.target.value }));
-            }}
+            onChange={(e) => handleFieldChange("description", e.target.value)}
             className={`mb-3 w-full rounded border p-2 text-black outline-none ${errors.description ? "border-red-500" : "border-primary"}`}
           />
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <div className="mb-4 flex flex-col">
-            <label
-              htmlFor="modalidad"
-              className="text-lg font-medium text-primary"
-            >
-              Modalidad
-            </label>
-            <ModalidadDropdown
-              modalidad={modalidad}
-              setModalidad={setModalidad}
-              errors={errors}
-            />
-            {errors.modalidad && (
-              <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-            )}
-            <label
-              htmlFor="category"
-              className="text-lg font-medium text-primary"
-            >
-              Categoría
-            </label>
-            <CategoryDropdown
-              category={category}
-              setCategory={setCategory}
-              errors={errors}
-            />
-            {errors.category && (
-              <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-            )}
+          <div className="mb-4 flex justify-evenly">
+            <div className="flex flex-col">
+              <label
+                htmlFor="modalidad"
+                className="text-lg font-medium text-primary"
+              >
+                Modalidad
+              </label>
+              <ModalidadDropdown
+                modalidad={modalidad}
+                setModalidad={setModalidad}
+                errors={errors}
+              />
+              {errors.modalidad && (
+                <p className="text-sm text-red-500">
+                  Este campo es obligatorio.
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <label
+                htmlFor="category"
+                className="text-lg font-medium text-primary"
+              >
+                Categoría
+              </label>
+              <CategoryDropdown
+                category={category}
+                setCategory={setCategory}
+                errors={errors}
+              />
+              {errors.category && (
+                <p className="text-sm text-red-500">
+                  Este campo es obligatorio.
+                </p>
+              )}
+            </div>
           </div>
           <label
             htmlFor="instructor"
@@ -275,22 +322,6 @@ export default function ModalFormCourse({
               Instructor: {user?.fullName}
             </h3>
           </div>
-          <label htmlFor="rating" className="text-lg font-medium text-primary">
-            Calificación
-          </label>
-          <input
-            type="number"
-            placeholder="Calificación"
-            value={rating}
-            onChange={(e) => {
-              setRating(Number(e.target.value));
-              setErrors((prev) => ({ ...prev, rating: !e.target.value }));
-            }}
-            className={`mb-4 w-full rounded border p-2 text-black outline-none ${errors.rating ? "border-red-500" : "border-primary"}`}
-          />
-          {errors.rating && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
           <label htmlFor="file" className="text-lg font-medium text-primary">
             Imagen de portada
           </label>
@@ -365,7 +396,17 @@ export default function ModalFormCourse({
               )}
             </div>
           </div>
-          {uploading && <Progress value={progress} className="my-4 w-full" />}
+          {(uploading || isUploading) && (
+            <div className="mt-4">
+              <Progress
+                value={uploading ? progress : uploadProgress}
+                className="w-full"
+              />
+              <p className="mt-2 text-center text-sm text-gray-500">
+                {uploading ? progress : uploadProgress}% Completado
+              </p>
+            </div>
+          )}
         </div>
         {errors.file && (
           <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -378,7 +419,7 @@ export default function ModalFormCourse({
                 ? isEditing
                   ? "Editando..."
                   : "Editar"
-                : "Subir Curso"}
+                : "Crear Curso"}
           </Button>
         </DialogFooter>
       </DialogContent>

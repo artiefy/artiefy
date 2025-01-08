@@ -48,13 +48,12 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] = useState(0);
   const [editModalidad, setEditModalidad] = useState(0);
-  const [editRating, setEditRating] = useState(0);
   const [editCoverImageKey, setEditCoverImageKey] = useState("");
 
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const response = await fetch(`/api/courses/${courseId}`);
+        const response = await fetch(`/api/educadores/${courseId}`);
         const data = await response.json();
         setCourse(data);
         setEditTitle(data.title);
@@ -75,7 +74,6 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
     file: File | null,
     categoryId: number,
     modalidadId: number,
-    rating: number,
   ) => {
     try {
       let coverImageKey = course?.coverImageKey || "";
@@ -109,7 +107,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
         coverImageKey = fields.key;
       }
 
-      const response = await fetch(`/api/courses/${courseId}`, {
+      const response = await fetch(`/api/educadores/${courseId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -118,7 +116,6 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
           coverImageKey,
           categoryId,
           modalidadId,
-          rating,
           instructor: course?.instructor,
         }),
       });
@@ -134,7 +131,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
 
       toast({
         title: "Curso actualizado",
-        description: "El curso se ha actualizado correctamente",
+        description: "El curso se ha actualizado con exito!!.",
       });
     } catch (error) {
       console.error("Error:", error);
@@ -151,7 +148,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/courses?id=${id}`, {
+      const response = await fetch(`/api/educadores?id=${id}`, {
         method: "DELETE",
       });
 
@@ -163,7 +160,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
   };
 
   return (
-    <div className="container mx-auto h-auto w-full rounded-lg bg-white p-6 mt-4">
+    <div className="container mx-auto mt-4 h-auto w-full rounded-lg bg-white p-6">
       <Card className="overflow-hidden bg-gray-300 px-4">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
@@ -259,14 +256,12 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
         description={editDescription}
         category={editCategory}
         modalidad={editModalidad}
-        rating={editRating}
         coverImageKey={editCoverImageKey}
         uploading={false}
         setTitle={setEditTitle}
         setDescription={setEditDescription}
         setModalidad={setEditModalidad}
         setCategory={setEditCategory}
-        setRating={setEditRating}
         setCoverImageKey={setEditCoverImageKey}
       />
     </div>

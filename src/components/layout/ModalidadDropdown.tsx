@@ -61,7 +61,7 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor="category-select" className="text-primary text-lg font-medium">
-        Selecciona una categoría:
+        Selecciona una Modalidad:
       </label>
       {isLoading ? (
         <p className="text-primary">Cargando categorías...</p>

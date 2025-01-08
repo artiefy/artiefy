@@ -1,21 +1,17 @@
 "use client";
 import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
-import { Info } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { Header } from "~/components/layout/Header";
-import { ModalError } from "~/components/modals/modalError";
 import { Button } from "~/components/ui/button";
 
 export default function Home() {
   const { user } = useUser();
- 
 
   // Determinar la ruta del dashboard según el rol del usuario
   const dashboardRoute =
     user?.publicMetadata?.role === "admin"
       ? "/dashboard/admin"
-      : user?.publicMetadata?.role === "profesor"
+      : user?.publicMetadata?.role === "educador"
         ? "/dashboard/educadores"
         : "/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
 

@@ -35,7 +35,6 @@ export interface Course {
     name: string;
   } | null;
   instructor: string;
-  rating: number | null;
   userId: string;
   lessons?: Lesson[];
   totalStudents?: number;
@@ -50,7 +49,6 @@ export async function createCourse({
   creatorId,
   categoryid,
   instructor,
-  rating,
   coverImageKey,
   modalidadesid,
 }: {
@@ -59,7 +57,6 @@ export async function createCourse({
   creatorId: string;
   categoryid: number;
   instructor: string;
-  rating: number;
   coverImageKey?: string;
   modalidadesid: number;
 }) {
@@ -70,7 +67,6 @@ export async function createCourse({
       creatorId,
       categoryid,
       instructor,
-      rating,
       coverImageKey,
       modalidadesid,
     });
@@ -100,7 +96,6 @@ export const getCoursesByUserId = async (userId: string) => {
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
       creatorId: courses.creatorId,
-      rating: courses.rating,
       modalidadesid: {
         id: modalidades.id,
         name: modalidades.name,
@@ -140,7 +135,6 @@ export const getCourseById = async (
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
       creatorId: courses.creatorId,
-      rating: courses.rating,
       modalidadesid: {
         id: modalidades.id,
         name: modalidades.name,
@@ -191,7 +185,6 @@ export const getAllCourses = async (): Promise<Course[]> => {
       },
       instructor: courses.instructor,
       creatorId: courses.creatorId,
-      rating: courses.rating,
       modalidadesid: {
         id: modalidades.id,
         name: modalidades.name,
@@ -219,29 +212,25 @@ export const updateCourse = async (
     modalidadesid,
     categoryid,
     instructor,
-    rating,
   }: {
-    title: string;
-    description: string;
-    coverImageKey: string;
-    modalidadesid: number;
-    categoryid: number;
-    instructor: string;
-    rating: number;
+    title?: string;
+    description?: string;
+    coverImageKey?: string;
+    modalidadesid?: number;
+    categoryid?: number;
+    instructor?: string;
   },
 ): Promise<void> => {
-  await db
-    .update(courses)
-    .set({
-      title,
-      description,
-      coverImageKey,
-      modalidadesid,
-      categoryid,
-      instructor,
-      rating,
-    })
-    .where(eq(courses.id, courseId));
+  const updateData: Record<string, unknown> = {};
+
+  if (title) updateData.title = title;
+  if (description) updateData.description = description;
+  if (coverImageKey) updateData.coverImageKey = coverImageKey;
+  if (modalidadesid) updateData.modalidadesid = modalidadesid;
+  if (categoryid && categoryid > 0) updateData.categoryid = categoryid;
+  if (instructor) updateData.instructor = instructor;
+
+  await db.update(courses).set(updateData).where(eq(courses.id, courseId));
 };
 
 // Eliminar un curso

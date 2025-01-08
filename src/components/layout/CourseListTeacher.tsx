@@ -15,8 +15,8 @@ import {
 
 interface CourseListTeacherProps {
   courses: CourseModel[];
-  onEdit: (course: CourseModel) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (course: CourseModel) => void;
+  onDelete?: (id: string) => void;
 }
 
 export default function CourseListTeacher({ courses }: CourseListTeacherProps) {

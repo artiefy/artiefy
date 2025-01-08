@@ -30,7 +30,6 @@ export interface CourseModel {
     name: string;
   };
   instructor: string;
-  rating?: number;
   coverImageKey: string;
   creatorId: string;
 }
@@ -59,7 +58,7 @@ export default function Page() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/courses?userId=${user.id}`);
+      const response = await fetch(`/api/educadores?userId=${user.id}`);
       if (response.ok) {
         const data = (await response.json()) as CourseModel[];
         setCourses(
@@ -104,7 +103,6 @@ export default function Page() {
     file: File | null,
     categoryId: number,
     modalidadId: number,
-    rating: number,
   ) => {
     if (!user) return;
 
@@ -131,7 +129,7 @@ export default function Page() {
       setUploading(false);
     }
 
-    const response = await fetch("/api/courses", {
+    const response = await fetch("/api/educadores", {
       method: editingCourse ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -142,7 +140,6 @@ export default function Page() {
         categoryid: categoryId,
         modalidadesid: modalidadId,
         instructor: user.fullName,
-        rating,
         userId: user.id,
       }),
     });
@@ -179,23 +176,14 @@ export default function Page() {
     setIsModalOpen(false);
   };
 
-  const handleEditCourse = (course: CourseModel) => {
-    setEditingCourse(course);
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteCourse = async (id: string) => {
-    // ... tu lógica de eliminación
-  };
-
   return (
     <>
       <main className="h-auto">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink className="hover:text-gray-300" href="/">
-              Cursos
+            <BreadcrumbLink className="hover:text-gray-300" href="/dashboard/educadores">
+              Inicio
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -238,8 +226,6 @@ export default function Page() {
               </h2>
               <CourseListTeacher
                 courses={courses as CourseModel[]}
-                onEdit={handleEditCourse}
-                onDelete={handleDeleteCourse}
               />
             </>
           )}
@@ -282,10 +268,6 @@ export default function Page() {
                       }
                     : null,
                 )
-              }
-              rating={editingCourse?.rating ?? 0}
-              setRating={(rating: number) =>
-                setEditingCourse((prev) => (prev ? { ...prev, rating } : null))
               }
               coverImageKey={editingCourse?.coverImageKey ?? ""}
               setCoverImageKey={(coverImageKey: string) =>
