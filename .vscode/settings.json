@@ -3,27 +3,12 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "explicit"
+    "source.fixAll.eslint": "always",
+    "source.organizeImports": "always"
   },
 
-  // 2. Validación de ESLint
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact",
-    "astro"
-  ],
   "eslint.options": {
     "extensions": [".js", ".jsx", ".ts", ".tsx"]
-  },
-
-  // 3. Integración Avanzada con TailwindCSS
-  "files.associations": {
-    "*.css": "tailwindcss",
-    "*.sql": "sql",
-    "*.drizzle.ts": "typescript"
   },
   "tailwindCSS.emmetCompletions": true,
   "tailwindCSS.includeLanguages": {
@@ -36,7 +21,6 @@
   ],
 
   // 4. Configuración para TypeScript y Resolución de Módulos
-  "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.updateImportsOnFileMove.enabled": "always",
  
@@ -49,16 +33,4 @@
   "git.enableSmartCommit": true,
   "git.autofetch": true,
 
-  // 9. Configuración para SQL y Drizzle ORM
-  "[sql]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-
-  // 10. Mejoras de Desempeño del Editor
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": false,
-    "strings": true
-  },
-  "editor.inlineSuggest.enabled": true,
 }

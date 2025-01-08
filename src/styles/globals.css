@@ -8,7 +8,7 @@
     --foreground: 178.4, 89.4%, 59.2%;   /* {#3AF4EF} */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;                           
+    --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
     --primary: 178.4, 89.4%, 59.2%;            /* {#3AF4EF} */
     --primary-foreground: 178.4, 89.4%, 59.2%;
@@ -112,7 +112,7 @@
 }
 
 .cl-userButtonOuterIdentifier {
-  color: #ff6347; 
+  color: #ff6347;
 }
 
 .custom-padding {
@@ -141,5 +141,3 @@
     opacity: 1;
   }
 }
-
-
