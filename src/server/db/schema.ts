@@ -84,6 +84,7 @@ export const lessons = pgTable("lessons", {
   id: serial("id").primaryKey(), // ID autoincremental de la lección
   title: varchar("title", { length: 255 }).notNull(), // Título de la lección
   description: text("description"), // Descripción de la lección
+  duration: integer("duration").notNull(),
   coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
   coverVideoKey: text("cover_video_key"), // Clave del video en S3
   order: serial("order").notNull(), // Orden de la lección en el curso

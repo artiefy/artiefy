@@ -54,8 +54,6 @@ export const createLesson = async ({
       title,
       duration,
       description,
-      imageKey,
-      videoKey,
       order,
       courseId,
       porcentajeCompletado: 0,
@@ -77,7 +75,24 @@ export const getLessonById = async (
       .from(lessons)
       .where(eq(lessons.id, lessonId))
       .limit(1);
-    return result[0] ?? null;
+    if (result.length === 0) return null;
+    const lesson = result[0];
+    if (!lesson) {
+      throw new Error("Lección no encontrada");
+    }
+    return {
+      id: lesson.id,
+      title: lesson.title,
+      duration: lesson.duration,
+      description: lesson.description,
+      imageKey: lesson.coverImageKey,
+      videoKey: lesson.coverVideoKey,
+      order: lesson.order,
+      courseId: lesson.courseId,
+      createdAt: lesson.createdAt,
+      updatedAt: lesson.updatedAt,
+      porcentajeCompletado: lesson.porcentajeCompletado,
+    };
   } catch (error) {
     throw new Error(
       `Error al obtener la lección: ${error instanceof Error ? error.message : "Error desconocido"}`,
@@ -90,11 +105,25 @@ export const getLessonsByCourseId = async (
   courseId: number,
 ): Promise<Lesson[]> => {
   try {
-    return await db
+    const result = await db
       .select()
       .from(lessons)
       .where(eq(lessons.courseId, courseId))
       .orderBy(lessons.order);
+
+    return result.map((lesson) => ({
+      id: lesson.id,
+      title: lesson.title,
+      duration: lesson.duration,
+      description: lesson.description,
+      imageKey: lesson.coverImageKey,
+      videoKey: lesson.coverVideoKey,
+      order: lesson.order,
+      courseId: lesson.courseId,
+      createdAt: lesson.createdAt,
+      updatedAt: lesson.updatedAt,
+      porcentajeCompletado: lesson.porcentajeCompletado,
+    }));
   } catch (error) {
     throw new Error(
       `Error al obtener las lecciones del curso: ${error instanceof Error ? error.message : "Error desconocido"}`,

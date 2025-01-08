@@ -7,7 +7,7 @@ import {
   getCourseById,
   getCoursesByUserId,
   updateCourse,
-} from "~/models/courseModels";
+} from "~/models/courseModelsEducator";
 import { ratelimit } from "~/server/ratelimit/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -115,7 +115,7 @@ export async function PUT(request: NextRequest) {
       coverImageKey: string;
       categoryid: number;
       modalidadesid: number;
-      instructor: string
+      instructor: string;
     };
     const {
       id,

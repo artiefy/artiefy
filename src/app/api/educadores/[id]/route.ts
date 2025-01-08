@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getCourseById, updateCourse } from "~/models/courseModels";
+import { getCourseById, updateCourse } from "~/models/courseModelsEducator";
 
 export async function GET(
   request: Request,

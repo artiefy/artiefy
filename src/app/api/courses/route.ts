@@ -1,43 +1,50 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import {
   createCourse,
+  getCoursesByUserId,
+  getCourseById,
+  updateCourse,
   deleteCourse,
   getAllCourses,
-  getCourseById,
-  getCoursesByUserId,
-  updateCourse,
-} from "~/models/courseModels";
-import { ratelimit } from "~/server/ratelimit/ratelimit";
+} from "~/models/coursesModelsStudent";
+import { getUserById, createUser } from "~/models/userModels";
+import { ratelimit } from '~/server/ratelimit/ratelimit';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic'; // Forzar el estado dinámico
 
+// Función de utilidad para responder con un error
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
-// GET endpoint para obtener cursos
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
-
+// Obtener todos los cursos de un profesor o todos los cursos si no se proporciona user_id
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const user_id = searchParams.get("user_id");
+
     let courses;
-    if (userId) {
-      courses = await getCoursesByUserId(userId);
+    if (user_id) {
+      courses = await getCoursesByUserId(user_id);
     } else {
-      courses = await getAllCourses();
+      courses = await getAllCourses(); // Obtener todos los cursos si no se proporciona user_id
     }
-    return NextResponse.json(courses);
-  } catch (error) {
-    console.error("Error:", error);
-    return NextResponse.json(
-      { error: "Error al obtener los cursos" },
-      { status: 500 },
+
+    const coursesWithCreators = await Promise.all(
+      courses.map(async (course) => {
+        const creator = await getUserById(course.creatorId);
+        return { ...course, creator };
+      })
     );
+
+    return NextResponse.json(coursesWithCreators);
+  } catch (error) {
+    console.error("Error al obtener los cursos:", error);
+    return respondWithError("Error al obtener los cursos", 500);
   }
 }
 
-// POST endpoint para crear cursos
+// Crear un nuevo curso
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -45,32 +52,42 @@ export async function POST(request: NextRequest) {
       return respondWithError("No autorizado", 403);
     }
 
-    // Implement rate limiting
+    // Implementar limitación de tasa
     const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
     const { success } = await ratelimit.limit(ip);
+
     if (!success) {
       return respondWithError("Demasiadas solicitudes", 429);
     }
 
     const clerkUser = await currentUser();
     if (!clerkUser) {
-      return respondWithError(
-        "No se pudo obtener información del usuario",
-        500,
-      );
+      return respondWithError("No se pudo obtener información del usuario", 500);
     }
 
-    const body = await request.json();
-    console.log("Datos recibidos en el servidor:", body);
+    const userName: string = clerkUser.fullName ?? clerkUser.firstName ?? "Usuario sin nombre";
+    const userEmail: string = clerkUser.emailAddresses[0]?.emailAddress ?? "";
 
-    const {
-      title,
-      description,
-      coverImageKey,
-      categoryid,
-      modalidadesid,
-      instructor,
-    } = body;
+    let existingUser = await getUserById(userId);
+    if (!existingUser) {
+      await createUser(userId, "profesor", userName, userEmail);
+      existingUser = await getUserById(userId);
+    }
+
+    if (!existingUser || existingUser.role !== "profesor") {
+      return respondWithError("No autorizado para crear cursos", 403);
+    }
+
+    const body = await request.json() as {
+      title: string;
+      description: string;
+      coverImageKey: string;
+      categoryid: number;
+      instructor: string;
+      rating: number;
+      modalidadesid: number; // Add this line
+    };
+    const { title, description, coverImageKey, categoryid, instructor, rating, modalidadesid } = body;
 
     await createCourse({
       title,
@@ -78,25 +95,18 @@ export async function POST(request: NextRequest) {
       creatorId: userId,
       coverImageKey,
       categoryid,
-      modalidadesid,
       instructor,
+      rating,
+      modalidadesid, // Add this line
     });
 
-    console.log("Datos enviados al servidor:", {
-      title,
-      description,
-      coverImageKey,
-      categoryid,
-      modalidadesid,
-      instructor,
+    return NextResponse.json({
+      message: "Curso creado exitosamente",
+      creator: existingUser,
     });
-
-    return NextResponse.json({ message: "Curso creado exitosamente" });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error("Error al crear el curso:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Error desconocido";
-    return respondWithError(`Error al crear el curso: ${errorMessage}`, 500);
+    return respondWithError("Error al crear el curso", 500);
   }
 }
 
@@ -108,24 +118,17 @@ export async function PUT(request: NextRequest) {
       return respondWithError("No autorizado", 403);
     }
 
-    const body = (await request.json()) as {
+    const body = await request.json() as {
       id: number;
       title: string;
       description: string;
       coverImageKey: string;
       categoryid: number;
-      modalidadesid: number;
-      instructor: string
+      instructor: string;
+      rating: number;
+      modalidadesid: number; // Add this line
     };
-    const {
-      id,
-      title,
-      description,
-      coverImageKey,
-      modalidadesid,
-      categoryid,
-      instructor,
-    } = body;
+    const { id, title, description, coverImageKey, categoryid, instructor, rating, modalidadesid } = body;
 
     const course = await getCourseById(id);
     if (!course) {
@@ -141,8 +144,9 @@ export async function PUT(request: NextRequest) {
       description,
       coverImageKey,
       categoryid,
-      modalidadesid,
       instructor,
+      rating,
+      modalidadesid, // Add this line
     });
 
     return NextResponse.json({ message: "Curso actualizado exitosamente" });
@@ -155,24 +159,28 @@ export async function PUT(request: NextRequest) {
 // Eliminar un curso
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return NextResponse.json(
-        { error: "ID no proporcionado" },
-        { status: 400 },
-      );
+    const { userId } = await auth();
+    if (!userId) {
+      return respondWithError("No autorizado", 403);
     }
 
-    const courseId = parseInt(id);
-    await deleteCourse(courseId);
+    const body = await request.json() as { id: number };
+    const { id } = body;
+
+    const course = await getCourseById(id);
+    if (!course) {
+      return respondWithError("Curso no encontrado", 404);
+    }
+
+    if (course.creatorId !== userId) {
+      return respondWithError("No autorizado para eliminar este curso", 403);
+    }
+
+    await deleteCourse(id);
+
     return NextResponse.json({ message: "Curso eliminado exitosamente" });
   } catch (error) {
     console.error("Error al eliminar el curso:", error);
-    return NextResponse.json(
-      { error: "Error al eliminar el curso" },
-      { status: 500 },
-    );
+    return respondWithError("Error al eliminar el curso", 500);
   }
 }

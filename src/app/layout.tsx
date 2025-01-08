@@ -1,50 +1,51 @@
-import { esMX } from "@clerk/localizations";
+import type { Metadata } from 'next'
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
-import { neobrutalism } from "@clerk/themes";
-import { Josefin_Sans, Montserrat } from "next/font/google";
-import { Toaster } from "~/components/ui/toaster";
-import { globalMetadata } from "../lib/metadata";
-import { CSPostHogProvider } from "./_analytics/provider";
-import Loading from "./loading";
-import Head from 'next/head';
-
-import "../styles/globals.css";
+import { esMX } from "@clerk/localizations"
+import { Montserrat } from 'next/font/google'
+import { Toaster } from "~/components/ui/toaster"
+import { CSPostHogProvider } from "./_analytics/provider"
+import { metadata as siteMetadata } from '~/lib/metadata'
+import Loading from "./loading"
+import Providers from '~/components/layout/ProgressBarProvider';
+import "~/styles/globals.css"
 
 const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-montserrat",
-});
+})
 
-const josefinSans = Josefin_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-josefin-sans",
-});
+export const metadata: Metadata = siteMetadata
 
-export const metadata = globalMetadata;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  'url': 'https://artiefy.vercel.app',
+  'name': 'Artiefy',
+  'description': 'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
+  'logo': {
+    '@type': 'ImageObject',
+    'url': 'https://artiefy.vercel.app/artiefy-icon.png'
+  }
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
+
   return (
     <ClerkProvider
       localization={esMX}
-      appearance={{
-        signIn: { baseTheme: neobrutalism },
-        signUp: { baseTheme: neobrutalism },
-      }}
-      afterSignOutUrl="/"
+      signUpFallbackRedirectUrl="/"
+      signInFallbackRedirectUrl="/"
     >
-      <html
-        lang="es"
-        className={`${montserrat.variable} ${josefinSans.variable}`}
-      >
-        <Head>
+      <html lang="es" className={montserrat.variable}>
+        <head>
           <script
             type="application/ld+json"
+<<<<<<< HEAD
             dangerouslySetInnerHTML={{
               __html: JSON.stringify({
                 "@context": "https://schema.org",
@@ -66,20 +67,23 @@ export default function RootLayout({
                 }
               }),
             }}
+=======
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+>>>>>>> develop
           />
-        </Head>
+          </head>
         <CSPostHogProvider>
           <body>
             <ClerkLoading>
               <Loading />
             </ClerkLoading>
             <ClerkLoaded>
-              <main>{children}</main>
-              <Toaster />
+            <Providers>{children}</Providers>
+            <Toaster />
             </ClerkLoaded>
           </body>
         </CSPostHogProvider>
       </html>
     </ClerkProvider>
-  );
+  )
 }

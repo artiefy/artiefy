@@ -12,7 +12,7 @@
     --popover-foreground: 240 10% 3.9%;
     --primary: 178.4, 89.4%, 59.2%;            /* {#3AF4EF} */
     --primary-foreground: 178.4, 89.4%, 59.2%;
-    --secondary: 240 4.8% 95.9%;                 /* {#00BDD8} */
+    --secondary: 187.5, 100%, 42.4%;                 /* {#00BDD8} */
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
@@ -77,8 +77,26 @@
   }
 }
 
+@keyframes sh02 {
+  from {
+    opacity: 0;
+    left: 0%;
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    left: 100%;
+  }
+}
+
 .animate-bounce-right {
   animation: bounce-right 1s infinite;
+}
+
+.button-hover:hover .button-hover-effect {
+  animation: sh02 0.5s 0s linear;
 }
 
 .cl-formButtonPrimary {
@@ -94,7 +112,7 @@
 }
 
 .cl-userButtonOuterIdentifier {
-  color: #ff6347; /* Cambia este color al que prefieras */
+  color: #ff6347; 
 }
 
 .custom-padding {
@@ -109,6 +127,19 @@
   }
 }
 
+.zoom-in {
+  animation: zoomIn 0.5s ease-in-out;
+}
 
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 
 

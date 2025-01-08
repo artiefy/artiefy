@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { type Config } from "tailwindcss";
 
-export default {
+const config: Config = {
   darkMode: ["class"],
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -13,6 +13,10 @@ export default {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        'main-bg': "url('/index-fondo.webp')",
+        'login-bg': "url('/login-fondo.webp')",
+      },
       animation: {
         "spin-slow": "spin 3s linear infinite",
         "fade-up": "fadeUp 0.8s ease-out forwards",
@@ -21,6 +25,10 @@ export default {
         fadeUp: {
           "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        'caret-blink': {
+          '0%,70%,100%': { opacity: '1' },
+          '20%,50%': { opacity: '0' },
         },
       },
       // Fuentes personalizadas
@@ -36,8 +44,8 @@ export default {
       },
       // Colores personalizados
       colors: {
-        background: "hsl(var(--background))", // Utiliza la variable CSS de fondo
-        foreground: "hsl(var(--foreground))", // Utiliza la variable CSS de texto
+        background: "hsl(var(--background))", 
+        foreground: "hsl(var(--foreground))", 
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
@@ -47,7 +55,7 @@ export default {
           foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))", // Utiliza la variable CSS para el color primario
+          DEFAULT: "hsl(var(--primary))", 
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -77,7 +85,7 @@ export default {
           "5": "hsl(var(--chart-5))",
         },
       },
-      // Puntos de ruptura para diseño responsivo
+      
       screens: {
         sm: "640px",
         md: "768px",
@@ -88,4 +96,6 @@ export default {
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+};
+
+export default config;
