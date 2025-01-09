@@ -18,7 +18,7 @@ export default function Home() {
       ? "/dashboard/admin"
       : user?.publicMetadata?.role === "profesor"
         ? "/dashboard/educadores"
-        : "/estudiantes"; 
+        : "/estudiantes";
 
   const handleButtonClick = () => {
     setLoading(true);
@@ -51,37 +51,9 @@ export default function Home() {
             <div>
               <SignedOut>
                 <SignInButton>
-                  <UiButton
-                    className="cta relative skew-x-[-20deg] transform rounded-none bg-primary p-7 text-2xl font-semibold italic text-background hover:text-white active:scale-95"
-                    style={{
-                      boxShadow: "6px 6px 0 black",
-                      transition: "0.5s",
-                      width: "250px",
-                    }}
-                    onClick={handleButtonClick}
-                  >
-                    <div className="flex items-center justify-center w-full">
-                      {loading ? (
-                        <Icons.spinner
-                          className="animate-spin"
-                          style={{ height: "32px", width: "32px" }} // Ajusta el tamaño del spinner
-                        />
-                      ) : (
-                        <>
-                          <span className="inline-block skew-x-[15deg] transform">
-                            COMIENZA YA
-                          </span>
-                          <FaArrowRight className="animate-bounce-right second ml-2 inline-block skew-x-[15deg] transform transition-transform duration-500" />
-                        </>
-                      )}
-                    </div>
-                  </UiButton>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
                 <UiButton
                   asChild
-                  className="cta relative skew-x-[-20deg] transform rounded-none bg-primary p-7 text-2xl font-semibold italic text-background hover:text-white active:scale-95"
+                  className="border border-primary hover:text-primary cta relative skew-x-[-20deg] transform rounded-none bg-primary py-8 text-2xl font-semibold italic text-background hover:border-primary hover:bg-transparent active:scale-95"
                   style={{
                     boxShadow: "6px 6px 0 black",
                     transition: "0.5s",
@@ -94,7 +66,38 @@ export default function Home() {
                       {loading ? (
                         <Icons.spinner
                           className="animate-spin"
-                          style={{ height: "32px", width: "32px" }} 
+                          style={{ height: "32px", width: "32px" }}
+                        />
+                      ) : (
+                        <>
+                          <span className="inline-block skew-x-[15deg] transform">
+                            COMIENZA YA
+                          </span>
+                          <FaArrowRight className="animate-bounce-right second ml-2 inline-block skew-x-[15deg] transform transition-transform duration-500" />
+                        </>
+                      )}
+                    </div>
+                  </Link>
+                </UiButton>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <UiButton
+                  asChild
+                  className="border border-primary hover:text-primary cta relative skew-x-[-20deg] transform rounded-none bg-primary py-8 text-2xl font-semibold italic text-background hover:border-primary hover:bg-transparent active:scale-95"
+                  style={{
+                    boxShadow: "6px 6px 0 black",
+                    transition: "0.5s",
+                    width: "250px",
+                  }}
+                  onClick={handleButtonClick}
+                >
+                  <Link href={dashboardRoute}>
+                    <div className="flex w-full items-center justify-center">
+                      {loading ? (
+                        <Icons.spinner
+                          className="animate-spin"
+                          style={{ height: "32px", width: "32px" }}
                         />
                       ) : (
                         <>

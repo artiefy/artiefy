@@ -1,19 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   FaCalendar,
   FaChevronDown,
   FaChevronUp,
   FaClock,
+  FaHome,
   FaStar,
   FaUserGraduate,
-  FaHome,
 } from "react-icons/fa";
 import Footer from "~/components/layout/Footer";
 import { Header } from "~/components/layout/Header";
-import { Button } from "~/components/ui/button";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -22,6 +21,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
+import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
 
 export interface Course {
@@ -78,13 +78,13 @@ export default function CourseDetails({ course }: { course: Course }) {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink href="/">
-                <FaHome className="inline-block mr-1" /> Home
+                <FaHome className="mr-1 inline-block" /> Inicio
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink href="/estudiantes/">
-                <FaUserGraduate className="inline-block mr-1" /> Cursos
+                <FaUserGraduate className="mr-1 inline-block" /> Cursos
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -110,15 +110,17 @@ export default function CourseDetails({ course }: { course: Course }) {
                 fill
                 className="object-cover"
                 priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
+                sizes="100vw"
+                />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-                <h1 className="text-3xl font-bold text-white">{course.title}</h1>
+                <h1 className="text-3xl font-bold text-white">
+                  {course.title}
+                </h1>
               </div>
             </div>
 
             {/* Course Info */}
-            <div className="p-6 flex flex-wrap gap-6">
+            <div className="flex flex-wrap gap-6 p-6">
               <div className="flex-1">
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center space-x-4">
@@ -216,32 +218,39 @@ export default function CourseDetails({ course }: { course: Course }) {
               </div>
 
               {/* Chatbot Component */}
-              <div className="max-w-md bg-white dark:bg-zinc-800 shadow-md rounded-lg overflow-hidden">
-                <div className="flex flex-col h-[400px]">
-                  <div className="px-4 py-3 border-b dark:border-zinc-700">
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-lg font-semibold text-zinc-800 dark:text-white">Chatbot Assistant</h2>
-                      <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Online</div>
+              <div className="max-w-md overflow-hidden rounded-lg bg-white shadow-md dark:bg-zinc-800">
+                <div className="flex h-[400px] flex-col">
+                  <div className="border-b px-4 py-3 dark:border-zinc-700">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold text-zinc-800 dark:text-white">
+                        Chatbot Assistant
+                      </h2>
+                      <div className="rounded-full bg-green-500 px-2 py-1 text-xs text-white">
+                        Online
+                      </div>
                     </div>
                   </div>
-                  <div className="flex-1 p-3 overflow-y-auto flex flex-col space-y-2" id="chatDisplay">
-                    <div className="chat-message self-end bg-blue-500 text-white max-w-xs rounded-lg px-3 py-1.5 text-sm">
+                  <div
+                    className="flex flex-1 flex-col space-y-2 overflow-y-auto p-3"
+                    id="chatDisplay"
+                  >
+                    <div className="chat-message max-w-xs self-end rounded-lg bg-secondary px-3 py-1.5 text-sm text-white">
                       Hello! How can I assist you today?
                     </div>
-                    <div className="chat-message self-start bg-zinc-500 text-white max-w-xs rounded-lg px-3 py-1.5 text-sm">
+                    <div className="chat-message max-w-xs self-start rounded-lg bg-zinc-500 px-3 py-1.5 text-sm text-white">
                       Hello! I need a Chatbot!
                     </div>
                   </div>
-                  <div className="px-3 py-2 border-t dark:border-zinc-700">
+                  <div className="border-t px-3 py-2 dark:border-zinc-700">
                     <div className="flex gap-2">
                       <input
                         placeholder="Type your message..."
-                        className="flex-1 p-2 border rounded-lg dark:bg-zinc-700 dark:text-white dark:border-zinc-600 text-sm"
+                        className="flex-1 rounded-lg border p-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
                         id="chatInput"
                         type="text"
                       />
-                  <Button className="inline-flex items-center justify-center overflow-hidden rounded-md border border-primary bg-background p-2 text-primary hover:bg-black/70 active:scale-95">
-                  Send
+                      <Button className="inline-flex items-center justify-center overflow-hidden rounded-md border border-primary bg-background p-2 text-primary transition duration-300 ease-in-out hover:bg-secondary hover:text-background active:scale-95">
+                        Send
                       </Button>
                     </div>
                   </div>
