@@ -43,11 +43,11 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => (
         <Card
           key={course.id}
-          className="flex flex-col justify-between overflow-hidden zoom-in"
+          className="flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105"
         >
           <div>
             <CardHeader>
