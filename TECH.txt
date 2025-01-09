@@ -1,7 +1,7 @@
 
 Tecnologias Que Se Usan:
 
-~ Next.js 15, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM, 
+~ Next.js 15, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM,
 PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Sentry, PostHog
 y Upstash
 

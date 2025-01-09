@@ -240,7 +240,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                         id="chatInput"
                         type="text"
                       />
-                  <Button className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary hover:bg-black/70 active:scale-95">
+                  <Button className="inline-flex items-center justify-center overflow-hidden rounded-md border border-primary bg-background p-2 text-primary hover:bg-black/70 active:scale-95">
                   Send
                       </Button>
                     </div>
