@@ -208,9 +208,9 @@ export default function StudentDashboard() {
           <div className="flex justify-end">
             <form className="flex max-w-lg items-center">
               <div className="mr-4 flex h-full items-center">
-                <RocketLaunchIcon className="size-6 h-6 w-6 text-gray-500 dark:text-gray-400" />
-                <span className="ml-2 whitespace-nowrap text-xl text-gray-500 dark:text-gray-400">
-                  IA
+                <RocketLaunchIcon className="size-6 h-6 w-6 text-orange-500 dark:text-gray-400" />
+                <span className="ml-2 whitespace-nowrap text-xl text-primary dark:text-gray-400">
+                  Artiefy IA
                 </span>
               </div>
 
@@ -248,7 +248,7 @@ export default function StudentDashboard() {
                   ? Array.from({ length: 3 }).map((_, index) => (
                       <Skeleton
                         key={index}
-                        className="mx-4 ml-2 h-48 w-full rounded-lg md:h-64"
+                        className="ml-4 h-48 w-full rounded-lg px-6 md:h-64"
                       />
                     ))
                   : courses.map((course) => (
@@ -269,7 +269,7 @@ export default function StudentDashboard() {
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             quality={85}
                             placeholder="blur"
-                            blurDataURL="data"
+                            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
                             onLoad={() =>
                               console.log(`Image ${course.title} loaded`)
                             }
@@ -278,30 +278,27 @@ export default function StudentDashboard() {
                             <h3 className="text-lg font-bold text-white">
                               {course.title}
                             </h3>
-                            <Badge
-                              variant="outline"
-                              className="mb-2 border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
-                            >
-                              {course.category.name}
-                            </Badge>
-                            <div className="flex w-full justify-between">
-                              <p className="italic text-primary">
-                                Educador:{" "}
-                                <span className="underline">
-                                  {course.instructor}
-                                </span>
-                              </p>
-                              <p className="text-primary">
-                                <span className="text-red-500">
-                                  {course.modalidad.name}
-                                </span>
-                              </p>
-                            </div>
-                            <div className="flex items-center">
-                              <StarIcon className="h-5 w-5 text-yellow-500" />
-                              <span className="ml-1 text-sm font-bold text-yellow-500">
-                                {(course.rating ?? 0).toFixed(1)}
+                            <div className="mb-2 flex items-center justify-between">
+                              <Badge
+                                variant="outline"
+                                className="border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
+                              >
+                                {course.category.name}
+                              </Badge>
+                              <span className="text-sm font-bold text-red-500">
+                                {course.modalidad.name}
                               </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm italic text-primary">
+                                Educador: <span>{course.instructor}</span>
+                              </p>
+                              <div className="flex items-center">
+                                <StarIcon className="h-4 w-4 text-yellow-500" />
+                                <span className="ml-1 text-sm font-bold text-yellow-500">
+                                  {(course.rating ?? 0).toFixed(1)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -315,44 +312,36 @@ export default function StudentDashboard() {
 
           {/* BUSCADOR Cursos Disponibles */}
           <div className="flex justify-end">
-            <form className="flex max-w-lg items-center">
+            <form className="flex w-full max-w-2xl items-center">
               <div className="mr-4 flex h-full items-center">
-                <AcademicCapIcon className="size-5 h-6 w-6 text-gray-500 dark:text-gray-400" />
-                <span className="ml-2 whitespace-nowrap text-xl text-gray-500 dark:text-gray-400">
+                <AcademicCapIcon className="size-5 h-6 w-6 text-orange-500 dark:text-gray-400" />
+                <span className="ml-2 whitespace-nowrap text-xl text-primary dark:text-gray-400">
                   Busca Tu Curso
                 </span>
               </div>
-              <label className="sr-only" htmlFor="course-search">
-                Buscar...
-              </label>
-              <div className="relative w-full max-w-xs">
+              <div className="relative w-full max-w-2xl">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <MagnifyingGlassIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                 </div>
                 <input
                   required
-                  placeholder="Search..."
+                  placeholder="Buscar..."
                   className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary dark:focus:ring-primary"
                   type="search"
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
-              <button
-                className="ml-2 inline-flex items-center rounded-lg border border-primary bg-primary px-3 py-2.5 text-sm font-medium text-background hover:bg-primary/90 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/50 dark:bg-primary dark:hover:bg-primary/90 dark:focus:ring-primary/50"
-                type="submit"
-              >
-                <MagnifyingGlassIcon className="mr-2 h-4 w-4" />
-                Buscar
-              </button>
             </form>
           </div>
+          {/* Seccion De Cursos */}
           <h2 className="text-3xl font-bold">Cursos Disponibles</h2>
           {loading && <LoadingCourses />}
           <Suspense fallback={<LoadingCourses />}>
             <CourseListStudent courses={paginatedCourses} />
           </Suspense>
 
+          {/* PAGINACION */}
           <Pagination className="pb-8">
             <PaginationContent className="cursor-pointer">
               {currentPage > 1 && (
@@ -379,6 +368,8 @@ export default function StudentDashboard() {
           </Pagination>
         </div>
       </main>
+
+      {/* Footer */}
       <Footer />
     </div>
   );
