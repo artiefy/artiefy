@@ -228,8 +228,8 @@ export default function StudentDashboard() {
             <CourseCategories />
 
             {/* CAROUSEL TOP CURSOS */}
-            <div className="relative">
-              <h2 className="ml-4 text-xl text-primary md:text-2xl">
+            <div className="relative xs:px-4">
+              <h2 className="ml-4 text-xl text-primary font-bold md:text-2xl">
                 Top Cursos
               </h2>
               <Carousel className="w-full p-4">
@@ -295,7 +295,7 @@ export default function StudentDashboard() {
                         </CarouselItem>
                       ))}
                 </CarouselContent>
-                <CarouselPrevious className="mr-7 h-12 w-12 bg-black bg-opacity-50 text-white" />
+                <CarouselPrevious className=" mr-7 h-12 w-12 bg-black bg-opacity-50 text-white" />
                 <CarouselNext className="ml-4 h-12 w-12 bg-black bg-opacity-50 text-white" />
               </Carousel>
             </div>
