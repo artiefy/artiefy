@@ -16,7 +16,15 @@ import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
 import { BookOpen, Users, TrendingUp, Search, Plus } from 'lucide-react'
 import { Course } from '~/types/course'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
-import { Pagination } from "~/components/ui/pagination"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "~/components/ui/pagination"
 
 export default function Cursos() {
   const [courses, setCourses] = useState<Course[]>([
@@ -135,11 +143,26 @@ export default function Cursos() {
       </div>
 
       <div className="flex justify-center mt-6">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={Math.ceil(filteredCourses.length / coursesPerPage)}
-          onPageChange={paginate}
-        />
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious onClick={() => paginate(currentPage - 1)} />
+            </PaginationItem>
+            {Array.from({ length: Math.ceil(filteredCourses.length / coursesPerPage) }, (_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  onClick={() => paginate(index + 1)}
+                  isActive={index + 1 === currentPage}
+                >
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext onClick={() => paginate(currentPage + 1)} />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
 
       {selectedCourse && (
