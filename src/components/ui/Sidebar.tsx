@@ -15,6 +15,7 @@ const menuItems = [
   { icon: FileText, text: 'Recursos', href: './recursos' },
   { icon: MessageSquare, text: 'Foros', href: './foros' },
   { icon: LifeBuoy, text: 'Soporte', href: './soporte' },
+  
   { icon: Award, text: 'Evaluaciones', href: './evaluaciones' },
   { icon: BarChart, text: 'Análisis', href: './analisis' },
   { icon: Tool, text: 'Configuración', href: './configuracion' },
