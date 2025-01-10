@@ -15,7 +15,7 @@ import {
 import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
 import { Users, GraduationCap, TrendingUp } from 'lucide-react'
 import { EstudianteDetalle } from '~/components/ui/EstudianteDetalle'
-import { Estudiante } from '~/types/user'
+import type { Estudiante } from '~/types/user'
 
 // Ensure AddStudentForm is correctly imported
 
@@ -119,10 +119,10 @@ export default function Estudiantes() {
       <GenericTable
         columns={columns}
         data={estudiantes}
-        onRowClick={(estudiante) => setEstudianteSeleccionado(estudiante)}
+        onRowClick={(estudiante: Estudiante) => setEstudianteSeleccionado(estudiante)}
         actions={(estudiante) => (
           <>
-            <Button variant="outline" className="mr-2" onClick={() => setEstudianteSeleccionado(estudiante)}>Ver Detalles</Button>
+            <Button variant="outline" className="mr-2" onClick={() => setEstudianteSeleccionado(estudiante as Estudiante)}>Ver Detalles</Button>
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">Editar</Button>
@@ -131,7 +131,7 @@ export default function Estudiantes() {
                 <DialogHeader>
                   <DialogTitle>Editar Estudiante</DialogTitle>
                 </DialogHeader>
-                <AddStudentForm onSubmit={handleEditEstudiante} initialData={estudiante} />
+                <AddStudentForm onSubmit={handleEditEstudiante} initialData={estudiante as Estudiante} />
               </DialogContent>
             </Dialog>
           </>

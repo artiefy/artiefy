@@ -20,7 +20,7 @@ import {
 
 };
 
-const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ title, message, onConfirm }) => {
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ title, message, onConfirm: _onConfirm }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>

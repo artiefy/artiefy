@@ -14,12 +14,11 @@ import {
 } from "~/components/ui/dialog"
 import { DashboardMetrics } from '~/components/ui/DashboardMetrics'
 import { BookOpen, Users, TrendingUp, Search, Plus } from 'lucide-react'
-import { Course } from '~/types/course'
+import { type Course } from '~/types/course'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -66,10 +65,6 @@ export default function Cursos() {
     setCourses([...courses, course])
   }
 
-  const handleUpdateCourse = (updatedCourse: Course) => {
-    setCourses(courses.map(course => course.id === updatedCourse.id ? updatedCourse : course))
-    setSelectedCourse(null)
-  }
 
   const filteredCourses = courses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

@@ -20,7 +20,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -192,7 +191,7 @@ export default function Recursos() {
       <GenericTable
         columns={columns}
         data={paginatedRecursos}
-        actions={(recurso) => (
+        actions={(recurso: Recurso) => (
           <>
             <Button variant="outline" className="mr-2" onClick={() => handleViewRecurso(recurso)}>Ver</Button>
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

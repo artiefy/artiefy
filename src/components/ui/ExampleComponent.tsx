@@ -21,7 +21,7 @@ export function ExampleComponent() {
       <ConfirmationDialog
         isOpen={isDialogOpen}
         title="Confirm Action"
-        message="Are you sure you want to perform this action?"
+        description="Are you sure you want to proceed?"
         onClose={handleClose}
         onConfirm={handleConfirm}
       />
