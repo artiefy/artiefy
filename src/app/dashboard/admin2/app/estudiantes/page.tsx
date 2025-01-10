@@ -17,8 +17,7 @@ import { Users, GraduationCap, TrendingUp } from 'lucide-react'
 import { EstudianteDetalle } from '~/components/ui/EstudianteDetalle'
 import { Estudiante } from '~/types/user'
 
-// Ensure AddStudentForm is correctly imported and exported
-export { AddStudentForm } from '~/components/ui/AddStudentForm'
+// Ensure AddStudentForm is correctly imported
 
 export default function Estudiantes() {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([
