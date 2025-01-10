@@ -39,7 +39,7 @@
     "**/*.cjs",
     ".next/types/**/*.ts",
     ".eslintrc.cjs",
-    "src/env.mjs"
+    "src/env.js"
   ],
   "exclude": ["node_modules", "dist", "build", "**/*.test.ts", "coverage"]
 }
