@@ -218,9 +218,12 @@ export default function Recursos() {
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(true)}>Eliminar</Button>
             {isDeleteDialogOpen && (
               <ConfirmDialog
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
                 message="¿Estás seguro de que quieres eliminar este recurso? Esta acción no se puede deshacer."
                 onConfirm={() => handleDeleteRecurso(recurso.id)}
                 title="Confirmar eliminación"
+                description="Esta acción no se puede deshacer."
               />
             )}
           </>

@@ -18,6 +18,7 @@ export function ParentComponent() {
         isOpen={isDialogOpen}
         title="Confirm Action"
         description="Are you sure you want to perform this action?"
+        message="This is a confirmation message"
         onClose={() => setIsDialogOpen(false)}
         onConfirm={handleConfirm}
       />

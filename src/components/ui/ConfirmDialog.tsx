@@ -9,16 +9,23 @@ import {
 } from "~/components/ui/dialog";
 
 
- export type ConfirmDialogProps = {
 
-  title: string;
+interface ConfirmDialogProps {
 
-  message: string;
+  isOpen: boolean
 
-  onConfirm: () => void;
+  title: string
 
+  description: string
 
-};
+  onClose: () => void
+
+  onConfirm: () => void
+
+  message: string
+
+}
+
 
 const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ title, message, onConfirm: _onConfirm }) => {
   return (
