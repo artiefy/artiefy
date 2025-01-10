@@ -2,7 +2,7 @@
 
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Dialog, DialogPanel } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -39,7 +39,7 @@ export function Header() {
                   fill
                   className="object-contain"
                   priority
-                  loading="eager"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
                   onLoad={(e) =>
                     console.log(
                       `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`,
@@ -98,40 +98,6 @@ export function Header() {
               </SignedIn>
             </div>
           </div>
-
-          {/* Mobile view */}
-          <div className="flex w-full items-center justify-between md:hidden">
-            <div className="mt-[-8px] flex-shrink-0">
-              <div className="relative h-[150px] w-[150px]">
-                <Image
-                  src="/artiefy-logo.png"
-                  alt="Logo Artiefy"
-                  fill
-                  style={{ objectFit: "contain" }}
-                  priority
-                  quality={100}
-                  loading="eager"
-                  onLoad={(e) =>
-                    console.log(
-                      `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`,
-                    )
-                  }
-                  onError={(e) =>
-                    console.error(
-                      `Failed to load image: ${(e.target as HTMLImageElement).src}`,
-                    )
-                  }
-                />
-              </div>
-            </div>
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex transform items-center justify-center p-2 transition-transform active:scale-95"
-              aria-label="Open main menu"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -153,7 +119,7 @@ export function Header() {
                 fill
                 style={{ objectFit: "contain" }}
                 priority
-                loading="eager"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
                 onLoad={(e) =>
                   console.log(
                     `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`,

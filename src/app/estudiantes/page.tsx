@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useCallback, useEffect, useState } from "react";
 import {
   AcademicCapIcon,
   MagnifyingGlassIcon,
@@ -7,7 +8,6 @@ import {
   StarIcon,
 } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { Suspense, useEffect, useState } from "react";
 import CourseCategories from "~/components/layout/CourseCategories";
 import CourseListStudent from "~/components/layout/CourseListStudent";
 import Footer from "~/components/layout/Footer";
@@ -30,6 +30,7 @@ import {
   PaginationPrevious,
 } from "~/components/ui/pagination";
 import { Skeleton } from "~/components/ui/skeleton";
+import { toast } from "~/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -59,66 +60,116 @@ function LoadingCourses() {
   );
 }
 
-export default function StudentDashboard() {
+export default function StudentDashboard({
+  params,
+}: {
+  params: Promise<Record<string, string>>;
+}) {
+  const [resolvedParams, setResolvedParams] = useState<Record<string, string> | null>(null);
+
+  useEffect(() => {
+    params.then(setResolvedParams).catch((error) => {
+      console.error("Error resolving params:", error);
+    });
+  }, [params]);
+
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
 
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await fetch("/api/courses");
       if (!response.ok) throw new Error(response.statusText);
       const data = (await response.json()) as Course[];
       data.sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       setCourses(data);
       setFilteredCourses(data);
       setCarouselIndex(0);
     } catch (error) {
       console.error("Error al obtener los cursos:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los cursos. Por favor, intenta de nuevo más tarde.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const handleSearch = (search: string) => {
-    setSearchTerm(search);
-    const filtered = courses.filter((course) =>
-      course.title.toLowerCase().includes(search.toLowerCase()),
-    );
-    setFilteredCourses(filtered);
-    setCurrentPage(1);
-  };
-
-  const paginatedCourses = filteredCourses.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
+  const filterCourses = useCallback(
+    (search: string, category: string | null) => {
+      let filtered = courses;
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter((course) =>
+          course.title.toLowerCase().includes(searchLower)
+        );
+      }
+      if (category) {
+        filtered = filtered.filter(
+          (course) =>
+            course.category.name.toLowerCase() === category.toLowerCase()
+        );
+      }
+      setFilteredCourses(filtered);
+      setCurrentPage(1);
+    },
+    [courses]
   );
 
-  const handleCarouselChange = (index: number) => {
+  const handleSearch = useCallback(
+    (search: string) => {
+      setSearchTerm(search);
+      filterCourses(search, selectedCategory);
+    },
+    [filterCourses, selectedCategory]
+  );
+
+  const handleCategorySelect = useCallback(
+    (category: string | null) => {
+      setSelectedCategory(category);
+      filterCourses(searchTerm, category);
+    },
+    [filterCourses, searchTerm]
+  );
+
+  const handleCarouselChange = useCallback((index: number) => {
     setCarouselIndex(index);
-  };
+  }, []);
 
   useEffect(() => {
     void fetchCourses();
-  }, []);
+  }, [fetchCourses]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCarouselIndex(
-        (prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5),
+        (prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5)
       );
     }, 5000);
     return () => clearInterval(interval);
-  }, [courses]);
+  }, [courses.length]);
 
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  if (!resolvedParams) {
+    return <LoadingCourses />;
+  }
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -147,10 +198,7 @@ export default function StudentDashboard() {
                         sizes="100vw"
                         quality={85}
                         placeholder="blur"
-                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
-                        onLoad={() =>
-                          console.log(`Image ${course.title} loaded`)
-                        }
+                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=="
                       />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 p-4 text-primary">
@@ -224,12 +272,10 @@ export default function StudentDashboard() {
                 </button>
               </form>
             </div>
-
-            <CourseCategories />
-
+            
             {/* CAROUSEL TOP CURSOS */}
             <div className="relative xs:px-4">
-              <h2 className="ml-4 text-xl text-primary font-bold md:text-2xl">
+              <h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
                 Top Cursos
               </h2>
               <Carousel className="w-full p-4">
@@ -259,10 +305,7 @@ export default function StudentDashboard() {
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               quality={85}
                               placeholder="blur"
-                              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
-                              onLoad={() =>
-                                console.log(`Image ${course.title} loaded`)
-                              }
+                              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=="
                             />
                             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
                               <h3 className="text-lg font-bold text-white">
@@ -295,10 +338,13 @@ export default function StudentDashboard() {
                         </CarouselItem>
                       ))}
                 </CarouselContent>
-                <CarouselPrevious className=" mr-7 h-12 w-12 bg-black bg-opacity-50 text-white" />
+                <CarouselPrevious className="mr-7 h-12 w-12 bg-black bg-opacity-50 text-white" />
                 <CarouselNext className="ml-4 h-12 w-12 bg-black bg-opacity-50 text-white" />
               </Carousel>
             </div>
+
+            {/* CATEGORIAS DE CURSOS */}
+            <CourseCategories onCategorySelect={handleCategorySelect} />
 
             {/* BUSCADOR Cursos Disponibles */}
             <div className="flex justify-center sm:justify-end">
@@ -327,13 +373,13 @@ export default function StudentDashboard() {
 
             {/* Seccion De Cursos */}
             <div className="flex flex-col px-11">
-              <h2 className="text-2xl font-bold sm:text-3xl mb-8">
-                Cursos Disponibles
+              <h2 className="mb-8 text-2xl font-bold sm:text-3xl">
+                {selectedCategory ? `Cursos de ${selectedCategory}` : "Cursos Disponibles"}
               </h2>
               {loading && <LoadingCourses />}
-              <Suspense fallback={<LoadingCourses />}>
+              <React.Suspense fallback={<LoadingCourses />}>
                 <CourseListStudent courses={paginatedCourses} />
-              </Suspense>
+              </React.Suspense>
             </div>
 
             {/* PAGINACION */}
