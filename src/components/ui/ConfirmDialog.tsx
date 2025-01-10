@@ -1,14 +1,26 @@
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogTrigger,
-} from "~/components/ui/dialog"
+} from "~/components/ui/dialog";
 
-function MyComponent({ title, message }: { title: string; message: string }) {
+
+ export type ConfirmDialogProps = {
+
+  title: string;
+
+  message: string;
+
+  onConfirm: () => void;
+
+
+};
+
+const ConfirmDialog: React.FC<ConfirmDialogProps> = ({ title, message, onConfirm }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -25,8 +37,7 @@ function MyComponent({ title, message }: { title: string; message: string }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
-export default MyComponent;
-
+export default ConfirmDialog;
