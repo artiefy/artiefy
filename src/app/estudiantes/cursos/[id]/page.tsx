@@ -3,10 +3,10 @@ import { notFound } from "next/navigation";
 import { type Course, type WithContext } from "schema-dts";
 import { getCourseById } from "~/models/courseModelsStudent";
 import CourseDetails from "./CourseDetails";
-import React from "react";
+import React, { use } from "react";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   searchParams: Record<string, string | string[] | undefined>;
 };
 
@@ -32,7 +32,7 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const id = params.id;
+  const { id } = await params;
 
   try {
     const course = await getCourseById(Number(id));
@@ -78,12 +78,17 @@ export async function generateMetadata(
   }
 }
 
-export default async function Page({
+export default function Page({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = use(params);
+
+  return <PageContent id={id} />;
+}
+
+async function PageContent({ id }: { id: string }) {
   try {
     const course = await getCourseById(Number(id));
     if (!course) {
