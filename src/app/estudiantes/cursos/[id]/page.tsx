@@ -7,7 +7,7 @@ import React, { use } from "react";
 
 type Props = {
   params: Promise<{ id: string }>;
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 async function getValidCoverImageUrl(
