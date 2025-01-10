@@ -293,7 +293,7 @@ export default function CourseForm({
         <DialogFooter>
           <Button
             onClick={handleSubmit}
-            variant="save"
+            variant="default"
             disabled={uploading}
           >
             {uploading
