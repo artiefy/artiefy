@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-import { type Config } from "tailwindcss";
+import type { Config } from "tailwindcss";
+import animatePlugin from "tailwindcss-animate";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
-export default {
+const config: Config = {
   darkMode: ["class"],
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -13,35 +14,28 @@ export default {
   ],
   theme: {
     extend: {
-      backgroundImage: {
-        'main-bg': "url('/index-fondo.webp')",
-        'login-bg': "url('/login-fondo.webp')",
-      },
       animation: {
         "spin-slow": "spin 3s linear infinite",
-        'caret-blink': 'caret-blink 1.25s ease-out infinite',
+        "caret-blink": "caret-blink 1.25s ease-out infinite",
       },
       keyframes: {
-        'caret-blink': {
-          '0%,70%,100%': { opacity: '1' },
-          '20%,50%': { opacity: '0' },
+        "caret-blink": {
+          "0%,70%,100%": { opacity: "1" },
+          "20%,50%": { opacity: "0" },
         },
       },
-      // Fuentes personalizadas
       fontFamily: {
-        montserrat: ["Montserrat", "sans-serif"],
-        josefin: ["Josefin Sans", "sans-serif"],
+        sans: ["var(--font-montserrat)", ...fontFamily.sans],
+        montserrat: ["var(--font-montserrat)", ...fontFamily.sans],
       },
-      // Radios de bordes
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      // Colores personalizados
       colors: {
-        background: "hsl(var(--background))", 
-        foreground: "hsl(var(--foreground))", 
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
@@ -51,7 +45,7 @@ export default {
           foreground: "hsl(var(--popover-foreground))",
         },
         primary: {
-          DEFAULT: "hsl(var(--primary))", 
+          DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
         secondary: {
@@ -74,22 +68,26 @@ export default {
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         chart: {
-          "1": "hsl(var(--chart-1))",
-          "2": "hsl(var(--chart-2))",
-          "3": "hsl(var(--chart-3))",
-          "4": "hsl(var(--chart-4))",
-          "5": "hsl(var(--chart-5))",
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
         },
       },
-      
-      screens: {
-        sm: "640px",
-        md: "768px",
-        lg: "1024px",
-        xl: "1280px",
-        "2xl": "1536px",
-      },
+    },
+    screens: {
+      'xs': '475px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+      '3xl': '1920px',
     },
   },
-  plugins: [require("tailwindcss-animate")],
-} satisfies Config;
+  plugins: [animatePlugin],
+};
+
+export default config;
+

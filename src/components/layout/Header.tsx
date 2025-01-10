@@ -2,7 +2,7 @@
 
 import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Dialog, DialogPanel } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -22,7 +22,6 @@ export function Header() {
 
   const handleSignInClick = () => {
     setIsLoading(true);
-    // Simulate loading
     setTimeout(() => setIsLoading(false), 2000);
   };
 
@@ -30,22 +29,30 @@ export function Header() {
     <header className="py-4">
       <div className="container mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between">
-
           <div className="hidden w-full items-center justify-between md:flex">
             {/* Logo */}
-            <div className="flex-shrink-0 mt-[-13px]"> 
-              <div className="relative h-[150px] w-[150px]"> 
+            <div className="mt-[-13px] flex-shrink-0">
+              <div className="relative h-[150px] w-[150px]">
                 <Image
                   src="/artiefy-logo.svg"
                   alt="Logo Artiefy"
                   fill
-                  style={{ objectFit: "contain" }}
+                  className="object-contain"
                   priority
-                  quality={100}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
+                  onLoad={(e) =>
+                    console.log(
+                      `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`,
+                    )
+                  }
+                  onError={(e) =>
+                    console.error(
+                      `Failed to load image: ${(e.target as HTMLImageElement).src}`,
+                    )
+                  }
                 />
               </div>
             </div>
-
             {/* Navigation items */}
             {navItems.map((item) => (
               <Link
@@ -62,23 +69,27 @@ export function Header() {
               <SignedOut>
                 <SignInButton>
                   <Button
-                    className="cta rounded-none relative p-5 font-light text-xl italic text-primary active:scale-95 transform skew-x-[-15deg] hover:text-white"
+                    className="cta relative skew-x-[-20deg] transform rounded-none border-2 border-primary bg-transparent p-5 text-xl font-light italic text-primary hover:bg-white/30 hover:text-primary active:scale-95"
                     style={{
                       transition: "0.5s",
-                      width: "175px", 
+                      width: "190px",
                     }}
                     onClick={handleSignInClick}
                   >
-                    <span className="inline-block transform skew-x-[15deg] relative overflow-hidden">
+                    <div className="flex w-full items-center justify-center">
                       {isLoading ? (
-                        <Icons.spinner className="size-5 animate-spin" />
+                        <Icons.spinner
+                          className="animate-spin"
+                          style={{ height: "20px", width: "20px" }}
+                        />
                       ) : (
                         <>
-                          Iniciar Sesión
-                          <span className="absolute top-0 left-0 w-0 h-full opacity-0 bg-white shadow-[0_0_50px_30px_white] transform skew-x-[-20deg] transition-all duration-500 button-hover-effect"></span>
+                          <span className="inline-block skew-x-[15deg] transform">
+                            Iniciar Sesión
+                          </span>
                         </>
                       )}
-                    </span>
+                    </div>
                   </Button>
                 </SignInButton>
               </SignedOut>
@@ -86,29 +97,6 @@ export function Header() {
                 <UserButton showName />
               </SignedIn>
             </div>
-          </div>
-
-          {/* Mobile view */}
-          <div className="flex w-full items-center justify-between md:hidden">
-            <div className="flex-shrink-0 mt-[-8px]"> 
-              <div className="relative h-[150px] w-[150px]"> 
-                <Image
-                  src="/artiefy-logo.png"
-                  alt="Logo Artiefy"
-                  fill
-                  style={{ objectFit: "contain" }}
-                  priority
-                  quality={100}
-                />
-              </div>
-            </div>
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="inline-flex transform items-center justify-center p-2 transition-transform active:scale-95"
-              aria-label="Open main menu"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
           </div>
         </div>
       </div>
@@ -123,14 +111,25 @@ export function Header() {
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <DialogPanel className="fixed inset-y-0 right-0 z-50 w-[75%] max-w-sm bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between">
-            <div className="relative h-[150px] w-[150px] mt-[-10px]"> {/* Adjusted margin-top to move the logo up slightly */}
+            <div className="relative mt-[-10px] h-[150px] w-[150px]">
+              {/* Adjusted margin-top to move the logo up slightly */}
               <Image
                 src="/artiefy-logo2.svg"
                 alt="Logo Artiefy"
                 fill
                 style={{ objectFit: "contain" }}
                 priority
-                quality={100}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
+                onLoad={(e) =>
+                  console.log(
+                    `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`,
+                  )
+                }
+                onError={(e) =>
+                  console.error(
+                    `Failed to load image: ${(e.target as HTMLImageElement).src}`,
+                  )
+                }
               />
             </div>
             <button
@@ -143,7 +142,7 @@ export function Header() {
           </div>
 
           <nav className="-mt-6">
-            <ul className="space-y-8">
+            <ul className="space-y-12">
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
@@ -158,27 +157,28 @@ export function Header() {
             </ul>
           </nav>
 
-          <div className="mt-6">
+          <div className="mt-12">
             <SignedOut>
               <SignInButton>
                 <Button
-                  className="border border-background cta rounded-none relative p-5 text-xl text-background bg-primary font-light italic active:scale-95 transform skew-x-[-15deg] hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] transition-all duration-200 button-hover"
+                  className="cta relative skew-x-[-20deg] transform rounded-none border-2 border-background bg-background p-5 text-xl font-light italic text-primary transition-colors duration-500 hover:bg-primary hover:text-background active:scale-95"
                   style={{
-                    transition: "0.5s",
-                    width: "175px", 
+                    width: "190px",
                   }}
                   onClick={handleSignInClick}
                 >
-                  <span className="skew-x-[15deg]">
+                  <div className="flex w-full items-center justify-center">
                     {isLoading ? (
-                      <Icons.spinner className="size-5 animate-spin" />
+                      <Icons.spinner
+                        className="animate-spin"
+                        style={{ height: "20px", width: "20px" }}
+                      />
                     ) : (
-                      <>
+                      <span className="inline-block skew-x-[15deg] transform">
                         Iniciar Sesión
-                        <span className="absolute top-0 left-0 w-0 h-full opacity-0 bg-white shadow-[0_0_50px_30px_white] transform skew-x-[-20deg] transition-all duration-500 button-hover-effect"></span>
-                      </>
+                      </span>
                     )}
-                  </span>
+                  </div>
                 </Button>
               </SignInButton>
             </SignedOut>

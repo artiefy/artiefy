@@ -5,7 +5,7 @@ import { eq, count } from "drizzle-orm";
 export interface Lesson {
   id: number;
   title: string;
-  duration: number; 
+  duration: number;
   description: string | null;
   order: number;
   course_id: number;

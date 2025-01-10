@@ -1,11 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getCourseById } from "~/models/courseModels";
+import { getCourseById } from "~/models/courseModelsStudent";
 
-export const dynamic = 'force-dynamic'; 
+export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
   const { id } = await context.params;
-  
+
   try {
     const courseId = Number(id);
     if (isNaN(courseId)) {
@@ -14,7 +17,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         { status: 400 },
       );
     }
-    
+
     const course = await getCourseById(courseId);
     if (!course) {
       return NextResponse.json(
@@ -23,7 +26,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       );
     }
     return NextResponse.json(course);
-  } catch {    
+  } catch {
     return NextResponse.json(
       { error: "Error al obtener el curso" },
       { status: 500 },

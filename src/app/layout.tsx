@@ -1,9 +1,8 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { esMX } from "@clerk/localizations"
 import { Montserrat } from 'next/font/google'
 import { Toaster } from "~/components/ui/toaster"
-import { CSPostHogProvider } from "./_analytics/provider"
 import { metadata as siteMetadata } from '~/lib/metadata'
 import Loading from "./loading"
 import Providers from '~/components/layout/ProgressBarProvider';
@@ -13,7 +12,16 @@ const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-montserrat",
+  preload: true,
+  weight: ['400', '500', '600', '700'],
 })
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
 
 export const metadata: Metadata = siteMetadata
 
@@ -34,22 +42,20 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-
   return (
     <ClerkProvider
       localization={esMX}
       signUpFallbackRedirectUrl="/"
       signInFallbackRedirectUrl="/"
     >
-      <html lang="es" className={montserrat.variable}>
+      <html lang="es" className={`${montserrat.variable}`}>
         <head>
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
-          </head>
-        <CSPostHogProvider>
-          <body>
+        </head>
+          <body className="font-sans bg-background text-primary">
             <ClerkLoading>
               <Loading />
             </ClerkLoading>
@@ -58,8 +64,8 @@ export default function RootLayout({
             <Toaster />
             </ClerkLoaded>
           </body>
-        </CSPostHogProvider>
       </html>
     </ClerkProvider>
   )
 }
+

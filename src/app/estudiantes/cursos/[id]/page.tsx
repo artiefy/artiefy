@@ -1,8 +1,9 @@
 import { type Metadata, type ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { type Course, type WithContext } from "schema-dts";
-import { getCourseById } from "~/models/courseModels";
+import { getCourseById } from "~/models/courseModelsStudent";
 import CourseDetails from "./CourseDetails";
+import React, { use } from "react";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -14,16 +15,16 @@ async function getValidCoverImageUrl(
 ): Promise<string> {
   const coverImageUrl = coverImageKey
     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
-    : `https://via.placeholder.com/600x400`; // URL de Placeholder.com
+    : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
 
   try {
     const response = await fetch(coverImageUrl);
     if (response.status === 403) {
-      return `https://via.placeholder.com/600x400`; // URL de Placeholder.com
+      return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
     }
     return coverImageUrl;
   } catch {
-    return `https://via.placeholder.com/600x400`; // URL de Placeholder.com
+    return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
   }
 }
 
@@ -31,7 +32,7 @@ export async function generateMetadata(
   { params }: Props,
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
-  const id = (await params).id;
+  const { id } = await params;
 
   try {
     const course = await getCourseById(Number(id));
@@ -77,12 +78,17 @@ export async function generateMetadata(
   }
 }
 
-export default async function Page({
+export default function Page({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id } = use(params);
+
+  return <PageContent id={id} />;
+}
+
+async function PageContent({ id }: { id: string }) {
   try {
     const course = await getCourseById(Number(id));
     if (!course) {
@@ -114,7 +120,7 @@ export default async function Page({
         : undefined,
       image: course.coverImageKey
         ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-        : `https://placehold.co/600x400/00BDD8/FFFFFF/png`, // URL de Placeholder.com
+        : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`,
     };
 
     return (
