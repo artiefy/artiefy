@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    --font-montserrat: 'Montserrat', sans-serif;
     --background: 212.9, 95.5%, 8.6%;  /* {#01142B} */
     --foreground: 178.4, 89.4%, 59.2%;   /* {#3AF4EF} */
     --card: 0 0% 100%;
@@ -57,8 +58,9 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+  
   body {
-    @apply bg-background font-montserrat text-primary;
+    @apply bg-background text-primary font-sans;
   }
 }
 

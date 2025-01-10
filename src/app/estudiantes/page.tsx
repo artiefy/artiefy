@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useState, use } from "react";
 import {
-  AcademicCapIcon,
   MagnifyingGlassIcon,
   RocketLaunchIcon,
   StarIcon,
@@ -52,7 +51,7 @@ interface Course {
 
 function LoadingCourses() {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
       ))}
@@ -192,8 +191,8 @@ export default function StudentDashboard(
                         sizes="100vw"
                         quality={85}
                         placeholder="blur"
-                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
-                        />
+                        blurDataURL="data"
+                      />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 p-4 text-primary">
                       <h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">
@@ -299,8 +298,8 @@ export default function StudentDashboard(
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               quality={85}
                               placeholder="blur"
-                              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
-                              />
+                              blurDataURL="data"
+                            />
                             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
                               <h3 className="text-lg font-bold text-white">
                                 {course.title}
@@ -338,32 +337,7 @@ export default function StudentDashboard(
             </div>
 
             {/* CATEGORIAS DE CURSOS */}
-            <CourseCategories onCategorySelect={handleCategorySelect} />
-
-            {/* BUSCADOR Cursos Disponibles */}
-            <div className="flex justify-center sm:justify-end">
-              <form className="flex w-full max-w-2xl flex-col items-center sm:flex-row sm:space-x-2 sm:space-y-0">
-                <div className="flex items-center">
-                  <AcademicCapIcon className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
-                  <span className="ml-2 whitespace-nowrap text-lg text-primary sm:text-xl">
-                    Busca Tu Curso
-                  </span>
-                </div>
-                <div className="relative w-full max-w-2xl">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-500" />
-                  </div>
-                  <input
-                    required
-                    placeholder="Buscar..."
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
-                    type="search"
-                    value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                  />
-                </div>
-              </form>
-            </div>
+            <CourseCategories onCategorySelect={handleCategorySelect} onSearch={handleSearch} />
 
             {/* Seccion De Cursos */}
             <div className="flex flex-col px-11">
@@ -376,31 +350,24 @@ export default function StudentDashboard(
               </React.Suspense>
             </div>
 
-            {/* PAGINACION */}
-            <Pagination className="pb-12">
-              <PaginationContent className="flex flex-wrap justify-center gap-2">
-                {currentPage > 1 && (
-                  <PaginationPrevious
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                  />
-                )}
-                {Array.from({ length: totalPages }).map((_, index) => (
-                  <PaginationItem key={index}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(index + 1)}
-                      isActive={currentPage === index + 1}
-                    >
-                      {index + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                {currentPage < totalPages && (
-                  <PaginationNext
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                  />
-                )}
-              </PaginationContent>
-            </Pagination>
+          {/* PAGINACION */}
+          <Pagination className="pb-12">
+            <PaginationContent className="cursor-pointer flex flex-wrap justify-center gap-2">
+              <PaginationPrevious onClick={() => setCurrentPage(currentPage - 1)} />
+              {Array.from({ length: totalPages }).map((_, index) => (
+                <PaginationItem key={index}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(index + 1)}
+                    isActive={currentPage === index + 1}
+                  >
+                    {index + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationNext onClick={() => setCurrentPage(currentPage + 1)} />
+            </PaginationContent>
+          </Pagination>
+            
           </div>
         </div>
       </main>

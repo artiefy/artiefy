@@ -13,7 +13,8 @@ const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-montserrat",
-  preload: false
+  preload: true,
+  weight: ['400', '500', '600', '700'],
 })
 
 export const viewport: Viewport = {
@@ -42,14 +43,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-
   return (
     <ClerkProvider
       localization={esMX}
       signUpFallbackRedirectUrl="/"
       signInFallbackRedirectUrl="/"
     >
-      <html lang="es" className={montserrat.variable}>
+      <html lang="es" className={`${montserrat.variable}`}>
         <head>
           <script
             type="application/ld+json"
@@ -57,7 +57,7 @@ export default function RootLayout({
           />
         </head>
         <CSPostHogProvider>
-          <body>
+          <body className="font-sans bg-background text-primary">
             <ClerkLoading>
               <Loading />
             </ClerkLoading>
@@ -71,3 +71,4 @@ export default function RootLayout({
     </ClerkProvider>
   )
 }
+

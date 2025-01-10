@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import animatePlugin from "tailwindcss-animate";
+import { fontFamily } from "tailwindcss/defaultTheme";
 
 const config: Config = {
   darkMode: ["class"],
@@ -22,8 +23,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        montserrat: ["Montserrat", "sans-serif"],
-        josefin: ["Josefin Sans", "sans-serif"],
+        sans: ["var(--font-montserrat)", ...fontFamily.sans],
+        montserrat: ["var(--font-montserrat)", ...fontFamily.sans],
       },
       borderRadius: {
         lg: "var(--radius)",
