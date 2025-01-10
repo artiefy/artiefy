@@ -2,11 +2,7 @@
   "compilerOptions": {
     // Base Options
     "target": "es2022",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "ES2022"
-    ],
+    "lib": ["dom", "dom.iterable", "ES2022"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
@@ -30,9 +26,7 @@
     // Path Aliases
     "baseUrl": ".",
     "paths": {
-      "~/*": [
-        "./src/*"
-      ]
+      "~/*": ["./src/*"]
     },
     "allowJs": true
   },
@@ -44,13 +38,8 @@
     "**/*.jsx",
     "**/*.cjs",
     ".next/types/**/*.ts",
-    ".eslintrc.cjs"
+    ".eslintrc.cjs",
+    "src/env.mjs"
   ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build",
-    "**/*.test.ts",
-    "coverage"
-  ]
+  "exclude": ["node_modules", "dist", "build", "**/*.test.ts", "coverage"]
 }

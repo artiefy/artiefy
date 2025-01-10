@@ -3,7 +3,6 @@ import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { esMX } from "@clerk/localizations"
 import { Montserrat } from 'next/font/google'
 import { Toaster } from "~/components/ui/toaster"
-import { CSPostHogProvider } from "./_analytics/provider"
 import { metadata as siteMetadata } from '~/lib/metadata'
 import Loading from "./loading"
 import Providers from '~/components/layout/ProgressBarProvider';
@@ -56,7 +55,6 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
         </head>
-        <CSPostHogProvider>
           <body className="font-sans bg-background text-primary">
             <ClerkLoading>
               <Loading />
@@ -66,7 +64,6 @@ export default function RootLayout({
             <Toaster />
             </ClerkLoaded>
           </body>
-        </CSPostHogProvider>
       </html>
     </ClerkProvider>
   )
