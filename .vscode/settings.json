@@ -6,36 +6,36 @@
   },
 
   // TypeScript
-  "typescript.tsdk": "node_modules/typescript/lib", // Use the workspace version of TypeScript
-  "typescript.enablePromptUseWorkspaceTsdk": true, // For security reasons it's require that users opt into using the workspace version of typescript
+  "typescript.tsdk": "node_modules/typescript/lib", // Usar la versión de TypeScript del espacio de trabajo
+  "typescript.enablePromptUseWorkspaceTsdk": true, // Por razones de seguridad, se requiere que los usuarios opten por usar la versión de TypeScript del espacio de trabajo
   "typescript.preferences.autoImportFileExcludePatterns": [
-    // useRouter should be imported from `next/navigation` instead of `next/router`
+    // useRouter debe ser importado desde `next/navigation` en lugar de `next/router`
     "next/router.d.ts",
     "next/dist/client/router.d.ts",
-    // give priority for Link to next/link instead of lucide-react
+    // dar prioridad a Link de next/link en lugar de lucide-react
     "lucide-react"
   ],
   "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  // Tailwind CSS Autocomplete, add more if used in projects
+  // Autocompletado de Tailwind CSS, agregar más si se usan en proyectos
   "tailwindCSS.classAttributes": [
     "class",
     "className",
     "classNames",
     "containerClassName"
   ],
-  "typescript.preferences.importModuleSpecifier": "non-relative", // Prefer non-relative imports
-  "typescript.preferences.preferTypeOnlyAutoImports": true, // Prefer type-only imports
+  "typescript.preferences.importModuleSpecifier": "non-relative", // Preferir importaciones no relativas
+  "typescript.preferences.preferTypeOnlyAutoImports": true, // Preferir importaciones solo de tipo
 
-  // Enable Prettier as the default formatter
+  // Habilitar Prettier como el formateador predeterminado
   "editor.formatOnSave": true,
 
-  // Auto fix with ESLint and Prettier on save
+  // Corrección automática con ESLint y Prettier al guardar
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always",
     "source.organizeImports": "always"
   },
 
-  // Enable eslint for all supported languages
+  // Habilitar eslint para todos los lenguajes soportados
   "eslint.validate": [
     "javascript",
     "javascriptreact",
