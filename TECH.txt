@@ -40,3 +40,19 @@ Tutorial UPDATE DEPENDENCIES:
 3. npm install @clerk/nextjs@latest
 4. npx @clerk/upgrade
 5. npm install drizzle-orm@latest
+---------------------------------
+Comandos De Eslint, Prettier y typescript
+- npm run lint:fix
+- npm run format:check
+- npm run typecheck
+- npm run format:write
+- npm run check
+- npx tsc --noEmit
+- npx eslint
+
+Archivos:
+- eslint.config.mjs, .js
+- eslintrc.cjs, .mjs
+- prettier.config.js
+- prettierrc.js, .mjs
+- settings.json

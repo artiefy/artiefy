@@ -43,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider
+<ClerkProvider
       localization={esMX}
     >
       <html lang="es" className={`${montserrat.variable}`}>

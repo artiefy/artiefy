@@ -47,7 +47,7 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
       {courses.map((course) => (
         <Card
           key={course.id}
-          className="flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105"
+          className={`flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out hover:scale-105 zoom-in`}
         >
           <div>
             <CardHeader>
