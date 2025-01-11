@@ -22,14 +22,6 @@ const coreConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    turbo: {
-      rules: {
-        // Aquí puedes añadir reglas específicas si las necesitas
-        // Ejemplo: "*.mdx": ["mdx-loader"]
-      },
-    },
-  },
 };
 
 export default coreConfig;

@@ -42,7 +42,9 @@ export default function Loading() {
         <li></li>
         <li></li>
       </ul>
-      <p className="-mt-20 text-3xl font-bold text-primary"> {/* Ajusta el margen superior aquí */}
+      <p className="-mt-20 text-3xl font-bold text-primary">
+        {" "}
+        {/* Ajusta el margen superior aquí */}
         Cargando... Artiefy
       </p>
     </div>

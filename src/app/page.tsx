@@ -2,11 +2,11 @@
 import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useState } from "react";
-import { FaArrowRight } from "react-icons/fa"; // Importa el icono de flecha
+import { FaArrowRight } from "react-icons/fa";
 import SmoothGradient from "~/components/layout/Gradient";
 import { Header } from "~/components/layout/Header";
 import { Button as UiButton } from "~/components/ui/button";
-import { Icons } from "~/components/ui/icons"; // Importa el ícono de carga
+import { Icons } from "~/components/ui/icons";
 
 export default function Home() {
   const { user } = useUser();
@@ -30,20 +30,16 @@ export default function Home() {
       <div className="relative z-10 flex min-h-screen flex-col">
         <Header />
         <main className="mt-[-10vh] flex flex-grow items-center justify-center">
-          {" "}
           {/* Ajusta el margen superior */}
           <section className="container mx-auto px-4 py-12 text-center">
-            {" "}
             {/* Ajusta el padding */}
             <h1 className="mb-5 text-5xl font-bold leading-snug text-white">
-              {" "}
               {/* Ajusta el margen inferior */}
               Únete a nosotros y transforma tus ideas en
               <br /> realidades con el{" "}
               <span className="text-primary">poder del conocimiento</span>
             </h1>
             <p className="mb-5 text-xl leading-snug">
-              {" "}
               {/* Ajusta el margen inferior */}
               Bienvenido a Artiefy, tu plataforma digital educativa dedicada a
               impulsar <br /> tus conociminetos con ciencia y tecnología.
