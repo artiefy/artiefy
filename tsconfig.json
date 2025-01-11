@@ -15,17 +15,12 @@
     "jsx": "preserve",
     "noEmit": true,
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     },
     "allowJs": true,
-    "types": ["node"]
+    "types": ["node"] // Asegúrate de incluir 'node' aquí
   },
   "include": [
     "next-env.d.ts",
@@ -36,7 +31,8 @@
     "**/*.cjs",
     ".next/types/**/*.ts",
     ".eslintrc.cjs",
-    "src/env.js"
+    "src/env.js",
+    "src/types/custom.d.ts"
   ],
   "exclude": ["node_modules", "dist", "build", "**/*.test.ts", "coverage"]
 }

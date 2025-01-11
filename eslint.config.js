@@ -8,6 +8,8 @@ const prettierPlugin = require('eslint-plugin-prettier');
 const tailwindcssPlugin = require('eslint-plugin-tailwindcss');
 const simpleImportSortPlugin = require('eslint-plugin-simple-import-sort');
 const unusedImportsPlugin = require('eslint-plugin-unused-imports');
+const reactPlugin = require('eslint-plugin-react');
+const reactHooksPlugin = require('eslint-plugin-react-hooks');
 
 module.exports = [
   {
@@ -19,7 +21,9 @@ module.exports = [
   {
     files: [
       'client/src/**/*.ts',
-      'server/src/**/*.ts'
+      'server/src/**/*.ts',
+      'client/src/**/*.tsx',
+      'server/src/**/*.tsx'
     ],
     ignores: [
       'eslint.config.js',
@@ -30,27 +34,33 @@ module.exports = [
       'prettier': prettierPlugin,
       'tailwindcss': tailwindcssPlugin,
       'simple-import-sort': simpleImportSortPlugin,
-      'unused-imports': unusedImportsPlugin
+      'unused-imports': unusedImportsPlugin,
+      'react': reactPlugin,
+      'react-hooks': reactHooksPlugin
     },
     languageOptions: {
       sourceType: 'module',
       parser: typescriptParser,
       parserOptions: {
         ecmaVersion: 2020,
-        project: ['./tsconfig.json']
+        project: ['./tsconfig.json'],
+        ecmaFeatures: {
+          jsx: true
+        }
       }
     },
     extends: [
       'eslint:recommended',
       'plugin:@typescript-eslint/recommended',
       'plugin:tailwindcss/recommended',
+      'plugin:react/recommended',
+      'plugin:react-hooks/recommended',
       'prettier'
     ],
     rules: {
       'prettier/prettier': 'error',
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
-      'semi': 'off',
       '@typescript-eslint/semi': 'error',
       '@typescript-eslint/member-delimiter-style': ['error', {
         'multiline': {
@@ -63,8 +73,7 @@ module.exports = [
         },
         'multilineDetection': 'brackets'
       }],
-      'indent': 'off',
-      '@typescript-eslint/indent': ['warn', 'tab', { 'SwitchCase': 1 }],
+      '@typescript-eslint/indent': ['warn', 2, { 'SwitchCase': 1 }],
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/consistent-type-exports': 'error',
       '@typescript-eslint/naming-convention': [
@@ -121,17 +130,11 @@ module.exports = [
           'args': 'after-used',
           'argsIgnorePattern': '^_'
         }
-      ]
-    }
-  },
-  {
-    files: [
-      'client/src/**/*.ts'
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.json']
-      }
+      ],
+      'react/jsx-uses-react': 'off',
+      'react/react-in-jsx-scope': 'off',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn'
     }
   },
   {

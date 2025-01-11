@@ -27,7 +27,6 @@
   "typescript.preferences.preferTypeOnlyAutoImports": true, // Prefer type-only imports
 
   // Enable Prettier as the default formatter
-  "prettier.enable": true,
   "editor.formatOnSave": true,
 
   // Auto fix with ESLint and Prettier on save
@@ -37,7 +36,6 @@
   },
 
   // Enable eslint for all supported languages
-  "eslint.format.enable": true,
   "eslint.validate": [
     "javascript",
     "javascriptreact",
