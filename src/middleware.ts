@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 // Definir rutas públicas
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)']);
+const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', '/', '/estudiantes']);
 
 // Definir rutas protegidas
 const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
@@ -43,7 +43,7 @@ export default clerkMiddleware(async (auth, req) => {
 export const config = {
   matcher: [
     // Excluir archivos estáticos y rutas internas de Next.js
-    '/((?!_next|.*\\.(?:html?|css|js|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/((?!_next|opengraph-image|sitemap.xml|robots.txt|.*\\.(?:html?|css|js|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     // Incluir todas las rutas API
     '/(api|trpc)(.*)',
   ],

@@ -29,7 +29,7 @@ export default async function Image() {
           height: '100%',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'flex-end', 
+          justifyContent: 'flex-end',
           padding: '20px',
           color: 'white',
         }}
