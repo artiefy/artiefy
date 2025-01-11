@@ -16,7 +16,7 @@ export default function Home() {
   const dashboardRoute =
     user?.publicMetadata?.role === "admin"
       ? "/dashboard/admin"
-      : user?.publicMetadata?.role === "profesor"
+      : user?.publicMetadata?.role === "educador"
         ? "/dashboard/educadores"
         : "/estudiantes";
 

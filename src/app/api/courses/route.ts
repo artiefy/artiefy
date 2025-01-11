@@ -1,5 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   createCourse,
   deleteCourse,
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     if (user_id) {
       courses = await getCoursesByUserId(user_id);
     } else {
-      courses = await getAllCourses(); // Obtener todos los cursos si no se proporciona user_id
+      courses = await getAllCourses();
     }
 
     const coursesWithCreators = await Promise.all(
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       categoryid: number;
       instructor: string;
       rating: number;
-      modalidadesid: number; // Add this line
+      modalidadesid: number;
     };
     const {
       title,
@@ -138,7 +138,7 @@ export async function PUT(request: NextRequest) {
       categoryid: number;
       instructor: string;
       rating: number;
-      modalidadesid: number; // Add this line
+      modalidadesid: number; 
     };
     const {
       id,
@@ -167,7 +167,7 @@ export async function PUT(request: NextRequest) {
       categoryid,
       instructor,
       rating,
-      modalidadesid, // Add this line
+      modalidadesid, 
     });
 
     return NextResponse.json({ message: "Curso actualizado exitosamente" });

@@ -7,16 +7,17 @@ import Image from "next/image";
 import { AspectRatio } from "~/components/ui/aspect-ratio";
 import { Icons } from "~/components/ui/icons";
 import Loading from "../../loading";
+import { redirect } from 'next/navigation'
 
 export default function SignInPage() {
-  const { isLoaded, userId } = useAuth();
+  const { isLoaded, userId } = useAuth()
 
   if (!isLoaded) {
-    return <Loading />;
+    return <Loading />
   }
 
   if (userId) {
-    return <div>Ya has iniciado sesión</div>;
+    redirect('/')
   }
 
   return (

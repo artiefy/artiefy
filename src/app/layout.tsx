@@ -45,8 +45,6 @@ export default function RootLayout({
   return (
     <ClerkProvider
       localization={esMX}
-      signUpFallbackRedirectUrl="/"
-      signInFallbackRedirectUrl="/"
     >
       <html lang="es" className={`${montserrat.variable}`}>
         <head>
