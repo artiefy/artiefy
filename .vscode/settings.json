@@ -16,7 +16,7 @@
   "javascript.validate.enable": true,
   "eslint.workingDirectories": [{ "mode": "auto" }],
   "eslint.options": {
-    "overrideConfigFile": "eslint.config.mjs"
+    "overrideConfigFile": ".eslintrc.cjs"
   },
   "editor.quickSuggestions": {
     "strings": true

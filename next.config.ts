@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import "./src/env.js";
 
 const coreConfig: NextConfig = {
+  reactStrictMode: true,
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: "inline",
@@ -22,8 +23,14 @@ const coreConfig: NextConfig = {
     ],
   },
   experimental: {
-    turbo: true
+    turbo: {
+      rules: {
+        // Aquí puedes añadir reglas específicas si las necesitas
+        // Ejemplo: "*.mdx": ["mdx-loader"]
+      },
+    },
   },
 };
 
 export default coreConfig;
+
