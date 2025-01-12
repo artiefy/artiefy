@@ -22,7 +22,7 @@ const SmoothGradient = () => {
             ),
             #01142B
           `,
-          backgroundBlendMode: "screen, screen, normal",
+          backgroundBlendMode: 'screen, screen, normal',
         }}
       />
     </div>

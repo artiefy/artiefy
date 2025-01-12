@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import * as Clerk from "@clerk/elements/common";
-import * as SignIn from "@clerk/elements/sign-in";
-import { useAuth } from "@clerk/nextjs";
-import Image from "next/image";
-import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
-import { Icons } from "~/components/estudiantes/ui/icons";
-import Loading from "../../loading";
-import { redirect } from "next/navigation";
+import * as Clerk from '@clerk/elements/common';
+import * as SignIn from '@clerk/elements/sign-in';
+import { useAuth } from '@clerk/nextjs';
+import Image from 'next/image';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import Loading from '../../loading';
+import { redirect } from 'next/navigation';
 
 export default function SignInPage() {
   const { isLoaded, userId } = useAuth();
@@ -17,7 +17,7 @@ export default function SignInPage() {
   }
 
   if (userId) {
-    redirect("/");
+    redirect('/');
   }
 
   return (
@@ -95,7 +95,7 @@ export default function SignInPage() {
                         submit
                         disabled={isGlobalLoading}
                         className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
-                        style={{ width: "150px" }}
+                        style={{ width: '150px' }}
                       >
                         <div className="flex w-full items-center justify-center">
                           <Clerk.Loading>
@@ -206,7 +206,7 @@ export default function SignInPage() {
                           submit
                           disabled={isGlobalLoading}
                           className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
-                          style={{ width: "150px" }}
+                          style={{ width: '150px' }}
                         >
                           <div className="flex w-full items-center justify-center">
                             <Clerk.Loading>

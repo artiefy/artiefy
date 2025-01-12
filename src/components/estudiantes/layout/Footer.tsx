@@ -1,5 +1,5 @@
-import React from "react";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
+import React from 'react';
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
 
 const Footer = () => {
   return (
@@ -8,15 +8,34 @@ const Footer = () => {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>
             <h3 className="mb-4 text-xl font-bold">Sobre Nosotros</h3>
-            <p className="text-gray-400">Empoderando a los estudiantes de todo el mundo con educación en línea de calidad.</p>
+            <p className="text-gray-400">
+              Empoderando a los estudiantes de todo el mundo con educación en
+              línea de calidad.
+            </p>
           </div>
           <div>
             <h3 className="mb-4 text-xl font-bold">Enlaces Rápidos</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 hover:text-white">Cursos</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Educadores</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Blog</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-white">Centro de Ayuda</a></li>
+              <li>
+                <a href="#" className="text-gray-400 hover:text-white">
+                  Cursos
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-gray-400 hover:text-white">
+                  Educadores
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-gray-400 hover:text-white">
+                  Blog
+                </a>
+              </li>
+              <li>
+                <a href="#" className="text-gray-400 hover:text-white">
+                  Centro de Ayuda
+                </a>
+              </li>
             </ul>
           </div>
           <div>

@@ -49,12 +49,11 @@ Forzar Dependencias
 ---------------------------------
 Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 
-1. `npx eslint . --ext .js,.jsx,.ts,.tsx`: Ejecuta ESLint en todos los archivos JavaScript y TypeScript del proyecto.
-2. `npm run lint`: Ejecuta ESLint para identificar problemas en el código sin corregirlos.
-3. `npm run lint:fix`: Ejecuta ESLint y corrige automáticamente los problemas que pueda solucionar.
-4. `npm run format:check`: Verifica si el código está formateado correctamente según Prettier, sin hacer cambios.
-5. `npm run format:write`: Formatea automáticamente el código del proyecto usando Prettier.
-6. `npm run typecheck`: Ejecuta el verificador de tipos de TypeScript sin generar archivos de salida.
+1. `npm run lint`: Ejecuta ESLint para identificar problemas en el código sin corregirlos.|
+2. `npm run lint:fix`: Ejecuta ESLint y corrige automáticamente los problemas que pueda solucionar.
+3. `npm run format:check`: Verifica si el código está formateado correctamente según Prettier, sin hacer cambios.
+4. `npm run format:write`: Formatea automáticamente el código del proyecto usando Prettier.
+5. `npm run typecheck`: Ejecuta el verificador de tipos de TypeScript sin generar archivos de salida.
 
 Archivos:
 - eslint.config.mjs .js

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useUser } from "@clerk/nextjs";
-import Image from "next/image";
-import { useEffect, useState, type ChangeEvent } from "react";
-import { FiUploadCloud } from "react-icons/fi";
-import { MdClose } from "react-icons/md";
+import { useUser } from '@clerk/nextjs';
+import Image from 'next/image';
+import { useEffect, useState, type ChangeEvent } from 'react';
+import { FiUploadCloud } from 'react-icons/fi';
+import { MdClose } from 'react-icons/md';
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/estudiantes/ui/dialog";
-import { Progress } from "~/components/estudiantes/ui/progress";
-import { Button } from "~/components/estudiantes/ui/button";
+} from '~/components/estudiantes/ui/dialog';
+import { Progress } from '~/components/estudiantes/ui/progress';
+import { Button } from '~/components/estudiantes/ui/button';
 
 interface CourseFormProps {
   onSubmitAction: (
@@ -22,7 +22,7 @@ interface CourseFormProps {
     description: string,
     file: File | null,
     category: string,
-    rating: number,
+    rating: number
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: string | null;
@@ -47,9 +47,9 @@ export default function CourseForm({
   onCloseAction,
 }: CourseFormProps) {
   const { user } = useUser();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
   const [rating, setRating] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -163,12 +163,12 @@ export default function CourseForm({
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader className="mt-4">
           <DialogTitle>
-            {editingCourseId ? "Editar Curso" : "Crear Curso"}
+            {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
           </DialogTitle>
           <DialogDescription>
             {editingCourseId
-              ? "Edita los detalles del curso"
-              : "Llena los detalles para crear un nuevo curso"}
+              ? 'Edita los detalles del curso'
+              : 'Llena los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
         <div className="rounded-lg bg-background px-6 text-black shadow-md">
@@ -183,7 +183,7 @@ export default function CourseForm({
               setTitle(e.target.value);
               setErrors((prev) => ({ ...prev, title: !e.target.value }));
             }}
-            className={`mb-4 w-full rounded border p-2 ${errors.title ? "border-red-500" : "border-primary"}`}
+            className={`mb-4 w-full rounded border p-2 ${errors.title ? 'border-red-500' : 'border-primary'}`}
           />
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -195,7 +195,7 @@ export default function CourseForm({
               setDescription(e.target.value);
               setErrors((prev) => ({ ...prev, description: !e.target.value }));
             }}
-            className={`mb-3 w-full rounded border p-2 ${errors.description ? "border-red-500" : "border-primary"}`}
+            className={`mb-3 w-full rounded border p-2 ${errors.description ? 'border-red-500' : 'border-primary'}`}
           />
           {errors.category && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -208,7 +208,7 @@ export default function CourseForm({
               setCategory(e.target.value);
               setErrors((prev) => ({ ...prev, category: !e.target.value }));
             }}
-            className={`mb-4 w-full rounded border p-2 ${errors.category ? "border-red-500" : "border-primary"}`}
+            className={`mb-4 w-full rounded border p-2 ${errors.category ? 'border-red-500' : 'border-primary'}`}
           />
           <div className="mb-4 w-full rounded border border-primary p-2">
             <h3 className="text-lg font-medium text-primary">
@@ -226,13 +226,13 @@ export default function CourseForm({
               setRating(Number(e.target.value));
               setErrors((prev) => ({ ...prev, rating: !e.target.value }));
             }}
-            className={`mb-4 w-full rounded border p-2 ${errors.rating ? "border-red-500" : "border-primary"}`}
+            className={`mb-4 w-full rounded border p-2 ${errors.rating ? 'border-red-500' : 'border-primary'}`}
           />
           {errors.file && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
           <div
-            className={`rounded-lg border-2 border-dashed p-8 ${isDragging ? "border-blue-500 bg-blue-50" : errors.file ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
+            className={`rounded-lg border-2 border-dashed p-8 ${isDragging ? 'border-blue-500 bg-blue-50' : errors.file ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'} transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -303,12 +303,12 @@ export default function CourseForm({
         <DialogFooter>
           <Button onClick={handleSubmit} variant="save" disabled={uploading}>
             {uploading
-              ? "Subiendo..."
+              ? 'Subiendo...'
               : editingCourseId
                 ? isEditing
-                  ? "Editando..."
-                  : "Editar"
-                : "Guardar"}
+                  ? 'Editando...'
+                  : 'Editar'
+                : 'Guardar'}
           </Button>
         </DialogFooter>
       </DialogContent>

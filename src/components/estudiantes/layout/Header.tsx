@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import { Dialog, DialogPanel } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { Button } from "~/components/estudiantes/ui/button";
-import { Icons } from "~/components/estudiantes/ui/icons";
+import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { Dialog, DialogPanel } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useState } from 'react';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const navItems = [
-    { href: "/", label: "Inicio" },
-    { href: "/estudiantes", label: "Cursos" },
-    { href: "/proyectos", label: "Proyectos" },
-    { href: "/comunidad", label: "Espacios" },
+    { href: '/', label: 'Inicio' },
+    { href: '/estudiantes', label: 'Cursos' },
+    { href: '/proyectos', label: 'Proyectos' },
+    { href: '/comunidad', label: 'Espacios' },
   ];
 
   const handleSignInClick = () => {
@@ -42,12 +42,12 @@ export function Header() {
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
                   onLoad={(e) =>
                     console.log(
-                      `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`,
+                      `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`
                     )
                   }
                   onError={(e) =>
                     console.error(
-                      `Failed to load image: ${(e.target as HTMLImageElement).src}`,
+                      `Failed to load image: ${(e.target as HTMLImageElement).src}`
                     )
                   }
                 />
@@ -71,8 +71,8 @@ export function Header() {
                   <Button
                     className="relative skew-x-[-20deg] rounded-none border-2 border-primary bg-transparent p-5 text-xl font-light italic text-primary hover:bg-white/30 hover:text-primary active:scale-95"
                     style={{
-                      transition: "0.5s",
-                      width: "190px",
+                      transition: '0.5s',
+                      width: '190px',
                     }}
                     onClick={handleSignInClick}
                   >
@@ -80,7 +80,7 @@ export function Header() {
                       {isLoading ? (
                         <Icons.spinner
                           className="animate-spin"
-                          style={{ height: "20px", width: "20px" }}
+                          style={{ height: '20px', width: '20px' }}
                         />
                       ) : (
                         <>
@@ -117,17 +117,17 @@ export function Header() {
                 src="/artiefy-logo2.svg"
                 alt="Logo Artiefy"
                 fill
-                style={{ objectFit: "contain" }}
+                style={{ objectFit: 'contain' }}
                 priority
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
                 onLoad={(e) =>
                   console.log(
-                    `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`,
+                    `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`
                   )
                 }
                 onError={(e) =>
                   console.error(
-                    `Failed to load image: ${(e.target as HTMLImageElement).src}`,
+                    `Failed to load image: ${(e.target as HTMLImageElement).src}`
                   )
                 }
               />
@@ -163,7 +163,7 @@ export function Header() {
                 <Button
                   className="relative skew-x-[-20deg] rounded-none border-2 border-background bg-background p-5 text-xl font-light italic text-primary transition-colors duration-500 hover:bg-primary hover:text-background active:scale-95"
                   style={{
-                    width: "190px",
+                    width: '190px',
                   }}
                   onClick={handleSignInClick}
                 >
@@ -171,7 +171,7 @@ export function Header() {
                     {isLoading ? (
                       <Icons.spinner
                         className="animate-spin"
-                        style={{ height: "20px", width: "20px" }}
+                        style={{ height: '20px', width: '20px' }}
                       />
                     ) : (
                       <span className="inline-block skew-x-[15deg]">

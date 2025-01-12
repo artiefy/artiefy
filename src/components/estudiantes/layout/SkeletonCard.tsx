@@ -1,4 +1,4 @@
-import { Skeleton } from "~/components/estudiantes/ui/skeleton";
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 export function SkeletonCard() {
   return (

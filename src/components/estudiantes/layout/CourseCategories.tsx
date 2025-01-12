@@ -1,5 +1,5 @@
-import { FunnelIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
-import React, { useState } from "react";
+import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+import React, { useState } from 'react';
 import {
   FiBarChart,
   FiCamera,
@@ -7,15 +7,15 @@ import {
   FiDatabase,
   FiMusic,
   FiPenTool,
-} from "react-icons/fi";
+} from 'react-icons/fi';
 
 const categories = [
-  { icon: <FiCode />, name: "Programacion", courses: "150+ cursos" },
-  { icon: <FiPenTool />, name: "Diseño", courses: "200+ cursos" },
-  { icon: <FiBarChart />, name: "Marketing", courses: "120+ cursos" },
-  { icon: <FiCamera />, name: "Fotografia", courses: "80+ cursos" },
-  { icon: <FiMusic />, name: "Musica", courses: "90+ cursos" },
-  { icon: <FiDatabase />, name: "Ciencia De Datos", courses: "100+ cursos" },
+  { icon: <FiCode />, name: 'Programacion', courses: '150+ cursos' },
+  { icon: <FiPenTool />, name: 'Diseño', courses: '200+ cursos' },
+  { icon: <FiBarChart />, name: 'Marketing', courses: '120+ cursos' },
+  { icon: <FiCamera />, name: 'Fotografia', courses: '80+ cursos' },
+  { icon: <FiMusic />, name: 'Musica', courses: '90+ cursos' },
+  { icon: <FiDatabase />, name: 'Ciencia De Datos', courses: '100+ cursos' },
 ];
 
 interface CourseCategoriesProps {
@@ -27,7 +27,7 @@ const CourseCategories: React.FC<CourseCategoriesProps> = ({
   onCategorySelect,
   onSearch,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,7 +49,7 @@ const CourseCategories: React.FC<CourseCategoriesProps> = ({
             <FunnelIcon className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-gray-500" />
             <select
               className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 px-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
-              value={selectedCategory ?? ""}
+              value={selectedCategory ?? ''}
               onChange={(e) => handleCategoryChange(e.target.value || null)}
             >
               <option value="">Todas las categorías</option>

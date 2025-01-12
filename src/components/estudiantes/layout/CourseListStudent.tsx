@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { ArrowRightIcon, StarIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
-import Link from "next/link";
-import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
-import { Badge } from "~/components/estudiantes/ui/badge";
-import { Button } from "~/components/estudiantes/ui/button";
+import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
+import Image from 'next/image';
+import Link from 'next/link';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/estudiantes/ui/card";
-import { useState } from "react";
+} from '~/components/estudiantes/ui/card';
+import { useState } from 'react';
 
 interface Course {
   id: number;
@@ -56,11 +56,11 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
                   src={
                     course.coverImageKey
                       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                      : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
+                      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
                   }
-                  alt={course.title || "Imagen del curso"}
+                  alt={course.title || 'Imagen del curso'}
                   className={`rounded-lg object-cover transition-opacity duration-500 ${
-                    loadedImages[course.id] ? "opacity-100" : "opacity-0"
+                    loadedImages[course.id] ? 'opacity-100' : 'opacity-0'
                   }`}
                   fill
                   placeholder="blur"
@@ -90,7 +90,7 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
           <CardFooter className="-mt-6 flex flex-col items-start justify-between">
             <div className="mb-2 flex w-full justify-between">
               <p className="text-sm font-bold italic text-gray-600">
-                Educador:{" "}
+                Educador:{' '}
                 <span className="font-bold italic">{course.instructor}</span>
               </p>
               <p className="text-sm font-bold text-red-500">

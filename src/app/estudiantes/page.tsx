@@ -1,25 +1,26 @@
-'use client';
+"use client";
 
+import React, { use, useCallback, useEffect, useState } from "react";
 import {
   MagnifyingGlassIcon,
   RocketLaunchIcon,
   StarIcon,
-} from '@heroicons/react/24/solid';
-import Image from 'next/image';
-import React, { use, useCallback, useEffect, useState } from 'react';
-import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
-import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
-import { SkeletonCard } from '~/components/estudiantes/layout/SkeletonCard';
-import { Badge } from '~/components/estudiantes/ui/badge';
+} from "@heroicons/react/24/solid";
+import Image from "next/image";
+import CourseCategories from "~/components/estudiantes/layout/CourseCategories";
+import CourseListStudent from "~/components/estudiantes/layout/CourseListStudent";
+import Footer from "~/components/estudiantes/layout/Footer";
+import { Header } from "~/components/estudiantes/layout/Header";
+import { SkeletonCard } from "~/components/estudiantes/layout/SkeletonCard";
+import { Badge } from "~/components/estudiantes/ui/badge";
+
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '~/components/estudiantes/ui/carousel';
+} from "~/components/estudiantes/ui/carousel";
 import {
   Pagination,
   PaginationContent,
@@ -27,9 +28,9 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '~/components/estudiantes/ui/pagination';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
-import { toast } from '~/hooks/use-toast';
+} from "~/components/estudiantes/ui/pagination";
+import { Skeleton } from "~/components/estudiantes/ui/skeleton";
+import { toast } from "~/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -66,7 +67,7 @@ export default function StudentDashboard(props: {
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -77,23 +78,23 @@ export default function StudentDashboard(props: {
   const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/estudiantes');
+      const response = await fetch("/api/estudiantes");
       if (!response.ok) throw new Error(response.statusText);
       const data = (await response.json()) as Course[];
       data.sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
       setCourses(data);
       setFilteredCourses(data);
       setCarouselIndex(0);
     } catch (error) {
-      console.error('Error al obtener los cursos:', error);
+      console.error("Error al obtener los cursos:", error);
       toast({
-        title: 'Error',
+        title: "Error",
         description:
-          'No se pudieron cargar los cursos. Por favor, intenta de nuevo más tarde.',
-        variant: 'destructive',
+          "No se pudieron cargar los cursos. Por favor, intenta de nuevo más tarde.",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -106,19 +107,19 @@ export default function StudentDashboard(props: {
       if (search) {
         const searchLower = search.toLowerCase();
         filtered = filtered.filter((course) =>
-          course.title.toLowerCase().includes(searchLower)
+          course.title.toLowerCase().includes(searchLower),
         );
       }
       if (category) {
         filtered = filtered.filter(
           (course) =>
-            course.category.name.toLowerCase() === category.toLowerCase()
+            course.category.name.toLowerCase() === category.toLowerCase(),
         );
       }
       setFilteredCourses(filtered);
       setCurrentPage(1);
     },
-    [courses]
+    [courses],
   );
 
   const handleSearch = useCallback(
@@ -126,7 +127,7 @@ export default function StudentDashboard(props: {
       setSearchTerm(search);
       filterCourses(search, selectedCategory);
     },
-    [filterCourses, selectedCategory]
+    [filterCourses, selectedCategory],
   );
 
   const handleCategorySelect = useCallback(
@@ -134,7 +135,7 @@ export default function StudentDashboard(props: {
       setSelectedCategory(category);
       filterCourses(searchTerm, category);
     },
-    [filterCourses, searchTerm]
+    [filterCourses, searchTerm],
   );
 
   const handleCarouselChange = useCallback((index: number) => {
@@ -148,7 +149,7 @@ export default function StudentDashboard(props: {
   useEffect(() => {
     const interval = setInterval(() => {
       setCarouselIndex(
-        (prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5)
+        (prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5),
       );
     }, 5000);
     return () => clearInterval(interval);
@@ -156,7 +157,7 @@ export default function StudentDashboard(props: {
 
   const paginatedCourses = filteredCourses.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    currentPage * ITEMS_PER_PAGE,
   );
 
   if (!resolvedParams) {
@@ -177,7 +178,7 @@ export default function StudentDashboard(props: {
                   <div
                     key={course.id}
                     className={`absolute size-full transition-opacity duration-500 ${
-                      index === carouselIndex ? 'opacity-100' : 'opacity-0'
+                      index === carouselIndex ? "opacity-100" : "opacity-0"
                     }`}
                   >
                     <div className="relative size-full">
@@ -228,7 +229,7 @@ export default function StudentDashboard(props: {
                     key={index}
                     onClick={() => handleCarouselChange(index)}
                     className={`size-2 rounded-full sm:size-3 ${
-                      index === carouselIndex ? 'bg-white' : 'bg-white/50'
+                      index === carouselIndex ? "bg-white" : "bg-white/50"
                     }`}
                   />
                 ))}
@@ -289,7 +290,7 @@ export default function StudentDashboard(props: {
                               src={
                                 course.coverImageKey
                                   ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                                  : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
                               }
                               alt={course.title}
                               fill
@@ -346,7 +347,7 @@ export default function StudentDashboard(props: {
               <h2 className="mb-8 text-2xl font-bold sm:text-3xl">
                 {selectedCategory
                   ? `Cursos de ${selectedCategory}`
-                  : 'Cursos Disponibles'}
+                  : "Cursos Disponibles"}
               </h2>
               {loading && <LoadingCourses />}
               <React.Suspense fallback={<LoadingCourses />}>
@@ -362,7 +363,7 @@ export default function StudentDashboard(props: {
                     setCurrentPage((prev) => Math.max(prev - 1, 1))
                   }
                   className={
-                    currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
+                    currentPage === 1 ? "cursor-not-allowed opacity-50" : ""
                   }
                 />
                 {Array.from({ length: totalPages }).map((_, index) => (
@@ -381,8 +382,8 @@ export default function StudentDashboard(props: {
                   }
                   className={
                     currentPage === totalPages
-                      ? 'cursor-not-allowed opacity-50'
-                      : ''
+                      ? "cursor-not-allowed opacity-50"
+                      : ""
                   }
                 />
               </PaginationContent>

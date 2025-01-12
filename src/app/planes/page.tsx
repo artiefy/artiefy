@@ -88,11 +88,7 @@ const PricingPlans: React.FC = () => {
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`relative flex flex-col justify-between rounded-lg bg-gradient-to-r from-primary to-secondary p-4 shadow-lg transition-all duration-200${
-                  plan.name === 'Pro' || plan.name === 'Enterprise'
-                    ? 'items-center justify-center'
-                    : ''
-                }`}
+                className="relative flex flex-col items-center justify-between rounded-lg bg-gradient-to-r from-primary to-secondary p-4 shadow-lg transition-all duration-200"
               >
                 <div className="absolute inset-0 -z-10 overflow-hidden rounded-lg border-2 border-white">
                   <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-50"></div>
@@ -167,17 +163,15 @@ const PricingPlans: React.FC = () => {
                   </li>
                 ))}
               </ul>
-              ...
               <div className="flex justify-center">
                 <Button
                   onClick={() => setShowModal(false)}
-                  className="group relative -my-6 h-full overflow-hidden rounded-md border border-b-4 border-secondary bg-background px-5 py-3 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:bg-background active:scale-95 active:opacity-75"
+                  className="group relative h-full overflow-hidden rounded-md border border-b-4 border-secondary bg-background p-4 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:bg-background active:scale-95 active:opacity-75"
                 >
                   <span className="absolute left-0 top-[150%] inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
                   Proceder con el Plan {selectedPlan.name}
                 </Button>
               </div>
-              ...
             </div>
           </div>
         </div>

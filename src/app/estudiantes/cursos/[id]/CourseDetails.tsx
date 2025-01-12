@@ -1,8 +1,8 @@
 //src\app\estudiantes\cursos\[id]\CourseDetails.tsx
-"use client";
+'use client';
 
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import {
   FaCalendar,
   FaChevronDown,
@@ -11,9 +11,9 @@ import {
   FaHome,
   FaStar,
   FaUserGraduate,
-} from "react-icons/fa";
-import Footer from "~/components/estudiantes/layout/Footer";
-import { Header } from "~/components/estudiantes/layout/Header";
+} from 'react-icons/fa';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,9 +21,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "~/components/estudiantes/ui/breadcrumb";
-import { Button } from "~/components/estudiantes/ui/button";
-import { Skeleton } from "~/components/estudiantes/ui/skeleton";
+} from '~/components/estudiantes/ui/breadcrumb';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 export interface Course {
   id: number;
@@ -68,7 +68,7 @@ export default function CourseDetails({ course }: { course: Course }) {
   };
 
   const formatDate = (dateString: string | number | Date) => {
-    return new Date(dateString).toISOString().split("T")[0];
+    return new Date(dateString).toISOString().split('T')[0];
   };
 
   return (
@@ -105,14 +105,14 @@ export default function CourseDetails({ course }: { course: Course }) {
                 src={
                   course.coverImageKey
                     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                    : "https://placehold.co/600x400/EEE/31343C?font=montserrat&text=Curso-Artiefy"
+                    : 'https://placehold.co/600x400/EEE/31343C?font=montserrat&text=Curso-Artiefy'
                 }
                 alt={course.title}
                 fill
                 className="object-cover"
                 priority
                 sizes="100vw"
-                />
+              />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
                 <h1 className="text-3xl font-bold text-white">
                   {course.title}
@@ -143,7 +143,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                       {Array.from({ length: 5 }).map((_, index) => (
                         <FaStar
                           key={index}
-                          className={`size-5 ${index < Math.floor(course.rating ?? 0) ? "text-yellow-400" : "text-gray-300"}`}
+                          className={`size-5 ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                         />
                       ))}
                       <span className="ml-2 text-lg font-semibold text-yellow-400">
@@ -155,7 +155,7 @@ export default function CourseDetails({ course }: { course: Course }) {
 
                 <div className="prose mb-8 max-w-none">
                   <p className="leading-relaxed text-gray-700">
-                    {course.description ?? "No hay descripción disponible."}
+                    {course.description ?? 'No hay descripción disponible.'}
                   </p>
                 </div>
 
@@ -205,7 +205,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                           <div className="border-t bg-white px-6 py-4">
                             <p className="text-gray-700">
                               {lesson.description ??
-                                "No hay descripción disponible para esta lección."}
+                                'No hay descripción disponible para esta lección.'}
                             </p>
                           </div>
                         )}

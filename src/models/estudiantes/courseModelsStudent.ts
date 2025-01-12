@@ -1,7 +1,13 @@
 //src\models\estudiantes\courseModelsStudent.ts
-import { db } from "~/server/db/index";
-import { courses, lessons, enrollments, categories, modalidades } from "~/server/db/schema"; // Add modalidades
-import { eq, count } from "drizzle-orm";
+import { db } from '~/server/db/index';
+import {
+  courses,
+  lessons,
+  enrollments,
+  categories,
+  modalidades,
+} from '~/server/db/schema'; // Add modalidades
+import { eq, count } from 'drizzle-orm';
 
 export interface Lesson {
   id: number;
@@ -62,7 +68,7 @@ export const createCourse = async ({
   categoryid: number;
   instructor: string;
   rating: number;
-  modalidadesid: number; 
+  modalidadesid: number;
 }): Promise<void> => {
   await db.insert(courses).values({
     title,
@@ -77,20 +83,37 @@ export const createCourse = async ({
 };
 
 // Obtener todos los cursos de un profesor
-export const getCoursesByUserId = async (user_id: string): Promise<Course[]> => {
-  const result = await db.select().from(courses).where(eq(courses.creatorId, user_id));
+export const getCoursesByUserId = async (
+  user_id: string
+): Promise<Course[]> => {
+  const result = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.creatorId, user_id));
   const categoriesResult = await db.select().from(categories);
-  const categoriesMap = new Map(categoriesResult.map(category => [category.id, category]));
+  const categoriesMap = new Map(
+    categoriesResult.map((category) => [category.id, category])
+  );
 
   const modalidadesResult = await db.select().from(modalidades);
-  const modalidadesMap = new Map(modalidadesResult.map(modalidad => [modalidad.id, modalidad]));
+  const modalidadesMap = new Map(
+    modalidadesResult.map((modalidad) => [modalidad.id, modalidad])
+  );
 
-  return result.map(course => ({
+  return result.map((course) => ({
     ...course,
     coverImageKey: course.coverImageKey,
     user_id: course.creatorId,
-    category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null },
-    modalidad: modalidadesMap.get(course.modalidadesid) ?? { id: course.modalidadesid, name: '', description: null }
+    category: categoriesMap.get(course.categoryid) ?? {
+      id: course.categoryid,
+      name: '',
+      description: null,
+    },
+    modalidad: modalidadesMap.get(course.modalidadesid) ?? {
+      id: course.modalidadesid,
+      name: '',
+      description: null,
+    },
   }));
 };
 
@@ -104,36 +127,55 @@ export const getTotalStudents = async (course_id: number): Promise<number> => {
 };
 
 // Obtener un curso por ID
-export const getCourseById = async (course_id: number): Promise<Course | null> => {
-  const courseResult = await db.select().from(courses).where(eq(courses.id, course_id));
+export const getCourseById = async (
+  course_id: number
+): Promise<Course | null> => {
+  const courseResult = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, course_id));
   if (courseResult.length === 0) return null;
 
   const courseData = courseResult[0];
   if (!courseData) return null;
-  const course = { 
-    ...courseData, 
+  const course = {
+    ...courseData,
     coverImageKey: courseData.coverImageKey, // Map from database column
     user_id: courseData.creatorId,
     category: { id: courseData.categoryid, name: '', description: null },
-    modalidad: { id: courseData.modalidadesid, name: '', description: null }
+    modalidad: { id: courseData.modalidadesid, name: '', description: null },
   } as Course;
 
-  const categoryResult = await db.select().from(categories).where(eq(categories.id, course.categoryid));
+  const categoryResult = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.id, course.categoryid));
   if (categoryResult.length > 0 && categoryResult[0]) {
     course.category = categoryResult[0];
   } else {
     course.category = { id: course.categoryid, name: '', description: null };
   }
 
-  const modalidadResult = await db.select().from(modalidades).where(eq(modalidades.id, courseData.modalidadesid));
+  const modalidadResult = await db
+    .select()
+    .from(modalidades)
+    .where(eq(modalidades.id, courseData.modalidadesid));
   if (modalidadResult.length > 0 && modalidadResult[0]) {
     course.modalidad = modalidadResult[0];
   } else {
-    course.modalidad = { id: courseData.modalidadesid, name: '', description: null };
+    course.modalidad = {
+      id: courseData.modalidadesid,
+      name: '',
+      description: null,
+    };
   }
 
-  const lessonsResult = await db.select().from(lessons).where(eq(lessons.courseId, course_id)).orderBy(lessons.order);
-  course.lessons = lessonsResult.map(lesson => ({
+  const lessonsResult = await db
+    .select()
+    .from(lessons)
+    .where(eq(lessons.courseId, course_id))
+    .orderBy(lessons.order);
+  course.lessons = lessonsResult.map((lesson) => ({
     ...lesson,
     course_id: lesson.courseId,
     duration: lesson.duration,
@@ -151,17 +193,29 @@ export const getCourseById = async (course_id: number): Promise<Course | null> =
 export const getAllCourses = async (): Promise<Course[]> => {
   const result = await db.select().from(courses);
   const categoriesResult = await db.select().from(categories);
-  const categoriesMap = new Map(categoriesResult.map(category => [category.id, category]));
+  const categoriesMap = new Map(
+    categoriesResult.map((category) => [category.id, category])
+  );
 
   const modalidadesResult = await db.select().from(modalidades);
-  const modalidadesMap = new Map(modalidadesResult.map(modalidad => [modalidad.id, modalidad]));
+  const modalidadesMap = new Map(
+    modalidadesResult.map((modalidad) => [modalidad.id, modalidad])
+  );
 
-  return result.map(course => ({
+  return result.map((course) => ({
     ...course,
     coverImageKey: course.coverImageKey,
     user_id: course.creatorId,
-    category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null },
-    modalidad: modalidadesMap.get(course.modalidadesid) ?? { id: course.modalidadesid, name: '', description: null }
+    category: categoriesMap.get(course.categoryid) ?? {
+      id: course.categoryid,
+      name: '',
+      description: null,
+    },
+    modalidad: modalidadesMap.get(course.modalidadesid) ?? {
+      id: course.modalidadesid,
+      name: '',
+      description: null,
+    },
   }));
 };
 
@@ -188,7 +242,15 @@ export const updateCourse = async (
 ): Promise<void> => {
   await db
     .update(courses)
-    .set({ title, description, coverImageKey, categoryid, instructor, rating, modalidadesid }) // Map to database column
+    .set({
+      title,
+      description,
+      coverImageKey,
+      categoryid,
+      instructor,
+      rating,
+      modalidadesid,
+    }) // Map to database column
     .where(eq(courses.id, course_id));
 };
 

@@ -30,20 +30,20 @@
     "baseUrl": ".", // Establece la raíz base para las rutas relativas.
     "paths": {
       "~/*": ["./src/*"] // Crea un alias para simplificar las rutas de importación de archivos en "src".
-  },
+    },
 
-  /* Incremental Builds */
-  "tsBuildInfoFile": "./.next/cache/tsconfig.tsbuildinfo" // Almacena progreso de compilaciones incrementales.
-},
-"include": [
+    /* Incremental Builds */
+    "tsBuildInfoFile": "./.next/cache/tsconfig.tsbuildinfo" // Almacena progreso de compilaciones incrementales.
+  },
+  "include": [
     "eslint.config.mjs", // Incluye el archivo de configuración de ESLint.
-    "next-env.d.ts", // Incluye el archivo de declaración de tipos generado por Next.js.
-    "**/*.mjs", // Incluye todos los archivos con extensión `.mjs`.
-    "**/*.ts", // Incluye todos los archivos con extensión `.ts`.
-    "**/*.tsx", // Incluye todos los archivos con extensión `.tsx`.
-    "**/*.cjs", // Incluye todos los archivos con extensión `.cjs`.
-    "**/*.js", // Incluye todos los archivos con extensión `.js`.
-    ".next/types/**/*.ts" // Incluye tipos generados automáticamente por Next.js.
+    "next-env.d.ts",
+    "**/*.mjs",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.cjs",
+    ".next/types/**/*.ts",
+    ".prettierrc.mjs"
   ],
   "exclude": [
     "node_modules" // Excluye los archivos y carpetas en "node_modules" del análisis.

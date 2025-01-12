@@ -1,73 +1,120 @@
-import { FlatCompat } from '@eslint/eslintrc'
+import { FlatCompat } from '@eslint/eslintrc';
 
 const compat = new FlatCompat({
   baseDirectory: import.meta.dirname,
-})
+});
 
 const eslintConfig = [
+  {
+    ignores: [
+      '**/node_modules/**',
+      '.next/**',
+      'out/**',
+      'public/**',
+      '**/*.d.ts',
+    ]
+  },
   ...compat.config({
     extends: [
       'next/core-web-vitals',
       'plugin:@typescript-eslint/recommended-type-checked',
       'plugin:@typescript-eslint/stylistic-type-checked',
       'plugin:tailwindcss/recommended',
-      'next/typescript',
-      'next',
-      'prettier'
+      'plugin:import/recommended',
+      'plugin:import/typescript',
+      'prettier',
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
-      project: true
+      project: true,
     },
     plugins: [
       '@typescript-eslint',
       'drizzle',
-      'tailwindcss'
+      'tailwindcss',
+      'jsx-a11y',
+      'import',
     ],
     rules: {
-      '@typescript-eslint/array-type': 'off',
-      '@typescript-eslint/consistent-type-definitions': 'off',
+      'tailwindcss/no-custom-classname': 'warn',
+      'tailwindcss/classnames-order': 'warn',
+      "@typescript-eslint/consistent-type-definitions": "warn",
       '@typescript-eslint/consistent-type-imports': [
         'warn',
         {
           prefer: 'type-imports',
-          fixStyle: 'inline-type-imports'
-        }
+          fixStyle: 'inline-type-imports',
+        },
       ],
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
-          argsIgnorePattern: '^_'
-        }
+          argsIgnorePattern: '^_',
+        },
       ],
-      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/require-await': 'warn',
       '@typescript-eslint/no-misused-promises': [
-        'error',
+        'warn',
         {
           checksVoidReturn: {
-            attributes: false
+            attributes: false,
+          },
+        },
+      ],
+      'drizzle/enforce-delete-with-where': [
+        'warn',
+        {
+          drizzleObjectName: ['db', 'ctx.db'],
+        },
+      ],
+      'drizzle/enforce-update-with-where': [
+        'warn',
+        {
+          drizzleObjectName: ['db', 'ctx.db'],
+        },
+      ],
+      '@next/next/google-font-display': 'warn',
+      '@next/next/no-img-element': 'warn',
+      '@next/next/no-html-link-for-pages': 'warn',
+      'import/order': [
+        'warn',
+        {
+          'groups': ['builtin', 'external', 'internal', ['parent', 'sibling']],
+          'pathGroups': [
+            {
+              'pattern': 'react',
+              'group': 'external',
+              'position': 'before'
+            },
+            {
+              'pattern': '@/components/**',
+              'group': 'internal',
+              'position': 'after'
+            }
+          ],
+          'pathGroupsExcludedImportTypes': ['react'],
+          'alphabetize': {
+            'order': 'asc',
+            'caseInsensitive': true
           }
         }
       ],
-      'drizzle/enforce-delete-with-where': [
-        'error',
-        {
-          drizzleObjectName: ['db', 'ctx.db']
-        }
-      ],
-      'drizzle/enforce-update-with-where': [
-        'error',
-        {
-          drizzleObjectName: ['db', 'ctx.db']
-        }
-      ]
+      'import/newline-after-import': 'warn',
     },
     settings: {
+      tailwindcss: {
+        config: './tailwind.config.ts',
+        cssFiles: [
+          './src/**/*.css',
+          './styles/globals.css',
+        ],
+      },
       next: {
-        rootDir: './'
-      }
-    }
-  })
-]
+        rootDir: './',
+      },
+    },
+  }),
+];
 
-export default eslintConfig
+export default eslintConfig;
+

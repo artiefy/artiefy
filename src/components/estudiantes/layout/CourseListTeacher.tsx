@@ -1,15 +1,15 @@
 //src\components\layout\CourseListTeacher.tsx
-import Image from "next/image";
-import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
-import { Badge } from "~/components/estudiantes/ui/badge";
-import { Button } from "~/components/estudiantes/ui/button";
+import Image from 'next/image';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/estudiantes/ui/card";
+} from '~/components/estudiantes/ui/card';
 
 interface Course {
   id: string;
@@ -67,7 +67,7 @@ export default function CourseListTeacher({
               {course.description}
             </p>
             <p className="text-sm font-bold italic text-gray-600">
-              Instructor:{" "}
+              Instructor:{' '}
               <span className="font-bold italic underline">
                 {course.instructor}
               </span>

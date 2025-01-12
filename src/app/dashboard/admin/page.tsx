@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { UserButton } from "@clerk/nextjs"; // Botón de usuario de Clerk
-import { getAdminUsers } from "~/server/queries/queries"; // Importar la función de la lógica del servidor
-import { ChangeRole } from "./ChangeRole";
-import { SearchUsers } from "./SearchUsers"; // Componente de búsqueda
+import { UserButton } from '@clerk/nextjs'; // Botón de usuario de Clerk
+import { getAdminUsers } from '~/server/queries/queries'; // Importar la función de la lógica del servidor
+import { ChangeRole } from './ChangeRole';
+import { SearchUsers } from './SearchUsers'; // Componente de búsqueda
 
 export default async function AdminDashboard(params: {
   searchParams: Promise<{ search?: string }>;
 }) {
-
-
   // Obtener los parámetros de búsqueda (query)
   const query = (await params.searchParams).search;
 
@@ -46,7 +44,7 @@ export default async function AdminDashboard(params: {
             key={user.id}
             user={{
               ...user,
-              role: typeof user.role === "string" ? user.role : null, // Validamos que sea string o null
+              role: typeof user.role === 'string' ? user.role : null, // Validamos que sea string o null
             }}
           />
         ))}
