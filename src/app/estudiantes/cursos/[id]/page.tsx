@@ -1,7 +1,7 @@
 import { type Metadata, type ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import { type Course, type WithContext } from "schema-dts";
-import { getCourseById } from "~/models/courseModelsStudent";
+import { getCourseById } from "~/models/estudiantes/courseModelsStudent";
 import CourseDetails from "./CourseDetails";
 import React, { use } from "react";
 

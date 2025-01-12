@@ -2,7 +2,7 @@ import { SignUp } from "@clerk/nextjs";
 
 export default function Page() {
   return (
-    <div className="flex justify-center mt-5 py-5">
+    <div className="mt-5 flex justify-center py-5">
       <SignUp appearance={{
             layout: {
               logoPlacement: "inside", // Ubicación del logo: 'inside' o 'outside'

@@ -1,5 +1,5 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import {
   createCourse,
   deleteCourse,
@@ -7,8 +7,8 @@ import {
   getCourseById,
   getCoursesByUserId,
   updateCourse,
-} from "~/models/courseModelsStudent";
-import { createUser, getUserById } from "~/models/userModels";
+} from "~/models/estudiantes/courseModelsStudent";
+import { createUser, getUserById } from "~/models/estudiantes/userModels";
 import { ratelimit } from "~/server/ratelimit/ratelimit";
 
 export const dynamic = "force-dynamic"; // Forzar el estado dinámico

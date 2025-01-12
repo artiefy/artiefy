@@ -1,3 +1,4 @@
+//src\app\estudiantes\cursos\[id]\CourseDetails.tsx
 "use client";
 
 import Image from "next/image";
@@ -11,8 +12,8 @@ import {
   FaStar,
   FaUserGraduate,
 } from "react-icons/fa";
-import Footer from "~/components/layout/Footer";
-import { Header } from "~/components/layout/Header";
+import Footer from "~/components/estudiantes/layout/Footer";
+import { Header } from "~/components/estudiantes/layout/Header";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,9 +21,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "~/components/ui/breadcrumb";
-import { Button } from "~/components/ui/button";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "~/components/estudiantes/ui/breadcrumb";
+import { Button } from "~/components/estudiantes/ui/button";
+import { Skeleton } from "~/components/estudiantes/ui/skeleton";
 
 export interface Course {
   id: number;
@@ -112,7 +113,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                 priority
                 sizes="100vw"
                 />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
                 <h1 className="text-3xl font-bold text-white">
                   {course.title}
                 </h1>
@@ -142,7 +143,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                       {Array.from({ length: 5 }).map((_, index) => (
                         <FaStar
                           key={index}
-                          className={`h-5 w-5 ${index < Math.floor(course.rating ?? 0) ? "text-yellow-400" : "text-gray-300"}`}
+                          className={`size-5 ${index < Math.floor(course.rating ?? 0) ? "text-yellow-400" : "text-gray-300"}`}
                         />
                       ))}
                       <span className="ml-2 text-lg font-semibold text-yellow-400">
@@ -212,7 +213,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                     ))}
                   </div>
                 </div>
-                <Button className="w-full transform justify-center border-white/20 bg-background text-lg font-semibold text-primary transition-colors hover:bg-background active:scale-95">
+                <Button className="w-full justify-center border-white/20 bg-background text-lg font-semibold text-primary transition-colors hover:bg-background active:scale-95">
                   Inscribirse
                 </Button>
               </div>
@@ -234,10 +235,10 @@ export default function CourseDetails({ course }: { course: Course }) {
                     className="flex flex-1 flex-col space-y-2 overflow-y-auto p-3"
                     id="chatDisplay"
                   >
-                    <div className="chat-message max-w-xs self-end rounded-lg bg-secondary px-3 py-1.5 text-sm text-white">
+                    <div className="max-w-xs self-end rounded-lg bg-secondary px-3 py-1.5 text-sm text-white">
                       Hello! How can I assist you today?
                     </div>
-                    <div className="chat-message max-w-xs self-start rounded-lg bg-zinc-500 px-3 py-1.5 text-sm text-white">
+                    <div className="max-w-xs self-start rounded-lg bg-zinc-500 px-3 py-1.5 text-sm text-white">
                       Hello! I need a Chatbot!
                     </div>
                   </div>

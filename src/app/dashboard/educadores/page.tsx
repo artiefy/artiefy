@@ -1,12 +1,12 @@
 "use client";
 
-import {UserButton, useUser } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
-import CourseForm from "~/components/layout/CourseForm";
-import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { Button } from "~/components/ui/button";
-import { SkeletonCard } from "~/components/layout/SkeletonCard";
+import CourseForm from "~/components/estudiantes/layout/CourseForm";
+import CourseListTeacher from "~/components/estudiantes/layout/CourseListTeacher";
+import { Button } from "~/components/estudiantes/ui/button";
+import { SkeletonCard } from "~/components/estudiantes/layout/SkeletonCard";
 import { toast } from "~/hooks/use-toast";
 
 interface CourseModel {
@@ -161,12 +161,12 @@ export default function Page() {
       <main className="container mx-auto px-16">
         <header className="mt-4 flex items-center justify-between px-7">
           <h1 className="text-3xl font-bold">Dashboard Profesores</h1>
-              <UserButton showName />    
-            </header>
-        <div className="flex justify-end mt-6">
+          <UserButton showName />
+        </header>
+        <div className="mt-6 flex justify-end">
           <Button
             onClick={handleCreateCourse}
-            className="transform bg-primary text-background transition-transform hover:text-primary active:scale-95"
+            className="bg-primary text-background transition-transform hover:text-primary active:scale-95"
           >
             <FiPlus className="mr-2" />
             Crear Curso

@@ -1,3 +1,4 @@
+//src\models\estudiantes\courseModelsStudent.ts
 import { db } from "~/server/db/index";
 import { courses, lessons, enrollments, categories, modalidades } from "~/server/db/schema"; // Add modalidades
 import { eq, count } from "drizzle-orm";
@@ -36,7 +37,7 @@ export interface Course {
   instructor: string;
   rating: number | null;
   user_id: string;
-  modalidad: Modalidad; 
+  modalidad: Modalidad;
   lessons?: Lesson[];
   totalStudents?: number;
   createdAt: string | number | Date;
@@ -52,7 +53,7 @@ export const createCourse = async ({
   categoryid,
   instructor,
   rating,
-  modalidadesid, 
+  modalidadesid,
 }: {
   title: string;
   description: string;
@@ -67,11 +68,11 @@ export const createCourse = async ({
     title,
     description,
     creatorId,
-    coverImageKey, 
+    coverImageKey,
     categoryid,
     instructor,
     rating,
-    modalidadesid, 
+    modalidadesid,
   });
 };
 
@@ -86,10 +87,10 @@ export const getCoursesByUserId = async (user_id: string): Promise<Course[]> => 
 
   return result.map(course => ({
     ...course,
-    coverImageKey: course.coverImageKey, // Map from database column
+    coverImageKey: course.coverImageKey,
     user_id: course.creatorId,
     category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null },
-    modalidad: modalidadesMap.get(course.modalidadesid) ?? { id: course.modalidadesid, name: '', description: null } // Add this line
+    modalidad: modalidadesMap.get(course.modalidadesid) ?? { id: course.modalidadesid, name: '', description: null }
   }));
 };
 
@@ -135,7 +136,7 @@ export const getCourseById = async (course_id: number): Promise<Course | null> =
   course.lessons = lessonsResult.map(lesson => ({
     ...lesson,
     course_id: lesson.courseId,
-    duration: lesson.duration, // Ensure duration is included
+    duration: lesson.duration,
     createdAt: lesson.createdAt.toISOString(),
     updatedAt: lesson.updatedAt.toISOString(),
   }));
@@ -157,7 +158,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
 
   return result.map(course => ({
     ...course,
-    coverImageKey: course.coverImageKey, // Map from database column
+    coverImageKey: course.coverImageKey,
     user_id: course.creatorId,
     category: categoriesMap.get(course.categoryid) ?? { id: course.categoryid, name: '', description: null },
     modalidad: modalidadesMap.get(course.modalidadesid) ?? { id: course.modalidadesid, name: '', description: null }
@@ -174,7 +175,7 @@ export const updateCourse = async (
     categoryid,
     instructor,
     rating,
-    modalidadesid, 
+    modalidadesid,
   }: {
     title: string;
     description: string;
@@ -182,7 +183,7 @@ export const updateCourse = async (
     categoryid: number;
     instructor: string;
     rating: number;
-    modalidadesid: number; 
+    modalidadesid: number;
   }
 ): Promise<void> => {
   await db

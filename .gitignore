@@ -9,8 +9,8 @@
 /coverage
 
 # database
-/drizzle/db.sqlite
-/drizzle/db.sqlite-journal
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
 db.sqlite
 
 # next.js
@@ -44,5 +44,3 @@ yarn-error.log*
 
 # idea files
 .idea
-# Sentry Config File
-.env.sentry-build-plugin

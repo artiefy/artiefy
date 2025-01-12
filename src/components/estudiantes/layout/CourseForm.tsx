@@ -12,9 +12,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
-import { Progress } from "~/components/ui/progress";
-import { Button } from "~/components/ui/button";
+} from "~/components/estudiantes/ui/dialog";
+import { Progress } from "~/components/estudiantes/ui/progress";
+import { Button } from "~/components/estudiantes/ui/button";
 
 interface CourseFormProps {
   onSubmitAction: (
@@ -172,7 +172,9 @@ export default function CourseForm({
           </DialogDescription>
         </DialogHeader>
         <div className="rounded-lg bg-background px-6 text-black shadow-md">
-          {errors.title && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          {errors.title && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
           <input
             type="text"
             placeholder="Título"
@@ -183,7 +185,9 @@ export default function CourseForm({
             }}
             className={`mb-4 w-full rounded border p-2 ${errors.title ? "border-red-500" : "border-primary"}`}
           />
-          {errors.description && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          {errors.description && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
           <textarea
             placeholder="Descripción"
             value={description}
@@ -193,7 +197,9 @@ export default function CourseForm({
             }}
             className={`mb-3 w-full rounded border p-2 ${errors.description ? "border-red-500" : "border-primary"}`}
           />
-          {errors.category && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          {errors.category && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
           <input
             type="text"
             placeholder="Categoría"
@@ -209,7 +215,9 @@ export default function CourseForm({
               Instructor: {user?.fullName}
             </h3>
           </div>
-          {errors.rating && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          {errors.rating && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
           <input
             type="number"
             placeholder="Calificación"
@@ -220,7 +228,9 @@ export default function CourseForm({
             }}
             className={`mb-4 w-full rounded border p-2 ${errors.rating ? "border-red-500" : "border-primary"}`}
           />
-          {errors.file && <p className="text-red-500 text-sm">Este campo es obligatorio.</p>}
+          {errors.file && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
           <div
             className={`rounded-lg border-2 border-dashed p-8 ${isDragging ? "border-blue-500 bg-blue-50" : errors.file ? "border-red-500 bg-red-50" : "border-gray-300 bg-gray-50"} transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
@@ -228,7 +238,7 @@ export default function CourseForm({
             onDrop={handleDrop}
           >
             <div className="text-center">
-              <FiUploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+              <FiUploadCloud className="mx-auto size-12 text-gray-400" />
               <h2 className="mt-4 text-xl font-medium text-gray-700">
                 Arrastra y suelta tu imagen aquí
               </h2>
@@ -277,7 +287,7 @@ export default function CourseForm({
                   }}
                   className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 >
-                  <MdClose className="h-5 w-5" />
+                  <MdClose className="size-5" />
                 </button>
                 <div className="flex justify-between p-2">
                   <p className="truncate text-sm text-gray-500">{fileName}</p>
@@ -291,11 +301,7 @@ export default function CourseForm({
           {uploading && <Progress value={progress} className="my-4 w-full" />}
         </div>
         <DialogFooter>
-          <Button
-            onClick={handleSubmit}
-            variant="save"
-            disabled={uploading}
-          >
+          <Button onClick={handleSubmit} variant="save" disabled={uploading}>
             {uploading
               ? "Subiendo..."
               : editingCourseId

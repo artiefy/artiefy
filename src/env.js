@@ -1,4 +1,3 @@
-//src\env.js
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
@@ -8,13 +7,7 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    POSTGRES_URL: z
-      .string()
-      .url()
-      .refine(
-        (str) => !str.includes("postgres://username:password@host:port/database"),
-        "You forgot to change the default URL",
-      ),
+    POSTGRES_URL: z.string().url(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -44,8 +37,8 @@ export const env = createEnv({
    */
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
   /**
-   * Makes it so that empty strings are treated as undefined.
-   * `SOME_VAR: z.string()` and `SOME_VAR=''` will throw an error.
+   * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
+   * `SOME_VAR=''` will throw an error.
    */
   emptyStringAsUndefined: true,
 });

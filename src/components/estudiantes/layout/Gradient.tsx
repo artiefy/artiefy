@@ -1,6 +1,6 @@
 const SmoothGradient = () => {
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden">
+    <div className="absolute inset-0 size-full overflow-hidden">
       <div
         className="absolute inset-0"
         style={{

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getCourseById } from "~/models/courseModelsStudent";
+import { getCourseById } from "~/models/estudiantes/courseModelsStudent";
 
 export const dynamic = "force-dynamic";
 

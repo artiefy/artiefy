@@ -1,26 +1,35 @@
 {
+  // Define Prettier como el formateador por defecto
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Aplica acciones en el guardado del archivo
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "always"
+    "source.fixAll": "always",
+    "source.organizeImports": "always"
   },
+
+  // Activa el formato al guardar
   "editor.formatOnSave": true,
+
+  // Habilita ESLint para los siguientes lenguajes
   "eslint.validate": [
     "javascript",
     "javascriptreact",
     "typescript",
-    "typescriptreact"
+    "typescriptreact",
+    "html",
+    "tailwindcss",
+    "css"
   ],
+
+  // Configura ESLint para ejecutarse en tiempo real
   "eslint.run": "onType",
+
+  // Asegúrate de usar la versión de TypeScript del proyecto
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.validate.enable": true,
-  "javascript.validate.enable": true,
-  "eslint.workingDirectories": [{ "mode": "auto" }],
-  "eslint.options": {
-    "overrideConfigFile": ".eslintrc.cjs"
-  },
+
+  // Habilita sugerencias rápidas en cadenas de texto
   "editor.quickSuggestions": {
     "strings": true
-  },
-  "typescript.surveys.enabled": false
+  }
 }
-

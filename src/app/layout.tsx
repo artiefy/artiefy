@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from 'next'
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from "@clerk/nextjs";
 import { esMX } from "@clerk/localizations"
 import { Montserrat } from 'next/font/google'
-import { Toaster } from "~/components/ui/toaster"
+import { Toaster } from "~/components/estudiantes/ui/toaster"
 import { metadata as siteMetadata } from '~/lib/metadata'
 import Loading from "./loading"
-import Providers from '~/components/layout/ProgressBarProvider';
+import Providers from '~/components/estudiantes/layout/ProgressBarProvider';
 import "~/styles/globals.css"
 
 const montserrat = Montserrat({
@@ -53,7 +53,7 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
         </head>
-          <body className="font-sans bg-background text-primary">
+          <body className="bg-background font-sans text-primary">
             <ClerkLoading>
               <Loading />
             </ClerkLoading>

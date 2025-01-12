@@ -4,20 +4,20 @@ import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
-import { AspectRatio } from "~/components/ui/aspect-ratio";
-import { Icons } from "~/components/ui/icons";
+import { AspectRatio } from "~/components/estudiantes/ui/aspect-ratio";
+import { Icons } from "~/components/estudiantes/ui/icons";
 import Loading from "../../loading";
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation";
 
 export default function SignInPage() {
-  const { isLoaded, userId } = useAuth()
+  const { isLoaded, userId } = useAuth();
 
   if (!isLoaded) {
-    return <Loading />
+    return <Loading />;
   }
 
   if (userId) {
-    redirect('/')
+    redirect("/");
   }
 
   return (
@@ -36,8 +36,8 @@ export default function SignInPage() {
       {/* Contenedor principal */}
       <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 lg:flex-row lg:items-start lg:justify-between lg:px-10">
         {/* Contenedor del logo */}
-        <div className="mb-8 w-full xl:ml-32 lg:ml-14 max-w-[280px] sm:max-w-[300px] md:max-w-[300px] lg:mb-0 lg:w-1/2 lg:max-w-[500px] lg:self-center xl:max-w-[600px]">
-          <AspectRatio ratio={16 / 9} className="relative h-full w-full">
+        <div className="mb-8 w-full max-w-[280px] sm:max-w-[300px] md:max-w-[300px] lg:mb-0 lg:ml-14 lg:w-1/2 lg:max-w-[500px] lg:self-center xl:ml-32 xl:max-w-[600px]">
+          <AspectRatio ratio={16 / 9} className="relative size-full">
             <Image
               src="/logo-login.webp"
               alt="Logo de Artiefy"
@@ -50,7 +50,7 @@ export default function SignInPage() {
         </div>
 
         {/* Formulario de inicio de sesión */}
-        <div className="w-full max-w-md -mt-20 sm:-mt-16 md:-mt-12 lg:mt-0 lg:w-1/2 lg:max-w-[400px] xl:max-w-[500px] lg:pr-8">
+        <div className="-mt-20 w-full max-w-md sm:-mt-16 md:-mt-12 lg:mt-0 lg:w-1/2 lg:max-w-[400px] lg:pr-8 xl:max-w-[500px]">
           <SignIn.Root>
             <Clerk.Loading>
               {(isGlobalLoading) => (
@@ -77,7 +77,10 @@ export default function SignInPage() {
                       <Clerk.FieldError className="mt-2 block text-xs text-rose-400" />
                     </Clerk.Field>
 
-                    <Clerk.Field name="password" className="group/field relative">
+                    <Clerk.Field
+                      name="password"
+                      className="group/field relative"
+                    >
                       <Clerk.Input
                         placeholder="Contraseña"
                         type="password"
@@ -89,9 +92,9 @@ export default function SignInPage() {
 
                     <div className="flex justify-center">
                       <SignIn.Action
-                        submit 
+                        submit
                         disabled={isGlobalLoading}
-                        className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:text-primary/70 active:scale-95"
+                        className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
                         style={{ width: "150px" }}
                       >
                         <div className="flex w-full items-center justify-center">
@@ -181,11 +184,13 @@ export default function SignInPage() {
                     <SignIn.Strategy name="email_code">
                       <div className="mb-6 text-center">
                         <h2 className="text-3xl font-bold">VERIFICAR CÓDIGO</h2>
-                        <p className="mt-2 text-sm">Ingresa el código enviado a tu email</p>
+                        <p className="mt-2 text-sm">
+                          Ingresa el código enviado a tu email
+                        </p>
                       </div>
 
                       <Clerk.GlobalError className="block text-sm text-rose-400" />
-                      
+
                       <Clerk.Field name="code" className="group/field relative">
                         <Clerk.Input
                           type="otp"
@@ -200,7 +205,7 @@ export default function SignInPage() {
                         <SignIn.Action
                           submit
                           disabled={isGlobalLoading}
-                          className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:text-primary/70 active:scale-95"
+                          className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
                           style={{ width: "150px" }}
                         >
                           <div className="flex w-full items-center justify-center">

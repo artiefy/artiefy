@@ -2,7 +2,7 @@ import "../styles/rocket.css"; // Importa el archivo CSS
 
 export default function Loading() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background overflow-hidden">
+    <div className="flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background">
       <div className="relative">
         <div className="rocket">
           <div className="rocket-body">
