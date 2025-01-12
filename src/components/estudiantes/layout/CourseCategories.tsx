@@ -1,5 +1,5 @@
-import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import React, { useState } from 'react';
+import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import {
   FiBarChart,
   FiCamera,

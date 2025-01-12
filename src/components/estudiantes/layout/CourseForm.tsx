@@ -1,10 +1,11 @@
 'use client';
 
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
-import { useEffect, useState, type ChangeEvent } from 'react';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,6 @@ import {
   DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
 import { Progress } from '~/components/estudiantes/ui/progress';
-import { Button } from '~/components/estudiantes/ui/button';
 
 interface CourseFormProps {
   onSubmitAction: (

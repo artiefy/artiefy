@@ -1,4 +1,5 @@
 //src\models\estudiantes\courseModelsStudent.ts
+import { eq, count } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
   courses,
@@ -6,8 +7,7 @@ import {
   enrollments,
   categories,
   modalidades,
-} from '~/server/db/schema'; // Add modalidades
-import { eq, count } from 'drizzle-orm';
+} from '~/server/db/schema';
 
 export interface Lesson {
   id: number;

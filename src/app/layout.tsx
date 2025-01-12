@@ -1,11 +1,11 @@
-import type { Metadata, Viewport } from 'next';
-import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import { esMX } from '@clerk/localizations';
+import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
+import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
+import Providers from '~/components/estudiantes/layout/ProgressBarProvider';
 import { Toaster } from '~/components/estudiantes/ui/toaster';
 import { metadata as siteMetadata } from '~/lib/metadata';
 import Loading from './loading';
-import Providers from '~/components/estudiantes/layout/ProgressBarProvider';
 import '~/styles/globals.css';
 
 const montserrat = Montserrat({

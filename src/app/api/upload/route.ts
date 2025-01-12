@@ -1,9 +1,9 @@
-import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import {
   S3Client,
   CreateMultipartUploadCommand,
   AbortMultipartUploadCommand,
 } from '@aws-sdk/client-s3';
+import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { v4 as uuidv4 } from 'uuid';
 
 const MAX_SIMPLE_UPLOAD_SIZE = 100 * 1024 * 1024; // 100 MB

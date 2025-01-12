@@ -1,12 +1,12 @@
 'use client';
 
-import { UserButton, useUser } from '@clerk/nextjs';
 import { useCallback, useEffect, useState } from 'react';
+import { UserButton, useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
 import CourseForm from '~/components/estudiantes/layout/CourseForm';
 import CourseListTeacher from '~/components/estudiantes/layout/CourseListTeacher';
-import { Button } from '~/components/estudiantes/ui/button';
 import { SkeletonCard } from '~/components/estudiantes/layout/SkeletonCard';
+import { Button } from '~/components/estudiantes/ui/button';
 import { toast } from '~/hooks/use-toast';
 
 interface CourseModel {
@@ -78,7 +78,10 @@ export default function Page() {
         body: JSON.stringify({ contentType: file.type }),
       });
 
-      type UploadResponse = { url: string; fields: Record<string, string> };
+      interface UploadResponse {
+        url: string;
+        fields: Record<string, string>;
+      }
       const { url, fields } = (await uploadResponse.json()) as UploadResponse;
 
       const formData = new FormData();

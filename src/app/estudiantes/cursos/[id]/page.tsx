@@ -1,14 +1,14 @@
+import { use } from 'react';
 import { type Metadata, type ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 import { type Course, type WithContext } from 'schema-dts';
 import { getCourseById } from '~/models/estudiantes/courseModelsStudent';
 import CourseDetails from './CourseDetails';
-import React, { use } from 'react';
 
-type Props = {
+interface Props {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+}
 
 async function getValidCoverImageUrl(
   coverImageKey: string | null

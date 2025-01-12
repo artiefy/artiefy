@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/estudiantes/ui/card';
-import { useState } from 'react';
 
 interface Course {
   id: number;

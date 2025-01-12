@@ -1,8 +1,8 @@
 //src\app\estudiantes\cursos\[id]\CourseDetails.tsx
 'use client';
 
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import {
   FaCalendar,
   FaChevronDown,

@@ -4,10 +4,10 @@ import * as Clerk from '@clerk/elements/common';
 import * as SignIn from '@clerk/elements/sign-in';
 import { useAuth } from '@clerk/nextjs';
 import Image from 'next/image';
+import { redirect } from 'next/navigation';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import Loading from '../../loading';
-import { redirect } from 'next/navigation';
 
 export default function SignInPage() {
   const { isLoaded, userId } = useAuth();
