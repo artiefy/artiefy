@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
             instructor: string;
             rating: number;
             modalidadesid: number;
+            dificultadid: number;
         };
         const {
             title,
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
             instructor,
             rating,
             modalidadesid,
+            dificultadid,
         } = body;
 
         await createCourse({
@@ -110,7 +112,8 @@ export async function POST(request: NextRequest) {
             categoryid,
             instructor,
             rating,
-            modalidadesid, // Add this line
+            modalidadesid,
+            dificultadid,
         });
 
         return NextResponse.json({
