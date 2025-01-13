@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '~/components/ui/button';
+import { Button } from '~/components/estudiantes/ui/button';
 import { Input } from '~/components/estudiantes/ui/input';
 import {
     Table,
@@ -147,7 +147,7 @@ export default function Tutores() {
                 </CardHeader>
                 <CardContent className="flex items-center justify-between">
                     <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 transform text-muted-foreground" />
+                        <Search className="text-muted-foreground absolute left-2 top-1/2 -translate-y-1/2 transform" />
                         <Input
                             placeholder="Buscar tutores..."
                             value={searchTerm}
