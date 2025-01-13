@@ -4,32 +4,32 @@ import { getCourseById } from '~/models/estudiantes/courseModelsStudent';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await context.params;
+    const { id } = await context.params;
 
-  try {
-    const courseId = Number(id);
-    if (isNaN(courseId)) {
-      return NextResponse.json(
-        { error: 'ID de curso inválido' },
-        { status: 400 }
-      );
-    }
+    try {
+        const courseId = Number(id);
+        if (isNaN(courseId)) {
+            return NextResponse.json(
+                { error: 'ID de curso inválido' },
+                { status: 400 }
+            );
+        }
 
-    const course = await getCourseById(courseId);
-    if (!course) {
-      return NextResponse.json(
-        { error: 'Curso no encontrado' },
-        { status: 404 }
-      );
+        const course = await getCourseById(courseId);
+        if (!course) {
+            return NextResponse.json(
+                { error: 'Curso no encontrado' },
+                { status: 404 }
+            );
+        }
+        return NextResponse.json(course);
+    } catch {
+        return NextResponse.json(
+            { error: 'Error al obtener el curso' },
+            { status: 500 }
+        );
     }
-    return NextResponse.json(course);
-  } catch {
-    return NextResponse.json(
-      { error: 'Error al obtener el curso' },
-      { status: 500 }
-    );
-  }
 }

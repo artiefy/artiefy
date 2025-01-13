@@ -6,138 +6,138 @@ import { getCourseById } from '~/models/estudiantes/courseModelsStudent';
 import CourseDetails from './CourseDetails';
 
 interface Props {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+    params: Promise<{ id: string }>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 async function getValidCoverImageUrl(
-  coverImageKey: string | null
+    coverImageKey: string | null
 ): Promise<string> {
-  const coverImageUrl = coverImageKey
-    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
-    : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
+    const coverImageUrl = coverImageKey
+        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
+        : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
 
-  try {
-    const response = await fetch(coverImageUrl);
-    if (response.status === 403) {
-      return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
+    try {
+        const response = await fetch(coverImageUrl);
+        if (response.status === 403) {
+            return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
+        }
+        return coverImageUrl;
+    } catch {
+        return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
     }
-    return coverImageUrl;
-  } catch {
-    return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
-  }
 }
 
 export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
+    { params }: Props,
+    parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const { id } = await params;
+    const { id } = await params;
 
-  try {
-    const course = await getCourseById(Number(id));
-    if (!course) {
-      return {
-        title: 'Curso no encontrado',
-        description: 'El curso solicitado no pudo ser encontrado.',
-      };
+    try {
+        const course = await getCourseById(Number(id));
+        if (!course) {
+            return {
+                title: 'Curso no encontrado',
+                description: 'El curso solicitado no pudo ser encontrado.',
+            };
+        }
+
+        const coverImageUrl = await getValidCoverImageUrl(course.coverImageKey);
+        const previousImages = (await parent).openGraph?.images ?? [];
+        const motivationalMessage = '¡Subscríbete ya en este curso excelente!';
+        return {
+            title: `${course.title} | Artiefy`,
+            description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
+            openGraph: {
+                title: `${course.title} | Artiefy`,
+                description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
+                images: [
+                    {
+                        url: coverImageUrl,
+                        width: 1200,
+                        height: 630,
+                        alt: `Portada del curso: ${course.title}`,
+                    },
+                    ...previousImages,
+                ],
+            },
+            twitter: {
+                card: 'summary_large_image',
+                title: `${course.title} | Artiefy`,
+                description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
+                images: [coverImageUrl],
+            },
+        };
+    } catch (error) {
+        console.error('Error fetching course metadata:', error);
+        return {
+            title: 'Error',
+            description: 'Hubo un error al cargar la información del curso.',
+        };
     }
-
-    const coverImageUrl = await getValidCoverImageUrl(course.coverImageKey);
-    const previousImages = (await parent).openGraph?.images ?? [];
-    const motivationalMessage = '¡Subscríbete ya en este curso excelente!';
-    return {
-      title: `${course.title} | Artiefy`,
-      description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
-      openGraph: {
-        title: `${course.title} | Artiefy`,
-        description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
-        images: [
-          {
-            url: coverImageUrl,
-            width: 1200,
-            height: 630,
-            alt: `Portada del curso: ${course.title}`,
-          },
-          ...previousImages,
-        ],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: `${course.title} | Artiefy`,
-        description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
-        images: [coverImageUrl],
-      },
-    };
-  } catch (error) {
-    console.error('Error fetching course metadata:', error);
-    return {
-      title: 'Error',
-      description: 'Hubo un error al cargar la información del curso.',
-    };
-  }
 }
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+    const { id } = use(params);
 
-  return <PageContent id={id} />;
+    return <PageContent id={id} />;
 }
 
 async function PageContent({ id }: { id: string }) {
-  try {
-    const course = await getCourseById(Number(id));
-    if (!course) {
-      notFound();
+    try {
+        const course = await getCourseById(Number(id));
+        if (!course) {
+            notFound();
+        }
+
+        const jsonLd: WithContext<Course> = {
+            '@context': 'https://schema.org',
+            '@type': 'Course',
+            name: course.title,
+            description: course.description ?? 'No hay descripción disponible.',
+            provider: {
+                '@type': 'Organization',
+                name: 'Artiefy',
+                sameAs: process.env.NEXT_PUBLIC_BASE_URL,
+                member: {
+                    '@type': 'Person',
+                    name: course.instructor,
+                },
+            },
+            dateCreated: new Date(course.createdAt).toISOString(),
+            dateModified: new Date(course.updatedAt).toISOString(),
+            aggregateRating: course.rating
+                ? {
+                      '@type': 'AggregateRating',
+                      ratingValue: course.rating,
+                      ratingCount: course.totalStudents,
+                  }
+                : undefined,
+            image: course.coverImageKey
+                ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+                : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`,
+        };
+
+        return (
+            <section>
+                <CourseDetails
+                    course={{
+                        ...course,
+                        totalStudents: course.totalStudents ?? 0,
+                        lessons: course.lessons ?? [],
+                    }}
+                />
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{
+                        __html: JSON.stringify(jsonLd),
+                    }}
+                />
+            </section>
+        );
+    } catch (error) {
+        console.error('Error fetching course:', error);
+        notFound();
     }
-
-    const jsonLd: WithContext<Course> = {
-      '@context': 'https://schema.org',
-      '@type': 'Course',
-      name: course.title,
-      description: course.description ?? 'No hay descripción disponible.',
-      provider: {
-        '@type': 'Organization',
-        name: 'Artiefy',
-        sameAs: process.env.NEXT_PUBLIC_BASE_URL,
-        member: {
-          '@type': 'Person',
-          name: course.instructor,
-        },
-      },
-      dateCreated: new Date(course.createdAt).toISOString(),
-      dateModified: new Date(course.updatedAt).toISOString(),
-      aggregateRating: course.rating
-        ? {
-            '@type': 'AggregateRating',
-            ratingValue: course.rating,
-            ratingCount: course.totalStudents,
-          }
-        : undefined,
-      image: course.coverImageKey
-        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-        : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`,
-    };
-
-    return (
-      <section>
-        <CourseDetails
-          course={{
-            ...course,
-            totalStudents: course.totalStudents ?? 0,
-            lessons: course.lessons ?? [],
-          }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd),
-          }}
-        />
-      </section>
-    );
-  } catch (error) {
-    console.error('Error fetching course:', error);
-    notFound();
-  }
 }
