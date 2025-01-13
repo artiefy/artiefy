@@ -7,7 +7,7 @@
 const config = {
   plugins: ['prettier-plugin-tailwindcss'],
   trailingComma: 'es5', // Añadir coma al final de listas y objetos
-  tabWidth: 2, // Tamaño del tabulador
+  tabWidth: 4, // Tamaño del tabulador
   semi: true, // Usar punto y coma al final de las declaraciones
   singleQuote: true, // Usar comillas simples en lugar de dobles
   printWidth: 80, // Longitud máxima de línea

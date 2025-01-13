@@ -1,47 +1,49 @@
 {
-  "editor.formatOnSave": true, // Formatear al guardar
-  "editor.formatOnPaste": true, // Formatear al pegar
-  "editor.formatOnType": true, // Formatear al escribir
+  "editor.formatOnSave": true, // Formatear automáticamente al guardar
+  "editor.formatOnPaste": true, // Formatear automáticamente al pegar
+  "editor.formatOnType": true, // Formatear automáticamente al escribir
+  "editor.formatOnSaveMode": "file", // Formatear solo el archivo guardado
+  "files.autoSave": "onWindowChange", // Guardar automáticamente cuando cambie el foco de la ventana
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always", // Corregir todos los problemas de ESLint al guardar
     "source.formatDocument": "always" // Formatear el documento al guardar
   },
   "eslint.validate": [
-    "javascript", // Validar archivos JavaScript
-    "javascriptreact", // Validar archivos JavaScript React
-    "typescript", // Validar archivos TypeScript
-    "typescriptreact" // Validar archivos TypeScript React
+    "javascript", // Validar JavaScript
+    "javascriptreact", // Validar JavaScript React
+    "typescript", // Validar TypeScript
+    "typescriptreact" // Validar TypeScript React
   ],
   "typescript.tsdk": "node_modules/typescript/lib", // Ruta del SDK de TypeScript
   "eslint.options": {
-    "overrideConfigFile": "eslint.config.mjs" // Archivo de configuración de ESLint
+    "overrideConfigFile": "eslint.config.mjs" // Usar el archivo de configuración de ESLint especificado
   },
-  "eslint.run": "onSave", // Ejecutar ESLint al guardar
+  "eslint.run": "onSave", // Ejecutar ESLint solo al guardar
   "eslint.rules.customizations": [
-    { "rule": "tailwindcss/classnames-order", "severity": "off" }, // Desactivar regla de orden de clases de Tailwind CSS
-    { "rule": "import/order", "severity": "off" } // Desactivar regla de orden de importaciones
+    { "rule": "tailwindcss/classnames-order", "severity": "off" }, // Desactivar la regla de orden de clases de Tailwind CSS
+    { "rule": "import/order", "severity": "off" } // Desactivar la regla de orden de importaciones
   ],
   "editor.quickSuggestions": {
-    "strings": true // Sugerencias rápidas para cadenas de texto
+    "strings": true // Mostrar sugerencias rápidas para cadenas de texto
   },
-  "prettier.requireConfig": true, // Requerir configuración de Prettier
+  "prettier.requireConfig": true, // Requerir un archivo de configuración de Prettier
   "prettier.configPath": ".prettierrc.mjs", // Ruta del archivo de configuración de Prettier
-  "prettier.useEditorConfig": true, // Usar configuración del editor para Prettier
-  "prettier.enableDebugLogs": true, // Habilitar registros de depuración de Prettier
-  "prettier.documentSelectors": ["**/*.{js,jsx,ts,tsx}"], // Selectores de documentos para Prettier
-  "prettier.withNodeModules": false, // No formatear archivos en node_modules
-  "editor.defaultFormatter": "esbenp.prettier-vscode", // Formateador por defecto
+  "prettier.useEditorConfig": true, // Usar la configuración del editor para Prettier
+  "prettier.enableDebugLogs": true, // Habilitar logs de depuración de Prettier
+  "prettier.documentSelectors": ["**/*.{js,jsx,ts,tsx}"], // Archivos para los cuales se aplicará Prettier
+  "prettier.withNodeModules": false, // No formatear archivos dentro de node_modules
+  "editor.defaultFormatter": "esbenp.prettier-vscode", // Establecer Prettier como formateador por defecto
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // Formateador por defecto para JavaScript
+    "editor.defaultFormatter": "esbenp.prettier-vscode" // Prettier como formateador por defecto para JavaScript
   },
   "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // Formateador por defecto para JavaScript React
+    "editor.defaultFormatter": "esbenp.prettier-vscode" // Prettier como formateador por defecto para JavaScript React
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // Formateador por defecto para TypeScript
+    "editor.defaultFormatter": "esbenp.prettier-vscode" // Prettier como formateador por defecto para TypeScript
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // Formateador por defecto para TypeScript React
+    "editor.defaultFormatter": "esbenp.prettier-vscode" // Prettier como formateador por defecto para TypeScript React
   },
   "prettier.resolveGlobalModules": true, // Resolver módulos globales de Prettier
   "prettier.ignorePath": ".prettierignore", // Ruta del archivo .prettierignore
@@ -49,5 +51,10 @@
   "files.watcherExclude": {
     "**/.prettierrc.mjs": true, // Excluir archivo .prettierrc.mjs del watcher
     "**/prettier.config.mjs": true // Excluir archivo prettier.config.mjs del watcher
-  }
+  },
+  "editor.formatOnSaveTimeout": 3000, // Ajuste el tiempo de espera de formato (3 segundos)
+  "editor.tabSize": 2, // Tamaño de la tabulación (2 espacios)
+  "editor.insertSpaces": true, // Usar espacios en lugar de tabuladores
+  "editor.rulers": [80], // Establecer una regla visual a los 80 caracteres
+  "files.eol": "\n" // Usar salto de línea LF
 }
