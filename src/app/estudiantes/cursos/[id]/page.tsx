@@ -1,17 +1,17 @@
-import { type Metadata, type ResolvingMetadata } from "next";
-import { notFound } from "next/navigation";
-import { type Course, type WithContext } from "schema-dts";
-import { getCourseById } from "~/models/courseModelsStudent";
-import CourseDetails from "./CourseDetails";
-import React, { use } from "react";
+import { use } from 'react';
+import { type Metadata, type ResolvingMetadata } from 'next';
+import { notFound } from 'next/navigation';
+import { type Course, type WithContext } from 'schema-dts';
+import { getCourseById } from '~/models/estudiantes/courseModelsStudent';
+import CourseDetails from './CourseDetails';
 
-type Props = {
+interface Props {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
+}
 
 async function getValidCoverImageUrl(
-  coverImageKey: string | null,
+  coverImageKey: string | null
 ): Promise<string> {
   const coverImageUrl = coverImageKey
     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
@@ -30,7 +30,7 @@ async function getValidCoverImageUrl(
 
 export async function generateMetadata(
   { params }: Props,
-  parent: ResolvingMetadata,
+  parent: ResolvingMetadata
 ): Promise<Metadata> {
   const { id } = await params;
 
@@ -38,20 +38,20 @@ export async function generateMetadata(
     const course = await getCourseById(Number(id));
     if (!course) {
       return {
-        title: "Curso no encontrado",
-        description: "El curso solicitado no pudo ser encontrado.",
+        title: 'Curso no encontrado',
+        description: 'El curso solicitado no pudo ser encontrado.',
       };
     }
 
     const coverImageUrl = await getValidCoverImageUrl(course.coverImageKey);
     const previousImages = (await parent).openGraph?.images ?? [];
-    const motivationalMessage = "¡Subscríbete ya en este curso excelente!";
+    const motivationalMessage = '¡Subscríbete ya en este curso excelente!';
     return {
       title: `${course.title} | Artiefy`,
-      description: `${course.description ?? "No hay descripción disponible."} ${motivationalMessage}`,
+      description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
       openGraph: {
         title: `${course.title} | Artiefy`,
-        description: `${course.description ?? "No hay descripción disponible."} ${motivationalMessage}`,
+        description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
         images: [
           {
             url: coverImageUrl,
@@ -63,26 +63,22 @@ export async function generateMetadata(
         ],
       },
       twitter: {
-        card: "summary_large_image",
+        card: 'summary_large_image',
         title: `${course.title} | Artiefy`,
-        description: `${course.description ?? "No hay descripción disponible."} ${motivationalMessage}`,
+        description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
         images: [coverImageUrl],
       },
     };
   } catch (error) {
-    console.error("Error fetching course metadata:", error);
+    console.error('Error fetching course metadata:', error);
     return {
-      title: "Error",
-      description: "Hubo un error al cargar la información del curso.",
+      title: 'Error',
+      description: 'Hubo un error al cargar la información del curso.',
     };
   }
 }
 
-export default function Page({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
 
   return <PageContent id={id} />;
@@ -96,16 +92,16 @@ async function PageContent({ id }: { id: string }) {
     }
 
     const jsonLd: WithContext<Course> = {
-      "@context": "https://schema.org",
-      "@type": "Course",
+      '@context': 'https://schema.org',
+      '@type': 'Course',
       name: course.title,
-      description: course.description ?? "No hay descripción disponible.",
+      description: course.description ?? 'No hay descripción disponible.',
       provider: {
-        "@type": "Organization",
-        name: "Artiefy",
+        '@type': 'Organization',
+        name: 'Artiefy',
         sameAs: process.env.NEXT_PUBLIC_BASE_URL,
         member: {
-          "@type": "Person",
+          '@type': 'Person',
           name: course.instructor,
         },
       },
@@ -113,7 +109,7 @@ async function PageContent({ id }: { id: string }) {
       dateModified: new Date(course.updatedAt).toISOString(),
       aggregateRating: course.rating
         ? {
-            "@type": "AggregateRating",
+            '@type': 'AggregateRating',
             ratingValue: course.rating,
             ratingCount: course.totalStudents,
           }
@@ -141,7 +137,7 @@ async function PageContent({ id }: { id: string }) {
       </section>
     );
   } catch (error) {
-    console.error("Error fetching course:", error);
+    console.error('Error fetching course:', error);
     notFound();
   }
 }

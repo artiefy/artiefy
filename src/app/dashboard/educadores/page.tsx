@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import {UserButton, useUser } from "@clerk/nextjs";
-import { useCallback, useEffect, useState } from "react";
-import { FiPlus } from "react-icons/fi";
-import CourseForm from "~/components/layout/CourseForm";
-import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { Button } from "~/components/ui/button";
-import { SkeletonCard } from "~/components/layout/SkeletonCard";
-import { toast } from "~/hooks/use-toast";
+import { useCallback, useEffect, useState } from 'react';
+import { UserButton, useUser } from '@clerk/nextjs';
+import { FiPlus } from 'react-icons/fi';
+import CourseForm from '~/components/estudiantes/layout/CourseForm';
+import CourseListTeacher from '~/components/estudiantes/layout/CourseListTeacher';
+import { SkeletonCard } from '~/components/estudiantes/layout/SkeletonCard';
+import { Button } from '~/components/estudiantes/ui/button';
+import { toast } from '~/hooks/use-toast';
 
 interface CourseModel {
   id: string;
@@ -45,18 +45,18 @@ export default function Page() {
       setCourses(
         data.map((course) => ({
           ...course,
-          coverImageKey: course.coverImageKey ?? "",
-        })) as CourseModel[],
+          coverImageKey: course.coverImageKey ?? '',
+        })) as CourseModel[]
       );
     } else {
-      console.error("Failed to fetch courses:", response.statusText);
+      console.error('Failed to fetch courses:', response.statusText);
     }
     setLoading(false);
   }, [user]);
 
   useEffect(() => {
     fetchCourses().catch((error) =>
-      console.error("Error fetching courses:", error),
+      console.error('Error fetching courses:', error)
     );
   }, [user, fetchCourses]);
 
@@ -65,36 +65,39 @@ export default function Page() {
     description: string,
     file: File | null,
     category: string,
-    rating: number,
+    rating: number
   ) => {
     if (!user) return;
 
-    let coverImageKey = "";
+    let coverImageKey = '';
     if (file) {
       setUploading(true);
-      const uploadResponse = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contentType: file.type }),
       });
 
-      type UploadResponse = { url: string; fields: Record<string, string> };
+      interface UploadResponse {
+        url: string;
+        fields: Record<string, string>;
+      }
       const { url, fields } = (await uploadResponse.json()) as UploadResponse;
 
       const formData = new FormData();
       Object.entries(fields).forEach(([key, value]) =>
-        formData.append(key, value),
+        formData.append(key, value)
       );
-      formData.append("file", file);
+      formData.append('file', file);
 
-      await fetch(url, { method: "POST", body: formData });
-      coverImageKey = fields.key ?? "";
+      await fetch(url, { method: 'POST', body: formData });
+      coverImageKey = fields.key ?? '';
       setUploading(false);
     }
 
-    const response = await fetch("/api/courses", {
-      method: editingCourse ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('/api/courses', {
+      method: editingCourse ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: editingCourse?.id,
         title,
@@ -109,23 +112,23 @@ export default function Page() {
 
     if (response.ok) {
       toast({
-        title: editingCourse ? "Curso actualizado" : "Curso creado",
+        title: editingCourse ? 'Curso actualizado' : 'Curso creado',
         description: editingCourse
-          ? "El curso se actualizó con éxito"
-          : "El curso se creó con éxito",
+          ? 'El curso se actualizó con éxito'
+          : 'El curso se creó con éxito',
       });
       fetchCourses().catch((error) =>
-        console.error("Error fetching courses:", error),
+        console.error('Error fetching courses:', error)
       );
       setEditingCourse(null);
       setIsModalOpen(false);
     } else {
       const errorData = (await response.json()) as { error?: string };
       toast({
-        title: "Error",
+        title: 'Error',
         description:
-          errorData.error ?? "Ocurrió un error al procesar la solicitud",
-        variant: "destructive",
+          errorData.error ?? 'Ocurrió un error al procesar la solicitud',
+        variant: 'destructive',
       });
     }
   };
@@ -142,13 +145,13 @@ export default function Page() {
 
   const handleDeleteCourse = async (id: string) => {
     if (!user) return;
-    await fetch("/api/courses", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+    await fetch('/api/courses', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, userId: user.id }),
     });
     fetchCourses().catch((error) =>
-      console.error("Error fetching courses:", error),
+      console.error('Error fetching courses:', error)
     );
   };
 
@@ -161,12 +164,12 @@ export default function Page() {
       <main className="container mx-auto px-16">
         <header className="mt-4 flex items-center justify-between px-7">
           <h1 className="text-3xl font-bold">Dashboard Profesores</h1>
-              <UserButton showName />    
-            </header>
-        <div className="flex justify-end mt-6">
+          <UserButton showName />
+        </header>
+        <div className="mt-6 flex justify-end">
           <Button
             onClick={handleCreateCourse}
-            className="transform bg-primary text-background transition-transform hover:text-primary active:scale-95"
+            className="bg-primary text-background transition-transform hover:text-primary active:scale-95"
           >
             <FiPlus className="mr-2" />
             Crear Curso
@@ -187,16 +190,16 @@ export default function Page() {
             onSubmitAction={handleCreateOrEditCourse}
             uploading={uploading}
             editingCourseId={editingCourse ? editingCourse.id : null}
-            title={editingCourse?.title ?? ""}
+            title={editingCourse?.title ?? ''}
             setTitle={(title: string) =>
               setEditingCourse((prev) => (prev ? { ...prev, title } : null))
             }
             setDescription={(description: string) =>
               setEditingCourse((prev) =>
-                prev ? { ...prev, description } : null,
+                prev ? { ...prev, description } : null
               )
             }
-            category={editingCourse?.category ?? ""}
+            category={editingCourse?.category ?? ''}
             setCategory={(category: string) =>
               setEditingCourse((prev) => (prev ? { ...prev, category } : null))
             }
@@ -204,10 +207,10 @@ export default function Page() {
             setRating={(rating: number) =>
               setEditingCourse((prev) => (prev ? { ...prev, rating } : null))
             }
-            coverImageKey={editingCourse?.coverImageKey ?? ""}
+            coverImageKey={editingCourse?.coverImageKey ?? ''}
             setCoverImageKey={(coverImageKey: string) =>
               setEditingCourse((prev) =>
-                prev ? { ...prev, coverImageKey } : null,
+                prev ? { ...prev, coverImageKey } : null
               )
             }
             isOpen={isModalOpen}

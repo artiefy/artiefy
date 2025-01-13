@@ -1,25 +1,26 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useState, use } from "react";
+import React, { use, useCallback, useEffect, useState } from 'react';
 import {
   MagnifyingGlassIcon,
   RocketLaunchIcon,
   StarIcon,
-} from "@heroicons/react/24/solid";
-import Image from "next/image";
-import CourseCategories from "~/components/layout/CourseCategories";
-import CourseListStudent from "~/components/layout/CourseListStudent";
-import Footer from "~/components/layout/Footer";
-import { Header } from "~/components/layout/Header";
-import { SkeletonCard } from "~/components/layout/SkeletonCard";
-import { Badge } from "~/components/ui/badge";
+} from '@heroicons/react/24/solid';
+import Image from 'next/image';
+import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
+import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+import { SkeletonCard } from '~/components/estudiantes/layout/SkeletonCard';
+import { Badge } from '~/components/estudiantes/ui/badge';
+
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "~/components/ui/carousel";
+} from '~/components/estudiantes/ui/carousel';
 import {
   Pagination,
   PaginationContent,
@@ -27,9 +28,9 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "~/components/ui/pagination";
-import { Skeleton } from "~/components/ui/skeleton";
-import { toast } from "~/hooks/use-toast";
+} from '~/components/estudiantes/ui/pagination';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import { toast } from '~/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -51,7 +52,7 @@ interface Course {
 
 function LoadingCourses() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
       ))}
@@ -59,16 +60,14 @@ function LoadingCourses() {
   );
 }
 
-export default function StudentDashboard(
-  props: {
-    params: Promise<Record<string, string>>;
-  }
-) {
+export default function StudentDashboard(props: {
+  params: Promise<Record<string, string>>;
+}) {
   const resolvedParams = use(props.params);
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -79,7 +78,7 @@ export default function StudentDashboard(
   const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/courses");
+      const response = await fetch('/api/estudiantes');
       if (!response.ok) throw new Error(response.statusText);
       const data = (await response.json()) as Course[];
       data.sort(
@@ -90,11 +89,12 @@ export default function StudentDashboard(
       setFilteredCourses(data);
       setCarouselIndex(0);
     } catch (error) {
-      console.error("Error al obtener los cursos:", error);
+      console.error('Error al obtener los cursos:', error);
       toast({
-        title: "Error",
-        description: "No se pudieron cargar los cursos. Por favor, intenta de nuevo más tarde.",
-        variant: "destructive",
+        title: 'Error',
+        description:
+          'No se pudieron cargar los cursos. Por favor, intenta de nuevo más tarde.',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -166,22 +166,22 @@ export default function StudentDashboard(
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex-grow">
+      <main className="grow">
         <div className="container mx-auto px-8 sm:px-12 lg:px-16">
           <div className="flex flex-col space-y-12 sm:space-y-16">
             {/* CAROUSEL GRANDE*/}
             <div className="relative h-[300px] overflow-hidden sm:h-[400px] md:h-[500px]">
               {loading ? (
-                <Skeleton className="h-full w-full rounded-lg" />
+                <Skeleton className="size-full rounded-lg" />
               ) : (
                 courses.slice(0, 5).map((course, index) => (
                   <div
                     key={course.id}
-                    className={`absolute h-full w-full transition-opacity duration-500 ${
-                      index === carouselIndex ? "opacity-100" : "opacity-0"
+                    className={`absolute size-full transition-opacity duration-500 ${
+                      index === carouselIndex ? 'opacity-100' : 'opacity-0'
                     }`}
                   >
-                    <div className="relative h-full w-full">
+                    <div className="relative size-full">
                       <Image
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
                         alt={course.title}
@@ -191,10 +191,10 @@ export default function StudentDashboard(
                         sizes="100vw"
                         quality={85}
                         placeholder="blur"
-                        blurDataURL="data"
+                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
                       />
                     </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 p-4 text-primary">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
                       <h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">
                         {course.title}
                       </h2>
@@ -214,7 +214,7 @@ export default function StudentDashboard(
                         {course.modalidad.name}
                       </p>
                       <div className="flex items-center">
-                        <StarIcon className="h-4 w-4 text-yellow-500 sm:h-5 sm:w-5" />
+                        <StarIcon className="size-4 text-yellow-500 sm:size-5" />
                         <span className="ml-1 text-sm text-yellow-500 sm:text-base">
                           {(course.rating ?? 0).toFixed(1)}
                         </span>
@@ -223,13 +223,13 @@ export default function StudentDashboard(
                   </div>
                 ))
               )}
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
+              <div className="absolute inset-x-0 bottom-4 flex justify-center space-x-2">
                 {courses.slice(0, 5).map((_, index) => (
                   <button
                     key={index}
                     onClick={() => handleCarouselChange(index)}
-                    className={`h-2 w-2 rounded-full sm:h-3 sm:w-3 ${
-                      index === carouselIndex ? "bg-white" : "bg-white/50"
+                    className={`size-2 rounded-full sm:size-3 ${
+                      index === carouselIndex ? 'bg-white' : 'bg-white/50'
                     }`}
                   />
                 ))}
@@ -240,14 +240,14 @@ export default function StudentDashboard(
             <div className="flex justify-center sm:justify-end">
               <form className="flex w-full max-w-lg flex-col items-center space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
                 <div className="flex items-center">
-                  <RocketLaunchIcon className="h-5 w-5 text-orange-500 sm:h-6 sm:w-6" />
+                  <RocketLaunchIcon className="size-5 text-orange-500 sm:size-6" />
                   <span className="ml-2 whitespace-nowrap text-lg text-primary sm:text-xl">
                     Artiefy IA
                   </span>
                 </div>
                 <div className="relative w-full max-w-xs">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon className="h-4 w-4 text-gray-500" />
+                    <MagnifyingGlassIcon className="size-4 text-gray-500" />
                   </div>
                   <input
                     required
@@ -260,12 +260,12 @@ export default function StudentDashboard(
                   className="inline-flex items-center rounded-lg border border-primary bg-primary px-3 py-2 text-sm font-medium text-background hover:bg-primary/90 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/50"
                   type="submit"
                 >
-                  <MagnifyingGlassIcon className="mr-2 h-4 w-4" />
+                  <MagnifyingGlassIcon className="mr-2 size-4" />
                   Buscar
                 </button>
               </form>
             </div>
-            
+
             {/* CAROUSEL TOP CURSOS */}
             <div className="relative xs:px-4">
               <h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
@@ -290,7 +290,7 @@ export default function StudentDashboard(
                               src={
                                 course.coverImageKey
                                   ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                                  : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
+                                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
                               }
                               alt={course.title}
                               fill
@@ -298,16 +298,16 @@ export default function StudentDashboard(
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               quality={85}
                               placeholder="blur"
-                              blurDataURL="data"
+                              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
                             />
-                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 p-2 text-white">
+                            <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
                               <h3 className="text-lg font-bold text-white">
                                 {course.title}
                               </h3>
                               <div className="mb-2 flex items-center justify-between">
                                 <Badge
                                   variant="outline"
-                                  className="border-primary bg-background text-primary hover:bg-black hover:bg-opacity-90"
+                                  className="border-primary bg-background text-primary hover:bg-black"
                                 >
                                   {course.category.name}
                                 </Badge>
@@ -320,7 +320,7 @@ export default function StudentDashboard(
                                   Educador: <span>{course.instructor}</span>
                                 </p>
                                 <div className="flex items-center">
-                                  <StarIcon className="h-4 w-4 text-yellow-500" />
+                                  <StarIcon className="size-4 text-yellow-500" />
                                   <span className="ml-1 text-sm font-bold text-yellow-500">
                                     {(course.rating ?? 0).toFixed(1)}
                                   </span>
@@ -331,18 +331,23 @@ export default function StudentDashboard(
                         </CarouselItem>
                       ))}
                 </CarouselContent>
-                <CarouselPrevious className="mr-7 h-12 w-12 bg-black bg-opacity-50 text-white" />
-                <CarouselNext className="ml-4 h-12 w-12 bg-black bg-opacity-50 text-white" />
+                <CarouselPrevious className="mr-7 size-12 bg-black/50 text-white" />
+                <CarouselNext className="ml-4 size-12 bg-black/50 text-white" />
               </Carousel>
             </div>
 
             {/* CATEGORIAS DE CURSOS */}
-            <CourseCategories onCategorySelect={handleCategorySelect} onSearch={handleSearch} />
+            <CourseCategories
+              onCategorySelect={handleCategorySelect}
+              onSearch={handleSearch}
+            />
 
             {/* Seccion De Cursos */}
             <div className="flex flex-col px-11">
               <h2 className="mb-8 text-2xl font-bold sm:text-3xl">
-                {selectedCategory ? `Cursos de ${selectedCategory}` : "Cursos Disponibles"}
+                {selectedCategory
+                  ? `Cursos de ${selectedCategory}`
+                  : 'Cursos Disponibles'}
               </h2>
               {loading && <LoadingCourses />}
               <React.Suspense fallback={<LoadingCourses />}>
@@ -350,24 +355,39 @@ export default function StudentDashboard(
               </React.Suspense>
             </div>
 
-          {/* PAGINACION */}
-          <Pagination className="pb-12">
-            <PaginationContent className="cursor-pointer flex flex-wrap justify-center gap-2">
-              <PaginationPrevious onClick={() => setCurrentPage(currentPage - 1)} />
-              {Array.from({ length: totalPages }).map((_, index) => (
-                <PaginationItem key={index}>
-                  <PaginationLink
-                    onClick={() => setCurrentPage(index + 1)}
-                    isActive={currentPage === index + 1}
-                  >
-                    {index + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationNext onClick={() => setCurrentPage(currentPage + 1)} />
-            </PaginationContent>
-          </Pagination>
-            
+            {/* PAGINACION */}
+            <Pagination className="pb-12">
+              <PaginationContent className="flex cursor-pointer flex-wrap justify-center gap-2">
+                <PaginationPrevious
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  className={
+                    currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
+                  }
+                />
+                {Array.from({ length: totalPages }).map((_, index) => (
+                  <PaginationItem key={index}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(index + 1)}
+                      isActive={currentPage === index + 1}
+                    >
+                      {index + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  className={
+                    currentPage === totalPages
+                      ? 'cursor-not-allowed opacity-50'
+                      : ''
+                  }
+                />
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       </main>

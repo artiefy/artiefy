@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations } from 'drizzle-orm';
 import {
   boolean,
   integer,
@@ -9,16 +9,16 @@ import {
   timestamp,
   varchar,
   // date,
-} from "drizzle-orm/pg-core";
+} from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
-export const users = pgTable("users", {
-  id: text("id").primaryKey(), // ID del usuario proporcionado por Clerk
-  role: text("role").notNull(), // Rol del usuario (estudiante/profesor, etc.)
-  name: text("name"), // Nombre opcional del usuario
-  email: text("email").notNull(), // Email obligatorio
-  createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
-  updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
+export const users = pgTable('users', {
+  id: text('id').primaryKey(), // ID del usuario proporcionado por Clerk
+  role: text('role').notNull(), // Rol del usuario (estudiante/profesor, etc.)
+  name: text('name'), // Nombre opcional del usuario
+  email: text('email').notNull(), // Email obligatorio
+  createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
+  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
   // phone: text("phone"), // Teléfono opcional
   // country: text("country"), // País opcional
   // city: text("city"), // Ciudad opcional
@@ -28,140 +28,140 @@ export const users = pgTable("users", {
 });
 
 // Tabla de cursos
-export const courses = pgTable("courses", {
-  id: serial("id").primaryKey(),
-  title: varchar("title", { length: 255 }).notNull(),
-  description: text("description"),
-  coverImageKey: text("cover_image_key"),
-  categoryid: integer("categoryid")
+export const courses = pgTable('courses', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  coverImageKey: text('cover_image_key'),
+  categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
-  instructor: text("instructor").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  creatorId: text("creator_id")
+  instructor: text('instructor').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  creatorId: text('creator_id')
     .references(() => users.id)
     .notNull(),
-  rating: real("rating").default(0),
-  modalidadesid: integer("modalidadesid")
+  rating: real('rating').default(0),
+  modalidadesid: integer('modalidadesid')
     .references(() => modalidades.id)
     .notNull(),
 });
 
 //tabla de categorias
-export const categories = pgTable("categories", {
-  id: serial("id").primaryKey(), // ID autoincremental de la categoría
-  name: varchar("name", { length: 255 }).notNull(), // Nombre de la categoría
-  description: text("description"), // Descripción de la categoría
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(), // ID autoincremental de la categoría
+  name: varchar('name', { length: 255 }).notNull(), // Nombre de la categoría
+  description: text('description'), // Descripción de la categoría
 });
 
 //tabla de preferencias
-export const preferences = pgTable("preferences", {
-  id: serial("id").primaryKey(), // ID autoincremental de la preferencia
-  name: varchar("name", { length: 255 }).notNull(), // Nombre de la preferencia
-  area_cono: text("area_cono"), // Área de conocimiento
-  userId: text("user_id")
+export const preferences = pgTable('preferences', {
+  id: serial('id').primaryKey(), // ID autoincremental de la preferencia
+  name: varchar('name', { length: 255 }).notNull(), // Nombre de la preferencia
+  area_cono: text('area_cono'), // Área de conocimiento
+  userId: text('user_id')
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  categoryid: integer("categoryid")
+  categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
 });
 
 //tabla de cursos tomados
-export const coursesTaken = pgTable("courses_taken", {
-  id: serial("id").primaryKey(), // ID autoincremental del curso tomado
-  userId: text("user_id")
+export const coursesTaken = pgTable('courses_taken', {
+  id: serial('id').primaryKey(), // ID autoincremental del curso tomado
+  userId: text('user_id')
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  courseId: integer("course_id")
+  courseId: integer('course_id')
     .references(() => courses.id)
     .notNull(), // Relación con cursos
 });
 
 // Tabla de lecciones
-export const lessons = pgTable("lessons", {
-  id: serial("id").primaryKey(), // ID autoincremental de la lección
-  title: varchar("title", { length: 255 }).notNull(), // Título de la lección
-  description: text("description"), // Descripción de la lección
-  duration: integer("duration").notNull(), // Duración de la lección en minutos
+export const lessons = pgTable('lessons', {
+  id: serial('id').primaryKey(), // ID autoincremental de la lección
+  title: varchar('title', { length: 255 }).notNull(), // Título de la lección
+  description: text('description'), // Descripción de la lección
+  duration: integer('duration').notNull(), // Duración de la lección en minutos
   // coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
   // coverVideoKey: text("cover_video_key"), // Clave del video en S3
-  order: serial("order").notNull(), // Orden de la lección en el curso
-  courseId: integer("course_id")
+  order: serial('order').notNull(), // Orden de la lección en el curso
+  courseId: integer('course_id')
     .references(() => courses.id)
     .notNull(), // Relación con la tabla cursos
-  createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
-  updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
+  createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
+  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
   // porcentajeCompletado: real("porcentaje_completado").default(0), // Nuevo campo de porcentaje completado
   // resourceKey: text("resource_key"), // Clave del recurso en S3
 });
 
-export const modalidades = pgTable("modalidades", {
-  id: serial("id").primaryKey(), // ID autoincremental de la modalidad
-  name: varchar("name", { length: 255 }).notNull(), // Nombre de la modalidad
-  description: text("description"), // Descripción de la modalidad
+export const modalidades = pgTable('modalidades', {
+  id: serial('id').primaryKey(), // ID autoincremental de la modalidad
+  name: varchar('name', { length: 255 }).notNull(), // Nombre de la modalidad
+  description: text('description'), // Descripción de la modalidad
 });
 
 //tabla de puntajes
-export const scores = pgTable("scores", {
-  id: serial("id").primaryKey(), // ID autoincremental del puntaje
-  score: real("score").notNull(), // Puntaje del usuario
-  userId: text("user_id")
+export const scores = pgTable('scores', {
+  id: serial('id').primaryKey(), // ID autoincremental del puntaje
+  score: real('score').notNull(), // Puntaje del usuario
+  userId: text('user_id')
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  categoryid: integer("categoryid")
+  categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
 });
 
 //tabla de actividades
-export const activities = pgTable("activities", {
-  id: serial("id").primaryKey(), // ID autoincremental de la actividad
-  name: varchar("name", { length: 255 }).notNull(), // Nombre de la actividad
-  description: text("description"), // Descripción de la actividad
-  tipo: varchar("tipo", { length: 255 }).notNull(), // Tipo de actividad
-  lessonsId: integer("lessons_id")
+export const activities = pgTable('activities', {
+  id: serial('id').primaryKey(), // ID autoincremental de la actividad
+  name: varchar('name', { length: 255 }).notNull(), // Nombre de la actividad
+  description: text('description'), // Descripción de la actividad
+  tipo: varchar('tipo', { length: 255 }).notNull(), // Tipo de actividad
+  lessonsId: integer('lessons_id')
     .references(() => lessons.id)
     .notNull(), // Relación con lecciones
 });
 
 // Tabla de inscripciones (relación muchos a muchos entre usuarios y inscripciones)
-export const enrollments = pgTable("enrollments", {
-  id: serial("id").primaryKey(), // ID autoincremental de la inscripción
-  userId: text("user_id")
+export const enrollments = pgTable('enrollments', {
+  id: serial('id').primaryKey(), // ID autoincremental de la inscripción
+  userId: text('user_id')
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  courseId: integer("course_id")
+  courseId: integer('course_id')
     .references(() => courses.id)
     .notNull(), // Relación con cursos
-  enrolledAt: timestamp("enrolled_at").defaultNow().notNull(), // Fecha de inscripción
-  completed: boolean("completed").default(false), // Estado de completado
+  enrolledAt: timestamp('enrolled_at').defaultNow().notNull(), // Fecha de inscripción
+  completed: boolean('completed').default(false), // Estado de completado
 });
 
 //Tabla de proyectos
-export const projects = pgTable("projects", {
-  id: serial("id").primaryKey(), // ID autoincremental del proyecto
-  name: varchar("name", { length: 255 }).notNull(), // Nombre del proyecto
-  description: text("description"), // Descripción del proyecto
-  coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
-  coverVideoKey: text("cover_video_key"), // Clave del video en S3
-  type_project: varchar("type_project", { length: 255 }).notNull(), // Tipo de proyecto
-  userId: text("user_id")
+export const projects = pgTable('projects', {
+  id: serial('id').primaryKey(), // ID autoincremental del proyecto
+  name: varchar('name', { length: 255 }).notNull(), // Nombre del proyecto
+  description: text('description'), // Descripción del proyecto
+  coverImageKey: text('cover_image_key'), // Clave de la imagen en S3
+  coverVideoKey: text('cover_video_key'), // Clave del video en S3
+  type_project: varchar('type_project', { length: 255 }).notNull(), // Tipo de proyecto
+  userId: text('user_id')
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  categoryid: integer("categoryid")
+  categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
 });
 
 //Tabla de proyectos tomados
-export const projectsTaken = pgTable("projects_taken", {
-  id: serial("id").primaryKey(), // ID autoincremental del proyecto tomado
-  userId: text("user_id")
+export const projectsTaken = pgTable('projects_taken', {
+  id: serial('id').primaryKey(), // ID autoincremental del proyecto tomado
+  userId: text('user_id')
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  projectId: integer("project_id")
+  projectId: integer('project_id')
     .references(() => projects.id)
     .notNull(), // Relación con proyectos
 });
