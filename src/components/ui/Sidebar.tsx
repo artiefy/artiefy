@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, Users, GraduationCap, FileText, MessageSquare, Settings, HelpCircle, Award, BarChart, PenToolIcon as Tool, Zap, Sun, Moon, LifeBuoy, Menu } from 'lucide-react'
+import { Home, BookOpen, Users, GraduationCap, FileText, MessageSquare, Award, BarChart, PenToolIcon as Tool, Zap, Sun, Moon, LifeBuoy, Menu } from 'lucide-react'
 import { Button } from "~/components/ui/button"
 import { useTheme } from "next-themes"
 

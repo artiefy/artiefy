@@ -1,5 +1,5 @@
 import React from 'react'
-import { Estudiante } from '~/types/user'
+import type { Estudiante } from '~/types/user'
 
 interface EstudianteDetalleProps {
   estudiante: Estudiante

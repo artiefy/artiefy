@@ -1,7 +1,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { Button } from "~/components/ui/button"
 import { Image } from 'lucide-react'
-import { Ticket } from '~/types/Tickets'
+import type { Ticket } from '~/types/Tickets'
 
 type TicketListProps = {
   tickets: Ticket[];
@@ -29,7 +29,7 @@ export function TicketList({ tickets, onSelectTicket, onDeleteTicket }: TicketLi
             <TableCell>{ticket.estudiante}</TableCell>
             <TableCell>{ticket.asunto}</TableCell>
             <TableCell>{ticket.estado}</TableCell>
-            <TableCell>{ticket.imagen ? <Image className="w-5 h-5" /> : null}</TableCell>
+            <TableCell>{ticket.imagen ? <Image className="w-5 h-5" alt="Ticket Image" /> : null}</TableCell>
             <TableCell>
               <Button 
                 onClick={() => onSelectTicket(ticket)}

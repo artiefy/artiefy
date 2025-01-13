@@ -9,9 +9,9 @@ type Column = {
 
 type GenericTableProps = {
   columns: Column[];
-  data: any[];
-  onRowClick?: (row: any) => void;
-  actions?: (row: any) => React.ReactNode;
+  data: Record<string, string | number | boolean | null>[];
+  onRowClick?: (row: Record<string, string | number | boolean | null>) => void;
+  actions?: (row: Record<string, string | number | boolean | null>) => React.ReactNode;
 }
 
 export function GenericTable({ columns, data, onRowClick, actions }: GenericTableProps) {

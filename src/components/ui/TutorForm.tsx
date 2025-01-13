@@ -5,7 +5,7 @@ import { Label } from "~/components/ui/label"
 import { Textarea } from "~/components/ui/textarea"
 
 type TutorFormProps = {
-  onSubmit: (tutor: any) => void;
+  onSubmit: (tutor: { id: number; nombre: string; email: string; especialidad: string; cursos: string[] }) => void;
   tutor?: {
     id: number;
     nombre: string;
@@ -17,10 +17,10 @@ type TutorFormProps = {
 
 export function TutorForm({ onSubmit, tutor }: TutorFormProps) {
   const [formData, setFormData] = useState({
-    nombre: tutor?.nombre || '',
-    email: tutor?.email || '',
-    especialidad: tutor?.especialidad || '',
-    cursos: tutor?.cursos.join(', ') || '',
+    nombre: tutor?.nombre ?? '',
+    email: tutor?.email ?? '',
+    especialidad: tutor?.especialidad ?? '',
+    cursos: tutor?.cursos.join(', ') ?? '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -31,7 +31,7 @@ export function TutorForm({ onSubmit, tutor }: TutorFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const cursosArray = formData.cursos.split(',').map(curso => curso.trim())
-    onSubmit(tutor ? { ...formData, id: tutor.id, cursos: cursosArray } : { ...formData, cursos: cursosArray })
+    onSubmit({ ...formData, id: tutor?.id ?? Date.now(), cursos: cursosArray })
   }
 
   return (

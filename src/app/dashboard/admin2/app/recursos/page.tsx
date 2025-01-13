@@ -181,7 +181,12 @@ export default function Recursos() {
                 { name: 'curso', label: 'Curso Asociado', type: 'text' },
                 { name: 'url', label: 'URL del Recurso', type: 'text' },
               ]}
-              onSubmit={handleAddRecurso}
+              onSubmit={(data) => handleAddRecurso({
+                nombre: data.nombre ?? '',
+                tipo: data.tipo as Recurso['tipo'],
+                curso: data.curso ?? '',
+                url: data.url ?? ''
+              })}
               submitLabel="Agregar Recurso"
             />
           </DialogContent>
@@ -191,7 +196,9 @@ export default function Recursos() {
       <GenericTable
         columns={columns}
         data={paginatedRecursos}
-        actions={(recurso: Recurso) => (
+        actions={(row) => {
+          const recurso = row as Recurso;
+          return (
           <>
             <Button variant="outline" className="mr-2" onClick={() => handleViewRecurso(recurso)}>Ver</Button>
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -209,8 +216,20 @@ export default function Recursos() {
                     { name: 'curso', label: 'Curso Asociado', type: 'text' },
                     { name: 'url', label: 'URL del Recurso', type: 'text' },
                   ]}
-                  onSubmit={handleEditRecurso}
-                  initialData={recurso}
+                  onSubmit={(data) => handleEditRecurso({
+                    id: recurso.id,
+                    nombre: data.nombre ?? '',
+                    tipo: data.tipo as Recurso['tipo'],
+                    curso: data.curso ?? '',
+                    url: data.url ?? '',
+                    descargas: recurso.descargas
+                  })}
+                  initialData={{
+                    nombre: recurso.nombre,
+                    tipo: recurso.tipo,
+                    curso: recurso.curso,
+                    url: recurso.url
+                  }}
                   submitLabel="Actualizar Recurso"
                 />
               </DialogContent>
@@ -227,7 +246,7 @@ export default function Recursos() {
               />
             )}
           </>
-        )}
+         )}}
       />
 
       <div className="flex justify-center mt-4">

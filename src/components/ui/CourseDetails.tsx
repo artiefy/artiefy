@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Image from "next/image";
 import { FaCalendar, FaChevronDown, FaChevronUp, FaClock, FaStar, FaUserGraduate } from "react-icons/fa";
 import { Button } from "~/components/ui/button";
-import { Course } from '~/types/course';
+import type { Course } from '~/types/course';
 import { ScrollArea } from "~/components/ui/scroll-area";
 
 interface CourseDetailsProps {

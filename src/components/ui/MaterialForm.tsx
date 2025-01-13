@@ -5,7 +5,7 @@ import { Label } from "~/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
 
 type MaterialFormProps = {
-  onSubmit: (material: any) => void;
+  onSubmit: (material: { id?: number; nombre: string; tipo: string; curso: string }) => void;
   material?: {
     id: number;
     nombre: string;
@@ -16,9 +16,9 @@ type MaterialFormProps = {
 
 export function MaterialForm({ onSubmit, material }: MaterialFormProps) {
   const [formData, setFormData] = useState({
-    nombre: material?.nombre || '',
-    tipo: material?.tipo || '',
-    curso: material?.curso || '',
+    nombre: material?.nombre ?? '',
+    tipo: material?.tipo ?? '',
+    curso: material?.curso ?? '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

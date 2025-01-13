@@ -24,7 +24,7 @@ type Estudiante = {
 }
 
 export default function Analisis() {
-  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([
+  const [estudiantes] = useState<Estudiante[]>([
     {
       id: 1,
       nombre: "Ana García",
@@ -98,7 +98,7 @@ export default function Analisis() {
               onChange={(e) => setFiltro(e.target.value)}
               className="md:w-1/2"
             />
-            <Select onValueChange={(value) => setEstudianteSeleccionado(estudiantes.find(e => e.id.toString() === value) || null)}>
+            <Select onValueChange={(value) => setEstudianteSeleccionado(estudiantes.find(e => e.id.toString() === value) ?? null)}>
               <SelectTrigger className="md:w-1/2">
                 <SelectValue placeholder="Seleccionar estudiante" />
               </SelectTrigger>

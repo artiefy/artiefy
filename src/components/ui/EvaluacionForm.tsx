@@ -5,7 +5,7 @@ import { Label } from "~/components/ui/label"
 import { Textarea } from "~/components/ui/textarea"
 
 type EvaluacionFormProps = {
-  onSubmit: (evaluacion: any) => void;
+  onSubmit: (evaluacion: { id: number; nombre: string; curso: string; tipoPreguntas: string; duracion: string; puntajeMaximo: number }) => void;
   evaluacion?: {
     id: number;
     nombre: string;
@@ -18,11 +18,12 @@ type EvaluacionFormProps = {
 
 export function EvaluacionForm({ onSubmit, evaluacion }: EvaluacionFormProps) {
   const [formData, setFormData] = useState({
-    nombre: evaluacion?.nombre || '',
-    curso: evaluacion?.curso || '',
-    tipoPreguntas: evaluacion?.tipoPreguntas || '',
-    duracion: evaluacion?.duracion || '',
-    puntajeMaximo: evaluacion?.puntajeMaximo || 0,
+    id: evaluacion?.id ?? 0,
+    nombre: evaluacion?.nombre ?? '',
+    curso: evaluacion?.curso ?? '',
+    tipoPreguntas: evaluacion?.tipoPreguntas ?? '',
+    duracion: evaluacion?.duracion ?? '',
+    puntajeMaximo: evaluacion?.puntajeMaximo ?? 0,
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -30,8 +31,8 @@ export function EvaluacionForm({ onSubmit, evaluacion }: EvaluacionFormProps) {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = (_e: React.FormEvent) => {
+    onSubmit(formData)
     onSubmit(evaluacion ? { ...formData, id: evaluacion.id } : formData)
   }
 

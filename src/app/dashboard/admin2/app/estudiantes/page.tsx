@@ -118,11 +118,22 @@ export default function Estudiantes() {
 
       <GenericTable
         columns={columns}
-        data={estudiantes}
-        onRowClick={(estudiante: Estudiante) => setEstudianteSeleccionado(estudiante)}
+        data={estudiantes.map(estudiante => ({
+          idEstudiante: estudiante.idEstudiante,
+          nombreCompleto: estudiante.nombreCompleto,
+          correo: estudiante.correo,
+          edad: estudiante.edad,
+          ciudad: estudiante.info_residencia.ciudad,
+        }))}
+        onRowClick={(row) => {
+          const estudiante = estudiantes.find(est => est.idEstudiante === row.idEstudiante);
+          if (estudiante) {
+            setEstudianteSeleccionado(estudiante);
+          }
+        }}
         actions={(estudiante) => (
           <>
-            <Button variant="outline" className="mr-2" onClick={() => setEstudianteSeleccionado(estudiante as Estudiante)}>Ver Detalles</Button>
+            <Button variant="outline" className="mr-2" onClick={() => setEstudianteSeleccionado(estudiante as unknown as Estudiante)}>Ver Detalles</Button>
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">Editar</Button>
@@ -131,7 +142,7 @@ export default function Estudiantes() {
                 <DialogHeader>
                   <DialogTitle>Editar Estudiante</DialogTitle>
                 </DialogHeader>
-                <AddStudentForm onSubmit={handleEditEstudiante} initialData={estudiante as Estudiante} />
+                <AddStudentForm onSubmit={handleEditEstudiante} initialData={estudiante as unknown as Estudiante} />
               </DialogContent>
             </Dialog>
           </>

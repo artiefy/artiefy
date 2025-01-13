@@ -5,7 +5,7 @@ import { Label } from "~/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
 
 type TicketFormProps = {
-  onSubmit: (ticket: any) => void;
+  onSubmit: (ticket: { id: number; asunto: string; estudiante: string; estado: 'Abierto' | 'En Progreso' | 'Resuelto'; prioridad: 'Baja' | 'Media' | 'Alta'; }) => void;
   ticket?: {
     id: number;
     asunto: string;
@@ -17,10 +17,10 @@ type TicketFormProps = {
 
 export function TicketForm({ onSubmit, ticket }: TicketFormProps) {
   const [formData, setFormData] = useState({
-    asunto: ticket?.asunto || '',
-    estudiante: ticket?.estudiante || '',
-    estado: ticket?.estado || 'Abierto',
-    prioridad: ticket?.prioridad || 'Media',
+    asunto: ticket?.asunto ?? '',
+    estudiante: ticket?.estudiante ?? '',
+    estado: ticket?.estado ?? 'Abierto',
+    prioridad: ticket?.prioridad ?? 'Media',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,7 +34,7 @@ export function TicketForm({ onSubmit, ticket }: TicketFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(ticket ? { ...formData, id: ticket.id } : formData)
+    onSubmit({ ...formData, id: ticket ? ticket.id : Date.now() })
   }
 
   return (

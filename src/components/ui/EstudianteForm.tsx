@@ -4,7 +4,7 @@ import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 
 type EstudianteFormProps = {
-  onSubmit: (estudiante: any) => void;
+  onSubmit: (estudiante: { id: number; nombre: string; email: string; fechaNacimiento: string }) => void;
   estudiante?: {
     id: number;
     nombre: string;
@@ -15,9 +15,10 @@ type EstudianteFormProps = {
 
 export function EstudianteForm({ onSubmit, estudiante }: EstudianteFormProps) {
   const [formData, setFormData] = useState({
-    nombre: estudiante?.nombre || '',
-    email: estudiante?.email || '',
-    fechaNacimiento: estudiante?.fechaNacimiento || '',
+    id: estudiante?.id ?? 0,
+    nombre: estudiante?.nombre ?? '',
+    email: estudiante?.email ?? '',
+    fechaNacimiento: estudiante?.fechaNacimiento ?? '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

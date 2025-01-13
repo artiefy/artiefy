@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd'
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+import type { DropResult } from 'react-beautiful-dnd'
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 
 type Curso = {

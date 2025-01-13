@@ -86,7 +86,7 @@ export default function Cursos() {
           metrics={[
             { title: "Total Cursos", value: courses.length.toString(), icon: BookOpen, href: "/cursos" },
             { title: "Estudiantes Inscritos", value: courses.reduce((acc, course) => acc + course.totalStudents, 0).toString(), icon: Users, href: "/estudiantes" },
-            { title: "Promedio de Calificación", value: (courses.reduce((acc, course) => acc + (course.rating || 0), 0) / courses.length).toFixed(1), icon: TrendingUp, href: "/analisis" },
+            { title: "Promedio de Calificación", value: (courses.reduce((acc, course) => acc + (course.rating ?? 0), 0) / courses.length).toFixed(1), icon: TrendingUp, href: "/analisis" },
           ]}
         />
 

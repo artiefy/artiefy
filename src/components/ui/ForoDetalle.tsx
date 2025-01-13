@@ -6,6 +6,7 @@ import { Button } from "~/components/ui/button"
 import { Textarea } from "~/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar"
 import { ThumbsUp, MessageSquare, ImageIcon, Send } from 'lucide-react'
+import Image from 'next/image'
 
 type Foro = {
   id: number;
@@ -104,7 +105,7 @@ export function ForoDetalle({ foro, onVolver }: ForoDetalleProps) {
                     </div>
                     <p className="text-sm mb-2">{mensaje.contenido}</p>
                     {mensaje.imagen && (
-                      <img src={mensaje.imagen} alt="Imagen adjunta" className="max-w-full h-auto rounded-lg mb-2" />
+                      <Image src={mensaje.imagen} alt="Imagen adjunta" className="max-w-full h-auto rounded-lg mb-2" width={300} height={200} />
                     )}
                     <div className="flex space-x-4">
                       <Button variant="ghost" size="sm" onClick={() => handleLike(mensaje.id)}>

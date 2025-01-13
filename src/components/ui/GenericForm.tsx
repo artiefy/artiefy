@@ -14,16 +14,16 @@ type Field = {
 
 type GenericFormProps = {
   fields: Field[];
-  onSubmit: (data: any) => void;
-  initialData?: any;
+  onSubmit: (data: Record<string, string>) => void;
+  initialData?: Record<string, string>;
   submitLabel: string;
 }
 
 export function GenericForm({ fields, onSubmit, initialData = {}, submitLabel }: GenericFormProps) {
-  const [formData, setFormData] = React.useState(initialData)
+  const [formData, setFormData] = React.useState<Record<string, string>>(initialData)
 
   const handleChange = (name: string, value: string) => {
-    setFormData((prev: any) => ({ ...prev, [name]: value }))
+    setFormData((prev: Record<string, string>) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -42,14 +42,14 @@ export function GenericForm({ fields, onSubmit, initialData = {}, submitLabel }:
             <Textarea
               id={field.name}
               name={field.name}
-              value={formData[field.name] || ''}
+              value={formData[field.name] ?? ''}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
               rows={4}
             />
           ) : field.type === 'select' ? (
             <Select 
-              value={formData[field.name] || ''} 
+              value={formData[field.name] ?? ''} 
               onValueChange={(value: string) => handleChange(field.name, value)}
             >
               <SelectTrigger>
@@ -68,7 +68,7 @@ export function GenericForm({ fields, onSubmit, initialData = {}, submitLabel }:
               id={field.name}
               name={field.name}
               type={field.type}
-              value={formData[field.name] || ''}
+              value={formData[field.name] ?? ''}
               onChange={(e) => handleChange(field.name, e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
             />

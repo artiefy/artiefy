@@ -4,7 +4,7 @@ import { Input } from "~/components/ui/input"
 import { Textarea } from "~/components/ui/textarea"
 import { Label } from "~/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
-import { Course } from '~/types/course'
+import type { Course } from '~/types/course'
 
 interface CourseFormProps {
   onSubmit: (course: Partial<Course>) => void;
@@ -12,7 +12,7 @@ interface CourseFormProps {
 }
 
 export function CourseForm({ onSubmit, initialData }: CourseFormProps) {
-  const [course, setCourse] = useState<Partial<Course>>(initialData || {
+  const [course, setCourse] = useState<Partial<Course>>(initialData ?? {
     title: '',
     description: '',
     instructor: '',
@@ -29,7 +29,7 @@ export function CourseForm({ onSubmit, initialData }: CourseFormProps) {
   };
 
   const handleCategoryChange = (value: string) => {
-    setCourse(prev => ({ ...prev, category: { id: prev.category?.id || 0, name: value } }));
+    setCourse(prev => ({ ...prev, category: { id: prev.category?.id ?? 0, name: value } }));
   };
 
   const handleModalidadChange = (value: string) => {
@@ -39,7 +39,7 @@ export function CourseForm({ onSubmit, initialData }: CourseFormProps) {
   const handleAddLesson = () => {
     setCourse(prev => ({
       ...prev,
-      lessons: [...(prev.lessons || []), { ...newLesson, id: Date.now() }]
+      lessons: [...(prev.lessons ?? []), { ...newLesson, id: Date.now() }]
     }));
     setNewLesson({ title: '', duration: 0, description: '' });
   };
@@ -56,7 +56,7 @@ export function CourseForm({ onSubmit, initialData }: CourseFormProps) {
         <Input
           id="title"
           name="title"
-          value={course.title || ''}
+          value={course.title ?? ''}
           onChange={handleChange}
           required
         />
@@ -66,7 +66,7 @@ export function CourseForm({ onSubmit, initialData }: CourseFormProps) {
         <Textarea
           id="description"
           name="description"
-          value={course.description || ''}
+          value={course.description ?? ''}
           onChange={handleChange}
           required
         />
@@ -76,7 +76,7 @@ export function CourseForm({ onSubmit, initialData }: CourseFormProps) {
         <Input
           id="instructor"
           name="instructor"
-          value={course.instructor || ''}
+          value={course.instructor ?? ''}
           onChange={handleChange}
           required
         />
@@ -109,7 +109,7 @@ export function CourseForm({ onSubmit, initialData }: CourseFormProps) {
       </div>
       <div>
         <Label>Lecciones</Label>
-        {course.lessons?.map((lesson, index) => (
+        {course.lessons?.map((lesson, _index) => (
           <div key={lesson.id} className="mb-2">
             <Input value={lesson.title} readOnly />
           </div>
