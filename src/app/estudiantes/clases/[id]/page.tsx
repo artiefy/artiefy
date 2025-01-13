@@ -24,9 +24,8 @@ async function PageContent({ id }: { id: string }) {
             <div>
                 <section className="container mx-auto p-4">
                     <h1 className="mb-4 text-2xl font-bold">{lesson.title}</h1>
-                    <VideoPlayer videoKey={lesson.coverVideoKey} />
+                    <VideoPlayer videoKey={lesson.coverVideoKey} />{' '}
                     <p className="mt-4">{lesson.description}</p>
-                    {/* Add any other fields from the lesson object if needed */}
                 </section>
             </div>
         );

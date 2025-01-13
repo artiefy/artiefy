@@ -2,13 +2,16 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import { lessons } from '~/server/db/schema';
 
-export interface Lesson {
+interface Lesson {
     id: number;
+    createdAt: Date;
+    updatedAt: Date;
     title: string;
     description: string | null;
+    courseId: number;
+    duration: number;
+    order: number;
     coverVideoKey: string;
-    createdAt: string | number | Date;
-    updatedAt: string | number | Date;
 }
 
 export const getLessonById = async (
@@ -27,7 +30,10 @@ export const getLessonById = async (
         title: lessonData.title,
         description: lessonData.description,
         coverVideoKey: lessonData.coverVideoKey,
-        createdAt: new Date(lessonData.createdAt).toISOString(),
-        updatedAt: new Date(lessonData.updatedAt).toISOString(),
+        createdAt: new Date(lessonData.createdAt),
+        updatedAt: new Date(lessonData.updatedAt),
+        courseId: lessonData.courseId,
+        duration: lessonData.duration,
+        order: lessonData.order,
     };
 };

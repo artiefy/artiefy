@@ -47,6 +47,7 @@ export interface Course {
         title: string;
         duration: number;
         description: string | null;
+        coverVideoKey: string;
     }[];
 }
 
@@ -55,10 +56,9 @@ export default function CourseDetails({ course }: { course: Course }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulate loading delay
         const timer = setTimeout(() => {
             setLoading(false);
-        }, 1000); // Adjust the delay as needed
+        }, 1000);
 
         return () => clearTimeout(timer);
     }, []);

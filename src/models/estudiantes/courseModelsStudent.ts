@@ -16,6 +16,7 @@ export interface Lesson {
     description: string | null;
     order: number;
     course_id: number;
+    coverVideoKey: string;
     createdAt: string | number | Date;
     updatedAt: string | number | Date;
 }
@@ -190,6 +191,7 @@ export const getCourseById = async (
         ...lesson,
         course_id: lesson.courseId,
         duration: lesson.duration,
+        coverVideoKey: lesson.coverVideoKey, // Map from database column
         createdAt: lesson.createdAt.toISOString(),
         updatedAt: lesson.updatedAt.toISOString(),
     }));
