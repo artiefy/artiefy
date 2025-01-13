@@ -1,84 +1,89 @@
-import { useState } from 'react'
+import { useState } from 'react';
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { Textarea } from "~/components/ui/textarea"
+import type { Tutor } from '~/types/tutor'
 
-type TutorFormProps = {
-  onSubmit: (tutor: { id: number; nombre: string; email: string; especialidad: string; cursos: string[] }) => void;
-  tutor?: {
-    id: number;
-    nombre: string;
-    email: string;
-    especialidad: string;
-    cursos: string[];
-  };
+interface TutorFormProps {
+  onSubmit: (tutor: Omit<Tutor, 'id' | 'estudiantes' | 'calificacion'>) => void;
+  tutor?: Tutor;
 }
 
-export function TutorForm({ onSubmit, tutor }: TutorFormProps) {
-  const [formData, setFormData] = useState({
+const TutorForm: React.FC<TutorFormProps> = ({ onSubmit, tutor }) => {
+  const [formData, setFormData] = useState<Omit<Tutor, 'id' | 'estudiantes' | 'calificacion'>>({
     nombre: tutor?.nombre ?? '',
     email: tutor?.email ?? '',
     especialidad: tutor?.especialidad ?? '',
-    cursos: tutor?.cursos.join(', ') ?? '',
-  })
+    cursos: tutor?.cursos ?? [],
+    name: tutor?.name ?? '',
+    rating: tutor?.rating ?? 0,
+    subject: tutor?.subject ?? '',
+    experience: tutor?.experience ?? 0,
+  });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target as HTMLInputElement;
+    const checked = (e.target as HTMLInputElement).checked;
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+  };
+
+
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const cursosArray = formData.cursos.split(',').map(curso => curso.trim())
-    onSubmit({ ...formData, id: tutor?.id ?? Date.now(), cursos: cursosArray })
-  }
+    e.preventDefault();
+    onSubmit(formData);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit}>
       <div>
-        <Label htmlFor="nombre">Nombre</Label>
+        <Label htmlFor="nombre">Nombre:</Label>
         <Input
+          type="text"
           id="nombre"
           name="nombre"
           value={formData.nombre}
           onChange={handleChange}
-          required
         />
       </div>
       <div>
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email:</Label>
         <Input
+          type="email"
           id="email"
           name="email"
-          type="email"
           value={formData.email}
           onChange={handleChange}
-          required
         />
       </div>
       <div>
-        <Label htmlFor="especialidad">Especialidad</Label>
+        <Label htmlFor="especialidad">Especialidad:</Label>
         <Input
+          type="text"
           id="especialidad"
           name="especialidad"
           value={formData.especialidad}
           onChange={handleChange}
-          required
         />
       </div>
       <div>
-        <Label htmlFor="cursos">Cursos (separados por comas)</Label>
+        <Label htmlFor="cursos">Cursos:</Label>
+        {/* Add your cursos input here */}
         <Textarea
           id="cursos"
           name="cursos"
-          value={formData.cursos}
+          value={formData.cursos.join(', ')}
           onChange={handleChange}
-          required
         />
       </div>
-      <Button type="submit">{tutor ? 'Actualizar' : 'Agregar'} Tutor</Button>
+      <Button type="submit">Submit</Button>
     </form>
-  )
-}
+  );
+};
+
+export default TutorForm;
 

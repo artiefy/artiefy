@@ -19,6 +19,7 @@ export function TicketList({ tickets, onSelectTicket, onDeleteTicket }: TicketLi
           <TableHead className="text-foreground">Asunto</TableHead>
           <TableHead className="text-foreground">Estado</TableHead>
           <TableHead className="text-foreground">Imagen</TableHead>
+          <TableHead className="text-foreground">Fecha de Creación</TableHead>
           <TableHead className="text-foreground">Acciones</TableHead>
         </TableRow>
       </TableHeader>
@@ -29,7 +30,15 @@ export function TicketList({ tickets, onSelectTicket, onDeleteTicket }: TicketLi
             <TableCell>{ticket.estudiante}</TableCell>
             <TableCell>{ticket.asunto}</TableCell>
             <TableCell>{ticket.estado}</TableCell>
-            <TableCell>{ticket.imagen ? <Image className="w-5 h-5" alt="Ticket Image" /> : null}</TableCell>
+            <TableCell>
+              {ticket.imagen ? (
+                <Image
+                  className="w-5 h-5"
+                  aria-label="Ticket Image"
+                />
+              ) : null}
+            </TableCell>
+            <TableCell>{ticket.fechaCreacion ?? 'N/A'}</TableCell>
             <TableCell>
               <Button 
                 onClick={() => onSelectTicket(ticket)}
@@ -50,4 +59,3 @@ export function TicketList({ tickets, onSelectTicket, onDeleteTicket }: TicketLi
     </Table>
   )
 }
-
