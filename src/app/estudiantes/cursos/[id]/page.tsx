@@ -10,7 +10,9 @@ interface Props {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-async function getValidCoverImageUrl(coverImageKey: string | null): Promise<string> {
+async function getValidCoverImageUrl(
+  coverImageKey: string | null
+): Promise<string> {
   const coverImageUrl = coverImageKey
     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
     : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
@@ -26,7 +28,10 @@ async function getValidCoverImageUrl(coverImageKey: string | null): Promise<stri
   }
 }
 
-export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
+export async function generateMetadata(
+  { params }: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
   const { id } = await params;
 
   try {

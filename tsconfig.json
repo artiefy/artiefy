@@ -1,53 +1,45 @@
-//tsconfig.json
 {
   "compilerOptions": {
     /* Base Options: */
-    "esModuleInterop": true, // Habilita la interoperabilidad con módulos CommonJS.
-    "forceConsistentCasingInFileNames": true, // Fuerza consistencia en el uso de mayúsculas/minúsculas en nombres de archivos.
-    "allowSyntheticDefaultImports": true, // Permite importar módulos CommonJS con exportaciones por defecto.
-    "skipLibCheck": true, // Omite la revisión de tipos en los archivos de declaración (.d.ts).
-    "target": "ES2023", // Define la versión de JavaScript a la que se transpilará el código.
-    "allowJs": true, // Permite incluir archivos JavaScript en el proyecto.
-    "resolveJsonModule": true, // Habilita la importación de archivos JSON como módulos.
-    "moduleDetection": "force", // Fuerza la detección del tipo de módulo (CommonJS o ESModule).
-    "isolatedModules": true, // Garantiza que cada archivo sea tratado como un módulo independiente.
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2022",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
 
     /* Strictness */
-    "strict": true, // Habilita el modo estricto para todas las configuraciones estrictas de TypeScript.
-    "noUncheckedIndexedAccess": true, // Asegura que las propiedades indexadas siempre se verifiquen.
-    "checkJs": true, // Verifica errores de tipo en archivos JavaScript.
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "checkJs": true,
+    "strictNullChecks": true,
 
     /* Bundled projects */
-    "lib": ["dom", "dom.iterable", "ES2023", "esnext"], // Especifica las bibliotecas que TypeScript incluye durante la compilación.
-    "noEmit": true, // Evita que TypeScript genere archivos de salida (como `.js`).
-    "module": "ESNext", // Establece el sistema de módulos en ESNext.
-    "moduleResolution": "Bundler", // Usa una resolución de módulos optimizada para bundlers como Vite.
-    "jsx": "preserve", // Mantiene la sintaxis JSX para que el compilador la procese más adelante.
-    "plugins": [{ "name": "next" }], // Incluye el plugin de Next.js para mejorar el soporte de TypeScript.
-    "incremental": true, // Habilita compilaciones incrementales para mejorar el rendimiento.
+    "lib": ["dom", "dom.iterable", "ES2022"],
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "plugins": [{ "name": "next" }],
+    "incremental": true,
 
     /* Path Aliases */
-    "baseUrl": ".", // Establece la raíz base para las rutas relativas.
+    "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"] // Crea un alias para simplificar las rutas de importación de archivos en "src".
-    },
-
-    /* Incremental Builds */
-    "tsBuildInfoFile": "./.next/cache/tsconfig.tsbuildinfo" // Almacena progreso de compilaciones incrementales.
+      "~/*": ["./src/*"]
+    }
   },
   "include": [
-    // Incluye los archivos y carpetas en el análisis.
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.js",
+    "src/**/*.jsx",
     "eslint.config.mjs",
     "next-env.d.ts",
-    "**/*.mjs",
-    "**/*.ts",
-    "**/*.tsx",
     "**/*.cjs",
-    ".next/types/**/*.ts",
-    ".prettierrc.mjs",
-    "src/**/*"
+    "**/*.js",
+    ".next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules" // Excluye los archivos y carpetas en "node_modules" del análisis.
-  ]
+  "exclude": ["node_modules"]
 }

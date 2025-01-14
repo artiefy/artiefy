@@ -12,12 +12,17 @@ const eslintConfig = [
       'out/**',
       'public/**',
       '**/*.d.ts',
-    ]
+    ],
   },
   ...compat.config({
     extends: [
+      'plugin:@next/next/recommended',
+      'next/typescript',
+      'next',
+      'plugin:react/recommended',
       'next/core-web-vitals',
       'plugin:@typescript-eslint/recommended-type-checked',
+      'plugin:@typescript-eslint/recommended',
       'plugin:@typescript-eslint/stylistic-type-checked',
       'plugin:tailwindcss/recommended',
       'plugin:import/recommended',
@@ -38,7 +43,7 @@ const eslintConfig = [
     rules: {
       'tailwindcss/no-custom-classname': 'warn',
       'tailwindcss/classnames-order': 'warn',
-      "@typescript-eslint/consistent-type-definitions": "warn",
+      '@typescript-eslint/consistent-type-definitions': 'warn',
       '@typescript-eslint/consistent-type-imports': [
         'warn',
         {
@@ -79,42 +84,39 @@ const eslintConfig = [
       'import/order': [
         'warn',
         {
-          'groups': ['builtin', 'external', 'internal', ['parent', 'sibling']],
-          'pathGroups': [
+          groups: ['builtin', 'external', 'internal', ['parent', 'sibling']],
+          pathGroups: [
             {
-              'pattern': 'react',
-              'group': 'external',
-              'position': 'before'
+              pattern: 'react',
+              group: 'external',
+              position: 'before',
             },
             {
-              'pattern': '@/components/**',
-              'group': 'internal',
-              'position': 'after'
-            }
+              pattern: '@/components/**',
+              group: 'internal',
+              position: 'after',
+            },
           ],
-          'pathGroupsExcludedImportTypes': ['react'],
-          'alphabetize': {
-            'order': 'asc',
-            'caseInsensitive': true
-          }
-        }
+          pathGroupsExcludedImportTypes: ['react'],
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
       ],
       'import/newline-after-import': 'warn',
     },
     settings: {
       tailwindcss: {
         config: './tailwind.config.ts',
-        cssFiles: [
-          './src/**/*.css',
-          './styles/globals.css',
-        ],
+        cssFiles: ['./src/**/*.css', './styles/globals.css'],
       },
       next: {
         rootDir: './',
       },
+      files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
     },
   }),
 ];
 
 export default eslintConfig;
-

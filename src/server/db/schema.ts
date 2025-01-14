@@ -1,5 +1,14 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgTable, real, serial, text, timestamp, varchar } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  integer,
+  pgTable,
+  real,
+  serial,
+  text,
+  timestamp,
+  varchar,
+} from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable('users', {
@@ -78,7 +87,7 @@ export const lessons = pgTable('lessons', {
   title: varchar('title', { length: 255 }).notNull(), // Título de la lección
   description: text('description'), // Descripción de la lección
   duration: integer('duration').notNull(),
-  // coverImageKey: text('cover_image_key').notNull(), // Clave de la imagen en S3
+  coverImageKey: text('cover_image_key').notNull(), // Clave de la imagen en S3
   coverVideoKey: text('cover_video_key').notNull(), // Clave del video en S3
   order: serial('order').notNull(), // Orden autoincremental de la lección en el curso
   courseId: integer('course_id')

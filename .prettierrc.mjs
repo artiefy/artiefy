@@ -10,7 +10,7 @@ const config = {
   tabWidth: 2, // Tamaño del tabulador
   semi: true, // Usar punto y coma al final de las declaraciones
   singleQuote: true, // Usar comillas simples en lugar de dobles
-  printWidth: 150, // Longitud máxima de línea
+  printWidth: 80, // Longitud máxima de línea
   useTabs: false, // Usar espacios en lugar de tabs
   bracketSpacing: true, // Espacio entre llaves en objetos
   arrowParens: 'always', // Paréntesis en funciones flecha con un solo argumento
