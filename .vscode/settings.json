@@ -17,18 +17,12 @@
   "eslint.options": {
     "overrideConfigFile": "eslint.config.mjs" // Usar el archivo de configuración de ESLint especificado
   },
-  "eslint.run": "onType", // Ejecutar ESLint solo al guardar
   "eslint.rules.customizations": [
-    { "rule": "tailwindcss/classnames-order", "severity": "off" }, // Desactivar la regla de orden de clases de Tailwind CSS
-    { "rule": "import/order", "severity": "off" } // Desactivar la regla de orden de importaciones
+    { "rule": "import/order", "severity": "off" } // Desactivar notificaciones para import/order
   ],
-  "editor.quickSuggestions": {
-    "strings": true // Mostrar sugerencias rápidas para cadenas de texto
-  },
   "prettier.requireConfig": true, // Requerir un archivo de configuración de Prettier
   "prettier.configPath": ".prettierrc.mjs", // Ruta del archivo de configuración de Prettier
   "prettier.useEditorConfig": true, // Usar la configuración del editor para Prettier
-  "prettier.enableDebugLogs": true, // Habilitar logs de depuración de Prettier
   "prettier.documentSelectors": ["**/*.{js,jsx,ts,tsx}"], // Archivos para los cuales se aplicará Prettier
   "prettier.withNodeModules": false, // No formatear archivos dentro de node_modules
   "editor.defaultFormatter": "esbenp.prettier-vscode", // Establecer Prettier como formateador por defecto

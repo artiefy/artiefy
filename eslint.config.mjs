@@ -12,6 +12,8 @@ const eslintConfig = [
       'out/**',
       'public/**',
       '**/*.d.ts',
+      'src/components/estudiantes/ui',
+      'lib',
     ],
   },
   ...compat.config({
@@ -31,7 +33,8 @@ const eslintConfig = [
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
-      project: true,
+      projectService: true,
+      tsconfigRootDir: import.meta.dirname,
     },
     plugins: [
       '@typescript-eslint',
@@ -42,7 +45,7 @@ const eslintConfig = [
     ],
     rules: {
       'tailwindcss/no-custom-classname': 'warn',
-      'tailwindcss/classnames-order': 'warn',
+      'tailwindcss/classnames-order': 'off',
       '@typescript-eslint/consistent-type-definitions': 'warn',
       '@typescript-eslint/consistent-type-imports': [
         'warn',
@@ -104,7 +107,6 @@ const eslintConfig = [
           },
         },
       ],
-      'import/newline-after-import': 'warn',
     },
     settings: {
       tailwindcss: {
