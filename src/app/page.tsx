@@ -32,10 +32,12 @@ export default function Home() {
           <section className="container mx-auto px-4 py-12 text-center">
             <h1 className="mb-5 text-5xl font-bold leading-snug text-white">
               Únete a nosotros y transforma tus ideas en
-              <br /> realidades con el <span className="text-primary">poder del conocimiento</span>
+              <br /> realidades con el{' '}
+              <span className="text-primary">poder del conocimiento</span>
             </h1>
             <p className="mb-5 text-xl leading-snug">
-              Bienvenido a Artiefy, tu plataforma digital educativa dedicada a impulsar <br /> tus conociminetos con ciencia y tecnología.
+              Bienvenido a Artiefy, tu plataforma digital educativa dedicada a
+              impulsar <br /> tus conociminetos con ciencia y tecnología.
             </p>
             <div>
               <SignedOut>
@@ -62,7 +64,9 @@ export default function Home() {
                           />
                         ) : (
                           <>
-                            <span className="inline-block skew-x-[15deg]">COMIENZA YA</span>
+                            <span className="inline-block skew-x-[15deg]">
+                              COMIENZA YA
+                            </span>
                             <FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
                           </>
                         )}
@@ -94,7 +98,9 @@ export default function Home() {
                         />
                       ) : (
                         <>
-                          <span className="inline-block skew-x-[15deg]">COMIENZA YA</span>
+                          <span className="inline-block skew-x-[15deg]">
+                            COMIENZA YA
+                          </span>
                           <FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
                         </>
                       )}

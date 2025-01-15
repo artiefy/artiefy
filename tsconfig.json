@@ -8,22 +8,22 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-
     // Estrictas
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "checkJs": true,
-    "strictNullChecks": true,
-
     // Proyectos agrupados
     "lib": ["dom", "dom.iterable", "ES2023"],
     "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
-    "plugins": [{ "name": "next" }],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "incremental": true,
-
     // Alias de rutas
     "baseUrl": ".",
     "paths": {
@@ -32,17 +32,18 @@
   },
   // Archivos incluidos
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
+    "**/*.js",
+    "**/*.mjs",
+    "**/*.ts",
+    "**/*.tsx",
+    ".prettierrc.mjs",
+    "next-env.d.ts",
     "src/**/*.js",
     "src/**/*.jsx",
-    "eslint.config.mjs",
-    "next-env.d.ts",
-    "**/*.cjs",
-    "**/*.js",
-    "tailwind.config.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     ".next/types/**/*.ts"
   ],
   // Archivos excluidos
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", ".next"]
 }

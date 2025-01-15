@@ -13,18 +13,13 @@ const eslintConfig = [
       'public/**',
       '**/*.d.ts',
       'src/components/estudiantes/ui',
-      'lib',
     ],
   },
   ...compat.config({
     extends: [
       'plugin:@next/next/recommended',
-      'next/typescript',
-      'next',
-      'plugin:react/recommended',
-      'next/core-web-vitals',
-      'plugin:@typescript-eslint/recommended-type-checked',
       'plugin:@typescript-eslint/recommended',
+      'plugin:@typescript-eslint/recommended-type-checked',
       'plugin:@typescript-eslint/stylistic-type-checked',
       'plugin:tailwindcss/recommended',
       'plugin:import/recommended',
@@ -33,16 +28,10 @@ const eslintConfig = [
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
-      projectService: true,
+      project: './tsconfig.json',
       tsconfigRootDir: import.meta.dirname,
     },
-    plugins: [
-      '@typescript-eslint',
-      'drizzle',
-      'tailwindcss',
-      'jsx-a11y',
-      'import',
-    ],
+    plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
     rules: {
       'tailwindcss/no-custom-classname': 'warn',
       'tailwindcss/classnames-order': 'off',
@@ -107,11 +96,29 @@ const eslintConfig = [
           },
         },
       ],
+      'react/react-in-jsx-scope': 'off',
+      'import/no-unresolved': 'off',
+      'import/newline-after-import': 'off',
     },
     settings: {
+      'import/resolver': {
+        alias: {
+          map: [['~', './src']],
+          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        },
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+      },
+      react: {
+        version: 'detect',
+      },
       tailwindcss: {
         config: './tailwind.config.ts',
-        cssFiles: ['./src/**/*.css', './styles/globals.css'],
+        cssFiles: ['./src/**/*.css'],
+        callees: ['classnames', 'clsx', 'ctl'],
+        tags: ['tw'],
       },
       next: {
         rootDir: './',

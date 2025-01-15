@@ -1,7 +1,11 @@
 'use client';
 
 import React, { use, useCallback, useEffect, useState } from 'react';
-import { MagnifyingGlassIcon, RocketLaunchIcon, StarIcon } from '@heroicons/react/24/solid';
+import {
+  MagnifyingGlassIcon,
+  RocketLaunchIcon,
+  StarIcon,
+} from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
@@ -10,7 +14,13 @@ import { Header } from '~/components/estudiantes/layout/Header';
 import { SkeletonCard } from '~/components/estudiantes/layout/SkeletonCard';
 import { Badge } from '~/components/estudiantes/ui/badge';
 
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '~/components/estudiantes/ui/carousel';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '~/components/estudiantes/ui/carousel';
 import {
   Pagination,
   PaginationContent,
@@ -50,7 +60,9 @@ function LoadingCourses() {
   );
 }
 
-export default function StudentDashboard(props: { params: Promise<Record<string, string>> }) {
+export default function StudentDashboard(props: {
+  params: Promise<Record<string, string>>;
+}) {
   const resolvedParams = use(props.params);
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -69,7 +81,10 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
       const response = await fetch('/api/estudiantes');
       if (!response.ok) throw new Error(response.statusText);
       const data = (await response.json()) as Course[];
-      data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      data.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
       setCourses(data);
       setFilteredCourses(data);
       setCarouselIndex(0);
@@ -77,7 +92,8 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
       console.error('Error al obtener los cursos:', error);
       toast({
         title: 'Error',
-        description: 'No se pudieron cargar los cursos. Por favor, intenta de nuevo más tarde.',
+        description:
+          'No se pudieron cargar los cursos. Por favor, intenta de nuevo más tarde.',
         variant: 'destructive',
       });
     } finally {
@@ -90,10 +106,15 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
       let filtered = courses;
       if (search) {
         const searchLower = search.toLowerCase();
-        filtered = filtered.filter((course) => course.title.toLowerCase().includes(searchLower));
+        filtered = filtered.filter((course) =>
+          course.title.toLowerCase().includes(searchLower)
+        );
       }
       if (category) {
-        filtered = filtered.filter((course) => course.category.name.toLowerCase() === category.toLowerCase());
+        filtered = filtered.filter(
+          (course) =>
+            course.category.name.toLowerCase() === category.toLowerCase()
+        );
       }
       setFilteredCourses(filtered);
       setCurrentPage(1);
@@ -127,12 +148,17 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCarouselIndex((prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5));
+      setCarouselIndex(
+        (prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5)
+      );
     }, 5000);
     return () => clearInterval(interval);
   }, [courses.length]);
 
-  const paginatedCourses = filteredCourses.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   if (!resolvedParams) {
     return <LoadingCourses />;
@@ -163,20 +189,33 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
                         sizes="100vw"
                         quality={85}
                         placeholder="blur"
-                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
+                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk2HujHgAEcAIWCbqEhgAAAABJRU5ErkJggg=="
                       />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
-                      <h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">{course.title}</h2>
-                      <Badge variant="outline" className="mb-2 border-primary text-primary">
+                      <h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">
+                        {course.title}
+                      </h2>
+                      <Badge
+                        variant="outline"
+                        className="mb-2 border-primary text-primary"
+                      >
                         {course.category.name}
                       </Badge>
-                      <p className="mb-2 hidden text-center text-sm sm:block sm:text-base md:text-lg lg:text-xl">{course.description}</p>
-                      <p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">Educador: {course.instructor}</p>
-                      <p className="mb-1 hidden text-sm text-red-500 sm:block sm:text-base md:text-lg">{course.modalidad.name}</p>
+                      <p className="mb-2 hidden text-center text-sm sm:block sm:text-base md:text-lg lg:text-xl">
+                        {course.description}
+                      </p>
+                      <p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">
+                        Educador: {course.instructor}
+                      </p>
+                      <p className="mb-1 hidden text-sm text-red-500 sm:block sm:text-base md:text-lg">
+                        {course.modalidad.name}
+                      </p>
                       <div className="flex items-center">
                         <StarIcon className="size-4 text-yellow-500 sm:size-5" />
-                        <span className="ml-1 text-sm text-yellow-500 sm:text-base">{(course.rating ?? 0).toFixed(1)}</span>
+                        <span className="ml-1 text-sm text-yellow-500 sm:text-base">
+                          {(course.rating ?? 0).toFixed(1)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -198,7 +237,9 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
               <form className="flex w-full max-w-lg flex-col items-center space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
                 <div className="flex items-center">
                   <RocketLaunchIcon className="size-5 text-orange-500 sm:size-6" />
-                  <span className="ml-2 whitespace-nowrap text-lg text-primary sm:text-xl">Artiefy IA</span>
+                  <span className="ml-2 whitespace-nowrap text-lg text-primary sm:text-xl">
+                    Artiefy IA
+                  </span>
                 </div>
                 <div className="relative w-full max-w-xs">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -223,13 +264,23 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
 
             {/* CAROUSEL TOP CURSOS */}
             <div className="relative xs:px-4">
-              <h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">Top Cursos</h2>
+              <h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
+                Top Cursos
+              </h2>
               <Carousel className="w-full p-4">
                 <CarouselContent>
                   {loading
-                    ? Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="ml-4 h-48 w-full rounded-lg px-6 md:h-64" />)
+                    ? Array.from({ length: 3 }).map((_, index) => (
+                        <Skeleton
+                          key={index}
+                          className="ml-4 h-48 w-full rounded-lg px-6 md:h-64"
+                        />
+                      ))
                     : courses.map((course) => (
-                        <CarouselItem key={course.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                        <CarouselItem
+                          key={course.id}
+                          className="pl-4 md:basis-1/2 lg:basis-1/3"
+                        >
                           <div className="relative h-48 w-full md:h-64">
                             <Image
                               src={
@@ -243,15 +294,22 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               quality={85}
                               placeholder="blur"
-                              blurDataURL="data"
+                              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk2HujHgAEcAIWCbqEhgAAAABJRU5ErkJggg=="
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
-                              <h3 className="text-lg font-bold text-white">{course.title}</h3>
+                              <h3 className="text-lg font-bold text-white">
+                                {course.title}
+                              </h3>
                               <div className="mb-2 flex items-center justify-between">
-                                <Badge variant="outline" className="border-primary bg-background text-primary hover:bg-black">
+                                <Badge
+                                  variant="outline"
+                                  className="border-primary bg-background text-primary hover:bg-black"
+                                >
                                   {course.category.name}
                                 </Badge>
-                                <span className="text-sm font-bold text-red-500">{course.modalidad.name}</span>
+                                <span className="text-sm font-bold text-red-500">
+                                  {course.modalidad.name}
+                                </span>
                               </div>
                               <div className="flex items-center justify-between">
                                 <p className="text-sm italic text-primary">
@@ -259,7 +317,9 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
                                 </p>
                                 <div className="flex items-center">
                                   <StarIcon className="size-4 text-yellow-500" />
-                                  <span className="ml-1 text-sm font-bold text-yellow-500">{(course.rating ?? 0).toFixed(1)}</span>
+                                  <span className="ml-1 text-sm font-bold text-yellow-500">
+                                    {(course.rating ?? 0).toFixed(1)}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -273,11 +333,18 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
             </div>
 
             {/* CATEGORIAS DE CURSOS */}
-            <CourseCategories onCategorySelect={handleCategorySelect} onSearch={handleSearch} />
+            <CourseCategories
+              onCategorySelect={handleCategorySelect}
+              onSearch={handleSearch}
+            />
 
             {/* Seccion De Cursos */}
             <div className="flex flex-col px-11">
-              <h2 className="mb-8 text-2xl font-bold sm:text-3xl">{selectedCategory ? `Cursos de ${selectedCategory}` : 'Cursos Disponibles'}</h2>
+              <h2 className="mb-8 text-2xl font-bold sm:text-3xl">
+                {selectedCategory
+                  ? `Cursos de ${selectedCategory}`
+                  : 'Cursos Disponibles'}
+              </h2>
               {loading && <LoadingCourses />}
               <React.Suspense fallback={<LoadingCourses />}>
                 <CourseListStudent courses={paginatedCourses} />
@@ -288,19 +355,32 @@ export default function StudentDashboard(props: { params: Promise<Record<string,
             <Pagination className="pb-12">
               <PaginationContent className="flex cursor-pointer flex-wrap justify-center gap-2">
                 <PaginationPrevious
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  className={currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  className={
+                    currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
+                  }
                 />
                 {Array.from({ length: totalPages }).map((_, index) => (
                   <PaginationItem key={index}>
-                    <PaginationLink onClick={() => setCurrentPage(index + 1)} isActive={currentPage === index + 1}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(index + 1)}
+                      isActive={currentPage === index + 1}
+                    >
                       {index + 1}
                     </PaginationLink>
                   </PaginationItem>
                 ))}
                 <PaginationNext
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  className={currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  className={
+                    currentPage === totalPages
+                      ? 'cursor-not-allowed opacity-50'
+                      : ''
+                  }
                 />
               </PaginationContent>
             </Pagination>
