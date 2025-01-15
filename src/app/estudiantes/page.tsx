@@ -31,6 +31,7 @@ import {
 } from '~/components/estudiantes/ui/pagination';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { toast } from '~/hooks/use-toast';
+import { blurDataURL } from '~/lib/blurDataUrl';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -189,7 +190,7 @@ export default function StudentDashboard(props: {
                         sizes="100vw"
                         quality={85}
                         placeholder="blur"
-                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk2HujHgAEcAIWCbqEhgAAAABJRU5ErkJggg=="
+                        blurDataURL={blurDataURL}
                       />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
@@ -294,7 +295,7 @@ export default function StudentDashboard(props: {
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               quality={85}
                               placeholder="blur"
-                              blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk2HujHgAEcAIWCbqEhgAAAABJRU5ErkJggg=="
+                              blurDataURL={blurDataURL}
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
                               <h3 className="text-lg font-bold text-white">
