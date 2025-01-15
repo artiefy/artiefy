@@ -1,3 +1,6 @@
+//video de prueba de una clase
+https://artiefy-upload.s3.us-east-2.amazonaws.com/uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed
+
 Tecnologias Que Se Usan:
 
 ~ Next.js 15.1.4, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM,

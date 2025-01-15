@@ -56,10 +56,11 @@ export interface Course {
 
 export interface Activity {
   id: number;
-  title: string;
-  type: string;
+  name: string;
+  description: string | null;
+  tipo: string;
+  lessonsId: number;
   completed: boolean;
-  lessons_id: number;
 }
 
 // Crear un nuevo curso
@@ -132,12 +133,36 @@ export const getCoursesByUserId = async (
   }));
 };
 
+// Obtener todas las lecciones por ID de curso
+export const getLessonsByCourseId = async (
+  course_id: number
+): Promise<Lesson[]> => {
+  const lessonsResult = await db
+    .select()
+    .from(lessons)
+    .where(eq(lessons.courseId, course_id))
+    .orderBy(lessons.order);
+  return lessonsResult.map((lesson) => ({
+    ...lesson,
+    course_id: lesson.courseId,
+    duration: lesson.duration,
+    coverVideoKey: lesson.coverVideoKey,
+    createdAt: lesson.createdAt.toISOString(),
+    updatedAt: lesson.updatedAt.toISOString(),
+    resourceKey: lesson.resourceKey,
+    porcentajecompletado: lesson.porcentajecompletado ?? 0,
+  }));
+};
+
 // Obtener el número total de estudiantes inscritos en un curso
 export const getTotalStudents = async (course_id: number): Promise<number> => {
   const result = await db
     .select({ totalStudents: count() })
     .from(enrollments)
     .where(eq(enrollments.courseId, course_id));
+  if (result[0] instanceof Error) {
+    throw result[0];
+  }
   return result[0]?.totalStudents ?? 0;
 };
 
@@ -249,8 +274,12 @@ export const getActivitiesByLessonId = async (
     .from(activities)
     .where(eq(activities.lessonsId, lesson_id));
   return activitiesResult.map((activity) => ({
-    ...activity,
-    lessons_id: activity.lessonsId,
+    id: activity.id,
+    name: activity.name,
+    description: activity.description,
+    tipo: activity.tipo,
+    lessonsId: activity.lessonsId,
+    completed: activity.completed ?? false,
   }));
 };
 

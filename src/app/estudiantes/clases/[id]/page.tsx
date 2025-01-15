@@ -1,15 +1,23 @@
 import { notFound } from 'next/navigation';
-import { getLessonById } from '~/models/estudiantes/courseModelsStudent';
+import {
+  getLessonById,
+  getActivitiesByLessonId,
+  getLessonsByCourseId,
+} from '~/models/estudiantes/courseModelsStudent';
 import LessonDetails from './LessonDetails';
 
-interface Props {
-  params: { id: string };
+interface Params {
+  id: string;
 }
 
-export default function Page({ params }: Props) {
-  const { id } = params;
+interface Props {
+  params: Promise<Params>;
+}
 
-  return <PageContent id={id} />;
+export default async function Page({ params }: Props) {
+  const { id } = await params;
+
+  return await PageContent({ id });
 }
 
 async function PageContent({ id }: { id: string }) {
@@ -24,7 +32,16 @@ async function PageContent({ id }: { id: string }) {
       notFound();
     }
 
-    return <LessonDetails lesson={lesson} />;
+    const activities = await getActivitiesByLessonId(lesson.id);
+    const lessons = await getLessonsByCourseId(lesson.course_id);
+
+    return (
+      <LessonDetails
+        lesson={lesson}
+        activities={activities}
+        lessons={lessons}
+      />
+    );
   } catch (error) {
     console.error('Error fetching lesson:', error);
     notFound();

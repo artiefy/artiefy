@@ -1,15 +1,9 @@
 'use client';
-import { useState } from 'react';
-import {
-  FaPlay,
-  FaPause,
-  FaExpand,
-  FaComments,
-  FaCheckCircle,
-  FaClock,
-  FaLock,
-} from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { FaComments, FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import VideoPlayer from '~/components/estudiantes/layout/VideoPlayer';
+import { updateLessonProgress } from '~/server/actions/lessonActions';
 
 interface Lesson {
   id: number;
@@ -18,88 +12,107 @@ interface Lesson {
   description: string | null;
   resourceKey: string;
   porcentajecompletado: number;
+  duration: number;
 }
 
-const mockClasses = [
-  {
-    id: 1,
-    title: 'Introduction to React Fundamentals',
-    instructor: 'Sarah Johnson',
-    progress: 100,
-    completed: true,
-    duration: '45 min',
-  },
-  {
-    id: 2,
-    title: 'State Management in React',
-    instructor: 'Michael Chen',
-    progress: 75,
-    completed: false,
-    duration: '60 min',
-  },
-  {
-    id: 3,
-    title: 'React Hooks Deep Dive',
-    instructor: 'Emily Parker',
-    progress: 0,
-    completed: false,
-    duration: '55 min',
-  },
-];
+interface Activity {
+  id: number;
+  name: string;
+  description: string | null;
+  tipo: string;
+  completed: boolean;
+}
 
-const activities = [
-  {
-    id: 1,
-    title: 'Practice Exercise 1',
-    type: 'assignment',
-    completed: true,
-  },
-  {
-    id: 2,
-    title: 'Module Quiz',
-    type: 'quiz',
-    completed: false,
-  },
-  {
-    id: 3,
-    title: 'Coding Challenge',
-    type: 'challenge',
-    completed: false,
-  },
-];
-
-export default function LessonDetails({ lesson }: { lesson: Lesson }) {
-  const [isPlaying, setIsPlaying] = useState(false);
+export default function LessonDetails({
+  lesson,
+  activities,
+  lessons = [],
+}: {
+  lesson: Lesson;
+  activities: Activity[];
+  lessons: Lesson[];
+}) {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(
+    lesson.id
+  );
+  const [progress, setProgress] = useState(lesson.porcentajecompletado);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (selectedLessonId !== null && selectedLessonId !== lesson.id) {
+      router.push(`/estudiantes/clases/${selectedLessonId}`);
+    }
+  }, [selectedLessonId, lesson.id, router]);
+
+  const handleVideoEnd = async () => {
+    setProgress(100);
+    await updateLessonProgress(lesson.id, 100);
+    unlockNextLesson();
+  };
+
+  const handleProgressUpdate = async (videoProgress: number) => {
+    const roundedProgress = Math.round(videoProgress);
+    if (roundedProgress > progress) {
+      setProgress(roundedProgress);
+      await updateLessonProgress(lesson.id, roundedProgress);
+    }
+  };
+
+  const unlockNextLesson = () => {
+    const currentIndex = lessons.findIndex((l) => l.id === lesson.id);
+    if (currentIndex < lessons.length - 1) {
+      const nextLesson = lessons[currentIndex + 1];
+      if (nextLesson) {
+        setSelectedLessonId(nextLesson.id);
+      }
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Left Sidebar */}
       <div className="w-80 overflow-y-auto bg-white p-4 shadow-lg">
         <h2 className="mb-4 text-xl font-bold">Course Content</h2>
-        {mockClasses.map((classItem) => (
-          <div
-            key={classItem.id}
-            className={`mb-2 rounded-lg p-4 ${classItem.id === 2 ? 'border-l-4 border-blue-500 bg-blue-50' : 'bg-gray-50'}`}
-          >
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="font-semibold">{classItem.title}</h3>
-              {classItem.completed ? (
-                <FaCheckCircle className="text-green-500" />
-              ) : (
-                <FaClock className="text-gray-400" />
-              )}
+        {lessons.map((lessonItem, index) => {
+          const isLocked =
+            index > 0 && (lessons[index - 1]?.porcentajecompletado ?? 0) < 100;
+          return (
+            <div
+              key={lessonItem.id}
+              className={`mb-2 cursor-pointer rounded-lg p-4 ${
+                lessonItem.id === selectedLessonId
+                  ? 'border-l-4 border-blue-500 bg-blue-50'
+                  : 'bg-gray-50'
+              } ${isLocked ? 'opacity-50' : ''}`}
+              onClick={() => !isLocked && setSelectedLessonId(lessonItem.id)}
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="font-semibold">{lessonItem.title}</h3>
+                {lessonItem.porcentajecompletado === 100 ? (
+                  <FaCheckCircle className="text-green-500" />
+                ) : isLocked ? (
+                  <FaLock className="text-gray-400" />
+                ) : (
+                  <FaClock className="text-gray-400" />
+                )}
+              </div>
+              <p className="mb-2 text-sm text-gray-600">Instructor</p>
+              <div className="relative h-2 rounded bg-gray-200">
+                <div
+                  className="absolute h-2 rounded bg-blue-500"
+                  style={{ width: `${lessonItem.porcentajecompletado}%` }}
+                ></div>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                {lessonItem.duration} mins
+              </p>
+              <p className="mt-1 text-right text-xs text-gray-500">
+                {lessonItem.porcentajecompletado}%
+              </p>
             </div>
-            <p className="mb-2 text-sm text-gray-600">{classItem.instructor}</p>
-            <div className="relative h-2 rounded bg-gray-200">
-              <div
-                className="absolute h-2 rounded bg-blue-500"
-                style={{ width: `${classItem.progress}%` }}
-              ></div>
-            </div>
-            <p className="mt-2 text-xs text-gray-500">{classItem.duration}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Main Content */}
@@ -107,20 +120,11 @@ export default function LessonDetails({ lesson }: { lesson: Lesson }) {
         <div className="mx-auto max-w-4xl">
           {/* Video Player */}
           <div className="relative mb-6 aspect-video overflow-hidden rounded-lg bg-black">
-            <VideoPlayer videoKey={lesson.coverVideoKey} />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-              <div className="flex items-center justify-between text-white">
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="rounded-full p-2 hover:bg-white/20"
-                >
-                  {isPlaying ? <FaPause /> : <FaPlay />}
-                </button>
-                <button className="rounded-full p-2 hover:bg-white/20">
-                  <FaExpand />
-                </button>
-              </div>
-            </div>
+            <VideoPlayer
+              videoKey={lesson.coverVideoKey}
+              onVideoEnd={handleVideoEnd}
+              onProgressUpdate={handleProgressUpdate}
+            />
           </div>
 
           {/* Class Info */}
@@ -128,9 +132,7 @@ export default function LessonDetails({ lesson }: { lesson: Lesson }) {
             <h1 className="mb-4 text-2xl font-bold">{lesson.title}</h1>
             <p className="text-gray-600">{lesson.description}</p>
             <p className="mt-4">Resource Key: {lesson.resourceKey}</p>
-            <p className="mt-4">
-              Porcentaje Completado: {lesson.porcentajecompletado}%
-            </p>
+            <p className="mt-4">Porcentaje Completado: {progress}%</p>
           </div>
         </div>
       </div>
@@ -145,9 +147,9 @@ export default function LessonDetails({ lesson }: { lesson: Lesson }) {
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold">{activity.title}</h3>
+                <h3 className="font-semibold">{activity.name}</h3>
                 <span className="text-xs uppercase text-gray-500">
-                  {activity.type}
+                  {activity.tipo}
                 </span>
               </div>
               {activity.completed ? (

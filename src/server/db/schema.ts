@@ -132,6 +132,7 @@ export const activities = pgTable('activities', {
   lessonsId: integer('lessons_id')
     .references(() => lessons.id)
     .notNull(), // Relación con lecciones
+  completed: boolean('completed').default(false), // Estado de completado
 });
 
 // Tabla de inscripciones (relación muchos a muchos entre usuarios y inscripciones)
