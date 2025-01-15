@@ -1,5 +1,6 @@
 //src\models\estudiantes\courseModelsStudent.ts
 import { eq, count } from 'drizzle-orm';
+import { and } from 'drizzle-orm/expressions';
 import { db } from '~/server/db/index';
 import {
   courses,
@@ -8,6 +9,8 @@ import {
   categories,
   modalidades,
   activities,
+  lessonProgress,
+  activityProgress,
 } from '~/server/db/schema';
 
 export interface Lesson {
@@ -22,6 +25,7 @@ export interface Lesson {
   updatedAt: string | number | Date;
   resourceKey: string;
   porcentajecompletado: number;
+  isLocked: boolean;
 }
 
 export interface Category {
@@ -151,6 +155,7 @@ export const getLessonsByCourseId = async (
     updatedAt: lesson.updatedAt.toISOString(),
     resourceKey: lesson.resourceKey,
     porcentajecompletado: lesson.porcentajecompletado ?? 0,
+    isLocked: lesson.order === 1 ? false : (lesson.isLocked ?? true),
   }));
 };
 
@@ -227,11 +232,12 @@ export const getCourseById = async (
     ...lesson,
     course_id: lesson.courseId,
     duration: lesson.duration,
-    coverVideoKey: lesson.coverVideoKey, // Map from database column
+    coverVideoKey: lesson.coverVideoKey,
     createdAt: lesson.createdAt.toISOString(),
     updatedAt: lesson.updatedAt.toISOString(),
     resourceKey: lesson.resourceKey,
     porcentajecompletado: lesson.porcentajecompletado ?? 0,
+    isLocked: lesson.order === 1 ? false : (lesson.isLocked ?? false),
   }));
 
   // Obtener el número total de estudiantes inscritos
@@ -262,6 +268,7 @@ export const getLessonById = async (
     updatedAt: lessonData.updatedAt.toISOString(),
     resourceKey: lessonData.resourceKey,
     porcentajecompletado: lessonData.porcentajecompletado ?? 0,
+    isLocked: lessonData.isLocked ?? false,
   };
 };
 
@@ -279,7 +286,7 @@ export const getActivitiesByLessonId = async (
     description: activity.description,
     tipo: activity.tipo,
     lessonsId: activity.lessonsId,
-    completed: activity.completed ?? false,
+    completed: activity.isCompleted ?? false,
   }));
 };
 
@@ -355,4 +362,217 @@ export const deleteCourse = async (course_id: number): Promise<void> => {
 
   // Luego eliminar el curso
   await db.delete(courses).where(eq(courses.id, course_id));
+};
+
+// Obtener el progreso de una lección para un usuario específico
+export const getLessonProgress = async (
+  userId: string,
+  lessonId: number
+): Promise<number> => {
+  const result = await db
+    .select({ progress: lessonProgress.progress })
+    .from(lessonProgress)
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.lessonId, lessonId)
+      )
+    );
+
+  return result[0]?.progress ?? 0;
+};
+
+// Actualizar el progreso de una lección para un usuario específico
+export const updateLessonProgress = async (
+  userId: string,
+  lessonId: number,
+  progress: number
+): Promise<void> => {
+  const existingProgress = await db
+    .select()
+    .from(lessonProgress)
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.lessonId, lessonId)
+      )
+    );
+
+  if (existingProgress.length > 0) {
+    await db
+      .update(lessonProgress)
+      .set({ progress, lastUpdated: new Date() })
+      .where(
+        and(
+          eq(lessonProgress.userId, userId),
+          eq(lessonProgress.lessonId, lessonId)
+        )
+      );
+  } else {
+    await db
+      .insert(lessonProgress)
+      .values({ userId, lessonId, progress, lastUpdated: new Date() });
+  }
+};
+
+// Marcar una lección como completada
+export const completeLessonProgress = async (
+  userId: string,
+  lessonId: number
+): Promise<void> => {
+  await updateLessonProgress(userId, lessonId, 100);
+  await db
+    .update(lessonProgress)
+    .set({ completed: true, lastUpdated: new Date() })
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.lessonId, lessonId)
+      )
+    );
+};
+
+// Obtener el estado de completado de una actividad para un usuario específico
+export const getActivityCompletion = async (
+  userId: string,
+  activityId: number
+): Promise<boolean> => {
+  const result = await db
+    .select({ completed: activityProgress.completed })
+    .from(activityProgress)
+    .where(
+      and(
+        eq(activityProgress.userId, userId),
+        eq(activityProgress.activityId, activityId)
+      )
+    );
+
+  return result[0]?.completed ?? false;
+};
+
+// Marcar una actividad como completada
+export const completeActivity = async (
+  userId: string,
+  activityId: number
+): Promise<void> => {
+  const existingProgress = await db
+    .select()
+    .from(activityProgress)
+    .where(
+      and(
+        eq(activityProgress.userId, userId),
+        eq(activityProgress.activityId, activityId)
+      )
+    );
+
+  if (existingProgress.length > 0) {
+    await db
+      .update(activityProgress)
+      .set({ completed: true, lastUpdated: new Date() })
+      .where(
+        and(
+          eq(activityProgress.userId, userId),
+          eq(activityProgress.activityId, activityId)
+        )
+      );
+  } else {
+    await db
+      .insert(activityProgress)
+      .values({ userId, activityId, completed: true, lastUpdated: new Date() });
+  }
+};
+
+// Verificar si una lección está desbloqueada para un usuario
+export const isLessonUnlocked = async (
+  userId: string,
+  lessonId: number
+): Promise<boolean> => {
+  const lesson = await db
+    .select()
+    .from(lessons)
+    .where(eq(lessons.id, lessonId))
+    .limit(1);
+
+  if (lesson.length === 0) return false;
+
+  if (lesson[0] && lesson[0].order === 1) return true;
+
+  const previousLessonId = lesson[0] ? lesson[0].order - 1 : 0;
+  const previousLessonProgress = await db
+    .select()
+    .from(lessonProgress)
+    .where(
+      and(
+        eq(lessonProgress.userId, userId),
+        eq(lessonProgress.lessonId, previousLessonId),
+        eq(lessonProgress.completed, true)
+      )
+    );
+
+  return previousLessonProgress.length > 0;
+};
+
+// Desbloquear la siguiente lección
+export const unlockNextLesson = async (
+  _userId: string,
+  currentLessonId: number
+): Promise<void> => {
+  const currentLesson = await db
+    .select()
+    .from(lessons)
+    .where(eq(lessons.id, currentLessonId))
+    .limit(1);
+
+  if (currentLesson.length === 0) return;
+
+  const nextLessonOrder = currentLesson[0] ? currentLesson[0].order + 1 : 0;
+  const nextLesson = await db
+    .select()
+    .from(lessons)
+    .where(
+      and(
+        eq(lessons.courseId, currentLesson[0]?.courseId ?? 0),
+        eq(lessons.order, nextLessonOrder)
+      )
+    )
+    .limit(1);
+
+  if (nextLesson.length === 0) return;
+
+  await db
+    .update(lessons)
+    .set({ isLocked: false })
+    .where(eq(lessons.id, nextLesson[0]?.id ?? 0));
+};
+
+// Obtener todas las lecciones de un curso con su estado de desbloqueo para un usuario específico
+export const getLessonsByCourseIdWithUnlockStatus = async (
+  userId: string,
+  courseId: number
+): Promise<(Lesson & { isUnlocked: boolean })[]> => {
+  const lessonsResult = await db
+    .select()
+    .from(lessons)
+    .where(eq(lessons.courseId, courseId))
+    .orderBy(lessons.order);
+
+  const lessonsWithUnlockStatus = await Promise.all(
+    lessonsResult.map(async (lesson) => {
+      const isUnlocked = await isLessonUnlocked(userId, lesson.id);
+      return {
+        ...lesson,
+        course_id: lesson.courseId,
+        duration: lesson.duration,
+        coverVideoKey: lesson.coverVideoKey,
+        createdAt: lesson.createdAt.toISOString(),
+        updatedAt: lesson.updatedAt.toISOString(),
+        resourceKey: lesson.resourceKey,
+        porcentajecompletado: lesson.porcentajecompletado ?? 0,
+        isLocked: lesson.isLocked ?? false,
+        isUnlocked,
+      };
+    })
+  );
+
+  return lessonsWithUnlockStatus;
 };

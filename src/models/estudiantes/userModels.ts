@@ -20,7 +20,12 @@ export async function getAllUsers(): Promise<User[]> {
   return db.select().from(users);
 }
 
-export async function createUser(id: string, role: string, name: string, email: string): Promise<void> {
+export async function createUser(
+  id: string,
+  role: string,
+  name: string,
+  email: string
+): Promise<void> {
   await db.insert(users).values({
     id,
     role,

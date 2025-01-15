@@ -44,5 +44,7 @@ export const config = {
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     // Siempre ejecutar para rutas API
     '/(api|trpc)(.*)',
+    // Proteger las rutas de clases
+    '/estudiantes/clases(.*)',
   ],
 };

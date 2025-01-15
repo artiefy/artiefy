@@ -1,26 +1,27 @@
 {
-  "editor.formatOnSave": true, // Formatear automáticamente al guardar
-  "editor.formatOnSaveMode": "file", // Formatear solo el archivo guardado
-  "files.autoSave": "onFocusChange", // Guardar automáticamente
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "files.autoSave": "onFocusChange",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "always" // Corregir todos los problemas de ESLint al guardar
+    "source.fixAll.eslint": "always"
   },
-  "typescript.tsdk": "./node_modules/typescript/lib", // Ruta del SDK de TypeScript
+  "typescript.tsdk": "./node_modules/typescript/lib",
   "eslint.rules.customizations": [
-    { "rule": "import/order", "severity": "off" } // Desactivar notificaciones para import/order
+    { "rule": "import/order", "severity": "off" },
+    { "rule": "@typescript-eslint/no-unused-vars", "severity": "warn" }
   ],
-  "editor.defaultFormatter": "esbenp.prettier-vscode", // Establecer Prettier como formateador por defecto
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // Prettier como formateador por defecto para JavaScript
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[javascriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // Prettier como formateador por defecto para JavaScript React
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // Prettier como formateador por defecto para TypeScript
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // Prettier como formateador por defecto para TypeScript React
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "eslint.validate": [
     "javascript",
