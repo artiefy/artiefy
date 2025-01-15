@@ -1,17 +1,14 @@
-"use client";
-import LeftSidebar from "~/components/educators/MenuDocentes/SideBarDocentes";
+'use client';
+import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  
   return (
     <section>
-      <LeftSidebar>
-        {children}
-      </LeftSidebar>
+      <ResponsiveSidebar>{children}</ResponsiveSidebar>
     </section>
   );
 }
