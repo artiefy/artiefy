@@ -7,6 +7,7 @@ import {
   enrollments,
   categories,
   modalidades,
+  activities,
 } from '~/server/db/schema';
 
 export interface Lesson {
@@ -51,6 +52,14 @@ export interface Course {
   totalStudents?: number;
   createdAt: string | number | Date;
   updatedAt: string | number | Date;
+}
+
+export interface Activity {
+  id: number;
+  title: string;
+  type: string;
+  completed: boolean;
+  lessons_id: number;
 }
 
 // Crear un nuevo curso
@@ -229,6 +238,20 @@ export const getLessonById = async (
     resourceKey: lessonData.resourceKey,
     porcentajecompletado: lessonData.porcentajecompletado ?? 0,
   };
+};
+
+// Obtener actividades por ID de lección
+export const getActivitiesByLessonId = async (
+  lesson_id: number
+): Promise<Activity[]> => {
+  const activitiesResult = await db
+    .select()
+    .from(activities)
+    .where(eq(activities.lessonsId, lesson_id));
+  return activitiesResult.map((activity) => ({
+    ...activity,
+    lessons_id: activity.lessonsId,
+  }));
 };
 
 // Obtener todos los cursos

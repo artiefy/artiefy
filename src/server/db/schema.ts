@@ -95,7 +95,7 @@ export const lessons = pgTable('lessons', {
     .notNull(), // Relación con la tabla cursos
   createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
-  porcentajecompletado: real('porcentajecompletado').default(0), // Nuevo campo de porcentaje completado
+  porcentajecompletado: real('porcentajecompletado').default(0), // Porcentaje de completado de las clases
   resourceKey: text('resource_key').notNull(), // Clave del recurso en S3
 });
 
@@ -246,39 +246,6 @@ export const coursesTakenRelations = relations(coursesTaken, ({ one }) => ({
     references: [users.id], // ID del usuario
   }),
 }));
-
-// export const progressRelations = relations(progress, ({ one }) => ({
-//   user: one(users, {
-//     fields: [progress.userId], // Campo que referencia al usuario
-//     references: [users.id], // ID del usuario
-//   }),
-//   lesson: one(lessons, {
-//     fields: [progress.lessonId], // Campo que referencia a la lección
-//     references: [lessons.id], // ID de la lección
-//   }),
-// }));
-
-// export const certificatesRelations = relations(certificates, ({ one }) => ({
-//   user: one(users, {
-//     fields: [certificates.userId], // Campo que referencia al usuario
-//     references: [users.id], // ID del usuario
-//   }),
-//   course: one(courses, {
-//     fields: [certificates.courseId], // Campo que referencia al curso
-//     references: [courses.id], // ID del curso
-//   }),
-// }));
-
-// export const commentsRelations = relations(comments, ({ one }) => ({
-//   user: one(users, {
-//     fields: [comments.userId], // Campo que referencia al usuario
-//     references: [users.id], // ID del usuario
-//   }),
-//   lesson: one(lessons, {
-//     fields: [comments.lessonId], // Campo que referencia a la lección
-//     references: [lessons.id], // ID de la lección
-//   }),
-// }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   preferences: many(preferences), // Relación con preferencias

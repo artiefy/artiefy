@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
-import VideoPlayer from '~/components/estudiantes/layout/VideoPlayer';
-import { getLessonById } from '~/models/estudiantes/courseModelsStudent'; // Import the correct function
+import { getLessonById } from '~/models/estudiantes/courseModelsStudent';
+import LessonDetails from './LessonDetails';
 
 interface Props {
   params: { id: string };
@@ -24,19 +24,7 @@ async function PageContent({ id }: { id: string }) {
       notFound();
     }
 
-    return (
-      <div>
-        <section className="container mx-auto p-4">
-          <h1 className="mb-4 text-2xl font-bold">{lesson.title}</h1>
-          <VideoPlayer videoKey={lesson.coverVideoKey} />
-          <p className="mt-4">{lesson.description}</p>
-          <p className="mt-4">Resource Key: {lesson.resourceKey}</p>
-          <p className="mt-4">
-            Porcentaje Completado: {lesson.porcentajecompletado}%
-          </p>
-        </section>
-      </div>
-    );
+    return <LessonDetails lesson={lesson} />;
   } catch (error) {
     console.error('Error fetching lesson:', error);
     notFound();
