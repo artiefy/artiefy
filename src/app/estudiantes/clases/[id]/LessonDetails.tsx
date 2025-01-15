@@ -187,10 +187,12 @@ export default function LessonDetails({
   return (
     <>
       <Header />
-      <div className="flex h-screen bg-gray-100">
+      <div className="flex h-screen px-14">
         {/* Left Sidebar */}
-        <div className="w-80 bg-background p-4 shadow-lg">
-          <h2 className="mb-4 text-2xl font-bold text-primary">Clases :</h2>
+        <div className="w-80 bg-background pr-8 shadow-lg">
+          <h2 className="mb-4 text-center text-3xl font-bold text-primary">
+            Clases
+          </h2>
           {lessonsState.map((lessonItem) => (
             <div
               key={lessonItem.id}
@@ -233,11 +235,8 @@ export default function LessonDetails({
           ))}
         </div>
 
-        {/* Separator Line */}
-        <div className="h-auto border-r"></div>
-
         {/* Main Content */}
-        <div className="flex-1 bg-background p-6">
+        <div className="flex-1 bg-background">
           <div className="mx-auto max-w-4xl">
             {/* Video Player */}
             <div className="mb-6 overflow-hidden rounded-lg bg-background">
@@ -265,13 +264,10 @@ export default function LessonDetails({
           </div>
         </div>
 
-        {/* Separator Line */}
-        <div className="h-auto border-r"></div>
-
         {/* Right Sidebar - Activity */}
-        <div className="w-72 bg-background p-4 shadow-lg">
-          <h2 className="mb-4 text-2xl font-bold text-primary">
-            Actividades :
+        <div className="w-72 bg-background pl-8 shadow-lg">
+          <h2 className="mb-4 text-center text-3xl font-bold text-primary">
+            Actividades
           </h2>
           {activity ? (
             <div className="mb-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
