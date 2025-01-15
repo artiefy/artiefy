@@ -1,8 +1,4 @@
-import {
-  S3Client,
-  CreateMultipartUploadCommand,
-  AbortMultipartUploadCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client, CreateMultipartUploadCommand, AbortMultipartUploadCommand } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -26,9 +22,7 @@ export async function POST(request: Request) {
     const key = `uploads/${uuidv4()}`; // Agregamos un prefijo 'uploads/' para mejor organización
 
     if (fileSize > MAX_FILE_SIZE) {
-      throw new Error(
-        'El archivo es demasiado grande. El tamaño máximo permitido es 1 GB.'
-      );
+      throw new Error('El archivo es demasiado grande. El tamaño máximo permitido es 1 GB.');
     }
 
     if (fileSize <= MAX_SIMPLE_UPLOAD_SIZE) {
@@ -90,7 +84,9 @@ export async function DELETE(request: Request) {
       })
     );
 
-    return Response.json({ message: 'Carga multiparte abortada con éxito' });
+    return Response.json({
+      message: 'Carga multiparte abortada con éxito',
+    });
   } catch (error) {
     console.error('Error al abortar la carga multiparte:', error);
     return Response.json({ error: (error as Error).message }, { status: 500 });

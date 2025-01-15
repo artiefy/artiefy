@@ -1,38 +1,44 @@
 import { type Config } from 'tailwindcss';
-import animatePlugin from 'tailwindcss-animate';
 import { fontFamily } from 'tailwindcss/defaultTheme';
+import animatePlugin from 'tailwindcss-animate';
 
+// Configuración de Tailwind CSS
 export default {
-  darkMode: ['class'], // Modo oscuro activado por clase
+  // Modo oscuro activado por clase
+  darkMode: ['class'],
+  // Archivos a escanear
   content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}', // Archivos a escanear en la carpeta app
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
-
-    // Or if using `src` directory:
     './src/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
+      // Animaciones personalizadas
       animation: {
-        'spin-slow': 'spin 3s linear infinite', // Animación de giro lento
-        'caret-blink': 'caret-blink 1.25s ease-out infinite', // Animación de parpadeo del cursor
+        'spin-slow': 'spin 3s linear infinite',
+        'caret-blink': 'caret-blink 1.25s ease-out infinite',
       },
+      // Keyframes personalizados
       keyframes: {
         'caret-blink': {
-          '0%,70%,100%': { opacity: '1' }, // Opacidad del cursor en diferentes momentos
-          '20%,50%': { opacity: '0' }, // Opacidad del cursor en diferentes momentos
+          '0%,70%,100%': { opacity: '1' },
+          '20%,50%': { opacity: '0' },
         },
       },
+      // Fuentes personalizadas
       fontFamily: {
-        sans: ['var(--font-montserrat)', ...fontFamily.sans], // Fuente sans personalizada
-        montserrat: ['var(--font-montserrat)', ...fontFamily.sans], // Fuente Montserrat personalizada
+        sans: ['var(--font-montserrat)', ...fontFamily.sans],
+        montserrat: ['var(--font-montserrat)', ...fontFamily.sans],
       },
+      // Bordes personalizados
       borderRadius: {
-        lg: 'var(--radius)', // Radio de borde grande
-        md: 'calc(var(--radius) - 2px)', // Radio de borde mediano
-        sm: 'calc(var(--radius) - 4px)', // Radio de borde pequeño
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
       },
+      // Colores personalizados
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
@@ -64,27 +70,40 @@ export default {
             foreground: 'hsl(var(--destructive-foreground))',
           },
         },
-        border: 'hsl(var(--border))', // Color de borde
-        input: 'hsl(var(--input))', // Color de entrada
-        ring: 'hsl(var(--ring))', // Color de anillo
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        muted: {
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
         chart: {
-          1: 'hsl(var(--chart-1))', // Color de gráfico 1
-          2: 'hsl(var(--chart-2))', // Color de gráfico 2
-          3: 'hsl(var(--chart-3))', // Color de gráfico 3
-          4: 'hsl(var(--chart-4))', // Color de gráfico 4
-          5: 'hsl(var(--chart-5))', // Color de gráfico 5
+          1: 'hsl(var(--chart-1))',
+          2: 'hsl(var(--chart-2))',
+          3: 'hsl(var(--chart-3))',
+          4: 'hsl(var(--chart-4))',
+          5: 'hsl(var(--chart-5))',
         },
       },
     },
+    // Tamaños de pantalla personalizados
     screens: {
-      xs: '475px', // Tamaño de pantalla extra pequeño
-      sm: '640px', // Tamaño de pantalla pequeño
-      md: '768px', // Tamaño de pantalla mediano
-      lg: '1024px', // Tamaño de pantalla grande
-      xl: '1280px', // Tamaño de pantalla extra grande
-      '2xl': '1536px', // Tamaño de pantalla 2x extra grande
-      '3xl': '1920px', // Tamaño de pantalla 3x extra grande
+      xs: '475px',
+      sm: '640px',
+      md: '768px',
+      lg: '1024px',
+      xl: '1280px',
+      '2xl': '1536px',
+      '3xl': '1920px',
     },
   },
-  plugins: [animatePlugin], // Plugin de animación
+  // Plugins de Tailwind CSS
+  plugins: [animatePlugin],
 } satisfies Config;

@@ -13,9 +13,7 @@ export const contentType = 'image/png';
 // Image generation
 export default async function Image() {
   // Load Montserrat font
-  const montserrat = fetch(
-    'https://fonts.gstatic.com/s/montserrat/v15/JTURjIg1_i6t8kCHKm45_dJE3gnD-w.ttf'
-  ).then((res) => res.arrayBuffer());
+  const montserrat = fetch('https://fonts.gstatic.com/s/montserrat/v15/JTURjIg1_i6t8kCHKm45_dJE3gnD-w.ttf').then((res) => res.arrayBuffer());
 
   return new ImageResponse(
     (
@@ -46,8 +44,7 @@ export default async function Image() {
           }}
         >
           <div style={{ fontSize: 40, marginTop: 10 }}>
-            Unete a nosotros y transforma tus ideas en realidades con el poder
-            del conocimineto. ¡Empieza hoy! 🎓 📚
+            Unete a nosotros y transforma tus ideas en realidades con el poder del conocimineto. ¡Empieza hoy! 🎓 📚
           </div>
         </div>
       </div>

@@ -1,10 +1,10 @@
-export type FechaNacimiento = {
+export interface FechaNacimiento {
   dia: string;
   mes: string;
   año: string;
 }
 
-export type Address = {
+export interface Address {
   ciudad: string;
   pais: string;
   vecindario: string;
@@ -27,11 +27,6 @@ export interface Estudiante {
 }
 
 // You can also export other user types here if needed
-export interface Admin {
-  // Admin properties
-}
+export type Admin = object;
 
-export interface Teacher {
-  // Teacher properties
-}
-
+export type Teacher = object;

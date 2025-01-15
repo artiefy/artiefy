@@ -1,7 +1,24 @@
 'use client';
 
 import { useState } from 'react';
+import { Users, BookOpen, Star, Search, Plus } from 'lucide-react';
+import { DashboardMetrics } from '~/components/admin/ui/DashboardMetrics';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '~/components/admin/ui/dialog';
+import TutorDetalle from '~/components/admin/ui/TutorDetalle';
+import TutorForm from '~/components/admin/ui/TutorForm';
 import { Button } from '~/components/estudiantes/ui/button';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from '~/components/estudiantes/ui/card';
 import { Input } from '~/components/estudiantes/ui/input';
 import {
     Table,
@@ -11,23 +28,6 @@ import {
     TableHeader,
     TableRow,
 } from '~/components/estudiantes/ui/table';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '~/components/estudiantes/ui/dialog';
-import { DashboardMetrics } from '~/components/estudiantes/ui/DashboardMetrics';
-import { Users, BookOpen, Star, Search, Plus } from 'lucide-react';
-import TutorForm from '~/components/estudiantes/ui/TutorForm';
-import TutorDetalle from '~/components/estudiantes/ui/TutorDetalle';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from '~/components/estudiantes/ui/card';
 import type { Tutor } from '~/types/tutor';
 
 export default function Tutores() {
@@ -147,7 +147,7 @@ export default function Tutores() {
                 </CardHeader>
                 <CardContent className="flex items-center justify-between">
                     <div className="relative w-full max-w-sm">
-                        <Search className="text-muted-foreground absolute left-2 top-1/2 -translate-y-1/2 transform" />
+                        <Search className="text-muted-foreground absolute left-2 top-1/2 -translate-y-1/2" />
                         <Input
                             placeholder="Buscar tutores..."
                             value={searchTerm}
@@ -160,7 +160,7 @@ export default function Tutores() {
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button>
-                                <Plus className="mr-2 h-4 w-4" /> Agregar Tutor
+                                <Plus className="mr-2 size-4" /> Agregar Tutor
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[425px]">

@@ -12,11 +12,13 @@ const eslintConfig = [
       'out/**',
       'public/**',
       '**/*.d.ts',
-    ]
+      'src/components/estudiantes/ui',
+    ],
   },
   ...compat.config({
     extends: [
-      'next/core-web-vitals',
+      'plugin:@next/next/recommended',
+      'plugin:@typescript-eslint/recommended',
       'plugin:@typescript-eslint/recommended-type-checked',
       'plugin:@typescript-eslint/stylistic-type-checked',
       'plugin:tailwindcss/recommended',
@@ -26,19 +28,14 @@ const eslintConfig = [
     ],
     parser: '@typescript-eslint/parser',
     parserOptions: {
-      project: true,
+      project: './tsconfig.json',
+      tsconfigRootDir: import.meta.dirname,
     },
-    plugins: [
-      '@typescript-eslint',
-      'drizzle',
-      'tailwindcss',
-      'jsx-a11y',
-      'import',
-    ],
+    plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
     rules: {
       'tailwindcss/no-custom-classname': 'warn',
-      'tailwindcss/classnames-order': 'warn',
-      "@typescript-eslint/consistent-type-definitions": "warn",
+      'tailwindcss/classnames-order': 'off',
+      '@typescript-eslint/consistent-type-definitions': 'warn',
       '@typescript-eslint/consistent-type-imports': [
         'warn',
         {
@@ -79,42 +76,56 @@ const eslintConfig = [
       'import/order': [
         'warn',
         {
-          'groups': ['builtin', 'external', 'internal', ['parent', 'sibling']],
-          'pathGroups': [
+          groups: ['builtin', 'external', 'internal', ['parent', 'sibling']],
+          pathGroups: [
             {
-              'pattern': 'react',
-              'group': 'external',
-              'position': 'before'
+              pattern: 'react',
+              group: 'external',
+              position: 'before',
             },
             {
-              'pattern': '@/components/**',
-              'group': 'internal',
-              'position': 'after'
-            }
+              pattern: '@/components/**',
+              group: 'internal',
+              position: 'after',
+            },
           ],
-          'pathGroupsExcludedImportTypes': ['react'],
-          'alphabetize': {
-            'order': 'asc',
-            'caseInsensitive': true
-          }
-        }
+          pathGroupsExcludedImportTypes: ['react'],
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
       ],
-      'import/newline-after-import': 'warn',
+      'react/react-in-jsx-scope': 'off',
+      'import/no-unresolved': 'off',
+      'import/newline-after-import': 'off',
     },
     settings: {
+      'import/resolver': {
+        alias: {
+          map: [['~', './src']],
+          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        },
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+      },
+      react: {
+        version: 'detect',
+      },
       tailwindcss: {
         config: './tailwind.config.ts',
-        cssFiles: [
-          './src/**/*.css',
-          './styles/globals.css',
-        ],
+        cssFiles: ['./src/**/*.css'],
+        callees: ['classnames', 'clsx', 'ctl'],
+        tags: ['tw'],
       },
       next: {
         rootDir: './',
       },
+      files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
     },
   }),
 ];
 
 export default eslintConfig;
-

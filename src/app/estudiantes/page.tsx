@@ -31,6 +31,7 @@ import {
 } from '~/components/estudiantes/ui/pagination';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { toast } from '~/hooks/use-toast';
+import { blurDataURL } from '~/lib/blurDataUrl';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -177,9 +178,7 @@ export default function StudentDashboard(props: {
                 courses.slice(0, 5).map((course, index) => (
                   <div
                     key={course.id}
-                    className={`absolute size-full transition-opacity duration-500 ${
-                      index === carouselIndex ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className={`absolute size-full transition-opacity duration-500 ${index === carouselIndex ? 'opacity-100' : 'opacity-0'}`}
                   >
                     <div className="relative size-full">
                       <Image
@@ -191,7 +190,7 @@ export default function StudentDashboard(props: {
                         sizes="100vw"
                         quality={85}
                         placeholder="blur"
-                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
+                        blurDataURL={blurDataURL}
                       />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
@@ -228,9 +227,7 @@ export default function StudentDashboard(props: {
                   <button
                     key={index}
                     onClick={() => handleCarouselChange(index)}
-                    className={`size-2 rounded-full sm:size-3 ${
-                      index === carouselIndex ? 'bg-white' : 'bg-white/50'
-                    }`}
+                    className={`size-2 rounded-full sm:size-3 ${index === carouselIndex ? 'bg-white' : 'bg-white/50'}`}
                   />
                 ))}
               </div>
@@ -298,7 +295,7 @@ export default function StudentDashboard(props: {
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               quality={85}
                               placeholder="blur"
-                              blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
+                              blurDataURL={blurDataURL}
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
                               <h3 className="text-lg font-bold text-white">

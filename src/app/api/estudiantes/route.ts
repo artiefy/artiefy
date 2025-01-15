@@ -1,21 +1,13 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
-import {
-  createCourse,
-  deleteCourse,
-  getAllCourses,
-  getCourseById,
-  getCoursesByUserId,
-  updateCourse,
-} from '~/models/estudiantes/courseModelsStudent';
+import { createCourse, deleteCourse, getAllCourses, getCourseById, getCoursesByUserId, updateCourse } from '~/models/estudiantes/courseModelsStudent';
 import { createUser, getUserById } from '~/models/estudiantes/userModels';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 export const dynamic = 'force-dynamic'; // Forzar el estado dinámico
 
 // Función de utilidad para responder con un error
-const respondWithError = (message: string, status: number) =>
-  NextResponse.json({ error: message }, { status });
+const respondWithError = (message: string, status: number) => NextResponse.json({ error: message }, { status });
 
 // Obtener todos los cursos de un profesor o todos los cursos si no se proporciona user_id
 export async function GET(request: NextRequest) {
@@ -62,14 +54,10 @@ export async function POST(request: NextRequest) {
 
     const clerkUser = await currentUser();
     if (!clerkUser) {
-      return respondWithError(
-        'No se pudo obtener información del usuario',
-        500
-      );
+      return respondWithError('No se pudo obtener información del usuario', 500);
     }
 
-    const userName: string =
-      clerkUser.fullName ?? clerkUser.firstName ?? 'Usuario sin nombre';
+    const userName: string = clerkUser.fullName ?? clerkUser.firstName ?? 'Usuario sin nombre';
     const userEmail: string = clerkUser.emailAddresses[0]?.emailAddress ?? '';
 
     let existingUser = await getUserById(userId);
@@ -90,16 +78,9 @@ export async function POST(request: NextRequest) {
       instructor: string;
       rating: number;
       modalidadesid: number;
+      dificultadid: number;
     };
-    const {
-      title,
-      description,
-      coverImageKey,
-      categoryid,
-      instructor,
-      rating,
-      modalidadesid,
-    } = body;
+    const { title, description, coverImageKey, categoryid, instructor, rating, modalidadesid, dificultadid } = body;
 
     await createCourse({
       title,
@@ -109,7 +90,8 @@ export async function POST(request: NextRequest) {
       categoryid,
       instructor,
       rating,
-      modalidadesid, // Add this line
+      modalidadesid,
+      dificultadid,
     });
 
     return NextResponse.json({
@@ -140,16 +122,7 @@ export async function PUT(request: NextRequest) {
       rating: number;
       modalidadesid: number;
     };
-    const {
-      id,
-      title,
-      description,
-      coverImageKey,
-      categoryid,
-      instructor,
-      rating,
-      modalidadesid,
-    } = body;
+    const { id, title, description, coverImageKey, categoryid, instructor, rating, modalidadesid } = body;
 
     const course = await getCourseById(id);
     if (!course) {

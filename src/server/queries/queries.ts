@@ -13,9 +13,7 @@ export async function getAdminUsers(query: string | undefined) {
     id: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
-    email: user.emailAddresses.find(
-      (email) => email.id === user.primaryEmailAddressId
-    )?.emailAddress,
+    email: user.emailAddresses.find((email) => email.id === user.primaryEmailAddressId)?.emailAddress,
     role: user.publicMetadata.role || 'estudiante', // Si role no existe, asignar 'estudiante'
   }));
 

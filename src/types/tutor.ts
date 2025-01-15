@@ -1,4 +1,4 @@
-export type Tutor = {
+export interface Tutor {
   id: number;
 
   nombre: string;
@@ -20,4 +20,4 @@ export type Tutor = {
   rating: number;
 
   experience: number;
-};
+}

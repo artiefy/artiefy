@@ -55,18 +55,10 @@ export default function Page() {
   }, [user]);
 
   useEffect(() => {
-    fetchCourses().catch((error) =>
-      console.error('Error fetching courses:', error)
-    );
+    fetchCourses().catch((error) => console.error('Error fetching courses:', error));
   }, [user, fetchCourses]);
 
-  const handleCreateOrEditCourse = async (
-    title: string,
-    description: string,
-    file: File | null,
-    category: string,
-    rating: number
-  ) => {
+  const handleCreateOrEditCourse = async (title: string, description: string, file: File | null, category: string, rating: number) => {
     if (!user) return;
 
     let coverImageKey = '';
@@ -85,9 +77,7 @@ export default function Page() {
       const { url, fields } = (await uploadResponse.json()) as UploadResponse;
 
       const formData = new FormData();
-      Object.entries(fields).forEach(([key, value]) =>
-        formData.append(key, value)
-      );
+      Object.entries(fields).forEach(([key, value]) => formData.append(key, value));
       formData.append('file', file);
 
       await fetch(url, { method: 'POST', body: formData });
@@ -113,21 +103,16 @@ export default function Page() {
     if (response.ok) {
       toast({
         title: editingCourse ? 'Curso actualizado' : 'Curso creado',
-        description: editingCourse
-          ? 'El curso se actualizó con éxito'
-          : 'El curso se creó con éxito',
+        description: editingCourse ? 'El curso se actualizó con éxito' : 'El curso se creó con éxito',
       });
-      fetchCourses().catch((error) =>
-        console.error('Error fetching courses:', error)
-      );
+      fetchCourses().catch((error) => console.error('Error fetching courses:', error));
       setEditingCourse(null);
       setIsModalOpen(false);
     } else {
       const errorData = (await response.json()) as { error?: string };
       toast({
         title: 'Error',
-        description:
-          errorData.error ?? 'Ocurrió un error al procesar la solicitud',
+        description: errorData.error ?? 'Ocurrió un error al procesar la solicitud',
         variant: 'destructive',
       });
     }
@@ -150,9 +135,7 @@ export default function Page() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, userId: user.id }),
     });
-    fetchCourses().catch((error) =>
-      console.error('Error fetching courses:', error)
-    );
+    fetchCourses().catch((error) => console.error('Error fetching courses:', error));
   };
 
   const handleCloseModal = () => {
@@ -167,52 +150,27 @@ export default function Page() {
           <UserButton showName />
         </header>
         <div className="mt-6 flex justify-end">
-          <Button
-            onClick={handleCreateCourse}
-            className="bg-primary text-background transition-transform hover:text-primary active:scale-95"
-          >
+          <Button onClick={handleCreateCourse} className="bg-primary text-background transition-transform hover:text-primary active:scale-95">
             <FiPlus className="mr-2" />
             Crear Curso
           </Button>
         </div>
         <h2 className="mb-4 text-2xl font-bold">Lista De Cursos Creados</h2>
-        {loading ? (
-          <LoadingCourses />
-        ) : (
-          <CourseListTeacher
-            courses={courses}
-            onEdit={handleEditCourse}
-            onDelete={handleDeleteCourse}
-          />
-        )}
+        {loading ? <LoadingCourses /> : <CourseListTeacher courses={courses} onEdit={handleEditCourse} onDelete={handleDeleteCourse} />}
         {isModalOpen && (
           <CourseForm
             onSubmitAction={handleCreateOrEditCourse}
             uploading={uploading}
             editingCourseId={editingCourse ? editingCourse.id : null}
             title={editingCourse?.title ?? ''}
-            setTitle={(title: string) =>
-              setEditingCourse((prev) => (prev ? { ...prev, title } : null))
-            }
-            setDescription={(description: string) =>
-              setEditingCourse((prev) =>
-                prev ? { ...prev, description } : null
-              )
-            }
+            setTitle={(title: string) => setEditingCourse((prev) => (prev ? { ...prev, title } : null))}
+            setDescription={(description: string) => setEditingCourse((prev) => (prev ? { ...prev, description } : null))}
             category={editingCourse?.category ?? ''}
-            setCategory={(category: string) =>
-              setEditingCourse((prev) => (prev ? { ...prev, category } : null))
-            }
+            setCategory={(category: string) => setEditingCourse((prev) => (prev ? { ...prev, category } : null))}
             rating={editingCourse?.rating ?? 0}
-            setRating={(rating: number) =>
-              setEditingCourse((prev) => (prev ? { ...prev, rating } : null))
-            }
+            setRating={(rating: number) => setEditingCourse((prev) => (prev ? { ...prev, rating } : null))}
             coverImageKey={editingCourse?.coverImageKey ?? ''}
-            setCoverImageKey={(coverImageKey: string) =>
-              setEditingCourse((prev) =>
-                prev ? { ...prev, coverImageKey } : null
-              )
-            }
+            setCoverImageKey={(coverImageKey: string) => setEditingCourse((prev) => (prev ? { ...prev, coverImageKey } : null))}
             isOpen={isModalOpen}
             onCloseAction={handleCloseModal}
           />

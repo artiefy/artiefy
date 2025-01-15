@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
@@ -14,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/estudiantes/ui/card';
+import { blurDataURL } from '~/lib/blurDataUrl';
 
 interface Course {
   id: number;
@@ -47,27 +46,34 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
       {courses.map((course) => (
         <Card
           key={course.id}
-          className={`flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in hover:scale-105`}
+          className={
+            'flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in hover:scale-105'
+          }
         >
           <div>
             <CardHeader>
               <AspectRatio ratio={16 / 9}>
-                <Image
-                  src={
-                    course.coverImageKey
-                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                  }
-                  alt={course.title || 'Imagen del curso'}
-                  className={`rounded-lg object-cover transition-opacity duration-500 ${
-                    loadedImages[course.id] ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  fill
-                  placeholder="blur"
-                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  onLoad={(_event) => handleImageLoad(course.id)}
-                />
+                <div className="relative size-full">
+                  <Image
+                    src={
+                      course.coverImageKey
+                        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
+                        : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                    }
+                    alt={course.title || 'Imagen del curso'}
+                    className={`rounded-lg object-cover transition-opacity duration-500 ${loadedImages[course.id] ? 'opacity-100' : 'opacity-0'}`}
+                    fill
+                    placeholder="blur"
+                    blurDataURL={blurDataURL}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    onLoad={() => handleImageLoad(course.id)}
+                  />
+                  {!loadedImages[course.id] && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#00BDD8] text-white">
+                      Cargando...
+                    </div>
+                  )}
+                </div>
               </AspectRatio>
             </CardHeader>
             <CardContent>

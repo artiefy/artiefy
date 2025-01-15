@@ -6,24 +6,11 @@ import Image from 'next/image';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import { Button } from '~/components/estudiantes/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '~/components/estudiantes/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '~/components/estudiantes/ui/dialog';
 import { Progress } from '~/components/estudiantes/ui/progress';
 
 interface CourseFormProps {
-  onSubmitAction: (
-    title: string,
-    description: string,
-    file: File | null,
-    category: string,
-    rating: number
-  ) => Promise<void>;
+  onSubmitAction: (title: string, description: string, file: File | null, category: string, rating: number) => Promise<void>;
   uploading: boolean;
   editingCourseId: string | null;
   title: string;
@@ -39,13 +26,7 @@ interface CourseFormProps {
   onCloseAction: () => void;
 }
 
-export default function CourseForm({
-  onSubmitAction,
-  uploading,
-  editingCourseId,
-  isOpen,
-  onCloseAction,
-}: CourseFormProps) {
+export default function CourseForm({ onSubmitAction, uploading, editingCourseId, isOpen, onCloseAction }: CourseFormProps) {
   const { user } = useUser();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -162,99 +143,81 @@ export default function CourseForm({
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
       <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader className="mt-4">
-          <DialogTitle>
-            {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
-          </DialogTitle>
-          <DialogDescription>
-            {editingCourseId
-              ? 'Edita los detalles del curso'
-              : 'Llena los detalles para crear un nuevo curso'}
-          </DialogDescription>
+          <DialogTitle>{editingCourseId ? 'Editar Curso' : 'Crear Curso'}</DialogTitle>
+          <DialogDescription>{editingCourseId ? 'Edita los detalles del curso' : 'Llena los detalles para crear un nuevo curso'}</DialogDescription>
         </DialogHeader>
         <div className="rounded-lg bg-background px-6 text-black shadow-md">
-          {errors.title && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
+          {errors.title && <p className="text-sm text-red-500">Este campo es obligatorio.</p>}
           <input
             type="text"
             placeholder="Título"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
-              setErrors((prev) => ({ ...prev, title: !e.target.value }));
+              setErrors((prev) => ({
+                ...prev,
+                title: !e.target.value,
+              }));
             }}
-            className={`mb-4 w-full rounded border p-2 ${errors.title ? 'border-red-500' : 'border-primary'}`}
+            className={mb-4 w-full rounded border p-2 ${errors.title ? 'border-red-500' : 'border-primary'}}
           />
-          {errors.description && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
+          {errors.description && <p className="text-sm text-red-500">Este campo es obligatorio.</p>}
           <textarea
             placeholder="Descripción"
             value={description}
             onChange={(e) => {
               setDescription(e.target.value);
-              setErrors((prev) => ({ ...prev, description: !e.target.value }));
+              setErrors((prev) => ({
+                ...prev,
+                description: !e.target.value,
+              }));
             }}
-            className={`mb-3 w-full rounded border p-2 ${errors.description ? 'border-red-500' : 'border-primary'}`}
+            className={mb-3 w-full rounded border p-2 ${errors.description ? 'border-red-500' : 'border-primary'}}
           />
-          {errors.category && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
+          {errors.category && <p className="text-sm text-red-500">Este campo es obligatorio.</p>}
           <input
             type="text"
             placeholder="Categoría"
             value={category}
             onChange={(e) => {
               setCategory(e.target.value);
-              setErrors((prev) => ({ ...prev, category: !e.target.value }));
+              setErrors((prev) => ({
+                ...prev,
+                category: !e.target.value,
+              }));
             }}
-            className={`mb-4 w-full rounded border p-2 ${errors.category ? 'border-red-500' : 'border-primary'}`}
+            className={mb-4 w-full rounded border p-2 ${errors.category ? 'border-red-500' : 'border-primary'}}
           />
           <div className="mb-4 w-full rounded border border-primary p-2">
-            <h3 className="text-lg font-medium text-primary">
-              Instructor: {user?.fullName}
-            </h3>
+            <h3 className="text-lg font-medium text-primary">Instructor: {user?.fullName}</h3>
           </div>
-          {errors.rating && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
+          {errors.rating && <p className="text-sm text-red-500">Este campo es obligatorio.</p>}
           <input
             type="number"
             placeholder="Calificación"
             value={rating}
             onChange={(e) => {
               setRating(Number(e.target.value));
-              setErrors((prev) => ({ ...prev, rating: !e.target.value }));
+              setErrors((prev) => ({
+                ...prev,
+                rating: !e.target.value,
+              }));
             }}
-            className={`mb-4 w-full rounded border p-2 ${errors.rating ? 'border-red-500' : 'border-primary'}`}
+            className={mb-4 w-full rounded border p-2 ${errors.rating ? 'border-red-500' : 'border-primary'}}
           />
-          {errors.file && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
+          {errors.file && <p className="text-sm text-red-500">Este campo es obligatorio.</p>}
           <div
-            className={`rounded-lg border-2 border-dashed p-8 ${isDragging ? 'border-blue-500 bg-blue-50' : errors.file ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'} transition-all duration-300 ease-in-out`}
+            className={rounded-lg border-2 border-dashed p-8 ${isDragging ? 'border-blue-500 bg-blue-50' : errors.file ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-gray-50'} transition-all duration-300 ease-in-out}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             <div className="text-center">
               <FiUploadCloud className="mx-auto size-12 text-gray-400" />
-              <h2 className="mt-4 text-xl font-medium text-gray-700">
-                Arrastra y suelta tu imagen aquí
-              </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                o haz clic para seleccionar un archivo desde tu computadora
-              </p>
-              <p className="mt-1 text-sm text-gray-500">
-                Supports: JPG, PNG, GIF (Max size: 5MB)
-              </p>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-                id="file-upload"
-              />
+              <h2 className="mt-4 text-xl font-medium text-gray-700">Arrastra y suelta tu imagen aquí</h2>
+              <p className="mt-2 text-sm text-gray-500">o haz clic para seleccionar un archivo desde tu computadora</p>
+              <p className="mt-1 text-sm text-gray-500">Supports: JPG, PNG, GIF (Max size: 5MB)</p>
+              <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} id="file-upload" />
               <label
                 htmlFor="file-upload"
                 className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -265,25 +228,18 @@ export default function CourseForm({
           </div>
           {fileName && (
             <div className="mt-8">
-              <h3 className="mb-4 text-lg font-medium text-primary">
-                Vista previa de la imagen
-              </h3>
+              <h3 className="mb-4 text-lg font-medium text-primary">Vista previa de la imagen</h3>
               <div className="group relative overflow-hidden rounded-lg bg-gray-100">
-                {file && (
-                  <Image
-                    src={URL.createObjectURL(file)}
-                    alt="preview"
-                    width={500}
-                    height={200}
-                    className="h-48 w-full object-cover"
-                  />
-                )}
+                {file && <Image src={URL.createObjectURL(file)} alt="preview" width={500} height={200} className="h-48 w-full object-cover" />}
                 <button
                   onClick={() => {
                     setFile(null);
                     setFileName(null);
                     setFileSize(null);
-                    setErrors((prev) => ({ ...prev, file: true }));
+                    setErrors((prev) => ({
+                      ...prev,
+                      file: true,
+                    }));
                   }}
                   className="absolute right-2 top-2 rounded-full bg-red-500 p-1 text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 >
@@ -291,9 +247,7 @@ export default function CourseForm({
                 </button>
                 <div className="flex justify-between p-2">
                   <p className="truncate text-sm text-gray-500">{fileName}</p>
-                  <p className="text-sm text-gray-500">
-                    {((fileSize ?? 0) / 1024).toFixed(2)} KB
-                  </p>
+                  <p className="text-sm text-gray-500">{((fileSize ?? 0) / 1024).toFixed(2)} KB</p>
                 </div>
               </div>
             </div>
@@ -301,22 +255,8 @@ export default function CourseForm({
           {uploading && <Progress value={progress} className="my-4 w-full" />}
         </div>
         <DialogFooter>
-<<<<<<< HEAD:src/components/layout/CourseForm.tsx
-          <Button
-            onClick={handleSubmit}
-            variant="default"
-            disabled={uploading}
-          >
-=======
           <Button onClick={handleSubmit} variant="save" disabled={uploading}>
->>>>>>> develop:src/components/estudiantes/layout/CourseForm.tsx
-            {uploading
-              ? 'Subiendo...'
-              : editingCourseId
-                ? isEditing
-                  ? 'Editando...'
-                  : 'Editar'
-                : 'Guardar'}
+            {uploading ? 'Subiendo...' : editingCourseId ? (isEditing ? 'Editando...' : 'Editar') : 'Guardar'}
           </Button>
         </DialogFooter>
       </DialogContent>

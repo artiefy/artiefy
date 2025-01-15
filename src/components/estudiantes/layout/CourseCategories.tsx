@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
-import {
-  FiBarChart,
-  FiCamera,
-  FiCode,
-  FiDatabase,
-  FiMusic,
-  FiPenTool,
-} from 'react-icons/fi';
+import { FiBarChart, FiCamera, FiCode, FiDatabase, FiMusic, FiPenTool } from 'react-icons/fi';
 
 const categories = [
   { icon: <FiCode />, name: 'Programacion', courses: '150+ cursos' },
@@ -23,10 +16,7 @@ interface CourseCategoriesProps {
   onSearch: (search: string) => void;
 }
 
-const CourseCategories: React.FC<CourseCategoriesProps> = ({
-  onCategorySelect,
-  onSearch,
-}) => {
+const CourseCategories: React.FC<CourseCategoriesProps> = ({ onCategorySelect, onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -82,9 +72,7 @@ const CourseCategories: React.FC<CourseCategoriesProps> = ({
               onClick={() => onCategorySelect(category.name)}
             >
               <div className="mb-4 text-3xl text-blue-600">{category.icon}</div>
-              <h3 className="mb-2 text-lg font-semibold text-background">
-                {category.name}
-              </h3>
+              <h3 className="mb-2 text-lg font-semibold text-background">{category.name}</h3>
               <p className="text-sm text-gray-500">{category.courses}</p>
             </div>
           ))}
