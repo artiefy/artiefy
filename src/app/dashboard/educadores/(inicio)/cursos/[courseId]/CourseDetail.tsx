@@ -44,11 +44,14 @@ interface Course {
   createdAt: string;
   updatedAt: string;
 }
+interface CourseDetailProps {
+  courseId: number;
+}
 
-export default function CourseDetail() {
+const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
   const { user } = useUser();
   const router = useRouter();
-  const { courseId } = useParams();
+  const { courseIdUrl } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
@@ -62,7 +65,9 @@ export default function CourseDetail() {
   const [error, setError] = useState<string | null>(null);
 
   // Verifica que courseId no sea un array ni undefined, y lo convierte a número
-  const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
+  const courseIdString = Array.isArray(courseIdUrl)
+    ? courseIdUrl[0]
+    : courseIdUrl;
   const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
 
   const fetchCourse = useCallback(async () => {
@@ -137,6 +142,7 @@ export default function CourseDetail() {
           url: string;
           fields: Record<string, string>;
         };
+
         const { url, fields } = uploadData;
         const formData = new FormData();
         Object.entries(fields).forEach(([key, value]) =>
@@ -388,4 +394,6 @@ export default function CourseDetail() {
       )}
     </div>
   );
-}
+};
+
+export default CourseDetail;

@@ -1,9 +1,9 @@
-import CourseDetail from "./CourseDetail";
+import CourseDetail from './CourseDetail';
 
 export default async function CourseDetailPage({
   params,
 }: {
-  params: Promise<{ courseId: string }>;
+  params: Promise<{ courseId: number }>;
 }) {
   const resolvedParams = await params;
   return (
