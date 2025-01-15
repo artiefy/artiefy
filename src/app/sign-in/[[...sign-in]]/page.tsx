@@ -23,7 +23,15 @@ export default function SignInPage() {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center">
       {/* Imagen de fondo */}
-      <Image src="/login-fondo.webp" alt="Fondo de inicio de sesión" fill className="object-cover" quality={85} priority sizes="100vw" />
+      <Image
+        src="/login-fondo.webp"
+        alt="Fondo de inicio de sesión"
+        fill
+        className="object-cover"
+        quality={85}
+        priority
+        sizes="100vw"
+      />
 
       {/* Contenedor principal */}
       <div className="relative z-10 flex w-full flex-col items-center justify-center px-4 lg:flex-row lg:items-start lg:justify-between lg:px-10">
@@ -47,13 +55,19 @@ export default function SignInPage() {
             <Clerk.Loading>
               {(isGlobalLoading) => (
                 <>
-                  <SignIn.Step name="start" className="mx-auto w-96 max-w-sm space-y-10 rounded-2xl px-8 py-10 sm:max-w-md">
+                  <SignIn.Step
+                    name="start"
+                    className="mx-auto w-96 max-w-sm space-y-10 rounded-2xl px-8 py-10 sm:max-w-md"
+                  >
                     <div className="mb-6 text-center">
                       <h2 className="text-3xl font-bold">INICIAR SESIÓN</h2>
                     </div>
                     <Clerk.GlobalError className="block text-sm text-rose-400" />
 
-                    <Clerk.Field name="identifier" className="group/field relative">
+                    <Clerk.Field
+                      name="identifier"
+                      className="group/field relative"
+                    >
                       <Clerk.Input
                         placeholder="Correo Electrónico o Usuario"
                         type="text"
@@ -63,7 +77,10 @@ export default function SignInPage() {
                       <Clerk.FieldError className="mt-2 block text-xs text-rose-400" />
                     </Clerk.Field>
 
-                    <Clerk.Field name="password" className="group/field relative">
+                    <Clerk.Field
+                      name="password"
+                      className="group/field relative"
+                    >
                       <Clerk.Input
                         placeholder="Contraseña"
                         type="password"
@@ -86,7 +103,9 @@ export default function SignInPage() {
                               return isLoading ? (
                                 <Icons.spinner className="size-5 animate-spin" />
                               ) : (
-                                <span className="inline-block font-bold">COMIENZA YA</span>
+                                <span className="inline-block font-bold">
+                                  COMIENZA YA
+                                </span>
                               );
                             }}
                           </Clerk.Loading>
@@ -96,7 +115,10 @@ export default function SignInPage() {
                     <div className="mt-4 text-center">
                       <p>O ingresa con tu cuenta:</p>
                       <div className="mt-2 flex justify-center space-x-4">
-                        <Clerk.Connection name="google" className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium">
+                        <Clerk.Connection
+                          name="google"
+                          className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
+                        >
                           <Clerk.Loading scope="provider:google">
                             {(isLoading) =>
                               isLoading ? (
@@ -110,7 +132,10 @@ export default function SignInPage() {
                           </Clerk.Loading>
                         </Clerk.Connection>
 
-                        <Clerk.Connection name="facebook" className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium">
+                        <Clerk.Connection
+                          name="facebook"
+                          className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
+                        >
                           <Clerk.Loading scope="provider:facebook">
                             {(isLoading) =>
                               isLoading ? (
@@ -124,7 +149,10 @@ export default function SignInPage() {
                           </Clerk.Loading>
                         </Clerk.Connection>
 
-                        <Clerk.Connection name="github" className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium">
+                        <Clerk.Connection
+                          name="github"
+                          className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
+                        >
                           <Clerk.Loading scope="provider:github">
                             {(isLoading) =>
                               isLoading ? (
@@ -149,11 +177,16 @@ export default function SignInPage() {
                     </div>
                   </SignIn.Step>
 
-                  <SignIn.Step name="verifications" className="mx-auto w-96 max-w-sm space-y-10 rounded-2xl px-8 py-10 sm:max-w-md">
+                  <SignIn.Step
+                    name="verifications"
+                    className="mx-auto w-96 max-w-sm space-y-10 rounded-2xl px-8 py-10 sm:max-w-md"
+                  >
                     <SignIn.Strategy name="email_code">
                       <div className="mb-6 text-center">
                         <h2 className="text-3xl font-bold">VERIFICAR CÓDIGO</h2>
-                        <p className="mt-2 text-sm">Ingresa el código enviado a tu email</p>
+                        <p className="mt-2 text-sm">
+                          Ingresa el código enviado a tu email
+                        </p>
                       </div>
 
                       <Clerk.GlobalError className="block text-sm text-rose-400" />
@@ -181,7 +214,9 @@ export default function SignInPage() {
                                 return isLoading ? (
                                   <Icons.spinner className="size-5 animate-spin" />
                                 ) : (
-                                  <span className="inline-block font-bold">VERIFICAR</span>
+                                  <span className="inline-block font-bold">
+                                    VERIFICAR
+                                  </span>
                                 );
                               }}
                             </Clerk.Loading>

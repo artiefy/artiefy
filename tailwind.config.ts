@@ -18,10 +18,15 @@ export default {
       // Animaciones personalizadas
       animation: {
         'spin-slow': 'spin 3s linear infinite',
+        'fade-up': 'fadeUp 0.8s ease-out forwards',
         'caret-blink': 'caret-blink 1.25s ease-out infinite',
       },
       // Keyframes personalizados
       keyframes: {
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
         'caret-blink': {
           '0%,70%,100%': { opacity: '1' },
           '20%,50%': { opacity: '0' },

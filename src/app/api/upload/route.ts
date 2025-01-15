@@ -1,4 +1,8 @@
-import { S3Client, CreateMultipartUploadCommand, AbortMultipartUploadCommand } from '@aws-sdk/client-s3';
+import {
+  AbortMultipartUploadCommand,
+  CreateMultipartUploadCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -18,11 +22,12 @@ export async function POST(request: Request) {
     if (!process.env.AWS_BUCKET_NAME) {
       throw new Error('AWS_BUCKET_NAME no está definido');
     }
-
     const key = `uploads/${uuidv4()}`; // Agregamos un prefijo 'uploads/' para mejor organización
 
     if (fileSize > MAX_FILE_SIZE) {
-      throw new Error('El archivo es demasiado grande. El tamaño máximo permitido es 1 GB.');
+      throw new Error(
+        'El archivo es demasiado grande. El tamaño máximo permitido es 1 GB.'
+      );
     }
 
     if (fileSize <= MAX_SIMPLE_UPLOAD_SIZE) {

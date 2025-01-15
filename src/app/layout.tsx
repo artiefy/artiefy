@@ -30,14 +30,19 @@ const jsonLd = {
   '@type': 'WebSite',
   url: 'https://artiefy.vercel.app',
   name: 'Artiefy',
-  description: 'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
+  description:
+    'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
   logo: {
     '@type': 'ImageObject',
     url: 'https://artiefy.vercel.app/artiefy-icon.png',
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <ClerkProvider localization={esMX}>
       <html lang="es" className={`${montserrat.variable}`}>
