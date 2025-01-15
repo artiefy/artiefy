@@ -1,4 +1,4 @@
-import "../styles/rocket.css"; // Importa el archivo CSS
+import '../styles/rocket.css'; // Importa el archivo CSS
 
 export default function Loading() {
   return (
@@ -43,7 +43,7 @@ export default function Loading() {
         <li></li>
       </ul>
       <p className="-mt-20 text-3xl font-bold text-primary">
-        {" "}
+        {' '}
         {/* Ajusta el margen superior aquí */}
         Cargando Artiefy &#128512;...
       </p>

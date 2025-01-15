@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   category: 'Educacion',
   alternates: {
     canonical: 'https://artiefy.vercel.app',
-},
+  },
   openGraph: {
     type: 'website',
     locale: 'es_ES',

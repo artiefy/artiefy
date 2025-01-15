@@ -1,30 +1,29 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { getLessonById } from "~/models/educatorsModels/lessonsModels";
+import { type NextRequest, NextResponse } from 'next/server';
+import { getLessonById } from '~/models/educatorsModels/lessonsModels';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const lessonId = searchParams.get("lessonId");
-  const courseId = searchParams.get("courseId");
+  const lessonId = searchParams.get('lessonId');
 
   try {
     if (lessonId) {
       const lesson = await getLessonById(Number(lessonId));
       if (!lesson) {
-        return respondWithError("Lección no encontrada", 404);
+        return respondWithError('Lección no encontrada', 404);
       }
       return NextResponse.json(lesson);
     } else {
       return respondWithError(
-        "Se requiere el ID de la lección o del curso",
-        400,
+        'Se requiere el ID de la lección o del curso',
+        400
       );
     }
   } catch (error) {
-    console.error("Error:", error);
-    return respondWithError("Error al obtener las lecciones", 500);
+    console.error('Error:', error);
+    return respondWithError('Error al obtener las lecciones', 500);
   }
 }
 

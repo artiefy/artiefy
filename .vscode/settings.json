@@ -1,64 +1,34 @@
 {
-  // 1. Formateador Predeterminado y Configuración de Guardado
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "files.autoSave": "onFocusChange",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "explicit"
+    "source.fixAll.eslint": "always"
   },
-
-  // 2. Validación de ESLint
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "eslint.rules.customizations": [
+    { "rule": "import/order", "severity": "off" },
+    { "rule": "@typescript-eslint/no-unused-vars", "severity": "warn" }
+  ],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "eslint.validate": [
     "javascript",
     "javascriptreact",
     "typescript",
-    "typescriptreact",
-    "astro"
+    "typescriptreact"
   ],
-  "eslint.options": {
-    "extensions": [".js", ".jsx", ".ts", ".tsx"]
-  },
-
-  // 3. Integración Avanzada con TailwindCSS
-  "files.associations": {
-    "*.css": "tailwindcss",
-    "*.sql": "sql",
-    "*.drizzle.ts": "typescript"
-  },
-  "tailwindCSS.emmetCompletions": true,
-  "tailwindCSS.includeLanguages": {
-    "typescript": "javascript",
-    "typescriptreact": "javascript"
-  },
-  "tailwindCSS.experimental.configFile": "./tailwind.config.ts",
-  "tailwindCSS.experimental.classRegex": [
-    ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*?)(?:'|\"|`)"]
-  ],
-
-  // 4. Configuración para TypeScript y Resolución de Módulos
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.preferences.importModuleSpecifier": "non-relative",
-  "typescript.updateImportsOnFileMove.enabled": "always",
- 
-  // 7. Integración con Markdown para Documentación del Proyecto
-  "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-
-  // 8. Configuración de Git
-  "git.enableSmartCommit": true,
-  "git.autofetch": true,
-
-  // 9. Configuración para SQL y Drizzle ORM
-  "[sql]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-
-  // 10. Mejoras de Desempeño del Editor
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": false,
-    "strings": true
-  },
-  "editor.inlineSuggest.enabled": true,
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "github.copilot.chat.completionContext.typescript.mode": "on"
 }

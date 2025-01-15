@@ -1,13 +1,13 @@
 //src\app\dashboard\admin\ChangeRole.tsx
 
-"use client";
+'use client';
 
-import React from "react";
-import { Button } from "~/components/educators/ui/button"; // Asegúrate de tener el componente de Button
+import React from 'react';
+import { Button } from '~/components/estudiantes/ui/button'; // Asegúrate de tener el componente de Button
 import {
   removeRoleWrapper,
   setRoleWrapper,
-} from "~/server/wrappers/serverWrappers";
+} from '~/server/wrappers/serverWrappers';
 
 interface UserCardProps {
   user: {

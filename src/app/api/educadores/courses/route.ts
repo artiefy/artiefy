@@ -1,5 +1,5 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { type NextRequest, NextResponse } from "next/server";
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import {
   createCourse,
   deleteCourse,
@@ -7,10 +7,10 @@ import {
   getCourseById,
   getCoursesByUserId,
   updateCourse,
-} from "~/models/educatorsModels/courseModelsEducator";
-import { ratelimit } from "~/server/ratelimit/ratelimit";
+} from '~/models/educatorsModels/courseModelsEducator';
+import { ratelimit } from '~/server/ratelimit/ratelimit';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
@@ -18,7 +18,7 @@ const respondWithError = (message: string, status: number) =>
 // GET endpoint para obtener cursos
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const userId = searchParams.get("userId");
+  const userId = searchParams.get('userId');
 
   try {
     let courses;
@@ -29,10 +29,10 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(courses);
   } catch (error) {
-    console.error("Error:", error);
+    console.error('Error:', error);
     return NextResponse.json(
-      { error: "Error al obtener los cursos" },
-      { status: 500 },
+      { error: 'Error al obtener los cursos' },
+      { status: 500 }
     );
   }
 }
@@ -42,26 +42,34 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError("No autorizado", 403);
+      return respondWithError('No autorizado', 403);
     }
 
     // Implement rate limiting
-    const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
     const { success } = await ratelimit.limit(ip);
     if (!success) {
-      return respondWithError("Demasiadas solicitudes", 429);
+      return respondWithError('Demasiadas solicitudes', 429);
     }
 
     const clerkUser = await currentUser();
     if (!clerkUser) {
       return respondWithError(
-        "No se pudo obtener información del usuario",
-        500,
+        'No se pudo obtener información del usuario',
+        500
       );
     }
 
-    const body = await request.json();
-    console.log("Datos recibidos en el servidor:", body);
+    const body = (await request.json()) as {
+      title: string;
+      description: string;
+      coverImageKey: string;
+      categoryid: number;
+      modalidadesid: number;
+      dificultadid: number;
+      instructor: string;
+    };
+    console.log('Datos recibidos en el servidor:', body);
 
     const {
       title,
@@ -84,7 +92,7 @@ export async function POST(request: NextRequest) {
       instructor,
     });
 
-    console.log("Datos enviados al servidor:", {
+    console.log('Datos enviados al servidor:', {
       title,
       description,
       coverImageKey,
@@ -94,11 +102,11 @@ export async function POST(request: NextRequest) {
       instructor,
     });
 
-    return NextResponse.json({ message: "Curso creado exitosamente" });
+    return NextResponse.json({ message: 'Curso creado exitosamente' });
   } catch (error: unknown) {
-    console.error("Error al crear el curso:", error);
+    console.error('Error al crear el curso:', error);
     const errorMessage =
-      error instanceof Error ? error.message : "Error desconocido";
+      error instanceof Error ? error.message : 'Error desconocido';
     return respondWithError(`Error al crear el curso: ${errorMessage}`, 500);
   }
 }
@@ -108,7 +116,7 @@ export async function PUT(request: NextRequest) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      return respondWithError("No autorizado", 403);
+      return respondWithError('No autorizado', 403);
     }
 
     const body = (await request.json()) as {
@@ -134,11 +142,11 @@ export async function PUT(request: NextRequest) {
 
     const course = await getCourseById(id);
     if (!course) {
-      return respondWithError("Curso no encontrado", 404);
+      return respondWithError('Curso no encontrado', 404);
     }
 
     if (course.creatorId !== userId) {
-      return respondWithError("No autorizado para actualizar este curso", 403);
+      return respondWithError('No autorizado para actualizar este curso', 403);
     }
 
     await updateCourse(id, {
@@ -151,10 +159,10 @@ export async function PUT(request: NextRequest) {
       dificultadid,
     });
 
-    return NextResponse.json({ message: "Curso actualizado exitosamente" });
+    return NextResponse.json({ message: 'Curso actualizado exitosamente' });
   } catch (error) {
-    console.error("Error al actualizar el curso:", error);
-    return respondWithError("Error al actualizar el curso", 500);
+    console.error('Error al actualizar el curso:', error);
+    return respondWithError('Error al actualizar el curso', 500);
   }
 }
 
@@ -162,23 +170,23 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const id = searchParams.get('id');
 
     if (!id) {
       return NextResponse.json(
-        { error: "ID no proporcionado" },
-        { status: 400 },
+        { error: 'ID no proporcionado' },
+        { status: 400 }
       );
     }
 
     const courseId = parseInt(id);
     await deleteCourse(courseId);
-    return NextResponse.json({ message: "Curso eliminado exitosamente" });
+    return NextResponse.json({ message: 'Curso eliminado exitosamente' });
   } catch (error) {
-    console.error("Error al eliminar el curso:", error);
+    console.error('Error al eliminar el curso:', error);
     return NextResponse.json(
-      { error: "Error al eliminar el curso" },
-      { status: 500 },
+      { error: 'Error al eliminar el curso' },
+      { status: 500 }
     );
   }
 }

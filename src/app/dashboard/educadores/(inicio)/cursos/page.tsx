@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useUser } from "@clerk/nextjs";
-import { useCallback, useEffect, useState } from "react";
-import { FiPlus } from "react-icons/fi";
-import CourseListTeacher from "~/components/educators/layout/CourseListTeacher";
-import { SkeletonCard } from "~/components/educators/layout/SkeletonCard";
-import ModalFormCourse from "~/components/educators/modals/ModalFormCourse";
+import { useCallback, useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { FiPlus } from 'react-icons/fi';
+import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
+import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
+import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/educators/ui/breadcrumb";
-import { Button } from "~/components/educators/ui/button";
-import { toast } from "~/hooks/use-toast";
+} from '~/components/educators/ui/breadcrumb';
+import { Button } from '~/components/educators/ui/button';
+import { toast } from '~/hooks/use-toast';
 
 export interface CourseModel {
   id: number;
@@ -59,29 +59,29 @@ export default function Page() {
         setCourses(
           data.map((course) => ({
             ...course,
-            dificultadid: course.dificultadid ?? "", // Map it properly
+            dificultadid: course.dificultadid ?? '', // Map it properly
             categoryid: course.categoryid, // Map categoryid properly
             modalidadesid: course.modalidadesid, // Map modalidadesid properly
-          })) as CourseModel[],
+          })) as CourseModel[]
         );
       } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.error || response.statusText;
+        const errorData = (await response.json()) as { error?: string };
+        const errorMessage = errorData.error ?? response.statusText;
         setError(`Error al cargar los cursos: ${errorMessage}`);
         toast({
-          title: "Error",
+          title: 'Error',
           description: `No se pudieron cargar los cursos: ${errorMessage}`,
-          variant: "destructive",
+          variant: 'destructive',
         });
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Error desconocido";
+        error instanceof Error ? error.message : 'Error desconocido';
       setError(`Error al cargar los cursos: ${errorMessage}`);
       toast({
-        title: "Error",
+        title: 'Error',
         description: `No se pudieron cargar los cursos: ${errorMessage}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -90,7 +90,7 @@ export default function Page() {
 
   useEffect(() => {
     fetchCourses().catch((error) =>
-      console.error("Error fetching courses:", error),
+      console.error('Error fetching courses:', error)
     );
   }, [user, fetchCourses]);
 
@@ -101,53 +101,56 @@ export default function Page() {
     file: File | null,
     categoryid: number,
     modalidadesid: number,
-    dificultadid: number,
+    dificultadid: number
   ) => {
     if (!user) return;
-    let coverImageKey = "";
+    let coverImageKey = '';
     try {
       setUploading(true);
       if (file) {
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
         });
 
         if (!uploadResponse.ok) {
           throw new Error(
-            `${Error}:al iniciar la carga: ${uploadResponse.statusText}`,
+            `Error: al iniciar la carga: ${uploadResponse.statusText}`
           );
         }
 
-        const { url, fields } = await uploadResponse.json();
+        const { url, fields } = (await uploadResponse.json()) as {
+          url: string;
+          fields: Record<string, string>;
+        };
 
         const formData = new FormData();
         Object.entries(fields).forEach(([key, value]) => {
-          if (typeof value === "string") {
+          if (typeof value === 'string') {
             formData.append(key, value);
           }
         });
-        formData.append("file", file);
+        formData.append('file', file);
 
-        const uploadResult = await fetch(url, {
-          method: "POST",
+        await fetch(url, {
+          method: 'POST',
           body: formData,
         });
         if (!uploadResponse.ok) {
           throw new Error(
-            `${Error}:al iniciar la carga: ${uploadResponse.statusText}`,
+            `Error: al iniciar la carga: ${uploadResponse.statusText}`
           );
         }
-        coverImageKey = fields.key ?? "";
+        coverImageKey = fields.key ?? '';
       }
       setUploading(false);
     } catch (e) {
-      throw new Error(`Error to upload the file type ${e}`);
+      throw new Error(`Error to upload the file type ${(e as Error).message}`);
     }
-    const response = await fetch("/api/educadores/courses", {
-      method: editingCourse ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('/api/educadores/courses', {
+      method: editingCourse ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: editingCourse?.id,
         title,
@@ -163,23 +166,23 @@ export default function Page() {
 
     if (response.ok) {
       toast({
-        title: editingCourse ? "Curso actualizado" : "Curso creado",
+        title: editingCourse ? 'Curso actualizado' : 'Curso creado',
         description: editingCourse
-          ? "El curso se actualizó con éxito"
-          : "El curso se creó con éxito",
+          ? 'El curso se actualizó con éxito'
+          : 'El curso se creó con éxito',
       });
       fetchCourses().catch((error) =>
-        console.error("Error fetching courses:", error),
+        console.error('Error fetching courses:', error)
       );
       setEditingCourse(null);
       setIsModalOpen(false);
     } else {
       const errorData = (await response.json()) as { error?: string };
       toast({
-        title: "Error",
+        title: 'Error',
         description:
-          errorData.error ?? "Ocurrió un error al procesar la solicitud",
-        variant: "destructive",
+          errorData.error ?? 'Ocurrió un error al procesar la solicitud',
+        variant: 'destructive',
       });
     }
   };
@@ -214,7 +217,7 @@ export default function Page() {
             <h1 className="text-3xl font-bold">Panel de cursos</h1>
             <Button
               onClick={handleCreateCourse}
-              className="transform bg-primary text-background transition-transform hover:text-primary active:scale-95"
+              className="bg-primary text-background transition-transform hover:text-primary active:scale-95"
             >
               <FiPlus className="mr-2" />
               Crear Curso
@@ -252,20 +255,20 @@ export default function Page() {
               onSubmitAction={handleCreateOrEditCourse}
               uploading={uploading}
               editingCourseId={editingCourse ? editingCourse.id : null}
-              title={editingCourse?.title ?? ""}
+              title={editingCourse?.title ?? ''}
               setTitle={(title: string) =>
                 setEditingCourse((prev) => (prev ? { ...prev, title } : null))
               }
-              description={editingCourse?.description ?? ""}
+              description={editingCourse?.description ?? ''}
               setDescription={(description: string) =>
                 setEditingCourse((prev) =>
-                  prev ? { ...prev, description } : null,
+                  prev ? { ...prev, description } : null
                 )
               }
               categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
               setCategoryid={(categoryid: number) =>
                 setEditingCourse((prev) =>
-                  prev ? { ...prev, categoryid: String(categoryid) } : null,
+                  prev ? { ...prev, categoryid: String(categoryid) } : null
                 )
               }
               modalidadesid={Number(editingCourse?.modalidadesid) ?? 0}
@@ -273,19 +276,19 @@ export default function Page() {
                 setEditingCourse((prev) =>
                   prev
                     ? { ...prev, modalidadesid: String(modalidadesid) }
-                    : null,
+                    : null
                 )
               }
               dificultadid={Number(editingCourse?.dificultadid) ?? 0}
               setDificultadid={(dificultadid: number) =>
                 setEditingCourse((prev) =>
-                  prev ? { ...prev, dificultadid: String(dificultadid) } : null,
+                  prev ? { ...prev, dificultadid: String(dificultadid) } : null
                 )
               }
-              coverImageKey={editingCourse?.coverImageKey ?? ""}
+              coverImageKey={editingCourse?.coverImageKey ?? ''}
               setCoverImageKey={(coverImageKey: string) =>
                 setEditingCourse((prev) =>
-                  prev ? { ...prev, coverImageKey } : null,
+                  prev ? { ...prev, coverImageKey } : null
                 )
               }
               isOpen={isModalOpen}

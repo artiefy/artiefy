@@ -1,12 +1,12 @@
-import { eq, sql } from "drizzle-orm";
-import { db } from "~/server/db/index";
+import { eq, sql } from 'drizzle-orm';
+import { db } from '~/server/db/index';
 import {
   categories,
   courses,
   lessons,
   modalidades,
   users,
-} from "~/server/db/schema";
+} from '~/server/db/schema';
 
 export interface Lesson {
   id: number;
@@ -21,7 +21,7 @@ export interface Lesson {
   updatedAt: string | number | Date;
   porcentajecompletado: number;
   resourceKey: string;
-  modalidadesId: {
+  _modalidadesId: {
     id: number;
     name: string;
   };
@@ -41,8 +41,6 @@ export async function createLesson({
   courseId,
   porcentajecompletado,
   resourceKey,
-  modalidadesId,
-  categoryId,
 }: {
   title: string;
   description: string;
@@ -52,14 +50,6 @@ export async function createLesson({
   courseId: number;
   porcentajecompletado: number;
   resourceKey: string;
-  modalidadesId: {
-    id: number;
-    name: string;
-  };
-  categoryId: {
-    id: number;
-    name: string;
-  };
 }) {
   try {
     // Obtener el valor máximo actual del campo `order` para el curso específico
@@ -74,16 +64,16 @@ export async function createLesson({
     // Verificar el límite de lecciones por dificultad
     const lessonCount = await countLessonsByCourseAndDifficulty(courseId);
     const difficulty = (await getCourseDifficulty(
-      courseId,
+      courseId
     )) as unknown as string;
 
     if (
-      (difficulty === "instructorio" && lessonCount >= 5) ||
-      (difficulty === "intermedio" && lessonCount >= 10) ||
-      (difficulty === "avanzado" && lessonCount >= 15)
+      (difficulty === 'instructorio' && lessonCount >= 5) ||
+      (difficulty === 'intermedio' && lessonCount >= 10) ||
+      (difficulty === 'avanzado' && lessonCount >= 15)
     ) {
       throw new Error(
-        `No se pueden crear más lecciones para el curso con dificultad ${difficulty}.`,
+        `No se pueden crear más lecciones para el curso con dificultad ${difficulty}.`
       );
     }
 
@@ -99,10 +89,10 @@ export async function createLesson({
       resourceKey,
     });
 
-    console.log("Lección creada:", newLesson);
+    console.log('Lección creada:', newLesson);
     return newLesson;
   } catch (error) {
-    console.error("Error al crear la lección:", error);
+    console.error('Error al crear la lección:', error);
     throw error;
   }
 }
@@ -147,7 +137,7 @@ export async function getLessonsByCourseId(courseId: number) {
         courseTitle: courses.title,
         courseDescription: courses.description,
         courseInstructor: courses.instructor,
-        CourseCategories: courses.categoryid,
+        courseCategories: courses.categoryid,
         courseModalidad: courses.modalidadesid,
         courseDificultad: courses.dificultadid,
       })
@@ -155,38 +145,56 @@ export async function getLessonsByCourseId(courseId: number) {
       .innerJoin(courses, eq(courses.id, lessons.courseId)) // Hace el JOIN con la tabla courses
       .where(eq(lessons.courseId, courseId)); // Filtra por el courseId
 
-    const lessonsWithCourse = lessonsData.map((lesson: any) => ({
-      id: lesson.lessonId,
-      title: lesson.lessonTitle,
-      coverImageKey: lesson.coverImageKey,
-      coverVideoKey: lesson.coverVideoKey,
-      resourceKey: lesson.resourceKey,
-      description: lesson.lessonDescription,
-      createdAt: "", // Este dato puede ser proporcionado si lo tienes
-      duration: lesson.lessonDuration,
-      order: lesson.lessonOrder,
-      course: {
-        id: lesson.courseId,
-        title: lesson.courseTitle,
-        description: lesson.courseDescription,
-        instructor: lesson.courseInstructor,
-        categoria: lesson.courseCategories,
-        categories: lesson.courseCategories,
-        modalidad: lesson.courseModalidad,
-        dificultad: lesson.courseDificultad,
-      },
-    }));
+    const lessonsWithCourse = lessonsData.map(
+      (Lesson: {
+        lessonId: number;
+        lessonTitle: string;
+        lessonDescription: string | null;
+        lessonDuration: number;
+        coverImageKey: string;
+        coverVideoKey: string;
+        resourceKey: string;
+        lessonOrder: number;
+        courseId: number;
+        courseTitle: string;
+        courseDescription: string | null;
+        courseInstructor: string;
+        courseCategories: number;
+        courseModalidad: number;
+        courseDificultad: number;
+      }) => ({
+        id: Lesson.lessonId,
+        title: Lesson.lessonTitle,
+        coverImageKey: Lesson.coverImageKey,
+        coverVideoKey: Lesson.coverVideoKey,
+        resourceKey: Lesson.resourceKey,
+        description: Lesson.lessonDescription ?? '',
+        createdAt: '', // Este dato puede ser proporcionado si lo tienes
+        duration: Lesson.lessonDuration,
+        order: Lesson.lessonOrder,
+        course: {
+          id: Lesson.courseId,
+          title: Lesson.courseTitle,
+          description: Lesson.courseDescription,
+          instructor: Lesson.courseInstructor,
+          courseCategories: Lesson.courseCategories,
+          categories: Lesson.courseCategories,
+          modalidad: Lesson.courseModalidad,
+          dificultad: Lesson.courseDificultad,
+        },
+      })
+    );
 
     return lessonsWithCourse;
   } catch (error) {
-    console.error("Error al obtener las lecciones por courseId", error);
+    console.error('Error al obtener las lecciones por courseId', error);
     throw error;
   }
 }
 
 // Obtener una lección por ID
 export const getLessonById = async (
-  lessonId: number,
+  lessonId: number
 ): Promise<Lesson | null> => {
   const lessonData = await db
     .select({
@@ -248,7 +256,7 @@ export const updateLesson = async (
     courseId?: number;
     porcentajecompletado?: number;
     resourceKey?: string;
-  },
+  }
 ): Promise<void> => {
   const updateData: Record<string, unknown> = {};
 

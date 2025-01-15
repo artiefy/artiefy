@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useUser } from "@clerk/nextjs";
-import Image from "next/image";
-import { useEffect, useState, type ChangeEvent } from "react";
-import { FiUploadCloud } from "react-icons/fi";
-import { MdClose } from "react-icons/md";
-import CategoryDropdown from "~/components/educators/layout/CategoryDropdown";
-import DificultadDropdown from "~/components/educators/layout/DifiultadDropdown";
-import ModalidadDropdown from "~/components/educators/layout/ModalidadDropdown";
-import { Button } from "~/components/educators/ui/button";
+import { useEffect, useState, type ChangeEvent } from 'react';
+import { useUser } from '@clerk/nextjs';
+import Image from 'next/image';
+import { FiUploadCloud } from 'react-icons/fi';
+import { MdClose } from 'react-icons/md';
+import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
+import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
+import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
+import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -16,8 +16,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/educators/ui/dialog";
-import { Progress } from "~/components/educators/ui/progress";
+} from '~/components/educators/ui/dialog';
+import { Progress } from '~/components/educators/ui/progress';
 
 interface CourseFormProps {
   onSubmitAction: (
@@ -27,7 +27,7 @@ interface CourseFormProps {
     file: File | null,
     categoryid: number,
     modalidadesid: number,
-    dificultadesid: number,
+    dificultadesid: number
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -56,8 +56,8 @@ export default function ModalFormCourse({
   coverImageKey,
 }: CourseFormProps) {
   const { user } = useUser();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [categoryid, setCategoryid] = useState(0);
   const [modalidadesid, setModalidadesid] = useState(0);
   const [dificultadid, setDificultadid] = useState(0);
@@ -81,8 +81,7 @@ export default function ModalFormCourse({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set());
-  const [currentCoverImageKey, setCurrentCoverImageKey] =
-    useState(coverImageKey);
+  const [currentCoverImageKey] = useState(coverImageKey);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -140,14 +139,14 @@ export default function ModalFormCourse({
     };
 
     if (editingCourseId) {
-      newErrors.title = modifiedFields.has("title") && !title;
-      newErrors.description = modifiedFields.has("description") && !description;
+      newErrors.title = modifiedFields.has('title') && !title;
+      newErrors.description = modifiedFields.has('description') && !description;
       newErrors.dificultadid =
-        modifiedFields.has("dificultadid") && !dificultadid;
-      newErrors.file = modifiedFields.has("file") && !file;
+        modifiedFields.has('dificultadid') && !dificultadid;
+      newErrors.file = modifiedFields.has('file') && !file;
       newErrors.modalidadesid =
-        modifiedFields.has("modalidadesid") && !modalidadesid;
-      newErrors.file = modifiedFields.has("file") && !file;
+        modifiedFields.has('modalidadesid') && !modalidadesid;
+      newErrors.file = modifiedFields.has('file') && !file;
     }
 
     setErrors(newErrors);
@@ -160,16 +159,16 @@ export default function ModalFormCourse({
     setIsUploading(true);
     try {
       await onSubmitAction(
-        editingCourseId ? editingCourseId.toString() : "",
+        editingCourseId ? editingCourseId.toString() : '',
         title,
         description,
         file,
         categoryid,
         modalidadesid,
-        dificultadid,
+        dificultadid
       );
       setIsUploading(false);
-      console.log("Datos enviados:", {
+      console.log('Datos enviados:', {
         title,
         description,
         file,
@@ -179,32 +178,32 @@ export default function ModalFormCourse({
       });
     } catch (error) {
       setIsUploading(false);
-      console.error("Error al enviar:", error);
+      console.error('Error al enviar:', error);
     }
   };
 
   const handleFieldChange = (
     field: string,
-    value: string | number | File | null,
+    value: string | number | File | null
   ) => {
     setModifiedFields((prev) => new Set(prev).add(field));
     switch (field) {
-      case "title":
+      case 'title':
         setTitle(value as string);
         break;
-      case "description":
+      case 'description':
         setDescription(value as string);
         break;
-      case "categoryid":
+      case 'categoryid':
         setCategoryid(value as number);
         break;
-      case "modalidadesid":
+      case 'modalidadesid':
         setModalidadesid(value as number);
         break;
-      case "dificultadesid":
+      case 'dificultadesid':
         setDificultadid(value as number);
         break;
-      case "file":
+      case 'file':
         setFile(value as File);
         break;
     }
@@ -262,15 +261,15 @@ export default function ModalFormCourse({
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-w-5/6 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-[83.333333%] overflow-y-auto">
         <DialogHeader className="mt-4">
           <DialogTitle className="text-4xl">
-            {editingCourseId ? "Editar Curso" : "Crear Curso"}
+            {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
           </DialogTitle>
           <DialogDescription className="text-xl text-white">
             {editingCourseId
-              ? "Edita los detalles del curso"
-              : "Llena los detalles para crear un nuevo curso"}
+              ? 'Edita los detalles del curso'
+              : 'Llena los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
         <div className="rounded-lg bg-background px-6 text-black shadow-md">
@@ -281,8 +280,8 @@ export default function ModalFormCourse({
             type="text"
             placeholder="Título"
             value={title}
-            onChange={(e) => handleFieldChange("title", e.target.value)}
-            className={`mb-4 w-full rounded border p-2 text-black outline-none ${errors.title ? "border-red-500" : "border-primary"}`}
+            onChange={(e) => handleFieldChange('title', e.target.value)}
+            className={`mb-4 w-full rounded border p-2 text-black outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
           />
           {errors.title && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -296,8 +295,8 @@ export default function ModalFormCourse({
           <textarea
             placeholder="Descripción"
             value={description}
-            onChange={(e) => handleFieldChange("description", e.target.value)}
-            className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.description ? "border-red-500" : "border-primary"}`}
+            onChange={(e) => handleFieldChange('description', e.target.value)}
+            className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
           />
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -375,10 +374,10 @@ export default function ModalFormCourse({
           <div
             className={`mx-auto w-1/2 rounded-lg border-2 border-dashed border-primary p-8 ${
               isDragging
-                ? "border-blue-500 bg-blue-50"
+                ? 'border-blue-500 bg-blue-50'
                 : errors.file
-                  ? "border-red-500 bg-red-50"
-                  : "border-gray-300 bg-gray-50"
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-gray-300 bg-gray-50'
             } transition-all duration-300 ease-in-out`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -388,7 +387,7 @@ export default function ModalFormCourse({
               {!file ? (
                 <>
                   <FiUploadCloud
-                    className={`mx-auto h-12 w-12 ${errors.file ? "text-red-500" : "text-primary"} `}
+                    className={`mx-auto size-12 ${errors.file ? 'text-red-500' : 'text-primary'} `}
                   />
                   <h2 className="mt-4 text-xl font-medium text-gray-700">
                     Arrastra y suelta tu imagen aquí
@@ -402,13 +401,13 @@ export default function ModalFormCourse({
                   <input
                     type="file"
                     accept="image/*"
-                    className={`hidden ${errors.file ? "bg-red-500" : "bg-primary"}`}
+                    className={`hidden ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
                     onChange={handleFileChange}
                     id="file-upload"
                   />
                   <label
                     htmlFor="file-upload"
-                    className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${errors.file ? "bg-red-500" : "bg-primary"}`}
+                    className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
                   >
                     Seleccionar Archivo
                   </label>
@@ -431,7 +430,7 @@ export default function ModalFormCourse({
                     }}
                     className="absolute right-2 top-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
                   >
-                    <MdClose className="z-20 h-5 w-5" />
+                    <MdClose className="z-20 size-5" />
                   </button>
                   <div className="flex justify-between p-2">
                     <p className="truncate text-sm text-gray-500">{fileName}</p>
@@ -461,12 +460,12 @@ export default function ModalFormCourse({
         <DialogFooter>
           <Button onClick={handleSubmit} variant="save" disabled={uploading}>
             {uploading
-              ? "Subiendo..."
+              ? 'Subiendo...'
               : editingCourseId
                 ? isEditing
-                  ? "Editando..."
-                  : "Editar"
-                : "Crear Curso"}
+                  ? 'Editando...'
+                  : 'Editar'
+                : 'Crear Curso'}
           </Button>
         </DialogFooter>
       </DialogContent>

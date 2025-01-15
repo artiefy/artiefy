@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 interface Category {
   id: number;
@@ -26,10 +26,10 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/categories", {
-          method: "GET",
+        const response = await fetch('/api/categories', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -38,29 +38,27 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
           throw new Error(`Error al obtener las categorías: ${errorData}`);
         }
 
-        const data = await response.json();
-        console.log("Datos de la respuesta:", data);
+        const data = (await response.json()) as Category[];
+        console.log('Datos de la respuesta:', data);
         setCategories(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCategories();
+    fetchCategories().catch((error) =>
+      console.error('Error fetching categories:', error)
+    );
   }, []);
-
-  const handleCategoryChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const selectedId = Number(event.target.value);
-    setCategory(selectedId);
-  };
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="category-select" className="text-primary text-lg font-medium">
+      <label
+        htmlFor="category-select"
+        className="text-lg font-medium text-primary"
+      >
         Selecciona una categoría:
       </label>
       {isLoading ? (
@@ -68,14 +66,14 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
       ) : (
         <select
           id="category-select"
-          value={category || ""}
+          value={category || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setCategory(selectedId);
-            console.log("Categoría seleccionada:", selectedId);
+            console.log('Categoría seleccionada:', selectedId);
           }}
           className={`mb-5 w-60 rounded border p-2 outline-none ${
-            errors.category ? "border-red-500" : "border-primary"
+            errors.category ? 'border-red-500' : 'border-primary'
           }`}
         >
           <option value="">Selecciona una categoría</option>

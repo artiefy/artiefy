@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { AspectRatio } from "~/components/educators/ui/aspect-ratio";
-import { Badge } from "~/components/educators/ui/badge";
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
+import { Badge } from '~/components/educators/ui/badge';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "~/components/educators/ui/card";
+} from '~/components/educators/ui/card';
 
 interface Course {
   id: number;
@@ -50,11 +50,11 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
                   src={
                     course.coverImageKey
                       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                      : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
+                      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
                   }
-                  alt={course.title || "Imagen del curso"}
+                  alt={course.title || 'Imagen del curso'}
                   className={`rounded-lg object-cover transition-opacity duration-500 ${
-                    loadedImages[course.id] ? "opacity-100" : "opacity-0"
+                    loadedImages[course.id] ? 'opacity-100' : 'opacity-0'
                   }`}
                   fill
                   placeholder="blur"
@@ -81,11 +81,11 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
                 {course.description}
               </p>
               <p className="text-sm font-bold italic text-gray-600">
-                Educador:{" "}
+                Educador:{' '}
                 <span className="font-bold italic">{course.instructor}</span>
               </p>
               <p className="text-sm font-bold italic text-gray-600">
-                Modalidad:{" "}
+                Modalidad:{' '}
                 <span className="font-bold italic">{course.modalidadesid}</span>
               </p>
             </CardContent>

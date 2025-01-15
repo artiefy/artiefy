@@ -87,15 +87,15 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
                 <a className="flex items-center">
                   <Button className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary hover:bg-black/70 active:scale-95">
                     <p className="ml-2">Ver Curso</p>
-                    <ArrowRightIcon className="animate-bounce-right mr-2 h-5 w-5" />
-                    <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+                    <ArrowRightIcon className="animate-bounce-right mr-2 size-5" />
+                    <div className="absolute inset-0 flex size-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
                       <div className="relative h-full w-10 bg-white/30"></div>
                     </div>
                   </Button>
                 </a>
               </Link>
               <div className="flex items-center">
-                <StarIcon className="h-5 w-5 text-yellow-500" />
+                <StarIcon className="size-5 text-yellow-500" />
                 <span className="ml-1 text-sm font-bold text-yellow-500">
                   {(course.rating ?? 0).toFixed(1)}
                 </span>

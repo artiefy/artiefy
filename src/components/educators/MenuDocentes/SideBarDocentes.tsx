@@ -1,10 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Info } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import {
   FaBell,
   FaBook,
@@ -29,27 +29,27 @@ export default function LeftSidebar({
   const menuItems = [
     {
       title: "Panel de control",
-      icon: <MdDashboard className="h-7 w-7" />,
+      icon: <MdDashboard className="size-7" />,
       url: "/dashboard/educadores",
     },
     {
       title: "Cursos",
-      icon: <FaChalkboardTeacher className="h-7 w-7" />,
+      icon: <FaChalkboardTeacher className="size-7" />,
       url: "/dashboard/educadores/cursos",
     },
     {
       title: "Alumnos",
-      icon: <FaGraduationCap className="h-7 w-7" />,
+      icon: <FaGraduationCap className="size-7" />,
       url: "/docentes/alumnos",
     },
     {
       title: "Recursos",
-      icon: <FaBook className="h-7 w-7" />,
+      icon: <FaBook className="size-7" />,
       url: "/profesores/recursos",
     },
     {
       title: "Configuración",
-      icon: <FaCog className="h-7 w-7" />,
+      icon: <FaCog className="size-7" />,
       url: "/profesores/configuracion",
     },
   ];
@@ -57,7 +57,7 @@ export default function LeftSidebar({
   return (
     <div className="flex">
       {/* Top Navigation Bar */}
-      <div className="fixed left-0 right-0 top-0 z-50 h-16 border-b border-gray-400/40 bg-background shadow-md">
+      <div className="fixed inset-x-0 top-0 z-50 h-16 border-b border-gray-400/40 bg-background shadow-md">
         <div className="flex h-full items-center justify-between px-4">
           <div className="flex items-center">
             <Button
@@ -84,7 +84,7 @@ export default function LeftSidebar({
               onClose={() => setIsModalOpen(false)}
             />
             <Button className="rounded-lg border-none border-transparent p-2">
-              <FaBell className="h-5 w-5 text-gray-300" />
+              <FaBell className="size-5 text-gray-300" />
             </Button>
             <Button className="flex items-center space-x-2 rounded-lg border-none border-transparent p-0">
               <UserButton showName />

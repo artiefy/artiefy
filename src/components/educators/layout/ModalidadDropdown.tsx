@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 interface Modalidad {
   id: number;
@@ -26,10 +26,10 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/modalidades", {
-          method: "GET",
+        const response = await fetch('/api/modalidades', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -38,29 +38,25 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
           throw new Error(`Error al obtener las categorías: ${errorData}`);
         }
 
-        const data = await response.json();
-        console.log("Datos de la respuesta:", data);
+        const data: Modalidad[] = (await response.json()) as Modalidad[];
+        console.log('Datos de la respuesta:', data);
         setModalidades(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCategories();
+    void fetchCategories();
   }, []);
-
-  const handleCategoryChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const selectedId = Number(event.target.value);
-    setModalidad(selectedId);
-  };
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="category-select" className="text-primary text-lg font-medium">
+      <label
+        htmlFor="category-select"
+        className="text-lg font-medium text-primary"
+      >
         Selecciona una Modalidad:
       </label>
       {isLoading ? (
@@ -68,14 +64,14 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
       ) : (
         <select
           id="category-select"
-          value={modalidad || ""}
+          value={modalidad || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setModalidad(selectedId);
-            console.log("Categoría seleccionada:", selectedId);
+            console.log('Categoría seleccionada:', selectedId);
           }}
           className={`mb-5 w-60 rounded border p-2 outline-none ${
-            errors.modalidad ? "border-red-500" : "border-primary"
+            errors.modalidad ? 'border-red-500' : 'border-primary'
           }`}
         >
           <option value="">Selecciona una categoría</option>

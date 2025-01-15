@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useUser } from "@clerk/nextjs";
-import { Upload } from "lucide-react";
-import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { LoadingCourses } from "~/app/dashboard/educadores/(inicio)/cursos/page";
-import LessonsListEducator from "~/components/educators/layout/LessonsListEducator"; // Importar el componente
-import ModalFormCourse from "~/components/educators/modals/ModalFormCourse";
-import ModalFormLessons from "~/components/educators/modals/ModalFormLessons";
+import { useCallback, useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { Upload } from 'lucide-react';
+import Image from 'next/image';
+import { useParams, useRouter } from 'next/navigation';
+import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
+import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
+import ModalFormLessons from '~/components/educators/modals/ModalFormLessons';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,35 +19,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/educators/ui/alert-dialog";
+} from '~/components/educators/ui/alert-dialog';
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/educators/ui/breadcrumb";
-import { Button } from "~/components/educators/ui/button";
-import { Card, CardHeader, CardTitle } from "~/components/educators/ui/card";
-import { toast } from "~/hooks/use-toast";
-
-interface LessonsModels {
-  id: number;
-  title: string;
-  description: string;
-  coverImageKey: string;
-  coverVideoKey: string;
-  resourceKey: string;
-  duration: number;
-  order: number;
-  createdAt: string;
-  course: {
-    id: number;
-    title: string;
-    description: string;
-    instructor: string;
-  };
-}
+} from '~/components/educators/ui/breadcrumb';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+import { toast } from '~/hooks/use-toast';
 
 interface Course {
   id: number;
@@ -68,15 +50,14 @@ export default function CourseDetail() {
   const router = useRouter();
   const { courseId } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
-  const [lessons, setLessons] = useState<LessonsModels[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const [editCategory, setEditCategory] = useState(0);
   const [editModalidad, setEditModalidad] = useState(0);
   const [editDificultad, setEditDificultad] = useState(0);
-  const [editCoverImageKey, setEditCoverImageKey] = useState("");
+  const [editCoverImageKey, setEditCoverImageKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,7 +72,7 @@ export default function CourseDetail() {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `/api/educadores/courses/${courseIdNumber}`,
+          `/api/educadores/courses/${courseIdNumber}`
         );
 
         if (response.ok) {
@@ -99,23 +80,23 @@ export default function CourseDetail() {
           console.log(data);
           setCourse(data);
         } else {
-          const errorData = await response.json();
-          const errorMessage = errorData.error || response.statusText;
+          const errorData = (await response.json()) as { error?: string };
+          const errorMessage = errorData.error ?? response.statusText;
           setError(`Error al cargar el curso: ${errorMessage}`);
           toast({
-            title: "Error",
+            title: 'Error',
             description: `No se pudo cargar el curso: ${errorMessage}`,
-            variant: "destructive",
+            variant: 'destructive',
           });
         }
-      } catch (error) {
+      } catch (error: unknown) {
         const errorMessage =
-          error instanceof Error ? error.message : "Error desconocido";
+          error instanceof Error ? error.message : 'Error desconocido';
         setError(`Error al cargar el curso: ${errorMessage}`);
         toast({
-          title: "Error",
+          title: 'Error',
           description: `No se pudo cargar el curso: ${errorMessage}`,
-          variant: "destructive",
+          variant: 'destructive',
         });
       } finally {
         setLoading(false);
@@ -125,7 +106,7 @@ export default function CourseDetail() {
 
   useEffect(() => {
     fetchCourse().catch((error) =>
-      console.error("Error fetching course:", error),
+      console.error('Error fetching course:', error)
     );
   }, [fetchCourse]);
 
@@ -136,73 +117,80 @@ export default function CourseDetail() {
     file: File | null,
     categoryid: number,
     modalidadesid: number,
-    dificultadid: number,
+    dificultadid: number
   ) => {
     try {
-      let coverImageKey = course?.coverImageKey || "";
+      let coverImageKey = course?.coverImageKey ?? '';
 
       if (file) {
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType: file.type }),
         });
 
         if (!uploadResponse.ok) {
-          throw new Error("Error al subir la imagen");
+          throw new Error('Error al subir la imagen');
         }
 
-        const { url, fields } = await uploadResponse.json();
+        const uploadData = (await uploadResponse.json()) as {
+          url: string;
+          fields: Record<string, string>;
+        };
+        const { url, fields } = uploadData;
         const formData = new FormData();
         Object.entries(fields).forEach(([key, value]) =>
-          formData.append(key, value as string),
+          formData.append(key, value)
         );
-        formData.append("file", file);
+        formData.append('file', file);
 
         const uploadResult = await fetch(url, {
-          method: "POST",
+          method: 'POST',
           body: formData,
         });
         if (!uploadResult.ok) {
-          throw new Error("Error al subir la imagen al servidor");
+          throw new Error('Error al subir la imagen al servidor');
         }
 
-        coverImageKey = fields.key;
+        coverImageKey = fields.key ?? '';
       }
 
-      const response = await fetch(`/api/educadores/courses/${courseId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          description,
-          coverImageKey,
-          categoryid,
-          modalidadesid,
-          dificultadid,
-          instructor: course?.instructor,
-        }),
-      });
+      const response = await fetch(
+        `/api/educadores/courses/${courseIdNumber}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            description,
+            coverImageKey,
+            categoryid,
+            modalidadesid,
+            dificultadid,
+            instructor: course?.instructor,
+          }),
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error al actualizar el curso");
+        const errorData = (await response.json()) as { error?: string };
+        throw new Error(errorData.error ?? 'Error al actualizar el curso');
       }
 
-      const updatedCourse = await response.json();
+      const updatedCourse = (await response.json()) as Course;
       setCourse(updatedCourse);
       setIsModalOpen(false);
       toast({
-        title: "Curso actualizado",
-        description: "El curso se ha actualizado con éxito.",
+        title: 'Curso actualizado',
+        description: 'El curso se ha actualizado con éxito.',
       });
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
       toast({
-        title: "Error",
+        title: 'Error',
         description:
-          error instanceof Error ? error.message : "Error desconocido",
-        variant: "destructive",
+          error instanceof Error ? error.message : 'Error desconocido',
+        variant: 'destructive',
       });
     }
   };
@@ -214,18 +202,14 @@ export default function CourseDetail() {
   const handleDelete = async (id: string) => {
     try {
       const response = await fetch(`/api/educadores/courses?id=${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error("Error al eliminar el curso");
-      router.push("/dashboard/educadores/cursos");
+      if (!response.ok) throw new Error('Error al eliminar el curso');
+      router.push('/dashboard/educadores/cursos');
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
     }
-  };
-
-  const addNewLesson = (newLesson: LessonsModels) => {
-    setLessons((prevLessons) => [...prevLessons, newLesson]); // Agrega la nueva lección al final de la lista
   };
 
   return (
@@ -269,7 +253,7 @@ export default function CourseDetail() {
             <div className="px-3 py-6">
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className="mx-4 border-yellow-500 bg-primary bg-yellow-500 text-white hover:bg-white hover:text-yellow-500"
+                className="mx-4 border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500"
               >
                 Editar curso
               </Button>
@@ -366,7 +350,7 @@ export default function CourseDetail() {
           file: File | null,
           categoryid: number,
           modalidadesid: number,
-          dificultadid: number,
+          dificultadid: number
         ) =>
           handleUpdateCourse(
             id,
@@ -375,7 +359,7 @@ export default function CourseDetail() {
             file,
             categoryid,
             modalidadesid,
-            dificultadid,
+            dificultadid
           )
         }
         editingCourseId={course.id}

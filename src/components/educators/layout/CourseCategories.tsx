@@ -19,7 +19,7 @@ const CourseCategories = () => {
           {categories.map((category, index) => (
             <div
               key={index}
-              className="flex flex-col items-center p-6 bg-gray-50 rounded-lg hover:shadow-lg transition-shadow cursor-pointer transform hover:scale-105"
+              className="flex flex-col items-center p-6 bg-gray-50 rounded-lg hover:shadow-lg transition-shadow cursor-pointer hover:scale-105"
             >
               <div className="text-3xl text-blue-600 mb-4">{category.icon}</div>
               <h3 className="text-lg font-semibold mb-2 text-background">{category.name}</h3>

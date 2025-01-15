@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, type ChangeEvent } from "react";
-import FileUpload from "~/components/educators/layout/FilesUpload";
-import { Button } from "~/components/educators/ui/button";
+import { useState, type ChangeEvent } from 'react';
+import FileUpload from '~/components/educators/layout/FilesUpload';
+import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/educators/ui/dialog";
-import { Progress } from "~/components/educators/ui/progress";
-import { toast } from "~/hooks/use-toast";
+} from '~/components/educators/ui/dialog';
+import { Progress } from '~/components/educators/ui/progress';
+import { toast } from '~/hooks/use-toast';
 
 interface LessonsFormProps {
   uploading: boolean;
@@ -29,14 +29,14 @@ const ModalFormLessons = ({
 }: LessonsFormProps) => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
+    title: '',
+    description: '',
     duration: 0,
     coverimage: undefined as File | undefined,
     covervideo: undefined as File | undefined,
     resourcefiles: [] as File[], // Array para múltiples archivos
-    cover_image_key: "",
-    cover_video_key: "",
+    cover_image_key: '',
+    cover_video_key: '',
     resource_keys: [] as string[],
   });
   const [isUploading, setIsUploading] = useState(false);
@@ -49,22 +49,20 @@ const ModalFormLessons = ({
     resource_keys: false,
   });
 
-  const [progress, setProgress] = useState(0);
-
   // Manejador de cambio para inputs
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    field: keyof typeof formData,
+    field: keyof typeof formData
   ) => {
     const value =
-      field === "duration" ? Number(e.target.value) : e.target.value;
+      field === 'duration' ? Number(e.target.value) : e.target.value;
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // Manejador de archivos
   const handleFileChange = (
     field: keyof typeof formData,
-    file: File | File[] | null,
+    file: File | File[] | null
   ) => {
     if (file) {
       if (Array.isArray(file)) {
@@ -82,36 +80,41 @@ const ModalFormLessons = ({
 
   // Subida de archivos
   const uploadFile = async (file: File, index: number, totalFiles: number) => {
-    const uploadResponse = await fetch("/api/upload", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const uploadResponse = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
     });
 
     if (!uploadResponse.ok) {
       throw new Error(
-        `Error al iniciar la carga: ${uploadResponse.statusText}`,
+        `Error al iniciar la carga: ${uploadResponse.statusText}`
       );
     }
 
-    const { url, fields } = await uploadResponse.json();
+    const { url, fields }: { url: string; fields: Record<string, string> } =
+      (await uploadResponse.json()) as {
+        url: string;
+        fields: Record<string, string>;
+      };
+    await uploadResponse.json();
 
     const formData = new FormData();
     Object.entries(fields).forEach(([key, value]) => {
-      if (typeof value === "string") {
+      if (typeof value === 'string') {
         formData.append(key, value);
       }
     });
-    formData.append("file", file);
+    formData.append('file', file);
 
-    const uploadResult = await fetch(url, { method: "POST", body: formData });
-    console.log("Form Data:", formData);
+    const uploadResult = await fetch(url, { method: 'POST', body: formData });
+    console.log('Form Data:', formData);
     if (!uploadResult.ok) {
       throw new Error(`Error al cargar el archivo: ${uploadResult.statusText}`);
     }
     const progress = Math.round(((index + 1) / totalFiles) * 100);
     setUploadProgress(progress); // Actualizamos el progreso
-    return fields.key;
+    return fields.key ?? '';
   };
 
   // Manejador del submit
@@ -119,29 +122,26 @@ const ModalFormLessons = ({
     setIsUploading(true);
     try {
       const { coverimage, covervideo, resourcefiles } = formData;
-      const resourceKeys: any[] = [];
+      const resourceKeys: string[] = [];
 
-      let coverImageKey = "";
-      let coverVideoKey = "";
+      let coverImageKey = '';
+      let coverVideoKey = '';
       const totalFiles = [coverimage, covervideo, ...resourcefiles].filter(
-        Boolean,
+        Boolean
       ).length;
 
       let currentIndex = 0;
       // Subir imagen de portada
       if (coverimage) {
-        coverImageKey = await uploadFile(
-          coverimage,
-          currentIndex++,
-          totalFiles,
-        );
+        coverImageKey =
+          (await uploadFile(coverimage, currentIndex++, totalFiles)) ?? '';
       }
       // Subir video de portada
       if (covervideo) {
         coverVideoKey = await uploadFile(
           covervideo,
           currentIndex++,
-          totalFiles,
+          totalFiles
         );
       } // Subir archivos de recursos
       for (const file of resourcefiles) {
@@ -166,23 +166,23 @@ const ModalFormLessons = ({
         resource_keys: resourceKeys.length === 0,
       };
 
-      console.log("Validando campos: ", formData);
+      console.log('Validando campos: ', formData);
 
       if (Object.values(newErrors).some((error) => error)) {
         setErrors(newErrors);
         toast({
-          title: "Error",
-          description: "Por favor completa los campos obligatorios.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Por favor completa los campos obligatorios.',
+          variant: 'destructive',
         });
         return;
       }
 
-      const concatenatedResourceKeys = resourceKeys.join(",");
+      const concatenatedResourceKeys = resourceKeys.join(',');
 
-      const response = await fetch("/api/educadores/lessons", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/educadores/lessons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
@@ -197,30 +197,30 @@ const ModalFormLessons = ({
 
       if (response.ok) {
         toast({
-          title: "Lección creada",
-          description: "La lección se creó con éxito.",
+          title: 'Lección creada',
+          description: 'La lección se creó con éxito.',
         });
         onCloseAction(); // Cierra el modal
       } else {
-        const errorData = await response.json();
+        const errorData = (await response.json()) as { error?: string };
         toast({
-          title: "Error",
-          description: errorData.error ?? "Error al crear la lección.",
-          variant: "destructive",
+          title: 'Error',
+          description: errorData.error ?? 'Error al crear la lección.',
+          variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
-        description: `Error al procesar la solicitud: ${error}`,
-        variant: "destructive",
+        title: 'Error',
+        description: `Error al procesar la solicitud: ${String(error)}`,
+        variant: 'destructive',
       });
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-w-5/6 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
         <DialogHeader className="mt-4">
           <DialogTitle className="text-4xl">Crear Clase</DialogTitle>
           <DialogDescription className="text-xl text-white">
@@ -235,9 +235,9 @@ const ModalFormLessons = ({
             type="text"
             placeholder="Título"
             value={formData.title}
-            onChange={(e) => handleInputChange(e, "title")}
+            onChange={(e) => handleInputChange(e, 'title')}
             className={`mb-4 w-full rounded border p-2 text-black outline-none ${
-              errors.title ? "border-red-500" : "border-primary"
+              errors.title ? 'border-red-500' : 'border-primary'
             }`}
           />
           {errors.title && (
@@ -253,9 +253,9 @@ const ModalFormLessons = ({
           <textarea
             placeholder="Descripción"
             value={formData.description}
-            onChange={(e) => handleInputChange(e, "description")}
+            onChange={(e) => handleInputChange(e, 'description')}
             className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${
-              errors.description ? "border-red-500" : "border-primary"
+              errors.description ? 'border-red-500' : 'border-primary'
             }`}
           />
           {errors.description && (
@@ -271,9 +271,9 @@ const ModalFormLessons = ({
             type="number"
             placeholder="Duración"
             value={formData.duration}
-            onChange={(e) => handleInputChange(e, "duration")}
+            onChange={(e) => handleInputChange(e, 'duration')}
             className={`mb-4 w-full rounded border p-2 text-black outline-none ${
-              errors.duration ? "border-red-500" : "border-primary"
+              errors.duration ? 'border-red-500' : 'border-primary'
             }`}
           />
           {errors.duration && (
@@ -286,9 +286,8 @@ const ModalFormLessons = ({
               label="Imagen de portada:"
               accept="image/*"
               maxSize={5}
-              required
               onFileChange={(file) =>
-                handleFileChange("coverimage", file ?? null)
+                handleFileChange('coverimage', file ?? null)
               }
             />
             <FileUpload
@@ -297,9 +296,8 @@ const ModalFormLessons = ({
               label="Video del curso:"
               accept="video/mp4"
               maxSize={2000}
-              required
               onFileChange={(file) =>
-                handleFileChange("covervideo", file ?? null)
+                handleFileChange('covervideo', file ?? null)
               }
             />
             <FileUpload
@@ -310,7 +308,7 @@ const ModalFormLessons = ({
               maxSize={10}
               multiple
               onFileChange={(file) =>
-                handleFileChange("resourcefiles", file ?? null)
+                handleFileChange('resourcefiles', file ?? null)
               }
             />
           </div>
@@ -325,7 +323,7 @@ const ModalFormLessons = ({
         </div>
         <DialogFooter>
           <Button onClick={handleSubmit} variant="save" disabled={uploading}>
-            {uploading ? "Subiendo..." : "Crear Clase"}
+            {uploading ? 'Subiendo...' : 'Crear Clase'}
           </Button>
         </DialogFooter>
       </DialogContent>

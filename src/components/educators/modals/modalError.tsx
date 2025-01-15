@@ -1,9 +1,7 @@
-import { useState } from "react";
-import { IoMdClose } from "react-icons/io";
+import { useState } from 'react';
+import { IoMdClose } from 'react-icons/io';
 
-interface FormErrors {
-  [key: string]: string;
-}
+type FormErrors = Record<string, string>;
 
 export const ModalError = ({
   isOpen,
@@ -13,14 +11,14 @@ export const ModalError = ({
   onClose: () => void;
 }) => {
   const [formData, setFormData] = useState({
-    description: "",
-    comments: "",
-    email: "",
+    description: '',
+    comments: '',
+    email: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -30,7 +28,7 @@ export const ModalError = ({
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
-        [name]: "",
+        [name]: '',
       }));
     }
   };
@@ -38,12 +36,12 @@ export const ModalError = ({
   const validateForm = () => {
     const newErrors: FormErrors = {};
     if (!formData.description.trim()) {
-      newErrors.description = "Error description is required";
+      newErrors.description = 'Error description is required';
     }
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
+      newErrors.email = 'Please enter a valid email';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -52,9 +50,9 @@ export const ModalError = ({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log("Form submitted:", formData);
+      console.log('Form submitted:', formData);
       onClose();
-      setFormData({ description: "", comments: "", email: "" });
+      setFormData({ description: '', comments: '', email: '' });
     }
   };
 
@@ -64,10 +62,10 @@ export const ModalError = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center px-4">
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          className="fixed inset-0 bg-black/50 transition-opacity"
           onClick={onClose}
         />
-        <div className="relative w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all">
+        <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl transition-all">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">
               Reportar un error
@@ -95,7 +93,7 @@ export const ModalError = ({
                 value={formData.description}
                 onChange={handleInputChange}
                 className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500 ${
-                  errors.description ? "border-red-500" : ""
+                  errors.description ? 'border-red-500' : ''
                 }`}
               />
               {errors.description && (
@@ -136,7 +134,7 @@ export const ModalError = ({
                 value={formData.email}
                 onChange={handleInputChange}
                 className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500 ${
-                  errors.email ? "border-red-500" : ""
+                  errors.email ? 'border-red-500' : ''
                 }`}
               />
               {errors.email && (

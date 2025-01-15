@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 interface Dificultad {
   id: number;
@@ -26,10 +26,10 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/dificultad", {
-          method: "GET",
+        const response = await fetch('/api/dificultad', {
+          method: 'GET',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         });
 
@@ -38,25 +38,18 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
           throw new Error(`Error al obtener las categorías: ${errorData}`);
         }
 
-        const data = await response.json();
-        console.log("Datos de la respuesta:", data);
+        const data: Dificultad[] = (await response.json()) as Dificultad[];
+        console.log('Datos de la respuesta:', data);
         setDificultades(data);
       } catch (error) {
-        console.error("Error detallado:", error);
+        console.error('Error detallado:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchCategories();
+    void fetchCategories();
   }, []);
-
-  const handleCategoryChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    const selectedId = Number(event.target.value);
-    setDificultad(selectedId);
-  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -71,14 +64,14 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
       ) : (
         <select
           id="category-select"
-          value={dificultad || ""}
+          value={dificultad || ''}
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setDificultad(selectedId);
-            console.log("Categoría seleccionada:", selectedId);
+            console.log('Categoría seleccionada:', selectedId);
           }}
           className={`mb-5 w-60 rounded border p-2 outline-none ${
-            errors.dificultad ? "border-red-500" : "border-primary"
+            errors.dificultad ? 'border-red-500' : 'border-primary'
           }`}
         >
           <option value="">Selecciona una categoría</option>
