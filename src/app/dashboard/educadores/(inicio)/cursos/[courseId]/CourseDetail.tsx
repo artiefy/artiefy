@@ -1,10 +1,14 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
+import { Upload } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { LoadingCourses } from "~/app/dashboard/educadores/(inicio)/cursos/page";
-import ModalFormCourse from "~/components/modals/ModalFormCourse";
+import LessonsListEducator from "~/components/educators/layout/LessonsListEducator"; // Importar el componente
+import ModalFormCourse from "~/components/educators/modals/ModalFormCourse";
+import ModalFormLessons from "~/components/educators/modals/ModalFormLessons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,65 +19,124 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
-import { Button } from "~/components/ui/button";
-import { Card, CardHeader, CardTitle } from "~/components/ui/card";
+} from "~/components/educators/ui/alert-dialog";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "~/components/educators/ui/breadcrumb";
+import { Button } from "~/components/educators/ui/button";
+import { Card, CardHeader, CardTitle } from "~/components/educators/ui/card";
 import { toast } from "~/hooks/use-toast";
+
+interface LessonsModels {
+  id: number;
+  title: string;
+  description: string;
+  coverImageKey: string;
+  coverVideoKey: string;
+  resourceKey: string;
+  duration: number;
+  order: number;
+  createdAt: string;
+  course: {
+    id: number;
+    title: string;
+    description: string;
+    instructor: string;
+  };
+}
 
 interface Course {
   id: number;
   title: string;
   description: string;
-  coverImageKey: string;
-  categoryid: {
-    id: number;
-    name: string;
-  };
-  modalidadesid: {
-    id: number;
-    name: string;
-  };
+  categoryid: string;
+  dificultadid: string;
+  modalidadesid: string;
   instructor: string;
+  coverImageKey: string;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface CourseDetailProps {
-  courseId: string;
-}
-
-export default function CourseDetail({ courseId }: CourseDetailProps) {
+export default function CourseDetail() {
+  const { user } = useUser();
   const router = useRouter();
+  const { courseId } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
+  const [lessons, setLessons] = useState<LessonsModels[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] = useState(0);
   const [editModalidad, setEditModalidad] = useState(0);
+  const [editDificultad, setEditDificultad] = useState(0);
   const [editCoverImageKey, setEditCoverImageKey] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Verifica que courseId no sea un array ni undefined, y lo convierte a número
+  const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
+  const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
+
+  const fetchCourse = useCallback(async () => {
+    if (!user) return;
+    if (courseIdNumber !== null) {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(
+          `/api/educadores/courses/${courseIdNumber}`,
+        );
+
+        if (response.ok) {
+          const data = (await response.json()) as Course;
+          console.log(data);
+          setCourse(data);
+        } else {
+          const errorData = await response.json();
+          const errorMessage = errorData.error || response.statusText;
+          setError(`Error al cargar el curso: ${errorMessage}`);
+          toast({
+            title: "Error",
+            description: `No se pudo cargar el curso: ${errorMessage}`,
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Error desconocido";
+        setError(`Error al cargar el curso: ${errorMessage}`);
+        toast({
+          title: "Error",
+          description: `No se pudo cargar el curso: ${errorMessage}`,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [user, courseId]);
 
   useEffect(() => {
-    const fetchCourse = async () => {
-      try {
-        const response = await fetch(`/api/educadores/${courseId}`);
-        const data = await response.json();
-        setCourse(data);
-        setEditTitle(data.title);
-        setEditDescription(data.description);
-        setEditCategory(data.categoryid.id);
-        setEditModalidad(data.modalidadesid.id);
-        setEditCoverImageKey(data.coverImageKey);
-      } catch (error) {
-        console.error("Error al cargar el curso:", error);
-      }
-    };
-    fetchCourse();
-  }, [courseId]);
+    fetchCourse().catch((error) =>
+      console.error("Error fetching course:", error),
+    );
+  }, [fetchCourse]);
 
   const handleUpdateCourse = async (
+    id: string,
     title: string,
     description: string,
     file: File | null,
-    categoryId: number,
-    modalidadId: number,
+    categoryid: number,
+    modalidadesid: number,
+    dificultadid: number,
   ) => {
     try {
       let coverImageKey = course?.coverImageKey || "";
@@ -107,15 +170,16 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
         coverImageKey = fields.key;
       }
 
-      const response = await fetch(`/api/educadores/${courseId}`, {
+      const response = await fetch(`/api/educadores/courses/${courseId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title,
           description,
           coverImageKey,
-          categoryId,
-          modalidadId,
+          categoryid,
+          modalidadesid,
+          dificultadid,
           instructor: course?.instructor,
         }),
       });
@@ -128,10 +192,9 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
       const updatedCourse = await response.json();
       setCourse(updatedCourse);
       setIsModalOpen(false);
-
       toast({
         title: "Curso actualizado",
-        description: "El curso se ha actualizado con exito!!.",
+        description: "El curso se ha actualizado con éxito.",
       });
     } catch (error) {
       console.error("Error:", error);
@@ -144,11 +207,13 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
     }
   };
 
-  if (!course) return <LoadingCourses />;
+  if (loading) return <div>Cargando curso...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!course) return <div>No se encontró el curso.</div>;
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/educadores?id=${id}`, {
+      const response = await fetch(`/api/educadores/courses?id=${id}`, {
         method: "DELETE",
       });
 
@@ -159,9 +224,31 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
     }
   };
 
+  const addNewLesson = (newLesson: LessonsModels) => {
+    setLessons((prevLessons) => [...prevLessons, newLesson]); // Agrega la nueva lección al final de la lista
+  };
+
   return (
-    <div className="container mx-auto mt-4 h-auto w-full rounded-lg bg-white p-6">
-      <Card className="overflow-hidden bg-gray-300 px-4">
+    <div className="container mx-auto h-auto w-full rounded-lg bg-background p-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              className="hover:text-gray-300"
+              href="/dashboard/educadores/cursos"
+            >
+              Cursos
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink className="hover:text-gray-300">
+              Detalles curso {course.title}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+      <Card className="mt-3 overflow-hidden bg-gray-300 px-4">
         <CardHeader>
           <CardTitle className="text-2xl font-bold">
             Curso: {course.title}
@@ -182,7 +269,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
             <div className="px-3 py-6">
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className="mx-4 border-yellow-500 bg-primary bg-yellow-500 text-white hover:text-yellow-500"
+                className="mx-4 border-yellow-500 bg-primary bg-yellow-500 text-white hover:bg-white hover:text-yellow-500"
               >
                 Editar curso
               </Button>
@@ -198,7 +285,7 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
                     <AlertDialogDescription>
                       Esta acción no se puede deshacer. Se eliminará
                       permanentemente el curso
-                      <span className="font-bold">{course.title}</span> y todos
+                      <span className="font-bold"> {course.title}</span> y todos
                       los datos asociados a este.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -215,7 +302,6 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
               </AlertDialog>
             </div>
           </div>
-
           {/* Columna derecha - Información */}
           <div className="pb-6">
             <h2 className="text-2xl font-bold">Información del curso</h2>
@@ -227,43 +313,95 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
               </div>
               <div className="flex flex-col">
                 <h2 className="text-lg font-semibold">Categoría:</h2>
-                <p className="text-gray-600">{course.categoryid.name}</p>
+                <p className="text-gray-600">{course.categoryid}</p>
               </div>
             </div>
             <div className="mb-4">
               <h2 className="text-lg font-semibold">Descripción:</h2>
-              <p className="text-gray-600">{course.description}</p>
+              <p className="text-justify text-gray-600">{course.description}</p>
             </div>
-            <div className="grid grid-cols-2">
+            <div className="grid grid-cols-3">
               <div className="flex flex-col">
                 <h2 className="text-lg font-semibold">Educador:</h2>
                 <p className="text-gray-600">{course.instructor}</p>
               </div>
               <div className="flex flex-col">
+                <h2 className="text-lg font-semibold">Dificultad:</h2>
+                <p className="text-gray-600">{course.dificultadid}</p>
+              </div>
+              <div className="flex flex-col">
                 <h2 className="text-lg font-semibold">Modalidad:</h2>
-                <p className="text-gray-600">{course.modalidadesid.name}</p>
+                <p className="text-gray-600">{course.modalidadesid}</p>
               </div>
             </div>
           </div>
         </div>
+        <div>
+          <Button
+            className="cursor-pointer bg-white"
+            onClick={() => {
+              setIsModalOpenLessons(true);
+            }}
+          >
+            <Upload />
+            Crear clase
+          </Button>
+        </div>
       </Card>
+      {loading ? (
+        <LoadingCourses />
+      ) : courseIdNumber !== null ? ( // Cambiado de "lessons" a "lessons.length > 0"
+        <>
+          <LessonsListEducator courseId={courseIdNumber} />
+        </>
+      ) : (
+        <></>
+      )}
       <ModalFormCourse
         isOpen={isModalOpen}
-        onCloseAction={() => setIsModalOpen(false)}
-        onSubmitAction={handleUpdateCourse}
+        onSubmitAction={(
+          id: string,
+          title: string,
+          description: string,
+          file: File | null,
+          categoryid: number,
+          modalidadesid: number,
+          dificultadid: number,
+        ) =>
+          handleUpdateCourse(
+            id,
+            title,
+            description,
+            file,
+            categoryid,
+            modalidadesid,
+            dificultadid,
+          )
+        }
         editingCourseId={course.id}
         title={editTitle}
         description={editDescription}
-        category={editCategory}
-        modalidad={editModalidad}
+        categoryid={editCategory}
+        modalidadesid={editModalidad}
+        dificultadid={editDificultad}
         coverImageKey={editCoverImageKey}
         uploading={false}
         setTitle={setEditTitle}
         setDescription={setEditDescription}
-        setModalidad={setEditModalidad}
-        setCategory={setEditCategory}
+        setModalidadesid={setEditModalidad}
+        setCategoryid={setEditCategory}
+        setDificultadid={setEditDificultad}
         setCoverImageKey={setEditCoverImageKey}
+        onCloseAction={() => setIsModalOpen(false)}
       />
+      {courseIdNumber !== null && (
+        <ModalFormLessons
+          isOpen={isModalOpenLessons}
+          onCloseAction={() => setIsModalOpenLessons(false)}
+          courseId={courseIdNumber}
+          uploading={false}
+        />
+      )}
     </div>
   );
 }

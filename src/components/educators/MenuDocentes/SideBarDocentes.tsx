@@ -1,6 +1,7 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
+import { Info } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -12,8 +13,9 @@ import {
   FaGraduationCap,
 } from "react-icons/fa";
 import { MdDashboard, MdMenu } from "react-icons/md";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import { ModalError } from "~/components/educators/modals/modalError";
+import { Button } from "~/components/educators/ui/button";
+import { Card } from "~/components/educators/ui/card";
 import Logo from "../../../public/artiefy-icon.png";
 
 export default function LeftSidebar({
@@ -22,6 +24,7 @@ export default function LeftSidebar({
   children: React.ReactNode;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const menuItems = [
     {
@@ -68,7 +71,18 @@ export default function LeftSidebar({
               Enseñanza con Artiefy
             </span>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="border-none p-2 text-yellow-300 hover:cursor-pointer"
+              title="Información"
+            >
+              <Info />
+            </Button>
+            <ModalError
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+            />
             <Button className="rounded-lg border-none border-transparent p-2">
               <FaBell className="h-5 w-5 text-gray-300" />
             </Button>

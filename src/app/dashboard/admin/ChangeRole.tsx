@@ -3,7 +3,7 @@
 "use client";
 
 import React from "react";
-import { Button } from "~/components/ui/button"; // Asegúrate de tener el componente de Button
+import { Button } from "~/components/educators/ui/button"; // Asegúrate de tener el componente de Button
 import {
   removeRoleWrapper,
   setRoleWrapper,

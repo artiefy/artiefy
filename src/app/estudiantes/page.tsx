@@ -1,22 +1,27 @@
 "use client";
 
-import { MagnifyingGlassIcon, RocketLaunchIcon, StarIcon, AcademicCapIcon } from "@heroicons/react/24/solid";
+import {
+  AcademicCapIcon,
+  MagnifyingGlassIcon,
+  RocketLaunchIcon,
+  StarIcon,
+} from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { Suspense, useEffect, useState } from "react";
-import CourseCategories from "~/components/layout/CourseCategories";
-import CourseListStudent from "~/components/layout/CourseListStudent";
-import Footer from "~/components/layout/Footer";
-import { Header } from "~/components/layout/Header";
-import { SkeletonCard } from "~/components/layout/SkeletonCard";
-import { AspectRatio } from "~/components/ui/aspect-ratio";
-import { Badge } from "~/components/ui/badge";
+import CourseCategories from "~/components/educators/layout/CourseCategories";
+import CourseListStudent from "~/components/educators/layout/CourseListStudent";
+import Footer from "~/components/educators/layout/Footer";
+import { Header } from "~/components/educators/layout/Header";
+import { SkeletonCard } from "~/components/educators/layout/SkeletonCard";
+import { AspectRatio } from "~/components/educators/ui/aspect-ratio";
+import { Badge } from "~/components/educators/ui/badge";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "~/components/ui/carousel";
+} from "~/components/educators/ui/carousel";
 import {
   Pagination,
   PaginationContent,
@@ -24,8 +29,8 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "~/components/ui/pagination";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "~/components/educators/ui/pagination";
+import { Skeleton } from "~/components/educators/ui/skeleton";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -190,12 +195,14 @@ export default function StudentDashboard() {
 
           {/* Search Bar Below Carousel */}
           <div className="flex justify-end">
-            <form className="flex items-center max-w-lg">
-            <div className="flex items-center mr-4 h-full">
+            <form className="flex max-w-lg items-center">
+              <div className="mr-4 flex h-full items-center">
                 <RocketLaunchIcon className="size-6 h-6 w-6 text-gray-500 dark:text-gray-400" />
-                <span className="ml-2 text-xl text-gray-500 dark:text-gray-400 whitespace-nowrap">IA</span>
-                </div>
-             
+                <span className="ml-2 whitespace-nowrap text-xl text-gray-500 dark:text-gray-400">
+                  IA
+                </span>
+              </div>
+
               <div className="relative w-full max-w-xs">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <MagnifyingGlassIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
@@ -214,7 +221,6 @@ export default function StudentDashboard() {
                 <MagnifyingGlassIcon className="mr-2 h-4 w-4" />
                 Buscar
               </button>
-             
             </form>
           </div>
 
@@ -290,16 +296,18 @@ export default function StudentDashboard() {
           </div>
 
           {/* Search Bar Above Cursos Disponibles */}
-          <div className="flex justify-end">      
+          <div className="flex justify-end">
             <form className="flex max-w-lg items-center">
-            <div className="flex items-center mr-4 h-full">
-              <AcademicCapIcon className="size-5 h-6 w-6 text-gray-500 dark:text-gray-400" />
-              <span className="ml-2 text-xl text-gray-500 dark:text-gray-400 whitespace-nowrap">Busca Tu Curso</span>              </div>
+              <div className="mr-4 flex h-full items-center">
+                <AcademicCapIcon className="size-5 h-6 w-6 text-gray-500 dark:text-gray-400" />
+                <span className="ml-2 whitespace-nowrap text-xl text-gray-500 dark:text-gray-400">
+                  Busca Tu Curso
+                </span>{" "}
+              </div>
               <label className="sr-only" htmlFor="course-search">
                 Buscar...
               </label>
               <div className="relative w-full max-w-xs">
-              
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <MagnifyingGlassIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                 </div>
@@ -312,7 +320,7 @@ export default function StudentDashboard() {
                   onChange={(e) => handleSearch(e.target.value)}
                 />
               </div>
-              
+
               <button
                 className="ml-2 inline-flex items-center rounded-lg border border-primary bg-primary px-3 py-2.5 text-sm font-medium text-background hover:bg-primary/90 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/50 dark:bg-primary dark:hover:bg-primary/90 dark:focus:ring-primary/50"
                 type="submit"
@@ -320,7 +328,6 @@ export default function StudentDashboard() {
                 <MagnifyingGlassIcon className="mr-2 h-4 w-4" />
                 Buscar
               </button>
-             
             </form>
           </div>
           <h2 className="text-3xl font-bold">Cursos Disponibles</h2>

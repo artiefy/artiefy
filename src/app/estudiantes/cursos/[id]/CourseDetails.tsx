@@ -1,19 +1,18 @@
-"use client"
+"use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   FaCalendar,
   FaChevronDown,
   FaChevronUp,
   FaClock,
+  FaHome,
   FaStar,
   FaUserGraduate,
-  FaHome,
 } from "react-icons/fa";
-import Footer from "~/components/layout/Footer";
-import { Header } from "~/components/layout/Header";
-import { Button } from "~/components/ui/button";
+import Footer from "~/components/educators/layout/Footer";
+import { Header } from "~/components/educators/layout/Header";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -21,8 +20,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "~/components/ui/breadcrumb";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "~/components/educators/ui/breadcrumb";
+import { Button } from "~/components/educators/ui/button";
+import { Skeleton } from "~/components/educators/ui/skeleton";
 
 export interface Course {
   id: number;
@@ -78,13 +78,13 @@ export default function CourseDetails({ course }: { course: Course }) {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink href="/">
-                <FaHome className="inline-block mr-1" /> Home
+                <FaHome className="mr-1 inline-block" /> Home
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink href="/estudiantes/">
-                <FaUserGraduate className="inline-block mr-1" /> Cursos
+                <FaUserGraduate className="mr-1 inline-block" /> Cursos
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -111,7 +111,9 @@ export default function CourseDetails({ course }: { course: Course }) {
                 className="object-cover"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-                <h1 className="text-3xl font-bold text-white">{course.title}</h1>
+                <h1 className="text-3xl font-bold text-white">
+                  {course.title}
+                </h1>
               </div>
             </div>
 

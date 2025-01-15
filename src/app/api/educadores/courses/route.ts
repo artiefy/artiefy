@@ -7,7 +7,7 @@ import {
   getCourseById,
   getCoursesByUserId,
   updateCourse,
-} from "~/models/courseModelsEducator";
+} from "~/models/educatorsModels/courseModelsEducator";
 import { ratelimit } from "~/server/ratelimit/ratelimit";
 
 export const dynamic = "force-dynamic";
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       coverImageKey,
       categoryid,
       modalidadesid,
+      dificultadid,
       instructor,
     } = body;
 
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
       coverImageKey,
       categoryid,
       modalidadesid,
+      dificultadid,
       instructor,
     });
 
@@ -88,6 +90,7 @@ export async function POST(request: NextRequest) {
       coverImageKey,
       categoryid,
       modalidadesid,
+      dificultadid,
       instructor,
     });
 
@@ -115,6 +118,7 @@ export async function PUT(request: NextRequest) {
       coverImageKey: string;
       categoryid: number;
       modalidadesid: number;
+      dificultadid: number;
       instructor: string;
     };
     const {
@@ -123,6 +127,7 @@ export async function PUT(request: NextRequest) {
       description,
       coverImageKey,
       modalidadesid,
+      dificultadid,
       categoryid,
       instructor,
     } = body;
@@ -143,6 +148,7 @@ export async function PUT(request: NextRequest) {
       categoryid,
       modalidadesid,
       instructor,
+      dificultadid,
     });
 
     return NextResponse.json({ message: "Curso actualizado exitosamente" });

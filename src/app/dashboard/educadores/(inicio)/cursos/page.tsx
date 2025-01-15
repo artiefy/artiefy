@@ -3,40 +3,35 @@
 import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { FiPlus } from "react-icons/fi";
-import CourseListTeacher from "~/components/layout/CourseListTeacher";
-import { SkeletonCard } from "~/components/layout/SkeletonCard";
-import ModalFormCourse from "~/components/modals/ModalFormCourse";
-import { Button } from "~/components/ui/button";
-import { toast } from "~/hooks/use-toast";
+import CourseListTeacher from "~/components/educators/layout/CourseListTeacher";
+import { SkeletonCard } from "~/components/educators/layout/SkeletonCard";
+import ModalFormCourse from "~/components/educators/modals/ModalFormCourse";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbSeparator,
-} from "~/components/ui/breadcrumb";
+} from "~/components/educators/ui/breadcrumb";
+import { Button } from "~/components/educators/ui/button";
+import { toast } from "~/hooks/use-toast";
 
 export interface CourseModel {
   id: number;
   title: string;
   description: string;
-  categoryid: {
-    id: number;
-    name: string;
-    description: string;
-  };
-  modalidadesid: {
-    id: number;
-    name: string;
-  };
+  categoryid: string;
+  modalidadesid: string;
+  createdAt: string;
   instructor: string;
   coverImageKey: string;
   creatorId: string;
+  dificultadid: string; // Add this line
 }
 
 export function LoadingCourses() {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mt-10">
+    <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
       ))}
@@ -58,13 +53,15 @@ export default function Page() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/educadores?userId=${user.id}`);
+      const response = await fetch(`/api/educadores/courses?userId=${user.id}`);
       if (response.ok) {
         const data = (await response.json()) as CourseModel[];
         setCourses(
           data.map((course) => ({
             ...course,
-            coverImageKey: course.coverImageKey ?? "",
+            dificultadid: course.dificultadid ?? "", // Map it properly
+            categoryid: course.categoryid, // Map categoryid properly
+            modalidadesid: course.modalidadesid, // Map modalidadesid properly
           })) as CourseModel[],
         );
       } else {
@@ -98,38 +95,57 @@ export default function Page() {
   }, [user, fetchCourses]);
 
   const handleCreateOrEditCourse = async (
+    id: string,
     title: string,
     description: string,
     file: File | null,
-    categoryId: number,
-    modalidadId: number,
+    categoryid: number,
+    modalidadesid: number,
+    dificultadid: number,
   ) => {
     if (!user) return;
-
     let coverImageKey = "";
-    if (file) {
+    try {
       setUploading(true);
-      const uploadResponse = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentType: file.type }),
-      });
+      if (file) {
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
+        });
 
-      type UploadResponse = { url: string; fields: Record<string, string> };
-      const { url, fields } = (await uploadResponse.json()) as UploadResponse;
+        if (!uploadResponse.ok) {
+          throw new Error(
+            `${Error}:al iniciar la carga: ${uploadResponse.statusText}`,
+          );
+        }
 
-      const formData = new FormData();
-      Object.entries(fields).forEach(([key, value]) =>
-        formData.append(key, value),
-      );
-      formData.append("file", file);
+        const { url, fields } = await uploadResponse.json();
 
-      await fetch(url, { method: "POST", body: formData });
-      coverImageKey = fields.key ?? "";
+        const formData = new FormData();
+        Object.entries(fields).forEach(([key, value]) => {
+          if (typeof value === "string") {
+            formData.append(key, value);
+          }
+        });
+        formData.append("file", file);
+
+        const uploadResult = await fetch(url, {
+          method: "POST",
+          body: formData,
+        });
+        if (!uploadResponse.ok) {
+          throw new Error(
+            `${Error}:al iniciar la carga: ${uploadResponse.statusText}`,
+          );
+        }
+        coverImageKey = fields.key ?? "";
+      }
       setUploading(false);
+    } catch (e) {
+      throw new Error(`Error to upload the file type ${e}`);
     }
-
-    const response = await fetch("/api/educadores", {
+    const response = await fetch("/api/educadores/courses", {
       method: editingCourse ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -137,10 +153,11 @@ export default function Page() {
         title,
         description,
         coverImageKey,
-        categoryid: categoryId,
-        modalidadesid: modalidadId,
+        categoryid,
+        modalidadesid,
         instructor: user.fullName,
         userId: user.id,
+        dificultadid,
       }),
     });
 
@@ -179,19 +196,22 @@ export default function Page() {
   return (
     <>
       <main className="h-auto">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink className="hover:text-gray-300" href="/dashboard/educadores">
-              Inicio
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-        </BreadcrumbList>
-      </Breadcrumb>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="hover:text-gray-300"
+                href="/dashboard/educadores"
+              >
+                Inicio
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </BreadcrumbList>
+        </Breadcrumb>
         <div className="container mx-auto px-2">
           <div className="mt-2 flex justify-between">
-            <h1 className="text-3xl font-bold">Panel de control de cursos</h1>
+            <h1 className="text-3xl font-bold">Panel de cursos</h1>
             <Button
               onClick={handleCreateCourse}
               className="transform bg-primary text-background transition-transform hover:text-primary active:scale-95"
@@ -224,9 +244,7 @@ export default function Page() {
               <h2 className="mb-4 mt-10 text-2xl font-bold">
                 Lista de cursos creados
               </h2>
-              <CourseListTeacher
-                courses={courses as CourseModel[]}
-              />
+              <CourseListTeacher courses={courses} />
             </>
           )}
           {isModalOpen && (
@@ -244,29 +262,24 @@ export default function Page() {
                   prev ? { ...prev, description } : null,
                 )
               }
-              category={editingCourse?.categoryid.id ?? 0}
-              setCategory={(categoryId: number) =>
+              categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
+              setCategoryid={(categoryid: number) =>
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, categoryid: String(categoryid) } : null,
+                )
+              }
+              modalidadesid={Number(editingCourse?.modalidadesid) ?? 0}
+              setModalidadesid={(modalidadesid: number) =>
                 setEditingCourse((prev) =>
                   prev
-                    ? {
-                        ...prev,
-                        categoryid: { ...prev.categoryid, id: categoryId },
-                      }
+                    ? { ...prev, modalidadesid: String(modalidadesid) }
                     : null,
                 )
               }
-              modalidad={editingCourse?.modalidadesid.id ?? 0}
-              setModalidad={(modalidadId: number) =>
+              dificultadid={Number(editingCourse?.dificultadid) ?? 0}
+              setDificultadid={(dificultadid: number) =>
                 setEditingCourse((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        modalidadesid: {
-                          ...prev.modalidadesid,
-                          id: modalidadId,
-                        },
-                      }
-                    : null,
+                  prev ? { ...prev, dificultadid: String(dificultadid) } : null,
                 )
               }
               coverImageKey={editingCourse?.coverImageKey ?? ""}

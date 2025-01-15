@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import { AiOutlineCrown } from "react-icons/ai";
 import { BsCheck2Circle, BsStars } from "react-icons/bs";
 import { FaBook, FaTimes } from "react-icons/fa";
-import Footer from "~/components/layout/Footer";
-import { Header } from "~/components/layout/Header";
-import { Button } from "~/components/ui/button";
+import Footer from "~/components/educators/layout/Footer";
+import { Header } from "~/components/educators/layout/Header";
+import { Button } from "~/components/educators/ui/button";
 
 const PricingPlans: React.FC = () => {
   interface Plan {
@@ -128,7 +128,7 @@ const PricingPlans: React.FC = () => {
                 <div className="mb-4 flex justify-center">
                   <Button
                     onClick={() => handlePlanSelect(plan)}
-                    className="h-full group hover:bg-background relative overflow-hidden rounded-md border border-b-4 border-white bg-background px-4 py-3 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:brightness-150 active:scale-95 active:opacity-75"
+                    className="group relative h-full overflow-hidden rounded-md border border-b-4 border-white bg-background px-4 py-3 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:bg-background hover:brightness-150 active:scale-95 active:opacity-75"
                   >
                     <span className="absolute -top-[150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
                     Seleccionar Plan {plan.name}
@@ -171,7 +171,7 @@ const PricingPlans: React.FC = () => {
               <div className="flex justify-center">
                 <Button
                   onClick={() => setShowModal(false)}
-                  className="-my-6 group relative h-full overflow-hidden rounded-md border border-b-4 border-secondary bg-background px-5 py-3 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:bg-background active:scale-95 active:opacity-75"
+                  className="group relative -my-6 h-full overflow-hidden rounded-md border border-b-4 border-secondary bg-background px-5 py-3 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:bg-background active:scale-95 active:opacity-75"
                 >
                   <span className="absolute -top-[150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
                   Proceder con el Plan {selectedPlan.name}

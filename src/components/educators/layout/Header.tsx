@@ -6,8 +6,8 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Icons } from "~/components/ui/icons";
+import { Button } from "~/components/educators/ui/button";
+import { Icons } from "~/components/educators/ui/icons";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,11 +30,10 @@ export function Header() {
     <header className="py-4">
       <div className="container mx-auto max-w-7xl px-4">
         <div className="flex items-center justify-between">
-
           <div className="hidden w-full items-center justify-between md:flex">
             {/* Logo */}
-            <div className="flex-shrink-0 mt-[-13px]"> 
-              <div className="relative h-[150px] w-[150px]"> 
+            <div className="mt-[-13px] flex-shrink-0">
+              <div className="relative h-[150px] w-[150px]">
                 <Image
                   src="/artiefy-logo.svg"
                   alt="Logo Artiefy"
@@ -62,20 +61,20 @@ export function Header() {
               <SignedOut>
                 <SignInButton>
                   <Button
-                    className="cta rounded-none relative p-5 font-light text-xl italic text-primary active:scale-95 transform skew-x-[-15deg] hover:text-white"
+                    className="cta relative skew-x-[-15deg] transform rounded-none p-5 text-xl font-light italic text-primary hover:text-white active:scale-95"
                     style={{
                       transition: "0.5s",
-                      width: "175px", 
+                      width: "175px",
                     }}
                     onClick={handleSignInClick}
                   >
-                    <span className="inline-block transform skew-x-[15deg] relative overflow-hidden">
+                    <span className="relative inline-block skew-x-[15deg] transform overflow-hidden">
                       {isLoading ? (
                         <Icons.spinner className="size-5 animate-spin" />
                       ) : (
                         <>
                           Iniciar Sesión
-                          <span className="absolute top-0 left-0 w-0 h-full opacity-0 bg-white shadow-[0_0_50px_30px_white] transform skew-x-[-20deg] transition-all duration-500 button-hover-effect"></span>
+                          <span className="button-hover-effect absolute left-0 top-0 h-full w-0 skew-x-[-20deg] transform bg-white opacity-0 shadow-[0_0_50px_30px_white] transition-all duration-500"></span>
                         </>
                       )}
                     </span>
@@ -90,8 +89,8 @@ export function Header() {
 
           {/* Mobile view */}
           <div className="flex w-full items-center justify-between md:hidden">
-            <div className="flex-shrink-0 mt-[-8px]"> 
-              <div className="relative h-[150px] w-[150px]"> 
+            <div className="mt-[-8px] flex-shrink-0">
+              <div className="relative h-[150px] w-[150px]">
                 <Image
                   src="/artiefy-logo.png"
                   alt="Logo Artiefy"
@@ -123,7 +122,9 @@ export function Header() {
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <DialogPanel className="fixed inset-y-0 right-0 z-50 w-[75%] max-w-sm bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between">
-            <div className="relative h-[150px] w-[150px] mt-[-10px]"> {/* Adjusted margin-top to move the logo up slightly */}
+            <div className="relative mt-[-10px] h-[150px] w-[150px]">
+              {" "}
+              {/* Adjusted margin-top to move the logo up slightly */}
               <Image
                 src="/artiefy-logo2.svg"
                 alt="Logo Artiefy"
@@ -162,10 +163,10 @@ export function Header() {
             <SignedOut>
               <SignInButton>
                 <Button
-                  className="border border-background cta rounded-none relative p-5 text-xl text-background bg-primary font-light italic active:scale-95 transform skew-x-[-15deg] hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] transition-all duration-200 button-hover"
+                  className="cta button-hover relative skew-x-[-15deg] transform rounded-none border border-background bg-primary p-5 text-xl font-light italic text-background transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
                   style={{
                     transition: "0.5s",
-                    width: "175px", 
+                    width: "175px",
                   }}
                   onClick={handleSignInClick}
                 >
@@ -175,7 +176,7 @@ export function Header() {
                     ) : (
                       <>
                         Iniciar Sesión
-                        <span className="absolute top-0 left-0 w-0 h-full opacity-0 bg-white shadow-[0_0_50px_30px_white] transform skew-x-[-20deg] transition-all duration-500 button-hover-effect"></span>
+                        <span className="button-hover-effect absolute left-0 top-0 h-full w-0 skew-x-[-20deg] transform bg-white opacity-0 shadow-[0_0_50px_30px_white] transition-all duration-500"></span>
                       </>
                     )}
                   </span>

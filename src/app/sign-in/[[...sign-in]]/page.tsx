@@ -3,8 +3,8 @@ import * as Clerk from "@clerk/elements/common";
 import * as SignIn from "@clerk/elements/sign-in";
 import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
-import { AspectRatio } from "~/components/ui/aspect-ratio";
-import { Icons } from "~/components/ui/icons";
+import { AspectRatio } from "~/components/educators/ui/aspect-ratio";
+import { Icons } from "~/components/educators/ui/icons";
 import Loading from "../../loading"; // Ajusta la ruta según la ubicación real del archivo
 
 export default function SignInPage() {
@@ -28,7 +28,7 @@ export default function SignInPage() {
             fill
             className="h-full w-full object-contain"
             priority
-            style={{ maxWidth: '500px', maxHeight: '500px' }} 
+            style={{ maxWidth: "500px", maxHeight: "500px" }}
           />
         </AspectRatio>
       </div>

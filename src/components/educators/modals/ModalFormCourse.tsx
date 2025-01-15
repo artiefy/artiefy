@@ -5,9 +5,10 @@ import Image from "next/image";
 import { useEffect, useState, type ChangeEvent } from "react";
 import { FiUploadCloud } from "react-icons/fi";
 import { MdClose } from "react-icons/md";
-import CategoryDropdown from "~/components/layout/CategoryDropdown";
-import ModalidadDropdown from "~/components/layout/ModalidadDropdown";
-import { Button } from "~/components/ui/button";
+import CategoryDropdown from "~/components/educators/layout/CategoryDropdown";
+import DificultadDropdown from "~/components/educators/layout/DifiultadDropdown";
+import ModalidadDropdown from "~/components/educators/layout/ModalidadDropdown";
+import { Button } from "~/components/educators/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -15,16 +16,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
-import { Progress } from "~/components/ui/progress";
+} from "~/components/educators/ui/dialog";
+import { Progress } from "~/components/educators/ui/progress";
 
 interface CourseFormProps {
   onSubmitAction: (
+    id: string,
     title: string,
     description: string,
     file: File | null,
-    category: number,
-    modalidad: number,
+    categoryid: number,
+    modalidadesid: number,
+    dificultadesid: number,
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -32,10 +35,12 @@ interface CourseFormProps {
   setTitle: (title: string) => void;
   description: string;
   setDescription: (description: string) => void;
-  category: number;
-  setCategory: (category: number) => void;
-  modalidad: number;
-  setModalidad: (modalidad: number) => void;
+  categoryid: number;
+  setCategoryid: (categoryid: number) => void;
+  modalidadesid: number;
+  setModalidadesid: (modalidadesid: number) => void;
+  dificultadid: number;
+  setDificultadid: (dificultadid: number) => void;
   coverImageKey: string;
   setCoverImageKey: (coverImageKey: string) => void;
   isOpen: boolean;
@@ -53,8 +58,9 @@ export default function ModalFormCourse({
   const { user } = useUser();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState(0);
-  const [modalidad, setModalidad] = useState(0);
+  const [categoryid, setCategoryid] = useState(0);
+  const [modalidadesid, setModalidadesid] = useState(0);
+  const [dificultadid, setDificultadid] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -64,9 +70,13 @@ export default function ModalFormCourse({
   const [errors, setErrors] = useState({
     title: false,
     description: false,
+    categoryid: false,
     category: false,
-    modalidad: false,
+    modalidadesid: false,
+    dificultadid: false,
     file: false,
+    dificultad: false,
+    modalidad: false,
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -120,16 +130,23 @@ export default function ModalFormCourse({
     const newErrors = {
       title: !editingCourseId && !title,
       description: !editingCourseId && !description,
-      category: !editingCourseId && !category,
-      modalidad: !editingCourseId && !modalidad,
+      categoryid: !editingCourseId && !categoryid,
+      category: false,
+      modalidadesid: !editingCourseId && !modalidadesid,
+      dificultadid: !editingCourseId && !dificultadid,
+      dificultad: false,
       file: !editingCourseId && !file && !currentCoverImageKey,
+      modalidad: false,
     };
 
     if (editingCourseId) {
       newErrors.title = modifiedFields.has("title") && !title;
       newErrors.description = modifiedFields.has("description") && !description;
-      newErrors.category = modifiedFields.has("category") && !category;
-      newErrors.modalidad = modifiedFields.has("modalidad") && !modalidad;
+      newErrors.dificultadid =
+        modifiedFields.has("dificultadid") && !dificultadid;
+      newErrors.file = modifiedFields.has("file") && !file;
+      newErrors.modalidadesid =
+        modifiedFields.has("modalidadesid") && !modalidadesid;
       newErrors.file = modifiedFields.has("file") && !file;
     }
 
@@ -142,14 +159,23 @@ export default function ModalFormCourse({
     setIsEditing(true);
     setIsUploading(true);
     try {
-      await onSubmitAction(title, description, file, category, modalidad);
+      await onSubmitAction(
+        editingCourseId ? editingCourseId.toString() : "",
+        title,
+        description,
+        file,
+        categoryid,
+        modalidadesid,
+        dificultadid,
+      );
       setIsUploading(false);
       console.log("Datos enviados:", {
         title,
         description,
         file,
-        categoryid: category,
-        modalidadesid: modalidad,
+        categoryid,
+        modalidadesid,
+        dificultadid,
       });
     } catch (error) {
       setIsUploading(false);
@@ -169,11 +195,14 @@ export default function ModalFormCourse({
       case "description":
         setDescription(value as string);
         break;
-      case "category":
-        setCategory(value as number);
+      case "categoryid":
+        setCategoryid(value as number);
         break;
-      case "modalidad":
-        setModalidad(value as number);
+      case "modalidadesid":
+        setModalidadesid(value as number);
+        break;
+      case "dificultadesid":
+        setDificultadid(value as number);
         break;
       case "file":
         setFile(value as File);
@@ -268,7 +297,7 @@ export default function ModalFormCourse({
             placeholder="Descripción"
             value={description}
             onChange={(e) => handleFieldChange("description", e.target.value)}
-            className={`mb-3 w-full rounded border p-2 text-black outline-none ${errors.description ? "border-red-500" : "border-primary"}`}
+            className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.description ? "border-red-500" : "border-primary"}`}
           />
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -276,17 +305,17 @@ export default function ModalFormCourse({
           <div className="mb-4 flex justify-evenly">
             <div className="flex flex-col">
               <label
-                htmlFor="modalidad"
+                htmlFor="dificultadid"
                 className="text-lg font-medium text-primary"
               >
-                Modalidad
+                Dificultad
               </label>
-              <ModalidadDropdown
-                modalidad={modalidad}
-                setModalidad={setModalidad}
+              <DificultadDropdown
+                dificultad={dificultadid}
+                setDificultad={setDificultadid}
                 errors={errors}
               />
-              {errors.modalidad && (
+              {errors.dificultadid && (
                 <p className="text-sm text-red-500">
                   Este campo es obligatorio.
                 </p>
@@ -294,17 +323,35 @@ export default function ModalFormCourse({
             </div>
             <div className="flex flex-col">
               <label
-                htmlFor="category"
+                htmlFor="modalidadesid"
+                className="text-lg font-medium text-primary"
+              >
+                Modalidad
+              </label>
+              <ModalidadDropdown
+                modalidad={modalidadesid}
+                setModalidad={setModalidadesid}
+                errors={errors}
+              />
+              {errors.modalidadesid && (
+                <p className="text-sm text-red-500">
+                  Este campo es obligatorio.
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <label
+                htmlFor="categoryid"
                 className="text-lg font-medium text-primary"
               >
                 Categoría
               </label>
               <CategoryDropdown
-                category={category}
-                setCategory={setCategory}
+                category={categoryid}
+                setCategory={setCategoryid}
                 errors={errors}
               />
-              {errors.category && (
+              {errors.categoryid && (
                 <p className="text-sm text-red-500">
                   Este campo es obligatorio.
                 </p>

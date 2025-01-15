@@ -11,8 +11,15 @@ const coreConfig = {
         pathname: '/artiefy-bucket/**',
         search: '',
       },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
+        search: '',
+      },
     ],
-    domains: ['s3.us-east-2.amazonaws.com'],
+    domains: ['s3.us-east-2.amazonaws.com', 'placehold.co'],
   },
 };
 

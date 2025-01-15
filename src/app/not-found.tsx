@@ -10,7 +10,7 @@ export default function NotFound() {
         Lo sentimos, pero la página que buscas no está disponible. Puede que el
         enlace esté roto o que la página haya sido movida.
       </p>
-      <Link href="/" className="text-lg text-blue-500 underline mb-6">
+      <Link href="/" className="text-lg text-blue-500 underline mb-6 border border-zinc-600 rounded-lg p-5">
         Volver al inicio
       </Link>
     </div>

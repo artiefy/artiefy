@@ -46,16 +46,19 @@ export const courses = pgTable("courses", {
   modalidadesid: integer("modalidadesid")
     .references(() => modalidades.id)
     .notNull(),
+  dificultadid: integer("dificultadid")
+    .references(() => dificultad.id)
+    .notNull(),
 });
 
-//tabla de categorias
+// Tabla de categorías
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(), // ID autoincremental de la categoría
   name: varchar("name", { length: 255 }).notNull(), // Nombre de la categoría
   description: text("description"), // Descripción de la categoría
 });
 
-//tabla de preferencias
+// Tabla de preferencias
 export const preferences = pgTable("preferences", {
   id: serial("id").primaryKey(), // ID autoincremental de la preferencia
   name: varchar("name", { length: 255 }).notNull(), // Nombre de la preferencia
@@ -63,7 +66,7 @@ export const preferences = pgTable("preferences", {
   userId: text("user_id")
     .references(() => users.id)
     .notNull(), // Relación con usuarios
-  categoryid: integer("categoryid")
+  categoryid: integer("categoryid") // Usar el nombre consistente
     .references(() => categories.id)
     .notNull(),
 });
@@ -85,16 +88,17 @@ export const lessons = pgTable("lessons", {
   title: varchar("title", { length: 255 }).notNull(), // Título de la lección
   description: text("description"), // Descripción de la lección
   duration: integer("duration").notNull(),
-  coverImageKey: text("cover_image_key"), // Clave de la imagen en S3
-  coverVideoKey: text("cover_video_key"), // Clave del video en S3
-  order: serial("order").notNull(), // Orden de la lección en el curso
+  coverImageKey: text("cover_image_key").notNull(), // Clave de la imagen en S3
+  coverVideoKey: text("cover_video_key").notNull(), // Clave del video en S3
+  order: serial("order").notNull(), // Orden autoincremental de la lección en el curso
   courseId: integer("course_id")
     .references(() => courses.id)
     .notNull(), // Relación con la tabla cursos
   createdAt: timestamp("created_at").defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp("updated_at").defaultNow().notNull(), // Fecha de última actualización
-  porcentajeCompletado: real("porcentaje_completado").default(0), // Nuevo campo de porcentaje completado
-  resourceKey: text("resource_key"), // Clave del recurso en S3
+  porcentajecompletado: real("porcentajecompletado").default(0), // Nuevo campo de porcentaje completado
+  resourceKey: text("resource_key").notNull(), // Clave del recurso en S3
+  isLocked: boolean('is_locked').default(true),
 });
 
 export const modalidades = pgTable("modalidades", {
@@ -103,7 +107,7 @@ export const modalidades = pgTable("modalidades", {
   description: text("description"), // Descripción de la modalidad
 });
 
-//tabla de puntajes
+// Tabla de puntajes
 export const scores = pgTable("scores", {
   id: serial("id").primaryKey(), // ID autoincremental del puntaje
   score: real("score").notNull(), // Puntaje del usuario
@@ -115,6 +119,12 @@ export const scores = pgTable("scores", {
     .notNull(),
 });
 
+export const dificultad = pgTable("dificultad", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+});
+
 //tabla de actividades
 export const activities = pgTable("activities", {
   id: serial("id").primaryKey(), // ID autoincremental de la actividad
@@ -124,6 +134,7 @@ export const activities = pgTable("activities", {
   lessonsId: integer("lessons_id")
     .references(() => lessons.id)
     .notNull(), // Relación con lecciones
+  completed: boolean('completed').default(false), // Estado de completado
 });
 
 // Tabla de inscripciones (relación muchos a muchos entre usuarios y inscripciones)
@@ -215,6 +226,10 @@ export const scoresRelations = relations(scores, ({ one }) => ({
     fields: [scores.userId], // Campo que referencia al usuario
     references: [users.id], // ID del usuario
   }),
+  category: one(categories, {
+    fields: [scores.categoryid], // Usar el nombre consistente
+    references: [categories.id],
+  }),
 }));
 
 export const preferencesRelations = relations(preferences, ({ one }) => ({
@@ -223,7 +238,7 @@ export const preferencesRelations = relations(preferences, ({ one }) => ({
     references: [users.id],
   }),
   category: one(categories, {
-    fields: [preferences.categoryid],
+    fields: [preferences.categoryid], // Usar el nombre consistente
     references: [categories.id],
   }),
 }));

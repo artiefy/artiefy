@@ -1,5 +1,5 @@
 import { type MetadataRoute } from "next";
-import { getAllCourses } from "~/models/courseModelsEducator";
+import { getAllCourses } from "~/models/educatorsModels/courseModelsEducator";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";

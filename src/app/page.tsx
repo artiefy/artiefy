@@ -3,10 +3,10 @@ import { SignInButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useState } from "react";
 import { FaArrowRight } from "react-icons/fa"; // Importa el icono de flecha
-import SmoothGradient from "~/components/layout/Gradient";
-import { Header } from "~/components/layout/Header";
-import { Button as UiButton } from "~/components/ui/button";
-import { Icons } from "~/components/ui/icons"; // Importa el ícono de carga
+import SmoothGradient from "~/components/educators/layout/Gradient";
+import { Header } from "~/components/educators/layout/Header";
+import { Button as UiButton } from "~/components/educators/ui/button";
+import { Icons } from "~/components/educators/ui/icons"; // Importa el ícono de carga
 
 export default function Home() {
   const { user } = useUser();
@@ -16,19 +16,13 @@ export default function Home() {
   const dashboardRoute =
     user?.publicMetadata?.role === "admin"
       ? "/dashboard/admin"
-<<<<<<< HEAD
       : user?.publicMetadata?.role === "educador"
         ? "/dashboard/educadores"
-        : "/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
-=======
-      : user?.publicMetadata?.role === "profesor"
-        ? "/dashboard/profesores"
         : "/estudiantes"; // Ruta predeterminada para usuarios sin rol o estudiantes
 
   const handleButtonClick = () => {
     setLoading(true);
   };
->>>>>>> develop
 
   return (
     <div className="relative flex min-h-screen flex-col">
@@ -38,17 +32,17 @@ export default function Home() {
         <main className="mt-[-10vh] flex flex-grow items-center justify-center">
           {" "}
           {/* Ajusta el margen superior */}
-          <section className="container mx-auto px-4 py-12 text-center">
+          <section className="container mx-auto px-4 text-center">
             {" "}
             {/* Ajusta el padding */}
-            <h1 className="mb-5 text-5xl font-bold leading-snug text-white">
+            <h1 className="mb-10 text-5xl font-bold leading-snug text-white">
               {" "}
               {/* Ajusta el margen inferior */}
               Únete a nosotros y transforma tus ideas en
               <br /> realidades con el{" "}
-              <span className="text-primary">poder del conocimiento</span>
+              <span className="text-primary">poder del conocimiento.</span>
             </h1>
-            <p className="mb-5 text-xl leading-snug">
+            <p className="mb-16 text-xl leading-snug">
               {" "}
               {/* Ajusta el margen inferior */}
               Bienvenido a Artiefy, tu plataforma digital educativa dedicada a
@@ -66,7 +60,7 @@ export default function Home() {
                     }}
                     onClick={handleButtonClick}
                   >
-                    <div className="flex items-center justify-center w-full">
+                    <div className="flex w-full items-center justify-center">
                       {loading ? (
                         <Icons.spinner
                           className="animate-spin"
@@ -100,7 +94,7 @@ export default function Home() {
                       {loading ? (
                         <Icons.spinner
                           className="animate-spin"
-                          style={{ height: "32px", width: "32px" }} 
+                          style={{ height: "32px", width: "32px" }}
                         />
                       ) : (
                         <>

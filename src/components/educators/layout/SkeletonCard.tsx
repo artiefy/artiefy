@@ -1,4 +1,4 @@
-import { Skeleton } from "~/components/ui/skeleton";
+import { Skeleton } from "~/components/educators/ui/skeleton";
 
 export function SkeletonCard() {
   return (
@@ -11,4 +11,3 @@ export function SkeletonCard() {
     </div>
   );
 }
-
