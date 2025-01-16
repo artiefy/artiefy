@@ -117,7 +117,7 @@ export default function CourseDetails({ course }: { course: Course }) {
               <Image
                 src={
                   course.coverImageKey
-                    ? ${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}.trimEnd()
+                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey.trimEnd()}`
                     : 'https://placehold.co/600x400/EEE/31343C?font=montserrat&text=Curso-Artiefy'
                 }
                 alt={course.title}
@@ -156,7 +156,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                       {Array.from({ length: 5 }).map((_, index) => (
                         <FaStar
                           key={index}
-                          className={size-5 ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}}
+                          className={`size-5 ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                         />
                       ))}
                       <span className="ml-2 text-lg font-semibold text-yellow-400">
@@ -231,7 +231,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                               asChild
                               className="mt-4 text-background hover:underline active:scale-95"
                             >
-                              <Link href={/estudiantes/clases/${lesson.id}}>
+                              <Link href={`/estudiantes/clases/${lesson.id}`}>
                                 Ver Clase
                               </Link>
                             </Button>
@@ -241,7 +241,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                     ))}
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="mt-8 flex items-center justify-between">
                   <Button
                     className="w-full justify-center border-white/20 bg-background text-lg font-semibold text-primary transition-colors hover:bg-background active:scale-95"
                     onClick={handleSubscribe}

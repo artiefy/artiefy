@@ -45,7 +45,7 @@ export default function Loading() {
       <p className="-mt-20 text-3xl font-bold text-primary">
         {' '}
         {/* Ajusta el margen superior aquí */}
-        Cargando... Artiefy
+        Cargando Artiefy &#128512;...
       </p>
     </div>
   );

@@ -70,6 +70,12 @@ export const preferences = pgTable('preferences', {
     .notNull(),
 });
 
+export const modalidades = pgTable('modalidades', {
+  id: serial('id').primaryKey(), // ID autoincremental de la modalidad
+  name: varchar('name', { length: 255 }).notNull(), // Nombre de la modalidad
+  description: text('description'), // Descripción de la modalidad
+});
+
 //tabla de cursos tomados
 export const coursesTaken = pgTable('courses_taken', {
   id: serial('id').primaryKey(), // ID autoincremental del curso tomado
@@ -95,9 +101,9 @@ export const lessons = pgTable('lessons', {
     .notNull(), // Relación con la tabla cursos
   createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
-  porcentajecompletado: real('porcentajecompletado').default(0), // Porcentaje de completado de las clases
+  porcentajecompletado: real('porcentajecompletado').default(0), // Nuevo campo de porcentaje completado
   resourceKey: text('resource_key').notNull(), // Clave del recurso en S3
-  isLocked: boolean('is_locked').default(true), // Nuevo campo para controlar si la lección está bloqueada
+  isLocked: boolean('is_locked').default(true),
 });
 
 // Agregamos una nueva tabla para el progreso de las lecciones
@@ -112,12 +118,6 @@ export const lessonProgress = pgTable('lesson_progress', {
   progress: real('progress').default(0),
   completed: boolean('completed').default(false),
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-});
-
-export const modalidades = pgTable('modalidades', {
-  id: serial('id').primaryKey(), // ID autoincremental de la modalidad
-  name: varchar('name', { length: 255 }).notNull(), // Nombre de la modalidad
-  description: text('description'), // Descripción de la modalidad
 });
 
 // Tabla de puntajes

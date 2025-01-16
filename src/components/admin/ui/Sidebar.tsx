@@ -1,108 +1,192 @@
 'use client';
 
-import { useState } from 'react';
-import {
-    Home,
-    BookOpen,
-    Users,
-    GraduationCap,
-    FileText,
-    MessageSquare,
-    Award,
-    BarChart,
-    PenToolIcon as Tool,
-    Zap,
-    Sun,
-    Moon,
-    LifeBuoy,
-    Menu,
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react';
+import { Info } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useTheme } from 'next-themes';
+import {
+  FiHome,
+  FiBook,
+  FiFileText,
+  FiUser,
+  FiSettings,
+  FiMenu,
+  FiX,
+} from 'react-icons/fi';
 import { Button } from '~/components/admin/ui/button';
+import { cn } from '~/lib/utils';
 
-const menuItems = [
-    { icon: Home, text: 'Inicio', href: './' },
-    { icon: BookOpen, text: 'Cursos', href: './app/cursos' },
-    { icon: Users, text: 'Estudiantes', href: './app/estudiantes' },
-    { icon: GraduationCap, text: 'Tutores', href: './app/tutores' },
-    { icon: FileText, text: 'Recursos', href: './recursos' },
-    { icon: MessageSquare, text: 'Foros', href: './foros' },
-    { icon: LifeBuoy, text: 'Soporte', href: './soporte' },
+interface SidebarProps {
+  children: React.ReactNode;
+}
 
-    { icon: Award, text: 'Evaluaciones', href: './evaluaciones' },
-    { icon: BarChart, text: 'Análisis', href: './analisis' },
-    { icon: Tool, text: 'Configuración', href: './configuracion' },
-    { icon: Zap, text: 'Gamificación', href: './gamificacion' },
-];
+export function Sidebar({ children }: SidebarProps) {
+  const { user } = useUser();
+  const [isOpen, setIsOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
-export const Sidebar = () => {
-    const pathname = usePathname();
-    const { theme, setTheme } = useTheme();
-    const [isOpen, setIsOpen] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsOpen(window.innerWidth > 768);
+    };
 
-    return (
-        <>
-            <Button
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const navItemsEducator = [
+    {
+      icon: <FiHome size={24} />,
+      title: 'Inicio',
+      id: 'home',
+      link: '/dashboard/educadores',
+    },
+    {
+      icon: <FiBook size={24} />,
+      title: 'Cursos',
+      id: 'courses',
+      link: '/dashboard/educadores/cursos',
+    },
+    {
+      icon: <FiFileText size={24} />,
+      title: 'Proyectos',
+      id: 'resources',
+      link: '/dashboard/educadores/proyectos',
+    },
+    {
+      icon: <FiUser size={24} />,
+      title: 'Perfil',
+      id: 'profile',
+      link: '/profile',
+    },
+    {
+      icon: <FiSettings size={24} />,
+      title: 'Configuración',
+      id: 'settings',
+      link: '/settings',
+    },
+  ];
+
+  const navItemsAdmin = [
+    { icon: <FiHome size={24} />, title: 'Inicio', id: 'home', link: '/' },
+    {
+      icon: <FiBook size={24} />,
+      title: 'Cursos',
+      id: 'courses',
+      link: '/cursos',
+    },
+    {
+      icon: <FiFileText size={24} />,
+      title: 'Proyectos',
+      id: 'projects',
+      link: '/proyectos',
+    },
+    {
+      icon: <FiUser size={24} />,
+      title: 'Perfil',
+      id: 'profile',
+      link: '/profile',
+    },
+    {
+      icon: <FiSettings size={24} />,
+      title: 'Configuración',
+      id: 'settings',
+      link: '/settings',
+    },
+  ];
+
+  const navItems =
+    user?.publicMetadata?.role === 'admin' ? navItemsAdmin : navItemsEducator;
+  const [activeItem, setActiveItem] = useState('home');
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Navbar */}
+      <nav className="fixed top-0 z-50 w-full border-b border-border bg-background shadow-sm">
+        <div className="p-3 lg:px-5 lg:pl-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <button
+                onClick={() => isMobile && setIsOpen(!isOpen)}
+                className="rounded-lg p-2 text-muted-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-muted-foreground md:hidden"
+                aria-controls="sidebar"
+                aria-expanded={isOpen}
+              >
+                {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+              </button>
+              <div className="ml-2 flex md:mr-24">
+                <div className="relative size-[38px]">
+                  <Image
+                    src="/favicon.ico"
+                    className="size-8 rounded-full object-contain"
+                    alt="Educational Logo"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
+                  />
+                </div>
+                <span className="ml-2 self-center text-xl font-semibold sm:text-2xl">
+                  Artiefy
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button
                 variant="ghost"
                 size="icon"
-                className="fixed left-4 top-4 z-50 md:hidden"
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <Menu className="size-6" />
-            </Button>
-            <aside
-                className={`${isOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-40 w-64 overflow-y-auto border-r border-gray-200 bg-white transition-transform duration-300 ease-in-out dark:border-gray-700 dark:bg-gray-800 md:static md:translate-x-0`}
-            >
-                <div className="py-4">
-                    <div className="px-4 py-2">
-                        <h1 className="text-2xl font-bold">EduDash</h1>
-                    </div>
-                    <nav className="mt-4">
-                        {menuItems.map((item, index) => (
-                            <Link
-                                key={index}
-                                href={item.href}
-                                className={`mx-2 flex items-center space-x-2 rounded-lg p-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700 ${
-                                    pathname === item.href
-                                        ? 'bg-gray-100 dark:bg-gray-700'
-                                        : ''
-                                }`}
-                                onClick={() => setIsOpen(false)}
-                            >
-                                <item.icon className="size-5" />
-                                <span>{item.text}</span>
-                            </Link>
-                        ))}
-                    </nav>
-                    <div className="mt-4 px-4">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                const newTheme =
-                                    theme === 'dark' ? 'light' : 'dark';
-                                setTheme(newTheme);
-                                localStorage.setItem('theme', newTheme);
-                            }}
-                            className="flex w-full items-center justify-center gap-2"
-                        >
-                            {theme === 'dark' ? (
-                                <>
-                                    <Sun className="size-4" />
-                                    <span>Cambiar a modo claro</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Moon className="size-4" />
-                                    <span>Cambiar a modo oscuro</span>
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                </div>
-            </aside>
-        </>
-    );
-};
+                className="text-yellow-300"
+                title="Información"
+              >
+                <Info />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-background pt-20 transition-transform dark:border-gray-700 sm:translate-x-0',
+          !isOpen && '-translate-x-full'
+        )}
+        aria-label="Sidebar"
+      >
+        <div className="h-full overflow-y-auto bg-background px-3 pb-4">
+          <ul className="space-y-5 font-medium">
+            {navItems.map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={item.link}
+                  onClick={() => setActiveItem(item.id)}
+                  className={cn(
+                    'group flex w-full items-center rounded-lg p-2 text-foreground hover:bg-accent',
+                    activeItem === item.id
+                      ? 'bg-primary text-primary-foreground'
+                      : ''
+                  )}
+                >
+                  <span className="text-muted-foreground transition duration-75 group-hover:text-foreground">
+                    {item.icon}
+                  </span>
+                  <span
+                    className={cn('ml-3', !isOpen && isMobile ? 'hidden' : '')}
+                  >
+                    {item.title}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className={cn('p-4 pt-20', isOpen ? 'sm:ml-64' : '')}>
+        <div>{children}</div>
+      </div>
+    </div>
+  );
+}
