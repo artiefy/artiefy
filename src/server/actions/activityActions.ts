@@ -22,12 +22,9 @@ export async function getActivitiesByLessonIdAction(lessonId: number) {
   }
 }
 
-export async function getActivityCompletionAction(
-  userId: string,
-  activityId: number
-) {
+export async function getActivityCompletionAction(activityId: number) {
   try {
-    const completed = await getActivityCompletion(userId, activityId);
+    const completed = await getActivityCompletion(activityId);
     return { success: true, completed };
   } catch (error) {
     console.error(
@@ -41,12 +38,9 @@ export async function getActivityCompletionAction(
   }
 }
 
-export async function completeActivityAction(
-  userId: string,
-  activityId: number
-) {
+export async function completeActivityAction(activityId: number) {
   try {
-    await completeActivity(userId, activityId);
+    await completeActivity(activityId);
     return { success: true, message: 'Actividad completada exitosamente' };
   } catch (error) {
     console.error(
