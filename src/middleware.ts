@@ -5,7 +5,6 @@ const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
 const isEducadorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
 const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)']);
 const isProtectedStudentRoute = createRouteMatcher([
-  '/estudiantes(.*)',
   '/estudiantes/cursos/:id',
   '/estudiantes/clases/:id'
 ]);
@@ -29,12 +28,12 @@ export default clerkMiddleware(async (auth, req) => {
   const userRole = session.sessionClaims?.metadata?.role;
 
   if (isAdminRoute(req) && userRole !== 'admin') {
-    const url = new URL('/dashboard', req.url);
+    const url = new URL('/', req.url);
     return NextResponse.redirect(url);
   }
 
   if (isEducadorRoute(req) && userRole !== 'educador') {
-    const url = new URL('/dashboard', req.url);
+    const url = new URL('/', req.url);
     return NextResponse.redirect(url);
   }
 
@@ -43,7 +42,10 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
     '/estudiantes/:path*',
     '/estudiantes/cursos/:path*',
     '/estudiantes/clases/:path*'
