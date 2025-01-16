@@ -29,6 +29,7 @@ export interface Course {
   rating: number | null;
   modalidadesid: number;
   dificultadid: number;
+  totalStudents?: number;
   // Relaciones
   category?: Category;
   modalidad?: Modalidad;
@@ -37,6 +38,8 @@ export interface Course {
   enrollments?: Enrollment[];
   creator?: User;
 }
+
+
 
 export interface Category {
   id: number;
@@ -78,11 +81,11 @@ export interface Lesson {
   courseId: number;
   createdAt: Date;
   updatedAt: Date;
-  porcentajecompletado: number | null;
+  porcentajecompletado: number;
   resourceKey: string;
-  isLocked: boolean | null;
+  isLocked: boolean;
   userProgress: number;
-  isCompleted: boolean | null; // Cambiado de boolean a boolean | null
+  isCompleted: boolean;
   lastUpdated: Date;
   // Relaciones
   course?: Course;

@@ -1,23 +1,23 @@
-'use server'
+'use server';
 
+import { auth } from '@clerk/nextjs/server';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { 
-  courses, 
-  lessons, 
-  activities, 
-  enrollments, 
+import {
+  courses,
+  lessons,
+  activities,
+  enrollments,
   preferences,
   scores,
   coursesTaken,
   projects,
   projectsTaken,
-  categories
+  categories,
 } from '~/server/db/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
-import { 
-  type Course, 
-  type Lesson, 
+import {
+  type Course,
+  type Lesson,
   type Enrollment,
   type Category,
   type Preference,
@@ -25,89 +25,160 @@ import {
   type CourseTaken,
   type Project,
   type ProjectTaken,
-  type Activity
+  type Activity,
 } from '~/types';
 
 // Función auxiliar para verificar la autenticación
 async function checkAuth() {
   const { userId } = await auth();
   if (!userId) {
-    return null;
+    throw new Error('No autenticado');
   }
   return userId;
 }
 
-// Obtener todos los cursos disponibles (públicamente accesible)
+// Obtener todos los cursos disponibles
 export async function getAllCourses(): Promise<Course[]> {
+  await checkAuth();
   const coursesData = await db.query.courses.findMany({
     with: {
       category: true,
       modalidad: true,
       dificultad: true,
       enrollments: true,
+      lessons: {
+        with: {
+          activities: true,
+        },
+      },
     },
   });
-  return coursesData.map(course => ({
+  return coursesData.map((course) => ({
     ...course,
-    enrollments: course.enrollments?.map(enrollment => ({
-      ...enrollment,
-      completed: enrollment.completed ?? false,
-    })) ?? [],
+    totalStudents: course.enrollments?.length ?? 0,
+    enrollments:
+      course.enrollments?.map((enrollment) => ({
+        ...enrollment,
+        completed: enrollment.completed ?? false,
+      })) ?? [],
+    lessons:
+      course.lessons?.map((lesson) => ({
+        ...lesson,
+        porcentajecompletado: lesson.porcentajecompletado ?? 0,
+        isLocked: lesson.isLocked ?? true,
+        userProgress: lesson.userProgress ?? 0,
+        isCompleted: lesson.isCompleted ?? false,
+        activities:
+          lesson.activities?.map((activity) => ({
+            ...activity,
+            isCompleted: activity.isCompleted ?? false,
+            userProgress: activity.userProgress ?? 0,
+          })) ?? [],
+      })) ?? [],
   }));
 }
 
-// Obtener un curso específico por ID (públicamente accesible)
+// Obtener un curso específico por ID
 export async function getCourseById(courseId: number): Promise<Course | null> {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error('No autenticado');
+  }
+
   const course = await db.query.courses.findFirst({
     where: eq(courses.id, courseId),
     with: {
       category: true,
       modalidad: true,
       dificultad: true,
+      lessons: {
+        orderBy: (lessons, { desc }) => [desc(lessons.order)],
+        with: {
+          activities: true,
+        },
+      },
       enrollments: true,
     },
   });
-  if (!course) return null;
-  return {
-    ...course,
-    enrollments: course.enrollments?.map(enrollment => ({
-      ...enrollment,
-      completed: enrollment.completed ?? false,
-    })) ?? [],
-  };
-}
 
-// Inscribirse en un curso (requiere autenticación)
-export async function enrollInCourse(courseId: number): Promise<Enrollment | null> {
-  const userId = await checkAuth();
-  if (!userId) return null;
-
-  const existingEnrollment = await db.query.enrollments.findFirst({
-    where: and(
-      eq(enrollments.userId, userId),
-      eq(enrollments.courseId, courseId)
-    ),
-  });
-
-  if (existingEnrollment) {
-    throw new Error('Ya estás inscrito en este curso');
+  if (!course) {
+    return null;
   }
 
-  const [enrollment] = await db.insert(enrollments).values({
-    userId,
-    courseId,
-    enrolledAt: new Date(),
-    completed: false,
-  }).returning();
+  // Transformamos los datos para asegurar que cumplen con los tipos
+  const transformedCourse: Course = {
+    ...course,
+    totalStudents: course.enrollments?.length ?? 0,
+    lessons:
+      course.lessons?.map((lesson) => ({
+        ...lesson,
+        userProgress: lesson.userProgress ?? 0,
+        isLocked: lesson.isLocked ?? true,
+        isCompleted: lesson.isCompleted ?? false,
+        porcentajecompletado: lesson.porcentajecompletado ?? 0,
+        activities:
+          lesson.activities?.map((activity) => ({
+            ...activity,
+            isCompleted: activity.isCompleted ?? false,
+            userProgress: activity.userProgress ?? 0,
+          })) ?? [],
+      })) ?? [],
+  };
 
-  return enrollment ?? null;
+  return transformedCourse;
 }
 
-// Obtener todas las lecciones de un curso (requiere autenticación)
-export async function getLessonsByCourseId(courseId: number): Promise<Lesson[] | null> {
-  const userId = await checkAuth();
-  if (!userId) return null;
+// Inscribirse en un curso
+export async function enrollInCourse(courseId: number): Promise<Enrollment> {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error('Usuario no autenticado');
+  }
 
+  try {
+    const existingEnrollment = await db.query.enrollments.findFirst({
+      where: and(
+        eq(enrollments.userId, userId),
+        eq(enrollments.courseId, courseId)
+      ),
+    });
+
+    if (existingEnrollment) {
+      throw new Error('Ya estás inscrito en este curso');
+    }
+
+    const [newEnrollment] = await db
+      .insert(enrollments)
+      .values({
+        userId,
+        courseId,
+        enrolledAt: new Date(),
+        completed: false,
+      })
+      .returning();
+
+    if (!newEnrollment) {
+      throw new Error('Error al crear la inscripción');
+    }
+
+    return {
+      id: newEnrollment.id,
+      userId: newEnrollment.userId,
+      courseId: newEnrollment.courseId,
+      enrolledAt: newEnrollment.enrolledAt,
+      completed: newEnrollment.completed ?? false,
+    };
+  } catch (error) {
+    console.error('Error al inscribirse en el curso:', error);
+    throw new Error('No se pudo completar la inscripción');
+  }
+}
+
+// Obtener todas las lecciones de un curso
+export async function getLessonsByCourseId(
+  courseId: number
+): Promise<Lesson[]> {
+  await checkAuth();
   const lessonsData = await db.query.lessons.findMany({
     where: eq(lessons.courseId, courseId),
     orderBy: [desc(lessons.order)],
@@ -115,13 +186,13 @@ export async function getLessonsByCourseId(courseId: number): Promise<Lesson[] |
       activities: true,
     },
   });
-  return lessonsData.map(lesson => ({
+  return lessonsData.map((lesson) => ({
     ...lesson,
     porcentajecompletado: lesson.porcentajecompletado ?? 0,
     isLocked: lesson.isLocked ?? true,
     userProgress: lesson.userProgress ?? 0,
     isCompleted: lesson.isCompleted ?? false,
-    activities: lesson.activities?.map(activity => ({
+    activities: lesson.activities?.map((activity) => ({
       ...activity,
       isCompleted: activity.isCompleted ?? false,
       userProgress: activity.userProgress ?? 0,
@@ -129,11 +200,9 @@ export async function getLessonsByCourseId(courseId: number): Promise<Lesson[] |
   }));
 }
 
-// Obtener una lección específica por ID (requiere autenticación)
+// Obtener una lección específica por ID
 export async function getLessonById(lessonId: number): Promise<Lesson | null> {
-  const userId = await checkAuth();
-  if (!userId) return null;
-
+  await checkAuth();
   const lesson = await db.query.lessons.findFirst({
     where: eq(lessons.id, lessonId),
     with: {
@@ -147,21 +216,24 @@ export async function getLessonById(lessonId: number): Promise<Lesson | null> {
     isLocked: lesson.isLocked ?? true,
     userProgress: lesson.userProgress ?? 0,
     isCompleted: lesson.isCompleted ?? false,
-    activities: (lesson.activities as Activity[] | undefined)?.map(activity => ({
-      ...activity,
-      isCompleted: activity.isCompleted ?? false,
-      userProgress: activity.userProgress ?? 0,
-    })) ?? [],
+    activities:
+      (lesson.activities as Activity[] | undefined)?.map((activity) => ({
+        ...activity,
+        isCompleted: activity.isCompleted ?? false,
+        userProgress: activity.userProgress ?? 0,
+      })) ?? [],
   };
 }
 
-// Actualizar el progreso de una lección (requiere autenticación)
-export async function updateLessonProgress(lessonId: number, progress: number): Promise<void | null> {
-  const userId = await checkAuth();
-  if (!userId) return null;
-
-  await db.update(lessons)
-    .set({ 
+// Actualizar el progreso de una lección
+export async function updateLessonProgress(
+  lessonId: number,
+  progress: number
+): Promise<void> {
+  await checkAuth();
+  await db
+    .update(lessons)
+    .set({
       userProgress: progress,
       isCompleted: progress >= 100,
       lastUpdated: new Date(),
@@ -169,13 +241,12 @@ export async function updateLessonProgress(lessonId: number, progress: number): 
     .where(eq(lessons.id, lessonId));
 }
 
-// Completar una actividad (requiere autenticación)
-export async function completeActivity(activityId: number): Promise<void | null> {
-  const userId = await checkAuth();
-  if (!userId) return null;
-
-  await db.update(activities)
-    .set({ 
+// Completar una actividad
+export async function completeActivity(activityId: number): Promise<void> {
+  await checkAuth();
+  await db
+    .update(activities)
+    .set({
       isCompleted: true,
       userProgress: 100,
       lastUpdated: new Date(),
@@ -183,15 +254,17 @@ export async function completeActivity(activityId: number): Promise<void | null>
     .where(eq(activities.id, activityId));
 }
 
-// Obtener todas las categorías (públicamente accesible)
+// Obtener todas las categorías
 export async function getAllCategories(): Promise<Category[]> {
+  await checkAuth();
   return db.query.categories.findMany({
     orderBy: [desc(categories.name)],
   });
 }
 
-// Obtener las categorías destacadas (públicamente accesible)
+// Nueva acción para obtener las categorías destacadas
 export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
+  await checkAuth();
   return db.query.categories.findMany({
     where: eq(categories.is_featured, true),
     orderBy: [desc(categories.name)],
@@ -202,26 +275,22 @@ export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
   });
 }
 
-// Las siguientes funciones requieren autenticación y devolverán null si el usuario no está autenticado
-
-export async function savePreferences(categoryIds: number[]): Promise<void | null> {
+// Guardar preferencias del usuario
+export async function savePreferences(categoryIds: number[]): Promise<void> {
   const userId = await checkAuth();
-  if (!userId) return null;
-
   await db.delete(preferences).where(eq(preferences.userId, userId));
   await db.insert(preferences).values(
-    categoryIds.map(categoryId => ({
+    categoryIds.map((categoryId) => ({
       userId,
       categoryid: categoryId,
-      name: '',
+      name: '', // Asegúrate de proporcionar un valor para el campo 'name'
     }))
   );
 }
 
-export async function getUserPreferences(): Promise<Preference[] | null> {
+// Obtener preferencias del usuario
+export async function getUserPreferences(): Promise<Preference[]> {
   const userId = await checkAuth();
-  if (!userId) return null;
-
   return db.query.preferences.findMany({
     where: eq(preferences.userId, userId),
     with: {
@@ -230,10 +299,12 @@ export async function getUserPreferences(): Promise<Preference[] | null> {
   });
 }
 
-export async function saveScore(categoryId: number, score: number): Promise<void | null> {
+// Guardar puntaje del usuario
+export async function saveScore(
+  categoryId: number,
+  score: number
+): Promise<void> {
   const userId = await checkAuth();
-  if (!userId) return null;
-
   await db.insert(scores).values({
     userId,
     categoryid: categoryId,
@@ -241,10 +312,9 @@ export async function saveScore(categoryId: number, score: number): Promise<void
   });
 }
 
-export async function getUserScores(): Promise<Score[] | null> {
+// Obtener puntajes del usuario
+export async function getUserScores(): Promise<Score[]> {
   const userId = await checkAuth();
-  if (!userId) return null;
-
   return db.query.scores.findMany({
     where: eq(scores.userId, userId),
     with: {
@@ -253,20 +323,18 @@ export async function getUserScores(): Promise<Score[] | null> {
   });
 }
 
-export async function markCourseTaken(courseId: number): Promise<void | null> {
+// Marcar un curso como tomado
+export async function markCourseTaken(courseId: number): Promise<void> {
   const userId = await checkAuth();
-  if (!userId) return null;
-
   await db.insert(coursesTaken).values({
     userId,
     courseId,
   });
 }
 
-export async function getUserCoursesTaken(): Promise<CourseTaken[] | null> {
+// Obtener cursos tomados por el usuario
+export async function getUserCoursesTaken(): Promise<CourseTaken[]> {
   const userId = await checkAuth();
-  if (!userId) return null;
-
   return db.query.coursesTaken.findMany({
     where: eq(coursesTaken.userId, userId),
     with: {
@@ -275,10 +343,9 @@ export async function getUserCoursesTaken(): Promise<CourseTaken[] | null> {
   });
 }
 
-export async function getAllProjects(): Promise<Project[] | null> {
-  const userId = await checkAuth();
-  if (!userId) return null;
-
+// Obtener todos los proyectos disponibles
+export async function getAllProjects(): Promise<Project[]> {
+  await checkAuth();
   return db.query.projects.findMany({
     with: {
       category: true,
@@ -286,10 +353,11 @@ export async function getAllProjects(): Promise<Project[] | null> {
   });
 }
 
-export async function getProjectById(projectId: number): Promise<Project | null> {
-  const userId = await checkAuth();
-  if (!userId) return null;
-
+// Obtener un proyecto específico por ID
+export async function getProjectById(
+  projectId: number
+): Promise<Project | null> {
+  await checkAuth();
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
     with: {
@@ -299,20 +367,18 @@ export async function getProjectById(projectId: number): Promise<Project | null>
   return project ?? null;
 }
 
-export async function markProjectTaken(projectId: number): Promise<void | null> {
+// Marcar un proyecto como tomado
+export async function markProjectTaken(projectId: number): Promise<void> {
   const userId = await checkAuth();
-  if (!userId) return null;
-
   await db.insert(projectsTaken).values({
     userId,
     projectId,
   });
 }
 
-export async function getUserProjectsTaken(): Promise<ProjectTaken[] | null> {
+// Obtener proyectos tomados por el usuario
+export async function getUserProjectsTaken(): Promise<ProjectTaken[]> {
   const userId = await checkAuth();
-  if (!userId) return null;
-
   return db.query.projectsTaken.findMany({
     where: eq(projectsTaken.userId, userId),
     with: {
@@ -321,25 +387,29 @@ export async function getUserProjectsTaken(): Promise<ProjectTaken[] | null> {
   });
 }
 
-// Obtener el progreso general del estudiante (requiere autenticación)
-export async function getStudentProgress(): Promise<{ 
-  coursesCompleted: number, 
-  totalEnrollments: number,
-  averageProgress: number 
-} | null> {
+// Obtener el progreso general del estudiante
+export async function getStudentProgress(): Promise<{
+  coursesCompleted: number;
+  totalEnrollments: number;
+  averageProgress: number;
+}> {
   const userId = await checkAuth();
-  if (!userId) return null;
+  const result = await db
+    .select({
+      coursesCompleted: sql<number>`COUNT(CASE WHEN ${enrollments.completed} = true THEN 1 END)`,
+      totalEnrollments: sql<number>`COUNT(*)`,
+      averageProgress: sql<number>`AVG(${lessons.userProgress})`,
+    })
+    .from(enrollments)
+    .leftJoin(lessons, eq(enrollments.courseId, lessons.courseId))
+    .where(eq(enrollments.userId, userId))
+    .groupBy(enrollments.userId);
 
-  const result = await db.select({
-    coursesCompleted: sql<number>`COUNT(CASE WHEN ${enrollments.completed} = true THEN 1 END)`,
-    totalEnrollments: sql<number>`COUNT(*)`,
-    averageProgress: sql<number>`AVG(${lessons.userProgress})`,
-  })
-  .from(enrollments)
-  .leftJoin(lessons, eq(enrollments.courseId, lessons.courseId))
-  .where(eq(enrollments.userId, userId))
-  .groupBy(enrollments.userId);
-
-  return result[0] ?? { coursesCompleted: 0, totalEnrollments: 0, averageProgress: 0 };
+  return (
+    result[0] ?? {
+      coursesCompleted: 0,
+      totalEnrollments: 0,
+      averageProgress: 0,
+    }
+  );
 }
-
