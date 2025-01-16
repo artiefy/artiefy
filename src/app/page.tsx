@@ -32,7 +32,7 @@ export default function Home() {
           <section className="container mx-auto px-4 py-12 text-center">
             <h1 className="mb-5 text-5xl font-bold leading-snug text-white">
               Únete a nosotros y transforma tus ideas en
-              <br /> realidades con el{' '}
+              <br /> realidades con el
               <span className="text-primary">poder del conocimiento</span>
             </h1>
             <p className="mb-5 text-xl leading-snug">
