@@ -1,5 +1,5 @@
 import type { NextConfig } from 'next';
-import './src/env';
+import './src/env.js';
 
 const coreConfig: NextConfig = {
   reactStrictMode: true,

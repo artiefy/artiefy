@@ -191,7 +191,6 @@ export default function StudentDashboard(props: {
                         quality={85}
                         placeholder="blur"
                         blurDataURL={blurDataURL}
-                        unoptimized
                       />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">

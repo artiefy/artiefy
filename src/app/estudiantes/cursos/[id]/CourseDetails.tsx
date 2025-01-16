@@ -1,261 +1,122 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import {
-  FaCalendar,
-  FaChevronDown,
-  FaChevronUp,
-  FaClock,
-  FaHome,
-  FaStar,
-  FaUserGraduate,
-} from 'react-icons/fa';
-import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '~/components/estudiantes/ui/breadcrumb';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '~/components/estudiantes/ui/card';
 
-export interface Course {
+interface Course {
   id: number;
   title: string;
   coverImageKey: string | null;
   category: {
-    id: number;
     name: string;
   };
-  description: string | null;
+  description: string;
   instructor: string;
-  rating: number | null;
-  createdAt: string | number | Date;
-  updatedAt: string | number | Date;
-  totalStudents: number;
+  rating?: number;
   modalidad: {
     name: string;
   };
-  lessons: {
-    id: number;
-    title: string;
-    duration: number;
-    description: string | null;
-    coverVideoKey: string;
-    resourceKey: string;
-    porcentajecompletado: number;
-  }[];
+  createdAt: string;
 }
 
-export default function CourseDetails({ course }: { course: Course }) {
-  const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+interface CourseListStudentProps {
+  courses: Course[];
+}
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+export default function CourseListStudent({ courses }: CourseListStudentProps) {
+  const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  const toggleLesson = (lessonId: number) => {
-    setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
-  };
-
-  const formatDate = (dateString: string | number | Date) => {
-    return new Date(dateString).toISOString().split('T')[0];
-  };
-
-  const handleSubscribe = () => {
-    try {
-      router.push('/planes');
-    } catch (error) {
-      console.error('Error navigating to payment page:', error);
-    }
+  const handleImageLoad = (courseId: number) => {
+    setLoadedImages((prev) => ({ ...prev, [courseId]: true }));
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
-        <Breadcrumb className="pb-6">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/">
-                <FaHome className="mr-1 inline-block" /> Inicio
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/estudiantes/">
-                <FaUserGraduate className="mr-1 inline-block" /> Cursos
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{course.title}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
-        {loading ? (
-          <Skeleton className="h-[500px] w-full rounded-lg" />
-        ) : (
-          <div className="overflow-hidden rounded-xl bg-white shadow-lg">
-            {/* Course Header */}
-            <div className="relative h-72 overflow-hidden">
-              <Image
-                src={
-                  course.coverImageKey
-                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                    : 'https://placehold.co/600x400/EEE/31343C?font=montserrat&text=Curso-Artiefy'
-                }
-                alt={course.title}
-                fill
-                className="object-cover"
-                priority
-                sizes="100vw"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-                <h1 className="text-3xl font-bold text-white">
-                  {course.title}
-                </h1>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {courses.map((course) => (
+        <Card
+          key={course.id}
+          className={
+            'flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in hover:scale-105'
+          }
+        >
+          <div>
+            <CardHeader>
+              <AspectRatio ratio={16 / 9}>
+                <div className="relative size-full">
+                  <Image
+                    src={
+                      course.coverImageKey
+                        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
+                        : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                    }
+                    alt={course.title || 'Imagen del curso'}
+                    className={`rounded-lg object-cover transition-opacity duration-500 ${loadedImages[course.id] ? 'opacity-100' : 'opacity-0'}`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    onLoad={() => handleImageLoad(course.id)}
+                  />
+                </div>
+              </AspectRatio>
+            </CardHeader>
+            <CardContent>
+              <CardTitle className="mb-2 rounded-lg text-lg text-background">
+                <div className="font-bold">{course.title}</div>
+              </CardTitle>
+              <div className="mb-2 flex items-center">
+                <Badge
+                  variant="outline"
+                  className="border-primary bg-background text-primary hover:bg-black/70"
+                >
+                  {course.category.name}
+                </Badge>
               </div>
-            </div>
-
-            {/* Course Info */}
-            <div className="flex flex-wrap gap-6 p-6">
-              <div className="flex-1">
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-background">
-                        {course.instructor}
-                      </h3>
-                      <p className="text-gray-600">Instructor</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-6">
-                    <div className="flex items-center">
-                      <FaUserGraduate className="mr-2 text-blue-600" />
-                      <span className="text-background">
-                        {course.totalStudents} Estudiantes
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <FaStar
-                          key={index}
-                          className={`size-5 ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
-                        />
-                      ))}
-                      <span className="ml-2 text-lg font-semibold text-yellow-400">
-                        {course.rating?.toFixed(1)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="prose mb-8 max-w-none">
-                  <p className="leading-relaxed text-gray-700">
-                    {course.description ?? 'No hay descripción disponible.'}
-                  </p>
-                </div>
-
-                <div className="mb-8 flex flex-wrap gap-4 text-sm text-gray-600">
-                  <div className="flex items-center">
-                    <FaCalendar className="mr-2" />
-                    <span>Creado: {formatDate(course.createdAt)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <FaClock className="mr-2" />
-                    <span>
-                      Última actualización: {formatDate(course.updatedAt)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Lessons */}
-                <div className="mt-8 p-4">
-                  <h2 className="mb-6 text-2xl font-bold text-background">
-                    Contenido del curso
-                  </h2>
-                  <div className="space-y-4">
-                    {course.lessons.map((lesson) => (
-                      <div
-                        key={lesson.id}
-                        className="overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100"
-                      >
-                        <button
-                          className="flex w-full items-center justify-between px-6 py-4"
-                          onClick={() => toggleLesson(lesson.id)}
-                        >
-                          <div className="flex items-center">
-                            <span className="font-medium text-background">
-                              {lesson.title}
-                            </span>
-                            <span className="ml-4 text-sm text-gray-500">
-                              {lesson.duration} mins
-                            </span>
-                          </div>
-                          {expandedLesson === lesson.id ? (
-                            <FaChevronUp className="text-gray-400" />
-                          ) : (
-                            <FaChevronDown className="text-gray-400" />
-                          )}
-                        </button>
-                        {expandedLesson === lesson.id && (
-                          <div className="border-t bg-white px-6 py-4">
-                            <p className="text-gray-700">
-                              {lesson.description ??
-                                'No hay descripción disponible para esta lección.'}
-                            </p>
-                            <p className="text-gray-700">
-                              Resource Key: {lesson.resourceKey}
-                            </p>
-                            <p className="text-gray-700">
-                              Porcentaje Completado:{' '}
-                              {lesson.porcentajecompletado}%
-                            </p>
-                            <Button
-                              asChild
-                              className="mt-4 text-background hover:underline active:scale-95"
-                            >
-                              <Link href={`/estudiantes/clases/${lesson.id}`}>
-                                Ver Clase
-                              </Link>
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Button
-                    className="w-full justify-center border-white/20 bg-background text-lg font-semibold text-primary transition-colors hover:bg-background active:scale-95"
-                    onClick={handleSubscribe}
-                  >
-                    Inscribirse
-                  </Button>
-                  <ChatbotModal />
-                </div>
-              </div>
-            </div>
+              <p className="mb-2 line-clamp-2 text-sm text-gray-600">
+                {course.description}
+              </p>
+            </CardContent>
           </div>
-        )}
-      </main>
-      <Footer />
+          <CardFooter className="-mt-6 flex flex-col items-start justify-between">
+            <div className="mb-2 flex w-full justify-between">
+              <p className="text-sm font-bold italic text-gray-600">
+                Educador:{' '}
+                <span className="font-bold italic">{course.instructor}</span>
+              </p>
+              <p className="text-sm font-bold text-red-500">
+                {course.modalidad.name}
+              </p>
+            </div>
+            <div className="flex w-full items-center justify-between">
+              <Link href={`/estudiantes/cursos/${course.id}`} legacyBehavior>
+                <a className="flex items-center">
+                  <Button className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary hover:bg-black/70 active:scale-95">
+                    <p className="ml-2">Ver Curso</p>
+                    <ArrowRightIcon className="animate-bounce-right mr-2 size-5" />
+                    <div className="absolute inset-0 flex size-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+                      <div className="relative h-full w-10 bg-white/30"></div>
+                    </div>
+                  </Button>
+                </a>
+              </Link>
+              <div className="flex items-center">
+                <StarIcon className="size-5 text-yellow-500" />
+                <span className="ml-1 text-sm font-bold text-yellow-500">
+                  {(course.rating ?? 0).toFixed(1)}
+                </span>
+              </div>
+            </div>
+          </CardFooter>
+        </Card>
+      ))}
     </div>
   );
 }
