@@ -35,19 +35,28 @@ import { type Course } from '~/types';
 
 function LoadingCourses() {
   return (
-    <>
+    <div className="p-16 space-y-12 sm:space-y-16">
       {/* Skeleton para el carousel grande */}
-      <Skeleton className="h-[300px] w-full rounded-lg sm:h-[400px] md:h-[500px]" />
+      <div className="relative h-[300px] sm:h-[400px] md:h-[500px]">
+        <Skeleton className="size-full" />
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="size-3 rounded-full" />
+          ))}
+        </div>
+      </div>
+
+      {/* Skeleton para el buscador IA */}
+      <div className="flex justify-center sm:justify-end">
+        <Skeleton className="h-10 w-full max-w-lg" />
+      </div>
 
       {/* Skeleton para el carousel de top cursos */}
-      <div className="space-y-3">
-        <Skeleton className="ml-4 h-[20px] w-[100px] rounded-lg" />{' '}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-4">
+        <Skeleton className="ml-4 h-8 w-32" />
+        <div className="grid grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              className="ml-4 h-48 w-full rounded-lg px-6 md:h-64"
-            />
+            <Skeleton key={i} className="h-48 w-full md:h-64" />
           ))}
         </div>
       </div>
@@ -55,25 +64,29 @@ function LoadingCourses() {
       {/* Skeleton para las categorías */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-[100px] w-full rounded-lg" />
+          <Skeleton key={i} className="h-24 w-full" />
         ))}
       </div>
 
       {/* Skeleton para la lista de cursos */}
-      <div className="px-12 pb-12">
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="flex flex-col space-y-3">
-              <Skeleton className="h-[200px] w-full rounded-xl" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
             </div>
           ))}
         </div>
       </div>
-    </>
+
+      {/* Skeleton para la paginación */}
+      <div className="flex justify-center pb-12">
+        <Skeleton className="h-10 w-64" />
+      </div>
+    </div>
   );
 }
 
@@ -84,6 +97,7 @@ export default function StudentDashboard() {
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -93,7 +107,6 @@ export default function StudentDashboard() {
       setFilteredCourses(data);
     } catch (error) {
       console.error('Error al obtener los cursos:', error);
-      // Mostrar un mensaje de error al usuario
     } finally {
       setLoading(false);
     }
@@ -102,6 +115,16 @@ export default function StudentDashboard() {
   useEffect(() => {
     void fetchCourses();
   }, [fetchCourses]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide(
+        (prevSlide) => (prevSlide + 1) % Math.min(courses.length, 5)
+      );
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [courses.length]);
 
   const handleCategorySelect = useCallback(
     (category: string | null) => {
@@ -123,8 +146,8 @@ export default function StudentDashboard() {
       setFilteredCourses(
         courses.filter(
           (course) =>
-            course.title.toLowerCase().includes(lowercasedTerm) ??
-            course.description?.toLowerCase().includes(lowercasedTerm) ??
+            (course.title.toLowerCase().includes(lowercasedTerm) ||
+              course.description?.toLowerCase().includes(lowercasedTerm)) ??
             false
         )
       );
@@ -140,25 +163,13 @@ export default function StudentDashboard() {
   );
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
-        <main className="grow">
-          <div className="container mx-auto px-8 sm:px-12 lg:px-16">
-            <div className="flex flex-col space-y-12 sm:space-y-16">
-              <LoadingCourses />
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+    return <LoadingCourses />;
   }
 
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex min-h-screen grow flex-col">
+      <main className="grow">
         <div className="container mx-auto px-8 sm:px-12 lg:px-16">
           <div className="flex flex-col space-y-12 sm:space-y-16">
             {/* CAROUSEL GRANDE*/}
@@ -167,7 +178,7 @@ export default function StudentDashboard() {
                 <div
                   key={course.id}
                   className={`absolute size-full transition-opacity duration-500 ${
-                    index === 0 ? 'opacity-100' : 'opacity-0'
+                    index === currentSlide ? 'opacity-100' : 'opacity-0'
                   }`}
                 >
                   <div className="relative size-full">
@@ -176,7 +187,7 @@ export default function StudentDashboard() {
                       alt={course.title}
                       fill
                       className="object-cover"
-                      priority={index === 0}
+                      priority={index === currentSlide}
                       sizes="100vw"
                       quality={85}
                       placeholder="blur"
@@ -211,6 +222,17 @@ export default function StudentDashboard() {
                   </div>
                 </div>
               ))}
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
+                {courses.slice(0, 5).map((_, index) => (
+                  <button
+                    key={index}
+                    className={`size-3 rounded-full ${
+                      index === currentSlide ? 'bg-primary' : 'bg-gray-300'
+                    }`}
+                    onClick={() => setCurrentSlide(index)}
+                  />
+                ))}
+              </div>
             </div>
 
             {/* BUSCADOR IA */}
@@ -230,7 +252,7 @@ export default function StudentDashboard() {
                     required
                     placeholder="Buscar..."
                     className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
-                    type="text"
+                    type="search"
                     onChange={(e) => handleSearch(e.target.value)}
                   />
                 </div>
