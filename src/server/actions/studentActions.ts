@@ -1,6 +1,5 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
 import {
@@ -28,18 +27,8 @@ import {
   type Activity,
 } from '~/types';
 
-// Función auxiliar para verificar la autenticación
-async function checkAuth() {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('No autenticado');
-  }
-  return userId;
-}
-
 // Obtener todos los cursos disponibles
 export async function getAllCourses(): Promise<Course[]> {
-  await checkAuth();
   const coursesData = await db.query.courses.findMany({
     with: {
       category: true,
@@ -80,11 +69,6 @@ export async function getAllCourses(): Promise<Course[]> {
 
 // Obtener un curso específico por ID
 export async function getCourseById(courseId: number): Promise<Course | null> {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('No autenticado');
-  }
-
   const course = await db.query.courses.findFirst({
     where: eq(courses.id, courseId),
     with: {
@@ -129,12 +113,7 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 }
 
 // Inscribirse en un curso
-export async function enrollInCourse(courseId: number): Promise<Enrollment> {
-  const { userId } = await auth();
-  if (!userId) {
-    throw new Error('Usuario no autenticado');
-  }
-
+export async function enrollInCourse(courseId: number, userId: string): Promise<Enrollment> {
   try {
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(
@@ -175,10 +154,7 @@ export async function enrollInCourse(courseId: number): Promise<Enrollment> {
 }
 
 // Obtener todas las lecciones de un curso
-export async function getLessonsByCourseId(
-  courseId: number
-): Promise<Lesson[]> {
-  await checkAuth();
+export async function getLessonsByCourseId(courseId: number): Promise<Lesson[]> {
   const lessonsData = await db.query.lessons.findMany({
     where: eq(lessons.courseId, courseId),
     orderBy: [desc(lessons.order)],
@@ -202,7 +178,6 @@ export async function getLessonsByCourseId(
 
 // Obtener una lección específica por ID
 export async function getLessonById(lessonId: number): Promise<Lesson | null> {
-  await checkAuth();
   const lesson = await db.query.lessons.findFirst({
     where: eq(lessons.id, lessonId),
     with: {
@@ -226,11 +201,7 @@ export async function getLessonById(lessonId: number): Promise<Lesson | null> {
 }
 
 // Actualizar el progreso de una lección
-export async function updateLessonProgress(
-  lessonId: number,
-  progress: number
-): Promise<void> {
-  await checkAuth();
+export async function updateLessonProgress(lessonId: number, progress: number): Promise<void> {
   await db
     .update(lessons)
     .set({
@@ -243,7 +214,6 @@ export async function updateLessonProgress(
 
 // Completar una actividad
 export async function completeActivity(activityId: number): Promise<void> {
-  await checkAuth();
   await db
     .update(activities)
     .set({
@@ -256,7 +226,6 @@ export async function completeActivity(activityId: number): Promise<void> {
 
 // Obtener todas las categorías
 export async function getAllCategories(): Promise<Category[]> {
-  await checkAuth();
   return db.query.categories.findMany({
     orderBy: [desc(categories.name)],
   });
@@ -264,7 +233,6 @@ export async function getAllCategories(): Promise<Category[]> {
 
 // Nueva acción para obtener las categorías destacadas
 export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
-  await checkAuth();
   return db.query.categories.findMany({
     where: eq(categories.is_featured, true),
     orderBy: [desc(categories.name)],
@@ -276,8 +244,7 @@ export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
 }
 
 // Guardar preferencias del usuario
-export async function savePreferences(categoryIds: number[]): Promise<void> {
-  const userId = await checkAuth();
+export async function savePreferences(userId: string, categoryIds: number[]): Promise<void> {
   await db.delete(preferences).where(eq(preferences.userId, userId));
   await db.insert(preferences).values(
     categoryIds.map((categoryId) => ({
@@ -289,8 +256,7 @@ export async function savePreferences(categoryIds: number[]): Promise<void> {
 }
 
 // Obtener preferencias del usuario
-export async function getUserPreferences(): Promise<Preference[]> {
-  const userId = await checkAuth();
+export async function getUserPreferences(userId: string): Promise<Preference[]> {
   return db.query.preferences.findMany({
     where: eq(preferences.userId, userId),
     with: {
@@ -300,11 +266,7 @@ export async function getUserPreferences(): Promise<Preference[]> {
 }
 
 // Guardar puntaje del usuario
-export async function saveScore(
-  categoryId: number,
-  score: number
-): Promise<void> {
-  const userId = await checkAuth();
+export async function saveScore(userId: string, categoryId: number, score: number): Promise<void> {
   await db.insert(scores).values({
     userId,
     categoryid: categoryId,
@@ -313,8 +275,7 @@ export async function saveScore(
 }
 
 // Obtener puntajes del usuario
-export async function getUserScores(): Promise<Score[]> {
-  const userId = await checkAuth();
+export async function getUserScores(userId: string): Promise<Score[]> {
   return db.query.scores.findMany({
     where: eq(scores.userId, userId),
     with: {
@@ -324,8 +285,7 @@ export async function getUserScores(): Promise<Score[]> {
 }
 
 // Marcar un curso como tomado
-export async function markCourseTaken(courseId: number): Promise<void> {
-  const userId = await checkAuth();
+export async function markCourseTaken(userId: string, courseId: number): Promise<void> {
   await db.insert(coursesTaken).values({
     userId,
     courseId,
@@ -333,8 +293,7 @@ export async function markCourseTaken(courseId: number): Promise<void> {
 }
 
 // Obtener cursos tomados por el usuario
-export async function getUserCoursesTaken(): Promise<CourseTaken[]> {
-  const userId = await checkAuth();
+export async function getUserCoursesTaken(userId: string): Promise<CourseTaken[]> {
   return db.query.coursesTaken.findMany({
     where: eq(coursesTaken.userId, userId),
     with: {
@@ -345,7 +304,6 @@ export async function getUserCoursesTaken(): Promise<CourseTaken[]> {
 
 // Obtener todos los proyectos disponibles
 export async function getAllProjects(): Promise<Project[]> {
-  await checkAuth();
   return db.query.projects.findMany({
     with: {
       category: true,
@@ -354,10 +312,7 @@ export async function getAllProjects(): Promise<Project[]> {
 }
 
 // Obtener un proyecto específico por ID
-export async function getProjectById(
-  projectId: number
-): Promise<Project | null> {
-  await checkAuth();
+export async function getProjectById(projectId: number): Promise<Project | null> {
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
     with: {
@@ -368,8 +323,7 @@ export async function getProjectById(
 }
 
 // Marcar un proyecto como tomado
-export async function markProjectTaken(projectId: number): Promise<void> {
-  const userId = await checkAuth();
+export async function markProjectTaken(userId: string, projectId: number): Promise<void> {
   await db.insert(projectsTaken).values({
     userId,
     projectId,
@@ -377,8 +331,7 @@ export async function markProjectTaken(projectId: number): Promise<void> {
 }
 
 // Obtener proyectos tomados por el usuario
-export async function getUserProjectsTaken(): Promise<ProjectTaken[]> {
-  const userId = await checkAuth();
+export async function getUserProjectsTaken(userId: string): Promise<ProjectTaken[]> {
   return db.query.projectsTaken.findMany({
     where: eq(projectsTaken.userId, userId),
     with: {
@@ -388,12 +341,11 @@ export async function getUserProjectsTaken(): Promise<ProjectTaken[]> {
 }
 
 // Obtener el progreso general del estudiante
-export async function getStudentProgress(): Promise<{
+export async function getStudentProgress(userId: string): Promise<{
   coursesCompleted: number;
   totalEnrollments: number;
   averageProgress: number;
 }> {
-  const userId = await checkAuth();
   const result = await db
     .select({
       coursesCompleted: sql<number>`COUNT(CASE WHEN ${enrollments.completed} = true THEN 1 END)`,
@@ -413,3 +365,4 @@ export async function getStudentProgress(): Promise<{
     }
   );
 }
+
