@@ -21,6 +21,7 @@ const coreConfig: NextConfig = {
         search: '',
       },
     ],
+    unoptimized: true,
   },
 };
 
