@@ -8,15 +8,17 @@ const coreConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 's3.amazonaws.com',
+        hostname: 's3.us-east-2.amazonaws.com',
         port: '',
         pathname: '/artiefy-upload/**',
+        search: '',
       },
       {
         protocol: 'https',
         hostname: 'placehold.co',
         port: '',
         pathname: '/**',
+        search: '',
       },
     ],
   },

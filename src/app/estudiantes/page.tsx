@@ -295,8 +295,6 @@ export default function StudentDashboard(props: {
                               className="rounded-lg object-cover"
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               quality={85}
-                              placeholder="blur"
-                              blurDataURL={blurDataURL}
                               unoptimized
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
