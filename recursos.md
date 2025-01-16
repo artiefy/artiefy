@@ -1,5 +1,4 @@
-//video de prueba de una clase
-https://artiefy-upload.s3.us-east-2.amazonaws.com/uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed
+uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed
 
 Tecnologias Que Se Usan:
 

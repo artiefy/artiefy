@@ -42,7 +42,6 @@ export default function LessonDetails({
   activity,
   lessons,
   course,
-  userId,
 }: {
   lesson: Lesson;
   activity: Activity | null;
@@ -126,7 +125,7 @@ export default function LessonDetails({
     if (!activity) return;
 
     try {
-      await completeActivityAction(userId, activity.id);
+      await completeActivityAction(activity.id);
       setIsActivityCompleted(true);
       toast({
         title: 'Actividad completada',
