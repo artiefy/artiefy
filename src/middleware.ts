@@ -5,8 +5,9 @@ const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
 const isEducadorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
 const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)']);
 const isProtectedStudentRoute = createRouteMatcher([
+  '/estudiantes(.*)',
   '/estudiantes/cursos/:id',
-  '/estudiantes/clases/:id',
+  '/estudiantes/clases/:id'
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
@@ -42,11 +43,10 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Excluir Next.js internals y archivos estáticos, a menos que se encuentren en los parámetros de búsqueda
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Siempre ejecutar para rutas API
-    '/(api|trpc)(.*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/estudiantes/:path*',
     '/estudiantes/cursos/:path*',
-    '/estudiantes/clases/:path*',
-  ],
+    '/estudiantes/clases/:path*'
+  ]
 };
+

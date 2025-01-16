@@ -88,7 +88,7 @@ const CourseCategories: React.FC<CourseCategoriesProps> = ({
             </div>
             <input
               required
-              placeholder="Buscar..."
+              placeholder="Busca Tu CURSO..."
               className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
               type="search"
               value={searchTerm}
