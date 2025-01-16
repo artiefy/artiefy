@@ -191,6 +191,7 @@ export default function StudentDashboard(props: {
                         quality={85}
                         placeholder="blur"
                         blurDataURL={blurDataURL}
+                        unoptimized
                       />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
@@ -296,6 +297,7 @@ export default function StudentDashboard(props: {
                               quality={85}
                               placeholder="blur"
                               blurDataURL={blurDataURL}
+                              unoptimized
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
                               <h3 className="text-lg font-bold text-white">
