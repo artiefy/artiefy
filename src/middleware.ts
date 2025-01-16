@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
 const isEducadorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
 const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)']);
+const isProtectedStudentRoute = createRouteMatcher(['/estudiantes/clases/[0-9]+', '/estudiantes/cursos/[0-9]+']);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) {
@@ -15,9 +16,14 @@ export default clerkMiddleware(async (auth, req) => {
   const session = await auth();
 
   if (!session) {
-    // Si no hay sesión, redirigir a la página de inicio de sesión
-    const signInUrl = new URL('/sign-in', req.url);
-    return NextResponse.redirect(signInUrl);
+    // Si no hay sesión y es una ruta protegida de estudiante, redirigir a la página de inicio de sesión
+    if (isProtectedStudentRoute(req)) {
+      const signInUrl = new URL('/sign-in', req.url);
+      signInUrl.searchParams.set('redirect_url', req.url);
+      return NextResponse.redirect(signInUrl);
+    }
+    // Para otras rutas, permitir el acceso (por ejemplo, la página principal de cursos)
+    return NextResponse.next();
   }
 
   const userRole = session.sessionClaims?.metadata?.role;
@@ -44,7 +50,8 @@ export const config = {
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     // Siempre ejecutar para rutas API
     '/(api|trpc)(.*)',
-    // Proteger las rutas de clases
-    '/estudiantes/clases(.*)',
+    '/estudiantes/clases/[0-9]+',
+    '/estudiantes/cursos/[0-9]+',
   ],
 };
+
