@@ -82,11 +82,7 @@ export default function LessonDetails({
     setProgress(100);
     setIsVideoCompleted(true);
     try {
-      await updateLessonProgressAction(
-        lesson.id.toString(),
-        100,
-        parseInt(userId)
-      );
+      await updateLessonProgressAction(lesson.id, 100);
       setLessonsState((prevLessons) =>
         prevLessons.map((l) =>
           l.id === lesson.id ? { ...l, porcentajecompletado: 100 } : l
@@ -112,11 +108,7 @@ export default function LessonDetails({
     if (roundedProgress > progress) {
       setProgress(roundedProgress);
       try {
-        await updateLessonProgressAction(
-          lesson.id.toString(),
-          roundedProgress,
-          parseInt(userId)
-        );
+        await updateLessonProgressAction(lesson.id, roundedProgress);
         setLessonsState((prevLessons) =>
           prevLessons.map((l) =>
             l.id === lesson.id
@@ -143,7 +135,7 @@ export default function LessonDetails({
       });
 
       // Desbloquear la siguiente lección
-      const result = await unlockNextLessonAction(userId, lesson.id);
+      const result = await unlockNextLessonAction(lesson.id);
       if (result.success && 'nextLessonId' in result) {
         toast({
           title: 'Nueva lección desbloqueada',

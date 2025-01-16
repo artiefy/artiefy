@@ -9,8 +9,6 @@ import {
   categories,
   modalidades,
   activities,
-  lessonProgress,
-  activityProgress,
 } from '~/server/db/schema';
 
 export interface Lesson {
@@ -19,12 +17,15 @@ export interface Lesson {
   duration: number;
   description: string | null;
   order: number;
-  course_id: number;
+  courseId: number;
   coverVideoKey: string;
   createdAt: string | number | Date;
   updatedAt: string | number | Date;
   resourceKey: string;
   porcentajecompletado: number;
+  userProgress: number;
+  lastUpdated: string | number | Date;
+  isCompleted: boolean;
   isLocked: boolean;
 }
 
@@ -50,7 +51,7 @@ export interface Course {
   category: Category;
   instructor: string;
   rating: number | null;
-  user_id: string;
+  userId: string;
   modalidad: Modalidad;
   lessons?: Lesson[];
   totalStudents?: number;
@@ -65,6 +66,9 @@ export interface Activity {
   tipo: string;
   lessonsId: number;
   completed: boolean;
+  userProgress: number;
+  lastUpdated: string | number | Date;
+  isCompleted: boolean;
 }
 
 // Crear un nuevo curso
@@ -103,13 +107,11 @@ export const createCourse = async ({
 };
 
 // Obtener todos los cursos de un profesor
-export const getCoursesByUserId = async (
-  user_id: string
-): Promise<Course[]> => {
+export const getCoursesByUserId = async (userId: string): Promise<Course[]> => {
   const result = await db
     .select()
     .from(courses)
-    .where(eq(courses.creatorId, user_id));
+    .where(eq(courses.creatorId, userId));
   const categoriesResult = await db.select().from(categories);
   const categoriesMap = new Map(
     categoriesResult.map((category) => [category.id, category])
@@ -123,7 +125,7 @@ export const getCoursesByUserId = async (
   return result.map((course) => ({
     ...course,
     coverImageKey: course.coverImageKey,
-    user_id: course.creatorId,
+    userId: course.creatorId,
     category: categoriesMap.get(course.categoryid) ?? {
       id: course.categoryid,
       name: '',
@@ -139,16 +141,16 @@ export const getCoursesByUserId = async (
 
 // Obtener todas las lecciones por ID de curso
 export const getLessonsByCourseId = async (
-  course_id: number
+  courseId: number
 ): Promise<Lesson[]> => {
   const lessonsResult = await db
     .select()
     .from(lessons)
-    .where(eq(lessons.courseId, course_id))
+    .where(eq(lessons.courseId, courseId))
     .orderBy(lessons.order);
   return lessonsResult.map((lesson) => ({
     ...lesson,
-    course_id: lesson.courseId,
+    courseId: lesson.courseId,
     duration: lesson.duration,
     coverVideoKey: lesson.coverVideoKey,
     createdAt: lesson.createdAt.toISOString(),
@@ -156,29 +158,34 @@ export const getLessonsByCourseId = async (
     resourceKey: lesson.resourceKey,
     porcentajecompletado: lesson.porcentajecompletado ?? 0,
     isLocked: lesson.order === 1 ? false : (lesson.isLocked ?? true),
+    userProgress: lesson.userProgress ?? 0,
+    isCompleted: lesson.isCompleted ?? false,
+    lastUpdated: new Date(),
   }));
 };
 
 // Obtener el número total de estudiantes inscritos en un curso
-export const getTotalStudents = async (course_id: number): Promise<number> => {
+export const getTotalStudents = async (courseId: number): Promise<number> => {
   const result = await db
     .select({ totalStudents: count() })
     .from(enrollments)
-    .where(eq(enrollments.courseId, course_id));
+    .where(eq(enrollments.courseId, courseId));
+
   if (result[0] instanceof Error) {
-    throw result[0];
+    throw new Error(result[0].message); // Ensure the error is properly typed
   }
+
   return result[0]?.totalStudents ?? 0;
 };
 
 // Obtener un curso por ID
 export const getCourseById = async (
-  course_id: number
+  courseId: number
 ): Promise<Course | null> => {
   const courseResult = await db
     .select()
     .from(courses)
-    .where(eq(courses.id, course_id));
+    .where(eq(courses.id, courseId));
   if (courseResult.length === 0) return null;
 
   const courseData = courseResult[0];
@@ -186,7 +193,7 @@ export const getCourseById = async (
   const course = {
     ...courseData,
     coverImageKey: courseData.coverImageKey,
-    user_id: courseData.creatorId,
+    userId: courseData.creatorId,
     category: { id: courseData.categoryid, name: '', description: null },
     modalidad: {
       id: courseData.modalidadesid,
@@ -226,11 +233,11 @@ export const getCourseById = async (
   const lessonsResult = await db
     .select()
     .from(lessons)
-    .where(eq(lessons.courseId, course_id))
+    .where(eq(lessons.courseId, courseId))
     .orderBy(lessons.order);
   course.lessons = lessonsResult.map((lesson) => ({
     ...lesson,
-    course_id: lesson.courseId,
+    courseId: lesson.courseId,
     duration: lesson.duration,
     coverVideoKey: lesson.coverVideoKey,
     createdAt: lesson.createdAt.toISOString(),
@@ -238,22 +245,25 @@ export const getCourseById = async (
     resourceKey: lesson.resourceKey,
     porcentajecompletado: lesson.porcentajecompletado ?? 0,
     isLocked: lesson.order === 1 ? false : (lesson.isLocked ?? false),
+    userProgress: lesson.userProgress ?? 0,
+    isCompleted: lesson.isCompleted ?? false,
+    lastUpdated: new Date().toISOString(),
   }));
 
   // Obtener el número total de estudiantes inscritos
-  course.totalStudents = await getTotalStudents(course_id);
+  course.totalStudents = await getTotalStudents(courseId);
 
   return course;
 };
 
 // Obtener una lección por ID
 export const getLessonById = async (
-  lesson_id: number
+  lessonId: number
 ): Promise<Lesson | null> => {
   const lessonResult = await db
     .select()
     .from(lessons)
-    .where(eq(lessons.id, lesson_id));
+    .where(eq(lessons.id, lessonId));
   if (lessonResult.length === 0) return null;
 
   const lessonData = lessonResult[0];
@@ -261,7 +271,7 @@ export const getLessonById = async (
 
   return {
     ...lessonData,
-    course_id: lessonData.courseId,
+    courseId: lessonData.courseId,
     duration: lessonData.duration,
     coverVideoKey: lessonData.coverVideoKey,
     createdAt: lessonData.createdAt.toISOString(),
@@ -269,17 +279,20 @@ export const getLessonById = async (
     resourceKey: lessonData.resourceKey,
     porcentajecompletado: lessonData.porcentajecompletado ?? 0,
     isLocked: lessonData.isLocked ?? false,
+    userProgress: lessonData.userProgress ?? 0,
+    isCompleted: lessonData.isCompleted ?? false,
+    lastUpdated: new Date().toISOString(),
   };
 };
 
 // Obtener actividades por ID de lección
 export const getActivitiesByLessonId = async (
-  lesson_id: number
+  lessonId: number
 ): Promise<Activity[]> => {
   const activitiesResult = await db
     .select()
     .from(activities)
-    .where(eq(activities.lessonsId, lesson_id));
+    .where(eq(activities.lessonsId, lessonId));
   return activitiesResult.map((activity) => ({
     id: activity.id,
     name: activity.name,
@@ -287,6 +300,9 @@ export const getActivitiesByLessonId = async (
     tipo: activity.tipo,
     lessonsId: activity.lessonsId,
     completed: activity.isCompleted ?? false,
+    userProgress: activity.userProgress ?? 0,
+    isCompleted: activity.isCompleted ?? false,
+    lastUpdated: activity.lastUpdated.toISOString(),
   }));
 };
 
@@ -306,7 +322,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
   return result.map((course) => ({
     ...course,
     coverImageKey: course.coverImageKey,
-    user_id: course.creatorId,
+    userId: course.creatorId,
     category: categoriesMap.get(course.categoryid) ?? {
       id: course.categoryid,
       name: '',
@@ -322,7 +338,7 @@ export const getAllCourses = async (): Promise<Course[]> => {
 
 // Actualizar un curso
 export const updateCourse = async (
-  course_id: number,
+  courseId: number,
   {
     title,
     description,
@@ -352,141 +368,72 @@ export const updateCourse = async (
       rating,
       modalidadesid,
     }) // Map to database column
-    .where(eq(courses.id, course_id));
+    .where(eq(courses.id, courseId));
 };
 
 // Eliminar un curso
-export const deleteCourse = async (course_id: number): Promise<void> => {
+export const deleteCourse = async (courseId: number): Promise<void> => {
   // Primero eliminar las lecciones asociadas al curso
-  await db.delete(lessons).where(eq(lessons.courseId, course_id));
+  await db.delete(lessons).where(eq(lessons.courseId, courseId));
 
   // Luego eliminar el curso
-  await db.delete(courses).where(eq(courses.id, course_id));
+  await db.delete(courses).where(eq(courses.id, courseId));
 };
 
 // Obtener el progreso de una lección para un usuario específico
-export const getLessonProgress = async (
-  userId: string,
-  lessonId: number
-): Promise<number> => {
+export const getLessonProgress = async (lessonId: number): Promise<number> => {
   const result = await db
-    .select({ progress: lessonProgress.progress })
-    .from(lessonProgress)
-    .where(
-      and(
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.lessonId, lessonId)
-      )
-    );
+    .select({ progress: lessons.userProgress })
+    .from(lessons)
+    .where(eq(lessons.id, lessonId));
 
   return result[0]?.progress ?? 0;
 };
 
 // Actualizar el progreso de una lección para un usuario específico
 export const updateLessonProgress = async (
-  userId: string,
   lessonId: number,
   progress: number
 ): Promise<void> => {
-  const existingProgress = await db
-    .select()
-    .from(lessonProgress)
-    .where(
-      and(
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.lessonId, lessonId)
-      )
-    );
-
-  if (existingProgress.length > 0) {
-    await db
-      .update(lessonProgress)
-      .set({ progress, lastUpdated: new Date() })
-      .where(
-        and(
-          eq(lessonProgress.userId, userId),
-          eq(lessonProgress.lessonId, lessonId)
-        )
-      );
-  } else {
-    await db
-      .insert(lessonProgress)
-      .values({ userId, lessonId, progress, lastUpdated: new Date() });
-  }
+  await db
+    .update(lessons)
+    .set({ userProgress: progress, lastUpdated: new Date() })
+    .where(eq(lessons.id, lessonId));
 };
 
 // Marcar una lección como completada
 export const completeLessonProgress = async (
-  userId: string,
   lessonId: number
 ): Promise<void> => {
-  await updateLessonProgress(userId, lessonId, 100);
+  await updateLessonProgress(lessonId, 100);
   await db
-    .update(lessonProgress)
-    .set({ completed: true, lastUpdated: new Date() })
-    .where(
-      and(
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.lessonId, lessonId)
-      )
-    );
+    .update(lessons)
+    .set({ isCompleted: true, lastUpdated: new Date() })
+    .where(eq(lessons.id, lessonId));
 };
 
 // Obtener el estado de completado de una actividad para un usuario específico
 export const getActivityCompletion = async (
-  userId: string,
   activityId: number
 ): Promise<boolean> => {
   const result = await db
-    .select({ completed: activityProgress.completed })
-    .from(activityProgress)
-    .where(
-      and(
-        eq(activityProgress.userId, userId),
-        eq(activityProgress.activityId, activityId)
-      )
-    );
+    .select({ completed: activities.isCompleted })
+    .from(activities)
+    .where(eq(activities.id, activityId));
 
   return result[0]?.completed ?? false;
 };
 
 // Marcar una actividad como completada
-export const completeActivity = async (
-  userId: string,
-  activityId: number
-): Promise<void> => {
-  const existingProgress = await db
-    .select()
-    .from(activityProgress)
-    .where(
-      and(
-        eq(activityProgress.userId, userId),
-        eq(activityProgress.activityId, activityId)
-      )
-    );
-
-  if (existingProgress.length > 0) {
-    await db
-      .update(activityProgress)
-      .set({ completed: true, lastUpdated: new Date() })
-      .where(
-        and(
-          eq(activityProgress.userId, userId),
-          eq(activityProgress.activityId, activityId)
-        )
-      );
-  } else {
-    await db
-      .insert(activityProgress)
-      .values({ userId, activityId, completed: true, lastUpdated: new Date() });
-  }
+export const completeActivity = async (activityId: number): Promise<void> => {
+  await db
+    .update(activities)
+    .set({ isCompleted: true, lastUpdated: new Date() })
+    .where(eq(activities.id, activityId));
 };
 
 // Verificar si una lección está desbloqueada para un usuario
-export const isLessonUnlocked = async (
-  userId: string,
-  lessonId: number
-): Promise<boolean> => {
+export const isLessonUnlocked = async (lessonId: number): Promise<boolean> => {
   const lesson = await db
     .select()
     .from(lessons)
@@ -500,13 +447,9 @@ export const isLessonUnlocked = async (
   const previousLessonId = lesson[0] ? lesson[0].order - 1 : 0;
   const previousLessonProgress = await db
     .select()
-    .from(lessonProgress)
+    .from(lessons)
     .where(
-      and(
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.lessonId, previousLessonId),
-        eq(lessonProgress.completed, true)
-      )
+      and(eq(lessons.id, previousLessonId), eq(lessons.isCompleted, true))
     );
 
   return previousLessonProgress.length > 0;
@@ -514,7 +457,6 @@ export const isLessonUnlocked = async (
 
 // Desbloquear la siguiente lección
 export const unlockNextLesson = async (
-  _userId: string,
   currentLessonId: number
 ): Promise<void> => {
   const currentLesson = await db
@@ -547,7 +489,7 @@ export const unlockNextLesson = async (
 
 // Obtener todas las lecciones de un curso con su estado de desbloqueo para un usuario específico
 export const getLessonsByCourseIdWithUnlockStatus = async (
-  userId: string,
+  _userId: string,
   courseId: number
 ): Promise<(Lesson & { isUnlocked: boolean })[]> => {
   const lessonsResult = await db
@@ -558,10 +500,10 @@ export const getLessonsByCourseIdWithUnlockStatus = async (
 
   const lessonsWithUnlockStatus = await Promise.all(
     lessonsResult.map(async (lesson) => {
-      const isUnlocked = await isLessonUnlocked(userId, lesson.id);
+      const isUnlocked = await isLessonUnlocked(lesson.id);
       return {
         ...lesson,
-        course_id: lesson.courseId,
+        courseId: lesson.courseId,
         duration: lesson.duration,
         coverVideoKey: lesson.coverVideoKey,
         createdAt: lesson.createdAt.toISOString(),
@@ -569,7 +511,10 @@ export const getLessonsByCourseIdWithUnlockStatus = async (
         resourceKey: lesson.resourceKey,
         porcentajecompletado: lesson.porcentajecompletado ?? 0,
         isLocked: lesson.isLocked ?? false,
+        userProgress: lesson.userProgress ?? 0,
+        isCompleted: lesson.isCompleted ?? false,
         isUnlocked,
+        lastUpdated: lesson.lastUpdated.toISOString(),
       };
     })
   );
