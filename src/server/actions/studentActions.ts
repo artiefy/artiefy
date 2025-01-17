@@ -13,6 +13,7 @@ import {
   projects,
   projectsTaken,
   categories,
+  users,
 } from '~/server/db/schema';
 import {
   type Course,
@@ -118,6 +119,23 @@ export async function enrollInCourse(courseId: number): Promise<{ success: boole
   const userId = user.id;
 
   try {
+    // Verificar si el usuario existe en la tabla de usuarios
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    // Si el usuario no existe, insertarlo en la tabla de usuarios
+    if (!existingUser) {
+      await db.insert(users).values({
+        id: userId,
+        role: 'student',
+        name: user.fullName,
+        email: user.emailAddresses[0]?.emailAddress,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+
     // Verificar si ya existe una inscripción
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(
@@ -168,9 +186,13 @@ export async function enrollInCourse(courseId: number): Promise<{ success: boole
       ));
 
     return { success: true, message: 'Inscripción exitosa' };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error al inscribirse en el curso:', error);
-    return { success: false, message: 'Error al inscribirse en el curso' };
+    if (error instanceof Error) {
+      return { success: false, message: `Error al inscribirse en el curso: ${error.message}` };
+    } else {
+      return { success: false, message: 'Error desconocido al inscribirse en el curso' };
+    }
   }
 }
 

@@ -486,13 +486,13 @@ export default function CourseDetails({
               ) : (
                 <div className="flex w-full flex-col space-y-4 sm:w-auto">
                   <Button
-                    className="h-12 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+                    className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
                     disabled={true}
                   >
                     <FaCheck className="mr-2" /> Suscrito Al Curso
                   </Button>
                   <Button
-                    className="h-12 justify-center border-white/20 bg-red-500 text-lg font-semibold"
+                    className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold"
                     onClick={handleUnenroll}
                     disabled={isUnenrolling}
                   >
