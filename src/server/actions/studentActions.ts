@@ -66,7 +66,7 @@ export async function getAllCourses(): Promise<Course[]> {
             userProgress: activity.userProgress ?? 0,
           })) ?? [],
       })) ?? [],
-  }));
+  }))
 }
 
 // Obtener un curso específico por ID
@@ -94,21 +94,14 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
   // Transformamos los datos para asegurar que cumplen con los tipos
   const transformedCourse: Course = {
     ...course,
-    totalStudents: course.enrollments?.length ?? 0, // Ensure totalStudents is always set
-    lessons:
-      course.lessons?.map((lesson) => ({
-        ...lesson,
-        userProgress: lesson.userProgress ?? 0,
-        isLocked: lesson.isLocked ?? true,
-        isCompleted: lesson.isCompleted ?? false,
-        porcentajecompletado: lesson.porcentajecompletado ?? 0,
-        activities:
-          lesson.activities?.map((activity) => ({
-            ...activity,
-            isCompleted: activity.isCompleted ?? false,
-            userProgress: activity.userProgress ?? 0,
-          })) ?? [],
-      })) ?? [],
+    totalStudents: course.enrollments?.length ?? 0,
+    lessons: course.lessons?.map((lesson) => ({
+      ...lesson,
+      isLocked: lesson.isLocked ?? true, // Ensure isLocked is always a boolean
+      isCompleted: lesson.isCompleted ?? false, // Ensure isCompleted is always a boolean
+      userProgress: lesson.userProgress ?? 0, // Ensure userProgress is always a number
+      porcentajecompletado: lesson.porcentajecompletado ?? 0, // Ensure porcentajecompletado is always a number
+    })) ?? [],
   };
 
   return transformedCourse;
@@ -239,7 +232,7 @@ export async function getLessonsByCourseId(courseId: number): Promise<Lesson[]> 
       isCompleted: activity.isCompleted ?? false,
       userProgress: activity.userProgress ?? 0,
     })),
-  }));
+  }))
 }
 
 // Obtener una lección específica por ID
@@ -308,14 +301,34 @@ export async function getAllCategories(): Promise<Category[]> {
 
 // Nueva acción para obtener las categorías destacadas
 export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
-  return db.query.categories.findMany({
+  const categoriesData = await db.query.categories.findMany({
     where: eq(categories.is_featured, true),
     orderBy: [desc(categories.name)],
     limit: limit,
     with: {
-      courses: true,
+      courses: {
+        with: {
+          enrollments: true,
+          lessons: true, // Ensure lessons is included
+        },
+      },
     },
   });
+
+  return categoriesData.map((category) => ({
+    ...category,
+    courses: category.courses.map((course) => ({
+      ...course,
+      totalStudents: course.enrollments?.length ?? 0,
+      lessons: course.lessons?.map((lesson) => ({
+        ...lesson,
+        isLocked: lesson.isLocked ?? true,
+        isCompleted: lesson.isCompleted ?? false,
+        userProgress: lesson.userProgress ?? 0,
+        porcentajecompletado: lesson.porcentajecompletado ?? 0,
+      })) ?? [],
+    })),
+  }));
 }
 
 // Guardar preferencias del usuario
@@ -369,12 +382,32 @@ export async function markCourseTaken(userId: string, courseId: number): Promise
 
 // Obtener cursos tomados por el usuario
 export async function getUserCoursesTaken(userId: string): Promise<CourseTaken[]> {
-  return db.query.coursesTaken.findMany({
+  const coursesTakenData = await db.query.coursesTaken.findMany({
     where: eq(coursesTaken.userId, userId),
     with: {
-      course: true,
+      course: {
+        with: {
+          enrollments: true,
+          lessons: true, // Ensure lessons is included
+        },
+      },
     },
   });
+
+  return coursesTakenData.map((courseTaken) => ({
+    ...courseTaken,
+    course: {
+      ...courseTaken.course,
+      totalStudents: courseTaken.course.enrollments?.length ?? 0, // Ensure totalStudents is always set
+      lessons: courseTaken.course.lessons?.map((lesson) => ({
+        ...lesson,
+        isLocked: lesson.isLocked ?? true, // Ensure isLocked is always a boolean
+        isCompleted: lesson.isCompleted ?? false, // Ensure isCompleted is always a boolean
+        userProgress: lesson.userProgress ?? 0, // Ensure userProgress is always a number
+        porcentajecompletado: lesson.porcentajecompletado ?? 0, // Ensure porcentajecompletado is always a number
+      })) ?? [], // Ensure lessons is always set
+    },
+  }));
 }
 
 // Obtener todos los proyectos disponibles

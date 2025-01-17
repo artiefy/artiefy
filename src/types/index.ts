@@ -30,11 +30,11 @@ export interface Course {
   modalidadesid: number;
   dificultadid: number;
   totalStudents: number;
+  lessons: Lesson[];
   // Relaciones
   category?: Category;
   modalidad?: Modalidad;
   dificultad?: Dificultad;
-  lessons?: Lesson[];
   enrollments?: Enrollment[];
   creator?: User;
 }

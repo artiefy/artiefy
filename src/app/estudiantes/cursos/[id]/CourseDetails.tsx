@@ -153,7 +153,10 @@ export default function CourseDetails({
         setIsEnrolled(true);
         const updatedCourse = await getCourseById(course.id);
         if (updatedCourse) {
-          setCourse(updatedCourse);
+          setCourse({
+            ...updatedCourse,
+            lessons: updatedCourse.lessons ?? [],
+          });
         }
         toast({
           title: 'Sucripción exitosa',
