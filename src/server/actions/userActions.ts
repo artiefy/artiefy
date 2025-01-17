@@ -1,66 +1,67 @@
 'use server';
 
-import {
-  getUserById,
-  getAllUsers,
-  createUser,
-  deleteUserById,
-  type User,
-} from '~/models/estudiantes/userModels';
+import { db } from '~/server/db';
+import { users } from '~/server/db/schema';
+import { eq } from 'drizzle-orm';
+import { currentUser } from '@clerk/nextjs/server';
 
-export async function getUserByIdAction(
-  userId: string
-): Promise<{ success: boolean; user?: User; error?: string }> {
+export async function syncUser() {
+  const user = await currentUser();
+  
+  if (!user) {
+    throw new Error('No se encontró un usuario autenticado');
+  }
+
   try {
-    const user = await getUserById(userId);
-    if (user) {
-      return { success: true, user };
+    const userData = {
+      id: user.id,
+      role: 'student',
+      name: user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`
+        : user.username ?? '',
+      email: user.emailAddresses[0]?.emailAddress ?? '',
+      createdAt: new Date(user.createdAt),
+      updatedAt: new Date(),
+      phone: user.phoneNumbers[0]?.phoneNumber ?? null,
+      country: null,
+      city: null,
+      address: null,
+      age: null,
+      birthDate: null,
+    };
+
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.id, user.id),
+    });
+
+    if (existingUser) {
+      // Actualizar usuario existente
+      await db.update(users)
+        .set(userData)
+        .where(eq(users.id, user.id));
     } else {
-      return { success: false, error: 'Usuario no encontrado' };
+      // Crear nuevo usuario
+      await db.insert(users).values(userData);
     }
+
+    return { success: true, message: 'Usuario sincronizado correctamente', userId: user.id };
   } catch (error) {
-    console.error(`Error al obtener el usuario con ID ${userId}:`, error);
-    return { success: false, error: 'No se pudo obtener el usuario' };
+    console.error('Error al sincronizar usuario:', error);
+    throw new Error('No se pudo sincronizar el usuario');
   }
 }
 
-export async function getAllUsersAction(): Promise<{
-  success: boolean;
-  users?: User[];
-  error?: string;
-}> {
+export async function getUserRole(userId: string): Promise<string | null> {
   try {
-    const users = await getAllUsers();
-    return { success: true, users };
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { role: true },
+    });
+
+    return user?.role ?? null;
   } catch (error) {
-    console.error('Error al obtener todos los usuarios:', error);
-    return { success: false, error: 'No se pudieron obtener los usuarios' };
+    console.error('Error al obtener el rol del usuario:', error);
+    return null;
   }
 }
 
-export async function createUserAction(
-  id: string,
-  role: string,
-  name: string,
-  email: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    await createUser(id, role, name, email);
-    return { success: true };
-  } catch (error) {
-    console.error('Error al crear el usuario:', error);
-    return { success: false, error: 'No se pudo crear el usuario' };
-  }
-}
-
-export async function deleteUserByIdAction(
-  userId: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    await deleteUserById(userId);
-    return { success: true };
-  } catch (error) {
-    console.error(`Error al eliminar el usuario con ID ${userId}:`, error);
-    return { success: false, error: 'No se pudo eliminar el usuario' };
-  }
-}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { use, useCallback, useEffect, useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   MagnifyingGlassIcon,
   RocketLaunchIcon,
@@ -11,7 +11,6 @@ import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import { SkeletonCard } from '~/components/estudiantes/layout/SkeletonCard';
 import { Badge } from '~/components/estudiantes/ui/badge';
 
 import {
@@ -30,117 +29,87 @@ import {
   PaginationPrevious,
 } from '~/components/estudiantes/ui/pagination';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
-import { toast } from '~/hooks/use-toast';
 import { blurDataURL } from '~/lib/blurDataUrl';
-
-const ITEMS_PER_PAGE = 9;
-
-interface Course {
-  id: number;
-  title: string;
-  coverImageKey: string;
-  category: {
-    name: string;
-  };
-  description: string;
-  instructor: string;
-  rating?: number;
-  modalidad: {
-    name: string;
-  };
-  createdAt: string;
-}
+import { getAllCourses } from '~/server/actions/studentActions';
+import { type Course } from '~/types';
 
 function LoadingCourses() {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 9 }).map((_, index) => (
-        <SkeletonCard key={index} />
-      ))}
+    <div className="p-16 space-y-12 sm:space-y-16">
+      {/* Skeleton para el carousel grande */}
+      <div className="relative h-[300px] sm:h-[400px] md:h-[500px]">
+        <Skeleton className="size-full" />
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="size-3 rounded-full" />
+          ))}
+        </div>
+      </div>
+
+      {/* Skeleton para el buscador IA */}
+      <div className="flex justify-center sm:justify-end">
+        <Skeleton className="h-10 w-full max-w-lg" />
+      </div>
+
+      {/* Skeleton para el carousel de top cursos */}
+      <div className="space-y-4">
+        <Skeleton className="ml-4 h-8 w-32" />
+        <div className="grid grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 w-full md:h-64" />
+          ))}
+        </div>
+      </div>
+
+      {/* Skeleton para las categorías */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
+      </div>
+
+      {/* Skeleton para la lista de cursos */}
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Skeleton para la paginación */}
+      <div className="flex justify-center pb-12">
+        <Skeleton className="h-10 w-64" />
+      </div>
     </div>
   );
 }
 
-export default function StudentDashboard(props: {
-  params: Promise<Record<string, string>>;
-}) {
-  const resolvedParams = use(props.params);
+const ITEMS_PER_PAGE = 9;
 
+export default function StudentDashboard() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [carouselIndex, setCarouselIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/estudiantes');
-      if (!response.ok) throw new Error(response.statusText);
-      const data = (await response.json()) as Course[];
-      data.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      const data = await getAllCourses();
       setCourses(data);
       setFilteredCourses(data);
-      setCarouselIndex(0);
     } catch (error) {
       console.error('Error al obtener los cursos:', error);
-      toast({
-        title: 'Error',
-        description:
-          'No se pudieron cargar los cursos. Por favor, intenta de nuevo más tarde.',
-        variant: 'destructive',
-      });
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  const filterCourses = useCallback(
-    (search: string, category: string | null) => {
-      let filtered = courses;
-      if (search) {
-        const searchLower = search.toLowerCase();
-        filtered = filtered.filter((course) =>
-          course.title.toLowerCase().includes(searchLower)
-        );
-      }
-      if (category) {
-        filtered = filtered.filter(
-          (course) =>
-            course.category.name.toLowerCase() === category.toLowerCase()
-        );
-      }
-      setFilteredCourses(filtered);
-      setCurrentPage(1);
-    },
-    [courses]
-  );
-
-  const handleSearch = useCallback(
-    (search: string) => {
-      setSearchTerm(search);
-      filterCourses(search, selectedCategory);
-    },
-    [filterCourses, selectedCategory]
-  );
-
-  const handleCategorySelect = useCallback(
-    (category: string | null) => {
-      setSelectedCategory(category);
-      filterCourses(searchTerm, category);
-    },
-    [filterCourses, searchTerm]
-  );
-
-  const handleCarouselChange = useCallback((index: number) => {
-    setCarouselIndex(index);
   }, []);
 
   useEffect(() => {
@@ -149,21 +118,54 @@ export default function StudentDashboard(props: {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCarouselIndex(
-        (prevIndex) => (prevIndex + 1) % Math.min(courses.length, 5)
+      setCurrentSlide(
+        (prevSlide) => (prevSlide + 1) % Math.min(courses.length, 5)
       );
-    }, 5000);
+    }, 5000); // Change slide every 5 seconds
+
     return () => clearInterval(interval);
   }, [courses.length]);
 
+  const handleCategorySelect = useCallback(
+    (category: string | null) => {
+      if (category) {
+        setFilteredCourses(
+          courses.filter((course) => course.category?.name === category)
+        );
+      } else {
+        setFilteredCourses(courses);
+      }
+      setCurrentPage(1);
+    },
+    [courses]
+  );
+
+  const handleSearch = useCallback(
+    (searchTerm: string) => {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      setFilteredCourses(
+        courses.filter(
+          (course) =>
+            (course.title.toLowerCase().includes(lowercasedTerm) ||
+              course.description?.toLowerCase().includes(lowercasedTerm)) ??
+            false
+        )
+      );
+      setCurrentPage(1);
+    },
+    [courses]
+  );
+
+  const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
   const paginatedCourses = filteredCourses.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  if (!resolvedParams) {
+  if (loading) {
     return <LoadingCourses />;
   }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -172,62 +174,62 @@ export default function StudentDashboard(props: {
           <div className="flex flex-col space-y-12 sm:space-y-16">
             {/* CAROUSEL GRANDE*/}
             <div className="relative h-[300px] overflow-hidden sm:h-[400px] md:h-[500px]">
-              {loading ? (
-                <Skeleton className="size-full rounded-lg" />
-              ) : (
-                courses.slice(0, 5).map((course, index) => (
-                  <div
-                    key={course.id}
-                    className={`absolute size-full transition-opacity duration-500 ${index === carouselIndex ? 'opacity-100' : 'opacity-0'}`}
-                  >
-                    <div className="relative size-full">
-                      <Image
-                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
-                        alt={course.title}
-                        fill
-                        className="object-cover"
-                        priority={index === 0}
-                        sizes="100vw"
-                        quality={85}
-                        placeholder="blur"
-                        blurDataURL={blurDataURL}
-                      />
-                    </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
-                      <h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">
-                        {course.title}
-                      </h2>
-                      <Badge
-                        variant="outline"
-                        className="mb-2 border-primary text-primary"
-                      >
-                        {course.category.name}
-                      </Badge>
-                      <p className="mb-2 hidden text-center text-sm sm:block sm:text-base md:text-lg lg:text-xl">
-                        {course.description}
-                      </p>
-                      <p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">
-                        Educador: {course.instructor}
-                      </p>
-                      <p className="mb-1 hidden text-sm text-red-500 sm:block sm:text-base md:text-lg">
-                        {course.modalidad.name}
-                      </p>
-                      <div className="flex items-center">
-                        <StarIcon className="size-4 text-yellow-500 sm:size-5" />
-                        <span className="ml-1 text-sm text-yellow-500 sm:text-base">
-                          {(course.rating ?? 0).toFixed(1)}
-                        </span>
-                      </div>
+              {courses.slice(0, 5).map((course, index) => (
+                <div
+                  key={course.id}
+                  className={`absolute size-full transition-opacity duration-500 ${
+                    index === currentSlide ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <div className="relative size-full">
+                    <Image
+                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+                      alt={course.title}
+                      fill
+                      className="object-cover"
+                      priority={index === currentSlide}
+                      sizes="100vw"
+                      quality={85}
+                      placeholder="blur"
+                      blurDataURL={blurDataURL}
+                    />
+                  </div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
+                    <h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">
+                      {course.title}
+                    </h2>
+                    <Badge
+                      variant="outline"
+                      className="mb-2 border-primary text-primary"
+                    >
+                      {course.category?.name ?? 'Sin categoría'}
+                    </Badge>
+                    <p className="mb-2 hidden text-center text-sm sm:block sm:text-base md:text-lg lg:text-xl">
+                      {course.description}
+                    </p>
+                    <p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">
+                      Educador: {course.instructor}
+                    </p>
+                    <p className="mb-1 hidden text-sm text-red-500 sm:block sm:text-base md:text-lg">
+                      {course.modalidad?.name ?? 'Modalidad no especificada'}
+                    </p>
+                    <div className="flex items-center">
+                      <StarIcon className="size-4 text-yellow-500 sm:size-5" />
+                      <span className="ml-1 text-sm text-yellow-500 sm:text-base">
+                        {(course.rating ?? 0).toFixed(1)}
+                      </span>
                     </div>
                   </div>
-                ))
-              )}
-              <div className="absolute inset-x-0 bottom-4 flex justify-center space-x-2">
+                </div>
+              ))}
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
                 {courses.slice(0, 5).map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => handleCarouselChange(index)}
-                    className={`size-2 rounded-full sm:size-3 ${index === carouselIndex ? 'bg-white' : 'bg-white/50'}`}
+                    className={`size-3 rounded-full ${
+                      index === currentSlide ? 'bg-primary' : 'bg-gray-300'
+                    }`}
+                    onClick={() => setCurrentSlide(index)}
                   />
                 ))}
               </div>
@@ -250,7 +252,8 @@ export default function StudentDashboard(props: {
                     required
                     placeholder="Buscar..."
                     className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
-                    type="text"
+                    type="search"
+                    onChange={(e) => handleSearch(e.target.value)}
                   />
                 </div>
                 <button
@@ -270,63 +273,57 @@ export default function StudentDashboard(props: {
               </h2>
               <Carousel className="w-full p-4">
                 <CarouselContent>
-                  {loading
-                    ? Array.from({ length: 3 }).map((_, index) => (
-                        <Skeleton
-                          key={index}
-                          className="ml-4 h-48 w-full rounded-lg px-6 md:h-64"
+                  {courses.map((course) => (
+                    <CarouselItem
+                      key={course.id}
+                      className="pl-4 md:basis-1/2 lg:basis-1/3"
+                    >
+                      <div className="relative h-48 w-full md:h-64">
+                        <Image
+                          src={
+                            course.coverImageKey
+                              ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
+                              : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                          }
+                          alt={course.title}
+                          fill
+                          className="rounded-lg object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          quality={85}
+                          placeholder="blur"
+                          blurDataURL={blurDataURL}
+                          unoptimized
                         />
-                      ))
-                    : courses.map((course) => (
-                        <CarouselItem
-                          key={course.id}
-                          className="pl-4 md:basis-1/2 lg:basis-1/3"
-                        >
-                          <div className="relative h-48 w-full md:h-64">
-                            <Image
-                              src={
-                                course.coverImageKey
-                                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                              }
-                              alt={course.title}
-                              fill
-                              className="rounded-lg object-cover"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                              quality={85}
-                              placeholder="blur"
-                              blurDataURL={blurDataURL}
-                            />
-                            <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
-                              <h3 className="text-lg font-bold text-white">
-                                {course.title}
-                              </h3>
-                              <div className="mb-2 flex items-center justify-between">
-                                <Badge
-                                  variant="outline"
-                                  className="border-primary bg-background text-primary hover:bg-black"
-                                >
-                                  {course.category.name}
-                                </Badge>
-                                <span className="text-sm font-bold text-red-500">
-                                  {course.modalidad.name}
-                                </span>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <p className="text-sm italic text-primary">
-                                  Educador: <span>{course.instructor}</span>
-                                </p>
-                                <div className="flex items-center">
-                                  <StarIcon className="size-4 text-yellow-500" />
-                                  <span className="ml-1 text-sm font-bold text-yellow-500">
-                                    {(course.rating ?? 0).toFixed(1)}
-                                  </span>
-                                </div>
-                              </div>
+                        <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
+                          <h3 className="text-lg font-bold text-white">
+                            {course.title}
+                          </h3>
+                          <div className="mb-2 flex items-center justify-between">
+                            <Badge
+                              variant="outline"
+                              className="border-primary bg-background text-primary hover:bg-black"
+                            >
+                              {course.category?.name}
+                            </Badge>
+                            <span className="text-sm font-bold text-red-500">
+                              {course.modalidad?.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm italic text-primary">
+                              Educador: <span>{course.instructor}</span>
+                            </p>
+                            <div className="flex items-center">
+                              <StarIcon className="size-4 text-yellow-500" />
+                              <span className="ml-1 text-sm font-bold text-yellow-500">
+                                {(course.rating ?? 0).toFixed(1)}
+                              </span>
                             </div>
                           </div>
-                        </CarouselItem>
-                      ))}
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
                 </CarouselContent>
                 <CarouselPrevious className="mr-7 size-12 bg-black/50 text-white" />
                 <CarouselNext className="ml-4 size-12 bg-black/50 text-white" />
@@ -342,11 +339,8 @@ export default function StudentDashboard(props: {
             {/* Seccion De Cursos */}
             <div className="flex flex-col px-11">
               <h2 className="mb-8 text-2xl font-bold sm:text-3xl">
-                {selectedCategory
-                  ? `Cursos de ${selectedCategory}`
-                  : 'Cursos Disponibles'}
+                Cursos Disponibles
               </h2>
-              {loading && <LoadingCourses />}
               <React.Suspense fallback={<LoadingCourses />}>
                 <CourseListStudent courses={paginatedCourses} />
               </React.Suspense>

@@ -1,9 +1,9 @@
 {
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
-  "files.autoSave": "onFocusChange",
+  "files.autoSave": "afterDelay",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "always"
+    "source.fixAll.eslint": "explicit"
   },
   "typescript.tsdk": "./node_modules/typescript/lib",
   "eslint.rules.customizations": [

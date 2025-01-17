@@ -1,8 +1,8 @@
 'use server';
 
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { lessons, lessonProgress } from '~/server/db/schema';
+import { lessons } from '~/server/db/schema';
 
 export async function getLessonByIdAction(lessonId: number) {
   try {
@@ -103,50 +103,22 @@ export async function unlockNextLessonAction(
 }
 
 export const getLessonProgressAction = async (
-  userId: string,
   lessonId: number
 ): Promise<number> => {
   const result = await db
-    .select({ progress: lessonProgress.progress })
-    .from(lessonProgress)
-    .where(
-      and(
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.lessonId, lessonId)
-      )
-    );
+    .select({ progress: lessons.userProgress })
+    .from(lessons)
+    .where(eq(lessons.id, lessonId));
 
   return result[0]?.progress ?? 0;
 };
 
 export const updateLessonProgressAction = async (
-  userId: string,
   lessonId: number,
   progress: number
 ): Promise<void> => {
-  const existingProgress = await db
-    .select()
-    .from(lessonProgress)
-    .where(
-      and(
-        eq(lessonProgress.userId, userId),
-        eq(lessonProgress.lessonId, lessonId)
-      )
-    );
-
-  if (existingProgress.length > 0) {
-    await db
-      .update(lessonProgress)
-      .set({ progress, lastUpdated: new Date() })
-      .where(
-        and(
-          eq(lessonProgress.userId, userId),
-          eq(lessonProgress.lessonId, lessonId)
-        )
-      );
-  } else {
-    await db
-      .insert(lessonProgress)
-      .values({ userId, lessonId, progress, lastUpdated: new Date() });
-  }
+  await db
+    .update(lessons)
+    .set({ userProgress: progress, lastUpdated: new Date() })
+    .where(eq(lessons.id, lessonId));
 };

@@ -44,13 +44,13 @@ async function LessonContent({ id }: { id: string }) {
     const activities = await getActivitiesByLessonId(lesson.id);
     const activity: Activity | null = activities?.[0] ?? null;
 
-    const course = await getCourseById(lesson.course_id);
+    const course = await getCourseById(lesson.courseId);
     if (!course) {
       console.log('Curso no encontrado');
       notFound();
     }
 
-    const lessons = await getLessonsByCourseId(lesson.course_id);
+    const lessons = await getLessonsByCourseId(lesson.courseId);
 
     const userId = 'someUserId';
 

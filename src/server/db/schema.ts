@@ -8,22 +8,45 @@ import {
   text,
   timestamp,
   varchar,
+  date,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable('users', {
-  id: text('id').primaryKey(), // ID del usuario proporcionado por Clerk
-  role: text('role').notNull(), // Rol del usuario (estudiante/profesor, etc.)
-  name: text('name'), // Nombre opcional del usuario
-  email: text('email').notNull(), // Email obligatorio
-  createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
-  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
-  // phone: text('phone'), // Teléfono opcional
-  // country: text('country'), // País opcional
-  // city: text('city'), // Ciudad opcional
-  // address: text('address'), // Dirección opcional
-  // age: integer('age'), // Edad opcional
-  // birthDate: date('birth_date'), // Fecha de nacimiento opcional
+  id: text('id').primaryKey(),
+  role: text('role').notNull(),
+  name: text('name'),
+  email: text('email').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  phone: text('phone'),
+  country: text('country'),
+  city: text('city'),
+  address: text('address'),
+  age: integer('age'),
+  birthDate: date('birth_date'),
+});
+
+// Tabla de categorías
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  is_featured: boolean('is_featured').default(false),
+});
+
+// Tabla de modalidades
+export const modalidades = pgTable('modalidades', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+});
+
+// Tabla de dificultad
+export const dificultad = pgTable('dificultad', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
 });
 
 // Tabla de cursos
@@ -50,26 +73,69 @@ export const courses = pgTable('courses', {
     .notNull(),
 });
 
-// Tabla de categorías
-export const categories = pgTable('categories', {
-  id: serial('id').primaryKey(), // ID autoincremental de la categoría
-  name: varchar('name', { length: 255 }).notNull(), // Nombre de la categoría
-  description: text('description'), // Descripción de la categoría
+// Tabla de lecciones
+export const lessons = pgTable('lessons', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  duration: integer('duration').notNull(),
+  coverImageKey: text('cover_image_key').notNull(),
+  coverVideoKey: text('cover_video_key').notNull(),
+  order: serial('order').notNull(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  porcentajecompletado: real('porcentajecompletado').default(0),
+  resourceKey: text('resource_key').notNull(),
+  isLocked: boolean('is_locked').default(true),
+  userProgress: real('user_progress').default(0),
+  isCompleted: boolean('is_completed').default(false),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+});
+
+// Tabla de actividades
+export const activities = pgTable('activities', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  tipo: varchar('tipo', { length: 255 }).notNull(),
+  lessonsId: integer('lessons_id')
+    .references(() => lessons.id)
+    .notNull(),
+  isCompleted: boolean('is_completed').default(false),
+  userProgress: real('user_progress').default(0),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+});
+
+// Tabla de inscripciones
+export const enrollments = pgTable('enrollments', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .notNull(),
+  enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
+  completed: boolean('completed').default(false),
 });
 
 // Tabla de preferencias
 export const preferences = pgTable('preferences', {
-  id: serial('id').primaryKey(), // ID autoincremental de la preferencia
-  name: varchar('name', { length: 255 }).notNull(), // Nombre de la preferencia
-  area_cono: text('area_cono'), // Área de conocimiento
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  area_cono: text('area_cono'),
   userId: text('user_id')
     .references(() => users.id)
-    .notNull(), // Relación con usuarios
-  categoryid: integer('categoryid') // Usar el nombre consistente
+    .notNull(),
+  categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
 });
 
+<<<<<<< HEAD
 export const modalidades = pgTable('modalidades', {
   id: serial('id').primaryKey(), // ID autoincremental de la modalidad
   name: varchar('name', { length: 255 }).notNull(), // Nombre de la modalidad
@@ -120,122 +186,130 @@ export const lessonProgress = pgTable('lesson_progress', {
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
+=======
+>>>>>>> main
 // Tabla de puntajes
 export const scores = pgTable('scores', {
-  id: serial('id').primaryKey(), // ID autoincremental del puntaje
-  score: real('score').notNull(), // Puntaje del usuario
+  id: serial('id').primaryKey(),
+  score: real('score').notNull(),
   userId: text('user_id')
     .references(() => users.id)
-    .notNull(), // Relación con usuarios
+    .notNull(),
   categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
 });
 
-export const dificultad = pgTable('dificultad', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-  description: text('description').notNull(),
-});
-
-//tabla de actividades
-export const activities = pgTable('activities', {
-  id: serial('id').primaryKey(), // ID autoincremental de la actividad
-  name: varchar('name', { length: 255 }).notNull(), // Nombre de la actividad
-  description: text('description'), // Descripción de la actividad
-  tipo: varchar('tipo', { length: 255 }).notNull(), // Tipo de actividad
-  lessonsId: integer('lessons_id')
-    .references(() => lessons.id)
-    .notNull(), // Relación con lecciones
-  isCompleted: boolean('is_completed').default(false), // Nuevo campo para controlar si la actividad está completada
-});
-
-// Agregamos una nueva tabla para el progreso de las actividades
-export const activityProgress = pgTable('activity_progress', {
+// Tabla de cursos tomados
+export const coursesTaken = pgTable('courses_taken', {
   id: serial('id').primaryKey(),
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
-  activityId: integer('activity_id')
-    .references(() => activities.id)
-    .notNull(),
-  completed: boolean('completed').default(false),
-  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-});
-
-// Tabla de inscripciones (relación muchos a muchos entre usuarios y inscripciones)
-export const enrollments = pgTable('enrollments', {
-  id: serial('id').primaryKey(), // ID autoincremental de la inscripción
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(), // Relación con usuarios
   courseId: integer('course_id')
     .references(() => courses.id)
-    .notNull(), // Relación con cursos
-  enrolledAt: timestamp('enrolled_at').defaultNow().notNull(), // Fecha de inscripción
-  completed: boolean('completed').default(false), // Estado de completado
+    .notNull(),
 });
 
-//Tabla de proyectos
+// Tabla de proyectos
 export const projects = pgTable('projects', {
-  id: serial('id').primaryKey(), // ID autoincremental del proyecto
-  name: varchar('name', { length: 255 }).notNull(), // Nombre del proyecto
-  description: text('description'), // Descripción del proyecto
-  coverImageKey: text('cover_image_key'), // Clave de la imagen en S3
-  coverVideoKey: text('cover_video_key'), // Clave del video en S3
-  type_project: varchar('type_project', { length: 255 }).notNull(), // Tipo de proyecto
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  coverImageKey: text('cover_image_key'),
+  coverVideoKey: text('cover_video_key'),
+  type_project: varchar('type_project', { length: 255 }).notNull(),
   userId: text('user_id')
     .references(() => users.id)
-    .notNull(), // Relación con usuarios
+    .notNull(),
   categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
 });
 
-//Tabla de proyectos tomados
+// Tabla de proyectos tomados
 export const projectsTaken = pgTable('projects_taken', {
-  id: serial('id').primaryKey(), // ID autoincremental del proyecto tomado
+  id: serial('id').primaryKey(),
   userId: text('user_id')
     .references(() => users.id)
-    .notNull(), // Relación con usuarios
+    .notNull(),
   projectId: integer('project_id')
     .references(() => projects.id)
-    .notNull(), // Relación con proyectos
+    .notNull(),
 });
 
 // Relaciones
+export const usersRelations = relations(users, ({ many }) => ({
+  enrollments: many(enrollments),
+  createdCourses: many(courses),
+  preferences: many(preferences),
+  scores: many(scores),
+  coursesTaken: many(coursesTaken),
+  projects: many(projects),
+  projectsTaken: many(projectsTaken),
+}));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  courses: many(courses),
+  preferences: many(preferences),
+  scores: many(scores),
+  projects: many(projects),
+}));
+
+export const modalidadesRelations = relations(modalidades, ({ many }) => ({
+  courses: many(courses),
+}));
+
+export const dificultadRelations = relations(dificultad, ({ many }) => ({
+  courses: many(courses),
+}));
+
 export const coursesRelations = relations(courses, ({ many, one }) => ({
   lessons: many(lessons),
   enrollments: many(enrollments),
   creator: one(users, {
     fields: [courses.creatorId],
     references: [users.id],
+    relationName: 'createdCourses', // Añadimos el relationName aquí
   }),
   modalidad: one(modalidades, {
     fields: [courses.modalidadesid],
     references: [modalidades.id],
   }),
+  dificultad: one(dificultad, {
+    fields: [courses.dificultadid],
+    references: [dificultad.id],
+  }),
+  category: one(categories, {
+    fields: [courses.categoryid],
+    references: [categories.id],
+  }),
+  coursesTaken: many(coursesTaken),
+}));
+
+export const lessonsRelations = relations(lessons, ({ one, many }) => ({
+  course: one(courses, {
+    fields: [lessons.courseId],
+    references: [courses.id],
+  }),
+  activities: many(activities),
+}));
+
+export const activitiesRelations = relations(activities, ({ one }) => ({
+  lesson: one(lessons, {
+    fields: [activities.lessonsId],
+    references: [lessons.id],
+  }),
 }));
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
   user: one(users, {
-    fields: [enrollments.userId], // Campo que referencia al usuario
-    references: [users.id], // ID del usuario
+    fields: [enrollments.userId],
+    references: [users.id],
   }),
   course: one(courses, {
-    fields: [enrollments.courseId], // Campo que referencia al curso
-    references: [courses.id], // ID del curso
-  }),
-}));
-
-export const scoresRelations = relations(scores, ({ one }) => ({
-  user: one(users, {
-    fields: [scores.userId], // Campo que referencia al usuario
-    references: [users.id], // ID del usuario
-  }),
-  category: one(categories, {
-    fields: [scores.categoryid], // Usar el nombre consistente
-    references: [categories.id],
+    fields: [enrollments.courseId],
+    references: [courses.id],
   }),
 }));
 
@@ -245,73 +319,53 @@ export const preferencesRelations = relations(preferences, ({ one }) => ({
     references: [users.id],
   }),
   category: one(categories, {
-    fields: [preferences.categoryid], // Usar el nombre consistente
+    fields: [preferences.categoryid],
+    references: [categories.id],
+  }),
+}));
+
+export const scoresRelations = relations(scores, ({ one }) => ({
+  user: one(users, {
+    fields: [scores.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [scores.categoryid],
     references: [categories.id],
   }),
 }));
 
 export const coursesTakenRelations = relations(coursesTaken, ({ one }) => ({
   user: one(users, {
-    fields: [coursesTaken.userId], // Campo que referencia al usuario
-    references: [users.id], // ID del usuario
-  }),
-}));
-
-export const categoriesRelations = relations(categories, ({ many }) => ({
-  preferences: many(preferences), // Relación con preferencias
-}));
-
-export const modalidadesRelations = relations(modalidades, ({ many }) => ({
-  courses: many(courses),
-}));
-
-// Agregamos las nuevas relaciones
-export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
-  user: one(users, {
-    fields: [lessonProgress.userId],
+    fields: [coursesTaken.userId],
     references: [users.id],
   }),
-  lesson: one(lessons, {
-    fields: [lessonProgress.lessonId],
-    references: [lessons.id],
-  }),
-}));
-
-export const activityProgressRelations = relations(
-  activityProgress,
-  ({ one }) => ({
-    user: one(users, {
-      fields: [activityProgress.userId],
-      references: [users.id],
-    }),
-    activity: one(activities, {
-      fields: [activityProgress.activityId],
-      references: [activities.id],
-    }),
-  })
-);
-
-// Actualizamos las relaciones existentes
-export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   course: one(courses, {
-    fields: [lessons.courseId],
+    fields: [coursesTaken.courseId],
     references: [courses.id],
   }),
-  activities: many(activities),
-  progress: many(lessonProgress),
 }));
 
-export const activitiesRelations = relations(activities, ({ one, many }) => ({
-  lesson: one(lessons, {
-    fields: [activities.lessonsId],
-    references: [lessons.id],
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  user: one(users, {
+    fields: [projects.userId],
+    references: [users.id],
   }),
-  progress: many(activityProgress),
+  category: one(categories, {
+    fields: [projects.categoryid],
+    references: [categories.id],
+  }),
+  projectsTaken: many(projectsTaken),
 }));
 
-export const usersRelations = relations(users, ({ many }) => ({
-  enrollments: many(enrollments),
-  createdCourses: many(courses),
-  lessonProgress: many(lessonProgress),
-  activityProgress: many(activityProgress),
+export const projectsTakenRelations = relations(projectsTaken, ({ one }) => ({
+  user: one(users, {
+    fields: [projectsTaken.userId],
+    references: [users.id],
+  }),
+  project: one(projects, {
+    fields: [projectsTaken.projectId],
+    references: [projects.id],
+  }),
 }));
+

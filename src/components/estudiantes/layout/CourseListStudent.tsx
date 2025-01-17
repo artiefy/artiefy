@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -13,22 +14,7 @@ import {
   CardTitle,
 } from '~/components/estudiantes/ui/card';
 import { blurDataURL } from '~/lib/blurDataUrl';
-
-interface Course {
-  id: number;
-  title: string;
-  coverImageKey: string | null;
-  category: {
-    name: string;
-  };
-  description: string;
-  instructor: string;
-  rating?: number;
-  modalidad: {
-    name: string;
-  };
-  createdAt: string;
-}
+import { type Course } from '~/types';
 
 interface CourseListStudentProps {
   courses: Course[];
@@ -36,9 +22,22 @@ interface CourseListStudentProps {
 
 export default function CourseListStudent({ courses }: CourseListStudentProps) {
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
 
   const handleImageLoad = (courseId: number) => {
     setLoadedImages((prev) => ({ ...prev, [courseId]: true }));
+  };
+
+  const handleViewCourse = (courseId: number) => {
+    const courseUrl = `/estudiantes/cursos/${courseId}`;
+    if (isSignedIn) {
+      router.push(courseUrl);
+    } else {
+      const signInUrl = new URL('/sign-in', window.location.origin);
+      signInUrl.searchParams.set('redirect_url', courseUrl);
+      router.push(signInUrl.toString());
+    }
   };
 
   return (
@@ -85,7 +84,7 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
                   variant="outline"
                   className="border-primary bg-background text-primary hover:bg-black/70"
                 >
-                  {course.category.name}
+                  {course.category?.name}
                 </Badge>
               </div>
               <p className="mb-2 line-clamp-2 text-sm text-gray-600">
@@ -100,21 +99,20 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
                 <span className="font-bold italic">{course.instructor}</span>
               </p>
               <p className="text-sm font-bold text-red-500">
-                {course.modalidad.name}
+                {course.modalidad?.name}
               </p>
             </div>
             <div className="flex w-full items-center justify-between">
-              <Link href={`/estudiantes/cursos/${course.id}`} legacyBehavior>
-                <a className="flex items-center">
-                  <Button className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary hover:bg-black/70 active:scale-95">
-                    <p className="ml-2">Ver Curso</p>
-                    <ArrowRightIcon className="animate-bounce-right mr-2 size-5" />
-                    <div className="absolute inset-0 flex size-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
-                      <div className="relative h-full w-10 bg-white/30"></div>
-                    </div>
-                  </Button>
-                </a>
-              </Link>
+              <Button
+                className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary hover:bg-black/70 active:scale-95"
+                onClick={() => handleViewCourse(course.id)}
+              >
+                <p className="ml-2">Ver Curso</p>
+                <ArrowRightIcon className="animate-bounce-right mr-2 size-5" />
+                <div className="absolute inset-0 flex size-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+                  <div className="relative h-full w-10 bg-white/30"></div>
+                </div>
+              </Button>
               <div className="flex items-center">
                 <StarIcon className="size-5 text-yellow-500" />
                 <span className="ml-1 text-sm font-bold text-yellow-500">

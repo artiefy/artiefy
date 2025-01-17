@@ -8,12 +8,9 @@ import {
   unlockNextLesson,
 } from '~/models/estudiantes/courseModelsStudent';
 
-export async function getLessonProgressAction(
-  userId: string,
-  lessonId: number
-) {
+export async function getLessonProgressAction(lessonId: number) {
   try {
-    const progress = await getLessonProgress(userId, lessonId);
+    const progress = await getLessonProgress(lessonId);
     return { success: true, progress };
   } catch (error) {
     console.error(
@@ -28,12 +25,11 @@ export async function getLessonProgressAction(
 }
 
 export async function updateLessonProgressAction(
-  userId: string,
   lessonId: number,
   progress: number
 ) {
   try {
-    await updateLessonProgress(userId, lessonId, progress);
+    await updateLessonProgress(lessonId, progress);
     return {
       success: true,
       message: 'Progreso de la lección actualizado exitosamente',
@@ -50,12 +46,9 @@ export async function updateLessonProgressAction(
   }
 }
 
-export async function completeLessonProgressAction(
-  userId: string,
-  lessonId: number
-) {
+export async function completeLessonProgressAction(lessonId: number) {
   try {
-    await completeLessonProgress(userId, lessonId);
+    await completeLessonProgress(lessonId);
     return { success: true, message: 'Lección completada exitosamente' };
   } catch (error) {
     console.error(`Error al completar la lección con ID ${lessonId}:`, error);
@@ -63,9 +56,9 @@ export async function completeLessonProgressAction(
   }
 }
 
-export async function isLessonUnlockedAction(userId: string, lessonId: number) {
+export async function isLessonUnlockedAction(lessonId: number) {
   try {
-    const isUnlocked = await isLessonUnlocked(userId, lessonId);
+    const isUnlocked = await isLessonUnlocked(lessonId);
     return { success: true, isUnlocked };
   } catch (error) {
     console.error(
@@ -79,12 +72,9 @@ export async function isLessonUnlockedAction(userId: string, lessonId: number) {
   }
 }
 
-export async function unlockNextLessonAction(
-  userId: string,
-  currentLessonId: number
-) {
+export async function unlockNextLessonAction(currentLessonId: number) {
   try {
-    await unlockNextLesson(userId, currentLessonId);
+    await unlockNextLesson(currentLessonId);
     return {
       success: true,
       message: 'Siguiente lección desbloqueada exitosamente',

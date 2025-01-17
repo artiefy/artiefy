@@ -40,14 +40,27 @@ export function Header() {
                   className="object-contain"
                   priority
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
-                  onLoad={(e) => console.log(`Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`)}
-                  onError={(e) => console.error(`Failed to load image: ${(e.target as HTMLImageElement).src}`)}
+                  onLoad={(e) =>
+                    console.log(
+                      `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`
+                    )
+                  }
+                  onError={(e) =>
+                    console.error(
+                      `Failed to load image: ${(e.target as HTMLImageElement).src}`
+                    )
+                  }
+                  unoptimized
                 />
               </div>
             </div>
             {/* Navigation items */}
             {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className="text-shadow transition-colors hover:text-orange-500 active:scale-95">
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-shadow transition-colors hover:text-orange-500 active:scale-95"
+              >
                 {item.label}
               </Link>
             ))}
@@ -75,7 +88,9 @@ export function Header() {
                         />
                       ) : (
                         <>
-                          <span className="inline-block skew-x-[15deg]">Iniciar Sesión</span>
+                          <span className="inline-block skew-x-[15deg]">
+                            Iniciar Sesión
+                          </span>
                         </>
                       )}
                     </div>
@@ -91,7 +106,12 @@ export function Header() {
       </div>
 
       {/* Mobile Menu */}
-      <Dialog as="div" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} className="fixed inset-0 z-50 md:hidden">
+      <Dialog
+        as="div"
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        className="fixed inset-0 z-50 md:hidden"
+      >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <DialogPanel className="fixed inset-y-0 right-0 z-50 w-3/4 max-w-sm bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between">
@@ -104,8 +124,16 @@ export function Header() {
                 style={{ objectFit: 'contain' }}
                 priority
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
-                onLoad={(e) => console.log(`Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`)}
-                onError={(e) => console.error(`Failed to load image: ${(e.target as HTMLImageElement).src}`)}
+                onLoad={(e) =>
+                  console.log(
+                    `Image loaded with width: ${(e.target as HTMLImageElement).naturalWidth}`
+                  )
+                }
+                onError={(e) =>
+                  console.error(
+                    `Failed to load image: ${(e.target as HTMLImageElement).src}`
+                  )
+                }
               />
             </div>
             <button
@@ -153,7 +181,9 @@ export function Header() {
                         }}
                       />
                     ) : (
-                      <span className="inline-block skew-x-[15deg]">Iniciar Sesión</span>
+                      <span className="inline-block skew-x-[15deg]">
+                        Iniciar Sesión
+                      </span>
                     )}
                   </div>
                 </Button>
