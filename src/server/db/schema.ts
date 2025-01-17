@@ -188,7 +188,7 @@ export const projectsTaken = pgTable('projects_taken', {
 // Relaciones
 export const usersRelations = relations(users, ({ many }) => ({
   enrollments: many(enrollments),
-  createdCourses: many(courses, { relationName: 'creator' }),
+  createdCourses: many(courses), // Eliminamos el relationName
   preferences: many(preferences),
   scores: many(scores),
   coursesTaken: many(coursesTaken),
@@ -217,6 +217,7 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
   creator: one(users, {
     fields: [courses.creatorId],
     references: [users.id],
+    relationName: 'createdCourses', // Añadimos el relationName aquí
   }),
   modalidad: one(modalidades, {
     fields: [courses.modalidadesid],
@@ -314,3 +315,4 @@ export const projectsTakenRelations = relations(projectsTaken, ({ one }) => ({
     references: [projects.id],
   }),
 }));
+

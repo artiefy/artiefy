@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/nextjs';
+import { StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
 import {
   FaCalendar,
   FaChevronDown,
@@ -13,11 +14,13 @@ import {
   FaHome,
   FaUserGraduate,
   FaLock,
+  FaCheck,
 } from 'react-icons/fa';
-import { StarIcon } from '@heroicons/react/24/solid';
 import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -27,15 +30,14 @@ import {
   BreadcrumbSeparator,
 } from '~/components/estudiantes/ui/breadcrumb';
 import { Button } from '~/components/estudiantes/ui/button';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from '~/components/estudiantes/ui/card';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import { useToast } from '~/hooks/use-toast';
 import { enrollInCourse } from '~/server/actions/studentActions';
 
 interface Enrollment {
@@ -85,6 +87,7 @@ export default function CourseDetails({ course }: { course: Course }) {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const { isSignedIn, userId } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -93,7 +96,11 @@ export default function CourseDetails({ course }: { course: Course }) {
 
     // Verificar si el usuario está inscrito
     if (Array.isArray(course.enrollments) && userId) {
-      setIsEnrolled(course.enrollments.some((enrollment: Enrollment) => enrollment.userId === userId));
+      setIsEnrolled(
+        course.enrollments.some(
+          (enrollment: Enrollment) => enrollment.userId === userId
+        )
+      );
     }
 
     return () => clearTimeout(timer);
@@ -110,7 +117,7 @@ export default function CourseDetails({ course }: { course: Course }) {
   };
 
   const handleEnroll = async () => {
-    if (!isSignedIn || !userId) {
+    if (!isSignedIn) {
       router.push('/sign-in');
       return;
     }
@@ -119,12 +126,31 @@ export default function CourseDetails({ course }: { course: Course }) {
     setEnrollmentError(null);
 
     try {
-      await enrollInCourse(course.id, userId);
-      setTotalStudents(prevTotal => prevTotal + 1);
+      await enrollInCourse(course.id);
+      setTotalStudents((prevTotal) => prevTotal + 1);
       setIsEnrolled(true);
+      toast({
+        title: 'Inscripción exitosa',
+        description: '¡Te has inscrito exitosamente en el curso!',
+        variant: 'default',
+      });
     } catch (error) {
-      setEnrollmentError('Error al inscribirse en el curso. Por favor, inténtelo de nuevo.');
-      console.error('Error al inscribirse:', error instanceof Error ? error.message : String(error));
+      if (error instanceof Error) {
+        setEnrollmentError(error.message);
+        toast({
+          title: 'Error de inscripción',
+          description: `Error al inscribirse: ${error.message}`,
+          variant: 'destructive',
+        });
+      } else {
+        setEnrollmentError('Error desconocido al inscribirse en el curso');
+        toast({
+          title: 'Error de inscripción',
+          description: 'Error desconocido al inscribirse en el curso',
+          variant: 'destructive',
+        });
+      }
+      console.error('Error al inscribirse:', error);
     } finally {
       setIsEnrolling(false);
     }
@@ -156,15 +182,18 @@ export default function CourseDetails({ course }: { course: Course }) {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-
-        {loading ? (
+{loading ? (
           <Skeleton className="h-[500px] w-full rounded-lg" />
         ) : (
           <Card className="overflow-hidden">
             <CardHeader className="p-0">
               <AspectRatio ratio={16 / 6}>
                 <Image
-                  src={course.coverImageKey ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd() : '/placeholder.jpg'}
+                  src={
+                    course.coverImageKey
+                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
+                      : '/placeholder.jpg'
+                  }
                   alt={course.title}
                   fill
                   className="object-cover"
@@ -209,15 +238,17 @@ export default function CourseDetails({ course }: { course: Course }) {
 
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center space-x-4">
-                  <Badge 
-                    variant="outline" 
+                  <Badge
+                    variant="outline"
                     className="border-primary bg-background text-primary hover:bg-black/70"
                   >
                     {course.category?.name}
                   </Badge>
                   <div className="flex items-center">
                     <FaCalendar className="mr-2 text-gray-600" />
-                    <span className="text-sm text-gray-600">Creado: {formatDate(course.createdAt)}</span>
+                    <span className="text-sm text-gray-600">
+                      Creado: {formatDate(course.createdAt)}
+                    </span>
                   </div>
                   <div className="flex items-center">
                     <FaClock className="mr-2 text-gray-600" />
@@ -280,8 +311,8 @@ export default function CourseDetails({ course }: { course: Course }) {
                             Resource Key: {lesson.resourceKey}
                           </p>
                           <p className="text-gray-700">
-                            Porcentaje Completado:{' '}
-                            {lesson.porcentajecompletado}%
+                            Porcentaje Completado: {lesson.porcentajecompletado}
+                            %
                           </p>
                           <Button
                             asChild
@@ -298,8 +329,8 @@ export default function CourseDetails({ course }: { course: Course }) {
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex items-center justify-between">
-              {!isEnrolled && (
+ <CardFooter className="flex items-center justify-between">
+              {!isEnrolled ? (
                 <Button
                   className="w-full justify-center border-white/20 bg-background text-lg font-semibold text-primary transition-colors hover:bg-background active:scale-95"
                   onClick={handleEnroll}
@@ -307,12 +338,46 @@ export default function CourseDetails({ course }: { course: Course }) {
                 >
                   {isEnrolling ? 'Inscribiendo...' : 'Inscribirse al curso'}
                 </Button>
+              ) : (
+                <Button
+                  className="w-full justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+                  disabled
+                >
+                  <FaCheck className="mr-2" /> Inscrito
+                </Button>
               )}
               <ChatbotModal />
             </CardFooter>
           </Card>
         )}
-        {enrollmentError && <p className="mt-2 text-red-500">{enrollmentError}</p>}
+        {enrollmentError && (
+          <div className="mt-4 rounded-md bg-red-50 p-4">
+            <div className="flex">
+              <div className="shrink-0">
+                <svg
+                  className="size-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Error de inscripción
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{enrollmentError}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
     </div>

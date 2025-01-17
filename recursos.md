@@ -1,5 +1,16 @@
-uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed
+### **Comandos Generales de TypeScript y ESlint**
+7. `ESlint: Fix All Auto-Fixable Problems`: Corrige todos los problemas que se puedan solucionar automáticamente.
+0. `Eslint: Restart ESlint Server`: Reinicia el servidor de ESlint.
+1. `TypeScript: Select TypeScript Version`: Cambia la versión de TypeScript que utiliza el proyecto.
+2. `TypeScript: Restart TS Server`: Reinicia el servidor de TypeScript
+3. `TypeScript: Go to Project Configuration`: Abre el archivo `tsconfig.json` del proyecto.
+4. `TypeScript: Open TS Server Log`: Abre el log del servidor de TypeScript para depurar problemas.
+5. `TypeScript: Reload Project`: Recarga la configuración del proyecto de TypeScript.
+15. `Quick Fix...`: Sugiere soluciones rápidas para errores destacados.
 
+------------------------------------------------
+uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed
+------------------------------------------------
 Tecnologias Que Se Usan:
 
 ~ Next.js 15.1.4, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM,

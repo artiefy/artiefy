@@ -13,6 +13,7 @@ import {
   projects,
   projectsTaken,
   categories,
+  users,
 } from '~/server/db/schema';
 import {
   type Course,
@@ -26,6 +27,8 @@ import {
   type ProjectTaken,
   type Activity,
 } from '~/types';
+import { currentUser } from '@clerk/nextjs/server';
+
 
 // Obtener todos los cursos disponibles
 export async function getAllCourses(): Promise<Course[]> {
@@ -113,8 +116,35 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 }
 
 // Inscribirse en un curso
-export async function enrollInCourse(courseId: number, userId: string): Promise<Enrollment> {
+export async function enrollInCourse(courseId: number): Promise<Enrollment> {
   try {
+    const user = await currentUser();
+    
+    if (!user?.id) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const userId = user.id;
+
+    // Verificar si el usuario existe en la base de datos
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (!existingUser) {
+      // Si el usuario no existe, lo creamos
+      await db.insert(users).values({
+        id: userId,
+        role: 'student',
+        name: user.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`
+          : user.username ?? '',
+        email: user.emailAddresses[0]?.emailAddress ?? '',
+        createdAt: new Date(user.createdAt),
+        updatedAt: new Date(),
+      });
+    }
+
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(
         eq(enrollments.userId, userId),
@@ -149,7 +179,11 @@ export async function enrollInCourse(courseId: number, userId: string): Promise<
     };
   } catch (error) {
     console.error('Error al inscribirse en el curso:', error);
-    throw new Error('No se pudo completar la inscripción');
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error('Error desconocido al inscribirse en el curso');
+    }
   }
 }
 
@@ -357,12 +391,10 @@ export async function getStudentProgress(userId: string): Promise<{
     .where(eq(enrollments.userId, userId))
     .groupBy(enrollments.userId);
 
-  return (
-    result[0] ?? {
-      coursesCompleted: 0,
-      totalEnrollments: 0,
-      averageProgress: 0,
-    }
-  );
+  return result?.[0] ?? {
+    coursesCompleted: 0,
+    totalEnrollments: 0,
+    averageProgress: 0,
+  };
 }
 

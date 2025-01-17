@@ -122,8 +122,8 @@ export interface Activity {
   description: string | null;
   tipo: string;
   lessonsId: number;
-  isCompleted: boolean | null; // Cambiado de boolean a boolean | null
-  userProgress: number | null; // Cambiado de number a number | null
+  isCompleted: boolean | null;
+  userProgress: number | null;
   lastUpdated: Date;
   // Relaciones
   lesson?: Lesson;
