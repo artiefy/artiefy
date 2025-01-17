@@ -19,7 +19,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (!session) {
     if (isProtectedStudentRoute(req)) {
       const signInUrl = new URL('/sign-in', req.url);
-      signInUrl.searchParams.set('redirect_url', req.url);
+      signInUrl.searchParams.set('redirect', req.url);
       return NextResponse.redirect(signInUrl);
     }
     return NextResponse.next();

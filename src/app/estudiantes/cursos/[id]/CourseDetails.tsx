@@ -162,7 +162,7 @@ export default function CourseDetails({ course }: { course: Course }) {
         ) : (
           <Card className="overflow-hidden">
             <CardHeader className="p-0">
-              <AspectRatio ratio={16 / 9}>
+              <AspectRatio ratio={16 / 6}>
                 <Image
                   src={course.coverImageKey ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd() : '/placeholder.jpg'}
                   alt={course.title}

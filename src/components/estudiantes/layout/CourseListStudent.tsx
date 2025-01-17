@@ -30,10 +30,13 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
   };
 
   const handleViewCourse = (courseId: number) => {
+    const courseUrl = `/estudiantes/cursos/${courseId}`;
     if (isSignedIn) {
-      router.push(`/estudiantes/cursos/${courseId}`);
+      router.push(courseUrl);
     } else {
-      router.push('/sign-in');
+      const signInUrl = new URL('/sign-in', window.location.origin);
+      signInUrl.searchParams.set('redirect_url', courseUrl);
+      router.push(signInUrl.toString());
     }
   };
 

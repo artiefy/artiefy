@@ -2,12 +2,11 @@ import { Suspense } from 'react';
 import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { type Course as CourseSchemaDTS, type WithContext } from 'schema-dts';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getCourseById } from '~/server/actions/studentActions';
 import CourseDetails, { type Course } from './CourseDetails';
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 async function getValidCoverImageUrl(
@@ -29,7 +28,8 @@ async function getValidCoverImageUrl(
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const course = await getCourseById(Number(params.id));
+  const resolvedParams = await params;
+  const course = await getCourseById(Number(resolvedParams.id));
 
   if (!course) {
     return {
@@ -65,10 +65,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function Page({ params }: Props) {
+export default async function Page({ params }: Props) {
+  const resolvedParams = await params;
+  
   return (
-    <Suspense fallback={<CourseSkeleton />}>
-      <CourseContent id={params.id} />
+    <Suspense>
+      <CourseContent id={resolvedParams.id} />
     </Suspense>
   );
 }
@@ -95,7 +97,7 @@ async function CourseContent({ id }: { id: string }) {
           name: course.modalidad.name,
         }
       : undefined,
-    enrollments: course.enrollments, // Keep the original enrollments array
+    enrollments: course.enrollments,
   };
 
   const jsonLd: WithContext<CourseSchemaDTS> = {
@@ -136,21 +138,5 @@ async function CourseContent({ id }: { id: string }) {
         }}
       />
     </section>
-  );
-}
-
-function CourseSkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-[300px] w-full" />
-      <Skeleton className="h-8 w-3/4" />
-      <Skeleton className="h-4 w-1/4" />
-      <Skeleton className="h-20 w-full" />
-      <div className="space-y-2">
-        <Skeleton className="h-4 w-1/2" />
-        <Skeleton className="h-4 w-1/3" />
-      </div>
-      <Skeleton className="h-10 w-40" />
-    </div>
   );
 }

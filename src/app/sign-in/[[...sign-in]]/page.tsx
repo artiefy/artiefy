@@ -4,20 +4,34 @@ import * as Clerk from '@clerk/elements/common';
 import * as SignIn from '@clerk/elements/sign-in';
 import { useAuth } from '@clerk/nextjs';
 import Image from 'next/image';
-import { redirect } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import Loading from '../../loading';
 
 export default function SignInPage() {
   const { isLoaded, userId } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (isLoaded && userId) {
+      const redirectUrl = searchParams.get('redirect_url');
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else {
+        router.push('/');
+      }
+    }
+  }, [isLoaded, userId, router, searchParams]);
 
   if (!isLoaded) {
     return <Loading />;
   }
 
   if (userId) {
-    redirect('/');
+    return null; // Evita renderizar el contenido mientras se realiza la redirección
   }
 
   return (
@@ -199,3 +213,4 @@ export default function SignInPage() {
     </div>
   );
 }
+
