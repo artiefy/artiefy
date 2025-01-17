@@ -29,7 +29,7 @@ export interface Course {
   rating: number | null;
   modalidadesid: number;
   dificultadid: number;
-  totalStudents?: number;
+  totalStudents: number;
   // Relaciones
   category?: Category;
   modalidad?: Modalidad;

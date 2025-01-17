@@ -13,12 +13,10 @@ import {
   projects,
   projectsTaken,
   categories,
-  users,
 } from '~/server/db/schema';
 import {
   type Course,
   type Lesson,
-  type Enrollment,
   type Category,
   type Preference,
   type Score,
@@ -26,6 +24,7 @@ import {
   type Project,
   type ProjectTaken,
   type Activity,
+  type Enrollment,
 } from '~/types';
 import { currentUser } from '@clerk/nextjs/server';
 
@@ -95,7 +94,7 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
   // Transformamos los datos para asegurar que cumplen con los tipos
   const transformedCourse: Course = {
     ...course,
-    totalStudents: course.enrollments?.length ?? 0,
+    totalStudents: course.enrollments?.length ?? 0, // Ensure totalStudents is always set
     lessons:
       course.lessons?.map((lesson) => ({
         ...lesson,
@@ -116,46 +115,29 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 }
 
 // Inscribirse en un curso
-export async function enrollInCourse(courseId: number): Promise<Enrollment> {
+export async function enrollInCourse(courseId: number): Promise<{ success: boolean; message: string }> {
+  const user = await currentUser();
+
+  if (!user?.id) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  const userId = user.id;
+
   try {
-    const user = await currentUser();
-    
-    if (!user?.id) {
-      throw new Error('Usuario no autenticado');
-    }
-
-    const userId = user.id;
-
-    // Verificar si el usuario existe en la base de datos
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-    });
-
-    if (!existingUser) {
-      // Si el usuario no existe, lo creamos
-      await db.insert(users).values({
-        id: userId,
-        role: 'student',
-        name: user.firstName && user.lastName
-          ? `${user.firstName} ${user.lastName}`
-          : user.username ?? '',
-        email: user.emailAddresses[0]?.emailAddress ?? '',
-        createdAt: new Date(user.createdAt),
-        updatedAt: new Date(),
-      });
-    }
-
+    // Verificar si ya existe una inscripción
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(
         eq(enrollments.userId, userId),
         eq(enrollments.courseId, courseId)
       ),
-    });
+    }) as Enrollment | undefined;
 
     if (existingEnrollment) {
-      throw new Error('Ya estás inscrito en este curso');
+      return { success: false, message: 'Ya estás inscrito en este curso' };
     }
 
+    // Realizar la inscripción
     const [newEnrollment] = await db
       .insert(enrollments)
       .values({
@@ -167,22 +149,72 @@ export async function enrollInCourse(courseId: number): Promise<Enrollment> {
       .returning();
 
     if (!newEnrollment) {
-      throw new Error('Error al crear la inscripción');
+      return { success: false, message: 'Error al crear la inscripción' };
     }
 
-    return {
-      id: newEnrollment.id,
-      userId: newEnrollment.userId,
-      courseId: newEnrollment.courseId,
-      enrolledAt: newEnrollment.enrolledAt,
-      completed: newEnrollment.completed ?? false,
-    };
+    // Desbloquear solo la primera lección del curso
+    const firstLesson = await db.query.lessons.findFirst({
+      where: and(
+        eq(lessons.courseId, courseId),
+        eq(lessons.order, 1)
+      ),
+    });
+
+    if (firstLesson) {
+      await db.update(lessons)
+        .set({ isLocked: false })
+        .where(eq(lessons.id, firstLesson.id));
+    }
+
+    // Bloquear todas las demás lecciones del curso
+    await db.update(lessons)
+      .set({ isLocked: true })
+      .where(and(
+        eq(lessons.courseId, courseId),
+        sql`${lessons.id} != ${firstLesson?.id}`
+      ));
+
+    return { success: true, message: 'Inscripción exitosa' };
   } catch (error) {
     console.error('Error al inscribirse en el curso:', error);
+    return { success: false, message: 'Error al inscribirse en el curso' };
+  }
+}
+
+// Función para desuscribirse de un curso
+export async function unenrollFromCourse(courseId: number): Promise<void> {
+  const user = await currentUser();
+  
+  if (!user?.id) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  const userId = user.id;
+
+  try {
+    const existingEnrollment = await db.query.enrollments.findFirst({
+      where: and(
+        eq(enrollments.userId, userId),
+        eq(enrollments.courseId, courseId)
+      ),
+    });
+
+    if (!existingEnrollment) {
+      throw new Error('No estás inscrito en este curso');
+    }
+
+    await db.delete(enrollments)
+      .where(and(
+        eq(enrollments.userId, userId),
+        eq(enrollments.courseId, courseId)
+      ));
+
+  } catch (error) {
+    console.error('Error al desuscribirse del curso:', error);
     if (error instanceof Error) {
       throw error;
     } else {
-      throw new Error('Error desconocido al inscribirse en el curso');
+      throw new Error('Error desconocido al desuscribirse del curso');
     }
   }
 }
@@ -236,6 +268,11 @@ export async function getLessonById(lessonId: number): Promise<Lesson | null> {
 
 // Actualizar el progreso de una lección
 export async function updateLessonProgress(lessonId: number, progress: number): Promise<void> {
+  const user = await currentUser();
+  if (!user?.id) {
+    throw new Error('Usuario no autenticado');
+  }
+
   await db
     .update(lessons)
     .set({
@@ -244,6 +281,10 @@ export async function updateLessonProgress(lessonId: number, progress: number): 
       lastUpdated: new Date(),
     })
     .where(eq(lessons.id, lessonId));
+
+  if (progress >= 100) {
+    await unlockNextLesson(lessonId);
+  }
 }
 
 // Completar una actividad
@@ -398,43 +439,45 @@ export async function getStudentProgress(userId: string): Promise<{
   };
 }
 
-// Desuscribirse de un curso
-export async function unenrollFromCourse(courseId: number): Promise<void> {
+// Nueva función para desbloquear una lección
+export async function unlockLesson(lessonId: number): Promise<void> {
   try {
-    const user = await currentUser();
-    
-    if (!user?.id) {
-      throw new Error('Usuario no autenticado');
-    }
-
-    const userId = user.id;
-
-    const existingEnrollment = await db.query.enrollments.findFirst({
-      where: and(
-        eq(enrollments.userId, userId),
-        eq(enrollments.courseId, courseId)
-      ),
-    });
-
-    if (!existingEnrollment) {
-      throw new Error('No estás inscrito en este curso');
-    }
-
-    await db
-      .delete(enrollments)
-      .where(
-        and(
-          eq(enrollments.userId, userId),
-          eq(enrollments.courseId, courseId)
-        )
-      );
-
+    await db.update(lessons)
+      .set({ isLocked: false })
+      .where(eq(lessons.id, lessonId));
   } catch (error) {
-    console.error('Error al desuscribirse del curso:', error);
-    if (error instanceof Error) {
-      throw error;
-    } else {
-      throw new Error('Error desconocido al desuscribirse del curso');
-    }
+    console.error('Error al desbloquear la lección:', error);
+    throw new Error('No se pudo desbloquear la lección');
   }
 }
+
+// Agregar la nueva función unlockNextLesson
+export async function unlockNextLesson(currentLessonId: number): Promise<void> {
+  const user = await currentUser();
+  if (!user?.id) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  const currentLesson = await db.query.lessons.findFirst({
+    where: eq(lessons.id, currentLessonId),
+  });
+
+  if (!currentLesson) {
+    throw new Error('Lección actual no encontrada');
+  }
+
+  const nextLesson = await db.query.lessons.findFirst({
+    where: and(
+      eq(lessons.courseId, currentLesson.courseId),
+      eq(lessons.order, currentLesson.order + 1)
+    ),
+  });
+
+  if (nextLesson) {
+    await db
+      .update(lessons)
+      .set({ isLocked: false })
+      .where(eq(lessons.id, nextLesson.id));
+  }
+}
+

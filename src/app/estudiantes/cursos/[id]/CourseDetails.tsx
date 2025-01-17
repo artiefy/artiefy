@@ -13,8 +13,9 @@ import {
   FaClock,
   FaHome,
   FaUserGraduate,
-  FaLock,
   FaCheck,
+  FaLock,
+  FaCheckCircle,
 } from 'react-icons/fa';
 import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -42,6 +43,7 @@ import { useToast } from '~/hooks/use-toast';
 import {
   enrollInCourse,
   unenrollFromCourse,
+  getCourseById,
 } from '~/server/actions/studentActions';
 
 interface Enrollment {
@@ -78,11 +80,18 @@ export interface Course {
     resourceKey: string;
     porcentajecompletado: number;
     order: number;
+    isLocked: boolean;
+    isCompleted: boolean;
   }[];
   enrollments?: Enrollment[] | { length: number };
 }
 
-export default function CourseDetails({ course }: { course: Course }) {
+export default function CourseDetails({
+  course: initialCourse,
+}: {
+  course: Course;
+}) {
+  const [course, setCourse] = useState<Course>(initialCourse);
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -101,11 +110,19 @@ export default function CourseDetails({ course }: { course: Course }) {
 
     // Verificar si el usuario está inscrito
     if (Array.isArray(course.enrollments) && userId) {
-      setIsEnrolled(
-        course.enrollments.some(
-          (enrollment: Enrollment) => enrollment.userId === userId
-        )
+      const userEnrolled = course.enrollments.some(
+        (enrollment: Enrollment) => enrollment.userId === userId
       );
+      setIsEnrolled(userEnrolled);
+      if (userEnrolled) {
+        setCourse((prevCourse) => ({
+          ...prevCourse,
+          lessons: prevCourse.lessons.map((lesson) => ({
+            ...lesson,
+            isLocked: lesson.isLocked, // Mantener el estado de isLocked según la base de datos
+          })),
+        }));
+      }
     }
 
     return () => clearTimeout(timer);
@@ -122,8 +139,7 @@ export default function CourseDetails({ course }: { course: Course }) {
   };
 
   const handleEnroll = async () => {
-    if (!isSignedIn) {
-      router.push('/sign-in');
+    if (!isSignedIn || isEnrolling) {
       return;
     }
 
@@ -131,19 +147,28 @@ export default function CourseDetails({ course }: { course: Course }) {
     setEnrollmentError(null);
 
     try {
-      await enrollInCourse(course.id);
-      setTotalStudents((prevTotal) => prevTotal + 1);
-      setIsEnrolled(true);
-      toast({
-        title: 'Inscripción exitosa',
-        description: '¡Te has inscrito exitosamente en el curso!',
-        variant: 'default',
-      });
-    } catch (error) {
+      const result = await enrollInCourse(course.id);
+      if (result.success) {
+        setTotalStudents((prevTotal) => prevTotal + 1);
+        setIsEnrolled(true);
+        const updatedCourse = await getCourseById(course.id);
+        if (updatedCourse) {
+          setCourse(updatedCourse);
+        }
+        toast({
+          title: 'Sucripción exitosa',
+          description:
+            '¡Te has Inscripto exitosamente en el curso!',
+          variant: 'default',
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: unknown) {
       if (error instanceof Error) {
         setEnrollmentError(error.message);
         toast({
-          title: 'Error de inscripción',
+          title: 'Error de Suscripción',
           description: `Error al inscribirse: ${error.message}`,
           variant: 'destructive',
         });
@@ -174,8 +199,8 @@ export default function CourseDetails({ course }: { course: Course }) {
       setTotalStudents((prevTotal) => prevTotal - 1);
       setIsEnrolled(false);
       toast({
-        title: 'Desuscripción exitosa',
-        description: 'Te has desuscrito del curso correctamente.',
+        title: 'Cancelar Suscripcion',
+        description: 'Se Cancelo El Curso Correctamente',
         variant: 'default',
       });
     } catch (error) {
@@ -200,7 +225,6 @@ export default function CourseDetails({ course }: { course: Course }) {
     }
   };
 
-  // Ordenar las lecciones por el campo 'order'
   const sortedLessons = [...course.lessons].sort((a, b) => a.order - b.order);
 
   return (
@@ -300,7 +324,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                     </span>
                   </div>
                 </div>
-                <Badge className="bg-red-500 text-white hover:bg-red-700">
+                <Badge className="bg-red-500 text-white">
                   {course.modalidad?.name}
                 </Badge>
               </div>
@@ -316,84 +340,97 @@ export default function CourseDetails({ course }: { course: Course }) {
                   Contenido del curso
                 </h2>
                 <div className="space-y-4">
-                  {sortedLessons.map((lesson) => (
-                    <div
-                      key={lesson.id}
-                      className="overflow-hidden rounded-lg border bg-gray-50 transition-colors hover:bg-gray-100"
-                    >
-                      <button
-                        className="flex w-full items-center justify-between px-6 py-4"
-                        onClick={() => toggleLesson(lesson.id)}
-                        disabled={!isEnrolled}
+                  {sortedLessons.map((lesson) => {
+                    const isUnlocked = isEnrolled && !lesson.isLocked;
+
+                    return (
+                      <div
+                        key={lesson.id}
+                        className={`overflow-hidden rounded-lg border transition-colors ${
+                          isUnlocked
+                            ? 'bg-gray-50 hover:bg-gray-100'
+                            : 'bg-gray-100 opacity-75'
+                        }`}
                       >
-                        <div className="flex items-center">
-                          <span className="font-medium text-background">
-                            Clase {lesson.order}: {lesson.title}
-                          </span>
-                          <span className="ml-4 text-sm text-gray-500">
-                            {lesson.duration} mins
-                          </span>
-                        </div>
-                        {isEnrolled ? (
-                          expandedLesson === lesson.id ? (
-                            <FaChevronUp className="text-gray-400" />
-                          ) : (
-                            <FaChevronDown className="text-gray-400" />
-                          )
-                        ) : (
-                          <FaLock className="text-gray-400" />
-                        )}
-                      </button>
-                      {expandedLesson === lesson.id && isEnrolled && (
-                        <div className="border-t bg-white px-6 py-4">
-                          <p className="mb-4 text-gray-700">
-                            {lesson.description ??
-                              'No hay descripción disponible para esta clase.'}
-                          </p>
-                          <div className="mb-4">
-                            <div className="mb-2 flex items-center justify-between">
-                              <p className="text-sm font-semibold text-gray-700">
-                                Progreso De La Clase:
-                              </p>
-                              <span className="text-sm font-medium text-gray-600">
-                                {lesson.porcentajecompletado}%
+                        <button
+                          className="flex w-full items-center justify-between px-6 py-4"
+                          onClick={() => toggleLesson(lesson.id)}
+                          disabled={!isUnlocked}
+                        >
+                          <div className="flex w-full items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              {isUnlocked ? (
+                                <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                              ) : (
+                                <FaLock className="mr-2 size-5 text-gray-400" />
+                              )}
+                              <span className="font-medium text-background">
+                                Clase {lesson.order}: {lesson.title}{' '}
+                                <span className="ml-2 text-sm text-gray-500">
+                                  ({lesson.duration} mins)
+                                </span>
                               </span>
                             </div>
-                            <Progress
-                              value={lesson.porcentajecompletado}
-                              className="w-full bg-gray-200"
-                              style={
-                                {
-                                  '--progress-background': 'green',
-                                } as React.CSSProperties
-                              }
-                            />
+                            <div className="flex items-center space-x-2">
+                              {isUnlocked &&
+                                (expandedLesson === lesson.id ? (
+                                  <FaChevronUp className="text-gray-400" />
+                                ) : (
+                                  <FaChevronDown className="text-gray-400" />
+                                ))}
+                            </div>
                           </div>
-                          <Button
-                            asChild
-                            className="mt-4 text-background hover:underline active:scale-95"
-                          >
-                            <Link href={`/estudiantes/clases/${lesson.id}`}>
-                              Ver Clase
-                            </Link>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        </button>
+                        {expandedLesson === lesson.id && isUnlocked && (
+                          <div className="border-t bg-white px-6 py-4">
+                            <p className="mb-4 text-gray-700">
+                              {lesson.description ??
+                                'No hay descripción disponible para esta clase.'}
+                            </p>
+                            <div className="mb-4">
+                              <div className="mb-2 flex items-center justify-between">
+                                <p className="text-sm font-semibold text-gray-700">
+                                  Progreso De La Clase:
+                                </p>
+                                <span className="text-sm font-medium text-gray-600">
+                                  {lesson.porcentajecompletado}%
+                                </span>
+                              </div>
+                              <Progress
+                                value={lesson.porcentajecompletado}
+                                className="w-full bg-gray-200"
+                                style={
+                                  {
+                                    '--progress-background': 'green',
+                                  } as React.CSSProperties
+                                }
+                              />
+                            </div>
+                            <Button
+                              asChild
+                              className="mt-4 text-background hover:underline active:scale-95"
+                            >
+                              <Link href={`/estudiantes/clases/${lesson.id}`}>
+                                Ver Clase
+                              </Link>
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </CardContent>
-            <CardFooter className="flex flex-col items-center justify-center space-y-4">
+            <CardFooter className="flex flex-col items-center justify-between space-y-4">
               {!isEnrolled ? (
-                <div className="group relative flex w-full justify-center">
+                <div className="group relative">
                   <button
                     onClick={handleEnroll}
                     disabled={isEnrolling}
                     className="relative inline-block cursor-pointer rounded-xl bg-gray-800 p-px font-semibold leading-6 text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
-                    style={{ width: '250px' }}
                   >
-                    <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-secondary via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
+                    <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
 
                     <span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
                       <div className="relative z-10 flex items-center justify-center space-x-2">
@@ -421,7 +458,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                         ) : (
                           <>
                             <span className="transition-all duration-500 group-hover:translate-x-1">
-                              Inscribirse Al Curso
+                              Inscribirse al curso
                             </span>
                             <svg
                               className="size-6 transition-transform duration-500 group-hover:translate-x-1"
@@ -444,15 +481,15 @@ export default function CourseDetails({ course }: { course: Course }) {
                   </button>
                 </div>
               ) : (
-                <div className="flex w-full flex-col items-center space-y-4">
+                <div className="flex w-full flex-col space-y-4 sm:w-auto">
                   <Button
-                    className="size-10 w-1/4 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+                    className="h-12 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
                     disabled={true}
                   >
-                    <FaCheck className="mr-2" /> Suscrito al curso
+                    <FaCheck className="mr-2" /> Suscrito Al Curso
                   </Button>
                   <Button
-                    className="size-10 w-1/5 justify-center border-white/20 bg-red-500 text-lg font-semibold text-white transition-colors hover:bg-red-600 active:scale-95"
+                    className="h-12 justify-center border-white/20 bg-red-500 text-lg font-semibold"
                     onClick={handleUnenroll}
                     disabled={isUnenrolling}
                   >
@@ -478,7 +515,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                         ></path>
                       </svg>
                     ) : (
-                      'Desuscribirse del curso'
+                      'Cancelar Suscripción'
                     )}
                   </Button>
                 </div>
@@ -490,23 +527,9 @@ export default function CourseDetails({ course }: { course: Course }) {
         {enrollmentError && (
           <div className="mt-4 rounded-md bg-red-50 p-4">
             <div className="flex">
-              <div className="shrink-0">
-                <svg
-                  className="size-5 text-red-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">
-                  Error de {isEnrolled ? 'desuscripción' : 'inscripción'}
+                  Error de {isEnrolled ? 'desuscripción' : 'suscripcion'}
                 </h3>
                 <div className="mt-2 text-sm text-red-700">
                   <p>{enrollmentError}</p>
