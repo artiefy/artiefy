@@ -66,7 +66,7 @@ const ChatbotModal = () => {
       {/* Chat Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-all duration-300 hover:bg-blue-600"
+        className="fixed bottom-6 right-6 z-50 rounded-full bg-secondary p-4 text-white shadow-lg transition-all duration-300 hover:border-2 hover:border-primary hover:bg-background"
         style={{ display: isOpen ? 'none' : 'block' }}
       >
         <FaRobot className="text-2xl" />
@@ -83,12 +83,12 @@ const ChatbotModal = () => {
           >
             <div className="flex items-center justify-between border-b border-gray-200 p-4">
               <div className="flex items-center space-x-2">
-                <FaRobot className="text-2xl text-blue-500" />
+                <FaRobot className="text-2xl text-secondary" />
                 <h2
                   id="modal-title"
                   className="text-lg font-semibold text-gray-800"
                 >
-                  AI Assistant
+                  Arti IA
                 </h2>
               </div>
               <button
@@ -110,12 +110,12 @@ const ChatbotModal = () => {
                     className={`flex max-w-[80%] items-start space-x-2 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                   >
                     {message.sender === 'bot' ? (
-                      <FaRobot className="mt-2 text-xl text-blue-500" />
+                      <FaRobot className="mt-2 text-xl text-secondary" />
                     ) : (
                       <BsPersonCircle className="mt-2 text-xl text-gray-500" />
                     )}
                     <div
-                      className={`rounded-lg p-3 ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'}`}
+                      className={`rounded-lg p-3 ${message.sender === 'user' ? 'bg-secondary text-white' : 'bg-gray-100 text-gray-800'}`}
                     >
                       {message.text}
                     </div>
@@ -147,13 +147,13 @@ const ChatbotModal = () => {
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Type your message..."
-                  className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:outline-none focus:ring-2 focus:ring-secondary"
                   disabled={isLoading}
                 />
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="rounded-lg bg-blue-500 p-2 text-white transition-colors hover:bg-blue-600 disabled:bg-blue-300"
+                  className="rounded-lg bg-secondary p-2 text-white transition-colors hover:bg-secondary disabled:bg-background"
                   aria-label="Send message"
                 >
                   <FiSend className="text-xl" />

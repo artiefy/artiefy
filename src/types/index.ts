@@ -39,8 +39,6 @@ export interface Course {
   creator?: User;
 }
 
-
-
 export interface Category {
   id: number;
   name: string;

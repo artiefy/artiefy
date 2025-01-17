@@ -36,9 +36,13 @@ import {
   CardFooter,
   CardHeader,
 } from '~/components/estudiantes/ui/card';
+import { Progress } from '~/components/estudiantes/ui/progress';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { useToast } from '~/hooks/use-toast';
-import { enrollInCourse } from '~/server/actions/studentActions';
+import {
+  enrollInCourse,
+  unenrollFromCourse,
+} from '~/server/actions/studentActions';
 
 interface Enrollment {
   id: number;
@@ -82,6 +86,7 @@ export default function CourseDetails({ course }: { course: Course }) {
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
   const [totalStudents, setTotalStudents] = useState(course.totalStudents);
   const [isEnrolled, setIsEnrolled] = useState(false);
@@ -156,6 +161,45 @@ export default function CourseDetails({ course }: { course: Course }) {
     }
   };
 
+  const handleUnenroll = async () => {
+    if (!isSignedIn) {
+      router.push('/sign-in');
+      return;
+    }
+
+    setIsUnenrolling(true);
+    setEnrollmentError(null);
+    try {
+      await unenrollFromCourse(course.id);
+      setTotalStudents((prevTotal) => prevTotal - 1);
+      setIsEnrolled(false);
+      toast({
+        title: 'Desuscripción exitosa',
+        description: 'Te has desuscrito del curso correctamente.',
+        variant: 'default',
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        setEnrollmentError(error.message);
+        toast({
+          title: 'Error de desuscripción',
+          description: `Error al desuscribirse: ${error.message}`,
+          variant: 'destructive',
+        });
+      } else {
+        setEnrollmentError('Error desconocido al desuscribirse del curso');
+        toast({
+          title: 'Error de desuscripción',
+          description: 'Error desconocido al desuscribirse del curso',
+          variant: 'destructive',
+        });
+      }
+      console.error('Error al desuscribirse:', error);
+    } finally {
+      setIsUnenrolling(false);
+    }
+  };
+
   // Ordenar las lecciones por el campo 'order'
   const sortedLessons = [...course.lessons].sort((a, b) => a.order - b.order);
 
@@ -182,7 +226,7 @@ export default function CourseDetails({ course }: { course: Course }) {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-{loading ? (
+        {loading ? (
           <Skeleton className="h-[500px] w-full rounded-lg" />
         ) : (
           <Card className="overflow-hidden">
@@ -213,7 +257,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                   <h3 className="text-lg font-semibold text-background">
                     {course.instructor}
                   </h3>
-                  <p className="text-gray-600">Instructor</p>
+                  <p className="text-gray-600">Educador</p>
                 </div>
                 <div className="flex items-center space-x-6">
                   <div className="flex items-center">
@@ -235,7 +279,6 @@ export default function CourseDetails({ course }: { course: Course }) {
                   </div>
                 </div>
               </div>
-
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center space-x-4">
                   <Badge
@@ -257,7 +300,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                     </span>
                   </div>
                 </div>
-                <Badge className="bg-red-500 text-white">
+                <Badge className="bg-red-500 text-white hover:bg-red-700">
                   {course.modalidad?.name}
                 </Badge>
               </div>
@@ -285,7 +328,7 @@ export default function CourseDetails({ course }: { course: Course }) {
                       >
                         <div className="flex items-center">
                           <span className="font-medium text-background">
-                            Lección {lesson.order}: {lesson.title}
+                            Clase {lesson.order}: {lesson.title}
                           </span>
                           <span className="ml-4 text-sm text-gray-500">
                             {lesson.duration} mins
@@ -303,17 +346,29 @@ export default function CourseDetails({ course }: { course: Course }) {
                       </button>
                       {expandedLesson === lesson.id && isEnrolled && (
                         <div className="border-t bg-white px-6 py-4">
-                          <p className="text-gray-700">
+                          <p className="mb-4 text-gray-700">
                             {lesson.description ??
-                              'No hay descripción disponible para esta lección.'}
+                              'No hay descripción disponible para esta clase.'}
                           </p>
-                          <p className="text-gray-700">
-                            Resource Key: {lesson.resourceKey}
-                          </p>
-                          <p className="text-gray-700">
-                            Porcentaje Completado: {lesson.porcentajecompletado}
-                            %
-                          </p>
+                          <div className="mb-4">
+                            <div className="mb-2 flex items-center justify-between">
+                              <p className="text-sm font-semibold text-gray-700">
+                                Progreso De La Clase:
+                              </p>
+                              <span className="text-sm font-medium text-gray-600">
+                                {lesson.porcentajecompletado}%
+                              </span>
+                            </div>
+                            <Progress
+                              value={lesson.porcentajecompletado}
+                              className="w-full bg-gray-200"
+                              style={
+                                {
+                                  '--progress-background': 'green',
+                                } as React.CSSProperties
+                              }
+                            />
+                          </div>
                           <Button
                             asChild
                             className="mt-4 text-background hover:underline active:scale-95"
@@ -329,22 +384,104 @@ export default function CourseDetails({ course }: { course: Course }) {
                 </div>
               </div>
             </CardContent>
- <CardFooter className="flex items-center justify-between">
+            <CardFooter className="flex flex-col items-center justify-center space-y-4">
               {!isEnrolled ? (
-                <Button
-                  className="w-full justify-center border-white/20 bg-background text-lg font-semibold text-primary transition-colors hover:bg-background active:scale-95"
-                  onClick={handleEnroll}
-                  disabled={isEnrolling}
-                >
-                  {isEnrolling ? 'Inscribiendo...' : 'Inscribirse al curso'}
-                </Button>
+                <div className="group relative flex w-full justify-center">
+                  <button
+                    onClick={handleEnroll}
+                    disabled={isEnrolling}
+                    className="relative inline-block cursor-pointer rounded-xl bg-gray-800 p-px font-semibold leading-6 text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
+                    style={{ width: '250px' }}
+                  >
+                    <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-secondary via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
+
+                    <span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
+                      <div className="relative z-10 flex items-center justify-center space-x-2">
+                        {isEnrolling ? (
+                          <svg
+                            className="size-5 animate-spin text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                        ) : (
+                          <>
+                            <span className="transition-all duration-500 group-hover:translate-x-1">
+                              Inscribirse Al Curso
+                            </span>
+                            <svg
+                              className="size-6 transition-transform duration-500 group-hover:translate-x-1"
+                              data-slot="icon"
+                              aria-hidden="true"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                clipRule="evenodd"
+                                d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
+                                fillRule="evenodd"
+                              ></path>
+                            </svg>
+                          </>
+                        )}
+                      </div>
+                    </span>
+                  </button>
+                </div>
               ) : (
-                <Button
-                  className="w-full justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
-                  disabled
-                >
-                  <FaCheck className="mr-2" /> Inscrito
-                </Button>
+                <div className="flex w-full flex-col items-center space-y-4">
+                  <Button
+                    className="size-10 w-1/4 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+                    disabled={true}
+                  >
+                    <FaCheck className="mr-2" /> Suscrito al curso
+                  </Button>
+                  <Button
+                    className="size-10 w-1/5 justify-center border-white/20 bg-red-500 text-lg font-semibold text-white transition-colors hover:bg-red-600 active:scale-95"
+                    onClick={handleUnenroll}
+                    disabled={isUnenrolling}
+                  >
+                    {isUnenrolling ? (
+                      <svg
+                        className="size-5 animate-spin text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    ) : (
+                      'Desuscribirse del curso'
+                    )}
+                  </Button>
+                </div>
               )}
               <ChatbotModal />
             </CardFooter>
@@ -369,7 +506,7 @@ export default function CourseDetails({ course }: { course: Course }) {
               </div>
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-red-800">
-                  Error de inscripción
+                  Error de {isEnrolled ? 'desuscripción' : 'inscripción'}
                 </h3>
                 <div className="mt-2 text-sm text-red-700">
                   <p>{enrollmentError}</p>
@@ -383,4 +520,3 @@ export default function CourseDetails({ course }: { course: Course }) {
     </div>
   );
 }
-
