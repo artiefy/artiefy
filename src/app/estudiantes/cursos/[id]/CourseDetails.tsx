@@ -119,7 +119,7 @@ export default function CourseDetails({
           ...prevCourse,
           lessons: prevCourse.lessons.map((lesson) => ({
             ...lesson,
-            isLocked: lesson.isLocked, // Mantener el estado de isLocked según la base de datos
+            isLocked: lesson.isLocked,
           })),
         }));
       }

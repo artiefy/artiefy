@@ -98,10 +98,10 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
     totalStudents: course.enrollments?.length ?? 0,
     lessons: course.lessons?.map((lesson) => ({
       ...lesson,
-      isLocked: lesson.isLocked ?? true, // Ensure isLocked is always a boolean
-      isCompleted: lesson.isCompleted ?? false, // Ensure isCompleted is always a boolean
-      userProgress: lesson.userProgress ?? 0, // Ensure userProgress is always a number
-      porcentajecompletado: lesson.porcentajecompletado ?? 0, // Ensure porcentajecompletado is always a number
+      isLocked: lesson.isLocked ?? true,
+      isCompleted: lesson.isCompleted ?? false,
+      userProgress: lesson.userProgress ?? 0,
+      porcentajecompletado: lesson.porcentajecompletado ?? 0,
     })) ?? [],
   };
 
@@ -325,7 +325,7 @@ export async function getAllCategories(): Promise<Category[]> {
   });
 }
 
-// Nueva acción para obtener las categorías destacadas
+// Acción para obtener las categorías destacadas
 export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
   const categoriesData = await db.query.categories.findMany({
     where: eq(categories.is_featured, true),
@@ -335,7 +335,7 @@ export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
       courses: {
         with: {
           enrollments: true,
-          lessons: true, // Ensure lessons is included
+          lessons: true,
         },
       },
     },
@@ -364,7 +364,7 @@ export async function savePreferences(userId: string, categoryIds: number[]): Pr
     categoryIds.map((categoryId) => ({
       userId,
       categoryid: categoryId,
-      name: '', // Asegúrate de proporcionar un valor para el campo 'name'
+      name: '',
     }))
   );
 }
@@ -424,14 +424,14 @@ export async function getUserCoursesTaken(userId: string): Promise<CourseTaken[]
     ...courseTaken,
     course: {
       ...courseTaken.course,
-      totalStudents: courseTaken.course.enrollments?.length ?? 0, // Ensure totalStudents is always set
+      totalStudents: courseTaken.course.enrollments?.length ?? 0,
       lessons: courseTaken.course.lessons?.map((lesson) => ({
         ...lesson,
-        isLocked: lesson.isLocked ?? true, // Ensure isLocked is always a boolean
-        isCompleted: lesson.isCompleted ?? false, // Ensure isCompleted is always a boolean
-        userProgress: lesson.userProgress ?? 0, // Ensure userProgress is always a number
-        porcentajecompletado: lesson.porcentajecompletado ?? 0, // Ensure porcentajecompletado is always a number
-      })) ?? [], // Ensure lessons is always set
+        isLocked: lesson.isLocked ?? true,
+        isCompleted: lesson.isCompleted ?? false,
+        userProgress: lesson.userProgress ?? 0,
+        porcentajecompletado: lesson.porcentajecompletado ?? 0,
+      })) ?? [],
     },
   }));
 }
