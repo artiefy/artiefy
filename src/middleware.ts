@@ -1,40 +1,43 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
+const isAdminRoute = createRouteMatcher(['/dashbaord/admin(.*)']);
 const isEducadorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
 const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)']);
 const isProtectedStudentRoute = createRouteMatcher([
   '/estudiantes/cursos/:id',
-  '/estudiantes/clases/:id'
+  '/estudiantes/clases/:id',
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isPublicRoute(req)) {
+const handleRedirect = (url: string, request: Request) => {
+  const redirectUrl = new URL(url, request.url);
+  redirectUrl.searchParams.set('redirect', request.url);
+  return NextResponse.redirect(redirectUrl);
+};
+
+export default clerkMiddleware(async (auth, request) => {
+  if (isPublicRoute(request)) {
     return NextResponse.next();
   }
 
   const session = await auth();
 
   if (!session) {
-    if (isProtectedStudentRoute(req)) {
-      const signInUrl = new URL('/sign-in', req.url);
-      signInUrl.searchParams.set('redirect', req.url);
-      return NextResponse.redirect(signInUrl);
-    }
-    return NextResponse.next();
+    return handleRedirect('/sign-in', request);
   }
 
-  const userRole = session.sessionClaims?.metadata?.role;
+  const userRole = session?.sessionClaims?.metadata?.role;
 
-  if (isAdminRoute(req) && userRole !== 'admin') {
-    const url = new URL('/', req.url);
-    return NextResponse.redirect(url);
+  if (isAdminRoute(request) && userRole !== 'admin') {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (isEducadorRoute(req) && userRole !== 'educador') {
-    const url = new URL('/', req.url);
-    return NextResponse.redirect(url);
+  if (isEducadorRoute(request) && userRole !== 'educador') {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
+  if (isProtectedStudentRoute(request) && !session) {
+    return handleRedirect('/sign-in', request);
   }
 
   return NextResponse.next();
@@ -42,13 +45,9 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
     '/(api|trpc)(.*)',
-    '/estudiantes/:path*',
     '/estudiantes/cursos/:path*',
-    '/estudiantes/clases/:path*'
-  ]
+    '/estudiantes/clases/:path*',
+  ],
 };
-

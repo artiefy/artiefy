@@ -126,14 +126,18 @@ export async function enrollInCourse(courseId: number): Promise<{ success: boole
 
     // Si el usuario no existe, insertarlo en la tabla de usuarios
     if (!existingUser) {
-      await db.insert(users).values({
-        id: userId,
-        role: 'student',
-        name: user.fullName,
-        email: user.emailAddresses[0]?.emailAddress,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      if (user.fullName && user.emailAddresses[0]?.emailAddress) {
+        await db.insert(users).values({
+          id: userId,
+          role: 'student',
+          name: user.fullName,
+          email: user.emailAddresses[0].emailAddress,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      } else {
+        throw new Error('Información del usuario incompleta');
+      }
     }
 
     // Verificar si ya existe una inscripción
