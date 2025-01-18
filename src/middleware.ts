@@ -1,53 +1,34 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-const isAdminRoute = createRouteMatcher(['/dashbaord/admin(.*)']);
-const isEducadorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)']);
-const isProtectedStudentRoute = createRouteMatcher([
-  '/estudiantes/cursos/:id',
-  '/estudiantes/clases/:id',
-]);
+const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)'])
+const isEducadorRoute = createRouteMatcher(['/dashboard/educador(.*)'])
+const isEstudiantesRoute = createRouteMatcher(['/estudiantes/cursos/(.*)', '/estudiantes/clases/(.*)'])
 
-const handleRedirect = (url: string, request: Request) => {
-  const redirectUrl = new URL(url, request.url);
-  redirectUrl.searchParams.set('redirect', request.url);
-  return NextResponse.redirect(redirectUrl);
-};
+export default clerkMiddleware(async (auth, req) => {
+  const url = new URL(req.url)
+  const originalPath = url.pathname + url.search
 
-export default clerkMiddleware(async (auth, request) => {
-  if (isPublicRoute(request)) {
-    return NextResponse.next();
+  if (isAdminRoute(req) && (await auth()).sessionClaims?.metadata?.role !== 'admin') {
+    const redirectUrl = new URL('/sign-in', req.url)
+    redirectUrl.searchParams.set('redirectTo', originalPath)
+    return NextResponse.redirect(redirectUrl)
+  }
+  
+  if (isEducadorRoute(req) && (await auth()).sessionClaims?.metadata?.role !== 'educador') {
+    const redirectUrl = new URL('/sign-in', req.url)
+    redirectUrl.searchParams.set('redirectTo', originalPath)
+    return NextResponse.redirect(redirectUrl)
   }
 
-  const session = await auth();
-
-  if (!session) {
-    return handleRedirect('/sign-in', request);
+  if (isEstudiantesRoute(req)) {
+    await auth.protect()
   }
-
-  const userRole = session?.sessionClaims?.metadata?.role;
-
-  if (isAdminRoute(request) && userRole !== 'admin') {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  if (isEducadorRoute(request) && userRole !== 'educador') {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
-  if (isProtectedStudentRoute(request) && !session) {
-    return handleRedirect('/sign-in', request);
-  }
-
-  return NextResponse.next();
-});
+})
 
 export const config = {
   matcher: [
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     '/(api|trpc)(.*)',
-    '/estudiantes/cursos/:path*',
-    '/estudiantes/clases/:path*',
   ],
-};
+}

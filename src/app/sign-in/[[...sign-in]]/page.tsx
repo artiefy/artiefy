@@ -118,7 +118,7 @@ export default function SignInPage() {
                           <Clerk.Loading>
                             {(isLoading) => {
                               return isLoading ? (
-                                <Icons.spinner className="size-8 animate-spin" />
+                                <Icons.spinner className="size-5 animate-spin" />
                               ) : (
                                 <span className="inline-block font-bold">COMIENZA YA</span>
                               );
