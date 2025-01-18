@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
@@ -21,13 +20,8 @@ interface CourseListStudentProps {
 }
 
 export default function CourseListStudent({ courses }: CourseListStudentProps) {
-  const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
   const { isSignedIn } = useAuth();
   const router = useRouter();
-
-  const handleImageLoad = (courseId: number) => {
-    setLoadedImages((prev) => ({ ...prev, [courseId]: true }));
-  };
 
   const handleViewCourse = (courseId: number) => {
     const courseUrl = `/estudiantes/cursos/${courseId}`;
@@ -45,9 +39,7 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
       {courses.map((course) => (
         <Card
           key={course.id}
-          className={
-            'flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in hover:scale-105'
-          }
+          className="flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in hover:scale-105"
         >
           <div>
             <CardHeader>
@@ -60,18 +52,12 @@ export default function CourseListStudent({ courses }: CourseListStudentProps) {
                         : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
                     }
                     alt={course.title || 'Imagen del curso'}
-                    className={`rounded-lg object-cover transition-opacity duration-500 ${loadedImages[course.id] ? 'opacity-100' : 'opacity-0'}`}
+                    className="rounded-lg object-cover transition-opacity duration-500"
                     fill
                     placeholder="blur"
                     blurDataURL={blurDataURL}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    onLoad={() => handleImageLoad(course.id)}
                   />
-                  {!loadedImages[course.id] && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-[#00BDD8] text-white">
-                      Cargando...
-                    </div>
-                  )}
                 </div>
               </AspectRatio>
             </CardHeader>

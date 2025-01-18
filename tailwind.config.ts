@@ -19,6 +19,7 @@ export default {
       animation: {
         'spin-slow': 'spin 3s linear infinite',
         'caret-blink': 'caret-blink 1.25s ease-out infinite',
+        bounce: 'rocketBounce 1s infinite',
       },
       // Keyframes personalizados
       keyframes: {
