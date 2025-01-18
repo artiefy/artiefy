@@ -414,7 +414,7 @@ export async function getUserCoursesTaken(userId: string): Promise<CourseTaken[]
       course: {
         with: {
           enrollments: true,
-          lessons: true, // Ensure lessons is included
+          lessons: true,
         },
       },
     },

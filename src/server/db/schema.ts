@@ -217,7 +217,7 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
   creator: one(users, {
     fields: [courses.creatorId],
     references: [users.id],
-    relationName: 'createdCourses', // Añadimos el relationName aquí
+    relationName: 'createdCourses',
   }),
   modalidad: one(modalidades, {
     fields: [courses.modalidadesid],
