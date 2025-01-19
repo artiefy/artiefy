@@ -13,13 +13,13 @@ interface SearchParams {
 }
 
 interface CoursesPageProps {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }
 
 const ITEMS_PER_PAGE = 9;
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
-  const { category, searchTerm, page } = searchParams;
+  const { category, searchTerm, page } = await searchParams;
   const currentPage = page ? parseInt(page, 10) : 1;
   const courses: Course[] = await getAllCourses();
   const allCategories: Category[] = await getAllCategories();
