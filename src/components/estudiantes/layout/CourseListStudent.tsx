@@ -12,14 +12,7 @@ import {
 } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { type Course } from '~/types';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "~/components/estudiantes/ui/pagination"
+import PaginationContainer from '~/components/estudiantes/layout/PagCourses';
 
 const ITEMS_PER_PAGE = 9;
 
@@ -117,34 +110,7 @@ export default async function CourseListStudent({
           );
         }))}
       </div>
-      {totalPages > 1 && (
-        <Pagination className="mt-8">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                href={`/estudiantes?page=${Math.max(1, currentPage - 1)}`}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-            {Array.from({ length: totalPages }).map((_, index) => (
-              <PaginationItem key={index}>
-                <PaginationLink
-                  href={`/estudiantes?page=${index + 1}`}
-                  isActive={currentPage === index + 1}
-                >
-                  {index + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext 
-                href={`/estudiantes?page=${Math.min(totalPages, currentPage + 1)}`}
-                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
+      <PaginationContainer totalPages={totalPages} currentPage={currentPage} route="/estudiantes" />
     </>
   );
 }

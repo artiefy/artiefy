@@ -1,6 +1,7 @@
 import { type Config } from 'tailwindcss';
 import { fontFamily } from 'tailwindcss/defaultTheme';
 import animatePlugin from 'tailwindcss-animate';
+import { heroui } from "@heroui/react" ;
 
 // Configuración de Tailwind CSS
 export default {
@@ -8,10 +9,12 @@ export default {
   darkMode: ['class'],
   // Archivos a escanear
   content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
+    "./node_modules/@heroui/react/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@heroui/theme/dist/components/(button|pagination|ripple|spinner).js"
   ],
   theme: {
     extend: {
@@ -106,5 +109,5 @@ export default {
     },
   },
   // Plugins de Tailwind CSS
-  plugins: [animatePlugin],
+  plugins: [animatePlugin, heroui()],
 } satisfies Config;

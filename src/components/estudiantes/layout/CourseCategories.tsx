@@ -12,6 +12,11 @@ import {
   FiPenTool,
 } from 'react-icons/fi';
 import { type Category } from '~/types';
+import NProgress from 'nprogress';
+import 'nprogress/nprogress.css';
+import type { NProgress } from 'nprogress';
+
+const nprogress = NProgress;
 
 interface CourseCategoriesProps {
   allCategories: Category[];
@@ -42,6 +47,7 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
   }, [searchParams]);
 
   const handleCategorySelect = (category: string | null) => {
+    nprogress.start();
     setLoadingCategory(category ?? 'all');
     if (category) {
       router.push(`${pathname}?category=${encodeURIComponent(category)}`, { scroll: false });
@@ -52,6 +58,7 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    nprogress.start();
     setLoadingCategory('search');
     if (searchTerm) {
       router.push(`${pathname}?searchTerm=${encodeURIComponent(searchTerm)}`, { scroll: false });
@@ -62,6 +69,7 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
 
   useEffect(() => {
     setLoadingCategory(null);
+    nprogress.done();
   }, [searchParams]);
 
   return (
@@ -89,7 +97,7 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
               </div>
               <input
                 required
-                placeholder="Busca Tu CURSO..."
+                placeholder="Buscar..."
                 className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
                 type="search"
                 value={searchTerm}
