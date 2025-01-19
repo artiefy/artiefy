@@ -47,7 +47,7 @@ export default async function CourseListStudent({
           return (
             <Card
               key={course.id}
-              className="flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in hover:scale-105"
+              className="mb-8 flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in hover:scale-105"
             >
               <div>
                 <CardHeader>
