@@ -22,6 +22,7 @@ import {
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -159,7 +160,7 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
                       {course.modalidad?.name ?? 'Modalidad no especificada'}
                     </p>
                     <div className="flex items-center">
- <StarIcon className="size-4 text-yellow-500 sm:size-5" />
+                      <StarIcon className="size-4 text-yellow-500 sm:size-5" />
                       <span className="ml-1 text-sm text-yellow-500 sm:text-base">
                         {(course.rating ?? 0).toFixed(1)}
                       </span>
@@ -247,7 +248,7 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
                               variant="outline"
                               className="border-primary bg-background text-primary hover:bg-black"
                             >
-  {course.category?.name}
+                              {course.category?.name}
                             </Badge>
                             <span className="text-sm font-bold text-red-500">
                               {course.modalidad?.name}
@@ -295,36 +296,45 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
             </div>
 
             {/* PAGINACION */}
-            <Pagination className="pb-12">
-              <PaginationContent className="flex cursor-pointer flex-wrap justify-center gap-2">
-                <PaginationPrevious
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  className={
-                    currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
-                  }
-                />
-                {Array.from({ length: totalPages }).map((_, index) => (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage((prev) => Math.max(prev - 1, 1));
+                    }}
+                  />
+                </PaginationItem>
+                {Array.from({ length: Math.min(5, totalPages) }).map((_, index) => (
                   <PaginationItem key={index}>
-                    <PaginationLink
-                      onClick={() => setCurrentPage(index + 1)}
+                    <PaginationLink 
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(index + 1);
+                      }}
                       isActive={currentPage === index + 1}
                     >
                       {index + 1}
                     </PaginationLink>
                   </PaginationItem>
                 ))}
-                <PaginationNext
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  className={
-                    currentPage === totalPages
-                      ? 'cursor-not-allowed opacity-50'
-                      : ''
-                  }
-                />
+                {totalPages > 5 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+                <PaginationItem>
+                  <PaginationNext 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                    }}
+                  />
+                </PaginationItem>
               </PaginationContent>
             </Pagination>
           </div>
