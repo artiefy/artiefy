@@ -1,7 +1,7 @@
-'use server';
+"use server"
 
-import { eq, and, or, like, sql, inArray, desc } from 'drizzle-orm';
-import { db } from '~/server/db';
+import { eq, and, or, like, sql, inArray, desc } from "drizzle-orm"
+import { db } from "~/server/db"
 import {
   courses,
   lessons,
@@ -16,35 +16,36 @@ import {
   projectsTaken,
   categories,
   users,
-} from '~/server/db/schema';
-import { cache } from 'react';
-import {
-  type Course,
-  type Lesson,
-  type Category,
-  type Preference,
-  type Score,
-  type CourseTaken,
-  type Project,
-  type ProjectTaken,
-  type Activity,
-  type Enrollment,
-  type GetCoursesResponse,
-} from '~/types';
-import { currentUser } from '@clerk/nextjs/server';
+} from "~/server/db/schema"
+import { cache } from "react"
+import type {
+  Course,
+  Lesson,
+  Category,
+  Preference,
+  Score,
+  CourseTaken,
+  Project,
+  ProjectTaken,
+  Activity,
+  Enrollment,
+  GetCoursesResponse,
+} from "~/types"
+import { currentUser } from "@clerk/nextjs/server"
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 9
 
 interface CourseFilters {
-  pagenum?: number;
-  categoryId?: number;
-  searchTerm?: string;
-  onlyFeatured?: boolean;
+  pagenum?: number
+  categoryId?: number
+  searchTerm?: string
+  onlyFeatured?: boolean
+  limit?: number
 }
 
 export const getPaginatedCourses = cache(async (filters: CourseFilters = {}): Promise<GetCoursesResponse> => {
   try {
-    const { pagenum = 1, categoryId, searchTerm, onlyFeatured } = filters;
+    const { pagenum = 1, categoryId, searchTerm, onlyFeatured, limit = ITEMS_PER_PAGE } = filters
 
     const baseQuery = db
       .select({
@@ -69,50 +70,58 @@ export const getPaginatedCourses = cache(async (filters: CourseFilters = {}): Pr
       .from(courses)
       .leftJoin(categories, eq(courses.categoryid, categories.id))
       .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-      .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id));
+      .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
 
-    const whereConditions = [];
+    const whereConditions = []
 
     if (categoryId !== undefined) {
-      whereConditions.push(eq(courses.categoryid, categoryId));
+      whereConditions.push(eq(courses.categoryid, categoryId))
     }
 
     if (searchTerm) {
       whereConditions.push(
         or(
           like(courses.title, `%${searchTerm}%`),
-          like(courses.description, `%${searchTerm}%`)
-        )
-      );
+          like(courses.description, `%${searchTerm}%`),
+          like(categories.name, `%${searchTerm}%`),
+          like(modalidades.name, `%${searchTerm}%`),
+          like(dificultad.name, `%${searchTerm}%`),
+        ),
+      )
     }
 
     if (onlyFeatured) {
-      whereConditions.push(eq(categories.is_featured, true));
+      whereConditions.push(eq(categories.is_featured, true))
     }
 
-    let finalQuery = baseQuery;
+    let finalQuery = baseQuery
 
     if (whereConditions.length > 0) {
-      finalQuery = finalQuery.where(and(...whereConditions));
+      finalQuery = finalQuery.where(and(...whereConditions))
     }
 
-    let totalCoursesQuery = db.select({ count: sql<number>`count(*)` }).from(courses);
+    let totalCoursesQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(courses)
+      .leftJoin(categories, eq(courses.categoryid, categories.id))
+      .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+      .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
 
     if (whereConditions.length > 0) {
-      totalCoursesQuery = totalCoursesQuery.where(and(...whereConditions));
+      totalCoursesQuery = totalCoursesQuery.where(and(...whereConditions))
     }
 
-    const totalCoursesResult = await totalCoursesQuery.execute();
-    const totalCourses = Number(totalCoursesResult[0]?.count ?? 0);
+    const totalCoursesResult = await totalCoursesQuery.execute()
+    const totalCourses = Number(totalCoursesResult[0]?.count ?? 0)
 
-    const totalPages = Math.ceil(totalCourses / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(totalCourses / limit)
 
-    const offset = (pagenum - 1) * ITEMS_PER_PAGE;
-    const paginatedQuery = finalQuery.limit(ITEMS_PER_PAGE).offset(offset);
+    const offset = (pagenum - 1) * limit
+    const paginatedQuery = finalQuery.limit(limit).offset(offset)
 
-    const coursesData = await paginatedQuery.execute();
+    const coursesData = await paginatedQuery.execute()
 
-    const courseIds = coursesData.map(course => course.id);
+    const courseIds = coursesData.map((course) => course.id)
     const enrollmentCounts = await db
       .select({
         courseId: enrollments.courseId,
@@ -120,17 +129,17 @@ export const getPaginatedCourses = cache(async (filters: CourseFilters = {}): Pr
       })
       .from(enrollments)
       .where(inArray(enrollments.courseId, courseIds))
-      .groupBy(enrollments.courseId);
+      .groupBy(enrollments.courseId)
 
-    const enrollmentCountMap = new Map(enrollmentCounts.map(e => [e.courseId, Number(e.count ?? 0)]));
+    const enrollmentCountMap = new Map(enrollmentCounts.map((e) => [e.courseId, Number(e.count ?? 0)]))
 
-    const formattedCourses: Course[] = coursesData.map(course => ({
+    const formattedCourses: Course[] = coursesData.map((course) => ({
       id: course.id,
-      title: course.title ?? '',
-      description: course.description ?? '',
-      coverImageKey: course.coverImageKey ?? '',
+      title: course.title ?? "",
+      description: course.description ?? "",
+      coverImageKey: course.coverImageKey ?? "",
       categoryid: course.categoryid,
-      instructor: course.instructor ?? '',
+      instructor: course.instructor ?? "",
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
       creatorId: course.creatorId,
@@ -139,129 +148,52 @@ export const getPaginatedCourses = cache(async (filters: CourseFilters = {}): Pr
       dificultadid: course.dificultadid,
       totalStudents: enrollmentCountMap.get(course.id) ?? 0,
       lessons: [],
-      category: { 
-        id: course.categoryid, 
-        name: course.categoryName ?? '',
-        description: course.categoryDescription ?? ''
+      category: {
+        id: course.categoryid,
+        name: course.categoryName ?? "",
+        description: course.categoryDescription ?? "",
       },
-      modalidad: { name: course.modalidadName ?? '' },
-      dificultad: { name: course.dificultadName ?? '' },
+      modalidad: { name: course.modalidadName ?? "" },
+      dificultad: { name: course.dificultadName ?? "" },
       isFeatured: course.isFeatured ?? false,
-    }));
+    }))
 
     return {
       courses: formattedCourses,
       total: totalCourses,
       page: pagenum,
-      pageSize: ITEMS_PER_PAGE,
-      totalPages,
-    };
-  } catch (error) {
-    console.error("Error fetching courses:", error);
-    throw new Error("Failed to fetch courses");
-  }
-});
-
-export const getAllCourses = cache(async ({ pagenum = 0, limit = 10 }: { pagenum?: number; limit?: number }): Promise<GetCoursesResponse> => {
-  try {
-    const offset = pagenum * limit;
-
-    const coursesData = await db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        description: courses.description,
-        coverImageKey: courses.coverImageKey,
-        categoryid: courses.categoryid,
-        instructor: courses.instructor,
-        createdAt: courses.createdAt,
-        updatedAt: courses.updatedAt,
-        creatorId: courses.creatorId,
-        rating: courses.rating,
-        modalidadesid: courses.modalidadesid,
-        dificultadid: courses.dificultadid,
-        categoryName: categories.name,
-        categoryDescription: categories.description,
-        modalidadName: modalidades.name,
-        dificultadName: dificultad.name,
-      })
-      .from(courses)
-      .leftJoin(categories, eq(courses.categoryid, categories.id))
-      .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-      .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
-      .limit(limit)
-      .offset(offset)
-      .execute();
-
-    const totalCoursesResult = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(courses)
-      .execute();
-    const totalCourses = Number(totalCoursesResult[0]?.count ?? 0);
-
-    const totalPages = Math.ceil(totalCourses / limit);
-
-    const courseIds = coursesData.map(course => course.id);
-    const enrollmentCounts = await db
-      .select({
-        courseId: enrollments.courseId,
-        count: sql<number>`count(*)`,
-      })
-      .from(enrollments)
-      .where(inArray(enrollments.courseId, courseIds))
-      .groupBy(enrollments.courseId);
-
-    const enrollmentCountMap = new Map(enrollmentCounts.map(e => [e.courseId, Number(e.count ?? 0)]));
-
-    const formattedCourses: Course[] = coursesData.map(course => ({
-      id: course.id,
-      title: course.title ?? '',
-      description: course.description ?? '',
-      coverImageKey: course.coverImageKey ?? '',
-      categoryid: course.categoryid,
-      instructor: course.instructor ?? '',
-      createdAt: course.createdAt,
-      updatedAt: course.updatedAt,
-      creatorId: course.creatorId,
-      rating: Number(course.rating ?? 0),
-      modalidadesid: course.modalidadesid,
-      dificultadid: course.dificultadid,
-      totalStudents: enrollmentCountMap.get(course.id) ?? 0,
-      lessons: [],
-      category: { 
-        id: course.categoryid, 
-        name: course.categoryName ?? '',
-        description: course.categoryDescription ?? ''
-      },
-      modalidad: { name: course.modalidadName ?? '' },
-      dificultad: { name: course.dificultadName ?? '' },
-    }));
-
-    return {
-      courses: formattedCourses,
-      total: totalCourses,
-      page: pagenum + 1,
       pageSize: limit,
       totalPages,
-    };
+    }
   } catch (error) {
-    console.error("Error fetching courses:", error);
-    throw new Error("Failed to fetch courses");
+    console.error("Error fetching courses:", error)
+    throw new Error("Failed to fetch courses: " + (error instanceof Error ? error.message : String(error)))
   }
-});
+})
 
 export const getAllCategories = cache(async (): Promise<Category[]> => {
   try {
     const allCategories = await db
-      .select()
-      .from(categories);
-    
-    return allCategories;
+      .select({
+        id: categories.id,
+        name: categories.name,
+        description: categories.description,
+        is_featured: categories.is_featured,
+        courseCount: sql<number>`COUNT(${courses.id})`,
+      })
+      .from(categories)
+      .leftJoin(courses, eq(categories.id, courses.categoryid))
+      .groupBy(categories.id)
+
+    return allCategories.map((category) => ({
+      ...category,
+      courses: { length: Number(category.courseCount) },
+    }))
   } catch (error) {
-    console.error("Error fetching categories:", error);
-    throw new Error("Failed to fetch categories");
+    console.error("Error fetching categories:", error)
+    throw new Error("Failed to fetch categories: " + (error instanceof Error ? error.message : String(error)))
   }
-});
+})
 
 export const getFeaturedCategories = cache(async (limit = 6): Promise<Category[]> => {
   try {
@@ -277,17 +209,18 @@ export const getFeaturedCategories = cache(async (limit = 6): Promise<Category[]
       .leftJoin(courses, eq(categories.id, courses.categoryid))
       .where(eq(categories.is_featured, true))
       .groupBy(categories.id)
-      .limit(limit);
-    
-    return featuredCategories.map(category => ({
+      .limit(limit)
+
+    return featuredCategories.map((category) => ({
       ...category,
       courses: { length: Number(category.courseCount) },
-    }));
+    }))
   } catch (error) {
-    console.error("Error fetching featured categories:", error);
-    throw new Error("Failed to fetch featured categories");
+    console.error("Error fetching featured categories:", error)
+    throw new Error("Failed to fetch featured categories: " + (error instanceof Error ? error.message : String(error)))
   }
-});
+})
+
 
 // Obtener un curso específico por ID
 export async function getCourseById(courseId: number): Promise<Course | null> {

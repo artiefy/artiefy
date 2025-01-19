@@ -1,61 +1,77 @@
-import { Suspense } from 'react';
-import { getPaginatedCourses, getAllCategories, getFeaturedCategories, getAllCourses } from '~/server/actions/studentActions';
-import StudentDashboard from './index';
-import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
-import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
-import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
+import { Suspense } from "react"
+import { getPaginatedCourses, getAllCategories, getFeaturedCategories } from "~/server/actions/studentActions"
+import StudentDashboard from "./index"
+import { LoadingCourses } from "~/components/estudiantes/layout/LoadingCourses"
+import CourseCategories from "~/components/estudiantes/layout/CourseCategories"
+import CourseListStudent from "~/components/estudiantes/layout/CourseListStudent"
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 9
 
-type SearchParams = Promise<{ 
-  category?: string;
-  searchTerm?: string;
-  page?: string;
-}>
+interface SearchParams {
+  category?: string
+  searchTerm?: string 
+  page?: string
+}
 
 interface Props {
-  searchParams: SearchParams;
+  searchParams: SearchParams
 }
 
 export default async function CoursesPage({ searchParams }: Props) {
-  const params = await searchParams;
-  
-  const currentPage = params?.page ? parseInt(params.page, 10) : 1;
-  const categoryId = params?.category ? parseInt(params.category, 10) : undefined;
-  const searchTerm = params?.searchTerm;
+  // Await and parse search params
+  const params = await new Promise<SearchParams>((resolve) => {
+    resolve(searchParams)
+  })
+
+  const currentPage = params.page ? Number.parseInt(params.page, 10) : 1
+  const categoryId = params.category ? Number.parseInt(params.category, 10) : undefined
+  const searchTerm = params.searchTerm
 
   try {
-    const [coursesData, allCategories, featuredCategories, latestCourses] = await Promise.all([
-      getPaginatedCourses({ 
-        pagenum: currentPage, 
-        categoryId, 
-        searchTerm 
+    // Fetch data in parallel
+    const [coursesData, allCategories, featuredCategories] = await Promise.all([
+      getPaginatedCourses({
+        pagenum: currentPage,
+        categoryId,
+        searchTerm,
+        limit: ITEMS_PER_PAGE,
       }),
       getAllCategories(),
       getFeaturedCategories(6),
-      getAllCourses({ pagenum: 0, limit: 15 })
-    ]);
+    ])
+
+    // Early return if no data
+    if (!coursesData?.courses) {
+      throw new Error('No courses data found')
+    }
 
     return (
       <Suspense fallback={<LoadingCourses />}>
-        <StudentDashboard initialCourses={latestCourses.courses}>
-          <CourseCategories
-            allCategories={allCategories}
+        <StudentDashboard initialCourses={coursesData.courses}>
+          <CourseCategories 
+            allCategories={allCategories} 
             featuredCategories={featuredCategories}
           />
-          <CourseListStudent 
-            courses={coursesData.courses} 
-            currentPage={currentPage} 
-            totalPages={Math.ceil(coursesData.total / ITEMS_PER_PAGE)}
+          <CourseListStudent
+            courses={coursesData.courses}
+            currentPage={currentPage}
+            totalPages={coursesData.totalPages}
             totalCourses={coursesData.total}
-            category={params.category}
+            category={params.category} // Use awaited params
             searchTerm={searchTerm}
           />
         </StudentDashboard>
       </Suspense>
-    );
+    )
   } catch (error) {
-    console.error('Error al cargar los cursos:', error);
-    return <div>Error al cargar los cursos. Por favor, intenta de nuevo más tarde.</div>;
+    console.error("Error al cargar los cursos:", error)
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="mb-2 text-xl font-bold">Error al cargar los cursos</h2>
+          <p>Por favor, intenta de nuevo más tarde.</p>
+        </div>
+      </div>
+    )
   }
 }

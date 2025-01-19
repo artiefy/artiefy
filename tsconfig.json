@@ -8,8 +8,6 @@
 		"resolveJsonModule": true,
 		"moduleDetection": "force",
 		"isolatedModules": true,
-		"forceConsistentCasingInFileNames": true,
-		"allowSyntheticDefaultImports": true,
 		"skipDefaultLibCheck": true,
 		// Estrictas
 		"strict": true,
@@ -19,7 +17,7 @@
 		"lib": ["dom", "dom.iterable", "ES2023"],
 		"noEmit": true,
 		"module": "ESNext",
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"jsx": "preserve",
 		"plugins": [
 			{
