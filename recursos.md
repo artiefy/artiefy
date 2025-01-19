@@ -1,3 +1,16 @@
+Volver a un commit anterior
+- git reset --hard ??????
+----------------------------------------------------------
+Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, puedes seguir estos pasos:
+
+Eliminar dependencias no utilizadas:
+
+Usa herramientas como depcheck para identificar dependencias no utilizadas.
+Instala depcheck globalmente:
+
+- npm install -g depcheck
+- depcheck
+-------------------------------------------------------------------
 ### **Comandos Generales de TypeScript y ESlint**
 7. `ESlint: Fix All Auto-Fixable Problems`: Corrige todos los problemas que se puedan solucionar automáticamente.
 0. `Eslint: Restart ESlint Server`: Reinicia el servidor de ESlint.

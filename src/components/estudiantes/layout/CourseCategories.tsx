@@ -1,29 +1,20 @@
 "use client"
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+
 import { useState, useEffect } from 'react';
 import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import {
-  FiBarChart,
-  FiCamera,
-  FiCode,
-  FiDatabase,
-  FiMusic,
-  FiPenTool,
-} from 'react-icons/fi';
-import { type Category } from '~/types';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import NProgress from 'nprogress';
+import { FiBarChart, FiCamera, FiCode, FiDatabase, FiMusic, FiPenTool } from 'react-icons/fi';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { type Category } from '~/types';
 import 'nprogress/nprogress.css';
-import type { NProgress } from 'nprogress';
-
-const nprogress = NProgress;
 
 interface CourseCategoriesProps {
   allCategories: Category[];
   featuredCategories: Category[];
 }
 
-const categoryIcons: Record<string, JSX.Element> = {
+const categoryIcons: Record<string, React.ReactNode> = {
   Programacion: <FiCode />,
   Diseño: <FiPenTool />,
   Marketing: <FiBarChart />,
@@ -47,29 +38,29 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
   }, [searchParams]);
 
   const handleCategorySelect = (category: string | null) => {
-    nprogress.start();
+    NProgress.start();
     setLoadingCategory(category ?? 'all');
+    const params = new URLSearchParams();
     if (category) {
-      router.push(`${pathname}?category=${encodeURIComponent(category)}`, { scroll: false });
-    } else {
-      router.push(pathname, { scroll: false });
+      params.set('category', category);
     }
+    router.push(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    nprogress.start();
+    NProgress.start();
     setLoadingCategory('search');
+    const params = new URLSearchParams();
     if (searchTerm) {
-      router.push(`${pathname}?searchTerm=${encodeURIComponent(searchTerm)}`, { scroll: false });
-    } else {
-      router.push(pathname, { scroll: false });
+      params.set('searchTerm', searchTerm);
     }
+    router.push(`${pathname}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
   };
 
   useEffect(() => {
     setLoadingCategory(null);
-    nprogress.done();
+    NProgress.done();
   }, [searchParams]);
 
   return (
@@ -81,10 +72,11 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
             <select
               className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 px-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
               onChange={(e) => handleCategorySelect(e.target.value || null)}
+              value={searchParams.get('category') ?? ''}
             >
               <option value="">Todas las categorías</option>
               {allCategories?.map((category) => (
-                <option key={category.id} value={category.name}>
+                <option key={category.id} value={category.id.toString()}>
                   {category.name}
                 </option>
               ))}
@@ -143,9 +135,9 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
             <div
               key={category.id}
               className="flex cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-6 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 aspect-square"
-              onClick={() => handleCategorySelect(category.name)}
+              onClick={() => handleCategorySelect(category.id.toString())}
             >
-              {loadingCategory === category.name ? (
+              {loadingCategory === category.id.toString() ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Icons.spinner className="size-8 animate-spin text-background" />
                   <p className="mt-2 text-sm text-background">Buscando Cursos...</p>

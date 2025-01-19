@@ -10,7 +10,9 @@ import withPlaiceholder from '@plaiceholder/next';
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    domains: ['s3.us-east-2.amazonaws.com'],
     dangerouslyAllowSVG: true,
+    formats: ['image/webp'],
     contentDispositionType: 'inline',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [

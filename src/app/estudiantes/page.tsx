@@ -1,61 +1,61 @@
 import { Suspense } from 'react';
-import { getAllCourses, getAllCategories, getFeaturedCategories } from '~/server/actions/studentActions';
+import { getPaginatedCourses, getAllCategories, getFeaturedCategories } from '~/server/actions/studentActions';
 import StudentDashboard from './index';
 import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
 import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
-import { type Course, type Category } from '~/types';
-
-interface SearchParams {
-  category?: string;
-  searchTerm?: string;
-  page?: string;
-}
-
-interface CoursesPageProps {
-  searchParams: Promise<SearchParams>;
-}
+import type { Category, GetCoursesResponse } from '~/types';
 
 const ITEMS_PER_PAGE = 9;
 
-export default async function CoursesPage({ searchParams }: CoursesPageProps) {
-  const { category, searchTerm, page } = await searchParams;
-  const currentPage = page ? parseInt(page, 10) : 1;
-  const courses: Course[] = await getAllCourses();
-  const allCategories: Category[] = await getAllCategories();
-  const featuredCategories: Category[] = await getFeaturedCategories(6);
+type SearchParams = Promise<{ 
+  category?: string;
+  searchTerm?: string;
+  page?: string;
+}>
 
-  let filteredCourses = courses;
+interface Props {
+  searchParams: SearchParams;
+}
 
-  if (category) {
-    filteredCourses = filteredCourses.filter((course) => course.category?.name === category);
-  }
+export default async function CoursesPage({ searchParams }: Props) {
+  const params = await searchParams;
+  
+  const currentPage = params?.page ? parseInt(params.page, 10) : 1;
+  const categoryId = params?.category ? parseInt(params.category, 10) : undefined;
+  const searchTerm = params?.searchTerm;
 
-  if (searchTerm) {
-    const lowercasedTerm = searchTerm.toLowerCase();
-    filteredCourses = filteredCourses.filter(
-      (course) =>
-        (course.title.toLowerCase().includes(lowercasedTerm) ||
-          course.description?.toLowerCase().includes(lowercasedTerm)) ??
-        false
+  try {
+    const [coursesData, allCategories, featuredCategories] = await Promise.all([
+      getPaginatedCourses({ 
+        pagenum: currentPage, 
+        categoryId, 
+        searchTerm 
+      }),
+      getAllCategories(),
+      getFeaturedCategories(6)
+    ]) as [GetCoursesResponse, Category[], Category[]];
+
+    return (
+      <Suspense fallback={<LoadingCourses />}>
+        <StudentDashboard initialCourses={coursesData.courses}>
+          <CourseCategories
+            allCategories={allCategories}
+            featuredCategories={featuredCategories}
+          />
+          <CourseListStudent 
+            courses={coursesData.courses} 
+            currentPage={currentPage} 
+            totalPages={Math.ceil(coursesData.total / ITEMS_PER_PAGE)}
+            totalCourses={coursesData.total}
+            category={params.category}
+            searchTerm={searchTerm}
+          />
+        </StudentDashboard>
+      </Suspense>
     );
+  } catch (error) {
+    console.error('Error al cargar los cursos:', error);
+    return <div>Error al cargar los cursos. Por favor, intenta de nuevo más tarde.</div>;
   }
-
-  const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
-  const paginatedCourses = filteredCourses.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  return (
-    <Suspense fallback={<LoadingCourses />}>
-      <StudentDashboard initialCourses={courses}>
-        <CourseCategories
-          allCategories={allCategories}
-          featuredCategories={featuredCategories}
-        />
-        <CourseListStudent courses={paginatedCourses} currentPage={currentPage} totalPages={totalPages} />
-      </StudentDashboard>
-    </Suspense>
-  );
 }

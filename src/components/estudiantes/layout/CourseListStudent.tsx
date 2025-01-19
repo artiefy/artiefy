@@ -16,17 +16,23 @@ import PaginationContainer from '~/components/estudiantes/layout/PaginationConta
 
 interface CourseListStudentProps {
   courses: Course[];
-  currentPage?: number;
+  currentPage: number;
   totalPages: number;
+  totalCourses: number;
+  category?: string;
+  searchTerm?: string;
 }
 
-export default async function CourseListStudent({ 
-  courses = [],
-  currentPage = 1,
+export default async function CourseListStudent({
+  courses,
+  currentPage,
   totalPages,
+  totalCourses,
+  category,
+  searchTerm
 }: CourseListStudentProps) {
   if (!courses || courses.length === 0) {
-    return <div>No courses available</div>;
+    return <div>No hay cursos disponibles</div>;
   }
 
   return (
@@ -94,22 +100,30 @@ export default async function CourseListStudent({
                     <p className="ml-2">Ver Curso</p>
                     <ArrowRightIcon className="animate-bounce-right mr-2 size-5" />
                     <div className="absolute inset-0 flex size-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
-                      <div className="relative h-full w-10 bg-white/30"></div>
-                    </div>
-                  </Link>
-                  <div className="flex items-center">
-                    <StarIcon className="size-5 text-yellow-500" />
-                    <span className="ml-1 text-sm font-bold text-yellow-500">
-                      {(course.rating ?? 0).toFixed(1)}
-                    </span>
+                    <div className="relative h-full w-10 bg-white/30"></div>
                   </div>
+                </Link>
+                <div className="flex items-center">
+                  <StarIcon className="size-5 text-yellow-500" />
+                  <span className="ml-1 text-sm font-bold text-yellow-500">
+                    {(course.rating ?? 0).toFixed(1)}
+                  </span>
                 </div>
-              </CardFooter>
-            </Card>
-          );
-        }))}
-      </div>
-      <PaginationContainer totalPages={totalPages} currentPage={currentPage} route="/estudiantes" />
-    </>
-  );
+              </div>
+            </CardFooter>
+          </Card>
+        );
+      }))}
+    </div>
+    <PaginationContainer 
+      totalPages={totalPages} 
+      currentPage={currentPage} 
+      totalCourses={totalCourses}
+      route="/estudiantes" 
+      category={category}
+      searchTerm={searchTerm}
+    />
+  </>
+);
 }
+

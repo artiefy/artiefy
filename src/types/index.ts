@@ -43,9 +43,10 @@ export interface Category {
   id: number;
   name: string;
   description: string | null;
-  courses?: Course[]; // Añade esta línea
+  courses?: { length: number };
   // Relaciones
   preferences?: Preference[];
+  is_featured?: boolean;
 }
 
 export interface Preference {
@@ -91,9 +92,9 @@ export interface Lesson {
 }
 
 export interface Modalidad {
-  id: number;
+  id?: number;
   name: string;
-  description: string | null;
+  description?: string | null;
   // Relaciones
   courses?: Course[];
 }
@@ -109,9 +110,9 @@ export interface Score {
 }
 
 export interface Dificultad {
-  id: number;
+  id?: number;
   name: string;
-  description: string;
+  description?: string;
 }
 
 export interface Activity {
@@ -158,9 +159,32 @@ export interface ProjectTaken {
   project?: Project;
 }
 
+export interface PaginatedCourses {
+  courses: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface GetCoursesResponse {
+  courses: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface  GetCoursesParams {
+  pagenum?: number;
+  pageSize?: number;
+  categoryId?: number;
+  searchTerm?: string;
+}
+
 // Tipos adicionales para manejar relaciones many-to-many si es necesario
 
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };
 export type UserWithCreatedCourses = User & { createdCourses: Course[] };
 export type CourseWithEnrollments = Course & { enrollments: Enrollment[] };
 export type CategoryWithPreferences = Category & { preferences: Preference[] };
+
