@@ -7,7 +7,6 @@ import {
   StarIcon,
 } from '@heroicons/react/24/solid';
 import Image from 'next/image';
-import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
@@ -19,19 +18,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '~/components/estudiantes/ui/carousel';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '~/components/estudiantes/ui/pagination';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course } from '~/types';
-
-const ITEMS_PER_PAGE = 9;
 
 interface StudentDashboardProps {
   initialCourses: Course[];
@@ -41,7 +29,6 @@ interface StudentDashboardProps {
 export default function StudentDashboard({ initialCourses, children }: StudentDashboardProps) {
   const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>(initialCourses);
-  const [currentPage, setCurrentPage] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -68,22 +55,6 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
     return () => clearTimeout(timer);
   }, []);
 
-  const handleCategorySelect = useCallback(
-    (category: string | null) => {
-      setIsLoading(true);
-      if (category) {
-        setFilteredCourses(
-          courses.filter((course) => course.category?.name === category)
-        );
-      } else {
-        setFilteredCourses(courses);
-      }
-      setCurrentPage(1);
-      setIsLoading(false);
-    },
-    [courses]
-  );
-
   const handleSearch = useCallback(
     (searchTerm: string) => {
       setIsLoading(true);
@@ -96,21 +67,23 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
             false
         )
       );
-      setCurrentPage(1);
       setIsLoading(false);
     },
     [courses]
   );
 
-  const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
-  const paginatedCourses = filteredCourses.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
   if (isLoading) {
     return <LoadingCourses />;
   }
+
+  // Ordenar los cursos por fecha de subida (suponiendo que tienen una propiedad `createdAt`)
+  const sortedCourses = [...courses].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  // Seleccionar los últimos 5 cursos para el carrusel
+  const latestFiveCourses = sortedCourses.slice(0, 5);
+
+  // Seleccionar los últimos 10 cursos para el "Top Cursos"
+  const latestTenCourses = sortedCourses.slice(0, 10);
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -118,9 +91,9 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
       <main className="grow">
         <div className="container mx-auto px-8 sm:px-12 lg:px-16">
           <div className="flex flex-col space-y-12 sm:space-y-16">
-            {/* CAROUSEL GRANDE*/}
+            {/* CAROUSEL GRANDE */}
             <div className="relative h-[300px] overflow-hidden sm:h-[400px] md:h-[500px]">
-              {courses.slice(0, 5).map((course, index) => (
+              {latestFiveCourses.map((course, index) => (
                 <div
                   key={course.id}
                   className={`absolute size-full transition-opacity duration-500 ${
@@ -169,7 +142,7 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
                 </div>
               ))}
               <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 space-x-2">
-                {courses.slice(0, 5).map((_, index) => (
+                {latestFiveCourses.map((_, index) => (
                   <button
                     key={index}
                     className={`size-3 rounded-full ${
@@ -219,7 +192,7 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
               </h2>
               <Carousel className="w-full p-4">
                 <CarouselContent>
-                  {courses.map((course) => (
+                  {latestTenCourses.map((course) => (
                     <CarouselItem
                       key={course.id}
                       className="pl-4 md:basis-1/2 lg:basis-1/3"
@@ -275,12 +248,6 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
               </Carousel>
             </div>
 
-            {/* CATEGORIAS DE CURSOS */}
-            <CourseCategories
-              onCategorySelect={handleCategorySelect}
-              onSearch={handleSearch}
-            />
-
             {/* Seccion De Cursos */}
             <div className="flex flex-col px-11">
               <h2 className="mb-8 text-2xl font-bold sm:text-3xl">
@@ -289,54 +256,11 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
               <React.Suspense fallback={<LoadingCourses />}>
                 {React.Children.map(children, child =>
                   React.isValidElement(child)
-                    ? React.cloneElement(child as React.ReactElement<{ courses: Course[] }>, { courses: paginatedCourses })
+                    ? React.cloneElement(child as React.ReactElement<{ courses: Course[] }>, { courses: filteredCourses })
                     : child
                 )}
               </React.Suspense>
             </div>
-
-            {/* PAGINACION */}
-            <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentPage((prev) => Math.max(prev - 1, 1));
-                    }}
-                  />
-                </PaginationItem>
-                {Array.from({ length: Math.min(5, totalPages) }).map((_, index) => (
-                  <PaginationItem key={index}>
-                    <PaginationLink 
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentPage(index + 1);
-                      }}
-                      isActive={currentPage === index + 1}
-                    >
-                      {index + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                {totalPages > 5 && (
-                  <PaginationItem>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                )}
-                <PaginationItem>
-                  <PaginationNext 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-                    }}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
           </div>
         </div>
       </main>
@@ -346,4 +270,3 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
     </div>
   );
 }
-
