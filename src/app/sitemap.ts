@@ -1,10 +1,15 @@
 import { type MetadataRoute } from 'next';
-import { getAllCourses } from '~/models/estudiantes/courseModelsStudent';
+import { getAllCourses } from '~/server/actions/studentActions';
+
+interface Course {
+  id: string;
+  updatedAt: string | number | Date;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
 
-  const courses = await getAllCourses();
+  const courses: Course[] = await getAllCourses();
 
   const courseUrls = courses.map((course) => ({
     url: `${baseUrl}/curso/${course.id}`,
@@ -13,7 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  const categoryUrls: MetadataRoute.Sitemap = []; // Define categoryUrls properly
+  const categoryUrls: MetadataRoute.Sitemap = [];
 
   return [
     {
