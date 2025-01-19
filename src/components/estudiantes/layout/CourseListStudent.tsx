@@ -12,28 +12,27 @@ import {
 } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { type Course } from '~/types';
-import PaginationContainer from '~/components/estudiantes/layout/PagCourses';
+import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
 
-const ITEMS_PER_PAGE = 9;
+interface CourseListStudentProps {
+  courses: Course[];
+  currentPage?: number;
+  totalPages: number;
+}
 
 export default async function CourseListStudent({ 
-  courses,
+  courses = [],
   currentPage = 1,
   totalPages,
-}: { 
-  courses: Course[],
-  currentPage?: number,
-  totalPages: number
-}) {
-  const paginatedCourses = courses.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+}: CourseListStudentProps) {
+  if (!courses || courses.length === 0) {
+    return <div>No courses available</div>;
+  }
 
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {await Promise.all(paginatedCourses.map(async (course) => {
+        {await Promise.all(courses.map(async (course) => {
           const imageUrl = course.coverImageKey
             ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
             : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';

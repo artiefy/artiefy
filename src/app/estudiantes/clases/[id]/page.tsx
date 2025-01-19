@@ -68,3 +68,4 @@ async function LessonContent({ id }: { id: string }) {
     notFound();
   }
 }
+
