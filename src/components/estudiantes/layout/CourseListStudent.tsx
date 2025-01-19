@@ -21,17 +21,17 @@ import {
   PaginationPrevious,
 } from "~/components/estudiantes/ui/pagination"
 
-
 const ITEMS_PER_PAGE = 9;
 
 export default async function CourseListStudent({ 
   courses,
   currentPage = 1,
+  totalPages,
 }: { 
   courses: Course[],
-  currentPage?: number
+  currentPage?: number,
+  totalPages: number
 }) {
-  const totalPages = Math.ceil(courses.length / ITEMS_PER_PAGE);
   const paginatedCourses = courses.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE

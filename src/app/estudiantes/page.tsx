@@ -2,8 +2,8 @@ import { Suspense } from 'react';
 import { getAllCourses, getAllCategories, getFeaturedCategories } from '~/server/actions/studentActions';
 import StudentDashboard from './index';
 import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
-import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
+import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import { type Course, type Category } from '~/types';
 
 interface SearchParams {
@@ -15,6 +15,8 @@ interface SearchParams {
 interface CoursesPageProps {
   searchParams: SearchParams;
 }
+
+const ITEMS_PER_PAGE = 9;
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const { category, searchTerm, page } = searchParams;
@@ -39,6 +41,12 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
     );
   }
 
+  const totalPages = Math.ceil(filteredCourses.length / ITEMS_PER_PAGE);
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <Suspense fallback={<LoadingCourses />}>
       <StudentDashboard initialCourses={courses}>
@@ -46,9 +54,8 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           allCategories={allCategories}
           featuredCategories={featuredCategories}
         />
-        <CourseListStudent courses={filteredCourses} currentPage={currentPage} />
+        <CourseListStudent courses={paginatedCourses} currentPage={currentPage} totalPages={totalPages} />
       </StudentDashboard>
     </Suspense>
   );
 }
-
