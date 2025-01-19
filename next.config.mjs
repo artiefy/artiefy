@@ -1,7 +1,13 @@
-import type { NextConfig } from 'next';
-import './src/env.js';
+// @ts-check
 
-const coreConfig: NextConfig = {
+/**
+ * @type {import('next').NextConfig}
+ */
+
+import './src/env.js';
+import withPlaiceholder from '@plaiceholder/next';
+
+const nextConfig = {
   reactStrictMode: true,
   images: {
     dangerouslyAllowSVG: true,
@@ -24,4 +30,5 @@ const coreConfig: NextConfig = {
   },
 };
 
-export default coreConfig;
+export default withPlaiceholder(nextConfig);
+

@@ -8,9 +8,9 @@ import {
 } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
-import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
   Carousel,
@@ -29,15 +29,15 @@ import {
 } from '~/components/estudiantes/ui/pagination';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course } from '~/types';
-import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
 
 const ITEMS_PER_PAGE = 9;
 
 interface StudentDashboardProps {
   initialCourses: Course[];
+  children: React.ReactNode;
 }
 
-export default function StudentDashboard({ initialCourses }: StudentDashboardProps) {
+export default function StudentDashboard({ initialCourses, children }: StudentDashboardProps) {
   const [courses, setCourses] = useState<Course[]>(initialCourses);
   const [filteredCourses, setFilteredCourses] = useState<Course[]>(initialCourses);
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,24 +49,20 @@ export default function StudentDashboard({ initialCourses }: StudentDashboardPro
       setCurrentSlide(
         (prevSlide) => (prevSlide + 1) % Math.min(courses.length, 5)
       );
-    }, 5000); // Change slide every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [courses.length]);
 
-  // Nuevo useEffect para demostrar el uso de setCourses
   useEffect(() => {
-    // Simulación de actualización de cursos después de un tiempo
     const timer = setTimeout(() => {
       setCourses(prevCourses => {
-        // Aquí podrías hacer una llamada a la API para obtener cursos actualizados
-        // Por ahora, solo añadiremos un campo 'lastUpdated' a cada curso
         return prevCourses.map(course => ({
           ...course,
           lastUpdated: new Date().toISOString()
         }));
       });
-    }, 60000); // Actualizar después de 1 minuto
+    }, 60000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -163,7 +159,7 @@ export default function StudentDashboard({ initialCourses }: StudentDashboardPro
                       {course.modalidad?.name ?? 'Modalidad no especificada'}
                     </p>
                     <div className="flex items-center">
-                      <StarIcon className="size-4 text-yellow-500 sm:size-5" />
+ <StarIcon className="size-4 text-yellow-500 sm:size-5" />
                       <span className="ml-1 text-sm text-yellow-500 sm:text-base">
                         {(course.rating ?? 0).toFixed(1)}
                       </span>
@@ -251,7 +247,7 @@ export default function StudentDashboard({ initialCourses }: StudentDashboardPro
                               variant="outline"
                               className="border-primary bg-background text-primary hover:bg-black"
                             >
-                              {course.category?.name}
+  {course.category?.name}
                             </Badge>
                             <span className="text-sm font-bold text-red-500">
                               {course.modalidad?.name}
@@ -290,7 +286,11 @@ export default function StudentDashboard({ initialCourses }: StudentDashboardPro
                 Cursos Disponibles
               </h2>
               <React.Suspense fallback={<LoadingCourses />}>
-                <CourseListStudent courses={paginatedCourses} />
+                {React.Children.map(children, child =>
+                  React.isValidElement(child)
+                    ? React.cloneElement(child as React.ReactElement<{ courses: Course[] }>, { courses: paginatedCourses })
+                    : child
+                )}
               </React.Suspense>
             </div>
 
