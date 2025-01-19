@@ -31,7 +31,7 @@ export default async function CourseListStudent({
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {
           await Promise.all(
             courses.map(async (course) => {

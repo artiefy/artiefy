@@ -57,7 +57,7 @@ export default async function CoursesPage({ searchParams }: Props) {
             currentPage={currentPage}
             totalPages={coursesData.totalPages}
             totalCourses={coursesData.total}
-            category={params.category} // Use awaited params
+            category={params.category}
             searchTerm={searchTerm}
           />
         </StudentDashboard>
