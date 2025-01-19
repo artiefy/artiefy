@@ -9,14 +9,16 @@ import { type Course, type Category } from '~/types';
 interface SearchParams {
   category?: string;
   searchTerm?: string;
+  page?: string;
 }
 
 interface CoursesPageProps {
-  searchParams: Promise<SearchParams>;
+  searchParams: SearchParams;
 }
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
-  const { category, searchTerm } = await searchParams;
+  const { category, searchTerm, page } = searchParams;
+  const currentPage = page ? parseInt(page, 10) : 1;
   const courses: Course[] = await getAllCourses();
   const allCategories: Category[] = await getAllCategories();
   const featuredCategories: Category[] = await getFeaturedCategories(6);
@@ -44,8 +46,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           allCategories={allCategories}
           featuredCategories={featuredCategories}
         />
-        <CourseListStudent courses={filteredCourses} />
+        <CourseListStudent courses={filteredCourses} currentPage={currentPage} />
       </StudentDashboard>
     </Suspense>
   );
 }
+

@@ -250,8 +250,8 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
 
             {/* Seccion De Cursos */}
             <div className="flex flex-col px-11">
-              <h2 className="mb-8 text-2xl font-bold sm:text-3xl">
-                Cursos Disponibles
+              <h2 className="mb-2 text-2xl font-bold sm:text-3xl">
+                Cursos Artiefy
               </h2>
               <React.Suspense fallback={<LoadingCourses />}>
                 {React.Children.map(children, child =>

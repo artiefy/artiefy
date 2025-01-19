@@ -31,7 +31,7 @@ import { currentUser } from '@clerk/nextjs/server';
 
 
 // Obtener todos los cursos disponibles
-export async function getAllCourses(): Promise<Course[]> {
+export async function getAllCourses({ offset, limit }: { offset: number, limit: number }): Promise<Course[]> {
   const coursesData = await db.query.courses.findMany({
     with: {
       category: true,
@@ -44,6 +44,8 @@ export async function getAllCourses(): Promise<Course[]> {
         },
       },
     },
+    offset,
+    limit,
   });
   return coursesData.map((course) => ({
     ...course,
@@ -67,8 +69,9 @@ export async function getAllCourses(): Promise<Course[]> {
             userProgress: activity.userProgress ?? 0,
           })) ?? [],
       })) ?? [],
-  }))
+  }));
 }
+
 
 // Obtener un curso específico por ID
 export async function getCourseById(courseId: number): Promise<Course | null> {
@@ -539,4 +542,5 @@ export async function unlockNextLesson(currentLessonId: number): Promise<void> {
       .where(eq(lessons.id, nextLesson.id));
   }
 }
+
 

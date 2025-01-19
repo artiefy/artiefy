@@ -1,6 +1,7 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -20,23 +21,44 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from '~/components/estudiantes/ui/pagination';
+} from "~/components/estudiantes/ui/pagination"
 import { type Course } from '~/types';
 
 const ITEMS_PER_PAGE = 9;
 
-interface CourseWithPlaceholder extends Course {
-  blurDataURL: string;
-}
-
-export default function ClientCourseList({ courses }: { courses: CourseWithPlaceholder[] }) {
+export default function ClientCourseList({ courses }: { courses: Course[] }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const page = Number(searchParams.get('page')) || 1;
+    setCurrentPage(page);
+  }, [searchParams]);
+
+  useEffect(() => {
+    // Mantener el scroll en la posición correcta después de cambiar de página
+    const courseListElement = document.getElementById('course-list');
+    if (courseListElement) {
+      courseListElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentPage]);
+
   const totalPages = Math.ceil(courses.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedCourses = courses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedCourses = courses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', page.toString());
+    router.push(`/estudiantes?${params.toString()}`, { scroll: false });
+  };
 
   return (
-    <>
+    <div id="course-list">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {paginatedCourses.map((course) => (
           <Card
@@ -48,14 +70,10 @@ export default function ClientCourseList({ courses }: { courses: CourseWithPlace
                 <AspectRatio ratio={16 / 9}>
                   <div className="relative size-full">
                     <Image
-                      src={course.coverImageKey
-                        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                        : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'}
+                      src={course.coverImageKey ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd() : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'}
                       alt={course.title || 'Imagen del curso'}
                       className="rounded-lg object-cover transition-opacity duration-500"
                       fill
-                      placeholder="blur"
-                      blurDataURL={course.blurDataURL}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                   </div>
@@ -110,32 +128,35 @@ export default function ClientCourseList({ courses }: { courses: CourseWithPlace
           </Card>
         ))}
       </div>
-      <Pagination className="mt-8">
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious 
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-            />
-          </PaginationItem>
-          {Array.from({ length: totalPages }).map((_, index) => (
-            <PaginationItem key={index}>
-              <PaginationLink
-                onClick={() => setCurrentPage(index + 1)}
-                isActive={currentPage === index + 1}
-              >
-                {index + 1}
-              </PaginationLink>
+      {totalPages > 1 && (
+        <Pagination className="m-8">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious 
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
             </PaginationItem>
-          ))}
-          <PaginationItem>
-            <PaginationNext 
-              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    </>
+            {Array.from({ length: totalPages }).map((_, index) => (
+              <PaginationItem key={index}>
+                <PaginationLink
+                  onClick={() => handlePageChange(index + 1)}
+                  isActive={currentPage === index + 1}
+                >
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            <PaginationItem>
+              <PaginationNext 
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      )}
+    </div>
   );
 }
+
