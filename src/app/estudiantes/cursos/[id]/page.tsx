@@ -3,7 +3,8 @@ import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { type Course as CourseSchemaDTS, type WithContext } from 'schema-dts';
 import { getCourseById } from '~/server/actions/studentActions';
-import CourseDetails, { type Course } from './CourseDetails';
+import CourseDetails from './CourseDetails';
+import type { Course } from '~/types';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -114,8 +115,8 @@ async function CourseContent({ id }: { id: string }) {
       '@type': 'Person',
       name: course.instructor,
     },
-    dateCreated: course.createdAt.toISOString(),
-    dateModified: course.updatedAt.toISOString(),
+    dateCreated: new Date(course.createdAt).toISOString(),
+    dateModified: new Date(course.updatedAt).toISOString(),
     aggregateRating: course.rating
       ? {
           '@type': 'AggregateRating',
