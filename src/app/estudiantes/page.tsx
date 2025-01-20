@@ -89,7 +89,7 @@ export default async function CoursesPage({ searchParams }: Props) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h2 className="mb-2 text-xl font-bold">Error al cargar los cursos</h2>
+          <h2 className="mb-2 text-xl font-bold">Error al cargar los Cursos</h2>
           <p>Por favor, intenta de nuevo más tarde.</p>
         </div>
       </div>
