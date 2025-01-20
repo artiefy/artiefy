@@ -1,12 +1,9 @@
 {
   "functions": {
-    "api/*.ts": {
+    "app/api/**/*": {
       "maxDuration": 60
     },
-    "api/courses/route.ts": {
-      "maxDuration": 60
-    },
-    "app/estudiantes/page.tsx": {
+    "app/estudiantes/**/*": {
       "maxDuration": 60
     }
   }
