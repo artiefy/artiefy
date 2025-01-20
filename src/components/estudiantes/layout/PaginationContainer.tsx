@@ -10,6 +10,7 @@ import {
   PaginationPrevious,
 } from "~/components/estudiantes/ui/pagination.tsx"
 import { useRouter, useSearchParams } from "next/navigation"
+import NProgress from 'nprogress'
 
 interface Props {
   totalPages: number
@@ -34,6 +35,7 @@ const PaginationContainer = ({
   if (totalPages <= 1) return null
 
   const handlePageChange = (page: number) => {
+    NProgress.start()
     const params = new URLSearchParams(searchParams.toString())
 
     if (page === 1) {
@@ -48,7 +50,8 @@ const PaginationContainer = ({
     const queryString = params.toString()
     const newUrl = page === 1 && !category && !searchTerm ? route : `${route}?${queryString}`
 
-    router.push(newUrl)
+    router.replace(newUrl, { scroll: false })
+    NProgress.done()
   }
 
   const startItem = (currentPage - 1) * 9 + 1
@@ -64,7 +67,7 @@ const PaginationContainer = ({
           <PaginationItem>
             <PaginationPrevious
               onClick={() => handlePageChange(currentPage - 1)}
-              className={`cursor-pointer ${currentPage === 1 ? "pointer-events-none opacity-50" : ""}`}
+              className={`cursor-pointer active:scale-95 ${currentPage === 1 ? "pointer-events-none opacity-50" : ""}`}
             />
           </PaginationItem>
           {Array.from({ length: totalPages }).map((_, index) => {
@@ -79,7 +82,7 @@ const PaginationContainer = ({
                   <PaginationLink
                     onClick={() => handlePageChange(pageNumber)}
                     isActive={currentPage === pageNumber}
-                    className="cursor-pointer"
+                    className="cursor-pointer active:scale-95"
                   >
                     {pageNumber}
                   </PaginationLink>
@@ -96,7 +99,7 @@ const PaginationContainer = ({
           <PaginationItem>
             <PaginationNext
               onClick={() => handlePageChange(currentPage + 1)}
-              className={`cursor-pointer ${currentPage === totalPages ? "pointer-events-none opacity-50" : ""}`}
+              className={`cursor-pointer active:scale-95 ${currentPage === totalPages ? "pointer-events-none opacity-50" : ""}`}
             />
           </PaginationItem>
         </PaginationContent>
@@ -106,4 +109,3 @@ const PaginationContainer = ({
 }
 
 export default PaginationContainer
-

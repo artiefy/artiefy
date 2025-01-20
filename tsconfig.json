@@ -1,6 +1,5 @@
 {
 	"compilerOptions": {
-		// Opciones base
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"target": "es2022",
@@ -9,11 +8,9 @@
 		"moduleDetection": "force",
 		"isolatedModules": true,
 		"skipDefaultLibCheck": true,
-		// Estrictas
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"checkJs": true,
-		// Proyectos agrupados
 		"lib": ["dom", "dom.iterable", "ES2023"],
 		"noEmit": true,
 		"module": "ESNext",
@@ -25,13 +22,11 @@
 			}
 		],
 		"incremental": true,
-		// Alias de rutas
 		"baseUrl": ".",
 		"paths": {
 			"~/*": ["./src/*"]
 		}
 	},
-	// Archivos incluidos
 	"include": [
 		"**/*.js",
 		"**/*.mjs",

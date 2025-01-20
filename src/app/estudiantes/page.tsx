@@ -15,13 +15,14 @@ interface SearchParams {
 }
 
 interface Props {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }
 
 export default async function CoursesPage({ searchParams }: Props) {
-  const currentPage = searchParams.page ? Number.parseInt(searchParams.page, 10) : 1
-  const categoryId = searchParams.category ? Number.parseInt(searchParams.category, 10) : undefined
-  const query = searchParams.query
+  const params = await searchParams;
+  const currentPage = params.page ? Number.parseInt(params.page, 10) : 1
+  const categoryId = params.category ? Number.parseInt(params.category, 10) : undefined
+  const query = params.query
 
   try {
     const [allCourses, allCategories, featuredCategories] = await Promise.all([

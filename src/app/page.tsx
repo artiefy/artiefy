@@ -56,11 +56,7 @@ export default function Home() {
                       <div className="flex w-full items-center justify-center">
                         {loading ? (
                           <Icons.spinner
-                            className="animate-spin"
-                            style={{
-                              height: '32px',
-                              width: '32px',
-                            }}
+                            className="size-8 animate-spin"
                           />
                         ) : (
                           <>
@@ -90,11 +86,7 @@ export default function Home() {
                     <div className="flex w-full items-center justify-center">
                       {loading ? (
                         <Icons.spinner
-                          className="animate-spin"
-                          style={{
-                            height: '32px',
-                            width: '32px',
-                          }}
+                          className="size-8 animate-spin"
                         />
                       ) : (
                         <>

@@ -45,7 +45,7 @@ const SearchForm: React.FC = () => {
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                         {isSearching ? (
-                            <Icons.spinner className="animate-spin" />
+                            <Icons.spinner className="size-4 bg-background animate-spin" />
                         ) : (
                             <MagnifyingGlassIcon className="size-4 text-gray-400" />
                         )}
