@@ -1,0 +1,14 @@
+{
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 60
+    },
+    "api/courses/route.ts": {
+      "maxDuration": 60
+    },
+    "app/estudiantes/page.tsx": {
+      "maxDuration": 60
+    }
+  }
+}
+
