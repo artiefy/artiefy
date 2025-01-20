@@ -41,9 +41,9 @@ export default async function CoursesPage({ searchParams }: Props) {
       const lowercasedQuery = query.toLowerCase()
       filteredCourses = filteredCourses.filter(
         (course) =>
-          course.title.toLowerCase().includes(lowercasedQuery) ||
-          course.description?.toLowerCase().includes(lowercasedQuery) ?? 
-          course.category?.name.toLowerCase().includes(lowercasedQuery) ?? 
+          course.title.toLowerCase().includes(lowercasedQuery) ??
+          course.description?.toLowerCase().includes(lowercasedQuery) ??
+          course.category?.name.toLowerCase().includes(lowercasedQuery) ??
           false,
       )
     }
