@@ -79,11 +79,11 @@ export function Header() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isLoading ? (
-                        <Icons.spinner
+                        <Icons.spinner2
                           className="animate-spin"
                           style={{
-                            height: '20px',
-                            width: '20px',
+                            height: '25px',
+                            width: '25px',
                           }}
                         />
                       ) : (
@@ -173,11 +173,11 @@ export function Header() {
                 >
                   <div className="flex w-full items-center justify-center">
                     {isLoading ? (
-                      <Icons.spinner
+                      <Icons.spinner2
                         className="animate-spin"
                         style={{
-                          height: '20px',
-                          width: '20px',
+                          height: '25px',
+                          width: '25px',
                         }}
                       />
                     ) : (
