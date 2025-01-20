@@ -37,6 +37,7 @@ import {
 	CardFooter,
 	CardHeader,
 } from '~/components/estudiantes/ui/card';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { useToast } from '~/hooks/use-toast';
@@ -394,33 +395,14 @@ export default function CourseDetails({
 									<button
 										onClick={handleEnroll}
 										disabled={isEnrolling}
-										className="relative inline-block cursor-pointer rounded-xl bg-gray-800 p-px font-semibold leading-6 text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
+										className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px font-semibold leading-6 text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 									>
 										<span className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
 
 										<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 											<div className="relative z-10 flex items-center justify-center space-x-2">
 												{isEnrolling ? (
-													<svg
-														className="size-5 animate-spin text-white"
-														xmlns="http://www.w3.org/2000/svg"
-														fill="none"
-														viewBox="0 0 24 24"
-													>
-														<circle
-															className="opacity-25"
-															cx="12"
-															cy="12"
-															r="10"
-															stroke="currentColor"
-															strokeWidth="4"
-														></circle>
-														<path
-															className="opacity-75"
-															fill="currentColor"
-															d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-														></path>
-													</svg>
+													<Icons.spinner className="size-6 animate-spin text-white" />
 												) : (
 													<>
 														<span className="transition-all duration-500 group-hover:translate-x-1">
@@ -460,26 +442,10 @@ export default function CourseDetails({
 										disabled={isUnenrolling}
 									>
 										{isUnenrolling ? (
-											<svg
-												className="size-5 animate-spin text-white"
-												xmlns="http://www.w3.org/2000/svg"
-												fill="none"
-												viewBox="0 0 24 24"
-											>
-												<circle
-													className="opacity-25"
-													cx="12"
-													cy="12"
-													r="10"
-													stroke="currentColor"
-													strokeWidth="4"
-												></circle>
-												<path
-													className="opacity-75"
-													fill="currentColor"
-													d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-												></path>
-											</svg>
+											<Icons.spinner
+												className="animate-spin text-white"
+												style={{ width: '25px', height: '25px' }}
+											/>
 										) : (
 											'Cancelar Suscripción'
 										)}

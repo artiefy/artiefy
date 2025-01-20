@@ -65,6 +65,7 @@ export interface Category {
   is_featured: boolean | null;
 }
 
+
 export interface Preference {
   id: number;
   name: string;

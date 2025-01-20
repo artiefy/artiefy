@@ -141,7 +141,7 @@ export default function SignInPage() {
                                                         {(isLoading) =>
                                                             isLoading ||
                                                             loadingProvider === 'oauth_google' ? (
-                                                                <Icons.spinner className="size-10 animate-spin text-primary" />
+                                                                <Icons.spinner className="size-8 animate-spin text-primary" />
                                                             ) : (
                                                                 <Icons.google />
                                                             )
@@ -157,7 +157,7 @@ export default function SignInPage() {
                                                         {(isLoading) =>
                                                             isLoading ||
                                                             loadingProvider === 'oauth_github' ? (
-                                                                <Icons.spinner className="size-10 animate-spin text-gray-500" />
+                                                                <Icons.spinner className="size-8 animate-spin text-gray-500" />
                                                             ) : (
                                                                 <Icons.gitHub />
                                                             )
@@ -173,7 +173,7 @@ export default function SignInPage() {
                                                         {(isLoading) =>
                                                             isLoading ||
                                                             loadingProvider === 'oauth_facebook' ? (
-                                                                <Icons.spinner className="size-10 animate-spin text-primary" />
+                                                                <Icons.spinner className="size-8 animate-spin text-primary" />
                                                             ) : (
                                                                 <Icons.facebook />
                                                             )
@@ -227,7 +227,7 @@ export default function SignInPage() {
                                                         <Clerk.Loading>
                                                             {(isLoading) => {
                                                                 return isLoading ? (
-                                                                    <Icons.spinner className="size-8 animate-spin" />
+                                                                    <Icons.spinner className="size-5 animate-spin" />
                                                                 ) : (
                                                                     <span className="inline-block font-bold">
                                                                         VERIFICAR

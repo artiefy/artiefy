@@ -171,172 +171,46 @@ export const Icons = {
 		</svg>
 	),
 	spinner: (props: IconProps) => (
-		<svg
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			xmlns="http://www.w3.org/2000/svg"
+    <svg
+      className="animate-spin"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
       {...props}
-		>
-			<g>
-				<circle cx="12" cy="3" r="1">
-					<animate
-						id="spinner_7Z73"
-						begin="0;spinner_tKsu.end-0.5s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="16.50" cy="4.21" r="1">
-					<animate
-						id="spinner_Wd87"
-						begin="spinner_7Z73.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="7.50" cy="4.21" r="1">
-					<animate
-						id="spinner_tKsu"
-						begin="spinner_9Qlc.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="19.79" cy="7.50" r="1">
-					<animate
-						id="spinner_lMMO"
-						begin="spinner_Wd87.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="4.21" cy="7.50" r="1">
-					<animate
-						id="spinner_9Qlc"
-						begin="spinner_Khxv.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="21.00" cy="12.00" r="1">
-					<animate
-						id="spinner_5L9t"
-						begin="spinner_lMMO.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="3.00" cy="12.00" r="1">
-					<animate
-						id="spinner_Khxv"
-						begin="spinner_ld6P.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="19.79" cy="16.50" r="1">
-					<animate
-						id="spinner_BfTD"
-						begin="spinner_5L9t.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="4.21" cy="16.50" r="1">
-					<animate
-						id="spinner_ld6P"
-						begin="spinner_XyBs.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="16.50" cy="19.79" r="1">
-					<animate
-						id="spinner_7gAK"
-						begin="spinner_BfTD.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="7.50" cy="19.79" r="1">
-					<animate
-						id="spinner_XyBs"
-						begin="spinner_HiSl.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<circle cx="12" cy="21" r="1">
-					<animate
-						id="spinner_HiSl"
-						begin="spinner_7gAK.begin+0.1s"
-						attributeName="r"
-						calcMode="spline"
-						dur="0.6s"
-						values="1;2;1"
-						keySplines=".27,.42,.37,.99;.53,0,.61,.73"
-					/>
-				</circle>
-				<animateTransform
-					attributeName="transform"
-					type="rotate"
-					dur="6s"
-					values="360 12 12;0 12 12"
-					repeatCount="indefinite"
-				/>
-			</g>
-		</svg>
-	),
-	spinner2: (props: IconProps) => (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="24"
-			height="24"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			{...props}
-		>
-			<path d="M21 12a9 9 0 1 1-6.219-8.56" />
-		</svg>
-	),
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      ></circle>
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      ></path>
+    </svg>
+  ),
+  spinner2: (props: IconProps) => (
+    <svg
+      className="animate-spin"
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  ),
 	facebook: () => (
 		<svg
 			width="45"

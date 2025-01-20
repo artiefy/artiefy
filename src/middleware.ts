@@ -2,32 +2,31 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
 const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)'])
-const isEducadorRoute = createRouteMatcher(['/dashboard/educador(.*)'])
-const isEstudiantesRoute = createRouteMatcher(['/estudiantes/cursos/(.*)', '/estudiantes/clases/(.*)'])
+const isEducatorRoute = createRouteMatcher(['/educadores(.*)'])
+const isStudentCourseRoute = createRouteMatcher(['/estudiantes/cursos/:id'])
+const isStudentClassRoute = createRouteMatcher(['/estudiantes/clases/:id'])
 
 export default clerkMiddleware(async (auth, req) => {
-  const url = new URL(req.url)
-  const originalPath = url.pathname + url.search
-  const session = await auth()
+  const sessionClaims = (await auth()).sessionClaims?.metadata
+  const role = sessionClaims?.role
 
-  if (isAdminRoute(req)) {
-    if (session.sessionClaims?.metadata?.role !== 'admin') {
-      const redirectUrl = new URL('/', req.url)
-      return NextResponse.redirect(redirectUrl)
-    }
+  // Protect all routes starting with `/admin`
+  if (isAdminRoute(req) && role !== 'admin') {
+    const url = new URL('/', req.url)
+    return NextResponse.redirect(url)
   }
 
-  if (isEducadorRoute(req)) {
-    if (session.sessionClaims?.metadata?.role !== 'educador') {
-      const redirectUrl = new URL('/', req.url)
-      return NextResponse.redirect(redirectUrl)
-    }
+  // Protect all routes starting with `/educator`
+  if (isEducatorRoute(req) && role !== 'educador') {
+    const url = new URL('/', req.url)
+    return NextResponse.redirect(url)
   }
 
-  if (isEstudiantesRoute(req) && !session) {
-    const redirectUrl = new URL('/sign-in', req.url)
-    redirectUrl.searchParams.set('redirectTo', originalPath)
-    return NextResponse.redirect(redirectUrl)
+  // Protect dynamic student routes
+  if ((isStudentCourseRoute(req) || isStudentClassRoute(req)) && !sessionClaims) {
+    const signInUrl = new URL('/sign-in', req.url)
+    signInUrl.searchParams.set('redirect_url', req.url)
+    return NextResponse.redirect(signInUrl)
   }
 })
 

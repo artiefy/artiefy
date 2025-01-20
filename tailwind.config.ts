@@ -1,7 +1,7 @@
 import { type Config } from 'tailwindcss';
 import { fontFamily } from 'tailwindcss/defaultTheme';
 import animatePlugin from 'tailwindcss-animate';
-import { heroui } from "@heroui/react" ;
+import { heroui } from "@heroui/react";
 
 // Configuración de Tailwind CSS
 export default {
@@ -22,13 +22,22 @@ export default {
       animation: {
         'spin-slow': 'spin 3s linear infinite',
         'caret-blink': 'caret-blink 1.25s ease-out infinite',
-        bounce: 'rocketBounce 1s infinite',
+        bounce: 'bounce 1s infinite',
+        'spin': 'spin 1s linear infinite',
       },
       // Keyframes personalizados
       keyframes: {
         'caret-blink': {
           '0%,70%,100%': { opacity: '1' },
           '20%,50%': { opacity: '0' },
+        },
+        bounce: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-25%)' },
+        },
+        spin: {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
         },
       },
       // Fuentes personalizadas

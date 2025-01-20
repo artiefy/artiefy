@@ -490,7 +490,15 @@ export async function getProjectById(projectId: number): Promise<Project | null>
       category: true,
     },
   });
-  return project ?? null;
+
+  if (!project) {
+    return null;
+  }
+
+  return {
+    ...project,
+    name: project.name ?? 'Untitled Project',
+  };
 }
 
 // Marcar un proyecto como tomado
@@ -510,6 +518,27 @@ export async function getUserProjectsTaken(userId: string): Promise<ProjectTaken
     },
   });
 }
+
+
+// Crear un proyecto
+export async function createProject(userId: string, projectData: {
+  name: string;
+  description: string;
+  courseId: number;
+  categoryId: number;
+  content: string;
+}): Promise<void> {
+  await db.insert(projects).values({
+    name: projectData.name,
+    description: projectData.description,
+    coverImageKey: null,
+    coverVideoKey: null,
+    type_project: "default",
+    userId: userId,
+    categoryid: projectData.categoryId,
+  });
+}
+
 
 // Obtener el progreso general del estudiante
 export async function getStudentProgress(userId: string): Promise<{
@@ -547,8 +576,8 @@ export async function unlockLesson(lessonId: number): Promise<void> {
   }
 }
 
-// Función para desbloquear una lección 1
-export async function unlockNextLesson(currentLessonId: number): Promise<void> {
+// Función para desbloquear una lección 2
+export async function unlockNextLesson(currentLessonId: number): Promise<{ success: boolean; nextLessonId?: number }> {
   const user = await currentUser();
   if (!user?.id) {
     throw new Error('Usuario no autenticado');
@@ -574,7 +603,10 @@ export async function unlockNextLesson(currentLessonId: number): Promise<void> {
       .update(lessons)
       .set({ isLocked: false })
       .where(eq(lessons.id, nextLesson.id));
+    return { success: true, nextLessonId: nextLesson.id };
   }
+
+  return { success: false };
 }
 
 
