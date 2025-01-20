@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/clerk-react';
-import { Info } from 'lucide-react';
+import { UserButton, useUser } from '@clerk/clerk-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -13,23 +12,26 @@ import {
   FiSettings,
   FiMenu,
   FiX,
+  FiMessageSquare,
+  FiShieldOff,
 } from 'react-icons/fi';
-import { Button } from '~/components/admin/ui/button';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
+import { ModalError } from '~/components/admin/ui/modalerror';
 
-interface SidebarProps {
+interface ResponsiveSidebarProps {
   children: React.ReactNode;
 }
 
-export function Sidebar({ children }: SidebarProps) {
+const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
-      setIsOpen(window.innerWidth > 768);
+      setIsOpen(window.innerWidth > 768); // Permite que la barra lateral esté abierta en desktop
     };
 
     handleResize();
@@ -40,7 +42,7 @@ export function Sidebar({ children }: SidebarProps) {
   const navItemsEducator = [
     {
       icon: <FiHome size={24} />,
-      title: 'Inicio',
+      title: 'Home',
       id: 'home',
       link: '/dashboard/educadores',
     },
@@ -56,62 +58,86 @@ export function Sidebar({ children }: SidebarProps) {
       id: 'resources',
       link: '/dashboard/educadores/proyectos',
     },
+    { icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: '/' },
     {
-      icon: <FiUser size={24} />,
-      title: 'Perfil',
-      id: 'profile',
-      link: '/profile',
+      icon: <FiMessageSquare size={24} />,
+      title: 'Forum',
+      id: 'forum',
+      link: '/dashboard/educadores/foro',
     },
     {
       icon: <FiSettings size={24} />,
-      title: 'Configuración',
+      title: 'Settings',
       id: 'settings',
-      link: '/settings',
+      link: '/',
+    },
+    {
+      icon: <FiShieldOff size={24} />,
+      title: 'Reporta errores',
+      id: 'errores',
+      onClick: () => setIsModalOpen(true),
     },
   ];
 
   const navItemsAdmin = [
-    { icon: <FiHome size={24} />, title: 'Inicio', id: 'home', link: '/' },
+    {
+      icon: <FiHome size={24} />,
+      title: 'Home',
+      id: 'home',
+      link: '/',
+    },
     {
       icon: <FiBook size={24} />,
-      title: 'Cursos',
+      title: 'Courses',
       id: 'courses',
-      link: '/cursos',
+      link: '/',
     },
     {
       icon: <FiFileText size={24} />,
       title: 'Proyectos',
-      id: 'projects',
-      link: '/proyectos',
+      id: 'Proyectos',
+      link: '/',
     },
+    { icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: '/' },
     {
-      icon: <FiUser size={24} />,
-      title: 'Perfil',
-      id: 'profile',
-      link: '/profile',
+      icon: <FiSettings size={24} />,
+      title: 'Settings',
+      id: 'settings',
+      link: '/',
     },
     {
       icon: <FiSettings size={24} />,
-      title: 'Configuración',
-      id: 'settings',
-      link: '/settings',
+      title: 'Foro',
+      id: 'foro',
+      link: '/dashboard/admin/foro',
     },
   ];
 
-  const navItems =
-    user?.publicMetadata?.role === 'admin' ? navItemsAdmin : navItemsEducator;
+  // Determina el rol del usuario y selecciona los elementos de navegación correspondientes
+  let navItems: {
+    icon: JSX.Element;
+    title: string;
+    id: string;
+    link?: string;
+    onClick?: () => void;
+  }[] = [];
+  if (user?.publicMetadata?.role === 'admin') {
+    navItems = navItemsAdmin;
+  } else if (user?.publicMetadata?.role === 'educador') {
+    navItems = navItemsEducator;
+  }
   const [activeItem, setActiveItem] = useState('home');
 
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
-      <nav className="fixed top-0 z-50 w-full border-b border-border bg-background shadow-sm">
+      <nav className="fixed top-0 z-50 w-full border-b border-gray-200 bg-background shadow-sm">
         <div className="p-3 lg:px-5 lg:pl-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button
                 onClick={() => isMobile && setIsOpen(!isOpen)}
-                className="rounded-lg p-2 text-muted-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-muted-foreground md:hidden"
+                className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 md:hidden"
                 aria-controls="sidebar"
                 aria-expanded={isOpen}
               >
@@ -127,20 +153,19 @@ export function Sidebar({ children }: SidebarProps) {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 150px"
                   />
                 </div>
+
                 <span className="ml-2 self-center text-xl font-semibold sm:text-2xl">
                   Artiefy
                 </span>
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-yellow-300"
-                title="Información"
-              >
-                <Info />
-              </Button>
+            <div className="absolute right-4">
+              <ModalError
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)} onCloseAction={function (): void {
+                  throw new Error('Function not implemented.');
+                } }              />
+              <UserButton showName />
             </div>
           </div>
         </div>
@@ -149,7 +174,7 @@ export function Sidebar({ children }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-background pt-20 transition-transform dark:border-gray-700 sm:translate-x-0',
+          'fixed left-0 top-0 z-40 h-screen w-64 border-r border-gray-200 bg-background pt-20 transition-transform dark:border-gray-700 dark:bg-gray-800 sm:translate-x-0',
           !isOpen && '-translate-x-full'
         )}
         aria-label="Sidebar"
@@ -157,18 +182,21 @@ export function Sidebar({ children }: SidebarProps) {
         <div className="h-full overflow-y-auto bg-background px-3 pb-4">
           <ul className="space-y-5 font-medium">
             {navItems.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} onClick={item.onClick}>
                 <Link
-                  href={item.link}
+                  href={item.link ?? '#'}
                   onClick={() => setActiveItem(item.id)}
                   className={cn(
-                    'group flex w-full items-center rounded-lg p-2 text-foreground hover:bg-accent',
-                    activeItem === item.id
-                      ? 'bg-primary text-primary-foreground'
-                      : ''
+                    'group flex w-full items-center rounded-lg p-2 text-white hover:bg-primary',
+                    activeItem === item.id ? 'bg-primary text-black' : ''
                   )}
                 >
-                  <span className="text-muted-foreground transition duration-75 group-hover:text-foreground">
+                  <span
+                    className={cn(
+                      'text-gray-300 transition duration-75 group-hover:text-gray-900',
+                      activeItem === item.id ? 'text-black' : ''
+                    )}
+                  >
                     {item.icon}
                   </span>
                   <span
@@ -184,9 +212,11 @@ export function Sidebar({ children }: SidebarProps) {
       </aside>
 
       {/* Main Content */}
-      <div className={cn('p-4 pt-20', isOpen ? 'sm:ml-64' : '')}>
+      <div className={`p-4 ${isOpen ? 'sm:ml-64' : ''} pt-20`}>
         <div>{children}</div>
       </div>
     </div>
   );
-}
+};
+
+export default ResponsiveSidebar;

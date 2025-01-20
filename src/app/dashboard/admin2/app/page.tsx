@@ -1,117 +1,146 @@
 'use client';
-import { useState } from 'react';
-import { SignInButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs';
+
+import {
+  Users,
+  BookOpen,
+  MessageSquare,
+  HelpCircle,
+  Award,
+  BarChart,
+  FileText,
+  GraduationCap,
+} from 'lucide-react';
 import Link from 'next/link';
-import { FaArrowRight } from 'react-icons/fa';
-import SmoothGradient from '~/components/estudiantes/layout/Gradient';
-import { Header } from '~/components/estudiantes/layout/Header';
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Button } from '~/components/admin/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '~/components/admin/ui/card';
 
 export default function Home() {
-  const { user } = useUser();
-  const [loading, setLoading] = useState(false);
+  const stats = [
+    {
+      title: 'Total Estudiantes',
+      value: '1,234',
+      icon: Users,
+      href: './app/estudiantes',
+    },
+    {
+      title: 'Cursos Activos',
+      value: '56',
+      icon: BookOpen,
+      href: './app/cursos',
+    },
+    {
+      title: 'Foros Activos',
+      value: '23',
+      icon: MessageSquare,
+      href: './app/foros',
+    },
+    {
+      title: 'Tickets de Soporte',
+      value: '15',
+      icon: HelpCircle,
+      href: './app/soporte',
+    },
+    {
+      title: 'Insignias Otorgadas',
+      value: '789',
+      icon: Award,
+      href: './app/gamificacion',
+    },
+    {
+      title: 'Tasa de Finalización',
+      value: '78%',
+      icon: BarChart,
+      href: './app/analisis',
+    },
+    {
+      title: 'Total Recursos',
+      value: '345',
+      icon: FileText,
+      href: './app/recursos',
+    },
+    {
+      title: 'Tutores Activos',
+      value: '42',
+      icon: GraduationCap,
+      href: './app/tutores',
+    },
+  ];
 
-  const dashboardRoute =
-    user?.publicMetadata?.role === 'admin'
-      ? '/dashboard/admin'
-      : user?.publicMetadata?.role === 'educador'
-        ? '/dashboard/educadores'
-        : '/estudiantes';
-
-  const handleButtonClick = () => {
-    setLoading(true);
-  };
+  const quickAccess = [
+    { title: 'Gestionar Cursos', href: './app/cursos' },
+    { title: 'Ver Estudiantes', href: './app/estudiantes' },
+    { title: 'Moderar Foros', href: './app/foros' },
+    { title: 'Atender Soporte', href: './app/soporte' },
+    { title: 'Gestionar Gamificación', href: './app/gamificacion' },
+    { title: 'Ver Análisis', href: './app/analisis' },
+    { title: 'Administrar Recursos', href: './app/recursos' },
+    { title: 'Gestionar Tutores', href: './app/tutores' },
+  ];
 
   return (
-    <div className="relative flex min-h-screen flex-col">
-      <SmoothGradient />
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <Header />
-        <main className="mt-[-10vh] flex grow items-center justify-center">
-          <section className="container mx-auto px-4 py-12 text-center">
-            <h1 className="mb-5 text-5xl font-bold leading-snug text-white">
-              Únete a nosotros y transforma tus ideas en
-              <br /> realidades con el{' '}
-              <span className="text-primary">poder del conocimiento</span>
-            </h1>
-            <p className="mb-5 text-xl leading-snug">
-              Bienvenido a Artiefy, tu plataforma digital educativa dedicada a
-              impulsar <br /> tus conociminetos con ciencia y tecnología.
-            </p>
-            <div>
-              <SignedOut>
-                <SignInButton>
-                  <Button
-                    asChild
-                    className="relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold italic text-background hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
-                    style={{
-                      boxShadow: '6px 6px 0 black',
-                      transition: '0.5s',
-                      width: '250px',
-                    }}
-                    onClick={handleButtonClick}
-                  >
-                    <Link href={dashboardRoute}>
-                      <div className="flex w-full items-center justify-center">
-                        {loading ? (
-                          <Icons.spinner
-                            className="animate-spin"
-                            style={{
-                              height: '32px',
-                              width: '32px',
-                            }}
-                          />
-                        ) : (
-                          <>
-                            <span className="inline-block skew-x-[15deg]">
-                              COMIENZA YA
-                            </span>
-                            <FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
-                          </>
-                        )}
-                      </div>
-                    </Link>
-                  </Button>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <Button
-                  asChild
-                  className="relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold italic text-background hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
-                  style={{
-                    boxShadow: '6px 6px 0 black',
-                    transition: '0.5s',
-                    width: '250px',
-                  }}
-                  onClick={handleButtonClick}
-                >
-                  <Link href={dashboardRoute}>
-                    <div className="flex w-full items-center justify-center">
-                      {loading ? (
-                        <Icons.spinner
-                          className="animate-spin"
-                          style={{
-                            height: '32px',
-                            width: '32px',
-                          }}
-                        />
-                      ) : (
-                        <>
-                          <span className="inline-block skew-x-[15deg]">
-                            COMIENZA YA
-                          </span>
-                          <FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
-                        </>
-                      )}
-                    </div>
-                  </Link>
+    <div className="container mx-auto px-4 py-8">
+      <h2 className="mb-6 text-2xl font-bold text-gray-800 dark:text-white md:text-3xl">
+        Dashboard Educativo
+      </h2>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className="size-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <Link href={stat.href} passHref>
+                <Button variant="link" className="p-0">
+                  Ver detalles
                 </Button>
-              </SignedIn>
-            </div>
-          </section>
-        </main>
+              </Link>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      <h3 className="mb-4 mt-8 text-xl font-semibold text-gray-800 dark:text-white">
+        Accesos Rápidos
+      </h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {quickAccess.map((item) => (
+          <Link key={item.title} href={item.href} passHref>
+            <Button className="w-full">{item.title}</Button>
+          </Link>
+        ))}
+      </div>
+
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Actividad Reciente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2">
+            <li>
+              Nuevo curso añadido: "Introducción a la Inteligencia Artificial"
+            </li>
+            <li>5 nuevos estudiantes registrados en las últimas 24 horas</li>
+            <li>Foro "Discusión General" alcanzó 1000 mensajes</li>
+            <li>Se resolvieron 10 tickets de soporte hoy</li>
+            <li>Nueva insignia creada: "Maestro del Código"</li>
+            <li>
+              Se añadieron 3 nuevos recursos al curso de "Desarrollo Web
+              Avanzado"
+            </li>
+            <li>2 nuevos tutores se unieron a la plataforma</li>
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   );
 }

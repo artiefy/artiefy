@@ -1,59 +1,55 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
 } from '~/components/admin/ui/card';
 import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
 } from '~/components/admin/ui/chart';
 
 interface Estadistica {
-    categoria: string;
-    valor: number;
+  categoria: string;
+  valor: number;
 }
 
 interface EstadisticasGeneralesProps {
-    titulo: string;
-    estadisticas: Estadistica[];
+  titulo: string;
+  estadisticas: Estadistica[];
 }
 
 export function EstadisticasGenerales({
-    titulo,
-    estadisticas,
+  titulo,
+  estadisticas,
 }: EstadisticasGeneralesProps) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{titulo}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <ChartContainer
-                    config={{
-                        valor: {
-                            label: 'Valor',
-                            color: 'hsl(var(--chart-1))',
-                        },
-                    }}
-                    className="h-[300px]"
-                >
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={estadisticas}>
-                            <XAxis dataKey="categoria" />
-                            <YAxis />
-                            <ChartTooltip content={<ChartTooltipContent />} />
-                            <Bar
-                                dataKey="valor"
-                                fill="var(--color-valor)"
-                                name="Valor"
-                            />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </ChartContainer>
-            </CardContent>
-        </Card>
-    );
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{titulo}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer
+          config={{
+            valor: {
+              label: 'Valor',
+              color: 'hsl(var(--chart-1))',
+            },
+          }}
+          className="h-[300px]"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={estadisticas}>
+              <XAxis dataKey="categoria" />
+              <YAxis />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="valor" fill="var(--color-valor)" name="Valor" />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
 }

@@ -256,27 +256,6 @@ export default function CourseDetails({
         {loading ? (
           <Skeleton className="h-[500px] w-full rounded-lg" />
         ) : (
-<<<<<<< HEAD
-          <div className="overflow-hidden rounded-xl bg-white shadow-lg">
-            {/* Course Header */}
-            <div className="relative h-72 overflow-hidden">
-              <Image
-                src={
-                  course.coverImageKey
-                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey.trimEnd()}`
-                    : 'https://placehold.co/600x400/EEE/31343C?font=montserrat&text=Curso-Artiefy'
-                }
-                alt={course.title}
-                fill
-                className="object-cover"
-                priority
-                sizes="100vw"
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-                <h1 className="text-3xl font-bold text-white">
-                  {course.title}
-                </h1>
-=======
           <Card className="overflow-hidden">
             <CardHeader className="p-0">
               <AspectRatio ratio={16 / 6}>
@@ -326,7 +305,6 @@ export default function CourseDetails({
                     </span>
                   </div>
                 </div>
->>>>>>> main
               </div>
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center space-x-4">
@@ -445,12 +423,6 @@ export default function CourseDetails({
                     );
                   })}
                 </div>
-<<<<<<< HEAD
-                <div className="mt-8 flex items-center justify-between">
-                  <Button
-                    className="w-full justify-center border-white/20 bg-background text-lg font-semibold text-primary transition-colors hover:bg-background active:scale-95"
-                    onClick={handleSubscribe}
-=======
               </div>
             </CardContent>
             <CardFooter className="flex flex-col items-center justify-between space-y-4">
@@ -460,7 +432,6 @@ export default function CourseDetails({
                     onClick={handleEnroll}
                     disabled={isEnrolling}
                     className="relative inline-block cursor-pointer rounded-xl bg-gray-800 p-px font-semibold leading-6 text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
->>>>>>> main
                   >
                     <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
 

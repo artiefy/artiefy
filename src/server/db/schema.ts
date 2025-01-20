@@ -135,59 +135,6 @@ export const preferences = pgTable('preferences', {
     .notNull(),
 });
 
-<<<<<<< HEAD
-export const modalidades = pgTable('modalidades', {
-  id: serial('id').primaryKey(), // ID autoincremental de la modalidad
-  name: varchar('name', { length: 255 }).notNull(), // Nombre de la modalidad
-  description: text('description'), // Descripción de la modalidad
-});
-
-//tabla de cursos tomados
-export const coursesTaken = pgTable('courses_taken', {
-  id: serial('id').primaryKey(), // ID autoincremental del curso tomado
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(), // Relación con usuarios
-  courseId: integer('course_id')
-    .references(() => courses.id)
-    .notNull(), // Relación con cursos
-});
-
-// Tabla de lecciones
-export const lessons = pgTable('lessons', {
-  id: serial('id').primaryKey(), // ID autoincremental de la lección
-  title: varchar('title', { length: 255 }).notNull(), // Título de la lección
-  description: text('description'), // Descripción de la lección
-  duration: integer('duration').notNull(),
-  coverImageKey: text('cover_image_key').notNull(), // Clave de la imagen en S3
-  coverVideoKey: text('cover_video_key').notNull(), // Clave del video en S3
-  order: serial('order').notNull(), // Orden autoincremental de la lección en el curso
-  courseId: integer('course_id')
-    .references(() => courses.id)
-    .notNull(), // Relación con la tabla cursos
-  createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
-  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
-  porcentajecompletado: real('porcentajecompletado').default(0), // Nuevo campo de porcentaje completado
-  resourceKey: text('resource_key').notNull(), // Clave del recurso en S3
-  isLocked: boolean('is_locked').default(true),
-});
-
-// Agregamos una nueva tabla para el progreso de las lecciones
-export const lessonProgress = pgTable('lesson_progress', {
-  id: serial('id').primaryKey(),
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(),
-  lessonId: integer('lesson_id')
-    .references(() => lessons.id)
-    .notNull(),
-  progress: real('progress').default(0),
-  completed: boolean('completed').default(false),
-  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-});
-
-=======
->>>>>>> main
 // Tabla de puntajes
 export const scores = pgTable('scores', {
   id: serial('id').primaryKey(),
