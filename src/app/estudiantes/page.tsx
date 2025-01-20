@@ -31,9 +31,11 @@ interface APIResponse {
 async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
   const url = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}/api/courses`)
 
-  if (params.category) url.searchParams.append("category", params.category)
-  if (params.query) url.searchParams.append("query", params.query)
-  if (params.page) url.searchParams.append("page", params.page)
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      url.searchParams.append(key, String(value))
+    }
+  })
 
   console.log("Fetching from URL:", url.toString())
 
@@ -48,11 +50,11 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
     throw new Error(`Error al cargar los cursos: ${response.status} ${response.statusText}`)
   }
 
-  const data = await response.json()
+  const data: APIResponse = await response.json() as APIResponse
   return {
     ...data,
-    categoryId: params.category ? Number.parseInt(params.category, 10) : undefined,
-    searchTerm: params.query,
+    categoryId: data.categoryId,
+    searchTerm: data.searchTerm,
   }
 }
 
