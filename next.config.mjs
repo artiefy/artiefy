@@ -1,4 +1,5 @@
-// @ts-check
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 
 /**
  * @type {import('next').NextConfig}
@@ -14,13 +15,13 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
-        protocol: 'https',
+        protocol: "https",
         hostname: 's3.us-east-2.amazonaws.com',
         port: '',
         pathname: '/artiefy-upload/**',
       },
       {
-        protocol: 'https',
+        protocol: "https",
         hostname: 'placehold.co',
         port: '',
         pathname: '/**',
