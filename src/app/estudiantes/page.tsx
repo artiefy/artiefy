@@ -13,7 +13,7 @@ interface SearchParams {
 }
 
 interface Props {
-  searchParams: Promise<SearchParams>
+  searchParams: SearchParams
 }
 
 interface APIResponse {
@@ -27,33 +27,22 @@ interface APIResponse {
 }
 
 async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
-  const searchParams = new URLSearchParams()
-
-  if (params.page) searchParams.set("page", params.page)
-  if (params.category) searchParams.set("category", params.category)
-  if (params.query) searchParams.set("query", params.query)
-
+  const searchParams = new URLSearchParams(params as Record<string, string>)
   const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/courses?${searchParams.toString()}`
-  console.log("Fetching from URL:", url)
 
-  const response = await fetch(url, {
-    next: { revalidate: 3600 }, // Cache for 1 hour
-  })
+  const res = await fetch(url, { next: { revalidate: 3600 } }) // Revalidate every hour
 
-  if (!response.ok) {
-    console.error("API response not OK:", response.status, response.statusText)
-    const text = await response.text()
-    console.error("Response body:", text)
-    throw new Error(`Error al cargar los cursos: ${response.status} ${response.statusText}`)
+  if (!res.ok) {
+    throw new Error("Failed to fetch course data")
   }
 
-  return response.json() as Promise<APIResponse>
+  return res.json() as Promise<APIResponse>
 }
+
 export default async function CoursesPage({ searchParams }: Props) {
   try {
-    const params = await searchParams
-    const data = await fetchCourseData(params)
-    const categoryId = params.category ? Number.parseInt(params.category, 10) : undefined
+    const data = await fetchCourseData(searchParams)
+    const categoryId = searchParams.category ? Number.parseInt(searchParams.category, 10) : undefined
 
     return (
       <Suspense fallback={<LoadingCourses />}>
@@ -71,7 +60,7 @@ export default async function CoursesPage({ searchParams }: Props) {
             totalPages={data.totalPages}
             totalCourses={data.total}
             category={categoryId?.toString()}
-            searchTerm={params.query}
+            searchTerm={searchParams.query}
           />
         </StudentDashboard>
       </Suspense>
