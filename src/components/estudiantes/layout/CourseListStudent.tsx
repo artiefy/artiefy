@@ -35,10 +35,18 @@ export default async function CourseListStudent({
         {
           await Promise.all(
             courses.map(async (course) => {
-              const imageUrl = course.coverImageKey
-                ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-                : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
-              const blurDataURL = await getImagePlaceholder(imageUrl)
+              let imageUrl;
+              let blurDataURL;
+              try {
+                imageUrl = course.coverImageKey
+                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
+                  : "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT";
+                blurDataURL = await getImagePlaceholder(imageUrl);
+              } catch (error) {
+                console.error('Error fetching image from AWS S3:', error);
+                imageUrl = "https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT";
+                blurDataURL = undefined;
+              }
 
               return (
                 <Card
@@ -50,7 +58,7 @@ export default async function CourseListStudent({
                       <AspectRatio ratio={16 / 9}>
                         <div className="relative size-full">
                           <Image
-                            src={imageUrl || "/placeholder.svg"}
+                            src={imageUrl}
                             alt={course.title || "Imagen del curso"}
                             className="rounded-lg object-cover transition-opacity duration-500"
                             fill
@@ -104,7 +112,7 @@ export default async function CourseListStudent({
                   </CardFooter>
                 </Card>
               )
-            }),
+            })
           )
         }
       </div>
@@ -119,4 +127,3 @@ export default async function CourseListStudent({
     </>
   )
 }
-

@@ -23,19 +23,35 @@ export interface Course {
   coverImageKey: string | null;
   categoryid: number;
   instructor: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string | number | Date;
+  updatedAt: string | number | Date;
   creatorId: string;
   rating: number | null;
   modalidadesid: number;
   dificultadid: number;
   totalStudents: number;
-  lessons: Lesson[];
+  lessons: {
+    id: number;
+    title: string;
+    duration: number;
+    description: string | null;
+    coverVideoKey: string;
+    resourceKey: string;
+    porcentajecompletado: number;
+    order: number;
+    isLocked: boolean;
+    isCompleted: boolean;
+  }[];
   // Relaciones
-  category?: Category;
-  modalidad?: Modalidad;
+  category?: {
+    id: number;
+    name: string;
+  };
+  modalidad?: {
+    name: string;
+  };
   dificultad?: Dificultad;
-  enrollments?: Enrollment[];
+  enrollments?: Enrollment[] | { length: number };
   creator?: User;
 }
 
@@ -136,6 +152,7 @@ export interface Enrollment {
   completed: boolean | null;
 }
 
+
 export interface Project {
   id: number;
   name: string;
@@ -180,6 +197,7 @@ export interface  GetCoursesParams {
   categoryId?: number;
   searchTerm?: string;
 }
+
 
 // Tipos adicionales para manejar relaciones many-to-many si es necesario
 
