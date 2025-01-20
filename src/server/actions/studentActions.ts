@@ -43,6 +43,72 @@ interface CourseFilters {
   limit?: number
 }
 
+interface GetCoursesResponse {
+  courses: Course[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
+}
+
+export const getAllCourses = cache(async (): Promise<Course[]> => {
+  try {
+    const coursesData = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        description: courses.description,
+        coverImageKey: courses.coverImageKey,
+        categoryid: courses.categoryid,
+        instructor: courses.instructor,
+        createdAt: courses.createdAt,
+        updatedAt: courses.updatedAt,
+        creatorId: courses.creatorId,
+        rating: courses.rating,
+        modalidadesid: courses.modalidadesid,
+        dificultadid: courses.dificultadid,
+        categoryName: categories.name,
+        categoryDescription: categories.description,
+        modalidadName: modalidades.name,
+        dificultadName: dificultad.name,
+        isFeatured: categories.is_featured,
+      })
+      .from(courses)
+      .leftJoin(categories, eq(courses.categoryid, categories.id))
+      .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+      .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
+      .execute()
+
+    return coursesData.map((course) => ({
+      id: course.id,
+      title: course.title ?? "",
+      description: course.description ?? "",
+      coverImageKey: course.coverImageKey ?? "",
+      categoryid: course.categoryid,
+      instructor: course.instructor ?? "",
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt,
+      creatorId: course.creatorId,
+      rating: Number(course.rating ?? 0),
+      modalidadesid: course.modalidadesid,
+      dificultadid: course.dificultadid,
+      totalStudents: 0, // Este dato no se obtiene en esta consulta
+      lessons: [],
+      category: {
+        id: course.categoryid,
+        name: course.categoryName ?? "",
+        description: course.categoryDescription ?? "",
+      },
+      modalidad: { name: course.modalidadName ?? "" },
+      dificultad: { name: course.dificultadName ?? "" },
+      isFeatured: course.isFeatured ?? false,
+    }))
+  } catch (error) {
+    console.error("Error fetching all courses:", error)
+    throw new Error("Failed to fetch all courses: " + (error instanceof Error ? error.message : String(error)))
+  }
+})
+
 export const getPaginatedCourses = cache(async (filters: CourseFilters = {}): Promise<GetCoursesResponse> => {
   try {
     const { pagenum = 1, categoryId, searchTerm, onlyFeatured, limit = ITEMS_PER_PAGE } = filters
@@ -220,7 +286,6 @@ export const getFeaturedCategories = cache(async (limit = 6): Promise<Category[]
     throw new Error("Failed to fetch featured categories: " + (error instanceof Error ? error.message : String(error)))
   }
 })
-
 
 // Obtener un curso específico por ID
 export async function getCourseById(courseId: number): Promise<Course | null> {
