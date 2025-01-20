@@ -24,25 +24,42 @@ interface APIResponse {
   page: number
   pageSize: number
   totalPages: number
+  categoryId?: number
+  searchTerm?: string
 }
 
 async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
-  const searchParams = new URLSearchParams(params as Record<string, string>)
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/courses?${searchParams.toString()}`
+  const url = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}/api/courses`)
 
-  const res = await fetch(url, { next: { revalidate: 3600 } }) // Revalidate every hour
+  if (params.category) url.searchParams.append("category", params.category)
+  if (params.query) url.searchParams.append("query", params.query)
+  if (params.page) url.searchParams.append("page", params.page)
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch course data")
+  console.log("Fetching from URL:", url.toString())
+
+  const response = await fetch(url, {
+    next: { revalidate: 3600 }, // Cache for 1 hour
+  })
+
+  if (!response.ok) {
+    console.error("API response not OK:", response.status, response.statusText)
+    const text = await response.text()
+    console.error("Response body:", text)
+    throw new Error(`Error al cargar los cursos: ${response.status} ${response.statusText}`)
   }
 
-  return res.json() as Promise<APIResponse>
+  const data = await response.json()
+  return {
+    ...data,
+    categoryId: params.category ? Number.parseInt(params.category, 10) : undefined,
+    searchTerm: params.query,
+  }
 }
 
 export default async function CoursesPage({ searchParams }: Props) {
   try {
     const data = await fetchCourseData(searchParams)
-    const categoryId = searchParams.category ? Number.parseInt(searchParams.category, 10) : undefined
+    console.log("Course data fetched successfully")
 
     return (
       <Suspense fallback={<LoadingCourses />}>
@@ -59,8 +76,8 @@ export default async function CoursesPage({ searchParams }: Props) {
             currentPage={data.page}
             totalPages={data.totalPages}
             totalCourses={data.total}
-            category={categoryId?.toString()}
-            searchTerm={searchParams.query}
+            category={data.categoryId?.toString()}
+            searchTerm={data.searchTerm}
           />
         </StudentDashboard>
       </Suspense>
