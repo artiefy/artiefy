@@ -10,6 +10,11 @@ Instala depcheck globalmente:
 
 - npm install -g depcheck
 - depcheck
+- rm -rf .next/cache // Eliminar la caché de Next.js
+- rm -rf node_modules // Eliminar la carpeta node_modules
+- rm package-lock.json // Eliminar el archivo package-lock
+  - npm i // Reinstalar las dependencias:
+- npm cache clean --force // Limpiar la caché de npm
 -------------------------------------------------------------------
 ### **Comandos Generales de TypeScript y ESlint**
 7. `ESlint: Fix All Auto-Fixable Problems`: Corrige todos los problemas que se puedan solucionar automáticamente.

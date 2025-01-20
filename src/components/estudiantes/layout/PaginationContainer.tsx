@@ -8,7 +8,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "~/components/estudiantes/ui/pagination.tsx"
+} from "~/components/estudiantes/ui/pagination"
 import { useRouter, useSearchParams } from "next/navigation"
 import NProgress from 'nprogress'
 
