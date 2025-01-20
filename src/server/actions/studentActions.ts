@@ -1,6 +1,6 @@
 "use server"
 
-import { eq, and, or, like, sql, inArray, desc } from "drizzle-orm"
+import { eq, and, sql,  desc } from "drizzle-orm"
 import { db } from "~/server/db"
 import {
   courses,
@@ -29,27 +29,10 @@ import type {
   ProjectTaken,
   Activity,
   Enrollment,
-  GetCoursesResponse,
 } from "~/types"
 import { currentUser } from "@clerk/nextjs/server"
 
-const ITEMS_PER_PAGE = 9
 
-interface CourseFilters {
-  pagenum?: number
-  categoryId?: number
-  searchTerm?: string
-  onlyFeatured?: boolean
-  limit?: number
-}
-
-interface GetCoursesResponse {
-  courses: Course[]
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-}
 
 export const getAllCourses = cache(async (): Promise<Course[]> => {
   try {
@@ -109,133 +92,7 @@ export const getAllCourses = cache(async (): Promise<Course[]> => {
   }
 })
 
-export const getPaginatedCourses = cache(async (filters: CourseFilters = {}): Promise<GetCoursesResponse> => {
-  try {
-    const { pagenum = 1, categoryId, searchTerm, onlyFeatured, limit = ITEMS_PER_PAGE } = filters
 
-    const baseQuery = db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        description: courses.description,
-        coverImageKey: courses.coverImageKey,
-        categoryid: courses.categoryid,
-        instructor: courses.instructor,
-        createdAt: courses.createdAt,
-        updatedAt: courses.updatedAt,
-        creatorId: courses.creatorId,
-        rating: courses.rating,
-        modalidadesid: courses.modalidadesid,
-        dificultadid: courses.dificultadid,
-        categoryName: categories.name,
-        categoryDescription: categories.description,
-        modalidadName: modalidades.name,
-        dificultadName: dificultad.name,
-        isFeatured: categories.is_featured,
-      })
-      .from(courses)
-      .leftJoin(categories, eq(courses.categoryid, categories.id))
-      .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-      .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
-
-    const whereConditions = []
-
-    if (categoryId !== undefined) {
-      whereConditions.push(eq(courses.categoryid, categoryId))
-    }
-
-    if (searchTerm) {
-      whereConditions.push(
-        or(
-          like(courses.title, `%${searchTerm}%`),
-          like(courses.description, `%${searchTerm}%`),
-          like(categories.name, `%${searchTerm}%`),
-          like(modalidades.name, `%${searchTerm}%`),
-          like(dificultad.name, `%${searchTerm}%`),
-        ),
-      )
-    }
-
-    if (onlyFeatured) {
-      whereConditions.push(eq(categories.is_featured, true))
-    }
-
-    let finalQuery = baseQuery
-
-    if (whereConditions.length > 0) {
-      finalQuery = finalQuery.where(and(...whereConditions))
-    }
-
-    let totalCoursesQuery = db
-      .select({ count: sql<number>`count(*)` })
-      .from(courses)
-      .leftJoin(categories, eq(courses.categoryid, categories.id))
-      .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-      .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
-
-    if (whereConditions.length > 0) {
-      totalCoursesQuery = totalCoursesQuery.where(and(...whereConditions))
-    }
-
-    const totalCoursesResult = await totalCoursesQuery.execute()
-    const totalCourses = Number(totalCoursesResult[0]?.count ?? 0)
-
-    const totalPages = Math.ceil(totalCourses / limit)
-
-    const offset = (pagenum - 1) * limit
-    const paginatedQuery = finalQuery.limit(limit).offset(offset)
-
-    const coursesData = await paginatedQuery.execute()
-
-    const courseIds = coursesData.map((course) => course.id)
-    const enrollmentCounts = await db
-      .select({
-        courseId: enrollments.courseId,
-        count: sql<number>`count(*)`,
-      })
-      .from(enrollments)
-      .where(inArray(enrollments.courseId, courseIds))
-      .groupBy(enrollments.courseId)
-
-    const enrollmentCountMap = new Map(enrollmentCounts.map((e) => [e.courseId, Number(e.count ?? 0)]))
-
-    const formattedCourses: Course[] = coursesData.map((course) => ({
-      id: course.id,
-      title: course.title ?? "",
-      description: course.description ?? "",
-      coverImageKey: course.coverImageKey ?? "",
-      categoryid: course.categoryid,
-      instructor: course.instructor ?? "",
-      createdAt: course.createdAt,
-      updatedAt: course.updatedAt,
-      creatorId: course.creatorId,
-      rating: Number(course.rating ?? 0),
-      modalidadesid: course.modalidadesid,
-      dificultadid: course.dificultadid,
-      totalStudents: enrollmentCountMap.get(course.id) ?? 0,
-      lessons: [],
-      category: {
-        id: course.categoryid,
-        name: course.categoryName ?? "",
-        description: course.categoryDescription ?? "",
-      },
-      modalidad: { name: course.modalidadName ?? "" },
-      dificultad: { name: course.dificultadName ?? "" },
-      isFeatured: course.isFeatured ?? false,
-    }))
-
-    return {
-      courses: formattedCourses,
-      total: totalCourses,
-      page: pagenum,
-      pageSize: limit,
-      totalPages,
-    }
-  } catch (error) {
-    console.error("Error fetching courses:", error)
-    throw new Error("Failed to fetch courses: " + (error instanceof Error ? error.message : String(error)))
-  }
-})
 
 export const getAllCategories = cache(async (): Promise<Category[]> => {
   try {

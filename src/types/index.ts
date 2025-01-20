@@ -62,7 +62,7 @@ export interface Category {
   courses?: { length: number };
   // Relaciones
   preferences?: Preference[];
-  is_featured?: boolean;
+  is_featured: boolean | null;
 }
 
 export interface Preference {
@@ -75,6 +75,8 @@ export interface Preference {
   user?: User;
   category?: Category;
 }
+
+
 
 export interface CourseTaken {
   id: number;
