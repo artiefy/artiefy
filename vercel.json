@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/courses/**/*.ts": {
+    "app/api/courses/**/*.ts": {
       "maxDuration": 60
     },
     "app/estudiantes/**/*": {
