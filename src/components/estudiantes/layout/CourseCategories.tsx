@@ -71,7 +71,7 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
           >
             {loadingCategory === "all" ? (
               <div className="flex flex-col items-center justify-center h-full">
-                <Icons.spinner className="size-8 animate-spin text-background" />
+                <Icons.spinner className="size-10" />
                 <p className="mt-2 text-sm text-background">Buscando Cursos...</p>
               </div>
             ) : (
@@ -83,28 +83,28 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
               </>
             )}
           </div>
-          {featuredCategories?.map((category) => (
+            {featuredCategories?.map((category: Category) => (
             <div
               key={category.id}
               className="flex cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-6 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 aspect-square"
               onClick={() => handleCategorySelect(category.id.toString())}
             >
               {loadingCategory === category.id.toString() ? (
-                <div className="flex flex-col items-center justify-center h-full">
-                  <Icons.spinner className="size-10 animate-spin text-background" />
-                  <p className="mt-2 text-sm text-background">Buscando Cursos...</p>
-                </div>
+              <div className="flex flex-col items-center justify-center h-full">
+                <Icons.spinner className="size-10" />
+                <p className="mt-2 text-sm text-background">Buscando Cursos...</p>
+              </div>
               ) : (
-                <>
-                  <div className="mb-4 text-3xl text-blue-600">{categoryIcons[category.name] ?? <FiCode />}</div>
-                  <h3 className="text-lg font-semibold text-background">{category.name}</h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    {`${category.courses?.length ?? 0} curso${category.courses?.length !== 1 ? "s" : ""}`}
-                  </p>
-                </>
+              <>
+                <div className="mb-4 text-3xl text-blue-600">{categoryIcons[category.name] ?? <FiCode />}</div>
+                <h3 className="text-lg font-semibold text-background">{category.name}</h3>
+                <p className="mt-2 text-sm text-gray-500">
+                {`${category.courses?.length ?? 0} curso${category.courses?.length !== 1 ? "s" : ""}`}
+                </p>
+              </>
               )}
             </div>
-          ))}
+            ))}
         </div>
       </div>
     </section>
