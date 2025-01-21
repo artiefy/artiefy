@@ -5,7 +5,6 @@ import { useAuth } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
     FaCalendar,
     FaChevronDown,
@@ -63,7 +62,6 @@ export default function CourseDetails({
     const [totalStudents, setTotalStudents] = useState(course.totalStudents);
     const [isEnrolled, setIsEnrolled] = useState(false);
     const { isSignedIn, userId } = useAuth();
-    const router = useRouter();
     const { toast } = useToast();
 
     useEffect(() => {
@@ -133,8 +131,8 @@ export default function CourseDetails({
                     });
                 }
                 toast({
-                    title: 'Sucripción exitosa',
-                    description: '¡Te has Inscripto exitosamente en el curso!',
+                    title: 'Suscripción exitosa',
+                    description: '¡Te has Inscrito exitosamente en el curso!',
                     variant: 'default',
                 });
             } else {
@@ -164,7 +162,6 @@ export default function CourseDetails({
 
     const handleUnenroll = async () => {
         if (!isSignedIn) {
-            router.push('/sign-in');
             return;
         }
 
@@ -174,12 +171,19 @@ export default function CourseDetails({
             await unenrollFromCourse(course.id);
             setTotalStudents((prevTotal) => prevTotal - 1);
             setIsEnrolled(false);
+            const updatedCourse = await getCourseById(course.id);
+            if (updatedCourse) {
+                setCourse({
+                    ...updatedCourse,
+                    lessons: updatedCourse.lessons ?? [],
+                });
+            }
             toast({
-                title: 'Cancelar Suscripcion',
-                description: 'Se Cancelo El Curso Correctamente',
+                title: 'Cancelar Suscripción',
+                description: 'Se Canceló El Curso Correctamente',
                 variant: 'default',
             });
-        } catch (error) {
+        } catch (error: unknown) {
             if (error instanceof Error) {
                 setEnrollmentError(error.message);
                 toast({
@@ -471,7 +475,7 @@ export default function CourseDetails({
                         <div className="flex">
                             <div className="ml-3">
                                 <h3 className="text-sm font-medium text-red-800">
-                                    Error de {isEnrolled ? 'desuscripción' : 'suscripcion'}
+                                    Error de {isEnrolled ? 'desuscripción' : 'suscripción'}
                                 </h3>
                                 <div className="mt-2 text-sm text-red-700">
                                     <p>{enrollmentError}</p>

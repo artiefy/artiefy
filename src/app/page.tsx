@@ -88,7 +88,7 @@ export default function Home() {
 											{loading ? (
 												<Icons.spinner
 													className="animate-spin"
-													style={{ width: '50px', height: '50px' }}
+													style={{ width: '35px', height: '35px' }}
 												/>
 											) : (
 												<>

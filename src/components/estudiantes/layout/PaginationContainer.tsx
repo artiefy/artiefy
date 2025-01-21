@@ -11,6 +11,7 @@ import {
 } from "~/components/estudiantes/ui/pagination"
 import { useRouter, useSearchParams } from "next/navigation"
 import NProgress from 'nprogress'
+import { useEffect } from "react"
 
 interface Props {
   totalPages: number
@@ -32,6 +33,10 @@ const PaginationContainer = ({
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  useEffect(() => {
+    NProgress.done()
+  }, [searchParams])
+
   if (totalPages <= 1) return null
 
   const handlePageChange = (page: number) => {
@@ -50,8 +55,7 @@ const PaginationContainer = ({
     const queryString = params.toString()
     const newUrl = page === 1 && !category && !searchTerm ? route : `${route}?${queryString}`
 
-    router.replace(newUrl, { scroll: false })
-    NProgress.done()
+    router.push(newUrl, { scroll: false })
   }
 
   const startItem = (currentPage - 1) * 9 + 1

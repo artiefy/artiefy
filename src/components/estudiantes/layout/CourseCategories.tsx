@@ -71,7 +71,7 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
           >
             {loadingCategory === "all" ? (
               <div className="flex flex-col items-center justify-center h-full">
-                <Icons.spinner className="size-10" />
+                <Icons.spinner className="size-10 text-background" />
                 <p className="mt-2 text-sm text-background">Buscando Cursos...</p>
               </div>
             ) : (
@@ -91,7 +91,7 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
             >
               {loadingCategory === category.id.toString() ? (
               <div className="flex flex-col items-center justify-center h-full">
-                <Icons.spinner className="size-10" />
+                <Icons.spinner className="size-10 text-background" />
                 <p className="mt-2 text-sm text-background">Buscando Cursos...</p>
               </div>
               ) : (

@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FaCheckCircle, FaLock, FaClock, FaRobot } from 'react-icons/fa';
+import NProgress from 'nprogress';
 import ChatBot from '~/components/estudiantes/layout/ChatBot';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -47,19 +48,14 @@ export default function LessonDetails({
     course: Course;
 }) {
     const [isChatOpen, setIsChatOpen] = useState(false);
-    const [selectedLessonId, setSelectedLessonId] = useState<number | null>(
-        lesson.id
-    );
+    const [selectedLessonId, setSelectedLessonId] = useState<number | null>(lesson.id);
     const [progress, setProgress] = useState(lesson.porcentajecompletado);
-    const [isVideoCompleted, setIsVideoCompleted] = useState(
-        lesson.porcentajecompletado === 100
-    );
-    const [isActivityCompleted, setIsActivityCompleted] = useState(
-        activity?.isCompleted ?? false
-    );
+    const [isVideoCompleted, setIsVideoCompleted] = useState(lesson.porcentajecompletado === 100);
+    const [isActivityCompleted, setIsActivityCompleted] = useState(activity?.isCompleted ?? false);
     const [isCompletingActivity, setIsCompletingActivity] = useState(false);
     const [lessonsState, setLessonsState] = useState<Lesson[]>([]);
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
 
     useEffect(() => {
@@ -70,10 +66,15 @@ export default function LessonDetails({
 
     useEffect(() => {
         if (selectedLessonId !== null && selectedLessonId !== lesson.id) {
+            NProgress.start();
             setProgress(0); // Reiniciar la barra de progreso
             router.push(`/estudiantes/clases/${selectedLessonId}`);
         }
     }, [selectedLessonId, lesson.id, router]);
+
+    useEffect(() => {
+        NProgress.done();
+    }, [searchParams]);
 
     useEffect(() => {
         // Ensure Lesson 1 is always active and unlocked
@@ -81,11 +82,11 @@ export default function LessonDetails({
             prevLessons.map((l) =>
                 l.id === 1
                     ? {
-                            ...l,
-                            isLocked: false,
-                            porcentajecompletado: 0,
-                            isCompleted: false,
-                        }
+                          ...l,
+                          isLocked: false,
+                          porcentajecompletado: 0,
+                          isCompleted: false,
+                      }
                     : l
             )
         );
@@ -119,8 +120,7 @@ export default function LessonDetails({
         if (lesson.isLocked) {
             toast({
                 title: 'Lección bloqueada',
-                description:
-                    'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
+                description: 'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
                 variant: 'destructive',
             });
 
@@ -210,8 +210,8 @@ export default function LessonDetails({
                         l.id === result.nextLessonId
                             ? { ...l, isLocked: false, porcentajecompletado: 0 }
                             : l.id === lesson.id
-                                ? { ...l, porcentajecompletado: 100, isCompleted: true }
-                                : l
+                            ? { ...l, porcentajecompletado: 100, isCompleted: true }
+                            : l
                     )
                 );
 
@@ -237,9 +237,7 @@ export default function LessonDetails({
             <div className="flex h-screen px-14">
                 {/* Left Sidebar */}
                 <div className="w-80 bg-background pr-8 shadow-lg">
-                    <h2 className="mb-4 text-center text-3xl font-bold text-primary">
-                        Clases
-                    </h2>
+                    <h2 className="mb-4 text-center text-3xl font-bold text-primary">Clases</h2>
                     {lessonsState.map((lessonItem) => (
                         <div
                             key={lessonItem.id}
@@ -256,11 +254,8 @@ export default function LessonDetails({
                             }}
                         >
                             <div className="mb-2 flex items-center justify-between">
-                                <h3 className="font-semibold text-background">
-                                    {lessonItem.title}
-                                </h3>
-                                {lessonItem.porcentajecompletado === 100 ||
-                                lessonItem.id === 1 ? (
+                                <h3 className="font-semibold text-background">{lessonItem.title}</h3>
+                                {lessonItem.porcentajecompletado === 100 || lessonItem.id === 1 ? (
                                     <FaCheckCircle className="text-green-500" />
                                 ) : lessonItem.isLocked ? (
                                     <FaLock className="text-gray-400" />
@@ -268,13 +263,8 @@ export default function LessonDetails({
                                     <FaClock className="text-gray-400" />
                                 )}
                             </div>
-                            <p className="mb-2 text-sm text-background">
-                                {course.instructor}
-                            </p>
-                            <Progress
-                                value={lessonItem.porcentajecompletado}
-                                className="mt-2 h-2 w-full"
-                            />
+                            <p className="mb-2 text-sm text-background">{course.instructor}</p>
+                            <Progress value={lessonItem.porcentajecompletado} className="mt-2 h-2 w-full" />
                             <div className="mt-2 flex justify-between text-xs text-background">
                                 <span>{lessonItem.duration} mins</span>
                                 <span>{lessonItem.porcentajecompletado}%</span>
@@ -298,16 +288,10 @@ export default function LessonDetails({
 
                         {/* Class Info */}
                         <div className="mb-6 rounded-lg bg-white p-6 shadow-sm">
-                            <h1 className="mb-4 text-2xl font-bold text-background">
-                                {lesson.title}
-                            </h1>
+                            <h1 className="mb-4 text-2xl font-bold text-background">{lesson.title}</h1>
                             <p className="text-background">{lesson.description}</p>
-                            <p className="mt-4 text-background">
-                                Resource Key: {lesson.resourceKey}
-                            </p>
-                            <p className="mt-4 text-background">
-                                Progreso De La Clase: {progress}%
-                            </p>
+                            <p className="mt-4 text-background">Resource Key: {lesson.resourceKey}</p>
+                            <p className="mt-4 text-background">Progreso De La Clase: {progress}%</p>
                             <Progress value={progress} className="mt-2 h-2 w-full" />
                         </div>
                     </div>
@@ -315,19 +299,13 @@ export default function LessonDetails({
 
                 {/* Right Sidebar - Activity */}
                 <div className="w-72 bg-background pl-8 shadow-lg">
-                    <h2 className="mb-4 text-center text-3xl font-bold text-primary">
-                        Actividades
-                    </h2>
+                    <h2 className="mb-4 text-center text-3xl font-bold text-primary">Actividades</h2>
                     {activity ? (
                         <div className="mb-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="font-semibold text-background">
-                                        {activity.name}
-                                    </h3>
-                                    <span className="text-xs uppercase text-background">
-                                        {activity.tipo}
-                                    </span>
+                                    <h3 className="font-semibold text-background">{activity.name}</h3>
+                                    <span className="text-xs uppercase text-background">{activity.tipo}</span>
                                 </div>
                                 {isActivityCompleted ? (
                                     <FaCheckCircle className="text-green-500" />
@@ -335,22 +313,16 @@ export default function LessonDetails({
                                     <FaLock className="text-gray-400" />
                                 )}
                             </div>
-                            <p className="mt-2 text-sm text-background">
-                                {activity.description}
-                            </p>
+                            <p className="mt-2 text-sm text-background">{activity.description}</p>
                             <Button
                                 onClick={async () => {
                                     await handleActivityCompletion();
                                 }}
-                                disabled={
-                                    !isVideoCompleted ||
-                                    isActivityCompleted ||
-                                    isCompletingActivity
-                                }
-                className="mt-4 w-full rounded-lg bg-secondary px-4 py-2 text-white hover:bg-[#0099B3] active:scale-95"
-                >
+                                disabled={!isVideoCompleted || isActivityCompleted || isCompletingActivity}
+                                className="mt-4 w-full rounded-lg bg-secondary px-4 py-2 text-white hover:bg-[#0099B3] active:scale-95"
+                            >
                                 {isCompletingActivity ? (
-                                    <Icons.spinner className="mr-2 text-background animate-spin"/>
+                                    <Icons.spinner className="mr-2 text-background animate-spin" />
                                 ) : isActivityCompleted ? (
                                     'Actividad Completada'
                                 ) : isVideoCompleted ? (
@@ -361,9 +333,7 @@ export default function LessonDetails({
                             </Button>
                         </div>
                     ) : (
-                        <p className="text-background">
-                            No hay actividades para esta lección.
-                        </p>
+                        <p className="text-background">No hay actividades para esta lección.</p>
                     )}
                 </div>
 

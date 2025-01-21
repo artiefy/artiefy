@@ -13,7 +13,7 @@ interface SearchParams {
 }
 
 interface Props {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }
 
 interface APIResponse {
@@ -60,7 +60,8 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 
 export default async function CoursesPage({ searchParams }: Props) {
   try {
-    const data = await fetchCourseData(searchParams)
+    const params = await searchParams
+    const data = await fetchCourseData(params)
     console.log("Course data fetched successfully")
 
     return (
@@ -96,4 +97,3 @@ export default async function CoursesPage({ searchParams }: Props) {
     )
   }
 }
-
