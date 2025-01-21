@@ -7,6 +7,7 @@ import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import VideoPlayer from '~/components/estudiantes/layout/VideoPlayer';
 import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
 import { useToast } from '~/hooks/use-toast';
 import {
@@ -46,10 +47,17 @@ export default function LessonDetails({
     course: Course;
 }) {
     const [isChatOpen, setIsChatOpen] = useState(false);
-    const [selectedLessonId, setSelectedLessonId] = useState<number | null>(lesson.id);
+    const [selectedLessonId, setSelectedLessonId] = useState<number | null>(
+        lesson.id
+    );
     const [progress, setProgress] = useState(lesson.porcentajecompletado);
-    const [isVideoCompleted, setIsVideoCompleted] = useState(lesson.porcentajecompletado === 100);
-    const [isActivityCompleted, setIsActivityCompleted] = useState(activity?.isCompleted ?? false);
+    const [isVideoCompleted, setIsVideoCompleted] = useState(
+        lesson.porcentajecompletado === 100
+    );
+    const [isActivityCompleted, setIsActivityCompleted] = useState(
+        activity?.isCompleted ?? false
+    );
+    const [isCompletingActivity, setIsCompletingActivity] = useState(false);
     const [lessonsState, setLessonsState] = useState<Lesson[]>([]);
     const router = useRouter();
     const { toast } = useToast();
@@ -62,6 +70,7 @@ export default function LessonDetails({
 
     useEffect(() => {
         if (selectedLessonId !== null && selectedLessonId !== lesson.id) {
+            setProgress(0); // Reiniciar la barra de progreso
             router.push(`/estudiantes/clases/${selectedLessonId}`);
         }
     }, [selectedLessonId, lesson.id, router]);
@@ -70,7 +79,14 @@ export default function LessonDetails({
         // Ensure Lesson 1 is always active and unlocked
         setLessonsState((prevLessons) =>
             prevLessons.map((l) =>
-                l.id === 1 ? { ...l, isLocked: false, porcentajecompletado: 0, isCompleted: false } : l
+                l.id === 1
+                    ? {
+                            ...l,
+                            isLocked: false,
+                            porcentajecompletado: 0,
+                            isCompleted: false,
+                        }
+                    : l
             )
         );
     }, []);
@@ -101,12 +117,20 @@ export default function LessonDetails({
     useEffect(() => {
         // Redirigir si la lección está bloqueada
         if (lesson.isLocked) {
-            router.push('/estudiantes');
             toast({
                 title: 'Lección bloqueada',
-                description: 'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
+                description:
+                    'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
                 variant: 'destructive',
             });
+
+            // Esperar 3 segundos antes de redirigir
+            const timeoutId = setTimeout(() => {
+                router.push('/estudiantes');
+            }, 3000);
+
+            // Limpiar el timeout si el componente se desmonta antes de que se complete el tiempo
+            return () => clearTimeout(timeoutId);
         }
     }, [lesson.isLocked, router, toast]);
 
@@ -117,7 +141,9 @@ export default function LessonDetails({
             await updateLessonProgress(lesson.id, 100);
             setLessonsState((prevLessons) =>
                 prevLessons.map((l) =>
-                    l.id === lesson.id ? { ...l, porcentajecompletado: 100, isCompleted: true } : l
+                    l.id === lesson.id
+                        ? { ...l, porcentajecompletado: 100, isCompleted: true }
+                        : l
                 )
             );
             toast({
@@ -157,6 +183,8 @@ export default function LessonDetails({
     const handleActivityCompletion = async () => {
         if (!activity) return;
 
+        setIsCompletingActivity(true);
+
         try {
             await completeActivity(activity.id);
             setIsActivityCompleted(true);
@@ -187,11 +215,9 @@ export default function LessonDetails({
                     )
                 );
 
-                // Redirigir a la clase 2 si la clase 1 y la actividad 1 están completadas
-                if (lesson.id === 1 && result.nextLessonId === 2) {
-                    router.push(`/estudiantes/clases/2`);
-                    setSelectedLessonId(2);
-                }
+                // Redirigir a la siguiente clase
+                setProgress(0); // Reiniciar la barra de progreso
+                router.push(`/estudiantes/clases/${result.nextLessonId}`);
             }
         } catch (error) {
             console.error('Error al completar la actividad:', error);
@@ -200,6 +226,8 @@ export default function LessonDetails({
                 description: 'No se pudo completar la actividad.',
                 variant: 'destructive',
             });
+        } finally {
+            setIsCompletingActivity(false);
         }
     };
 
@@ -219,10 +247,13 @@ export default function LessonDetails({
                                 lessonItem.id === selectedLessonId
                                     ? 'border-l-8 border-blue-500 bg-blue-50'
                                     : 'bg-gray-50'
-                            } ${lessonItem.isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            onClick={() =>
-                                !lessonItem.isLocked && setSelectedLessonId(lessonItem.id)
-                            }
+                            } ${lessonItem.isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                            onClick={() => {
+                                if (!lessonItem.isLocked) {
+                                    setProgress(0); // Reiniciar la barra de progreso
+                                    setSelectedLessonId(lessonItem.id);
+                                }
+                            }}
                         >
                             <div className="mb-2 flex items-center justify-between">
                                 <h3 className="font-semibold text-background">
@@ -240,7 +271,10 @@ export default function LessonDetails({
                             <p className="mb-2 text-sm text-background">
                                 {course.instructor}
                             </p>
-                            <Progress value={lessonItem.porcentajecompletado} className="mt-2 h-2 w-full" />
+                            <Progress
+                                value={lessonItem.porcentajecompletado}
+                                className="mt-2 h-2 w-full"
+                            />
                             <div className="mt-2 flex justify-between text-xs text-background">
                                 <span>{lessonItem.duration} mins</span>
                                 <span>{lessonItem.porcentajecompletado}%</span>
@@ -308,14 +342,22 @@ export default function LessonDetails({
                                 onClick={async () => {
                                     await handleActivityCompletion();
                                 }}
-                                disabled={!isVideoCompleted || isActivityCompleted}
-                                className="mt-4 w-full rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-                            >
-                                {isActivityCompleted
-                                    ? 'Actividad Completada'
-                                    : isVideoCompleted
-                                        ? 'Completar Actividad'
-                                        : 'Tomar la clase para desbloquear'}
+                                disabled={
+                                    !isVideoCompleted ||
+                                    isActivityCompleted ||
+                                    isCompletingActivity
+                                }
+                className="mt-4 w-full rounded-lg bg-secondary px-4 py-2 text-white hover:bg-[#0099B3] active:scale-95"
+                >
+                                {isCompletingActivity ? (
+                                    <Icons.spinner className="mr-2 text-background animate-spin"/>
+                                ) : isActivityCompleted ? (
+                                    'Actividad Completada'
+                                ) : isVideoCompleted ? (
+                                    'Completar Actividad'
+                                ) : (
+                                    'Tomar clase para desbloquear'
+                                )}
                             </Button>
                         </div>
                     ) : (

@@ -55,7 +55,7 @@ export default function Home() {
 										<Link href={dashboardRoute}>
 											<div className="flex w-full items-center justify-center">
 												{loading ? (
-													<Icons.spinner2
+													<Icons.spinner
 														className="animate-spin"
 														style={{ width: '35px', height: '35px' }}
 													/>

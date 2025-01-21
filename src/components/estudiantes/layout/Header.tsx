@@ -79,7 +79,7 @@ export function Header() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isLoading ? (
-                        <Icons.spinner2
+                        <Icons.spinner
                           className="animate-spin"
                           style={{
                             height: '25px',
@@ -173,7 +173,7 @@ export function Header() {
                 >
                   <div className="flex w-full items-center justify-center">
                     {isLoading ? (
-                      <Icons.spinner2
+                      <Icons.spinner
                         className="animate-spin"
                         style={{
                           height: '25px',
