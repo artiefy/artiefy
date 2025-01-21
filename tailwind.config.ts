@@ -22,7 +22,7 @@ export default {
       animation: {
         'spin-slow': 'spin 3s linear infinite',
         'caret-blink': 'caret-blink 1.25s ease-out infinite',
-        bounce: 'bounce 1s infinite',
+        'bounce': 'rocketbounce 1s infinite',
         'spin': 'spin 1s linear infinite',
       },
       // Keyframes personalizados

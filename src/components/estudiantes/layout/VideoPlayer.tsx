@@ -4,12 +4,14 @@ interface VideoPlayerProps {
   videoKey: string;
   onVideoEnd: () => void;
   onProgressUpdate: (progress: number) => void;
+  isVideoCompleted: boolean;
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
   videoKey,
   onVideoEnd,
   onProgressUpdate,
+  isVideoCompleted,
 }) => {
   const [videoUrl, setVideoUrl] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -35,11 +37,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
   }, [videoKey]);
 
   const handleTimeUpdate = () => {
-    if (videoRef.current) {
+    if (videoRef.current && !isVideoCompleted) {
       const progress =
         (videoRef.current.currentTime / videoRef.current.duration) * 100;
       onProgressUpdate(progress);
     }
+  };
+
+  const handleVideoEnd = () => {
+    onVideoEnd();
   };
 
   return (
@@ -49,7 +55,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
           ref={videoRef}
           controls
           className="h-auto w-full"
-          onEnded={onVideoEnd}
+          onEnded={handleVideoEnd}
           onTimeUpdate={handleTimeUpdate}
         >
           <source src={videoUrl} type="video/mp4" />

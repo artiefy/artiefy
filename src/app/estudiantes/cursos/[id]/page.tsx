@@ -91,6 +91,8 @@ async function CourseContent({ id }: { id: string }) {
       ? {
           id: course.category.id,
           name: course.category.name,
+          description: course.category.description,
+          is_featured: course.category.is_featured,
         }
       : undefined,
     modalidad: course.modalidad

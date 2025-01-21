@@ -1,11 +1,10 @@
 "use server"
 
-import { eq, and, sql,  desc } from "drizzle-orm"
+import { eq, and, sql, desc } from "drizzle-orm"
 import { db } from "~/server/db"
 import {
   courses,
   lessons,
-  activities,
   enrollments,
   preferences,
   scores,
@@ -16,6 +15,8 @@ import {
   projectsTaken,
   categories,
   users,
+  userLessonsProgress,
+  userActivitiesProgress,
 } from "~/server/db/schema"
 import { cache } from "react"
 import type {
@@ -31,8 +32,6 @@ import type {
   Enrollment,
 } from "~/types"
 import { currentUser } from "@clerk/nextjs/server"
-
-
 
 export const getAllCourses = cache(async (): Promise<Course[]> => {
   try {
@@ -81,6 +80,7 @@ export const getAllCourses = cache(async (): Promise<Course[]> => {
         id: course.categoryid,
         name: course.categoryName ?? "",
         description: course.categoryDescription ?? "",
+        is_featured: course.isFeatured ?? false,
       },
       modalidad: { name: course.modalidadName ?? "" },
       dificultad: { name: course.dificultadName ?? "" },
@@ -91,8 +91,6 @@ export const getAllCourses = cache(async (): Promise<Course[]> => {
     throw new Error("Failed to fetch all courses: " + (error instanceof Error ? error.message : String(error)))
   }
 })
-
-
 
 export const getAllCategories = cache(async (): Promise<Category[]> => {
   try {
@@ -173,9 +171,14 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
     lessons: course.lessons?.map((lesson) => ({
       ...lesson,
       isLocked: lesson.isLocked ?? true,
-      isCompleted: lesson.isCompleted ?? false,
-      userProgress: lesson.userProgress ?? 0,
-      porcentajecompletado: lesson.porcentajecompletado ?? 0,
+      isCompleted: false,
+      userProgress: 0,
+      porcentajecompletado: 0,
+      activities: lesson.activities?.map((activity) => ({
+        ...activity,
+        isCompleted: false,
+        userProgress: 0,
+      })) ?? [],
     })) ?? [],
   };
 
@@ -323,16 +326,16 @@ export async function getLessonsByCourseId(courseId: number): Promise<Lesson[]> 
   });
   return lessonsData.map((lesson) => ({
     ...lesson,
-    porcentajecompletado: lesson.porcentajecompletado ?? 0,
+    porcentajecompletado: 0, // Se obtiene de userLessonsProgress
     isLocked: lesson.isLocked ?? true,
-    userProgress: lesson.userProgress ?? 0,
-    isCompleted: lesson.isCompleted ?? false,
+    userProgress: 0, // Se obtiene de userLessonsProgress
+    isCompleted: false, // Se obtiene de userLessonsProgress
     activities: lesson.activities?.map((activity) => ({
       ...activity,
-      isCompleted: activity.isCompleted ?? false,
-      userProgress: activity.userProgress ?? 0,
+      isCompleted: false, // Se obtiene de userActivitiesProgress
+      userProgress: 0, // Se obtiene de userActivitiesProgress
     })),
-  }))
+  }));
 }
 
 // Obtener una lección específica por ID
@@ -346,15 +349,15 @@ export async function getLessonById(lessonId: number): Promise<Lesson | null> {
   if (!lesson) return null;
   return {
     ...lesson,
-    porcentajecompletado: lesson.porcentajecompletado ?? 0,
+    porcentajecompletado: 0, // Se obtiene de userLessonsProgress
     isLocked: lesson.isLocked ?? true,
-    userProgress: lesson.userProgress ?? 0,
-    isCompleted: lesson.isCompleted ?? false,
+    userProgress: 0, // Se obtiene de userLessonsProgress
+    isCompleted: false, // Se obtiene de userLessonsProgress
     activities:
       (lesson.activities as Activity[] | undefined)?.map((activity) => ({
         ...activity,
-        isCompleted: activity.isCompleted ?? false,
-        userProgress: activity.userProgress ?? 0,
+        isCompleted: false, // Se obtiene de userActivitiesProgress
+        userProgress: 0, // Se obtiene de userActivitiesProgress
       })) ?? [],
   };
 }
@@ -366,14 +369,25 @@ export async function updateLessonProgress(lessonId: number, progress: number): 
     throw new Error('Usuario no autenticado');
   }
 
+  const userId = user.id;
+
   await db
-    .update(lessons)
-    .set({
-      userProgress: progress,
+    .insert(userLessonsProgress)
+    .values({
+      userId,
+      lessonId,
+      progress,
       isCompleted: progress >= 100,
       lastUpdated: new Date(),
     })
-    .where(eq(lessons.id, lessonId));
+    .onConflictDoUpdate({
+      target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+      set: {
+        progress,
+        isCompleted: progress >= 100,
+        lastUpdated: new Date(),
+      },
+    });
 
   if (progress >= 100) {
     await unlockNextLesson(lessonId);
@@ -382,17 +396,31 @@ export async function updateLessonProgress(lessonId: number, progress: number): 
 
 // Completar una actividad
 export async function completeActivity(activityId: number): Promise<void> {
+  const user = await currentUser();
+  if (!user?.id) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  const userId = user.id;
+
   await db
-    .update(activities)
-    .set({
+    .insert(userActivitiesProgress)
+    .values({
+      userId,
+      activityId,
+      progress: 100,
       isCompleted: true,
-      userProgress: 100,
       lastUpdated: new Date(),
     })
-    .where(eq(activities.id, activityId));
+    .onConflictDoUpdate({
+      target: [userActivitiesProgress.userId, userActivitiesProgress.activityId],
+      set: {
+        progress: 100,
+        isCompleted: true,
+        lastUpdated: new Date(),
+      },
+    });
 }
-
-
 
 // Guardar preferencias del usuario
 export async function savePreferences(userId: string, categoryIds: number[]): Promise<void> {
@@ -465,9 +493,9 @@ export async function getUserCoursesTaken(userId: string): Promise<CourseTaken[]
       lessons: courseTaken.course.lessons?.map((lesson) => ({
         ...lesson,
         isLocked: lesson.isLocked ?? true,
-        isCompleted: lesson.isCompleted ?? false,
-        userProgress: lesson.userProgress ?? 0,
-        porcentajecompletado: lesson.porcentajecompletado ?? 0,
+        isCompleted: false, // Se obtiene de userLessonsProgress
+        userProgress: 0, // Se obtiene de userLessonsProgress
+        porcentajecompletado: 0, // Se obtiene de userLessonsProgress
       })) ?? [],
     },
   }));
@@ -519,7 +547,6 @@ export async function getUserProjectsTaken(userId: string): Promise<ProjectTaken
   });
 }
 
-
 // Crear un proyecto
 export async function createProject(userId: string, projectData: {
   name: string;
@@ -539,7 +566,6 @@ export async function createProject(userId: string, projectData: {
   });
 }
 
-
 // Obtener el progreso general del estudiante
 export async function getStudentProgress(userId: string): Promise<{
   coursesCompleted: number;
@@ -550,10 +576,10 @@ export async function getStudentProgress(userId: string): Promise<{
     .select({
       coursesCompleted: sql<number>`COUNT(CASE WHEN ${enrollments.completed} = true THEN 1 END)`,
       totalEnrollments: sql<number>`COUNT(*)`,
-      averageProgress: sql<number>`AVG(${lessons.userProgress})`,
+      averageProgress: sql<number>`AVG(${userLessonsProgress.progress})`,
     })
     .from(enrollments)
-    .leftJoin(lessons, eq(enrollments.courseId, lessons.courseId))
+    .leftJoin(userLessonsProgress, eq(enrollments.userId, userLessonsProgress.userId))
     .where(eq(enrollments.userId, userId))
     .groupBy(enrollments.userId);
 

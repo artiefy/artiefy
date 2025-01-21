@@ -13,6 +13,7 @@ import {
     completeActivity,
     updateLessonProgress,
     unlockNextLesson,
+    getLessonsByCourseId,
 } from '~/server/actions/studentActions';
 import { type Activity } from '~/types';
 
@@ -25,6 +26,7 @@ interface Lesson {
     porcentajecompletado: number;
     duration: number;
     isLocked: boolean;
+    isCompleted: boolean;
 }
 
 interface Course {
@@ -42,16 +44,21 @@ export default function LessonDetails({
     activity: Activity | null;
     lessons: Lesson[];
     course: Course;
-    userId: string;
 }) {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [selectedLessonId, setSelectedLessonId] = useState<number | null>(lesson.id);
     const [progress, setProgress] = useState(lesson.porcentajecompletado);
-    const [isVideoCompleted, setIsVideoCompleted] = useState(false);
+    const [isVideoCompleted, setIsVideoCompleted] = useState(lesson.porcentajecompletado === 100);
     const [isActivityCompleted, setIsActivityCompleted] = useState(activity?.isCompleted ?? false);
-    const [lessonsState, setLessonsState] = useState<Lesson[]>(lessons);
+    const [lessonsState, setLessonsState] = useState<Lesson[]>([]);
     const router = useRouter();
     const { toast } = useToast();
+
+    useEffect(() => {
+        // Ordenar las lecciones en orden ascendente por id
+        const sortedLessons = [...lessons].sort((a, b) => a.id - b.id);
+        setLessonsState(sortedLessons);
+    }, [lessons]);
 
     useEffect(() => {
         if (selectedLessonId !== null && selectedLessonId !== lesson.id) {
@@ -63,10 +70,45 @@ export default function LessonDetails({
         // Ensure Lesson 1 is always active and unlocked
         setLessonsState((prevLessons) =>
             prevLessons.map((l) =>
-                l.id === 1 ? { ...l, isLocked: false, porcentajecompletado: 0 } : l
+                l.id === 1 ? { ...l, isLocked: false, porcentajecompletado: 0, isCompleted: false } : l
             )
         );
     }, []);
+
+    useEffect(() => {
+        // Set initial progress and video completion state based on lesson data
+        setProgress(lesson.porcentajecompletado);
+        setIsVideoCompleted(lesson.porcentajecompletado === 100);
+    }, [lesson]);
+
+    useEffect(() => {
+        // Fetch progress from the database for all lessons
+        const fetchProgress = async () => {
+            try {
+                const lessonsData = await getLessonsByCourseId(course.id);
+                const sortedLessons = lessonsData.sort((a, b) => a.id - b.id);
+                setLessonsState(sortedLessons);
+            } catch (error) {
+                console.error('Error fetching lesson progress:', error);
+            }
+        };
+
+        fetchProgress().catch((error) => {
+            console.error('Error fetching lesson progress:', error);
+        });
+    }, [course.id]);
+
+    useEffect(() => {
+        // Redirigir si la lección está bloqueada
+        if (lesson.isLocked) {
+            router.push('/estudiantes');
+            toast({
+                title: 'Lección bloqueada',
+                description: 'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
+                variant: 'destructive',
+            });
+        }
+    }, [lesson.isLocked, router, toast]);
 
     const handleVideoEnd = async () => {
         setProgress(100);
@@ -75,12 +117,12 @@ export default function LessonDetails({
             await updateLessonProgress(lesson.id, 100);
             setLessonsState((prevLessons) =>
                 prevLessons.map((l) =>
-                    l.id === lesson.id ? { ...l, porcentajecompletado: 100 } : l
+                    l.id === lesson.id ? { ...l, porcentajecompletado: 100, isCompleted: true } : l
                 )
             );
             toast({
-                title: 'Progreso actualizado',
-                description: 'Has completado el video de la lección.',
+                title: 'Clase Completada',
+                description: 'Has completado la clase 1.',
                 variant: 'default',
             });
         } catch (error) {
@@ -95,7 +137,7 @@ export default function LessonDetails({
 
     const handleProgressUpdate = async (videoProgress: number) => {
         const roundedProgress = Math.round(videoProgress);
-        if (roundedProgress > progress) {
+        if (roundedProgress > progress && roundedProgress < 100) {
             setProgress(roundedProgress);
             try {
                 await updateLessonProgress(lesson.id, roundedProgress);
@@ -127,33 +169,28 @@ export default function LessonDetails({
             // Desbloquear la siguiente lección
             const result = await unlockNextLesson(lesson.id);
             if (result.success && 'nextLessonId' in result) {
-                toast({
-                    title: 'Nueva lección desbloqueada',
-                    description: '¡Has desbloqueado la siguiente lección!',
-                    variant: 'default',
-                });
+                setTimeout(() => {
+                    toast({
+                        title: 'Nueva clase desbloqueada',
+                        description: '¡Has desbloqueado la siguiente clase!',
+                        variant: 'default',
+                    });
+                }, 1000);
 
                 setLessonsState((prevLessons) =>
                     prevLessons.map((l) =>
                         l.id === result.nextLessonId
                             ? { ...l, isLocked: false, porcentajecompletado: 0 }
                             : l.id === lesson.id
-                                ? { ...l, porcentajecompletado: 100 }
+                                ? { ...l, porcentajecompletado: 100, isCompleted: true }
                                 : l
                     )
                 );
 
-                // Cambiar a la siguiente lección inmediatamente
-                if (
-                    typeof result.nextLessonId === 'number' ||
-                    typeof result.nextLessonId === 'string'
-                ) {
-                    router.push(`/estudiantes/clases/${result.nextLessonId}`);
-                    setSelectedLessonId(
-                        typeof result.nextLessonId === 'number'
-                            ? result.nextLessonId
-                            : parseInt(result.nextLessonId)
-                    );
+                // Redirigir a la clase 2 si la clase 1 y la actividad 1 están completadas
+                if (lesson.id === 1 && result.nextLessonId === 2) {
+                    router.push(`/estudiantes/clases/2`);
+                    setSelectedLessonId(2);
                 }
             }
         } catch (error) {
@@ -182,7 +219,7 @@ export default function LessonDetails({
                                 lessonItem.id === selectedLessonId
                                     ? 'border-l-8 border-blue-500 bg-blue-50'
                                     : 'bg-gray-50'
-                            } ${lessonItem.isLocked && lessonItem.id !== 1 ? 'opacity-50' : ''}`}
+                            } ${lessonItem.isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                             onClick={() =>
                                 !lessonItem.isLocked && setSelectedLessonId(lessonItem.id)
                             }
@@ -203,12 +240,7 @@ export default function LessonDetails({
                             <p className="mb-2 text-sm text-background">
                                 {course.instructor}
                             </p>
-                            <div className="relative h-2 rounded bg-gray-200">
-                                <div
-                                    className="absolute h-2 rounded bg-blue-500"
-                                    style={{ width: `${lessonItem.porcentajecompletado}%` }}
-                                ></div>
-                            </div>
+                            <Progress value={lessonItem.porcentajecompletado} className="mt-2 h-2 w-full" />
                             <div className="mt-2 flex justify-between text-xs text-background">
                                 <span>{lessonItem.duration} mins</span>
                                 <span>{lessonItem.porcentajecompletado}%</span>
@@ -226,6 +258,7 @@ export default function LessonDetails({
                                 videoKey={lesson.coverVideoKey}
                                 onVideoEnd={handleVideoEnd}
                                 onProgressUpdate={handleProgressUpdate}
+                                isVideoCompleted={isVideoCompleted}
                             />
                         </div>
 
@@ -274,18 +307,6 @@ export default function LessonDetails({
                             <Button
                                 onClick={async () => {
                                     await handleActivityCompletion();
-                                    const nextLesson = lessonsState.find(
-                                        (lessonItem) => lessonItem.id === lesson.id + 1
-                                    );
-                                    if (nextLesson) {
-                                        router.push(`/estudiantes/clases/${nextLesson.id}`);
-                                        setLessonsState((prevLessons) =>
-                                            prevLessons.map((l) =>
-                                                l.id === nextLesson.id ? { ...l, isLocked: false } : l
-                                            )
-                                        );
-                                        setSelectedLessonId(nextLesson.id);
-                                    }
                                 }}
                                 disabled={!isVideoCompleted || isActivityCompleted}
                                 className="mt-4 w-full rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
@@ -294,7 +315,7 @@ export default function LessonDetails({
                                     ? 'Actividad Completada'
                                     : isVideoCompleted
                                         ? 'Completar Actividad'
-                                        : 'Ver el video para desbloquear'}
+                                        : 'Tomar la clase para desbloquear'}
                             </Button>
                         </div>
                     ) : (

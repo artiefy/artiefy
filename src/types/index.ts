@@ -1,5 +1,3 @@
-// Interfaces basadas en el esquema proporcionado
-
 export interface User {
   id: string;
   role: string;
@@ -7,7 +5,6 @@ export interface User {
   email: string;
   createdAt: Date;
   updatedAt: Date;
-  // Campos opcionales
   phone?: string | null;
   country?: string | null;
   city?: string | null;
@@ -30,26 +27,9 @@ export interface Course {
   modalidadesid: number;
   dificultadid: number;
   totalStudents: number;
-  lessons: {
-    id: number;
-    title: string;
-    duration: number;
-    description: string | null;
-    coverVideoKey: string;
-    resourceKey: string;
-    porcentajecompletado: number;
-    order: number;
-    isLocked: boolean;
-    isCompleted: boolean;
-  }[];
-  // Relaciones
-  category?: {
-    id: number;
-    name: string;
-  };
-  modalidad?: {
-    name: string;
-  };
+  lessons: Lesson[];
+  category?: Category;
+  modalidad?: Modalidad;
   dificultad?: Dificultad;
   enrollments?: Enrollment[] | { length: number };
   creator?: User;
@@ -60,11 +40,9 @@ export interface Category {
   name: string;
   description: string | null;
   courses?: { length: number };
-  // Relaciones
   preferences?: Preference[];
   is_featured: boolean | null;
 }
-
 
 export interface Preference {
   id: number;
@@ -72,18 +50,14 @@ export interface Preference {
   area_cono: string | null;
   userId: string;
   categoryid: number;
-  // Relaciones
   user?: User;
   category?: Category;
 }
-
-
 
 export interface CourseTaken {
   id: number;
   userId: string;
   courseId: number;
-  // Relaciones
   user?: User;
   course?: Course;
 }
@@ -105,7 +79,6 @@ export interface Lesson {
   userProgress: number;
   isCompleted: boolean;
   lastUpdated: Date;
-  // Relaciones
   course?: Course;
   activities?: Activity[];
 }
@@ -114,7 +87,6 @@ export interface Modalidad {
   id?: number;
   name: string;
   description?: string | null;
-  // Relaciones
   courses?: Course[];
 }
 
@@ -123,7 +95,6 @@ export interface Score {
   score: number;
   userId: string;
   categoryid: number;
-  // Relaciones
   user?: User;
   category?: Category;
 }
@@ -143,7 +114,6 @@ export interface Activity {
   isCompleted: boolean | null;
   userProgress: number | null;
   lastUpdated: Date;
-  // Relaciones
   lesson?: Lesson;
 }
 
@@ -155,7 +125,6 @@ export interface Enrollment {
   completed: boolean | null;
 }
 
-
 export interface Project {
   id: number;
   name: string;
@@ -166,7 +135,6 @@ export interface Project {
   userId: string;
   categoryid: number;
   category?: Category;
-  // Relaciones
   user?: User;
 }
 
@@ -174,7 +142,6 @@ export interface ProjectTaken {
   id: number;
   userId: string;
   projectId: number;
-  // Relaciones
   user?: User;
   project?: Project;
 }
@@ -194,18 +161,14 @@ export interface GetCoursesResponse {
   totalPages: number;
 }
 
-export interface  GetCoursesParams {
+export interface GetCoursesParams {
   pagenum?: number;
   pageSize?: number;
   categoryId?: number;
   searchTerm?: string;
 }
 
-
-// Tipos adicionales para manejar relaciones many-to-many si es necesario
-
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };
 export type UserWithCreatedCourses = User & { createdCourses: Course[] };
 export type CourseWithEnrollments = Course & { enrollments: Enrollment[] };
 export type CategoryWithPreferences = Category & { preferences: Preference[] };
-
