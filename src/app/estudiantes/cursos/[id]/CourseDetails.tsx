@@ -65,10 +65,6 @@ export default function CourseDetails({
 	const { toast } = useToast();
 
 	useEffect(() => {
-		const timer = setTimeout(() => {
-			setLoading(false);
-		}, 1000);
-
 		const fetchUserProgress = async () => {
 			if (userId && isEnrolled) {
 				try {
@@ -97,6 +93,10 @@ export default function CourseDetails({
 			}
 		}
 
+		const timer = setTimeout(() => {
+			setLoading(false);
+		}, 1000);
+
 		return () => clearTimeout(timer);
 	}, [course.enrollments, userId, isEnrolled, course.id]);
 
@@ -106,9 +106,8 @@ export default function CourseDetails({
 		}
 	};
 
-	const formatDate = (dateString: string | number | Date) => {
-		return new Date(dateString).toISOString().split('T')[0];
-	};
+	const formatDate = (dateString: string | number | Date) =>
+		new Date(dateString).toISOString().split('T')[0];
 
 	const handleEnroll = async () => {
 		if (!isSignedIn || isEnrolling) {
@@ -139,22 +138,7 @@ export default function CourseDetails({
 				throw new Error(result.message);
 			}
 		} catch (error: unknown) {
-			if (error instanceof Error) {
-				setEnrollmentError(error.message);
-				toast({
-					title: 'Error de Suscripción',
-					description: `Error al inscribirse: ${error.message}`,
-					variant: 'destructive',
-				});
-			} else {
-				setEnrollmentError('Error desconocido al inscribirse en el curso');
-				toast({
-					title: 'Error de inscripción',
-					description: 'Error desconocido al inscribirse en el curso',
-					variant: 'destructive',
-				});
-			}
-			console.error('Error al inscribirse:', error);
+			handleError(error, 'Error de Suscripción', 'Error al inscribirse');
 		} finally {
 			setIsEnrolling(false);
 		}
@@ -167,6 +151,7 @@ export default function CourseDetails({
 
 		setIsUnenrolling(true);
 		setEnrollmentError(null);
+
 		try {
 			await unenrollFromCourse(course.id);
 			setTotalStudents((prevTotal) => prevTotal - 1);
@@ -184,25 +169,33 @@ export default function CourseDetails({
 				variant: 'default',
 			});
 		} catch (error: unknown) {
-			if (error instanceof Error) {
-				setEnrollmentError(error.message);
-				toast({
-					title: 'Error de desuscripción',
-					description: `Error al desuscribirse: ${error.message}`,
-					variant: 'destructive',
-				});
-			} else {
-				setEnrollmentError('Error desconocido al desuscribirse del curso');
-				toast({
-					title: 'Error de desuscripción',
-					description: 'Error desconocido al desuscribirse del curso',
-					variant: 'destructive',
-				});
-			}
-			console.error('Error al desuscribirse:', error);
+			handleError(error, 'Error de desuscripción', 'Error al desuscribirse');
 		} finally {
 			setIsUnenrolling(false);
 		}
+	};
+
+	const handleError = (
+		error: unknown,
+		toastTitle: string,
+		toastDescription: string
+	) => {
+		if (error instanceof Error) {
+			setEnrollmentError(error.message);
+			toast({
+				title: toastTitle,
+				description: `${toastDescription}: ${error.message}`,
+				variant: 'destructive',
+			});
+		} else {
+			setEnrollmentError('Error desconocido');
+			toast({
+				title: toastTitle,
+				description: 'Error desconocido',
+				variant: 'destructive',
+			});
+		}
+		console.error(toastDescription, error);
 	};
 
 	const sortedLessons = [...course.lessons].sort((a, b) => a.order - b.order);
