@@ -1,17 +1,11 @@
-"use cache"
-
 import { type NextRequest, NextResponse } from "next/server"
 import { getAllCourses } from "~/server/actions/courses/getAllCourses"
 import { getAllCategories } from "~/server/actions/categories/getAllCategories"
 import { getFeaturedCategories } from "~/server/actions/categories/getFeaturedCategories"
-import { unstable_cacheLife as cacheLife } from "next/cache"
 
 const ITEMS_PER_PAGE = 9
-const CACHE_DURATION = 60 * 60 // 1 hora en segundos
 
 export async function GET(request: NextRequest) {
-  cacheLife({ revalidate: CACHE_DURATION })
-
   try {
     const { searchParams } = request.nextUrl
     const page = Number.parseInt(searchParams.get("page") ?? "1", 10)
@@ -55,6 +49,8 @@ export async function GET(request: NextRequest) {
       categoryId,
       searchTerm: query,
     })
+
+    response.headers.set("Cache-Control", "s-maxage=3600, stale-while-revalidate")
 
     return response
   } catch (error) {
