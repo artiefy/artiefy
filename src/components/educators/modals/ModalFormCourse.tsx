@@ -27,7 +27,8 @@ interface CourseFormProps {
     file: File | null,
     categoryid: number,
     modalidadesid: number,
-    dificultadesid: number
+    dificultadesid: number,
+    requerimientos: string
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -35,6 +36,8 @@ interface CourseFormProps {
   setTitle: (title: string) => void;
   description: string;
   setDescription: (description: string) => void;
+  requerimientos: string;
+  setRequerimientos: (requerimientos: string) => void;
   categoryid: number;
   setCategoryid: (categoryid: number) => void;
   modalidadesid: number;
@@ -58,6 +61,7 @@ export default function ModalFormCourse({
   const { user } = useUser();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [requerimientos, setRequerimientos] = useState('');
   const [categoryid, setCategoryid] = useState(0);
   const [modalidadesid, setModalidadesid] = useState(0);
   const [dificultadid, setDificultadid] = useState(0);
@@ -77,6 +81,7 @@ export default function ModalFormCourse({
     file: false,
     dificultad: false,
     modalidad: false,
+    requerimientos: false,
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -136,6 +141,7 @@ export default function ModalFormCourse({
       dificultad: false,
       file: !editingCourseId && !file && !currentCoverImageKey,
       modalidad: false,
+      requerimientos: !editingCourseId && !requerimientos,
     };
 
     if (editingCourseId) {
@@ -146,7 +152,8 @@ export default function ModalFormCourse({
       newErrors.file = modifiedFields.has('file') && !file;
       newErrors.modalidadesid =
         modifiedFields.has('modalidadesid') && !modalidadesid;
-      newErrors.file = modifiedFields.has('file') && !file;
+      newErrors.requerimientos =
+        modifiedFields.has('requerimientos') && !requerimientos;
     }
 
     setErrors(newErrors);
@@ -165,7 +172,8 @@ export default function ModalFormCourse({
         file,
         categoryid,
         modalidadesid,
-        dificultadid
+        dificultadid,
+        requerimientos
       );
       setIsUploading(false);
       console.log('Datos enviados:', {
@@ -175,6 +183,7 @@ export default function ModalFormCourse({
         categoryid,
         modalidadesid,
         dificultadid,
+        requerimientos,
       });
     } catch (error) {
       setIsUploading(false);
@@ -193,6 +202,9 @@ export default function ModalFormCourse({
         break;
       case 'description':
         setDescription(value as string);
+        break;
+      case 'requerimientos':
+        setRequerimientos(value as string);
         break;
       case 'categoryid':
         setCategoryid(value as number);
@@ -261,7 +273,7 @@ export default function ModalFormCourse({
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-h-[90vh] max-w-[83.333333%] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
         <DialogHeader className="mt-4">
           <DialogTitle className="text-4xl">
             {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
@@ -301,11 +313,28 @@ export default function ModalFormCourse({
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <div className="mb-4 flex justify-evenly">
-            <div className="flex flex-col">
+          <label
+            htmlFor="requerimientos"
+            className="text-lg font-medium text-primary"
+          >
+            Requerimientos previos
+          </label>
+          <textarea
+            placeholder="Escriba en esta zona los requerimientos o conocimientos previos para el curso"
+            value={requerimientos}
+            onChange={(e) =>
+              handleFieldChange('requerimientos', e.target.value)
+            }
+            className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
+          />
+          {errors.requerimientos && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
+          <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mx-auto flex flex-col justify-center">
               <label
                 htmlFor="dificultadid"
-                className="text-lg font-medium text-primary"
+                className="justify-center text-center text-lg font-medium text-primary"
               >
                 Dificultad
               </label>
@@ -320,10 +349,10 @@ export default function ModalFormCourse({
                 </p>
               )}
             </div>
-            <div className="flex flex-col">
+            <div className="mx-auto flex flex-col justify-center">
               <label
                 htmlFor="modalidadesid"
-                className="text-lg font-medium text-primary"
+                className="justify-center text-center text-lg font-medium text-primary"
               >
                 Modalidad
               </label>
@@ -338,10 +367,10 @@ export default function ModalFormCourse({
                 </p>
               )}
             </div>
-            <div className="flex flex-col">
+            <div className="mx-auto flex flex-col justify-center">
               <label
                 htmlFor="categoryid"
-                className="text-lg font-medium text-primary"
+                className="justify-center text-center text-lg font-medium text-primary"
               >
                 Categoría
               </label>
@@ -372,7 +401,7 @@ export default function ModalFormCourse({
             Imagen de portada
           </label>
           <div
-            className={`mx-auto w-1/2 rounded-lg border-2 border-dashed border-primary p-8 ${
+            className={`mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary p-8 lg:w-1/2 ${
               isDragging
                 ? 'border-blue-500 bg-blue-50'
                 : errors.file

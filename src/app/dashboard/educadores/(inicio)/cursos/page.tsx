@@ -27,6 +27,7 @@ export interface CourseModel {
   coverImageKey: string;
   creatorId: string;
   dificultadid: string; // Add this line
+  requerimientos: string;
 }
 
 export function LoadingCourses() {
@@ -101,7 +102,8 @@ export default function Page() {
     file: File | null,
     categoryid: number,
     modalidadesid: number,
-    dificultadid: number
+    dificultadid: number,
+    requerimientos: string
   ) => {
     if (!user) return;
     let coverImageKey = '';
@@ -161,6 +163,7 @@ export default function Page() {
         instructor: user.fullName,
         userId: user.id,
         dificultadid,
+        requerimientos,
       }),
     });
 
@@ -202,10 +205,7 @@ export default function Page() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink
-                className="hover:text-gray-300"
-                href="/dashboard/educadores"
-              >
+              <BreadcrumbLink className="hover:text-gray-300" href="/">
                 Inicio
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -263,6 +263,12 @@ export default function Page() {
               setDescription={(description: string) =>
                 setEditingCourse((prev) =>
                   prev ? { ...prev, description } : null
+                )
+              }
+              requerimientos={editingCourse?.requerimientos ?? ''}
+              setRequerimientos={(requerimientos: string) =>
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, requerimientos } : null
                 )
               }
               categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}

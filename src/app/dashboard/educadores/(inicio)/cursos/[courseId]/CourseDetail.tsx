@@ -2,13 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Upload } from 'lucide-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
-import ModalFormLessons from '~/components/educators/modals/ModalFormLessons';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +27,8 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+import { Input } from '~/components/educators/ui/input';
+import { Label } from '~/components/educators/ui/label';
 import { toast } from '~/hooks/use-toast';
 
 interface Course {
@@ -43,32 +43,37 @@ interface Course {
   creatorId: string;
   createdAt: string;
   updatedAt: string;
+  requerimientos: string;
 }
 interface CourseDetailProps {
   courseId: number;
 }
 
-const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
+const CourseDetail: React.FC<CourseDetailProps> = () => {
   const { user } = useUser();
   const router = useRouter();
-  const { courseIdUrl } = useParams();
+  const params = useParams();
+  const courseIdUrl = params.courseId;
   const [course, setCourse] = useState<Course | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editRequerimientos, setEditRequerimientos] = useState('');
   const [editCategory, setEditCategory] = useState(0);
   const [editModalidad, setEditModalidad] = useState(0);
   const [editDificultad, setEditDificultad] = useState(0);
   const [editCoverImageKey, setEditCoverImageKey] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string>('');
 
   // Verifica que courseId no sea un array ni undefined, y lo convierte a número
   const courseIdString = Array.isArray(courseIdUrl)
     ? courseIdUrl[0]
     : courseIdUrl;
   const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
+  console.log('courseIdUrl:', courseIdUrl);
+  console.log('courseIdString:', courseIdString);
 
   const fetchCourse = useCallback(async () => {
     if (!user) return;
@@ -107,13 +112,20 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
         setLoading(false);
       }
     }
-  }, [user, courseId]);
+  }, [user, courseIdNumber]);
 
   useEffect(() => {
     fetchCourse().catch((error) =>
       console.error('Error fetching course:', error)
     );
   }, [fetchCourse]);
+
+  useEffect(() => {
+    const savedColor = localStorage.getItem('selectedColor');
+    if (savedColor) {
+      setSelectedColor(savedColor);
+    }
+  }, []);
 
   const handleUpdateCourse = async (
     id: string,
@@ -122,7 +134,8 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
     file: File | null,
     categoryid: number,
     modalidadesid: number,
-    dificultadid: number
+    dificultadid: number,
+    requerimientos: string
   ) => {
     try {
       let coverImageKey = course?.coverImageKey ?? '';
@@ -174,6 +187,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
             modalidadesid,
             dificultadid,
             instructor: course?.instructor,
+            requerimientos,
           }),
         }
       );
@@ -204,6 +218,12 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
   if (loading) return <div>Cargando curso...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!course) return <div>No se encontró el curso.</div>;
+
+  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const color = event.target.value;
+    setSelectedColor(event.target.value);
+    localStorage.setItem('selectedColor', color);
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -238,16 +258,28 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Card className="mt-3 overflow-hidden bg-gray-300 px-4">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">
+      <Card
+        className="mt-3 h-auto overflow-hidden border-transparent bg-black p-4"
+        style={{ backgroundColor: selectedColor }}
+      >
+        <CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
+          <CardTitle className="text-2xl font-bold text-white">
             Curso: {course.title}
           </CardTitle>
+          <div className="ml-9 flex flex-col">
+            <Label className="text-white">Seleccione el color deseado</Label>
+            <Input
+              type="color"
+              value={selectedColor}
+              onChange={handleColorChange}
+              className="w-12"
+            />
+          </div>
         </CardHeader>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className={`grid gap-6 md:grid-cols-2`}>
           {/* Columna izquierda - Imagen */}
-          <div className="flex flex-col">
-            <div className="relative aspect-video">
+          <div className="flex w-full flex-col">
+            <div className="relative aspect-video w-full">
               <Image
                 src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
                 alt={course.title}
@@ -256,16 +288,19 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
                 priority
               />
             </div>
-            <div className="px-3 py-6">
+            <div className="mt-8 grid grid-cols-3 gap-5">
+              <Button className="bg-primary text-white hover:bg-white hover:text-primary">
+                Visualizar curso
+              </Button>
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className="mx-4 border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500"
+                className="border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500"
               >
                 Editar curso
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="mx-4 border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
+                  <Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
                     Eliminar
                   </Button>
                 </AlertDialogTrigger>
@@ -294,55 +329,53 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
           </div>
           {/* Columna derecha - Información */}
           <div className="pb-6">
-            <h2 className="text-2xl font-bold">Información del curso</h2>
+            <h2 className="text-2xl font-bold text-white">
+              Información del curso
+            </h2>
             <br />
             <div className="grid grid-cols-2">
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold">Curso:</h2>
-                <h1 className="mb-4 text-2xl font-bold">{course.title}</h1>
+                <h2 className="text-lg font-semibold text-white">Curso:</h2>
+                <h1 className="mb-4 text-2xl font-bold text-white">
+                  {course.title}
+                </h1>
               </div>
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold">Categoría:</h2>
-                <p className="text-gray-600">{course.categoryid}</p>
+                <h2 className="text-lg font-semibold text-white">Categoría:</h2>
+                <p className="text-white">{course.categoryid}</p>
               </div>
             </div>
             <div className="mb-4">
-              <h2 className="text-lg font-semibold">Descripción:</h2>
-              <p className="text-justify text-gray-600">{course.description}</p>
+              <h2 className="text-lg font-semibold text-white">Descripción:</h2>
+              <p className="text-justify text-white">{course.description}</p>
             </div>
             <div className="grid grid-cols-3">
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold">Educador:</h2>
-                <p className="text-gray-600">{course.instructor}</p>
+                <h2 className="text-lg font-semibold text-white">Educador:</h2>
+                <p className="text-white">{course.instructor}</p>
               </div>
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold">Dificultad:</h2>
-                <p className="text-gray-600">{course.dificultadid}</p>
+                <h2 className="text-lg font-semibold text-white">
+                  Dificultad:
+                </h2>
+                <p className="text-white">{course.dificultadid}</p>
               </div>
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold">Modalidad:</h2>
-                <p className="text-gray-600">{course.modalidadesid}</p>
+                <h2 className="text-lg font-semibold text-white">Modalidad:</h2>
+                <p className="text-white">{course.modalidadesid}</p>
               </div>
             </div>
           </div>
         </div>
-        <div>
-          <Button
-            className="cursor-pointer bg-white"
-            onClick={() => {
-              setIsModalOpenLessons(true);
-            }}
-          >
-            <Upload />
-            Crear clase
-          </Button>
-        </div>
       </Card>
       {loading ? (
         <LoadingCourses />
-      ) : courseIdNumber !== null ? ( // Cambiado de "lessons" a "lessons.length > 0"
+      ) : courseIdNumber !== null && courseIdNumber > 0 ? (
         <>
-          <LessonsListEducator courseId={courseIdNumber} />
+          <LessonsListEducator
+            courseId={courseIdNumber}
+            selectedColor={selectedColor}
+          />
         </>
       ) : (
         <></>
@@ -356,7 +389,8 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
           file: File | null,
           categoryid: number,
           modalidadesid: number,
-          dificultadid: number
+          dificultadid: number,
+          requerimientos: string
         ) =>
           handleUpdateCourse(
             id,
@@ -365,12 +399,14 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
             file,
             categoryid,
             modalidadesid,
-            dificultadid
+            dificultadid,
+            requerimientos
           )
         }
         editingCourseId={course.id}
         title={editTitle}
         description={editDescription}
+        requerimientos={editRequerimientos}
         categoryid={editCategory}
         modalidadesid={editModalidad}
         dificultadid={editDificultad}
@@ -378,20 +414,13 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
         uploading={false}
         setTitle={setEditTitle}
         setDescription={setEditDescription}
+        setRequerimientos={setEditRequerimientos}
         setModalidadesid={setEditModalidad}
         setCategoryid={setEditCategory}
         setDificultadid={setEditDificultad}
         setCoverImageKey={setEditCoverImageKey}
         onCloseAction={() => setIsModalOpen(false)}
       />
-      {courseIdNumber !== null && (
-        <ModalFormLessons
-          isOpen={isModalOpenLessons}
-          onCloseAction={() => setIsModalOpenLessons(false)}
-          courseId={courseIdNumber}
-          uploading={false}
-        />
-      )}
     </div>
   );
 };

@@ -27,6 +27,8 @@ const ModalFormLessons = ({
   onCloseAction,
   courseId,
 }: LessonsFormProps) => {
+  console.log('ModalFormLessons isOpen:', isOpen);
+
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formData, setFormData] = useState({
     title: '',
@@ -97,7 +99,6 @@ const ModalFormLessons = ({
         url: string;
         fields: Record<string, string>;
       };
-    await uploadResponse.json();
 
     const formData = new FormData();
     Object.entries(fields).forEach(([key, value]) => {
@@ -201,6 +202,7 @@ const ModalFormLessons = ({
           description: 'La lección se creó con éxito.',
         });
         onCloseAction(); // Cierra el modal
+        window.location.reload(); // Refrescar la página
       } else {
         const errorData = (await response.json()) as { error?: string };
         toast({
@@ -279,7 +281,7 @@ const ModalFormLessons = ({
           {errors.duration && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <div className="grid w-full grid-cols-3 gap-4">
+          <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <FileUpload
               key="coverimage"
               type="image"

@@ -61,22 +61,6 @@ export async function createLesson({
 
     const newOrder = maxOrder + 1;
 
-    // Verificar el límite de lecciones por dificultad
-    const lessonCount = await countLessonsByCourseAndDifficulty(courseId);
-    const difficulty = (await getCourseDifficulty(
-      courseId
-    )) as unknown as string;
-
-    if (
-      (difficulty === 'instructorio' && lessonCount >= 5) ||
-      (difficulty === 'intermedio' && lessonCount >= 10) ||
-      (difficulty === 'avanzado' && lessonCount >= 15)
-    ) {
-      throw new Error(
-        `No se pueden crear más lecciones para el curso con dificultad ${difficulty}.`
-      );
-    }
-
     const newLesson = await db.insert(lessons).values({
       title,
       description,

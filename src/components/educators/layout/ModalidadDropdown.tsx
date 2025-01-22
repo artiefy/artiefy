@@ -39,7 +39,6 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
         }
 
         const data: Modalidad[] = (await response.json()) as Modalidad[];
-        console.log('Datos de la respuesta:', data);
         setModalidades(data);
       } catch (error) {
         console.error('Error detallado:', error);
@@ -68,13 +67,12 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setModalidad(selectedId);
-            console.log('Categoría seleccionada:', selectedId);
           }}
           className={`mb-5 w-60 rounded border p-2 outline-none ${
             errors.modalidad ? 'border-red-500' : 'border-primary'
           }`}
         >
-          <option value="">Selecciona una categoría</option>
+          <option value="">Selecciona una modalidad</option>
           {modalidades.map((modalidad) => (
             <option key={modalidad.id} value={modalidad.id}>
               {modalidad.name}

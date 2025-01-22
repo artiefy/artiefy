@@ -39,7 +39,6 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
         }
 
         const data = (await response.json()) as Category[];
-        console.log('Datos de la respuesta:', data);
         setCategories(data);
       } catch (error) {
         console.error('Error detallado:', error);
@@ -70,7 +69,6 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setCategory(selectedId);
-            console.log('Categoría seleccionada:', selectedId);
           }}
           className={`mb-5 w-60 rounded border p-2 outline-none ${
             errors.category ? 'border-red-500' : 'border-primary'

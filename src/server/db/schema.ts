@@ -48,6 +48,7 @@ export const courses = pgTable('courses', {
   dificultadid: integer('dificultadid')
     .references(() => dificultad.id)
     .notNull(),
+  requerimientos: text('requerimientos'),
 });
 
 // Tabla de categorías
@@ -103,7 +104,6 @@ export const lessons = pgTable('lessons', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
   porcentajecompletado: real('porcentajecompletado').default(0), // Nuevo campo de porcentaje completado
   resourceKey: text('resource_key').notNull(), // Clave del recurso en S3
-  isLocked: boolean('is_locked').default(true),
 });
 
 // Agregamos una nueva tabla para el progreso de las lecciones
@@ -138,7 +138,7 @@ export const dificultad = pgTable('dificultad', {
   description: text('description').notNull(),
 });
 
-//tabla de actividades
+// Verificar si la tabla 'activities' ya existe antes de crearla
 export const activities = pgTable('activities', {
   id: serial('id').primaryKey(), // ID autoincremental de la actividad
   name: varchar('name', { length: 255 }).notNull(), // Nombre de la actividad
@@ -203,11 +203,40 @@ export const projectsTaken = pgTable('projects_taken', {
     .notNull(), // Relación con proyectos
 });
 
+//tabla de foros
+export const forums = pgTable('forums', {
+  id: serial('id').primaryKey(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .notNull(), // Relación con el curso
+  title: varchar('title', { length: 255 }).notNull(), // Título del foro (por ejemplo, "Discusiones del curso X")
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(), // El usuario que crea el foro
+  description: text('description'), // Descripción opcional del foro
+  createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
+  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
+});
+
+//tabla de posts
+export const posts = pgTable('posts', {
+  id: serial('id').primaryKey(),
+  forumId: integer('forum_id')
+    .references(() => forums.id)
+    .notNull(), // Relación con el foro
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(), // El usuario que hace el post
+  content: text('content').notNull(), // Contenido del post
+  createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
+  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
+});
+
 // Relaciones
 export const coursesRelations = relations(courses, ({ many, one }) => ({
   lessons: many(lessons),
   enrollments: many(enrollments),
-  creator: one(users, {
+  user: one(users, {
     fields: [courses.creatorId],
     references: [users.id],
   }),
@@ -251,7 +280,7 @@ export const preferencesRelations = relations(preferences, ({ one }) => ({
 }));
 
 export const coursesTakenRelations = relations(coursesTaken, ({ one }) => ({
-  user: one(users, {
+  users: one(users, {
     fields: [coursesTaken.userId], // Campo que referencia al usuario
     references: [users.id], // ID del usuario
   }),
@@ -280,7 +309,7 @@ export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
 export const activityProgressRelations = relations(
   activityProgress,
   ({ one }) => ({
-    user: one(users, {
+    users: one(users, {
       fields: [activityProgress.userId],
       references: [users.id],
     }),
@@ -293,7 +322,7 @@ export const activityProgressRelations = relations(
 
 // Actualizamos las relaciones existentes
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
-  course: one(courses, {
+  courses: one(courses, {
     fields: [lessons.courseId],
     references: [courses.id],
   }),
@@ -314,4 +343,24 @@ export const usersRelations = relations(users, ({ many }) => ({
   createdCourses: many(courses),
   lessonProgress: many(lessonProgress),
   activityProgress: many(activityProgress),
+}));
+
+//relaciones de foros
+export const forumRelations = relations(forums, ({ one, many }) => ({
+  course: one(courses, {
+    fields: [forums.courseId],
+    references: [courses.id],
+  }), // Un foro está asociado a un solo curso (relación uno a uno)
+  posts: many(posts), // Un foro puede tener muchos posts (comentarios o temas de discusión)
+}));
+
+export const postRelations = relations(posts, ({ one }) => ({
+  forum: one(forums, {
+    fields: [posts.forumId],
+    references: [forums.id],
+  }), // Un post pertenece a un foro
+  user: one(users, {
+    fields: [posts.userId],
+    references: [users.id],
+  }), // Un post tiene un usuario creador
 }));

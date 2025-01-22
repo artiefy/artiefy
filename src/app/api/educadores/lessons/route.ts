@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     // Obtén las lecciones asociadas al curso
     const lessons = await getLessonsByCourseId(courseId);
 
-    if (!lessons || lessons.length === 0) {
+    if (!lessons) {
       return NextResponse.json(
         { error: 'Lecciones no encontradas para este curso' },
         { status: 404 }

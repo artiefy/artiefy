@@ -1,6 +1,13 @@
-import { eq, count } from "drizzle-orm";
-import { db } from "~/server/db/index";
-import { courses, users, categories, modalidades, enrollments, dificultad } from "~/server/db/schema";
+import { eq, count } from 'drizzle-orm';
+import { db } from '~/server/db/index';
+import {
+  courses,
+  users,
+  categories,
+  modalidades,
+  enrollments,
+  dificultad,
+} from '~/server/db/schema';
 
 export interface Lesson {
   id: number;
@@ -42,6 +49,7 @@ export interface Course {
   creatorId: string;
   createdAt: string | number | Date;
   updatedAt: string | number | Date;
+  requerimientos: string;
 }
 
 // Crear un nuevo curso
@@ -54,6 +62,7 @@ export const createCourse = async ({
   dificultadid,
   instructor,
   creatorId,
+  requerimientos,
 }: {
   title: string;
   description: string;
@@ -63,6 +72,7 @@ export const createCourse = async ({
   dificultadid: number;
   instructor: string;
   creatorId: string;
+  requerimientos: string;
 }) => {
   return db.insert(courses).values({
     title,
@@ -73,6 +83,7 @@ export const createCourse = async ({
     dificultadid,
     instructor,
     creatorId,
+    requerimientos,
   });
 };
 
@@ -91,6 +102,7 @@ export const getCoursesByUserId = async (userId: string) => {
       creatorId: courses.creatorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
+      requerimientos: courses.requerimientos,
     })
     .from(courses)
     .leftJoin(users, eq(courses.instructor, users.id))
@@ -124,6 +136,7 @@ export const getCourseById = async (courseId: number) => {
       creatorId: courses.creatorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
+      requerimientos: courses.requerimientos,
     })
     .from(courses)
     .leftJoin(categories, eq(courses.categoryid, categories.id))
@@ -148,6 +161,7 @@ export const getAllCourses = async () => {
       creatorId: courses.creatorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
+      requerimientos: courses.requerimientos,
     })
     .from(courses)
     .leftJoin(categories, eq(courses.categoryid, categories.id))
@@ -166,6 +180,7 @@ export const updateCourse = async (
     modalidadesid,
     dificultadid,
     instructor,
+    requerimientos,
   }: {
     title: string;
     description: string;
@@ -174,7 +189,8 @@ export const updateCourse = async (
     modalidadesid: number;
     dificultadid: number;
     instructor: string;
-  },
+    requerimientos: string;
+  }
 ) => {
   return db
     .update(courses)
@@ -186,6 +202,7 @@ export const updateCourse = async (
       modalidadesid,
       dificultadid,
       instructor,
+      requerimientos,
     })
     .where(eq(courses.id, courseId));
 };

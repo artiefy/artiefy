@@ -4,6 +4,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
 const MAX_SIMPLE_UPLOAD_SIZE = 100 * 1024 * 1024; // 100 MB
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
         Expires: 3600, // 1 hora
       });
 
-      return Response.json({ url, fields, key, uploadType: 'simple' });
+      return NextResponse.json({ url, fields, key, uploadType: 'simple' });
     } else {
       // Carga multiparte para archivos grandes (100 MB - 1 GB)
       const multipartUpload = await client.send(
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
         })
       );
 
-      return Response.json({
+      return NextResponse.json({
         uploadId: multipartUpload.UploadId,
         key: key,
         uploadType: 'multipart',
@@ -66,7 +67,10 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     console.error('Error en la carga:', error);
-    return Response.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }
 
@@ -89,11 +93,14 @@ export async function DELETE(request: Request) {
       })
     );
 
-    return Response.json({
+    return NextResponse.json({
       message: 'Carga multiparte abortada con éxito',
     });
   } catch (error) {
     console.error('Error al abortar la carga multiparte:', error);
-    return Response.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

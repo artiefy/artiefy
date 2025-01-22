@@ -68,8 +68,8 @@ export async function POST(request: NextRequest) {
       modalidadesid: number;
       dificultadid: number;
       instructor: string;
+      requerimientos: string;
     };
-    console.log('Datos recibidos en el servidor:', body);
 
     const {
       title,
@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
       modalidadesid,
       dificultadid,
       instructor,
+      requerimientos,
     } = body;
 
     await createCourse({
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
       modalidadesid,
       dificultadid,
       instructor,
+      requerimientos,
     });
 
     console.log('Datos enviados al servidor:', {
@@ -100,6 +102,7 @@ export async function POST(request: NextRequest) {
       modalidadesid,
       dificultadid,
       instructor,
+      requerimientos,
     });
 
     return NextResponse.json({ message: 'Curso creado exitosamente' });
@@ -128,6 +131,7 @@ export async function PUT(request: NextRequest) {
       modalidadesid: number;
       dificultadid: number;
       instructor: string;
+      requerimientos: string;
     };
     const {
       id,
@@ -138,6 +142,7 @@ export async function PUT(request: NextRequest) {
       dificultadid,
       categoryid,
       instructor,
+      requerimientos,
     } = body;
 
     const course = await getCourseById(id);
@@ -157,6 +162,7 @@ export async function PUT(request: NextRequest) {
       modalidadesid,
       instructor,
       dificultadid,
+      requerimientos,
     });
 
     return NextResponse.json({ message: 'Curso actualizado exitosamente' });

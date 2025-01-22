@@ -44,7 +44,7 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -52,8 +52,7 @@ export async function PUT(
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const resolvedParams = await params;
-    const courseId = parseInt(resolvedParams.id);
+    const courseId = parseInt(params.id);
     const data = (await request.json()) as {
       title: string;
       description: string;
@@ -62,6 +61,7 @@ export async function PUT(
       instructor: string;
       modalidadesid: number;
       dificultadid: number;
+      requerimientos: string;
     };
 
     await updateCourse(courseId, {
@@ -72,6 +72,7 @@ export async function PUT(
       instructor: data.instructor,
       modalidadesid: data.modalidadesid,
       dificultadid: data.dificultadid,
+      requerimientos: data.requerimientos,
     });
 
     // Obtener el curso actualizado
