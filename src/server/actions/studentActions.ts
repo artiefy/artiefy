@@ -2,7 +2,7 @@
 
 import { cache } from 'react';
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and, sql, desc } from 'drizzle-orm';
+import { eq, and, sql, asc } from 'drizzle-orm';
 import { db } from '~/server/db';
 import {
   courses,
@@ -350,54 +350,55 @@ export async function unenrollFromCourse(courseId: number): Promise<void> {
 }
 
 // Obtener todas las lecciones de un curso
-export async function getLessonsByCourseId(
-	courseId: number
-): Promise<Lesson[]> {
-	const user = await currentUser();
-	if (!user?.id) {
-		throw new Error('Usuario no autenticado');
-	}
+export async function getLessonsByCourseId(courseId: number): Promise<Lesson[]> {
+  const user = await currentUser()
+  if (!user?.id) {
+    throw new Error("Usuario no autenticado")
+  }
 
-	const lessonsData = await db.query.lessons.findMany({
-		where: eq(lessons.courseId, courseId),
-		orderBy: [desc(lessons.order)],
-		with: {
-			activities: true,
-		},
-	});
+  const lessonsData = await db.query.lessons.findMany({
+    where: eq(lessons.courseId, courseId),
+    orderBy: [asc(lessons.order)],
+    with: {
+      activities: true,
+    },
+  })
 
-	const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
-		where: eq(userLessonsProgress.userId, user.id),
-	});
+  const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
+    where: eq(userLessonsProgress.userId, user.id),
+  })
 
-	const userActivitiesProgressData =
-		await db.query.userActivitiesProgress.findMany({
-			where: eq(userActivitiesProgress.userId, user.id),
-		});
+  const userActivitiesProgressData = await db.query.userActivitiesProgress.findMany({
+    where: eq(userActivitiesProgress.userId, user.id),
+  })
 
-	return lessonsData.map((lesson) => {
-		const lessonProgress = userLessonsProgressData.find(
-			(progress) => progress.lessonId === lesson.id
-		);
-		return {
-			...lesson,
-			porcentajecompletado: lessonProgress?.progress ?? 0,
-			isLocked: lessonProgress?.isLocked ?? true,
-			userProgress: lessonProgress?.progress ?? 0,
-			isCompleted: lessonProgress?.isCompleted ?? false,
-			activities:
-				lesson.activities?.map((activity) => {
-					const activityProgress = userActivitiesProgressData.find(
-						(progress) => progress.activityId === activity.id
-					);
-					return {
-						...activity,
-						isCompleted: activityProgress?.isCompleted ?? false,
-						userProgress: activityProgress?.progress ?? 0,
-					};
-				}) ?? [],
-		};
-	});
+  let previousLessonCompleted = true // Assume the first lesson is always unlocked
+
+  return lessonsData.map((lesson, index) => {
+    const lessonProgress = userLessonsProgressData.find((progress) => progress.lessonId === lesson.id)
+
+    const isLocked = index === 0 ? false : !previousLessonCompleted
+
+    const isCompleted = lessonProgress?.isCompleted ?? false
+    previousLessonCompleted = isCompleted
+
+    return {
+      ...lesson,
+      porcentajecompletado: lessonProgress?.progress ?? 0,
+      isLocked: isLocked,
+      userProgress: lessonProgress?.progress ?? 0,
+      isCompleted: isCompleted,
+      activities:
+        lesson.activities?.map((activity) => {
+          const activityProgress = userActivitiesProgressData.find((progress) => progress.activityId === activity.id)
+          return {
+            ...activity,
+            isCompleted: activityProgress?.isCompleted ?? false,
+            userProgress: activityProgress?.progress ?? 0,
+          }
+        }) ?? [],
+    }
+  })
 }
 
 // Obtener una lección específica por ID
@@ -463,6 +464,7 @@ export async function updateLessonProgress(lessonId: number, progress: number): 
             lessonId,
             progress,
             isCompleted: progress >= 100,
+            isLocked: false, // Una vez desbloqueada, permanece desbloqueada
             lastUpdated: new Date(),
         })
         .onConflictDoUpdate({
@@ -470,6 +472,7 @@ export async function updateLessonProgress(lessonId: number, progress: number): 
             set: {
                 progress,
                 isCompleted: progress >= 100,
+                isLocked: false,
                 lastUpdated: new Date(),
             },
         });
@@ -517,51 +520,55 @@ export async function completeActivity(activityId: number): Promise<void> {
 
 // Desbloquear la siguiente lección
 export async function unlockNextLesson(currentLessonId: number): Promise<{ success: boolean; nextLessonId?: number }> {
-    const user = await currentUser();
-    if (!user?.id) {
-        throw new Error('Usuario no autenticado');
-    }
+  const user = await currentUser()
+  if (!user?.id) {
+    throw new Error("Usuario no autenticado")
+  }
 
-    const currentLesson = await db.query.lessons.findFirst({
-        where: eq(lessons.id, currentLessonId),
-    });
+  // Verify if the current lesson is completed (video and activity)
+  const currentLessonProgress = await db.query.userLessonsProgress.findFirst({
+    where: and(eq(userLessonsProgress.userId, user.id), eq(userLessonsProgress.lessonId, currentLessonId)),
+  })
 
-    if (!currentLesson) {
-        throw new Error('Lección actual no encontrada');
-    }
+  if (!currentLessonProgress?.isCompleted) {
+    return { success: false }
+  }
 
-    const nextLesson = await db.query.lessons.findFirst({
-        where: and(
-            eq(lessons.courseId, currentLesson.courseId),
-            eq(lessons.order, currentLesson.order + 1)
-        ),
-    });
+  const currentLesson = await db.query.lessons.findFirst({
+    where: eq(lessons.id, currentLessonId),
+  })
 
-    if (nextLesson) {
-        await db
-            .insert(userLessonsProgress)
-            .values({
-                userId: user.id,
-                lessonId: nextLesson.id,
-                progress: 0,
-                isCompleted: false,
-                isLocked: false,
-                lastUpdated: new Date(),
-            })
-            .onConflictDoUpdate({
-                target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
-                set: {
-                    progress: 0,
-                    isCompleted: false,
-                    isLocked: false,
-                    lastUpdated: new Date(),
-                },
-            });
+  if (!currentLesson) {
+    throw new Error("Lección actual no encontrada")
+  }
 
-        return { success: true, nextLessonId: nextLesson.id };
-    }
+  const nextLesson = await db.query.lessons.findFirst({
+    where: and(eq(lessons.courseId, currentLesson.courseId), eq(lessons.order, currentLesson.order + 1)),
+  })
 
-    return { success: false };
+  if (nextLesson) {
+    await db
+      .insert(userLessonsProgress)
+      .values({
+        userId: user.id,
+        lessonId: nextLesson.id,
+        progress: 0,
+        isCompleted: false,
+        isLocked: false,
+        lastUpdated: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+        set: {
+          isLocked: false,
+          lastUpdated: new Date(),
+        },
+      })
+
+    return { success: true, nextLessonId: nextLesson.id }
+  }
+
+  return { success: false }
 }
 
 // Guardar preferencias del usuario
