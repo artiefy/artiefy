@@ -300,7 +300,7 @@ export default function CourseDetails({
 										</span>
 									</div>
 								</div>
-								<Badge className="bg-red-500 text-white">
+								<Badge className="bg-red-500 text-white hover:bg-red-700">
 									{course.modalidad?.name}
 								</Badge>
 							</div>
