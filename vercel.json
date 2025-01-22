@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "functions": {
     "app/api/courses/**/*.ts": {
       "maxDuration": 60
@@ -6,5 +7,18 @@
     "app/estudiantes/**/*": {
       "maxDuration": 60
     }
-  }
+  },
+  "routes": [
+    {
+      "src": "/api/courses",
+      "dest": "/api/courses"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/revalidate",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }
+

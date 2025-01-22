@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { type Course as CourseSchemaDTS, type WithContext } from 'schema-dts';
-import { getCourseById } from '~/server/actions/studentActions';
+import { getCourseById } from '~/server/actions/courses/getCourseById';
 import CourseDetails from './CourseDetails';
 import type { Course } from '~/types';
 

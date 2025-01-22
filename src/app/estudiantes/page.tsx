@@ -1,3 +1,5 @@
+"use cache"
+
 import { Suspense } from "react"
 import StudentDashboard from "./index"
 import { LoadingCourses } from "~/components/estudiantes/layout/LoadingCourses"
@@ -5,6 +7,7 @@ import CourseCategories from "~/components/estudiantes/layout/CourseCategories"
 import CourseListStudent from "~/components/estudiantes/layout/CourseListStudent"
 import SearchForm from "~/components/estudiantes/layout/SearchForm"
 import type { Category, Course } from "~/types"
+import { unstable_cacheLife as cacheLife, unstable_cacheTag as cacheTag } from "next/cache"
 
 interface SearchParams {
   category?: string
@@ -29,6 +32,10 @@ interface APIResponse {
 }
 
 async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
+  "use cache"
+  cacheLife({ stale: 60 * 60 }) // Cache for 1 hour
+  cacheTag("courses") // Add a cache tag for manual revalidation
+
   const url = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}/api/courses`)
 
   Object.entries(params).forEach(([key, value]) => {
@@ -39,26 +46,30 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 
   console.log("Fetching from URL:", url.toString())
 
-  const response = await fetch(url, {
-    next: { revalidate: 3600 }, // Cache for 1 hour
-  })
+  try {
+    const response = await fetch(url)
 
-  if (!response.ok) {
-    console.error("API response not OK:", response.status, response.statusText)
-    const text = await response.text()
-    console.error("Response body:", text)
-    throw new Error(`Error al cargar los cursos: ${response.status} ${response.statusText}`)
-  }
+    if (!response.ok) {
+      throw new Error(`Error al cargar los cursos: ${response.status} ${response.statusText}`)
+    }
 
-  const data: APIResponse = await response.json() as APIResponse
-  return {
-    ...data,
-    categoryId: data.categoryId,
-    searchTerm: data.searchTerm,
+    const data: APIResponse = await response.json() as APIResponse
+    return {
+      ...data,
+      categoryId: data.categoryId,
+      searchTerm: data.searchTerm,
+    }
+  } catch (error) {
+    console.error("Error fetching course data:", error)
+    throw error
   }
 }
 
 export default async function CoursesPage({ searchParams }: Props) {
+  "use cache"
+  cacheLife({ stale: 60 * 60 }) // Cache the page for 1 hour
+  cacheTag("courses") // Add a cache tag for manual revalidation
+
   try {
     const params = await searchParams
     const data = await fetchCourseData(params)
@@ -97,3 +108,4 @@ export default async function CoursesPage({ searchParams }: Props) {
     )
   }
 }
+

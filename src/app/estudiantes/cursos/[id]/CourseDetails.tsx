@@ -40,13 +40,11 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { useToast } from '~/hooks/use-toast';
-import {
-	enrollInCourse,
-	unenrollFromCourse,
-	getCourseById,
-	getLessonsByCourseId,
-} from '~/server/actions/studentActions';
 import { blurDataURL } from '~/lib/blurDataUrl';
+import { enrollInCourse } from '~/server/actions/courses/enrollInCourse';
+import { getCourseById } from '~/server/actions/courses/getCourseById';
+import { unenrollFromCourse } from '~/server/actions/courses/unenrollFromCourse';
+import { getLessonsByCourseId } from '~/server/actions/lessons/getLessonsByCourseId';
 import type { Course, Enrollment } from '~/types';
 
 export default function CourseDetails({
@@ -241,8 +239,8 @@ export default function CourseDetails({
 									className="object-cover"
 									priority
 									sizes="100vw"
-                  placeholder = "blur"
-                  blurDataURL={blurDataURL}
+									placeholder="blur"
+									blurDataURL={blurDataURL}
 									onError={(e) => {
 										e.currentTarget.src = '/fetch-error.jpg';
 									}}
