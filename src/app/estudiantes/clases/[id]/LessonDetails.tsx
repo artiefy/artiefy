@@ -360,18 +360,18 @@ export default function LessonDetails({
                                 <Button
                                     onClick={() => handleNavigation('prev')}
                                     disabled={!lessonsState.some((l, i) => i < lesson.order - 1 && !l.isLocked)}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-2 active:scale-95"
                                     variant="outline"
                                 >
-                                    <FaArrowLeft /> Lección Anterior
+                                    <FaArrowLeft /> Clase Anterior
                                 </Button>
                                 <Button
                                     onClick={() => handleNavigation('next')}
                                     disabled={!lessonsState.some((l, i) => i > lesson.order - 1 && !l.isLocked)}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-2 active:scale-95"
                                     variant="outline"
                                 >
-                                    Siguiente Lección <FaArrowRight />
+                                    Siguiente Clase <FaArrowRight />
                                 </Button>
                             </div>
 
@@ -402,7 +402,7 @@ export default function LessonDetails({
 
                     {/* Right Sidebar - Activities */}
                     <div className="w-72 bg-background shadow-lg p-4">
-                        <h2 className="text-2xl font-bold mb-4 text-primary">Actividades</h2>
+                        <h2 className="items-end text-2xl font-bold mb-4 text-primary">Actividades</h2>
                         {activity ? (
                             <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
                                 <div className="flex items-center justify-between">
