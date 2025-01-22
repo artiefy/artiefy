@@ -46,6 +46,7 @@ import {
 	getCourseById,
 	getLessonsByCourseId,
 } from '~/server/actions/studentActions';
+import { blurDataURL } from '~/lib/blurDataUrl';
 import type { Course, Enrollment } from '~/types';
 
 export default function CourseDetails({
@@ -240,6 +241,8 @@ export default function CourseDetails({
 									className="object-cover"
 									priority
 									sizes="100vw"
+                  placeholder = "blur"
+                  blurDataURL={blurDataURL}
 									onError={(e) => {
 										e.currentTarget.src = '/fetch-error.jpg';
 									}}
