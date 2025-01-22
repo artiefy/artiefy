@@ -3,6 +3,7 @@ import {
     getLessonById,
     getLessonsByCourseId,
     getCourseById,
+    getUserLessonsProgress,
 } from '~/server/actions/studentActions';
 import { type Activity } from '~/types';
 import LessonDetails from './LessonDetails';
@@ -27,7 +28,8 @@ async function LessonContent({ id }: { id: string }) {
             notFound();
         }
 
-        const lesson = await getLessonById(lessonId);
+        const lessonData = await getLessonById(lessonId);
+        const lesson = lessonData ? { ...lessonData, isLocked: lessonData.isLocked ?? false } : null;
         if (!lesson) {
             console.log('Lección no encontrada');
             notFound();
@@ -48,6 +50,7 @@ async function LessonContent({ id }: { id: string }) {
         }
 
         const lessons = await getLessonsByCourseId(lesson.courseId);
+        const userLessonsProgress = await getUserLessonsProgress(course.creatorId);
 
         return (
             <LessonDetails
@@ -55,6 +58,7 @@ async function LessonContent({ id }: { id: string }) {
                 activity={activity}
                 lessons={lessons}
                 course={course}
+                userLessonsProgress={userLessonsProgress}
             />
         );
     } catch (error) {

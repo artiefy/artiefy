@@ -75,12 +75,32 @@ export interface Lesson {
   updatedAt: Date;
   porcentajecompletado: number;
   resourceKey: string;
-  isLocked: boolean;
   userProgress: number;
   isCompleted: boolean;
   lastUpdated: Date;
   course?: Course;
   activities?: Activity[];
+  isLocked: boolean | null;
+}
+
+export interface LessonWithProgress {
+  isLocked: boolean | null;
+}
+export interface UserLessonsProgress {
+  userId: string;
+  lessonId: number;
+  progress: number;
+  isCompleted: boolean;
+  isLocked: boolean | null;
+  lastUpdated: Date;
+}
+
+export interface UserActivitiesProgress {
+  userId: string;
+  activityId: number;
+  progress: number;
+  isCompleted: boolean;
+  lastUpdated: Date;
 }
 
 export interface Modalidad {

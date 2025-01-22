@@ -17,7 +17,7 @@ import {
     unlockNextLesson,
     getLessonsByCourseId,
 } from '~/server/actions/studentActions';
-import { type Activity } from '~/types';
+import { type Activity, type UserLessonsProgress } from '~/types';
 
 interface Lesson {
     id: number;
@@ -27,7 +27,6 @@ interface Lesson {
     resourceKey: string;
     porcentajecompletado: number;
     duration: number;
-    isLocked: boolean;
     isCompleted: boolean;
 }
 
@@ -36,16 +35,22 @@ interface Course {
     instructor: string;
 }
 
+interface LessonWithProgress extends Lesson {
+    isLocked: boolean;
+}
+
 export default function LessonDetails({
     lesson,
     activity,
     lessons,
     course,
+    userLessonsProgress,
 }: {
-    lesson: Lesson;
+    lesson: LessonWithProgress;
     activity: Activity | null;
     lessons: Lesson[];
     course: Course;
+    userLessonsProgress: UserLessonsProgress[];
 }) {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [selectedLessonId, setSelectedLessonId] = useState<number | null>(lesson.id);
@@ -53,21 +58,31 @@ export default function LessonDetails({
     const [isVideoCompleted, setIsVideoCompleted] = useState(lesson.porcentajecompletado === 100);
     const [isActivityCompleted, setIsActivityCompleted] = useState(activity?.isCompleted ?? false);
     const [isCompletingActivity, setIsCompletingActivity] = useState(false);
-    const [lessonsState, setLessonsState] = useState<Lesson[]>([]);
+    const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
     const router = useRouter();
     const searchParams = useSearchParams();
     const { toast } = useToast();
 
     useEffect(() => {
-        // Ordenar las lecciones en orden ascendente por id
-        const sortedLessons = [...lessons].sort((a, b) => a.id - b.id);
-        setLessonsState(sortedLessons);
-    }, [lessons]);
+        // Ordenar las lecciones en orden ascendente por id y agregar isLocked desde userLessonsProgress
+        if (userLessonsProgress) {
+            const sortedLessons = lessons.map((lessonItem) => {
+                const progress = userLessonsProgress.find(
+                    (progress) => progress.lessonId === lessonItem.id
+                );
+                return {
+                    ...lessonItem,
+                    isLocked: progress ? progress.isLocked ?? true : true,
+                };
+            }).sort((a, b) => a.id - b.id);
+            setLessonsState(sortedLessons);
+        }
+    }, [lessons, userLessonsProgress]);
 
     useEffect(() => {
         if (selectedLessonId !== null && selectedLessonId !== lesson.id) {
             NProgress.start();
-            setProgress(0); // Reiniciar la barra de progreso
+            setProgress(0);
             router.push(`/estudiantes/clases/${selectedLessonId}`);
         }
     }, [selectedLessonId, lesson.id, router]);
@@ -99,12 +114,22 @@ export default function LessonDetails({
     }, [lesson]);
 
     useEffect(() => {
-        // Fetch progress from the database for all lessons
+        // Fetch progress from the database for all lessons and ensure isLocked is always a boolean
         const fetchProgress = async () => {
             try {
                 const lessonsData = await getLessonsByCourseId(course.id);
-                const sortedLessons = lessonsData.sort((a, b) => a.id - b.id);
-                setLessonsState(sortedLessons);
+                if (userLessonsProgress) {
+                    const sortedLessons = lessonsData.map((lessonItem) => {
+                        const progress = userLessonsProgress.find(
+                            (progress) => progress.lessonId === lessonItem.id
+                        );
+                        return {
+                            ...lessonItem,
+                            isLocked: progress ? progress.isLocked ?? true : true,
+                        };
+                    }).sort((a, b) => a.id - b.id);
+                    setLessonsState(sortedLessons);
+                }
             } catch (error) {
                 console.error('Error fetching lesson progress:', error);
             }
@@ -113,11 +138,11 @@ export default function LessonDetails({
         fetchProgress().catch((error) => {
             console.error('Error fetching lesson progress:', error);
         });
-    }, [course.id]);
+    }, [course.id, userLessonsProgress]);
 
     useEffect(() => {
-        // Redirigir si la lección está bloqueada
-        if (lesson.isLocked) {
+        // Redirigir si la lección está bloqueada y no es la lección 1
+        if (lesson.isLocked && lesson.id !== 1) {
             toast({
                 title: 'Lección bloqueada',
                 description: 'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
@@ -132,7 +157,7 @@ export default function LessonDetails({
             // Limpiar el timeout si el componente se desmonta antes de que se complete el tiempo
             return () => clearTimeout(timeoutId);
         }
-    }, [lesson.isLocked, router, toast]);
+    }, [lesson.isLocked, lesson.id, router, toast]);
 
     const handleVideoEnd = async () => {
         setProgress(100);
@@ -142,15 +167,39 @@ export default function LessonDetails({
             setLessonsState((prevLessons) =>
                 prevLessons.map((l) =>
                     l.id === lesson.id
-                        ? { ...l, porcentajecompletado: 100, isCompleted: true }
+                        ? { ...l, porcentajecompletado: 100, isCompleted: true, isLocked: false }
                         : l
                 )
             );
             toast({
                 title: 'Clase Completada',
-                description: 'Has completado la clase 1.',
+                description: `Has completado la clase ${lesson.id}.`,
                 variant: 'default',
             });
+
+            // Desbloquear la siguiente lección
+            const result = await unlockNextLesson(lesson.id);
+            if (result.success && 'nextLessonId' in result) {
+                setTimeout(() => {
+                    toast({
+                        title: 'Nueva clase desbloqueada',
+                        description: '¡Has desbloqueado la siguiente clase!',
+                        variant: 'default',
+                    });
+                }, 1000);
+
+                setLessonsState((prevLessons) =>
+                    prevLessons.map((l) =>
+                        l.id === result.nextLessonId
+                            ? { ...l, isLocked: false, porcentajecompletado: 0 }
+                            : l
+                    )
+                );
+
+                // Redirigir a la siguiente clase
+                setProgress(0); // Reiniciar la barra de progreso
+                router.push(`/estudiantes/clases/${result.nextLessonId}`);
+            }
         } catch (error) {
             console.error('Error al actualizar el progreso de la lección:', error);
             toast({
@@ -209,8 +258,6 @@ export default function LessonDetails({
                     prevLessons.map((l) =>
                         l.id === result.nextLessonId
                             ? { ...l, isLocked: false, porcentajecompletado: 0 }
-                            : l.id === lesson.id
-                            ? { ...l, porcentajecompletado: 100, isCompleted: true }
                             : l
                     )
                 );
@@ -244,8 +291,10 @@ export default function LessonDetails({
                             className={`mb-2 cursor-pointer rounded-lg p-4 ${
                                 lessonItem.id === selectedLessonId
                                     ? 'border-l-8 border-blue-500 bg-blue-50'
-                                    : 'bg-gray-50'
-                            } ${lessonItem.isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                                    : lessonItem.isLocked
+                                    ? 'bg-gray-50 cursor-not-allowed opacity-50'
+                                    : 'bg-white'
+                            }`}
                             onClick={() => {
                                 if (!lessonItem.isLocked) {
                                     setProgress(0); // Reiniciar la barra de progreso
@@ -255,7 +304,7 @@ export default function LessonDetails({
                         >
                             <div className="mb-2 flex items-center justify-between">
                                 <h3 className="font-semibold text-background">{lessonItem.title}</h3>
-                                {lessonItem.porcentajecompletado === 100 || lessonItem.id === 1 ? (
+                                {lessonItem.porcentajecompletado === 100 ? (
                                     <FaCheckCircle className="text-green-500" />
                                 ) : lessonItem.isLocked ? (
                                     <FaLock className="text-gray-400" />

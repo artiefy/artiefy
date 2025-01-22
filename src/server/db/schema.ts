@@ -88,7 +88,6 @@ export const lessons = pgTable('lessons', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   resourceKey: text('resource_key').notNull(),
-  isLocked: boolean('is_locked').default(true),
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
@@ -186,6 +185,7 @@ export const userLessonsProgress = pgTable('user_lessons_progress', {
   lessonId: integer('lesson_id').references(() => lessons.id).notNull(),
   progress: real('progress').default(0).notNull(),
   isCompleted: boolean('is_completed').default(false).notNull(),
+  isLocked: boolean('is_locked').default(true),
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
