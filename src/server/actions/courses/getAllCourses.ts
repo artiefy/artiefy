@@ -1,7 +1,7 @@
 import { cache } from "react"
 import { db } from "~/server/db"
 import { courses, categories, modalidades, dificultad } from "~/server/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, desc } from "drizzle-orm"
 
 export const getAllCourses = cache(async () => {
   try {
@@ -29,7 +29,8 @@ export const getAllCourses = cache(async () => {
       .leftJoin(categories, eq(courses.categoryid, categories.id))
       .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
       .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
-
+      .orderBy(desc(courses.createdAt))
+      
     return coursesData.map((course) => ({
       id: course.id,
       title: course.title ?? "",
