@@ -35,11 +35,14 @@ export default async function CourseListStudent({
 		return <div>No hay cursos disponibles</div>;
 	}
 
+	// Ordenar los cursos por fecha de subida en orden descendente
+	const sortedCourses = [...courses].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
 	return (
 		<>
 			<div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{await Promise.all(
-					courses.map(async (course) => {
+					sortedCourses.map(async (course) => {
 						let imageUrl;
 						let blurDataURL;
 						try {
