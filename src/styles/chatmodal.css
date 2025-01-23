@@ -1,7 +1,7 @@
 .button {
   cursor: pointer;
   border: none;
-  background: #5865f2;
+  background: #00A5C0;
   color: #fff;
   width: 100px;
   height: 100px;
@@ -9,11 +9,11 @@
   overflow: hidden;
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  right: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 300ms, transform 200ms;
+  transition: background 300ms, transform 200ms, border 300ms;
   font-weight: 600;
   z-index: 50;
 }
@@ -39,7 +39,7 @@
   height: 40px;
   overflow: hidden;
   background: #212121;
-  color: #5865f2;
+  color: #3AF4EF;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -63,6 +63,7 @@
 .button:hover {
   background: #000;
   transform: scale(1.05);
+  border: 2px solid #fff; /* Add this line to set the border color to white on hover */
 }
 
 .button:hover .button__icon {
@@ -161,4 +162,3 @@
 .loading-dot:nth-child(3) {
   animation: bounce 1.0s infinite 0.3s;
 }
-

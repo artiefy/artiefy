@@ -148,7 +148,7 @@ const ChatbotModal = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="rounded-lg bg-secondary p-2 text-white transition-colors hover:bg-secondary/90 disabled:bg-gray-300"
+                  className="rounded-lg bg-secondary p-2 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
                   aria-label="Enviar mensaje"
                 >
                   <FiSend className="text-xl" />

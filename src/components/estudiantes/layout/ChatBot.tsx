@@ -1,12 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaTimes } from 'react-icons/fa';
+import { FaTimes, FaRobot } from 'react-icons/fa';
+import '~/styles/chatmodal.css'; // Import the CSS file
 
-interface ChatBotProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
+const ChatBot: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<
     { text: string; sender: string }[]
   >([]);
@@ -31,7 +28,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
       ]);
       setMessageInput('');
       setIsLoading(true);
-      // Simular respuesta del chatbot
+      // Simulate chatbot response
       setTimeout(() => {
         setChatMessages((prev) => [
           ...prev,
@@ -47,13 +44,31 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
+      {/* Chat Trigger Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`button ${isOpen ? 'bg-gray-200' : ''}`}
+      >
+        <div className="button__text">
+          {Array.from("-ARTI-IA-ARTI-IA").map((char, i) => (
+            <span key={i} style={{ "--index": i } as React.CSSProperties}>
+              {char}
+            </span>
+          ))}
+        </div>
+        <div className="button__circle">
+          <FaRobot className="button__icon" />
+          <FaRobot className="button__icon button__icon--copy" />
+        </div>
+      </button>
+
       {/* Modal del Chatbot */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-96 rounded-lg bg-white shadow-xl">
+        <div className="fixed bottom-32 right-6 w-96 rounded-lg bg-white shadow-xl">
           <div className="flex items-center justify-between border-b p-4">
             <h3 className="font-bold text-gray-800">Arti IA</h3>
             <button
-              onClick={onClose}
+              onClick={() => setIsOpen(false)}
               className="text-gray-500 hover:text-gray-700"
             >
               <FaTimes />
@@ -82,9 +97,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
               <div className="flex justify-start">
                 <div className="rounded-lg bg-gray-100 p-3">
                   <div className="flex space-x-2">
-                    <div className="size-2 animate-bounce rounded-full bg-gray-400"></div>
-                    <div className="size-2 animate-bounce rounded-full bg-gray-400 delay-100"></div>
-                    <div className="size-2 animate-bounce rounded-full bg-gray-400 delay-200"></div>
+                    <div className="loading-dot"></div>
+                    <div className="loading-dot"></div>
+                    <div className="loading-dot"></div>
                   </div>
                 </div>
               </div>
@@ -102,7 +117,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ isOpen, onClose }) => {
               />
               <button
                 type="submit"
-                className="rounded-lg bg-background px-4 py-2 text-white transition-all hover:bg-black/70"
+                disabled={isLoading}
+                className="rounded-lg bg-secondary px-4 py-2 text-white transition-all disabled:bg-gray-300 hover:bg-[#00A5C0]"
               >
                 Enviar
               </button>
