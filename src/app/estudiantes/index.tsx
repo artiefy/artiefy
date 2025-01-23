@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  MagnifyingGlassIcon,
   RocketLaunchIcon,
   StarIcon,
 } from '@heroicons/react/24/solid';
@@ -21,6 +20,7 @@ import {
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course } from '~/types';
+import '~/styles/searchBar.css'; // Import the new CSS file
 
 interface StudentDashboardProps {
   initialCourses: Course[];
@@ -92,38 +92,37 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
         <div className="container mx-auto px-8 sm:px-12 lg:px-16">
           <div className="flex flex-col space-y-12 sm:space-y-16">
             {/* BUSCADOR IA */}
-            <div className="flex flex-col items-center mt-8 space-y-4">
-              <div className="flex items-center">
-                <RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
-                <span className="ml-2 whitespace-nowrap text-2xl font-bold text-primary sm:text-3xl">
-                  Arti IA
-                </span>
-              </div>
-              <form className="flex w-full max-w-2xl flex-col items-center space-y-2">
-                <div className="relative w-full max-w-xs">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon className="size-5 text-gray-500" />
-                  </div>
-                  <input
-                    required
-                    placeholder="Buscar..."
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 pl-10 text-lg text-gray-900 focus:border-primary focus:ring-primary"
-                    type="search"
-                    onChange={(e) => handleSearch(e.target.value)}
-                  />
+            {!isLoading && (
+              <div className="flex flex-col items-center mt-8 space-y-4">
+                <div className="flex items-center">
+                  <RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
+                  <span className="ml-2 whitespace-nowrap text-2xl font-bold text-primary sm:text-3xl">
+                    Arti IA
+                  </span>
                 </div>
-                <button
-                  className="inline-flex items-center rounded-lg border border-primary bg-primary px-4 py-3 text-lg font-medium text-background hover:bg-primary/90 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/50"
-                  type="submit"
+                <form
+                  className="flex w-full max-w-2xl flex-col items-center space-y-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const searchTerm = (e.target as HTMLFormElement).elements.namedItem('search') as HTMLInputElement;
+                    handleSearch(searchTerm.value);
+                  }}
                 >
-                  <MagnifyingGlassIcon className="mr-2 size-5" />
-                  Buscar
-                </button>
-              </form>
-            </div>
+                  <div className="input-container">
+                    <input
+                      required
+                      className="input"
+                      name="search"
+                      placeholder="Dime que deseas buscar..."
+                      type="search"
+                    />
+                  </div>
+                </form>
+              </div>
+            )}
 
             {/* CAROUSEL GRANDE */}
-            <div className="relative h-[300px] overflow-hidden sm:h-[400px] md:h-[500px]">
+            <div className="relative h-[300px] overflow-hidden sm:h-[400px] md:h-[500px] px-8">
               {latestFiveCourses.map((course, index) => (
                 <div
                   key={course.id}
@@ -160,7 +159,7 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
                     <p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">
                       Educador: {course.instructor}
                     </p>
-                    <p className="mb-1 hidden text-sm text-red-500 sm:block sm:text-base md:text-lg">
+                    <p className="mb-1 hidden text-sm font-bold text-red-500 sm:block sm:text-base md:text-lg">
                       {course.modalidad?.name ?? 'Modalidad no especificada'}
                     </p>
                     <div className="flex items-center">
@@ -186,7 +185,7 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
             </div>
 
             {/* CAROUSEL TOP CURSOS */}
-            <div className="relative xs:px-4">
+            <div className="relative xs:px-4 px-8">
               <h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
                 Top Cursos
               </h2>
@@ -251,7 +250,7 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
             </div>
 
             {/* Seccion De Cursos */}
-            <div className="flex flex-col px-11">
+            <div className="flex flex-col px-8">
               <h2 className="mb-2 text-2xl font-bold sm:text-3xl">
                 Cursos Artiefy
               </h2>

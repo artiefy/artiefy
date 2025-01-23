@@ -37,7 +37,7 @@ export default function Home() {
 						</h1>
 						<p className="mb-5 text-xl leading-snug">
 							Bienvenido a Artiefy, tu plataforma digital educativa dedicada a
-							impulsar <br /> tus conociminetos con ciencia y tecnología.
+							impulsar <br /> tus conocimientos con ciencia y tecnología.
 						</p>
 						<div>
 							<SignedOut>
