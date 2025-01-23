@@ -15,6 +15,8 @@ import {
   FiMessageSquare,
   FiShieldOff,
   FiAlertOctagon,
+  FiBookOpen,
+  FiArchive,
 } from 'react-icons/fi';
 import { ModalError } from '~/components/admin/ui/modalerror';
 import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
@@ -97,24 +99,35 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       icon: <FiFileText size={24} />,
       title: 'Proyectos',
       id: 'Proyectos',
-      link: '/',
+      link: './',
     },
-    { icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: './' },
     {
       icon: <FiSettings size={24} />,
       title: 'Settings',
       id: 'settings',
-      link: './',
-    },
-    {
-      icon: <FiAlertOctagon size={24} />,
-      title: 'Ejemplo',
-      id: 'settings',
       link: './app/Settings',
     },
     {
-      icon: <FiSettings size={24} />,
+      icon: <FiAlertOctagon size={24} />,
+      title: 'Soporte',
+      id: 'soporte',
+      link: './soporte',
+    },
+    {
+      icon: <FiBookOpen size={24} />,
+      title: 'Educators',
+      id: 'tutores',
+      link: './tutores',
+    },
+    {
+      icon: <FiArchive size={24} />,
       title: 'Foro',
+      id: 'foros',
+      link: './foros',
+    },
+    {
+      icon: <FiArchive size={24} />,
+      title: 'Roles',
       id: 'foros',
       link: './foros',
     },
