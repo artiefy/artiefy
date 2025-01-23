@@ -17,7 +17,7 @@ export default function SignInPage() {
     const { signIn } = useSignIn();
     const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(null);
     const searchParams = useSearchParams();
-    const redirectTo = searchParams.get('redirectTo') ?? '/';
+    const redirectTo = searchParams.get('redirect_url') ?? '/';
 
     const signInWith = async (strategy: OAuthStrategy) => {
         if (!signIn) return;
@@ -25,7 +25,7 @@ export default function SignInPage() {
         try {
             await signIn.authenticateWithRedirect({
                 strategy,
-                redirectUrl: '/sign-up/sso-callback',
+                redirectUrl: '/sso-callback',
                 redirectUrlComplete: redirectTo,
             });
         } catch (error) {

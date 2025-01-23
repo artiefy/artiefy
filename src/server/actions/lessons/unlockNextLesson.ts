@@ -43,7 +43,7 @@ export async function unlockNextLesson(currentLessonId: number): Promise<{ succe
       .values({
         userId: user.id,
         lessonId: nextLesson.id,
-        progress: 1, // Set initial progress to 1%
+        progress: 1,
         isCompleted: false,
         isLocked: false,
         lastUpdated: new Date(),
@@ -52,7 +52,7 @@ export async function unlockNextLesson(currentLessonId: number): Promise<{ succe
         target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
         set: {
           isLocked: false,
-          progress: 1, // Ensure progress is set to 1% on update
+          progress: 1,
           lastUpdated: new Date(),
         },
       })
