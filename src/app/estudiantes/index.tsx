@@ -7,6 +7,7 @@ import {
   StarIcon,
 } from '@heroicons/react/24/solid';
 import Image from 'next/image';
+import Link from 'next/link';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
@@ -63,8 +64,7 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
         courses.filter(
           (course) =>
             (course.title.toLowerCase().includes(lowercasedTerm) ||
-              course.description?.toLowerCase().includes(lowercasedTerm)) ??
-            false
+              course.description?.toLowerCase().includes(lowercasedTerm)) ?? false
         )
       );
       setIsLoading(false);
@@ -91,6 +91,37 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
       <main className="grow">
         <div className="container mx-auto px-8 sm:px-12 lg:px-16">
           <div className="flex flex-col space-y-12 sm:space-y-16">
+            {/* BUSCADOR IA */}
+            <div className="flex justify-center mt-8">
+              <form className="flex w-full max-w-2xl flex-col items-center space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
+                <div className="flex items-center">
+                  <RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
+                  <span className="ml-2 whitespace-nowrap text-2xl font-bold text-primary sm:text-3xl">
+                    Arti IA
+                  </span>
+                </div>
+                <div className="relative w-full max-w-xs">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <MagnifyingGlassIcon className="size-5 text-gray-500" />
+                  </div>
+                  <input
+                    required
+                    placeholder="Buscar..."
+                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-3 pl-10 text-lg text-gray-900 focus:border-primary focus:ring-primary"
+                    type="search"
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                </div>
+                <button
+                  className="inline-flex items-center rounded-lg border border-primary bg-primary px-4 py-3 text-lg font-medium text-background hover:bg-primary/90 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/50"
+                  type="submit"
+                >
+                  <MagnifyingGlassIcon className="mr-2 size-5" />
+                  Buscar
+                </button>
+              </form>
+            </div>
+
             {/* CAROUSEL GRANDE */}
             <div className="relative h-[300px] overflow-hidden sm:h-[400px] md:h-[500px]">
               {latestFiveCourses.map((course, index) => (
@@ -154,37 +185,6 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
               </div>
             </div>
 
-            {/* BUSCADOR IA */}
-            <div className="flex justify-center sm:justify-end">
-              <form className="flex w-full max-w-lg flex-col items-center space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
-                <div className="flex items-center">
-                  <RocketLaunchIcon className="size-5 text-orange-500 sm:size-6" />
-                  <span className="ml-2 whitespace-nowrap text-lg text-primary sm:text-xl">
-                    Artiefy IA
-                  </span>
-                </div>
-                <div className="relative w-full max-w-xs">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon className="size-4 text-gray-500" />
-                  </div>
-                  <input
-                    required
-                    placeholder="Buscar..."
-                    className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
-                    type="search"
-                    onChange={(e) => handleSearch(e.target.value)}
-                  />
-                </div>
-                <button
-                  className="inline-flex items-center rounded-lg border border-primary bg-primary px-3 py-2 text-sm font-medium text-background hover:bg-primary/90 hover:text-primary focus:outline-none focus:ring-4 focus:ring-primary/50"
-                  type="submit"
-                >
-                  <MagnifyingGlassIcon className="mr-2 size-4" />
-                  Buscar
-                </button>
-              </form>
-            </div>
-
             {/* CAROUSEL TOP CURSOS */}
             <div className="relative xs:px-4">
               <h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
@@ -213,9 +213,11 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
                           blurDataURL={blurDataURL}
                         />
                         <div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
-                          <h3 className="text-lg font-bold text-white">
-                            {course.title}
-                          </h3>
+                          <Link href={`/estudiantes/cursos/${course.id}`}>
+                            <h3 className="text-lg font-bold text-white hover:underline active:scale-95">
+                              {course.title}
+                            </h3>
+                          </Link>
                           <div className="mb-2 flex items-center justify-between">
                             <Badge
                               variant="outline"
