@@ -1,7 +1,19 @@
-import { eq, count } from "drizzle-orm";
-import { db } from "~/server/db/index";
-import { courses, users, categories, modalidades, enrollments, dificultad } from "~/server/db/schema";
+import { eq, count } from 'drizzle-orm';
+import { db } from '~/server/db/index';
+import {
+  courses,
+  users,
+  categories,
+  modalidades,
+  enrollments,
+  dificultad,
+} from '~/server/db/schema';
 
+// Obtener el número total de cursos en la plataforma
+export const getTotalCourses = async (): Promise<number> => {
+  const result = await db.select({ totalCourses: count() }).from(courses);
+  return result[0]?.totalCourses ?? 0;
+};
 export interface Lesson {
   id: number;
   title: string;
@@ -174,7 +186,7 @@ export const updateCourse = async (
     modalidadesid: number;
     dificultadid: number;
     instructor: string;
-  },
+  }
 ) => {
   return db
     .update(courses)

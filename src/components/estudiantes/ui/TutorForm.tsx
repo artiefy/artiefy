@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Button } from "~/components/ui/button"
-import { Input } from "~/components/ui/input"
-import { Label } from "~/components/ui/label"
-import { Textarea } from "~/components/ui/textarea"
+import { Button } from "~/components/admin/ui/button"
+import { Input } from "~/components/admin/ui/input"
+import { Label } from "~/components/admin/ui/label"
+import { Textarea } from "~/components/admin/ui/textarea"
 import type { Tutor } from '~/types/tutor'
 
 interface TutorFormProps {

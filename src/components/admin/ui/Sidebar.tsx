@@ -14,9 +14,10 @@ import {
   FiX,
   FiMessageSquare,
   FiShieldOff,
+  FiAlertOctagon,
 } from 'react-icons/fi';
-import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
 import { ModalError } from '~/components/admin/ui/modalerror';
+import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
 
 interface ResponsiveSidebarProps {
   children: React.ReactNode;
@@ -84,13 +85,13 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       icon: <FiHome size={24} />,
       title: 'Home',
       id: 'home',
-      link: '/',
+      link: './',
     },
     {
       icon: <FiBook size={24} />,
-      title: 'Courses',
-      id: 'courses',
-      link: '/',
+      title: 'Cursos',
+      id: 'Cursos',
+      link: './cursos',
     },
     {
       icon: <FiFileText size={24} />,
@@ -98,18 +99,24 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       id: 'Proyectos',
       link: '/',
     },
-    { icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: '/' },
+    { icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: './' },
     {
       icon: <FiSettings size={24} />,
       title: 'Settings',
       id: 'settings',
-      link: '/',
+      link: './',
+    },
+    {
+      icon: <FiAlertOctagon size={24} />,
+      title: 'Ejemplo',
+      id: 'settings',
+      link: './app/Settings',
     },
     {
       icon: <FiSettings size={24} />,
       title: 'Foro',
-      id: 'foro',
-      link: '/dashboard/admin/foro',
+      id: 'foros',
+      link: './foros',
     },
   ];
 
@@ -162,9 +169,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             <div className="absolute right-4">
               <ModalError
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)} onCloseAction={function (): void {
+                onClose={() => setIsModalOpen(false)}
+                onCloseAction={function (): void {
                   throw new Error('Function not implemented.');
-                } }              />
+                }}
+              />
               <UserButton showName />
             </div>
           </div>

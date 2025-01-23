@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
-import { Badge } from "~/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/admin/ui/card"
+import { Badge } from "~/components/admin/ui/badge"
 
 interface Tutor {
   name: string;

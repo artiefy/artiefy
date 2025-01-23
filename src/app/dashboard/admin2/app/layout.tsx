@@ -1,22 +1,22 @@
 'use client';
 
-import { Inter } from 'next/font/google'
-import '~/styles/globals.css'
-import { usePathname } from 'next/navigation'
-import ResponsiveSidebar from '~/components/admin/ui/Sidebar'
-import { ThemeProvider } from "~/components/admin/ui/theme-provider"
-import { ThemeEffect } from '~/components/admin/ui/theme-effect'
+import { Inter } from 'next/font/google';
+import '~/styles/globals.css';
+import { usePathname } from 'next/navigation';
+import ResponsiveSidebar from '~/components/admin/ui/Sidebar';
+import { ThemeProvider } from '~/components/admin/ui/theme-provider';
+import { ThemeEffect } from '~/components/admin/ui/theme-effect';
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const publicRoutes = ['/login', '/register']
-  const pathname = usePathname()
-  const isPublicRoute = publicRoutes.includes(pathname)
+  const publicRoutes = ['/login', '/register'];
+  const pathname = usePathname();
+  const isPublicRoute = publicRoutes.includes(pathname);
 
   return (
     <html lang="es" suppressHydrationWarning>
@@ -43,6 +43,6 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }
 

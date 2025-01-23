@@ -1,7 +1,7 @@
 'use client';
-
-import { useState } from 'react';
-import { BookOpen, Users, TrendingUp, Search, Plus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, TrendingUp, Search, Plus } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '~/components/admin/ui/button';
 import {
   Card,
@@ -67,6 +67,26 @@ export default function Cursos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const coursesPerPage = 6;
+  const [totalCourses, setTotalCourses] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchTotalCourses = async () => {
+      try {
+        const response = await fetch('/api/admin/couses');
+        if (!response.ok) {
+          throw new Error('Error fetching total courses');
+        }
+        const data: { total: number } = (await response.json()) as {
+          total: number;
+        };
+        setTotalCourses(data.total);
+      } catch (error) {
+        console.error('Error fetching total courses:', error);
+      }
+    };
+
+    void fetchTotalCourses();
+  }, []);
 
   const handleAddCourse = (newCourse: Partial<Course>) => {
     const course: Course = {
@@ -102,35 +122,49 @@ export default function Cursos() {
         Gestión de Cursos
       </h2>
 
-      <div className="grid gap-4 md:gap-6">
-        <DashboardMetrics
-          metrics={[
-            {
-              title: 'Total Cursos',
-              value: courses.length.toString(),
-              icon: BookOpen,
-              href: '/cursos',
-            },
-            {
-              title: 'Estudiantes Inscritos',
-              value: courses
-                .reduce((acc, course) => acc + course.totalStudents, 0)
-                .toString(),
-              icon: Users,
-              href: '/estudiantes',
-            },
-            {
-              title: 'Promedio de Calificación',
-              value: (
-                courses.reduce((acc, course) => acc + (course.rating ?? 0), 0) /
-                courses.length
-              ).toFixed(1),
-              icon: TrendingUp,
-              href: '/analisis',
-            },
-          ]}
-        />
+      <div className="grid gap-4">
+        <div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total de Cursos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalCourses}</div>
+              <Link
+                href={'/cursos'}
+                className="text-xs text-muted-foreground hover:underline"
+              >
+                Ver detalles
+              </Link>
+            </CardContent>
+          </Card>
 
+          <DashboardMetrics
+            metrics={[
+              {
+                title: 'Estudiantes Inscritos',
+                value: courses
+                  .reduce((acc, course) => acc + course.totalStudents, 0)
+                  .toString(),
+                icon: Users,
+                href: '/estudiantes',
+              },
+              {
+                title: 'Promedio de Calificación',
+                value: (
+                  courses.reduce(
+                    (acc, course) => acc + (course.rating ?? 0),
+                    0
+                  ) / courses.length
+                ).toFixed(1),
+                icon: TrendingUp,
+                href: '/analisis',
+              },
+            ]}
+          />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="text-lg sm:text-xl">
