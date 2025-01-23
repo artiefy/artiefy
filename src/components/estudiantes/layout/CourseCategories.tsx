@@ -7,6 +7,7 @@ import NProgress from "nprogress"
 import { FiBarChart, FiCamera, FiCode, FiDatabase, FiMusic, FiPenTool } from "react-icons/fi"
 import { Icons } from "~/components/estudiantes/ui/icons"
 import type { Category } from "~/types"
+import { saveScrollPosition, restoreScrollPosition } from "~/utils/scrollPosition"
 import "nprogress/nprogress.css"
 
 interface CourseCategoriesProps {
@@ -30,18 +31,20 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
   const [loadingCategory, setLoadingCategory] = useState<string | null>(null)
 
   const handleCategorySelect = (category: string | null) => {
+    saveScrollPosition()
     NProgress.start()
     setLoadingCategory(category ?? "all")
     const params = new URLSearchParams()
     if (category) {
       params.set("category", category)
     }
-    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+    router.push(`${pathname}?${params.toString()}`)
   }
 
   useEffect(() => {
     setLoadingCategory(null)
     NProgress.done()
+    restoreScrollPosition()
   }, [searchParams])
 
   return (
@@ -54,6 +57,7 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
               className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 px-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
               onChange={(e) => handleCategorySelect(e.target.value || null)}
               value={searchParams.get("category") ?? ""}
+              aria-label="Seleccionar categoría"
             >
               <option value="">Todas las categorías</option>
               {allCategories?.map((category) => (
@@ -68,43 +72,51 @@ export default function CourseCategories({ allCategories, featuredCategories }: 
           <div
             className="flex cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-6 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 aspect-square"
             onClick={() => handleCategorySelect(null)}
+            role="button"
+            tabIndex={0}
+            aria-label="Mostrar todos los cursos"
           >
             {loadingCategory === "all" ? (
               <div className="flex flex-col items-center justify-center h-full">
-                <Icons.spinner className="size-10 text-background" />
+                <Icons.spinner className="size-10 text-background" aria-hidden="true" />
                 <p className="mt-2 text-sm text-background">Buscando Cursos...</p>
               </div>
             ) : (
               <>
                 <div className="mb-4 text-3xl text-blue-600">
-                  <FiCode />
+                  <FiCode aria-hidden="true" />
                 </div>
                 <h3 className="text-lg font-semibold text-background">Todos los cursos</h3>
               </>
             )}
           </div>
-            {featuredCategories?.map((category: Category) => (
+          {featuredCategories?.map((category: Category) => (
             <div
               key={category.id}
               className="flex cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-6 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 aspect-square"
               onClick={() => handleCategorySelect(category.id.toString())}
+              role="button"
+              tabIndex={0}
+              aria-label={`Mostrar cursos de ${category.name}`}
             >
               {loadingCategory === category.id.toString() ? (
-              <div className="flex flex-col items-center justify-center h-full">
-                <Icons.spinner className="size-10 text-background" />
-                <p className="mt-2 text-sm text-background">Buscando Cursos...</p>
-              </div>
+                <div className="flex flex-col items-center justify-center h-full">
+                  <Icons.spinner className="size-10 text-background" aria-hidden="true" />
+                  <p className="mt-2 text-sm text-background">Buscando Cursos...</p>
+                </div>
               ) : (
-              <>
-                <div className="mb-4 text-3xl text-blue-600">{categoryIcons[category.name] ?? <FiCode />}</div>
-                <h3 className="text-lg font-semibold text-background">{category.name}</h3>
-                <p className="mt-2 text-sm text-gray-500">
-                {`${category.courses?.length ?? 0} curso${category.courses?.length !== 1 ? "s" : ""}`}
-                </p>
-              </>
+                <>
+                  <div className="mb-4 text-3xl text-blue-600" aria-hidden="true">
+                    {categoryIcons[category.name] ?? <FiCode />}
+                  </div>
+                  <h3 className="text-lg font-semibold text-background">{category.name}</h3>
+                  <p className="mt-2 text-sm text-gray-500">
+                    {`${category.courses?.length ?? 0} curso${category.courses?.length !== 1 ? "s" : ""}`}
+                  </p>
+                </>
               )}
             </div>
-            ))}
+          ))}
         </div>
       </div>
     </section>
