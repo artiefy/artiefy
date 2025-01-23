@@ -1,4 +1,3 @@
-
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
@@ -52,31 +51,31 @@ export async function updateLessonProgress(lessonId: number, progress: number): 
 
 // Desbloquear la siguiente lección
 export async function unlockNextLesson(currentLessonId: number): Promise<{ success: boolean; nextLessonId?: number }> {
-  const user = await currentUser()
+  const user = await currentUser();
   if (!user?.id) {
-    throw new Error("Usuario no autenticado")
+    throw new Error("Usuario no autenticado");
   }
 
   // Verify if the current lesson is completed (video and activity)
   const currentLessonProgress = await db.query.userLessonsProgress.findFirst({
     where: and(eq(userLessonsProgress.userId, user.id), eq(userLessonsProgress.lessonId, currentLessonId)),
-  })
+  });
 
   if (!currentLessonProgress?.isCompleted) {
-    return { success: false }
+    return { success: false };
   }
 
   const currentLesson = await db.query.lessons.findFirst({
     where: eq(lessons.id, currentLessonId),
-  })
+  });
 
   if (!currentLesson) {
-    throw new Error("Lección actual no encontrada")
+    throw new Error("Lección actual no encontrada");
   }
 
   const nextLesson = await db.query.lessons.findFirst({
     where: and(eq(lessons.courseId, currentLesson.courseId), eq(lessons.order, currentLesson.order + 1)),
-  })
+  });
 
   if (nextLesson) {
     await db
@@ -84,7 +83,7 @@ export async function unlockNextLesson(currentLessonId: number): Promise<{ succe
       .values({
         userId: user.id,
         lessonId: nextLesson.id,
-        progress: 0,
+        progress: 1, // Set initial progress to 1%
         isCompleted: false,
         isLocked: false,
         lastUpdated: new Date(),
@@ -93,12 +92,13 @@ export async function unlockNextLesson(currentLessonId: number): Promise<{ succe
         target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
         set: {
           isLocked: false,
+          progress: 1, // Ensure progress is set to 1% on update
           lastUpdated: new Date(),
         },
-      })
+      });
 
-    return { success: true, nextLessonId: nextLesson.id }
+    return { success: true, nextLessonId: nextLesson.id };
   }
 
-  return { success: false }
+  return { success: false };
 }
