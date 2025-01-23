@@ -2,12 +2,11 @@ import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
-import ProgressBar from '~/components/estudiantes/layout/ProgressBarProvider';
+import Provider from '~/components/estudiantes/layout/ProgressBarProvider';
 import { Toaster } from '~/components/estudiantes/ui/toaster';
 import { metadata as siteMetadata } from '~/lib/metadata';
 import Loading from './loading';
 import '~/styles/globals.css';
-import { Providers } from './providers';
 
 const montserrat = Montserrat({
 	subsets: ['latin'],
@@ -60,9 +59,9 @@ export default function RootLayout({
 						<Loading />
 					</ClerkLoading>
 					<ClerkLoaded>
-						<ProgressBar>
-							<Providers>{children}</Providers>
-						</ProgressBar>
+						<Provider>
+							{children}
+						</Provider>
 						<Toaster />
 					</ClerkLoaded>
 				</body>

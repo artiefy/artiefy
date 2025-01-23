@@ -1,0 +1,164 @@
+.button {
+  cursor: pointer;
+  border: none;
+  background: #5865f2;
+  color: #fff;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 300ms, transform 200ms;
+  font-weight: 600;
+  z-index: 50;
+}
+
+.button__text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: text-rotation 8s linear infinite;
+}
+
+.button__text > span {
+  position: absolute;
+  transform: rotate(calc(22deg * var(--index)));
+  inset: 7px;
+}
+
+.button__circle {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  background: #212121;
+  color: #5865f2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button__icon {
+  font-size: 20px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button__icon--copy {
+  position: absolute;
+  transform: translate(-150%, 150%);
+}
+
+.button:hover {
+  background: #000;
+  transform: scale(1.05);
+}
+
+.button:hover .button__icon {
+  color: #fff;
+}
+
+.button:hover .button__icon:first-child {
+  transition: transform 0.3s ease-in-out;
+  transform: translate(150%, -150%);
+}
+
+.button:hover .button__icon--copy {
+  transition: transform 0.3s ease-in-out 0.1s;
+  transform: translate(0);
+}
+
+@keyframes text-rotation {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.button:active {
+  transform: scale(0.95);
+}
+
+/* Estilos adicionales para el modal del chat */
+.chat-modal {
+  background: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.chat-container {
+  background: white;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 28rem;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.input-container {
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.loading-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #00BDD8;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0 2px;
+}
+
+.loading-dot:nth-child(1) {
+  animation: bounce 0.8s infinite 0.1s;
+}
+
+.loading-dot:nth-child(2) {
+  animation: bounce 0.9s infinite 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+  animation: bounce 1.0s infinite 0.3s;
+}
+

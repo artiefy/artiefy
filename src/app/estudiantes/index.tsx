@@ -92,14 +92,14 @@ export default function StudentDashboard({ initialCourses, children }: StudentDa
         <div className="container mx-auto px-8 sm:px-12 lg:px-16">
           <div className="flex flex-col space-y-12 sm:space-y-16">
             {/* BUSCADOR IA */}
-            <div className="flex justify-center mt-8">
-              <form className="flex w-full max-w-2xl flex-col items-center space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
-                <div className="flex items-center">
-                  <RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
-                  <span className="ml-2 whitespace-nowrap text-2xl font-bold text-primary sm:text-3xl">
-                    Arti IA
-                  </span>
-                </div>
+            <div className="flex flex-col items-center mt-8 space-y-4">
+              <div className="flex items-center">
+                <RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
+                <span className="ml-2 whitespace-nowrap text-2xl font-bold text-primary sm:text-3xl">
+                  Arti IA
+                </span>
+              </div>
+              <form className="flex w-full max-w-2xl flex-col items-center space-y-2">
                 <div className="relative w-full max-w-xs">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <MagnifyingGlassIcon className="size-5 text-gray-500" />

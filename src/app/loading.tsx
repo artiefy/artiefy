@@ -1,4 +1,4 @@
-import '../styles/rocket.css'; // Importa el archivo CSS
+import '~/styles/rocket.css';
 
 export default function Loading() {
   return (
