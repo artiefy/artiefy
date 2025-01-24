@@ -62,42 +62,39 @@ export default async function CourseListStudent({
 						return (
 							<Card
 								key={course.id}
-								className="content flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in"
-                id='card'
+								className="flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in"
 							>
-								<div className="content">
 									<CardHeader>
 										<AspectRatio ratio={16 / 9}>
-											<div className="relative size-full">
-												<Image
-													src={imageUrl}
-													alt={course.title || 'Imagen del curso'}
-													className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-													fill
-													placeholder="blur"
-													blurDataURL={blurDataURL ?? undefined}
-													sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-												/>
-											</div>
-										</AspectRatio>
-									</CardHeader>
-									<CardContent>
-										<CardTitle className="mb-2 rounded-lg text-lg text-background">
-											<div className="font-bold">{course.title}</div>
-										</CardTitle>
-										<div className="mb-2 flex items-center">
-											<Badge
-												variant="outline"
-												className="border-primary bg-background text-primary hover:bg-black/70"
-											>
-												{course.category?.name}
-											</Badge>
+										<div className="relative size-full">
+											<Image
+												src={imageUrl}
+												alt={course.title || 'Imagen del curso'}
+												className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+												fill
+												placeholder="blur"
+												blurDataURL={blurDataURL ?? undefined}
+												sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+											/>
 										</div>
-										<p className="mb-2 line-clamp-2 text-sm text-gray-600">
-											{course.description}
-										</p>
-									</CardContent>
-								</div>
+									</AspectRatio>
+								</CardHeader>
+								<CardContent>
+									<CardTitle className="mb-2 rounded-lg text-lg text-background">
+										<div className="font-bold">{course.title}</div>
+									</CardTitle>
+									<div className="mb-2 flex items-center">
+										<Badge
+											variant="outline"
+											className="border-primary bg-background text-primary hover:bg-black/70"
+										>
+											{course.category?.name}
+										</Badge>
+									</div>
+									<p className="mb-2 line-clamp-2 text-sm text-gray-600">
+										{course.description}
+									</p>
+								</CardContent>
 								<CardFooter className="-mt-6 flex flex-col items-start justify-between">
 									<div className="mb-2 flex w-full justify-between">
 										<p className="text-sm font-bold italic text-gray-600">
