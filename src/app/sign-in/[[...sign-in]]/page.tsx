@@ -1,14 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import * as Clerk from '@clerk/elements/common';
 import * as SignIn from '@clerk/elements/sign-in';
 import { useAuth, useSignIn } from '@clerk/nextjs';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import Loading from '../../loading';
-import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 
 type OAuthStrategy = 'oauth_google' | 'oauth_facebook' | 'oauth_github';
 

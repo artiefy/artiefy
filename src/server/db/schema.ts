@@ -88,6 +88,7 @@ export const lessons = pgTable('lessons', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   resourceKey: text('resource_key').notNull(),
+  porcentajecompletado: real('porcentajecompletado').default(0),
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 

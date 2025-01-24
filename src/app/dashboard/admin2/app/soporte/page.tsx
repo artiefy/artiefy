@@ -22,16 +22,24 @@ import { LiveChat } from '~/components/admin/ui/LiveChat';
 import { NewTicketForm } from '~/components/admin/ui/NewTicketForm';
 import { TicketList } from '~/components/admin/ui/TicketList';
 import { type Ticket } from '~/types/Tickets';
+import { TicketDetail } from '~/components/admin/ui/TicketDetail';
 
-export interface TicketDetailProps {
-  ticket: Ticket;
-  onUpdateTicket: (updatedTicket: Ticket, newImage?: File) => void;
-  onDeleteTicket: () => void;
+interface TicketDetailProps {
+  id: number;
+  estudiante: string;
+  asunto: string;
+  descripcion: string;
+  estado: 'Abierto' | 'En Progreso' | 'Resuelto';
+  fechaCreacion?: Date | null;
+  imagen?: string;
+  onUpdateTicket?: (updatedTicket: LocalTicket, newImage?: File) => void;
+  onDeleteTicket?: () => void;
 }
 
+export interface LocalTicket extends TicketDetailProps {}
+
 export default function Soporte() {
-  const TicketDetail: React.FC<TicketDetailProps> = ({}) => {
-  const [tickets, setTickets] = useState<Ticket[]>([
+  const [tickets, setTickets] = useState<LocalTicket[]>([
     {
       id: 1,
       estudiante: 'Ana García',
@@ -39,7 +47,7 @@ export default function Soporte() {
       descripcion:
         'No puedo acceder al material del curso de Programación Avanzada',
       estado: 'Abierto',
-      fechaCreacion: '2023-06-15',
+      fechaCreacion: new Date('2023-06-15'),
     },
     {
       id: 2,
@@ -48,45 +56,43 @@ export default function Soporte() {
       descripcion:
         'Al intentar subir mi tarea, recibo un error de "archivo no soportado"',
       estado: 'En Progreso',
-      fechaCreacion: '2023-06-14',
+      fechaCreacion: new Date('2023-06-14'),
     },
   ]);
-   
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+
+  const [selectedTicket, setSelectedTicket] = useState<LocalTicket | null>(
+    null
+  );
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleAddTicket = (
-    newTicket: Omit<Ticket, 'id' | 'fechaCreacion' | 'estado' | 'imagen'> & {
+    newTicket: Omit<LocalTicket, 'id' | 'fechaCreacion' | 'estado'> & {
       imagen?: File;
     }
   ) => {
     let imagenUrl = undefined;
     if (newTicket.imagen) {
-      // Aquí iría la lógica para subir la imagen a un servidor
-      // Por ahora, simularemos esto con una URL local
       imagenUrl = URL.createObjectURL(newTicket.imagen);
     }
 
-    const ticket: Ticket = {
+    const ticket: LocalTicket = {
       ...newTicket,
       id: tickets.length + 1,
-      fechaCreacion: new Date().toISOString().split('T')[0],
+      fechaCreacion: new Date(),
       estado: 'Abierto',
-      imagen: imagenUrl ?? '',
+      imagen: imagenUrl || '',
     };
     setTickets([...tickets, ticket]);
   };
 
-  const handleUpdateTicket = (updatedTicket: Ticket, newImage?: File) => {
+  const handleUpdateTicket = (updatedTicket: LocalTicket, newImage?: File) => {
     let imagenUrl = updatedTicket.imagen;
     if (newImage) {
-      // Aquí iría la lógica para subir la nueva imagen a un servidor
-      // Por ahora, simularemos esto con una URL local
       imagenUrl = URL.createObjectURL(newImage);
     }
 
-    const finalUpdatedTicket = {
+    const finalUpdatedTicket: LocalTicket = {
       ...updatedTicket,
       imagen: imagenUrl,
     };
@@ -96,11 +102,7 @@ export default function Soporte() {
         ticket.id === finalUpdatedTicket.id ? finalUpdatedTicket : ticket
       )
     );
-    if (finalUpdatedTicket.estado === 'Resuelto') {
-      setIsDeleteDialogOpen(true);
-    } else {
-      setSelectedTicket(null);
-    }
+    setSelectedTicket(null);
   };
 
   const handleDeleteTicket = (id: number) => {
@@ -174,23 +176,29 @@ export default function Soporte() {
 
       <div className="flex space-x-6">
         <div
-          className={`grow transition-all duration-300 ${selectedTicket || isChatOpen ? 'w-2/3' : 'w-full'}`}
+          className={`grow transition-all duration-300 ${
+            selectedTicket || isChatOpen ? 'w-2/3' : 'w-full'
+          }`}
         >
           <TicketList
-            tickets={tickets}
-            onSelectTicket={setSelectedTicket}
+            tickets={tickets.map(ticket => ({
+              ...ticket,
+              fechaCreacion: ticket.fechaCreacion?.toISOString(),
+            }))}
+            onSelectTicket={(ticket) => setSelectedTicket({
+              ...ticket,
+              fechaCreacion: ticket.fechaCreacion ? new Date(ticket.fechaCreacion) : null
+            })}
             onDeleteTicket={handleDeleteTicket}
           />
-        </div>
-        {selectedTicket && !isChatOpen && (
-          <div className="w-1/3 transition-all duration-300">
+          {selectedTicket && (
             <TicketDetail
-              ticket={selectedTicket}
+              {...selectedTicket}
               onUpdateTicket={handleUpdateTicket}
               onDeleteTicket={() => setIsDeleteDialogOpen(true)}
             />
-          </div>
-        )}
+          )}
+        </div>
         {isChatOpen && (
           <div className="w-1/3 transition-all duration-300">
             <LiveChat />
@@ -215,5 +223,4 @@ export default function Soporte() {
       />
     </div>
   );
-}
 }
