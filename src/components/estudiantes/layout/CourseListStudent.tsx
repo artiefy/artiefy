@@ -36,7 +36,9 @@ export default async function CourseListStudent({
 	}
 
 	// Ordenar los cursos por fecha de subida en orden descendente
-	const sortedCourses = [...courses].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+	const sortedCourses = [...courses].sort(
+		(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+	);
 
 	return (
 		<>
@@ -60,16 +62,17 @@ export default async function CourseListStudent({
 						return (
 							<Card
 								key={course.id}
-								className="flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in hover:scale-105"
+								className="content flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out zoom-in"
+                id='card'
 							>
-								<div>
+								<div className="content">
 									<CardHeader>
 										<AspectRatio ratio={16 / 9}>
 											<div className="relative size-full">
 												<Image
 													src={imageUrl}
 													alt={course.title || 'Imagen del curso'}
-													className="rounded-lg object-cover transition-opacity duration-500"
+													className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
 													fill
 													placeholder="blur"
 													blurDataURL={blurDataURL ?? undefined}

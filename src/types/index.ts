@@ -157,7 +157,6 @@ export interface Project {
   category?: Category;
   user?: User;
 }
-
 export interface ProjectTaken {
   id: number;
   userId: string;

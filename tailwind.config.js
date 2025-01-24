@@ -23,14 +23,6 @@ module.exports = {
           '0%,70%,100%': { opacity: '1' },
           '20%,50%': { opacity: '0' },
         },
-        bounce: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-25%)' },
-        },
-        spin: {
-          from: { transform: 'rotate(0deg)' },
-          to: { transform: 'rotate(360deg)' },
-        },
         'loading-dot': {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
@@ -39,12 +31,6 @@ module.exports = {
       // Fuentes personalizadas
       fontFamily: {
         sans: ['var(--font-montserrat)'],
-      },
-      // Bordes personalizados
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
       },
       // Colores personalizados
       colors: {

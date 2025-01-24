@@ -59,8 +59,8 @@
   }
   
   body {
-    @apply bg-[hsl(var(--background))];
-  }
+    @apply bg-[hsl(var(--background))] text-[hsl(var(--primary))];
+}
 }
 
 @layer utilities {
