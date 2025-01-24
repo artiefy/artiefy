@@ -1,9 +1,9 @@
 'use server';
 
+import { currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
-import { currentUser } from '@clerk/nextjs/server';
 
 export async function syncUser() {
   const user = await currentUser();

@@ -1,49 +1,44 @@
 {
-    "compilerOptions": {
-        // Opciones base
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "target": "es2022",
-        "allowJs": true,
-        "resolveJsonModule": true,
-        "moduleDetection": "force",
-        "isolatedModules": true,
-        // Estrictas
-        "strict": true,
-        "noUncheckedIndexedAccess": true,
-        "checkJs": true,
-        // Proyectos agrupados
-        "lib": ["dom", "dom.iterable", "ES2023"],
-        "noEmit": true,
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "jsx": "preserve",
-        "plugins": [
-            {
-                "name": "next"
-            }
-        ],
-        "incremental": true,
-        // Alias de rutas
-        "baseUrl": ".",
-        "paths": {
-            "~/*": ["./src/*"]
-        }
-    },
-    // Archivos incluidos
-    "include": [
-        "**/*.js",
-        "**/*.mjs",
-        "**/*.ts",
-        "**/*.tsx",
-        ".prettierrc.mjs",
-        "next-env.d.ts",
-        "src/**/*.js",
-        "src/**/*.jsx",
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        ".next/types/**/*.ts"
-    ],
-    // Archivos excluidos
-    "exclude": ["node_modules", ".next"]
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"target": "es2022",
+		"allowJs": true,
+		"resolveJsonModule": true,
+		"moduleDetection": "force",
+		"isolatedModules": true,
+		"skipDefaultLibCheck": true,
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"checkJs": true,
+		"lib": ["dom", "dom.iterable", "ES2023"],
+		"noEmit": true,
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"jsx": "preserve",
+		"plugins": [
+			{
+				"name": "next"
+			}
+		],
+		"incremental": true,
+		"baseUrl": ".",
+		"paths": {
+			"~/*": ["./src/*"]
+		}
+	},
+	"include": [
+		"**/*.js",
+		"**/*.mjs",
+		"**/*.ts",
+		"**/*.tsx",
+		".prettierrc.mjs",
+		"next-env.d.ts",
+		"src/**/*.js",
+		"src/**/*.ts",
+		"src/**/*.tsx",
+		".next/types/**/*.ts"
+	],
+	// Archivos excluidos
+	"exclude": ["node_modules", ".next"]
 }

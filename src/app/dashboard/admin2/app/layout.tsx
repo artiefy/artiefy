@@ -4,8 +4,8 @@ import { Inter } from 'next/font/google';
 import '~/styles/globals.css';
 import { usePathname } from 'next/navigation';
 import ResponsiveSidebar from '~/components/admin/ui/Sidebar';
-import { ThemeProvider } from '~/components/admin/ui/theme-provider';
 import { ThemeEffect } from '~/components/admin/ui/theme-effect';
+import { ThemeProvider } from '~/components/admin/ui/theme-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,8 +31,8 @@ export default function RootLayout({
           <ThemeEffect />
           {!isPublicRoute ? (
             <ResponsiveSidebar>
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background p-4 md:p-6">
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background p-4 md:p-6">
                   {children}
                 </main>
               </div>
@@ -45,4 +45,3 @@ export default function RootLayout({
     </html>
   );
 }
-

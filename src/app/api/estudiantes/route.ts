@@ -7,8 +7,8 @@ import {
   getCourseById,
   getCoursesByUserId,
   updateCourse,
-} from '~/models/estudiantes/courseModelsStudent';
-import { createUser, getUserById } from '~/models/estudiantes/userModels';
+} from '~/models/educatorsModels/courseModelsEducator';
+import { createUser, getUserById } from '~/models/educatorsModels/userModels';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 export const dynamic = 'force-dynamic'; // Forzar el estado dinámico
@@ -113,6 +113,16 @@ export async function POST(request: NextRequest) {
       rating,
       modalidadesid,
       dificultadid,
+    } as {
+      title: string;
+      description: string;
+      coverImageKey: string;
+      categoryid: number;
+      instructor: string;
+      rating: number;
+      modalidadesid: number;
+      dificultadid: number;
+      creatorId: string;
     });
 
     return NextResponse.json({
@@ -171,6 +181,16 @@ export async function PUT(request: NextRequest) {
       instructor,
       rating,
       modalidadesid,
+      dificultadid: typeof course.dificultadid === 'number' ? course.dificultadid : 0,
+    } as {
+      title: string;
+      description: string;
+      coverImageKey: string;
+      categoryid: number;
+      instructor: string;
+      rating: number;
+      modalidadesid: number;
+      dificultadid: number;
     });
 
     return NextResponse.json({ message: 'Curso actualizado exitosamente' });

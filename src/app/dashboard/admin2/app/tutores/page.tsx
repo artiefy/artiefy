@@ -2,13 +2,24 @@
 
 import { useState } from 'react';
 import { Users, BookOpen, Star, Search, Plus } from 'lucide-react';
+import { Button } from '~/components/admin/ui/button'; // Cambiado a la ruta correcta
+import { DashboardMetrics } from '~/components/admin/ui/DashboardMetrics';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '~/components/admin/ui/table';
+import TutorDetalle from '~/components/admin/ui/TutorDetalle';
+import TutorForm from '~/components/admin/ui/TutorForm';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '~/components/estudiantes/ui/card';
-import { DashboardMetrics } from '~/components/estudiantes/ui/DashboardMetrics';
 import {
   Dialog,
   DialogContent,
@@ -17,18 +28,7 @@ import {
   DialogTrigger,
 } from '~/components/estudiantes/ui/dialog';
 import { Input } from '~/components/estudiantes/ui/input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '~/components/estudiantes/ui/table';
-import TutorDetalle from '~/components/estudiantes/ui/TutorDetalle';
-import TutorForm from '~/components/estudiantes/ui/TutorForm';
 import type { Tutor } from '~/types/tutor';
-import { Button } from '~/components/admin/ui/button'; // Cambiado a la ruta correcta
 
 export default function Tutores() {
   const [tutores, setTutores] = useState<Tutor[]>([

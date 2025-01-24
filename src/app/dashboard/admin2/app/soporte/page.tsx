@@ -20,13 +20,17 @@ import {
 import { Input } from '~/components/admin/ui/input';
 import { LiveChat } from '~/components/admin/ui/LiveChat';
 import { NewTicketForm } from '~/components/admin/ui/NewTicketForm';
-import { TicketDetail } from '~/components/admin/ui/TicketDetail';
 import { TicketList } from '~/components/admin/ui/TicketList';
 import { type Ticket } from '~/types/Tickets';
 
-// Removed unused TicketDetailProps interface
+export interface TicketDetailProps {
+  ticket: Ticket;
+  onUpdateTicket: (updatedTicket: Ticket, newImage?: File) => void;
+  onDeleteTicket: () => void;
+}
 
 export default function Soporte() {
+  const TicketDetail: React.FC<TicketDetailProps> = ({}) => {
   const [tickets, setTickets] = useState<Ticket[]>([
     {
       id: 1,
@@ -47,7 +51,7 @@ export default function Soporte() {
       fechaCreacion: '2023-06-14',
     },
   ]);
-
+   
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -211,4 +215,5 @@ export default function Soporte() {
       />
     </div>
   );
+}
 }

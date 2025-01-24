@@ -87,11 +87,7 @@ export const lessons = pgTable('lessons', {
     .notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  porcentajecompletado: real('porcentajecompletado').default(0),
   resourceKey: text('resource_key').notNull(),
-  isLocked: boolean('is_locked').default(true),
-  userProgress: real('user_progress').default(0),
-  isCompleted: boolean('is_completed').default(false),
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
@@ -104,8 +100,6 @@ export const activities = pgTable('activities', {
   lessonsId: integer('lessons_id')
     .references(() => lessons.id)
     .notNull(),
-  isCompleted: boolean('is_completed').default(false),
-  userProgress: real('user_progress').default(0),
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
@@ -185,6 +179,25 @@ export const projectsTaken = pgTable('projects_taken', {
     .notNull(),
 });
 
+// Tabla de progreso de lecciones por usuario
+export const userLessonsProgress = pgTable('user_lessons_progress', {
+  userId: text('user_id').references(() => users.id).notNull(),
+  lessonId: integer('lesson_id').references(() => lessons.id).notNull(),
+  progress: real('progress').default(0).notNull(),
+  isCompleted: boolean('is_completed').default(false).notNull(),
+  isLocked: boolean('is_locked').default(true),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+});
+
+// Tabla de progreso de actividades por usuario
+export const userActivitiesProgress = pgTable('user_activities_progress', {
+  userId: text('user_id').references(() => users.id).notNull(),
+  activityId: integer('activity_id').references(() => activities.id).notNull(),
+  progress: real('progress').default(0).notNull(),
+  isCompleted: boolean('is_completed').default(false).notNull(),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+});
+
 // Relaciones
 export const usersRelations = relations(users, ({ many }) => ({
   enrollments: many(enrollments),
@@ -194,6 +207,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   coursesTaken: many(coursesTaken),
   projects: many(projects),
   projectsTaken: many(projectsTaken),
+  userLessonsProgress: many(userLessonsProgress),
+  userActivitiesProgress: many(userActivitiesProgress),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -217,7 +232,7 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
   creator: one(users, {
     fields: [courses.creatorId],
     references: [users.id],
-    relationName: 'createdCourses', // Añadimos el relationName aquí
+    relationName: 'createdCourses',
   }),
   modalidad: one(modalidades, {
     fields: [courses.modalidadesid],
@@ -240,13 +255,15 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
     references: [courses.id],
   }),
   activities: many(activities),
+  userLessonsProgress: many(userLessonsProgress),
 }));
 
-export const activitiesRelations = relations(activities, ({ one }) => ({
+export const activitiesRelations = relations(activities, ({ one, many }) => ({
   lesson: one(lessons, {
     fields: [activities.lessonsId],
     references: [lessons.id],
   }),
+  userActivitiesProgress: many(userActivitiesProgress),
 }));
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
@@ -316,3 +333,24 @@ export const projectsTakenRelations = relations(projectsTaken, ({ one }) => ({
   }),
 }));
 
+export const userLessonsProgressRelations = relations(userLessonsProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [userLessonsProgress.userId],
+    references: [users.id],
+  }),
+  lesson: one(lessons, {
+    fields: [userLessonsProgress.lessonId],
+    references: [lessons.id],
+  }),
+}));
+
+export const userActivitiesProgressRelations = relations(userActivitiesProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [userActivitiesProgress.userId],
+    references: [users.id],
+  }),
+  activity: one(activities, {
+    fields: [userActivitiesProgress.activityId],
+    references: [activities.id],
+  }),
+}));

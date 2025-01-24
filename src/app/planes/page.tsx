@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/router'; // Import useRouter
+import { useRouter } from 'next/navigation';
 import { AiOutlineCrown } from 'react-icons/ai';
 import { BsCheck2Circle, BsStars } from 'react-icons/bs';
 import { FaBook, FaTimes } from 'react-icons/fa';
@@ -27,7 +27,7 @@ const PricingPlans: React.FC = () => {
     {
       name: 'Pro',
       icon: BsStars,
-      price: '$15mil',
+      price: '$100mil',
       period: '/mes',
       courses: 10,
       features: [
@@ -41,7 +41,7 @@ const PricingPlans: React.FC = () => {
     {
       name: 'Premium',
       icon: AiOutlineCrown,
-      price: '$30mil',
+      price: '$150mil',
       period: '/mes',
       courses: 20,
       features: [
@@ -55,7 +55,7 @@ const PricingPlans: React.FC = () => {
     {
       name: 'Enterprise',
       icon: FaBook,
-      price: '$50mil',
+      price: '$200mil',
       period: '/mes',
       courses: 50,
       features: [
@@ -73,12 +73,12 @@ const PricingPlans: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleProceedWithPlan = async () => {
+  const handleProceedWithPlan = () => {
     setShowModal(false);
     try {
       // Navigate to the course details page dynamically
       const courseId = 1; // Replace with dynamic course ID retrieval logic
-      await router.push(`/estudiantes/cursos/${courseId}`);
+      router.push(`/estudiantes/cursos/${courseId}`);
     } catch (error) {
       console.error('Error navigating to the course details page:', error);
     }

@@ -1,5 +1,3 @@
-// Interfaces basadas en el esquema proporcionado
-
 export interface User {
   id: string;
   role: string;
@@ -7,7 +5,6 @@ export interface User {
   email: string;
   createdAt: Date;
   updatedAt: Date;
-  // Campos opcionales
   phone?: string | null;
   country?: string | null;
   city?: string | null;
@@ -23,19 +20,18 @@ export interface Course {
   coverImageKey: string | null;
   categoryid: number;
   instructor: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string | number | Date;
+  updatedAt: string | number | Date;
   creatorId: string;
   rating: number | null;
   modalidadesid: number;
   dificultadid: number;
   totalStudents: number;
   lessons: Lesson[];
-  // Relaciones
   category?: Category;
   modalidad?: Modalidad;
   dificultad?: Dificultad;
-  enrollments?: Enrollment[];
+  enrollments?: Enrollment[] | { length: number };
   creator?: User;
 }
 
@@ -43,9 +39,9 @@ export interface Category {
   id: number;
   name: string;
   description: string | null;
-  courses?: Course[]; // Añade esta línea
-  // Relaciones
+  courses?: { length: number };
   preferences?: Preference[];
+  is_featured: boolean | null;
 }
 
 export interface Preference {
@@ -54,7 +50,6 @@ export interface Preference {
   area_cono: string | null;
   userId: string;
   categoryid: number;
-  // Relaciones
   user?: User;
   category?: Category;
 }
@@ -63,7 +58,6 @@ export interface CourseTaken {
   id: number;
   userId: string;
   courseId: number;
-  // Relaciones
   user?: User;
   course?: Course;
 }
@@ -81,20 +75,38 @@ export interface Lesson {
   updatedAt: Date;
   porcentajecompletado: number;
   resourceKey: string;
-  isLocked: boolean;
   userProgress: number;
   isCompleted: boolean;
   lastUpdated: Date;
-  // Relaciones
   course?: Course;
   activities?: Activity[];
+  isLocked: boolean | null;
+}
+
+export interface LessonWithProgress {
+  isLocked: boolean | null;
+}
+export interface UserLessonsProgress {
+  userId: string;
+  lessonId: number;
+  progress: number;
+  isCompleted: boolean;
+  isLocked: boolean | null;
+  lastUpdated: Date;
+}
+
+export interface UserActivitiesProgress {
+  userId: string;
+  activityId: number;
+  progress: number;
+  isCompleted: boolean;
+  lastUpdated: Date;
 }
 
 export interface Modalidad {
-  id: number;
+  id?: number;
   name: string;
-  description: string | null;
-  // Relaciones
+  description?: string | null;
   courses?: Course[];
 }
 
@@ -103,15 +115,14 @@ export interface Score {
   score: number;
   userId: string;
   categoryid: number;
-  // Relaciones
   user?: User;
   category?: Category;
 }
 
 export interface Dificultad {
-  id: number;
+  id?: number;
   name: string;
-  description: string;
+  description?: string;
 }
 
 export interface Activity {
@@ -123,7 +134,6 @@ export interface Activity {
   isCompleted: boolean | null;
   userProgress: number | null;
   lastUpdated: Date;
-  // Relaciones
   lesson?: Lesson;
 }
 
@@ -145,7 +155,6 @@ export interface Project {
   userId: string;
   categoryid: number;
   category?: Category;
-  // Relaciones
   user?: User;
 }
 
@@ -153,12 +162,31 @@ export interface ProjectTaken {
   id: number;
   userId: string;
   projectId: number;
-  // Relaciones
   user?: User;
   project?: Project;
 }
 
-// Tipos adicionales para manejar relaciones many-to-many si es necesario
+export interface PaginatedCourses {
+  courses: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface GetCoursesResponse {
+  courses: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface GetCoursesParams {
+  pagenum?: number;
+  pageSize?: number;
+  categoryId?: number;
+  searchTerm?: string;
+}
 
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };
 export type UserWithCreatedCourses = User & { createdCourses: Course[] };

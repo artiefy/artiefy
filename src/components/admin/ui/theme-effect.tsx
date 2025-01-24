@@ -1,7 +1,7 @@
 'use client'
 
-import { useTheme } from 'next-themes'
 import { useEffect } from 'react'
+import { useTheme } from 'next-themes'
 
 export function ThemeEffect() {
   const { theme, systemTheme } = useTheme()

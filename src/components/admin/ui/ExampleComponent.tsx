@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ConfirmationDialog } from '~/components/admin/ui/confirmationDialog'
 import { Button } from "~/components/admin/ui/button"
+import { ConfirmationDialog } from '~/components/admin/ui/confirmationDialog'
 
 export function ExampleComponent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)

@@ -1,3 +1,21 @@
+Volver a un commit anterior
+- git reset --hard ??????
+----------------------------------------------------------
+Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, puedes seguir estos pasos:
+
+Eliminar dependencias no utilizadas:
+
+Usa herramientas como depcheck para identificar dependencias no utilizadas.
+Instala depcheck globalmente:
+
+- npm install -g depcheck
+- depcheck
+- rm -rf .next/cache // Eliminar la caché de Next.js
+- rm -rf node_modules // Eliminar la carpeta node_modules
+- rm package-lock.json // Eliminar el archivo package-lock
+  - npm i // Reinstalar las dependencias:
+- npm cache clean --force // Limpiar la caché de npm
+-------------------------------------------------------------------
 ### **Comandos Generales de TypeScript y ESlint**
 7. `ESlint: Fix All Auto-Fixable Problems`: Corrige todos los problemas que se puedan solucionar automáticamente.
 0. `Eslint: Restart ESlint Server`: Reinicia el servidor de ESlint.
@@ -21,9 +39,11 @@ artiefysupport@gmail.com
 ----------------------------------
 Colores del manual de marca:
 
-#01142B
-#3AF4EF
-#00BDD8
+#01142B -background //variable de tailwindcss
+#3AF4EF -primary //variable de tailwindcss
+#00BDD8 -secondary //variable de tailwindcss
+
+#00A5C0 //color parecido mas oscuro de -secondary para el hover
 ---------------------------------
 Lik Del Modo Blur:
 

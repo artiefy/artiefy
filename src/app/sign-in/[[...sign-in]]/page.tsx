@@ -2,36 +2,42 @@
 
 import * as Clerk from '@clerk/elements/common';
 import * as SignIn from '@clerk/elements/sign-in';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useSignIn } from '@clerk/nextjs';
 import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import Loading from '../../loading';
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+type OAuthStrategy = 'oauth_google' | 'oauth_facebook' | 'oauth_github';
 
 export default function SignInPage() {
-  const { isLoaded, userId } = useAuth();
-  const router = useRouter();
+  const { isLoaded } = useAuth();
+  const { signIn } = useSignIn();
+  const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
+    null
+  );
   const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect_url') ?? '/';
 
-  useEffect(() => {
-    if (isLoaded && userId) {
-      const redirectUrl = searchParams.get('redirect_url');
-      if (redirectUrl) {
-        router.push(redirectUrl);
-      } else {
-        router.push('/');
-      }
+  const signInWith = async (strategy: OAuthStrategy) => {
+    if (!signIn) return;
+    setLoadingProvider(strategy);
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy,
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: redirectTo,
+      });
+    } catch (error) {
+      console.error('Error during sign-in:', error);
+      setLoadingProvider(null);
     }
-  }, [isLoaded, userId, router, searchParams]);
+  };
 
   if (!isLoaded) {
     return <Loading />;
-  }
-
-  if (userId) {
-    return null; // Evita renderizar el contenido mientras se realiza la redirección
   }
 
   return (
@@ -67,7 +73,7 @@ export default function SignInPage() {
         <div className="-mt-20 w-full max-w-md sm:-mt-16 md:-mt-12 lg:mt-0 lg:w-1/2 lg:max-w-[400px] lg:pr-8 xl:max-w-[500px]">
           <SignIn.Root>
             <Clerk.Loading>
-              {(isGlobalLoading) => (
+              {(isGlobalLoading: boolean) => (
                 <>
                   <SignIn.Step
                     name="start"
@@ -129,56 +135,53 @@ export default function SignInPage() {
                     <div className="mt-4 text-center">
                       <p>O ingresa con tu cuenta:</p>
                       <div className="mt-2 flex justify-center space-x-4">
-                        <Clerk.Connection
-                          name="google"
-                          className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
+                        <div
+                          onClick={() => signInWith('oauth_google')}
+                          className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                         >
                           <Clerk.Loading scope="provider:google">
                             {(isLoading) =>
-                              isLoading ? (
-                                <Icons.spinner className="size-8 animate-spin" />
+                              isLoading ||
+                              loadingProvider === 'oauth_google' ? (
+                                <Icons.spinner className="size-8 animate-spin text-primary" />
                               ) : (
-                                <>
-                                  <Clerk.Icon className="size-8" />
-                                </>
+                                <Icons.google />
                               )
                             }
                           </Clerk.Loading>
-                        </Clerk.Connection>
+                        </div>
 
-                        <Clerk.Connection
-                          name="facebook"
-                          className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
-                        >
-                          <Clerk.Loading scope="provider:facebook">
-                            {(isLoading) =>
-                              isLoading ? (
-                                <Icons.spinner className="size-8 animate-spin" />
-                              ) : (
-                                <>
-                                  <Clerk.Icon className="size-8" />
-                                </>
-                              )
-                            }
-                          </Clerk.Loading>
-                        </Clerk.Connection>
-
-                        <Clerk.Connection
-                          name="github"
-                          className="flex items-center justify-center gap-x-3 rounded-md px-2.5 py-1.5 font-medium"
+                        <div
+                          onClick={() => signInWith('oauth_github')}
+                          className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                         >
                           <Clerk.Loading scope="provider:github">
                             {(isLoading) =>
-                              isLoading ? (
-                                <Icons.spinner className="size-8 animate-spin" />
+                              isLoading ||
+                              loadingProvider === 'oauth_github' ? (
+                                <Icons.spinner className="size-8 animate-spin text-gray-500" />
                               ) : (
-                                <>
-                                  <Clerk.Icon className="size-8" />
-                                </>
+                                <Icons.gitHub />
                               )
                             }
                           </Clerk.Loading>
-                        </Clerk.Connection>
+                        </div>
+
+                        <div
+                          onClick={() => signInWith('oauth_facebook')}
+                          className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
+                        >
+                          <Clerk.Loading scope="provider:facebook">
+                            {(isLoading) =>
+                              isLoading ||
+                              loadingProvider === 'oauth_facebook' ? (
+                                <Icons.spinner className="size-8 animate-spin text-primary" />
+                              ) : (
+                                <Icons.facebook />
+                              )
+                            }
+                          </Clerk.Loading>
+                        </div>
                       </div>
                       <div className="mt-6 text-sm">
                         <Clerk.Link
@@ -248,4 +251,3 @@ export default function SignInPage() {
     </div>
   );
 }
-

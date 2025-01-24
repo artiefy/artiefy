@@ -2,8 +2,9 @@ import { Suspense } from 'react';
 import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { type Course as CourseSchemaDTS, type WithContext } from 'schema-dts';
-import { getCourseById } from '~/server/actions/studentActions';
-import CourseDetails, { type Course } from './CourseDetails';
+import { getCourseById } from '~/server/actions/courses/getCourseById';
+import type { Course } from '~/types';
+import CourseDetails from './CourseDetails';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -90,6 +91,8 @@ async function CourseContent({ id }: { id: string }) {
       ? {
           id: course.category.id,
           name: course.category.name,
+          description: course.category.description,
+          is_featured: course.category.is_featured,
         }
       : undefined,
     modalidad: course.modalidad
@@ -114,8 +117,8 @@ async function CourseContent({ id }: { id: string }) {
       '@type': 'Person',
       name: course.instructor,
     },
-    dateCreated: course.createdAt.toISOString(),
-    dateModified: course.updatedAt.toISOString(),
+    dateCreated: new Date(course.createdAt).toISOString(),
+    dateModified: new Date(course.updatedAt).toISOString(),
     aggregateRating: course.rating
       ? {
           '@type': 'AggregateRating',

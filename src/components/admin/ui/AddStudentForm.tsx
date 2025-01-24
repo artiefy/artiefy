@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import type { Estudiante, FechaNacimiento, Address } from '~/types/user';
 import { Button } from "~/components/admin/ui/button"
 import { Input } from "~/components/admin/ui/input"
 import { Label } from "~/components/admin/ui/label"
+import type { Estudiante, FechaNacimiento, Address } from '~/types/user';
 
 interface AddStudentFormProps {
   onSubmit: (estudiante: Omit<Estudiante, 'id'>) => void;

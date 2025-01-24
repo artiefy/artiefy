@@ -15,14 +15,6 @@ import {
 import { GenericForm } from '~/components/admin/ui/GenericForm';
 import { GenericTable } from '~/components/admin/ui/GenericTable';
 import { Input } from '~/components/admin/ui/input';
-import { RecursoViewer } from '~/components/admin/ui/RecursoViewer';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/admin/ui/select';
 import {
   Pagination,
   PaginationContent,
@@ -31,6 +23,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '~/components/admin/ui/pagination';
+import { RecursoViewer } from '~/components/admin/ui/RecursoViewer';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/admin/ui/select';
 
 interface Recurso {
   id: number;
@@ -243,7 +243,7 @@ export default function Recursos() {
 
       <GenericTable
         columns={columns}
-        data={paginatedRecursos.map(recurso => ({
+        data={paginatedRecursos.map((recurso) => ({
           nombre: recurso.nombre,
           tipo: recurso.tipo,
           curso: recurso.curso,

@@ -23,10 +23,11 @@ import type { Ticket } from '~/types/Tickets';
 
 interface TicketDetailProps {
   ticket: Ticket;
-  onUpdateTicketAction: (ticket: Ticket, newImage?: File) => void;
+
+  onUpdateTicketAction: (updatedTicket: Ticket, newImage?: File) => void;
+
   onDeleteTicketAction: () => void;
 }
-
 
 export function TicketDetail({
   ticket,
