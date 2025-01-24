@@ -39,6 +39,8 @@ artiefysupport@gmail.com
 ----------------------------------
 Colores del manual de marca:
 
+#3AF4EF #00BDD8 #01142B
+
 #01142B -background //variable de tailwindcss
 #3AF4EF -primary //variable de tailwindcss
 #00BDD8 -secondary //variable de tailwindcss

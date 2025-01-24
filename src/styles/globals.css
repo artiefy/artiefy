@@ -57,15 +57,24 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
-  
-  body {
-    @apply bg-[hsl(var(--background))] text-[hsl(var(--primary))];
 }
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background;
+  }
 }
 
 @layer utilities {
   .text-shadow {
     text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+  }
+  .animate-gradient {
+    animation: borderRotate 4s linear infinite;
+    background-size: 300% 300%;
   }
 }
 
@@ -90,6 +99,33 @@
     opacity: 0;
     left: 100%;
   }
+}
+
+@keyframes gradient-x {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes borderRotate {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+    background: linear-gradient(270deg, #3AF4EF, #00BDD8, #01142B);
+    background-size: 600% 600%;
+    animation: gradient-x 4s ease infinite;
 }
 
 .animate-bounce-right {

@@ -61,7 +61,7 @@ export function Header() {
 							<SignedOut>
 								<SignInButton>
 									<Button
-										className="relative skew-x-[-15deg] rounded-none border border-background bg-primary p-5 text-xl font-light italic text-background transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+										className="relative skew-x-[-15deg] rounded-none border border-primary bg-primary p-5 text-xl font-light italic text-background transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 										style={{
 											transition: '0.5s',
 											width: '175px',
