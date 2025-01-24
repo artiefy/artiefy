@@ -4,16 +4,15 @@
 
 @layer base {
   :root {
-    --font-montserrat: 'Montserrat', sans-serif;
-    --background: 212.9, 95.5%, 8.6%;  /* {#01142B} */
-    --foreground: 178.4, 89.4%, 59.2%;   /* {#3AF4EF} */
+    --background: 212.9 95.5% 8.6%;  /* {#01142B} */
+    --foreground: 178.4 89.4% 59.2%;   /* {#3AF4EF} */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 178.4, 89.4%, 59.2%;            /* {#3AF4EF} */
-    --primary-foreground: 178.4, 89.4%, 59.2%;
-    --secondary: 187.5, 100%, 42.4%;                 /* {#00BDD8} */
+    --primary: 178.4 89.4% 59.2%;            /* {#3AF4EF} */
+    --primary-foreground: 178.4 89.4% 59.2%;
+    --secondary: 187.5 100% 42.4%;                 /* {#00BDD8} */
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
@@ -21,7 +20,7 @@
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 178.4, 89.4%, 59.2%;             /* {#3AF4EF} */
+    --border: 178.4 89.4% 59.2%;             /* {#3AF4EF} */
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
@@ -60,7 +59,7 @@
   }
   
   body {
-    @apply bg-background text-primary font-sans;
+    @apply bg-[hsl(var(--background))];
   }
 }
 
