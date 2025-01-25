@@ -121,7 +121,7 @@ export default function SignInPage() {
 													<Clerk.Loading>
 														{(isLoading) => {
 															return isLoading ? (
-																<Icons.spinner className="size-5 animate-spin" />
+																<Icons.spinner className="size-5 text-primary animate-spin" />
 															) : (
 																<span className="inline-block font-bold">
 																	COMIENZA YA
@@ -159,7 +159,7 @@ export default function SignInPage() {
 														{(isLoading) =>
 															isLoading ||
 															loadingProvider === 'oauth_github' ? (
-																<Icons.spinner className="size-8 animate-spin text-gray-500" />
+																<Icons.spinner className="size-8 animate-spin text-primary" />
 															) : (
 																<Icons.gitHub />
 															)
