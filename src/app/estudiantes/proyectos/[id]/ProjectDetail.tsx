@@ -10,7 +10,7 @@ const ProjectDetail = () => {
 
   useEffect(() => {
     if (id) {
-      getProjectById(Number(id)).then(setProject);
+      getProjectById(Number(id)).then(setProject).catch(console.error);
     }
   }, [id]);
 
