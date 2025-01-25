@@ -11,3 +11,4 @@ public
 *.mdx
 .env*
 !.env.js
+tsconfig.json

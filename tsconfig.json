@@ -1,23 +1,20 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "target": "ES2022",
-    "allowJs": true,
-    "resolveJsonModule": true,
-    "moduleDetection": "force",
-    "isolatedModules": true,
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "checkJs": true,
     "lib": [
       "dom",
       "dom.iterable",
-      "ES2022"
+      "ESNext"
     ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
     "noEmit": true,
+    "esModuleInterop": true,
+    "target": "ES2017",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
     "jsx": "preserve",
     "plugins": [
       {
@@ -31,10 +28,13 @@
         "./src/*"
       ]
     },
-    "types": ["node", "next", "next/types", "next/image-types", "next-env"]
   },
   "include": [
     "./**/*",
+    "**/*.ts",
+    "**/*.js",
+    "**/*.mjs",
+    "**/*.tsx",
     "next-env.d.ts",
     ".next/types/**/*.ts"
   ],
@@ -42,5 +42,10 @@
     "node_modules",
     ".next",
     "dist"
+  ],
+  "moduleResolution": [
+    "node_modules",
+    ".next",
+    "node"
   ]
 }

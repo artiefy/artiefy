@@ -54,7 +54,7 @@ export default async function Image() {
 		),
 		{
 			...size,
-			emoji: 'twemoj',
+			emoji: 'fluent',
 			fonts: [
 				{
 					name: 'Montserrat',

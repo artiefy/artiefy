@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 import { SignInButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
