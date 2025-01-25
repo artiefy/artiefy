@@ -10,24 +10,24 @@ export default clerkMiddleware(async (auth, req) => {
 	const { userId, sessionClaims, redirectToSignIn } = await auth();
 	const role = sessionClaims?.metadata?.role;
 
-	// Protect all routes starting with `/admin`
+	// Proteger todas las rutas que comienzan con el rol`/admin`
 	if (isAdminRoute(req) && role !== 'admin') {
 		const url = new URL('/', req.url);
 		return NextResponse.redirect(url);
 	}
 
-	// Protect all routes starting with `/educator`
+	// Proteger todas las rutas que comienzan con el rol `/educador`
 	if (isEducatorRoute(req) && role !== 'educador') {
 		const url = new URL('/', req.url);
 		return NextResponse.redirect(url);
 	}
 
-	// Protect dynamic student routes
+	// Proteger rutas dinámicas de estudiantes
 	if ((isStudentCourseRoute(req) || isStudentClassRoute(req)) && !userId) {
 		return redirectToSignIn();
 	}
 
-	// Handle OAuth redirects
+	// Manejar redirecciones de OAuth
 	if (req.nextUrl.pathname === '/sso-callback') {
 		const redirectUrl = req.nextUrl.searchParams.get('redirect_url');
 		if (redirectUrl) {
@@ -38,9 +38,9 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
 	matcher: [
-		// Skip Next.js internals and all static files, unless found in search params
+		// Omitir internos de Next.js y todos los archivos estáticos, a menos que se encuentren en los parámetros de búsqueda
 		'/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-		// Always run for API routes
+		// Siempre ejecutar para rutas de API
 		'/(api|trpc)(.*)',
 	],
 };
