@@ -30,7 +30,8 @@
       "~/*": [
         "./src/*"
       ]
-    }
+    },
+    "types": ["node", "next", "next/types", "next/image-types", "next-env"]
   },
   "include": [
     "./**/*",

@@ -5,11 +5,11 @@ import { projectsTaken } from '~/server/db/schema';
 
 // Marcar un proyecto como tomado
 export async function markProjectTaken(
-  userId: string,
-  projectId: number
+	userId: string,
+	projectId: number
 ): Promise<void> {
-  await db.insert(projectsTaken).values({
-    userId,
-    projectId,
-  });
+	await db.insert(projectsTaken).values({
+		userId,
+		projectId,
+	});
 }

@@ -5,33 +5,33 @@ import { currentUser } from '@clerk/nextjs/server';
 import { eq, and, sql, asc } from 'drizzle-orm';
 import { db } from '~/server/db';
 import {
-  courses,
-  lessons,
-  enrollments,
-  preferences,
-  scores,
-  modalidades,
-  dificultad,
-  coursesTaken,
-  projects,
-  projectsTaken,
-  categories,
-  users,
-  userLessonsProgress,
-  userActivitiesProgress,
+	courses,
+	lessons,
+	enrollments,
+	preferences,
+	scores,
+	modalidades,
+	dificultad,
+	coursesTaken,
+	projects,
+	projectsTaken,
+	categories,
+	users,
+	userLessonsProgress,
+	userActivitiesProgress,
 } from '~/server/db/schema';
 import type {
-  Course,
-  Lesson,
-  Category,
-  Preference,
-  Score,
-  CourseTaken,
-  Project,
-  ProjectTaken,
-  Activity,
-  Enrollment,
-  UserLessonsProgress,
+	Course,
+	Lesson,
+	Category,
+	Preference,
+	Score,
+	CourseTaken,
+	Project,
+	ProjectTaken,
+	Activity,
+	Enrollment,
+	UserLessonsProgress,
 } from '~/types';
 
 // Obtener todos los cursos
@@ -159,157 +159,166 @@ export const getFeaturedCategories = cache(
 
 // Obtener un curso específico por ID
 export async function getCourseById(courseId: number): Promise<Course | null> {
-  const course = await db.query.courses.findFirst({
-      where: eq(courses.id, courseId),
-      with: {
-          category: true,
-          modalidad: true,
-          dificultad: true,
-          lessons: {
-              orderBy: (lessons, { asc }) => [asc(lessons.order)],
-              with: {
-                  activities: true,
-              },
-          },
-          enrollments: true,
-      },
-  });
+	const course = await db.query.courses.findFirst({
+		where: eq(courses.id, courseId),
+		with: {
+			category: true,
+			modalidad: true,
+			dificultad: true,
+			lessons: {
+				orderBy: (lessons, { asc }) => [asc(lessons.order)],
+				with: {
+					activities: true,
+				},
+			},
+			enrollments: true,
+		},
+	});
 
-  if (!course) {
-      return null;
-  }
+	if (!course) {
+		return null;
+	}
 
-  const user = await currentUser();
-  if (!user?.id) {
-      throw new Error('Usuario no autenticado');
-  }
+	const user = await currentUser();
+	if (!user?.id) {
+		throw new Error('Usuario no autenticado');
+	}
 
-  const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
-      where: eq(userLessonsProgress.userId, user.id),
-  });
+	const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
+		where: eq(userLessonsProgress.userId, user.id),
+	});
 
-  // Transformamos los datos para asegurar que cumplen con los tipos
-  const transformedCourse: Course = {
-      ...course,
-      totalStudents: course.enrollments?.length ?? 0,
-      lessons: course.lessons?.map((lesson) => {
-          const lessonProgress = userLessonsProgressData.find((progress) => progress.lessonId === lesson.id);
-          return {
-              ...lesson,
-              isLocked: lessonProgress ? lessonProgress.isLocked : true,
-              isCompleted: lessonProgress ? lessonProgress.isCompleted : false,
-              userProgress: lessonProgress ? lessonProgress.progress : 0,
-              porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
-              activities: lesson.activities?.map((activity) => ({
-                  ...activity,
-                  isCompleted: false,
-                  userProgress: 0,
-              })) ?? [],
-          };
-      }) ?? [],
-  };
+	// Transformamos los datos para asegurar que cumplen con los tipos
+	const transformedCourse: Course = {
+		...course,
+		totalStudents: course.enrollments?.length ?? 0,
+		lessons:
+			course.lessons?.map((lesson) => {
+				const lessonProgress = userLessonsProgressData.find(
+					(progress) => progress.lessonId === lesson.id
+				);
+				return {
+					...lesson,
+					isLocked: lessonProgress ? lessonProgress.isLocked : true,
+					isCompleted: lessonProgress ? lessonProgress.isCompleted : false,
+					userProgress: lessonProgress ? lessonProgress.progress : 0,
+					porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
+					activities:
+						lesson.activities?.map((activity) => ({
+							...activity,
+							isCompleted: false,
+							userProgress: 0,
+						})) ?? [],
+				};
+			}) ?? [],
+	};
 
-  return transformedCourse;
+	return transformedCourse;
 }
 
 // Inscribirse en un curso
-export async function enrollInCourse(courseId: number): Promise<{ success: boolean; message: string }> {
-  const user = await currentUser();
+export async function enrollInCourse(
+	courseId: number
+): Promise<{ success: boolean; message: string }> {
+	const user = await currentUser();
 
-  if (!user?.id) {
-      throw new Error('Usuario no autenticado');
-  }
+	if (!user?.id) {
+		throw new Error('Usuario no autenticado');
+	}
 
-  const userId = user.id;
+	const userId = user.id;
 
-  try {
-      // Verificar si el usuario existe en la tabla de usuarios
-      const existingUser = await db.query.users.findFirst({
-          where: eq(users.id, userId),
-      });
+	try {
+		// Verificar si el usuario existe en la tabla de usuarios
+		const existingUser = await db.query.users.findFirst({
+			where: eq(users.id, userId),
+		});
 
-      // Si el usuario no existe, insertarlo en la tabla de usuarios
-      if (!existingUser) {
-          if (user.fullName && user.emailAddresses[0]?.emailAddress) {
-              await db.insert(users).values({
-                  id: userId,
-                  role: 'student',
-                  name: user.fullName,
-                  email: user.emailAddresses[0].emailAddress,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-              });
-          } else {
-              throw new Error('Información del usuario incompleta');
-          }
-      }
+		// Si el usuario no existe, insertarlo en la tabla de usuarios
+		if (!existingUser) {
+			if (user.fullName && user.emailAddresses[0]?.emailAddress) {
+				await db.insert(users).values({
+					id: userId,
+					role: 'student',
+					name: user.fullName,
+					email: user.emailAddresses[0].emailAddress,
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				});
+			} else {
+				throw new Error('Información del usuario incompleta');
+			}
+		}
 
-      // Verificar si ya existe una inscripción
-      const existingEnrollment = await db.query.enrollments.findFirst({
-          where: and(
-              eq(enrollments.userId, userId),
-              eq(enrollments.courseId, courseId)
-          ),
-      }) as Enrollment | undefined;
+		// Verificar si ya existe una inscripción
+		const existingEnrollment = (await db.query.enrollments.findFirst({
+			where: and(
+				eq(enrollments.userId, userId),
+				eq(enrollments.courseId, courseId)
+			),
+		})) as Enrollment | undefined;
 
-      if (existingEnrollment) {
-          return { success: false, message: 'Ya estás inscrito en este curso' };
-      }
+		if (existingEnrollment) {
+			return { success: false, message: 'Ya estás inscrito en este curso' };
+		}
 
-      // Realizar la inscripción
-      const [newEnrollment] = await db
-          .insert(enrollments)
-          .values({
-              userId,
-              courseId,
-              enrolledAt: new Date(),
-              completed: false,
-          })
-          .returning();
+		// Realizar la inscripción
+		const [newEnrollment] = await db
+			.insert(enrollments)
+			.values({
+				userId,
+				courseId,
+				enrolledAt: new Date(),
+				completed: false,
+			})
+			.returning();
 
-      if (!newEnrollment) {
-          return { success: false, message: 'Error al crear la inscripción' };
-      }
+		if (!newEnrollment) {
+			return { success: false, message: 'Error al crear la inscripción' };
+		}
 
-      // Desbloquear solo la primera lección del curso para el usuario
-      const firstLesson = await db.query.lessons.findFirst({
-          where: and(
-              eq(lessons.courseId, courseId),
-              eq(lessons.order, 1)
-          ),
-      });
+		// Desbloquear solo la primera lección del curso para el usuario
+		const firstLesson = await db.query.lessons.findFirst({
+			where: and(eq(lessons.courseId, courseId), eq(lessons.order, 1)),
+		});
 
-      if (firstLesson) {
-          await db
-              .insert(userLessonsProgress)
-              .values({
-                  userId,
-                  lessonId: firstLesson.id,
-                  progress: 0,
-                  isCompleted: false,
-                  isLocked: false,
-                  lastUpdated: new Date(),
-              })
-              .onConflictDoUpdate({
-                  target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
-                  set: {
-                      progress: 0,
-                      isCompleted: false,
-                      isLocked: false,
-                      lastUpdated: new Date(),
-                  },
-              });
-      }
+		if (firstLesson) {
+			await db
+				.insert(userLessonsProgress)
+				.values({
+					userId,
+					lessonId: firstLesson.id,
+					progress: 0,
+					isCompleted: false,
+					isLocked: false,
+					lastUpdated: new Date(),
+				})
+				.onConflictDoUpdate({
+					target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+					set: {
+						progress: 0,
+						isCompleted: false,
+						isLocked: false,
+						lastUpdated: new Date(),
+					},
+				});
+		}
 
-      return { success: true, message: 'Inscripción exitosa' };
-  } catch (error: unknown) {
-      console.error('Error al inscribirse en el curso:', error);
-      if (error instanceof Error) {
-          return { success: false, message: `Error al inscribirse en el curso: ${error.message}` };
-      } else {
-          return { success: false, message: 'Error desconocido al inscribirse en el curso' };
-      }
-  }
+		return { success: true, message: 'Inscripción exitosa' };
+	} catch (error: unknown) {
+		console.error('Error al inscribirse en el curso:', error);
+		if (error instanceof Error) {
+			return {
+				success: false,
+				message: `Error al inscribirse en el curso: ${error.message}`,
+			};
+		} else {
+			return {
+				success: false,
+				message: 'Error desconocido al inscribirse en el curso',
+			};
+		}
+	}
 }
 
 // Desuscribirse de un curso
@@ -350,55 +359,62 @@ export async function unenrollFromCourse(courseId: number): Promise<void> {
 }
 
 // Obtener todas las lecciones de un curso
-export async function getLessonsByCourseId(courseId: number): Promise<Lesson[]> {
-  const user = await currentUser()
-  if (!user?.id) {
-    throw new Error("Usuario no autenticado")
-  }
+export async function getLessonsByCourseId(
+	courseId: number
+): Promise<Lesson[]> {
+	const user = await currentUser();
+	if (!user?.id) {
+		throw new Error('Usuario no autenticado');
+	}
 
-  const lessonsData = await db.query.lessons.findMany({
-    where: eq(lessons.courseId, courseId),
-    orderBy: [asc(lessons.order)],
-    with: {
-      activities: true,
-    },
-  })
+	const lessonsData = await db.query.lessons.findMany({
+		where: eq(lessons.courseId, courseId),
+		orderBy: [asc(lessons.order)],
+		with: {
+			activities: true,
+		},
+	});
 
-  const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
-    where: eq(userLessonsProgress.userId, user.id),
-  })
+	const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
+		where: eq(userLessonsProgress.userId, user.id),
+	});
 
-  const userActivitiesProgressData = await db.query.userActivitiesProgress.findMany({
-    where: eq(userActivitiesProgress.userId, user.id),
-  })
+	const userActivitiesProgressData =
+		await db.query.userActivitiesProgress.findMany({
+			where: eq(userActivitiesProgress.userId, user.id),
+		});
 
-  let previousLessonCompleted = true // Assume the first lesson is always unlocked
+	let previousLessonCompleted = true; // Assume the first lesson is always unlocked
 
-  return lessonsData.map((lesson, index) => {
-    const lessonProgress = userLessonsProgressData.find((progress) => progress.lessonId === lesson.id)
+	return lessonsData.map((lesson, index) => {
+		const lessonProgress = userLessonsProgressData.find(
+			(progress) => progress.lessonId === lesson.id
+		);
 
-    const isLocked = index === 0 ? false : !previousLessonCompleted
+		const isLocked = index === 0 ? false : !previousLessonCompleted;
 
-    const isCompleted = lessonProgress?.isCompleted ?? false
-    previousLessonCompleted = isCompleted
+		const isCompleted = lessonProgress?.isCompleted ?? false;
+		previousLessonCompleted = isCompleted;
 
-    return {
-      ...lesson,
-      porcentajecompletado: lessonProgress?.progress ?? 0,
-      isLocked: isLocked,
-      userProgress: lessonProgress?.progress ?? 0,
-      isCompleted: isCompleted,
-      activities:
-        lesson.activities?.map((activity) => {
-          const activityProgress = userActivitiesProgressData.find((progress) => progress.activityId === activity.id)
-          return {
-            ...activity,
-            isCompleted: activityProgress?.isCompleted ?? false,
-            userProgress: activityProgress?.progress ?? 0,
-          }
-        }) ?? [],
-    }
-  })
+		return {
+			...lesson,
+			porcentajecompletado: lessonProgress?.progress ?? 0,
+			isLocked: isLocked,
+			userProgress: lessonProgress?.progress ?? 0,
+			isCompleted: isCompleted,
+			activities:
+				lesson.activities?.map((activity) => {
+					const activityProgress = userActivitiesProgressData.find(
+						(progress) => progress.activityId === activity.id
+					);
+					return {
+						...activity,
+						isCompleted: activityProgress?.isCompleted ?? false,
+						userProgress: activityProgress?.progress ?? 0,
+					};
+				}) ?? [],
+		};
+	});
 }
 
 // Obtener una lección específica por ID
@@ -449,126 +465,143 @@ export async function getLessonById(lessonId: number): Promise<Lesson | null> {
 }
 
 // Actualizar el progreso de una lección
-export async function updateLessonProgress(lessonId: number, progress: number): Promise<void> {
-    const user = await currentUser();
-    if (!user?.id) {
-        throw new Error('Usuario no autenticado');
-    }
+export async function updateLessonProgress(
+	lessonId: number,
+	progress: number
+): Promise<void> {
+	const user = await currentUser();
+	if (!user?.id) {
+		throw new Error('Usuario no autenticado');
+	}
 
-    const userId = user.id;
+	const userId = user.id;
 
-    await db
-        .insert(userLessonsProgress)
-        .values({
-            userId,
-            lessonId,
-            progress,
-            isCompleted: progress >= 100,
-            isLocked: false, // Una vez desbloqueada, permanece desbloqueada
-            lastUpdated: new Date(),
-        })
-        .onConflictDoUpdate({
-            target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
-            set: {
-                progress,
-                isCompleted: progress >= 100,
-                isLocked: false,
-                lastUpdated: new Date(),
-            },
-        });
+	await db
+		.insert(userLessonsProgress)
+		.values({
+			userId,
+			lessonId,
+			progress,
+			isCompleted: progress >= 100,
+			isLocked: false, // Una vez desbloqueada, permanece desbloqueada
+			lastUpdated: new Date(),
+		})
+		.onConflictDoUpdate({
+			target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+			set: {
+				progress,
+				isCompleted: progress >= 100,
+				isLocked: false,
+				lastUpdated: new Date(),
+			},
+		});
 
-    // Actualizar el estado de bloqueo de la lección en userLessonsProgress
-    await db.update(userLessonsProgress)
-        .set({ isLocked: progress === 0 })
-        .where(and(
-            eq(userLessonsProgress.userId, userId),
-            eq(userLessonsProgress.lessonId, lessonId)
-        ));
+	// Actualizar el estado de bloqueo de la lección en userLessonsProgress
+	await db
+		.update(userLessonsProgress)
+		.set({ isLocked: progress === 0 })
+		.where(
+			and(
+				eq(userLessonsProgress.userId, userId),
+				eq(userLessonsProgress.lessonId, lessonId)
+			)
+		);
 
-    if (progress >= 100) {
-        await unlockNextLesson(lessonId);
-    }
+	if (progress >= 100) {
+		await unlockNextLesson(lessonId);
+	}
 }
 
 // Completar una actividad
 export async function completeActivity(activityId: number): Promise<void> {
-  const user = await currentUser();
-  if (!user?.id) {
-      throw new Error('Usuario no autenticado');
-  }
+	const user = await currentUser();
+	if (!user?.id) {
+		throw new Error('Usuario no autenticado');
+	}
 
-  const userId = user.id;
+	const userId = user.id;
 
-  await db
-      .insert(userActivitiesProgress)
-      .values({
-          userId,
-          activityId,
-          progress: 100,
-          isCompleted: true,
-          lastUpdated: new Date(),
-      })
-      .onConflictDoUpdate({
-          target: [userActivitiesProgress.userId, userActivitiesProgress.activityId],
-          set: {
-              progress: 100,
-              isCompleted: true,
-              lastUpdated: new Date(),
-          },
-      });
+	await db
+		.insert(userActivitiesProgress)
+		.values({
+			userId,
+			activityId,
+			progress: 100,
+			isCompleted: true,
+			lastUpdated: new Date(),
+		})
+		.onConflictDoUpdate({
+			target: [
+				userActivitiesProgress.userId,
+				userActivitiesProgress.activityId,
+			],
+			set: {
+				progress: 100,
+				isCompleted: true,
+				lastUpdated: new Date(),
+			},
+		});
 }
 
 // Desbloquear la siguiente lección
-export async function unlockNextLesson(currentLessonId: number): Promise<{ success: boolean; nextLessonId?: number }> {
-  const user = await currentUser()
-  if (!user?.id) {
-    throw new Error("Usuario no autenticado")
-  }
+export async function unlockNextLesson(
+	currentLessonId: number
+): Promise<{ success: boolean; nextLessonId?: number }> {
+	const user = await currentUser();
+	if (!user?.id) {
+		throw new Error('Usuario no autenticado');
+	}
 
-  // Verify if the current lesson is completed (video and activity)
-  const currentLessonProgress = await db.query.userLessonsProgress.findFirst({
-    where: and(eq(userLessonsProgress.userId, user.id), eq(userLessonsProgress.lessonId, currentLessonId)),
-  })
+	// Verify if the current lesson is completed (video and activity)
+	const currentLessonProgress = await db.query.userLessonsProgress.findFirst({
+		where: and(
+			eq(userLessonsProgress.userId, user.id),
+			eq(userLessonsProgress.lessonId, currentLessonId)
+		),
+	});
 
-  if (!currentLessonProgress?.isCompleted) {
-    return { success: false }
-  }
+	if (!currentLessonProgress?.isCompleted) {
+		return { success: false };
+	}
 
-  const currentLesson = await db.query.lessons.findFirst({
-    where: eq(lessons.id, currentLessonId),
-  })
+	const currentLesson = await db.query.lessons.findFirst({
+		where: eq(lessons.id, currentLessonId),
+	});
 
-  if (!currentLesson) {
-    throw new Error("Lección actual no encontrada")
-  }
+	if (!currentLesson) {
+		throw new Error('Lección actual no encontrada');
+	}
 
-  const nextLesson = await db.query.lessons.findFirst({
-    where: and(eq(lessons.courseId, currentLesson.courseId), eq(lessons.order, currentLesson.order + 1)),
-  })
+	const nextLesson = await db.query.lessons.findFirst({
+		where: and(
+			eq(lessons.courseId, currentLesson.courseId),
+			eq(lessons.order, currentLesson.order + 1)
+		),
+	});
 
-  if (nextLesson) {
-    await db
-      .insert(userLessonsProgress)
-      .values({
-        userId: user.id,
-        lessonId: nextLesson.id,
-        progress: 0,
-        isCompleted: false,
-        isLocked: false,
-        lastUpdated: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
-        set: {
-          isLocked: false,
-          lastUpdated: new Date(),
-        },
-      })
+	if (nextLesson) {
+		await db
+			.insert(userLessonsProgress)
+			.values({
+				userId: user.id,
+				lessonId: nextLesson.id,
+				progress: 0,
+				isCompleted: false,
+				isLocked: false,
+				lastUpdated: new Date(),
+			})
+			.onConflictDoUpdate({
+				target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+				set: {
+					isLocked: false,
+					lastUpdated: new Date(),
+				},
+			});
 
-    return { success: true, nextLessonId: nextLesson.id }
-  }
+		return { success: true, nextLessonId: nextLesson.id };
+	}
 
-  return { success: false }
+	return { success: false };
 }
 
 // Guardar preferencias del usuario

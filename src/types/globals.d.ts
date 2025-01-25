@@ -4,10 +4,10 @@ export {};
 export type Roles = 'admin' | 'educador' | 'estudiante';
 
 declare global {
-  interface CustomJwtSessionClaims {
-    metadata: {
-      role?: Roles;
-      isNewUser?: boolean;
-    };
-  }
+	interface CustomJwtSessionClaims {
+		metadata: {
+			role?: Roles;
+			isNewUser?: boolean;
+		};
+	}
 }

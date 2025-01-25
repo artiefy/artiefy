@@ -62,7 +62,7 @@ export default async function CourseListStudent({
 						return (
 							<div key={course.id} className="group relative">
 								<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
-								<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02] hover:transform">
+								<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
 									<CardHeader>
 										<AspectRatio ratio={16 / 9}>
 											<div className="relative size-full">
