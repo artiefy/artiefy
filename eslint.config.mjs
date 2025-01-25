@@ -115,7 +115,7 @@ const eslintConfig = [
 				version: 'detect',
 			},
 			tailwindcss: {
-				config: './tailwind.config.ts',
+				config: './tailwind.config.js',
 				cssFiles: ['./src/**/*.css'],
 				callees: ['classnames', 'clsx', 'ctl'],
 				tags: ['tw'],

@@ -1,68 +1,84 @@
-import { Suspense } from "react"
-import StudentDashboard from "./index"
-import { LoadingCourses } from "~/components/estudiantes/layout/LoadingCourses"
-import CourseCategories from "~/components/estudiantes/layout/CourseCategories"
-import CourseListStudent from "~/components/estudiantes/layout/CourseListStudent"
-import SearchForm from "~/components/estudiantes/layout/SearchForm"
-import type { Category, Course } from "~/types"
+import { Suspense } from 'react';
+import StudentDashboard from './index';
+import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
+import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
+import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
+import SearchForm from '~/components/estudiantes/layout/SearchForm';
+import { getAllCourses } from '~/server/actions/courses/getAllCourses';
+import { getAllCategories } from '~/server/actions/categories/getAllCategories';
+import { getFeaturedCategories } from '~/server/actions/categories/getFeaturedCategories';
+import type { Category, Course } from '~/types';
 
 interface SearchParams {
-  category?: string
-  query?: string
-  page?: string
+  category?: string;
+  query?: string;
+  page?: string;
 }
 
 interface Props {
-  searchParams: Promise<SearchParams>
+  searchParams: Promise<SearchParams>;
 }
 
 interface APIResponse {
-  courses: Course[]
-  categories: Category[]
-  featuredCategories: Category[]
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-  categoryId?: number
-  searchTerm?: string
+  courses: Course[];
+  categories: Category[];
+  featuredCategories: Category[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  categoryId?: number;
+  searchTerm?: string;
 }
 
+const ITEMS_PER_PAGE = 9;
+
 async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
-  const url = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}/api/courses`)
+  const [allCourses, allCategories, featuredCategories] = await Promise.all([
+    getAllCourses(),
+    getAllCategories(),
+    getFeaturedCategories(6),
+  ]);
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (value) {
-      url.searchParams.append(key, String(value))
-    }
-  })
+  let filteredCourses = allCourses;
 
-  console.log("Fetching from URL:", url.toString())
-
-  try {
-    const response = await fetch(url, { next: { revalidate: 3600 } }) // Cache for 1 hour
-
-    if (!response.ok) {
-      throw new Error(`Error al cargar los cursos: ${response.status} ${response.statusText}`)
-    }
-
-    const data: APIResponse = await response.json() as APIResponse
-    return {
-      ...data,
-      categoryId: data.categoryId,
-      searchTerm: data.searchTerm,
-    }
-  } catch (error) {
-    console.error("Error fetching course data:", error)
-    throw error
+  if (params.category) {
+    const categoryId = Number(params.category);
+    filteredCourses = filteredCourses.filter((course) => course.categoryid === categoryId);
   }
+
+  if (params.query) {
+    const lowercasedQuery = params.query.toLowerCase();
+    filteredCourses = filteredCourses.filter(
+      (course) =>
+        course.title.toLowerCase().includes(lowercasedQuery) ||
+        (course.description?.toLowerCase().includes(lowercasedQuery)) ||
+        course.category?.name.toLowerCase().includes(lowercasedQuery),
+    );
+  }
+
+  const totalFilteredCourses = filteredCourses.length;
+  const totalPages = Math.ceil(totalFilteredCourses / ITEMS_PER_PAGE);
+  const page = Number(params.page ?? '1');
+  const paginatedCourses = filteredCourses.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
+  return {
+    courses: paginatedCourses,
+    categories: allCategories,
+    featuredCategories,
+    total: totalFilteredCourses,
+    page,
+    pageSize: ITEMS_PER_PAGE,
+    totalPages,
+    categoryId: params.category ? Number(params.category) : undefined,
+    searchTerm: params.query,
+  };
 }
 
 export default async function CoursesPage({ searchParams }: Props) {
   try {
-    const params = await searchParams
-    const data = await fetchCourseData(params)
-    console.log("Course data fetched successfully")
+    const params = await searchParams;
+    const data = await fetchCourseData(params);
 
     return (
       <Suspense fallback={<LoadingCourses />}>
@@ -84,9 +100,9 @@ export default async function CoursesPage({ searchParams }: Props) {
           />
         </StudentDashboard>
       </Suspense>
-    )
+    );
   } catch (error) {
-    console.error("Error al cargar los cursos:", error)
+    console.error('Error al cargar los cursos:', error);
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -94,7 +110,6 @@ export default async function CoursesPage({ searchParams }: Props) {
           <p>Por favor, intenta de nuevo más tarde.</p>
         </div>
       </div>
-    )
+    );
   }
 }
-

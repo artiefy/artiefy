@@ -1,7 +1,7 @@
-import { cache } from "react"
-import { db } from "~/server/db"
-import { courses, categories, modalidades, dificultad } from "~/server/db/schema"
-import { eq, desc } from "drizzle-orm"
+import { cache } from 'react';
+import { db } from '~/server/db';
+import { courses, categories, modalidades, dificultad } from '~/server/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export const getAllCourses = cache(async () => {
   try {
@@ -29,15 +29,15 @@ export const getAllCourses = cache(async () => {
       .leftJoin(categories, eq(courses.categoryid, categories.id))
       .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
       .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
-      .orderBy(desc(courses.createdAt))
-      
+      .orderBy(desc(courses.createdAt));
+
     return coursesData.map((course) => ({
       id: course.id,
-      title: course.title ?? "",
-      description: course.description ?? "",
-      coverImageKey: course.coverImageKey ?? "",
+      title: course.title ?? '',
+      description: course.description ?? '',
+      coverImageKey: course.coverImageKey ?? '',
       categoryid: course.categoryid,
-      instructor: course.instructor ?? "",
+      instructor: course.instructor ?? '',
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
       creatorId: course.creatorId,
@@ -48,17 +48,16 @@ export const getAllCourses = cache(async () => {
       lessons: [],
       category: {
         id: course.categoryid,
-        name: course.categoryName ?? "",
-        description: course.categoryDescription ?? "",
+        name: course.categoryName ?? '',
+        description: course.categoryDescription ?? '',
         is_featured: course.isFeatured ?? false,
       },
-      modalidad: { name: course.modalidadName ?? "" },
-      dificultad: { name: course.dificultadName ?? "" },
+      modalidad: { name: course.modalidadName ?? '' },
+      dificultad: { name: course.dificultadName ?? '' },
       isFeatured: course.isFeatured ?? false,
-    }))
+    }));
   } catch (error) {
-    console.error("Error al obtener todos los cursos:", error)
-    throw new Error("Error al obtener todos los cursos: " + (error instanceof Error ? error.message : String(error)))
+    console.error('Error al obtener todos los cursos:', error);
+    throw new Error('Error al obtener todos los cursos: ' + (error instanceof Error ? error.message : String(error)));
   }
-})
-
+});
