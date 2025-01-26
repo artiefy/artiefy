@@ -1,13 +1,13 @@
 'use server';
 
-import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { categories, courses } from '~/server/db/schema';
 import type { Category } from '~/types';
 
 // Obtener categorías destacadas
-export const getFeaturedCategories = cache(
+export const getFeaturedCategories = unstable_cache(
 	async (limit = 6): Promise<Category[]> => {
 		try {
 			const featuredCategories = await db
@@ -22,7 +22,7 @@ export const getFeaturedCategories = cache(
 				.leftJoin(courses, eq(categories.id, courses.categoryid))
 				.where(eq(categories.is_featured, true))
 				.groupBy(categories.id)
-				.limit(limit);
+				.limit(Number(limit));
 
 			return featuredCategories.map((category) => ({
 				...category,
@@ -35,5 +35,7 @@ export const getFeaturedCategories = cache(
 					(error instanceof Error ? error.message : String(error))
 			);
 		}
-	}
+	},
+	['featuredCategories'],
+	{ revalidate: 3600 }
 );
