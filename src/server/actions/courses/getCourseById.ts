@@ -30,7 +30,25 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 
 	const user = await currentUser();
 	if (!user?.id) {
-		throw new Error('Usuario no autenticado');
+		// Return course data without user-specific progress
+		return {
+			...course,
+			totalStudents: course.enrollments?.length ?? 0,
+			lessons:
+				course.lessons?.map((lesson) => ({
+					...lesson,
+					isLocked: true,
+					isCompleted: false,
+					userProgress: 0,
+					porcentajecompletado: 0,
+					activities:
+						lesson.activities?.map((activity) => ({
+							...activity,
+							isCompleted: false,
+							userProgress: 0,
+						})) ?? [],
+				})) ?? [],
+		};
 	}
 
 	const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
