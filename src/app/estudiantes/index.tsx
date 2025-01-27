@@ -64,9 +64,8 @@ export default function StudentDashboard({
 			setFilteredCourses(
 				courses.filter(
 					(course) =>
-						(course.title.toLowerCase().includes(lowercasedTerm) ||
-							course.description?.toLowerCase().includes(lowercasedTerm)) ??
-						false
+						course.title.toLowerCase().includes(lowercasedTerm) ||
+						course.description?.toLowerCase().includes(lowercasedTerm)
 				)
 			);
 			setIsLoading(false);
@@ -78,15 +77,11 @@ export default function StudentDashboard({
 		return <LoadingCourses />;
 	}
 
-	// Ordenar los cursos por fecha de subida (suponiendo que tienen una propiedad `createdAt`)
 	const sortedCourses = [...courses].sort(
 		(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 	);
 
-	// Seleccionar los últimos 5 cursos para el carrusel
 	const latestFiveCourses = sortedCourses.slice(0, 5);
-
-	// Seleccionar los últimos 10 cursos para el "Top Cursos"
 	const latestTenCourses = sortedCourses.slice(0, 10);
 
 	return (
@@ -95,7 +90,6 @@ export default function StudentDashboard({
 			<main className="grow">
 				<div className="container mx-auto px-8 sm:px-12 lg:px-16">
 					<div className="flex flex-col space-y-12 sm:space-y-16">
-						{/* BUSCADOR IA */}
 						{!isLoading && (
 							<div className="mt-8 flex flex-col items-center space-y-4">
 								<div className="flex items-center">
@@ -127,7 +121,6 @@ export default function StudentDashboard({
 							</div>
 						)}
 
-						{/* CAROUSEL GRANDE */}
 						<div className="relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
 							{latestFiveCourses.map((course, index) => (
 								<div
@@ -138,7 +131,11 @@ export default function StudentDashboard({
 								>
 									<div className="relative size-full">
 										<Image
-											src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+											src={
+												course.coverImageKey
+													? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
+													: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+											}
 											alt={course.title}
 											fill
 											className="object-cover"
@@ -190,7 +187,6 @@ export default function StudentDashboard({
 							</div>
 						</div>
 
-						{/* CAROUSEL TOP CURSOS */}
 						<div className="xs:px-4 relative px-8">
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Top Cursos
@@ -255,7 +251,6 @@ export default function StudentDashboard({
 							</Carousel>
 						</div>
 
-						{/* Seccion De Cursos */}
 						<div className="flex flex-col px-8">
 							<h2 className="mb-2 text-2xl font-bold sm:text-3xl">
 								Cursos Artiefy
@@ -274,8 +269,6 @@ export default function StudentDashboard({
 					</div>
 				</div>
 			</main>
-
-			{/* Footer */}
 			<Footer />
 		</div>
 	);
