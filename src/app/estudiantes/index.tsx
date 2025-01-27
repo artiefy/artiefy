@@ -125,7 +125,7 @@ export default function StudentDashboard({
 							{latestFiveCourses.map((course, index) => (
 								<div
 									key={course.id}
-									className={`absolute size-full transition-opacity duration-500 ${
+									className={`absolute inset-0 transition-opacity duration-500 ${
 										index === currentSlide ? 'opacity-100' : 'opacity-0'
 									}`}
 								>
@@ -133,11 +133,11 @@ export default function StudentDashboard({
 										<Image
 											src={
 												course.coverImageKey
-													? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
+													? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
 													: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
 											}
 											alt={course.title}
-											fill
+											layout="fill"
 											className="object-cover"
 											priority={index === currentSlide}
 											sizes="100vw"
@@ -202,7 +202,7 @@ export default function StudentDashboard({
 												<Image
 													src={
 														course.coverImageKey
-															? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
+															? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
 															: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
 													}
 													alt={course.title}
