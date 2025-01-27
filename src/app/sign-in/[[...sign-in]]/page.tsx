@@ -14,7 +14,7 @@ import Loading from '../../loading';
 export default function SignInPage() {
 	const { isLoaded, isSignedIn } = useAuth();
 	const { signIn, setActive } = useSignIn();
-	const [, setLoadingProvider] = useState<OAuthStrategy | null>(null);
+	const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(null);
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [code, setCode] = useState('');
@@ -175,7 +175,7 @@ export default function SignInPage() {
 			{/* Contenedor principal */}
 			<div className="relative z-10 flex w-full flex-col items-center justify-center px-4 lg:flex-row lg:items-start lg:justify-between lg:px-10">
 				{/* Contenedor del logo */}
-				<div className="mb-8 w-full max-w-[280px] sm:max-w-[300px] md:max-w-[300px] lg:mb-0 lg:ml-14 lg:w-1/2 lg:max-w-[500px] lg:self-center xl:ml-32 xl:max-w-[600px]">
+				<div className="md:mr-14 mb-8 w-full max-w-[280px] sm:max-w-[300px] md:max-w-[300px] lg:mb-0 lg:ml-14 lg:w-1/2 lg:max-w-[500px] lg:self-center xl:ml-32 xl:max-w-[600px]">
 					<AspectRatio ratio={16 / 9} className="relative size-full">
 						<Image
 							src="/logo-login.webp"
@@ -192,12 +192,12 @@ export default function SignInPage() {
 				<div className="-mt-20 w-full max-w-md sm:-mt-16 md:-mt-12 lg:mt-0 lg:w-1/2 lg:max-w-[400px] lg:pr-8 xl:max-w-[500px]">
 					<div className="mx-auto w-full max-w-sm space-y-10 rounded-2xl px-8 py-10 sm:max-w-md">
 						<div className="mb-6 text-center">
-							<h2 className="text-3xl font-bold sm:text-2xl">INICIAR SESIÓN</h2>
+							<h2 className="text-3xl font-bold xs:text-2xl">INICIAR SESIÓN</h2>
 						</div>
 						{errors && (
 							<ul>
 								{errors.map((el, index) => (
-									<li key={index} className="text-sm text-rose-400">
+									<li key={index} className="text-sm text-rose-400 -my-4">
 										{el.code === 'form_password_incorrect' ? 'Contraseña incorrecta. Inténtalo de nuevo o usa otro método.' : el.code === 'form_identifier_not_found' ? 'No se pudo encontrar tu cuenta.' : el.longMessage}
 									</li>
 								))}
@@ -205,47 +205,47 @@ export default function SignInPage() {
 						)}
 						{!successfulCreation && !isForgotPassword ? (
 							<form onSubmit={handleSubmit}>
-								<div>
-									<input
-										onChange={(e) => setEmail(e.target.value)}
-										id="email"
-										name="email"
-										type="email"
-										value={email}
-										placeholder="Correo Electrónico"
-										required
-										className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${emailError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
-									/>
-								</div>
-								<div className="mt-4">
-									<input
-										onChange={(e) => setPassword(e.target.value)}
-										id="password"
-										name="password"
-										type="password"
-										value={password}
-										placeholder="Contraseña"
-										required
-										className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${passwordError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
-									/>
-								</div>
-								<div className="mt-6 flex justify-center">
-									<button
-										type="submit"
-										className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
-										style={{ width: '150px' }}
-										disabled={isSubmitting}
-									>
-										<div className="flex w-full items-center justify-center">
-											{isSubmitting ? (
-												<Icons.spinner className="size-5 animate-spin text-primary" />
-											) : (
-												<span className="inline-block font-bold">COMIENZA YA</span>
-											)}
-										</div>
-									</button>
-								</div>
-							</form>
+              <div className="flex justify-center">
+                  <input
+                      onChange={(e) => setEmail(e.target.value)}
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={email}
+                      placeholder="Correo Electrónico"
+                      required
+                      className={`w-full xs:w-[350px] sm:w-[350px] md:w-[300px] lg:w-[330px] xl:w-[350px] rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${emailError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
+                  />
+              </div>
+              <div className="mt-4 flex justify-center">
+                  <input
+                      onChange={(e) => setPassword(e.target.value)}
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={password}
+                      placeholder="Contraseña"
+                      required
+                      className={`w-full xs:w-[350px] sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${passwordError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
+                  />
+              </div>
+              <div className="mt-6 flex justify-center">
+                  <button
+                      type="submit"
+                      className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
+                      style={{ width: '150px' }}
+                      disabled={isSubmitting}
+                  >
+                      <div className="flex w-full items-center justify-center">
+                          {isSubmitting ? (
+                              <Icons.spinner className="size-5 animate-spin text-primary" />
+                          ) : (
+                              <span className="inline-block font-bold">COMIENZA YA</span>
+                          )}
+                      </div>
+                  </button>
+              </div>
+          </form>
 						) : successfulCreation ? (
 							<form onSubmit={handleResetPassword}>
 								<div>
@@ -329,19 +329,31 @@ export default function SignInPage() {
 									onClick={() => signInWith('oauth_google')}
 									className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
 								>
-									<Icons.google />
+									{loadingProvider === 'oauth_google' ? (
+										<Icons.spinner className="size-10 animate-spin text-primary" />
+									) : (
+										<Icons.google />
+									)}
 								</div>
 								<div
 									onClick={() => signInWith('oauth_github')}
 									className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
 								>
-									<Icons.gitHub />
+									{loadingProvider === 'oauth_github' ? (
+										<Icons.spinner className="size-10 animate-spin text-primary" />
+									) : (
+										<Icons.gitHub />
+									)}
 								</div>
 								<div
 									onClick={() => signInWith('oauth_facebook')}
 									className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
 								>
-									<Icons.facebook />
+									{loadingProvider === 'oauth_facebook' ? (
+										<Icons.spinner className="size-10 animate-spin text-primary" />
+									) : (
+										<Icons.facebook />
+									)}
 								</div>
 							</div>
 							<div className="mt-6 text-sm">
