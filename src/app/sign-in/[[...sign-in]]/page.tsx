@@ -214,7 +214,7 @@ export default function SignInPage() {
                       value={email}
                       placeholder="Correo Electrónico"
                       required
-                      className={`w-full xs:w-[350px] sm:w-[350px] md:w-[300px] lg:w-[330px] xl:w-[350px] rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${emailError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
+                      className={`w-full sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${emailError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
                   />
               </div>
               <div className="mt-4 flex justify-center">
@@ -226,7 +226,7 @@ export default function SignInPage() {
                       value={password}
                       placeholder="Contraseña"
                       required
-                      className={`w-full xs:w-[350px] sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${passwordError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
+                      className={`w-full sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${passwordError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
                   />
               </div>
               <div className="mt-6 flex justify-center">
