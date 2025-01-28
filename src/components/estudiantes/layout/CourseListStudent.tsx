@@ -56,14 +56,14 @@ export default async function CourseListStudent({
                     <AspectRatio ratio={16 / 9}>
                       <div className="relative size-full">
                         <Image
-                          src={imageUrl || "/placeholder.svg"}
+                          src={imageUrl}
                           alt={course.title || "Imagen del curso"}
                           className="size-full object-cover px-6 pt-6 transition-transform duration-300 hover:scale-105"
                           fill
                           placeholder="blur"
                           blurDataURL={blurDataURL ?? undefined}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          loading="lazy" // Carga diferida de imágenes
+                          quality={75}
                         />
                       </div>
                     </AspectRatio>

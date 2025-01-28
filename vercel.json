@@ -1,8 +1,90 @@
 {
   "functions": {
-    "app/estudiantes/**/*.tsx": {
+    "app/api/upload/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "app/dashboard/admin/*.tsx": {
+      "memory": 2048,
       "maxDuration": 60
+    },
+    "app/estudiantes/clases/[id]/page.tsx": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "app/estudiantes/cursos/[id]/page.tsx": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "app/estudiantes/proyectos/[id]/page.tsx": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "app/sign-in/sso-callback/page.tsx": {
+      "memory": 512,
+      "maxDuration": 15
+    },
+    "app/sign-up/sso-callback.tsx": {
+      "memory": 512,
+      "maxDuration": 15
+    },
+    "app/user-profile/[[...user-profile]]/page.tsx": {
+      "memory": 512,
+      "maxDuration": 15
     }
-  }
+  },
+  "framework": "nextjs",
+  "headers": [
+    {
+      "source": "/app/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ],
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
+  "installCommand": "npm install",
+  "outputDirectory": "build",
+  "public": true,
+  "redirects": [
+    { "source": "/me", "destination": "/profile.html", "permanent": false },
+    { "source": "/user", "destination": "/api/user", "statusCode": 301 },
+    { "source": "/view-source", "destination": "https://github.com/vercel/vercel", "statusCode": 308 },
+    { "source": "/(.*)", "destination": "https://vercel.com/docs", "statusCode": 308 },
+    { "source": "/blog/:path*", "destination": "/news/:path*", "statusCode": 308 },
+    { "source": "/post/:path(\\d{1,})", "destination": "/news/:path*", "statusCode": 308 },
+    {
+      "source": "/:path((?!uk/).*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-vercel-ip-country",
+          "value": "GB"
+        }
+      ],
+      "destination": "/uk/:path*",
+      "permanent": false
+    }
+  ],
+  "regions": ["sfo1"]
 }
-

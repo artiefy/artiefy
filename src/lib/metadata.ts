@@ -1,27 +1,27 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-	metadataBase: new URL('https://artiefy.vercel.app'),
+	metadataBase: new URL('https://artiefy.com'),
 	title: 'Artiefy - Tu Plataforma de Educación Definitiva',
 	description:
 		'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
 	keywords: ['cursos', 'aprendizaje', 'educación', 'profesores', 'estudiantes'],
 	applicationName: 'Artiefy',
-	authors: [{ name: 'Equipo Artiefy', url: 'https://artiefy.vercel.app' }],
+	authors: [{ name: 'Equipo Artiefy', url: 'https://artiefy.com' }],
 	creator: 'Equipo Artiefy',
 	category: 'Educacion',
 	alternates: {
-		canonical: 'https://artiefy.vercel.app',
+		canonical: 'https://artiefy.com',
 	},
 	openGraph: {
 		type: 'website',
 		locale: 'es_ES',
-		url: 'https://artiefy.vercel.app',
+		url: 'https://artiefy.com',
 		title: 'Artiefy - Aprende y Crea',
 		description: 'Artiefy es la plataforma de aprendizaje más innovadora.',
 		images: [
 			{
-				url: 'https://artiefy.vercel.app/opengraph-image',
+				url: 'https://artiefy.com/opengraph-image',
 				width: 1200,
 				height: 630,
 				alt: 'Artiefy - App Web Educativa de Cursos Online',

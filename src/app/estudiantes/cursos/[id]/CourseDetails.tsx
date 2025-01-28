@@ -458,7 +458,7 @@ export default function CourseDetails({
 											<FaCheck className="mr-2" /> Suscrito Al Curso
 										</Button>
 										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-red-500 hover:text-red-700 text-lg font-semibold"
+											className="h-12 w-64 justify-center border-white/20 bg-red-500 hover:bg-red-700 text-lg font-semibold"
 											onClick={handleUnenroll}
 											disabled={isUnenrolling}
 										>
