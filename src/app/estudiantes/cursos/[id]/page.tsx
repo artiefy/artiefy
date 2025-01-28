@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { type Metadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 import { type Course as CourseSchemaDTS, type WithContext } from 'schema-dts';
 import { getCourseById } from '~/server/actions/courses/getCourseById';
@@ -8,6 +8,7 @@ import CourseDetails from './CourseDetails';
 
 interface Props {
     params: Promise<{ id: string }>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 async function getValidCoverImageUrl(
@@ -28,7 +29,10 @@ async function getValidCoverImageUrl(
     }
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(
+    { params }: Props,
+    parent: ResolvingMetadata
+): Promise<Metadata> {
     const resolvedParams = await params;
     const course = await getCourseById(Number(resolvedParams.id));
 
@@ -41,6 +45,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const coverImageUrl = await getValidCoverImageUrl(course.coverImageKey);
     const motivationalMessage = '¡Subscríbete ya en este curso excelente!';
+
+    const previousImages = (await parent).openGraph?.images ?? [];
 
     return {
         title: `${course.title} | Artiefy`,
@@ -55,6 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
                     height: 630,
                     alt: `Portada del curso: ${course.title}`,
                 },
+                ...previousImages,
             ],
         },
         twitter: {
