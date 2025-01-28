@@ -1,13 +1,14 @@
-import { Suspense } from 'react';
 import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
-import { LoadingCourses } from '~/components/estudiantes/layout/LoadingCourses';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
 import SearchForm from '~/components/estudiantes/layout/SearchForm';
+import StudentDashboard from '~/app/estudiantes/StudentDashboard';
 import { getAllCategories } from '~/server/actions/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/courses/getAllCourses';
 import type { Category, Course } from '~/types';
-import StudentDashboard from './index';
+import React from 'react';
 
 interface SearchParams {
 	category?: string;
@@ -86,20 +87,22 @@ export default async function CoursesPage({ searchParams }: Props) {
 		const data = await fetchCourseData(params);
 
 		return (
-			<Suspense fallback={<LoadingCourses />}>
-				<StudentDashboard initialCourses={data.courses}>
-					<div className="container mx-auto mb-8">
-						<div className="mb-4 flex items-center justify-between">
-							<div className="w-1/3">
-								{/* Placeholder for dropdown if needed */}
-							</div>
-							<SearchForm />
+			<>
+				<Header />
+				<StudentDashboard initialCourses={data.courses} />
+				<div className="container mx-auto mb-8">
+					<div className="mb-4 flex items-center justify-between">
+						<div className="w-1/3">
+							{/* Placeholder for dropdown if needed */}
 						</div>
-						<CourseCategories
-							allCategories={data.categories}
-							featuredCategories={data.featuredCategories}
-						/>
+						<SearchForm />
 					</div>
+					<CourseCategories
+						allCategories={data.categories}
+						featuredCategories={data.featuredCategories}
+					/>
+				</div>
+				<div className="px-8">
 					<CourseListStudent
 						courses={data.courses}
 						currentPage={data.page}
@@ -108,8 +111,9 @@ export default async function CoursesPage({ searchParams }: Props) {
 						category={data.categoryId?.toString()}
 						searchTerm={data.searchTerm}
 					/>
-				</StudentDashboard>
-			</Suspense>
+				</div>
+				<Footer />
+			</>
 		);
 	} catch (error) {
 		console.error('Error al cargar los cursos:', error);

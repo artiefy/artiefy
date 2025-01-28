@@ -31,10 +31,11 @@ export default async function CourseListStudent({
 
   return (
     <>
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <h2 className="mb-6 text-3xl font-bold text-primary px-20">Cursos Artie</h2>
+      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 px-20">
         {
           await Promise.all(
-            courses.map(async (course, index) => {
+            courses.map(async (course) => {
               let imageUrl
               let blurDataURL
               try {
@@ -63,7 +64,6 @@ export default async function CourseListStudent({
                             placeholder="blur"
                             blurDataURL={blurDataURL ?? undefined}
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            priority={index < 3} // Prioriza la carga de las primeras 3 imágenes
                           />
                         </div>
                       </AspectRatio>
@@ -126,4 +126,3 @@ export default async function CourseListStudent({
     </>
   )
 }
-
