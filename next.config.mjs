@@ -13,7 +13,7 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
     qualities: [25, 50, 75],
-    formats: ["image/avif", "image/webp"],
+    formats: ["image/avif", "image/webp", "image/png"],
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
