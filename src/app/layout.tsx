@@ -28,7 +28,7 @@ export const metadata: Metadata = siteMetadata;
 const jsonLd = {
 	'@context': 'https://schema.org',
 	'@type': 'WebSite',
-	url: 'https://artiefy.com',
+	url: 'https://artiefy.com/',
 	name: 'Artiefy',
 	description:
 		'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
