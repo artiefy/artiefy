@@ -26,7 +26,7 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/dificultad', {
+        const response = await fetch('/api/educadores/dificultad', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

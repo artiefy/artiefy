@@ -26,7 +26,7 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/modalidades', {
+        const response = await fetch('/api/educadores/modalidades', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

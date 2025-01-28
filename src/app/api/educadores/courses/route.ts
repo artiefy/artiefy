@@ -176,17 +176,17 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const courseId = searchParams.get('courseId');
 
-    if (!id) {
+    if (!courseId) {
       return NextResponse.json(
         { error: 'ID no proporcionado' },
         { status: 400 }
       );
     }
 
-    const courseId = parseInt(id);
-    await deleteCourse(courseId);
+    const parsedCourseId = parseInt(courseId);
+    await deleteCourse(parsedCourseId);
     return NextResponse.json({ message: 'Curso eliminado exitosamente' });
   } catch (error) {
     console.error('Error al eliminar el curso:', error);

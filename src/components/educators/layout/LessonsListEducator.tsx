@@ -56,6 +56,15 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
   const courseIdString = courseId.toString();
 
+  const getContrastYIQ = (hexcolor: string) => {
+    hexcolor = hexcolor.replace('#', '');
+    const r = parseInt(hexcolor.substr(0, 2), 16);
+    const g = parseInt(hexcolor.substr(2, 2), 16);
+    const b = parseInt(hexcolor.substr(4, 2), 16);
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 128 ? 'black' : 'white';
+  };
+
   // Fetch de las lecciones cuando el courseId cambia
   useEffect(() => {
     if (courseId) {
@@ -106,8 +115,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <span>&#128071;&#128071;&#128071;</span>
         <div className="mt-3">
           <Button
-            className="cursor-pointer border-transparent bg-white"
             style={{ backgroundColor: selectedColor }}
+            className={`cursor-pointer border-transparent bg-black font-semibold ${
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+            }`}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
@@ -140,8 +151,11 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           {lessons.map((lesson) => (
             <Card
               key={lesson.id}
-              className="flex flex-col border-transparent hover:scale-100"
-              style={{ backgroundColor: selectedColor }}
+              className="flex flex-col border-transparent bg-black hover:scale-100"
+              style={{
+                backgroundColor: selectedColor,
+                color: getContrastYIQ(selectedColor),
+              }}
             >
               <div className="relative grid grid-cols-1 p-5 lg:grid-cols-2">
                 <CardHeader>
@@ -163,12 +177,16 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                     onLoad={(_event) => handleImageLoad(lesson.id)}
                   />
                 </CardHeader>
-                <CardContent>
-                  <CardTitle className="text-lg text-background">
+                <CardContent
+                  className={`${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
+                >
+                  <CardTitle className="text-lg">
                     <div className="font-bold">Clase: {lesson.title}</div>
                   </CardTitle>
                   <div className="mb-2 flex items-center">
-                    <p className="text-sm font-bold text-gray-600">
+                    <p className="text-sm font-bold">
                       Perteneciente al curso:{' '}
                     </p>
                     <Badge
@@ -178,20 +196,20 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                       {lesson.course.title}
                     </Badge>
                   </div>
-                  <p className="mb-2 line-clamp-2 text-sm text-gray-600">
+                  <p className="mb-2 line-clamp-2 text-sm">
                     Descripción: {lesson.description}
                   </p>
-                  <p className="text-sm font-bold italic text-gray-600">
+                  <p className="text-sm font-bold italic">
                     Educador:{' '}
                     <span className="font-bold italic">
                       {lesson.course.instructor}
                     </span>
                   </p>
-                  <p className="text-sm font-bold italic text-gray-600">
+                  <p className="text-sm font-bold italic">
                     Clase #{' '}
                     <span className="font-bold italic">{lesson.order}</span>
                   </p>
-                  <p className="text-sm font-bold italic text-gray-600">
+                  <p className="text-sm font-bold italic">
                     Duración:{' '}
                     <span className="font-bold italic">
                       {lesson.duration} Minutos
@@ -212,7 +230,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         </div>
         <div className="mx-auto my-4">
           <Button
-            className="mx-auto mt-6 cursor-pointer justify-center border-transparent bg-primary font-semibold text-white"
+            className={`mx-auto mt-6 cursor-pointer justify-center border-transparent bg-primary font-semibold ${
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+            }`}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {
               setIsModalOpenLessons(true);

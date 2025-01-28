@@ -237,10 +237,18 @@ export default function Page() {
               <p className="text-xl text-gray-600">
                 No hay cursos creados todavía
               </p>
-              <p className="mt-2 text-gray-500">
+              <p className="my-2 text-gray-500">
                 Comienza creando tu primer curso haciendo clic en el botón
                 "Crear Curso"
               </p>
+              <span>&#128071;&#128071;&#128071;</span>
+              <Button
+                onClick={handleCreateCourse}
+                className="mt-5 bg-primary text-background transition-transform hover:text-primary active:scale-95"
+              >
+                <FiPlus className="mr-2" />
+                Crear Curso
+              </Button>
             </div>
           ) : (
             <>

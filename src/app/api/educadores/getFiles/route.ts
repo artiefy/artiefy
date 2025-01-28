@@ -25,8 +25,6 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url); // Obtén los parámetros de búsqueda desde la URL
   const lessonId = searchParams.get('lessonId'); // El parámetro 'lessonId' es el que buscas
 
-  console.log('Recibido parámetro lessonId:', lessonId);
-
   // Verificar que el parámetro 'lessonId' sea válido
   if (!lessonId || isNaN(Number(lessonId))) {
     console.error('lessonId no válido:', lessonId);
@@ -37,18 +35,12 @@ export async function GET(req: Request) {
   }
 
   const lessonIdNumber = Number(lessonId); // Convertimos el lessonId a un número
-  console.log('Lección ID convertido:', lessonIdNumber);
-
   try {
-    console.log('Realizando consulta a la base de datos...');
-
     // Realiza la consulta en la base de datos
     const result = await pool.query<{ resource_key: string }>(
       'SELECT resource_key FROM lessons WHERE id = $1',
       [lessonIdNumber]
     );
-
-    console.log('Resultado de la consulta:', result.rows);
 
     // Si encontramos resultados, obtenemos los nombres de los archivos desde S3
     if (result.rows.length > 0) {
@@ -62,19 +54,27 @@ export async function GET(req: Request) {
         throw new Error('AWS_S3_BUCKET_NAME is not defined');
       }
 
-      const fileNames = await Promise.all(
+      // Obtener tanto la clave como el nombre del archivo
+      const filesInfo = await Promise.all(
         keys.map(async (key) => {
           const params = {
             Bucket: bucketName,
             Key: key,
           };
-          const headData = await s3.headObject(params).promise();
-          return headData.Metadata?.filename ?? key; // Usa el nombre del archivo si está disponible, de lo contrario usa la clave
+          try {
+            const headData = await s3.headObject(params).promise();
+            return { key, fileName: headData.Metadata?.filename ?? key }; // Regresamos clave y nombre
+          } catch (err) {
+            console.error(
+              `Error al obtener metadata para el archivo ${key}`,
+              err
+            );
+            return { key, fileName: key }; // Si no hay metadata, usamos la clave como nombre
+          }
         })
       );
 
-      console.log('Nombres de los archivos:', fileNames);
-      return NextResponse.json(fileNames); // Responde con el array de nombres de archivos
+      return NextResponse.json(filesInfo); // Responde con el array de nombres de archivos
     } else {
       // Si no se encuentran resultados
       console.log('Archivos no encontrados para lessonId:', lessonIdNumber);

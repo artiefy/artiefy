@@ -21,6 +21,7 @@ interface Foru {
     title: string | null;
     descripcion: string | null;
     instructor: string | null;
+    coverImageKey: string | null;
   };
   title: string;
   description: string;
@@ -56,10 +57,11 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
         title: forums.title,
         description: forums.description,
         userId: forums.userId,
-        courseTitle: courses.title, // Asumiendo que hay una tabla de cursos
+        courseTitle: courses.title,
         courseDescription: courses.description,
         courseInstructor: courses.instructor,
-        userName: users.name, // Unir con la tabla de usuarios para obtener el nombre del usuario
+        userName: users.name,
+        courseCoverImageKey: courses.coverImageKey,
       })
       .from(forums)
       .leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
@@ -80,13 +82,14 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
         title: forum.courseTitle,
         descripcion: forum.courseDescription,
         instructor: forum.courseInstructor,
+        coverImageKey: forum.courseCoverImageKey,
+      },
+      userId: {
+        id: forum.userId,
+        name: forum.userName ?? '',
       },
       title: forum.title,
       description: forum.description ?? '',
-      userId: {
-        id: forum.userId,
-        name: forum.userName ?? '', // Manejar el caso en que el nombre del usuario sea nulo
-      },
     };
   } catch (error: unknown) {
     console.error(error);
@@ -107,6 +110,7 @@ export async function getForumByCourseId(courseId: number) {
         courseTitle: courses.title,
         courseDescription: courses.description,
         courseInstructor: courses.instructor,
+        courseCoverImageKey: courses.coverImageKey,
         userName: users.name, // Unir con la tabla de usuarios para obtener el nombre del usuario
       })
       .from(forums)
@@ -134,6 +138,7 @@ export async function getForumByCourseId(courseId: number) {
         title: forumData.courseTitle,
         description: forumData.courseDescription,
         instructor: forumData.courseInstructor,
+        coverImageKey: forumData.courseCoverImageKey,
       },
       title: forumData.title,
       description: forumData.description ?? '',
@@ -148,10 +153,47 @@ export async function getForumByCourseId(courseId: number) {
   }
 }
 
-//obtener foro por id de usuario
+// Obtener foros por id de usuario
 export async function getForumByUserId(userId: string) {
-  const forum = await db.select().from(forums).where(eq(forums.userId, userId));
-  return forum;
+  try {
+    const forumsRecords = await db
+      .select({
+        id: forums.id,
+        courseId: forums.courseId,
+        title: forums.title,
+        description: forums.description,
+        userId: forums.userId,
+        courseTitle: courses.title,
+        courseDescription: courses.description,
+        courseInstructor: courses.instructor,
+        courseCoverImageKey: courses.coverImageKey,
+        userName: users.name,
+      })
+      .from(forums)
+      .leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
+      .leftJoin(users, eq(forums.userId, users.id)) // Unir con la tabla de usuarios
+      .where(eq(forums.userId, userId));
+
+    return forumsRecords.map((forum) => ({
+      id: forum.id,
+      courseId: {
+        id: forum.courseId,
+        title: forum.courseTitle,
+        descripcion: forum.courseDescription,
+        instructor: forum.courseInstructor,
+        coverImageKey: forum.courseCoverImageKey,
+      },
+      userId: {
+        id: forum.userId,
+        name: forum.userName ?? '',
+      },
+      title: forum.title,
+      description: forum.description ?? '',
+    }));
+  } catch (error: unknown) {
+    console.error(error);
+    return [];
+  }
 }
 
 //delete forum by id
@@ -164,6 +206,7 @@ export async function deleteForumById(forumId: number) {
 
 //delete forum by course id
 export async function deleteForumByCourseId(courseId: number) {
+  await db.delete(posts).where(eq(posts.forumId, courseId));
   await db.delete(forums).where(eq(forums.courseId, courseId));
 }
 

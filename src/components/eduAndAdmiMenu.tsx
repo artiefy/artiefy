@@ -56,24 +56,25 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       id: 'resources',
       link: '/dashboard/educadores/proyectos',
     },
-    { icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: '/' },
     {
       icon: <FiMessageSquare size={24} />,
       title: 'Forum',
       id: 'forum',
       link: '/dashboard/educadores/foro',
     },
-    {
-      icon: <FiSettings size={24} />,
-      title: 'Settings',
-      id: 'settings',
-      link: '/',
-    },
+    { icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: '/' },
     {
       icon: <FiShieldOff size={24} />,
       title: 'Reporta errores',
       id: 'errores',
       onClick: () => setIsModalOpen(true),
+    },
+
+    {
+      icon: <FiSettings size={24} />,
+      title: 'Settings',
+      id: 'settings',
+      link: '/',
     },
   ];
 

@@ -14,16 +14,17 @@ const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
 const client = new S3Client({ region: process.env.AWS_REGION });
 
 export async function POST(request: Request) {
-  const { contentType, fileSize } = (await request.json()) as {
+  const { contentType, fileSize, fileName } = (await request.json()) as {
     contentType: string;
     fileSize: number;
+    fileName: string;
   };
 
   try {
     if (!process.env.AWS_BUCKET_NAME) {
       throw new Error('AWS_BUCKET_NAME no está definido');
     }
-    const key = `uploads/${uuidv4()}`; // Agregamos un prefijo 'uploads/' para mejor organización
+    const key = `uploads/${uuidv4()}-${fileName}`; // Agregamos un prefijo 'uploads/' para mejor organización
 
     if (fileSize > MAX_FILE_SIZE) {
       throw new Error(
@@ -47,7 +48,13 @@ export async function POST(request: Request) {
         Expires: 3600, // 1 hora
       });
 
-      return NextResponse.json({ url, fields, key, uploadType: 'simple' });
+      return NextResponse.json({
+        url,
+        fields,
+        key,
+        fileName,
+        uploadType: 'simple',
+      });
     } else {
       // Carga multiparte para archivos grandes (100 MB - 1 GB)
       const multipartUpload = await client.send(
@@ -62,6 +69,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         uploadId: multipartUpload.UploadId,
         key: key,
+        fileName: fileName,
         uploadType: 'multipart',
       });
     }

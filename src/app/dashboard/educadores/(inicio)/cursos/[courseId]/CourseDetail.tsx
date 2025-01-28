@@ -27,7 +27,6 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
-import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { toast } from '~/hooks/use-toast';
 
@@ -49,6 +48,16 @@ interface CourseDetailProps {
   courseId: number;
 }
 
+const getContrastYIQ = (hexcolor: string) => {
+  if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
+  hexcolor = hexcolor.replace('#', '');
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? 'black' : 'white';
+};
+
 const CourseDetail: React.FC<CourseDetailProps> = () => {
   const { user } = useUser();
   const router = useRouter();
@@ -66,6 +75,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>('');
+  const predefinedColors = ['#000000', '#FFFFFF', '#3af4ef']; // Colores específicos
 
   // Verifica que courseId no sea un array ni undefined, y lo convierte a número
   const courseIdString = Array.isArray(courseIdUrl)
@@ -121,11 +131,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   }, [fetchCourse]);
 
   useEffect(() => {
-    const savedColor = localStorage.getItem('selectedColor');
+    const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
     if (savedColor) {
       setSelectedColor(savedColor);
     }
-  }, []);
+  }, [courseIdNumber]);
 
   const handleUpdateCourse = async (
     id: string,
@@ -203,6 +213,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       toast({
         title: 'Curso actualizado',
         description: 'El curso se ha actualizado con éxito.',
+        variant: 'destructive',
       });
     } catch (error) {
       console.error('Error:', error);
@@ -219,19 +230,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   if (error) return <div>Error: {error}</div>;
   if (!course) return <div>No se encontró el curso.</div>;
 
-  const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const color = event.target.value;
-    setSelectedColor(event.target.value);
-    localStorage.setItem('selectedColor', color);
+  const handlePredefinedColorChange = (color: string) => {
+    setSelectedColor(color);
+    localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
   };
 
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/educadores/courses?id=${id}`, {
+      const response = await fetch(`/api/educadores/courses?courseId=${id}`, {
         method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error('Error al eliminar el curso');
+      if (!response.ok)
+        throw new Error(`Error al eliminar el curso, id: ${id}`);
+      toast({
+        title: 'Curso eliminado',
+        description: 'El curso se ha eliminado con éxito.',
+      });
       router.push('/dashboard/educadores/cursos');
     } catch (error) {
       console.error('Error:', error);
@@ -239,7 +254,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   };
 
   return (
-    <div className="container mx-auto h-auto w-full rounded-lg bg-background p-6">
+    <div className="container h-auto w-full rounded-lg bg-background p-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -260,20 +275,37 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       </Breadcrumb>
       <Card
         className="mt-3 h-auto overflow-hidden border-transparent bg-black p-4"
-        style={{ backgroundColor: selectedColor }}
+        style={{
+          backgroundColor: selectedColor,
+          color: getContrastYIQ(selectedColor),
+        }}
       >
         <CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
-          <CardTitle className="text-2xl font-bold text-white">
+          <CardTitle
+            className={`text-2xl font-bold ${
+              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+            }`}
+          >
             Curso: {course.title}
           </CardTitle>
           <div className="ml-9 flex flex-col">
-            <Label className="text-white">Seleccione el color deseado</Label>
-            <Input
-              type="color"
-              value={selectedColor}
-              onChange={handleColorChange}
-              className="w-12"
-            />
+            <Label
+              className={
+                selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              }
+            >
+              Seleccione el color deseado
+            </Label>
+            <div className="mt-2 flex space-x-2">
+              {predefinedColors.map((color) => (
+                <Button
+                  key={color}
+                  style={{ backgroundColor: color }}
+                  className={`size-8 ${selectedColor === '#FFFFFF' ? 'border-black' : 'border-white'}`}
+                  onClick={() => handlePredefinedColorChange(color)}
+                />
+              ))}
+            </div>
           </div>
         </CardHeader>
         <div className={`grid gap-6 md:grid-cols-2`}>
@@ -289,18 +321,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               />
             </div>
             <div className="mt-8 grid grid-cols-3 gap-5">
-              <Button className="bg-primary text-white hover:bg-white hover:text-primary">
+              <Button
+                className={`bg-white text-primary hover:border-white hover:bg-primary hover:text-white`}
+              >
                 Visualizar curso
               </Button>
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className="border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500"
+                className={`border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500`}
               >
                 Editar curso
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
+                  <Button
+                    className={`border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600`}
+                  >
                     Eliminar
                   </Button>
                 </AlertDialogTrigger>
@@ -329,40 +365,110 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </div>
           {/* Columna derecha - Información */}
           <div className="pb-6">
-            <h2 className="text-2xl font-bold text-white">
+            <h2
+              className={`text-2xl font-bold ${
+                selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              }`}
+            >
               Información del curso
             </h2>
             <br />
             <div className="grid grid-cols-2">
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold text-white">Curso:</h2>
-                <h1 className="mb-4 text-2xl font-bold text-white">
+                <h2
+                  className={`text-lg font-semibold ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
+                >
+                  Curso:
+                </h2>
+                <h1
+                  className={`mb-4 text-2xl font-bold ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
+                >
                   {course.title}
                 </h1>
               </div>
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold text-white">Categoría:</h2>
-                <p className="text-white">{course.categoryid}</p>
+                <h2
+                  className={`text-lg font-semibold ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
+                >
+                  Categoría:
+                </h2>
+                <p
+                  className={
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }
+                >
+                  {course.categoryid}
+                </p>
               </div>
             </div>
             <div className="mb-4">
-              <h2 className="text-lg font-semibold text-white">Descripción:</h2>
-              <p className="text-justify text-white">{course.description}</p>
+              <h2
+                className={`text-lg font-semibold ${
+                  selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                }`}
+              >
+                Descripción:
+              </h2>
+              <p
+                className={`text-justify ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+              >
+                {course.description}
+              </p>
             </div>
             <div className="grid grid-cols-3">
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold text-white">Educador:</h2>
-                <p className="text-white">{course.instructor}</p>
+                <h2
+                  className={`text-lg font-semibold ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
+                >
+                  Educador:
+                </h2>
+                <p
+                  className={
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }
+                >
+                  {course.instructor}
+                </p>
               </div>
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold text-white">
+                <h2
+                  className={`text-lg font-semibold ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
+                >
                   Dificultad:
                 </h2>
-                <p className="text-white">{course.dificultadid}</p>
+                <p
+                  className={
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }
+                >
+                  {course.dificultadid}
+                </p>
               </div>
               <div className="flex flex-col">
-                <h2 className="text-lg font-semibold text-white">Modalidad:</h2>
-                <p className="text-white">{course.modalidadesid}</p>
+                <h2
+                  className={`text-lg font-semibold ${
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
+                >
+                  Modalidad:
+                </h2>
+                <p
+                  className={
+                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }
+                >
+                  {course.modalidadesid}
+                </p>
               </div>
             </div>
           </div>

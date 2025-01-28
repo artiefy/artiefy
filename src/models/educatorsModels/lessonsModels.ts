@@ -41,6 +41,7 @@ export async function createLesson({
   courseId,
   porcentajecompletado,
   resourceKey,
+  resourceNames,
 }: {
   title: string;
   description: string;
@@ -50,6 +51,7 @@ export async function createLesson({
   courseId: number;
   porcentajecompletado: number;
   resourceKey: string;
+  resourceNames: string;
 }) {
   try {
     // Obtener el valor máximo actual del campo `order` para el curso específico
@@ -71,6 +73,7 @@ export async function createLesson({
       courseId,
       porcentajecompletado,
       resourceKey,
+      resourceNames,
     });
 
     console.log('Lección creada:', newLesson);
@@ -116,6 +119,7 @@ export async function getLessonsByCourseId(courseId: number) {
         coverImageKey: lessons.coverImageKey,
         coverVideoKey: lessons.coverVideoKey,
         resourceKey: lessons.resourceKey,
+        resourceNames: lessons.resourceNames,
         lessonOrder: lessons.order,
         courseId: lessons.courseId,
         courseTitle: courses.title,
@@ -138,6 +142,7 @@ export async function getLessonsByCourseId(courseId: number) {
         coverImageKey: string;
         coverVideoKey: string;
         resourceKey: string;
+        resourceNames: string;
         lessonOrder: number;
         courseId: number;
         courseTitle: string;
@@ -152,6 +157,7 @@ export async function getLessonsByCourseId(courseId: number) {
         coverImageKey: Lesson.coverImageKey,
         coverVideoKey: Lesson.coverVideoKey,
         resourceKey: Lesson.resourceKey,
+        resourceNames: Lesson.resourceNames,
         description: Lesson.lessonDescription ?? '',
         createdAt: '', // Este dato puede ser proporcionado si lo tienes
         duration: Lesson.lessonDuration,
@@ -194,6 +200,7 @@ export const getLessonById = async (
       updatedAt: lessons.updatedAt,
       porcentajecompletado: lessons.porcentajecompletado ?? 0,
       resourceKey: lessons.resourceKey,
+      resourceNames: lessons.resourceNames,
       course: {
         id: courses.id,
         title: courses.title,
@@ -230,6 +237,7 @@ export const updateLesson = async (
     courseId,
     porcentajecompletado,
     resourceKey,
+    resourceNames,
   }: {
     title?: string;
     description?: string;
@@ -240,6 +248,7 @@ export const updateLesson = async (
     courseId?: number;
     porcentajecompletado?: number;
     resourceKey?: string;
+    resourceNames?: string;
   }
 ): Promise<void> => {
   const updateData: Record<string, unknown> = {};
@@ -254,6 +263,7 @@ export const updateLesson = async (
   if (porcentajecompletado !== undefined)
     updateData.porcentajecompletado = porcentajecompletado;
   if (resourceKey) updateData.resourceKey = resourceKey;
+  if (resourceNames) updateData.resourceNames = resourceNames;
 
   await db.update(lessons).set(updateData).where(eq(lessons.id, lessonId));
 };
@@ -261,4 +271,8 @@ export const updateLesson = async (
 // Eliminar una lección
 export const deleteLesson = async (lessonId: number): Promise<void> => {
   await db.delete(lessons).where(eq(lessons.id, lessonId));
+};
+
+export const deleteLessonsByCourseId = async (courseId: number) => {
+  await db.delete(lessons).where(eq(lessons.courseId, courseId));
 };

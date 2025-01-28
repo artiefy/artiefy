@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       courseId: number;
       porcentajecompletado: number;
       resourceKey: string;
+      resourceNames: string;
       modalidadesId: {
         id: number;
         name: string;
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
       coverImageKey,
       coverVideoKey,
       resourceKey,
+      resourceNames,
       porcentajecompletado,
       courseId,
     } = body;
@@ -93,6 +95,7 @@ export async function POST(req: NextRequest) {
       coverVideoKey, // Asegurarse de que el nombre de la columna coincida
       resourceKey, // Asegurarse de que el nombre de la columna coincida
       porcentajecompletado,
+      resourceNames,
       courseId,
     });
 
@@ -104,7 +107,8 @@ export async function POST(req: NextRequest) {
       !coverImageKey ||
       !coverVideoKey ||
       !resourceKey ||
-      !courseId
+      !courseId ||
+      !resourceNames
     ) {
       console.log('Faltan campos obligatorios.');
     }

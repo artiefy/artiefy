@@ -4,8 +4,20 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Upload } from 'lucide-react';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import ViewFiles from '~/components/educators/layout/ViewFiles';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '~/components/educators/ui/alert-dialog';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,6 +36,7 @@ interface Lessons {
   coverImageKey: string;
   coverVideoKey: string;
   resourceKey: string;
+  resourceName: string;
   duration: number;
   order: number;
   course: {
@@ -38,12 +51,32 @@ interface Lessons {
   updatedAt: string;
 }
 
+const getContrastYIQ = (hexcolor: string) => {
+  hexcolor = hexcolor.replace('#', '');
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? 'black' : 'white';
+};
+
 const Page: React.FC = () => {
   const { user } = useUser();
+  const router = useRouter();
   const { courseId, lessonId } = useParams();
   const [lessons, setLessons] = useState<Lessons | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string>('');
+
+  useEffect(() => {
+    const savedColor = localStorage.getItem(
+      `selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
+    );
+    if (savedColor) {
+      setSelectedColor(savedColor);
+    }
+  }, [courseId]);
 
   useEffect(() => {
     if (!lessonId) {
@@ -52,10 +85,8 @@ const Page: React.FC = () => {
       return;
     }
 
-    const lessonsIdNumber2 = Array.isArray(lessonId)
-      ? lessonId[0]
-      : (lessonId ?? '');
-    const lessonsIdNumber = parseInt(lessonsIdNumber2!);
+    const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
+    const lessonsIdNumber = parseInt(lessonsId2!);
     if (isNaN(lessonsIdNumber) || lessonsIdNumber <= 0) {
       setError('lessonId is not a valid number');
       setLoading(false);
@@ -106,9 +137,27 @@ const Page: React.FC = () => {
   if (error) return <div>Error: {error}</div>;
   if (!lessons) return <div>No se encontró la leccion.</div>;
 
+  const handleDelete = async (id: string) => {
+    try {
+      const response = await fetch(`/api/educadores/lessons?lessonId=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Error al eliminar la clase');
+      toast({
+        title: 'Clase eliminada',
+        description: `La clase ${lessons.title} ha sido eliminada exitosamente.`,
+        variant: 'default',
+      });
+      router.back(); // Redirige a la página anterior
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
   return (
     <>
-      <div className="container mx-auto mt-4 h-auto w-full rounded-lg bg-background p-6">
+      <div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background p-6">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -136,29 +185,33 @@ const Page: React.FC = () => {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <Card className="mt-5 p-5">
+        <Card
+          className={`mt-5 border-transparent bg-black p-5 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+          style={{
+            backgroundColor: selectedColor,
+            color: getContrastYIQ(selectedColor),
+          }}
+        >
           <CardHeader>
-            <CardTitle className="text-2xl font-bold">
+            <CardTitle
+              className={`text-2xl font-bold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+            >
               Lesion: {lessons.title}
             </CardTitle>
           </CardHeader>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
             {/* Columna izquierda - Imagen */}
-            <div className="flex flex-col">
-              <div className="relative aspect-video">
-                <p>Image:</p>
-                <Image
-                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverImageKey}`}
-                  alt={lessons.title}
-                  fill
-                  className="rounded-lg object-cover"
-                  priority
-                />
-              </div>
+            <div className="relative w-full">
+              <Image
+                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverImageKey}`}
+                alt={lessons.title}
+                fill
+                className="absolute mx-auto size-full rounded-lg object-cover"
+                priority
+              />
             </div>
             {/* Columna derecha - Información */}
-            <video className="h-80 w-full object-cover" controls>
-              <p> Video clase:</p>
+            <video className="h-72 w-full rounded-lg object-cover" controls>
               <source
                 src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`}
               />
@@ -166,17 +219,47 @@ const Page: React.FC = () => {
           </div>
           {/* Zona de los files */}
           <div>
-            <ViewFiles lessonId={lessons.id} />
+            <ViewFiles lessonId={lessons.id} selectedColor={selectedColor} />
           </div>
-          <div className="flex justify-evenly px-3 py-6">
-            <Button className="mx-4 border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500">
+          <div className="flex justify-evenly lg:px-3 lg:py-6">
+            <Button className="border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500">
               Editar Lesion
             </Button>
-            <Button variant="default">Ver Lesion</Button>
-            <Button variant="destructive">Eliminar</Button>
+            <Button className="border-primary bg-white text-primary hover:border-white hover:bg-primary hover:text-white">
+              Ver Lesion
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
+                  Eliminar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Se eliminará
+                    permanentemente el curso
+                    <span className="font-bold"> {lessons.title}</span> y todos
+                    los datos asociados a este.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDelete(lessons.id.toString())}
+                    className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                  >
+                    Eliminar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
           <div>
-            <div className="pb-6">
+            <div
+              className={`pb-6 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+            >
               <h2 className="text-2xl font-bold">Información de la clase</h2>
               <br />
               <div className="grid grid-cols-2">
@@ -186,33 +269,34 @@ const Page: React.FC = () => {
                 </div>
                 <div className="flex flex-col">
                   <h2 className="text-lg font-semibold">Categoría:</h2>
-                  <p className="text-gray-600">{lessons.course?.categoryId}</p>
+                  <p>{lessons.course?.categoryId}</p>
                 </div>
               </div>
               <div className="mb-4">
                 <h2 className="text-lg font-semibold">Descripción:</h2>
-                <p className="text-justify text-gray-600">
-                  {lessons.description}
-                </p>
+                <p className="text-justify">{lessons.description}</p>
               </div>
               <div className="grid grid-cols-2">
                 <div className="flex flex-col">
                   <h2 className="text-lg font-semibold">Educador:</h2>
-                  <p className="text-gray-600">{lessons.course?.instructor}</p>
+                  <p>{lessons.course?.instructor}</p>
                 </div>
                 <div className="flex flex-col">
                   <h2 className="text-lg font-semibold">Modalidad:</h2>
-                  <p className="text-gray-600">{lessons.course?.modalidadId}</p>
+                  <p>{lessons.course?.modalidadId}</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="flex w-full justify-center">
-            <Button className="mx-auto cursor-pointer justify-center bg-white">
-              <Upload />
+            <Link
+              href={`./${lessons.id}/actividades`}
+              className="cursor-pointer justify-center rounded-lg border border-primary bg-white p-2 text-primary hover:border-white hover:bg-primary hover:text-white"
+            >
+              <Upload className="mx-auto" />
               Crear actividad
-            </Button>
+            </Link>
           </div>
         </Card>
       </div>

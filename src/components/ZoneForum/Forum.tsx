@@ -112,7 +112,7 @@ const ForumHome = () => {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button
-                  className="flex items-center gap-2 bg-primary text-white hover:bg-primary/50"
+                  className="flex items-center gap-2 bg-primary text-black hover:bg-primary/50"
                   onClick={() => setIsDialogOpen(true)}
                 >
                   <FaPlus />

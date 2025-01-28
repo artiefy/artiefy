@@ -32,6 +32,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);
+    const validFileTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+
     if (
       multiple &&
       selectedFiles.length + files.length > 5 &&
@@ -40,13 +50,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setErrors('No puedes subir más de 5 archivos.');
       return;
     }
+
     const validFiles = selectedFiles.filter(
-      (file) => file.size / (1024 * 1024) <= maxSize
+      (file) =>
+        file.size / (1024 * 1024) <= maxSize &&
+        (type !== 'file' || validFileTypes.includes(file.type))
     );
+
     if (validFiles.length !== selectedFiles.length) {
-      setErrors('Algunos archivos superan el tamaño máximo permitido.');
+      setErrors(
+        'Algunos archivos no son del tipo permitido o superan el tamaño máximo permitido.'
+      );
       return;
     }
+
     setFiles((prev) => [...prev, ...validFiles]);
     setFileNames((prev) => [...prev, ...validFiles.map((file) => file.name)]);
     setFileSizes((prev) => [...prev, ...validFiles.map((file) => file.size)]);
@@ -67,6 +84,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
     e.preventDefault();
     setIsDragging(false);
     const selectedFiles = Array.from(e.dataTransfer.files ?? []);
+    const validFileTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+
     if (
       multiple &&
       selectedFiles.length + files.length > 5 &&
@@ -75,13 +102,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setErrors('No puedes subir más de 5 archivos.');
       return;
     }
+
     const validFiles = selectedFiles.filter(
-      (file) => file.size / (1024 * 1024) <= maxSize
+      (file) =>
+        file.size / (1024 * 1024) <= maxSize &&
+        (type !== 'file' || validFileTypes.includes(file.type))
     );
+
     if (validFiles.length !== selectedFiles.length) {
-      setErrors('Algunos archivos superan el tamaño máximo permitido.');
+      setErrors(
+        'Algunos archivos no son del tipo permitido o superan el tamaño máximo permitido.'
+      );
       return;
     }
+
     setFiles((prev) => [...prev, ...validFiles]);
     setFileNames((prev) => [...prev, ...validFiles.map((file) => file.name)]);
     setFileSizes((prev) => [...prev, ...validFiles.map((file) => file.size)]);

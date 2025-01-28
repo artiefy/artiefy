@@ -8,6 +8,8 @@ import {
   enrollments,
   dificultad,
 } from '~/server/db/schema';
+import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
+import { deleteLessonsByCourseId } from './lessonsModels'; // Importar la función para eliminar lecciones
 
 export interface Lesson {
   id: number;
@@ -207,7 +209,12 @@ export const updateCourse = async (
     .where(eq(courses.id, courseId));
 };
 
-// Eliminar un curso
+// Eliminar un curso y su foro asociado
 export const deleteCourse = async (courseId: number) => {
+  // Primero elimina el foro asociado al curso
+  await deleteForumByCourseId(courseId);
+  // Luego elimina las lecciones asociadas al curso
+  await deleteLessonsByCourseId(courseId);
+  // Luego elimina el curso
   return db.delete(courses).where(eq(courses.id, courseId));
 };

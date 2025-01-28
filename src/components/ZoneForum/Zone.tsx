@@ -4,7 +4,6 @@ import { useUser } from '@clerk/nextjs';
 import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FaImage } from 'react-icons/fa';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,17 +15,28 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
+import { toast } from '~/hooks/use-toast';
+//import { FaImage } from 'react-icons/fa';
 import { Button } from '../educators/ui/button';
 
 interface ForumsModels {
   id: number;
-  courseId: number;
+  courseId: {
+    id: number;
+    title: string;
+    descripcion: string;
+    instructor: string;
+    coverImageKey: string;
+  };
   title: string;
   description: string;
-  userName: string;
-  change: {
-    image: string;
+  userId: {
+    id: string;
+    name: string;
   };
+  // change: {
+  //   image: string;
+  // };
 }
 
 export const Zone = () => {
@@ -34,27 +44,27 @@ export const Zone = () => {
   const [forums, setForums] = useState<ForumsModels[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [change, setChange] = useState<{ image: string }>({ image: '' });
-  const [localImageUrl, setLocalImageUrl] = useState(change.image);
+  // const [change, setChange] = useState<{ image: string }>({ image: '' });
+  // const [localImageUrl, setLocalImageUrl] = useState(change.image);
   const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
 
   const handleImageLoad = (courseId: number) => {
     setLoadedImages((prev) => ({ ...prev, [courseId]: true }));
   };
 
-  useEffect(() => {
-    setLocalImageUrl(change.image);
-  }, [change]);
+  // useEffect(() => {
+  //   setLocalImageUrl(change.image);
+  // }, [change]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files?.[0]) {
-      const file = files[0];
-      const imageUrl = URL.createObjectURL(file);
-      setLocalImageUrl(imageUrl);
-      setChange({ image: imageUrl });
-    }
-  };
+  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = e.target.files;
+  //   if (files?.[0]) {
+  //     const file = files[0];
+  //     const imageUrl = URL.createObjectURL(file);
+  //     setLocalImageUrl(imageUrl);
+  //     setChange({ image: imageUrl });
+  //   }
+  // };
 
   useEffect(() => {
     const fetchLessons = async () => {
@@ -80,7 +90,13 @@ export const Zone = () => {
 
   if (loading) return <p>Cargando...</p>;
   if (forums.length === 0) {
-    return <p>No hay foros</p>;
+    return (
+      <div className="mt-10 flex h-auto items-center justify-center">
+        <p className="text-2xl text-gray-600">
+          No hay foros disponibles actualmente
+        </p>
+      </div>
+    );
   } else if (error) return <p>{error}</p>;
 
   const handleDelete = async (id: number) => {
@@ -88,8 +104,13 @@ export const Zone = () => {
       const response = await fetch(`/api/forums?id=${id}`, {
         method: 'DELETE',
       });
-      window.location.reload(); // Refrescar la página
       if (!response.ok) throw new Error('Error al eliminar el foro');
+      toast({
+        title: 'Foro eliminado',
+        description: 'El foro ha sido eliminado correctamente',
+        variant: 'destructive',
+      });
+      window.location.reload(); // Refrescar la página
     } catch (error) {
       console.error('Error:', error);
     }
@@ -99,18 +120,22 @@ export const Zone = () => {
     <ul className="grid grid-cols-1 gap-7 rounded-l shadow-md sm:grid-cols-2 lg:grid-cols-3">
       {forums.map((forum, index) => (
         <li
-          className="mx-auto flex w-96 flex-col rounded-lg border border-gray-600 md:w-full lg:w-full"
+          className="mx-auto flex h-auto w-96 flex-col rounded-lg border border-gray-600 md:w-full lg:w-full"
           key={index}
         >
           <div className="relative">
             <AspectRatio ratio={16 / 9}>
               <Image
-                src={localImageUrl || '/login-fondo.webp'}
+                src={
+                  `
+                  ${`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.courseId.coverImageKey}`} ` ||
+                  '/login-fondo.webp'
+                }
                 alt={forum.title}
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = '/login-fondo.webp';
                 }}
-                className={`rounded-lg object-cover transition-opacity duration-500 ${
+                className={`object-cover transition-opacity duration-500 ${
                   loadedImages[forum.id] ? 'opacity-100' : 'opacity-0'
                 }`}
                 fill
@@ -125,7 +150,7 @@ export const Zone = () => {
                 {forum.title}
               </h2>
             </div>
-            <label className="absolute bottom-2 right-2 cursor-pointer rounded-full bg-white p-2 hover:bg-gray-100">
+            {/* <label className="absolute bottom-2 right-2 cursor-pointer rounded-full bg-white p-2 hover:bg-gray-100">
               <input
                 type="file"
                 accept="image/*"
@@ -133,16 +158,16 @@ export const Zone = () => {
                 className="hidden"
               />
               <FaImage className="text-gray-600" />
-            </label>
+            </label> */}
           </div>
-          <div className="flex justify-evenly p-5">
+          <div className="grid grid-cols-2 p-5">
             <div className="flex flex-col justify-center text-center">
               <p>Del curso:</p>
-              <p> {forum.title}</p>
+              <p className="mt-2 text-white"> {forum.courseId.title}</p>
             </div>
             <div className="flex flex-col justify-center text-center">
               <p>Del docente:</p>
-              <p> {forum.userName}</p>
+              <p className="mt-2 text-white"> {forum.courseId.instructor}</p>
             </div>
           </div>
           <div className="h-auto bg-white p-6">

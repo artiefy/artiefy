@@ -28,7 +28,8 @@ interface CourseFormProps {
     categoryid: number,
     modalidadesid: number,
     dificultadesid: number,
-    requerimientos: string
+    requerimientos: string,
+    options?: { signal: AbortSignal }
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -87,6 +88,8 @@ export default function ModalFormCourse({
   const [isUploading, setIsUploading] = useState(false);
   const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set());
   const [currentCoverImageKey] = useState(coverImageKey);
+  const [uploadController, setUploadController] =
+    useState<AbortController | null>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -131,6 +134,8 @@ export default function ModalFormCourse({
   };
 
   const handleSubmit = async () => {
+    const controller = new AbortController();
+    setUploadController(controller);
     const newErrors = {
       title: !editingCourseId && !title,
       description: !editingCourseId && !description,
@@ -173,8 +178,13 @@ export default function ModalFormCourse({
         categoryid,
         modalidadesid,
         dificultadid,
-        requerimientos
+        requerimientos,
+        { signal: controller.signal } // Pasar el signal al onSubmitAction
       );
+      if (controller.signal.aborted) {
+        console.log('Upload cancelled');
+        return; // Salir de la función si se cancela la carga
+      }
       setIsUploading(false);
       console.log('Datos enviados:', {
         title,
@@ -186,9 +196,21 @@ export default function ModalFormCourse({
         requerimientos,
       });
     } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        console.log('Upload cancelled');
+        return; // Salir de la función si se cancela la carga
+      } else {
+        console.error('Error al enviar:', error);
+      }
       setIsUploading(false);
-      console.error('Error al enviar:', error);
     }
+  };
+
+  const handleCancel = () => {
+    if (uploadController) {
+      uploadController.abort();
+    }
+    onCloseAction();
   };
 
   const handleFieldChange = (
@@ -486,7 +508,13 @@ export default function ModalFormCourse({
         {errors.file && (
           <p className="text-sm text-red-500">Este campo es obligatorio.</p>
         )}
-        <DialogFooter>
+        <DialogFooter className="mt-4 grid grid-cols-2 gap-4">
+          <Button
+            onClick={handleCancel}
+            className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
+          >
+            Cancelar
+          </Button>
           <Button onClick={handleSubmit} variant="save" disabled={uploading}>
             {uploading
               ? 'Subiendo...'

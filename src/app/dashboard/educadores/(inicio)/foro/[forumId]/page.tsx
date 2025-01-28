@@ -162,7 +162,7 @@ const ForumPage = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="container mx-auto mt-5">
-        <div className="rounded-lg bg-gray-800 p-5 shadow-lg">
+        <div className="mx-auto w-full rounded-lg p-5 shadow-lg md:w-11/12 lg:w-full">
           <div className="flex justify-between">
             <h1 className="mb-4 text-2xl font-bold text-white">
               {forumData?.title}
@@ -172,7 +172,9 @@ const ForumPage = () => {
             </p>{' '}
             {/* Asegúrate de acceder al nombre del usuario */}
           </div>
-          <p className="mb-4 text-gray-300">{forumData?.description}</p>
+          <p className="mb-4 text-gray-300">
+            Description: {forumData?.description}
+          </p>
           <h2 className="text-xl font-semibold text-white">Mensajes</h2>
           <div className="mb-4 flex flex-col-reverse rounded-lg bg-gray-700 p-4">
             {/* Aquí puedes mapear los mensajes del foro */}
