@@ -1,9 +1,9 @@
-import { cache } from "react"
-import { unstable_cache } from "next/cache"
-import "server-only"
-import { eq, desc } from "drizzle-orm"
-import { db } from "~/server/db"
-import { courses, categories, modalidades, dificultad } from "~/server/db/schema"
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
+import "server-only";
+import { eq, desc } from "drizzle-orm";
+import { db } from "~/server/db";
+import { courses, categories, modalidades, dificultad } from "~/server/db/schema";
 
 const getCachedCoursesData = unstable_cache(
   async () => {
@@ -32,16 +32,17 @@ const getCachedCoursesData = unstable_cache(
       .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
       .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
       .orderBy(desc(courses.createdAt))
+      .limit(100);
 
-    return coursesData
+    return coursesData;
   },
   ["courses-data"],
   { revalidate: 3600, tags: ["courses"] },
-)
+);
 
 export const getAllCourses = cache(async () => {
   try {
-    const coursesData = await getCachedCoursesData()
+    const coursesData = await getCachedCoursesData();
 
     return coursesData.map((course) => ({
       id: course.id,
@@ -67,14 +68,13 @@ export const getAllCourses = cache(async () => {
       modalidad: { name: course.modalidadName ?? "" },
       dificultad: { name: course.dificultadName ?? "" },
       isFeatured: course.isFeatured ?? false,
-    }))
+    }));
   } catch (error) {
-    console.error("Error al obtener todos los cursos:", error)
-    throw new Error("Error al obtener todos los cursos: " + (error instanceof Error ? error.message : String(error)))
+    console.error("Error al obtener todos los cursos:", error);
+    throw new Error("Error al obtener todos los cursos: " + (error instanceof Error ? error.message : String(error)));
   }
-})
+});
 
 export const preloadAllCourses = () => {
-  void getAllCourses()
-}
-
+  void getAllCourses();
+};
