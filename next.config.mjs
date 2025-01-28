@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-import "./src/env.js";
-import withPlaiceholder from "@plaiceholder/next";
+import "./src/env.js"
+import withPlaiceholder from "@plaiceholder/next"
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -43,6 +43,37 @@ const nextConfig = {
       resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
     },
   },
-};
+  headers: () => {
+    return [
+      {
+        source: "/app/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600, must-revalidate",
+          },
+        ],
+      },
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+        ],
+      },
+    ]
+  },
+}
 
-export default withPlaiceholder(nextConfig);
+export default withPlaiceholder(nextConfig)
+
