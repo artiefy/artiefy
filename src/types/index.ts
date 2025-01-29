@@ -1,128 +1,129 @@
 export interface User {
-	id: string;
-	role: string;
-	name: string | null;
-	email: string;
-	createdAt: Date;
-	updatedAt: Date;
-	phone?: string | null;
-	country?: string | null;
-	city?: string | null;
-	address?: string | null;
-	age?: number | null;
-	birthDate?: Date | null;
+  id: string;
+  role: string;
+  name: string | null;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+  phone?: string | null;
+  country?: string | null;
+  city?: string | null;
+  address?: string | null;
+  age?: number | null;
+  birthDate?: Date | null;
 }
 
 export interface Course {
-	id: number;
-	title: string;
-	description: string | null;
-	coverImageKey: string | null;
-	categoryid: number;
-	instructor: string;
-	createdAt: string | number | Date;
-	updatedAt: string | number | Date;
-	creatorId: string;
-	rating: number | null;
-	modalidadesid: number;
-	dificultadid: number;
-	totalStudents: number;
-	lessons: Lesson[];
-	category?: Category;
-	modalidad?: Modalidad;
-	dificultad?: Dificultad;
-	enrollments?: Enrollment[] | { length: number };
-	creator?: User;
+  id: number;
+  title: string;
+  description: string | null;
+  coverImageKey: string | null;
+  categoryid: number;
+  instructor: string;
+  createdAt: string | number | Date;
+  updatedAt: string | number | Date;
+  creatorId: string;
+  rating: number | null;
+  modalidadesid: number;
+  dificultadid: number;
+  totalStudents: number;
+  lessons: Lesson[];
+  category?: Category;
+  modalidad?: Modalidad;
+  dificultad?: Dificultad;
+  enrollments?: Enrollment[] | { length: number };
+  creator?: User;
 }
 
 export interface Category {
-	id: number;
-	name: string;
-	description: string | null;
-	courses?: { length: number };
-	preferences?: Preference[];
-	is_featured: boolean | null;
+  id: number;
+  name: string;
+  description: string | null;
+  courses?: { length: number };
+  preferences?: Preference[];
+  is_featured: boolean | null;
 }
 
 export interface Preference {
-	id: number;
-	name: string;
-	area_cono: string | null;
-	userId: string;
-	categoryid: number;
-	user?: User;
-	category?: Category;
+  id: number;
+  name: string;
+  area_cono: string | null;
+  userId: string;
+  categoryid: number;
+  user?: User;
+  category?: Category;
 }
 
 export interface CourseTaken {
-	id: number;
-	userId: string;
-	courseId: number;
-	user?: User;
-	course?: Course;
+  id: number;
+  userId: string;
+  courseId: number;
+  user?: User;
+  course?: Course;
 }
 
 export interface Lesson {
-	id: number;
-	title: string;
-	description: string | null;
-	duration: number;
-	coverImageKey: string;
-	coverVideoKey: string;
-	order: number;
-	courseId: number;
-	createdAt: Date;
-	updatedAt: Date;
-	porcentajecompletado: number;
-	resourceKey: string;
-	userProgress: number;
-	isCompleted: boolean;
-	lastUpdated: Date;
-	course?: Course;
-	activities?: Activity[];
-	isLocked: boolean | null;
+  id: number;
+  title: string;
+  description: string | null;
+  duration: number;
+  coverImageKey: string;
+  coverVideoKey: string;
+  order: number;
+  courseId: number;
+  createdAt: Date;
+  updatedAt: Date;
+  porcentajecompletado: number;
+  resourceKey: string;
+  userProgress: number;
+  isCompleted: boolean;
+  lastUpdated: Date;
+  course?: Course;
+  activities?: Activity[];
+  isLocked: boolean | null;
 }
 
 export interface LessonWithProgress {
-	isLocked: boolean | null;
+  isLocked: boolean | null;
 }
+
 export interface UserLessonsProgress {
-	userId: string;
-	lessonId: number;
-	progress: number;
-	isCompleted: boolean;
-	isLocked: boolean | null;
-	lastUpdated: Date;
+  userId: string;
+  lessonId: number;
+  progress: number;
+  isCompleted: boolean;
+  isLocked: boolean | null;
+  lastUpdated: Date;
 }
 
 export interface UserActivitiesProgress {
-	userId: string;
-	activityId: number;
-	progress: number;
-	isCompleted: boolean;
-	lastUpdated: Date;
+  userId: string;
+  activityId: number;
+  progress: number;
+  isCompleted: boolean;
+  lastUpdated: Date;
 }
 
 export interface Modalidad {
-	id?: number;
-	name: string;
-	description?: string | null;
-	courses?: Course[];
+  id?: number;
+  name: string;
+  description?: string | null;
+  courses?: Course[];
 }
 
 export interface Score {
-	id: number;
-	score: number;
-	userId: string;
-	categoryid: number;
-	user?: User;
-	category?: Category;
+  id: number;
+  score: number;
+  userId: string;
+  categoryid: number;
+  user?: User;
+  category?: Category;
 }
 
 export interface Dificultad {
-	id?: number;
-	name: string;
-	description?: string;
+  id?: number;
+  name: string;
+  description?: string;
 }
 
 export interface Activity {
@@ -130,62 +131,71 @@ export interface Activity {
   name: string;
   description: string | null;
   type_id: number;
-  type_acti: string;
   lessonsId: number;
   isCompleted: boolean | null;
   userProgress: number | null;
   lastUpdated: Date;
   lesson?: Lesson;
+  typeActi?: TypeActi;
+  userActivitiesProgress?: UserActivitiesProgress[];
+}
+
+export interface TypeActi {
+  id: number;
+  name: string;
+  description: string | null;
+  activities?: Activity[];
 }
 
 export interface Enrollment {
-	id: number;
-	userId: string;
-	courseId: number;
-	enrolledAt: Date;
-	completed: boolean | null;
+  id: number;
+  userId: string;
+  courseId: number;
+  enrolledAt: Date;
+  completed: boolean | null;
 }
 
 export interface Project {
-	id: number;
-	name: string;
-	description: string | null;
-	coverImageKey: string | null;
-	coverVideoKey: string | null;
-	type_project: string;
-	userId: string;
-	categoryid: number;
-	category?: Category;
-	user?: User;
+  id: number;
+  name: string;
+  description: string | null;
+  coverImageKey: string | null;
+  coverVideoKey: string | null;
+  type_project: string;
+  userId: string;
+  categoryid: number;
+  category?: Category;
+  user?: User;
 }
+
 export interface ProjectTaken {
-	id: number;
-	userId: string;
-	projectId: number;
-	user?: User;
-	project?: Project;
+  id: number;
+  userId: string;
+  projectId: number;
+  user?: User;
+  project?: Project;
 }
 
 export interface PaginatedCourses {
-	courses: Course[];
-	total: number;
-	page: number;
-	pageSize: number;
+  courses: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface GetCoursesResponse {
-	courses: Course[];
-	total: number;
-	page: number;
-	pageSize: number;
-	totalPages: number;
+  courses: Course[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export interface GetCoursesParams {
-	pagenum?: number;
-	pageSize?: number;
-	categoryId?: number;
-	searchTerm?: string;
+  pagenum?: number;
+  pageSize?: number;
+  categoryId?: number;
+  searchTerm?: string;
 }
 
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };

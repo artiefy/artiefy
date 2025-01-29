@@ -89,15 +89,10 @@ export default async function CoursesPage({ searchParams }: Props) {
       <>
         <Header />
         <StudentDashboard initialCourses={data.courses} />
-        <div className="container mx-auto mb-8">
-          <div className="mb-4 flex flex-col lg:flex-row items-center justify-between">
             <CourseCategories
               allCategories={data.categories}
               featuredCategories={data.featuredCategories}
             />
-          </div>
-        </div>
-        <div className="px-8">
           <CourseListStudent
             courses={data.courses}
             currentPage={data.page}
@@ -106,7 +101,6 @@ export default async function CoursesPage({ searchParams }: Props) {
             category={data.categoryId?.toString()}
             searchTerm={data.searchTerm}
           />
-        </div>
         <Footer />
       </>
     );
