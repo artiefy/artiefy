@@ -1,7 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getCourseById } from '~/server/actions/courses/getCourseById';
 
-export const runtime = 'edge';
 
 export const alt = 'Course Image';
 export const size = {
