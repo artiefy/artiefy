@@ -93,14 +93,15 @@ export const lessons = pgTable('lessons', {
 
 // Tabla de actividades
 export const activities = pgTable('activities', {
-	id: serial('id').primaryKey(),
-	name: varchar('name', { length: 255 }).notNull(),
-	description: text('description'),
-	tipo: varchar('tipo', { length: 255 }).notNull(),
-	lessonsId: integer('lessons_id')
-		.references(() => lessons.id)
-		.notNull(),
-	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  type_id: integer('type_id').notNull(),
+  type_acti: varchar('type_acti', { length: 255 }).notNull(),
+  lessonsId: integer('lessons_id')
+      .references(() => lessons.id)
+      .notNull(),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
 // Tabla de inscripciones

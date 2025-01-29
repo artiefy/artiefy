@@ -68,7 +68,7 @@ export default async function CourseListStudent({
 												<Image
 													src={imageUrl || '/placeholder.svg'}
 													alt={course.title || 'Imagen del curso'}
-													className="px-2 pt-2 object-cover transition-transform duration-300 hover:scale-105"
+													className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
 													fill
 													placeholder="blur"
 													blurDataURL={blurDataURL ?? undefined}
@@ -79,13 +79,13 @@ export default async function CourseListStudent({
 										</AspectRatio>
 									</CardHeader>
 
-									<CardContent className="flex grow flex-col justify-between px-2">
-										<CardTitle className="mb-1 rounded-lg text-lg text-background">
+									<CardContent className="flex grow flex-col justify-between space-y-2 px-2">
+										<CardTitle className="rounded-lg text-lg text-background">
 											<div className="font-bold text-primary">
 												{course.title}
 											</div>
 										</CardTitle>
-										<div className="mb-1 flex items-center">
+										<div className="flex items-center">
 											<Badge
 												variant="outline"
 												className="border-primary bg-background text-primary hover:bg-black/70"
@@ -93,12 +93,12 @@ export default async function CourseListStudent({
 												{course.category?.name}
 											</Badge>
 										</div>
-										<p className="-mb-4 line-clamp-2 text-sm text-gray-300">
+										<p className="line-clamp-2 text-sm text-gray-300">
 											{course.description}
 										</p>
 									</CardContent>
-									<CardFooter className="flex flex-col items-start justify-between px-2">
-										<div className="mb-2 flex w-full justify-between">
+									<CardFooter className="flex flex-col items-start justify-between space-y-2 px-2">
+										<div className="flex w-full justify-between">
 											<p className="text-sm font-bold italic text-gray-300">
 												Educador:{' '}
 												<span className="font-bold italic">
