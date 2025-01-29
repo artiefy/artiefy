@@ -52,8 +52,8 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 	if (params.query) {
 		const lowercasedQuery = params.query.toLowerCase();
 		filteredCourses = filteredCourses.filter((course: Course) =>
-			course.title.toLowerCase().includes(lowercasedQuery) ||
-			course.description?.toLowerCase().includes(lowercasedQuery) ||
+			course.title.toLowerCase().includes(lowercasedQuery) ??
+			course.description?.toLowerCase().includes(lowercasedQuery) ??
 			course.category?.name.toLowerCase().includes(lowercasedQuery)
 		);
 	}

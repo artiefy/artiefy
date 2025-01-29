@@ -3,14 +3,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
-<<<<<<< HEAD
-import {
-  courses,
-  userLessonsProgress,
-} from '~/server/db/schema';
-=======
 import { courses, userLessonsProgress } from '~/server/db/schema';
->>>>>>> develop
 import type { Course } from '~/types';
 
 // Obtener un curso específico por ID

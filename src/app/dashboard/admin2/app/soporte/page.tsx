@@ -22,7 +22,6 @@ import { LiveChat } from '~/components/admin/ui/LiveChat';
 import { NewTicketForm } from '~/components/admin/ui/NewTicketForm';
 import { TicketDetail } from '~/components/admin/ui/TicketDetail';
 import { TicketList } from '~/components/admin/ui/TicketList';
-
 interface TicketDetailProps {
 	id: number;
 	estudiante: string;
@@ -30,75 +29,71 @@ interface TicketDetailProps {
 	descripcion: string;
 	estado: 'Abierto' | 'En Progreso' | 'Resuelto';
 	fechaCreacion?: Date | null;
-	imagen?: string;
-	onUpdateTicket: (updatedTicket: LocalTicket, newImage?: File) => void;
+	imagen?: string | File;
 	onDeleteTicket: () => void;
+	onUpdateTicket: (
+		updatedTicket: Omit<TicketDetailProps, 'onUpdateTicket'>,
+		newImage?: File
+	) => void;
 }
 
-export interface LocalTicket
-	extends Omit<TicketDetailProps, 'onUpdateTicket'> {}
-
-interface Ticket {
-	id: number;
-	title: string;
-	description: string;
-	status: 'Abierto' | 'En Progreso' | 'Resuelto';
-	prioridad: string; // Cambiado de 'priority' a 'prioridad'
-	createdAt: string;
-	image?: string;
-	updatedAt?: string;
-	studentName: string;
-	studentEmail: string;
-	estudiante: string;
-	asunto: string;
-	descripcion: string;
-	estado: 'Abierto' | 'En Progreso' | 'Resuelto';
-	fechaCreacion?: Date | null;
-	imagen?: string | File;
+export interface TicketListProps {
+	tickets: Omit<TicketDetailProps, 'onUpdateTicket'>[];
+	onSelectTicket: (ticket: Omit<TicketDetailProps, 'onUpdateTicket'>) => void;
+	onDeleteTicket: (id: number) => void;
 }
 
 export default function Soporte() {
-	const [tickets, setTickets] = useState<LocalTicket[]>([
+	const [tickets, setTickets] = useState<
+		Omit<TicketDetailProps, 'onUpdateTicket'>[]
+	>([
 		{
 			id: 1,
 			estudiante: 'Ana García',
 			asunto: 'Problema con el acceso al curso',
-			descripcion: 'No puedo acceder al material del curso de Programación Avanzada',
+			descripcion:
+				'No puedo acceder al material del curso de Programación Avanzada',
 			estado: 'Abierto',
 			fechaCreacion: new Date('2023-06-15'),
 			onDeleteTicket: function (): void {
 				throw new Error('Function not implemented.');
-			}
+			},
 		},
 		{
 			id: 2,
 			estudiante: 'Carlos Rodríguez',
 			asunto: 'Error en la subida de tareas',
-			descripcion: 'Al intentar subir mi tarea, recibo un error de "archivo no soportado"',
+			descripcion:
+				'Al intentar subir mi tarea, recibo un error de "archivo no soportado"',
 			estado: 'En Progreso',
 			fechaCreacion: new Date('2023-06-14'),
 			onDeleteTicket: function (): void {
 				throw new Error('Function not implemented.');
-			}
+			},
 		},
 	]);
 
-	const [selectedTicket, setSelectedTicket] = useState<LocalTicket | null>(
-		null
-	);
+	const [selectedTicket, setSelectedTicket] = useState<Omit<
+		TicketDetailProps,
+		'onUpdateTicket'
+	> | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 	const [isChatOpen, setIsChatOpen] = useState(false);
 
 	const handleAddTicket = (
-		newTicket: Omit<LocalTicket, 'id' | 'fechaCreacion' | 'estado'> & {
+		newTicket: Omit<
+			Omit<TicketDetailProps, 'onUpdateTicket'>,
+			'id' | 'fechaCreacion' | 'estado'
+		> & {
 			imagen?: string | File;
 		}
 	) => {
-		const imagenUrl = typeof newTicket.imagen === 'object' && (newTicket.imagen as any) instanceof File
-			? URL.createObjectURL(newTicket.imagen)
-			: newTicket.imagen;
+		const imagenUrl =
+			typeof newTicket.imagen === 'object' && newTicket.imagen instanceof File
+				? URL.createObjectURL(newTicket.imagen)
+				: newTicket.imagen;
 
-		const ticket: LocalTicket = {
+		const ticket: Omit<TicketDetailProps, 'onUpdateTicket'> = {
 			...newTicket,
 			id: tickets.length + 1,
 			fechaCreacion: new Date(),
@@ -109,12 +104,15 @@ export default function Soporte() {
 		setTickets([...tickets, ticket]);
 	};
 
-	const handleUpdateTicket = (updatedTicket: LocalTicket, newImage?: File) => {
+	const handleUpdateTicket = (
+		updatedTicket: Omit<TicketDetailProps, 'onUpdateTicket'>,
+		newImage?: File
+	) => {
 		const imagenUrl = newImage
 			? URL.createObjectURL(newImage)
 			: updatedTicket.imagen;
 
-		const finalUpdatedTicket: LocalTicket = {
+		const finalUpdatedTicket: Omit<TicketDetailProps, 'onUpdateTicket'> = {
 			...updatedTicket,
 			imagen: imagenUrl,
 		};
@@ -209,9 +207,10 @@ export default function Soporte() {
 							description: ticket.descripcion, // Mapeo de 'descripcion' a 'description'
 							status: ticket.estado, // Mapeo de 'estado' a 'status'
 							prioridad: 'Normal', // Cambiado de 'priority' a 'prioridad'
-							createdAt: ticket.fechaCreacion?.toISOString() || '',
-							image: typeof ticket.imagen === 'string' ? ticket.imagen : undefined,
-							updatedAt: ticket.fechaCreacion?.toISOString() || '',
+							createdAt: ticket.fechaCreacion?.toISOString() ?? '',
+							image:
+								typeof ticket.imagen === 'string' ? ticket.imagen : undefined,
+							updatedAt: ticket.fechaCreacion?.toISOString() ?? '',
 							studentName: ticket.estudiante,
 							studentEmail: '', // Asignar un valor por defecto a 'studentEmail'
 							estudiante: ticket.estudiante,
@@ -224,7 +223,9 @@ export default function Soporte() {
 						onSelectTicket={(ticket) =>
 							setSelectedTicket({
 								...ticket,
-								fechaCreacion: ticket.createdAt ? new Date(ticket.createdAt) : null,
+								fechaCreacion: ticket.fechaCreacion
+									? new Date(ticket.fechaCreacion)
+									: null,
 								onDeleteTicket: () => handleDeleteTicket(ticket.id),
 							})
 						}

@@ -19,7 +19,6 @@ export interface Lesson {
   courseId: number;
   createdAt: string | number | Date;
   updatedAt: string | number | Date;
-  porcentajecompletado: number;
   resourceKey: string;
   _modalidadesId: {
     id: number;
@@ -39,7 +38,6 @@ export async function createLesson({
   coverImageKey,
   coverVideoKey,
   courseId,
-  porcentajecompletado,
   resourceKey,
 }: {
   title: string;
@@ -48,7 +46,6 @@ export async function createLesson({
   coverImageKey: string;
   coverVideoKey: string;
   courseId: number;
-  porcentajecompletado: number;
   resourceKey: string;
 }) {
   try {
@@ -85,8 +82,7 @@ export async function createLesson({
       coverVideoKey,
       order: newOrder, // Asignar el nuevo valor de `order`
       courseId,
-      porcentajecompletado,
-      resourceKey,
+  resourceKey,
     });
 
     console.log('Lección creada:', newLesson);
@@ -208,7 +204,6 @@ export const getLessonById = async (
       courseId: lessons.courseId,
       createdAt: lessons.createdAt,
       updatedAt: lessons.updatedAt,
-      porcentajecompletado: lessons.porcentajecompletado ?? 0,
       resourceKey: lessons.resourceKey,
       course: {
         id: courses.id,
@@ -227,9 +222,6 @@ export const getLessonById = async (
     .where(eq(lessons.id, lessonId))
     .then((rows) => rows[0]);
 
-  if (lessonData) {
-    lessonData.porcentajecompletado = lessonData.porcentajecompletado ?? 0;
-  }
   return (lessonData as unknown as Lesson) || null;
 };
 
@@ -244,7 +236,6 @@ export const updateLesson = async (
     coverVideoKey,
     order,
     courseId,
-    porcentajecompletado,
     resourceKey,
   }: {
     title?: string;
@@ -254,7 +245,6 @@ export const updateLesson = async (
     coverVideoKey?: string;
     order?: number;
     courseId?: number;
-    porcentajecompletado?: number;
     resourceKey?: string;
   }
 ): Promise<void> => {
@@ -267,8 +257,6 @@ export const updateLesson = async (
   if (coverVideoKey) updateData.coverVideoKey = coverVideoKey;
   if (order) updateData.order = order;
   if (courseId) updateData.courseId = courseId;
-  if (porcentajecompletado !== undefined)
-    updateData.porcentajecompletado = porcentajecompletado;
   if (resourceKey) updateData.resourceKey = resourceKey;
 
   await db.update(lessons).set(updateData).where(eq(lessons.id, lessonId));

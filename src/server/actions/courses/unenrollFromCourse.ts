@@ -3,13 +3,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 import { db } from '~/server/db';
-<<<<<<< HEAD
-import {
-  enrollments,
-} from '~/server/db/schema';
-=======
 import { enrollments } from '~/server/db/schema';
->>>>>>> develop
 
 // Desuscribirse de un curso
 export async function unenrollFromCourse(courseId: number): Promise<void> {

@@ -3,14 +3,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 import { db } from '~/server/db';
-<<<<<<< HEAD
-import {
-  userLessonsProgress, lessons,
-} from '~/server/db/schema';
-
-=======
 import { userLessonsProgress, lessons } from '~/server/db/schema';
->>>>>>> develop
 
 // Actualizar el progreso de una lección
 export async function updateLessonProgress(

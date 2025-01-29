@@ -90,7 +90,7 @@ export function NewTicketForm({ onSubmit }: NewTicketFormProps) {
         <Label className="text-foreground">
           Imagen del problema (opcional)
         </Label>
-        <ImageUpload onImageUploadAction={handleImageUpload} onImageUpload={function (file: File): void {
+        <ImageUpload onImageUploadAction={handleImageUpload} onImageUpload={function (): void {
           throw new Error('Function not implemented.');
         } } />
       </div>

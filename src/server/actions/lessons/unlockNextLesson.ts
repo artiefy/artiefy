@@ -3,15 +3,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 import { db } from '~/server/db';
-<<<<<<< HEAD
-import {
-  lessons,
-  userLessonsProgress,
-} from '~/server/db/schema';
-
-=======
 import { lessons, userLessonsProgress } from '~/server/db/schema';
->>>>>>> develop
 
 // Desbloquear la siguiente lección
 export async function unlockNextLesson(

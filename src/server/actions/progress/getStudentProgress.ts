@@ -2,14 +2,7 @@
 
 import { eq, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
-<<<<<<< HEAD
-import {
-  enrollments,
-  userLessonsProgress,
-} from '~/server/db/schema';
-=======
 import { enrollments, userLessonsProgress } from '~/server/db/schema';
->>>>>>> develop
 
 // Obtener el progreso general del estudiante
 export async function getStudentProgress(userId: string): Promise<{
