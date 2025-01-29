@@ -44,6 +44,7 @@ export async function generateMetadata(
     }
 
     const coverImageUrl = await getValidCoverImageUrl(course.coverImageKey);
+    console.log('Cover Image URL:', coverImageUrl); // Aquí está el console.log
     const motivationalMessage = '¡Subscríbete ya en este curso excelente!';
 
     const previousImages = (await parent).openGraph?.images ?? [];
@@ -56,7 +57,7 @@ export async function generateMetadata(
             description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
             images: [
                 {
-                    url: coverImageUrl,
+                    url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${resolvedParams.id}/opengraph-image`,
                     width: 1200,
                     height: 630,
                     alt: `Portada del curso: ${course.title}`,
@@ -68,7 +69,7 @@ export async function generateMetadata(
             card: 'summary_large_image',
             title: `${course.title} | Artiefy`,
             description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
-            images: [coverImageUrl],
+            images: [`${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${resolvedParams.id}/opengraph-image`],
         },
     };
 }
