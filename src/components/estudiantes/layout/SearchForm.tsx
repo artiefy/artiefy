@@ -8,8 +8,8 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Input } from '~/components/estudiantes/ui/input';
 import {
-    saveScrollPosition,
-    restoreScrollPosition,
+  saveScrollPosition,
+  restoreScrollPosition,
 } from '~/utils/scrollPosition';
 
 const SearchForm: React.FC = () => {
@@ -46,41 +46,39 @@ const SearchForm: React.FC = () => {
     };
 
     return (
-        <div className="right-0 p-8 justify-center top-0 flex flex-col items-center lg:items-end -mt-10 lg:-mb-36 px-4 lg:px-20">
-            <div className="flex w-full justify-center lg:justify-end">
-                <div className="relative w-full max-w-lg">
-                    <Input
-                        type="search"
-                        placeholder="Buscar cursos..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        className="w-full bg-white pr-10 text-background"
-                        aria-label="Buscar cursos"
-                    />
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                        {isSearching ? (
-                            <Icons.spinner
-                                className="size-4 text-background"
-                                aria-hidden="true"
-                            />
-                        ) : (
-                            <MagnifyingGlassIcon
-                                className="size-4 text-gray-400"
-                                aria-hidden="true"
-                            />
-                        )}
-                    </div>
+        <div className="flex w-full justify-center lg:justify-end p-4 sm:p-8 lg:px-20">
+            <div className="relative w-full max-w-lg">
+                <Input
+                    type="search"
+                    placeholder="Buscar cursos..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="w-full bg-white pr-10 text-background"
+                    aria-label="Buscar cursos"
+                />
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    {isSearching ? (
+                        <Icons.spinner
+                            className="size-4 text-background"
+                            aria-hidden="true"
+                        />
+                    ) : (
+                        <MagnifyingGlassIcon
+                            className="size-4 text-gray-400"
+                            aria-hidden="true"
+                        />
+                    )}
                 </div>
-                <Button
-                    onClick={handleSearch}
-                    disabled={isSearching}
-                    className="ml-2 border border-primary bg-primary text-background hover:bg-background hover:text-primary"
-                    aria-label="Realizar búsqueda"
-                >
-                    Buscar
-                </Button>
             </div>
+            <Button
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="ml-2 border border-primary bg-primary text-background hover:bg-background hover:text-primary"
+                aria-label="Realizar búsqueda"
+            >
+                Buscar
+            </Button>
         </div>
     );
 };
