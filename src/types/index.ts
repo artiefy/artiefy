@@ -83,8 +83,8 @@ export interface Lesson {
   isLocked: boolean | null;
 }
 
-export interface LessonWithProgress {
-  isLocked: boolean | null;
+export interface LessonWithProgress extends Lesson {
+  isLocked: boolean;
 }
 
 export interface UserLessonsProgress {
