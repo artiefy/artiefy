@@ -32,15 +32,15 @@ export function Header() {
 				<div className="flex items-center justify-between">
 					<div className="hidden w-full items-center justify-between md:flex">
 						{/* Logo */}
-						<div className="mt-[-13px] shrink-0 ">
-							<div className="relative size-[150px] ">
+						<div className="mt-[-13px] shrink-0">
+							<div className="relative size-[150px]">
 								<Image
 									src="/artiefy-logo.svg"
 									alt="Logo Artiefy"
 									fill
-									className="object-contain"
 									priority
-									quality={100}
+									className="object-contain"
+									sizes="(max-width: 768px) 150px, 150px"
 								/>
 							</div>
 						</div>
@@ -95,9 +95,9 @@ export function Header() {
 									src="/artiefy-logo.png"
 									alt="Logo Artiefy"
 									fill
-									className='object-contain ml-6'
 									priority
-									quality={100}
+									className="ml-6 object-contain"
+									sizes="(max-width: 768px) 150px, 150px"
 								/>
 							</div>
 						</div>
@@ -106,7 +106,7 @@ export function Header() {
 							className="inline-flex items-center justify-center p-2 transition-transform active:scale-95"
 							aria-label="Open main menu"
 						>
-							<Bars3Icon className="size-8 mr-4" />
+							<Bars3Icon className="mr-4 size-8" />
 						</button>
 					</div>
 				</div>
@@ -124,14 +124,13 @@ export function Header() {
 					<div className="flex items-center justify-between">
 						<div className="relative mt-[-10px] size-[150px]">
 							{' '}
-							{/* Adjusted margin-top to move the logo up slightly */}
+							{/* Icon SVG */}
 							<Image
 								src="/artiefy-logo2.svg"
 								alt="Logo Artiefy"
 								fill
 								className="object-contain"
-								priority
-								quality={100}
+								sizes="150px"
 							/>
 						</div>
 						<button

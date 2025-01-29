@@ -1,36 +1,21 @@
 import { Suspense } from 'react';
-import { type Metadata } from 'next';
+import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
-import { type Course as CourseSchemaDTS, type WithContext } from 'schema-dts';
+import type { Course as CourseSchemaDTS, WithContext } from 'schema-dts';
 import { getCourseById } from '~/server/actions/courses/getCourseById';
 import type { Course } from '~/types';
 import CourseDetails from './CourseDetails';
 
 interface Props {
-	params: Promise<{ id: string }>;
+	params: { id: string };
+	searchParams: Record<string, string | string[] | undefined>;
 }
 
-async function getValidCoverImageUrl(
-	coverImageKey: string | null
-): Promise<string> {
-	const coverImageUrl = coverImageKey
-		? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
-		: `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
-
-	try {
-		const response = await fetch(coverImageUrl);
-		if (response.status === 403) {
-			return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
-		}
-		return coverImageUrl;
-	} catch {
-		return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
-	}
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-	const resolvedParams = await params;
-	const course = await getCourseById(Number(resolvedParams.id));
+export async function generateMetadata(
+	{ params }: Props,
+	parent: ResolvingMetadata
+): Promise<Metadata> {
+	const course = await getCourseById(Number(params.id));
 
 	if (!course) {
 		return {
@@ -39,8 +24,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 		};
 	}
 
-	const coverImageUrl = await getValidCoverImageUrl(course.coverImageKey);
 	const motivationalMessage = '¡Subscríbete ya en este curso excelente!';
+
+	const previousImages = (await parent).openGraph?.images ?? [];
 
 	return {
 		title: `${course.title} | Artiefy`,
@@ -50,28 +36,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 			description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
 			images: [
 				{
-					url: coverImageUrl,
+					url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}/opengraph-image`,
 					width: 1200,
 					height: 630,
 					alt: `Portada del curso: ${course.title}`,
 				},
+				...previousImages,
 			],
 		},
 		twitter: {
 			card: 'summary_large_image',
 			title: `${course.title} | Artiefy`,
 			description: `${course.description ?? 'No hay descripción disponible.'} ${motivationalMessage}`,
-			images: [coverImageUrl],
+			images: [
+				`${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}/opengraph-image`,
+			],
 		},
 	};
 }
 
-export default async function Page({ params }: Props) {
-	const resolvedParams = await params;
-
+export default function Page({ params }: Props) {
 	return (
-		<Suspense>
-			<CourseContent id={resolvedParams.id} />
+		<Suspense fallback={<div>Cargando...</div>}>
+			<CourseContent id={params.id} />
 		</Suspense>
 	);
 }

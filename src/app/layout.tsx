@@ -28,13 +28,13 @@ export const metadata: Metadata = siteMetadata;
 const jsonLd = {
 	'@context': 'https://schema.org',
 	'@type': 'WebSite',
-	url: 'https://artiefy.vercel.app',
+	url: 'https://artiefy.com/',
 	name: 'Artiefy',
 	description:
 		'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
 	logo: {
 		'@type': 'ImageObject',
-		url: 'https://artiefy.vercel.app/artiefy-icon.png',
+		url: 'https://artiefy.com/artiefy-icon.png',
 	},
 };
 

@@ -182,7 +182,7 @@ export default function SignInPage() {
 							alt="Logo de Artiefy"
 							fill
 							className="object-contain"
-							sizes="(max-width: 640px) 280px, (max-width: 768px) 300px, (max-width: 1024px) 400px, 600px"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 							priority
 						/>
 					</AspectRatio>

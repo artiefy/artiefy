@@ -23,7 +23,7 @@ export default async function Image() {
 				style={{
 					fontSize: 48,
 					fontFamily: 'Montserrat',
-					backgroundImage: 'url(http://artiefy.vercel.app/og-fondo.png)',
+					backgroundImage: 'url(http://artiefy.com/og-fondo.png)',
 					backgroundSize: 'cover',
 					width: '100%',
 					height: '100%',
