@@ -38,7 +38,7 @@ export const createActivity = async ({
     await db.insert(activities).values({
       name,
       description,
-      tipo,
+      typeid: parseInt(tipo, 10),
       lessonsId,
     });
   } catch (error) {
@@ -58,7 +58,9 @@ export const getActivityById = async (
       .from(activities)
       .where(eq(activities.id, activityId))
       .limit(1);
-    return result[0] ?? null;
+    if (result.length === 0) return null;
+    const { id, name, description, typeid, lessonsId } = result[0];
+    return { id, name, description, tipo: typeid.toString(), lessonsId };
   } catch (error) {
     throw new Error(
       `Error al obtener la actividad: ${error instanceof Error ? error.message : "Error desconocido"}`,
@@ -71,10 +73,18 @@ export const getActivitiesByLessonId = async (
   lessonId: number,
 ): Promise<Activity[]> => {
   try {
-    return await db
+    const results = await db
       .select()
       .from(activities)
       .where(eq(activities.lessonsId, lessonId));
+
+    return results.map(({ id, name, description, typeid, lessonsId }) => ({
+      id,
+      name,
+      description,
+      tipo: typeid.toString(),
+      lessonsId,
+    }));
   } catch (error) {
     throw new Error(
       `Error al obtener las actividades de la lección: ${error instanceof Error ? error.message : "Error desconocido"}`,

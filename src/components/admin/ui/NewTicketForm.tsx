@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { type LocalTicket } from '~/app/dashboard/admin2/app/soporte/page';
 import { Button } from '~/components/admin/ui/button';
 import { ImageUpload } from '~/components/admin/ui/ImageUpload';
 import { Input } from '~/components/admin/ui/input';
 import { Label } from '~/components/admin/ui/label';
 import { Textarea } from '~/components/admin/ui/textarea';
+import { type LocalTicket } from '~/types/Tickets';
 
 interface NewTicket {
   estudiante: string;
@@ -41,7 +41,7 @@ export function NewTicketForm({ onSubmit }: NewTicketFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(newTicket as Omit<LocalTicket, 'id' | 'fechaCreacion' | 'estado'> & { imagen?: string | File });
+    onSubmit(newTicket as unknown as Omit<LocalTicket, 'id' | 'fechaCreacion' | 'estado'> & { imagen?: string | File });
     setNewTicket({ estudiante: '', asunto: '', descripcion: '', imagen: undefined });
   };
 

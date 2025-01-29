@@ -51,29 +51,6 @@ export const dificultad = pgTable('dificultad', {
 
 // Tabla de cursos
 export const courses = pgTable('courses', {
-<<<<<<< HEAD
-	id: serial('id').primaryKey(),
-	title: varchar('title', { length: 255 }).notNull(),
-	description: text('description'),
-	coverImageKey: text('cover_image_key'),
-	categoryid: integer('categoryid')
-		.references(() => categories.id)
-		.notNull(),
-	instructor: text('instructor').notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull(),
-	creatorId: text('creator_id')
-		.references(() => users.id)
-		.notNull(),
-	rating: real('rating').default(0),
-	modalidadesid: integer('modalidadesid')
-		.references(() => modalidades.id)
-		.notNull(),
-	dificultadid: integer('dificultadid')
-		.references(() => dificultad.id)
-		.notNull(),
-	requerimientos: text('requerimientos'),
-=======
     id: serial('id').primaryKey(),
     title: varchar('title', { length: 255 }).notNull(),
     description: text('description'),
@@ -94,7 +71,7 @@ export const courses = pgTable('courses', {
     dificultadid: integer('dificultadid')
         .references(() => dificultad.id)
         .notNull(),
->>>>>>> develop
+    requerimientos: text('requerimientos'),
 });
 
 // Tabla de lecciones

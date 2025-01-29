@@ -1,13 +1,13 @@
+import React from 'react';
+import StudentDashboard from '~/app/estudiantes/StudentDashboard';
 import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import StudentDashboard from '~/app/estudiantes/StudentDashboard';
 import { getAllCategories } from '~/server/actions/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/courses/getAllCourses';
 import type { Category, Course } from '~/types';
-import React from 'react';
 
 interface SearchParams {
   category?: string;
@@ -42,23 +42,6 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 
   let filteredCourses = allCourses;
 
-<<<<<<< HEAD
-	if (params.category) {
-		const categoryId = Number(params.category);
-		filteredCourses = filteredCourses.filter(
-			(course: Course) => course.categoryid === categoryId
-		);
-	}
-
-	if (params.query) {
-		const lowercasedQuery = params.query.toLowerCase();
-		filteredCourses = filteredCourses.filter((course: Course) =>
-			course.title.toLowerCase().includes(lowercasedQuery) ??
-			course.description?.toLowerCase().includes(lowercasedQuery) ??
-			course.category?.name.toLowerCase().includes(lowercasedQuery)
-		);
-	}
-=======
   if (params.category) {
     const categoryId = Number(params.category);
     filteredCourses = filteredCourses.filter(
@@ -75,7 +58,6 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
         course.category?.name.toLowerCase().includes(lowercasedQuery)
     );
   }
->>>>>>> develop
 
   const totalFilteredCourses = filteredCourses.length;
   const totalPages = Math.ceil(totalFilteredCourses / ITEMS_PER_PAGE);

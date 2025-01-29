@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { RocketLaunchIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
-import { Badge } from '~/components/estudiantes/ui/badge';
 import Link from 'next/link';
+import { Badge } from '~/components/estudiantes/ui/badge';
 import {
 	Carousel,
 	CarouselContent,
@@ -12,10 +12,10 @@ import {
 	CarouselNext,
 	CarouselPrevious,
 } from '~/components/estudiantes/ui/carousel';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course } from '~/types';
 import '~/styles/searchBar.css';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 interface StudentDashboardProps {
   initialCourses: Course[];
