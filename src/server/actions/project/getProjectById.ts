@@ -7,21 +7,21 @@ import type { Project } from '~/types';
 
 // Obtener un proyecto específico por ID
 export async function getProjectById(
-  projectId: number
+	projectId: number
 ): Promise<Project | null> {
-  const project = await db.query.projects.findFirst({
-    where: eq(projects.id, projectId),
-    with: {
-      category: true,
-    },
-  });
+	const project = await db.query.projects.findFirst({
+		where: eq(projects.id, projectId),
+		with: {
+			category: true,
+		},
+	});
 
-  if (!project) {
-    return null;
-  }
+	if (!project) {
+		return null;
+	}
 
-  return {
-    ...project,
-    name: project.name ?? 'Untitled Project',
-  };
+	return {
+		...project,
+		name: project.name ?? 'Untitled Project',
+	};
 }

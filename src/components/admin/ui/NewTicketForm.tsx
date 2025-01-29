@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { type LocalTicket } from '~/app/dashboard/admin2/app/soporte/page';
 import { Button } from '~/components/admin/ui/button';
 import { ImageUpload } from '~/components/admin/ui/ImageUpload';
 import { Input } from '~/components/admin/ui/input';
@@ -9,11 +10,11 @@ interface NewTicket {
   estudiante: string;
   asunto: string;
   descripcion: string;
-  imagen?: File;
+  imagen?: string | File; // Cambiado para aceptar ambos tipos
 }
 
 interface NewTicketFormProps {
-  onSubmit: (ticket: NewTicket) => void;
+  onSubmit: (ticket: Omit<LocalTicket, 'id' | 'fechaCreacion' | 'estado'> & { imagen?: string | File }) => void;
 }
 
 export function NewTicketForm({ onSubmit }: NewTicketFormProps) {
@@ -31,13 +32,17 @@ export function NewTicketForm({ onSubmit }: NewTicketFormProps) {
   };
 
   const handleImageUpload = (file: File) => {
-    setNewTicket({ ...newTicket, imagen: file });
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewTicket({ ...newTicket, imagen: reader.result as string }); // Convertimos el archivo a base64
+    };
+    reader.readAsDataURL(file); // Leemos el archivo como base64
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(newTicket);
-    setNewTicket({ estudiante: '', asunto: '', descripcion: '' });
+    onSubmit(newTicket as Omit<LocalTicket, 'id' | 'fechaCreacion' | 'estado'> & { imagen?: string | File });
+    setNewTicket({ estudiante: '', asunto: '', descripcion: '', imagen: undefined });
   };
 
   return (
@@ -85,10 +90,9 @@ export function NewTicketForm({ onSubmit }: NewTicketFormProps) {
         <Label className="text-foreground">
           Imagen del problema (opcional)
         </Label>
-        <ImageUpload onImageUpload={handleImageUpload} onImageUploadAction={function (): void {
+        <ImageUpload onImageUploadAction={handleImageUpload} onImageUpload={function (file: File): void {
           throw new Error('Function not implemented.');
         } } />
-      
       </div>
       <Button
         type="submit"

@@ -1,5 +1,5 @@
 import { type MetadataRoute } from 'next';
-import { getAllCourses } from '~/server/actions/studentActions';
+import { getAllCourses } from '~/server/actions/courses/getAllCourses';
 
 import { type Course as ImportedCourse } from '~/types';
 

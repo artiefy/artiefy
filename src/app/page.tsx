@@ -1,6 +1,7 @@
 'use client';
+
 import { useState } from 'react';
-import { SignInButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { FaArrowRight } from 'react-icons/fa';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
@@ -40,68 +41,34 @@ export default function Home() {
 							impulsar <br /> tus conocimientos con ciencia y tecnología.
 						</p>
 						<div>
-							<SignedOut>
-								<SignInButton>
-									<Button
-										asChild
-										className="relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold italic text-background hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
-										style={{
-											boxShadow: '6px 6px 0 black',
-											transition: '0.5s',
-											width: '250px',
-										}}
-										onClick={handleButtonClick}
-									>
-										<Link href={dashboardRoute}>
-											<div className="flex w-full items-center justify-center">
-												{loading ? (
-													<Icons.spinner
-														className="animate-spin"
-														style={{ width: '35px', height: '35px' }}
-													/>
-												) : (
-													<>
-														<span className="inline-block skew-x-[15deg]">
-															COMIENZA YA
-														</span>
-														<FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
-													</>
-												)}
-											</div>
-										</Link>
-									</Button>
-								</SignInButton>
-							</SignedOut>
-							<SignedIn>
-								<Button
-									asChild
-									className="relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold italic text-background hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
-									style={{
-										boxShadow: '6px 6px 0 black',
-										transition: '0.5s',
-										width: '250px',
-									}}
-									onClick={handleButtonClick}
-								>
-									<Link href={dashboardRoute}>
-										<div className="flex w-full items-center justify-center">
-											{loading ? (
-												<Icons.spinner
-													className="animate-spin"
-													style={{ width: '35px', height: '35px' }}
-												/>
-											) : (
-												<>
-													<span className="inline-block skew-x-[15deg]">
-														COMIENZA YA
-													</span>
-													<FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
-												</>
-											)}
-										</div>
-									</Link>
-								</Button>
-							</SignedIn>
+							<Button
+								asChild
+								className="relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold italic text-background hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
+								style={{
+									boxShadow: '6px 6px 0 black',
+									transition: '0.5s',
+									width: '250px',
+								}}
+								onClick={handleButtonClick}
+							>
+								<Link href={dashboardRoute}>
+									<div className="flex w-full items-center justify-center">
+										{loading ? (
+											<Icons.spinner
+												className="animate-spin"
+												style={{ width: '35px', height: '35px' }}
+											/>
+										) : (
+											<>
+												<span className="inline-block skew-x-[15deg]">
+													COMIENZA YA
+												</span>
+												<FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
+											</>
+										)}
+									</div>
+								</Link>
+							</Button>
 						</div>
 					</section>
 				</main>

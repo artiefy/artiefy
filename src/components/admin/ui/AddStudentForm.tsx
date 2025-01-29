@@ -22,9 +22,9 @@ export function AddStudentForm({ onSubmit, initialData }: AddStudentFormProps) {
       const [parent, child] = name.split('.');
       setStudent(prev => ({
         ...prev,
-        [parent!]: {
+        [parent]: {
           ...((prev[parent as keyof typeof prev] as object) || {}),
-          [child!]: value
+          [child]: value
         }
       }));
     } else {

@@ -4,16 +4,15 @@
 
 @layer base {
   :root {
-    --font-montserrat: 'Montserrat', sans-serif;
-    --background: 212.9, 95.5%, 8.6%;  /* {#01142B} */
-    --foreground: 178.4, 89.4%, 59.2%;   /* {#3AF4EF} */
+    --background: 212.9 95.5% 8.6%;  /* {#01142B} */
+    --foreground: 178.4 89.4% 59.2%;   /* {#3AF4EF} */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 178.4, 89.4%, 59.2%;            /* {#3AF4EF} */
-    --primary-foreground: 178.4, 89.4%, 59.2%;
-    --secondary: 187.5, 100%, 42.4%;                 /* {#00BDD8} */
+    --primary: 178.4 89.4% 59.2%;            /* {#3AF4EF} */
+    --primary-foreground: 178.4 89.4% 59.2%;
+    --secondary: 187.5 100% 42.4%;                 /* {#00BDD8} */
     --secondary-foreground: 240 5.9% 10%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
@@ -21,7 +20,7 @@
     --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 178.4, 89.4%, 59.2%;             /* {#3AF4EF} */
+    --border: 178.4 89.4% 59.2%;             /* {#3AF4EF} */
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
@@ -58,15 +57,24 @@
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
-  
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
   body {
-    @apply bg-background text-primary font-sans;
+    @apply bg-background;
   }
 }
 
 @layer utilities {
   .text-shadow {
     text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+  }
+  .animate-gradient {
+    animation: borderRotate 4s linear infinite;
+    background-size: 300% 300%;
   }
 }
 
@@ -91,6 +99,33 @@
     opacity: 0;
     left: 100%;
   }
+}
+
+@keyframes gradient-x {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes borderRotate {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+    background: linear-gradient(270deg, #3AF4EF, #00BDD8, #01142B);
+    background-size: 600% 600%;
+    animation: gradient-x 4s ease infinite;
 }
 
 .animate-bounce-right {

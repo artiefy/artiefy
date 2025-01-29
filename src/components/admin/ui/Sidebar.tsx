@@ -93,7 +93,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       icon: <FiBook size={24} />,
       title: 'Cursos',
       id: 'Cursos',
-      link: './cursos',
+      link: './app/cursos',
     },
     {
       icon: <FiFileText size={24} />,
@@ -111,25 +111,25 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       icon: <FiAlertOctagon size={24} />,
       title: 'Soporte',
       id: 'soporte',
-      link: './soporte',
+      link: './app/soporte',
     },
     {
       icon: <FiBookOpen size={24} />,
       title: 'Educators',
       id: 'tutores',
-      link: './tutores',
+      link: './app/tutores',
     },
     {
       icon: <FiArchive size={24} />,
       title: 'Foro',
       id: 'foros',
-      link: './foros',
+      link: './app/foros',
     },
     {
       icon: <FiArchive size={24} />,
       title: 'Roles',
       id: 'foros',
-      link: './foros',
+      link: './app/foros',
     },
   ];
 

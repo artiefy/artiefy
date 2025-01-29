@@ -7,12 +7,12 @@ import type { ProjectTaken } from '~/types';
 
 // Obtener proyectos tomados por el usuario
 export async function getUserProjectsTaken(
-  userId: string
+	userId: string
 ): Promise<ProjectTaken[]> {
-  return db.query.projectsTaken.findMany({
-    where: eq(projectsTaken.userId, userId),
-    with: {
-      project: true,
-    },
-  });
+	return db.query.projectsTaken.findMany({
+		where: eq(projectsTaken.userId, userId),
+		with: {
+			project: true,
+		},
+	});
 }

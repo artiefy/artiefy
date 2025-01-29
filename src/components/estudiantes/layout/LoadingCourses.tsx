@@ -31,7 +31,7 @@ export function LoadingCourses() {
 			{/* Skeleton para las categorías */}
 			<div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
 				{Array.from({ length: 6 }).map((_, i) => (
-					<Skeleton key={i} className="h-36 aspect-square w-full" />
+					<Skeleton key={i} className="aspect-square h-36 w-full" />
 				))}
 			</div>
 

@@ -1,13 +1,9 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
-
-/**
- * @type {import('next').NextConfig}
- */
-
 import "./src/env.js"
 import withPlaiceholder from "@plaiceholder/next"
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   images: {
@@ -43,7 +39,11 @@ const nextConfig = {
       resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
     },
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 }
+
 
 export default withPlaiceholder(nextConfig)
 

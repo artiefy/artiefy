@@ -59,9 +59,7 @@ export default function RootLayout({
 						<Loading />
 					</ClerkLoading>
 					<ClerkLoaded>
-						<Provider>
-							{children}
-						</Provider>
+						<Provider>{children}</Provider>
 						<Toaster />
 					</ClerkLoaded>
 				</body>

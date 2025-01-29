@@ -46,7 +46,7 @@ export function TicketList({
                 <Image className="size-5" aria-label="Ticket Image" />
               ) : null}
             </TableCell>
-            <TableCell>{ticket.fechaCreacion ?? 'N/A'}</TableCell>
+            <TableCell>{ticket.fechaCreacion ? ticket.fechaCreacion.toString() : 'N/A'}</TableCell>
             <TableCell>
               <Button
                 onClick={() => onSelectTicket(ticket)}

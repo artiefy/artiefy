@@ -32,13 +32,13 @@ export function Header() {
 				<div className="flex items-center justify-between">
 					<div className="hidden w-full items-center justify-between md:flex">
 						{/* Logo */}
-						<div className="mt-[-13px] shrink-0">
-							<div className="relative size-[150px]">
+						<div className="mt-[-13px] shrink-0 ">
+							<div className="relative size-[150px] ">
 								<Image
 									src="/artiefy-logo.svg"
 									alt="Logo Artiefy"
 									fill
-									style={{ objectFit: 'contain' }}
+									className="object-contain"
 									priority
 									quality={100}
 								/>
@@ -61,7 +61,7 @@ export function Header() {
 							<SignedOut>
 								<SignInButton>
 									<Button
-										className="relative skew-x-[-15deg] rounded-none border border-background bg-primary p-5 text-xl font-light italic text-background transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+										className="relative skew-x-[-15deg] rounded-none border border-primary bg-primary p-5 text-xl font-light italic text-background transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 										style={{
 											transition: '0.5s',
 											width: '175px',
@@ -70,7 +70,10 @@ export function Header() {
 									>
 										<span className="relative skew-x-[15deg] overflow-hidden">
 											{isLoading ? (
-												<Icons.spinner className="size-5 animate-spin" />
+												<Icons.spinner
+													className="animate-spin"
+													style={{ width: '25px', height: '25px' }}
+												/>
 											) : (
 												<>Iniciar Sesión</>
 											)}
@@ -92,7 +95,7 @@ export function Header() {
 									src="/artiefy-logo.png"
 									alt="Logo Artiefy"
 									fill
-									style={{ objectFit: 'contain' }}
+									className='object-contain ml-6'
 									priority
 									quality={100}
 								/>
@@ -103,7 +106,7 @@ export function Header() {
 							className="inline-flex items-center justify-center p-2 transition-transform active:scale-95"
 							aria-label="Open main menu"
 						>
-							<Bars3Icon className="size-6" />
+							<Bars3Icon className="size-8 mr-4" />
 						</button>
 					</div>
 				</div>
@@ -126,7 +129,7 @@ export function Header() {
 								src="/artiefy-logo2.svg"
 								alt="Logo Artiefy"
 								fill
-								style={{ objectFit: 'contain' }}
+								className="object-contain"
 								priority
 								quality={100}
 							/>
@@ -159,25 +162,27 @@ export function Header() {
 					<div className="mt-6">
 						<SignedOut>
 							<SignInButton>
-              <Button
-				className="border border-background rounded-none relative p-5 text-xl text-background bg-primary font-light italic active:scale-95 skew-x-[-15deg] hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] transition-all duration-200 button-hover"
-                  style={{
-                    transition: "0.5s",
-                    width: "175px", 
-                  }}
-                  onClick={handleSignInClick}
-                >
-                  <span className="skew-x-[15deg]">
-                    {isLoading ? (
-                      <Icons.spinner className="size-5 animate-spin" />
-                    ) : (
-                      <>
-                        Iniciar Sesión
-						<span className="absolute top-0 left-0 w-0 h-full opacity-0 bg-white shadow-[0_0_50px_30px_white] skew-x-[-20deg] transition-all duration-500 button-hover-effect"></span>
-                      </>
-                    )}
-                  </span>
-                </Button>
+								<Button
+									className="button-hover relative skew-x-[-15deg] rounded-none border border-background bg-primary p-5 text-xl font-light italic text-background transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+									style={{
+										transition: '0.5s',
+										width: '175px',
+									}}
+									onClick={handleSignInClick}
+								>
+									<span className="skew-x-[15deg]">
+										{isLoading ? (
+											<Icons.spinner
+												style={{ width: '25px', height: '25px' }}
+											/>
+										) : (
+											<>
+												Iniciar Sesión
+												<span className="button-hover-effect absolute left-0 top-0 h-full w-0 skew-x-[-20deg] bg-white opacity-0 shadow-[0_0_50px_30px_white] transition-all duration-500"></span>
+											</>
+										)}
+									</span>
+								</Button>
 							</SignInButton>
 						</SignedOut>
 						<SignedIn>

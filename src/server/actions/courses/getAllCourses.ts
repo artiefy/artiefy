@@ -1,10 +1,12 @@
 import { cache } from "react"
+import { unstable_cache } from "next/cache"
+import "server-only"
 import { eq, desc } from "drizzle-orm"
 import { db } from "~/server/db"
 import { courses, categories, modalidades, dificultad } from "~/server/db/schema"
 
-export const getAllCourses = cache(async () => {
-  try {
+const getCachedCoursesData = unstable_cache(
+  async () => {
     const coursesData = await db
       .select({
         id: courses.id,
@@ -30,7 +32,17 @@ export const getAllCourses = cache(async () => {
       .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
       .leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
       .orderBy(desc(courses.createdAt))
-      
+
+    return coursesData
+  },
+  ["courses-data"],
+  { revalidate: 3600, tags: ["courses"] },
+)
+
+export const getAllCourses = cache(async () => {
+  try {
+    const coursesData = await getCachedCoursesData()
+
     return coursesData.map((course) => ({
       id: course.id,
       title: course.title ?? "",
@@ -61,4 +73,8 @@ export const getAllCourses = cache(async () => {
     throw new Error("Error al obtener todos los cursos: " + (error instanceof Error ? error.message : String(error)))
   }
 })
+
+export const preloadAllCourses = () => {
+  void getAllCourses()
+}
 
