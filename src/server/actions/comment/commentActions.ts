@@ -1,7 +1,7 @@
-'use server';
-
+"use server"
 import { currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
+import { isUserEnrolled } from '~/server/actions/courses/enrollInCourse';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -18,9 +18,9 @@ export async function addComment(courseId: number, content: string, rating: numb
   const userId = user.id;
 
   try {
-    const existingEnrollment = await redis.hgetall(`enrollment:${userId}:${courseId}`);
+    const enrolled = await isUserEnrolled(courseId, userId);
 
-    if (!existingEnrollment) {
+    if (!enrolled) {
       return { success: false, message: 'No estás inscrito en este curso' };
     }
 

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { addComment, getCommentsByCourseId } from '~/server/actions/comment/commentActions';
 import { StarIcon } from '@heroicons/react/24/solid';
+import { useAuth } from '@clerk/nextjs';
+import { addComment, getCommentsByCourseId } from '~/server/actions/comment/commentActions';
+import { isUserEnrolled } from '~/server/actions/courses/enrollInCourse';
 
 interface CommentProps {
   courseId: number;
@@ -19,6 +21,8 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
   const [message, setMessage] = useState('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const { userId } = useAuth();
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -32,11 +36,23 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
       }
     };
 
+    const checkEnrollment = async () => {
+      if (userId) {
+        const enrolled = await isUserEnrolled(courseId, userId);
+        setIsEnrolled(enrolled);
+      }
+    };
+
     void fetchComments();
-  }, [courseId]);
+    void checkEnrollment();
+  }, [courseId, userId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isEnrolled) {
+      setMessage('Debes estar inscrito en el curso para dejar un comentario.');
+      return;
+    }
     try {
       const response = await addComment(courseId, content, rating);
       setMessage(response.message);
@@ -55,7 +71,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 
   return (
     <div className="mt-8">
-      <h2 className="text-2xl font-bold mb-4">Deja Un Comentario :</h2>
+      <h2 className="text-2xl font-bold mb-4">Deja un comentario</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="content" className="text-primary block text-sm font-medium text-gray-700">
@@ -87,7 +103,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
         </div>
         <button
           type="submit"
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 active:scale-95"
         >
           Enviar
         </button>
@@ -110,7 +126,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
                   ))}
                   <span className="ml-2 text-sm text-gray-600">{new Date(comment.createdAt).toLocaleDateString()}</span>
                 </div>
-                <p className="text-gray-700">{comment.content}</p>
+                <p className="text-primary">{comment.content}</p>
               </li>
             ))}
           </ul>
