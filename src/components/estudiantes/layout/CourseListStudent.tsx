@@ -71,7 +71,7 @@ export default async function CourseListStudent({
 													fill
 													placeholder="blur"
 													blurDataURL={blurDataURL ?? undefined}
-													sizes="(max-width: 640px) 288px, (max-width: 768px) 352px, (max-width: 1024px) 384px, 416px"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 													quality={75}
 												/>
 											</div>
