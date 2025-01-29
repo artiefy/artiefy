@@ -126,15 +126,16 @@ export interface Dificultad {
 }
 
 export interface Activity {
-	id: number;
-	name: string;
-	description: string | null;
-	tipo: string;
-	lessonsId: number;
-	isCompleted: boolean | null;
-	userProgress: number | null;
-	lastUpdated: Date;
-	lesson?: Lesson;
+  id: number;
+  name: string;
+  description: string | null;
+  type_id: number;
+  type_acti: string;
+  lessonsId: number;
+  isCompleted: boolean | null;
+  userProgress: number | null;
+  lastUpdated: Date;
+  lesson?: Lesson;
 }
 
 export interface Enrollment {
