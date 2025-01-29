@@ -130,7 +130,7 @@ export interface Activity {
   id: number;
   name: string;
   description: string | null;
-  type_id: number;
+  typeid: number;
   lessonsId: number;
   isCompleted: boolean | null;
   userProgress: number | null;
