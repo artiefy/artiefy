@@ -117,7 +117,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           <Button
             style={{ backgroundColor: selectedColor }}
             className={`cursor-pointer border-transparent bg-black font-semibold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              selectedColor === '#FFFFFF' || '#3af4ef'
+                ? 'text-black'
+                : 'text-white'
             }`}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
@@ -179,7 +181,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                 </CardHeader>
                 <CardContent
                   className={`${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }`}
                 >
                   <CardTitle className="text-lg">
@@ -231,7 +233,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <div className="mx-auto my-4">
           <Button
             className={`mx-auto mt-6 cursor-pointer justify-center border-transparent bg-primary font-semibold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              selectedColor === '#000000' ? 'text-white' : 'text-black'
             }`}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {

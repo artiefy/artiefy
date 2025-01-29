@@ -63,7 +63,9 @@ const getContrastYIQ = (hexcolor: string) => {
 const Page: React.FC = () => {
   const { user } = useUser();
   const router = useRouter();
-  const { courseId, lessonId } = useParams();
+  const params = useParams();
+  const courseId = params?.courseId ?? null;
+  const lessonId = params?.lessonId ?? null;
   const [lessons, setLessons] = useState<Lessons | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +88,7 @@ const Page: React.FC = () => {
     }
 
     const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
-    const lessonsIdNumber = parseInt(lessonsId2!);
+    const lessonsIdNumber = parseInt(lessonsId2 ?? '');
     if (isNaN(lessonsIdNumber) || lessonsIdNumber <= 0) {
       setError('lessonId is not a valid number');
       setLoading(false);
@@ -159,7 +161,7 @@ const Page: React.FC = () => {
     <>
       <div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background p-6">
         <Breadcrumb>
-          <BreadcrumbList>
+          <BreadcrumbList className="flex space-x-2 text-lg">
             <BreadcrumbItem>
               <BreadcrumbLink
                 className="hover:text-gray-300"
@@ -179,14 +181,14 @@ const Page: React.FC = () => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink className="hover:text-gray-300">
+              <BreadcrumbLink href={``} className="hover:text-gray-300">
                 Detalles de la lession: {lessons.title}
               </BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
         <Card
-          className={`mt-5 border-transparent bg-black p-5 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+          className={`mt-5 border-transparent bg-black p-5 ${selectedColor === '#000000' ? 'text-white' : 'text-black'}`}
           style={{
             backgroundColor: selectedColor,
             color: getContrastYIQ(selectedColor),
@@ -194,7 +196,7 @@ const Page: React.FC = () => {
         >
           <CardHeader>
             <CardTitle
-              className={`text-2xl font-bold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+              className={`text-2xl font-bold ${selectedColor === '#000000' ? 'text-white' : 'text-black'}`}
             >
               Lesion: {lessons.title}
             </CardTitle>
@@ -222,10 +224,12 @@ const Page: React.FC = () => {
             <ViewFiles lessonId={lessons.id} selectedColor={selectedColor} />
           </div>
           <div className="flex justify-evenly lg:px-3 lg:py-6">
-            <Button className="border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500">
+            <Button className="border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-700">
               Editar Lesion
             </Button>
-            <Button className="border-primary bg-white text-primary hover:border-white hover:bg-primary hover:text-white">
+            <Button
+              className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
+            >
               Ver Lesion
             </Button>
             <AlertDialog>
@@ -258,7 +262,7 @@ const Page: React.FC = () => {
           </div>
           <div>
             <div
-              className={`pb-6 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+              className={`pb-6 ${selectedColor === '#000000' ? 'text-white' : 'text-black'}`}
             >
               <h2 className="text-2xl font-bold">Información de la clase</h2>
               <br />
@@ -291,14 +295,15 @@ const Page: React.FC = () => {
 
           <div className="flex w-full justify-center">
             <Link
-              href={`./${lessons.id}/actividades`}
-              className="cursor-pointer justify-center rounded-lg border border-primary bg-white p-2 text-primary hover:border-white hover:bg-primary hover:text-white"
+              href={`./${lessons.id}/actividades?lessonId=${lessons.id}`}
+              className="cursor-pointer justify-center rounded-lg border-transparent bg-green-400 p-2 text-white hover:bg-green-500"
             >
               <Upload className="mx-auto" />
               Crear actividad
             </Link>
           </div>
         </Card>
+        <div></div>
       </div>
     </>
   );

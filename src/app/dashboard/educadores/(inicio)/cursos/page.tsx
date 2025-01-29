@@ -205,8 +205,17 @@ export default function Page() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink className="hover:text-gray-300" href="/">
+              <BreadcrumbLink
+                className="hover:text-gray-300"
+                href="../educadores"
+              >
                 Inicio
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink className="hover:text-gray-300" href="/">
+                Lista de cursos
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -252,7 +261,7 @@ export default function Page() {
             </div>
           ) : (
             <>
-              <h2 className="mb-4 mt-10 text-2xl font-bold">
+              <h2 className="mb-4 mt-5 text-2xl font-bold">
                 Lista de cursos creados
               </h2>
               <CourseListTeacher courses={courses} />

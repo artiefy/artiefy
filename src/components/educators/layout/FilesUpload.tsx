@@ -13,6 +13,7 @@ interface FileUploadProps {
   _required?: boolean;
   multiple?: boolean;
   onFileChange: (file: File | File[] | null | undefined) => void;
+  tipo: string;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -23,6 +24,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   _required = false,
   multiple = false,
   onFileChange,
+  tipo,
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileNames, setFileNames] = useState<string[]>([]);
@@ -183,7 +185,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               htmlFor={`file-upload-${type}`}
               className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Seleccionar Archivo
+              Seleccionar {tipo}
             </label>
           </div>
         ) : (

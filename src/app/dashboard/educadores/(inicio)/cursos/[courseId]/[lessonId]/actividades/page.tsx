@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-// import { useRouter } from 'next/router';
+import { useRouter, useSearchParams, useParams } from 'next/navigation'; // Cambiar la importación de useRouter
 import TypeActDropdown from '~/components/educators/layout/TypesActDropdown';
 import {
   Breadcrumb,
@@ -15,14 +15,12 @@ import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 import { toast } from '~/hooks/use-toast';
 
-export default function Page() {
-  // const router = useRouter();
-  // const [lessonId, setLessonId] = useState<string | string[] | undefined>(
-  //   undefined
-  // );
-  // const [lessonTitle, setLessonTitle] = useState<string | string[] | undefined>(
-  //   undefined
-  // );
+const Page: React.FC = () => {
+  const params = useParams();
+  const cursoIdUrl = params?.courseId;
+  const searchParams = useSearchParams();
+  const lessonsId = searchParams?.get('lessonId');
+  const courseId = searchParams?.get('courseId'); // Obtener courseId de los parámetros de búsqueda
   const [modalidadesid, setModalidadesid] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [errors, setErrors] = useState({
@@ -36,17 +34,16 @@ export default function Page() {
     description: '',
     type: '',
   });
+  const router = useRouter(); // Usar useRouter de next/navigation
 
-  // useEffect(() => {
-  //   if (router.isReady) {
-  //     setLessonId(router.query.lessonId);
-  //     setLessonTitle(router.query.lessonTitle);
-  //   }
-  // }, [router.isReady, router.query]);
+  const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl;
+  const cursoIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
 
-  // if (!lessonId) {
-  //   return <p>Cargando...</p>;
-  // }
+  console.log(`LessonsId activity ${lessonsId}`);
+
+  if (!lessonsId || !cursoIdNumber) {
+    return <p>Cargando parametros...</p>;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +56,7 @@ export default function Page() {
         type: !formData.type,
       };
 
-      if (Object.values(newErrors).some((error) => error)) {
+      if (Object.values(newErrors).some((error) => error) || !lessonsId) {
         setErrors(newErrors);
         toast({
           title: 'Error',
@@ -76,16 +73,22 @@ export default function Page() {
         body: JSON.stringify({
           name: formData.name,
           description: formData.description,
-          type: formData.type,
-          //lessonId,
+          typeid: parseInt(formData.type, 10), // Asegurarse de que typeid sea un entero
+          lessonsId: parseInt(lessonsId, 10), // Asegurarse de que lessonsId sea un entero
         }),
       });
 
       if (response.ok) {
+        const responseData = (await response.json()) as { id: number };
+        const actividadId = responseData.id; // Suponiendo que el backend devuelve el ID de la actividad creada
+        console.log(`Datos enviados al backend ${JSON.stringify(formData)}`);
         toast({
           title: 'Actividad creada',
           description: 'La actividad se creó con éxito.',
         });
+        router.push(
+          `/dashboard/educadores/cursos/${cursoIdNumber}/${lessonsId}/actividades/${actividadId}`
+        );
       } else {
         const errorData = (await response.json()) as { error?: string };
         toast({
@@ -110,10 +113,27 @@ export default function Page() {
     }
   };
 
+  useEffect(() => {
+    if (isUploading) {
+      setUploadProgress(0);
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 10; // Incrementar de 10 en 10
+        });
+      }, 500);
+
+      return () => clearInterval(interval);
+    }
+  }, [isUploading]);
+
   return (
     <>
       <Breadcrumb>
-        <BreadcrumbList>
+        <BreadcrumbList className="flex space-x-2 text-lg">
           <BreadcrumbItem>
             <BreadcrumbLink
               className="hover:text-gray-300"
@@ -126,14 +146,18 @@ export default function Page() {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="hover:text-gray-300"
-              href={`/dashboard/educadores/cursos`}
+              href={`/dashboard/educadores/cursos/${courseId}`}
             >
               Detalles curso
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink className="hover:text-gray-300">
+            <BreadcrumbLink
+              href="#"
+              onClick={() => window.history.back()}
+              className="hover:text-gray-300"
+            >
               Lession:
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -194,7 +218,7 @@ export default function Page() {
             errors={errors}
           />
           {isUploading && (
-            <div className="mt-4">
+            <div className="my-1">
               <Progress value={uploadProgress} className="w-full" />
               <p className="mt-2 text-center text-sm text-gray-500">
                 {uploadProgress}% Completado
@@ -210,4 +234,6 @@ export default function Page() {
       </div>
     </>
   );
-}
+};
+
+export default Page;

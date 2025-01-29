@@ -1,13 +1,18 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
-import { createActivity } from '~/models/educatorsModels/activitiesModels';
+import {
+  createActivity,
+  getActivityById,
+  updateActivity,
+  deleteActivity,
+} from '~/models/educatorsModels/activitiesModels';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 function respondWithError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
-// POST endpoint para crear cursos
+// POST endpoint para crear actividades
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -31,7 +36,6 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as {
-      id: number;
       name: string;
       description: string;
       lessonsId: number;
@@ -40,11 +44,11 @@ export async function POST(request: NextRequest) {
 
     const { name, description, lessonsId, typeid } = body;
 
-    await createActivity({
+    const newActivity = await createActivity({
       name,
       description,
       typeid,
-      lessonsId: lessonsId,
+      lessonsId,
     });
 
     console.log('Datos enviados al servidor:', {
@@ -54,11 +58,111 @@ export async function POST(request: NextRequest) {
       typeid,
     });
 
-    return NextResponse.json({ message: 'Curso creado exitosamente' });
+    return NextResponse.json({
+      id: newActivity.id,
+      message: 'Actividad creada exitosamente',
+    });
   } catch (error: unknown) {
-    console.error('Error al crear el curso:', error);
+    console.error('Error al crear la actividad:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Error desconocido';
-    return respondWithError(`Error al crear el curso: ${errorMessage}`, 500);
+    return respondWithError(
+      `Error al crear la actividad: ${errorMessage}`,
+      500
+    );
+  }
+}
+
+// GET endpoint para obtener una actividad por ID
+export async function GET(request: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return respondWithError('No autorizado', 403);
+    }
+
+    const { searchParams } = new URL(request.url);
+    const activityId = searchParams.get('actividadId');
+    if (!activityId) {
+      return respondWithError('ID de actividad no proporcionado', 400);
+    }
+
+    const activity = await getActivityById(parseInt(activityId, 10));
+    if (!activity) {
+      return respondWithError('Actividad no encontrada', 404);
+    }
+
+    return NextResponse.json(activity);
+  } catch (error: unknown) {
+    console.error('Error al obtener la actividad:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error desconocido';
+    return respondWithError(
+      `Error al obtener la actividad: ${errorMessage}`,
+      500
+    );
+  }
+}
+
+// PUT endpoint para actualizar una actividad
+export async function PUT(request: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return respondWithError('No autorizado', 403);
+    }
+
+    const body = (await request.json()) as {
+      id: number;
+      name?: string;
+      description?: string;
+      typeid?: number;
+    };
+
+    const { id, name, description, typeid } = body;
+
+    await updateActivity(id, { name, description, typeid });
+
+    return NextResponse.json({
+      message: 'Actividad actualizada exitosamente',
+    });
+  } catch (error: unknown) {
+    console.error('Error al actualizar la actividad:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error desconocido';
+    return respondWithError(
+      `Error al actualizar la actividad: ${errorMessage}`,
+      500
+    );
+  }
+}
+
+// DELETE endpoint para eliminar una actividad
+export async function DELETE(request: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return respondWithError('No autorizado', 403);
+    }
+
+    const { searchParams } = new URL(request.url);
+    const activityId = searchParams.get('id');
+    if (!activityId) {
+      return respondWithError('ID de actividad no proporcionado', 400);
+    }
+
+    await deleteActivity(parseInt(activityId, 10));
+
+    return NextResponse.json({
+      message: 'Actividad eliminada exitosamente',
+    });
+  } catch (error: unknown) {
+    console.error('Error al eliminar la actividad:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error desconocido';
+    return respondWithError(
+      `Error al eliminar la actividad: ${errorMessage}`,
+      500
+    );
   }
 }

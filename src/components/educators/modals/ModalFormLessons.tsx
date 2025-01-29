@@ -353,6 +353,7 @@ const ModalFormLessons = ({
               label="Imagen de portada:"
               accept="image/*"
               maxSize={5}
+              tipo="Imagen"
               onFileChange={(file) =>
                 handleFileChange('coverimage', file ?? null)
               }
@@ -363,6 +364,7 @@ const ModalFormLessons = ({
               label="Video del curso:"
               accept="video/mp4"
               maxSize={2000}
+              tipo="Video"
               onFileChange={(file) =>
                 handleFileChange('covervideo', file ?? null)
               }
@@ -374,6 +376,7 @@ const ModalFormLessons = ({
               accept=".pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx"
               maxSize={10}
               multiple
+              tipo="Archivos"
               onFileChange={(file) =>
                 handleFileChange('resourcefiles', file ?? null)
               }

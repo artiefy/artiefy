@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { db } from '~/server/db/index';
-import { activities } from '~/server/db/schema';
+import { activities, typeActi, lessons, courses } from '~/server/db/schema';
 
 // Interfaces
 export interface Activity {
@@ -11,6 +11,30 @@ export interface Activity {
   lessonsId: number;
 }
 
+// Interface with details
+export interface ActivityDetails {
+  id: number;
+  name: string;
+  description: string | null;
+  typeid: number;
+  type: {
+    id: number;
+    name: string;
+    description: string;
+  };
+  lesson: {
+    id: number;
+    title: string;
+    coverImageKey: string;
+    course: {
+      id: number;
+      title: string;
+      description: string;
+      instructor: string;
+    };
+  };
+}
+
 // CRUD Operations
 // Crear una nueva actividad
 export const createActivity = async ({
@@ -18,14 +42,29 @@ export const createActivity = async ({
   description,
   typeid,
   lessonsId,
-}: Omit<Activity, 'id'>): Promise<void> => {
+}: Omit<Activity, 'id'>): Promise<Activity> => {
+  // Cambiar el tipo de retorno a Promise<Activity>
   try {
-    await db.insert(activities).values({
-      name,
-      description,
-      typeid,
-      lessonsId,
-    });
+    const [newActivity] = await db
+      .insert(activities)
+      .values({
+        name,
+        description,
+        typeid,
+        lessonsId,
+      })
+      .returning({
+        id: activities.id,
+        name: activities.name,
+        description: activities.description,
+        typeid: activities.typeid,
+        lessonsId: activities.lessonsId,
+      }); // Retornar todos los campos, incluyendo el ID
+
+    if (!newActivity) {
+      throw new Error('Error al crear la actividad: actividad no creada');
+    }
+    return newActivity; // Retornar la nueva actividad creada
   } catch (error) {
     throw new Error(
       `Error al crear la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
@@ -36,14 +75,38 @@ export const createActivity = async ({
 // Obtener una actividad por ID
 export const getActivityById = async (
   activityId: number
-): Promise<Activity | null> => {
+): Promise<ActivityDetails | null> => {
   try {
     const result = await db
-      .select()
+      .select({
+        id: activities.id,
+        name: activities.name,
+        description: activities.description,
+        typeid: activities.typeid,
+        type: {
+          id: typeActi.id,
+          name: typeActi.name,
+          description: typeActi.description,
+        },
+        lesson: {
+          id: lessons.id,
+          title: lessons.title,
+          coverImageKey: lessons.coverImageKey,
+          course: {
+            id: courses.id,
+            title: courses.title,
+            description: courses.description,
+            instructor: courses.instructor,
+          },
+        },
+      })
       .from(activities)
+      .leftJoin(typeActi, eq(activities.typeid, typeActi.id))
+      .leftJoin(lessons, eq(activities.lessonsId, lessons.id))
+      .leftJoin(courses, eq(lessons.courseId, courses.id))
       .where(eq(activities.id, activityId))
       .limit(1);
-    return result[0] ?? null;
+    return (result[0] as unknown as ActivityDetails) ?? null;
   } catch (error) {
     throw new Error(
       `Error al obtener la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`

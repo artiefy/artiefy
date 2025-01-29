@@ -160,7 +160,6 @@ export const activities = pgTable('activities', {
   lessonsId: integer('lessons_id')
     .references(() => lessons.id)
     .notNull(), // Relación con lecciones
-  isCompleted: boolean('is_completed').default(false), // Nuevo campo para controlar si la actividad está completada
   lastUpdated: timestamp('last_updated').defaultNow().notNull(), // Fecha de última actualización
 });
 
@@ -337,6 +336,10 @@ export const activitiesRelations = relations(activities, ({ one, many }) => ({
   lesson: one(lessons, {
     fields: [activities.lessonsId],
     references: [lessons.id],
+  }),
+  type: one(typeActi, {
+    fields: [activities.typeid],
+    references: [typeActi.id],
   }),
   userActivitiesProgress: many(userActivitiesProgress),
 }));

@@ -38,7 +38,8 @@ interface Post {
 }
 
 const ForumPage = () => {
-  const { forumId } = useParams();
+  const params = useParams();
+  const forumId = params?.forumId;
   const { user } = useUser();
   const [forumData, setForumData] = useState<Foro | null>(null);
   const [loading, setLoading] = useState(true);
@@ -162,7 +163,7 @@ const ForumPage = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="container mx-auto mt-5">
-        <div className="mx-auto w-full rounded-lg p-5 shadow-lg md:w-11/12 lg:w-full">
+        <div className="mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg md:w-11/12 lg:w-full">
           <div className="flex justify-between">
             <h1 className="mb-4 text-2xl font-bold text-white">
               {forumData?.title}

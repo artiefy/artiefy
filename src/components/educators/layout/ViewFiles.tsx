@@ -1,28 +1,26 @@
 // pages/viewFiles.tsx
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
-import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
+import { Icons } from '~/components/educators/ui/icons';
 
 const getIconForFileType = (fileName: string) => {
-  if (fileName === null) return '/default-icon.png'; // Manejar caso de archivo sin nombre
-  if (fileName === '') return '/default-icon.png'; // Manejar caso de archivo sin nombre
+  if (fileName === null || fileName === '') return <Icons.txt />;
   const ext = fileName.split('.').pop()?.toLowerCase();
 
   switch (ext) {
     case 'pdf':
-      return '/pdf-icon.png';
+      return <Icons.pdf className="size-16" />;
     case 'docx':
     case 'doc':
-      return '/word-icon.png';
+      return <Icons.word className="size-16" />;
     case 'xlsx':
     case 'xls':
-      return '/excel-icon.png';
+      return <Icons.excel className="size-16" />;
     case 'pptx':
     case 'ppt':
-      return '/powerpoint-icon.png';
+      return <Icons.powerPoint className="size-16" />;
     default:
-      return '/default-icon.png';
+      return <Icons.txt className="size-16" />;
   }
 };
 
@@ -139,7 +137,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
   return (
     <div className="mt-6">
       <h1
-        className={`mb-4 text-2xl font-bold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+        className={`mb-4 text-2xl font-bold ${selectedColor === '#000000' ? 'text-white' : 'text-black'}`}
       >
         Archivos de lección
       </h1>
@@ -162,18 +160,10 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
               rel="noopener noreferrer"
               className="relative mb-3 grid h-24 w-full grid-cols-2 items-center rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40"
             >
-              <AspectRatio className="absolute top-6 size-20">
-                <Image
-                  src={icon ?? '/default-icon.png'}
-                  alt="File icon"
-                  fill
-                  className="rounded-lg"
-                  priority
-                  sizes="(max-width: 268px) 100vw, (max-width: 320px) 50vw, 33vw"
-                />
-              </AspectRatio>
+              {icon}
+
               <p
-                className={`absolute right-4 no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                className={`absolute right-4 no-underline hover:underline ${selectedColor === '#000000' ? 'text-white' : 'text-black'}`}
               >
                 {resourceNames[index] ?? file.fileName}
                 {/* Nombre del archivo */}

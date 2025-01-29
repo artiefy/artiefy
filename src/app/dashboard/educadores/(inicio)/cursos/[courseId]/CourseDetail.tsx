@@ -62,7 +62,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const { user } = useUser();
   const router = useRouter();
   const params = useParams();
-  const courseIdUrl = params.courseId;
+  const courseIdUrl = params?.courseId;
   const [course, setCourse] = useState<Course | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -283,7 +283,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
           <CardTitle
             className={`text-2xl font-bold ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+              selectedColor === '#000000' ? 'text-white' : 'text-black'
             }`}
           >
             Curso: {course.title}
@@ -291,7 +291,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <div className="ml-9 flex flex-col">
             <Label
               className={
-                selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                selectedColor === '#000000' ? 'text-white' : 'text-black'
               }
             >
               Seleccione el color deseado
@@ -301,7 +301,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <Button
                   key={color}
                   style={{ backgroundColor: color }}
-                  className={`size-8 ${selectedColor === '#FFFFFF' ? 'border-black' : 'border-white'}`}
+                  className={`size-8 ${selectedColor === '#000000' ? 'border-white' : 'border-black'}`}
                   onClick={() => handlePredefinedColorChange(color)}
                 />
               ))}
@@ -322,23 +322,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
             <div className="mt-8 grid grid-cols-3 gap-5">
               <Button
-                className={`bg-white text-primary hover:border-white hover:bg-primary hover:text-white`}
+                className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
               >
                 Visualizar curso
               </Button>
               <Button
                 onClick={() => setIsModalOpen(true)}
-                className={`border-yellow-500 bg-yellow-500 text-white hover:bg-white hover:text-yellow-500`}
+                className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
               >
                 Editar curso
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button
-                    className={`border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600`}
-                  >
-                    Eliminar
-                  </Button>
+                  <Button variant="destructive">Eliminar</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -367,7 +363,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <div className="pb-6">
             <h2
               className={`text-2xl font-bold ${
-                selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                selectedColor === '#000000' ? 'text-white' : 'text-black'
               }`}
             >
               Información del curso
@@ -377,14 +373,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="flex flex-col">
                 <h2
                   className={`text-lg font-semibold ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }`}
                 >
                   Curso:
                 </h2>
                 <h1
                   className={`mb-4 text-2xl font-bold ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }`}
                 >
                   {course.title}
@@ -393,14 +389,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="flex flex-col">
                 <h2
                   className={`text-lg font-semibold ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }`}
                 >
                   Categoría:
                 </h2>
                 <p
                   className={
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }
                 >
                   {course.categoryid}
@@ -410,13 +406,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <div className="mb-4">
               <h2
                 className={`text-lg font-semibold ${
-                  selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                  selectedColor === '#000000' ? 'text-white' : 'text-black'
                 }`}
               >
                 Descripción:
               </h2>
               <p
-                className={`text-justify ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                className={`text-justify ${selectedColor === '#000000' ? 'text-white' : 'text-black'}`}
               >
                 {course.description}
               </p>
@@ -425,14 +421,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="flex flex-col">
                 <h2
                   className={`text-lg font-semibold ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }`}
                 >
                   Educador:
                 </h2>
                 <p
                   className={
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }
                 >
                   {course.instructor}
@@ -441,14 +437,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="flex flex-col">
                 <h2
                   className={`text-lg font-semibold ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }`}
                 >
                   Dificultad:
                 </h2>
                 <p
                   className={
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }
                 >
                   {course.dificultadid}
@@ -457,14 +453,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="flex flex-col">
                 <h2
                   className={`text-lg font-semibold ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }`}
                 >
                   Modalidad:
                 </h2>
                 <p
                   className={
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+                    selectedColor === '#000000' ? 'text-white' : 'text-black'
                   }
                 >
                   {course.modalidadesid}
