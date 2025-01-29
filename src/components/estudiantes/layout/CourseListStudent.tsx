@@ -4,7 +4,7 @@ import Link from 'next/link';
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button'; // Import Button from shadcn
+import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
 	CardContent,

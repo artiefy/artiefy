@@ -119,6 +119,13 @@ const eslintConfig = [
                 cssFiles: ['./src/**/*.css'],
                 callees: ['classnames', 'clsx', 'ctl'],
                 tags: ['tw'],
+                classRegex: [
+                    'tw`([^`]*)',
+                    'tw="([^"]*)',
+                    'tw={"([^"}]*)',
+                    'tw\\.\\w+`([^`]*)',
+                    'tw\\(.*?\\)`([^`]*)',
+                ],
             },
             next: {
                 rootDir: './',

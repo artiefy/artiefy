@@ -4,24 +4,9 @@ import { NextResponse } from "next/server"
 const isAdminRoute = createRouteMatcher(["/dashboard/admin(.*)"])
 const isSuperAdminRoute = createRouteMatcher(["/dashboard/super-admin(.*)"])
 const isEducatorRoute = createRouteMatcher(["/dashboard/educadores(.*)"])
-const isStudentCourseRoute = createRouteMatcher(["/estudiantes/cursos/:id"])
 const isStudentClassRoute = createRouteMatcher(["/estudiantes/clases/:id"])
 
-// Nuevo: Matcher para rutas de OG
-const isOGRoute = createRouteMatcher([
-  "/estudiantes/cursos/:id/opengraph-image",
-  "/estudiantes/cursos/:id/twitter-image",
-  "/opengraph-image",
-  "/twitter-image",
-])
-
 export default clerkMiddleware(async (auth, req) => {
-  // Primero verificar si es una ruta de OG
-  if (isOGRoute(req)) {
-    // Permitir acceso sin autenticación a rutas de OG
-    return NextResponse.next()
-  }
-
   const { userId, sessionClaims, redirectToSignIn } = await auth()
   const role = sessionClaims?.metadata?.role
 
@@ -44,12 +29,8 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Proteger rutas dinámicas de estudiantes
-  // Excluir las rutas de OG de la protección
-  if ((isStudentCourseRoute(req) || isStudentClassRoute(req)) && !userId) {
-    const path = req.nextUrl.pathname
-    if (!path.endsWith("/opengraph-image") && !path.endsWith("/twitter-image")) {
-      return redirectToSignIn()
-    }
+  if (isStudentClassRoute(req) && !userId) {
+    return redirectToSignIn()
   }
 
   // Manejar redirecciones de OAuth
@@ -69,4 +50,3 @@ export const config = {
     "/(api|trpc)(.*)",
   ],
 }
-
