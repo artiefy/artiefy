@@ -158,10 +158,10 @@ const Page = () => {
               Del docente: {actividad.lesson.courseInstructor}.
             </p>
             <p className="text-lg font-medium">
-              Tipo de actividad: {actividad.type.name}
+              Tipo de actividad: {actividad.type.name}.
             </p>
             <p className="text-lg font-medium">
-              Descripción de la actividad: {actividad.description}
+              Descripción de la actividad: {actividad.description}.
             </p>
           </div>
           <div className="flex justify-center">
