@@ -49,3 +49,35 @@ export async function addComment(courseId: number, content: string, rating: numb
     }
   }
 }
+
+export async function getCommentsByCourseId(courseId: number): Promise<{ comments: Comment[] }> {
+  try {
+    const keys = await redis.keys(`comment:*:${courseId}:*`);
+    const comments = await Promise.all(
+      keys.map(async (key) => {
+        const comment = await redis.hgetall(key);
+        if (!comment) {
+          return null;
+        }
+        return {
+          id: key,
+          content: comment.content as string,
+          rating: Number(comment.rating),
+          createdAt: comment.createdAt as string,
+        };
+      })
+    );
+
+    return { comments: comments.filter((comment): comment is Comment => comment !== null) };
+  } catch (error: unknown) {
+    console.error('Error al obtener comentarios:', error);
+    return { comments: [] };
+  }
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  rating: number;
+  createdAt: string;
+}

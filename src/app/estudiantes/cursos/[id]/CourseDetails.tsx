@@ -45,6 +45,7 @@ import { enrollInCourse } from '~/server/actions/courses/enrollInCourse';
 import { getCourseById } from '~/server/actions/courses/getCourseById';
 import { unenrollFromCourse } from '~/server/actions/courses/unenrollFromCourse';
 import { getLessonsByCourseId } from '~/server/actions/lessons/getLessonsByCourseId';
+import Comments from '~/components/estudiantes/layout/Comments';
 import type { Course, Enrollment } from '~/types';
 
 export default function CourseDetails({
@@ -501,6 +502,9 @@ export default function CourseDetails({
 						</div>
 					</div>
 				)}
+        {/* Añadir el componente de comentarios aquí */}
+        <Comments courseId={course.id} />
+            
 			</main>
 			<Footer />
 		</div>

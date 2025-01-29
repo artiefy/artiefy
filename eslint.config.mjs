@@ -12,7 +12,9 @@ const eslintConfig = [
             'out/**',
             'public/**',
             '**/*.d.ts',
-            'src/components/estudiantes/ui',
+            'src/components/estudiantes/ui/**',
+            'src/components/admin/ui/**',
+            'src/components/educadores/ui/**',
         ],
     },
     ...compat.config({
