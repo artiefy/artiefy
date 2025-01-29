@@ -49,10 +49,11 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
                 userProgress: lessonProgress ? lessonProgress.progress : 0,
                 porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
                 activities: lesson.activities?.map((activity) => ({
-                    ...activity,
-                    isCompleted: false,
-                    userProgress: 0,
-                })) ?? [],
+                  ...activity,
+                  isCompleted: false,
+                  userProgress: 0,
+                  typeid: activity.typeid,
+              })) ?? [],
             };
         }) ?? [],
     };

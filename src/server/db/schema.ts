@@ -103,7 +103,7 @@ export const activities = pgTable('activities', {
     id: serial('id').primaryKey(),
     name: varchar('name', { length: 255 }).notNull(),
     description: text('description'),
-    type_id: integer('type_id')
+    typeid: integer('type_id')
         .references(() => typeActi.id)
         .notNull(),
     lessonsId: integer('lessons_id')
@@ -281,7 +281,7 @@ export const activitiesRelations = relations(activities, ({ one, many }) => ({
         references: [lessons.id],
     }),
     typeActi: one(typeActi, {
-        fields: [activities.type_id],
+        fields: [activities.typeid],
         references: [typeActi.id],
     }),
     userActivitiesProgress: many(userActivitiesProgress),
