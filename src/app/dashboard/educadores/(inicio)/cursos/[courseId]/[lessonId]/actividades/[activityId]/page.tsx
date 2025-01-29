@@ -155,7 +155,7 @@ const Page = () => {
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
           <div className="mt-4 space-y-12">
             <p className="text-lg font-medium">
-              Del docente: {actividad.lesson.courseInstructor}
+              Del docente: {actividad.lesson.courseInstructor}.
             </p>
             <p className="text-lg font-medium">
               Tipo de actividad: {actividad.type.name}
