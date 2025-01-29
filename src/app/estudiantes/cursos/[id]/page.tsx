@@ -11,22 +11,6 @@ interface Props {
   searchParams: Record<string, string | string[] | undefined>
 }
 
-async function getValidCoverImageUrl(coverImageKey: string | null): Promise<string> {
-  const coverImageUrl = coverImageKey
-    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
-    : `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`
-
-  try {
-    const response = await fetch(coverImageUrl)
-    if (response.status === 403) {
-      return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`
-    }
-    return coverImageUrl
-  } catch {
-    return `https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`
-  }
-}
-
 export async function generateMetadata({ params }: Props, parent: ResolvingMetadata): Promise<Metadata> {
   const course = await getCourseById(Number(params.id))
 
@@ -37,8 +21,6 @@ export async function generateMetadata({ params }: Props, parent: ResolvingMetad
     }
   }
 
-  const coverImageUrl = await getValidCoverImageUrl(course.coverImageKey)
-  console.log("Cover Image URL:", coverImageUrl)
   const motivationalMessage = "¡Subscríbete ya en este curso excelente!"
 
   const previousImages = (await parent).openGraph?.images ?? []
