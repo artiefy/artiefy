@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
 import { Badge } from '~/components/educators/ui/badge';
 import {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getForumById } from '~/models/educatorsModels/forumAndPosts';
 
 // export async function GET(request: Request) {

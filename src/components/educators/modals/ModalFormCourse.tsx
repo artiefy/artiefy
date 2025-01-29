@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState, type ChangeEvent } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
+
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';

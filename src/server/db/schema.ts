@@ -8,44 +8,22 @@ import {
   text,
   timestamp,
   varchar,
-  date,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable('users', {
-  id: text('id').primaryKey(),
-  role: text('role').notNull(),
-  name: text('name'),
-  email: text('email').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  phone: text('phone'),
-  country: text('country'),
-  city: text('city'),
-  address: text('address'),
-  age: integer('age'),
-  birthDate: date('birth_date'),
-});
-
-// Tabla de categorías
-export const categories = pgTable('categories', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 255 }).notNull(),
-  description: text('description'),
-  is_featured: boolean('is_featured').default(false),
-});
-
-export const modalidades = pgTable('modalidades', {
-  id: serial('id').primaryKey(), // ID autoincremental de la modalidad
-  name: varchar('name', { length: 255 }).notNull(), // Nombre de la modalidad
-  description: text('description'), // Descripción de la modalidad
-});
-
-// Tabla de dificultad
-export const dificultad = pgTable('dificultad', {
-  id: serial('id').primaryKey(),
-  name: text('name').notNull(),
-  description: text('description').notNull(),
+  id: text('id').primaryKey(), // ID del usuario proporcionado por Clerk
+  role: text('role').notNull(), // Rol del usuario (estudiante/profesor, etc.)
+  name: text('name'), // Nombre opcional del usuario
+  email: text('email').notNull(), // Email obligatorio
+  createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
+  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
+  // phone: text('phone'), // Teléfono opcional
+  // country: text('country'), // País opcional
+  // city: text('city'), // Ciudad opcional
+  // address: text('address'), // Dirección opcional
+  // age: integer('age'), // Edad opcional
+  // birthDate: date('birth_date'), // Fecha de nacimiento opcional
 });
 
 // Tabla de cursos
@@ -70,7 +48,15 @@ export const courses = pgTable('courses', {
   dificultadid: integer('dificultadid')
     .references(() => dificultad.id)
     .notNull(),
-  requerimientos: text('requerimientos'),
+  requerimientos: text('requerimientos').notNull(),
+});
+
+// Tabla de categorías
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(), // ID autoincremental de la categoría
+  name: varchar('name', { length: 255 }).notNull(), // Nombre de la categoría
+  description: text('description'), // Descripción de la categoría
+  is_featured: boolean('is_featured').default(false), // Nuevo campo para destacar categorías
 });
 
 // Tabla de preferencias
@@ -111,35 +97,33 @@ export const lessons = pgTable('lessons', {
     .notNull(), // Relación con la tabla cursos
   createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
-  porcentajecompletado: real('porcentajecompletado').default(0), // Nuevo campo de porcentaje completado
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(), // Fecha de última actualización
   resourceKey: text('resource_key').notNull(), // Clave del recurso en S3
-  resourceNames: text('resource_names').notNull(), // Nombres de los recursos en S3
+  resourceNames: text('resource_names').notNull(), // Nombre del recurso
 });
 
-// Agregamos una nueva tabla para el progreso de las lecciones
-export const lessonProgress = pgTable('lesson_progress', {
-  id: serial('id').primaryKey(),
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(),
-  lessonId: integer('lesson_id')
-    .references(() => lessons.id)
-    .notNull(),
-  progress: real('progress').default(0),
-  completed: boolean('completed').default(false),
-  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+export const modalidades = pgTable('modalidades', {
+  id: serial('id').primaryKey(), // ID autoincremental de la modalidad
+  name: varchar('name', { length: 255 }).notNull(), // Nombre de la modalidad
+  description: text('description'), // Descripción de la modalidad
 });
 
 // Tabla de puntajes
 export const scores = pgTable('scores', {
-  id: serial('id').primaryKey(), // ID autoincremental del puntaje
-  score: real('score').notNull(), // Puntaje del usuario
+  id: serial('id').primaryKey(),
+  score: real('score').notNull(),
   userId: text('user_id')
     .references(() => users.id)
-    .notNull(), // Relación con usuarios
+    .notNull(),
   categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
+});
+
+export const dificultad = pgTable('dificultad', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description').notNull(),
 });
 
 //Tabla de tipos de actividades
@@ -149,14 +133,14 @@ export const typeActi = pgTable('type_acti', {
   description: text('description'),
 });
 
-// Verificar si la tabla 'activities' ya existe antes de crearla
+//tabla de actividades
 export const activities = pgTable('activities', {
   id: serial('id').primaryKey(), // ID autoincremental de la actividad
   name: varchar('name', { length: 255 }).notNull(), // Nombre de la actividad
   description: text('description'), // Descripción de la actividad
   typeid: integer('type_id')
     .references(() => typeActi.id)
-    .notNull(), // Tipo de actividad
+    .notNull(), // Relación con el tipo de actividad
   lessonsId: integer('lessons_id')
     .references(() => lessons.id)
     .notNull(), // Relación con lecciones
@@ -189,31 +173,45 @@ export const enrollments = pgTable('enrollments', {
   completed: boolean('completed').default(false), // Estado de completado
 });
 
-//Tabla de proyectos
+// Tabla de proyectos
 export const projects = pgTable('projects', {
-  id: serial('id').primaryKey(), // ID autoincremental del proyecto
-  name: varchar('name', { length: 255 }).notNull(), // Nombre del proyecto
-  description: text('description'), // Descripción del proyecto
-  coverImageKey: text('cover_image_key'), // Clave de la imagen en S3
-  coverVideoKey: text('cover_video_key'), // Clave del video en S3
-  type_project: varchar('type_project', { length: 255 }).notNull(), // Tipo de proyecto
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  coverImageKey: text('cover_image_key'),
+  coverVideoKey: text('cover_video_key'),
+  type_project: varchar('type_project', { length: 255 }).notNull(),
   userId: text('user_id')
     .references(() => users.id)
-    .notNull(), // Relación con usuarios
+    .notNull(),
   categoryid: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
 });
 
-//Tabla de proyectos tomados
+// Tabla de proyectos tomados
 export const projectsTaken = pgTable('projects_taken', {
-  id: serial('id').primaryKey(), // ID autoincremental del proyecto tomado
+  id: serial('id').primaryKey(),
   userId: text('user_id')
     .references(() => users.id)
-    .notNull(), // Relación con usuarios
+    .notNull(),
   projectId: integer('project_id')
     .references(() => projects.id)
-    .notNull(), // Relación con proyectos
+    .notNull(),
+});
+
+// Tabla de progreso de lecciones por usuario
+export const userLessonsProgress = pgTable('user_lessons_progress', {
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  lessonId: integer('lesson_id')
+    .references(() => lessons.id)
+    .notNull(),
+  progress: real('progress').default(0).notNull(),
+  isCompleted: boolean('is_completed').default(false).notNull(),
+  isLocked: boolean('is_locked').default(true),
+  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
 //tabla de foros
@@ -243,20 +241,6 @@ export const posts = pgTable('posts', {
   content: text('content').notNull(), // Contenido del post
   createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
   updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
-});
-
-// Tabla de progreso de lecciones por usuario
-export const userLessonsProgress = pgTable('user_lessons_progress', {
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(),
-  lessonId: integer('lesson_id')
-    .references(() => lessons.id)
-    .notNull(),
-  progress: real('progress').default(0).notNull(),
-  isCompleted: boolean('is_completed').default(false).notNull(),
-  isLocked: boolean('is_locked').default(true),
-  lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
 // Tabla de progreso de actividades por usuario
@@ -337,7 +321,7 @@ export const activitiesRelations = relations(activities, ({ one, many }) => ({
     fields: [activities.lessonsId],
     references: [lessons.id],
   }),
-  type: one(typeActi, {
+  typeActi: one(typeActi, {
     fields: [activities.typeid],
     references: [typeActi.id],
   }),

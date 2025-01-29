@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { Upload } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+
 import ViewFiles from '~/components/educators/layout/ViewFiles';
 import {
   AlertDialog,

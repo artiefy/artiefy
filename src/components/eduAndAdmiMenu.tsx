@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import type { JSX } from 'react';
+
 import { UserButton, useUser } from '@clerk/clerk-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,7 +15,9 @@ import {
   FiMessageSquare,
   FiShieldOff,
 } from 'react-icons/fi';
+
 import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
+
 import { ModalError } from './educators/modals/modalError';
 
 interface ResponsiveSidebarProps {

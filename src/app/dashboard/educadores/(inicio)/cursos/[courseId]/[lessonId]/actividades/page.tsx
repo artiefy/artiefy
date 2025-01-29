@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import Image from 'next/image';
 import { useRouter, useSearchParams, useParams } from 'next/navigation'; // Cambiar la importación de useRouter
+
 import TypeActDropdown from '~/components/educators/layout/TypesActDropdown';
 import {
   Breadcrumb,

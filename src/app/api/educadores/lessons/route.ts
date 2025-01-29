@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
+
 import {
   createLesson,
   deleteLesson,
@@ -15,7 +16,8 @@ const respondWithError = (message: string, status: number) =>
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const courseId = parseInt(url.searchParams.get('courseId') ?? ''); // Obtiene el courseId de los query params
+    const courseIdParam = url.searchParams.get('courseId');
+    const courseId = courseIdParam ? parseInt(courseIdParam) : NaN; // Obtiene el courseId de los query params
 
     // Verifica si el courseId es válido
     if (isNaN(courseId)) {

@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { ArrowUpFromLine } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import { Badge } from '~/components/educators/ui/badge';
 import {
@@ -13,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/educators/ui/card';
+
 import ModalFormLessons from '../modals/ModalFormLessons';
 import { Button } from '../ui/button';
 
@@ -48,6 +51,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
+  console.log(courseId);
 
   // Manejo de carga de imágenes
   const handleImageLoad = (lessonId: number) => {
@@ -117,9 +121,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           <Button
             style={{ backgroundColor: selectedColor }}
             className={`cursor-pointer border-transparent bg-black font-semibold ${
-              selectedColor === '#FFFFFF' || '#3af4ef'
-                ? 'text-black'
-                : 'text-white'
+              selectedColor === '#000000' ? 'text-white' : 'text-black'
             }`}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');

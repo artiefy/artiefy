@@ -1,10 +1,13 @@
+
 import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
-import Providers from '~/components/estudiantes/layout/ProgressBarProvider';
+
+import Provider from '~/components/estudiantes/layout/ProgressBarProvider';
 import { Toaster } from '~/components/estudiantes/ui/toaster';
 import { metadata as siteMetadata } from '~/lib/metadata';
+
 import Loading from './loading';
 import '~/styles/globals.css';
 
@@ -59,7 +62,7 @@ export default function RootLayout({
             <Loading />
           </ClerkLoading>
           <ClerkLoaded>
-            <Providers>{children}</Providers>
+            <Provider>{children}</Provider>
             <Toaster />
           </ClerkLoaded>
         </body>

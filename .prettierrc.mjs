@@ -11,7 +11,7 @@ const config = {
   semi: true, // Usar punto y coma al final de las declaraciones
   singleQuote: true, // Usar comillas simples en lugar de dobles
   printWidth: 80, // Longitud máxima de línea
-  useTabs: false, // Usar espacios en lugar de tabs
+  useTabs: true, // Usar espacios en lugar de tabs
   bracketSpacing: true, // Espacio entre llaves en objetos
   arrowParens: 'always', // Paréntesis en funciones flecha con un solo argumento
   endOfLine: 'lf', // Usar LF para el final de línea

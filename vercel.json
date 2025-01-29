@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "app/api/upload/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "framework": "nextjs",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
+  "installCommand": "npm install",
+  "public": true
+}
+

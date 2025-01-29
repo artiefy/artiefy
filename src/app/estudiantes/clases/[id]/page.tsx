@@ -1,19 +1,18 @@
 import { notFound } from 'next/navigation';
-import {
-  getLessonById,
-  getActivitiesByLessonId,
-  getLessonsByCourseId,
-  getCourseById,
-} from '~/models/estudiantes/courseModelsStudent';
-import LessonDetails from './LessonDetails';
 
-interface Activity {
-  id: number;
-  name: string;
-  description: string | null;
-  tipo: string;
-  completed: boolean;
-}
+import { getCourseById } from '~/server/actions/courses/getCourseById';
+import { getLessonById } from '~/server/actions/lessons/getLessonById';
+import { getLessonsByCourseId } from '~/server/actions/lessons/getLessonsByCourseId';
+import { getUserLessonsProgress } from '~/server/actions/progress/getUserLessonsProgress';
+import type {
+  Activity,
+  Lesson,
+  Course,
+  UserLessonsProgress,
+  LessonWithProgress,
+} from '~/types';
+
+import LessonDetails from './LessonDetails';
 
 interface Params {
   id: string;
@@ -30,29 +29,39 @@ export default async function LessonPage({ params }: Props) {
 
 async function LessonContent({ id }: { id: string }) {
   try {
-    const lessonId = parseInt(id, 10);
+    const lessonId = Number.parseInt(id, 10);
     if (isNaN(lessonId)) {
       notFound();
     }
 
-    const lesson = await getLessonById(lessonId);
-    if (!lesson) {
+    const lessonData: Lesson | null = await getLessonById(lessonId);
+    if (!lessonData) {
       console.log('Lección no encontrada');
       notFound();
     }
 
-    const activities = await getActivitiesByLessonId(lesson.id);
-    const activity: Activity | null = activities?.[0] ?? null;
+    const lesson: LessonWithProgress = {
+      ...lessonData,
+      isLocked: lessonData.isLocked ?? false,
+    };
 
-    const course = await getCourseById(lesson.course_id);
+    const activity: Activity | null = lesson.activities?.[0]
+      ? {
+          ...lesson.activities[0],
+          isCompleted: lesson.activities[0].isCompleted ?? false,
+          userProgress: lesson.activities[0].userProgress ?? 0,
+        }
+      : null;
+
+    const course: Course | null = await getCourseById(lesson.courseId);
     if (!course) {
       console.log('Curso no encontrado');
       notFound();
     }
 
-    const lessons = await getLessonsByCourseId(lesson.course_id);
-
-    const userId = 'someUserId';
+    const lessons: Lesson[] = await getLessonsByCourseId(lesson.courseId);
+    const userLessonsProgress: UserLessonsProgress[] =
+      await getUserLessonsProgress(course.creatorId);
 
     return (
       <LessonDetails
@@ -60,11 +69,14 @@ async function LessonContent({ id }: { id: string }) {
         activity={activity}
         lessons={lessons}
         course={course}
-        userId={userId}
+        userLessonsProgress={userLessonsProgress}
       />
     );
   } catch (error) {
-    console.error('Error al obtener los datos de la lección:', error);
+    console.error(
+      'Error al obtener los datos de la lección:',
+      error instanceof Error ? error.message : String(error)
+    );
     notFound();
   }
 }

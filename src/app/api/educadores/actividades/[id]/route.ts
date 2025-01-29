@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getActivityById } from '~/models/educatorsModels/activitiesModels';
 
 export async function GET(
@@ -15,15 +16,16 @@ export async function GET(
       );
     }
 
-    const lesson = await getActivityById(actividadId);
-    if (!lesson) {
+    const actividad = await getActivityById(actividadId);
+    if (!actividad) {
       return NextResponse.json(
         { error: 'Actividad no encontrado' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(lesson);
+    console.log('Actividad obtenida:', actividad);
+    return NextResponse.json(actividad);
   } catch (error) {
     console.error('Error al obtener la actividad:', error);
     return NextResponse.json(

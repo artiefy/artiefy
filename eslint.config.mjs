@@ -7,11 +7,11 @@ const compat = new FlatCompat({
 const eslintConfig = [
   {
     ignores: [
-      '**/node_modules/**',
-      '.next/**',
-      'out/**',
-      'public/**',
-      '**/*.d.ts',
+      '/node_modules/',
+      '.next/',
+      'out/',
+      'public/',
+      '/*.d.ts',
       'src/components/estudiantes/ui',
     ],
   },
@@ -84,7 +84,7 @@ const eslintConfig = [
               position: 'before',
             },
             {
-              pattern: '@/components/**',
+              pattern: '@/components/',
               group: 'internal',
               position: 'after',
             },
@@ -115,15 +115,22 @@ const eslintConfig = [
         version: 'detect',
       },
       tailwindcss: {
-        config: './tailwind.config.ts',
-        cssFiles: ['./src/**/*.css'],
+        config: './tailwind.config.js',
+        cssFiles: ['./src//*.css'],
         callees: ['classnames', 'clsx', 'ctl'],
         tags: ['tw'],
+        classRegex: [
+          'tw`([^`]*)',
+          'tw="([^"]*)',
+          'tw={"([^"}]*)',
+          'tw\\.\\w+([^]*)',
+          'tw\\(.*?\\)([^]*)',
+        ],
       },
       next: {
         rootDir: './',
       },
-      files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+      files: ['/*.{js,jsx,mjs,cjs,ts,tsx}'],
     },
   }),
 ];

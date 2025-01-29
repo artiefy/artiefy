@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 import Image from 'next/image';
 import Link from 'next/link';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { toast } from '~/hooks/use-toast';
+
 //import { FaImage } from 'react-icons/fa';
 import { Button } from '../educators/ui/button';
 

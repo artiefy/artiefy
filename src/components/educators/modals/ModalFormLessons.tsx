@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ChangeEvent } from 'react';
+
 import FileUpload from '~/components/educators/layout/FilesUpload';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -361,7 +362,7 @@ const ModalFormLessons = ({
             <FileUpload
               key="covervideo"
               type="video"
-              label="Video del curso:"
+              label="Video de la clase:"
               accept="video/mp4"
               maxSize={2000}
               tipo="Video"
@@ -372,7 +373,7 @@ const ModalFormLessons = ({
             <FileUpload
               key="resourcefiles"
               type="file"
-              label="Archivo del curso:"
+              label="Archivo de la clase:"
               accept=".pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx"
               maxSize={10}
               multiple

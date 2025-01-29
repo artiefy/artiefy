@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getLessonById } from '~/models/educatorsModels/lessonsModels';
 
 export async function GET(

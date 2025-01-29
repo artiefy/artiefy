@@ -1,7 +1,9 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { useParams } from 'next/navigation';
+
 import {
   Breadcrumb,
   BreadcrumbItem,

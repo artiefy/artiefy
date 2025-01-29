@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import {
   getPostsByForo,
   createPost,
@@ -31,13 +32,12 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       forumId: string;
-      title: string;
       content: string;
       author: string;
     };
-    const { forumId, title, content, author } = body;
+    const { forumId, content, author } = body;
 
-    const newPost = await createPost(Number(forumId), title, content, author);
+    const newPost = await createPost(Number(forumId), author, content);
     return NextResponse.json(newPost);
   } catch (error) {
     console.error('Error al crear el post:', error);

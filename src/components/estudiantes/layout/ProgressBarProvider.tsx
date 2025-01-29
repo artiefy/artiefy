@@ -1,15 +1,19 @@
-// Create a Providers component to wrap your application with all the components requiring 'use client', such as next-nprogress-bar or your different contexts...
 'use client';
 
-import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
+import { AppProgressBar as Provider } from 'next-nprogress-bar';
 
-const Providers = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <>
-      {children}
-      <ProgressBar height="4px" color="#fffd00" options={{ showSpinner: false }} shallowRouting />
-    </>
-  );
+const AppProgressBar = ({ children }: { children: React.ReactNode }) => {
+	return (
+		<>
+			{children}
+			<Provider
+				height="4px"
+				color="#FFFF00"
+				options={{ showSpinner: false }}
+				shallowRouting={false}
+			/>
+		</>
+	);
 };
 
-export default Providers;
+export default AppProgressBar;

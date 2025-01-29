@@ -1,4 +1,5 @@
 import { eq, count } from 'drizzle-orm';
+
 import { db } from '~/server/db/index';
 import {
   courses,
@@ -8,6 +9,7 @@ import {
   enrollments,
   dificultad,
 } from '~/server/db/schema';
+
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
 import { deleteLessonsByCourseId } from './lessonsModels'; // Importar la función para eliminar lecciones
 

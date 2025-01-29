@@ -1,7 +1,9 @@
 'use client';
 import { useState, useCallback, useEffect } from 'react';
+
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
+
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -25,12 +27,10 @@ interface ActivityDetails {
     id: number;
     title: string;
     coverImageKey: string;
-    course: {
-      id: number;
-      title: string;
-      description: string;
-      instructor: string;
-    };
+    courseId: number;
+    courseTitle: string;
+    courseDescription: string;
+    courseInstructor: string;
   };
 }
 
@@ -108,7 +108,7 @@ const Page = () => {
   return (
     <>
       <Breadcrumb>
-        <BreadcrumbList className="flex space-x-2 text-lg">
+        <BreadcrumbList className="flex space-x-2">
           <BreadcrumbItem>
             <BreadcrumbLink
               className="hover:text-gray-300"
@@ -147,15 +147,18 @@ const Page = () => {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="mt-4 flex w-full flex-col rounded-lg bg-white p-6 text-black shadow-lg">
+      <div className="mx-auto mt-4 flex w-11/12 flex-col rounded-lg bg-white p-6 text-black shadow-lg">
         <div className="flex items-center justify-between text-3xl font-bold text-gray-800">
           <h2>Actividad: {actividad.name}</h2>
-          <h3>Perteneciente a la lección: {actividad.lesson?.title}</h3>
+          <h3>Lección: {actividad.lesson?.title}</h3>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-2">
-          <div className="mt-4 space-y-10">
+          <div className="mt-4 space-y-12">
             <p className="text-lg font-medium">
-              Del docente: {actividad.lesson.course.instructor}
+              Del docente: {actividad.lesson.courseInstructor}
+            </p>
+            <p className="text-lg font-medium">
+              Tipo de actividad: {actividad.type.name}
             </p>
             <p className="text-lg font-medium">
               Descripción de la actividad: {actividad.description}

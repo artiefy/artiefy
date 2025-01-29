@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
+
 import { db } from '~/server/db/index';
-import { activities, typeActi, lessons, courses } from '~/server/db/schema';
+import { activities, lessons, courses, typeActi } from '~/server/db/schema';
 
 // Interfaces
 export interface Activity {
@@ -16,17 +17,16 @@ export interface ActivityDetails {
   id: number;
   name: string;
   description: string | null;
-  typeid: number;
   type: {
     id: number;
     name: string;
     description: string;
   };
-  lesson: {
+  lessonsId: {
     id: number;
     title: string;
     coverImageKey: string;
-    course: {
+    courseId: {
       id: number;
       title: string;
       description: string;
@@ -73,16 +73,13 @@ export const createActivity = async ({
 };
 
 // Obtener una actividad por ID
-export const getActivityById = async (
-  activityId: number
-): Promise<ActivityDetails | null> => {
+export const getActivityById = async (activityId: number) => {
   try {
     const result = await db
       .select({
         id: activities.id,
         name: activities.name,
         description: activities.description,
-        typeid: activities.typeid,
         type: {
           id: typeActi.id,
           name: typeActi.name,
@@ -92,12 +89,10 @@ export const getActivityById = async (
           id: lessons.id,
           title: lessons.title,
           coverImageKey: lessons.coverImageKey,
-          course: {
-            id: courses.id,
-            title: courses.title,
-            description: courses.description,
-            instructor: courses.instructor,
-          },
+          courseId: courses.id,
+          courseTitle: courses.title,
+          courseDescription: courses.description,
+          courseInstructor: courses.instructor,
         },
       })
       .from(activities)
@@ -106,7 +101,14 @@ export const getActivityById = async (
       .leftJoin(courses, eq(lessons.courseId, courses.id))
       .where(eq(activities.id, activityId))
       .limit(1);
-    return (result[0] as unknown as ActivityDetails) ?? null;
+
+    const activity = result[0] as unknown as ActivityDetails;
+
+    if (!activity) {
+      return null;
+    }
+
+    return activity;
   } catch (error) {
     throw new Error(
       `Error al obtener la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`

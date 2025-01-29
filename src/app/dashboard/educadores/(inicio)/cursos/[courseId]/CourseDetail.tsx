@@ -1,9 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
+
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
@@ -81,9 +83,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const courseIdString = Array.isArray(courseIdUrl)
     ? courseIdUrl[0]
     : courseIdUrl;
-  const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
-  console.log('courseIdUrl:', courseIdUrl);
-  console.log('courseIdString:', courseIdString);
+  const courseIdString2 = courseIdString ?? '';
+  const courseIdNumber = parseInt(courseIdString2);
 
   const fetchCourse = useCallback(async () => {
     if (!user) return;
