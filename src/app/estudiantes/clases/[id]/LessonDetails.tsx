@@ -455,9 +455,6 @@ export default function LessonDetails({
 										<h3 className="font-semibold text-gray-900">
 											{activity.name}
 										</h3>
-										<span className="text-xs uppercase text-gray-500">
-											{activity.tipo}
-										</span>
 									</div>
 									{isActivityCompleted ? (
 										<FaCheckCircle className="text-green-500" />
