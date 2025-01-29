@@ -1,13 +1,13 @@
+import React from 'react';
+import StudentDashboard from '~/app/estudiantes/StudentDashboard';
 import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import StudentDashboard from '~/app/estudiantes/StudentDashboard';
 import { getAllCategories } from '~/server/actions/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/courses/getAllCourses';
 import type { Category, Course } from '~/types';
-import React from 'react';
 
 interface SearchParams {
   category?: string;

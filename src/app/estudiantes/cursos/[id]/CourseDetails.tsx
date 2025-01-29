@@ -109,7 +109,16 @@ export default function CourseDetails({
 		new Date(dateString).toISOString().split('T')[0];
 
 	const handleEnroll = async () => {
-		if (!isSignedIn || isEnrolling) {
+		if (!isSignedIn) {
+			toast({
+				title: 'Debes iniciar sesión',
+				description: 'Debes iniciar sesión para inscribirte en este curso.',
+				variant: 'destructive',
+			});
+			return;
+		}
+
+		if (isEnrolling) {
 			return;
 		}
 
@@ -458,7 +467,7 @@ export default function CourseDetails({
 											<FaCheck className="mr-2" /> Suscrito Al Curso
 										</Button>
 										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-red-500 hover:bg-red-700 text-lg font-semibold"
+											className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
 											onClick={handleUnenroll}
 											disabled={isUnenrolling}
 										>
