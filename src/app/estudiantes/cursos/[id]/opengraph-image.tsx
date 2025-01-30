@@ -37,8 +37,6 @@ export default async function Image({ params }: { params: { id: string } }) {
             ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
             : `https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT`;
 
-        console.log('Cover Image URL:', coverImageUrl);
-
         // Load Montserrat font
         const montserrat = await fetch(
             'https://fonts.gstatic.com/s/montserrat/v15/JTURjIg1_i6t8kCHKm45_dJE3gnD-w.ttf'
