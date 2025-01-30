@@ -40,7 +40,7 @@ export function generateJsonLd(course: Course): WithContext<CourseSchemaDTS> {
     };
 }
 
-function isMetadataImages(value: unknown): value is Metadata['openGraph']['images'] {
+function isMetadataImages(value: unknown): value is NonNullable<Metadata['openGraph']>['images'] {
     return Array.isArray(value) && value.every(item => typeof item === 'object' && item !== null);
 }
 
@@ -51,9 +51,7 @@ export async function generateCourseMetadata(
 ): Promise<Metadata> {
     const motivationalMessage = '¡Subscríbete ya en este curso excelente!';
     const parentMetadata = await parent;
-    const previousImages = parentMetadata.openGraph && isMetadataImages(parentMetadata.openGraph.images)
-        ? parentMetadata.openGraph.images
-        : [];
+    const previousImages = isMetadataImages(parentMetadata.openGraph?.images) ? parentMetadata.openGraph.images : [];
 
     const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}/opengraph-image`;
 
