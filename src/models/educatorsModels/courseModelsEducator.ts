@@ -13,32 +13,37 @@ import {
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
 import { deleteLessonsByCourseId } from './lessonsModels'; // Importar la función para eliminar lecciones
 
+// Obtener el número total de cursos en la plataforma
+export const getTotalCourses = async (): Promise<number> => {
+	const result = await db.select({ totalCourses: count() }).from(courses);
+	return result[0]?.totalCourses ?? 0;
+};
 export interface Lesson {
-  id: number;
-  title: string;
-  duration: number;
-  description: string | null;
-  order: number;
-  courseId: number;
-  createdAt: string | number | Date;
-  updatedAt: string | number | Date;
+	id: number;
+	title: string;
+	duration: number;
+	description: string | null;
+	order: number;
+	courseId: number;
+	createdAt: string | number | Date;
+	updatedAt: string | number | Date;
 }
 
 export interface Category {
-  id: number;
-  name: string;
-  description: string | null;
+	id: number;
+	name: string;
+	description: string | null;
 }
 export interface dificultad {
-  id: number;
-  name: string;
-  description: string | null;
+	id: number;
+	name: string;
+	description: string | null;
 }
 
 export interface Modalidad {
-  id: number;
-  name: string;
-  description: string | null;
+	id: number;
+	name: string;
+	description: string | null;
 }
 
 export interface Course {
@@ -118,11 +123,11 @@ export const getCoursesByUserId = async (userId: string) => {
 
 // Obtener el número total de estudiantes inscritos en un curso
 export const getTotalStudents = async (course_id: number): Promise<number> => {
-  const result = await db
-    .select({ totalStudents: count() })
-    .from(enrollments)
-    .where(eq(enrollments.courseId, course_id));
-  return result[0]?.totalStudents ?? 0;
+	const result = await db
+		.select({ totalStudents: count() })
+		.from(enrollments)
+		.where(eq(enrollments.courseId, course_id));
+	return result[0]?.totalStudents ?? 0;
 };
 
 // Obtener un curso por ID
