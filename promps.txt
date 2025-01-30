@@ -1,88 +1,184 @@
-'use server';
+import { FlatCompat } from '@eslint/eslintrc';
 
-import { currentUser } from '@clerk/nextjs/server';
-import { db } from '~/server/db';
-import { users, courses } from '~/server/db/schema';
+const compat = new FlatCompat({
+	baseDirectory: import.meta.dirname,
+});
 
-import type { Course } from '~/types';
+const eslintConfig = [
+	{
+		ignores: [
+			'**/node_modules/**',
+			'.next/**',
+			'out/**',
+			'public/**',
+			'**/*.d.ts',
+			'src/components/estudiantes/ui/**',
+			'src/components/admin/ui/**',
+			'src/components/educadores/ui/**',
+		],
+	},
+	...compat.config({
+		extends: [
+			'plugin:@next/next/recommended',
+			'plugin:@typescript-eslint/recommended',
+			'plugin:@typescript-eslint/recommended-type-checked',
+			'plugin:@typescript-eslint/stylistic-type-checked',
+			'plugin:tailwindcss/recommended',
+			'plugin:import/recommended',
+			'plugin:import/typescript',
+			'prettier',
+		],
+		parser: '@typescript-eslint/parser',
+		parserOptions: {
+			project: './tsconfig.json',
+			tsconfigRootDir: import.meta.dirname,
+		},
+		plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
+		rules: {
+			'tailwindcss/no-custom-classname': 'warn',
+			'tailwindcss/classnames-order': 'warn',
+			'tailwindcss/enforces-negative-arbitrary-values': 'warn',
+			'tailwindcss/enforces-shorthand': 'warn',
+			'tailwindcss/migration-from-tailwind-2': 'warn',
+			'tailwindcss/no-contradicting-classname': 'error',
+			'@typescript-eslint/consistent-type-definitions': 'warn',
+			'@typescript-eslint/consistent-type-imports': [
+				'warn',
+				{
+					prefer: 'type-imports',
+					fixStyle: 'inline-type-imports',
+				},
+			],
+			'@typescript-eslint/no-unused-vars': [
+				'warn',
+				{
+					argsIgnorePattern: '^_',
+				},
+			],
+			'@typescript-eslint/require-await': 'warn',
+			'@typescript-eslint/no-misused-promises': [
+				'warn',
+				{
+					checksVoidReturn: {
+						attributes: false,
+					},
+				},
+			],
+			'drizzle/enforce-delete-with-where': [
+				'warn',
+				{
+					drizzleObjectName: ['db', 'ctx.db'],
+				},
+			],
+			'drizzle/enforce-update-with-where': [
+				'warn',
+				{
+					drizzleObjectName: ['db', 'ctx.db'],
+				},
+			],
+			'@next/next/google-font-display': 'warn',
+			'@next/next/no-img-element': 'warn',
+			'@next/next/no-html-link-for-pages': 'warn',
+			'import/order': [
+				'warn',
+				{
+					groups: ['builtin', 'external', 'internal', ['parent', 'sibling']],
+					pathGroups: [
+						{
+							pattern: 'react',
+							group: 'external',
+							position: 'before',
+						},
+						{
+							pattern: '@/components/**',
+							group: 'internal',
+							position: 'after',
+						},
+					],
+					pathGroupsExcludedImportTypes: ['react'],
+					alphabetize: {
+						order: 'asc',
+						caseInsensitive: true,
+					},
+				},
+			],
+			'react/react-in-jsx-scope': 'off',
+			'import/no-unresolved': 'off',
+			'import/newline-after-import': 'off',
+		},
+		settings: {
+			'import/resolver': {
+				alias: {
+					map: [['~', './src']],
+					extensions: ['.js', '.jsx', '.ts', '.tsx'],
+				},
+				typescript: {
+					alwaysTryTypes: true,
+					project: './tsconfig.json',
+				},
+			},
+			react: {
+				version: 'detect',
+			},
+			tailwindcss: {
+				config: './tailwind.config.js',
+				cssFiles: [
+					'**/*.css',
+					'!**/node_modules',
+					'!**/.*',
+					'!**/dist',
+					'!**/build',
+				],
+				callees: ['classnames', 'clsx', 'ctl'],
+				tags: ['tw'],
+				classRegex: '^class(Name)?$',
+				cssFilesRefreshRate: 5000,
+				skipClassAttribute: false,
+				exposeConfiguration: true,
+				whitelist: [
+					// Clases existentes
+					'animate-gradient-x',
+					'animate-bounce-right',
+					'button-hover',
+					'button-hover-effect',
+					'cl-formButtonPrimary',
+					'cl-userButtonOuterIdentifier',
+					'custom-padding',
+					'text-shadow',
+					'animate-gradient',
+					'zoom-in',
 
-// Crear un curso
-export async function createCourse(
-    courseDetails: Omit<Course, 'id' | 'createdAt' | 'updatedAt'>
-): Promise<{ success: boolean; message: string }> {
-    const user = await currentUser();
+					// Nuevas clases personalizadas basadas en tu configuración de Tailwind
+					'animate-bounce',
+					'animate-spin',
+					'animate-loading-dot',
+					'animate-accordion-down',
+					'animate-accordion-up',
 
-    if (!user?.id) {
-        throw new Error('Usuario no autenticado');
-    }
+					// Regex para capturar clases de fuentes personalizadas
+					'font-sans',
 
-    const userId = user.id;
+					// Regex para capturar clases de colores personalizados
+					'/^(bg|text|border|ring)-(background|foreground|card|popover|primary|secondary|muted|accent|destructive)/',
 
-    try {
-        // Verificar si el usuario existe
-        const existingUser = await db.query.users.findFirst({
-            where: eq(users.id, userId),
-        });
+					// Regex para capturar clases de chart
+					'/^chart-[1-5]/',
 
-        // Si el usuario no existe, crearlo con rol de 'admin'
-        if (!existingUser) {
-            if (user.fullName && user.emailAddresses[0]?.emailAddress) {
-                await db.insert(users).values({
-                    id: userId,
-                    role: 'admin',
-                    name: user.fullName,
-                    email: user.emailAddresses[0].emailAddress,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    phone: user.phoneNumbers[0]?.phoneNumber || null,
-                    country: user.country || null,
-                    city: user.city || null,
-                    address: user.address || null,
-                    age: user.age || null,
-                    birthDate: user.birthDate || null,
-                });
-            } else {
-                throw new Error('Información del usuario incompleta');
-            }
-        } else {
-            // Si el usuario existe, actualizar su rol a 'admin' si no lo es
-            if (existingUser.role !== 'admin') {
-                await db.update(users)
-                    .set({ role: 'admin', updatedAt: new Date() })
-                    .where(eq(users.id, userId));
-            }
-        }
+					// Captura cualquier clase personalizada que comience con 'custom-'
+					'/^custom-/',
+				],
+				future: {
+					purgeLayersByDefault: true,
+				},
+				removeDeprecatedUtilities: true,
+			},
+			next: {
+				rootDir: './',
+			},
+			files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+		},
+	}),
+];
 
-        // Crear el curso
-        const [newCourse] = await db
-            .insert(courses)
-            .values({
-                ...courseDetails,
-                creatorId: userId,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            })
-            .returning();
+export default eslintConfig;
 
-        if (!newCourse) {
-            return { success: false, message: 'Error al crear el curso' };
-        }
-
-        return { success: true, message: 'Curso creado exitosamente' };
-    } catch (error: unknown) {
-        console.error('Error al crear el curso:', error);
-        if (error instanceof Error) {
-            return {
-                success: false,
-                message: `Error al crear el curso: ${error.message}`,
-            };
-        } else {
-            return {
-                success: false,
-                message: 'Error desconocido al crear el curso',
-            };
-        }
-    }
-}
-
-//server actions crear cursos

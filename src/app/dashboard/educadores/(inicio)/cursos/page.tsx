@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
+
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
 import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
@@ -27,6 +29,7 @@ export interface CourseModel {
   coverImageKey: string;
   creatorId: string;
   dificultadid: string; // Add this line
+  requerimientos: string;
 }
 
 export function LoadingCourses() {
@@ -101,7 +104,8 @@ export default function Page() {
     file: File | null,
     categoryid: number,
     modalidadesid: number,
-    dificultadid: number
+    dificultadid: number,
+    requerimientos: string
   ) => {
     if (!user) return;
     let coverImageKey = '';
@@ -161,6 +165,7 @@ export default function Page() {
         instructor: user.fullName,
         userId: user.id,
         dificultadid,
+        requerimientos,
       }),
     });
 
@@ -204,9 +209,15 @@ export default function Page() {
             <BreadcrumbItem>
               <BreadcrumbLink
                 className="hover:text-gray-300"
-                href="/dashboard/educadores"
+                href="../educadores"
               >
                 Inicio
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink className="hover:text-gray-300" href="/">
+                Lista de cursos
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -237,14 +248,22 @@ export default function Page() {
               <p className="text-xl text-gray-600">
                 No hay cursos creados todavía
               </p>
-              <p className="mt-2 text-gray-500">
+              <p className="my-2 text-gray-500">
                 Comienza creando tu primer curso haciendo clic en el botón
                 "Crear Curso"
               </p>
+              <span>&#128071;&#128071;&#128071;</span>
+              <Button
+                onClick={handleCreateCourse}
+                className="mt-5 bg-primary text-background transition-transform hover:text-primary active:scale-95"
+              >
+                <FiPlus className="mr-2" />
+                Crear Curso
+              </Button>
             </div>
           ) : (
             <>
-              <h2 className="mb-4 mt-10 text-2xl font-bold">
+              <h2 className="mb-4 mt-5 text-2xl font-bold">
                 Lista de cursos creados
               </h2>
               <CourseListTeacher courses={courses} />
@@ -263,6 +282,12 @@ export default function Page() {
               setDescription={(description: string) =>
                 setEditingCourse((prev) =>
                   prev ? { ...prev, description } : null
+                )
+              }
+              requerimientos={editingCourse?.requerimientos ?? ''}
+              setRequerimientos={(requerimientos: string) =>
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, requerimientos } : null
                 )
               }
               categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}

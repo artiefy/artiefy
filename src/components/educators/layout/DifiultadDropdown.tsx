@@ -26,7 +26,7 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
     const fetchCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/dificultad', {
+        const response = await fetch('/api/educadores/dificultad', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -39,7 +39,6 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
         }
 
         const data: Dificultad[] = (await response.json()) as Dificultad[];
-        console.log('Datos de la respuesta:', data);
         setDificultades(data);
       } catch (error) {
         console.error('Error detallado:', error);
@@ -68,13 +67,12 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
           onChange={(e) => {
             const selectedId = Number(e.target.value);
             setDificultad(selectedId);
-            console.log('Categoría seleccionada:', selectedId);
           }}
           className={`mb-5 w-60 rounded border p-2 outline-none ${
             errors.dificultad ? 'border-red-500' : 'border-primary'
           }`}
         >
-          <option value="">Selecciona una categoría</option>
+          <option value="">Selecciona una dificultad</option>
           {dificultades.map((dificultad) => (
             <option key={dificultad.id} value={dificultad.id}>
               {dificultad.name}

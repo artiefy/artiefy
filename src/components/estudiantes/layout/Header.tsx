@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 

@@ -25,6 +25,8 @@ Instala depcheck globalmente:
 4. `TypeScript: Open TS Server Log`: Abre el log del servidor de TypeScript para depurar problemas.
 5. `TypeScript: Reload Project`: Recarga la configuración del proyecto de TypeScript.
 15. `Quick Fix...`: Sugiere soluciones rápidas para errores destacados.
+16. `npm install -g eslint`: Intalar localmente Eslint
+17. `npm install -g typescript`: Intalar localmente typescript
 
 ------------------------------------------------
 uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed

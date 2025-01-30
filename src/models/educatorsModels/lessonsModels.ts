@@ -1,4 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
+
 import { db } from '~/server/db/index';
 import {
   categories,
@@ -39,6 +40,7 @@ export async function createLesson({
   coverVideoKey,
   courseId,
   resourceKey,
+  resourceNames,
 }: {
   title: string;
   description: string;
@@ -47,6 +49,7 @@ export async function createLesson({
   coverVideoKey: string;
   courseId: number;
   resourceKey: string;
+  resourceNames: string;
 }) {
   try {
     // Obtener el valor máximo actual del campo `order` para el curso específico
@@ -58,22 +61,6 @@ export async function createLesson({
 
     const newOrder = maxOrder + 1;
 
-    // Verificar el límite de lecciones por dificultad
-    const lessonCount = await countLessonsByCourseAndDifficulty(courseId);
-    const difficulty = (await getCourseDifficulty(
-      courseId
-    )) as unknown as string;
-
-    if (
-      (difficulty === 'instructorio' && lessonCount >= 5) ||
-      (difficulty === 'intermedio' && lessonCount >= 10) ||
-      (difficulty === 'avanzado' && lessonCount >= 15)
-    ) {
-      throw new Error(
-        `No se pueden crear más lecciones para el curso con dificultad ${difficulty}.`
-      );
-    }
-
     const newLesson = await db.insert(lessons).values({
       title,
       description,
@@ -82,7 +69,8 @@ export async function createLesson({
       coverVideoKey,
       order: newOrder, // Asignar el nuevo valor de `order`
       courseId,
-  resourceKey,
+      resourceKey,
+      resourceNames,
     });
 
     console.log('Lección creada:', newLesson);
@@ -128,6 +116,7 @@ export async function getLessonsByCourseId(courseId: number) {
         coverImageKey: lessons.coverImageKey,
         coverVideoKey: lessons.coverVideoKey,
         resourceKey: lessons.resourceKey,
+        resourceNames: lessons.resourceNames,
         lessonOrder: lessons.order,
         courseId: lessons.courseId,
         courseTitle: courses.title,
@@ -150,6 +139,7 @@ export async function getLessonsByCourseId(courseId: number) {
         coverImageKey: string;
         coverVideoKey: string;
         resourceKey: string;
+        resourceNames: string;
         lessonOrder: number;
         courseId: number;
         courseTitle: string;
@@ -164,6 +154,7 @@ export async function getLessonsByCourseId(courseId: number) {
         coverImageKey: Lesson.coverImageKey,
         coverVideoKey: Lesson.coverVideoKey,
         resourceKey: Lesson.resourceKey,
+        resourceNames: Lesson.resourceNames,
         description: Lesson.lessonDescription ?? '',
         createdAt: '', // Este dato puede ser proporcionado si lo tienes
         duration: Lesson.lessonDuration,
@@ -205,6 +196,7 @@ export const getLessonById = async (
       createdAt: lessons.createdAt,
       updatedAt: lessons.updatedAt,
       resourceKey: lessons.resourceKey,
+      resourceNames: lessons.resourceNames,
       course: {
         id: courses.id,
         title: courses.title,
@@ -237,6 +229,7 @@ export const updateLesson = async (
     order,
     courseId,
     resourceKey,
+    resourceNames,
   }: {
     title?: string;
     description?: string;
@@ -246,6 +239,7 @@ export const updateLesson = async (
     order?: number;
     courseId?: number;
     resourceKey?: string;
+    resourceNames?: string;
   }
 ): Promise<void> => {
   const updateData: Record<string, unknown> = {};
@@ -258,6 +252,7 @@ export const updateLesson = async (
   if (order) updateData.order = order;
   if (courseId) updateData.courseId = courseId;
   if (resourceKey) updateData.resourceKey = resourceKey;
+  if (resourceNames) updateData.resourceNames = resourceNames;
 
   await db.update(lessons).set(updateData).where(eq(lessons.id, lessonId));
 };
@@ -265,4 +260,8 @@ export const updateLesson = async (
 // Eliminar una lección
 export const deleteLesson = async (lessonId: number): Promise<void> => {
   await db.delete(lessons).where(eq(lessons.id, lessonId));
+};
+
+export const deleteLessonsByCourseId = async (courseId: number) => {
+  await db.delete(lessons).where(eq(lessons.courseId, courseId));
 };

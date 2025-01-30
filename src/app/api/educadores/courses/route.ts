@@ -1,5 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
+
 import {
 	createCourse,
 	deleteCourse,
@@ -60,50 +61,50 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		const body = (await request.json()) as {
-			title: string;
-			description: string;
-			coverImageKey: string;
-			categoryid: number;
-			modalidadesid: number;
-			dificultadid: number;
-			instructor: string;
-			requerimientos: string;
-		};
+    const body = (await request.json()) as {
+      title: string;
+      description: string;
+      coverImageKey: string;
+      categoryid: number;
+      modalidadesid: number;
+      dificultadid: number;
+      instructor: string;
+      requerimientos: string;
+    };
 
-		const {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			dificultadid,
-			instructor,
-			requerimientos,
-		} = body;
+    const {
+      title,
+      description,
+      coverImageKey,
+      categoryid,
+      modalidadesid,
+      dificultadid,
+      instructor,
+      requerimientos,
+    } = body;
 
-		await createCourse({
-			title,
-			description,
-			creatorId: userId,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			dificultadid,
-			instructor,
-			requerimientos,
-		});
+    await createCourse({
+      title,
+      description,
+      creatorId: userId,
+      coverImageKey,
+      categoryid,
+      modalidadesid,
+      dificultadid,
+      instructor,
+      requerimientos,
+    });
 
-		console.log('Datos enviados al servidor:', {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			dificultadid,
-			instructor,
-			requerimientos,
-		});
+    console.log('Datos enviados al servidor:', {
+      title,
+      description,
+      coverImageKey,
+      categoryid,
+      modalidadesid,
+      dificultadid,
+      instructor,
+      requerimientos,
+    });
 
 		return NextResponse.json({ message: 'Curso creado exitosamente' });
 	} catch (error: unknown) {
@@ -122,28 +123,28 @@ export async function PUT(request: NextRequest) {
 			return respondWithError('No autorizado', 403);
 		}
 
-		const body = (await request.json()) as {
-			id: number;
-			title: string;
-			description: string;
-			coverImageKey: string;
-			categoryid: number;
-			modalidadesid: number;
-			dificultadid: number;
-			instructor: string;
-			requerimientos: string;
-		};
-		const {
-			id,
-			title,
-			description,
-			coverImageKey,
-			modalidadesid,
-			dificultadid,
-			categoryid,
-			instructor,
-			requerimientos,
-		} = body;
+    const body = (await request.json()) as {
+      id: number;
+      title: string;
+      description: string;
+      coverImageKey: string;
+      categoryid: number;
+      modalidadesid: number;
+      dificultadid: number;
+      instructor: string;
+      requerimientos: string;
+    };
+    const {
+      id,
+      title,
+      description,
+      coverImageKey,
+      modalidadesid,
+      dificultadid,
+      categoryid,
+      instructor,
+      requerimientos,
+    } = body;
 
 		const course = await getCourseById(id);
 		if (!course) {
@@ -154,16 +155,16 @@ export async function PUT(request: NextRequest) {
 			return respondWithError('No autorizado para actualizar este curso', 403);
 		}
 
-		await updateCourse(id, {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			instructor,
-			dificultadid,
-			requerimientos,
-		});
+    await updateCourse(id, {
+      title,
+      description,
+      coverImageKey,
+      categoryid,
+      modalidadesid,
+      instructor,
+      dificultadid,
+      requerimientos,
+    });
 
 		return NextResponse.json({ message: 'Curso actualizado exitosamente' });
 	} catch (error) {
@@ -174,25 +175,25 @@ export async function PUT(request: NextRequest) {
 
 // Eliminar un curso
 export async function DELETE(request: NextRequest) {
-	try {
-		const { searchParams } = new URL(request.url);
-		const courseId = searchParams.get('courseId');
+  try {
+    const { searchParams } = new URL(request.url);
+    const courseId = searchParams.get('courseId');
 
-		if (!courseId) {
-			return NextResponse.json(
-				{ error: 'ID no proporcionado' },
-				{ status: 400 }
-			);
-		}
+    if (!courseId) {
+      return NextResponse.json(
+        { error: 'ID no proporcionado' },
+        { status: 400 }
+      );
+    }
 
-		const parsedCourseId = parseInt(courseId);
-		await deleteCourse(parsedCourseId);
-		return NextResponse.json({ message: 'Curso eliminado exitosamente' });
-	} catch (error) {
-		console.error('Error al eliminar el curso:', error);
-		return NextResponse.json(
-			{ error: 'Error al eliminar el curso' },
-			{ status: 500 }
-		);
-	}
+    const parsedCourseId = parseInt(courseId);
+    await deleteCourse(parsedCourseId);
+    return NextResponse.json({ message: 'Curso eliminado exitosamente' });
+  } catch (error) {
+    console.error('Error al eliminar el curso:', error);
+    return NextResponse.json(
+      { error: 'Error al eliminar el curso' },
+      { status: 500 }
+    );
+  }
 }

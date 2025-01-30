@@ -111,3 +111,18 @@ export async function enrollInCourse(
 		}
 	}
 }
+
+// Verificar si el usuario está inscrito en un curso
+export async function isUserEnrolled(
+	courseId: number,
+	userId: string
+): Promise<boolean> {
+	const existingEnrollment = await db.query.enrollments.findFirst({
+		where: and(
+			eq(enrollments.userId, userId),
+			eq(enrollments.courseId, courseId)
+		),
+	});
+
+	return !!existingEnrollment;
+}

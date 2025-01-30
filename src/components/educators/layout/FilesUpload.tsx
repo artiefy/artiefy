@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import { FilePlus2, FileVideo, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { MdClose } from 'react-icons/md';
@@ -13,6 +14,7 @@ interface FileUploadProps {
   _required?: boolean;
   multiple?: boolean;
   onFileChange: (file: File | File[] | null | undefined) => void;
+  tipo: string;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -23,6 +25,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   _required = false,
   multiple = false,
   onFileChange,
+  tipo,
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileNames, setFileNames] = useState<string[]>([]);
@@ -32,6 +35,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);
+    const validFileTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+
     if (
       multiple &&
       selectedFiles.length + files.length > 5 &&
@@ -40,13 +53,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setErrors('No puedes subir más de 5 archivos.');
       return;
     }
+
     const validFiles = selectedFiles.filter(
-      (file) => file.size / (1024 * 1024) <= maxSize
+      (file) =>
+        file.size / (1024 * 1024) <= maxSize &&
+        (type !== 'file' || validFileTypes.includes(file.type))
     );
+
     if (validFiles.length !== selectedFiles.length) {
-      setErrors('Algunos archivos superan el tamaño máximo permitido.');
+      setErrors(
+        'Algunos archivos no son del tipo permitido o superan el tamaño máximo permitido.'
+      );
       return;
     }
+
     setFiles((prev) => [...prev, ...validFiles]);
     setFileNames((prev) => [...prev, ...validFiles.map((file) => file.name)]);
     setFileSizes((prev) => [...prev, ...validFiles.map((file) => file.size)]);
@@ -67,6 +87,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
     e.preventDefault();
     setIsDragging(false);
     const selectedFiles = Array.from(e.dataTransfer.files ?? []);
+    const validFileTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ];
+
     if (
       multiple &&
       selectedFiles.length + files.length > 5 &&
@@ -75,13 +105,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setErrors('No puedes subir más de 5 archivos.');
       return;
     }
+
     const validFiles = selectedFiles.filter(
-      (file) => file.size / (1024 * 1024) <= maxSize
+      (file) =>
+        file.size / (1024 * 1024) <= maxSize &&
+        (type !== 'file' || validFileTypes.includes(file.type))
     );
+
     if (validFiles.length !== selectedFiles.length) {
-      setErrors('Algunos archivos superan el tamaño máximo permitido.');
+      setErrors(
+        'Algunos archivos no son del tipo permitido o superan el tamaño máximo permitido.'
+      );
       return;
     }
+
     setFiles((prev) => [...prev, ...validFiles]);
     setFileNames((prev) => [...prev, ...validFiles.map((file) => file.name)]);
     setFileSizes((prev) => [...prev, ...validFiles.map((file) => file.size)]);
@@ -149,7 +186,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               htmlFor={`file-upload-${type}`}
               className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Seleccionar Archivo
+              Seleccionar {tipo}
             </label>
           </div>
         ) : (

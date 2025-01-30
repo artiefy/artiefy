@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { db } from "~/server/db";
 import { modalidades } from "~/server/db/schema";
 

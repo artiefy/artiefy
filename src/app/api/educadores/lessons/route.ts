@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
+
 import {
 	createLesson,
 	deleteLesson,
@@ -15,7 +16,8 @@ const respondWithError = (message: string, status: number) =>
 export async function GET(request: Request) {
 	try {
 		const url = new URL(request.url);
-		const courseId = parseInt(url.searchParams.get('courseId') ?? ''); // Obtiene el courseId de los query params
+		const courseIdParam = url.searchParams.get('courseId');
+		const courseId = courseIdParam ? parseInt(courseIdParam) : NaN; // Obtiene el courseId de los query params
 
 		// Verifica si el courseId es válido
 		if (isNaN(courseId)) {
@@ -28,7 +30,7 @@ export async function GET(request: Request) {
 		// Obtén las lecciones asociadas al curso
 		const lessons = await getLessonsByCourseId(courseId);
 
-		if (!lessons || lessons.length === 0) {
+		if (!lessons) {
 			return NextResponse.json(
 				{ error: 'Lecciones no encontradas para este curso' },
 				{ status: 404 }
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
 			coverVideoKey: string;
 			courseId: number;
 			resourceKey: string;
+			resourceNames: string;
 			modalidadesId: {
 				id: number;
 				name: string;
@@ -78,6 +81,7 @@ export async function POST(req: NextRequest) {
 			coverImageKey,
 			coverVideoKey,
 			resourceKey,
+			resourceNames,
 			courseId,
 		} = body;
 
@@ -90,6 +94,7 @@ export async function POST(req: NextRequest) {
 			coverImageKey, // Asegurarse de que el nombre de la columna coincida
 			coverVideoKey, // Asegurarse de que el nombre de la columna coincida
 			resourceKey, // Asegurarse de que el nombre de la columna coincida
+			resourceNames,
 			courseId,
 		});
 
@@ -101,7 +106,8 @@ export async function POST(req: NextRequest) {
 			!coverImageKey ||
 			!coverVideoKey ||
 			!resourceKey ||
-			!courseId
+			!courseId ||
+			!resourceNames
 		) {
 			console.log('Faltan campos obligatorios.');
 		}

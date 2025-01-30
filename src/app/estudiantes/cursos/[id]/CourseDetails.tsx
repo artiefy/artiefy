@@ -17,6 +17,7 @@ import {
 	FaCheckCircle,
 } from 'react-icons/fa';
 import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
+import Comments from '~/components/estudiantes/layout/Comments';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -109,7 +110,16 @@ export default function CourseDetails({
 		new Date(dateString).toISOString().split('T')[0];
 
 	const handleEnroll = async () => {
-		if (!isSignedIn || isEnrolling) {
+		if (!isSignedIn) {
+			toast({
+				title: 'Debes iniciar sesión',
+				description: 'Debes iniciar sesión para inscribirte en este curso.',
+				variant: 'destructive',
+			});
+			return;
+		}
+
+		if (isEnrolling) {
 			return;
 		}
 
@@ -212,7 +222,7 @@ export default function CourseDetails({
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbLink href="/estudiantes/cursos">
+							<BreadcrumbLink href="/estudiantes">
 								<FaUserGraduate className="mr-1 inline-block" /> Cursos
 							</BreadcrumbLink>
 						</BreadcrumbItem>
@@ -458,7 +468,7 @@ export default function CourseDetails({
 											<FaCheck className="mr-2" /> Suscrito Al Curso
 										</Button>
 										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-red-500 hover:bg-red-700 text-lg font-semibold"
+											className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
 											onClick={handleUnenroll}
 											disabled={isUnenrolling}
 										>
@@ -492,6 +502,8 @@ export default function CourseDetails({
 						</div>
 					</div>
 				)}
+				{/* Añadir el componente de comentarios aquí */}
+				<Comments courseId={course.id} />
 			</main>
 			<Footer />
 		</div>

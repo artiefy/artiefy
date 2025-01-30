@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState, type ChangeEvent } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
+
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
@@ -27,7 +29,9 @@ interface CourseFormProps {
     file: File | null,
     categoryid: number,
     modalidadesid: number,
-    dificultadesid: number
+    dificultadesid: number,
+    requerimientos: string,
+    options?: { signal: AbortSignal }
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -35,6 +39,8 @@ interface CourseFormProps {
   setTitle: (title: string) => void;
   description: string;
   setDescription: (description: string) => void;
+  requerimientos: string;
+  setRequerimientos: (requerimientos: string) => void;
   categoryid: number;
   setCategoryid: (categoryid: number) => void;
   modalidadesid: number;
@@ -58,6 +64,7 @@ export default function ModalFormCourse({
   const { user } = useUser();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [requerimientos, setRequerimientos] = useState('');
   const [categoryid, setCategoryid] = useState(0);
   const [modalidadesid, setModalidadesid] = useState(0);
   const [dificultadid, setDificultadid] = useState(0);
@@ -77,11 +84,14 @@ export default function ModalFormCourse({
     file: false,
     dificultad: false,
     modalidad: false,
+    requerimientos: false,
   });
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set());
   const [currentCoverImageKey] = useState(coverImageKey);
+  const [uploadController, setUploadController] =
+    useState<AbortController | null>(null);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -126,6 +136,8 @@ export default function ModalFormCourse({
   };
 
   const handleSubmit = async () => {
+    const controller = new AbortController();
+    setUploadController(controller);
     const newErrors = {
       title: !editingCourseId && !title,
       description: !editingCourseId && !description,
@@ -136,6 +148,7 @@ export default function ModalFormCourse({
       dificultad: false,
       file: !editingCourseId && !file && !currentCoverImageKey,
       modalidad: false,
+      requerimientos: !editingCourseId && !requerimientos,
     };
 
     if (editingCourseId) {
@@ -146,7 +159,8 @@ export default function ModalFormCourse({
       newErrors.file = modifiedFields.has('file') && !file;
       newErrors.modalidadesid =
         modifiedFields.has('modalidadesid') && !modalidadesid;
-      newErrors.file = modifiedFields.has('file') && !file;
+      newErrors.requerimientos =
+        modifiedFields.has('requerimientos') && !requerimientos;
     }
 
     setErrors(newErrors);
@@ -165,8 +179,14 @@ export default function ModalFormCourse({
         file,
         categoryid,
         modalidadesid,
-        dificultadid
+        dificultadid,
+        requerimientos,
+        { signal: controller.signal } // Pasar el signal al onSubmitAction
       );
+      if (controller.signal.aborted) {
+        console.log('Upload cancelled');
+        return; // Salir de la función si se cancela la carga
+      }
       setIsUploading(false);
       console.log('Datos enviados:', {
         title,
@@ -175,11 +195,24 @@ export default function ModalFormCourse({
         categoryid,
         modalidadesid,
         dificultadid,
+        requerimientos,
       });
     } catch (error) {
+      if ((error as Error).name === 'AbortError') {
+        console.log('Upload cancelled');
+        return; // Salir de la función si se cancela la carga
+      } else {
+        console.error('Error al enviar:', error);
+      }
       setIsUploading(false);
-      console.error('Error al enviar:', error);
     }
+  };
+
+  const handleCancel = () => {
+    if (uploadController) {
+      uploadController.abort();
+    }
+    onCloseAction();
   };
 
   const handleFieldChange = (
@@ -193,6 +226,9 @@ export default function ModalFormCourse({
         break;
       case 'description':
         setDescription(value as string);
+        break;
+      case 'requerimientos':
+        setRequerimientos(value as string);
         break;
       case 'categoryid':
         setCategoryid(value as number);
@@ -261,7 +297,7 @@ export default function ModalFormCourse({
 
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-h-[90vh] max-w-[83.333333%] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
         <DialogHeader className="mt-4">
           <DialogTitle className="text-4xl">
             {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
@@ -301,11 +337,28 @@ export default function ModalFormCourse({
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
-          <div className="mb-4 flex justify-evenly">
-            <div className="flex flex-col">
+          <label
+            htmlFor="requerimientos"
+            className="text-lg font-medium text-primary"
+          >
+            Requerimientos previos
+          </label>
+          <textarea
+            placeholder="Escriba en esta zona los requerimientos o conocimientos previos para el curso"
+            value={requerimientos}
+            onChange={(e) =>
+              handleFieldChange('requerimientos', e.target.value)
+            }
+            className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
+          />
+          {errors.requerimientos && (
+            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
+          )}
+          <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mx-auto flex flex-col justify-center">
               <label
                 htmlFor="dificultadid"
-                className="text-lg font-medium text-primary"
+                className="justify-center text-center text-lg font-medium text-primary"
               >
                 Dificultad
               </label>
@@ -320,10 +373,10 @@ export default function ModalFormCourse({
                 </p>
               )}
             </div>
-            <div className="flex flex-col">
+            <div className="mx-auto flex flex-col justify-center">
               <label
                 htmlFor="modalidadesid"
-                className="text-lg font-medium text-primary"
+                className="justify-center text-center text-lg font-medium text-primary"
               >
                 Modalidad
               </label>
@@ -338,10 +391,10 @@ export default function ModalFormCourse({
                 </p>
               )}
             </div>
-            <div className="flex flex-col">
+            <div className="mx-auto flex flex-col justify-center">
               <label
                 htmlFor="categoryid"
-                className="text-lg font-medium text-primary"
+                className="justify-center text-center text-lg font-medium text-primary"
               >
                 Categoría
               </label>
@@ -372,7 +425,7 @@ export default function ModalFormCourse({
             Imagen de portada
           </label>
           <div
-            className={`mx-auto w-1/2 rounded-lg border-2 border-dashed border-primary p-8 ${
+            className={`mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary p-8 lg:w-1/2 ${
               isDragging
                 ? 'border-blue-500 bg-blue-50'
                 : errors.file
@@ -457,7 +510,13 @@ export default function ModalFormCourse({
         {errors.file && (
           <p className="text-sm text-red-500">Este campo es obligatorio.</p>
         )}
-        <DialogFooter>
+        <DialogFooter className="mt-4 grid grid-cols-2 gap-4">
+          <Button
+            onClick={handleCancel}
+            className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
+          >
+            Cancelar
+          </Button>
           <Button onClick={handleSubmit} variant="save" disabled={uploading}>
             {uploading
               ? 'Subiendo...'

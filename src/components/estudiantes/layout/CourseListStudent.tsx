@@ -1,6 +1,7 @@
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
+
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -38,10 +39,10 @@ export default async function CourseListStudent({
 
 	return (
 		<>
-			<h2 className="my-6 text-3xl font-bold text-primary ml-8 lg:ml-20">
+			<h2 className="my-6 ml-8 text-3xl font-bold text-primary lg:ml-20">
 				Cursos Artie
 			</h2>
-			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:px-20 lg:grid-cols-3">
+			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
 				{await Promise.all(
 					courses.map(async (course) => {
 						let imageUrl;
@@ -68,7 +69,7 @@ export default async function CourseListStudent({
 												<Image
 													src={imageUrl || '/placeholder.svg'}
 													alt={course.title || 'Imagen del curso'}
-													className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
+													className="rounded-2xl object-cover p-2 transition-transform duration-300 hover:scale-105"
 													fill
 													placeholder="blur"
 													blurDataURL={blurDataURL ?? undefined}
@@ -80,8 +81,8 @@ export default async function CourseListStudent({
 									</CardHeader>
 
 									<CardContent className="flex grow flex-col justify-between space-y-2 px-2">
-										<CardTitle className="rounded-lg text-lg text-background">
-											<div className="font-bold text-primary">
+										<CardTitle className="rounded text-lg text-background">
+											<div className="-mt-4 font-bold text-primary">
 												{course.title}
 											</div>
 										</CardTitle>

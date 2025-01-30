@@ -1,6 +1,7 @@
 'use server';
 
 import { eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { scores } from '~/server/db/schema';
 import type { Score } from '~/types';
