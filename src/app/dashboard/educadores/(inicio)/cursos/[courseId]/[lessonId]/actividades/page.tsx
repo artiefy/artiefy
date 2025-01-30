@@ -189,7 +189,7 @@ const Page: React.FC = () => {
             </h2>
           </div>
           {/* <p className="mb-2 text-2xl">Lección ID: {lessonTitle}</p> */}
-          <p className="mb-2 text-2xl">Lección ID:</p>
+          <p className="mb-2 text-2xl">Lección ID: {lessonsId}</p>
           <Label className="mb-2 text-xl text-black">Titulo</Label>
           <Input
             className="text-black"

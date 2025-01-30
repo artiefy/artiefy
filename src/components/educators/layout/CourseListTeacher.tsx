@@ -1,107 +1,110 @@
-'use client';
-
-import { useState } from 'react';
-
+import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
 import { Badge } from '~/components/educators/ui/badge';
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
 } from '~/components/educators/ui/card';
+import { Button } from '~/components/estudiantes/ui/button';
 
 interface Course {
-  id: number;
-  title: string;
-  coverImageKey: string | null;
-  categoryid: string;
-  description: string;
-  instructor: string;
-  rating?: number;
-  modalidadesid: string;
-  dificultadid: string;
-  createdAt: string;
+	id: number;
+	title: string;
+	coverImageKey: string | null;
+	categoryid: string;
+	description: string;
+	instructor: string;
+	rating?: number;
+	modalidadesid: string;
+	dificultadid: string;
+	createdAt: string;
 }
 
 interface CourseListTeacherProps {
-  courses: Course[];
+	courses: Course[];
 }
 
 export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
-  const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
+	return (
+		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
+			{courses.map((course) => (
+				<div key={course.id} className="group relative">
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
+						<CardHeader>
+							<AspectRatio ratio={16 / 9}>
+								<div className="relative size-full">
+									<Image
+										src={
+											`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}` ||
+											'/placeholder.svg'
+										}
+										alt={course.title || 'Imagen del curso'}
+										className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
+										fill
+										sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+										quality={75}
+									/>
+								</div>
+							</AspectRatio>
+						</CardHeader>
 
-  const handleImageLoad = (courseId: number) => {
-    setLoadedImages((prev) => ({ ...prev, [courseId]: true }));
-  };
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {courses.map((course) => (
-        <Card
-          key={course.id}
-          className="flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out active:scale-105"
-        >
-          <div>
-            <CardHeader>
-              <AspectRatio ratio={16 / 9}>
-                <Image
-                  src={
-                    course.coverImageKey
-                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                  }
-                  alt={course.title || 'Imagen del curso'}
-                  className={`rounded-lg object-cover transition-opacity duration-500 ${
-                    loadedImages[course.id] ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  fill
-                  placeholder="blur"
-                  blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImciPjxzdG9wIHN0b3AtY29sb3I9IiNlZWUiIG9mZnNldD0iMjAlIi8+PHN0b3Agc3RvcC1jb2xvcj0iI2Y1ZjVmNSIgb2Zmc2V0PSI1MCUiLz48c3RvcCBzdG9wLWNvbG9yPSIjZWVlIiBvZmZzZXQ9IjcwJSIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjZWVlIi8+PHJlY3QgaWQ9InIiIHdpZHRoPSI2MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJ1cmwoI2cpIi8+PGFuaW1hdGUgeGxpbms6aHJlZj0iI3IiIGF0dHJpYnV0ZU5hbWU9IngiIGZyb209Ii02MDAiIHRvPSI2MDAiIGR1cj0iMXMiIHJlcGVhdENvdW50PSJpbmRlZmluaXRlIi8+PC9zdmc+"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  onLoad={(_event) => handleImageLoad(course.id)}
-                />
-              </AspectRatio>
-            </CardHeader>
-            <CardContent>
-              <CardTitle className="mb-2 rounded-lg text-lg text-background">
-                <div className="font-bold">{course.title}</div>
-              </CardTitle>
-              <div className="mb-2 flex items-center">
-                <p className="text-sm font-bold text-gray-600">Categoría: </p>
-                <Badge
-                  variant="outline"
-                  className="ml-1 border-primary bg-background text-primary hover:bg-black/70"
-                >
-                  {course.categoryid}
-                </Badge>
-              </div>
-              <p className="mb-2 line-clamp-2 text-sm text-gray-600">
-                {course.description}
-              </p>
-              <p className="text-sm font-bold italic text-gray-600">
-                Educador:{' '}
-                <span className="font-bold italic">{course.instructor}</span>
-              </p>
-              <p className="text-sm font-bold italic text-gray-600">
-                Modalidad:{' '}
-                <span className="font-bold italic">{course.modalidadesid}</span>
-              </p>
-            </CardContent>
-          </div>
-          <CardFooter className="-mt-6 flex flex-col items-start justify-between">
-            <Link
-              href={`/dashboard/educadores/cursos/${course.id}`}
-              className="mx-auto mt-3 rounded-lg border-orange-500 bg-orange-500 p-3 text-white hover:border-orange-500/90 hover:bg-orange-500/90"
-            >
-              Ver Curso
-            </Link>
-          </CardFooter>
-        </Card>
-      ))}
-    </div>
-  );
+						<CardContent className="flex grow flex-col justify-between space-y-2 px-2">
+							<CardTitle className="rounded-lg text-lg text-background">
+								<div className="font-bold text-primary">{course.title}</div>
+							</CardTitle>
+							<div className="flex items-center">
+								Categoria:
+								<Badge
+									variant="outline"
+									className="border-primary bg-background text-primary hover:bg-black/70"
+								>
+									{course.categoryid}
+								</Badge>
+							</div>
+							<p className="line-clamp-2 text-sm text-gray-300">
+								Descripcion: {course.description}
+							</p>
+						</CardContent>
+						<CardFooter className="flex flex-col items-start justify-between space-y-2 px-2">
+							<div className="flex w-full justify-between">
+								<p className="text-sm font-bold italic text-gray-300">
+									Educador:{' '}
+									<span className="font-bold italic">{course.instructor}</span>
+								</p>
+								<p className="text-sm font-bold text-red-500">
+									{course.modalidadesid}
+								</p>
+							</div>
+							<div className="flex w-full items-center justify-between">
+								<Button asChild>
+									<Link
+										href={`/dashboard/educadores/cursos/${course.id}`}
+										className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
+									>
+										<p className="font-bold">Ver Curso</p>
+										<ArrowRightIcon className="animate-bounce-right size-5" />
+										<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+											<div className="relative h-full w-10 bg-white/30"></div>
+										</div>
+									</Link>
+								</Button>
+								<div className="flex items-center">
+									<StarIcon className="size-5 text-yellow-500" />
+									<span className="ml-1 text-sm font-bold text-yellow-500">
+										{(course.rating ?? 0).toFixed(1)}
+									</span>
+								</div>
+							</div>
+						</CardFooter>
+					</Card>
+				</div>
+			))}
+		</div>
+	);
 }

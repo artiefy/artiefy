@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { useAuth } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
@@ -16,10 +17,9 @@ import {
 	FaLock,
 	FaCheckCircle,
 } from 'react-icons/fa';
+
 import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
-import Comments from '~/components/estudiantes/layout/Comments';
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
@@ -48,11 +48,7 @@ import { unenrollFromCourse } from '~/server/actions/courses/unenrollFromCourse'
 import { getLessonsByCourseId } from '~/server/actions/lessons/getLessonsByCourseId';
 import type { Course, Enrollment } from '~/types';
 
-export default function CourseDetails({
-	course: initialCourse,
-}: {
-	course: Course;
-}) {
+export default function Page({ course: initialCourse }: { course: Course }) {
 	const [course, setCourse] = useState<Course>(initialCourse);
 	const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -110,16 +106,7 @@ export default function CourseDetails({
 		new Date(dateString).toISOString().split('T')[0];
 
 	const handleEnroll = async () => {
-		if (!isSignedIn) {
-			toast({
-				title: 'Debes iniciar sesión',
-				description: 'Debes iniciar sesión para inscribirte en este curso.',
-				variant: 'destructive',
-			});
-			return;
-		}
-
-		if (isEnrolling) {
+		if (!isSignedIn || isEnrolling) {
 			return;
 		}
 
@@ -211,7 +198,6 @@ export default function CourseDetails({
 
 	return (
 		<div className="min-h-screen bg-background">
-			<Header />
 			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
 				<Breadcrumb className="pb-6">
 					<BreadcrumbList>
@@ -397,7 +383,7 @@ export default function CourseDetails({
 															asChild
 															className="mt-4 text-background hover:underline active:scale-95"
 														>
-															<Link href={`/estudiantes/clases/${lesson.id}`}>
+															<Link href={`./${course.id}/clases/${lesson.id}`}>
 																Ver Clase
 															</Link>
 														</Button>
@@ -468,7 +454,7 @@ export default function CourseDetails({
 											<FaCheck className="mr-2" /> Suscrito Al Curso
 										</Button>
 										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+											className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-700"
 											onClick={handleUnenroll}
 											disabled={isUnenrolling}
 										>
@@ -502,8 +488,6 @@ export default function CourseDetails({
 						</div>
 					</div>
 				)}
-				{/* Añadir el componente de comentarios aquí */}
-				<Comments courseId={course.id} />
 			</main>
 			<Footer />
 		</div>
