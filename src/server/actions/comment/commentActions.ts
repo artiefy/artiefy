@@ -1,4 +1,5 @@
-"use server"
+'use server';
+
 import { currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { isUserEnrolled } from '~/server/actions/courses/enrollInCourse';
@@ -16,6 +17,7 @@ export async function addComment(courseId: number, content: string, rating: numb
   }
 
   const userId = user.id;
+  const userName = user.username ?? user.emailAddresses[0]?.emailAddress ?? 'Anónimo';
 
   try {
     const enrolled = await isUserEnrolled(courseId, userId);
@@ -26,6 +28,7 @@ export async function addComment(courseId: number, content: string, rating: numb
 
     await redis.hmset(`comment:${userId}:${courseId}:${new Date().toISOString()}`, {
       userId,
+      userName,
       courseId,
       content,
       rating,
@@ -64,6 +67,7 @@ export async function getCommentsByCourseId(courseId: number): Promise<{ comment
           content: comment.content as string,
           rating: Number(comment.rating),
           createdAt: comment.createdAt as string,
+          userName: comment.userName as string, // Añadir el nombre del usuario
         };
       })
     );
@@ -80,4 +84,5 @@ interface Comment {
   content: string;
   rating: number;
   createdAt: string;
+  userName: string;
 }

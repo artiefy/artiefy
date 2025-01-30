@@ -36,7 +36,11 @@ const eslintConfig = [
         plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
         rules: {
             'tailwindcss/no-custom-classname': 'warn',
-            'tailwindcss/classnames-order': 'off',
+            'tailwindcss/classnames-order': 'warn',
+            'tailwindcss/enforces-negative-arbitrary-values': 'warn',
+            'tailwindcss/enforces-shorthand': 'warn',
+            'tailwindcss/migration-from-tailwind-2': 'warn',
+            'tailwindcss/no-contradicting-classname': 'error',
             '@typescript-eslint/consistent-type-definitions': 'warn',
             '@typescript-eslint/consistent-type-imports': [
                 'warn',
@@ -118,16 +122,23 @@ const eslintConfig = [
             },
             tailwindcss: {
                 config: './tailwind.config.js',
-                cssFiles: ['./src/**/*.css'],
+                cssFiles: [
+                    '**/*.css',
+                    '!**/node_modules',
+                    '!**/.*',
+                    '!**/dist',
+                    '!**/build',
+                ],
                 callees: ['classnames', 'clsx', 'ctl'],
                 tags: ['tw'],
-                classRegex: [
-                    'tw`([^`]*)',
-                    'tw="([^"]*)',
-                    'tw={"([^"}]*)',
-                    'tw\\.\\w+`([^`]*)',
-                    'tw\\(.*?\\)`([^`]*)',
-                ],
+                classRegex: '^(class|className)$',
+                cssFilesRefreshRate: 5000,
+                skipClassAttribute: false,
+                exposeConfiguration: true,
+                future: {
+                    purgeLayersByDefault: true,
+                },
+                removeDeprecatedUtilities: true,
             },
             next: {
                 rootDir: './',

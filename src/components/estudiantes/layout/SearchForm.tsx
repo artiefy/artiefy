@@ -46,7 +46,7 @@ const SearchForm: React.FC = () => {
     };
 
     return (
-        <div className="flex w-full justify-center lg:justify-end p-4 sm:p-8 lg:px-20">
+        <div className="flex w-full justify-center p-4 sm:p-8 lg:justify-end lg:px-20">
             <div className="relative w-full max-w-lg">
                 <Input
                     type="search"

@@ -64,7 +64,7 @@ export default function StudentDashboard({
 				<div className="container mx-auto px-8 sm:px-12 lg:px-16">
 					<div className="flex flex-col space-y-12 sm:space-y-16">
 						{isLoading ? (
-							<Skeleton className="h-10 w-full max-w-lg mx-auto" />
+							<Skeleton className="mx-auto h-10 w-full max-w-lg" />
 						) : (
 							<div className="mt-8 flex flex-col items-center space-y-4">
 								<div className="flex items-center">

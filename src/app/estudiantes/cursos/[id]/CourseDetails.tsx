@@ -17,6 +17,7 @@ import {
 	FaCheckCircle,
 } from 'react-icons/fa';
 import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
+import Comments from '~/components/estudiantes/layout/Comments';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -45,7 +46,6 @@ import { enrollInCourse } from '~/server/actions/courses/enrollInCourse';
 import { getCourseById } from '~/server/actions/courses/getCourseById';
 import { unenrollFromCourse } from '~/server/actions/courses/unenrollFromCourse';
 import { getLessonsByCourseId } from '~/server/actions/lessons/getLessonsByCourseId';
-import Comments from '~/components/estudiantes/layout/Comments';
 import type { Course, Enrollment } from '~/types';
 
 export default function CourseDetails({

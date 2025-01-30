@@ -2,7 +2,6 @@
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "files.autoSave": "afterDelay",
-  "prettier.requireConfig": true,
   "editor.codeActionsOnSave": {
       "source.fixAll.eslint": "explicit"
   },
@@ -28,10 +27,9 @@
       "javascript",
       "javascriptreact",
       "typescript",
-      "typescriptreact"
+      "typescriptreact",
   ],
   "typescript.enablePromptUseWorkspaceTsdk": false,
-  "github.copilot.chat.completionContext.typescript.mode": "off",
   "tailwindCSS.includeLanguages": {
       "typescript": "javascript",
       "typescriptreact": "javascript",
