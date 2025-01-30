@@ -7,8 +7,8 @@ import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useSearchParams, useRouter } from 'next/navigation';
 
+import { useSearchParams, useRouter } from 'next/navigation';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
@@ -17,7 +17,9 @@ import Loading from '../../loading';
 export default function SignInPage() {
 	const { isLoaded, isSignedIn } = useAuth();
 	const { signIn, setActive } = useSignIn();
-	const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(null);
+	const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
+		null
+	);
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [code, setCode] = useState('');
@@ -42,7 +44,14 @@ export default function SignInPage() {
 
 	const signInWith = async (strategy: OAuthStrategy) => {
 		if (!signIn) {
-			setErrors([{ code: 'sign_in_undefined', message: 'SignIn no está definido', longMessage: 'SignIn no está definido', meta: {} }]);
+			setErrors([
+				{
+					code: 'sign_in_undefined',
+					message: 'SignIn no está definido',
+					longMessage: 'SignIn no está definido',
+					meta: {},
+				},
+			]);
 			setIsSubmitting(false);
 			return;
 		}
@@ -55,7 +64,14 @@ export default function SignInPage() {
 			});
 		} catch {
 			setLoadingProvider(null);
-			setErrors([{ code: 'oauth_error', message: 'Error durante el inicio de sesión con OAuth', longMessage: 'Error durante el inicio de sesión con OAuth', meta: {} }]);
+			setErrors([
+				{
+					code: 'oauth_error',
+					message: 'Error durante el inicio de sesión con OAuth',
+					longMessage: 'Error durante el inicio de sesión con OAuth',
+					meta: {},
+				},
+			]);
 		}
 	};
 
@@ -78,18 +94,42 @@ export default function SignInPage() {
 				}
 				router.replace(redirectTo);
 			} else if (signInAttempt.status === 'needs_first_factor') {
-				const supportedStrategies = signInAttempt.supportedFirstFactors?.map(factor => factor.strategy) ?? [];
+				const supportedStrategies =
+					signInAttempt.supportedFirstFactors?.map(
+						(factor) => factor.strategy
+					) ?? [];
 				if (!supportedStrategies.includes('password')) {
-					setErrors([{ code: 'invalid_strategy', message: 'Estrategia de verificación inválida', longMessage: 'Estrategia de verificación inválida', meta: {} }]);
+					setErrors([
+						{
+							code: 'invalid_strategy',
+							message: 'Estrategia de verificación inválida',
+							longMessage: 'Estrategia de verificación inválida',
+							meta: {},
+						},
+					]);
 				}
 			} else {
-				setErrors([{ code: 'unknown_error', message: 'Ocurrió un error desconocido', longMessage: 'Ocurrió un error desconocido', meta: {} }]);
+				setErrors([
+					{
+						code: 'unknown_error',
+						message: 'Ocurrió un error desconocido',
+						longMessage: 'Ocurrió un error desconocido',
+						meta: {},
+					},
+				]);
 			}
 		} catch (err) {
 			if (isClerkAPIResponseError(err)) {
 				setErrors(err.errors);
 			} else {
-				setErrors([{ code: 'unknown_error', message: 'Ocurrió un error desconocido', longMessage: 'Ocurrió un error desconocido', meta: {} }]);
+				setErrors([
+					{
+						code: 'unknown_error',
+						message: 'Ocurrió un error desconocido',
+						longMessage: 'Ocurrió un error desconocido',
+						meta: {},
+					},
+				]);
 			}
 		} finally {
 			setIsSubmitting(false);
@@ -113,7 +153,14 @@ export default function SignInPage() {
 			if (isClerkAPIResponseError(err)) {
 				setErrors(err.errors);
 			} else {
-				setErrors([{ code: 'unknown_error', message: 'Ocurrió un error desconocido', longMessage: 'Ocurrió un error desconocido', meta: {} }]);
+				setErrors([
+					{
+						code: 'unknown_error',
+						message: 'Ocurrió un error desconocido',
+						longMessage: 'Ocurrió un error desconocido',
+						meta: {},
+					},
+				]);
 			}
 		} finally {
 			setIsSubmitting(false);
@@ -127,7 +174,14 @@ export default function SignInPage() {
 
 		try {
 			if (!signIn) {
-				setErrors([{ code: 'sign_in_undefined', message: 'SignIn no está definido', longMessage: 'SignIn no está definido', meta: {} }]);
+				setErrors([
+					{
+						code: 'sign_in_undefined',
+						message: 'SignIn no está definido',
+						longMessage: 'SignIn no está definido',
+						meta: {},
+					},
+				]);
 				setIsSubmitting(false);
 				return;
 			}
@@ -146,21 +200,39 @@ export default function SignInPage() {
 				}
 				router.replace('/');
 			} else {
-				setErrors([{ code: 'unknown_error', message: 'Ocurrió un error desconocido', longMessage: 'Ocurrió un error desconocido', meta: {} }]);
+				setErrors([
+					{
+						code: 'unknown_error',
+						message: 'Ocurrió un error desconocido',
+						longMessage: 'Ocurrió un error desconocido',
+						meta: {},
+					},
+				]);
 			}
 		} catch (err) {
 			if (isClerkAPIResponseError(err)) {
 				setErrors(err.errors);
 			} else {
-				setErrors([{ code: 'unknown_error', message: 'Ocurrió un error desconocido', longMessage: 'Ocurrió un error desconocido', meta: {} }]);
+				setErrors([
+					{
+						code: 'unknown_error',
+						message: 'Ocurrió un error desconocido',
+						longMessage: 'Ocurrió un error desconocido',
+						meta: {},
+					},
+				]);
 			}
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 
-	const emailError = errors?.some(error => error.code === 'form_identifier_not_found');
-	const passwordError = errors?.some(error => error.code === 'form_password_incorrect');
+	const emailError = errors?.some(
+		(error) => error.code === 'form_identifier_not_found'
+	);
+	const passwordError = errors?.some(
+		(error) => error.code === 'form_password_incorrect'
+	);
 
 	return (
 		<div className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -185,7 +257,7 @@ export default function SignInPage() {
 							alt="Logo de Artiefy"
 							fill
 							className="object-contain"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 							priority
 						/>
 					</AspectRatio>
@@ -201,54 +273,60 @@ export default function SignInPage() {
 							<ul>
 								{errors.map((el, index) => (
 									<li key={index} className="-my-4 text-sm text-rose-400">
-										{el.code === 'form_password_incorrect' ? 'Contraseña incorrecta. Inténtalo de nuevo o usa otro método.' : el.code === 'form_identifier_not_found' ? 'No se pudo encontrar tu cuenta.' : el.longMessage}
+										{el.code === 'form_password_incorrect'
+											? 'Contraseña incorrecta. Inténtalo de nuevo o usa otro método.'
+											: el.code === 'form_identifier_not_found'
+												? 'No se pudo encontrar tu cuenta.'
+												: el.longMessage}
 									</li>
 								))}
 							</ul>
 						)}
 						{!successfulCreation && !isForgotPassword ? (
 							<form onSubmit={handleSubmit}>
-              <div className="flex justify-center">
-                  <input
-                      onChange={(e) => setEmail(e.target.value)}
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={email}
-                      placeholder="Correo Electrónico"
-                      required
-                      className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${emailError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
-                  />
-              </div>
-              <div className="mt-4 flex justify-center">
-                  <input
-                      onChange={(e) => setPassword(e.target.value)}
-                      id="password"
-                      name="password"
-                      type="password"
-                      value={password}
-                      placeholder="Contraseña"
-                      required
-                      className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${passwordError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
-                  />
-              </div>
-              <div className="mt-6 flex justify-center">
-                  <button
-                      type="submit"
-                      className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
-                      style={{ width: '150px' }}
-                      disabled={isSubmitting}
-                  >
-                      <div className="flex w-full items-center justify-center">
-                          {isSubmitting ? (
-                              <Icons.spinner className="size-5 animate-spin text-primary" />
-                          ) : (
-                              <span className="inline-block font-bold">COMIENZA YA</span>
-                          )}
-                      </div>
-                  </button>
-              </div>
-          </form>
+								<div className="flex justify-center">
+									<input
+										onChange={(e) => setEmail(e.target.value)}
+										id="email"
+										name="email"
+										type="email"
+										value={email}
+										placeholder="Correo Electrónico"
+										required
+										className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${emailError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
+									/>
+								</div>
+								<div className="mt-4 flex justify-center">
+									<input
+										onChange={(e) => setPassword(e.target.value)}
+										id="password"
+										name="password"
+										type="password"
+										value={password}
+										placeholder="Contraseña"
+										required
+										className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${passwordError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
+									/>
+								</div>
+								<div className="mt-6 flex justify-center">
+									<button
+										type="submit"
+										className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic text-primary shadow ring-1 ring-inset ring-primary hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
+										style={{ width: '150px' }}
+										disabled={isSubmitting}
+									>
+										<div className="flex w-full items-center justify-center">
+											{isSubmitting ? (
+												<Icons.spinner className="size-5 animate-spin text-primary" />
+											) : (
+												<span className="inline-block font-bold">
+													COMIENZA YA
+												</span>
+											)}
+										</div>
+									</button>
+								</div>
+							</form>
 						) : successfulCreation ? (
 							<form onSubmit={handleResetPassword}>
 								<div>
@@ -286,7 +364,9 @@ export default function SignInPage() {
 											{isSubmitting ? (
 												<Icons.spinner className="size-5 animate-spin text-primary" />
 											) : (
-												<span className="inline-block font-bold">RESTABLECER</span>
+												<span className="inline-block font-bold">
+													RESTABLECER
+												</span>
 											)}
 										</div>
 									</button>
@@ -317,14 +397,18 @@ export default function SignInPage() {
 											{isSubmitting ? (
 												<Icons.spinner className="size-5 animate-spin text-primary" />
 											) : (
-												<span className="inline-block font-bold">ENVIAR CÓDIGO</span>
+												<span className="inline-block font-bold">
+													ENVIAR CÓDIGO
+												</span>
 											)}
 										</div>
 									</button>
 								</div>
 							</form>
 						)}
-						{secondFactor && <p>2FA es requerido, pero esta interfaz no lo maneja.</p>}
+						{secondFactor && (
+							<p>2FA es requerido, pero esta interfaz no lo maneja.</p>
+						)}
 						<div className="mt-4 text-center">
 							<p>O ingresa con tu cuenta:</p>
 							<div className="mt-2 flex justify-center space-x-4">

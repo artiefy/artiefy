@@ -1,11 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-
 import { RocketLaunchIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
 	Carousel,
@@ -20,10 +18,8 @@ import { type Course } from '~/types';
 import '~/styles/searchBar.css';
 
 interface StudentDashboardProps {
-  initialCourses: Course[];
+	initialCourses: Course[];
 }
-
-
 
 export default function StudentDashboard({
 	initialCourses,
@@ -53,7 +49,8 @@ export default function StudentDashboard({
 
 	const sortedCourses = useMemo(() => {
 		return [...courses].sort(
-			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+			(a, b) =>
+				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
 		);
 	}, [courses]);
 
@@ -206,7 +203,7 @@ export default function StudentDashboard({
 														<div className="mb-2 flex items-center justify-between">
 															<Badge
 																variant="outline"
-																className="border-primary bg-background text-primary hover:bg-black"
+																className="mb-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
 															>
 																{course.category?.name}
 															</Badge>

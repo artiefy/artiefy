@@ -27,10 +27,9 @@
       "javascript",
       "javascriptreact",
       "typescript",
-      "typescriptreact"
+      "typescriptreact",
   ],
   "typescript.enablePromptUseWorkspaceTsdk": false,
-  "github.copilot.chat.completionContext.typescript.mode": "off",
   "tailwindCSS.includeLanguages": {
       "typescript": "javascript",
       "typescriptreact": "javascript",
@@ -40,32 +39,5 @@
   "tailwindCSS.emmetCompletions": true,
   "css.validate": false,
   "scss.validate": false,
-  "less.validate": false,
-  "responsiveViewer.breakpoints": [
-      {
-          "name": "sm",
-          "width": 640,
-          "height": 800
-      },
-      {
-          "name": "md",
-          "width": 768,
-          "height": 800
-      },
-      {
-          "name": "lg",
-          "width": 1024,
-          "height": 800
-      },
-      {
-          "name": "xl",
-          "width": 1280,
-          "height": 800
-      },
-      {
-          "name": "2xl",
-          "width": 1536,
-          "height": 800
-      }
-  ]
+  "less.validate": false
 }

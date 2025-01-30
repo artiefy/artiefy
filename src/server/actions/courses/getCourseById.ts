@@ -36,30 +36,27 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
       })
     : [];
 
-  const transformedCourse: Course = {
-    ...course,
-    totalStudents: course.enrollments?.length ?? 0,
-    lessons:
-      course.lessons?.map((lesson) => {
-        const lessonProgress = userLessonsProgressData.find(
-          (progress) => progress.lessonId === lesson.id
-        );
-        return {
-          ...lesson,
-          isLocked: lessonProgress ? lessonProgress.isLocked : true,
-          isCompleted: lessonProgress ? lessonProgress.isCompleted : false,
-          userProgress: lessonProgress ? lessonProgress.progress : 0,
-          porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
-          activities:
-            lesson.activities?.map((activity) => ({
-              ...activity,
-              isCompleted: false,
-              userProgress: 0,
-              lastUpdated: activity.lastUpdated,
-            })) ?? [],
-        };
-      }) ?? [],
-  };
+    const transformedCourse: Course = {
+        ...course,
+        totalStudents: course.enrollments?.length ?? 0,
+        lessons: course.lessons?.map((lesson) => {
+            const lessonProgress = userLessonsProgressData.find(
+                (progress) => progress.lessonId === lesson.id
+            );
+            return {
+                ...lesson,
+                isLocked: lessonProgress ? lessonProgress.isLocked : true,
+                isCompleted: lessonProgress ? lessonProgress.isCompleted : false,
+                userProgress: lessonProgress ? lessonProgress.progress : 0,
+                porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
+                activities: lesson.activities?.map((activity) => ({
+                    ...activity,
+                    isCompleted: false,
+                    userProgress: 0,
+                })) ?? [],
+            };
+        }) ?? [],
+    };
 
   return transformedCourse;
 }
