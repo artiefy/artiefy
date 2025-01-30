@@ -35,7 +35,22 @@ const eslintConfig = [
 		},
 		plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
 		rules: {
-			'tailwindcss/no-custom-classname': 'warn',
+			'tailwindcss/no-custom-classname': [
+				'warn',
+				{
+					config: './tailwind.config.js',
+					cssFiles: [
+						'**/*.css',
+						'!**/node_modules',
+						'!**/.*',
+						'!**/dist',
+						'!**/build',
+					],
+					cssFilesRefreshRate: 5000,
+					callees: ['classnames', 'clsx', 'ctl'],
+					tags: ['tw'],
+				},
+			],
 			'tailwindcss/classnames-order': 'warn',
 			'tailwindcss/enforces-negative-arbitrary-values': 'warn',
 			'tailwindcss/enforces-shorthand': 'warn',
@@ -135,38 +150,6 @@ const eslintConfig = [
 				cssFilesRefreshRate: 5000,
 				skipClassAttribute: false,
 				exposeConfiguration: true,
-				whitelist: [
-					// Clases existentes
-					'animate-gradient-x',
-					'animate-bounce-right',
-					'button-hover',
-					'button-hover-effect',
-					'cl-formButtonPrimary',
-					'cl-userButtonOuterIdentifier',
-					'custom-padding',
-					'text-shadow',
-					'animate-gradient',
-					'zoom-in',
-
-					// Nuevas clases personalizadas basadas en tu configuración de Tailwind
-					'animate-bounce',
-					'animate-spin',
-					'animate-loading-dot',
-					'animate-accordion-down',
-					'animate-accordion-up',
-
-					// Regex para capturar clases de fuentes personalizadas
-					'font-sans',
-
-					// Regex para capturar clases de colores personalizados
-					'/^(bg|text|border|ring)-(background|foreground|card|popover|primary|secondary|muted|accent|destructive)/',
-
-					// Regex para capturar clases de chart
-					'/^chart-[1-5]/',
-
-					// Captura cualquier clase personalizada que comience con 'custom-'
-					'/^custom-/',
-				],
 				future: {
 					purgeLayersByDefault: true,
 				},
