@@ -1,9 +1,9 @@
 import { Suspense } from "react"
 import type { Metadata, ResolvingMetadata } from "next"
 import { notFound } from "next/navigation"
+import type { Course } from "~/types"
 import { fetchCourseDetails, generateJsonLd, generateCourseMetadata } from "~/utils/courseUtils"
 import CourseDetails from "./CourseDetails"
-import type { Course } from "~/types"
 
 interface Props {
   params: Promise<{ id: string }>

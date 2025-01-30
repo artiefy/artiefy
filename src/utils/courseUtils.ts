@@ -1,7 +1,7 @@
-import { getCourseById } from '~/server/actions/courses/getCourseById';
-import type { Course as CourseSchemaDTS, WithContext } from 'schema-dts';
-import type { Course } from '~/types';
 import type { Metadata, ResolvingMetadata } from 'next';
+import type { Course as CourseSchemaDTS, WithContext } from 'schema-dts';
+import { getCourseById } from '~/server/actions/courses/getCourseById';
+import type { Course } from '~/types';
 
 export async function fetchCourseDetails(id: string): Promise<Course | null> {
     const course = await getCourseById(Number(id));
