@@ -178,7 +178,7 @@ export default function SignInPage() {
 			{/* Contenedor principal */}
 			<div className="relative z-10 flex w-full flex-col items-center justify-center px-4 lg:flex-row lg:items-start lg:justify-between lg:px-10">
 				{/* Contenedor del logo */}
-				<div className="md:mr-14 mb-8 w-full max-w-[280px] sm:max-w-[300px] md:max-w-[300px] lg:mb-0 lg:ml-14 lg:w-1/2 lg:max-w-[500px] lg:self-center xl:ml-32 xl:max-w-[600px]">
+				<div className="mb-8 w-full max-w-[280px] sm:max-w-[300px] md:mr-14 md:max-w-[300px] lg:mb-0 lg:ml-14 lg:w-1/2 lg:max-w-[500px] lg:self-center xl:ml-32 xl:max-w-[600px]">
 					<AspectRatio ratio={16 / 9} className="relative size-full">
 						<Image
 							src="/logo-login.webp"
@@ -195,12 +195,12 @@ export default function SignInPage() {
 				<div className="-mt-20 w-full max-w-md sm:-mt-16 md:-mt-12 lg:mt-0 lg:w-1/2 lg:max-w-[400px] lg:pr-8 xl:max-w-[500px]">
 					<div className="mx-auto w-full max-w-sm space-y-10 rounded-2xl px-8 py-10 sm:max-w-md">
 						<div className="mb-6 text-center">
-							<h2 className="text-3xl font-bold xs:text-2xl">INICIAR SESIÓN</h2>
+							<h2 className="xs:text-2xl text-3xl font-bold">INICIAR SESIÓN</h2>
 						</div>
 						{errors && (
 							<ul>
 								{errors.map((el, index) => (
-									<li key={index} className="text-sm text-rose-400 -my-4">
+									<li key={index} className="-my-4 text-sm text-rose-400">
 										{el.code === 'form_password_incorrect' ? 'Contraseña incorrecta. Inténtalo de nuevo o usa otro método.' : el.code === 'form_identifier_not_found' ? 'No se pudo encontrar tu cuenta.' : el.longMessage}
 									</li>
 								))}
@@ -217,7 +217,7 @@ export default function SignInPage() {
                       value={email}
                       placeholder="Correo Electrónico"
                       required
-                      className={`w-full sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${emailError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
+                      className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${emailError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
                   />
               </div>
               <div className="mt-4 flex justify-center">
@@ -229,7 +229,7 @@ export default function SignInPage() {
                       value={password}
                       placeholder="Contraseña"
                       required
-                      className={`w-full sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset ${passwordError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
+                      className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm outline-none ring-1 ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${passwordError ? 'ring-rose-400' : 'ring-white/20'} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-[1.5px] focus:ring-primary data-[invalid]:shadow-rose-400/20 data-[invalid]:ring-rose-400`}
                   />
               </div>
               <div className="mt-6 flex justify-center">

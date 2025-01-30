@@ -39,10 +39,10 @@ export default async function CourseListStudent({
 
 	return (
 		<>
-			<h2 className="my-6 text-3xl font-bold text-primary ml-8 lg:ml-20">
+			<h2 className="my-6 ml-8 text-3xl font-bold text-primary lg:ml-20">
 				Cursos Artie
 			</h2>
-			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:px-20 lg:grid-cols-3">
+			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
 				{await Promise.all(
 					courses.map(async (course) => {
 						let imageUrl;

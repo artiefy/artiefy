@@ -222,7 +222,7 @@ export default function CourseDetails({
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbLink href="/estudiantes/cursos">
+							<BreadcrumbLink href="/estudiantes">
 								<FaUserGraduate className="mr-1 inline-block" /> Cursos
 							</BreadcrumbLink>
 						</BreadcrumbItem>

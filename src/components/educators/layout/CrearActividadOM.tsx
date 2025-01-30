@@ -7,7 +7,7 @@ import {
 	Trash2,
 	CheckCircle2,
 	HelpCircle,
-	Edit2,
+	// Edit2,
 	ArrowLeft,
 } from 'lucide-react';
 import type { Question, QuizConfig } from '~/app/typesActi';
@@ -53,9 +53,9 @@ function PreguntasOM() {
 		setQuestions(questions.filter((q) => q.id !== id));
 	};
 
-	const handleEditQuestion = (id: string) => {
-		// Implementar edición de pregunta
-	};
+	// const handleEditQuestion = (id: string) => {
+	// 	// Implementar edición de pregunta
+	// };
 
 	const handleStartQuiz = () => {
 		if (questions.length > 0) {
@@ -220,12 +220,12 @@ function PreguntasOM() {
 														</div>
 													</div>
 													<div className="flex gap-2">
-														<button
+														{/* <button
 															onClick={() => handleEditQuestion(question.id)}
 															className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50"
 														>
 															<Edit2 className="size-4" />
-														</button>
+														</button> */}
 														<button
 															onClick={() => handleRemoveQuestion(question.id)}
 															className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50"
