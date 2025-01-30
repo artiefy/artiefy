@@ -1,6 +1,6 @@
 Volver a un commit anterior
 - git reset --hard ??????
-----------------------------------------------------------
+-------------------------------------------------------------------
 Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, puedes seguir estos pasos:
 
 Eliminar dependencias no utilizadas:
@@ -13,10 +13,11 @@ Instala depcheck globalmente:
 - rm -rf .next/cache // Eliminar la caché de Next.js
 - rm -rf node_modules // Eliminar la carpeta node_modules
 - rm package-lock.json // Eliminar el archivo package-lock
-  - npm i // Reinstalar las dependencias:
+- npm i // Reinstalar las dependencias:
 - npm cache clean --force // Limpiar la caché de npm
 -------------------------------------------------------------------
 ### **Comandos Generales de TypeScript y ESlint**
+
 7. `ESlint: Fix All Auto-Fixable Problems`: Corrige todos los problemas que se puedan solucionar automáticamente.
 0. `Eslint: Restart ESlint Server`: Reinicia el servidor de ESlint.
 1. `TypeScript: Select TypeScript Version`: Cambia la versión de TypeScript que utiliza el proyecto.
@@ -27,18 +28,20 @@ Instala depcheck globalmente:
 15. `Quick Fix...`: Sugiere soluciones rápidas para errores destacados.
 16. `npm install -g eslint`: Intalar localmente Eslint
 17. `npm install -g typescript`: Intalar localmente typescript
-
-------------------------------------------------
+18. `npm install typescript --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
+19. `npx tsc`: Ejecuta el compilador TypeScript localmente.
+20. `tsc`: Ejecuta el compilador TypeScript globalmente.
+-------------------------------------------------------------------
 uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed
-------------------------------------------------
+-------------------------------------------------------------------
 Tecnologias Que Se Usan:
 
 ~ Next.js 15, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM,
 PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Upstash.
-------------------------------------
+-------------------------------------------------------------------
 CORREO SOPORTE:
 artiefysupport@gmail.com
-------------------------------------
+-------------------------------------------------------------------
 Colores del manual de marca:
 
 #3AF4EF #00BDD8 #01142B
@@ -48,13 +51,13 @@ Colores del manual de marca:
 #00BDD8 -secondary //variable de tailwindcss
 
 #00A5C0 //color parecido mas oscuro de -secondary para el hover
----------------------------------
+-------------------------------------------------------------------
 Lik Del Modo Blur:
 
 blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk2HujHgAEcAIWCbqEhgAAAABJRU5ErkJggg=="
 
 blurDataURL="data"
----------------------------------
+-------------------------------------------------------------------
 Tutorial UPDATE DEPENDENCIES:
 
 1. npm install -g npm-check-updates
@@ -75,7 +78,7 @@ Tutorial UPDATE DEPENDENCIES:
 3. npm install @clerk/nextjs@latest
 4. npx @clerk/upgrade
 5. npm install drizzle-orm@latest
---------------------------------------
+-------------------------------------------------------------------
 Para La Instalacion Dependencias En Devs
 
 --save-dev
@@ -84,7 +87,7 @@ Forzar Dependencias
 
 --force
 --legacy-peer-deps
----------------------------------
+-------------------------------------------------------------------
 Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 
 1. `npm run lint`: Ejecuta ESLint para identificar problemas en el código sin corregirlos.|
@@ -99,5 +102,4 @@ Archivos:
 - prettier.config.js .mjs
 - prettierrc.cjs,
 - settings.json
-----------------------------------------
-
+-------------------------------------------------------------------
