@@ -7,12 +7,14 @@ const compat = new FlatCompat({
 const eslintConfig = [
     {
         ignores: [
-            '**/node_modules/**',
-            '.next/**',
-            'out/**',
-            'public/**',
-            '**/*.d.ts',
-            'src/components/estudiantes/ui',
+            '/node_modules/',
+            '.next/',
+            'out/',
+            'public/',
+            '/*.d.ts',
+            'src/components/estudiantes/ui/',
+            'src/components/admin/ui/',
+            'src/components/educadores/ui/',
         ],
     },
     ...compat.config({
@@ -34,7 +36,11 @@ const eslintConfig = [
         plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
         rules: {
             'tailwindcss/no-custom-classname': 'warn',
-            'tailwindcss/classnames-order': 'off',
+            'tailwindcss/classnames-order': 'warn',
+            'tailwindcss/enforces-negative-arbitrary-values': 'warn',
+            'tailwindcss/enforces-shorthand': 'warn',
+            'tailwindcss/migration-from-tailwind-2': 'warn',
+            'tailwindcss/no-contradicting-classname': 'error',
             '@typescript-eslint/consistent-type-definitions': 'warn',
             '@typescript-eslint/consistent-type-imports': [
                 'warn',
@@ -84,7 +90,7 @@ const eslintConfig = [
                             position: 'before',
                         },
                         {
-                            pattern: '@/components/**',
+                            pattern: '@/components/',
                             group: 'internal',
                             position: 'after',
                         },
@@ -116,14 +122,28 @@ const eslintConfig = [
             },
             tailwindcss: {
                 config: './tailwind.config.js',
-                cssFiles: ['./src/**/*.css'],
+                cssFiles: [
+                    '/*.css',
+                    '!/node_modules',
+                    '!/.*',
+                    '!/dist',
+                    '!/build',
+                ],
                 callees: ['classnames', 'clsx', 'ctl'],
                 tags: ['tw'],
+                classRegex: '^(class|className)$',
+                cssFilesRefreshRate: 5000,
+                skipClassAttribute: false,
+                exposeConfiguration: true,
+                future: {
+                    purgeLayersByDefault: true,
+                },
+                removeDeprecatedUtilities: true,
             },
             next: {
                 rootDir: './',
             },
-            files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+            files: ['/*.{js,jsx,mjs,cjs,ts,tsx}'],
         },
     }),
 ];

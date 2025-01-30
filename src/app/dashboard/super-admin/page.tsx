@@ -264,12 +264,12 @@ export default function AdminDashboard() {
 
   return (
     <SuperAdminLayout>
-      <header className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-lg shadow-md text-white text-3xl font-bold flex justify-between items-center">
-        <h1>📊 Dashboard Admin</h1>
+      <header className="bg-primary p-6 rounded-lg shadow-md text-white text-3xl font-bold flex justify-between items-center">
+        <h1>Dashboard Admin</h1>
       </header>
 
       <div className="p-6">
-        <p className="text-lg text-gray-400 mb-6">
+        <p className="text-lg text-white mb-6">
           Aquí puedes gestionar los usuarios y sus roles.
         </p>
 
@@ -305,7 +305,7 @@ export default function AdminDashboard() {
                   </button>
                   <button
                     onClick={() => setShowCreateForm(true)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-full flex items-center shadow-lg transition transform hover:scale-105"
+                    className="bg-secondary hover:bg-[#00A5C0] text-white font-semibold py-3 px-4 rounded-full flex items-center shadow-lg transition transform hover:scale-105"
                   >
                     <UserPlus className="w-5 h-5 mr-2" /> Crear
                   </button>
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
               {/* Botón principal flotante (+) */}
               <button
                 onClick={() => setShowActions(!showActions)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold p-5 rounded-full shadow-2xl flex items-center justify-center transition-transform duration-300 transform hover:scale-110"
+                className="bg-primary hover:bg-secondary text-white font-bold p-5 rounded-full shadow-2xl flex items-center justify-center transition-transform duration-300 transform hover:scale-110"
               >
                 <Plus className={`w-6 h-6 transition-transform duration-300 ${showActions ? "rotate-45" : ""}`} />
               </button>
@@ -323,7 +323,7 @@ export default function AdminDashboard() {
 
             {showCreateForm && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
-                <div className="bg-gray-800 p-6 rounded-lg shadow-2xl w-full max-w-md relative z-50">
+                <div className="bg-background p-6 rounded-lg shadow-2xl w-full max-w-md relative z-50">
                   {/* Header del formulario con botón de cierre */}
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-bold text-white">Crear Nuevo Usuario</h2>
@@ -369,7 +369,7 @@ export default function AdminDashboard() {
                   {/* Botón para crear usuario */}
                   <button
                     onClick={handleCreateUser}
-                    className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md flex justify-center"
+                    className="mt-4 w-full bg-primary hover:bg-secondary text-white font-bold py-2 px-4 rounded-md flex justify-center"
                     disabled={creatingUser}
                   >
                     {creatingUser ? <Loader2 className="w-5 h-5 animate-spin" /> : "Crear Usuario"}
@@ -379,8 +379,8 @@ export default function AdminDashboard() {
             )}
 
             <div className="overflow-x-auto mt-6">
-              <table className="w-full border-collapse rounded-lg shadow-lg bg-opacity-70 backdrop-blur-lg text-white bg-gradient-to-br from-gray-900 to-gray-800">
-                <thead className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-t-lg">
+              <table className="w-full border-collapse rounded-lg shadow-lg bg-opacity-70 backdrop-blur-lg text-white bg-gradient-to-br from-background to-gray-800">
+                <thead className="bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
                   <tr>
                     <th className="px-4 py-3">
                       <input
