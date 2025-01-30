@@ -502,9 +502,8 @@ export default function CourseDetails({
 						</div>
 					</div>
 				)}
-        {/* Añadir el componente de comentarios aquí */}
-        <Comments courseId={course.id} />
-            
+				{/* Añadir el componente de comentarios aquí */}
+				<Comments courseId={course.id} />
 			</main>
 			<Footer />
 		</div>

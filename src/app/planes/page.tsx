@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
 import { AiOutlineCrown } from 'react-icons/ai';
 import { BsCheck2Circle, BsStars } from 'react-icons/bs';
 import { FaBook, FaTimes } from 'react-icons/fa';
+
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';

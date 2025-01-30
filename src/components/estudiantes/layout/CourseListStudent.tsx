@@ -1,6 +1,7 @@
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
+
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';

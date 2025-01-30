@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
+
 import { useRouter, useSearchParams } from 'next/navigation';
 import NProgress from 'nprogress';
+
 import {
   Pagination,
   PaginationContent,
@@ -41,7 +43,7 @@ const PaginationContainer = ({
 
   const handlePageChange = (page: number) => {
     NProgress.start();
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams?.toString());
 
     if (page === 1) {
       params.delete('page');
