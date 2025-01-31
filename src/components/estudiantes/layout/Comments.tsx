@@ -86,7 +86,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 				<div>
 					<label
 						htmlFor="content"
-						className="block text-sm font-medium text-primary"
+						className="text-primary block text-sm font-medium"
 					>
 						Comentario:
 					</label>
@@ -96,7 +96,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 						onChange={(e) => setContent(e.target.value)}
 						required
 						placeholder="Escribe tu comentario"
-						className="mt-1 block w-full rounded-md border-gray-300 text-background shadow-sm placeholder:text-gray-400 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+						className="text-background shadow-xs mt-1 block w-full rounded-md border-gray-300 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
 						style={{
 							height: '100px',
 							padding: '10px',
@@ -109,7 +109,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 				<div>
 					<label
 						htmlFor="rating"
-						className="block text-sm font-medium text-primary"
+						className="text-primary block text-sm font-medium"
 					>
 						Calificación:
 					</label>
@@ -125,7 +125,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 				</div>
 				<button
 					type="submit"
-					className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-95"
+					className="shadow-xs focus:outline-hidden inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-95"
 				>
 					Enviar
 				</button>

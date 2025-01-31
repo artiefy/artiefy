@@ -97,7 +97,7 @@ export default function CourseCategories({
 			<div className="container mx-auto">
 				<div className="mb-8 flex flex-col items-center justify-between lg:flex-row">
 					<div className="relative mb-4 w-full sm:w-3/4 md:w-1/3 lg:mb-0 lg:w-1/3">
-						<FunnelIcon className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-gray-500" />
+						<FunnelIcon className="absolute top-1/2 left-3 size-5 -translate-y-1/2 fill-gray-500" />
 						<select
 							className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
 							onChange={(e) => handleCategorySelect(e.target.value || null)}
@@ -133,7 +133,7 @@ export default function CourseCategories({
 									/>
 								) : (
 									<MagnifyingGlassIcon
-										className="size-4 text-gray-400"
+										className="size-4 fill-gray-400"
 										aria-hidden="true"
 									/>
 								)}

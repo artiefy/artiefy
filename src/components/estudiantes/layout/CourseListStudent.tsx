@@ -38,7 +38,7 @@ export default async function CourseListStudent({
 
 	return (
 		<>
-			<h2 className="my-6 ml-8 text-3xl font-bold text-primary lg:ml-20">
+			<h2 className="text-primary my-6 ml-8 text-3xl font-bold lg:ml-20">
 				Cursos Artie
 			</h2>
 			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
@@ -60,8 +60,8 @@ export default async function CourseListStudent({
 
 						return (
 							<div key={course.id} className="group relative">
-								<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
-								<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
+								<div className="animate-gradient bg-linear-to-r absolute -inset-0.5 rounded-xl from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
+								<Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
 									<CardHeader>
 										<AspectRatio ratio={16 / 9}>
 											<div className="relative size-full">
@@ -80,8 +80,8 @@ export default async function CourseListStudent({
 									</CardHeader>
 
 									<CardContent className="flex grow flex-col justify-between space-y-2 px-2">
-										<CardTitle className="rounded text-lg text-background">
-											<div className="-mt-4 font-bold text-primary">
+										<CardTitle className="text-background rounded text-lg">
+											<div className="text-primary -mt-4 font-bold">
 												{course.title}
 											</div>
 										</CardTitle>
@@ -113,7 +113,7 @@ export default async function CourseListStudent({
 											<Button asChild>
 												<Link
 													href={`/estudiantes/cursos/${course.id}`}
-													className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
+													className="group/button bg-background text-primary relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
 												>
 													<p className="font-bold">Ver Curso</p>
 													<ArrowRightIcon className="animate-bounce-right size-5" />

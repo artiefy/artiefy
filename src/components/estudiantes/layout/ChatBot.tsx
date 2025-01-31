@@ -64,7 +64,7 @@ const ChatBot: React.FC = () => {
 
 			{/* Modal del Chatbot */}
 			{isOpen && (
-				<div className="fixed bottom-32 right-6 w-96 rounded-lg bg-white shadow-xl">
+				<div className="fixed right-6 bottom-32 w-96 rounded-lg bg-white shadow-xl">
 					<div className="flex items-center justify-between border-b p-4">
 						<h3 className="font-bold text-gray-800">Arti IA</h3>
 						<button
@@ -113,7 +113,7 @@ const ChatBot: React.FC = () => {
 								value={messageInput}
 								onChange={(e) => setMessageInput(e.target.value)}
 								placeholder="Escribe tu mensaje..."
-								className="flex-1 rounded-lg border p-2 text-background focus:outline-none focus:ring-2 focus:ring-secondary"
+								className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-hidden"
 							/>
 							<button
 								type="submit"

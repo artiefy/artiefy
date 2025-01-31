@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { RocketLaunchIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -68,7 +68,7 @@ export default function StudentDashboard({
 							<div className="mt-8 flex flex-col items-center space-y-4">
 								<div className="flex items-center">
 									<RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
-									<span className="ml-2 whitespace-nowrap text-2xl font-bold text-primary sm:text-3xl">
+									<span className="ml-2 text-2xl font-bold whitespace-nowrap text-primary sm:text-3xl">
 										Arti IA
 									</span>
 								</div>
@@ -212,7 +212,7 @@ export default function StudentDashboard({
 															</span>
 														</div>
 														<div className="flex items-center justify-between">
-															<p className="text-sm italic text-primary">
+															<p className="text-sm text-primary italic">
 																Educador: <span>{course.instructor}</span>
 															</p>
 															<div className="flex items-center">

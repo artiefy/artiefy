@@ -159,7 +159,7 @@ const ChatbotModal = () => {
 									value={inputText}
 									onChange={(e) => setInputText(e.target.value)}
 									placeholder="Escribe tu mensaje..."
-									className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:outline-none focus:ring-2 focus:ring-secondary"
+									className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-hidden"
 									disabled={isLoading}
 								/>
 								<button

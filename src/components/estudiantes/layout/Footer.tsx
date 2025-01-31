@@ -1,9 +1,8 @@
-import React from 'react';
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
 
 const Footer = () => {
 	return (
-		<footer className="w-full bg-gray-800 py-12 text-primary">
+		<footer className="text-primary w-full bg-gray-800 py-12">
 			<div className="container mx-auto px-4">
 				<div className="grid grid-cols-1 gap-8 md:grid-cols-4">
 					<div>

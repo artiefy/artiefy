@@ -1,6 +1,5 @@
-import { cache } from 'react';
 import { eq, desc } from 'drizzle-orm';
-import { unstable_cache } from 'next/cache';
+import { unstable_cache, unstable_expireTag } from 'next/cache';
 import 'server-only';
 import { db } from '~/server/db';
 import {
@@ -45,7 +44,7 @@ const getCachedCoursesData = unstable_cache(
 	{ revalidate: 3600, tags: ['courses'] }
 );
 
-export const getAllCourses = cache(async () => {
+export const getAllCourses = unstable_cache(async () => {
 	try {
 		const coursesData = await getCachedCoursesData();
 
@@ -85,4 +84,8 @@ export const getAllCourses = cache(async () => {
 
 export const preloadAllCourses = () => {
 	void getAllCourses();
+};
+
+export const invalidateCoursesCache = () => {
+	unstable_expireTag('courses');
 };

@@ -1,3 +1,19 @@
+TAILWINDCSS V4.0
+
+Si deseas aplicar estilos a un rango específico de pantalla, Tailwind CSS 4 permite usar max-breakpoints:
+
+<!-- Aplicar flex solo entre md y xl -->
+<div class="md:max-xl:flex">
+  <!-- Contenido -->
+</div>
+
+📌 Ejemplo de variantes max-*:
+
+max-sm	@media (width < 640px)
+max-md	@media (width < 768px)
+max-lg	@media (width < 1024px)
+max-xl	@media (width < 1280px)
+-------------------------------------------------------------------
 Volver a un commit anterior
 - git reset --hard ??????
 -------------------------------------------------------------------
@@ -95,6 +111,7 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 3. `npm run format:check`: Verifica si el código está formateado correctamente según Prettier, sin hacer cambios.
 4. `npm run format:write`: Formatea automáticamente el código del proyecto usando Prettier.
 5. `npm run typecheck`: Ejecuta el verificador de tipos de TypeScript sin generar archivos de salida.
+6. `npm run build`: Ejecuta el verificador de despliegue
 
 Archivos:
 - eslint.config.mjs .js

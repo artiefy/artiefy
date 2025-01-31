@@ -26,7 +26,7 @@ export default async function AdminDashboard(params: {
 	return (
 		<>
 			<div>
-				<header className="bg-primary p-5 text-2xl font-extrabold text-background">
+				<header className="bg-primary text-background p-5 text-2xl font-extrabold">
 					<h1>Dashboard Admin</h1>
 					{/* Botón de usuario de Clerk */}
 					<UserButton showName />

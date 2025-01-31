@@ -375,11 +375,11 @@ export default function LessonDetails({
 	return (
 		<>
 			<Header />
-			<div className="flex min-h-screen flex-col bg-background">
+			<div className="bg-background flex min-h-screen flex-col">
 				<div className="flex flex-1 px-4 py-6">
 					{/* Left Sidebar */}
-					<div className="w-80 bg-background p-4 shadow-lg">
-						<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
+					<div className="bg-background w-80 p-4 shadow-lg">
+						<h2 className="text-primary mb-4 text-2xl font-bold">Cursos</h2>
 						{lessonsState
 							.sort((a, b) => a.order - b.order)
 							.map(renderLessonCard)}
@@ -427,7 +427,7 @@ export default function LessonDetails({
 							</div>
 
 							{/* Class Info */}
-							<div className="rounded-lg bg-white p-6 shadow-sm">
+							<div className="shadow-xs rounded-lg bg-white p-6">
 								<h1 className="mb-4 text-2xl font-bold text-gray-900">
 									{lesson.title}
 								</h1>
@@ -444,8 +444,8 @@ export default function LessonDetails({
 					</div>
 
 					{/* Right Sidebar - Activities */}
-					<div className="w-72 bg-background p-4 shadow-lg">
-						<h2 className="mb-4 text-2xl font-bold text-primary">
+					<div className="bg-background w-72 p-4 shadow-lg">
+						<h2 className="text-primary mb-4 text-2xl font-bold">
 							Actividades
 						</h2>
 						{activity ? (
@@ -475,11 +475,11 @@ export default function LessonDetails({
 									className={`mt-4 w-full ${
 										isVideoCompleted
 											? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]'
-											: 'bg-gray-400 text-background'
+											: 'text-background bg-gray-400'
 									}`}
 								>
 									{isCompletingActivity ? (
-										<Icons.spinner className="mr-2 text-background" />
+										<Icons.spinner className="text-background mr-2" />
 									) : isActivityCompleted ? (
 										'Actividad Completada'
 									) : isVideoCompleted ? (

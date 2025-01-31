@@ -30,13 +30,13 @@
     },
   },
   "include": [
-    "./**/*",
     "**/*.ts",
     "**/*.js",
     "**/*.mjs",
     "**/*.tsx",
     "next-env.d.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".prettierrc.mjs"
   ],
   "exclude": [
     "node_modules",
