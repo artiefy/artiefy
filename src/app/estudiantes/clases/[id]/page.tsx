@@ -3,7 +3,13 @@ import { getCourseById } from '~/server/actions/courses/getCourseById';
 import { getLessonById } from '~/server/actions/lessons/getLessonById';
 import { getLessonsByCourseId } from '~/server/actions/lessons/getLessonsByCourseId';
 import { getUserLessonsProgress } from '~/server/actions/progress/getUserLessonsProgress';
-import { type Activity } from '~/types';
+import type {
+	Activity,
+	Lesson,
+	Course,
+	UserLessonsProgress,
+	LessonWithProgress,
+} from '~/types';
 import LessonDetails from './LessonDetails';
 
 interface Params {
@@ -21,19 +27,21 @@ export default async function LessonPage({ params }: Props) {
 
 async function LessonContent({ id }: { id: string }) {
 	try {
-		const lessonId = parseInt(id, 10);
+		const lessonId = Number.parseInt(id, 10);
 		if (isNaN(lessonId)) {
 			notFound();
 		}
 
-		const lessonData = await getLessonById(lessonId);
-		const lesson = lessonData
-			? { ...lessonData, isLocked: lessonData.isLocked ?? false }
-			: null;
-		if (!lesson) {
+		const lessonData: Lesson | null = await getLessonById(lessonId);
+		if (!lessonData) {
 			console.log('Lección no encontrada');
 			notFound();
 		}
+
+		const lesson: LessonWithProgress = {
+			...lessonData,
+			isLocked: lessonData.isLocked ?? false,
+		};
 
 		const activity: Activity | null = lesson.activities?.[0]
 			? {
@@ -43,14 +51,15 @@ async function LessonContent({ id }: { id: string }) {
 				}
 			: null;
 
-		const course = await getCourseById(lesson.courseId);
+		const course: Course | null = await getCourseById(lesson.courseId);
 		if (!course) {
 			console.log('Curso no encontrado');
 			notFound();
 		}
 
-		const lessons = await getLessonsByCourseId(lesson.courseId);
-		const userLessonsProgress = await getUserLessonsProgress(course.creatorId);
+		const lessons: Lesson[] = await getLessonsByCourseId(lesson.courseId);
+		const userLessonsProgress: UserLessonsProgress[] =
+			await getUserLessonsProgress(course.creatorId);
 
 		return (
 			<LessonDetails
@@ -62,7 +71,10 @@ async function LessonContent({ id }: { id: string }) {
 			/>
 		);
 	} catch (error) {
-		console.error('Error al obtener los datos de la lección:', error);
+		console.error(
+			'Error al obtener los datos de la lección:',
+			error instanceof Error ? error.message : String(error)
+		);
 		notFound();
 	}
 }

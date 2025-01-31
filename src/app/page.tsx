@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { FaArrowRight } from 'react-icons/fa';
+
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';

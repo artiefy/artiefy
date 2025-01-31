@@ -1,6 +1,7 @@
 'use server';
 
 import { eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { preferences } from '~/server/db/schema';
 import type { Preference } from '~/types';

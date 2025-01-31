@@ -25,18 +25,20 @@ Instala depcheck globalmente:
 4. `TypeScript: Open TS Server Log`: Abre el log del servidor de TypeScript para depurar problemas.
 5. `TypeScript: Reload Project`: Recarga la configuración del proyecto de TypeScript.
 15. `Quick Fix...`: Sugiere soluciones rápidas para errores destacados.
+16. `npm install -g eslint`: Intalar localmente Eslint
+17. `npm install -g typescript`: Intalar localmente typescript
 
 ------------------------------------------------
 uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed
 ------------------------------------------------
 Tecnologias Que Se Usan:
 
-~ Next.js 15.1.4, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM,
+~ Next.js 15, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM,
 PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Upstash.
 ------------------------------------
 CORREO SOPORTE:
 artiefysupport@gmail.com
-----------------------------------
+------------------------------------
 Colores del manual de marca:
 
 #3AF4EF #00BDD8 #01142B

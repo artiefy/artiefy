@@ -1,24 +1,13 @@
 {
-  "version": 2,
   "functions": {
-    "app/api/courses/**/*.ts": {
-      "maxDuration": 60
-    },
-    "app/estudiantes/**/*": {
-      "maxDuration": 60
+    "app/api/upload/route.ts": {
+      "memory": 1024,
+      "maxDuration": 30
     }
   },
-  "routes": [
-    {
-      "src": "/api/courses",
-      "dest": "/api/courses"
-    }
-  ],
-  "crons": [
-    {
-      "path": "/api/revalidate",
-      "schedule": "0 0 * * *"
-    }
-  ]
+  "framework": "nextjs",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
+  "installCommand": "npm install",
+  "public": true
 }
 

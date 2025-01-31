@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 

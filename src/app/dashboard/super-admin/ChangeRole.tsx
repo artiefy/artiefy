@@ -44,13 +44,13 @@ export const ChangeRole: React.FC<UserCardProps> = ({ user }) => {
 
 				<form action={setRoleWrapper} className="flex items-center space-x-4">
 					<input type="hidden" value={user.id} name="id" />
-					<input type="hidden" value="profesor" name="role" />
+					<input type="hidden" value="educador" name="role" />
 					<Button
 						type="submit"
 						variant="secondary"
 						className="border border-white bg-yellow-600 text-white hover:bg-yellow-600/90"
 					>
-						Cambiar a Profesor
+						Cambiar a Educador
 					</Button>
 				</form>
 

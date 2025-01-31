@@ -1,5 +1,5 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
 const isSuperAdminRoute = createRouteMatcher(['/dashboard/super-admin(.*)']);

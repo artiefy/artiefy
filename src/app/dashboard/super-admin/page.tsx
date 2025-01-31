@@ -1,12 +1,12 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { UserButton } from '@clerk/nextjs';
-import { getAdminUsers, setRoleWrapper, removeRole, deleteUser, updateUserInfo, createUser } from '~/server/queries/queries';
-import SuperAdminLayout from './super-admin-layout';
 import { Loader2, UserX, Plus, X, XCircle, Edit, Trash2, UserPlus, Check } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { getAdminUsers, setRoleWrapper, removeRole, deleteUser, updateUserInfo, createUser } from '~/server/queries/queries';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
-import { useSearchParams } from 'next/navigation';
+import SuperAdminLayout from './super-admin-layout';
 
 interface User {
   id: string;
@@ -52,14 +52,20 @@ export default function AdminDashboard() {
   const [creatingUser, setCreatingUser] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const handleUserSelection = (userId: string) => {
+  const handleUserSelection = useCallback((userId: string) => {
     setSelectedUsers((prevSelected) =>
       prevSelected.includes(userId)
         ? prevSelected.filter((id) => id !== userId)
         : [...prevSelected, userId]
     );
-  };
-  const [showActions, setShowActions] = useState(false);
+  }, []);
+
+  const [roleFilter, setRoleFilter] = useState<string>(""); // Filtro por rol
+  const [statusFilter, setStatusFilter] = useState<string>(""); // Filtro por estado
+  const filteredUsers = users.filter(user =>
+    (roleFilter ? user.role === roleFilter : true) &&
+    (statusFilter ? user.status === statusFilter : true)
+  );
 
   useEffect(() => {
     async function fetchUsers() {
@@ -67,7 +73,7 @@ export default function AdminDashboard() {
         const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`);
         if (!res.ok) throw new Error("Error al cargar usuarios");
         const data = await res.json();
-        setUsers(data); 
+        setUsers(data);
       } catch (err) {
         setError("Error al cargar los usuarios.");
         console.error("Error fetching users:", err);
@@ -80,7 +86,7 @@ export default function AdminDashboard() {
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type });
-    setTimeout(() => setNotification(null), 3000); 
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const handleCreateUser = async () => {
@@ -88,7 +94,7 @@ export default function AdminDashboard() {
       showNotification("Todos los campos son obligatorios.", "error");
       return;
     }
-
+  
     try {
       setCreatingUser(true);
       const res = await fetch("/api/users", {
@@ -101,28 +107,40 @@ export default function AdminDashboard() {
           role: newUser.role,
         }),
       });
+  
       if (!res.ok) {
         throw new Error("No se pudo crear el usuario");
       }
+  
       const data = await res.json();
       const { user: safeUser, generatedPassword } = data;
       
       const username = safeUser.username;
-
-      setUsers([...users, { id: safeUser.id, ...newUser }]);
+  
+      // ✅ Asegurar que 'status' está presente en el nuevo usuario
+      setUsers([...users, { 
+        id: safeUser.id, 
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        email: newUser.email,
+        role: newUser.role,
+        status: "activo" // 🔥 Se agrega un valor predeterminado para 'status'
+      }]);
+  
       setInfoDialogTitle("Usuario Creado");
       setInfoDialogMessage(
         `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`
       );
       setInfoDialogOpen(true);
       setNewUser({ firstName: "", lastName: "", email: "", role: "estudiante" });
-
+  
     } catch (error) {
       showNotification("Error al crear el usuario.", "error");
     } finally {
       setCreatingUser(false);
     }
   };
+  
 
   const handleMassUpdateStatus = async (newStatus: string) => {
     if (selectedUsers.length === 0) {
@@ -195,22 +213,34 @@ export default function AdminDashboard() {
     });
   };
 
-  const handleRemoveRole = (userId: string) => {
+  const handleMassRemoveRole = async () => {
+    if (selectedUsers.length === 0) {
+      showNotification("No has seleccionado usuarios.", "error");
+      return;
+    }
+
     setConfirmation({
       isOpen: true,
-      title: "Eliminar Rol",
-      message: "¿Estás seguro de que quieres eliminar el rol de este usuario?",
+      title: "Eliminar Roles",
+      message: "¿Estás seguro de que quieres eliminar el rol de los usuarios seleccionados?",
       onConfirm: async () => {
         try {
-          setUpdatingUserId(userId);
-          await removeRole(userId);
+          await fetch("/api/users", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "removeRole", userIds: selectedUsers }),
+          });
 
-          setUsers(users.map(user => user.id === userId ? { ...user, role: "sin-role" } : user));
-          showNotification("Rol eliminado correctamente.", "success");
+          // Actualizar los usuarios en el estado local
+          setUsers(users.map(user =>
+            selectedUsers.includes(user.id) ? { ...user, role: "sin-role" } : user
+          ));
+
+          setSelectedUsers([]); // Limpiar selección
+          showNotification("Roles eliminados con éxito.", "success");
         } catch (error) {
-          showNotification("Error al eliminar el rol.", "error");
+          showNotification("Error al eliminar roles.", "error");
         } finally {
-          setUpdatingUserId(null);
           setConfirmation(null);
         }
       },
@@ -264,71 +294,36 @@ export default function AdminDashboard() {
 
   return (
     <SuperAdminLayout>
-      <header className="bg-primary p-6 rounded-lg shadow-md text-white text-3xl font-bold flex justify-between items-center">
+      <header className=" flex items-center justify-between rounded-lg bg-[#00BDD8]  p-6 text-3xl font-bold text-[#01142B] shadow-md">
         <h1>Dashboard Admin</h1>
       </header>
 
       <div className="p-6">
-        <p className="text-lg text-white mb-6">
+        <p className="mb-6 text-lg text-white">
           Aquí puedes gestionar los usuarios y sus roles.
         </p>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="mb-6 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
             <p>{error}</p>
           </div>
         )}
 
         {loading ? (
           <div className="flex items-center justify-center p-8">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <Loader2 className="size-6 animate-spin text-primary" />
             <span className="ml-2">Cargando usuarios...</span>
           </div>
         ) : (
           <>
-            {/* Botón flotante con acciones */}
-            <div className="fixed bottom-6 right-6 flex flex-col items-end space-y-2 z-50">
-              {/* Botones de acciones, ocultos por defecto */}
-              {showActions && (
-                <div className="flex flex-col space-y-3 mb-3">
-                  <button
-                    onClick={() => handleMassUpdateStatus("activo")}
-                    className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-full flex items-center shadow-lg transition transform hover:scale-105"
-                  >
-                    <Check className="w-5 h-5 mr-2" /> Activar
-                  </button>
-                  <button
-                    onClick={() => handleMassUpdateStatus("inactivo")}
-                    className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-full flex items-center shadow-lg transition transform hover:scale-105"
-                  >
-                    <XCircle className="w-5 h-5 mr-2" /> Desactivar
-                  </button>
-                  <button
-                    onClick={() => setShowCreateForm(true)}
-                    className="bg-secondary hover:bg-[#00A5C0] text-white font-semibold py-3 px-4 rounded-full flex items-center shadow-lg transition transform hover:scale-105"
-                  >
-                    <UserPlus className="w-5 h-5 mr-2" /> Crear
-                  </button>
-                </div>
-              )}
-
-              {/* Botón principal flotante (+) */}
-              <button
-                onClick={() => setShowActions(!showActions)}
-                className="bg-primary hover:bg-secondary text-white font-bold p-5 rounded-full shadow-2xl flex items-center justify-center transition-transform duration-300 transform hover:scale-110"
-              >
-                <Plus className={`w-6 h-6 transition-transform duration-300 ${showActions ? "rotate-45" : ""}`} />
-              </button>
-            </div>
-
             {showCreateForm && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
-                <div className="bg-background p-6 rounded-lg shadow-2xl w-full max-w-md relative z-50">
+              <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4">
+                <div className="relative z-50 w-full max-w-md rounded-lg bg-background p-6 shadow-2xl">
                   {/* Header del formulario con botón de cierre */}
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="mb-4 flex items-center justify-between">
                     <h2 className="text-lg font-bold text-white">Crear Nuevo Usuario</h2>
                     <button onClick={() => setShowCreateForm(false)}>
-                      <X className="w-6 h-6 text-gray-300 hover:text-white" />
+                      <X className="size-6 text-gray-300 hover:text-white" />
                     </button>
                   </div>
 
@@ -337,31 +332,31 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       placeholder="Nombre"
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2"
+                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
                       value={newUser.firstName}
                       onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
                     />
                     <input
                       type="text"
                       placeholder="Apellido"
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2"
+                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
                       value={newUser.lastName}
                       onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
                     />
                     <input
                       type="email"
                       placeholder="Correo electrónico"
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2"
+                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
                       value={newUser.email}
                       onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
                     />
                     <select
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2"
+                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
                       value={newUser.role}
                       onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
                     >
                       <option value="admin">Admin</option>
-                      <option value="profesor">Profesor</option>
+                      <option value="educador">Educador</option>
                       <option value="estudiante">Estudiante</option>
                     </select>
                   </div>
@@ -369,55 +364,120 @@ export default function AdminDashboard() {
                   {/* Botón para crear usuario */}
                   <button
                     onClick={handleCreateUser}
-                    className="mt-4 w-full bg-primary hover:bg-secondary text-white font-bold py-2 px-4 rounded-md flex justify-center"
+                    className="mt-4 flex w-full justify-center rounded-md bg-primary px-4 py-2 font-bold text-white hover:bg-secondary"
                     disabled={creatingUser}
                   >
-                    {creatingUser ? <Loader2 className="w-5 h-5 animate-spin" /> : "Crear Usuario"}
+                    {creatingUser ? <Loader2 className="size-5 animate-spin" /> : "Crear Usuario"}
                   </button>
+
                 </div>
               </div>
             )}
+            {/* Contenedor de botones arriba de la tabla */}
+            <div className="mb-4 flex items-center justify-between">
+              {/* Contenedor de botones arriba de la tabla */}
+              <div className="mb-4 flex space-x-2">
+                <button
+                  onClick={() => handleMassUpdateStatus("activo")}
+                  className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105${
+                    selectedUsers.length === 0 ? "cursor-not-allowed bg-gray-500" : "bg-green-500 hover:bg-green-600"
+                  }`}
+                  disabled={selectedUsers.length === 0}
+                >
+                  <Check className="mr-2 size-5" /> Activar
+                </button>
 
-            <div className="overflow-x-auto mt-6">
-              <table className="w-full border-collapse rounded-lg shadow-lg bg-opacity-70 backdrop-blur-lg text-white bg-gradient-to-br from-background to-gray-800">
-                <thead className="bg-gradient-to-r from-primary to-secondary text-white rounded-t-lg">
+                <button
+                  onClick={() => handleMassUpdateStatus("inactivo")}
+                  className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105${
+                    selectedUsers.length === 0 ? "cursor-not-allowed bg-gray-500" : "bg-red-500 hover:bg-red-600"
+                  }`}
+                  disabled={selectedUsers.length === 0}
+                >
+                  <XCircle className="mr-2 size-5" /> Desactivar
+                </button>
+
+                <button
+                  onClick={handleMassRemoveRole}
+                  className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105${
+                    selectedUsers.length === 0 ? "cursor-not-allowed bg-gray-500" : "bg-yellow-500 hover:bg-yellow-600"
+                  }`}
+                  disabled={selectedUsers.length === 0}
+                >
+                  <XCircle className="mr-2 size-5" /> Quitar Rol
+                </button>
+
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="flex items-center rounded-md bg-secondary px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-[#00A5C0]"
+                >
+                  <UserPlus className="mr-2 size-5" /> Crear Usuario
+                </button>
+              </div>
+
+            </div>
+
+
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full border-collapse rounded-lg bg-opacity-70 bg-gradient-to-br from-background to-gray-800 text-white  shadow-lg backdrop-blur-lg">
+                <thead className="  rounded-t-lg bg-[#00BDD8]  from-primary to-secondary text-[#01142B]">
                   <tr>
                     <th className="px-4 py-3">
                       <input
                         type="checkbox"
-                        onChange={(e) => setSelectedUsers(e.target.checked ? users.map(user => user.id) : [])}
-                        checked={selectedUsers.length === users.length}
+                        onChange={(e) => setSelectedUsers(e.target.checked ? filteredUsers.map(user => user.id) : [])}
+                        checked={selectedUsers.length === filteredUsers.length}
                       />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Nombre</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Correo</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Rol</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Estado</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider"><select
+                        value={roleFilter}
+                        onChange={(e) => setRoleFilter(e.target.value)}
+                        className="rounded-md bg-transparent px-3 py-2 text-sm text-[#01142B]"
+                      >
+                        <option value="">Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="educador">Educador</option>
+                        <option value="estudiante">Estudiante</option>
+                        <option value="sin-role">Sin Rol</option>
+                      </select></th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider"> <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="rounded-md bg-transparent px-3 py-2 text-sm text-[#01142B]"
+                      >
+                        <option value="">Estados</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                        <option value="suspendido">Suspendido</option>
+                      </select></th>
                     <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-800 hover:shadow-lg transition duration-300">
+                  {filteredUsers.map((user) => (
+                    <tr key={user.id} className="transition duration-300 hover:bg-gray-800 hover:shadow-lg">
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
-                          checked={selectedUsers.includes(user.id)}
-                          onChange={() => handleUserSelection(user.id)}
+                          checked={selectedUsers.includes(user.id)} // ✅ Está marcado si el usuario está en `selectedUsers`
+                          onChange={() => handleUserSelection(user.id)} // ✅ Maneja la selección/deselección del usuario
                         />
                       </td>
-                      <td className="px-4 py-3 text-gray-300 text-sm">
+
+                      <td className="px-4 py-3 text-sm text-gray-300">
                         {editingUser === user.id ? (
                           <div className="flex space-x-2">
                             <input
                               type="text"
-                              className="bg-gray-800 text-white border-none rounded-lg px-2 py-1 text-xs w-1/2"
+                              className="w-1/2 rounded-lg border-none bg-gray-800 px-2 py-1 text-xs text-white"
                               value={editValues.firstName}
                               onChange={(e) => setEditValues({ ...editValues, firstName: e.target.value })}
                             />
                             <input
                               type="text"
-                              className="bg-gray-800 text-white border-none rounded-lg px-2 py-1 text-xs w-1/2"
+                              className="w-1/2 rounded-lg border-none bg-gray-800 px-2 py-1 text-xs text-white"
                               value={editValues.lastName}
                               onChange={(e) => setEditValues({ ...editValues, lastName: e.target.value })}
                             />
@@ -426,22 +486,22 @@ export default function AdminDashboard() {
                           `${user.firstName} ${user.lastName}`
                         )}
                       </td>
-                      <td className="px-4 py-3 text-gray-400 text-xs">{user.email}</td>
+                      <td className="px-4 py-3 text-xs text-gray-400">{user.email}</td>
                       <td className="px-4 py-3">
                         <select
-                          className="bg-gray-900 text-gray-200 border-none rounded-md px-2 py-1 text-xs cursor-pointer hover:bg-gray-800 transition duration-300"
+                          className="cursor-pointer rounded-md border-none bg-gray-900 px-2 py-1 text-xs text-gray-200 transition duration-300 hover:bg-gray-800"
                           value={user.role || "sin-role"}
                           onChange={(e) => handleRoleChange(user.id, e.target.value)}
                         >
                           <option value="sin-role">Sin Rol</option>
                           <option value="admin">Admin</option>
-                          <option value="profesor">Profesor</option>
+                          <option value="educador">Educador</option>
                           <option value="estudiante">Estudiante</option>
                         </select>
                       </td>
                       <td className="px-4 py-3">
                         <select
-                          className="bg-gray-900 text-gray-200 border-none rounded-md px-2 py-1 text-xs cursor-pointer hover:bg-gray-800 transition duration-300"
+                          className="cursor-pointer rounded-md border-none bg-gray-900 px-2 py-1 text-xs text-gray-200 transition duration-300 hover:bg-gray-800"
                           value={user.status}
                           onChange={(e) => handleStatusChange(user.id, e.target.value)}
                         >
@@ -450,31 +510,25 @@ export default function AdminDashboard() {
                           <option value="suspendido">Suspendido</option>
                         </select>
                       </td>
-                      <td className="px-4 py-3 flex space-x-2">
+                      <td className="flex space-x-2 px-4 py-3">
                         {editingUser === user.id ? (
                           <button
                             onClick={() => handleSaveUser(user.id)}
-                            className="px-2 py-1 text-xs font-medium rounded-md bg-green-500 hover:bg-green-600 transition duration-300 shadow-md flex items-center"
+                            className="flex items-center rounded-md bg-green-500 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-green-600"
                           >
                             <Edit size={14} className="mr-1" /> Guardar
                           </button>
                         ) : (
                           <button
                             onClick={() => handleEditUser(user)}
-                            className="px-2 py-1 text-xs font-medium rounded-md bg-blue-500 hover:bg-blue-600 transition duration-300 shadow-md flex items-center"
+                            className="flex items-center rounded-md bg-blue-500 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-blue-600"
                           >
                             <Edit size={14} className="mr-1" /> Editar
                           </button>
                         )}
                         <button
-                          onClick={() => handleRemoveRole(user.id)}
-                          className="px-2 py-1 text-xs font-medium rounded-md bg-red-500 hover:bg-red-600 transition duration-300 shadow-md flex items-center"
-                        >
-                          <XCircle size={14} className="mr-1" /> Quitar
-                        </button>
-                        <button
                           onClick={() => handleDeleteUser(user.id)}
-                          className="px-2 py-1 text-xs font-medium rounded-md bg-red-700 hover:bg-red-800 transition duration-300 shadow-md flex items-center"
+                          className="flex items-center rounded-md bg-red-700 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-red-800"
                         >
                           <Trash2 size={14} className="mr-1" /> Eliminar
                         </button>
@@ -484,11 +538,12 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+
           </>
         )}
       </div>
       {notification && (
-        <div className={`fixed bottom-5 right-5 px-4 py-2 rounded-md shadow-lg text-white ${notification.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
+        <div className={`fixed bottom-5 right-5 rounded-md px-4 py-2 text-white shadow-lg ${notification.type === "success" ? "bg-green-500" : "bg-red-500"}`}>
           {notification.message}
         </div>
       )}

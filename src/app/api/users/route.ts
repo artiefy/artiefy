@@ -72,9 +72,18 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: true });
     }
     if (action === "removeRole") {
-      await removeRole(id);
-      return NextResponse.json({ success: true });
-    }
+        const { userIds } = body;
+        if (!userIds || !Array.isArray(userIds)) {
+          return NextResponse.json({ error: "Faltan userIds o no es un array" }, { status: 400 });
+        }
+      
+        for (const userId of userIds) {
+          await removeRole(userId);
+        }
+      
+        return NextResponse.json({ success: true });
+      }
+      
     if (action === "updateUserInfo") {
       await updateUserInfo(id, firstName, lastName);
       return NextResponse.json({ success: true });
