@@ -3,5 +3,5 @@ export default function DashboardLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	return <section>Luis es una bitch{children}</section>;
+	return <section>{children}</section>;
 }

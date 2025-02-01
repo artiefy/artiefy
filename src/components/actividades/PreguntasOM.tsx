@@ -1,15 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
 import type { Question, Option } from '~/app/typesActi';
 
 interface Props {
 	onSubmit: (question: Question) => void;
+	questionToEdit?: Question;
+	onCancel?: () => void;
 }
 
-const QuestionForm: React.FC<Props> = ({ onSubmit }) => {
+const QuestionForm: React.FC<Props> = ({
+	onSubmit,
+	questionToEdit,
+	onCancel,
+}) => {
 	const [questionText, setQuestionText] = useState('');
 	const [options, setOptions] = useState<Option[]>([]);
 	const [correctOptionId, setCorrectOptionId] = useState<string>('');
+
+	useEffect(() => {
+		if (questionToEdit) {
+			setQuestionText(questionToEdit.text);
+			setOptions(questionToEdit.options);
+			setCorrectOptionId(questionToEdit.correctOptionId);
+		}
+	}, [questionToEdit]);
 
 	const handleAddOption = () => {
 		if (options.length < 4) {
@@ -36,7 +50,7 @@ const QuestionForm: React.FC<Props> = ({ onSubmit }) => {
 		e.preventDefault();
 		if (questionText && options.length === 4 && correctOptionId) {
 			const question: Question = {
-				id: crypto.randomUUID(),
+				id: questionToEdit ? questionToEdit.id : crypto.randomUUID(),
 				text: questionText,
 				options,
 				correctOptionId,
@@ -61,7 +75,7 @@ const QuestionForm: React.FC<Props> = ({ onSubmit }) => {
 					id="question"
 					value={questionText}
 					onChange={(e) => setQuestionText(e.target.value)}
-					className="w-full rounded-lg border border-gray-300 px-4 py-2 font-normal text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+					className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
 					rows={3}
 					placeholder="Escribe tu pregunta aquí..."
 					required
@@ -102,7 +116,7 @@ const QuestionForm: React.FC<Props> = ({ onSubmit }) => {
 									onChange={(e) =>
 										handleOptionChange(option.id, e.target.value)
 									}
-									className="w-full rounded-lg border border-gray-300 px-4 py-2 text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
 									placeholder={`Opción ${index + 1}`}
 									required
 								/>
@@ -119,22 +133,24 @@ const QuestionForm: React.FC<Props> = ({ onSubmit }) => {
 				))}
 			</div>
 
-			<button
-				type="submit"
-				disabled={!questionText || options.length !== 4 || !correctOptionId}
-				className="w-full rounded-lg bg-indigo-600 py-3 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-			>
-				Guardar Pregunta
-			</button>
-			{!questionText && (
-				<p className="text-red-500">La pregunta es requerida</p>
-			)}
-			{options.length !== 4 && (
-				<p className="text-red-500">Se requieren 4 opciones</p>
-			)}
-			{!correctOptionId && (
-				<p className="text-red-500">Selecciona la respuesta correcta</p>
-			)}
+			<div className="flex gap-4">
+				<button
+					type="submit"
+					disabled={!questionText || options.length !== 4 || !correctOptionId}
+					className="flex-1 rounded-lg bg-indigo-600 py-3 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+				>
+					{questionToEdit ? 'Guardar Cambios' : 'Guardar Pregunta'}
+				</button>
+				{onCancel && (
+					<button
+						type="button"
+						onClick={onCancel}
+						className="rounded-lg bg-gray-100 px-6 py-3 text-gray-700 transition-colors hover:bg-gray-200"
+					>
+						Cancelar
+					</button>
+				)}
+			</div>
 		</form>
 	);
 };

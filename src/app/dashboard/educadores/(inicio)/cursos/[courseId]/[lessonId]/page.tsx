@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -53,6 +52,7 @@ interface Lessons {
 }
 
 const getContrastYIQ = (hexcolor: string) => {
+	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
 	hexcolor = hexcolor.replace('#', '');
 	const r = parseInt(hexcolor.substr(0, 2), 16);
 	const g = parseInt(hexcolor.substr(2, 2), 16);
@@ -61,7 +61,7 @@ const getContrastYIQ = (hexcolor: string) => {
 	return yiq >= 128 ? 'black' : 'white';
 };
 
-const Page: React.FC = () => {
+const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 	const { user } = useUser();
 	const router = useRouter();
 	const params = useParams();
@@ -70,18 +70,21 @@ const Page: React.FC = () => {
 	const [lessons, setLessons] = useState<Lessons | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [selectedColor, setSelectedColor] = useState<string>('');
+	const [color, setColor] = useState<string>(selectedColor || '#FFFFFF');
 
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
 	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
-
+	console.log(
+		`courseIdString: ${courseIdString}, courseIdNumber: ${courseIdNumber}`
+	);
 	useEffect(() => {
 		const savedColor = localStorage.getItem(
 			`selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
 		);
 		if (savedColor) {
-			setSelectedColor(savedColor);
+			setColor(savedColor);
 		}
+		console.log(`Color guardado lessons: ${savedColor}`);
 	}, [courseId]);
 
 	useEffect(() => {
@@ -187,7 +190,7 @@ const Page: React.FC = () => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="hover:text-gray-300"
-								href={`/dashboard/educadores/cursos/${Array.isArray(courseId) ? courseId[0] : courseId}`}
+								href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 							>
 								Detalles curso
 							</BreadcrumbLink>
@@ -203,15 +206,15 @@ const Page: React.FC = () => {
 				<div className="group relative h-auto w-full">
 					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 					<Card
-						className={`relative z-20 mt-5 border-transparent bg-black p-5 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+						className={`relative z-20 mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						style={{
-							backgroundColor: selectedColor,
-							color: getContrastYIQ(selectedColor),
+							backgroundColor: color,
+							color: getContrastYIQ(color),
 						}}
 					>
 						<CardHeader>
 							<CardTitle
-								className={`text-2xl font-bold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+								className={`text-2xl font-bold ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 							>
 								Clase: {lessons.title}
 							</CardTitle>
@@ -222,9 +225,11 @@ const Page: React.FC = () => {
 								<Image
 									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverImageKey}`}
 									alt={lessons.title}
-									fill
-									className="absolute mx-auto size-full rounded-lg object-cover"
+									width={300}
+									height={100}
+									className="mx-auto rounded-lg object-contain"
 									priority
+									quality={75}
 								/>
 							</div>
 							{/* Columna derecha - Información */}
@@ -236,7 +241,7 @@ const Page: React.FC = () => {
 						</div>
 						{/* Zona de los files */}
 						<div>
-							<ViewFiles lessonId={lessons.id} selectedColor={selectedColor} />
+							<ViewFiles lessonId={lessons.id} selectedColor={color} />
 						</div>
 						<div className="flex justify-evenly lg:px-3 lg:py-6">
 							<Button
@@ -278,7 +283,7 @@ const Page: React.FC = () => {
 						</div>
 						<div>
 							<div
-								className={`pb-6 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+								className={`pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 							>
 								<h2 className="text-2xl font-bold">Información de la clase</h2>
 								<br />
@@ -324,7 +329,7 @@ const Page: React.FC = () => {
 						lessonId={lessons.id}
 						courseId={courseIdNumber ?? 0}
 						coverImageKey={lessons.coverImageKey}
-						selectedColor={selectedColor}
+						selectedColor={color}
 					/>
 				</div>
 			</div>

@@ -77,7 +77,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [editCoverImageKey, setEditCoverImageKey] = useState('');
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [selectedColor, setSelectedColor] = useState<string>('');
+	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
 
 	// Verifica que courseId no sea un array ni undefined, y lo convierte a número
@@ -256,7 +256,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	};
 
 	return (
-		<div className="container h-auto w-full rounded-lg bg-background p-6">
+		<div className="h-auto w-full rounded-lg bg-background">
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>

@@ -100,8 +100,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	}
 	if (lessons.length === 0 || lessons === null) {
 		return (
-			<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-2 lg:px-5">
-				<h2 className="mb-4 text-2xl font-bold">Lista de clases creadas</h2>
+			<div className="mt-7 items-center justify-center gap-4 px-8 text-center lg:px-5">
+				<h2 className={`mb-4 text-2xl font-bold text-primary`}>
+					Lista de clases creadas
+				</h2>
 				<p className="text-xl text-gray-600">
 					No hay clases creadas hasta el momento
 				</p>
@@ -113,13 +115,11 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 				<div className="mt-3">
 					<Button
 						style={{ backgroundColor: selectedColor }}
-						className={`cursor-pointer border-transparent bg-black font-semibold ${
+						className={`cursor-pointer border-transparent font-semibold text-black ${
 							selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 						}`}
 						onClick={() => {
-							console.log('Botón Crear nueva clase clickeado');
 							setIsModalOpenLessons(true);
-							console.log('isModalOpenLessons:', isModalOpenLessons);
 						}}
 					>
 						<ArrowUpFromLine />
@@ -142,7 +142,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	// Renderizamos las lecciones si todo es correcto
 	return (
 		<>
-			<h2 className="mb-4 mt-10 text-2xl font-bold">Lista de clases:</h2>
+			<h2 className={`mb-4 mt-10 text-2xl font-bold`}>Lista de clases:</h2>
 			<div className="flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
 					{lessons.map((lesson) => (
@@ -150,7 +150,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 							<Card
 								key={lesson.id}
-								className="relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]"
+								className="relative flex flex-col overflow-hidden border-0 border-transparent bg-white px-2 pt-2 text-black transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]"
 								style={{
 									backgroundColor: selectedColor,
 									color: getContrastYIQ(selectedColor),
@@ -230,7 +230,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 				</div>
 				<div className="mx-auto my-4">
 					<Button
-						className={`mx-auto mt-6 cursor-pointer justify-center border-transparent bg-primary font-semibold ${
+						className={`mx-auto mt-6 cursor-pointer justify-center border-transparent bg-white font-semibold ${
 							selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 						}`}
 						style={{ backgroundColor: selectedColor }}

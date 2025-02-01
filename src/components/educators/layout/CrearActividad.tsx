@@ -83,7 +83,7 @@ function App() {
 		const foundWords = words.filter((w) => w.found).length;
 		const totalWords = words.length;
 		alert(
-			`¡Juego terminado!\n\nPalabras encontradas: ${foundWords} de ${totalWords}\nPuntaje final: ${score}`
+			`¡Actividad terminada!\n\nPalabras encontradas: ${foundWords} de ${totalWords}\nPuntaje final: ${score}`
 		);
 	};
 
@@ -96,7 +96,7 @@ function App() {
 	const allWordsFound = words.every((w) => w.found);
 
 	return (
-		<div className="min-h-screen rounded-lg bg-gradient-to-br from-primary to-indigo-500 p-8">
+		<div className="h-auto rounded-lg bg-gradient-to-br from-primary to-indigo-500 p-8">
 			<div className="mx-auto mt-16 max-w-4xl">
 				<div className="mb-8 rounded-2xl bg-white p-8 shadow-xl">
 					<h1 className="mb-6 text-center text-3xl font-bold text-indigo-800">
@@ -190,7 +190,7 @@ function App() {
 								disabled={words.length === 0}
 								className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-400"
 							>
-								<Play className="size-5" /> Comenzar Juego
+								<Play className="size-5" /> Comenzar Actividad
 							</button>
 						</div>
 					) : (

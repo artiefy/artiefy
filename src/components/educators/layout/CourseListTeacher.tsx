@@ -31,7 +31,7 @@ interface CourseListTeacherProps {
 
 export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
 	return (
-		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
+		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-2">
 			{courses.map((course) => (
 				<div key={course.id} className="group relative">
 					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>

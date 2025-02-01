@@ -7,19 +7,23 @@ import {
 	Trash2,
 	CheckCircle2,
 	HelpCircle,
-	// Edit2,
+	Edit2,
 	ArrowLeft,
 } from 'lucide-react';
 import type { Question, QuizConfig } from '~/app/typesActi';
 import QuestionForm from '~/components/actividades/PreguntasOM';
 import Quiz from '~/components/educators/layout/QuizPOM';
 
-function PreguntasOM() {
+function App() {
 	const [questions, setQuestions] = useState<Question[]>([]);
 	const [isEditing, setIsEditing] = useState(false);
+	const [editingQuestion, setEditingQuestion] = useState<
+		Question | undefined
+	>();
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [score, setScore] = useState(0);
+	const [answeredQuestions, setAnsweredQuestions] = useState<string[]>([]);
 	const [config, setConfig] = useState<QuizConfig>({
 		points: 10,
 		timeLimit: 300,
@@ -27,6 +31,7 @@ function PreguntasOM() {
 	});
 	const [remainingTime, setRemainingTime] = useState(config.timeLimit);
 	const [showInstructions, setShowInstructions] = useState(true);
+	const [timeExpired, setTimeExpired] = useState(false);
 
 	useEffect(() => {
 		let timer: number;
@@ -34,7 +39,8 @@ function PreguntasOM() {
 			timer = window.setInterval(() => {
 				setRemainingTime((prev) => {
 					if (prev <= 1) {
-						handleFinishQuiz();
+						setTimeExpired(true);
+						handleFinishQuiz(true);
 						return 0;
 					}
 					return prev - 1;
@@ -45,30 +51,51 @@ function PreguntasOM() {
 	}, [isPlaying, config.isTimerEnabled, remainingTime]);
 
 	const handleAddQuestion = (question: Question) => {
-		setQuestions([...questions, question]);
+		if (editingQuestion) {
+			setQuestions(questions.map((q) => (q.id === question.id ? question : q)));
+			setEditingQuestion(undefined);
+		} else {
+			setQuestions([...questions, question]);
+		}
 		setIsEditing(false);
 	};
 
 	const handleRemoveQuestion = (id: string) => {
-		setQuestions(questions.filter((q) => q.id !== id));
+		if (confirm('¿Estás seguro de que deseas eliminar esta pregunta?')) {
+			setQuestions(questions.filter((q) => q.id !== id));
+		}
 	};
 
-	// const handleEditQuestion = (id: string) => {
-	// 	// Implementar edición de pregunta
-	// };
+	const handleEditQuestion = (id: string) => {
+		const question = questions.find((q) => q.id === id);
+		if (question) {
+			setEditingQuestion(question);
+			setIsEditing(true);
+		}
+	};
 
 	const handleStartQuiz = () => {
 		if (questions.length > 0) {
 			setIsPlaying(true);
 			setCurrentQuestionIndex(0);
 			setScore(0);
+			setAnsweredQuestions([]);
 			setRemainingTime(config.timeLimit);
 			setShowInstructions(true);
+			setTimeExpired(false);
 		}
 	};
 
 	const handleAnswer = (optionId: string) => {
 		const currentQuestion = questions[currentQuestionIndex];
+
+		// Evitar respuestas duplicadas
+		if (answeredQuestions.includes(currentQuestion.id)) {
+			return;
+		}
+
+		setAnsweredQuestions([...answeredQuestions, currentQuestion.id]);
+
 		if (currentQuestion.correctOptionId === optionId) {
 			setScore((prev) => prev + config.points);
 		}
@@ -76,15 +103,51 @@ function PreguntasOM() {
 		if (currentQuestionIndex < questions.length - 1) {
 			setCurrentQuestionIndex((prev) => prev + 1);
 		} else {
-			handleFinishQuiz();
+			handleFinishQuiz(false);
 		}
 	};
 
-	const handleFinishQuiz = () => {
+	const handleFinishQuiz = (timeOut = false) => {
 		setIsPlaying(false);
-		alert(
-			`¡Quiz terminado!\n\nPuntaje final: ${score} de ${questions.length * config.points}`
-		);
+		const totalPoints = questions.length * config.points;
+		const answeredCount = answeredQuestions.length;
+		const percentage = (score / totalPoints) * 100;
+
+		let message = '';
+
+		if (timeOut) {
+			message =
+				`¡Se acabó el tiempo!\n\n` +
+				`Lamentablemente no pudiste completar el quiz a tiempo.\n` +
+				`Alcanzaste a responder ${answeredCount} de ${questions.length} preguntas.\n` +
+				`Puntaje final: ${score} de ${totalPoints} (${percentage.toFixed(1)}%)\n\n` +
+				`¡Inténtalo de nuevo! Seguro lo harás mejor la próxima vez.`;
+		} else {
+			if (percentage >= 90) {
+				message =
+					`¡Excelente trabajo!\n\n` +
+					`Has completado el quiz con un puntaje sobresaliente.\n` +
+					`Respondiste ${answeredCount} de ${questions.length} preguntas.\n` +
+					`Puntaje final: ${score} de ${totalPoints} (${percentage.toFixed(1)}%)\n\n` +
+					`¡Sigue así!`;
+			} else if (percentage >= 70) {
+				message =
+					`¡Buen trabajo!\n\n` +
+					`Has completado el quiz con un buen puntaje.\n` +
+					`Respondiste ${answeredCount} de ${questions.length} preguntas.\n` +
+					`Puntaje final: ${score} de ${totalPoints} (${percentage.toFixed(1)}%)\n\n` +
+					`¡Sigue practicando!`;
+			} else {
+				message =
+					`Quiz completado\n\n` +
+					`Has completado el quiz, pero hay espacio para mejorar.\n` +
+					`Respondiste ${answeredCount} de ${questions.length} preguntas.\n` +
+					`Puntaje final: ${score} de ${totalPoints} (${percentage.toFixed(1)}%)\n\n` +
+					`¡No te desanimes! Inténtalo de nuevo para mejorar tu puntaje.`;
+			}
+		}
+
+		alert(message);
 	};
 
 	const formatTime = (seconds: number) => {
@@ -94,11 +157,11 @@ function PreguntasOM() {
 	};
 
 	return (
-		<div className="min-h-screen rounded-lg bg-gradient-to-br from-primary to-indigo-500 p-8">
-			<div className="mx-auto mt-16 max-w-4xl">
+		<div className="h-auto rounded-lg bg-gradient-to-br from-primary to-indigo-500 p-8 text-indigo-500">
+			<div className="mx-auto mt-6 max-w-4xl">
 				<div className="mb-8 rounded-2xl bg-white p-8 shadow-xl">
 					<h1 className="mb-6 text-center text-3xl font-bold text-indigo-800">
-						Preguntas de Opción Múltiple
+						Quiz de Opción Múltiple
 					</h1>
 
 					{!isPlaying ? (
@@ -107,13 +170,23 @@ function PreguntasOM() {
 								<>
 									<div className="mb-6 flex items-center gap-4">
 										<button
-											onClick={() => setIsEditing(false)}
+											onClick={() => {
+												setIsEditing(false);
+												setEditingQuestion(undefined);
+											}}
 											className="flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-800"
 										>
 											<ArrowLeft className="size-5" /> Volver a la lista
 										</button>
 									</div>
-									<QuestionForm onSubmit={handleAddQuestion} />
+									<QuestionForm
+										onSubmit={handleAddQuestion}
+										questionToEdit={editingQuestion}
+										onCancel={() => {
+											setIsEditing(false);
+											setEditingQuestion(undefined);
+										}}
+									/>
 								</>
 							) : (
 								<>
@@ -131,7 +204,7 @@ function PreguntasOM() {
 
 									<div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
 										<div className="space-y-4">
-											<h3 className="flex items-center gap-2 text-lg font-semibold text-indigo-800">
+											<h3 className="flex items-center gap-2 text-lg font-semibold">
 												<Trophy className="size-5" /> Puntos por pregunta
 											</h3>
 											<input
@@ -143,16 +216,16 @@ function PreguntasOM() {
 														points: Number(e.target.value),
 													})
 												}
-												className="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+												className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
 												min="1"
 											/>
 										</div>
 
 										<div className="space-y-4">
-											<h3 className="flex items-center gap-2 text-lg font-semibold text-indigo-800">
+											<h3 className="flex items-center gap-2 text-lg font-semibold">
 												<Timer className="size-5" /> Temporizador
 											</h3>
-											<div className="flex items-center gap-4 text-indigo-800">
+											<div className="flex items-center gap-4">
 												<label className="flex items-center gap-2">
 													<input
 														type="checkbox"
@@ -168,19 +241,22 @@ function PreguntasOM() {
 													Activar
 												</label>
 												{config.isTimerEnabled && (
-													<input
-														type="number"
-														value={config.timeLimit}
-														onChange={(e) =>
-															setConfig({
-																...config,
-																timeLimit: Number(e.target.value),
-															})
-														}
-														className="w-32 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-														min="30"
-														step="30"
-													/>
+													<>
+														<input
+															type="number"
+															value={config.timeLimit}
+															onChange={(e) =>
+																setConfig({
+																	...config,
+																	timeLimit: Number(e.target.value),
+																})
+															}
+															className="w-32 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+															min="30"
+															step="30"
+														/>
+														<p> Segundos</p>
+													</>
 												)}
 											</div>
 										</div>
@@ -220,15 +296,17 @@ function PreguntasOM() {
 														</div>
 													</div>
 													<div className="flex gap-2">
-														{/* <button
+														<button
 															onClick={() => handleEditQuestion(question.id)}
 															className="rounded-lg p-2 text-blue-600 transition-colors hover:bg-blue-50"
+															title="Editar pregunta"
 														>
 															<Edit2 className="size-4" />
-														</button> */}
+														</button>
 														<button
 															onClick={() => handleRemoveQuestion(question.id)}
 															className="rounded-lg p-2 text-red-600 transition-colors hover:bg-red-50"
+															title="Eliminar pregunta"
 														>
 															<Trash2 className="size-4" />
 														</button>
@@ -258,8 +336,14 @@ function PreguntasOM() {
 										<span className="text-xl font-bold">{score}</span>
 									</span>
 									{config.isTimerEnabled && (
-										<span className="flex items-center gap-2">
-											<Timer className="size-5 text-indigo-500" />
+										<span
+											className={`flex items-center gap-2 ${
+												remainingTime < 30
+													? 'animate-pulse text-red-500'
+													: 'text-indigo-500'
+											}`}
+										>
+											<Timer className="size-5" />
 											<span className="text-xl font-bold">
 												{formatTime(remainingTime)}
 											</span>
@@ -312,4 +396,4 @@ function PreguntasOM() {
 	);
 }
 
-export default PreguntasOM;
+export default App;

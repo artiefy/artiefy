@@ -1,7 +1,13 @@
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
-import { activities, lessons, courses, typeActi } from '~/server/db/schema';
+import {
+	activities,
+	lessons,
+	courses,
+	typeActi,
+	userActivitiesProgress,
+} from '~/server/db/schema';
 
 // Interfaces
 export interface Activity {
@@ -12,7 +18,7 @@ export interface Activity {
 	lessonsId: number;
 }
 
-// Interface with details
+// Actualizar la interfaz ActivityDetails
 export interface ActivityDetails {
 	id: number;
 	name: string;
@@ -27,10 +33,10 @@ export interface ActivityDetails {
 		title: string;
 		coverImageKey: string;
 		courseId: {
-			id: number;
-			title: string;
-			description: string;
-			instructor: string;
+			id: number | null;
+			title: string | null;
+			description: string | null;
+			instructor: string | null;
 		};
 	};
 }
@@ -119,33 +125,58 @@ export const getActivityById = async (activityId: number) => {
 // Obtener todas las actividades de una lección
 export const getActivitiesByLessonId = async (
 	lessonId: number
-): Promise<Activity[]> => {
+): Promise<ActivityDetails[]> => {
 	try {
-		//const actividades =
-		return await db
-			.select
-			//   {
-			//   id: activities.id,
-			//   name: activities.name,
-			//   description: activities.description,
-			//   typeid:{
-			//     id: typeActi.id,
-			//     name: typeActi.name,
-			//     description: typeActi.description
-			//   },
-			//   lessonsId:{
-			//     id: lessons.id,
-			//     title: lessons.title
-			//   },
-			// }
-			()
+		const actividades = await db
+			.select({
+				id: activities.id,
+				name: activities.name,
+				description: activities.description,
+				type: {
+					id: typeActi.id,
+					name: typeActi.name,
+					description: typeActi.description,
+				},
+				lesson: {
+					id: lessons.id,
+					title: lessons.title,
+					coverImageKey: lessons.coverImageKey,
+					courseId: courses.id,
+					courseTitle: courses.title,
+					courseDescription: courses.description,
+					courseInstructor: courses.instructor,
+				},
+			})
 			.from(activities)
+			.leftJoin(typeActi, eq(activities.typeid, typeActi.id))
+			.leftJoin(lessons, eq(activities.lessonsId, lessons.id))
+			.leftJoin(courses, eq(lessons.courseId, courses.id))
 			.where(eq(activities.lessonsId, lessonId));
-		//return actividades;
+
+		return actividades.map((actividad) => ({
+			id: actividad.id,
+			name: actividad.name,
+			description: actividad.description,
+			type: {
+				id: actividad.type?.id ?? 0,
+				name: actividad.type?.name ?? '',
+				description: actividad.type?.description ?? '',
+			},
+			lessonsId: {
+				id: actividad.lesson.id ?? 0,
+				title: actividad.lesson.title ?? '',
+				coverImageKey: actividad.lesson.coverImageKey ?? '',
+				courseId: {
+					id: actividad.lesson.courseId,
+					title: actividad.lesson.courseTitle,
+					description: actividad.lesson.courseDescription,
+					instructor: actividad.lesson.courseInstructor,
+				},
+			},
+		}));
 	} catch (error) {
-		throw new Error(
-			`Error al obtener las actividades de la lección: ${error instanceof Error ? error.message : 'Error desconocido'}`
-		);
+		console.error('Error fetching activities by lesson ID:', error);
+		throw error;
 	}
 };
 
@@ -171,9 +202,15 @@ export const updateActivity = async (
 	}
 };
 
-// Eliminar una actividad
+// Eliminar una actividad y todos los datos asociados
 export const deleteActivity = async (activityId: number): Promise<void> => {
 	try {
+		// Eliminar los datos asociados en userActivitiesProgress
+		await db
+			.delete(userActivitiesProgress)
+			.where(eq(userActivitiesProgress.activityId, activityId));
+
+		// Eliminar la actividad
 		await db.delete(activities).where(eq(activities.id, activityId));
 	} catch (error) {
 		throw new Error(

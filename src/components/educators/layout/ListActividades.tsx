@@ -16,7 +16,10 @@ interface ActividadModels {
 	id: number;
 	name: string;
 	description: string;
-	typeid: number;
+	type: {
+		id: number;
+		name: string;
+	};
 	lessonsId: {
 		id: number;
 		title: string;
@@ -143,6 +146,9 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 										</p>
 										<p className="text-sm font-bold">
 											Descripcion: {actividad.description}
+										</p>
+										<p className="text-sm font-bold">
+											Tipo de actividad: {actividad.type.name}
 										</p>
 									</div>
 								</CardContent>
