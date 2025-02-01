@@ -1,3 +1,14 @@
+Uptash o Neon usan Serveless
+
+Un servicio serverless como Upstash o Neon es una plataforma que proporciona bases de datos y otros servicios sin que el usuario tenga que gestionar servidores. En lugar de aprovisionar y mantener instancias manualmente, estos servicios escalan automáticamente y cobran solo por el uso real.
+
+¿Qué significa "serverless"?
+
+"Serverless" no significa que no haya servidores, sino que el proveedor se encarga de la infraestructura. Esto trae beneficios como:
+✅ Escalabilidad automática: Crece o disminuye según la demanda.
+✅ Pago por uso: No hay costos fijos por servidores inactivos.
+✅ Sin gestión de infraestructura: No tienes que preocuparte por actualizaciones o mantenimiento.
+---------------------------------------------------------------------
 TAILWINDCSS V4.0
 
 Si deseas aplicar estilos a un rango específico de pantalla, Tailwind CSS 4 permite usar max-breakpoints:

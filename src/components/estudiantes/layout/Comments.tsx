@@ -1,9 +1,22 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@clerk/nextjs';
-import { StarIcon } from '@heroicons/react/24/solid';
+import {
+	StarIcon,
+	PencilIcon,
+	TrashIcon,
+	HandThumbUpIcon,
+	XMarkIcon,
+} from '@heroicons/react/24/solid'; // Cambiado a XCircleIcon
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons'; // Importa el componente Icons
+import { Textarea } from '~/components/estudiantes/ui/textarea';
 import {
 	addComment,
 	getCommentsByCourseId,
+	editComment,
+	deleteComment,
+	likeComment,
 } from '~/server/actions/comment/commentActions';
 import { isUserEnrolled } from '~/server/actions/courses/enrollInCourse';
 
@@ -16,7 +29,9 @@ interface Comment {
 	content: string;
 	rating: number;
 	createdAt: string;
-	userName: string; // Añadir el nombre del usuario
+	userName: string;
+	likes: number;
+	userId: string;
 }
 
 const Comments: React.FC<CommentProps> = ({ courseId }) => {
@@ -26,13 +41,18 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [isEnrolled, setIsEnrolled] = useState(false);
-	const { userId } = useAuth();
+	const [isSubmitting, setIsSubmitting] = useState(false); // Estado para manejar el envío
+	const [editMode, setEditMode] = useState<null | string>(null); // Estado para manejar el modo de edición
+	const [deletingComment, setDeletingComment] = useState<null | string>(null); // Estado para manejar la eliminación
+	const [likingComment, setLikingComment] = useState<null | string>(null); // Estado para manejar el "me gusta"
+	const { userId, isSignedIn } = useAuth();
+	const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
 	useEffect(() => {
 		const fetchComments = async () => {
 			try {
 				const response = await getCommentsByCourseId(courseId);
-				setComments(response.comments);
+				setComments(response.comments as Comment[]);
 			} catch (error) {
 				console.error('Error fetching comments:', error);
 			} finally {
@@ -48,7 +68,16 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 		};
 
 		void fetchComments();
-		void checkEnrollment();
+
+		// Polling every 10 seconds to check enrollment status
+		const interval = setInterval(() => {
+			if (userId) {
+				void checkEnrollment();
+			}
+		}, 10000);
+
+		// Clean up interval on component unmount
+		return () => clearInterval(interval);
 	}, [courseId, userId]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -57,26 +86,76 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 			setMessage('Debes estar inscrito en el curso para dejar un comentario.');
 			return;
 		}
+		setIsSubmitting(true); // Mostrar el spinner
 		try {
-			const response = await addComment(courseId, content, rating);
+			let response;
+			if (editMode) {
+				response = await editComment(editMode, content);
+			} else {
+				response = await addComment(courseId, content, rating);
+			}
 			setMessage(response.message);
 			if (response.success) {
 				setContent('');
 				setRating(0);
-				setComments((prevComments) => [
-					...prevComments,
-					{
-						id: Date.now().toString(),
-						content,
-						rating,
-						createdAt: new Date().toISOString(),
-						userName: 'Tu Nombre',
-					}, // Añadir el nombre del usuario
-				]);
+				setEditMode(null); // Reset edit mode
+				const updatedComments = await getCommentsByCourseId(courseId);
+				setComments(updatedComments.comments as Comment[]);
 			}
 		} catch (error) {
-			console.error('Error adding comment:', error);
+			console.error('Error adding/editing comment:', error);
+		} finally {
+			setIsSubmitting(false); // Ocultar el spinner
 		}
+	};
+
+	const handleDelete = async (commentId: string) => {
+		setDeletingComment(commentId); // Marcar el comentario como en proceso de eliminación
+		try {
+			const response = await deleteComment(commentId);
+			setMessage(response.message);
+			if (response.success) {
+				setComments((prevComments) =>
+					prevComments.filter((comment) => comment.id !== commentId)
+				);
+			}
+		} catch (error) {
+			console.error('Error deleting comment:', error);
+		} finally {
+			setDeletingComment(null); // Desmarcar el comentario como en proceso de eliminación
+		}
+	};
+
+	const handleLike = async (commentId: string) => {
+		setLikingComment(commentId); // Marcar el comentario como en proceso de "me gusta"
+		try {
+			const response = await likeComment(commentId);
+			setMessage(response.message);
+			if (response.success) {
+				const updatedComments = await getCommentsByCourseId(courseId);
+				setComments(updatedComments.comments as Comment[]);
+			}
+		} catch (error) {
+			console.error('Error liking comment:', error);
+		} finally {
+			setLikingComment(null); // Desmarcar el comentario como en proceso de "me gusta"
+		}
+	};
+
+	const handleEdit = (comment: Comment) => {
+		setContent(comment.content);
+		setEditMode(comment.id);
+
+		// Scroll to the textarea
+		if (textareaRef.current) {
+			textareaRef.current.scrollIntoView({ behavior: 'smooth' });
+			textareaRef.current.focus();
+		}
+	};
+
+	const handleCancelEdit = () => {
+		setContent('');
+		setEditMode(null);
 	};
 
 	return (
@@ -86,21 +165,29 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 				<div>
 					<label
 						htmlFor="content"
-						className="text-primary block text-sm font-medium"
+						className="block text-sm font-medium text-primary"
 					>
 						Comentario:
 					</label>
-					<textarea
+					<Textarea
 						id="content"
+						ref={textareaRef}
 						value={content}
 						onChange={(e) => setContent(e.target.value)}
+						onFocus={(e) => (e.target.placeholder = '')}
+						onBlur={(e) => (e.target.placeholder = 'Escribe tu comentario')}
 						required
 						placeholder="Escribe tu comentario"
-						className="text-background shadow-xs mt-1 block w-full rounded-md border-gray-300 placeholder:text-gray-400 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+						disabled={!isSignedIn || !isEnrolled}
+						className={`mt-1 block w-full rounded-md border text-primary shadow-xs placeholder:text-gray-400 focus:ring-primary sm:text-sm ${
+							!isSignedIn || !isEnrolled
+								? 'border-gray-300'
+								: 'focus:border-2 focus:border-secondary'
+						}`}
 						style={{
 							height: '100px',
 							padding: '10px',
-							caretColor: 'black',
+							caretColor: 'var(--color-primary)',
 							textAlign: 'left',
 							verticalAlign: 'middle',
 						}}
@@ -109,7 +196,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 				<div>
 					<label
 						htmlFor="rating"
-						className="text-primary block text-sm font-medium"
+						className="block text-sm font-medium text-primary"
 					>
 						Calificación:
 					</label>
@@ -123,12 +210,35 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 						))}
 					</div>
 				</div>
-				<button
-					type="submit"
-					className="shadow-xs focus:outline-hidden inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-95"
-				>
-					Enviar
-				</button>
+				<div className="flex items-center space-x-2">
+					<Button
+						type="submit"
+						className="inline-flex items-center justify-center rounded-md border border-transparent bg-secondary px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:outline-hidden active:scale-95"
+						style={{ width: '100px', height: '38px' }}
+					>
+						{isSubmitting ? (
+							<div className="flex items-center">
+								<Icons.spinner
+									className="animate-spin text-white"
+									style={{ width: '20px', height: '20px' }}
+								/>
+							</div>
+						) : editMode ? (
+							'Editar'
+						) : (
+							'Enviar'
+						)}
+					</Button>
+					{editMode && (
+						<button
+							type="button"
+							onClick={handleCancelEdit}
+							className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden active:scale-95"
+						>
+							<XMarkIcon className="size-5" />
+						</button>
+					)}
+				</div>
 			</form>
 			{message && <p className="mt-4 text-sm text-green-600">{message}</p>}
 			<div className="mt-8">
@@ -140,17 +250,67 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 				) : (
 					<ul className="space-y-4">
 						{comments.map((comment) => (
-							<li key={comment.id} className="border-b pb-4">
-								<div className="mb-2 flex items-center">
-									{[1, 2, 3, 4, 5].map((star) => (
-										<StarIcon
-											key={star}
-											className={`size-5 ${star <= comment.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-										/>
-									))}
-									<span className="ml-2 text-sm text-gray-600">
-										{new Date(comment.createdAt).toLocaleDateString()}
-									</span>
+							<li key={comment.id} className="border-b pb-2">
+								<div className="mb-2 flex items-center justify-between">
+									<div className="flex items-center py-2">
+										{[1, 2, 3, 4, 5].map((star) => (
+											<StarIcon
+												key={star}
+												className={`size-5 ${star <= comment.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+											/>
+										))}
+										<span className="ml-2 text-sm text-gray-600">
+											{new Date(comment.createdAt).toLocaleDateString()}
+										</span>
+									</div>
+									<div className="flex items-center space-x-2">
+										<div className="flex flex-col items-center">
+											<span
+												className={`-mt-6 text-sm ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'}`}
+											>
+												{comment.likes.toString()}
+											</span>{' '}
+											{/* Convert likes to string */}
+											<button
+												onClick={() => handleLike(comment.id)}
+												disabled={likingComment === comment.id}
+											>
+												{likingComment === comment.id ? (
+													<Icons.spinner
+														className="animate-spin text-blue-600"
+														style={{ width: '20px', height: '20px' }}
+													/>
+												) : (
+													<HandThumbUpIcon
+														className={`-mb-2 size-5 cursor-pointer ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'} hover:text-blue-600`}
+													/>
+												)}
+											</button>
+										</div>
+										{userId === comment.userId && (
+											<>
+												<button onClick={() => handleEdit(comment)}>
+													<PencilIcon className="size-5 cursor-pointer text-gray-500 hover:text-amber-400" />
+												</button>
+												<button
+													onClick={() => handleDelete(comment.id)}
+													className={
+														deletingComment === comment.id ? 'text-red-500' : ''
+													}
+													disabled={deletingComment === comment.id}
+												>
+													{deletingComment === comment.id ? (
+														<Icons.spinner
+															className="animate-spin text-red-500"
+															style={{ width: '20px', height: '20px' }}
+														/>
+													) : (
+														<TrashIcon className="size-5 cursor-pointer text-gray-500 hover:text-red-500" />
+													)}
+												</button>
+											</>
+										)}
+									</div>
 								</div>
 								<p className="text-primary">{comment.content}</p>
 								<p className="text-sm text-gray-500">

@@ -82,6 +82,9 @@
   body {
     @apply bg-background;
   }
+  button {
+    @apply cursor-pointer;
+  }
 }
 
 /* 🎨 Clases de utilidades */

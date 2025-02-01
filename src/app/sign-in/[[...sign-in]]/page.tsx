@@ -28,6 +28,7 @@ export default function SignInPage() {
 	const searchParams = useSearchParams();
 	const redirectTo = searchParams.get('redirect_url') ?? '/';
 	const router = useRouter();
+	const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
 	useEffect(() => {
 		if (isSignedIn) {
@@ -57,7 +58,7 @@ export default function SignInPage() {
 			await signIn.authenticateWithRedirect({
 				strategy,
 				redirectUrl: '/sso-callback',
-				redirectUrlComplete: redirectTo,
+				redirectUrlComplete: currentUrl,
 			});
 		} catch {
 			setLoadingProvider(null);
@@ -89,7 +90,7 @@ export default function SignInPage() {
 				if (setActive) {
 					await setActive({ session: signInAttempt.createdSessionId });
 				}
-				router.replace(redirectTo);
+				router.replace(currentUrl);
 			} else if (signInAttempt.status === 'needs_first_factor') {
 				const supportedStrategies =
 					signInAttempt.supportedFirstFactors?.map(
@@ -195,7 +196,7 @@ export default function SignInPage() {
 				if (setActive) {
 					await setActive({ session: result.createdSessionId });
 				}
-				router.replace('/');
+				router.replace('/'); // Aquí puedes cambiar para redirigir a una URL específica si es necesario
 			} else {
 				setErrors([
 					{
