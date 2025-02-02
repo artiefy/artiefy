@@ -17,35 +17,38 @@ import {
   type Course,
   type LessonWithProgress,
 } from '~/types';
-import LessonNavigation from './LessonNavigation';
-import LessonCards from './LessonCards';
-import LessonPlayer from './LessonPlayer';
-import LessonActivities from './LessonActivities';
+import LessonNavigation from '~/components/estudiantes/layout/LessonNavigation';
+import LessonCards from '~/components/estudiantes/layout/LessonCards';
+import LessonPlayer from '~/components/estudiantes/layout/LessonPlayer';
+import LessonActivities from '~/components/estudiantes/layout/LessonActivities';
+
 
 export default function LessonDetails({
   lesson,
-  activities,
+  activity,
   course,
   lessons,
   userLessonsProgress,
 }: {
   lesson: LessonWithProgress;
-  activities: Activity[];
+  activity: Activity | null;
   lessons: Lesson[];
   course: Course;
   userLessonsProgress: UserLessonsProgress[];
 }) {
+  // State and hooks initialization
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(lesson.id);
   const [progress, setProgress] = useState(lesson.porcentajecompletado);
   const [isVideoCompleted, setIsVideoCompleted] = useState(lesson.porcentajecompletado === 100);
-  const [isActivityCompleted, setIsActivityCompleted] = useState(false);
+  const [isActivityCompleted, setIsActivityCompleted] = useState(activity?.isCompleted ?? false);
   const [isCompletingActivity, setIsCompletingActivity] = useState(false);
   const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
+  // Initialize lessons state with progress and locked status
   useEffect(() => {
     const initializeLessonsState = () => {
       const lessonsWithProgress = lessons
@@ -63,6 +66,7 @@ export default function LessonDetails({
     initializeLessonsState();
   }, [lessons, userLessonsProgress]);
 
+  // Handle lesson navigation
   useEffect(() => {
     if (selectedLessonId !== null && selectedLessonId !== lesson.id) {
       NProgress.start();
@@ -73,10 +77,12 @@ export default function LessonDetails({
     }
   }, [selectedLessonId, lesson.id, router]);
 
+  // Ensure initial lesson loading is complete
   useEffect(() => {
     NProgress.done();
   }, [searchParams]);
 
+  // Ensure the first lesson is always active and unlocked
   useEffect(() => {
     setLessonsState((prevLessons) =>
       prevLessons.map((l) =>
@@ -92,11 +98,14 @@ export default function LessonDetails({
     );
   }, []);
 
+  // Set initial progress and video completion state based on lesson data
   useEffect(() => {
     setProgress(lesson.porcentajecompletado);
     setIsVideoCompleted(lesson.porcentajecompletado === 100);
-  }, [lesson]);
+    setIsActivityCompleted(activity?.isCompleted ?? false);
+  }, [lesson, activity]);
 
+  // Redirect if the lesson is locked and not the first lesson
   useEffect(() => {
     if (lesson.isLocked && lesson.order !== 1) {
       toast({
@@ -113,6 +122,7 @@ export default function LessonDetails({
     }
   }, [lesson.isLocked, lesson.order, router, toast]);
 
+  // Handle video end event
   const handleVideoEnd = async () => {
     setProgress(100);
     setIsVideoCompleted(true);
@@ -124,7 +134,7 @@ export default function LessonDetails({
             ? {
                 ...l,
                 porcentajecompletado: 100,
-                isCompleted: !activities.some(activity => !activity.isCompleted),
+                isCompleted: activity ? false : true,
                 isLocked: false,
               }
             : l
@@ -132,13 +142,12 @@ export default function LessonDetails({
       );
       toast({
         title: 'Video Completado',
-        description: activities.length
-          ? 'Ahora completa las actividades para desbloquear la siguiente clase'
-          : 'Has completado la clase',
+        description: activity ? 'Ahora completa la actividad para desbloquear la siguiente clase' : 'Has completado la clase',
         variant: 'default',
       });
 
-      if (!activities.length) {
+      // Unlock next lesson if no activity
+      if (!activity) {
         const result = await unlockNextLesson(lesson.id);
         if (result.success && 'nextLessonId' in result) {
           toast({
@@ -147,6 +156,7 @@ export default function LessonDetails({
             variant: 'default',
           });
 
+          // Navigate to next lesson
           setTimeout(() => {
             setProgress(0);
             setSelectedLessonId(result.nextLessonId ?? null);
@@ -164,6 +174,7 @@ export default function LessonDetails({
     }
   };
 
+  // Handle progress update event
   const handleProgressUpdate = async (videoProgress: number) => {
     const roundedProgress = Math.round(videoProgress);
     if (roundedProgress > progress && roundedProgress < 100) {
@@ -181,14 +192,14 @@ export default function LessonDetails({
     }
   };
 
-  const handleActivityCompletion = async (activityId: number) => {
-    const activity = activities.find(activity => activity.id === activityId);
+  // Handle activity completion event
+  const handleActivityCompletion = async () => {
     if (!activity || !isVideoCompleted) return;
 
     setIsCompletingActivity(true);
 
     try {
-      await completeActivity(activityId);
+      await completeActivity(activity.id);
       setIsActivityCompleted(true);
       setLessonsState((prevLessons) =>
         prevLessons.map((l) =>
@@ -204,6 +215,7 @@ export default function LessonDetails({
           variant: 'default',
         });
 
+        // Navigate to next lesson
         setTimeout(() => {
           setProgress(0);
           setSelectedLessonId(result.nextLessonId ?? null);
@@ -222,6 +234,7 @@ export default function LessonDetails({
     }
   };
 
+  // Add new effect to handle URL-based lesson unlocking
   useEffect(() => {
     setLessonsState((prevLessons) =>
       prevLessons.map((l) => ({
@@ -240,6 +253,7 @@ export default function LessonDetails({
     );
   }, [lesson.id]);
 
+  // Function to handle navigation
   const handleNavigation = (direction: 'prev' | 'next') => {
     const sortedLessons = [...lessonsState].sort((a, b) => a.order - b.order);
     const currentIndex = sortedLessons.findIndex((l) => l.id === selectedLessonId);
@@ -272,6 +286,7 @@ export default function LessonDetails({
       <Header />
       <div className="bg-background flex min-h-screen flex-col">
         <div className="flex flex-1 px-4 py-6">
+          {/* Left Sidebar */}
           <div className="bg-background w-80 p-4 shadow-lg">
             <h2 className="text-primary mb-4 text-2xl font-bold">Cursos</h2>
             <LessonCards
@@ -281,6 +296,8 @@ export default function LessonDetails({
               course={course}
             />
           </div>
+
+          {/* Main Content */}
           <div className="flex-1 p-6">
             <LessonNavigation
               handleNavigation={handleNavigation}
@@ -294,19 +311,24 @@ export default function LessonDetails({
               handleProgressUpdate={handleProgressUpdate}
             />
           </div>
+
+          {/* Right Sidebar - Activities */}
           <LessonActivities
-            activities={activities}
+            activity={activity}
             isVideoCompleted={isVideoCompleted}
             isActivityCompleted={isActivityCompleted}
             isCompletingActivity={isCompletingActivity}
             handleActivityCompletion={handleActivityCompletion}
           />
+
+          {/* Chatbot Button and Modal */}
           <button
             onClick={() => setIsChatOpen(!isChatOpen)}
             className="fixed bottom-6 right-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
           >
             <FaRobot className="text-xl" />
           </button>
+
           <ChatBot />
         </div>
         <Footer />
