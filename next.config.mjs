@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
+
 import './src/env.js';
 import withPlaiceholder from '@plaiceholder/next';
 

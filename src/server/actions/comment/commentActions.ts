@@ -98,7 +98,8 @@ export async function getCommentsByCourseId(
 
 export async function editComment(
   commentId: string,
-  content: string
+  content: string,
+  rating: number // Aceptar el rating como parámetro
 ): Promise<{ success: boolean; message: string }> {
   try {
     const user = await currentUser();
@@ -115,6 +116,7 @@ export async function editComment(
 
     await redis.hmset(commentId, {
       content,
+      rating, // Actualizar el rating
       updatedAt: new Date().toISOString(),
     });
 
