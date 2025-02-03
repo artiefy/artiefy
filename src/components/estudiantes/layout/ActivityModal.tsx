@@ -2,28 +2,31 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '~/components/estudiantes/ui/dialog';
 import { Button } from '~/components/estudiantes/ui/button';
-import type { Activity, Question } from '~/types'; // Elimina Option ya que no se usa directamente aquí
+import { Icons } from '~/components/estudiantes/ui/icons';
+import type { Activity, Question } from '~/types';
 import { getActivityContent } from '~/server/actions/activities/getActivityContent';
 
 interface ActivityModalProps {
   isOpen: boolean;
   onClose: () => void;
   activity: Activity;
+  userId: string;
   onQuestionsAnswered: (allAnswered: boolean) => void;
 }
 
-const ActivityModal = ({ isOpen, onClose, activity, onQuestionsAnswered }: ActivityModalProps) => {
+const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered }: ActivityModalProps) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [score, setScore] = useState(0);
+  const [allCorrect, setAllCorrect] = useState(false);
 
   // Fetch questions when the modal is open
   useEffect(() => {
     const fetchQuestions = async () => {
       setIsLoading(true);
       try {
-        const activityContent = await getActivityContent(activity.lessonsId);
+        const activityContent = await getActivityContent(activity.lessonsId, userId);
         if (activityContent.length > 0 && activityContent[0].content?.questions) {
           setQuestions(activityContent[0].content.questions);
         } else {
@@ -40,7 +43,7 @@ const ActivityModal = ({ isOpen, onClose, activity, onQuestionsAnswered }: Activ
     if (isOpen) {
       void fetchQuestions();
     }
-  }, [isOpen, activity.lessonsId]);
+  }, [isOpen, activity.lessonsId, userId]);
 
   // Handle answer selection
   const handleAnswerChange = (questionId: string, optionId: string) => {
@@ -50,19 +53,24 @@ const ActivityModal = ({ isOpen, onClose, activity, onQuestionsAnswered }: Activ
     const allAnswered = questions.every((q) => updatedAnswers[q.id]);
     onQuestionsAnswered(allAnswered);
 
-    // Calculate score in real-time
+    // Calculate score and check if all answers are correct in real-time
     const correctAnswers = questions.filter((q) => updatedAnswers[q.id] === q.correctOptionId).length;
     setScore(correctAnswers);
+    setAllCorrect(correctAnswers === questions.length);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Actividad: {activity.name}</DialogTitle>
+          <DialogTitle className='flex flex-col items-center justify-center font-bold text-2xl'>Bienvenido a la Actividad</DialogTitle>
+          <p className="flex flex-col items-center justify-center text-sm text-gray-500">Por favor, selecciona las respuestas correctamente.</p>
         </DialogHeader>
         {isLoading ? (
-          <div>Cargando preguntas...</div>
+          <div className="flex flex-col items-center justify-center">
+            Cargando preguntas...
+            <Icons.blocks className="w-16 h-16 mt-4 fill-primary" />
+          </div>
         ) : (
           <div>
             {questions.length > 0 ? (
@@ -87,14 +95,18 @@ const ActivityModal = ({ isOpen, onClose, activity, onQuestionsAnswered }: Activ
                 </div>
               ))
             ) : (
-              <div>No hay preguntas disponibles.</div>
+              <div className="text-center">No hay preguntas disponibles.</div>
             )}
-            <div className="mt-4">
-              <h4 className="font-semibold">Calificación: {score} / {questions.length}</h4>
+            <div className="mt-4 text-center">
+              {allCorrect ? (
+                <h4 className="font-semibold text-green-500">¡Felicidades! Respondiste todas las preguntas correctamente. Calificación: 5.0</h4>
+              ) : (
+                <h4 className="font-semibold">Calificación: {score} / {questions.length}</h4>
+              )}
             </div>
           </div>
         )}
-        <Button onClick={onClose} className="mt-4">
+        <Button onClick={onClose} className="mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0]">
           Cerrar
         </Button>
       </DialogContent>

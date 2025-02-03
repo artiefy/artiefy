@@ -57,10 +57,10 @@ export default function SignInPage() {
 		try {
 			await signIn.authenticateWithRedirect({
 				strategy,
-				redirectUrl: '/sso-callback',
+				redirectUrl: '/sign-up/sso-callback',
 				redirectUrlComplete: currentUrl,
 			});
-		} catch {
+		} catch (err) {
 			setLoadingProvider(null);
 			setErrors([
 				{
@@ -70,6 +70,7 @@ export default function SignInPage() {
 					meta: {},
 				},
 			]);
+			console.error(err);
 		}
 	};
 

@@ -1,3 +1,4 @@
+// src/middleware.ts
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
@@ -6,10 +7,17 @@ const isSuperAdminRoute = createRouteMatcher(['/dashboard/super-admin(.*)']);
 const isEducatorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
 const isStudentClassRoute = createRouteMatcher(['/estudiantes/clases/:id']);
 const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)']);
+const publicRoutes = createRouteMatcher(['/sign-in', '/sign-up']);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
   const role = sessionClaims?.metadata?.role;
+
+  // Redirect to login page if not authenticated and the route is protected
+  if (!userId && isProtectedRoute(req)) {
+    const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
+    return NextResponse.redirect(`/sign-in?redirect_url=${redirectTo}`);
+  }
 
   // Protect specific role routes
   if (isAdminRoute(req) && role !== 'admin') {
@@ -29,25 +37,16 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Protect dynamic student routes
   if (isStudentClassRoute(req) && !userId) {
-    const signInUrl = new URL('/sign-in', req.url);
-    signInUrl.searchParams.set('redirect_url', req.url);
-    return NextResponse.redirect(signInUrl);
+    const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
+    return NextResponse.redirect(`/sign-in?redirect_url=${redirectTo}`);
   }
 
-  // Redirect to login page if not authenticated and the route is protected
-  if (!userId && isProtectedRoute(req)) {
-    const signInUrl = new URL('/sign-in', req.url);
-    signInUrl.searchParams.set('redirect_url', req.url);
-    return NextResponse.redirect(signInUrl);
+  // Handle public routes
+  if (!userId && publicRoutes(req)) {
+    return NextResponse.next();
   }
 
-  // Handle OAuth redirections
-  if (req.nextUrl.pathname === '/sso-callback') {
-    const redirectUrl = req.nextUrl.searchParams.get('redirect_url');
-    if (redirectUrl) {
-      return NextResponse.redirect(redirectUrl);
-    }
-  }
+  return NextResponse.next();
 });
 
 export const config = {

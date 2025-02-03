@@ -44,7 +44,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<ClerkProvider localization={esMX}>
+		<ClerkProvider localization={esMX} afterSignOutUrl="/">
 			<html lang="es" className={`${montserrat.variable}`}>
 				<head>
 					<script

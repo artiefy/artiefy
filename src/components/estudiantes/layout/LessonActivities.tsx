@@ -11,6 +11,7 @@ interface LessonActivitiesProps {
   isActivityCompleted: boolean;
   isCompletingActivity: boolean;
   handleActivityCompletion: () => void;
+  userId: string; // Añadimos userId aquí
 }
 
 const LessonActivities = ({
@@ -19,6 +20,7 @@ const LessonActivities = ({
   isActivityCompleted,
   isCompletingActivity,
   handleActivityCompletion,
+  userId, // Añadimos userId aquí
 }: LessonActivitiesProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
@@ -80,6 +82,7 @@ const LessonActivities = ({
           onClose={closeModal}
           activity={activity}
           onQuestionsAnswered={handleQuestionsAnswered}
+          userId={userId} // Pasamos userId aquí
         />
       )}
     </div>
