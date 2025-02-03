@@ -90,6 +90,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
         course={course}
         userLessonsProgress={lessonsProgress}
         userActivitiesProgress={activitiesProgress}
+        userId={userId}
       />
     )
   } catch (error: unknown) {
@@ -97,4 +98,3 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
     return notFound()
   }
 }
-
