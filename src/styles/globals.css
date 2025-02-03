@@ -4,15 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* 🔹 Variables de tema */
 @theme {
-  /* Tamaños de pantalla */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
-
   /* Colores */
   --color-background: hsl(212.9, 95.5%, 8.6%);
   --color-foreground: hsl(178.4, 89.4%, 59.2%);
@@ -45,16 +37,14 @@
   --font-sans: var(--font-montserrat);
 }
 
-
 /* 🟠 Keyframes */
-@keyframes accordion-down {
-  from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
-}
-
-@keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
-  to { height: 0; }
+@keyframes bounce-left-right {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(7px);
+  }
 }
 
 @keyframes borderRotate {
@@ -72,7 +62,6 @@
     opacity: 1;
   }
 }
-
 
 /* 🌐 Estilos base */
 @layer base {
@@ -119,4 +108,8 @@
 
 .zoom-in {
   animation: zoomIn 0.5s ease-in-out;
+}
+
+.animate-bounce-right {
+  animation: bounce-left-right 1s infinite;
 }

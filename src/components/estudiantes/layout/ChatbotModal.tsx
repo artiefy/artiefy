@@ -116,7 +116,7 @@ const ChatbotModal = () => {
 									<div
 										className={`flex max-w-[80%] items-start space-x-2 ${
 											message.sender === 'user'
-												? 'flex-row-reverse'
+												? 'flex-row-reverse space-x-reverse'
 												: 'flex-row'
 										}`}
 									>
@@ -152,20 +152,20 @@ const ChatbotModal = () => {
 						</div>
 
 						<form onSubmit={handleSendMessage} className="input-container">
-							<div className="flex space-x-2">
+							<div className="flex space-x-2 w-full">
 								<input
 									ref={inputRef}
 									type="text"
 									value={inputText}
 									onChange={(e) => setInputText(e.target.value)}
 									placeholder="Escribe tu mensaje..."
-									className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-hidden"
+									className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
 									disabled={isLoading}
 								/>
 								<button
 									type="submit"
 									disabled={isLoading}
-									className="rounded-lg bg-secondary p-2 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
+									className="rounded-lg bg-secondary px-4 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
 									aria-label="Enviar mensaje"
 								>
 									<FiSend className="text-xl" />
