@@ -2,26 +2,31 @@
 
 import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { userLessonsProgress } from '~/server/db/schema';
-import type { UserLessonsProgress } from '~/types';
+import { userLessonsProgress, userActivitiesProgress } from '~/server/db/schema';
+import type { UserLessonsProgress, UserActivitiesProgress } from '~/types';
 
 // Obtener el progreso de las lecciones del usuario
 export async function getUserLessonsProgress(
-	userId: string
-): Promise<UserLessonsProgress[]> {
-	try {
-		const userLessonsProgressData = await db.query.userLessonsProgress.findMany(
-			{
-				where: eq(userLessonsProgress.userId, userId),
-			}
-		);
+    userId: string
+): Promise<{lessonsProgress: UserLessonsProgress[], activitiesProgress: UserActivitiesProgress[]}> {
+    try {
+        const lessonsProgress = await db.query.userLessonsProgress.findMany({
+            where: eq(userLessonsProgress.userId, userId),
+        });
 
-		return userLessonsProgressData;
-	} catch (error) {
-		console.error('Error fetching user lessons progress:', error);
-		throw new Error(
-			'Failed to fetch user lessons progress: ' +
-				(error instanceof Error ? error.message : String(error))
-		);
-	}
+        const activitiesProgress = await db.query.userActivitiesProgress.findMany({
+            where: eq(userActivitiesProgress.userId, userId),
+        });
+
+        return {
+            lessonsProgress,
+            activitiesProgress
+        };
+    } catch (error) {
+        console.error('Error fetching user lessons progress:', error);
+        throw new Error(
+            'Failed to fetch user lessons progress: ' +
+                (error instanceof Error ? error.message : String(error))
+        );
+    }
 }

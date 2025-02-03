@@ -165,6 +165,7 @@ export interface TypeActi {
   activities?: Activity[];
 }
 
+
 export interface Enrollment {
 	id: number;
 	userId: string;

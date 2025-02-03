@@ -1,16 +1,16 @@
-import { useState } from "react"
-import { FaCheckCircle, FaLock } from "react-icons/fa"
-import { Button } from "~/components/estudiantes/ui/button"
-import { Icons } from "~/components/estudiantes/ui/icons"
-import type { Activity } from "~/types"
-import ActivityModal from "./ActivityModal"
+import { useState } from 'react';
+import { FaCheckCircle, FaLock } from 'react-icons/fa';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import type { Activity } from '~/types';
+import ActivityModal from './ActivityModal';
 
 interface LessonActivitiesProps {
-  activity: Activity | null
-  isVideoCompleted: boolean
-  isActivityCompleted: boolean
-  isCompletingActivity: boolean
-  handleActivityCompletion: () => void
+  activity: Activity | null;
+  isVideoCompleted: boolean;
+  isActivityCompleted: boolean;
+  isCompletingActivity: boolean;
+  handleActivityCompletion: () => void;
 }
 
 const LessonActivities = ({
@@ -20,15 +20,15 @@ const LessonActivities = ({
   isCompletingActivity,
   handleActivityCompletion,
 }: LessonActivitiesProps) => {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
 
-  const openModal = () => setIsModalOpen(true)
-  const closeModal = () => setIsModalOpen(false)
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
 
   const handleQuestionsAnswered = (answered: boolean) => {
-    setAllQuestionsAnswered(answered)
-  }
+    setAllQuestionsAnswered(answered);
+  };
 
   return (
     <div className="w-72 bg-background p-4 shadow-lg">
@@ -42,7 +42,11 @@ const LessonActivities = ({
             {isActivityCompleted ? <FaCheckCircle className="text-green-500" /> : <FaLock className="text-gray-400" />}
           </div>
           <p className="mt-2 text-sm text-gray-600">{activity.description}</p>
-          <Button onClick={openModal} className="mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0]">
+          <Button
+            onClick={openModal}
+            className="mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0]"
+            disabled={!isVideoCompleted} // Disable button until video is completed
+          >
             Ver Actividad
           </Button>
           <Button
@@ -50,20 +54,20 @@ const LessonActivities = ({
             disabled={!isVideoCompleted || isActivityCompleted || isCompletingActivity || !allQuestionsAnswered}
             className={`mt-2 w-full ${
               isVideoCompleted && allQuestionsAnswered
-                ? "bg-[#00BDD8] text-white hover:bg-[#00A5C0]"
-                : "bg-gray-400 text-background"
+                ? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]'
+                : 'bg-gray-400 text-background'
             }`}
           >
             {isCompletingActivity ? (
               <Icons.spinner className="mr-2 text-background" />
             ) : isActivityCompleted ? (
-              "Actividad Completada"
+              'Actividad Completada'
             ) : !allQuestionsAnswered ? (
-              "Responde todas las preguntas"
+              'Responde todas las preguntas'
             ) : isVideoCompleted ? (
-              "Completar Actividad"
+              'Completar Actividad'
             ) : (
-              "Ver video primero"
+              'Ver video primero'
             )}
           </Button>
         </div>
@@ -79,8 +83,7 @@ const LessonActivities = ({
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default LessonActivities
-
+export default LessonActivities;

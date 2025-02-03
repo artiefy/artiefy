@@ -16,12 +16,12 @@ import {
   type Lesson,
   type Course,
   type LessonWithProgress,
+  type UserActivitiesProgress, // Importamos UserActivitiesProgress
 } from '~/types';
 import LessonNavigation from '~/components/estudiantes/layout/LessonNavigation';
 import LessonCards from '~/components/estudiantes/layout/LessonCards';
 import LessonPlayer from '~/components/estudiantes/layout/LessonPlayer';
 import LessonActivities from '~/components/estudiantes/layout/LessonActivities';
-
 
 export default function LessonDetails({
   lesson,
@@ -29,12 +29,14 @@ export default function LessonDetails({
   course,
   lessons,
   userLessonsProgress,
+  userActivitiesProgress, // Añadimos userActivitiesProgress
 }: {
   lesson: LessonWithProgress;
   activity: Activity | null;
   lessons: Lesson[];
   course: Course;
   userLessonsProgress: UserLessonsProgress[];
+  userActivitiesProgress: UserActivitiesProgress[]; // Añadimos userActivitiesProgress
 }) {
   // State and hooks initialization
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -56,7 +58,8 @@ export default function LessonDetails({
           const progress = userLessonsProgress.find((progress) => progress.lessonId === lessonItem.id);
           return {
             ...lessonItem,
-            isLocked: progress ? (progress.isLocked ?? true) : true,
+            isLocked: progress ? progress.isLocked ?? true : true,
+            porcentajecompletado: progress ? progress.progress : 0,
           };
         })
         .sort((a, b) => a.order - b.order);
@@ -65,6 +68,12 @@ export default function LessonDetails({
 
     initializeLessonsState();
   }, [lessons, userLessonsProgress]);
+
+  // Usar userActivitiesProgress para algo útil, por ejemplo, mostrar el progreso de las actividades
+  useEffect(() => {
+    console.log(userActivitiesProgress);
+    // Aquí puedes agregar lógica para usar userActivitiesProgress en la interfaz de usuario
+  }, [userActivitiesProgress]);
 
   // Handle lesson navigation
   useEffect(() => {
@@ -150,6 +159,13 @@ export default function LessonDetails({
       if (!activity) {
         const result = await unlockNextLesson(lesson.id);
         if (result.success && 'nextLessonId' in result) {
+          setLessonsState((prevLessons) =>
+            prevLessons.map((l) =>
+              l.id === result.nextLessonId
+                ? { ...l, isLocked: false }
+                : l
+            )
+          );
           toast({
             title: 'Clase Completada',
             description: '¡Avanzando a la siguiente clase!',
@@ -209,6 +225,13 @@ export default function LessonDetails({
 
       const result = await unlockNextLesson(lesson.id);
       if (result.success && 'nextLessonId' in result) {
+        setLessonsState((prevLessons) =>
+          prevLessons.map((l) =>
+            l.id === result.nextLessonId
+              ? { ...l, isLocked: false }
+              : l
+          )
+        );
         toast({
           title: 'Clase Completada',
           description: '¡Avanzando a la siguiente clase!',
@@ -294,6 +317,7 @@ export default function LessonDetails({
               selectedLessonId={selectedLessonId}
               setSelectedLessonId={setSelectedLessonId}
               course={course}
+              progress={progress} // Add progress property
             />
           </div>
 
@@ -313,7 +337,7 @@ export default function LessonDetails({
           </div>
 
           {/* Right Sidebar - Activities */}
-            <LessonActivities
+          <LessonActivities
             activity={activity}
             isVideoCompleted={isVideoCompleted}
             isActivityCompleted={isActivityCompleted}
