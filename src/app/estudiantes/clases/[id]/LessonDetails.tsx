@@ -313,7 +313,7 @@ export default function LessonDetails({
           </div>
 
           {/* Right Sidebar - Activities */}
-          <LessonActivities
+            <LessonActivities
             activity={activity}
             isVideoCompleted={isVideoCompleted}
             isActivityCompleted={isActivityCompleted}

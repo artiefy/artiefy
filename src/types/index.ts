@@ -79,13 +79,16 @@ export interface Lesson {
 	isCompleted: boolean;
 	lastUpdated: Date;
 	course?: Course;
-	activities?: Activity[];
+  activities?: Activity[]; // Relación con actividades
 	isLocked: boolean | null;
 }
 
 export interface LessonWithProgress extends Lesson {
-	isLocked: boolean;
+  porcentajecompletado: number
+  isLocked: boolean
+  isCompleted: boolean
 }
+
 
 export interface UserLessonsProgress {
 	userId: string;
@@ -127,24 +130,39 @@ export interface Dificultad {
 }
 
 export interface Activity {
-	id: number;
-	name: string;
-	description: string | null;
-	typeid: number;
-	lessonsId: number;
-	isCompleted: boolean | null;
-	userProgress: number | null;
-	lastUpdated: Date;
-	lesson?: Lesson;
-	typeActi?: TypeActi;
-	userActivitiesProgress?: UserActivitiesProgress[];
+  id: number
+  name: string
+  description: string | null
+  typeid: number
+  lessonsId: number
+  isCompleted: boolean | null
+  userProgress: number | null
+  lastUpdated: Date
+  lesson?: Lesson
+  typeActi?: TypeActi
+  userActivitiesProgress?: UserActivitiesProgress[]
+  content?: {
+    questions: Question[]
+  }
+}
+
+export interface Question {
+  id: string
+  text: string
+  options: Option[]
+  correctOptionId: string
+}
+
+export interface Option {
+  id: string
+  text: string
 }
 
 export interface TypeActi {
-	id: number;
-	name: string;
-	description: string | null;
-	activities?: Activity[];
+  id: number;
+  name: string;
+  description: string | null;
+  activities?: Activity[];
 }
 
 export interface Enrollment {
