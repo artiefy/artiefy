@@ -21,7 +21,7 @@ const Loading: React.FC = () => {
                 <div className="star star-6"></div>
                 <div className="star star-7"></div>
                 <div className="card-info">
-                    <span>Cargando... Artiefy!</span>
+                <span className="animate-pulse-text">CARGANDO... ARTIEFY !</span>
                 </div>
                 <svg className="moon" viewBox="0 0 20 20">
                     <path d="M 10 9 z z M 7.007 6.552 c 0 -2.259 0.795 -4.33 2.117 -5.955 C 4.34 1.042 0.594 5.07 0.594 9.98 c 0 5.207 4.211 9.426 9.406 9.426 c 2.94 0 5.972 -1.354 7.696 -3.472 c -0.289 0.026 -0.987 0.044 -1.283 0.044 C 11.219 15.979 7.007 11.759 7.007 6.552 z"></path>

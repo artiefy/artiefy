@@ -89,6 +89,7 @@ export const lessons = pgTable('lessons', {
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 	resourceKey: text('resource_key').notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  resourceNames: text('resource_names').notNull(),
 });
 
 // Tabla de tipos de actividades

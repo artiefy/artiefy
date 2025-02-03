@@ -63,24 +63,25 @@ export interface CourseTaken {
 }
 
 export interface Lesson {
-	id: number;
-	title: string;
-	description: string | null;
-	duration: number;
-	coverImageKey: string;
-	coverVideoKey: string;
-	order: number;
-	courseId: number;
-	createdAt: Date;
-	updatedAt: Date;
-	porcentajecompletado: number;
-	resourceKey: string;
-	userProgress: number;
-	isCompleted: boolean;
-	lastUpdated: Date;
-	course?: Course;
+  id: number;
+  title: string;
+  description: string | null;
+  duration: number;
+  coverImageKey: string;
+  coverVideoKey: string;
+  order: number;
+  courseId: number;
+  createdAt: Date;
+  updatedAt: Date;
+  porcentajecompletado: number;
+  resourceKey: string;
+  userProgress: number;
+  isCompleted: boolean;
+  lastUpdated: Date;
+  course?: Course;
   activities?: Activity[]; // Relación con actividades
-	isLocked: boolean | null;
+  isLocked: boolean | null;
+  resourceNames: string[]; // Añadir resourceName como un array de strings
 }
 
 export interface LessonWithProgress extends Lesson {

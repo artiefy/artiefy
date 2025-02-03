@@ -44,6 +44,7 @@ export async function getLessonById(lessonId: number): Promise<Lesson | null> {
             isLocked: lessonProgress?.isLocked ?? true,
             userProgress: lessonProgress?.progress ?? 0,
             isCompleted: lessonProgress?.isCompleted ?? false,
+            resourceNames: lesson.resourceNames ? lesson.resourceNames.split(',') : [], // Convertir texto a array
             activities:
                 (lesson.activities as Activity[] | undefined)?.map((activity) => {
                     const activityProgress = userActivitiesProgressData.find(

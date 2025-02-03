@@ -53,6 +53,7 @@ export async function getLessonsByCourseId(
             porcentajecompletado: lessonProgress?.progress ?? 0,
             isLocked: isLocked,
             userProgress: lessonProgress?.progress ?? 0,
+            resourceNames: lesson.resourceNames ? lesson.resourceNames.split(',') : [], // Convertir texto a array
             isCompleted: isCompleted,
             activities:
                 lesson.activities?.map((activity) => {

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaCheckCircle, FaLock } from 'react-icons/fa';
+import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa'; // Import FaArrowDown
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity } from '~/types';
@@ -44,9 +44,14 @@ const LessonActivities = ({
             {isActivityCompleted ? <FaCheckCircle className="text-green-500" /> : <FaLock className="text-gray-400" />}
           </div>
           <p className="mt-2 text-sm text-gray-600">{activity.description}</p>
+          {isVideoCompleted && (
+            <div className="flex justify-center">
+              <FaArrowDown className="text-green-500 mb-1 animate-bounce-up-down" /> {/* Add arrow icon with animation */}
+            </div>
+          )}
           <Button
             onClick={openModal}
-            className="mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0]"
+            className={`w-full ${isVideoCompleted ? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]' : 'bg-gray-400 text-background'}`} // Change background color based on isVideoCompleted
             disabled={!isVideoCompleted} // Disable button until video is completed
           >
             Ver Actividad

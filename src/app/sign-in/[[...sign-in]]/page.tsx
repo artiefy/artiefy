@@ -55,7 +55,7 @@ export default function SignInPage() {
     try {
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: '/sign-up/sso-callback',
+        redirectUrl: `/sign-up/sso-callback?redirect_url=${encodeURIComponent(currentUrl)}`,
         redirectUrlComplete: currentUrl,
       });
     } catch (err) {
@@ -250,7 +250,7 @@ export default function SignInPage() {
               className="object-contain"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority
-              quality={90}
+              quality={100}
             />
           </AspectRatio>
         </div>
@@ -356,7 +356,7 @@ export default function SignInPage() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.blocks className="w-5 h-5 animate-spin text-primary" />
+                        <Icons.spinner className="w-5 h-5 animate-spin text-primary" />
                       ) : (
                         <span className="inline-block font-bold">RESTABLECER</span>
                       )}
@@ -387,7 +387,7 @@ export default function SignInPage() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.blocks className="w-5 h-5 animate-spin text-primary" />
+                        <Icons.spinner className="w-5 h-5 animate-spin text-primary" />
                       ) : (
                         <span className="inline-block font-bold">ENVIAR CÓDIGO</span>
                       )}
@@ -405,7 +405,7 @@ export default function SignInPage() {
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
                   {loadingProvider === 'oauth_google' ? (
-                    <Icons.blocks className="w-10 h-10 animate-spin text-primary" />
+                    <Icons.spinner className="w-10 h-10 animate-spin text-primary" />
                   ) : (
                     <Icons.google />
                   )}
@@ -415,7 +415,7 @@ export default function SignInPage() {
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
                   {loadingProvider === 'oauth_github' ? (
-                    <Icons.blocks className="w-10 h-10 animate-spin text-primary" />
+                    <Icons.spinner className="w-10 h-10 animate-spin text-primary" />
                   ) : (
                     <Icons.gitHub />
                   )}

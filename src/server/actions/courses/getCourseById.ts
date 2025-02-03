@@ -49,6 +49,7 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 					isCompleted: lessonProgress ? lessonProgress.isCompleted : false,
 					userProgress: lessonProgress ? lessonProgress.progress : 0,
 					porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
+          resourceNames: lesson.resourceNames ? lesson.resourceNames.split(',') : [], // Convertir texto a array
 					activities:
 						lesson.activities?.map((activity) => ({
 							...activity,

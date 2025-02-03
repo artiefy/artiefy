@@ -111,24 +111,19 @@
 }
 
 .card-info span {
-  font-size: 1.2em;
-  color: white;
-  font-weight: 600;
+  font-size: 2.2rem;
+  color: #3AF4EF;
+  font-weight: 900;
   text-transform: uppercase;
-  transition: all 1s ease;
 }
 
 .card.launch .rocket {
-  transform: translate(150vw, -150vh);  /* Move diagonally to the top-right corner */
+  transform: translate(150vw, -150vh);
 }
 
 .card.launch .moon {
   width: 50px;
   height: 50px;
-}
-
-.card.launch span {
-  font-size: 1.5em;
 }
 
 @keyframes rotate {
