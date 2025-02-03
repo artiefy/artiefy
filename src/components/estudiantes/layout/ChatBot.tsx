@@ -50,7 +50,7 @@ const ChatBot: React.FC = () => {
 				className={`button ${isOpen ? 'bg-gray-200' : ''}`}
 			>
 				<div className="button__text">
-					{Array.from('-ARTI-IA-ARTI-IA').map((char, i) => (
+					{Array.from('-ARTIE-IA-ARTIE-IA').map((char, i) => (
 						<span key={i} style={{ '--index': i } as React.CSSProperties}>
 							{char}
 						</span>
@@ -66,7 +66,7 @@ const ChatBot: React.FC = () => {
 			{isOpen && (
 				<div className="fixed right-6 bottom-32 w-96 rounded-lg bg-white shadow-xl">
 					<div className="flex items-center justify-between border-b p-4">
-						<h3 className="font-bold text-gray-800">Arti IA</h3>
+						<h3 className="font-bold text-gray-800">Artie IA</h3>
 						<button
 							onClick={() => setIsOpen(false)}
 							className="text-gray-500 hover:text-gray-700"

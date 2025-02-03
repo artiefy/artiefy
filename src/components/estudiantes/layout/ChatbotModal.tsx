@@ -65,7 +65,7 @@ const ChatbotModal = () => {
 				aria-label="Abrir chat"
 			>
 				<div className="button__text">
-					{Array.from('-ARTI-IA-ARTI-IA').map((char, i) => (
+					{Array.from('-ARTIE-IA-ARTIE-IA').map((char, i) => (
 						<span key={i} style={{ '--index': i } as React.CSSProperties}>
 							{char}
 						</span>
@@ -95,7 +95,7 @@ const ChatbotModal = () => {
 									id="modal-title"
 									className="text-lg font-semibold text-gray-800"
 								>
-									Arti IA
+									Artie IA
 								</h2>
 							</div>
 							<button

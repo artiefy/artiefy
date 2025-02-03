@@ -40,7 +40,7 @@ function generateJsonLd(course: Course): object {
       : undefined,
     image: course.coverImageKey
       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-      : `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course.jpg`,
+      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT',
   };
 }
 

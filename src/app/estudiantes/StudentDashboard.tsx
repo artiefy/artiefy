@@ -69,14 +69,14 @@ export default function StudentDashboard({
 								<div className="flex items-center">
 									<RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
 									<span className="ml-2 text-2xl font-bold whitespace-nowrap text-primary sm:text-3xl">
-										Arti IA
+										Artie IA
 									</span>
 								</div>
-								<form className="flex w-full max-w-2xl flex-col items-center space-y-2">
-									<div className="input-container">
+								<form className="flex w-full flex-col items-center space-y-2">
+									<div className="input-container w-full">
 										<input
 											required
-											className="input"
+											className="input w-full"
 											name="search"
 											placeholder="Dime que deseas buscar..."
 											type="search"

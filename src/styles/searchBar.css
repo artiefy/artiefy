@@ -1,7 +1,7 @@
 .input-container {
   position: relative;
   width: 100%;
-  max-width: 400px; /* Increase the width */
+  max-width: 800px; /* Increase the width */
 }
 
 .input {
