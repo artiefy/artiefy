@@ -1,9 +1,12 @@
 'use client';
 import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import CrearActividad from '~/components/educators/layout/CrearActividad';
-import PreguntasOm from '~/components/educators/layout/CrearActividadOM';
+//import CrearActividadOM from '~/components/educators/layout/CrearActividadOM';
+//import CrearActividadSL from '~/components/educators/layout/CrearActividadSL';
+//import CrearCrucigrama from '~/components/educators/layout/CrearCrucigrama';
+import QuestionManager from '~/components/actividades/PreguntasOM';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -274,6 +277,14 @@ const Page: React.FC = () => {
 							</div>
 						</div>
 					</div>
+					<div className="flex justify-end">
+						<Link
+							href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
+							className="mb-4 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+						>
+							Realizar Actividad
+						</Link>
+					</div>
 					<AlertDialog>
 						<AlertDialogTrigger asChild>
 							<Button className="mx-auto my-4 w-1/6 border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
@@ -304,10 +315,18 @@ const Page: React.FC = () => {
 							</AlertDialogFooter>
 						</AlertDialogContent>
 					</AlertDialog>
-					{actividad?.type?.id === 1 && <CrearActividad />}
-					{actividad?.type?.id === 2 && <PreguntasOm />}
+					{/* Zona de actividades */}
+					{actividad?.type?.id === 1 && (
+						// <CrearActividadSL />
+						<div>En construccion</div>
+					)}
+					{actividad?.type?.id === 2 && actividadIdNumber !== null && (
+						// <CrearActividadOM activityId={actividadIdNumber} />
+						<QuestionManager activityId={actividadIdNumber} />
+					)}
 					{actividad?.type?.id === 3 && (
-						<>Actividad en construccion momentaaneamente!!.</>
+						// <CrearCrucigrama />
+						<div>En construccion</div>
 					)}
 					{actividad?.type?.id !== 1 &&
 						actividad?.type?.id !== 2 &&

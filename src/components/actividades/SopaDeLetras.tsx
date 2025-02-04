@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Word } from '~/app/typesActi';
+import type { Word } from '~/types/typesActi';
 
 interface Props {
 	grid: string[][];

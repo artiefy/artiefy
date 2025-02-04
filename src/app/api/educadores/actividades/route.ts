@@ -93,7 +93,6 @@ export async function GET(request: NextRequest) {
 			return respondWithError('Actividad no encontrada', 404);
 		}
 		
-		console.log('Actividades:', activities);
 		return NextResponse.json(activities);
 	} catch (error: unknown) {
 		console.error('Error al obtener la actividad:', error);

@@ -218,3 +218,9 @@ export const deleteActivity = async (activityId: number): Promise<void> => {
 		);
 	}
 };
+
+//Delete all activities by lesson id
+export const deleteActivitiesByLessonId = async (lessonId: number) => {
+	// Elimina las actividades asociadas a la lección
+	await db.delete(activities).where(eq(activities.lessonsId, lessonId));
+};

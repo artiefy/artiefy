@@ -10,11 +10,19 @@ import {
 	HelpCircle,
 	CheckCircle2,
 } from 'lucide-react';
-import type { WordSearchConfig, Word } from '~/app/typesActi';
+import type { WordSearchConfig, Word } from '~/types/typesActi';
 import WordSearch from '~/components/actividades/SopaDeLetras';
 import { generateWordSearch } from '~/utils/generadorSopaDeletras';
 
-function App() {
+interface CrearActividadSLProps {
+	saveData: (data: WordSearchConfig) => Promise<void>;
+	getData: () => Promise<WordSearchConfig | null>;
+}
+
+const CrearActividadSL: React.FC<CrearActividadSLProps> = ({
+	saveData,
+	getData,
+}) => {
 	const [words, setWords] = useState<Word[]>([]);
 	const [newWord, setNewWord] = useState('');
 	const [points, setPoints] = useState(10);
@@ -25,6 +33,33 @@ function App() {
 	const [score, setScore] = useState(0);
 	const [grid, setGrid] = useState<string[][]>([]);
 	const [showInstructions, setShowInstructions] = useState(true);
+
+	useEffect(() => {
+		const fetchData = async () => {
+			try {
+				const data = await getData();
+				if (data) {
+					setWords(
+						data.words.map((word) => ({
+							text: word.text,
+							found: false,
+							clue: word.clue,
+							startX: word.startX,
+							startY: word.startY,
+							direction: word.direction,
+						}))
+					);
+					setPoints(data.points);
+					setIsTimerEnabled(data.isTimerEnabled);
+					setTimeLimit(data.timeLimit);
+					setRemainingTime(data.timeLimit);
+				}
+			} catch (error) {
+				console.error('Error fetching data:', error);
+			}
+		};
+		void fetchData();
+	}, [getData]);
 
 	useEffect(() => {
 		let timer: number;
@@ -47,7 +82,17 @@ function App() {
 			newWord.trim() &&
 			!words.find((w) => w.text.toLowerCase() === newWord.toLowerCase())
 		) {
-			setWords([...words, { text: newWord.toUpperCase(), found: false }]);
+			setWords([
+				...words,
+				{
+					text: newWord.toUpperCase(),
+					found: false,
+					clue: '',
+					startX: 0,
+					startY: 0,
+					direction: 'across',
+				},
+			]);
 			setNewWord('');
 		}
 	};
@@ -59,17 +104,30 @@ function App() {
 	const handleStartGame = () => {
 		if (words.length > 0) {
 			const config: WordSearchConfig = {
-				words: words.map((w) => w.text),
+				words: words.map((w) => ({
+					text: w.text,
+					clue: w.clue,
+					found: w.found,
+					startX: w.startX,
+					startY: w.startY,
+					direction: w.direction,
+				})),
 				gridSize: Math.max(
 					10,
 					Math.ceil(Math.sqrt(words.map((w) => w.text).join('').length * 2))
 				),
+				points,
+				isTimerEnabled,
+				timeLimit,
 			};
 			setGrid(generateWordSearch(config));
 			setIsPlaying(true);
 			setRemainingTime(timeLimit);
 			setScore(0);
 			setShowInstructions(true);
+			saveData(config).catch((error) => {
+				console.error('Error saving data:', error);
+			});
 		}
 	};
 
@@ -299,6 +357,6 @@ function App() {
 			</div>
 		</div>
 	);
-}
+};
 
-export default App;
+export default CrearActividadSL;

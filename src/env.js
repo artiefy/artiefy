@@ -21,4 +21,7 @@ export const env = createEnv({
 
 	skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 	emptyStringAsUndefined: true,
+
+	UPSTASH_URL: process.env.UPSTASH_REDIS_REST_URL,
+	UPSTASH_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
 });

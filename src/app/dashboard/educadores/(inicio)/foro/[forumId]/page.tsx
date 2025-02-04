@@ -1,227 +1,534 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-
 import { useUser } from '@clerk/nextjs';
+//import { Ellipsis } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import '@reach/menu-button/styles.css';
 
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
 
+// Interfaces
 interface Foro {
-  id: number;
-  title: string;
-  description: string;
-  userId: {
-    id: string;
-    name: string;
-  };
-  courseId: {
-    id: number;
-    title: string;
-    descripcion: string;
-    instructor: string;
-  };
+	id: number;
+	title: string;
+	description: string;
+	userId: {
+		id: string;
+		name: string;
+	};
+	courseId: {
+		id: number;
+		title: string;
+		descripcion: string;
+		instructor: string;
+	};
 }
 
 interface Post {
-  id: number;
-  userId: {
-    id: string;
-    name: string;
-  };
-  content: string;
-  foroId: number;
-  createdAt: string;
+	id: number;
+	userId: {
+		id: string;
+		name: string;
+	};
+	content: string;
+	foroId: number;
+	createdAt: string;
+	updatedAt: string;
 }
 
+interface PostReplay {
+	id: number;
+	userId: {
+		id: string;
+		name: string;
+	};
+	postId: number;
+	content: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+const formatDate = (dateString: string | number | Date) => {
+	const date = new Date(dateString);
+	return isNaN(date.getTime())
+		? 'Fecha inválida'
+		: date.toISOString().split('T')[0];
+};
+
 const ForumPage = () => {
-  const params = useParams();
-  const forumId = params?.forumId;
-  const { user } = useUser();
-  const [forumData, setForumData] = useState<Foro | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loadingPosts, setLoadingPosts] = useState(false);
+	const params = useParams();
+	const forumId = params?.forumId;
+	const { user } = useUser();
+	const [forumData, setForumData] = useState<Foro | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [posts, setPosts] = useState<Post[]>([]);
+	const [postReplays, setPostReplays] = useState<PostReplay[]>([]);
+	const [message, setMessage] = useState('');
+	const [replyMessage, setReplyMessage] = useState('');
+	const [replyingToPostId, setReplyingToPostId] = useState<number | null>(null);
+	const [loadingPosts, setLoadingPosts] = useState(false);
+	const [editingPostId, setEditingPostId] = useState<number | null>(null);
+	const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
+	const [editPostContent, setEditPostContent] = useState<string>('');
+	const [editReplyContent, setEditReplyContent] = useState<string>('');
 
-  const ForumIdString = Array.isArray(forumId) ? forumId[0] : forumId;
-  const ForumIdNumber = ForumIdString ? parseInt(ForumIdString) : null;
-  console.log('courseIdUrl:', ForumIdNumber);
+	const ForumIdString = Array.isArray(forumId) ? forumId[0] : forumId;
+	const ForumIdNumber = ForumIdString ? parseInt(ForumIdString) : null;
 
-  const fetchPosts = useCallback(async () => {
-    setLoadingPosts(true);
-    try {
-      const responsePosts = await fetch(
-        `/api/forums/posts?foroId=${ForumIdNumber}`
-      );
-      if (responsePosts.ok) {
-        const data = (await responsePosts.json()) as Post[];
-        console.log(`Respuesta correcta`);
-        setPosts(data);
-      } else {
-        console.error('Error al traer los posts');
-      }
-    } catch (e) {
-      console.error(`Error de tipo ${(e as Error).message}`);
-    } finally {
-      setLoadingPosts(false);
-    }
-  }, [ForumIdNumber]);
+	// Fetch del foro
+	const fetchForum = useCallback(async () => {
+		setLoading(true);
+		try {
+			const responseForum = await fetch(`/api/forums/${ForumIdNumber}`);
+			if (responseForum.ok) {
+				const data = (await responseForum.json()) as Foro;
+				setForumData(data);
+			} else {
+				console.error('Error al traer el foro');
+			}
+		} catch (e) {
+			console.error('Error al obtener el foro:', e);
+		} finally {
+			setLoading(false);
+		}
+	}, [ForumIdNumber]);
 
-  useEffect(() => {
-    fetchPosts().catch((error) =>
-      console.error('Error fetching posts:', error)
-    );
-  }, [fetchPosts]);
+	// Fetch de los posts principales
+	const fetchPosts = useCallback(async () => {
+		setLoadingPosts(true);
+		try {
+			const responsePosts = await fetch(
+				`/api/forums/posts?foroId=${ForumIdNumber}`
+			);
+			if (responsePosts.ok) {
+				const data = (await responsePosts.json()) as Post[];
+				setPosts(data);
+			} else {
+				console.error('Error al traer los posts');
+			}
+		} catch (e) {
+			console.error('Error al obtener los posts:', e);
+		} finally {
+			setLoadingPosts(false);
+		}
+	}, [ForumIdNumber]);
 
-  const fetchForum = useCallback(async () => {
-    if (!ForumIdNumber) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(`/api/forums/${ForumIdNumber}`);
-      if (response.ok) {
-        const data = (await response.json()) as Foro;
-        console.log(data);
-        setForumData(data);
-      } else {
-        setError('Error al traer el foro');
-        console.error(`Error al traer el foro`);
-      }
-    } catch (e) {
-      setError((e as Error).message);
-      console.error(`Error type: ${(e as Error).message}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [ForumIdNumber]);
+	// Fetch de las respuestas (PostReplies)
+	const fetchPostReplays = useCallback(async () => {
+		try {
+			const postIds = posts.map((post) => post.id).join(',');
+			if (postIds) {
+				const responsePostReplays = await fetch(
+					`/api/forums/posts/postReplay?postIds=${postIds}`
+				);
+				if (responsePostReplays.ok) {
+					const data = (await responsePostReplays.json()) as PostReplay[];
+					setPostReplays(data);
+				} else {
+					console.error('Error al traer las respuestas');
+				}
+			}
+		} catch (e) {
+			console.error('Error al obtener las respuestas:', e);
+		}
+	}, [posts]);
 
-  useEffect(() => {
-    fetchForum().catch((error) => console.error('Error fetching Foro:', error));
-  }, [fetchForum]);
+	useEffect(() => {
+		fetchPosts().catch((error) =>
+			console.error('Error fetching posts:', error)
+		);
+		fetchForum().catch((error) =>
+			console.error('Error fetching forum:', error)
+		);
+	}, [fetchPosts, fetchForum]);
 
-  const handleSubmit = async () => {
-    if (!message.trim() || !user) return;
+	useEffect(() => {
+		if (posts.length > 0) {
+			fetchPostReplays().catch((error) =>
+				console.error('Error fetching post replies:', error)
+			);
+		}
+	}, [fetchPostReplays, posts]);
 
-    try {
-      const response = await fetch('/api/forums/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: message,
-          foroId: ForumIdNumber,
-          userId: user.fullName,
-        }),
-      });
+	// Crear nuevo Post
+	const handlePostSubmit = async () => {
+		if (!message.trim() || !user) return;
+		try {
+			const response = await fetch('/api/forums/posts', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					content: message,
+					foroId: ForumIdNumber,
+					userId: user.fullName,
+				}),
+			});
 
-      if (response.ok) {
-        setMessage('');
-        await fetchPosts();
-      } else {
-        console.error('Error al enviar el mensaje');
-      }
-    } catch (error) {
-      console.error('Error al enviar el mensaje:', error);
-    }
-  };
+			if (response.ok) {
+				setMessage('');
+				await fetchPosts(); // Refrescar lista de posts
+			} else {
+				console.error('Error al enviar el post');
+			}
+		} catch (error) {
+			console.error('Error al enviar el post:', error);
+		}
+	};
 
-  if (loading) return <div>Cargando Foro...</div>;
-  if (error) return <div>Error: {error}</div>;
-  return (
-    <>
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink className="hover:text-gray-300" href="/">
-              Inicio
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="hover:text-gray-300"
-              href="/dashboard/educadores/foro"
-            >
-              Foros
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="hover:text-gray-300"
-              href="/dashboard/educadores/foro"
-            >
-              Foro: {forumData?.title}
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="container mx-auto mt-5">
-        <div className="mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg md:w-11/12 lg:w-full">
-          <div className="flex justify-between">
-            <h1 className="mb-4 text-2xl font-bold text-white">
-              {forumData?.title}
-            </h1>
-            <p className="text-white">
-              Del instructor: {forumData?.userId.name}
-            </p>{' '}
-            {/* Asegúrate de acceder al nombre del usuario */}
-          </div>
-          <p className="mb-4 text-gray-300">
-            Description: {forumData?.description}
-          </p>
-          <h2 className="text-xl font-semibold text-white">Mensajes</h2>
-          <div className="mb-4 flex flex-col-reverse rounded-lg bg-gray-700 p-4">
-            {/* Aquí puedes mapear los mensajes del foro */}
-            {loadingPosts ? (
-              <div className="mt-2 rounded-lg bg-gray-600 p-3">
-                <p className="text-gray-200">Cargando mensajes...</p>
-              </div>
-            ) : posts.length === 0 ? (
-              <div className="mt-2 rounded-lg bg-gray-600 p-3">
-                <p className="text-gray-200">No hay mensajes todavía</p>
-              </div>
-            ) : (
-              posts.map((post, index) => (
-                <div className="mt-2 rounded-lg bg-gray-600 p-3" key={index}>
-                  <p className="font-bold text-gray-200">
-                    {post.userId.name}, dijo:
-                  </p>
-                  <p className="text-justify text-gray-200">{post.content}</p>
-                  <p className="mt-4 text-xs text-gray-400">
-                    Creado en: {post.createdAt}
-                  </p>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="flex flex-col">
-            <textarea
-              className="mb-2 rounded-lg bg-gray-900 p-3 text-white outline-none"
-              placeholder="Ingresa tu mensaje"
-              rows={3}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-            <button
-              className="rounded-lg bg-blue-500 p-2 text-white hover:bg-blue-600"
-              onClick={handleSubmit}
-            >
-              Enviar
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+	// Crear una respuesta (PostReplay)
+	const handleReplySubmit = async () => {
+		if (!replyMessage.trim() || !user || replyingToPostId === null) return;
+
+		try {
+			const response = await fetch('/api/forums/posts/postReplay', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					content: replyMessage,
+					postId: replyingToPostId,
+					userId: user.fullName,
+				}),
+			});
+
+			if (response.ok) {
+				setReplyMessage('');
+				setReplyingToPostId(null);
+				await fetchPostReplays(); // Refrescar las respuestas
+			} else {
+				console.error('Error al enviar la respuesta');
+			}
+		} catch (error) {
+			console.error('Error al enviar la respuesta:', error);
+		}
+	};
+
+	// Eliminar un post
+	const handleDeletePost = async (postId: number) => {
+		try {
+			const response = await fetch(`/api/forums/posts?postId=${postId}`, {
+				method: 'DELETE',
+			});
+
+			if (response.ok) {
+				await fetchPosts(); // Refrescar lista de posts
+			} else {
+				console.error('Error al eliminar el post');
+			}
+		} catch (error) {
+			console.error('Error al eliminar el post:', error);
+		}
+	};
+
+	// Eliminar una respuesta
+	const handleDeleteReply = async (replyId: number) => {
+		try {
+			const response = await fetch(
+				`/api/forums/posts/postReplay?replyId=${replyId}`,
+				{
+					method: 'DELETE',
+				}
+			);
+
+			if (response.ok) {
+				await fetchPostReplays(); // Refrescar respuestas
+			} else {
+				console.error('Error al eliminar la respuesta');
+			}
+		} catch (error) {
+			console.error('Error al eliminar la respuesta:', error);
+		}
+	};
+
+	// Actualizar Post
+	const handlePostUpdate = async (postId: number) => {
+		if (!editPostContent.trim()) return;
+		try {
+			const response = await fetch(`/api/forums/posts/${postId}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					content: editPostContent,
+				}),
+			});
+
+			if (response.ok) {
+				setEditingPostId(null);
+				setEditPostContent('');
+				await fetchPosts(); // Refrescar lista de posts
+			} else {
+				console.error('Error al actualizar el post');
+			}
+		} catch (error) {
+			console.error('Error al actualizar el post:', error);
+		}
+	};
+
+	// Actualizar Respuesta
+	const handleReplyUpdate = async (replyId: number) => {
+		if (!editReplyContent.trim()) return;
+		try {
+			const response = await fetch(`/api/forums/posts/postReplay/${replyId}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					content: editReplyContent,
+				}),
+			});
+
+			if (response.ok) {
+				setEditingReplyId(null);
+				setEditReplyContent('');
+				await fetchPostReplays(); // Refrescar respuestas
+			} else {
+				console.error('Error al actualizar la respuesta');
+			}
+		} catch (error) {
+			console.error('Error al actualizar la respuesta:', error);
+		}
+	};
+
+	// Renderizar respuestas de un post
+	const renderPostReplies = (postId: number) => {
+		const replies = postReplays.filter((reply) => reply.postId === postId);
+
+		return replies.map((reply) => (
+			<div className="ml-6 mt-2 space-y-2" key={reply.id}>
+				<div className="rounded-lg bg-gray-800 p-3">
+					<p className="mb-3 font-bold text-gray-200">
+						{reply.userId.name}, dijo:
+					</p>
+					{editingReplyId === reply.id ? (
+						<div>
+							<textarea
+								className="w-full rounded-lg p-2 text-black outline-none"
+								value={editReplyContent}
+								onChange={(e) => setEditReplyContent(e.target.value)}
+							/>
+							<button
+								onClick={() => handleReplyUpdate(reply.id)}
+								className="mt-2 rounded bg-blue-500 px-4 py-2 text-white"
+							>
+								Actualizar Respuesta
+							</button>
+						</div>
+					) : (
+						<p className="text-justify text-gray-200">{reply.content}</p>
+					)}
+					<p className="mt-4 text-xs text-gray-400">
+						Creado en: {formatDate(reply.createdAt)}
+						{reply.updatedAt !== reply.createdAt && (
+							<span className="ml-2 text-xs text-gray-500">(editado)</span>
+						)}
+					</p>
+					<div className="mt-4 space-x-2">
+						{editingReplyId === reply.id ? (
+							<button
+								className="mt-2 text-sm text-red-400"
+								onClick={() => setEditingReplyId(null)}
+							>
+								Cancelar
+							</button>
+						) : (
+							<button
+								className="mt-2 text-sm text-yellow-400"
+								onClick={() => {
+									setEditingReplyId(reply.id);
+									setEditReplyContent(reply.content);
+								}}
+							>
+								Editar Respuesta
+							</button>
+						)}
+						<button
+							className="mt-2 text-sm text-red-400"
+							onClick={() => handleDeleteReply(reply.id)}
+						>
+							Eliminar Respuesta
+						</button>
+					</div>
+				</div>
+			</div>
+		));
+	};
+
+	if (loading) return <div>Cargando Foro...</div>;
+
+	return (
+		<>
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink className="hover:text-gray-300" href="/">
+							Inicio
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="hover:text-gray-300"
+							href={`/dashboard/educadores/foro`}
+						>
+							Foros
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="hover:text-gray-300"
+							href={`/dashboard/educadores/foro/${forumData?.id}`}
+						>
+							Foro: {forumData?.title}
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+
+			<div className="container mx-auto mt-5 rounded-lg bg-black/25 p-5 shadow-lg">
+				<div className="mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg md:w-11/12 lg:w-full">
+					<div className="flex justify-between">
+						<h1 className="mb-4 text-2xl font-bold text-white">
+							{forumData?.title}
+						</h1>
+						<p className="text-white">
+							Del instructor: {forumData?.userId.name}
+						</p>
+					</div>
+					<p className="mb-4 text-white">{forumData?.description}</p>
+				</div>
+
+				{/* Renderizar Posts */}
+				<div className="mt-4 flex flex-col-reverse space-y-4">
+					{loadingPosts ? (
+						<p>Cargando posts...</p>
+					) : (
+						posts.map((post) => (
+							<div className="rounded-lg bg-slate-500/20 p-3" key={post.id}>
+								<p className="font-bold text-gray-200">
+									{post.userId.name}, dijo:
+								</p>
+								{editingPostId === post.id ? (
+									<div>
+										<textarea
+											className="w-full p-2 text-black"
+											value={editPostContent}
+											onChange={(e) => setEditPostContent(e.target.value)}
+										/>
+										<button
+											onClick={() => handlePostUpdate(post.id)}
+											className="mt-2 rounded bg-blue-500 px-4 py-2 text-white"
+										>
+											Actualizar Post
+										</button>
+									</div>
+								) : (
+									<p className="text-justify text-gray-200">{post.content}</p>
+								)}
+								<p className="mt-4 text-xs text-gray-400">
+									Creado en: {formatDate(post.createdAt)}
+									{post.updatedAt !== post.createdAt && (
+										<span className="ml-2 text-xs text-gray-500">
+											(editado)
+										</span>
+									)}
+								</p>
+								<div className="mt-4 space-x-2">
+									{editingPostId === post.id ? (
+										<button
+											className="mt-2 text-sm text-red-400"
+											onClick={() => setEditingPostId(null)}
+										>
+											Cancelar
+										</button>
+									) : (
+										<button
+											className="mt-2 text-sm text-yellow-400"
+											onClick={() => {
+												setEditingPostId(post.id);
+												setEditPostContent(post.content);
+											}}
+										>
+											Editar Post
+										</button>
+									)}
+									<button
+										className="mt-2 text-sm text-red-400"
+										onClick={() => handleDeletePost(post.id)}
+									>
+										Eliminar Post
+									</button>
+									{/* Mostrar formulario de respuesta */}
+									<div>
+										{replyingToPostId === post.id ? (
+											<div>
+												<textarea
+													className="w-full rounded-lg p-2 text-black outline-none"
+													placeholder="Escribe tu respuesta..."
+													value={replyMessage}
+													onChange={(e) => setReplyMessage(e.target.value)}
+												/>
+												<button
+													className="mr-2 mt-2 rounded bg-blue-500 px-4 py-2 text-white"
+													onClick={handleReplySubmit}
+												>
+													Enviar Respuesta
+												</button>
+												<button
+													className="mt-2 text-sm text-red-400"
+													onClick={() => setReplyingToPostId(null)}
+												>
+													Cancelar
+												</button>
+											</div>
+										) : (
+											<button
+												className="mt-2 text-sm text-green-400"
+												onClick={() => setReplyingToPostId(post.id)}
+											>
+												Responder
+											</button>
+										)}
+									</div>
+								</div>
+
+								{/* Renderizar Respuestas */}
+								{renderPostReplies(post.id)}
+							</div>
+						))
+					)}
+				</div>
+
+				{/* Crear nuevo Post */}
+				<div className="mt-4">
+					<textarea
+						className="w-full rounded-lg p-2 text-black outline-none"
+						placeholder="Escribe un nuevo mensaje..."
+						value={message}
+						onChange={(e) => setMessage(e.target.value)}
+					></textarea>
+					<button
+						className="mt-2 rounded bg-blue-500 px-4 py-2 text-white"
+						onClick={handlePostSubmit}
+					>
+						Enviar
+					</button>
+				</div>
+			</div>
+		</>
+	);
 };
 
 export default ForumPage;

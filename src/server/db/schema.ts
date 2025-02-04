@@ -230,18 +230,36 @@ export const forums = pgTable('forums', {
 	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
 });
 
-//tabla de posts
 export const posts = pgTable('posts', {
 	id: serial('id').primaryKey(),
 	forumId: integer('forum_id')
 		.references(() => forums.id)
-		.notNull(), // Relación con el foro
+		.notNull(),
 	userId: text('user_id')
 		.references(() => users.id)
-		.notNull(), // El usuario que hace el post
-	content: text('content').notNull(), // Contenido del post
-	createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
-	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
+		.notNull(),
+	content: text('content').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.notNull()
+		.$onUpdateFn(() => new Date()),
+});
+
+export const postReplies = pgTable('post_replies', {
+	id: serial('id').primaryKey(),
+	postId: integer('post_id')
+		.references(() => posts.id)
+		.notNull(), // Relaciona la respuesta con el post original
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(), // El usuario que hace la respuesta
+	content: text('content').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.notNull()
+		.$onUpdateFn(() => new Date()),
 });
 
 // Tabla de progreso de actividades por usuario

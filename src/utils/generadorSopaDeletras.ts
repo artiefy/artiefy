@@ -1,4 +1,4 @@
-import type { WordSearchConfig } from '~/app/typesActi';
+import type { WordSearchConfig } from '~/types/typesActi';
 
 const DIRECTIONS = [
 	[-1, -1],
@@ -15,7 +15,9 @@ export function generateWordSearch(config: WordSearchConfig): string[][] {
 	const { words, gridSize } = config;
 
 	// Initialize grid with empty spaces
-	const grid: string[][] = Array.from({ length: gridSize }, () => Array<string>(gridSize).fill(''));
+	const grid: string[][] = Array.from({ length: gridSize }, () =>
+		Array<string>(gridSize).fill('')
+	);
 
 	// Place words
 	for (const word of words) {

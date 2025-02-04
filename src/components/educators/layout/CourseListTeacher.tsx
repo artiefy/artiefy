@@ -59,7 +59,7 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
 								<div className="font-bold text-primary">{course.title}</div>
 							</CardTitle>
 							<div className="flex items-center">
-								Categoria id:
+								Categoria:
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"

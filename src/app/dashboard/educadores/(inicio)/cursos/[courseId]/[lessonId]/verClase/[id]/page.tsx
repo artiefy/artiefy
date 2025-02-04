@@ -2,22 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import Image from 'next/image';
-import Link from 'next/link';
+import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
 import { useParams, useRouter } from 'next/navigation';
-import ListActividadesEducator from '~/components/educators/layout/ListActividades';
-import ViewFiles from '~/components/educators/layout/ViewFiles';
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
-} from '~/components/educators/ui/alert-dialog';
+import ListActividadesLookStudent from '~/components/educators/layout/ListActividadesByStudent';
+import VerFileByStudent from '~/components/educators/layout/verFileBystudent';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -26,7 +14,6 @@ import {
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { toast } from '~/hooks/use-toast';
 
 interface Lessons {
@@ -51,19 +38,19 @@ interface Lessons {
 	updatedAt: string;
 }
 
-const getContrastYIQ = (hexcolor: string) => {
-	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
-	hexcolor = hexcolor.replace('#', '');
-	const r = parseInt(hexcolor.substr(0, 2), 16);
-	const g = parseInt(hexcolor.substr(2, 2), 16);
-	const b = parseInt(hexcolor.substr(4, 2), 16);
-	const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-	return yiq >= 128 ? 'black' : 'white';
-};
+// const getContrastYIQ = (hexcolor: string) => {
+// 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
+// 	hexcolor = hexcolor.replace('#', '');
+// 	const r = parseInt(hexcolor.substr(0, 2), 16);
+// 	const g = parseInt(hexcolor.substr(2, 2), 16);
+// 	const b = parseInt(hexcolor.substr(4, 2), 16);
+// 	const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+// 	return yiq >= 128 ? 'black' : 'white';
+// };
 
 const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
+	const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
 	const { user } = useUser();
-	const router = useRouter();
 	const params = useParams();
 	const courseId = params?.courseId ?? null;
 	const lessonId = params?.lessonId ?? null;
@@ -71,6 +58,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [color, setColor] = useState<string>(selectedColor || '#FFFFFF');
+	const router = useRouter();
 
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
 	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
@@ -120,7 +108,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					toast({
 						title: 'Error',
 						description: `No se pudo cargar la leccion: ${errorMessage}`,
-						variant: 'destructive',
+						variant: 'info',
 					});
 				}
 			} catch (error) {
@@ -130,7 +118,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				toast({
 					title: 'Error',
 					description: `No se pudo cargar la leccion: ${errorMessage}`,
-					variant: 'destructive',
+					variant: 'info',
 				});
 			} finally {
 				setLoading(false);
@@ -146,27 +134,53 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 	if (error) return <div>Error: {error}</div>;
 	if (!lessons) return <div>No se encontró la leccion.</div>;
 
-	const handleDelete = async (id: string) => {
-		try {
-			const response = await fetch(`/api/educadores/lessons?lessonId=${id}`, {
-				method: 'DELETE',
-			});
+	// Add this function to handle navigation
+	const handleNavigation = (direction: 'prev' | 'next', lessons: Lessons[]) => {
+		const sortedLessons = [...(lessons ?? [])].sort(
+			(a, b) => a.order - b.order
+		);
+		const currentIndex = sortedLessons.findIndex(
+			(l) => l.id === selectedLessonId
+		);
 
-			if (!response.ok) throw new Error('Error al eliminar la clase');
+		if (direction === 'prev') {
+			for (let i = currentIndex - 1; i >= 0; i--) {
+				const prevLesson = sortedLessons[i];
+				if (prevLesson) {
+					setSelectedLessonId(prevLesson.id);
+					router.push(
+						`/dashboard/educadores/cursos/${courseIdNumber}/${prevLesson.id}/verClase/${prevLesson.id}`
+					);
+					return;
+				}
+			}
 			toast({
-				title: 'Clase eliminada',
-				description: `La clase ${lessons.title} ha sido eliminada exitosamente.`,
+				title: 'Información',
+				description: 'No hay más clases anteriores.',
 				variant: 'default',
 			});
-			router.back(); // Redirige a la página anterior
-		} catch (error) {
-			console.error('Error:', error);
+		} else if (direction === 'next') {
+			for (let i = currentIndex + 1; i < sortedLessons.length; i++) {
+				const nextLesson = sortedLessons[i];
+				if (nextLesson) {
+					setSelectedLessonId(nextLesson.id);
+					router.push(
+						`/dashboard/educadores/cursos/${courseIdNumber}/${nextLesson.id}/verClase/${nextLesson.id}`
+					);
+					return;
+				}
+			}
+			toast({
+				title: 'Información',
+				description: 'No hay más clases siguientes.',
+				variant: 'default',
+			});
 		}
 	};
 
 	return (
 		<>
-			<div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background p-6">
+			<div className="container">
 				<Breadcrumb>
 					<BreadcrumbList>
 						<BreadcrumbItem>
@@ -197,101 +211,61 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbLink href={``} className="hover:text-gray-300">
-								Detalles de la clase: {lessons.title}
+							<BreadcrumbLink
+								href={`#`}
+								onClick={() => window.history.back()}
+								className="hover:text-gray-300"
+							>
+								Detallados de la clase
+							</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+						<BreadcrumbItem>
+							<BreadcrumbLink className="hover:text-gray-300">
+								Vista de la clase: {lessons.title}
 							</BreadcrumbLink>
 						</BreadcrumbItem>
 					</BreadcrumbList>
 				</Breadcrumb>
+				<div className="mt-4 flex items-center justify-between">
+					<Button onClick={() => handleNavigation('prev', [lessons])}>
+						<ArrowLeftIcon className="animate-bounce-right size-5" />
+						<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+							<div className="relative h-full w-10 bg-white/30"></div>
+						</div>
+						Clase Anterior
+					</Button>
+					<Button onClick={() => handleNavigation('next', [lessons])}>
+						Siguiente Clase
+						<ArrowRightIcon className="animate-bounce-right size-5" />
+						<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+							<div className="relative h-full w-10 bg-white/30"></div>
+						</div>
+					</Button>
+				</div>
 				<div className="group relative h-auto w-full">
 					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
-					<Card
-						className={`relative z-20 mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-						style={{
-							backgroundColor: color,
-							color: getContrastYIQ(color),
-						}}
+					<div
+						className="container relative z-20 mt-4 grid grid-cols-1 gap-5 rounded-lg bg-black p-5 md:grid-cols-2 lg:grid-cols-2"
+						style={{ backgroundColor: color }}
 					>
-						<CardHeader>
-							<CardTitle
-								className={`text-2xl font-bold ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+						{/* Columna derecha - Información */}
+						<div>
+							<h1 className="text-2xl font-bold">{lessons.title}</h1>
+							<video
+								className="mt-2 h-72 w-full rounded-lg object-contain"
+								controls
 							>
-								Clase: {lessons.title}
-							</CardTitle>
-						</CardHeader>
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 lg:gap-6">
-							{/* Columna izquierda - Imagen */}
-							<div className="relative w-full">
-								<Image
-									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverImageKey}`}
-									alt={lessons.title}
-									width={300}
-									height={100}
-									className="mx-auto rounded-lg object-contain"
-									priority
-									quality={75}
-								/>
-							</div>
-							{/* Columna derecha - Información */}
-							<video className="h-72 w-full rounded-lg object-cover" controls>
 								<source
 									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`}
 								/>
 							</video>
-						</div>
-						{/* Zona de los files */}
-						<div>
-							<ViewFiles lessonId={lessons.id} selectedColor={color} />
-						</div>
-						<div className="flex justify-evenly lg:px-3 lg:py-6">
-							<Button
-								className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
-							>
-								<Link href={`./${lessons.id}/verClase/${lessons.id}`}>
-									Ver clase
-								</Link>
-							</Button>
-							<Button className="border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600">
-								Editar clase
-							</Button>
-
-							<AlertDialog>
-								<AlertDialogTrigger asChild>
-									<Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
-										Eliminar
-									</Button>
-								</AlertDialogTrigger>
-								<AlertDialogContent>
-									<AlertDialogHeader>
-										<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-										<AlertDialogDescription>
-											Esta acción no se puede deshacer. Se eliminará
-											permanentemente la clase
-											<span className="font-bold"> {lessons.title}</span> y
-											todos los datos asociados a este.
-										</AlertDialogDescription>
-									</AlertDialogHeader>
-									<AlertDialogFooter>
-										<AlertDialogCancel>Cancelar</AlertDialogCancel>
-										<AlertDialogAction
-											onClick={() => handleDelete(lessons.id.toString())}
-											className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
-										>
-											Eliminar
-										</AlertDialogAction>
-									</AlertDialogFooter>
-								</AlertDialogContent>
-							</AlertDialog>
-						</div>
-						<div>
-							<div
-								className={`pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-							>
+							<div className="mt-4 rounded-lg bg-white p-4 text-black">
 								<h2 className="text-2xl font-bold">Información de la clase</h2>
 								<br />
 								<div className="grid grid-cols-2">
 									<div className="flex flex-col">
-										<h2 className="text-lg font-semibold">Lesion:</h2>
+										<h2 className="text-lg font-semibold">Lección:</h2>
 										<h1 className="mb-4 text-2xl font-bold">{lessons.title}</h1>
 									</div>
 									<div className="flex flex-col">
@@ -314,25 +288,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 									</div>
 								</div>
 							</div>
+							<VerFileByStudent lessonId={lessons.id} selectedColor={color} />
 						</div>
-
-						<div className="flex w-full justify-center">
-							<Link
-								href={`./${lessons.id}/actividades?lessonId=${lessons.id}`}
-								className="cursor-pointer justify-center rounded-lg border-transparent bg-green-400 p-2 text-white hover:bg-green-500"
-							>
-								Crear actividad
-							</Link>
+						<div>
+							<ListActividadesLookStudent
+								lessonId={lessons.id}
+								courseId={courseIdNumber ?? 0}
+								coverImageKey={lessons.coverImageKey}
+								selectedColor={color}
+							/>
 						</div>
-					</Card>
-				</div>
-				<div>
-					<ListActividadesEducator
-						lessonId={lessons.id}
-						courseId={courseIdNumber ?? 0}
-						coverImageKey={lessons.coverImageKey}
-						selectedColor={color}
-					/>
+					</div>
 				</div>
 			</div>
 		</>
