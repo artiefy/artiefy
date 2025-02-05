@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa'; // Import FaArrowDown
+import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa'; // Import FaCheckCircle and FaArrowDown
+import { PiArrowFatLineLeftFill } from "react-icons/pi"; // Import PiArrowFatLineLeftFill
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity } from '~/types';
@@ -24,12 +25,22 @@ const LessonActivities = ({
 }: LessonActivitiesProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [allQuestionsAnswered, setAllQuestionsAnswered] = useState(false);
+  const [activityCompleted, setActivityCompleted] = useState(isActivityCompleted); // New state for activity completion
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
   const handleQuestionsAnswered = (answered: boolean) => {
     setAllQuestionsAnswered(answered);
+  };
+
+  const markActivityAsCompleted = () => {
+    setActivityCompleted(true);
+  };
+
+  const handleActivityComplete = () => {
+    handleActivityCompletion();
+    closeModal();
   };
 
   return (
@@ -41,34 +52,42 @@ const LessonActivities = ({
             <div>
               <h3 className="font-semibold text-gray-900">{activity.name}</h3>
             </div>
-            {isActivityCompleted ? <FaCheckCircle className="text-green-500" /> : <FaLock className="text-gray-400" />}
+            {activityCompleted ? <FaCheckCircle className="text-green-500" /> : <FaLock className="text-gray-400" />}
           </div>
           <p className="mt-2 text-sm text-gray-600">{activity.description}</p>
           {isVideoCompleted && (
             <div className="flex justify-center">
-              <FaArrowDown className="text-green-500 mb-1 animate-bounce-up-down" /> {/* Add arrow icon with animation */}
+              <FaArrowDown className="my-4 text-green-500 mb-1 animate-bounce-up-down" /> {/* Add arrow icon with animation */}
             </div>
           )}
           <Button
             onClick={openModal}
-            className={`w-full ${isVideoCompleted ? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]' : 'bg-gray-400 text-background'}`} // Change background color based on isVideoCompleted
+            className={`mt-2 w-full ${activityCompleted ? 'bg-green-500 text-white' : isVideoCompleted ? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]' : 'bg-gray-400 text-background'}`} // Change background color based on isActivityCompleted and isVideoCompleted
             disabled={!isVideoCompleted} // Disable button until video is completed
           >
-            Ver Actividad
+            {activityCompleted ? (
+              <>
+                Actividad Completada <FaCheckCircle className="ml-2" />
+              </>
+            ) : (
+              'Ver Actividad'
+            )}
           </Button>
           <Button
-            onClick={handleActivityCompletion}
-            disabled={!isVideoCompleted || isActivityCompleted || isCompletingActivity || !allQuestionsAnswered}
+            onClick={handleActivityComplete}
+            disabled={!isVideoCompleted || !activityCompleted || isCompletingActivity || !allQuestionsAnswered}
             className={`mt-2 w-full ${
-              isVideoCompleted && allQuestionsAnswered
-                ? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]'
+              activityCompleted && allQuestionsAnswered
+                ? 'bg-gradient-to-r from-[#004d40] to-[#00796b] text-white hover:bg-gradient-to-l animate-pulse'
                 : 'bg-gray-400 text-background'
             }`}
           >
             {isCompletingActivity ? (
-              <Icons.spinner className="mr-2 text-background" />
-            ) : isActivityCompleted ? (
-              'Actividad Completada'
+              <Icons.spinner className="mr-2 text-primary" />
+            ) : activityCompleted ? (
+              <>
+                Siguiente Clase <PiArrowFatLineLeftFill className="ml-2" />
+              </>
             ) : !allQuestionsAnswered ? (
               'Responde todas las preguntas'
             ) : isVideoCompleted ? (
@@ -88,6 +107,7 @@ const LessonActivities = ({
           activity={activity}
           onQuestionsAnswered={handleQuestionsAnswered}
           userId={userId} // Pasamos userId aquí
+          markActivityAsCompleted={markActivityAsCompleted} // Pass activity completion handler
         />
       )}
     </div>

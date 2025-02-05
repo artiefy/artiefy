@@ -5,6 +5,7 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity, Question } from '~/types';
 import { getActivityContent } from '~/server/actions/activities/getActivityContent';
+import { completeActivity } from '~/server/actions/progress/completeActivity'; // Import completeActivity action
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -12,9 +13,10 @@ interface ActivityModalProps {
   activity: Activity;
   userId: string;
   onQuestionsAnswered: (allAnswered: boolean) => void;
+  markActivityAsCompleted: () => void; // New prop for activity completion callback
 }
 
-const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered }: ActivityModalProps) => {
+const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered, markActivityAsCompleted }: ActivityModalProps) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -57,6 +59,17 @@ const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered 
     const correctAnswers = questions.filter((q) => updatedAnswers[q.id] === q.correctOptionId).length;
     setScore(correctAnswers);
     setAllCorrect(correctAnswers === questions.length);
+  };
+
+  // Handle activity completion
+  const handleCompleteActivity = async () => {
+    try {
+      await completeActivity(activity.id); // Mark activity as completed in the database
+      markActivityAsCompleted();
+      onClose();
+    } catch (error) {
+      console.error('Error completing activity:', error);
+    }
   };
 
   return (
@@ -106,7 +119,7 @@ const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered 
             </div>
           </div>
         )}
-        <Button onClick={onClose} className="mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0]">
+        <Button onClick={handleCompleteActivity} className="mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0]">
           Cerrar
         </Button>
       </DialogContent>

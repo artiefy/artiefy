@@ -27,87 +27,9 @@
   transition: all 1s ease;
 }
 
-.moon {
-  width: 100px;
-  height: 100px;
-  top: 10%;
-  right: 10%;
-  position: absolute;
-  fill: white;
-  transform: rotate(-20deg);
-  transition: all 1s ease;
-}
-
-.rocket {
-  width: 140px;
-  height: 140px;
-  bottom: -2%;
-  left: -2%;
-  position: absolute;
-  fill: white;
-  transition: all 5s ease;
-}
-
-.star {
-  position: absolute;
-  background: radial-gradient(circle, rgba(251, 239, 63, 1) 0%, rgba(255, 253, 212, 1) 100%);
-  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-}
-
-.star-1 {
-  width: 100px;
-  height: 100px;
-  bottom: 90px;
-  left: -15px;
-  transition: all 1s ease;
-}
-
-.star-2 {
-  width: 150px;
-  height: 150px;
-  top: -10%;
-  left: -10%;
-  transition: all .5s ease;
-}
-
-.star-3 {
-  width: 100px;
-  height: 100px;
-  bottom: 5%;
-  right: -15px;
-  transition: all .3s ease;
-}
-
-.star-4 {
-  width: 20px;
-  height: 20px;
-  top: 4%;
-  right: 5px;
-  transition: all 1.4s ease;
-}
-
-.star-5 {
-  width: 20px;
-  height: 20px;
-  bottom: 24%;
-  right: 45%;
-  animation: rotate 3s normal linear infinite;
-}
-
-.star-6 {
-  width: 20px;
-  height: 20px;
-  top: 14%;
-  right: 25%;
-  animation: rotate 5s normal linear infinite;
-}
-
-.star-7 {
-  width: 40px;
-  height: 40px;
-  top: 34%;
-  right: 65%;
-  animation: rotate 5s normal linear infinite;
+.card-info {
+  display: flex;
+  align-items: center;
 }
 
 .card-info span {
@@ -115,6 +37,11 @@
   color: #3AF4EF;
   font-weight: 900;
   text-transform: uppercase;
+  margin-left: 10px;
+}
+
+.spinner {
+  fill: white;
 }
 
 .card.launch .rocket {
@@ -124,31 +51,4 @@
 .card.launch .moon {
   width: 50px;
   height: 50px;
-}
-
-@keyframes rotate {
-  0% {
-    -webkit-transform: rotate3d(0, 0, 1, 0deg);
-    transform: rotate3d(0, 0, 1, 0deg);
-  }
-
-  25% {
-    -webkit-transform: rotate3d(0, 0, 1, 90deg);
-    transform: rotate3d(0, 0, 1, 90deg);
-  }
-
-  50% {
-    -webkit-transform: rotate3d(0, 0, 1, 180deg);
-    transform: rotate3d(0, 0, 1, 180deg);
-  }
-
-  75% {
-    -webkit-transform: rotate3d(0, 0, 1, 270deg);
-    transform: rotate3d(0, 0, 1, 270deg);
-  }
-
-  100% {
-    -webkit-transform: rotate3d(0, 0, 1, 360deg);
-    transform: rotate3d(0, 0, 1, 360deg);
-  }
 }

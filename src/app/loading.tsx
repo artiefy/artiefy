@@ -1,5 +1,6 @@
 "use client"
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import '~/styles/rocket.css';
 
 const Loading: React.FC = () => {
@@ -13,22 +14,25 @@ const Loading: React.FC = () => {
     return (
         <div className="fullscreen-background">
             <div className={`card ${launch ? 'launch' : ''}`}>
-                <div className="star star-1"></div>
-                <div className="star star-2"></div>
-                <div className="star star-3"></div>
-                <div className="star star-4"></div>
-                <div className="star star-5"></div>
-                <div className="star star-6"></div>
-                <div className="star star-7"></div>
                 <div className="card-info">
-                <span className="animate-pulse-text">CARGANDO... ARTIEFY !</span>
+                    <svg className="spinner" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <style>
+                            {`.spinner_Wezc{transform-origin:center;animation:spinner_Oiah .75s step-end infinite}
+                            @keyframes spinner_Oiah{8.3%{transform:rotate(30deg)}16.6%{transform:rotate(60deg)}25%{transform:rotate(90deg)}33.3%{transform:rotate(120deg)}41.6%{transform:rotate(150deg)}50%{transform:rotate(180deg)}58.3%{transform:rotate(210deg)}66.6%{transform:rotate(240deg)}75%{transform:rotate(270deg)}83.3%{transform:rotate(300deg)}91.6%{transform:rotate(330deg)}100%{transform:rotate(360deg)}}`}
+                        </style>
+                        <g className="spinner_Wezc">
+                            <circle cx="12" cy="2.5" r="1.5" opacity=".14"/>
+                            <circle cx="16.75" cy="3.77" r="1.5" opacity=".29"/>
+                            <circle cx="20.23" cy="7.25" r="1.5" opacity=".43"/>
+                            <circle cx="21.50" cy="12.00" r="1.5" opacity=".57"/>
+                            <circle cx="20.23" cy="16.75" r="1.5" opacity=".71"/>
+                            <circle cx="16.75" cy="20.23" r="1.5" opacity=".86"/>
+                            <circle cx="12" cy="21.5" r="1.5"/>
+                        </g>
+                    </svg>
+                    <span className="animate-pulse-text">CARGANDO!</span>
                 </div>
-                <svg className="moon" viewBox="0 0 20 20">
-                    <path d="M 10 9 z z M 7.007 6.552 c 0 -2.259 0.795 -4.33 2.117 -5.955 C 4.34 1.042 0.594 5.07 0.594 9.98 c 0 5.207 4.211 9.426 9.406 9.426 c 2.94 0 5.972 -1.354 7.696 -3.472 c -0.289 0.026 -0.987 0.044 -1.283 0.044 C 11.219 15.979 7.007 11.759 7.007 6.552 z"></path>
-                </svg>
-                <svg className="rocket" viewBox="48.0129 48.1783 416 415.6">
-                    <path d="M461.81,53.81a4.4,4.4,0,0,0-3.3-3.39c-54.38-13.3-180,34.09-248.13,102.17a294.9,294.9,0,0,0-33.09,39.08c-21-1.9-42-.3-59.88,7.5-50.49,22.2-65.18,80.18-69.28,105.07a9,9,0,0,0,9.8,10.4l81.07-8.9a180.29,180.29,0,0,0,1.1,18.3,18.15,18.15,0,0,0,5.3,11.09l31.39,31.39a18.15,18.15,0,0,0,11.1,5.3,179.91,179.91,0,0,0,18.19,1.1l-8.89,81a9,9,0,0,0,10.39,9.79c24.9-4,83-18.69,105.07-69.17,7.8-17.9,9.4-38.79,7.6-59.69a293.91,293.91,0,0,0,39.19-33.09C427.82,233.76,474.91,110.9,461.81,53.81ZM298.66,213.67a42.7,42.7,0,1,1,60.38,0A42.65,42.65,0,0,1,298.66,213.67Z"></path>
-                </svg>
+                <Image src="/cursor.png" alt="Logo" className="logo" width={140} height={140} />
             </div>
         </div>
     );

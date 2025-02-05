@@ -50,7 +50,7 @@ const ChatBot: React.FC = () => {
 				className={`button ${isOpen ? 'bg-gray-200' : ''}`}
 			>
 				<div className="button__text">
-					{Array.from('-ARTIE-IA-ARTIE-IA').map((char, i) => (
+					{Array.from('-ARTI-IA-ARTI-IA').map((char, i) => (
 						<span key={i} style={{ '--index': i } as React.CSSProperties}>
 							{char}
 						</span>
