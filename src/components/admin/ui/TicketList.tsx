@@ -22,7 +22,7 @@ export function TicketList({
   onDeleteTicket,
 }: TicketListProps) {
   return (
-    <Table className="bg-background text-foreground">
+    <Table className="bg-background text-foreground border-foreground ">
       <TableHeader>
         <TableRow>
           <TableHead className="text-foreground">ID</TableHead>
@@ -50,7 +50,7 @@ export function TicketList({
             <TableCell>
               <Button
                 onClick={() => onSelectTicket(ticket)}
-                className="mr-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                className="mr-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground/90 text-white"
               >
                 Ver Detalles
               </Button>

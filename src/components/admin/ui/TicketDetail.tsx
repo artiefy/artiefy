@@ -58,14 +58,14 @@ export function TicketDetail({
   };
 
   return (
-    <Card className="bg-background text-foreground">
+    <Card className="bg-background text-foreground border-foreground border w-full ">
       <CardHeader>
         <CardTitle>Detalles del Ticket</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 ">
           <div>
-            <Label htmlFor="estudiante" className="text-foreground">
+            <Label htmlFor="estudiante" className="text-foreground text-sm ">
               Estudiante
             </Label>
             <Input
@@ -73,7 +73,7 @@ export function TicketDetail({
               name="estudiante"
               value={editedTicket.estudiante}
               onChange={handleChange}
-              className="border-input bg-background text-foreground"
+              className="border-input bg-background text-foreground "
             />
           </div>
           <div>
@@ -129,7 +129,7 @@ export function TicketDetail({
           <div className="flex justify-between">
             <Button
               type="submit"
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground text-white"
             >
               Actualizar Ticket
             </Button>

@@ -50,7 +50,7 @@ export function TicketForm({ onSubmit, ticket }: TicketFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 ">
       <div>
         <Label htmlFor="asunto">Asunto</Label>
         <Input

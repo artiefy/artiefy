@@ -213,7 +213,7 @@ export default function Cursos() {
 				categoryid,
 				modalidadesid,
 				instructor: user.fullName,
-				userId: user.id,
+				creatorId: user.id,
 				dificultadid,
 				requerimientos,
 			}),

@@ -37,7 +37,7 @@ export function EstudianteForm({ onSubmit, estudiante }: EstudianteFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-lg mx-auto">
       <div>
         <Label htmlFor="nombre">Nombre</Label>
         <Input

@@ -7,7 +7,7 @@ interface EstudianteDetalleProps {
 
 export function EstudianteDetalle({ estudiante }: EstudianteDetalleProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-white text-sm md:text-base">
       <div>
         <h3 className="text-lg font-medium">Información Personal</h3>
         <p><strong>ID Estudiante:</strong> {estudiante.idEstudiante}</p>

@@ -47,15 +47,15 @@ export function EstudianteAnalisis({ estudiante }: EstudianteAnalisisProps) {
           <CardTitle>Resumen del Estudiante</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 text-center">
             <div>
-              <p className="text-sm font-medium">Promedio General</p>
+              <p className="text-sm font-medium ">Promedio General</p>
               <p className="text-2xl font-bold">
                 {estudiante.promedioGeneral.toFixed(2)}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium">Tasa de Finalización</p>
+              <p className="text-sm font-medium ">Tasa de Finalización</p>
               <p className="text-2xl font-bold">
                 {estudiante.tasaFinalizacion}%
               </p>

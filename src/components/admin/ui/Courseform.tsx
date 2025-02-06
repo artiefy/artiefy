@@ -67,7 +67,7 @@ export function CourseForm({ onSubmit, initialData }: CourseFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-lg mx-auto">
       <div>
         <Label htmlFor="title">Título del Curso</Label>
         <Input

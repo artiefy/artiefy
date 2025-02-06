@@ -97,8 +97,8 @@ export default function Estudiantes() {
   ];
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">
+    <div className="space-y-6 bg-background p-8 text-foreground">
+      <h2 className="text-3xl font-bold tracking-tight text-white mb-6 sm:mb-8">
         Gestión de Estudiantes
       </h2>
 
@@ -125,13 +125,13 @@ export default function Estudiantes() {
         ]}
       />
 
-      <div className="flex items-center justify-between">
-        <Input placeholder="Buscar estudiantes..." className="max-w-sm" />
+      <div className="flex items-center justify-between space-x-4 bg-white p-6 rounded-lg">
+        <Input placeholder="Buscar estudiantes..." className="max-w-sm " />
         <Dialog>
           <DialogTrigger asChild>
             <Button>Agregar Estudiante</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[625px]">
+          <DialogContent className="sm:max-w-[625px] ">
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Estudiante</DialogTitle>
             </DialogHeader>
