@@ -2,6 +2,7 @@ import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
+import Script from 'next/script';
 import Provider from '~/components/estudiantes/layout/ProgressBarProvider';
 import { Toaster } from '~/components/estudiantes/ui/toaster';
 import { metadata as siteMetadata } from '~/lib/metadata';
@@ -47,11 +48,13 @@ export default function RootLayout({
 		<ClerkProvider localization={esMX} afterSignOutUrl="/">
 			<html lang="es" className={`${montserrat.variable}`}>
 				<head>
-					<script
+					<Script
+						id="json-ld"
 						type="application/ld+json"
 						dangerouslySetInnerHTML={{
 							__html: JSON.stringify(jsonLd),
 						}}
+						strategy="afterInteractive"
 					/>
 				</head>
 				<body className="bg-background font-sans text-primary">

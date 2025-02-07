@@ -6,6 +6,7 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity, Question } from '~/types';
 import { getActivityContent } from '~/server/actions/activities/getActivityContent';
 import { completeActivity } from '~/server/actions/progress/completeActivity'; // Import completeActivity action
+import { saveActivityScore } from '~/server/actions/progress/saveActivityScore'; // Import saveActivityScore action
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -22,13 +23,15 @@ const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered,
   const [isLoading, setIsLoading] = useState(true);
   const [score, setScore] = useState(0);
   const [allCorrect, setAllCorrect] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false); // New state for spinner
+  const [attempts, setAttempts] = useState<Record<string, number>>({}); // New state for attempts
 
   // Fetch questions when the modal is open
   useEffect(() => {
     const fetchQuestions = async () => {
       setIsLoading(true);
       try {
-        const activityContent = await getActivityContent(activity.lessonsId, userId);
+        const activityContent = await getActivityContent(activity.lessonsId, userId); // Ensure lessonsId is a number
         if (activityContent.length > 0 && activityContent[0].content?.questions) {
           setQuestions(activityContent[0].content.questions);
         } else {
@@ -49,8 +52,13 @@ const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered,
 
   // Handle answer selection
   const handleAnswerChange = (questionId: string, optionId: string) => {
+    if (attempts[questionId] >= 2) return; // Prevent more than 2 attempts
+
     const updatedAnswers = { ...selectedAnswers, [questionId]: optionId };
     setSelectedAnswers(updatedAnswers);
+
+    const updatedAttempts = { ...attempts, [questionId]: (attempts[questionId] || 0) + 1 };
+    setAttempts(updatedAttempts);
 
     const allAnswered = questions.every((q) => updatedAnswers[q.id]);
     onQuestionsAnswered(allAnswered);
@@ -63,12 +71,16 @@ const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered,
 
   // Handle activity completion
   const handleCompleteActivity = async () => {
+    setIsCompleting(true); // Set spinner state to true
     try {
       await completeActivity(activity.id); // Mark activity as completed in the database
+      await saveActivityScore(activity.id.toString(), userId, score); // Ensure activity.id is a string
       markActivityAsCompleted();
       onClose();
     } catch (error) {
       console.error('Error completing activity:', error);
+    } finally {
+      setIsCompleting(false); // Set spinner state to false
     }
   };
 
@@ -100,11 +112,15 @@ const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered,
                           checked={selectedAnswers[question.id] === option.id}
                           onChange={() => handleAnswerChange(question.id, option.id)}
                           className="mr-2"
+                          disabled={attempts[question.id] >= 2} // Disable input after 2 attempts
                         />
                         {option.text}
                       </label>
                     ))}
                   </div>
+                  {attempts[question.id] >= 2 && (
+                    <p className="text-red-500">Has alcanzado el límite de intentos para esta pregunta.</p>
+                  )}
                 </div>
               ))
             ) : (
@@ -119,8 +135,12 @@ const ActivityModal = ({ isOpen, onClose, activity, userId, onQuestionsAnswered,
             </div>
           </div>
         )}
-        <Button onClick={handleCompleteActivity} className="mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0]">
-          Cerrar
+        <Button
+          onClick={handleCompleteActivity}
+          className="active:scale-95 mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0]"
+          disabled={!allCorrect || isCompleting} // Disable button if not all questions are answered correctly or if completing
+        >
+          {isCompleting ? <Icons.spinner style={{width:"25px", height:"25px"}} /> : 'Completar Actividad'}
         </Button>
       </DialogContent>
     </Dialog>

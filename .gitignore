@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+/backend/node_modules
 
 # testing
 /coverage
@@ -44,3 +45,6 @@ yarn-error.log*
 
 # idea files
 .idea
+
+# Ignorar toda la carpeta backend
+/backend/
