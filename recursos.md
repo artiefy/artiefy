@@ -53,13 +53,11 @@ Instala depcheck globalmente:
 4. `TypeScript: Open TS Server Log`: Abre el log del servidor de TypeScript para depurar problemas.
 5. `TypeScript: Reload Project`: Recarga la configuración del proyecto de TypeScript.
 15. `Quick Fix...`: Sugiere soluciones rápidas para errores destacados.
-16. `npm install -g eslint`: Intalar localmente Eslint
-17. `npm install -g typescript`: Intalar localmente typescript
+16. `npm install -g eslint`: Intalar globalmente Eslint
+17. `npm install -g typescript`: Intalar globalmente typescript
 18. `npm install typescript --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
 19. `npx tsc`: Ejecuta el compilador TypeScript localmente.
 20. `tsc`: Ejecuta el compilador TypeScript globalmente.
--------------------------------------------------------------------
-uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed
 -------------------------------------------------------------------
 Tecnologias Que Se Usan:
 
@@ -87,24 +85,25 @@ blurDataURL="data"
 -------------------------------------------------------------------
 Tutorial UPDATE DEPENDENCIES:
 
-1. npm install -g npm-check-updates
-2. ncu
-3. ncu -u
-4. npm install
+1. `npm install -g npm-check-updates`  // Instala de manera global la herramienta npm-check-updates
+2. `ncu`  // Muestra las dependencias que tienen nuevas versiones
+3. `ncu -u`  // Actualiza el archivo package.json con las últimas versiones de las dependencias
+4. `npm install`  // Instala las dependencias actualizadas según el archivo package.json
 
-1. npm outdated
-2. npm update
-3. npm install nombre-del-paquete@latest
+1. `npm outdated`  // Muestra una lista de las dependencias que están desactualizadas
+2. `npm update`  // Actualiza las dependencias a sus versiones más recientes compatibles
+3. `npm install nombre-del-paquete@latest`  // Instala la última versión de un paquete específico
 
-1. npm outdated --include=dev
-2. npm outdated -g --depth=0
-3. npm install -g [nombre-del-paquete]@latest
+1. `npm outdated --include=dev`  // Muestra las dependencias de desarrollo que están desactualizadas
+2. `npm outdated -g --depth=0`  // Muestra las dependencias globales que están desactualizadas
+3. `npm install -g [nombre-del-paquete]@latest`  // Instala la última versión de un paquete global específico
 
-1. npm install --save-dev typescript@latest
-2. npm install -D tailwindcss@latest postcss@latest autoprefixer@latest
-3. npm install @clerk/nextjs@latest
-4. npx @clerk/upgrade
-5. npm install drizzle-orm@latest
+1. `npm install tailwindcss @tailwindcss/postcss postcss`  // Instala las últimas versiones de TailwindCSS 4.0
+4. `npx @tailwindcss/upgrade@next` // Migrar tailwindcss 3 or 4
+3. `npx @clerk/upgrade --from=core-1`  // Instala la última versión de Clerk para Next.js 1
+4. `npx @clerk/upgrade -g`  // Instala la última versión de Clerk para Next.js 2
+5. `npm install drizzle-orm@latest`  // Instala la última versión de Drizzle ORM
+
 -------------------------------------------------------------------
 Para La Instalacion Dependencias En Devs
 

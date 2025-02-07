@@ -95,24 +95,26 @@
 	}
 }
 
-@layer utilities {
-	.animate-pulse-text {
+@utility animate-pulse-text {
 		animation: pulse 1.5s infinite ease-in-out;
 	}
-}
 
 /* 🌐 Estilos base */
 @layer base {
-	* {
-		@apply border-border;
-	}
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-background, currentColor);
+  }
 	body {
 		@apply bg-background;
-		font-family: 'Montserrat', sans-serif;
 	}
-	button {
-		@apply cursor-pointer;
-	}
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 /* 🎨 Clases de utilidades */

@@ -48,6 +48,7 @@ export default function RootLayout({
 		<ClerkProvider localization={esMX} afterSignOutUrl="/">
 			<html lang="es" className={`${montserrat.variable}`}>
 				<head>
+        <Script src="https://checkout.epayco.co/epayco.min.js" />
 					<Script
 						id="json-ld"
 						type="application/ld+json"

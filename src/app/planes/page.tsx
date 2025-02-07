@@ -1,38 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { AiOutlineCrown } from 'react-icons/ai';
 import { BsCheck2Circle, BsStars } from 'react-icons/bs';
 import { FaBook, FaTimes } from 'react-icons/fa';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import { PaymentForm } from '~/components/estudiantes/layout/PaymentForm';
 import { Button } from '~/components/estudiantes/ui/button';
-import '~/styles/buttonPlanes.css'; // Import the new CSS file
+import '~/styles/buttonPlanes.css';
+
+interface Plan {
+	id: string;
+	name: string;
+	icon: React.ComponentType;
+	price: number;
+	priceUsd: number;
+	period: string;
+	courses: string;
+	projects: number | string;
+	features: string[];
+}
 
 const PricingPlans: React.FC = () => {
-	interface Plan {
-		name: string;
-		icon: React.ComponentType;
-		price: string;
-		priceUsd: string;
-		period: string;
-		courses: string;
-		projects: number | string;
-		features: string[];
-	}
-
 	const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 	const [showModal, setShowModal] = useState(false);
 	const [activeTab, setActiveTab] = useState('personas');
-	const router = useRouter(); // Initialize useRouter
+	const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-	const plansPersonas = [
+	const plansPersonas: Plan[] = [
 		{
+			id: 'plan-pro',
 			name: 'Pro',
 			icon: BsStars,
-			price: '$100mil COP',
-			priceUsd: '$25 USD',
+			price: 100000,
+			priceUsd: 25,
 			period: '/mes',
 			courses: '15',
 			projects: 5,
@@ -45,10 +47,11 @@ const PricingPlans: React.FC = () => {
 			],
 		},
 		{
+			id: 'plan-premium',
 			name: 'Premium',
 			icon: AiOutlineCrown,
-			price: '$150mil COP',
-			priceUsd: '$37 USD',
+			price: 150000,
+			priceUsd: 37,
 			period: '/mes',
 			courses: 'Ilimitados',
 			projects: 15,
@@ -62,12 +65,13 @@ const PricingPlans: React.FC = () => {
 		},
 	];
 
-	const plansEmpresas = [
+	const plansEmpresas: Plan[] = [
 		{
+			id: 'plan-enterprise',
 			name: 'Enterprise',
 			icon: FaBook,
-			price: '$200mil COP',
-			priceUsd: '$50 USD',
+			price: 200000,
+			priceUsd: 50,
 			period: '/mes',
 			courses: 'Ilimitados',
 			projects: 'Ilimitados',
@@ -86,15 +90,9 @@ const PricingPlans: React.FC = () => {
 		setShowModal(true);
 	};
 
-	const handleProceedWithPlan = () => {
+	const handleSuccess = (message: string) => {
+		setSuccessMessage(message);
 		setShowModal(false);
-		try {
-			// Navigate to the course details page dynamically
-			const courseId = 1; // Replace with dynamic course ID retrieval logic
-			router.push(`/estudiantes/cursos/${courseId}`);
-		} catch (error) {
-			console.error('Error navigating to the course details page:', error);
-		}
 	};
 
 	return (
@@ -131,68 +129,47 @@ const PricingPlans: React.FC = () => {
 						</button>
 					</div>
 					<div className="mt-12 flex justify-center">
-						<div className={`grid gap-8 ${activeTab === 'personas' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 justify-items-center'} w-full max-w-4xl`}>
-							{(activeTab === 'personas' ? plansPersonas : plansEmpresas).map((plan) => (
-								<div
-									key={plan.name}
-									className="relative flex flex-col items-center justify-between rounded-lg bg-linear-to-r from-primary to-secondary p-2 shadow-lg transition-all duration-200 w-full max-w-md"
-								>
-									{plan.name === 'Pro' && (
-										<div className="absolute top-6 -right-5 bg-red-500 text-white text-xs font-bold px-5 py-1 transform rotate-45">
-											15 días gratis
+						<div
+							className={`grid gap-8 ${activeTab === 'personas' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 justify-items-center'} w-full max-w-4xl`}
+						>
+							{(activeTab === 'personas' ? plansPersonas : plansEmpresas).map(
+								(plan) => (
+									<div
+										key={plan.id}
+										className="relative flex w-full max-w-md flex-col items-center justify-between rounded-lg bg-linear-to-r from-primary to-secondary p-2 shadow-lg transition-all duration-200"
+									>
+										{plan.name === 'Pro' && (
+											<div className="absolute top-6 -right-5 rotate-45 transform bg-red-500 px-5 py-1 text-xs font-bold text-white">
+												15 días gratis
+											</div>
+										)}
+										<div className="absolute inset-0 -z-10 overflow-hidden rounded-lg border-2 border-white">
+											<div className="absolute inset-0 bg-linear-to-r from-primary to-secondary opacity-50"></div>
 										</div>
-									)}
-									<div className="absolute inset-0 -z-10 overflow-hidden rounded-lg border-2 border-white">
-										<div className="absolute inset-0 bg-linear-to-r from-primary to-secondary opacity-50"></div>
-									</div>
-									{plan.name === 'Enterprise' ? (
-										<div className="my-6 px-4">
-											<div className="flex items-center justify-between">
-												<h3 className="text-2xl font-bold text-background mr-18">
-													{plan.name}
-												</h3>
-												<plan.icon className="size-7 text-background ml-18" />
-											</div>
-											<div className="mt-4 flex flex-col items-center">
-												<span className="text-4xl font-extrabold text-background">
-													{plan.price}<span className="text-xl font-normal">/mes</span>
-												</span>
-												<span className="text-2xl text-gray-600 font-extrabold text-center w-full">
-													{plan.priceUsd} <span className="text-xl font-normal">/month</span>
-												</span>
-											</div>
-											<div className="mt-4 text-background text-left">
-												<p>
-													Cursos disponibles:{' '}
-													<span className="text-2xl font-semibold">
-														{plan.courses}
-													</span>
-												</p>
-												<p>
-													Proyectos disponibles:{' '}
-													<span className="text-2xl font-semibold">
-														{plan.projects}
-													</span>
-												</p>
-											</div>
-										</div>
-									) : (
 										<div className="my-6">
 											<div className="flex items-center justify-between">
 												<h3 className="text-2xl font-bold text-background">
 													{plan.name}
 												</h3>
-												<plan.icon className="size-8 text-background" />
+												{React.createElement(
+													plan.icon as React.ComponentType<{
+														className: string;
+													}>,
+
+													{ className: 'size-8 text-background' }
+												)}
 											</div>
 											<div className="m-4 flex flex-col items-start">
 												<span className="text-4xl font-extrabold text-background">
-													{plan.price}<span className="text-lg font-normal">/mes</span>
+													${plan.price.toLocaleString('es-CO')}
+													<span className="text-lg font-normal">/mes</span>
 												</span>
-												<span className="text-2xl text-gray-600 font-extrabold text-center w-full">
-													{plan.priceUsd} <span className="text-lg font-normal">/month</span>
+												<span className="w-full text-center text-2xl font-extrabold text-gray-600">
+													${plan.priceUsd}{' '}
+													<span className="text-lg font-normal">/month</span>
 												</span>
 											</div>
-											<div className="text-background text-left">
+											<div className="text-left text-background">
 												<p>
 													Cursos disponibles:{' '}
 													<span className="text-2xl font-semibold">
@@ -207,70 +184,71 @@ const PricingPlans: React.FC = () => {
 												</p>
 											</div>
 										</div>
-									)}
-									<div className="">
-										<ul className="mb-5 space-y-3">
-											{plan.features.map((feature) => (
-												<li key={feature} className="flex items-center">
-													<BsCheck2Circle className="size-6 text-green-600" />
-													<span className="ml-3 text-background">{feature}</span>
-												</li>
-											))}
-										</ul>
+										<div className="">
+											<ul className="mb-5 space-y-3">
+												{plan.features.map((feature) => (
+													<li key={feature} className="flex items-center">
+														<BsCheck2Circle className="size-6 text-green-600" />
+														<span className="ml-3 text-background">
+															{feature}
+														</span>
+													</li>
+												))}
+											</ul>
+										</div>
+										<div className="mb-5 flex justify-center">
+											<Button
+												onClick={() => handlePlanSelect(plan)}
+												className="group relative h-full overflow-hidden rounded-md border border-b-4 border-white bg-background px-4 py-3 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b hover:bg-background hover:brightness-150 active:scale-95 active:opacity-75"
+											>
+												<span className="absolute top-[-150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
+												Seleccionar Plan {plan.name}
+											</Button>
+										</div>
 									</div>
-									<div className="mb-5 flex justify-center">
-										<Button
-											onClick={() => handlePlanSelect(plan)}
-											className="group relative h-full overflow-hidden rounded-md border border-b-4 border-white bg-background px-4 py-3 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b hover:bg-background hover:brightness-150 active:scale-95 active:opacity-75"
-										>
-											<span className="absolute top-[-150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
-											Seleccionar Plan {plan.name}
-										</Button>
-									</div>
-								</div>
-							))}
+								)
+							)}
 						</div>
 					</div>
 				</div>
 			</div>
 
 			{showModal && selectedPlan && (
-				<div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
-					<div className="w-full max-w-md rounded-lg bg-white p-8">
-						<div className="mb-6 flex items-center justify-between">
-							<h3 className="text-2xl font-bold text-gray-900">
-								Detalles del Plan {selectedPlan.name}
+				<div className="fixed inset-0 flex items-center justify-center bg-black/50">
+					<div className="w-full max-w-lg rounded-lg bg-white p-4">
+						<div className="relative mb-4 flex items-center justify-between">
+							<h3 className="w-full text-center text-xl font-semibold text-gray-900">
+								Llena este formulario
+								<br />
+								<span className="font-bold">Plan {selectedPlan.name}</span>
 							</h3>
 							<button
 								onClick={() => setShowModal(false)}
-								className="text-gray-500 hover:text-gray-700"
+								className="absolute top-0 right-0 mt-2 mr-2 text-gray-500 hover:text-gray-700"
 							>
-								<FaTimes className="size-6" />
+								<FaTimes className="h-6 w-6" />
 							</button>
 						</div>
-						<div className="space-y-5">
-							<p className="text-gray-600">
-								Comienza con nuestro plan {selectedPlan.name} y desbloquea
-								características increíbles:
-							</p>
-							<ul className="space-y-3 pb-1">
-								{selectedPlan.features.map((feature: string) => (
-									<li key={feature} className="flex items-center">
-										<BsCheck2Circle className="size-6 font-bold text-green-400" />
-										<span className="ml-3 text-gray-600">{feature}</span>
-									</li>
-								))}
-							</ul>
-							<div className="flex justify-center">
-								<Button
-									onClick={handleProceedWithPlan}
-									className="group relative h-full overflow-hidden rounded-md border border-b-4 border-secondary bg-background p-4 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b hover:bg-background active:scale-95 active:opacity-75"
-								>
-									<span className="absolute top-[150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
-									Proceder con el Plan {selectedPlan.name}
-								</Button>
-							</div>
+						<div>
+							<PaymentForm onSuccess={handleSuccess} planId={selectedPlan.id} />
 						</div>
+					</div>
+				</div>
+			)}
+
+			{successMessage && (
+				<div className="fixed inset-0 flex items-center justify-center bg-black/50 p-4">
+					<div className="w-full max-w-lg rounded-lg bg-white p-8">
+						<div className="mb-6 flex items-center justify-between">
+							<h3 className="text-2xl font-bold text-gray-900">Éxito</h3>
+							<button
+								onClick={() => setSuccessMessage(null)}
+								className="text-gray-500 hover:text-gray-700"
+							>
+								<FaTimes />
+							</button>
+						</div>
+						<p className="text-gray-600">{successMessage}</p>
 					</div>
 				</div>
 			)}
