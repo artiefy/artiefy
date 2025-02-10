@@ -115,12 +115,18 @@ const PricingPlans: React.FC = () => {
 							onClick={() => setActiveTab('personas')}
 						>
 							Personas
+              <div className="hoverEffect">
+                <div></div>
+              </div>
 						</button>
 						<button
 							className={`button ${activeTab === 'empresas' ? 'bg-primary text-white' : 'bg-white text-primary'}`}
 							onClick={() => setActiveTab('empresas')}
 						>
 							Empresas
+              <div className="hoverEffect">
+                <div></div>
+              </div>
 						</button>
 					</div>
 					<div className="mt-12 flex justify-center">

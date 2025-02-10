@@ -587,9 +587,7 @@ Producción	https://apify.epayco.co
 Colección en Postman
 Como plataforma poseemos una colección de nuestra API en postman que le permitirá realizar sus intregaciones de la manera mas fácil y simple, la cual puede obtener por medio del botón a continuación:
 
-
-
-
+paso 1. login ala api de epayco
 
 Login
 En esta sección de Login se encuentran los servicios necesarios para loguearse satisfactoriamente en la APIFY.
@@ -605,3 +603,169 @@ Estas variables usted podrá obtenerlas accediendo a nuestro dashboard en la sec
 curl --location -g --request POST '{{url_apify}}/login' \
 --header 'Content-Type: application/json' \
 --data ''
+
+paso 2.
+
+POST
+Crear token tarjeta
+{{url_apify}}/token/card
+Si desea tener mayor seguridad al realizar transacciones con tarjeta de crédito, en este endpoint usted podrá crear un token de la tarjeta de crédito y procesar los futuros pagos empleando este token.
+
+¿Cómo tokenizar una tarjeta?
+Usted debe enviar los siguientes parámetros como obligatorios: 
+
+Parámetro	Descripción
+cardNumber	string(16) Número de tarjeta.
+cardExpYear	string(4) Fecha año de expiración (AAAA)
+cardExpMonth	string(2) Fecha mes de expiración.
+cardCvc	string(4) CVV.
+Importante
+Es muy importante almacenar los datos de los token cuando se procese por primera vez, y así evitar crear distintos token de una misma tarjeta ya generada anteriormente.
+
+AUTHORIZATION
+Bearer Token
+Token
+HEADERS
+Content-Type
+application/json
+
+Body
+raw
+{
+    "cardNumber":"4504070849985391",
+    "cardExpYear":"2022",
+    "cardExpMonth":"12",
+    "cardCvc":"677"
+}
+Example Request
+Crear token tarjeta respuesta exitosa
+curl
+curl --location -g '{{url_apify}}/token/card' \
+--header 'Content-Type: application/json' \
+--data '{
+    "cardNumber":"4575623182290326",
+    "cardExpYear":"2019",
+    "cardExpMonth":"12",
+    "cardCvc":"123"
+}'
+200 OK
+Example Response
+Body
+Headers (0)
+View More
+json
+{
+  "success": true,
+  "titleResponse": "Success token generate",
+  "textResponse": "Success token generate",
+  "lastAction": "token_card",
+  "data": {
+    "status": true,
+    "id": "6MPbuNLPbMiBR2PR9",
+    "success": true,
+    "type": "card",
+    "data": {
+      "status": "exitoso",
+      "id": "6MPbuNLPbMiBR2PR9",
+      "created": "12/18/2019",
+      "livemode": false
+    },
+    "card": {
+      "exp_month": "12",
+      "exp_year": "2019",
+      "name": "visa"
+    },
+    "object": "token"
+  }
+}
+
+paso 3. 
+
+POST
+Crear un customer
+{{url_apify}}/token/customer
+En este endpoint usted podrá crear el customer y/o asociar un token generado a un customer ya creado.
+
+¿Cómo tokenizar un customer?
+Para asignar un token a un customer usted debe enviar los siguientes parámetros como obligatorios:
+
+View More
+Parámetro	Descripción
+docType	string(4) obligatorio Tipo documento cliente.
+docNumber	string(20) obligatorio Número documento cliente.
+name	string(50) obligatorio Nombre cliente.
+lastName	string(50) obligatorio Apellido cliente).
+email	string(50) obligatorio Email cliente.
+cellPhone	string(10) obligatorio Celular cliente.
+phone	string(10) obligatorio Teléfono cliente.
+requireCardToken	boolean obligatorio Condicional si se enviará o no el token id de la tarjeta
+cardTokenId	string(20) obligatorio Token de la tarjeta, si el parámetro anterior es true este campo se vuelve obligatorio.
+Parámetros opcionales:
+
+|Parámetro| Descripción| |----------|-----------|-------------------| |address| string(100) opcional Dirección cliente.| |city| string(100) opcional ciudad cliente.|
+
+Importante
+Es muy importante almacenar los datos de los token con los datos del cliente, para realizar las futuras transacciones empleando mismo datos de cliente con el token de la tarjeta.
+
+Para agregar más tokens de tarjetas de crédito al customer, se puede invocar nuevamente este método enviando el nuevo token de la tarjeta generado en este endpoint tokenCard
+
+AUTHORIZATION
+Bearer Token
+Token
+HEADERS
+Content-Type
+application/json
+
+Body
+raw
+{
+    "docType":"CC",
+    "docNumber":"123456789",
+    "name":"jon",
+    "lastName":"doe",
+    "email":"jondoe@hotmail.com",
+    "cellPhone":"0000000000",
+    "phone":"0000000",
+    "cardTokenId":"rdSHdTmJFioQdfp9k"
+}
+Example Request
+Crear un customer respuesta exitosa
+View More
+curl
+curl --location -g '{{url_apify}}/token/customer' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "docType":"CC",
+    "docNumber":"123456789",
+    "name":"jon",
+    "lastName":"doe",
+    "email":"jondoe@hotmail.com",
+    "cellPhone":"0000000000",
+    "phone":"0000000",
+    "cardTokenId":"rdSHdTmJFioQdfp9k"
+}'
+200 OK
+Example Response
+Body
+Headers (0)
+View More
+json
+{
+  "success": true,
+  "titleResponse": "Success token generate",
+  "textResponse": "Success token generate",
+  "lastAction": "token_customer",
+  "data": {
+    "status": true,
+    "success": true,
+    "type": "Create customer",
+    "data": {
+      "status": "exitoso",
+      "description": "El cliente fue creado exitosamente con el id: DiYPdhgncppes9KAb",
+      "customerId": "DiYPdhgncppes9KAb",
+      "name": "jon",
+      "email": "jondoe@hotmail.com"
+    },
+    "object": "customer"
+  }
+}

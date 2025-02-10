@@ -1,6 +1,4 @@
 /* eslint-disable */
-// app/api/login/route.ts (o pages/api/login.ts)
-
 import { NextResponse } from 'next/server';
 
 export async function POST() {
@@ -24,7 +22,7 @@ export async function POST() {
     }
 
     const data = await response.json();
-    console.log('Token JWT generado:', data.token);  // Mostrar el token en la terminal
+    console.log('Token JWT generado:', data.token);
 
     return NextResponse.json({ token: data.token });
   } catch (error) {
