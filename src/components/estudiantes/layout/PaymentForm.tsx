@@ -1,306 +1,336 @@
+/* eslint-disable */
+
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '~/components/estudiantes/ui/button';
-import { config } from '~/config';
-import '~/styles/form.css';
+import React, { useState } from 'react';
+import '~/styles/form.css'; // Import form.css
+import { Button } from '~/components/estudiantes/ui/button'; // Import Button component
 
 interface PaymentFormProps {
-  onSuccess: (message: string) => void;
-  planId: string;
+	onSuccess: (message: string) => void;
+	planId: string;
 }
 
-interface ErrorResponse {
-  message?: string;
-}
+export const PaymentForm: React.FC<PaymentFormProps> = ({
+	onSuccess,
+	planId,
+}) => {
+	// Definimos el estado para los campos de la tarjeta
+	const [cardNumber, setCardNumber] = useState('');
+	const [cardExpYear, setCardExpYear] = useState('');
+	const [cardExpMonth, setCardExpMonth] = useState('');
+	const [cardCvc, setCardCvc] = useState('');
 
-export function PaymentForm({ onSuccess, planId }: PaymentFormProps) {
-  const [cardNumber, setCardNumber] = useState('');
-  const [expYear, setExpYear] = useState('');
-  const [expMonth, setExpMonth] = useState('');
-  const [cvc, setCvc] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+	const [name, setName] = useState('');
+	const [lastName, setLastName] = useState('');
+	const [address, setAddress] = useState('');
+	const [cellPhone, setCellPhone] = useState('');
+	const [phone, setPhone] = useState('');
+	const [email, setEmail] = useState('');
+	const [docType, setDocType] = useState('');
+	const [docNumber, setDocNumber] = useState('');
 
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.epayco.co/epayco.min.js';
-    script.async = true;
-    document.body.appendChild(script);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setLoading(true);
+		setError(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+		try {
+			// Generate token
+			const tokenResponse = await fetch('/api/token-card', {
+				method: 'POST',
+				body: JSON.stringify({
+					cardNumber,
+					cardExpYear,
+					cardExpMonth,
+					cardCvc,
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
 
-    // Validar la información de la tarjeta
-    if (!/^\d{16}$/.test(cardNumber)) {
-      setError('Número de tarjeta inválido');
-      setLoading(false);
-      return;
-    }
-    if (!/^\d{3,4}$/.test(cvc)) {
-      setError('CVC inválido');
-      setLoading(false);
-      return;
-    }
-    if (!/^\d{4}$/.test(expYear)) {
-      setError('Año de expiración inválido');
-      setLoading(false);
-      return;
-    }
-    if (
-      !/^\d{1,2}$/.test(expMonth) ||
-      parseInt(expMonth) < 1 ||
-      parseInt(expMonth) > 12
-    ) {
-      setError('Mes de expiración inválido');
-      setLoading(false);
-      return;
-    }
+			const tokenData = await tokenResponse.json();
 
-    try {
-      // Paso 1: Crear token
-      const tokenResponse = await fetch(`${config.apiUrl}/api/create-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          credit_info: {
-            'card[number]': cardNumber,
-            'card[exp_year]': expYear,
-            'card[exp_month]': expMonth,
-            'card[cvc]': cvc,
-            hasCvv: true,
-          },
-        }),
-      });
+			if (!tokenData.success) {
+				setError('Error al generar el token');
+				setLoading(false);
+				return;
+			}
 
-      if (!tokenResponse.ok) {
-        const errorData = (await tokenResponse.json()) as ErrorResponse;
-        throw new Error(errorData.message ?? 'Error al crear el token');
-      }
+			const tokenCardId = tokenData.data.id;
 
-      const tokenData = (await tokenResponse.json()) as { id: string };
-      const tokenId: string = tokenData.id;
-      console.log('Token ID:', tokenId);
+			// Create customer
+			const customerResponse = await fetch('/api/create-customer', {
+				method: 'POST',
+				body: JSON.stringify({
+					docType,
+					docNumber,
+					name,
+					lastName,
+					address,
+					cellPhone,
+					phone,
+					email,
+					cardTokenId: tokenCardId,
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
 
-      // Paso 2: Crear customer
-      const customerResponse = await fetch(
-        `${config.apiUrl}/api/create-customer`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            customer_info: {
-              token_card: tokenId,
-              name: name,
-              email: email,
-              address: address,
-              phone: phone,
-              cell_phone: phone,
-              default: true,
-            },
-          }),
-        }
-      );
+			const customerData = await customerResponse.json();
 
-      if (!customerResponse.ok) {
-        const errorData = (await customerResponse.json()) as ErrorResponse;
-        throw new Error(errorData.message ?? 'Error al crear el customer');
-      }
+			if (!customerData.success) {
+				setError('Error al crear el cliente');
+				setLoading(false);
+				return;
+			}
 
-      const customerData = (await customerResponse.json()) as { data: { customerId: string } };
-      const customerId = customerData.data.customerId;
-      console.log('Customer ID:', customerId);
+			const customerId = customerData.data.customerId;
 
-      // Paso 3: Crear suscripción
-      const subscriptionResponse = await fetch(
-        `${config.apiUrl}/api/create-subscription`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            subscription_info: {
-              id_plan: planId,
-              customer: customerId,
-              token_card: tokenId,
-              doc_type: 'CC',
-              doc_number: phone,
-              url_confirmation: `${config.apiUrl}/confirmacion`,
-              method_confirmation: 'POST',
-            },
-          }),
-        }
-      );
+			// Create subscription
+			const subscriptionResponse = await fetch('/api/create-subscription', {
+				method: 'POST',
+				body: JSON.stringify({
+					customerId,
+					planId,
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
 
-      if (!subscriptionResponse.ok) {
-        const errorData = (await subscriptionResponse.json()) as ErrorResponse;
-        throw new Error(errorData.message ?? 'Error al crear la suscripción');
-      }
+			const subscriptionData = await subscriptionResponse.json();
 
-      const subscriptionData = (await subscriptionResponse.json()) as { id: string };
-      const subscriptionId = subscriptionData.id;
-      console.log('Subscription ID:', subscriptionId);
+			if (!subscriptionData.success) {
+				setError('Error al crear la suscripción');
+				setLoading(false);
+				return;
+			}
 
-      // Paso 4: Realizar cargo a la suscripción
-      const chargeResponse = await fetch(
-        `${config.apiUrl}/api/charge-subscription`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            subscription_info: {
-              id_plan: planId,
-              customer: customerId,
-              token_card: tokenId,
-              doc_type: 'CC',
-              doc_number: phone,
-              ip: '190.000.000.000', // IP del cliente
-            },
-          }),
-        }
-      );
+			const subscriptionId = subscriptionData.data.subscriptionId;
 
-      if (!chargeResponse.ok) {
-        const errorData = (await chargeResponse.json()) as ErrorResponse;
-        throw new Error(
-          errorData.message ?? 'Error al realizar el cargo a la suscripción'
-        );
-      }
+			// Charge subscription
+			const chargeResponse = await fetch('/api/charge-subscription', {
+				method: 'POST',
+				body: JSON.stringify({
+					id_plan: planId,
+					customer: customerId,
+					token_card: tokenCardId,
+					doc_type: docType,
+					doc_number: docNumber,
+					ip: '190.000.000.000',
+				}),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			});
 
-      const chargeData = (await chargeResponse.json()) as { id: string };
-      const paymentId = chargeData.id;
-      console.log('Payment ID:', paymentId);
+			const chargeData = await chargeResponse.json();
 
-      onSuccess(`Pago procesado con éxito. Plan ID: ${planId}, Subscription ID: ${subscriptionId}, Payment ID: ${paymentId}`);
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Error desconocido');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+			if (!chargeData.success) {
+				setError('Error al cobrar la suscripción');
+				setLoading(false);
+				return;
+			}
 
-  return (
-    <form onSubmit={handleSubmit} className="form rounded-lg">
-      <div className="mb-4 grid grid-cols-2 gap-4">
-        <div className="label">
-          <span className="title">Nombre Del Titular</span>
-          <input
-            type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div className="label">
-          <span className="title">Correo electrónico</span>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div className="label">
-          <span className="title">Dirección</span>
-          <input
-            type="text"
-            id="address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div className="label">
-          <span className="title">Celular</span>
-          <input
-            type="text"
-            id="phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="input-field"
-            required
-          />
-        </div>
-        <div className="label">
-          <span className="title">Número de tarjeta</span>
-          <input
-            type="text"
-            id="cardNumber"
-            value={cardNumber}
-            onChange={(e) => setCardNumber(e.target.value)}
-            className="input-field"
-            placeholder="0000 0000 0000 0000"
-            required
-          />
-        </div>
-        <div className="label col-span-1">
-          <span className="title">Mes de expiración(MM)</span>
-          <input
-            type="text"
-            id="expMonth"
-            value={expMonth}
-            onChange={(e) => setExpMonth(e.target.value)}
-            className="input-field"
-            placeholder="MM"
-            required
-          />
-        </div>
-        <div className="label col-span-1">
-          <span className="title">Año de expiración(AAAA)</span>
-          <input
-            type="text"
-            id="expYear"
-            value={expYear}
-            onChange={(e) => setExpYear(e.target.value)}
-            className="input-field"
-            placeholder="AAAA"
-            required
-          />
-        </div>
-        <div className="label">
-          <span className="title">CVC</span>
-          <input
-            type="text"
-            id="cvc"
-            value={cvc}
-            onChange={(e) => setCvc(e.target.value)}
-            className="input-field"
-            placeholder="CVC"
-            required
-          />
-        </div>
-      </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      <Button type="submit" disabled={loading} className="checkout-btn">
-        {loading ? 'Procesando...' : 'Pagar'}
-      </Button>
-    </form>
-  );
-}
+			onSuccess('Suscripción creada y cobrada exitosamente');
+		} catch (error) {
+			console.error('Error en el pago:', error);
+			setError('Error al procesar el pago');
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<form onSubmit={handleSubmit} className="form">
+			<div className="split">
+				<div className="label">
+					<label htmlFor="name" className="block">
+						<span className="title">Nombre</span>
+						<input
+							type="text"
+							id="name"
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="Joe"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+				<div className="label">
+					<label htmlFor="lastName" className="block">
+						<span className="title">Apellido</span>
+						<input
+							type="text"
+							id="lastName"
+							value={lastName}
+							onChange={(e) => setLastName(e.target.value)}
+							placeholder="Doe"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+			</div>
+			<div className="split">
+				<div className="label">
+					<label htmlFor="email" className="block">
+						<span className="title">Email</span>
+						<input
+							type="email"
+							id="email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="joe@payco.co"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+				<div className="label">
+					<label htmlFor="cellPhone" className="block">
+						<span className="title">Celular</span>
+						<input
+							type="text"
+							id="cellPhone"
+							value={cellPhone}
+							onChange={(e) => setCellPhone(e.target.value)}
+							placeholder="3010000001"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+			</div>
+			<div className="split">
+				<div className="label">
+					<label htmlFor="address" className="block">
+						<span className="title">Dirección</span>
+						<input
+							type="text"
+							id="address"
+							value={address}
+							onChange={(e) => setAddress(e.target.value)}
+							placeholder="Cr 4 # 55 36"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+				<div className="label">
+					<label htmlFor="phone" className="block">
+						<span className="title">Teléfono</span>
+						<input
+							type="text"
+							id="phone"
+							value={phone}
+							onChange={(e) => setPhone(e.target.value)}
+							placeholder="3005234321"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+			</div>
+			<div className="split">
+				<div className="label">
+					<label htmlFor="docType" className="block">
+						<span className="title">Tipo de Documento</span>
+						<input
+							type="text"
+							id="docType"
+							value={docType}
+							onChange={(e) => setDocType(e.target.value)}
+							placeholder="CC"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+				<div className="label">
+					<label htmlFor="docNumber" className="block">
+						<span className="title">Número de Documento</span>
+						<input
+							type="text"
+							id="docNumber"
+							value={docNumber}
+							onChange={(e) => setDocNumber(e.target.value)}
+							placeholder="5234567"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+			</div>
+			<div className="label">
+				<label htmlFor="cardNumber" className="block">
+					<span className="title">Número de tarjeta</span>
+					<input
+						type="text"
+						id="cardNumber"
+						value={cardNumber}
+						onChange={(e) => setCardNumber(e.target.value)}
+						placeholder="1234 5678 9876 5432"
+						required
+						className="input-field"
+					/>
+				</label>
+			</div>
+			<div className="split">
+				<div className="label">
+					<label htmlFor="cardExpMonth" className="block">
+						<span className="title">Mes de Expiración</span>
+						<input
+							type="text"
+							id="cardExpMonth"
+							value={cardExpMonth}
+							onChange={(e) => setCardExpMonth(e.target.value)}
+							placeholder="MM"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+				<div className="label">
+					<label htmlFor="cardExpYear" className="block">
+						<span className="title">Año de Expiración</span>
+						<input
+							type="text"
+							id="cardExpYear"
+							value={cardExpYear}
+							onChange={(e) => setCardExpYear(e.target.value)}
+							placeholder="YYYY"
+							required
+							className="input-field"
+						/>
+					</label>
+				</div>
+			</div>
+			<div className="label">
+				<label htmlFor="cardCvc" className="block">
+					<span className="title">CVC</span>
+					<input
+						type="text"
+						id="cardCvc"
+						value={cardCvc}
+						onChange={(e) => setCardCvc(e.target.value)}
+						placeholder="CVC"
+						required
+						className="input-field"
+					/>
+				</label>
+			</div>
+			{error && <p className="text-sm text-red-500">{error}</p>}
+			<Button type="submit" disabled={loading} className="checkout-btn">
+				{loading ? 'Procesando...' : 'Pagar'}
+			</Button>
+		</form>
+	);
+};

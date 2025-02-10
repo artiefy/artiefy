@@ -106,7 +106,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-background, currentColor);
+    border-color: var(--color-primary, currentColor);
   }
 	body {
 		@apply bg-background;

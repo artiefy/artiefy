@@ -13,10 +13,6 @@
   border-radius: 25px;
 }
 
-.form .label {
-  margin-bottom: -12px;
-}
-
 .form .label:has(input:focus) .title {
   top: 0;
   left: 0;
