@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
 
+import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
+import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
 	getCourses,
 	createCourse,
@@ -11,9 +13,7 @@ import {
 } from '~/server/queries/queries';
 import type { CourseData } from '~/server/queries/queries';
 import CourseListAdmin from './../../components/CourseListAdmin';
-import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
-import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
-import SuperAdminLayout from './../../super-admin-layout'; // ✅ Asegura que estás importando el layout correcto
+import SuperAdminLayout from './../../super-admin-layout';
 
 export function LoadingCourses() {
 	return (
@@ -24,57 +24,51 @@ export function LoadingCourses() {
 		</div>
 	);
 }
+
 export default function Page() {
 	const { user } = useUser();
-	const [courses, setCourses] = useState<
-		{
-			id: number;
-			title: string;
-			description: string | null;
-			coverImageKey: string | null;
-			categoryid: number;
-			instructor: string;
-			createdAt: Date;
-			updatedAt: Date;
-			creatorId: string;
-			rating: number | null;
-			modalidadesid: number;
-			dificultadid: number;
-			requerimientos: string;
-		}[]
-	>([]);
-	const [editingCourse, setEditingCourse] = useState<{
-		id: number;
-		title: string;
-		description: string | null;
-		coverImageKey: string | null;
-		categoryid: number;
-		instructor: string;
-		createdAt: Date;
-		updatedAt: Date;
-		creatorId: string;
-		rating: number | null;
-		modalidadesid: number;
-		dificultadid: number;
-		requerimientos: string;
-	} | null>(null);
+	const [courses, setCourses] = useState<CourseData[]>([]);
+	const [editingCourse, setEditingCourse] = useState<CourseData | null>(null);
 	const [uploading, setUploading] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [categoryFilter, setCategoryFilter] = useState('');
+	const [totalCourses, setTotalCourses] = useState(0);
+	const [totalStudents, setTotalStudents] = useState(0);
+	const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
 
-	// ✅ Cargar cursos al cargar la página
+	// ✅ Obtener cursos, totales y categorías
 	useEffect(() => {
-		async function fetchCourses() {
+		async function fetchData() {
 			try {
 				const coursesData = await getCourses();
 				setCourses(coursesData);
+
+				// Obtener métricas
+				const totalsResponse = await fetch('/api/super-admin/courses/totals');
+				if (!totalsResponse.ok) throw new Error('Error obteniendo totales');
+				const { totalCourses, totalStudents } = await totalsResponse.json();
+
+				setTotalCourses(totalCourses);
+				setTotalStudents(totalStudents);
+
+				// Obtener categorías
+				const categoriesResponse = await fetch('/api/super-admin/categories');
+				if (!categoriesResponse.ok) throw new Error('Error obteniendo categorías');
+				const categoriesData = await categoriesResponse.json();
+				setCategories(categoriesData);
 			} catch (error) {
-				console.error('Error cargando cursos:', error);
+				console.error('❌ Error cargando datos:', error);
 			}
 		}
-		fetchCourses().catch((error: Error) =>
-			console.error('Error cargando cursos:', error)
-		);
+		fetchData();
 	}, []);
+
+	// ✅ Filtrar cursos por búsqueda y categoría
+	const filteredCourses = courses.filter(course =>
+		course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+		(categoryFilter ? course.categoryid === Number(categoryFilter) : true)
+	);
 
 	// ✅ Crear o actualizar curso
 	const handleCreateOrUpdateCourse = async (
@@ -99,15 +93,12 @@ export default function Page() {
 				});
 
 				if (!uploadResponse.ok)
-					throw new Error(
-						`Error al subir imagen: ${uploadResponse.statusText}`
-					);
+					throw new Error(`Error al subir imagen: ${uploadResponse.statusText}`);
 
-				interface UploadResponse {
+				const { url, fields } = (await uploadResponse.json()) as {
 					url: string;
 					fields: Record<string, string>;
-				}
-				const { url, fields } = (await uploadResponse.json()) as UploadResponse;
+				};
 				const formData = new FormData();
 				Object.entries(fields).forEach(([key, value]) =>
 					formData.append(key, value)
@@ -119,9 +110,7 @@ export default function Page() {
 			}
 
 			const instructor =
-				user?.fullName ??
-				user?.emailAddresses[0]?.emailAddress ??
-				'Desconocido'; // ✅ Asegurar instructor
+				user?.fullName ?? user?.emailAddresses[0]?.emailAddress ?? 'Desconocido';
 
 			if (id) {
 				await updateCourse(Number(id), {
@@ -154,85 +143,63 @@ export default function Page() {
 			setUploading(false);
 			setCourses(await getCourses());
 		} catch (error) {
-			console.error('Error al procesar el curso:', error);
+			console.error('❌ Error al procesar el curso:', error);
 			setUploading(false);
 		}
 	};
 
 	return (
 		<SuperAdminLayout>
-			{' '}
-			{/* ✅ Envolver dentro del layout para que el sidebar no desaparezca */}
 			<div className="p-6">
 				<header className="flex items-center justify-between rounded-lg bg-[#3AF4EF] to-[#01142B] p-6 text-3xl font-extrabold text-white shadow-lg">
 					<h1>Gestión de Cursos</h1>
-					<button
-						onClick={() => setIsModalOpen(true)}
-						className="flex items-center rounded-md bg-[#01142B] px-6 py-2 font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#0097A7]"
-					>
-						<FiPlus className="mr-2 size-5" /> Crear curso
-					</button>
 				</header>
 
-				{courses.length === 0 ? (
-					<SkeletonCard />
-				) : (
-					<CourseListAdmin
-						courses={courses}
-						onEditCourse={setEditingCourse}
-						onDeleteCourse={() => {}}
-					/>
-				)}
+				{/* Totales y Filtros */}
+				<div className="grid grid-cols-3 gap-4 my-4">
+					<div className="bg-white text-black p-6 rounded-lg shadow-md">
+						<h2 className="text-lg font-bold">Total de Cursos</h2>
+						<p className="text-3xl">{totalCourses}</p>
+					</div>
+					<div className="bg-white text-black p-6 rounded-lg shadow-md">
+						<h2 className="text-lg font-bold">Estudiantes Inscritos</h2>
+						<p className="text-3xl">{totalStudents}</p>
+					</div>
+					<div className="bg-white text-black p-6 rounded-lg shadow-md">
+						<h2 className="text-lg font-bold">Filtrar por Categoría</h2>
+						<select
+							className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							value={categoryFilter}
+							onChange={(e) => setCategoryFilter(e.target.value)}
+						>
+							<option value="">Todas</option>
+							{categories.map((category) => (
+								<option key={category.id} value={category.id}>
+									{category.name}
+								</option>
+							))}
+						</select>
+					</div>
+				</div>
 
-				{isModalOpen && (
-					<ModalFormCourse
-						isOpen={isModalOpen}
-						onCloseAction={() => setIsModalOpen(false)}
-						onSubmitAction={handleCreateOrUpdateCourse}
-						uploading={uploading}
-						editingCourseId={editingCourse ? editingCourse.id : null}
-						title={editingCourse?.title ?? ''}
-						setTitle={(title) =>
-							setEditingCourse((prev) => (prev ? { ...prev, title } : null))
-						}
-						description={editingCourse?.description ?? ''}
-						setDescription={(description) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, description } : null
-							)
-						}
-						requerimientos={editingCourse?.requerimientos ?? ''}
-						setRequerimientos={(requerimientos) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, requerimientos } : null
-							)
-						}
-						categoryid={editingCourse?.categoryid ?? 1}
-						setCategoryid={(categoryid) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, categoryid } : null
-							)
-						}
-						modalidadesid={editingCourse?.modalidadesid ?? 1}
-						setModalidadesid={(modalidadesid) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, modalidadesid } : null
-							)
-						}
-						dificultadid={editingCourse?.dificultadid ?? 1}
-						setDificultadid={(dificultadid) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, dificultadid } : null
-							)
-						}
-						coverImageKey={editingCourse?.coverImageKey ?? ''}
-						setCoverImageKey={(coverImageKey) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, coverImageKey } : null
-							)
-						}
+				{/* Buscador y botón en la parte inferior */}
+				<div className="bg-white text-black p-6 rounded-lg shadow-md flex items-center justify-between my-4">
+					<input
+						type="text"
+						placeholder="Buscar cursos..."
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
 					/>
-				)}
+
+					<button onClick={() => setIsModalOpen(true)} className="bg-[#01142B] text-white px-6 py-2 rounded-md font-bold shadow-lg hover:bg-[#0097A7]">
+						<FiPlus className="mr-2 size-5" /> Agregar Curso
+					</button>
+				</div>
+
+				<CourseListAdmin courses={filteredCourses} onEditCourse={setEditingCourse} onDeleteCourse={() => {}} />
+
+				{isModalOpen && <ModalFormCourse isOpen={isModalOpen} onCloseAction={() => setIsModalOpen(false)} onSubmitAction={handleCreateOrUpdateCourse} />}
 			</div>
 		</SuperAdminLayout>
 	);

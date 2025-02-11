@@ -10,8 +10,6 @@ const usePageTimeTracker = (userId: string | null) => {
   useEffect(() => {
     if (!userId) return;
 
-    console.log(`✅ Iniciando rastreo de tiempo para el usuario: ${userId}`);
-
     let timeout: NodeJS.Timeout;
     let interval: NodeJS.Timeout;
 

@@ -9,6 +9,7 @@
 		getCoursesByUserId,
 		updateCourse,
 	} from '~/models/super-adminModels/courseModelsSuperAdmin';
+
 	import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 	export const dynamic = 'force-dynamic';
