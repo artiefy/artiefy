@@ -197,7 +197,7 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 	const sortedLessons = [...course.lessons].sort((a, b) => a.order - b.order);
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="bg-background min-h-screen">
 			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
 				<Breadcrumb className="pb-6">
 					<BreadcrumbList>
@@ -235,13 +235,13 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 									className="object-cover"
 									priority
 									sizes="100vw"
-									placeholder="blur"
+									placeholder="blur-sm"
 									blurDataURL={blurDataURL}
 									onError={(e) => {
 										e.currentTarget.src = '/fetch-error.jpg';
 									}}
 								/>
-								<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+								<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
 									<h1 className="text-3xl font-bold text-white">
 										{course.title}
 									</h1>
@@ -251,7 +251,7 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 						<CardContent className="space-y-6 p-6">
 							<div className="flex flex-wrap items-center justify-between gap-4">
 								<div>
-									<h3 className="text-lg font-semibold text-background">
+									<h3 className="text-background text-lg font-semibold">
 										{course.instructor}
 									</h3>
 									<p className="text-gray-600">Educador</p>
@@ -309,7 +309,7 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 							</div>
 
 							<div>
-								<h2 className="mb-4 text-2xl font-bold text-background">
+								<h2 className="text-background mb-4 text-2xl font-bold">
 									Contenido del curso
 								</h2>
 								<div className="space-y-4">
@@ -337,7 +337,7 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 															) : (
 																<FaLock className="mr-2 size-5 text-gray-400" />
 															)}
-															<span className="font-medium text-background">
+															<span className="text-background font-medium">
 																Clase {lesson.order}: {lesson.title}{' '}
 																<span className="ml-2 text-sm text-gray-500">
 																	({lesson.duration} mins)
@@ -381,7 +381,7 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 														</div>
 														<Button
 															asChild
-															className="mt-4 text-background hover:underline active:scale-95"
+															className="text-background mt-4 hover:underline active:scale-95"
 														>
 															<Link href={`./${course.id}/clases/${lesson.id}`}>
 																Ver Clase
@@ -404,9 +404,9 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 										<Button
 											onClick={handleEnroll}
 											disabled={isEnrolling}
-											className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px font-semibold leading-6 text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
+											className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 										>
-											<span className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
+											<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
 
 											<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 												<div className="relative z-10 flex items-center justify-center space-x-2">
@@ -448,7 +448,7 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 								{isEnrolled && (
 									<div className="flex w-full flex-col space-y-4 sm:w-auto">
 										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+											className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
 											disabled={true}
 										>
 											<FaCheck className="mr-2" /> Suscrito Al Curso

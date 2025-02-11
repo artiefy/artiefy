@@ -1,10 +1,8 @@
-'use client';
+'use client'; // Esto asegura que el código se ejecute en el cliente
 
 import { useEffect } from 'react';
-
 import { useRouter, useSearchParams } from 'next/navigation';
 import NProgress from 'nprogress';
-
 import {
   Pagination,
   PaginationContent,
@@ -14,6 +12,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '~/components/estudiantes/ui/pagination';
+import usePageTimeTracker from '~/hooks/usePageTimeTracker'; // Asegúrate de que la ruta sea correcta
+
 
 interface Props {
   totalPages: number;
@@ -22,6 +22,8 @@ interface Props {
   route?: string;
   category?: string;
   searchTerm?: string;
+  userId: string | null; // Añadimos userId como prop
+  courseId: number; // Añadimos courseId como prop
 }
 
 const PaginationContainer = ({
@@ -31,9 +33,14 @@ const PaginationContainer = ({
   route = '/estudiantes',
   category,
   searchTerm,
+  userId, // Recibimos userId como prop
+  courseId, // Recibimos courseId como prop
 }: Props) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Usamos el hook usePageTimeTracker para rastrear el tiempo
+  usePageTimeTracker(userId, courseId); // Llamamos al hook correctamente
 
   useEffect(() => {
     NProgress.done();

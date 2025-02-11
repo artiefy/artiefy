@@ -91,7 +91,7 @@ export async function PUT(
   }
 }
 
-export async function GET() {
+export async function GET_ALL() {
   try {
     const courses = await getAllCourses();
     return NextResponse.json(courses, { status: 200 });
@@ -104,6 +104,18 @@ export async function GET() {
   }
 }
 
+interface CourseData {
+  title: string;
+  description: string;
+  coverImageKey: string;
+  categoryid: number;
+  modalidadesid: number;
+  dificultadid: number;
+  instructor: string;
+  requerimientos: string;
+  creatorId: string;
+}
+
 export async function POST(request: Request) {
   try {
     const { userId } = await auth();
@@ -111,7 +123,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const data = await request.json();
+    const data = (await request.json()) as CourseData;
+
+    // Opcional: Validar que los datos tienen la forma esperada
+    if (!data.title || !data.description) {
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+    }
+
     const newCourse = await createCourse(data);
     return NextResponse.json(newCourse, { status: 201 });
   } catch (error) {
@@ -123,6 +141,10 @@ export async function POST(request: Request) {
   }
 }
 
+interface DeleteCourseRequest {
+  id: string;
+}
+
 export async function DELETE(request: Request) {
   try {
     const { userId } = await auth();
@@ -130,9 +152,28 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const { id } = await request.json();
-    const courseId = parseInt(id);
+    // Verifica si hay cuerpo en la solicitud
+    if (request.body === undefined || request.body === null) {
+      return NextResponse.json({ error: 'Cuerpo vacío' }, { status: 400 });
+    }
 
+    // Convertimos el JSON recibido al tipo correcto
+    let data: DeleteCourseRequest;
+    try {
+      data = (await request.json()) as DeleteCourseRequest;
+    } catch {
+      return NextResponse.json({ error: 'JSON inválido' }, { status: 400 });
+    }
+
+    // Validamos que el ID sea un string válido
+    if (!data.id || typeof data.id !== 'string') {
+      return NextResponse.json(
+        { error: 'ID de curso inválido' },
+        { status: 400 }
+      );
+    }
+
+    const courseId = parseInt(data.id);
     if (isNaN(courseId)) {
       return NextResponse.json(
         { error: 'ID de curso inválido' },
@@ -153,3 +194,4 @@ export async function DELETE(request: Request) {
     );
   }
 }
+  

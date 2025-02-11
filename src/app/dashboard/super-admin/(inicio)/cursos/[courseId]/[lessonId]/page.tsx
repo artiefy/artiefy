@@ -6,8 +6,17 @@ import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import ListActividadesEducator from '~/components/educators/layout/ListActividades';
-import ViewFiles from '~/components/educators/layout/ViewFiles';
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from '~/components/educators/ui/breadcrumb';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+import ListActividadesEducator from '~/components/super-admin/layout/ListActividades';
+import ViewFiles from '~/components/super-admin/layout/ViewFiles';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -18,16 +27,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 	AlertDialogTrigger,
-} from '~/components/educators/ui/alert-dialog';
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+} from '~/components/super-admin/ui/alert-dialog';
 import { toast } from '~/hooks/use-toast';
 
 interface Lessons {
@@ -163,7 +163,7 @@ const Page: React.FC = () => {
 
 	return (
 		<>
-			<div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background p-6">
+			<div className="bg-background container mx-auto mt-2 h-auto w-full rounded-lg p-6">
 				<Breadcrumb>
 					<BreadcrumbList>
 						<BreadcrumbItem>
@@ -201,7 +201,7 @@ const Page: React.FC = () => {
 					</BreadcrumbList>
 				</Breadcrumb>
 				<div className="group relative h-auto w-full">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
 					<Card
 						className={`relative z-20 mt-5 border-transparent bg-black p-5 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						style={{

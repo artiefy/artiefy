@@ -1,5 +1,5 @@
-import { AlertCircle } from 'lucide-react';
 import { MouseEventHandler } from 'react';
+import { AlertCircle } from 'lucide-react';
 
 interface InfoDialogProps {
   isOpen: boolean;

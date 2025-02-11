@@ -91,7 +91,7 @@ const ChatbotModal = () => {
 					>
 						<div className="chat-header">
 							<div className="flex items-center space-x-2">
-								<FaRobot className="text-2xl text-secondary" />
+								<FaRobot className="text-secondary text-2xl" />
 								<h2
 									id="modal-title"
 									className="text-lg font-semibold text-gray-800"
@@ -122,7 +122,7 @@ const ChatbotModal = () => {
 										}`}
 									>
 										{message.sender === 'bot' ? (
-											<FaRobot className="mt-2 text-xl text-secondary" />
+											<FaRobot className="text-secondary mt-2 text-xl" />
 										) : (
 											<BsPersonCircle className="mt-2 text-xl text-gray-500" />
 										)}
@@ -160,13 +160,13 @@ const ChatbotModal = () => {
 									value={inputText}
 									onChange={(e) => setInputText(e.target.value)}
 									placeholder="Escribe tu mensaje..."
-									className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:outline-none focus:ring-2 focus:ring-secondary"
+									className="text-background focus:ring-secondary flex-1 rounded-lg border border-gray-300 p-2 focus:ring-2 focus:outline-hidden"
 									disabled={isLoading}
 								/>
 								<button
 									type="submit"
 									disabled={isLoading}
-									className="rounded-lg bg-secondary p-2 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
+									className="bg-secondary rounded-lg p-2 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
 									aria-label="Enviar mensaje"
 								>
 									<FiSend className="text-xl" />

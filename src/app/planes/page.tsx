@@ -87,7 +87,7 @@ const PricingPlans: React.FC = () => {
 	};
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="bg-background min-h-screen">
 			<Header />
 			<div className="mb-12 px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-7xl">
@@ -95,7 +95,7 @@ const PricingPlans: React.FC = () => {
 						<h2 className="text-3xl font-extrabold text-white sm:text-4xl">
 							Planes Artiefy
 						</h2>
-						<p className="mt-4 text-xl text-primary">
+						<p className="text-primary mt-4 text-xl">
 							Elige el plan perfecto para tu viaje de aprendizaje
 						</p>
 					</div>
@@ -103,25 +103,25 @@ const PricingPlans: React.FC = () => {
 						{plans.map((plan) => (
 							<div
 								key={plan.name}
-								className="relative flex flex-col items-center justify-between rounded-lg bg-gradient-to-r from-primary to-secondary p-4 shadow-lg transition-all duration-200"
+								className="from-primary to-secondary relative flex flex-col items-center justify-between rounded-lg bg-linear-to-r p-4 shadow-lg transition-all duration-200"
 							>
 								<div className="absolute inset-0 -z-10 overflow-hidden rounded-lg border-2 border-white">
-									<div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-50"></div>
+									<div className="from-primary to-secondary absolute inset-0 bg-linear-to-r opacity-50"></div>
 								</div>
 								<div className="grow p-8">
 									<div className="flex items-center justify-between">
-										<h3 className="text-2xl font-bold text-background">
+										<h3 className="text-background text-2xl font-bold">
 											{plan.name}
 										</h3>
-										<plan.icon className="size-8 text-background" />
+										<plan.icon className="text-background size-8" />
 									</div>
 									<div className="mt-4">
-										<span className="text-4xl font-extrabold text-background">
+										<span className="text-background text-4xl font-extrabold">
 											{plan.price}
 										</span>
 										<span className="text-background">{plan.period}</span>
 									</div>
-									<p className="mt-2 text-background">
+									<p className="text-background mt-2">
 										Cursos disponibles:{' '}
 										<span className="text-2xl font-semibold">
 											{plan.courses}
@@ -131,7 +131,7 @@ const PricingPlans: React.FC = () => {
 										{plan.features.map((feature) => (
 											<li key={feature} className="flex items-center">
 												<BsCheck2Circle className="size-6 text-green-600" />
-												<span className="ml-3 text-background">{feature}</span>
+												<span className="text-background ml-3">{feature}</span>
 											</li>
 										))}
 									</ul>
@@ -139,9 +139,9 @@ const PricingPlans: React.FC = () => {
 								<div className="mb-4 flex justify-center">
 									<Button
 										onClick={() => handlePlanSelect(plan)}
-										className="group relative h-full overflow-hidden rounded-md border border-b-4 border-white bg-background px-4 py-3 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:bg-background hover:brightness-150 active:scale-95 active:opacity-75"
+										className="group bg-background hover:bg-background relative h-full overflow-hidden rounded-md border border-b-4 border-white px-4 py-3 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b hover:brightness-150 active:scale-95 active:opacity-75"
 									>
-										<span className="absolute left-0 top-[-150%] inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
+										<span className="absolute top-[-150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
 										Seleccionar Plan {plan.name}
 									</Button>
 								</div>
@@ -181,9 +181,9 @@ const PricingPlans: React.FC = () => {
 							<div className="flex justify-center">
 								<Button
 									onClick={handleProceedWithPlan}
-									className="group relative h-full overflow-hidden rounded-md border border-b-4 border-secondary bg-background p-4 font-medium text-white outline-none duration-300 hover:border-b hover:border-t-4 hover:bg-background active:scale-95 active:opacity-75"
+									className="group border-secondary bg-background hover:bg-background relative h-full overflow-hidden rounded-md border border-b-4 p-4 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b active:scale-95 active:opacity-75"
 								>
-									<span className="absolute left-0 top-[150%] inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
+									<span className="absolute top-[150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
 									Proceder con el Plan {selectedPlan.name}
 								</Button>
 							</div>

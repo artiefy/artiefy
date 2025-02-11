@@ -54,13 +54,13 @@ const SearchForm: React.FC = () => {
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value)}
 					onKeyDown={handleKeyDown}
-					className="w-full bg-white pr-10 text-background"
+					className="text-background w-full bg-white pr-10"
 					aria-label="Buscar cursos"
 				/>
 				<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
 					{isSearching ? (
 						<Icons.spinner
-							className="size-4 text-background"
+							className="text-background size-4"
 							aria-hidden="true"
 						/>
 					) : (
@@ -74,7 +74,7 @@ const SearchForm: React.FC = () => {
 			<Button
 				onClick={handleSearch}
 				disabled={isSearching}
-				className="ml-2 border border-primary bg-primary text-background hover:bg-background hover:text-primary"
+				className="border-primary bg-primary text-background hover:bg-background hover:text-primary ml-2 border"
 				aria-label="Realizar búsqueda"
 			>
 				Buscar

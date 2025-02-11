@@ -92,6 +92,7 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 3. `npm run format:check`: Verifica si el código está formateado correctamente según Prettier, sin hacer cambios.
 4. `npm run format:write`: Formatea automáticamente el código del proyecto usando Prettier.
 5. `npm run typecheck`: Ejecuta el verificador de tipos de TypeScript sin generar archivos de salida.
+6. `npm run bild`: Para ver errores de despliegue en producción
 
 Archivos:
 - eslint.config.mjs .js

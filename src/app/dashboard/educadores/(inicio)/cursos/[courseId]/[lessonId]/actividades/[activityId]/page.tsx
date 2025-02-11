@@ -113,7 +113,7 @@ const Page = () => {
 	return (
 		<>
 			<Breadcrumb>
-				<BreadcrumbList className="flex space-x-3 rounded-lg bg-gradient-to-r from-teal-500 to-blue-500 p-2 text-white shadow-lg">
+				<BreadcrumbList className="flex space-x-3 rounded-lg bg-linear-to-r from-teal-500 to-blue-500 p-2 text-white shadow-lg">
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="transition duration-300 hover:scale-105 hover:text-gray-300"
@@ -155,7 +155,7 @@ const Page = () => {
 
 			<div className="mx-auto mt-6 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 bg-white p-8 shadow-lg">
 				<div className="mb-3 grid grid-cols-1 items-center justify-between space-y-4 text-3xl font-semibold text-gray-800 md:grid-cols-2">
-					<h2 className="text-4xl font-extrabold text-primary">
+					<h2 className="text-primary text-4xl font-extrabold">
 						Actividad: {actividad.name}
 					</h2>
 					<h3 className="text-xl text-gray-600 md:mr-8 lg:mr-24">

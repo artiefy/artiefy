@@ -68,7 +68,7 @@ export default function StudentDashboard({
 							<div className="mt-8 flex flex-col items-center space-y-4">
 								<div className="flex items-center">
 									<RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
-									<span className="ml-2 whitespace-nowrap text-2xl font-bold text-primary sm:text-3xl">
+									<span className="text-primary ml-2 text-2xl font-bold whitespace-nowrap sm:text-3xl">
 										Arti IA
 									</span>
 								</div>
@@ -116,13 +116,13 @@ export default function StudentDashboard({
 												blurDataURL={blurDataURL}
 											/>
 										</div>
-										<div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
+										<div className="text-primary absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4">
 											<h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">
 												{course.title}
 											</h2>
 											<Badge
 												variant="outline"
-												className="mb-2 border-primary text-primary"
+												className="border-primary text-primary mb-2"
 											>
 												{course.category?.name ?? 'Sin categoría'}
 											</Badge>
@@ -169,7 +169,7 @@ export default function StudentDashboard({
 							</div>
 						) : (
 							<div className="xs:px-4 relative px-8">
-								<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
+								<h2 className="text-primary ml-4 text-xl font-bold md:text-2xl">
 									Top Cursos
 								</h2>
 								<Carousel className="w-full p-4">
@@ -203,7 +203,7 @@ export default function StudentDashboard({
 														<div className="mb-2 flex items-center justify-between">
 															<Badge
 																variant="outline"
-																className="mb-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
+																className="border-primary bg-background text-primary mb-2 text-[9px] lg:text-sm"
 															>
 																{course.category?.name}
 															</Badge>
@@ -212,7 +212,7 @@ export default function StudentDashboard({
 															</span>
 														</div>
 														<div className="flex items-center justify-between">
-															<p className="text-sm italic text-primary">
+															<p className="text-primary text-sm italic">
 																Educador: <span>{course.instructor}</span>
 															</p>
 															<div className="flex items-center">

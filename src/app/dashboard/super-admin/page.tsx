@@ -1,9 +1,8 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
-import { UserButton } from '@clerk/nextjs';
-import { Loader2, UserX, Plus, X, XCircle, Edit, Trash2, UserPlus, Check } from 'lucide-react';
+import { Loader2, X, XCircle, Edit, Trash2, UserPlus, Check } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { getAdminUsers, setRoleWrapper, removeRole, deleteUser, updateUserInfo, createUser } from '~/server/queries/queries';
+import {  setRoleWrapper,  deleteUser, updateUserInfo } from '~/server/queries/queries';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
 import SuperAdminLayout from './super-admin-layout';
@@ -27,9 +26,13 @@ type ConfirmationState = {
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
+  // 🔍 Estados de búsqueda y filtros
+  const [searchQuery, setSearchQuery] = useState(""); // Búsqueda por nombre o correo
+  const [roleFilter, setRoleFilter] = useState("");  // Filtro por rol
+  const [statusFilter, setStatusFilter] = useState(""); // Filtro por estado
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null as string | null);
   const [confirmation, setConfirmation] = useState<ConfirmationState>(null);
   const [notification, setNotification] = useState<{ message: string, type: "success" | "error" } | null>(null);
   const [editingUser, setEditingUser] = useState<string | null>(null);
@@ -42,7 +45,7 @@ export default function AdminDashboard() {
   const [infoDialogMessage, setInfoDialogMessage] = useState("");
 
   const searchParams = useSearchParams();
-  const query = searchParams.get('search') || "";
+  const query = searchParams.get('search') ?? "";
   const [newUser, setNewUser] = useState({
     firstName: "",
     lastName: "",
@@ -60,19 +63,50 @@ export default function AdminDashboard() {
     );
   }, []);
 
-  const [roleFilter, setRoleFilter] = useState<string>(""); // Filtro por rol
-  const [statusFilter, setStatusFilter] = useState<string>(""); // Filtro por estado
   const filteredUsers = users.filter(user =>
+    (searchQuery === "" || 
+      user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    ) &&
     (roleFilter ? user.role === roleFilter : true) &&
     (statusFilter ? user.status === statusFilter : true)
   );
+
 
   useEffect(() => {
     async function fetchUsers() {
       try {
         const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`);
         if (!res.ok) throw new Error("Error al cargar usuarios");
-        const data = await res.json();
+  
+        const rawData: unknown = await res.json(); // ✅ Primero tratamos la respuesta como `unknown`
+        
+        if (!Array.isArray(rawData)) {
+          throw new Error("Datos inválidos recibidos"); // ✅ Validación de seguridad
+        }
+  
+        // ✅ Filtramos solo los objetos que tienen las propiedades esperadas
+        const data: User[] = rawData
+          .filter((item): item is User =>
+            typeof item === "object" &&
+            item !== null &&
+            "id" in item &&
+            "firstName" in item &&
+            "lastName" in item &&
+            "email" in item &&
+            "role" in item &&
+            "status" in item
+          )
+          .map((item) => ({
+            id: String(item.id),
+            firstName: String(item.firstName),
+            lastName: String(item.lastName),
+            email: String(item.email),
+            role: String(item.role),
+            status: String(item.status),
+          }));
+  
         setUsers(data);
       } catch (err) {
         setError("Error al cargar los usuarios.");
@@ -81,14 +115,26 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     }
-    fetchUsers();
+  
+    void fetchUsers(); // ✅ Ejecutamos la función sin afectar ESLint
   }, [query]);
+  
+  
+  
 
   const showNotification = (message: string, type: "success" | "error") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
+  interface CreateUserResponse {
+    user: {
+      id: string;
+      username: string;
+    };
+    generatedPassword: string;
+  }
+  
   const handleCreateUser = async () => {
     if (!newUser.firstName.trim() || !newUser.lastName.trim() || !newUser.email.trim()) {
       showNotification("Todos los campos son obligatorios.", "error");
@@ -112,34 +158,48 @@ export default function AdminDashboard() {
         throw new Error("No se pudo crear el usuario");
       }
   
-      const data = await res.json();
-      const { user: safeUser, generatedPassword } = data;
-      
-      const username = safeUser.username;
+      const rawData: unknown = await res.json();
+      if (
+        typeof rawData !== "object" ||
+        rawData === null ||
+        !("user" in rawData) ||
+        !("generatedPassword" in rawData)
+      ) {
+        throw new Error("Respuesta de la API en formato incorrecto");
+      }
   
-      // ✅ Asegurar que 'status' está presente en el nuevo usuario
+      const { user: safeUser, generatedPassword } = rawData as CreateUserResponse;
+      if (!safeUser || typeof safeUser !== "object" || !("id" in safeUser) || !("username" in safeUser)) {
+        throw new Error("Usuario inválido en la respuesta de la API");
+      }
+  
+      const username = safeUser.username;
       setUsers([...users, { 
         id: safeUser.id, 
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         email: newUser.email,
         role: newUser.role,
-        status: "activo" // 🔥 Se agrega un valor predeterminado para 'status'
+        status: "activo",
       }]);
   
       setInfoDialogTitle("Usuario Creado");
-      setInfoDialogMessage(
-        `Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`
-      );
+      setInfoDialogMessage(`Se ha creado el usuario "${username}" con la contraseña: ${generatedPassword}`);
       setInfoDialogOpen(true);
+  
+      // ✅ Cerrar el modal después de crear el usuario
+      setShowCreateForm(false);
+  
       setNewUser({ firstName: "", lastName: "", email: "", role: "estudiante" });
   
-    } catch (error) {
+    } catch {
       showNotification("Error al crear el usuario.", "error");
     } finally {
       setCreatingUser(false);
     }
   };
+  
+  
   
 
   const handleMassUpdateStatus = async (newStatus: string) => {
@@ -160,7 +220,7 @@ export default function AdminDashboard() {
       ));
       setSelectedUsers([]);
       showNotification(`Usuarios actualizados a ${newStatus}.`, "success");
-    } catch (error) {
+    } catch {
       showNotification("Error al actualizar usuarios.", "error");
     }
   };
@@ -170,122 +230,146 @@ export default function AdminDashboard() {
       isOpen: true,
       title: "Actualizar Rol",
       message: `¿Estás seguro de que quieres cambiar el rol de este usuario a ${newRole}?`,
-      onConfirm: async () => {
-        try {
-          setUpdatingUserId(userId);
-          await setRoleWrapper({ id: userId, role: newRole });
-
-          setUsers(users.map(user => user.id === userId ? { ...user, role: newRole } : user));
-          showNotification("Rol actualizado con éxito.", "success");
-        } catch (error) {
-          showNotification("Error al actualizar el rol.", "error");
-        } finally {
-          setUpdatingUserId(null);
-          setConfirmation(null);
-        }
+      onConfirm: () => {
+        void (async () => {
+          try {
+            setUpdatingUserId(userId);
+            await setRoleWrapper({ id: userId, role: newRole });
+  
+            setUsers(users.map(user => 
+              user.id === userId ? { ...user, role: newRole } : user
+            ));
+  
+            showNotification("Rol actualizado con éxito.", "success");
+          } catch {
+            showNotification("Error al actualizar el rol.", "error");
+          } finally {
+            setUpdatingUserId(null);
+          }
+        })(); // Llamamos la función inmediatamente
       },
     });
   };
+  
 
   const handleStatusChange = (userId: string, newStatus: string) => {
     setConfirmation({
       isOpen: true,
       title: "Actualizar Estado",
       message: `¿Estás seguro de que quieres cambiar el estado del usuario a "${newStatus}"?`,
-      onConfirm: async () => {
-        try {
-          setUpdatingUserId(userId);
-          await fetch("/api/users", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "updateStatus", id: userId, status: newStatus }),
-          });
-
-          setUsers(users.map(user => user.id === userId ? { ...user, status: newStatus } : user));
-          showNotification("Estado actualizado con éxito.", "success");
-        } catch (error) {
-          showNotification("Error al actualizar el estado.", "error");
-        } finally {
-          setUpdatingUserId(null);
-          setConfirmation(null);
-        }
+      onConfirm: () => {
+        void (async () => {
+          try {
+            setUpdatingUserId(userId);
+              await fetch("/api/users", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "updateStatus", id: userId, status: newStatus }),
+            });
+  
+            setUsers(users.map(user => 
+              user.id === userId ? { ...user, status: newStatus } : user
+            ));
+  
+            showNotification("Estado actualizado con éxito.", "success");
+          } catch {
+            showNotification("Error al actualizar el estado.", "error");
+          } finally {
+            setUpdatingUserId(null);
+            setConfirmation(null);
+          }
+        })(); // Ejecutamos la función inmediatamente
       },
     });
   };
+  
+  
 
-  const handleMassRemoveRole = async () => {
+  const handleMassRemoveRole = () => {
     if (selectedUsers.length === 0) {
       showNotification("No has seleccionado usuarios.", "error");
       return;
     }
-
+  
     setConfirmation({
       isOpen: true,
       title: "Eliminar Roles",
       message: "¿Estás seguro de que quieres eliminar el rol de los usuarios seleccionados?",
-      onConfirm: async () => {
-        try {
-          await fetch("/api/users", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "removeRole", userIds: selectedUsers }),
-          });
-
-          // Actualizar los usuarios en el estado local
-          setUsers(users.map(user =>
-            selectedUsers.includes(user.id) ? { ...user, role: "sin-role" } : user
-          ));
-
-          setSelectedUsers([]); // Limpiar selección
-          showNotification("Roles eliminados con éxito.", "success");
-        } catch (error) {
-          showNotification("Error al eliminar roles.", "error");
-        } finally {
-          setConfirmation(null);
-        }
+      onConfirm: () => {
+        void (async () => {
+          try {
+            await fetch("/api/users", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ action: "removeRole", userIds: selectedUsers }),
+            });
+  
+            // Actualizar los usuarios en el estado local
+            setUsers(users.map(user =>
+              selectedUsers.includes(user.id) ? { ...user, role: "sin-role" } : user
+            ));
+  
+            setSelectedUsers([]); // Limpiar selección
+            showNotification("Roles eliminados con éxito.", "success");
+          } catch {
+            showNotification("Error al eliminar roles.", "error");
+          } finally {
+            setConfirmation(null);
+          }
+        })(); // ✅ Ejecutamos la función inmediatamente
       },
     });
   };
+  
 
   const handleDeleteUser = (userId: string) => {
     setConfirmation({
       isOpen: true,
       title: "Eliminar Usuario",
       message: "¿Estás seguro de que quieres eliminar este usuario? Esta acción no se puede deshacer.",
-      onConfirm: async () => {
-        try {
-          setUpdatingUserId(userId);
-          await deleteUser(userId);
-
-          setUsers(users.filter(user => user.id !== userId));
-          showNotification("Usuario eliminado correctamente.", "success");
-        } catch (error) {
-          showNotification("Error al eliminar el usuario.", "error");
-        } finally {
-          setUpdatingUserId(null);
-          setConfirmation(null);
-        }
+      onConfirm: () => {
+        void (async () => {
+          try {
+            setUpdatingUserId(userId);
+            await deleteUser(userId);
+  
+            setUsers(users.filter(user => user.id !== userId));
+            showNotification("Usuario eliminado correctamente.", "success");
+          } catch  {
+            showNotification("Error al eliminar el usuario.", "error");
+          } finally {
+            setUpdatingUserId(null);
+            setConfirmation(null);
+          }
+        })(); // ✅ Ejecutamos la función inmediatamente
       },
     });
   };
-
-  const handleSaveUser = async (userId: string) => {
-    try {
-      setUpdatingUserId(userId);
-      await updateUserInfo(userId, editValues.firstName, editValues.lastName);
-      setUsers(users.map(user =>
-        user.id === userId ? { ...user, firstName: editValues.firstName, lastName: editValues.lastName } : user
-      ));
-      setEditingUser(null);
-
-      showNotification("Usuario actualizado con éxito.", "success");
-    } catch (error) {
-      showNotification("Error al actualizar usuario.", "error");
-    } finally {
-      setUpdatingUserId(null);
-      setEditingUser(null);
-    }
+  
+  const handleSaveUser = (userId: string) => {
+    if (updatingUserId === null) return; // Evita que sea null
+  
+    void (async () => {
+      try {
+        setUpdatingUserId(userId);
+        await updateUserInfo(userId, editValues.firstName, editValues.lastName);
+  
+        setUsers(users.map(user =>
+          user.id === userId ? { ...user, firstName: editValues.firstName, lastName: editValues.lastName } : user
+        ));
+        setEditingUser(null);
+  
+        showNotification("Usuario actualizado con éxito.", "success");
+      } catch  {
+        showNotification("Error al actualizar usuario.", "error");
+      } finally {
+        setUpdatingUserId(null);
+        setEditingUser(null);
+      }
+    })(); // ✅ Ejecutamos la función inmediatamente
   };
+  
+  
 
   const handleEditUser = (user: User) => {
     setEditingUser(user.id);
@@ -294,9 +378,15 @@ export default function AdminDashboard() {
 
   return (
     <SuperAdminLayout>
+      {/* 🔎 Barra de Búsqueda y Filtro */}
+
+
       <header className=" flex items-center justify-between rounded-lg bg-[#00BDD8]  p-6 text-3xl font-bold text-[#01142B] shadow-md">
         <h1>Dashboard Admin</h1>
-      </header>
+        </header>
+      {/* 🔎 Barra de Búsqueda y Filtro */}
+
+
 
       <div className="p-6">
         <p className="mb-6 text-lg text-white">
@@ -317,95 +407,104 @@ export default function AdminDashboard() {
         ) : (
           <>
             {showCreateForm && (
-              <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4">
-                <div className="relative z-50 w-full max-w-md rounded-lg bg-background p-6 shadow-2xl">
-                  {/* Header del formulario con botón de cierre */}
-                  <div className="mb-4 flex items-center justify-between">
-                    <h2 className="text-lg font-bold text-white">Crear Nuevo Usuario</h2>
-                    <button onClick={() => setShowCreateForm(false)}>
-                      <X className="size-6 text-gray-300 hover:text-white" />
-                    </button>
-                  </div>
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-md p-4">
+    <div className="relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-2xl">
+      {/* Header del formulario con botón de cierre */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-white">Crear Nuevo Usuario</h2>
+        <button onClick={() => setShowCreateForm(false)}>
+          <X className="size-6 text-gray-300 hover:text-white" />
+        </button>
+      </div>
 
-                  {/* Formulario de creación */}
-                  <div className="space-y-4">
-                    <input
-                      type="text"
-                      placeholder="Nombre"
-                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                      value={newUser.firstName}
-                      onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Apellido"
-                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                      value={newUser.lastName}
-                      onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
-                    />
-                    <input
-                      type="email"
-                      placeholder="Correo electrónico"
-                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                      value={newUser.email}
-                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                    />
-                    <select
-                      className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
-                      value={newUser.role}
-                      onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                    >
-                      <option value="admin">Admin</option>
-                      <option value="educador">Educador</option>
-                      <option value="estudiante">Estudiante</option>
-                    </select>
-                  </div>
+      {/* Formulario de creación */}
+      <div className="space-y-4">
+        <input
+          type="text"
+          placeholder="Nombre"
+          className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+          value={newUser.firstName}
+          onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
+        />
+        <input
+          type="text"
+          placeholder="Apellido"
+          className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+          value={newUser.lastName}
+          onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
+        />
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+          value={newUser.email}
+          onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+        />
+        <select
+          className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+          value={newUser.role}
+          onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+        >
+          <option value="admin">Admin</option>
+          <option value="super-admin">super-admin</option>
+          <option value="educador">Educador</option>
+          <option value="estudiante">Estudiante</option>
+        </select>
+      </div>
 
-                  {/* Botón para crear usuario */}
-                  <button
-                    onClick={handleCreateUser}
-                    className="mt-4 flex w-full justify-center rounded-md bg-primary px-4 py-2 font-bold text-white hover:bg-secondary"
-                    disabled={creatingUser}
-                  >
-                    {creatingUser ? <Loader2 className="size-5 animate-spin" /> : "Crear Usuario"}
-                  </button>
+      {/* Botón para crear usuario */}
+      <button
+        onClick={handleCreateUser}
+        className="mt-4 flex w-full justify-center rounded-md bg-primary px-4 py-2 font-bold text-white hover:bg-secondary"
+        disabled={creatingUser}
+      >
+        {creatingUser ? <Loader2 className="size-5 animate-spin" /> : "Crear Usuario"}
+      </button>
+    </div>
+  </div>
+)}
 
-                </div>
-              </div>
-            )}
+
             {/* Contenedor de botones arriba de la tabla */}
             <div className="mb-4 flex items-center justify-between">
               {/* Contenedor de botones arriba de la tabla */}
               <div className="mb-4 flex space-x-2">
-                <button
-                  onClick={() => handleMassUpdateStatus("activo")}
-                  className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105${
-                    selectedUsers.length === 0 ? "cursor-not-allowed bg-gray-500" : "bg-green-500 hover:bg-green-600"
-                  }`}
-                  disabled={selectedUsers.length === 0}
-                >
-                  <Check className="mr-2 size-5" /> Activar
-                </button>
+              <button
+                onClick={() => handleMassUpdateStatus("activo")}
+                className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition-all hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  selectedUsers.length === 0
+                    ? "cursor-not-allowed bg-gray-500"
+                    : "bg-green-500 hover:bg-green-600 focus:bg-green-600"
+                }`}
+                disabled={selectedUsers.length === 0}
+              >
+                <Check className="mr-2 size-5" /> Activar
+              </button>
 
-                <button
-                  onClick={() => handleMassUpdateStatus("inactivo")}
-                  className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105${
-                    selectedUsers.length === 0 ? "cursor-not-allowed bg-gray-500" : "bg-red-500 hover:bg-red-600"
-                  }`}
-                  disabled={selectedUsers.length === 0}
-                >
-                  <XCircle className="mr-2 size-5" /> Desactivar
-                </button>
+              <button
+                onClick={() => handleMassUpdateStatus("inactivo")}
+                className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition-all hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  selectedUsers.length === 0
+                    ? "cursor-not-allowed bg-gray-500"
+                    : "bg-red-500 hover:bg-red-600 focus:bg-red-600"
+                }`}
+                disabled={selectedUsers.length === 0}
+              >
+                <XCircle className="mr-2 size-5" /> Desactivar
+              </button>
 
-                <button
-                  onClick={handleMassRemoveRole}
-                  className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105${
-                    selectedUsers.length === 0 ? "cursor-not-allowed bg-gray-500" : "bg-yellow-500 hover:bg-yellow-600"
-                  }`}
-                  disabled={selectedUsers.length === 0}
-                >
-                  <XCircle className="mr-2 size-5" /> Quitar Rol
-                </button>
+              <button
+                onClick={handleMassRemoveRole}
+                className={`flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition-all hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+                  selectedUsers.length === 0
+                    ? "cursor-not-allowed bg-gray-500"
+                    : "bg-yellow-500 hover:bg-yellow-600 focus:bg-yellow-600"
+                }`}
+                disabled={selectedUsers.length === 0}
+              >
+                <XCircle className="mr-2 size-5" /> Quitar Rol
+              </button>
+
 
                 <button
                   onClick={() => setShowCreateForm(true)}
@@ -416,6 +515,50 @@ export default function AdminDashboard() {
               </div>
 
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+
+{/* 🔍 Buscador por Nombre o Correo */}
+<div className="bg-white text-black rounded-lg p-4 shadow-md flex items-center gap-2">
+  <input
+    type="text"
+    placeholder="Buscar por nombre o correo..."
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+</div>
+
+{/* 🎭 Filtro de Roles */}
+<div className="bg-white text-black rounded-lg p-4 shadow-md flex items-center gap-2">
+  <select
+    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    value={roleFilter}
+    onChange={(e) => setRoleFilter(e.target.value)}
+  >
+    <option value="">Todos los Roles</option>
+    <option value="admin">Admin</option>
+    <option value="super-admin">Super-admin</option>
+    <option value="educador">Educador</option>
+    <option value="estudiante">Estudiante</option>
+    <option value="sin-role">Sin Rol</option>
+  </select>
+</div>
+
+{/* ⚡ Filtro de Estado */}
+<div className="bg-white text-black rounded-lg p-4 shadow-md flex items-center gap-2">
+  <select
+    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    value={statusFilter}
+    onChange={(e) => setStatusFilter(e.target.value)}
+  >
+    <option value="">Todos los Estados</option>
+    <option value="activo">Activo</option>
+    <option value="inactivo">Inactivo</option>
+    <option value="suspendido">Suspendido</option>
+  </select>
+</div>
+
+</div>
 
 
             <div className="mt-6 overflow-x-auto">
@@ -438,6 +581,7 @@ export default function AdminDashboard() {
                       >
                         <option value="">Roles</option>
                         <option value="admin">Admin</option>
+                        <option value="super-admin">super-admin</option>
                         <option value="educador">Educador</option>
                         <option value="estudiante">Estudiante</option>
                         <option value="sin-role">Sin Rol</option>
@@ -495,6 +639,7 @@ export default function AdminDashboard() {
                         >
                           <option value="sin-role">Sin Rol</option>
                           <option value="admin">Admin</option>
+                          <option value="super-admin">Super-admin</option>
                           <option value="educador">Educador</option>
                           <option value="estudiante">Estudiante</option>
                         </select>
@@ -547,13 +692,22 @@ export default function AdminDashboard() {
           {notification.message}
         </div>
       )}
-      <ConfirmDialog
+    <ConfirmDialog
         isOpen={confirmation?.isOpen ?? false}
         title={confirmation?.title ?? ''}
         message={confirmation?.message ?? ''}
-        onConfirm={confirmation?.onConfirm ?? (() => {})}
+        onConfirm={confirmation?.onConfirm
+          ? async () => {
+              await Promise.resolve(confirmation.onConfirm?.());
+            }
+          : async () => Promise.resolve()} // Asegura que `onConfirm` siempre devuelva una Promise<void>
         onCancel={() => setConfirmation(null)}
       />
+
+
+
+
+
       <InfoDialog
         isOpen={infoDialogOpen}
         title={infoDialogTitle}

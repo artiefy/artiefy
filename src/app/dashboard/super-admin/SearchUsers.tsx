@@ -16,7 +16,7 @@ export const SearchUsers = () => {
 					const formData = new FormData(form);
 					const queryTerm = formData.get('search') as string;
 
-					console.log("DEBUG: Enviando búsqueda con término:", queryTerm); // 🔥 DEBUG
+					console.log('DEBUG: Enviando búsqueda con término:', queryTerm); // 🔥 DEBUG
 
 					router.push(`${pathname}?search=${queryTerm}`);
 				}}
@@ -25,7 +25,6 @@ export const SearchUsers = () => {
 				<input id="search" name="search" type="text" placeholder="Buscar..." />
 				<button type="submit">Buscar</button>
 			</form>
-
 		</div>
 	);
 };
