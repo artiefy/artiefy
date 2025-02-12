@@ -1,6 +1,6 @@
 import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
@@ -68,9 +68,9 @@ export default function RootLayout({
 						<Provider>
 							{children}
 							<SpeedInsights />
+              <Analytics />
 						</Provider>
 						<Toaster />
-						<Analytics />
 					</ClerkLoaded>
 				</body>
 			</html>
