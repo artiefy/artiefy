@@ -4,7 +4,7 @@ import { getAuthToken } from '~/utils/auth';
 
 export async function POST(request: Request) {
   try {
-    const { customerId, planId } = await request.json();
+    const { customerId, planId, tokenCardId, docType, docNumber } = await request.json();
 
     const token = await getAuthToken();
 
@@ -16,7 +16,12 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         customerId,
-        planId,
+        id_plan: planId,
+        token_card: tokenCardId,
+        doc_type: docType,
+        doc_number: docNumber,
+        url_confirmation: "https://ejemplo.com/confirmacion",
+        method_confirmation: "POST",
       }),
     });
 

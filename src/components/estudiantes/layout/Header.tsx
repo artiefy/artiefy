@@ -50,7 +50,7 @@ export function Header() {
 							<Link
 								key={item.href}
 								href={item.href}
-								className="transition-colors text-shadow hover:text-orange-500 active:scale-95"
+								className="text-shadow transition-colors hover:text-orange-500 active:scale-95"
 							>
 								{item.label}
 							</Link>
@@ -120,7 +120,7 @@ export function Header() {
 				className="fixed inset-0 z-50 md:hidden"
 			>
 				<div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-				<DialogPanel className="fixed inset-y-0 right-0 z-50 w-2/4 max-w-sm bg-white p-6 shadow-xl">
+				<DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
 					<div className="flex items-center justify-between">
 						<div className="relative mt-[-10px] size-[150px]">
 							{' '}
@@ -135,7 +135,7 @@ export function Header() {
 						</div>
 						<button
 							onClick={() => setMobileMenuOpen(false)}
-							className="rounded-full p-1 text-gray-400 transition-transform hover:bg-gray-100 active:scale-95"
+							className="ml-5 rounded-full p-1 text-gray-400 transition-transform hover:bg-gray-100 active:scale-95"
 							aria-label="Close menu"
 						>
 							<XMarkIcon className="size-6" />
@@ -158,7 +158,7 @@ export function Header() {
 						</ul>
 					</nav>
 
-					<div className="mt-6">
+					<div className="mt-6 flex items-center justify-center">
 						<SignedOut>
 							<SignInButton>
 								<Button

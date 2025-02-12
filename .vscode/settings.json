@@ -7,7 +7,7 @@
 	},
 	"eslint.rules.customizations": [
 		{ "rule": "import/order", "severity": "off" },
-		{"rule": "no-unused-vars","severity": "warn" }
+		{ "rule": "no-unused-vars", "severity": "warn" }
 	],
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"[javascript]": {
@@ -44,13 +44,5 @@
 	},
 	"editor.quickSuggestions": {
 		"strings": "on"
-	},
-	"tailwindCSS.suggestions": true,
-	"tailwindCSS.validate": true,
-	"tailwindCSS.lint.invalidApply": "warning",
-	"tailwindCSS.lint.invalidScreen": "warning",
-	"tailwindCSS.lint.invalidVariant": "warning",
-	"tailwindCSS.lint.invalidConfigPath": "warning",
-	"tailwindCSS.lint.cssConflict": "warning",
-	"tailwindCSS.lint.recommendedVariantOrder": "warning"
+	}
 }

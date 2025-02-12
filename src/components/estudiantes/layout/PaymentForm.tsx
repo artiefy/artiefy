@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import '~/styles/form.css'; // Import form.css
-import { Button } from '~/components/estudiantes/ui/button';
+import { Button } from '~/components/estudiantes/ui/button'; // Import Button component
 
 interface PaymentFormProps {
   onSuccess: (message: string) => void;
@@ -70,7 +70,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onSuccess, planId }) =
         },
       });
 
-      const tokenData: TokenResponse = await tokenResponse.json() as TokenResponse;
+      const tokenData: TokenResponse = await tokenResponse.json();
 
       if (!tokenData.success) {
         setError('Error al generar el token');
@@ -100,7 +100,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onSuccess, planId }) =
         },
       });
 
-      const customerData: CustomerResponse = await customerResponse.json() as CustomerResponse;
+      const customerData: CustomerResponse = await customerResponse.json();
 
       if (!customerData.success) {
         setError('Error al crear el cliente');
@@ -116,13 +116,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({ onSuccess, planId }) =
         body: JSON.stringify({
           customerId,
           planId,
+          tokenCardId,
+          docType,
+          docNumber,
         }),
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      const subscriptionData: SubscriptionResponse = await subscriptionResponse.json() as SubscriptionResponse;
+      const subscriptionData: SubscriptionResponse = await subscriptionResponse.json();
 
       if (!subscriptionData.success) {
         setError('Error al crear la suscripción');
