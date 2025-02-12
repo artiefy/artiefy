@@ -1,5 +1,7 @@
 import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
 import Script from 'next/script';
@@ -48,7 +50,7 @@ export default function RootLayout({
 		<ClerkProvider localization={esMX} afterSignOutUrl="/">
 			<html lang="es" className={`${montserrat.variable}`}>
 				<head>
-        <Script src="https://checkout.epayco.co/epayco.min.js" />
+					<Script src="https://checkout.epayco.co/epayco.min.js" />
 					<Script
 						id="json-ld"
 						type="application/ld+json"
@@ -63,8 +65,12 @@ export default function RootLayout({
 						<Loading />
 					</ClerkLoading>
 					<ClerkLoaded>
-						<Provider>{children}</Provider>
+						<Provider>
+							{children}
+							<SpeedInsights />
+						</Provider>
 						<Toaster />
+						<Analytics />
 					</ClerkLoaded>
 				</body>
 			</html>
