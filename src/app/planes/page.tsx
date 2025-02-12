@@ -231,7 +231,7 @@ const PricingPlans: React.FC = () => {
 							</button>
 						</div>
 						<div>
-							<PaymentForm onSuccess={handleSuccess} planId={selectedPlan.id} />
+							<PaymentForm onSuccess={handleSuccess} planId={selectedPlan.id} isModalOpen={showModal} />
 						</div>
 					</div>
 				</div>

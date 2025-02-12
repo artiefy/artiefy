@@ -7,6 +7,7 @@ import { Button } from '~/components/estudiantes/ui/button'; // Import Button co
 interface PaymentFormProps {
   onSuccess: (message: string) => void;
   isModalOpen: boolean; // Add isModalOpen prop to track modal state
+  planId: string;
 }
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({ onSuccess }) => {
