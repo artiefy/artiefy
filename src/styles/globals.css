@@ -1,7 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
 @import 'tailwindcss';
 
 @config "../../tailwind.config.js";
+
+@custom-variant hover (&:hover);
+
+@media (hover: hover) {
+  .hover\:underline:hover {
+    text-decoration: underline;
+  }
+}
 
 @custom-variant dark (&:is(.dark *));
 
