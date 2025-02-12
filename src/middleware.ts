@@ -16,7 +16,7 @@ export default clerkMiddleware(async (auth, req) => {
   // Redirect to login page if not authenticated and the route is protected
   if (!userId && isProtectedRoute(req)) {
     const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(`/sign-in?redirect_url=${redirectTo}`);
+    return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${redirectTo}`);
   }
 
   // Protect specific role routes
@@ -38,7 +38,7 @@ export default clerkMiddleware(async (auth, req) => {
   // Protect dynamic student routes
   if (isStudentClassRoute(req) && !userId) {
     const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(`/sign-in?redirect_url=${redirectTo}`);
+    return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${redirectTo}`);
   }
 
   // Handle public routes

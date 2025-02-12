@@ -15,9 +15,8 @@ const eslintConfig = [
             'src/components/estudiantes/ui/**',
             'src/components/admin/ui/**',
             'src/components/educadores/ui/**',
-            'eslint.config.mjs',
-            'api/**', // Ignore all files and subdirectories under the api directory
-        ],
+            'eslint.config.mjs'
+        ]
     },
     ...compat.config({
         extends: [
