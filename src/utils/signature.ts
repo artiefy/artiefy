@@ -1,4 +1,4 @@
-import { MD5 } from 'crypto-js';
+import { MD5 } from "crypto-js";
 
 /**
  * Función para calcular el hash MD5.
@@ -10,15 +10,9 @@ import { MD5 } from 'crypto-js';
  * @param {string} currency - La moneda de la transacción.
  * @returns {string} - El hash MD5 generado.
  */
-export function calculateMD5(
-	apiKey: string,
-	merchantId: string,
-	reference: string,
-	price: string,
-	currency: string
-): string {
-	const concatenatedArray = [apiKey, merchantId, reference, price, currency];
-	const concatenatedString = concatenatedArray.join('~');
-	const hash = MD5(concatenatedString).toString();
-	return hash;
+export function calculateMD5(apiKey: string, merchantId: string, reference: string, price: string, currency: string): string {
+  const concatenatedArray = [apiKey, merchantId, reference, price, currency];
+  const concatenatedString = concatenatedArray.join("~");
+  const hash = MD5(concatenatedString).toString();
+  return hash;
 }
