@@ -1,148 +1,165 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { Button } from '~/components/admin/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '~/components/admin/ui/card';
-import { ImageUpload } from '~/components/admin/ui/ImageUpload';
-import { Input } from '~/components/admin/ui/input';
-import { Label } from '~/components/admin/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/admin/ui/select';
-import { Textarea } from '~/components/admin/ui/textarea';
-import type { Ticket } from '~/types/Tickets';
+import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/admin/ui/dialog"
+import { Button } from "~/components/admin/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/admin/ui/select"
+import { Textarea } from "~/components/admin/ui/textarea"
+import { Label } from "~/components/admin/ui/label"
+import { Input } from "~/components/admin/ui/input"
 
-interface TicketDetailProps {
-  ticket: Ticket;
-
-  onUpdateTicketAction: (updatedTicket: Ticket, newImage?: File) => void;
-
-  onDeleteTicketAction: () => void;
+interface Ticket {
+  id: string
+  title: string
+  status: "critical" | "pending" | "completed"
+  assignedTo: string | null
+  priority: "High" | "Medium" | "Low"
+  date: string
+  description: string
+  imageUrl?: string
+  createdAt: string
+  resolvedAt?: string
 }
 
-export function TicketDetail({
-  ticket,
-  onUpdateTicketAction,
-  onDeleteTicketAction,
-}: TicketDetailProps) {
-  const [editedTicket, setEditedTicket] = useState(ticket);
-  const [newImage, setNewImage] = useState<File | undefined>(undefined);
+interface Technician {
+  id: string
+  name: string
+  role: "technician" | "admin" | "superadmin"
+  assignedTickets: number
+}
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setEditedTicket({ ...editedTicket, [name]: value });
-  };
+interface TicketDetailsProps {
+  ticket: Ticket
+  onCloseAction: () => void
+  onUpdateAction: (ticket: Ticket) => void
+  technicians: Technician[]
+}
 
-  const handleSelectChange = (value: string) => {
-    setEditedTicket({ ...editedTicket, estado: value as Ticket['estado'] });
-  };
 
-  const handleImageUpload = (file: File) => {
-    setNewImage(file);
-  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onUpdateTicketAction(editedTicket, newImage);
-  };
+
+export const TicketDetails = ({ ticket, onCloseAction, onUpdateAction, technicians }: TicketDetailsProps) => {
+  const [editedTicket, setEditedTicket] = useState(ticket)
+
+  const handleChange = (field: keyof Ticket, value: string) => {
+    setEditedTicket({ ...editedTicket, [field]: value })
+  }
+
+  const handleSubmit = () => {
+    onUpdateAction(editedTicket)
+    onCloseAction()
+  }
+
+  const calculateResolutionTime = () => {
+    if (!editedTicket.resolvedAt) return "Not resolved yet"
+    const created = new Date(editedTicket.createdAt)
+    const resolved = new Date(editedTicket.resolvedAt)
+    const diff = resolved.getTime() - created.getTime()
+    const hours = Math.floor(diff / 3600000)
+    const minutes = Math.floor((diff % 3600000) / 60000)
+    return `${hours} hours and ${minutes} minutes`
+  }
 
   return (
-    <Card className="bg-background text-foreground border-foreground border w-full ">
-      <CardHeader>
-        <CardTitle>Detalles del Ticket</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4 ">
-          <div>
-            <Label htmlFor="estudiante" className="text-foreground text-sm ">
-              Estudiante
-            </Label>
-            <Input
-              id="estudiante"
-              name="estudiante"
-              value={editedTicket.estudiante}
-              onChange={handleChange}
-              className="border-input bg-background text-foreground "
-            />
+    <Dialog open={true} onOpenChange={onCloseAction}>
+      <DialogContent className="max-w-3xl w-full p-4">
+        <DialogHeader>
+          <DialogTitle>{editedTicket.title}</DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 py-4 text-white">
+          <div className="grid grid-cols-2 gap-4 text-white">
+            <div>
+              <Label htmlFor="status">Estado</Label>
+              <Select
+                value={editedTicket.status}
+                onValueChange={(value) => handleChange("status", value as Ticket["status"])}
+              >
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pendiente</SelectItem>
+                  <SelectItem value="critical">Crítico</SelectItem>
+                  <SelectItem value="completed">Completado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="priority">Prioridad</Label>
+              <Select
+                value={editedTicket.priority}
+                onValueChange={(value) => handleChange("priority", value as Ticket["priority"])}
+              >
+                <SelectTrigger id="priority">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">Alta</SelectItem>
+                  <SelectItem value="Medium">Media</SelectItem>
+                  <SelectItem value="Low">Baja</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div>
-            <Label htmlFor="asunto" className="text-foreground">
-              Asunto
-            </Label>
-            <Input
-              id="asunto"
-              name="asunto"
-              value={editedTicket.asunto}
-              onChange={handleChange}
-              className="border-input bg-background text-foreground"
-            />
-          </div>
-          <div>
-            <Label htmlFor="descripcion" className="text-foreground">
-              Descripción
-            </Label>
-            <Textarea
-              id="descripcion"
-              name="descripcion"
-              value={editedTicket.descripcion}
-              onChange={handleChange}
-              className="border-input bg-background text-foreground"
-            />
-          </div>
-          <div>
-            <Label htmlFor="estado" className="text-foreground">
-              Estado
-            </Label>
-            <Select
-              onValueChange={handleSelectChange}
-              defaultValue={editedTicket.estado}
-            >
-              <SelectTrigger className="border-input bg-background text-foreground">
-                <SelectValue placeholder="Seleccionar estado" />
+            <Label htmlFor="assignedTo">Asignado a</Label>
+            <Select value={editedTicket.assignedTo || ""} onValueChange={(value) => handleChange("assignedTo", value)}>
+              <SelectTrigger id="assignedTo">
+                <SelectValue placeholder="Assign to..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Abierto">Abierto</SelectItem>
-                <SelectItem value="En Progreso">En Progreso</SelectItem>
-                <SelectItem value="Resuelto">Resuelto</SelectItem>
+                <SelectItem value="unassigned">Sin asignar</SelectItem>
+                {technicians.map((tech) => (
+                  <SelectItem key={tech.id} value={tech.name}>
+                    {tech.name} ({tech.role})
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label className="text-foreground">Imagen del problema</Label>
-            <ImageUpload
-              onImageUpload={handleImageUpload}
-              onImageUploadAction={handleImageUpload}
-              initialImage={editedTicket.imagen}
+            <Label htmlFor="description">Descripción</Label>
+            <Textarea
+              id="description"
+              value={editedTicket.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+              rows={4}
             />
           </div>
-          <div className="flex justify-between">
-            <Button
-              type="submit"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground text-white"
-            >
-              Actualizar Ticket
-            </Button>
-            <Button
-              type="button"
-              onClick={onDeleteTicketAction}
-              variant="destructive"
-            >
-              Eliminar Ticket
-            </Button>
+          <div>
+            <Label htmlFor="image">Imagen del problema</Label>
+            <Input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  const reader = new FileReader()
+                  reader.onloadend = () => {
+                    handleChange("imageUrl", reader.result as string)
+                  }
+                  reader.readAsDataURL(file)
+                }
+              }}
+            />
+            {editedTicket.imageUrl && (
+              <img src={editedTicket.imageUrl || "/placeholder.svg"} alt="Problem" className="mt-2 max-w-full h-auto" />
+            )}
           </div>
-        </form>
-      </CardContent>
-    </Card>
-  );
+          <div>
+            <Label>Tiempo de resolución</Label>
+            <p>{calculateResolutionTime()}</p>
+          </div>
+        </div>
+        <div className="flex justify-end space-x-2 mt-4 text-white ">
+          <Button onClick={onCloseAction} variant="outline">
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit}>Guardar cambios</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 }
+

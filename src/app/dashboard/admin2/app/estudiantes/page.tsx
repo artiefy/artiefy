@@ -98,7 +98,7 @@ export default function Estudiantes() {
 
   return (
     <div className="space-y-6 bg-background p-8 text-foreground">
-      <h2 className="text-3xl font-bold tracking-tight text-white mb-6 sm:mb-8">
+      <h2 className="mb-6 text-3xl font-bold tracking-tight text-white sm:mb-8">
         Gestión de Estudiantes
       </h2>
 
@@ -125,7 +125,7 @@ export default function Estudiantes() {
         ]}
       />
 
-      <div className="flex items-center justify-between space-x-4 bg-white p-6 rounded-lg">
+      <div className="flex items-center justify-between space-x-4 rounded-lg bg-white p-6">
         <Input placeholder="Buscar estudiantes..." className="max-w-sm " />
         <Dialog>
           <DialogTrigger asChild>

@@ -1,147 +1,145 @@
-'use client';
+import { useState } from 'react';
+import {
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from '~/components/admin/ui/dialog';
+import { Button } from '~/components/admin/ui/button';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '~/components/admin/ui/select';
+import { Textarea } from '~/components/admin/ui/textarea';
+import { Label } from '~/components/admin/ui/label';
+import { Input } from '~/components/admin/ui/input';
 
-import { useState, useCallback } from 'react';
-import { X } from 'lucide-react';
+interface NewTicket {
+	title: string;
+	status: 'critical' | 'pending' | 'completed';
+	assignedTo: string | null;
+	priority: 'High' | 'Medium' | 'Low';
+	description: string;
+	imageUrl?: string;
+}
 
 interface CreateTicketFormProps {
 	onClose: () => void;
+	onSubmitAction: (newTicket: NewTicket) => void;
 }
 
-const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onClose }) => {
-	const [formData, setFormData] = useState({
+export const CreateTicketForm = ({
+	onClose,
+	onSubmitAction,
+	
+}: CreateTicketFormProps) => {
+	const [newTicket, setNewTicket] = useState<NewTicket>({
 		title: '',
-		category: '',
+		status: 'pending',
+		assignedTo: null,
 		priority: 'Medium',
 		description: '',
 	});
 
-	const handleChange = useCallback(
-		(
-			e: React.ChangeEvent<
-				HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-			>
-		) => {
-			const { name, value } = e.target;
-			setFormData((prev) => ({ ...prev, [name]: value }));
-		},
-		[]
-	);
+	const handleChange = (field: keyof NewTicket, value: string) => {
+		setNewTicket({ ...newTicket, [field]: value });
+	};
 
-	const handleSubmit = useCallback(
-		(e: React.FormEvent) => {
-			e.preventDefault();
-			console.log('New Ticket:', formData);
-			onClose();
-		},
-		[formData, onClose]
-	);
+	const handleSubmit = () => {
+		onSubmitAction(newTicket);
+		onClose();
+	};
 
 	return (
-		<div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-			<div className="relative w-96 rounded-lg bg-white p-6 shadow-lg dark:bg-gray-900">
-				<button
-					onClick={onClose}
-					className="absolute right-3 top-3 rounded-full p-1 text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
-					aria-label="Close"
-				>
-					<X size={20} />
-				</button>
-				<h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-					Create New Ticket
-				</h2>
-				<form onSubmit={handleSubmit}>
-					<div className="mb-4">
-						<label
-							className="block text-gray-700 dark:text-gray-300"
-							htmlFor="title"
-						>
-							Title
-						</label>
-						<input
-							id="title"
-							type="text"
-							name="title"
-							value={formData.title}
-							onChange={handleChange}
-							className="w-full rounded border p-2 dark:bg-gray-800 dark:text-white text-black"
-							required
-							autoFocus
-							aria-label="Ticket title"
-						/>
-					</div>
-					<div className="mb-4">
-						<label
-							className="block text-black text-gray-700 dark:text-gray-300"
-							htmlFor="category"
-						>
-							Category
-						</label>
-						<input
-							id="category"
-							type="text"
-							name="category"
-							value={formData.category}
-							onChange={handleChange}
-							className="w-full rounded border p-2 text-black dark:bg-gray-800"
-							aria-label="Ticket category"
-						/>
-					</div>
-					<div className="mb-4 ">
-						<label
-							className="block text-gray-700 dark:text-gray-300 "
-							htmlFor="priority"
-						>
-							Priority
-						</label>
-						<select
-							id="priority"
-							name="priority"
-							value={formData.priority}
-							onChange={handleChange}
-							className="w-full rounded border p-2 text-black dark:bg-gray-800"
-							aria-label="Ticket priority"
-						>
-							<option value="Low">Low</option>
-							<option value="Medium">Medium</option>
-							<option value="High">High</option>
-						</select>
-					</div>
-					<div className="mb-4">
-						<label
-							className="block text-black text-gray-700"
-							htmlFor="description"
-						>
-							Description
-						</label>
-						<textarea
-							id="description"
-							name="description"
-							value={formData.description}
-							onChange={handleChange}
-							className="w-full rounded border p-2 dark:bg-gray-800 dark:text-white text-black"
-							rows={3}
-							aria-label="Ticket description"
-						/>
-					</div>
-					<div className="flex justify-end space-x-2">
-						<button
-							type="button"
-							onClick={onClose}
-							className="rounded bg-gray-500 px-4 py-2 text-white transition hover:bg-gray-600"
-						>
-							Cancel
-						</button>
-						<button
-							type="submit"
-							className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
-						>
-							Submit
-						</button>
-					</div>
-				</form>
+		<DialogContent>
+			<DialogHeader>
+				<DialogTitle className="text-white">Crear Nuevo Ticket</DialogTitle>
+			</DialogHeader>
+			<div className="grid w-full max-w-md gap-4 space-y-4 rounded-lg bg-background p-4 py-4 text-sm text-white">
+				<div>
+					<Label htmlFor="title">Título</Label>
+					<Input
+						id="title"
+						value={newTicket.title}
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+							handleChange('title', e.target.value)
+						}
+					/>
+				</div>
+				<div>
+					<Label htmlFor="status">Estado</Label>
+					<Select
+						value={newTicket.status}
+						onValueChange={(value: string) =>
+							handleChange('status', value as NewTicket['status'])
+						}
+					>
+						<SelectTrigger id="status">
+							<SelectValue placeholder="Select status" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="pending">Pendiente</SelectItem>
+							<SelectItem value="critical">Crítico</SelectItem>
+							<SelectItem value="completed">Completado</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+				<div>
+					<Label htmlFor="priority">Prioridad</Label>
+					<Select
+						value={newTicket.priority}
+						onValueChange={(value: string) =>
+							handleChange('priority', value as NewTicket['priority'])
+						}
+					>
+						<SelectTrigger id="priority">
+							<SelectValue placeholder="Select priority" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="High">Alta</SelectItem>
+							<SelectItem value="Medium">Media</SelectItem>
+							<SelectItem value="Low">Baja</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+				<div>
+					<Label htmlFor="description">Descripción</Label>
+					<Textarea
+						id="description"
+						value={newTicket.description}
+						onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+							handleChange('description', e.target.value)
+						}
+						rows={4}
+					/>
+				</div>
+				<div>
+					<Label htmlFor="image">Imagen del problema</Label>
+					<Input
+						id="image"
+						type="file"
+						accept="image/*"
+						onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+							const file: File | undefined = e.target.files?.[0];
+							if (file) {
+								const reader: FileReader = new FileReader();
+								reader.onloadend = () => {
+									handleChange('imageUrl', reader.result as string);
+								};
+								reader.readAsDataURL(file);
+							}
+						}}
+					/>
+				</div>
 			</div>
-		</div>
+			<div className="flex justify-end space-x-2 mt-4 text-white text-sm font-semibold text-right">
+				<Button onClick={onClose} variant="outline">
+					Cancelar
+				</Button>
+				<Button onClick={handleSubmit}>Crear Ticket</Button>
+			</div>
+		</DialogContent>
 	);
 };
-
-export default CreateTicketForm;

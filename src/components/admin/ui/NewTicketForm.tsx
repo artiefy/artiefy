@@ -60,7 +60,10 @@ export function NewTicketForm({ onSubmit }: NewTicketFormProps) {
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="space-y-4">
+		<form
+			onSubmit={handleSubmit}
+			className="grid w-full max-w-md gap-4 space-y-4 py-4"
+		>
 			<div>
 				<Label htmlFor="estudiante" className="text-foreground">
 					Estudiante
@@ -113,7 +116,7 @@ export function NewTicketForm({ onSubmit }: NewTicketFormProps) {
 			</div>
 			<Button
 				type="submit"
-				className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+				className="bg-primary text-primary-foreground text-white hover:bg-primary/90 hover:text-primary-foreground"
 			>
 				Crear Ticket
 			</Button>
