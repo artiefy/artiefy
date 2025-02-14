@@ -7,9 +7,6 @@ import Image from 'next/image';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 
-import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
-import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
-import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
 	Dialog,
@@ -20,6 +17,9 @@ import {
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
+import CategoryDropdown from '~/components/super-admin/layout/CategoryDropdown';
+import DificultadDropdown from '~/components/super-admin/layout/DifiultadDropdown';
+import ModalidadDropdown from '~/components/super-admin/layout/ModalidadDropdown';
 
 interface CourseFormProps {
 	onSubmitAction: (

@@ -131,34 +131,34 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     className={`block rounded-lg p-2 text-gray-600 hover:bg-secondary hover:text-white transition-all duration-300 
                       ${pathname === "/dashboard/super-admin/cursos" ? "bg-primary text-[#01142B]" : ""}`}
                   >
-                    📚 Todos los Cursos
+                    Todos los Cursos
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/dashboard/super-admin/categorias"
+                    href="/dashboard/super-admin/categories"
                     className={`block rounded-lg p-2 text-gray-600 hover:bg-secondary hover:text-white transition-all duration-300 
-                      ${pathname === "/dashboard/super-admin/categorias" ? "bg-primary text-[#01142B]" : ""}`}
+                      ${pathname === "/dashboard/super-admin/categories" ? "bg-primary text-[#01142B]" : ""}`}
                   >
-                    📂 Categorías
+                    Categorías
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/dashboard/super-admin/modalidades"
+                    href="/dashboard/super-admin/modalities"
                     className={`block rounded-lg p-2 text-gray-600 hover:bg-secondary hover:text-white transition-all duration-300 
-                      ${pathname === "/dashboard/super-admin/modalidades" ? "bg-primary text-[#01142B]" : ""}`}
+                      ${pathname === "/dashboard/super-admin/modalities" ? "bg-primary text-[#01142B]" : ""}`}
                   >
-                    🎓 Modalidades
+                    Modalidades
                   </Link>
                 </li>
                 <li>
                   <Link
-                    href="/dashboard/super-admin/dificultades"
+                    href="/dashboard/super-admin/difficulties"
                     className={`block rounded-lg p-2 text-gray-600 hover:bg-secondary hover:text-white transition-all duration-300 
-                      ${pathname === "/dashboard/super-admin/dificultades" ? "bg-primary text-[#01142B]" : ""}`}
+                      ${pathname === "/dashboard/super-admin/difficulties" ? "bg-primary text-[#01142B]" : ""}`}
                   >
-                    🚀 Dificultades
+                    Dificultades
                   </Link>
                 </li>
               </ul>

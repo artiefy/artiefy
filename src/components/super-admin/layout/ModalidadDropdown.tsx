@@ -68,7 +68,7 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
 						const selectedId = Number(e.target.value);
 						setModalidad(selectedId);
 					}}
-					className={`mb-5 w-60 rounded border p-2 outline-hidden ${
+					className={`mb-5 w-60 rounded border p-2 outline-hidden text-[#3AF4EF] bg-background ${
 						errors.modalidad ? 'border-red-500' : 'border-primary'
 					}`}
 				>

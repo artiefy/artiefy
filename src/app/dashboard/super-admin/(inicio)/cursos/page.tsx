@@ -35,7 +35,9 @@ export default function Page() {
 	const [categoryFilter, setCategoryFilter] = useState('');
 	const [totalCourses, setTotalCourses] = useState(0);
 	const [totalStudents, setTotalStudents] = useState(0);
-	const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+	const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+		[]
+	);
 
 	// ✅ Obtener cursos, totales y categorías
 	useEffect(() => {
@@ -54,7 +56,8 @@ export default function Page() {
 
 				// Obtener categorías
 				const categoriesResponse = await fetch('/api/super-admin/categories');
-				if (!categoriesResponse.ok) throw new Error('Error obteniendo categorías');
+				if (!categoriesResponse.ok)
+					throw new Error('Error obteniendo categorías');
 				const categoriesData = await categoriesResponse.json();
 				setCategories(categoriesData);
 			} catch (error) {
@@ -65,9 +68,10 @@ export default function Page() {
 	}, []);
 
 	// ✅ Filtrar cursos por búsqueda y categoría
-	const filteredCourses = courses.filter(course =>
-		course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-		(categoryFilter ? course.categoryid === Number(categoryFilter) : true)
+	const filteredCourses = courses.filter(
+		(course) =>
+			course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+			(categoryFilter ? course.categoryid === Number(categoryFilter) : true)
 	);
 
 	// ✅ Crear o actualizar curso
@@ -93,7 +97,9 @@ export default function Page() {
 				});
 
 				if (!uploadResponse.ok)
-					throw new Error(`Error al subir imagen: ${uploadResponse.statusText}`);
+					throw new Error(
+						`Error al subir imagen: ${uploadResponse.statusText}`
+					);
 
 				const { url, fields } = (await uploadResponse.json()) as {
 					url: string;
@@ -110,7 +116,9 @@ export default function Page() {
 			}
 
 			const instructor =
-				user?.fullName ?? user?.emailAddresses[0]?.emailAddress ?? 'Desconocido';
+				user?.fullName ??
+				user?.emailAddresses[0]?.emailAddress ??
+				'Desconocido';
 
 			if (id) {
 				await updateCourse(Number(id), {
@@ -156,19 +164,19 @@ export default function Page() {
 				</header>
 
 				{/* Totales y Filtros */}
-				<div className="grid grid-cols-3 gap-4 my-4">
-					<div className="bg-white text-black p-6 rounded-lg shadow-md">
+				<div className="my-4 grid grid-cols-3 gap-4">
+					<div className="rounded-lg bg-white p-6 text-black shadow-md">
 						<h2 className="text-lg font-bold">Total de Cursos</h2>
 						<p className="text-3xl">{totalCourses}</p>
 					</div>
-					<div className="bg-white text-black p-6 rounded-lg shadow-md">
+					<div className="rounded-lg bg-white p-6 text-black shadow-md">
 						<h2 className="text-lg font-bold">Estudiantes Inscritos</h2>
 						<p className="text-3xl">{totalStudents}</p>
 					</div>
-					<div className="bg-white text-black p-6 rounded-lg shadow-md">
+					<div className="rounded-lg bg-white p-6 text-black shadow-md">
 						<h2 className="text-lg font-bold">Filtrar por Categoría</h2>
 						<select
-							className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 							value={categoryFilter}
 							onChange={(e) => setCategoryFilter(e.target.value)}
 						>
@@ -183,23 +191,36 @@ export default function Page() {
 				</div>
 
 				{/* Buscador y botón en la parte inferior */}
-				<div className="bg-white text-black p-6 rounded-lg shadow-md flex items-center justify-between my-4">
+				<div className="my-4 flex items-center justify-between rounded-lg p-6 text-black shadow-md">
 					<input
 						type="text"
 						placeholder="Buscar cursos..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 					/>
 
-					<button onClick={() => setIsModalOpen(true)} className="bg-[#01142B] text-white px-6 py-2 rounded-md font-bold shadow-lg hover:bg-[#0097A7]">
+					<button
+						onClick={() => setIsModalOpen(true)}
+						className="rounded-md bg-[#01142B] px-6 py-2 font-bold text-white shadow-lg hover:bg-[#0097A7]"
+					>
 						<FiPlus className="mr-2 size-5" /> Agregar Curso
 					</button>
 				</div>
 
-				<CourseListAdmin courses={filteredCourses} onEditCourse={setEditingCourse} onDeleteCourse={() => {}} />
+				<CourseListAdmin
+					courses={filteredCourses}
+					onEditCourse={setEditingCourse}
+					onDeleteCourse={() => {}}
+				/>
 
-				{isModalOpen && <ModalFormCourse isOpen={isModalOpen} onCloseAction={() => setIsModalOpen(false)} onSubmitAction={handleCreateOrUpdateCourse} />}
+				{isModalOpen && (
+					<ModalFormCourse
+						isOpen={isModalOpen}
+						onCloseAction={() => setIsModalOpen(false)}
+						onSubmitAction={handleCreateOrUpdateCourse}
+					/>
+				)}
 			</div>
 		</SuperAdminLayout>
 	);
