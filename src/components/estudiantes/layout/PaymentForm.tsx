@@ -1,57 +1,95 @@
 'use client';
 
-import React from 'react';
-import '~/styles/form.css'; // Import form.css
-import { Button } from '~/components/estudiantes/ui/button'; // Import Button component
+import React, { useState } from 'react';
+import '~/styles/form.css';
+import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { type FormData, type Product } from '~/types/payu';
 
-interface PaymentFormProps {
-  onSuccess: (message: string) => void;
-  isModalOpen: boolean; // Add isModalOpen prop to track modal state
-  planId: string;
-}
+const PaymentForm: React.FC<{ selectedProduct: Product }> = ({ selectedProduct }) => {
+  const [error, setError] = useState<string | null>(null);
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerFullName, setBuyerFullName] = useState('');
+  const [telephone, setTelephone] = useState('');
+  const [loading, setLoading] = useState(false);
 
-export const PaymentForm: React.FC<PaymentFormProps> = ({ onSuccess }) => {
-  const merchantId = '508029';
-  const accountId = '512321';
-  const description = 'Test PAYU';
-  const referenceCode = 'plan_pro'; // Static reference code for testing
-  const amount = '100000';
-  const tax = '3193';
-  const taxReturnBase = '16806';
-  const currency = 'COP';
-  const signature = 'd04d2ad0e9bec264297f89e9c1acdd9c'; // Static signature for testing
-  const test = '1'; // Changed to 1 for testing
-  const responseUrl = 'http://www.test.com/response';
-  const confirmationUrl = 'http://www.test.com/confirmation';
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === 'buyerEmail') setBuyerEmail(value);
+    if (name === 'buyerFullName') setBuyerFullName(value);
+    if (name === 'telephone') setTelephone(value);
+  };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     event.preventDefault();
-    onSuccess('Redirigiendo a PayU...');
-    const form = document.getElementById('payu-form') as HTMLFormElement;
-    if (form) {
+
+    if (!buyerEmail || !buyerFullName || !telephone) {
+      setError('Please fill in all fields.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/generatePaymentData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: selectedProduct.id,
+          buyerEmail,
+          buyerFullName,
+          telephone,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch form data');
+      }
+
+      const data: FormData = await response.json() as FormData;
+      console.log('Form Data:', data);
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/';
+
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = key;
+          hiddenField.value = data[key as keyof FormData];
+          form.appendChild(hiddenField);
+        }
+      }
+
+      document.body.appendChild(form);
       form.submit();
+    } catch (error) {
+      setError((error as Error).message);
+      setLoading(false);
     }
   };
 
   return (
-    <form id="payu-form" method="post" action="https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/" onSubmit={handleSubmit} className="form">
-      <input name="merchantId" type="hidden" value={merchantId} />
-      <input name="accountId" type="hidden" value={accountId} />
-      <input name="description" type="hidden" value={description} />
-      <input name="referenceCode" type="hidden" value={referenceCode} />
-      <input name="amount" type="hidden" value={amount} />
-      <input name="tax" type="hidden" value={tax} />
-      <input name="taxReturnBase" type="hidden" value={taxReturnBase} />
-      <input name="currency" type="hidden" value={currency} />
-      <input name="signature" type="hidden" value={signature} />
-      <input name="test" type="hidden" value={test} />
-      <input name="responseUrl" type="hidden" value={responseUrl} />
-      <input name="confirmationUrl" type="hidden" value={confirmationUrl} />
-      <input name="buyerEmail" type="hidden" value="test@test.com" />
-
-      <Button type="submit" className="checkout-btn">
-        Enviar
+    <form className="form">
+      <BuyerInfoForm formData={{ buyerEmail, buyerFullName, telephone }} onChange={handleInputChange} />
+      {error && <p className="error">{error}</p>}
+      <Button type="button" className="checkout-btn" onClick={handleSubmit} disabled={loading}>
+        {loading ? (
+          <>
+            <Icons.spinner className="mr-2 text-background" style={{width:'25px', height:'25px'}} /> 
+            <span className="font-bold text-background">Redirigiendo a PayU...</span>
+          </>
+        ) : (
+          'Enviar'
+        )}
       </Button>
     </form>
   );
 };
+
+export default PaymentForm;
