@@ -1,42 +1,72 @@
 import React from 'react';
+import { type FormData } from '~/types/payu';
 
 interface BuyerInfoFormProps {
-	formData: { buyerEmail: string; buyerFullName: string; telephone: string };
+	formData: Pick<FormData, 'buyerEmail' | 'buyerFullName' | 'telephone'>;
 	onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	showErrors: boolean;
+	errors: {
+		buyerEmail?: string;
+		buyerFullName?: string;
+		telephone?: string;
+	};
 }
 
 const BuyerInfoForm: React.FC<BuyerInfoFormProps> = ({
 	formData,
 	onChange,
+	showErrors,
+	errors,
 }) => (
-	<div className="grid grid-cols-1 gap-y-2">
-		<input
-			type="email"
-			name="buyerEmail"
-			placeholder="Enter your email"
-			value={formData.buyerEmail}
-			onChange={onChange}
-			className="input-field"
-			required
-		/>
-		<input
-			type="text"
-			name="buyerFullName"
-			placeholder="Enter your full name"
-			value={formData.buyerFullName}
-			onChange={onChange}
-			className="input-field"
-			required
-		/>
-		<input
-			type="tel"
-			name="telephone"
-			placeholder="Enter your telephone"
-			value={formData.telephone}
-			onChange={onChange}
-			className="input-field"
-			required
-		/>
+	<div className="grid grid-cols-1 gap-y-4">
+		<label className="label">
+			<span className="title">Correo Electrónico</span>
+			<input
+				type="email"
+				name="buyerEmail"
+				placeholder="ejemplo@correo.com"
+				value={formData.buyerEmail}
+				onChange={onChange}
+				className={`input-field ${showErrors && errors.buyerEmail ? 'input-error' : ''}`}
+				required
+				pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+			/>
+			{showErrors && errors.buyerEmail && (
+				<span className="error-message">{errors.buyerEmail}</span>
+			)}
+		</label>
+		<label className="label">
+			<span className="title">Nombre Completo</span>
+			<input
+				type="text"
+				name="buyerFullName"
+				placeholder="Juan Pérez"
+				value={formData.buyerFullName}
+				onChange={onChange}
+				className={`input-field ${showErrors && errors.buyerFullName ? 'input-error' : ''}`}
+				required
+				pattern="[a-zA-Z\s]+"
+			/>
+			{showErrors && errors.buyerFullName && (
+				<span className="error-message">{errors.buyerFullName}</span>
+			)}
+		</label>
+		<label className="label">
+			<span className="title">Teléfono</span>
+			<input
+				type="tel"
+				name="telephone"
+				placeholder="+57 3113333332"
+				value={formData.telephone}
+				onChange={onChange}
+				className={`input-field ${showErrors && errors.telephone ? 'input-error' : ''}`}
+				required
+				pattern="\+57\s[0-9]{10}"
+			/>
+			{showErrors && errors.telephone && (
+				<span className="error-message">{errors.telephone}</span>
+			)}
+		</label>
 	</div>
 );
 
