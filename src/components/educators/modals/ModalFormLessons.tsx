@@ -28,8 +28,6 @@ const ModalFormLessons = ({
 	onCloseAction,
 	courseId,
 }: LessonsFormProps) => {
-	console.log('ModalFormLessons isOpen:', isOpen);
-
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [formData, setFormData] = useState({
 		title: '',

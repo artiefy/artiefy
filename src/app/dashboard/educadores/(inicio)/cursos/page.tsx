@@ -7,7 +7,7 @@ import { FiPlus } from 'react-icons/fi';
 
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
 import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
-import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
+import ModalFormCourse from '~/components/educators/modals/ModalFormCourse2';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -30,6 +30,7 @@ export interface CourseModel {
 	creatorId: string;
 	dificultadid: string; // Add this line
 	requerimientos: string;
+	totalParametros: number; // Add this line
 }
 
 export function LoadingCourses() {
@@ -50,6 +51,15 @@ export default function Page() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [parametrosList, setParametrosList] = useState<
+		{
+			id: number;
+			name: string;
+			description: string;
+			porcentaje: number;
+			entrega: number;
+		}[]
+	>([]);
 
 	const fetchCourses = useCallback(async () => {
 		if (!user) return;
@@ -92,9 +102,11 @@ export default function Page() {
 	}, [user]);
 
 	useEffect(() => {
-		fetchCourses().catch((error) =>
-			console.error('Error fetching courses:', error)
-		);
+		if (user) {
+			fetchCourses().catch((error) =>
+				console.error('Error fetching courses:', error)
+			);
+		}
 	}, [user, fetchCourses]);
 
 	const handleCreateOrEditCourse = async (
@@ -105,7 +117,8 @@ export default function Page() {
 		categoryid: number,
 		modalidadesid: number,
 		dificultadid: number,
-		requerimientos: string
+		requerimientos: string,
+		options?: { signal: AbortSignal }
 	) => {
 		if (!user) return;
 		let coverImageKey = '';
@@ -149,11 +162,13 @@ export default function Page() {
 				coverImageKey = fields.key ?? '';
 			}
 			setUploading(false);
-		} catch (e) {
-			throw new Error(`Error to upload the file type ${(e as Error).message}`);
+		} catch (e: unknown) {
+			const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+			throw new Error(`Error to upload the file type ${errorMessage}`);
 		}
 		const response = await fetch('/api/educadores/courses', {
-			method: editingCourse ? 'PUT' : 'POST',
+			...options,
+			method: 'POST', // Asegúrate de usar 'POST' cuando no estás editando
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				id: editingCourse?.id,
@@ -170,12 +185,51 @@ export default function Page() {
 		});
 
 		if (response.ok) {
+			const responseData = (await response.json()) as { id: number };
+
 			toast({
 				title: editingCourse ? 'Curso actualizado' : 'Curso creado',
 				description: editingCourse
 					? 'El curso se actualizó con éxito'
 					: 'El curso se creó con éxito',
 			});
+
+			// Guardar parámetros en la base de datos
+			for (const parametro of parametrosList) {
+				try {
+					const response = await fetch('/api/educadores/parametros', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							name: parametro.name,
+							description: parametro.description,
+							entrega: parametro.entrega,
+							porcentaje: parametro.porcentaje,
+							courseId: responseData.id, // Asegúrate de pasar el courseId aquí
+						}),
+					});
+
+					if (response.ok) {
+						toast({
+							title: 'Parámetro creado exitosamente',
+							description: 'El parámetro se ha creado exitosamente',
+							variant: 'default',
+						});
+					} else {
+						const errorData = (await response.json()) as { error: string };
+						throw new Error(errorData.error);
+					}
+				} catch (error) {
+					toast({
+						title: 'Error al crear el parámetro',
+						description: `Ha ocurrido un error al crear el parámetro: ${(error as Error).message}`,
+						variant: 'destructive',
+					});
+				}
+			}
+
 			fetchCourses().catch((error) =>
 				console.error('Error fetching courses:', error)
 			);
@@ -194,6 +248,7 @@ export default function Page() {
 
 	const handleCreateCourse = () => {
 		setEditingCourse(null);
+		setParametrosList([]); // Resetear la lista de parámetros al crear un nuevo curso
 		setIsModalOpen(true);
 	};
 
@@ -208,7 +263,7 @@ export default function Page() {
 					<BreadcrumbList>
 						<BreadcrumbItem>
 							<BreadcrumbLink
-								className="hover:text-gray-300"
+								className="text-primary hover:text-gray-300"
 								href="../educadores"
 							>
 								Inicio
@@ -216,7 +271,10 @@ export default function Page() {
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbLink className="hover:text-gray-300" href="/">
+							<BreadcrumbLink
+								className="text-primary hover:text-gray-300"
+								href="/"
+							>
 								Lista de cursos
 							</BreadcrumbLink>
 						</BreadcrumbItem>
@@ -276,24 +334,86 @@ export default function Page() {
 							editingCourseId={editingCourse ? editingCourse.id : null}
 							title={editingCourse?.title ?? ''}
 							setTitle={(title: string) =>
-								setEditingCourse((prev) => (prev ? { ...prev, title } : null))
+								setEditingCourse((prev) =>
+									prev
+										? { ...prev, title }
+										: {
+												id: 0,
+												title,
+												description: '',
+												categoryid: '',
+												modalidadesid: '',
+												createdAt: '',
+												instructor: '',
+												coverImageKey: '',
+												creatorId: '',
+												dificultadid: '',
+												requerimientos: '',
+												totalParametros: 0,
+											}
+								)
 							}
 							description={editingCourse?.description ?? ''}
 							setDescription={(description: string) =>
 								setEditingCourse((prev) =>
-									prev ? { ...prev, description } : null
+									prev
+										? { ...prev, description }
+										: {
+												id: 0,
+												title: '',
+												description,
+												categoryid: '',
+												modalidadesid: '',
+												createdAt: '',
+												instructor: '',
+												coverImageKey: '',
+												creatorId: '',
+												dificultadid: '',
+												requerimientos: '',
+												totalParametros: 0,
+											}
 								)
 							}
 							requerimientos={editingCourse?.requerimientos ?? ''}
 							setRequerimientos={(requerimientos: string) =>
 								setEditingCourse((prev) =>
-									prev ? { ...prev, requerimientos } : null
+									prev
+										? { ...prev, requerimientos }
+										: {
+												id: 0,
+												title: '',
+												description: '',
+												categoryid: '',
+												modalidadesid: '',
+												createdAt: '',
+												instructor: '',
+												coverImageKey: '',
+												creatorId: '',
+												dificultadid: '',
+												requerimientos,
+												totalParametros: 0,
+											}
 								)
 							}
 							categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
 							setCategoryid={(categoryid: number) =>
 								setEditingCourse((prev) =>
-									prev ? { ...prev, categoryid: String(categoryid) } : null
+									prev
+										? { ...prev, categoryid: String(categoryid) }
+										: {
+												id: 0,
+												title: '',
+												description: '',
+												categoryid: String(categoryid),
+												modalidadesid: '',
+												createdAt: '',
+												instructor: '',
+												coverImageKey: '',
+												creatorId: '',
+												dificultadid: '',
+												requerimientos: '',
+												totalParametros: 0,
+											}
 								)
 							}
 							modalidadesid={Number(editingCourse?.modalidadesid) ?? 0}
@@ -301,21 +421,69 @@ export default function Page() {
 								setEditingCourse((prev) =>
 									prev
 										? { ...prev, modalidadesid: String(modalidadesid) }
-										: null
+										: {
+												id: 0,
+												title: '',
+												description: '',
+												categoryid: '',
+												modalidadesid: String(modalidadesid),
+												createdAt: '',
+												instructor: '',
+												coverImageKey: '',
+												creatorId: '',
+												dificultadid: '',
+												requerimientos: '',
+												totalParametros: 0,
+											}
 								)
 							}
 							dificultadid={Number(editingCourse?.dificultadid) ?? 0}
 							setDificultadid={(dificultadid: number) =>
 								setEditingCourse((prev) =>
-									prev ? { ...prev, dificultadid: String(dificultadid) } : null
+									prev
+										? { ...prev, dificultadid: String(dificultadid) }
+										: {
+												id: 0,
+												title: '',
+												description: '',
+												categoryid: '',
+												modalidadesid: '',
+												createdAt: '',
+												instructor: '',
+												coverImageKey: '',
+												creatorId: '',
+												dificultadid: String(dificultadid),
+												requerimientos: '',
+												totalParametros: 0,
+											}
 								)
 							}
 							coverImageKey={editingCourse?.coverImageKey ?? ''}
 							setCoverImageKey={(coverImageKey: string) =>
 								setEditingCourse((prev) =>
-									prev ? { ...prev, coverImageKey } : null
+									prev
+										? { ...prev, coverImageKey }
+										: {
+												id: 0,
+												title: '',
+												description: '',
+												categoryid: '',
+												modalidadesid: '',
+												createdAt: '',
+												instructor: '',
+												coverImageKey,
+												creatorId: '',
+												dificultadid: '',
+												requerimientos: '',
+												totalParametros: 0,
+											}
 								)
 							}
+							parametros={parametrosList.map((parametro, index) => ({
+								...parametro,
+								id: index,
+							}))}
+							setParametrosAction={setParametrosList}
 							isOpen={isModalOpen}
 							onCloseAction={handleCloseModal}
 						/>

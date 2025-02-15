@@ -116,7 +116,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 						<div key={index} className="group relative size-full">
 							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 							<Card
-								className="relative z-20 flex flex-col border-transparent bg-black hover:scale-100"
+								className="relative z-20 flex h-dvh flex-col border-transparent bg-black hover:scale-100" // Añadir h-80 para altura fija
 								style={{
 									backgroundColor: selectedColor,
 									color: getContrastYIQ(selectedColor),
@@ -126,7 +126,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 									<Image
 										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`}
 										alt={actividad.name || 'Imagen del curso'}
-										className={`relative mx-auto h-auto w-40 rounded-lg object-cover transition-opacity duration-500`}
+										className={`relative mx-auto w-40 rounded-lg object-cover transition-opacity duration-500`}
 										height={150}
 										width={150}
 										quality={75}

@@ -79,6 +79,8 @@ export const activities = pgTable('activities', {
 		.references(() => lessons.id)
 		.notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+	pesoNota: integer('peso_nota'),
+	revisada: boolean('revisada').default(false),
 });
 
 // Tabla de preferencias
@@ -273,6 +275,33 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 	progress: real('progress').default(0).notNull(),
 	isCompleted: boolean('is_completed').default(false).notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+});
+
+//Tabla de sistema de tickets
+export const tickets = pgTable('tickets', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	comments: varchar('comments', { length: 255 }).notNull(),
+	description: text('description').notNull(),
+	estado: boolean('estado').default(false).notNull(),
+	email: text('email').notNull(),
+	coverImageKey: text('cover_image_key'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+//Tabla de parametros
+export const parametros = pgTable('parametros', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: text('description').notNull(),
+	entrega: integer('entrega').notNull(),
+	porcentaje: integer('porcentaje').notNull(),
+	courseId: integer('course_id')
+		.references(() => courses.id)
+		.notNull(),
 });
 
 // Relaciones

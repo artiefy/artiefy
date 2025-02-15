@@ -106,10 +106,13 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
 		<>
 			<div className="flex flex-col gap-4">
 				{actividades.map((actividad, index) => (
-					<div key={index} className="group relative size-full">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div
+						key={index}
+						className="group relative size-full border-black shadow-2xl"
+					>
+						{/* <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div> */}
 						<Card
-							className="relative z-20 grid grid-cols-1 border-transparent bg-black p-3 hover:scale-100 md:grid-cols-2 lg:grid-cols-2"
+							className="relative z-20 flex flex-wrap space-y-2 border-transparent bg-black p-2 py-1 hover:scale-100 md:grid-cols-2 lg:flex lg:grid-cols-2"
 							style={{
 								backgroundColor: selectedColor,
 								color: getContrastYIQ(selectedColor),
@@ -119,21 +122,21 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
 								<Image
 									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`}
 									alt="Actividad"
-									className="mt-5 h-40 w-full rounded-t-lg object-cover"
+									className="mx-auto mt-8 h-20 w-full items-center justify-center rounded-lg object-contain"
 									width={300}
 									height={200}
 									quality={100}
 								/>
 							</div>
 							<CardContent
-								className={`${
+								className={`p-2 ${
 									selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 								}`}
 							>
 								<CardTitle className="text-lg">
 									<div className="font-bold">Actividad: {actividad.name}</div>
 								</CardTitle>
-								<div className="my-2 flex flex-col space-y-2">
+								<div className="flex flex-col space-y-2">
 									<p className="text-sm font-bold">
 										Clase: {actividad.lessonsId.title}
 									</p>
@@ -144,12 +147,12 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
 										Tipo de actividad: {actividad.type.name}
 									</p>
 								</div>
-								<Button className="group relative mx-auto inline-flex flex-col overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95">
+								<Button className="mt-2 border-none p-0">
 									<Link
-										className="w-full"
 										href={`/dashboard/educadores/cursos/${courseId}/${lessonIdString}/actividades/${actividad.id}`}
+										className="group/button relative inline-flex w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-orange-400 p-2 text-black active:scale-95"
 									>
-										<p>Ver actividad</p>
+										<p className="font-bold">Ver actividad</p>
 										<ArrowRightIcon className="animate-bounce-right size-5" />
 										<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
 											<div className="relative h-full w-10 bg-white/30"></div>

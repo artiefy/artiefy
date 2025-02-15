@@ -49,7 +49,6 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
-	console.log(courseId);
 
 	const courseIdString = courseId.toString();
 

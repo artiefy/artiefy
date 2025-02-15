@@ -202,6 +202,48 @@ export async function getForumByUserId(userId: string) {
 	}
 }
 
+// Obtener todos los foros
+export async function getAllForums() {
+	try {
+		const forumsRecords = await db
+			.select({
+				id: forums.id,
+				courseId: forums.courseId,
+				title: forums.title,
+				description: forums.description,
+				userId: forums.userId,
+				courseTitle: courses.title,
+				courseDescription: courses.description,
+				courseInstructor: courses.instructor,
+				courseCoverImageKey: courses.coverImageKey,
+				userName: users.name,
+			})
+			.from(forums)
+			.leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
+			.leftJoin(users, eq(forums.userId, users.id)); // Unir con la tabla de usuarios
+
+		return forumsRecords.map((forum) => ({
+			id: forum.id,
+			courseId: {
+				id: forum.courseId,
+				title: forum.courseTitle,
+				descripcion: forum.courseDescription,
+				instructor: forum.courseInstructor,
+				coverImageKey: forum.courseCoverImageKey,
+			},
+			userId: {
+				id: forum.userId,
+				name: forum.userName ?? '',
+			},
+			title: forum.title,
+			description: forum.description ?? '',
+		}));
+	} catch (error: unknown) {
+		console.error(error);
+		return [];
+	}
+}
+
 //delete forum by id
 export async function deleteForumById(forumId: number) {
 	// Primero elimina los registros relacionados en la tabla 'posts'
@@ -212,7 +254,29 @@ export async function deleteForumById(forumId: number) {
 
 //delete forum by course id
 export async function deleteForumByCourseId(courseId: number) {
-	await db.delete(posts).where(eq(posts.forumId, courseId));
+	// Obtener todos los foros relacionados con el courseId
+	const forumsToDelete = await db
+		.select({ id: forums.id })
+		.from(forums)
+		.where(eq(forums.courseId, courseId));
+
+	for (const forum of forumsToDelete) {
+		// Obtener todos los posts relacionados con el forumId
+		const postsToDelete = await db
+			.select({ id: posts.id })
+			.from(posts)
+			.where(eq(posts.forumId, forum.id));
+
+		// Eliminar primero las entradas en la tabla postReplies que hacen referencia a los posts
+		for (const post of postsToDelete) {
+			await db.delete(postReplies).where(eq(postReplies.postId, post.id));
+		}
+
+		// Luego eliminar las entradas en la tabla posts que hacen referencia al forumId
+		await db.delete(posts).where(eq(posts.forumId, forum.id));
+	}
+
+	// Finalmente, eliminar las entradas en la tabla forums
 	await db.delete(forums).where(eq(forums.courseId, courseId));
 }
 

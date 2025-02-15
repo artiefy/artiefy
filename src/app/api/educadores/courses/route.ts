@@ -1,6 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
-
 import {
 	createCourse,
 	deleteCourse,
@@ -33,14 +32,21 @@ async function ensureUserExists(userId: string) {
 	}
 }
 
-// GET endpoint para obtener cursos
-export async function GET(req: Request) {
+// GET endpoint para obtener un curso por su ID
+export async function GET(req: NextRequest) {
 	const { searchParams } = new URL(req.url);
+	const courseId = searchParams.get('courseId');
 	const userId = searchParams.get('userId');
 
 	try {
 		let courses;
-		if (userId) {
+		if (courseId) {
+			const course = await getCourseById(parseInt(courseId));
+			if (!course) {
+				return respondWithError('Curso no encontrado', 404);
+			}
+			courses = course;
+		} else if (userId) {
 			courses = await getCoursesByUserId(userId);
 		} else {
 			courses = await getAllCourses();
@@ -55,7 +61,6 @@ export async function GET(req: Request) {
 	}
 }
 
-// POST endpoint para crear cursos
 export async function POST(request: NextRequest) {
 	try {
 		const { userId } = await auth();
@@ -98,7 +103,7 @@ export async function POST(request: NextRequest) {
 		} = body;
 
 		console.log(`CreatorID en api route ${creatorId}`);
-		await createCourse({
+		const courseId = await createCourse({
 			title,
 			description,
 			creatorId: userId,
@@ -122,7 +127,12 @@ export async function POST(request: NextRequest) {
 			requerimientos,
 		});
 
-		return NextResponse.json({ message: 'Curso creado exitosamente' });
+		const id = courseId.id;
+
+		return NextResponse.json({
+			message: 'Curso creado exitosamente',
+			id,
+		});
 	} catch (error: unknown) {
 		console.error('Error al crear el curso:', error);
 		const errorMessage =

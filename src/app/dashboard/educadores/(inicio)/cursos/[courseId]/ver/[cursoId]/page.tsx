@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -174,9 +175,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
 	};
 
-	const navigateToLesson = (lessonId: number) => {
-		window.location.href = `/dashboard/educadores/cursos/${courseIdNumber}/lecciones/${lessonId}`;
-	};
+	// const navigateToLesson = (lessonId: number) => {
+	// 	window.location.href = `/dashboard/educadores/cursos/${courseIdNumber}/lecciones/${lessonId}`;
+	// };
 
 	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
@@ -437,6 +438,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 							</div>
 						</div>
 					</div>
+					<Link
+						href={'#'}
+						onClick={() => window.history.back()}
+						className="group/button relative inline-flex w-1/2 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-blue-500 p-2 px-4 text-white hover:bg-blue-700 active:scale-95"
+					>
+						<ArrowLeftIcon className="animate-bounce-right size-5" />
+						<p className="font-bold">Volver</p>
+						<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+							<div className="relative h-full w-10 bg-white/30"></div>
+						</div>
+					</Link>
 				</Card>
 			</div>
 		</div>

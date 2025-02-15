@@ -1,27 +1,31 @@
 'use client';
-
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
 import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
-import type { Question, Option } from '~/types/typesActi';
+import { Progress } from '~/components/educators/ui/progress';
+import { toast } from '~/hooks/use-toast';
+import type { Question, OptionOM } from '~/types/typesActi';
 
 interface QuestionFormProps {
 	activityId: number;
 	questionToEdit?: Question;
-	onSubmit: (question: Question) => void;
+	onSubmit: (questions: Question) => void;
 	onCancel?: () => void;
+	isUploading: boolean;
 }
 
 const QuestionForm: React.FC<QuestionFormProps> = ({
+	activityId,
 	questionToEdit,
 	onSubmit,
 	onCancel,
+	isUploading,
 }) => {
 	const [questionText, setQuestionText] = useState(questionToEdit?.text ?? '');
-	const [options, setOptions] = useState<Option[]>(
+	const [options, setOptions] = useState<OptionOM[]>(
 		questionToEdit?.options ??
 			Array(4)
 				.fill(null)
@@ -30,25 +34,73 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 	const [correctOptionId, setCorrectOptionId] = useState(
 		questionToEdit?.correctOptionId ?? ''
 	);
+	const [isUploading2, setIsUploading] = useState(false);
+	const [uploadProgress, setUploadProgress] = useState(0);
 
 	useEffect(() => {
 		if (questionToEdit) {
 			setQuestionText(questionToEdit.text);
-			setOptions(questionToEdit.options);
+			setOptions(questionToEdit.options ?? []);
 			setCorrectOptionId(questionToEdit.correctOptionId);
+		} else {
+			setQuestionText('');
+			setOptions(
+				Array(4)
+					.fill(null)
+					.map(() => ({ id: crypto.randomUUID(), text: '' }))
+			);
+			setCorrectOptionId('');
 		}
 	}, [questionToEdit]);
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (questionText && options.length === 4 && correctOptionId) {
-			const question: Question = {
-				id: questionToEdit?.id ?? crypto.randomUUID(),
-				text: questionText,
-				options,
-				correctOptionId,
+	const handleSubmit = async (questions: Question) => {
+		const method = questionToEdit ? 'PUT' : 'POST';
+		setIsUploading(true);
+		setUploadProgress(0);
+		const interval = setInterval(() => {
+			setUploadProgress((prev) => {
+				if (prev >= 100) {
+					clearInterval(interval);
+					return 100;
+				}
+				return prev + 10;
+			});
+		}, 500);
+
+		try {
+			const response = await fetch('/api/educadores/question/opcionMulti', {
+				method,
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					activityId,
+					questions: { ...questions },
+				}),
+			});
+			const data: { message?: string } = (await response.json()) as {
+				message?: string;
 			};
-			onSubmit(question);
+			if (response.ok) {
+				toast({
+					title: 'Pregunta guardada',
+					description: 'La pregunta se guardó correctamente',
+				});
+				onSubmit(questions);
+			} else {
+				toast({
+					title: 'Error',
+					description: data.message ?? 'Error al guardar la pregunta',
+					variant: 'destructive',
+				});
+			}
+		} catch (error) {
+			console.error('Error al guardar la pregunta:', error);
+			toast({
+				title: 'Error',
+				description: `Error al guardar la pregunta: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				variant: 'destructive',
+			});
+		} finally {
+			setIsUploading(false);
 		}
 	};
 
@@ -71,25 +123,50 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 		}
 	};
 
+	useEffect(() => {
+		if (isUploading2) {
+			setUploadProgress(0);
+			const interval = setInterval(() => {
+				setUploadProgress((prev) => {
+					if (prev >= 100) {
+						clearInterval(interval);
+						return 100;
+					}
+					return prev + 10; // Incrementar de 10 en 10
+				});
+			}, 500);
+
+			return () => clearInterval(interval);
+		}
+	}, [isUploading2]);
+
 	return (
 		<form
-			onSubmit={handleSubmit}
+			onSubmit={async (e) => {
+				e.preventDefault();
+				await handleSubmit({
+					id: questionToEdit?.id ?? crypto.randomUUID(),
+					text: questionText,
+					options,
+					correctOptionId,
+				});
+			}}
 			className="space-y-6 rounded-lg bg-white p-6 shadow-md"
 		>
 			<div>
 				<Label
-					htmlFor="question"
+					htmlFor="questions"
 					className="block text-lg font-medium text-gray-700"
 				>
 					Pregunta
 				</Label>
 				<textarea
-					id="question"
+					id="questions"
 					value={questionText}
 					onChange={(e) => setQuestionText(e.target.value)}
 					placeholder="Escribe tu pregunta aquí"
 					required
-					className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+					className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none focus:border-indigo-500 focus:ring-indigo-500"
 				/>
 			</div>
 			<div className="space-y-4">
@@ -112,14 +189,14 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 							onChange={(e) => handleOptionChange(option.id, e.target.value)}
 							placeholder={`Opción ${index + 1}`}
 							required
-							className="flex-1 rounded-md border border-gray-300 p-2 text-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+							className="flex-1 rounded-md border border-gray-300 p-2 text-black shadow-sm"
 						/>
 						<Button
 							type="button"
 							onClick={() => handleRemoveOption(option.id)}
 							variant="outline"
 							size="icon"
-							className="text-red-600 hover:text-red-800"
+							className="text-white hover:text-red-500"
 						>
 							<X className="size-5" />
 						</Button>
@@ -130,26 +207,34 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 						type="button"
 						onClick={handleAddOption}
 						variant="outline"
-						className="flex w-full items-center justify-center rounded-md border border-gray-300 p-2 text-indigo-600 shadow-sm hover:bg-indigo-50"
+						className="mx-auto flex w-2/5 items-center justify-center rounded-md border border-gray-300 bg-slate-100 p-2 text-black shadow-sm hover:bg-indigo-50"
 					>
 						<Plus className="mr-2 size-5" /> Agregar opción
 					</Button>
 				)}
 			</div>
+			{isUploading && (
+				<div className="my-1">
+					<Progress value={uploadProgress} className="w-full" />
+					<p className="mt-2 text-center text-sm text-gray-500">
+						{uploadProgress}% Completado
+					</p>
+				</div>
+			)}
 			<div className="flex justify-end space-x-2">
 				{onCancel && (
 					<Button
 						type="button"
 						onClick={onCancel}
 						variant="outline"
-						className="horver:bg-gray-500 text-gray-100 hover:text-gray-800"
+						className="text-gray-100 hover:text-gray-800"
 					>
 						Cancelar
 					</Button>
 				)}
 				<Button
 					type="submit"
-					className="bg-indigo-600 text-white hover:bg-indigo-700"
+					className="border-none bg-green-400 text-white hover:bg-green-500"
 				>
 					{questionToEdit ? 'Actualizar' : 'Crear'} Pregunta
 				</Button>

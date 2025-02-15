@@ -1,31 +1,8 @@
-export interface Word {
+export interface OptionOM {
+	id: string;
 	text: string;
-	found: boolean;
-	clue: string;
-	startX: number;
-	startY: number;
-	direction: 'across' | 'down';
 }
-
-export interface WordCruci {
-	word: string;
-	clue: string;
-	startX: number;
-	startY: number;
-	direction: 'across' | 'down';
-	text: string;
-	found: boolean;
-}
-
-export interface WordSearchConfig {
-	words: Word[];
-	timeLimit: number;
-	gridSize: number;
-	isTimerEnabled: boolean;
-	points: number;
-}
-
-export interface Option {
+export interface OptionVOF {
 	id: string;
 	text: string;
 }
@@ -33,17 +10,26 @@ export interface Option {
 export interface Question {
 	id: string;
 	text: string;
-	options: Option[];
+	options: OptionOM[];
 	correctOptionId: string;
 }
 
-export interface QuizConfig {
-	points: number;
-	timeLimit: number;
-	isTimerEnabled: boolean;
+export interface VerdaderoOFlaso {
+	id: string;
+	text: string;
+	correct: boolean;
+	options: OptionVOF[];
+	correctOptionId: string;
 }
 
-export interface CrosswordConfig {
-	words: Word[];
-	timeLimit: number;
+export interface Completado {
+	id: string;
+	text: string;
+	palabra: string;
+}
+
+export interface QuestionFilesSubida {
+	id: string;
+	text: string;
+	parametros: string;
 }

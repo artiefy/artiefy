@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { useRouter, useSearchParams, useParams } from 'next/navigation'; // Cambiar la importación de useRouter
-
+import SelectParametro from '~/components/educators/layout/SelectParametro';
 import TypeActDropdown from '~/components/educators/layout/TypesActDropdown';
 import {
 	AlertDialog,
@@ -38,33 +39,142 @@ const getContrastYIQ = (hexcolor: string) => {
 	return yiq >= 128 ? 'black' : 'white';
 };
 
+interface Course {
+	id: number;
+	title: string;
+	description: string;
+	categoryid: string;
+	dificultadid: string;
+	modalidadesid: string;
+	instructor: string;
+	coverImageKey: string;
+	creatorId: string;
+	createdAt: string;
+	updatedAt: string;
+	requerimientos: string;
+	totalParametros: number;
+}
+
+interface Parametros {
+	id: number;
+	name: string;
+	description: string;
+	entrega: number;
+	porcentaje: number;
+	courseId: number;
+	typeid: number;
+}
+
 const Page: React.FC = () => {
+	const { user } = useUser();
 	const params = useParams();
 	const cursoIdUrl = params?.courseId;
 	const searchParams = useSearchParams();
 	const lessonsId = searchParams?.get('lessonId');
-	const [modalidadesid, setModalidadesid] = useState(0);
 	const [isUploading, setIsUploading] = useState(false);
 	const [errors, setErrors] = useState({
 		name: false,
 		description: false,
 		type: false,
+		pesoNota: false,
+		parametro: false,
 	});
 	const [uploadProgress, setUploadProgress] = useState(0);
+	const [course, setCourse] = useState<Course | null>(null);
 	const [formData, setFormData] = useState({
+		id: 0,
 		name: '',
 		description: '',
 		type: '',
+		pesoNota: 0,
+		revisada: false,
+		parametro: 0,
 	});
-	const router = useRouter(); // Usar useRouter de next/navigation
-	const [color, setColor] = useState<string>('#FFFFFF');
-
 	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl;
 	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
 	const cursoIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
-	console.log(
-		`cursoIdString: ${cursoIdString}, courseIdNumber: ${courseIdNumber}`
-	);
+	const [parametros, setParametros] = useState<Parametros[]>([]); // Restaurar setParametros
+	const router = useRouter(); // Usar useRouter de next/navigation
+	const [color, setColor] = useState<string>('#FFFFFF');
+	const [isActive, setIsActive] = useState(false);
+	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
+	const [showErrors, setShowErrors] = useState(false);
+
+	useEffect(() => {
+		const fetchParametros = async () => {
+			try {
+				const response = await fetch(
+					`/api/educadores/parametros?courseId=${courseIdNumber}`
+				);
+				if (response.ok) {
+					const data = (await response.json()) as Parametros[];
+					setParametros(data);
+				} else {
+					const errorData = await response.text();
+					throw new Error(`Error al obtener los parámetros: ${errorData}`);
+				}
+			} catch (error) {
+				console.error('Error detallado:', error);
+			}
+		};
+
+		if (courseIdNumber) {
+			fetchParametros().catch((error) =>
+				console.error('Error fetching parametros:', error)
+			);
+		}
+	}, [courseIdNumber]);
+
+	const handleParametroChange = (parametroId: number) => {
+		const selectedParametro = parametros.find(
+			(param: Parametros) => param.id === parametroId
+		);
+		if (selectedParametro) {
+			setFormData((prevFormData) => ({
+				...prevFormData,
+				parametro: selectedParametro.id,
+				name: selectedParametro.name,
+				description: selectedParametro.description,
+				pesoNota: selectedParametro.porcentaje,
+			}));
+		}
+	};
+
+	const handleToggle = () => {
+		setIsActive((prevIsActive) => {
+			const newIsActive = !prevIsActive;
+			if (newIsActive && formData.parametro) {
+				const selectedParametro = parametros.find(
+					(param: Parametros) => param.id === formData.parametro
+				);
+				if (selectedParametro) {
+					setFormData((prevFormData) => ({
+						...prevFormData,
+						revisada: true,
+						name: selectedParametro.name,
+						description: selectedParametro.description,
+						pesoNota: selectedParametro.porcentaje,
+					}));
+				}
+			} else {
+				setFormData((prevFormData) => ({
+					...prevFormData,
+					revisada: false,
+					name: '',
+					description: '',
+					pesoNota: 0,
+				}));
+			}
+			if (!newIsActive) {
+				setShowLongevidadForm(false); // Ocultar el formulario de longevidad si se desactiva
+			}
+			return newIsActive;
+		});
+	};
+
+	const handleLongevidadClick = () => {
+		setShowLongevidadForm(true);
+	};
 
 	if (!lessonsId || !cursoIdNumber) {
 		return <p>Cargando parametros...</p>;
@@ -78,16 +188,59 @@ const Page: React.FC = () => {
 		console.log(`Color guardado actividad: ${savedColor}`);
 	}, [courseIdNumber]);
 
+	const fetchCourse = useCallback(async () => {
+		if (!user) return;
+		if (courseIdNumber !== null) {
+			try {
+				const response = await fetch(
+					`/api/educadores/courses/${courseIdNumber}`
+				);
+
+				if (response.ok) {
+					const data = (await response.json()) as Course;
+					setCourse(data);
+				} else {
+					const errorData = (await response.json()) as { error?: string };
+					const errorMessage = errorData.error ?? response.statusText;
+					toast({
+						title: 'Error',
+						description: `No se pudo cargar el curso: ${errorMessage}`,
+						variant: 'destructive',
+					});
+				}
+			} catch (error: unknown) {
+				const errorMessage =
+					error instanceof Error ? error.message : 'Error desconocido';
+				toast({
+					title: 'Error',
+					description: `No se pudo cargar el curso: ${errorMessage}`,
+					variant: 'destructive',
+				});
+			}
+		}
+	}, [user, courseIdNumber]);
+
+	useEffect(() => {
+		fetchCourse().catch((error) =>
+			console.error('Error fetching course:', error)
+		);
+	}, [fetchCourse]);
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsUploading(true);
+		setShowErrors(true); // Mostrar errores después de intentar enviar el formulario
 		try {
 			// Validar campos después de establecer las claves de los archivos
 			const newErrors = {
 				name: !formData.name,
 				description: !formData.description,
 				type: !formData.type,
+				pesoNota: showLongevidadForm && !formData.pesoNota,
+				parametro: showLongevidadForm && !formData.parametro,
 			};
+
+			console.log(newErrors);
 
 			if (Object.values(newErrors).some((error) => error) || !lessonsId) {
 				setErrors(newErrors);
@@ -99,8 +252,14 @@ const Page: React.FC = () => {
 				setIsUploading(false);
 				return;
 			}
+			if (formData) {
+				console.log(formData);
+			}
 
-			const response = await fetch('/api/educadores/actividades', {
+			let actividadId: number | null = null;
+
+			// Guardar en la tabla actividades
+			const actividadResponse = await fetch('/api/educadores/actividades', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -108,28 +267,74 @@ const Page: React.FC = () => {
 					description: formData.description,
 					typeid: parseInt(formData.type, 10), // Asegurarse de que typeid sea un entero
 					lessonsId: parseInt(lessonsId, 10), // Asegurarse de que lessonsId sea un entero
+					pesoNota: formData.pesoNota, // Usar formData.pesoNota
+					revisada: formData.revisada, // Usar formData.revisada
 				}),
 			});
 
-			if (response.ok) {
-				const responseData = (await response.json()) as { id: number };
-				const actividadId = responseData.id; // Suponiendo que el backend devuelve el ID de la actividad creada
+			if (actividadResponse.ok) {
+				const actividadData = (await actividadResponse.json()) as {
+					id: number;
+				};
+				actividadId = actividadData.id; // Suponiendo que el backend devuelve el ID de la actividad creada
 				console.log(`Datos enviados al backend ${JSON.stringify(formData)}`);
 				toast({
 					title: 'Actividad creada',
 					description: 'La actividad se creó con éxito.',
 				});
-				router.push(
-					`/dashboard/educadores/cursos/${cursoIdNumber}/${lessonsId}/actividades/${actividadId}`
-				);
 			} else {
-				const errorData = (await response.json()) as { error?: string };
+				const errorData = (await actividadResponse.json()) as {
+					error?: string;
+				};
 				toast({
 					title: 'Error',
 					description: errorData.error ?? 'Error al crear la actividad.',
 					variant: 'destructive',
 				});
+				setIsUploading(false);
+				return;
 			}
+
+			// Si la actividad es revisada, actualizar el parámetro
+			if (formData.revisada && formData.parametro) {
+				const parametroResponse = await fetch(
+					`/api/educadores/parametros/${formData.id}`,
+					{
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							name: formData.name,
+							description: formData.description,
+							entrega: formData.pesoNota,
+							porcentaje: formData.pesoNota,
+							typeid: parseInt(formData.type, 10),
+							courseId: courseIdNumber,
+						}),
+					}
+				);
+
+				if (parametroResponse.ok) {
+					toast({
+						title: 'Parámetro actualizado',
+						description: 'El parámetro se actualizó con éxito.',
+					});
+				} else {
+					const errorData = (await parametroResponse.json()) as {
+						error?: string;
+					};
+					toast({
+						title: 'Error',
+						description: errorData.error ?? 'Error al actualizar el parámetro.',
+						variant: 'destructive',
+					});
+					setIsUploading(false);
+					return;
+				}
+			}
+
+			router.push(
+				`/dashboard/educadores/cursos/${cursoIdNumber}/${lessonsId}/actividades/${actividadId}`
+			);
 		} catch (e) {
 			if ((e as Error).name === 'AbortError') {
 				console.log('Upload cancelled');
@@ -166,10 +371,10 @@ const Page: React.FC = () => {
 	return (
 		<>
 			<Breadcrumb>
-				<BreadcrumbList className="flex space-x-2 text-lg">
+				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href="/dashboard/educadores"
 						>
 							Inicio
@@ -178,7 +383,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href="/dashboard/educadores/cursos"
 						>
 							Lista de cursos
@@ -187,7 +392,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 						>
 							Detalles curso
@@ -198,14 +403,14 @@ const Page: React.FC = () => {
 						<BreadcrumbLink
 							href="#"
 							onClick={() => window.history.back()}
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 						>
 							Lession:
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
-						<BreadcrumbLink className="hover:text-gray-300">
+						<BreadcrumbLink className="text-primary hover:text-gray-300">
 							Creacion de actividad:
 						</BreadcrumbLink>
 					</BreadcrumbItem>
@@ -227,10 +432,92 @@ const Page: React.FC = () => {
 								width={70}
 								height={70}
 							/>
-							<h2 className="mt-5 text-center text-3xl font-semibold">
+							<h2 className="mt-5 flex flex-col text-start text-3xl font-semibold">
 								Creacion de actividad
+								<p className="text-sm">En el curso: {course?.title}</p>
 							</h2>
 						</div>
+						<div className="flex flex-col">
+							<p>La actividad revisada?:</p>
+							<div className="flex space-x-2">
+								<label
+									htmlFor="toggle"
+									className="relative inline-block h-8 w-16"
+								>
+									<input
+										type="checkbox"
+										id="toggle"
+										checked={isActive}
+										onChange={handleToggle} // Eliminar el atributo value
+										className="absolute size-0"
+									/>
+									<span
+										className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${isActive ? 'bg-gray-300' : 'bg-red-500'}`}
+									>
+										<span
+											className={`absolute left-1 top-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
+										></span>
+									</span>
+								</label>
+								<span className="mt-1 text-sm text-gray-400">
+									{isActive ? 'Si' : 'No'}
+								</span>
+							</div>
+						</div>
+						{isActive && (
+							<>
+								<div className="my-4">
+									<Button
+										onClick={handleLongevidadClick}
+										className="border-none bg-blue-500 text-white hover:bg-blue-500/90"
+									>
+										Asignar un parametro de evaluacion
+									</Button>
+								</div>
+								{showLongevidadForm && (
+									<div className="my-4">
+										<div className="flex flex-col">
+											<SelectParametro
+												courseId={cursoIdNumber}
+												parametro={formData.parametro ?? 0}
+												setParametro={handleParametroChange}
+												errors={errors}
+											/>
+											<Label
+												htmlFor="pesoNota"
+												className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+											>
+												Peso de la nota en el curso (0-100 en porcentaje %):
+											</Label>
+											<div>
+												<Input
+													value={formData.pesoNota}
+													className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+													type="number"
+													id="percentage"
+													name="pesoNota"
+													min="0"
+													max="100"
+													step="1"
+													placeholder="0-100"
+													onChange={(e) =>
+														setFormData({
+															...formData,
+															pesoNota: parseFloat(e.target.value),
+														})
+													}
+												/>
+											</div>
+											{showErrors && errors.pesoNota && (
+												<p className="mt-1 text-sm text-red-500">
+													El porcentaje de actividad es requerido.
+												</p>
+											)}
+										</div>
+									</div>
+								)}
+							</>
+						)}
 						<Label
 							className={`mb-2 text-xl text-black ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						>
@@ -245,6 +532,11 @@ const Page: React.FC = () => {
 								setFormData({ ...formData, name: e.target.value })
 							}
 						/>
+						{showErrors && errors.name && (
+							<p className="mt-1 text-sm text-red-500">
+								El titulo es requerido.
+							</p>
+						)}
 						<div className="my-4 flex flex-col">
 							<Label
 								className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
@@ -259,16 +551,26 @@ const Page: React.FC = () => {
 									setFormData({ ...formData, description: e.target.value })
 								}
 							/>
+							{showErrors && errors.description && (
+								<p className="mt-1 text-sm text-red-500">
+									La descripcion es requerida
+								</p>
+							)}
 						</div>
+						<Label className="mb-2 text-xl text-black">Tipo de Actividad</Label>
 						<TypeActDropdown
-							typeActi={modalidadesid}
-							setTypeActividad={(id) => {
-								setModalidadesid(id);
-								setFormData({ ...formData, type: id.toString() });
-							}}
-							selectedColor={color}
+							typeActi={parseInt(formData.type, 10)}
+							setTypeActividad={(type: number) =>
+								setFormData({ ...formData, type: type.toString() })
+							}
 							errors={errors}
+							selectedColor={color}
 						/>
+						{showErrors && errors.type && (
+							<p className="mt-1 text-sm text-red-500">
+								El tipo de actividad es requerido.
+							</p>
+						)}
 						{isUploading && (
 							<div className="my-1">
 								<Progress value={uploadProgress} className="w-full" />

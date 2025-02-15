@@ -51,7 +51,6 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 	const [errorNames, setErrorNames] = useState<string | null>(null);
 
 	const lessonIdNumber = Number(lessonId);
-	console.log(`lessonIdNumer: ${lessonIdNumber}`);
 	useEffect(() => {
 		localStorage.getItem(`selectedColor_${lessonId}`);
 	}, [lessonId]);

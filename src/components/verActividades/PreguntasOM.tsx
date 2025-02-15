@@ -10,12 +10,14 @@ interface QuestionListProps {
 	activityId: number | null;
 }
 
-const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
+const VerQuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 	const [questions, setQuestions] = useState<Question[]>([]);
 	const [selectedOptions, setSelectedOptions] = useState<
 		Record<number, number | null>
 	>({});
-	const [feedback, setFeedback] = useState<string | null>(null);
+	const [loading, setLoading] = useState(true);
+
+	const [feedback, setFeedback] = useState<Record<number, string | null>>({});
 	const params = useParams();
 	const paramActivityId = params?.activityId;
 	const activityIdString = Array.isArray(paramActivityId)
@@ -29,6 +31,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 	}, [activityId]);
 
 	const fetchQuestions = async () => {
+		setLoading(true);
 		try {
 			const response = await fetch(
 				`/api/educadores/question?activityId=${activityIdNumber}`
@@ -42,48 +45,47 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
+		} finally {
+			setLoading(false);
 		}
 	};
 
-	const handleOptionChange = (questionId: number, optionId: string) => {
+	const handleOptionChange = (questionId: number, optionId: number) => {
 		setSelectedOptions((prev) => ({
 			...prev,
-			[questionId]: parseInt(optionId),
+			[questionId]: optionId,
 		}));
 	};
 
-	const handleSubmit = (questionId: number, correctOptionId: string) => {
+	const handleSubmit = (questionId: number, correctOptionId: number) => {
 		const selectedOptionId = selectedOptions[questionId];
-		if (selectedOptionId === parseInt(correctOptionId)) {
-			setFeedback('¡Correcto!');
-		} else {
-			setFeedback('Incorrecto, intenta de nuevo.');
-		}
+		setFeedback((prev) => ({
+			...prev,
+			[questionId]:
+				selectedOptionId === correctOptionId
+					? '¡Correcto!'
+					: 'Incorrecto, intenta de nuevo.',
+		}));
 	};
+
+	if (loading) return <div className="text-center">Cargando actividad...</div>;
 
 	return (
 		<div className="space-y-4">
-			{questions.map((question) => (
+			{questions.map((question: Question) => (
 				<Card key={question.id}>
 					<CardContent className="pt-6">
 						<h3 className="mb-2 text-lg font-semibold">{question.text}</h3>
-						<ul className="list-inside list-disc space-y-1">
+						<ul className="space-y-1">
 							{question.options.map((option) => (
 								<li key={option.id}>
-									<label
-										className={
-											option.id === question.correctOptionId
-												? 'font-bold text-indigo-500'
-												: ''
-										}
-									>
+									<label className={'text-black'}>
 										<input
 											type="radio"
 											name={`question-${question.id}`}
 											value={option.id}
-											checked={
-												selectedOptions[question.id] === parseInt(option.id)
-											}
+											className="mr-2"
+											checked={selectedOptions[question.id] === option.id}
 											onChange={() =>
 												handleOptionChange(question.id, option.id)
 											}
@@ -98,13 +100,14 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 						<Button
 							type="button"
 							variant="secondary"
+							className="mr-2"
 							onClick={() =>
 								handleSubmit(question.id, question.correctOptionId)
 							}
 						>
 							Enviar
 						</Button>
-						{feedback && <p>{feedback}</p>}
+						{feedback[question.id] && <p>{feedback[question.id]}</p>}
 					</CardFooter>
 				</Card>
 			))}
@@ -112,4 +115,4 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 	);
 };
 
-export default QuestionList;
+export default VerQuestionList;

@@ -16,6 +16,8 @@ export interface Activity {
 	description: string | null;
 	typeid: number;
 	lessonsId: number;
+	pesoNota: number;
+	revisada: boolean;
 }
 
 // Actualizar la interfaz ActivityDetails
@@ -28,6 +30,8 @@ export interface ActivityDetails {
 		name: string;
 		description: string;
 	};
+	revisada: boolean;
+	pesoNota: number | null;
 	lessonsId: {
 		id: number;
 		title: string;
@@ -48,6 +52,8 @@ export const createActivity = async ({
 	description,
 	typeid,
 	lessonsId,
+	pesoNota,
+	revisada,
 }: Omit<Activity, 'id'>): Promise<Activity> => {
 	// Cambiar el tipo de retorno a Promise<Activity>
 	try {
@@ -58,6 +64,8 @@ export const createActivity = async ({
 				description,
 				typeid,
 				lessonsId,
+				pesoNota,
+				revisada,
 			})
 			.returning({
 				id: activities.id,
@@ -65,12 +73,18 @@ export const createActivity = async ({
 				description: activities.description,
 				typeid: activities.typeid,
 				lessonsId: activities.lessonsId,
+				pesoNota: activities.pesoNota,
+				revisada: activities.revisada,
 			}); // Retornar todos los campos, incluyendo el ID
 
 		if (!newActivity) {
 			throw new Error('Error al crear la actividad: actividad no creada');
 		}
-		return newActivity; // Retornar la nueva actividad creada
+		return {
+			...newActivity,
+			revisada: newActivity.revisada ?? false,
+			pesoNota: newActivity.pesoNota ?? 0,
+		}; // Retornar la nueva actividad creada
 	} catch (error) {
 		throw new Error(
 			`Error al crear la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
@@ -91,6 +105,8 @@ export const getActivityById = async (activityId: number) => {
 					name: typeActi.name,
 					description: typeActi.description,
 				},
+				revisada: activities.revisada,
+				pesoNota: activities.pesoNota,
 				lesson: {
 					id: lessons.id,
 					title: lessons.title,
@@ -137,6 +153,8 @@ export const getActivitiesByLessonId = async (
 					name: typeActi.name,
 					description: typeActi.description,
 				},
+				pesoNota: activities.pesoNota,
+				revisada: activities.revisada,
 				lesson: {
 					id: lessons.id,
 					title: lessons.title,
@@ -162,6 +180,8 @@ export const getActivitiesByLessonId = async (
 				name: actividad.type?.name ?? '',
 				description: actividad.type?.description ?? '',
 			},
+			revisada: actividad.revisada ?? false,
+			pesoNota: actividad.pesoNota ?? 0,
 			lessonsId: {
 				id: actividad.lesson.id ?? 0,
 				title: actividad.lesson.title ?? '',

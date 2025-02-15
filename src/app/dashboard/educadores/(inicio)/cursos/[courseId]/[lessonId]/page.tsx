@@ -74,9 +74,6 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
 	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
-	console.log(
-		`courseIdString: ${courseIdString}, courseIdNumber: ${courseIdNumber}`
-	);
 	useEffect(() => {
 		const savedColor = localStorage.getItem(
 			`selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
@@ -84,7 +81,6 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		if (savedColor) {
 			setColor(savedColor);
 		}
-		console.log(`Color guardado lessons: ${savedColor}`);
 	}, [courseId]);
 
 	useEffect(() => {
@@ -148,11 +144,35 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
 	const handleDelete = async (id: string) => {
 		try {
+			const responseAwsImg = await fetch(
+				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`,
+				{
+					method: 'DELETE',
+				}
+			);
+			const responseAwsVideo = await fetch(
+				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`,
+				{
+					method: 'DELETE',
+				}
+			);
+			const responseAwsFiles = await fetch(
+				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.resourceKey}`,
+				{
+					method: 'DELETE',
+				}
+			);
+
 			const response = await fetch(`/api/educadores/lessons?lessonId=${id}`, {
 				method: 'DELETE',
 			});
-
-			if (!response.ok) throw new Error('Error al eliminar la clase');
+			if (
+				!response.ok &&
+				!responseAwsImg &&
+				!responseAwsVideo &&
+				!responseAwsFiles
+			)
+				throw new Error('Error al eliminar la clase');
 			toast({
 				title: 'Clase eliminada',
 				description: `La clase ${lessons.title} ha sido eliminada exitosamente.`,
@@ -166,12 +186,12 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
 	return (
 		<>
-			<div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background p-6">
+			<div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background">
 				<Breadcrumb>
 					<BreadcrumbList>
 						<BreadcrumbItem>
 							<BreadcrumbLink
-								className="hover:text-gray-300"
+								className="text-primary hover:text-gray-300"
 								href="/dashboard/educadores"
 							>
 								Cursos
@@ -180,7 +200,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
 							<BreadcrumbLink
-								className="hover:text-gray-300"
+								className="text-primary hover:text-gray-300"
 								href="/dashboard/educadores/cursos"
 							>
 								Lista de cursos
@@ -189,7 +209,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
 							<BreadcrumbLink
-								className="hover:text-gray-300"
+								className="text-primary hover:text-gray-300"
 								href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 							>
 								Detalles curso
@@ -197,7 +217,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbLink href={``} className="hover:text-gray-300">
+							<BreadcrumbLink
+								href={``}
+								className="text-primary hover:text-gray-300"
+							>
 								Detalles de la clase: {lessons.title}
 							</BreadcrumbLink>
 						</BreadcrumbItem>

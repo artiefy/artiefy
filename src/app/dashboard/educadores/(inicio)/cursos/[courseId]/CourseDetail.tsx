@@ -1,15 +1,12 @@
 'use client';
-
 import { useCallback, useEffect, useState } from 'react';
-
 import { useUser } from '@clerk/nextjs';
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
-import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
+import ModalFormCourse from '~/components/educators/modals/ModalFormCourse2';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -46,8 +43,18 @@ interface Course {
 	createdAt: string;
 	updatedAt: string;
 	requerimientos: string;
+	totalParametros: number;
 }
 interface CourseDetailProps {
+	courseId: number;
+}
+
+export interface Parametros {
+	id: number;
+	name: string;
+	description: string;
+	entrega: number;
+	porcentaje: number;
 	courseId: number;
 }
 
@@ -67,6 +74,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const params = useParams();
 	const courseIdUrl = params?.courseId;
 	const [course, setCourse] = useState<Course | null>(null);
+	const [parametros, setParametros] = useState<Parametros[]>([]); // Nuevo estado para los parámetros
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editTitle, setEditTitle] = useState('');
 	const [editDescription, setEditDescription] = useState('');
@@ -79,6 +87,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
+	const [editParametros, setEditParametros] = useState<
+		{
+			id: number;
+			name: string;
+			description: string;
+			porcentaje: number;
+			entrega: number;
+		}[]
+	>([]); // Nuevo estado para los parámetros
 
 	// Verifica que courseId no sea un array ni undefined, y lo convierte a número
 	const courseIdString = Array.isArray(courseIdUrl)
@@ -88,19 +105,29 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const courseIdNumber = parseInt(courseIdString2);
 
 	const fetchCourse = useCallback(async () => {
-		if (!user) return;
 		if (courseIdNumber !== null) {
 			try {
 				setLoading(true);
 				setError(null);
+
+				const responseParametros = await fetch(
+					`/api/educadores/parametros?courseId=${courseIdNumber}`
+				); // Obtener los parámetros
+
 				const response = await fetch(
 					`/api/educadores/courses/${courseIdNumber}`
 				);
 
-				if (response.ok) {
+				if (!response.ok || !responseParametros.ok) {
+					throw new Error(response.statusText);
+				}
+				if (response.ok && responseParametros.ok) {
 					const data = (await response.json()) as Course;
-					console.log(data);
 					setCourse(data);
+					const dataParametros =
+						(await responseParametros.json()) as Parametros[]; // Obtener los parámetros
+					setParametros(dataParametros); // Inicializar los parámetros
+					console.log('parametros obtenidos', parametros);
 				} else {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
@@ -170,9 +197,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 				const { url, fields } = uploadData;
 				const formData = new FormData();
-				Object.entries(fields).forEach(([key, value]) =>
-					formData.append(key, value)
-				);
+				if (fields) {
+					Object.entries(fields).forEach(([key, value]) =>
+						formData.append(key, value)
+					);
+				}
 				formData.append('file', file);
 
 				const uploadResult = await fetch(url, {
@@ -183,7 +212,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					throw new Error('Error al subir la imagen al servidor');
 				}
 
-				coverImageKey = fields.key ?? '';
+				if (fields?.key) {
+					coverImageKey = fields.key;
+				}
 			}
 
 			const response = await fetch(
@@ -204,18 +235,62 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			);
 
-			if (!response.ok) {
+			const parametrosPromises = editParametros.map((p) =>
+				fetch(`/api/educadores/parametros/${p.id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						name: p.name,
+						description: p.description,
+						porcentaje: p.porcentaje,
+						entrega: p.entrega,
+						courseId: courseIdNumber,
+					}),
+				})
+			);
+
+			const parametrosResponses = await Promise.all(parametrosPromises);
+
+			for (const responseParametros of parametrosResponses) {
+				if (!responseParametros.ok) {
+					const errorData = (await responseParametros.json()) as {
+						error?: string;
+					};
+					toast({
+						title: 'Error',
+						description:
+							errorData.error ?? 'Error al actualizar los parámetros',
+						variant: 'destructive',
+					});
+					throw new Error(
+						errorData.error ?? 'Error al actualizar los parámetros'
+					);
+				}
+			}
+
+			if (!response.ok && !parametrosResponses.every((r) => r.ok)) {
 				const errorData = (await response.json()) as { error?: string };
+				toast({
+					title: 'Error',
+					description: errorData.error ?? 'Error al actualizar el curso',
+					variant: 'destructive',
+				});
 				throw new Error(errorData.error ?? 'Error al actualizar el curso');
 			}
 
 			const updatedCourse = (await response.json()) as Course;
 			setCourse(updatedCourse);
+
 			setIsModalOpen(false);
 			toast({
 				title: 'Curso actualizado',
 				description: 'El curso se ha actualizado con éxito.',
-				variant: 'destructive',
+				variant: 'default',
+			});
+			toast({
+				title: 'Parámetros actualizados',
+				description: 'Los parámetros se han actualizado con éxito.',
+				variant: 'default',
 			});
 		} catch (error) {
 			console.error('Error:', error);
@@ -228,22 +303,35 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}
 	};
 
-	if (loading) return <div>Cargando curso...</div>;
-	if (error) return <div>Error: {error}</div>;
-	if (!course) return <div>No se encontró el curso.</div>;
-
-	const handlePredefinedColorChange = (color: string) => {
-		setSelectedColor(color);
-		localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
+	const handleEditCourse = () => {
+		setEditTitle(course?.title ?? '');
+		setEditDescription(course?.description ?? '');
+		setEditRequerimientos(course?.requerimientos ?? '');
+		setEditCategory(parseInt(course?.categoryid ?? '0'));
+		setEditModalidad(parseInt(course?.modalidadesid ?? '0'));
+		setEditDificultad(parseInt(course?.dificultadid ?? '0'));
+		setEditCoverImageKey(course?.coverImageKey ?? '');
+		setEditParametros(parametros);
+		setIsModalOpen(true);
 	};
+
+	if (loading) return <div>Cargando curso...</div>;
+	if (!course) return <div>No se encontró el curso.</div>;
 
 	const handleDelete = async (id: string) => {
 		try {
+			const responseAws = await fetch(
+				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`,
+				{
+					method: 'DELETE',
+				}
+			);
+
 			const response = await fetch(`/api/educadores/courses?courseId=${id}`, {
 				method: 'DELETE',
 			});
 
-			if (!response.ok)
+			if (!response.ok && !responseAws.ok)
 				throw new Error(`Error al eliminar el curso, id: ${id}`);
 			toast({
 				title: 'Curso eliminado',
@@ -255,13 +343,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}
 	};
 
+	if (error) return <div>Error: {error}</div>;
+
+	const handlePredefinedColorChange = (color: string) => {
+		setSelectedColor(color);
+		localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
+	};
+
 	return (
 		<div className="h-auto w-full rounded-lg bg-background">
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href="/dashboard/educadores"
 						>
 							Inicio
@@ -270,7 +365,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href="/dashboard/educadores/cursos"
 						>
 							Lista de cursos
@@ -278,7 +373,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
-						<BreadcrumbLink className="hover:text-gray-300">
+						<BreadcrumbLink className="text-primary hover:text-gray-300">
 							Detalles curso {course.title}
 						</BreadcrumbLink>
 					</BreadcrumbItem>
@@ -344,7 +439,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</Link>
 								</Button>
 								<Button
-									onClick={() => setIsModalOpen(true)}
+									onClick={handleEditCourse}
 									className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
 								>
 									Editar curso
@@ -531,6 +626,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				modalidadesid={editModalidad}
 				dificultadid={editDificultad}
 				coverImageKey={editCoverImageKey}
+				parametros={editParametros}
 				uploading={false}
 				setTitle={setEditTitle}
 				setDescription={setEditDescription}
@@ -539,6 +635,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setCategoryid={setEditCategory}
 				setDificultadid={setEditDificultad}
 				setCoverImageKey={setEditCoverImageKey}
+				setParametrosAction={(
+					parametros: {
+						id: number;
+						name: string;
+						description: string;
+						porcentaje: number;
+						entrega: number;
+					}[]
+				) => setEditParametros(parametros)}
 				onCloseAction={() => setIsModalOpen(false)}
 			/>
 		</div>

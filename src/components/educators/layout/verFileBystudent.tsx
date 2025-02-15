@@ -11,18 +11,18 @@ const getIconForFileType = (fileName: string) => {
 
 	switch (ext) {
 		case 'pdf':
-			return <Icons.pdf className="size-16" />;
+			return <Icons.pdf className="size-8" />;
 		case 'docx':
 		case 'doc':
-			return <Icons.word className="size-16" />;
+			return <Icons.word className="size-8" />;
 		case 'xlsx':
 		case 'xls':
-			return <Icons.excel className="size-16" />;
+			return <Icons.excel className="size-8" />;
 		case 'pptx':
 		case 'ppt':
-			return <Icons.powerPoint className="size-16" />;
+			return <Icons.powerPoint className="size-8" />;
 		default:
-			return <Icons.txt className="size-16" />;
+			return <Icons.txt className="size-8" />;
 	}
 };
 
@@ -51,7 +51,6 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
 	const [errorNames, setErrorNames] = useState<string | null>(null);
 
 	const lessonIdNumber = Number(lessonId);
-	console.log(`lessonIdNumer: ${lessonIdNumber}`);
 	useEffect(() => {
 		localStorage.getItem(`selectedColor_${lessonId}`);
 	}, [lessonId]);
@@ -143,7 +142,7 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
 			>
 				Archivos de la clase
 			</h1>
-			<ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-2">
+			<ul className="grid grid-cols-1 gap-5">
 				{files.map((file, index) => {
 					if (!file) return null; // Manejar caso de clave vacía
 					const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3
@@ -160,12 +159,12 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
 							href={fileUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="relative mb-3 flex h-24 w-full items-center space-x-3 rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40"
+							className="relative mb-3 flex h-11 w-full space-x-2 rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40 lg:w-3/5"
 						>
 							{icon}
 
 							<p
-								className={`absolute right-4 no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+								className={`no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 							>
 								{resourceNames[index] ?? file.fileName}
 								{/* Nombre del archivo */}

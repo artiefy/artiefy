@@ -1,12 +1,10 @@
 'use client';
-
 import { useEffect, useState, type ChangeEvent } from 'react';
-
 import { useUser } from '@clerk/nextjs';
+import { Plus } from 'lucide-react';
 import Image from 'next/image';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
-
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
@@ -20,6 +18,7 @@ import {
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
+import { toast } from '~/hooks/use-toast';
 
 interface CourseFormProps {
 	onSubmitAction: (
@@ -29,7 +28,7 @@ interface CourseFormProps {
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadesid: number,
+		dificultadid: number,
 		requerimientos: string,
 		options?: { signal: AbortSignal }
 	) => Promise<void>;
@@ -49,38 +48,60 @@ interface CourseFormProps {
 	setDificultadid: (dificultadid: number) => void;
 	coverImageKey: string;
 	setCoverImageKey: (coverImageKey: string) => void;
+	parametros: {
+		id: number;
+		name: string;
+		description: string;
+		porcentaje: number;
+		entrega: number;
+	}[];
+	setParametrosAction: (
+		parametros: {
+			id: number;
+			name: string;
+			description: string;
+			porcentaje: number;
+			entrega: number;
+		}[]
+	) => void;
 	isOpen: boolean;
 	onCloseAction: () => void;
 }
 
-export default function ModalFormCourse({
+const ModalFormCourse: React.FC<CourseFormProps> = ({
 	onSubmitAction,
 	uploading,
 	editingCourseId,
+	title,
+	setTitle,
+	description,
+	setDescription,
+	requerimientos,
+	setRequerimientos,
+	categoryid,
+	setCategoryid,
+	modalidadesid,
+	setModalidadesid,
+	dificultadid,
+	setDificultadid,
+	coverImageKey,
+	parametros = [], // Asegúrate de que no sea undefined
+	setParametrosAction,
 	isOpen,
 	onCloseAction,
-	coverImageKey,
-}: CourseFormProps) {
+}) => {
 	const { user } = useUser();
-	const [title, setTitle] = useState('');
-	const [description, setDescription] = useState('');
-	const [requerimientos, setRequerimientos] = useState('');
-	const [categoryid, setCategoryid] = useState(0);
-	const [modalidadesid, setModalidadesid] = useState(0);
-	const [dificultadid, setDificultadid] = useState(0);
 	const [file, setFile] = useState<File | null>(null);
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [fileSize, setFileSize] = useState<number | null>(null);
 	const [progress, setProgress] = useState(0);
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDragging, setIsDragging] = useState(false);
-	const [creatorId, setCreatorId] = useState<string | null>(null);
 	const [errors, setErrors] = useState({
 		title: false,
 		description: false,
 		categoryid: false,
 		category: false,
-		creatorId: false,
 		modalidadesid: false,
 		dificultadid: false,
 		file: false,
@@ -94,6 +115,7 @@ export default function ModalFormCourse({
 	const [currentCoverImageKey] = useState(coverImageKey);
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
+	const [coverImage, setCoverImageKey] = useState<string | null>(null);
 
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -108,6 +130,7 @@ export default function ModalFormCourse({
 			setFileSize(null);
 			setErrors((prev) => ({ ...prev, file: true }));
 		}
+		console.log('coverImageKey', coverImage);
 	};
 
 	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -137,6 +160,55 @@ export default function ModalFormCourse({
 		}
 	};
 
+	const handleAddParametro = () => {
+		if (parametros.length < 10) {
+			setParametrosAction([
+				...parametros.map((parametro, index) => ({
+					...parametro,
+					id: index + 1,
+				})),
+				{
+					id: parametros.length + 1,
+					name: '',
+					description: '',
+					porcentaje: 0,
+					entrega: parametros.length + 1,
+				},
+			]);
+		}
+	};
+
+	const handleParametroChange = (
+		index: number,
+		field: 'name' | 'description' | 'porcentaje',
+		value: string | number
+	) => {
+		const updatedParametros = [...parametros];
+		updatedParametros[index] = {
+			...updatedParametros[index],
+			[field]: value,
+		};
+		setParametrosAction(
+			updatedParametros.map((parametro, index) => ({
+				...parametro,
+				id: index + 1,
+			}))
+		);
+	};
+
+	const handleRemoveParametro = (index: number) => {
+		const updatedParametros = parametros.filter((_, i) => i !== index);
+		// Reasignar los valores de entrega
+		const reassignedParametros = updatedParametros.map((parametro, i) => ({
+			id: parametro.id,
+			name: parametro.name,
+			description: parametro.description,
+			porcentaje: parametro.porcentaje,
+			entrega: i + 1,
+		}));
+		setParametrosAction(reassignedParametros);
+	};
+
 	const handleSubmit = async () => {
 		const controller = new AbortController();
 		setUploadController(controller);
@@ -146,7 +218,6 @@ export default function ModalFormCourse({
 			categoryid: !editingCourseId && !categoryid,
 			category: false,
 			modalidadesid: !editingCourseId && !modalidadesid,
-			creatorId: false,
 			dificultadid: !editingCourseId && !dificultadid,
 			dificultad: false,
 			file: !editingCourseId && !file && !currentCoverImageKey,
@@ -157,19 +228,33 @@ export default function ModalFormCourse({
 		if (editingCourseId) {
 			newErrors.title = modifiedFields.has('title') && !title;
 			newErrors.description = modifiedFields.has('description') && !description;
-			newErrors.dificultadid =
-				modifiedFields.has('dificultadid') && !dificultadid;
+			newErrors.dificultadid = modifiedFields.has('dificultadid')
+				? !dificultadid
+				: !!newErrors.dificultadid;
 			newErrors.file = modifiedFields.has('file') && !file;
 			newErrors.modalidadesid =
 				modifiedFields.has('modalidadesid') && !modalidadesid;
-			newErrors.creatorId = modifiedFields.has('creatorId') && !creatorId;
 			newErrors.requerimientos =
 				modifiedFields.has('requerimientos') && !requerimientos;
+		}
+
+		// Validar que cada porcentaje esté entre 1 y 100
+		const porcentajeInvalido = parametros.some(
+			(parametro) => parametro.porcentaje < 1 || parametro.porcentaje > 100
+		);
+		if (porcentajeInvalido) {
+			toast({
+				title: 'Error',
+				description: 'Cada porcentaje debe estar entre 1 y 100%',
+				variant: 'destructive',
+			});
+			return;
 		}
 
 		setErrors(newErrors);
 
 		if (Object.values(newErrors).some((error) => error)) {
+			console.log('Validation errors:', newErrors); // Registro de depuración
 			return;
 		}
 
@@ -185,23 +270,14 @@ export default function ModalFormCourse({
 				modalidadesid,
 				dificultadid,
 				requerimientos,
-				{ signal: controller.signal } // Pasar el signal al onSubmitAction
+				{ signal: controller.signal }
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
-				return; // Salir de la función si se cancela la carga
+				return;
 			}
+
 			setIsUploading(false);
-			console.log('Datos enviados:', {
-				title,
-				description,
-				file,
-				creatorId,
-				categoryid,
-				modalidadesid,
-				dificultadid,
-				requerimientos,
-			});
 		} catch (error) {
 			if ((error as Error).name === 'AbortError') {
 				console.log('Upload cancelled');
@@ -238,13 +314,10 @@ export default function ModalFormCourse({
 			case 'categoryid':
 				setCategoryid(value as number);
 				break;
-			case 'creatorId':
-				setCreatorId(value as string);
-				break;
 			case 'modalidadesid':
 				setModalidadesid(value as number);
 				break;
-			case 'dificultadesid':
+			case 'dificultadid':
 				setDificultadid(value as number);
 				break;
 			case 'file':
@@ -265,7 +338,6 @@ export default function ModalFormCourse({
 					return prev + 1;
 				});
 			}, 50); // Ajusta el intervalo según sea necesario
-
 			return () => clearInterval(interval);
 		}
 	}, [uploading]);
@@ -302,6 +374,50 @@ export default function ModalFormCourse({
 			return () => clearInterval(interval);
 		}
 	}, [isUploading]);
+
+	useEffect(() => {
+		// Inicializar los valores del formulario con los valores de edición
+		if (editingCourseId) {
+			setTitle(title);
+			setDescription(description);
+			setRequerimientos(requerimientos);
+			setCategoryid(categoryid);
+			setModalidadesid(modalidadesid);
+			setDificultadid(dificultadid);
+			setCoverImageKey(coverImageKey);
+		}
+	}, [editingCourseId]);
+
+	useEffect(() => {
+		if (isOpen) {
+			setTitle(title);
+			setDescription(description);
+			setRequerimientos(requerimientos);
+			setCategoryid(categoryid);
+			setModalidadesid(modalidadesid);
+			setDificultadid(dificultadid);
+			setCoverImageKey(coverImageKey);
+			setParametrosAction(parametros);
+		}
+	}, [
+		isOpen,
+		title,
+		description,
+		requerimientos,
+		categoryid,
+		modalidadesid,
+		dificultadid,
+		coverImageKey,
+		parametros,
+		setTitle,
+		setDescription,
+		setRequerimientos,
+		setCategoryid,
+		setModalidadesid,
+		setDificultadid,
+		setCoverImageKey,
+		setParametrosAction,
+	]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
@@ -501,7 +617,79 @@ export default function ModalFormCourse({
 									</div>
 								</div>
 							)}
+							{errors.file && (
+								<p className="text-sm text-red-500">
+									Este campo es obligatorio.
+								</p>
+							)}
 						</div>
+					</div>
+					<div className="my-4 flex flex-col">
+						<label
+							htmlFor="totalParametros"
+							className="text-lg font-medium text-primary"
+						>
+							Parametros de evaluación
+						</label>
+						<Button
+							onClick={handleAddParametro}
+							disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
+							className="w-10/12 lg:w-1/4"
+						>
+							{editingCourseId ? 'Editar' : 'Agregar'} parametro
+							<Plus />
+						</Button>
+						{parametros.map((parametro, index) => (
+							<div key={index} className="mt-4 rounded-lg border p-4">
+								<div className="flex items-center justify-between">
+									<h3 className="text-lg font-medium text-primary">
+										Parámetro {index + 1}
+									</h3>
+									<Button
+										variant="destructive"
+										onClick={() => handleRemoveParametro(index)}
+									>
+										Eliminar
+									</Button>
+								</div>
+								<label className="mt-2 text-lg font-medium text-primary">
+									Nombre
+								</label>
+								<input
+									type="text"
+									value={parametro.name}
+									onChange={(e) =>
+										handleParametroChange(index, 'name', e.target.value)
+									}
+									className="mt-1 w-full rounded border p-2 text-black outline-none"
+								/>
+								<label className="mt-2 text-lg font-medium text-primary">
+									Descripción
+								</label>
+								<textarea
+									value={parametro.description}
+									onChange={(e) =>
+										handleParametroChange(index, 'description', e.target.value)
+									}
+									className="mt-1 w-full rounded border p-2 text-black outline-none"
+								/>
+								<label className="mt-2 text-lg font-medium text-primary">
+									Porcentaje %
+								</label>
+								<input
+									type="number"
+									value={parametro.porcentaje}
+									onChange={(e) =>
+										handleParametroChange(
+											index,
+											'porcentaje',
+											Math.max(1, Math.min(100, parseFloat(e.target.value)))
+										)
+									}
+									className="mt-1 w-full rounded border p-2 text-black outline-none"
+								/>
+							</div>
+						))}
 					</div>
 					{(uploading || isUploading) && (
 						<div className="mt-4">
@@ -515,9 +703,6 @@ export default function ModalFormCourse({
 						</div>
 					)}
 				</div>
-				{errors.file && (
-					<p className="text-sm text-red-500">Este campo es obligatorio.</p>
-				)}
 				<DialogFooter className="mt-4 grid grid-cols-2 gap-4">
 					<Button
 						onClick={handleCancel}
@@ -538,4 +723,6 @@ export default function ModalFormCourse({
 			</DialogContent>
 		</Dialog>
 	);
-}
+};
+
+export default ModalFormCourse;

@@ -31,13 +31,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
-		const { activityId, question } = (await request.json()) as {
+		const { activityId, questions } = (await request.json()) as {
 			activityId: string;
-			question: Question;
+			questions: Question;
 		};
 		const key = `activity:${activityId}:questions`;
 		const existingQuestions = (await redis.get<Question[]>(key)) ?? [];
-		const updatedQuestions = [...existingQuestions, question];
+
+		const updatedQuestions = [...existingQuestions, questions];
 		await redis.set(key, updatedQuestions);
 		return NextResponse.json({
 			success: true,
@@ -54,14 +55,15 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
 	try {
-		const { activityId, question } = (await request.json()) as {
+		const { activityId, questions } = (await request.json()) as {
 			activityId: string;
-			question: Question;
+			questions: Question;
 		};
 		const key = `activity:${activityId}:questions`;
 		const existingQuestions = (await redis.get<Question[]>(key)) ?? [];
+
 		const updatedQuestions = existingQuestions.map((q) =>
-			q.id === question.id ? question : q
+			q.id === questions.id ? questions : q
 		);
 		await redis.set(key, updatedQuestions);
 		return NextResponse.json({

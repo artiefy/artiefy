@@ -41,15 +41,26 @@ export async function POST(request: NextRequest) {
 			description: string;
 			lessonsId: number;
 			typeid: number;
+			pesoNota: number;
+			revisada: boolean;
 		};
 
-		const { name, description, lessonsId, typeid } = body;
+		const {
+			name,
+			description,
+			lessonsId,
+			typeid,
+			pesoNota,
+			revisada,
+		} = body;
 
 		const newActivity = await createActivity({
 			name,
 			description,
 			typeid,
 			lessonsId,
+			pesoNota,
+			revisada,
 		});
 
 		console.log('Datos enviados al servidor:', {
@@ -57,6 +68,8 @@ export async function POST(request: NextRequest) {
 			description,
 			lessonsId,
 			typeid,
+			pesoNota,
+			revisada,
 		});
 
 		return NextResponse.json({
@@ -92,7 +105,7 @@ export async function GET(request: NextRequest) {
 		if (!activities) {
 			return respondWithError('Actividad no encontrada', 404);
 		}
-		
+
 		return NextResponse.json(activities);
 	} catch (error: unknown) {
 		console.error('Error al obtener la actividad:', error);
@@ -118,11 +131,20 @@ export async function PUT(request: NextRequest) {
 			name?: string;
 			description?: string;
 			typeid?: number;
+			revisada?: boolean;
+			pesoNota?: number;
 		};
 
-		const { id, name, description, typeid } = body;
+		const { id, name, description, typeid, revisada, pesoNota } =
+			body;
 
-		await updateActivity(id, { name, description, typeid });
+		await updateActivity(id, {
+			name,
+			description,
+			typeid,
+			revisada,
+			pesoNota,
+		});
 
 		return NextResponse.json({
 			message: 'Actividad actualizada exitosamente',

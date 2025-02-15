@@ -1,8 +1,17 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import QuestionList from '~/components/verActividades/PreguntasOM';
-
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from '~/components/educators/ui/breadcrumb';
+import ActSubida from '~/components/verActividades/ActSubida';
+import VerListPreguntaAbierta from '~/components/verActividades/PreguntaCompletado';
+import VerQuestionVOFList from '~/components/verActividades/PreguntaFOV';
+import VerQuestionList from '~/components/verActividades/PreguntasOM';
 import { toast } from '~/hooks/use-toast';
 
 interface ActivityDetails {
@@ -83,37 +92,102 @@ const RealizarActividad: React.FC = () => {
 	if (error) return <div>Error: {error}</div>;
 
 	return (
-		<div className="h-auto rounded-lg bg-gradient-to-br from-primary to-indigo-500 p-8 text-indigo-500">
-			<div className="mx-auto max-w-6xl px-4">
-				<header className="mb-8 text-center">
-					{actividad && (
-						<>
-							<h1 className="mb-2 text-3xl font-bold text-gray-800">
-								{actividad.name}
-							</h1>
-							<p className="text-gray-600">{actividad.description}</p>
-						</>
-					)}
-				</header>
-
-				{actividad && (
-					<>
-						{actividad.type.id === 1 && <div>En construccion</div>}
-						{actividad.type.id === 2 && (
-							<QuestionList activityId={actividadIdNumber} />
+		<>
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+							href="/dashboard/educadores"
+						>
+							Cursos
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+							href="/dashboard/educadores/cursos"
+						>
+							Lista de cursos
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+							href={`/dashboard/educadores/cursos`}
+						>
+							Detalles curso
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							href={`/dashboard/educadores/cursos`}
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+						>
+							Lección
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							href="#"
+							onClick={() => window.history.back()}
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+						>
+							Creación de actividad
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							href="#"
+							onClick={() => window.history.back()}
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+						>
+							Realizacion de actividad
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+			<div className="h-auto rounded-lg bg-gradient-to-br from-primary to-indigo-500 p-8 text-indigo-500">
+				<div className="max-w-6xl px-4">
+					<header className="mb-8">
+						{actividad && (
+							<>
+								<h1 className="mb-2 text-center text-3xl font-bold text-gray-800">
+									{actividad.name}
+								</h1>
+								<p className="text-center text-gray-600">
+									{actividad.description}
+								</p>
+								<p className="text-center text-gray-600">
+									Docente: {actividad.lesson.courseInstructor}
+								</p>
+								{actividad.type.id === 1 ? (
+									<>
+										<ActSubida activityId={actividad.id} />
+									</>
+								) : actividad.type.id === 2 ? (
+									<>
+										<VerQuestionList activityId={actividad.id} />
+										<VerListPreguntaAbierta activityId={actividad.id} />
+										<VerQuestionVOFList activityId={actividad.id} />
+									</>
+								) : (
+									<>
+										Actividad no encontrada, escribenos y comentanos que
+										actividad te gustaria ver aqui en Artiefy!!.
+									</>
+								)}
+							</>
 						)}
-						{actividad.type.id === 3 && <div>Actividad tipo 3</div>}
-						{actividad.type.id !== 1 &&
-							actividad.type.id !== 2 &&
-							actividad.type.id !== 3 && (
-								<div className="text-center text-xl text-red-500">
-									No se encontró la actividad.
-								</div>
-							)}
-					</>
-				)}
+					</header>
+				</div>
 			</div>
-		</div>
+		</>
 	);
 };
 

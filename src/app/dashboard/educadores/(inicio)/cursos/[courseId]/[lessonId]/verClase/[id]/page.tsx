@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import ListActividadesLookStudent from '~/components/educators/layout/ListActividadesByStudent';
 import VerFileByStudent from '~/components/educators/layout/verFileBystudent';
@@ -185,7 +186,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					<BreadcrumbList>
 						<BreadcrumbItem>
 							<BreadcrumbLink
-								className="hover:text-gray-300"
+								className="text-primary hover:text-gray-300"
 								href="/dashboard/educadores"
 							>
 								Cursos
@@ -194,7 +195,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
 							<BreadcrumbLink
-								className="hover:text-gray-300"
+								className="text-primary hover:text-gray-300"
 								href="/dashboard/educadores/cursos"
 							>
 								Lista de cursos
@@ -203,7 +204,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
 							<BreadcrumbLink
-								className="hover:text-gray-300"
+								className="text-primary hover:text-gray-300"
 								href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 							>
 								Detalles curso
@@ -214,14 +215,14 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 							<BreadcrumbLink
 								href={`#`}
 								onClick={() => window.history.back()}
-								className="hover:text-gray-300"
+								className="text-primary hover:text-gray-300"
 							>
 								Detallados de la clase
 							</BreadcrumbLink>
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbLink className="hover:text-gray-300">
+							<BreadcrumbLink className="text-primary hover:text-gray-300">
 								Vista de la clase: {lessons.title}
 							</BreadcrumbLink>
 						</BreadcrumbItem>
@@ -298,6 +299,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 								selectedColor={color}
 							/>
 						</div>
+						<Link
+							href={'#'}
+							onClick={() => window.history.back()}
+							className="group/button relative inline-flex w-1/2 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-blue-500 p-2 px-4 text-white hover:bg-blue-700 active:scale-95"
+						>
+							<ArrowLeftIcon className="animate-bounce-right size-5" />
+							<p className="font-bold">Volver</p>
+							<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+								<div className="relative h-full w-10 bg-white/30"></div>
+							</div>
+						</Link>
 					</div>
 				</div>
 			</div>

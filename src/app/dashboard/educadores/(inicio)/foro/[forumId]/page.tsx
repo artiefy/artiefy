@@ -1,10 +1,9 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-//import { Ellipsis } from 'lucide-react';
+import { EllipsisVertical } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import '@reach/menu-button/styles.css';
-
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -12,6 +11,11 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from '~/components/ui/collapsible';
 
 // Interfaces
 interface Foro {
@@ -35,6 +39,7 @@ interface Post {
 	userId: {
 		id: string;
 		name: string;
+		email: string;
 	};
 	content: string;
 	foroId: number;
@@ -156,10 +161,42 @@ const ForumPage = () => {
 		}
 	}, [fetchPostReplays, posts]);
 
+	const sendWelcomeEmail = async (
+		postContent: string,
+		recipients: string[]
+	) => {
+		try {
+			console.log('Sending email to:', recipients);
+			const response = await fetch('/api/educadores/send-email', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					content: postContent,
+					recipients: recipients,
+				}),
+			});
+
+			const result = (await response.json()) as {
+				success: boolean;
+				message: string;
+			};
+			if (result.success) {
+				console.log('Email sent successfully:', result.message);
+			} else {
+				console.error('Failed to send email:', result.message);
+			}
+		} catch (error) {
+			console.error('Error sending email:', error);
+		}
+	};
+
 	// Crear nuevo Post
 	const handlePostSubmit = async () => {
 		if (!message.trim() || !user) return;
 		try {
+			console.log('Creating new post...');
 			const response = await fetch('/api/forums/posts', {
 				method: 'POST',
 				headers: {
@@ -175,6 +212,19 @@ const ForumPage = () => {
 			if (response.ok) {
 				setMessage('');
 				await fetchPosts(); // Refrescar lista de posts
+
+				// Verificar si el usuario es un educador o administrador
+				if (user.publicMetadata?.rol === 'educador') {
+					const emailAddresses = user.emailAddresses.map(
+						(email) => email.emailAddress
+					);
+					console.log('Educador detected, sending email...');
+					await sendWelcomeEmail(message, emailAddresses);
+				} else if (user.publicMetadata?.rol === 'administrador') {
+					const recipients = posts.map((post) => post.userId.email);
+					console.log('Administrador detected, sending email...');
+					await sendWelcomeEmail(message, recipients);
+				}
 			} else {
 				console.error('Error al enviar el post');
 			}
@@ -307,7 +357,7 @@ const ForumPage = () => {
 
 		return replies.map((reply) => (
 			<div className="ml-6 mt-2 space-y-2" key={reply.id}>
-				<div className="rounded-lg bg-gray-800 p-3">
+				<div className="relative rounded-lg bg-gray-800 p-3">
 					<p className="mb-3 font-bold text-gray-200">
 						{reply.userId.name}, dijo:
 					</p>
@@ -334,32 +384,62 @@ const ForumPage = () => {
 							<span className="ml-2 text-xs text-gray-500">(editado)</span>
 						)}
 					</p>
-					<div className="mt-4 space-x-2">
-						{editingReplyId === reply.id ? (
-							<button
-								className="mt-2 text-sm text-red-400"
-								onClick={() => setEditingReplyId(null)}
-							>
-								Cancelar
-							</button>
-						) : (
-							<button
-								className="mt-2 text-sm text-yellow-400"
-								onClick={() => {
-									setEditingReplyId(reply.id);
-									setEditReplyContent(reply.content);
-								}}
-							>
-								Editar Respuesta
-							</button>
-						)}
-						<button
-							className="mt-2 text-sm text-red-400"
-							onClick={() => handleDeleteReply(reply.id)}
-						>
-							Eliminar Respuesta
-						</button>
-					</div>
+					{reply.userId.id === user?.id && (
+						<div className="mt-4 space-x-2">
+							{editingReplyId === reply.id ? (
+								<>
+									<Collapsible className="absolute right-3 top-4">
+										<CollapsibleTrigger>
+											<EllipsisVertical className="text-white" />
+										</CollapsibleTrigger>
+										<CollapsibleContent>
+											<button
+												className="mt-2 text-sm text-red-400"
+												onClick={() => setEditingReplyId(null)}
+											>
+												Cancelar
+											</button>
+										</CollapsibleContent>
+										<CollapsibleContent>
+											<button
+												className="mt-2 text-sm text-red-400"
+												onClick={() => handleDeleteReply(reply.id)}
+											>
+												Eliminar Respuesta
+											</button>
+										</CollapsibleContent>
+									</Collapsible>
+								</>
+							) : (
+								<>
+									<Collapsible className="absolute right-3 top-4">
+										<CollapsibleTrigger>
+											<EllipsisVertical className="text-white" />
+										</CollapsibleTrigger>
+										<CollapsibleContent>
+											<button
+												className="mt-2 text-sm text-yellow-400"
+												onClick={() => {
+													setEditingReplyId(reply.id);
+													setEditReplyContent(reply.content);
+												}}
+											>
+												Editar Respuesta
+											</button>
+										</CollapsibleContent>
+										<CollapsibleContent>
+											<button
+												className="mt-2 text-sm text-red-400"
+												onClick={() => handleDeleteReply(reply.id)}
+											>
+												Eliminar Respuesta
+											</button>
+										</CollapsibleContent>
+									</Collapsible>
+								</>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
 		));
@@ -372,14 +452,17 @@ const ForumPage = () => {
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
-						<BreadcrumbLink className="hover:text-gray-300" href="/">
+						<BreadcrumbLink
+							className="text-primary hover:text-gray-300"
+							href="/"
+						>
 							Inicio
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href={`/dashboard/educadores/foro`}
 						>
 							Foros
@@ -388,7 +471,7 @@ const ForumPage = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href={`/dashboard/educadores/foro/${forumData?.id}`}
 						>
 							Foro: {forumData?.title}
@@ -416,7 +499,10 @@ const ForumPage = () => {
 						<p>Cargando posts...</p>
 					) : (
 						posts.map((post) => (
-							<div className="rounded-lg bg-slate-500/20 p-3" key={post.id}>
+							<div
+								className="relative rounded-lg bg-slate-500/20 p-3"
+								key={post.id}
+							>
 								<p className="font-bold text-gray-200">
 									{post.userId.name}, dijo:
 								</p>
@@ -445,67 +531,95 @@ const ForumPage = () => {
 										</span>
 									)}
 								</p>
-								<div className="mt-4 space-x-2">
-									{editingPostId === post.id ? (
-										<button
-											className="mt-2 text-sm text-red-400"
-											onClick={() => setEditingPostId(null)}
-										>
-											Cancelar
-										</button>
-									) : (
-										<button
-											className="mt-2 text-sm text-yellow-400"
-											onClick={() => {
-												setEditingPostId(post.id);
-												setEditPostContent(post.content);
-											}}
-										>
-											Editar Post
-										</button>
-									)}
-									<button
-										className="mt-2 text-sm text-red-400"
-										onClick={() => handleDeletePost(post.id)}
-									>
-										Eliminar Post
-									</button>
-									{/* Mostrar formulario de respuesta */}
-									<div>
-										{replyingToPostId === post.id ? (
-											<div>
-												<textarea
-													className="w-full rounded-lg p-2 text-black outline-none"
-													placeholder="Escribe tu respuesta..."
-													value={replyMessage}
-													onChange={(e) => setReplyMessage(e.target.value)}
-												/>
-												<button
-													className="mr-2 mt-2 rounded bg-blue-500 px-4 py-2 text-white"
-													onClick={handleReplySubmit}
-												>
-													Enviar Respuesta
-												</button>
-												<button
-													className="mt-2 text-sm text-red-400"
-													onClick={() => setReplyingToPostId(null)}
-												>
-													Cancelar
-												</button>
-											</div>
+								{post.userId.id === user?.id && (
+									<div className="mt-4 space-x-2">
+										{editingPostId === post.id ? (
+											<Collapsible className="absolute right-3 top-4">
+												<CollapsibleTrigger>
+													<EllipsisVertical className="text-white" />
+												</CollapsibleTrigger>
+												<CollapsibleContent>
+													<button
+														className="mt-2 text-sm text-red-400"
+														onClick={() => setEditingPostId(null)}
+													>
+														Cancelar
+													</button>
+												</CollapsibleContent>
+												<CollapsibleContent>
+													<button
+														className="mt-2 text-sm text-red-400"
+														onClick={() => handleDeletePost(post.id)}
+													>
+														Eliminar Post
+													</button>
+												</CollapsibleContent>
+											</Collapsible>
 										) : (
-											<button
-												className="mt-2 text-sm text-green-400"
-												onClick={() => setReplyingToPostId(post.id)}
-											>
-												Responder
-											</button>
+											<Collapsible className="absolute right-3 top-4">
+												<CollapsibleTrigger>
+													<EllipsisVertical className="text-white" />
+												</CollapsibleTrigger>
+												<CollapsibleContent>
+													<button
+														className="mt-2 text-sm text-yellow-400"
+														onClick={() => {
+															setEditingPostId(post.id);
+															setEditPostContent(post.content);
+														}}
+													>
+														Editar Post
+													</button>
+												</CollapsibleContent>
+												<CollapsibleContent>
+													<button
+														className="mt-2 text-sm text-red-400"
+														onClick={() => handleDeletePost(post.id)}
+													>
+														Eliminar Post
+													</button>
+												</CollapsibleContent>
+											</Collapsible>
 										)}
 									</div>
+								)}
+								{/* Mostrar formulario de respuesta */}
+								<div>
+									{replyingToPostId === post.id ? (
+										<div>
+											<textarea
+												className="w-full rounded-lg p-2 text-black outline-none"
+												placeholder="Escribe tu respuesta..."
+												value={replyMessage}
+												onChange={(e) => setReplyMessage(e.target.value)}
+											/>
+											<button
+												className="mr-2 mt-2 rounded bg-blue-500 px-4 py-2 text-white"
+												onClick={handleReplySubmit}
+											>
+												Enviar Respuesta
+											</button>
+											<button
+												className="mt-2 text-sm text-red-400"
+												onClick={() => setReplyingToPostId(null)}
+											>
+												Cancelar
+											</button>
+										</div>
+									) : (
+										<button
+											className="mt-2 text-sm text-green-400"
+											onClick={() => setReplyingToPostId(post.id)}
+										>
+											Responder
+										</button>
+									)}
 								</div>
 
-								{/* Renderizar Respuestas */}
-								{renderPostReplies(post.id)}
+								<div className="flex flex-col-reverse">
+									{/* Renderizar Respuestas */}
+									{renderPostReplies(post.id)}
+								</div>
 							</div>
 						))
 					)}

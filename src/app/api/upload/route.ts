@@ -1,6 +1,7 @@
 import {
-	AbortMultipartUploadCommand,
 	CreateMultipartUploadCommand,
+	DeleteObjectCommand,
+	ListObjectsV2Command,
 	S3Client,
 } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
@@ -83,9 +84,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-	const { uploadId, key } = (await request.json()) as {
-		uploadId: string;
+	const { key, fileName } = (await request.json()) as {
 		key: string;
+		fileName?: string;
 	};
 
 	try {
@@ -93,19 +94,43 @@ export async function DELETE(request: Request) {
 			throw new Error('AWS_BUCKET_NAME no está definido');
 		}
 
-		await client.send(
-			new AbortMultipartUploadCommand({
-				Bucket: process.env.AWS_BUCKET_NAME,
-				Key: key,
-				UploadId: uploadId,
-			})
-		);
+		// Si se proporciona fileName, eliminar el archivo específico
+		if (fileName) {
+			const specificKey = `uploads/${fileName}`;
+			await client.send(
+				new DeleteObjectCommand({
+					Bucket: process.env.AWS_BUCKET_NAME,
+					Key: specificKey,
+				})
+			);
+		} else {
+			// Si no se proporciona fileName, eliminar todos los archivos que coincidan con la clave
+			const listObjectsResponse = await client.send(
+				new ListObjectsV2Command({
+					Bucket: process.env.AWS_BUCKET_NAME,
+					Prefix: key,
+				})
+			);
+
+			const deletePromises = listObjectsResponse.Contents?.map((object) =>
+				client.send(
+					new DeleteObjectCommand({
+						Bucket: process.env.AWS_BUCKET_NAME,
+						Key: object.Key!,
+					})
+				)
+			);
+
+			if (deletePromises) {
+				await Promise.all(deletePromises);
+			}
+		}
 
 		return NextResponse.json({
-			message: 'Carga multiparte abortada con éxito',
+			message: 'Archivo(s) eliminado(s) con éxito',
 		});
 	} catch (error) {
-		console.error('Error al abortar la carga multiparte:', error);
+		console.error('Error al eliminar el archivo:', error);
 		return NextResponse.json(
 			{ error: (error as Error).message },
 			{ status: 500 }

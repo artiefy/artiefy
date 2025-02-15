@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-
 import {
 	getCourseById,
 	updateCourse,
@@ -11,11 +10,6 @@ export async function GET(
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		const { userId } = await auth();
-		if (!userId) {
-			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-		}
-
 		const resolvedParams = await params;
 		const courseId = parseInt(resolvedParams.id);
 		if (isNaN(courseId)) {
@@ -32,8 +26,6 @@ export async function GET(
 				{ status: 404 }
 			);
 		}
-
-		console.log(course);
 		return NextResponse.json(course);
 	} catch (error) {
 		console.error('Error al obtener el curso:', error);
@@ -46,36 +38,60 @@ export async function GET(
 
 export async function PUT(
 	request: Request,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
+		const resolvedParams = await params;
+		const courseId = parseInt(resolvedParams.id);
 
-		const courseId = parseInt(params.id);
+		if (isNaN(courseId)) {
+			return NextResponse.json(
+				{ error: 'ID de curso inválido' },
+				{ status: 400 }
+			);
+		}
+
 		const data = (await request.json()) as {
-			title: string;
-			description: string;
-			coverImageKey: string;
-			categoryId: number;
-			instructor: string;
-			modalidadesid: number;
-			dificultadid: number;
-			requerimientos: string;
+			title?: string;
+			description?: string;
+			coverImageKey?: string;
+			categoryId?: number;
+			instructor?: string;
+			modalidadesid?: number;
+			dificultadid?: number;
+			requerimientos?: string;
 		};
 
-		await updateCourse(courseId, {
-			title: data.title,
-			description: data.description,
-			coverImageKey: data.coverImageKey,
-			categoryid: data.categoryId,
-			instructor: data.instructor,
-			modalidadesid: data.modalidadesid,
-			dificultadid: data.dificultadid,
-			requerimientos: data.requerimientos,
-		});
+		const updateData: {
+			title?: string;
+			description?: string;
+			coverImageKey?: string;
+			categoryid?: number;
+			instructor?: string;
+			modalidadesid?: number;
+			dificultadid?: number;
+			requerimientos?: string;
+		} = {};
+
+		if (data.title !== undefined) updateData.title = data.title;
+		if (data.description !== undefined)
+			updateData.description = data.description;
+		if (data.coverImageKey !== undefined)
+			updateData.coverImageKey = data.coverImageKey;
+		if (data.categoryId !== undefined) updateData.categoryid = data.categoryId;
+		if (data.instructor !== undefined) updateData.instructor = data.instructor;
+		if (data.modalidadesid !== undefined)
+			updateData.modalidadesid = data.modalidadesid;
+		if (data.dificultadid !== undefined)
+			updateData.dificultadid = data.dificultadid;
+		if (data.requerimientos !== undefined)
+			updateData.requerimientos = data.requerimientos;
+
+		await updateCourse(courseId, updateData);
 
 		// Obtener el curso actualizado
 		const updatedCourse = await getCourseById(courseId);

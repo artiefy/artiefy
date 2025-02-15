@@ -3,10 +3,15 @@ import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-//import CrearActividadOM from '~/components/educators/layout/CrearActividadOM';
-//import CrearActividadSL from '~/components/educators/layout/CrearActividadSL';
-//import CrearCrucigrama from '~/components/educators/layout/CrearCrucigrama';
-import QuestionManager from '~/components/actividades/PreguntasOM';
+import FormActCompletado from '~/components/educators/layout/FormActCompletado';
+import QuestionSubidaList from '~/components/educators/layout/ListActSubidaFile';
+import ListPreguntaAbierta from '~/components/educators/layout/ListPreguntaAbierta';
+import PreguntasAbiertas from '~/components/educators/layout/PreguntasAbiertas';
+import QuestionForm from '~/components/educators/layout/QuestionsForms';
+import QuestionList from '~/components/educators/layout/QuestionsList';
+import SeleccionActi from '~/components/educators/layout/SeleccionActi';
+import QuestionVOFForm from '~/components/educators/layout/VerdaderoOFalseForm';
+import QuestionVOFList from '~/components/educators/layout/VerdaderoOFalseList';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -27,6 +32,12 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import { toast } from '~/hooks/use-toast';
+import type {
+	QuestionFilesSubida,
+	Completado,
+	VerdaderoOFlaso,
+	Question,
+} from '~/types/typesActi';
 
 interface ActivityDetails {
 	id: number;
@@ -38,6 +49,10 @@ interface ActivityDetails {
 		name: string;
 		description: string;
 	};
+	nota: number;
+	revisada: boolean;
+	parametros: string;
+	pesoNota: number;
 	lesson: {
 		id: number;
 		title: string;
@@ -68,6 +83,12 @@ const Page: React.FC = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [color, setColor] = useState<string>('#FFFFFF');
+	const [selectedActivityType, setSelectedActivityType] = useState<string>('');
+	const [questions, setQuestions] = useState<string[]>([]);
+	const [editingQuestion, setEditingQuestion] = useState<
+		QuestionFilesSubida | Completado | VerdaderoOFlaso | Question | null
+	>(null);
+	const [totalPeso, setTotalPeso] = useState<number>(0);
 
 	const actividadIdString = Array.isArray(actividadIdUrl)
 		? actividadIdUrl[0]
@@ -117,11 +138,47 @@ const Page: React.FC = () => {
 		}
 	}, [actividadIdNumber]);
 
+	const fetchTotalPeso = useCallback(async () => {
+		if (actividadIdNumber !== null) {
+			try {
+				const response = await fetch(
+					`/api/educadores/actividades/${actividadIdNumber}/totalPeso`
+				);
+
+				if (response.ok) {
+					const data = (await response.json()) as { totalPeso: number };
+					if (typeof data.totalPeso === 'number') {
+						setTotalPeso(data.totalPeso);
+					} else {
+						throw new Error('Respuesta inesperada del servidor');
+					}
+				} else {
+					const errorData = await response.text();
+					throw new Error(`Error al obtener el peso total: ${errorData}`);
+				}
+			} catch (error: unknown) {
+				const errorMessage =
+					error instanceof Error ? error.message : 'Error desconocido';
+				toast({
+					title: 'Error',
+					description: `No se pudo cargar el peso total: ${errorMessage}`,
+					variant: 'destructive',
+				});
+			}
+		}
+	}, [actividadIdNumber]);
+
 	useEffect(() => {
 		fetchActividad().catch((error) =>
 			console.error('Error fetching activity:', error)
 		);
 	}, [fetchActividad]);
+
+	useEffect(() => {
+		fetchTotalPeso().catch((error) =>
+			console.error('Error fetching total peso:', error)
+		);
+	}, [fetchTotalPeso]);
 
 	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
@@ -172,6 +229,28 @@ const Page: React.FC = () => {
 		}
 	};
 
+	const handleAddQuestion = () => {
+		if (totalPeso >= 100) {
+			toast({
+				title: 'Error',
+				description: 'El peso total de las preguntas no puede exceder el 100%.',
+				variant: 'destructive',
+			});
+			return;
+		}
+
+		if (selectedActivityType) {
+			setQuestions([selectedActivityType]);
+			setSelectedActivityType('');
+		}
+	};
+
+	const handleFormSubmit = async () => {
+		await fetchTotalPeso();
+		setEditingQuestion(null);
+		setQuestions([]);
+	};
+
 	if (loading)
 		return (
 			<div className="animate-pulse text-center text-xl">
@@ -188,10 +267,10 @@ const Page: React.FC = () => {
 	return (
 		<>
 			<Breadcrumb>
-				<BreadcrumbList className="flex space-x-3 rounded-lg bg-gradient-to-r from-teal-500 to-blue-500 p-2 text-white shadow-lg">
+				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="transition duration-300 hover:scale-105 hover:text-gray-300"
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
 							href="/dashboard/educadores"
 						>
 							Cursos
@@ -200,7 +279,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="transition duration-300 hover:scale-105 hover:text-gray-300"
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
 							href="/dashboard/educadores/cursos"
 						>
 							Lista de cursos
@@ -209,7 +288,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="transition duration-300 hover:scale-105 hover:text-gray-300"
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
 							href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 						>
 							Detalles curso
@@ -219,7 +298,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}`}
-							className="transition duration-300 hover:scale-105 hover:text-gray-300"
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
 						>
 							Lección
 						</BreadcrumbLink>
@@ -229,7 +308,7 @@ const Page: React.FC = () => {
 						<BreadcrumbLink
 							href="#"
 							onClick={() => window.history.back()}
-							className="transition duration-300 hover:scale-105 hover:text-gray-300"
+							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
 						>
 							Creación de actividad
 						</BreadcrumbLink>
@@ -264,6 +343,15 @@ const Page: React.FC = () => {
 							<p className="font-semibold">
 								Descripción de la actividad: <b>{actividad.description}.</b>
 							</p>
+							<p className="font-semibold">
+								Peso de la nota en el curso: <b>{actividad.pesoNota}%.</b>
+							</p>
+							<p className="font-semibold">
+								Es calificable?: <b>{actividad.revisada ? 'Si' : 'No'}.</b>
+							</p>
+							<p className="font-semibold">
+								Calificacion de la actividad: <b>{actividad.nota}.</b>
+							</p>
 						</div>
 						<div className="flex items-center justify-center">
 							<div className="text-center">
@@ -277,64 +365,127 @@ const Page: React.FC = () => {
 							</div>
 						</div>
 					</div>
-					<div className="flex justify-end">
+					<div className="flex items-center justify-evenly space-x-4">
 						<Link
 							href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-							className="mb-4 rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+							className="rounded-lg bg-blue-500 px-4 py-1.5 text-white hover:bg-blue-600"
 						>
 							Realizar Actividad
 						</Link>
-					</div>
-					<AlertDialog>
-						<AlertDialogTrigger asChild>
-							<Button className="mx-auto my-4 w-1/6 border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
-								Eliminar
-							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-								<AlertDialogDescription>
-									Esta acción no se puede deshacer. Se eliminará permanentemente
-									la actividad
-									<span className="font-bold">
-										{' '}
-										{actividad?.name}, del tipo: {actividad?.type?.name}
-									</span>{' '}
-									y todos los datos asociados a este.
-								</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>Cancelar</AlertDialogCancel>
-								<AlertDialogAction
-									onClick={handleDeleteAct}
-									className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
-								>
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<Button className="mx-auto w-1/3 border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600 md:w-1/6 lg:w-1/6">
 									Eliminar
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
+								</Button>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+									<AlertDialogDescription>
+										Esta acción no se puede deshacer. Se eliminará
+										permanentemente la actividad
+										<span className="font-bold">
+											{' '}
+											{actividad?.name}, del tipo: {actividad?.type?.name}
+										</span>{' '}
+										y todos los datos asociados a este.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>Cancelar</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={handleDeleteAct}
+										className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+									>
+										Eliminar
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
+					</div>
 					{/* Zona de actividades */}
-					{actividad?.type?.id === 1 && (
-						// <CrearActividadSL />
-						<div>En construccion</div>
+					{actividad?.type.id === 1 ? (
+						<>
+							{actividadIdNumber !== null && (
+								<>
+									{editingQuestion &&
+										'parametros' in editingQuestion &&
+										'pesoNota' in editingQuestion && (
+											<FormActCompletado
+												activityId={actividadIdNumber}
+												editingQuestion={editingQuestion}
+												onSubmit={handleFormSubmit}
+											/>
+										)}
+									<QuestionSubidaList activityId={actividadIdNumber} />
+								</>
+							)}
+						</>
+					) : actividad?.type.id === 2 ? (
+						<>
+							{totalPeso < 100 ? (
+								<>
+									<SeleccionActi
+										selectedColor={color}
+										onSelectChange={setSelectedActivityType}
+									/>
+									{selectedActivityType && (
+										<Button
+											className="mx-auto mb-4 w-2/4 border-slate-300 text-black md:w-1/4 lg:w-1/4"
+											onClick={handleAddQuestion}
+										>
+											Agregar Pregunta
+										</Button>
+									)}
+								</>
+							) : (
+								<p className="text-center text-red-500">
+									El peso total de las preguntas ha alcanzado el 100%. No se
+									pueden agregar más preguntas.
+								</p>
+							)}
+							{questions.map((questionType, index) => (
+								<div key={index}>
+									{questionType === 'OM' && actividadIdNumber !== null && (
+										<QuestionForm
+											activityId={actividadIdNumber}
+											onSubmit={handleFormSubmit}
+											isUploading={false}
+											questionToEdit={editingQuestion as Question}
+										/>
+									)}
+									{questionType === 'FOV' && actividadIdNumber !== null && (
+										<QuestionVOFForm
+											activityId={actividadIdNumber}
+											onSubmit={handleFormSubmit}
+											isUploading={false}
+											questionToEdit={editingQuestion as VerdaderoOFlaso}
+										/>
+									)}
+									{questionType === 'COMPLETADO' &&
+										actividadIdNumber !== null && (
+											<PreguntasAbiertas
+												activityId={actividadIdNumber}
+												onSubmit={handleFormSubmit}
+												isUploading={false}
+												questionToEdit={editingQuestion as Completado}
+											/>
+										)}
+								</div>
+							))}
+							{actividadIdNumber !== null && (
+								<>
+									<QuestionVOFList activityId={actividadIdNumber} />
+									<QuestionList activityId={actividadIdNumber} />
+									<ListPreguntaAbierta activityId={actividadIdNumber} />
+								</>
+							)}
+						</>
+					) : (
+						<div className="text-center text-xl text-red-500">
+							No se encontró la actividad.
+						</div>
 					)}
-					{actividad?.type?.id === 2 && actividadIdNumber !== null && (
-						// <CrearActividadOM activityId={actividadIdNumber} />
-						<QuestionManager activityId={actividadIdNumber} />
-					)}
-					{actividad?.type?.id === 3 && (
-						// <CrearCrucigrama />
-						<div>En construccion</div>
-					)}
-					{actividad?.type?.id !== 1 &&
-						actividad?.type?.id !== 2 &&
-						actividad?.type?.id !== 3 && (
-							<div className="text-center text-xl text-red-500">
-								No se encontró la actividad.
-							</div>
-						)}
 				</div>
 			</div>
 		</>
