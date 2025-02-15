@@ -136,9 +136,9 @@ export const getCourseById = async (courseId: number) => {
 			title: courses.title,
 			description: courses.description,
 			coverImageKey: courses.coverImageKey,
-			categoryid: categories.name,
-			modalidadesid: modalidades.name,
-			dificultadid: dificultad.name,
+			categoryid: courses.categoryid, // ✅ Ahora devuelve el ID, no el nombre
+			modalidadesid: courses.modalidadesid, // ✅ Ahora devuelve el ID, no el nombre
+			dificultadid: courses.dificultadid, // ✅ Ahora devuelve el ID, no el nombre
 			instructor: courses.instructor,
 			creatorId: courses.creatorId,
 			createdAt: courses.createdAt,
@@ -146,9 +146,6 @@ export const getCourseById = async (courseId: number) => {
 			requerimientos: courses.requerimientos,
 		})
 		.from(courses)
-		.leftJoin(categories, eq(courses.categoryid, categories.id))
-		.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-		.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id)) // Agregar esta línea
 		.where(eq(courses.id, courseId))
 		.then((rows) => rows[0]);
 };
@@ -214,94 +211,97 @@ export const updateCourse = async (
 		.where(eq(courses.id, courseId));
 };
 
-
 export const deleteCourse = async (courseId: number): Promise<void> => {
-  try {
-    console.log(`🔍 Intentando eliminar el curso con ID: ${courseId}`);
+	try {
+		console.log(`🔍 Intentando eliminar el curso con ID: ${courseId}`);
 
-    // 🔎 1️⃣ Verificar inscripciones antes de eliminarlas
-    const enrollmentsToDelete = await db
-      .select()
-      .from(enrollments)
-      .where(eq(enrollments.courseId, courseId));
+		// 🔎 1️⃣ Verificar inscripciones antes de eliminarlas
+		const enrollmentsToDelete = await db
+			.select()
+			.from(enrollments)
+			.where(eq(enrollments.courseId, courseId));
 
-    console.log(`📌 Inscripciones encontradas ANTES de eliminar: ${enrollmentsToDelete.length}`);
+		console.log(
+			`📌 Inscripciones encontradas ANTES de eliminar: ${enrollmentsToDelete.length}`
+		);
 
-    if (enrollmentsToDelete.length > 0) {
-      console.log(`🚀 Eliminando inscripciones del curso ${courseId}...`);
-      await db.delete(enrollments).where(eq(enrollments.courseId, courseId));
-      console.log('✅ Inscripciones eliminadas correctamente.');
-    } else {
-      console.log('⚠️ No se encontraron inscripciones en el curso.');
-    }
+		if (enrollmentsToDelete.length > 0) {
+			console.log(`🚀 Eliminando inscripciones del curso ${courseId}...`);
+			await db.delete(enrollments).where(eq(enrollments.courseId, courseId));
+			console.log('✅ Inscripciones eliminadas correctamente.');
+		} else {
+			console.log('⚠️ No se encontraron inscripciones en el curso.');
+		}
 
-    // 🔎 2️⃣ Verificar que las inscripciones fueron eliminadas
-    const enrollmentsAfterDelete = await db
-      .select()
-      .from(enrollments)
-      .where(eq(enrollments.courseId, courseId));
+		// 🔎 2️⃣ Verificar que las inscripciones fueron eliminadas
+		const enrollmentsAfterDelete = await db
+			.select()
+			.from(enrollments)
+			.where(eq(enrollments.courseId, courseId));
 
-    console.log(`📌 Inscripciones DESPUÉS de eliminar: ${enrollmentsAfterDelete.length}`);
+		console.log(
+			`📌 Inscripciones DESPUÉS de eliminar: ${enrollmentsAfterDelete.length}`
+		);
 
-    if (enrollmentsAfterDelete.length > 0) {
-      throw new Error('❌ ERROR: Inscripciones NO eliminadas. No se puede proceder con la eliminación del curso.');
-    }
+		if (enrollmentsAfterDelete.length > 0) {
+			throw new Error(
+				'❌ ERROR: Inscripciones NO eliminadas. No se puede proceder con la eliminación del curso.'
+			);
+		}
 
-    // 🔎 3️⃣ Eliminar foros asociados al curso
-    console.log(`📌 Eliminando foros asociados al curso ${courseId}...`);
-    await deleteForumByCourseId(courseId);
-    console.log('✅ Foros eliminados correctamente.');
+		// 🔎 3️⃣ Eliminar foros asociados al curso
+		console.log(`📌 Eliminando foros asociados al curso ${courseId}...`);
+		await deleteForumByCourseId(courseId);
+		console.log('✅ Foros eliminados correctamente.');
 
-    // 🔎 4️⃣ Eliminar lecciones asociadas al curso
-    console.log(`📌 Eliminando lecciones asociadas al curso ${courseId}...`);
-    await deleteLessonsByCourseId(courseId);
-    console.log('✅ Lecciones eliminadas correctamente.');
+		// 🔎 4️⃣ Eliminar lecciones asociadas al curso
+		console.log(`📌 Eliminando lecciones asociadas al curso ${courseId}...`);
+		await deleteLessonsByCourseId(courseId);
+		console.log('✅ Lecciones eliminadas correctamente.');
 
-    // 🔎 5️⃣ Finalmente, eliminar el curso
-    console.log(`📌 Eliminando curso con ID ${courseId}...`);
-    await db.delete(courses).where(eq(courses.id, courseId));
-    console.log('✅ Curso eliminado correctamente.');
-    
-  } catch (error) {
-    console.error('❌ ERROR al eliminar el curso:', error);
+		// 🔎 5️⃣ Finalmente, eliminar el curso
+		console.log(`📌 Eliminando curso con ID ${courseId}...`);
+		await db.delete(courses).where(eq(courses.id, courseId));
+		console.log('✅ Curso eliminado correctamente.');
+	} catch (error) {
+		console.error('❌ ERROR al eliminar el curso:', error);
 
-    if (error instanceof Error) {
-      throw new Error(`Error al eliminar el curso: ${error.message}`);
-    } else {
-      throw new Error('Error desconocido al eliminar el curso.');
-    }
-  }
+		if (error instanceof Error) {
+			throw new Error(`Error al eliminar el curso: ${error.message}`);
+		} else {
+			throw new Error('Error desconocido al eliminar el curso.');
+		}
+	}
 };
-
 
 // ✅ Obtener todos los educadores disponibles
 export async function getAllEducators() {
 	try {
-  
-	  const educators = await db
-		.select({
-		  id: users.id,
-		  name: users.name, 
-		})
-		.from(users)
-		.where(eq(users.role, 'educador')) 
-		.execute();
-  
-	  console.log('✅ [DB] Educadores encontrados:', educators);
-  
-	  return educators;
+		const educators = await db
+			.select({
+				id: users.id,
+				name: users.name,
+			})
+			.from(users)
+			.where(eq(users.role, 'educador'))
+			.execute();
+
+		console.log('✅ [DB] Educadores encontrados:', educators);
+
+		return educators;
 	} catch (error) {
-	  throw new Error('Error al obtener educadores de la base de datos');
+		throw new Error('Error al obtener educadores de la base de datos');
 	}
-  }
+}
 
-
-  // ✅ Actualizar el instructor asignado a un curso
-export const updateCourseInstructor = async (courseId: number, newInstructor: string) => {
+// ✅ Actualizar el instructor asignado a un curso
+export const updateCourseInstructor = async (
+	courseId: number,
+	newInstructor: string
+) => {
 	return db
-	  .update(courses)
-	  .set({ instructor: newInstructor })
-	  .where(eq(courses.id, courseId))
-	  .execute();
-  };
-  
+		.update(courses)
+		.set({ instructor: newInstructor })
+		.where(eq(courses.id, courseId))
+		.execute();
+};

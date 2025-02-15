@@ -197,14 +197,14 @@ export default function Page() {
 						placeholder="Buscar cursos..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+						className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 					/>
 
 					<button
 						onClick={() => setIsModalOpen(true)}
-						className="rounded-md bg-[#01142B] px-6 py-2 font-bold text-white shadow-lg hover:bg-[#0097A7]"
+						className="bg-primary font-primary flex items-center gap-2 rounded-md px-6 py-2 text-white shadow-lg hover:bg-[#0097A7]"
 					>
-						<FiPlus className="mr-2 size-5" /> Agregar Curso
+						<FiPlus className="size-5" /> Agregar
 					</button>
 				</div>
 

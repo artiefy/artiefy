@@ -91,19 +91,6 @@ export async function PUT(
 	}
 }
 
-export async function GET() {
-	try {
-		const courses = await getAllCourses();
-		return NextResponse.json(courses, { status: 200 });
-	} catch (error) {
-		console.error('Error al obtener los cursos:', error);
-		return NextResponse.json(
-			{ error: 'Error al obtener los cursos' },
-			{ status: 500 }
-		);
-	}
-}
-
 export async function POST(request: Request) {
 	try {
 		const { userId } = await auth();

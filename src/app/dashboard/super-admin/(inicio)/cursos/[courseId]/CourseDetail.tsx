@@ -208,23 +208,65 @@ const CourseDetail = () => {
 
 	const handleSaveChanges = async () => {
 		try {
-			const response = await fetch(`/api/super-admin/courses/${course.id}`, {
+			console.log('📌 Curso actual:', course);
+			console.log('📌 Imagen actual:', course?.coverImageKey);
+			console.log('📌 Nueva imagen seleccionada:', newCoverImageKey);
+
+			// ✅ Si no hay una nueva imagen, usa la anterior
+			const finalCoverImageKey = newCoverImageKey || course?.coverImageKey;
+
+			if (!finalCoverImageKey) {
+				console.error('❌ Error: `coverImageKey` es undefined');
+				toast({
+					title: 'Error',
+					description: 'No se encontró la imagen del curso.',
+				});
+				return;
+			}
+
+			// 🚀 Obtener los IDs correctos
+			const categoryid = categorias.find(
+				(c) => c.id === Number(course?.categoryid)
+			)?.id;
+			const modalidadesid = modalidades.find(
+				(m) => m.id === Number(course?.modalidadesid)
+			)?.id;
+			const dificultadid = dificultades.find(
+				(d) => d.id === Number(course?.dificultadid)
+			)?.id;
+
+			if (!categoryid || !modalidadesid || !dificultadid) {
+				console.error('⛔ Error: No se encontraron IDs válidos');
+				toast({
+					title: 'Error',
+					description: 'Hubo un problema con los valores seleccionados.',
+				});
+				return;
+			}
+
+			// ✅ Construir objeto de actualización
+			const updatedData = {
+				id: course?.id,
+				title: editedTitle.trim(),
+				description: editedDescription.trim(),
+				coverImageKey: finalCoverImageKey, // ✅ Ahora siempre tiene valor
+				categoryid,
+				modalidadesid,
+				dificultadid,
+				instructor: course?.instructor.trim(),
+				requerimientos: course?.requerimientos.trim(),
+			};
+
+			console.log('📤 Enviando a la API:', updatedData);
+
+			const response = await fetch(`/api/super-admin/courses/${course?.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					id: course.id,
-					title: editedTitle,
-					description: editedDescription,
-					coverImageKey: newCoverImageKey || course.coverImageKey,
-					categoryid: course.categoryid,
-					modalidadesid: course.modalidadesid,
-					dificultadid: course.dificultadid,
-					instructor: course.instructor,
-					requerimientos: course.requerimientos,
-				}),
+				body: JSON.stringify(updatedData),
 			});
 
-			const responseData = await response.json(); // Obtén la respuesta en JSON
+			const responseData = await response.json();
+			console.log('✅ Respuesta de la API:', responseData);
 
 			if (!response.ok) {
 				console.error('🔴 Error en la API:', responseData);
@@ -236,13 +278,14 @@ const CourseDetail = () => {
 				description: 'Los cambios fueron guardados con éxito',
 			});
 
+			// 🔄 Actualizar estado del curso
 			setCourse((prev) =>
 				prev
 					? {
 							...prev,
 							title: editedTitle,
 							description: editedDescription,
-							coverImageKey: newCoverImageKey || prev.coverImageKey,
+							coverImageKey: finalCoverImageKey, // ✅ Usar la imagen final
 						}
 					: prev
 			);
@@ -258,32 +301,59 @@ const CourseDetail = () => {
 		const file = e.target.files?.[0];
 		if (!file) return;
 
-		setSelectedFile(file);
+		console.log('📌 Archivo seleccionado:', file.name);
 
 		try {
+			console.log('📤 Solicitando URL de carga...');
 			const uploadResponse = await fetch('/api/upload', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
 			});
 
-			if (!uploadResponse.ok) throw new Error('Error al obtener URL de carga');
+			if (!uploadResponse.ok)
+				throw new Error('❌ Error al obtener URL de carga');
 
 			const { url, fields } = await uploadResponse.json();
-			const formData = new FormData();
+			console.log('✅ URL de carga obtenida:', url);
 
+			const formData = new FormData();
 			Object.entries(fields).forEach(([key, value]) =>
 				formData.append(key, value)
 			);
 			formData.append('file', file);
 
+			console.log('📤 Subiendo imagen a AWS...');
 			const s3UploadResponse = await fetch(url, {
 				method: 'POST',
 				body: formData,
 			});
-			if (!s3UploadResponse.ok) throw new Error('Error al subir imagen');
 
-			setNewCoverImageKey(fields.key);
+			if (!s3UploadResponse.ok) throw new Error('❌ Error al subir imagen');
+
+			console.log('✅ Imagen subida con éxito:', fields.key);
+
+			// 🚀 **Guardar el nuevo coverImageKey en el curso**
+			if (course) {
+				console.log('📌 Actualizando curso con nueva imagen...');
+				const updateResponse = await fetch(
+					`/api/super-admin/courses/${course.id}`,
+					{
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ coverImageKey: fields.key }), // ✅ Solo actualiza la imagen
+					}
+				);
+
+				if (!updateResponse.ok)
+					throw new Error('❌ Error al actualizar la imagen en la BD');
+
+				console.log('✅ Imagen guardada en la base de datos correctamente.');
+				setNewCoverImageKey(fields.key); // ✅ Guarda la nueva imagen en el estado
+				setCourse((prev) =>
+					prev ? { ...prev, coverImageKey: fields.key } : prev
+				);
+			}
 		} catch (error) {
 			console.error('❌ Error al subir imagen:', error);
 		}
@@ -291,6 +361,8 @@ const CourseDetail = () => {
 
 	const handleChange = async (type: string, newValue: number) => {
 		try {
+			console.log(`🟡 Cambiando ${type} a ID:`, newValue);
+
 			const response = await fetch(`/api/super-admin/change-${type}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
@@ -299,7 +371,7 @@ const CourseDetail = () => {
 
 			if (!response.ok) throw new Error(`Error al actualizar ${type}`);
 
-			// 🔥 Vuelve a traer los datos del curso desde la API para garantizar la actualización correcta
+			// 🔥 Vuelve a obtener los datos del curso actualizados
 			const updatedResponse = await fetch(
 				`/api/super-admin/courses/${course?.id}`
 			);
@@ -309,7 +381,8 @@ const CourseDetail = () => {
 			const updatedCourse = (await updatedResponse.json()) as Course;
 			console.log(`✅ ${type} actualizado correctamente:`, updatedCourse);
 
-			setCourse(updatedCourse); // 🔄 Actualizar el estado con la versión correcta desde el backend
+			// 🔄 Actualizar estado con la versión correcta del backend
+			setCourse(updatedCourse);
 
 			toast({
 				title: `${type.charAt(0).toUpperCase() + type.slice(1)} actualizada`,
@@ -413,31 +486,52 @@ const CourseDetail = () => {
 			</Breadcrumb>
 
 			{/* 📌 Imagen en forma de banner arriba */}
+			{/* 📌 Imagen en forma de banner arriba */}
 			<div className="relative h-60 w-full md:h-80">
-				{isEditing ? (
-					<div className="bg-opacity-50 absolute inset-0 flex items-center justify-center bg-black">
+				{/* La imagen siempre visible */}
+				<Image
+					src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${newCoverImageKey || course.coverImageKey}`}
+					alt={course.title}
+					layout="fill"
+					objectFit="cover"
+					className="rounded-lg"
+				/>
+
+				{/* 📌 Si está en modo edición, mostrar el botón sin ocultar la imagen */}
+				{isEditing && (
+					<div className="absolute inset-0 flex items-center justify-center">
+						<label
+							htmlFor="fileInput"
+							className="bg-opacity-80 absolute bottom-4 left-4 flex cursor-pointer items-center gap-2 rounded-md bg-gray-800 px-4 py-2 text-white transition hover:bg-gray-700"
+						>
+							{/* 📷 Icono de cámara */}
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								fill="none"
+								viewBox="0 0 24 24"
+								strokeWidth="2"
+								stroke="currentColor"
+								className="h-6 w-6"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									d="M15.232 5.232l3.536 3.536m-2.036-7.036h-2.5a2 2 0 00-2 2v1.5m0 4l5 5M4 15.5V20a2 2 0 002 2h10a2 2 0 002-2v-4.5m-6-2l-5 5"
+								/>
+							</svg>
+							Cambiar Imagen
+						</label>
 						<input
 							type="file"
+							id="fileInput"
 							accept="image/*"
 							onChange={handleImageUpload}
-							className="block w-full text-sm text-gray-300"
+							className="hidden"
 						/>
-						{selectedFile && (
-							<p className="text-sm text-green-400">
-								Imagen seleccionada: {selectedFile.name}
-							</p>
-						)}
 					</div>
-				) : (
-					<Image
-						src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${newCoverImageKey || course.coverImageKey}`}
-						alt={course.title}
-						layout="fill"
-						objectFit="cover"
-						className="rounded-lg"
-					/>
 				)}
 			</div>
+
 			<Card
 				className={`zoom-in relative z-20 mt-3 h-auto border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
 				style={{
@@ -532,8 +626,9 @@ const CourseDetail = () => {
 							<div className="relative flex flex-col">
 								<h2 className="text-lg font-semibold text-white">Categoría:</h2>
 								<span className="text-primary font-medium">
-									{categorias.find((cat) => cat.name === course.categoryid)
-										?.name ?? 'No asignada'}
+									{categorias.find(
+										(cat) => cat.id === Number(course.categoryid)
+									)?.name ?? 'No asignada'}
 								</span>
 
 								<div className="mt-2">
@@ -622,8 +717,9 @@ const CourseDetail = () => {
 									Dificultad:
 								</h2>
 								<span className="text-primary font-medium">
-									{dificultades.find((dif) => dif.name === course.dificultadid)
-										?.name ?? 'No asignada'}
+									{dificultades.find(
+										(dif) => dif.id === Number(course.dificultadid)
+									)?.name ?? 'No asignada'}
 								</span>
 
 								<div className="mt-2">
@@ -665,8 +761,9 @@ const CourseDetail = () => {
 							<div className="relative flex flex-col">
 								<h2 className="text-lg font-semibold text-white">Modalidad:</h2>
 								<span className="text-primary font-medium">
-									{modalidades.find((mod) => mod.name === course.modalidadesid)
-										?.name ?? 'No asignada'}
+									{modalidades.find(
+										(mod) => mod.id === Number(course.modalidadesid)
+									)?.name ?? 'No asignada'}
 								</span>
 
 								<div className="mt-2">
