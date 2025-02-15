@@ -116,7 +116,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 						<div key={index} className="group relative size-full">
 							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 							<Card
-								className="relative z-20 flex h-dvh flex-col border-transparent bg-black hover:scale-100" // Añadir h-80 para altura fija
+								className="relative z-20 flex h-auto flex-col border-transparent bg-black hover:scale-100" // Añadir h-80 para altura fija
 								style={{
 									backgroundColor: selectedColor,
 									color: getContrastYIQ(selectedColor),

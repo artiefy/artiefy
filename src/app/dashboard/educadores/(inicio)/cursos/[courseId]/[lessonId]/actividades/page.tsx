@@ -434,11 +434,11 @@ const Page: React.FC = () => {
 							/>
 							<h2 className="mt-5 flex flex-col text-start text-3xl font-semibold">
 								Creacion de actividad
-								<p className="text-sm">En el curso: {course?.title}</p>
+								<p className="text-sm">Del curso: {course?.title}</p>
 							</h2>
 						</div>
 						<div className="flex flex-col">
-							<p>La actividad revisada?:</p>
+							<p>¿La actividad es revisada?:</p>
 							<div className="flex space-x-2">
 								<label
 									htmlFor="toggle"
@@ -482,6 +482,7 @@ const Page: React.FC = () => {
 												parametro={formData.parametro ?? 0}
 												setParametro={handleParametroChange}
 												errors={errors}
+												selectedColor={color}
 											/>
 											<Label
 												htmlFor="pesoNota"
@@ -557,7 +558,11 @@ const Page: React.FC = () => {
 								</p>
 							)}
 						</div>
-						<Label className="mb-2 text-xl text-black">Tipo de Actividad</Label>
+						<Label
+							className={`mb-2 text-xl ${color == '#FFFFFF' ? 'text-black' : 'text-white'}`}
+						>
+							Tipo de Actividad
+						</Label>
 						<TypeActDropdown
 							typeActi={parseInt(formData.type, 10)}
 							setTypeActividad={(type: number) =>

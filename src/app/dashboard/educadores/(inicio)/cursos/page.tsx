@@ -254,6 +254,8 @@ export default function Page() {
 
 	const handleCloseModal = () => {
 		setIsModalOpen(false);
+		setEditingCourse(null);
+		setParametrosList([]);
 	};
 
 	return (

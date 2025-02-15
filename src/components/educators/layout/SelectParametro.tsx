@@ -16,6 +16,7 @@ interface ParametrosDropdownProps {
 	errors: {
 		parametro: boolean;
 	};
+	selectedColor: string;
 }
 
 const SelectParametro: React.FC<ParametrosDropdownProps> = ({
@@ -23,9 +24,19 @@ const SelectParametro: React.FC<ParametrosDropdownProps> = ({
 	parametro,
 	setParametro,
 	errors,
+	selectedColor,
 }) => {
 	const [parametros, setParametros] = useState<Parametros[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
+
+	const getContrastYIQ = (hexcolor: string) => {
+		hexcolor = hexcolor.replace('#', '');
+		const r = parseInt(hexcolor.substr(0, 2), 16);
+		const g = parseInt(hexcolor.substr(2, 2), 16);
+		const b = parseInt(hexcolor.substr(4, 2), 16);
+		const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+		return yiq >= 128 ? 'black' : 'white';
+	};
 
 	useEffect(() => {
 		const fetchParametros = async () => {
@@ -67,6 +78,10 @@ const SelectParametro: React.FC<ParametrosDropdownProps> = ({
 				className={`text-lg font-medium ${
 					errors.parametro ? 'text-red-500' : 'text-black'
 				}`}
+				style={{
+					backgroundColor: selectedColor,
+					color: getContrastYIQ(selectedColor),
+				}}
 			>
 				Selecciona un parametro:
 			</label>
@@ -80,7 +95,7 @@ const SelectParametro: React.FC<ParametrosDropdownProps> = ({
 						const selectedId = Number(e.target.value);
 						setParametro(selectedId);
 					}}
-					className={`mb-5 w-60 rounded border p-2 outline-none ${
+					className={`mb-5 w-60 rounded border p-2 text-black outline-none ${
 						errors.parametro ? 'border-red-500' : 'border-black'
 					}`}
 				>

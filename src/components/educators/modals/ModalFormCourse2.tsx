@@ -115,7 +115,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [currentCoverImageKey] = useState(coverImageKey);
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
-	const [coverImage, setCoverImageKey] = useState<string | null>(null);
+	const [coverImage, setCoverImage] = useState<string | null>(null);
 
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -245,7 +245,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		if (porcentajeInvalido) {
 			toast({
 				title: 'Error',
-				description: 'Cada porcentaje debe estar entre 1 y 100%',
+				description:
+					'Cada porcentaje debe estar entre 1 y 100% o deben ser igual al 100%',
 				variant: 'destructive',
 			});
 			return;
@@ -376,7 +377,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	}, [isUploading]);
 
 	useEffect(() => {
-		// Inicializar los valores del formulario con los valores de edición
 		if (editingCourseId) {
 			setTitle(title);
 			setDescription(description);
@@ -384,40 +384,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setCategoryid(categoryid);
 			setModalidadesid(modalidadesid);
 			setDificultadid(dificultadid);
-			setCoverImageKey(coverImageKey);
+			setCoverImage(coverImageKey);
 		}
 	}, [editingCourseId]);
 
 	useEffect(() => {
-		if (isOpen) {
-			setTitle(title);
-			setDescription(description);
-			setRequerimientos(requerimientos);
-			setCategoryid(categoryid);
-			setModalidadesid(modalidadesid);
-			setDificultadid(dificultadid);
-			setCoverImageKey(coverImageKey);
-			setParametrosAction(parametros);
+		if (isOpen && !editingCourseId) {
+			setTitle('');
+			setDescription('');
+			setRequerimientos('');
+			setCategoryid(0);
+			setModalidadesid(0);
+			setDificultadid(0);
+			setCoverImage('');
+			setParametrosAction([]);
 		}
-	}, [
-		isOpen,
-		title,
-		description,
-		requerimientos,
-		categoryid,
-		modalidadesid,
-		dificultadid,
-		coverImageKey,
-		parametros,
-		setTitle,
-		setDescription,
-		setRequerimientos,
-		setCategoryid,
-		setModalidadesid,
-		setDificultadid,
-		setCoverImageKey,
-		setParametrosAction,
-	]);
+	}, [isOpen, editingCourseId]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
@@ -634,9 +616,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<Button
 							onClick={handleAddParametro}
 							disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
-							className="w-10/12 lg:w-1/4"
+							className="mt-2 w-10/12 lg:w-1/2"
 						>
-							{editingCourseId ? 'Editar' : 'Agregar'} parametro
+							{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo parametro
 							<Plus />
 						</Button>
 						{parametros.map((parametro, index) => (
