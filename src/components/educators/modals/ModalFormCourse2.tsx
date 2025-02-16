@@ -238,15 +238,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				modifiedFields.has('requerimientos') && !requerimientos;
 		}
 
-		// Validar que cada porcentaje esté entre 1 y 100
-		const porcentajeInvalido = parametros.some(
-			(parametro) => parametro.porcentaje < 1 || parametro.porcentaje > 100
+		// Validar que la suma de los porcentajes sea igual a 100
+		const sumaPorcentajes = parametros.reduce(
+			(acc, parametro) => acc + parametro.porcentaje,
+			0
 		);
-		if (porcentajeInvalido) {
+		if (sumaPorcentajes !== 100) {
 			toast({
 				title: 'Error',
-				description:
-					'Cada porcentaje debe estar entre 1 y 100% o deben ser igual al 100%',
+				description: 'La suma de los porcentajes debe ser igual a 100%',
 				variant: 'destructive',
 			});
 			return;

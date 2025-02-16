@@ -45,9 +45,9 @@ export interface Course {
 	title: string;
 	description: string;
 	coverImageKey: string;
-	categoryid: number;
-	modalidadesid: number;
-	dificultadid: number;
+	categoryid: number | null;
+	modalidadesid: number | null;
+	dificultadid: number | null;
 	rating: number;
 	instructor: string;
 	creatorId: string;
@@ -208,34 +208,52 @@ export const updateCourse = async (
 		requerimientos,
 	}: {
 		title?: string;
-		description?: string;
-		coverImageKey?: string;
-		categoryid?: number;
-		modalidadesid?: number;
-		dificultadid?: number;
+		description?: string | null;
+		coverImageKey?: string | null;
+		categoryid?: number | null;
+		modalidadesid?: number | null;
+		dificultadid?: number | null;
 		instructor?: string;
 		requerimientos?: string;
 	}
 ) => {
+	// Obtener los datos actuales del curso
+	const currentCourse = await getCourseById(courseId);
+
 	const updateData: {
 		title?: string;
-		description?: string;
-		coverImageKey?: string;
-		categoryid?: number;
-		modalidadesid?: number;
-		dificultadid?: number;
+		description?: string | null;
+		coverImageKey?: string | null;
+		categoryid?: number | undefined;
+		modalidadesid?: number | undefined;
+		dificultadid?: number | undefined;
 		instructor?: string;
 		requerimientos?: string;
-	} = {};
-
-	if (title !== undefined) updateData.title = title;
-	if (description !== undefined) updateData.description = description;
-	if (coverImageKey !== undefined) updateData.coverImageKey = coverImageKey;
-	if (categoryid !== undefined) updateData.categoryid = categoryid;
-	if (modalidadesid !== undefined) updateData.modalidadesid = modalidadesid;
-	if (dificultadid !== undefined) updateData.dificultadid = dificultadid;
-	if (instructor !== undefined) updateData.instructor = instructor;
-	if (requerimientos !== undefined) updateData.requerimientos = requerimientos;
+	} = {
+		title: title ?? currentCourse.title,
+		description: description ?? currentCourse.description,
+		coverImageKey: coverImageKey ?? currentCourse.coverImageKey,
+		categoryid:
+			typeof categoryid === 'number'
+				? categoryid
+				: typeof currentCourse.categoryid === 'number'
+					? currentCourse.categoryid
+					: undefined,
+		modalidadesid:
+			typeof modalidadesid === 'number'
+				? modalidadesid
+				: typeof currentCourse.modalidadesid === 'number'
+					? currentCourse.modalidadesid
+					: undefined,
+		dificultadid:
+			typeof dificultadid === 'number'
+				? dificultadid
+				: typeof currentCourse.dificultadid === 'number'
+					? currentCourse.dificultadid
+					: undefined,
+		instructor: instructor ?? currentCourse.instructor,
+		requerimientos: requerimientos ?? currentCourse.requerimientos,
+	};
 
 	return db.update(courses).set(updateData).where(eq(courses.id, courseId));
 };

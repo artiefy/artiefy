@@ -125,7 +125,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					const dataParametros =
 						(await responseParametros.json()) as Parametros[]; // Obtener los parámetros
 					setParametros(dataParametros); // Inicializar los parámetros
-					console.log('parametros obtenidos', parametros);
 				} else {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
@@ -330,7 +329,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	if (loading) return <div>Cargando curso...</div>;
 	if (!course) return <div>No se encontró el curso.</div>;
 
-	const handleDelete = async (id: string) => {
+	const handleDelete = async (id: number) => {
 		try {
 			const responseAws = await fetch(
 				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`,
@@ -473,7 +472,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										<AlertDialogFooter>
 											<AlertDialogCancel>Cancelar</AlertDialogCancel>
 											<AlertDialogAction
-												onClick={() => handleDelete(course.id.toString())}
+												onClick={() => handleDelete(course.id)}
 												className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
 											>
 												Eliminar
