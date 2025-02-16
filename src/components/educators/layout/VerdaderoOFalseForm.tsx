@@ -52,7 +52,7 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 		}
 	}, [questionToEdit]);
 
-	const handleSubmit = async (questions: VerdaderoOFlaso) => {
+	const handleSubmit = async (question: VerdaderoOFlaso) => {
 		const method = questionToEdit ? 'PUT' : 'POST';
 		setIsUploading(true);
 		setUploadProgress(0);
@@ -70,22 +70,25 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 			const response = await fetch('/api/educadores/question/VerdaderoOFalso', {
 				method,
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ activityId, questions }),
+				body: JSON.stringify({ activityId, questionsVOF: question }),
 			});
+
 			if (!response.ok) {
 				const errorText = await response.text();
 				throw new Error(`Error en la solicitud: ${errorText}`);
 			}
+
 			const data = (await response.json()) as {
 				success: boolean;
 				questions: VerdaderoOFlaso[];
 			};
+
 			if (data.success) {
 				toast({
 					title: 'Pregunta guardada',
 					description: 'La pregunta se guardó correctamente',
 				});
-				onSubmit(questions);
+				onSubmit(question);
 			} else if (data.success === false) {
 				toast({
 					title: 'Error',

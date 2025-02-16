@@ -17,13 +17,13 @@ export async function GET(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questions`;
-		const questions = (await redis.get<VerdaderoOFlaso[]>(key)) ?? [];
-		console.log('Fetched questions from Redis:', questions); // Add logging
-		if (questions.length === 0) {
-			console.log('No questions found for activityId:', activityId);
+		const key = `activity:${activityId}:questionsVOF`;
+		const questionsVOF = (await redis.get<VerdaderoOFlaso[]>(key)) ?? [];
+		console.log('Fetched questionsVOF from Redis:', questionsVOF); // Add logging
+		if (questionsVOF.length === 0) {
+			console.log('No questionsVOF found for activityId:', activityId);
 		}
-		return NextResponse.json({ success: true, questions: questions });
+		return NextResponse.json({ success: true, questionsVOF: questionsVOF });
 	} catch (error) {
 		console.error('Error en la API route:', error);
 		return NextResponse.json(
@@ -35,14 +35,22 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
-		const { activityId, questions } = (await request.json()) as {
+		const { activityId, questionsVOF } = (await request.json()) as {
 			activityId: string;
-			questions: VerdaderoOFlaso;
+			questionsVOF: VerdaderoOFlaso;
 		};
-		const key = `activity:${activityId}:questions`;
+
+		if (!activityId || !questionsVOF) {
+			return NextResponse.json(
+				{ success: false, message: 'Datos incompletos' },
+				{ status: 400 }
+			);
+		}
+
+		const key = `activity:${activityId}:questionsVOF`;
 		const existingQuestions = (await redis.get<VerdaderoOFlaso[]>(key)) ?? [];
 
-		const updatedQuestions = [...existingQuestions, questions];
+		const updatedQuestions = [...existingQuestions, questionsVOF];
 		await redis.set(key, updatedQuestions);
 		return NextResponse.json({
 			success: true,
@@ -59,15 +67,23 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
 	try {
-		const { activityId, questions } = (await request.json()) as {
+		const { activityId, questionsVOF } = (await request.json()) as {
 			activityId: string;
-			questions: VerdaderoOFlaso;
+			questionsVOF: VerdaderoOFlaso;
 		};
-		const key = `activity:${activityId}:questions`;
+
+		if (!activityId || !questionsVOF) {
+			return NextResponse.json(
+				{ success: false, message: 'Datos incompletos' },
+				{ status: 400 }
+			);
+		}
+
+		const key = `activity:${activityId}:questionsVOF`;
 		const existingQuestions = (await redis.get<VerdaderoOFlaso[]>(key)) ?? [];
 
 		const updatedQuestions = existingQuestions.map((q) =>
-			q.id === questions.id ? questions : q
+			q.id === questionsVOF.id ? questionsVOF : q
 		);
 		await redis.set(key, updatedQuestions);
 		return NextResponse.json({
@@ -94,7 +110,7 @@ export async function DELETE(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questions`;
+		const key = `activity:${activityId}:questionsVOF`;
 		const existingQuestions = (await redis.get<VerdaderoOFlaso[]>(key)) ?? [];
 		const updatedQuestions = existingQuestions.filter(
 			(q) => q.id !== questionId

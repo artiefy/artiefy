@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Button } from '~/components/educators/ui/button';
-import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 import { toast } from '~/hooks/use-toast';
 import type { QuestionFilesSubida } from '~/types/typesActi';
@@ -9,13 +8,11 @@ import type { QuestionFilesSubida } from '~/types/typesActi';
 interface formSubida {
 	activityId: number;
 	editingQuestion?: QuestionFilesSubida;
-	onSubmit: (pesoNota: number) => void;
 }
 
 const FormActCompletado: React.FC<formSubida> = ({
 	activityId,
 	editingQuestion,
-	onSubmit,
 }) => {
 	const [isUploading, setIsUploading] = useState<boolean>(false);
 	const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -23,7 +20,6 @@ const FormActCompletado: React.FC<formSubida> = ({
 		id: '',
 		text: '',
 		parametros: '',
-		pesoNota: 0,
 	});
 
 	useEffect(() => {
@@ -34,7 +30,6 @@ const FormActCompletado: React.FC<formSubida> = ({
 				id: '',
 				text: '',
 				parametros: '',
-				pesoNota: 0,
 			});
 		}
 	}, [editingQuestion]);
@@ -88,7 +83,6 @@ const FormActCompletado: React.FC<formSubida> = ({
 					description: 'La pregunta se guardó correctamente',
 					variant: 'default',
 				});
-				onSubmit(formData.pesoNota);
 			} else if (data.success === false) {
 				toast({
 					title: 'Error',
@@ -127,21 +121,6 @@ const FormActCompletado: React.FC<formSubida> = ({
 						value={formData.parametros}
 						onChange={handleChange}
 					/>
-					<div className="flex flex-col text-black">
-						<label>Peso de la pregunta (en porcentaje %)</label>
-						<Input
-							className={`w-1/4 rounded-lg border border-slate-400 bg-transparent p-2 shadow-2xl outline-none md:w-1/12 lg:w-1/12`}
-							type="number"
-							id="percentage"
-							name="pesoNota"
-							min="0"
-							max="100"
-							step="1"
-							placeholder="0-100"
-							value={formData.pesoNota}
-							onChange={handleChange}
-						/>
-					</div>
 					{isUploading && (
 						<div className="my-1">
 							<Progress value={uploadProgress} className="w-full" />
@@ -155,7 +134,6 @@ const FormActCompletado: React.FC<formSubida> = ({
 							type="button"
 							variant="outline"
 							className="horver:bg-gray-500 text-gray-100 hover:text-gray-800"
-							onClick={() => onSubmit(formData.pesoNota)}
 						>
 							Cancelar
 						</Button>

@@ -48,7 +48,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 		const interval = setInterval(() => {
 			void fetchQuestions();
-		}, 5000); // Polling cada 5 segundos
+		},5000); // Polling cada 5 segundos
 
 		return () => clearInterval(interval);
 	}, [activityId]);

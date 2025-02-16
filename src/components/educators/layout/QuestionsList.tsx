@@ -25,11 +25,11 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 			);
 			const data = (await response.json()) as {
 				success: boolean;
-				questions: Question[];
+				questionsOM: Question[];
 			};
 			if (data.success) {
 				setQuestions(
-					data.questions?.filter(
+					data.questionsOM?.filter(
 						(q) => q?.text && q?.options && Array.isArray(q.options)
 					) ?? []
 				);
@@ -46,7 +46,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 		const interval = setInterval(() => {
 			void fetchQuestions();
-		}, 5000); // Polling cada 5 segundos
+		},5000); // Polling cada 5 segundos
 		return () => {
 			clearInterval(interval);
 		};

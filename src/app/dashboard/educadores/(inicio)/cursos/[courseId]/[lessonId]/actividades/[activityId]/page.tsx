@@ -88,7 +88,6 @@ const Page: React.FC = () => {
 	const [editingQuestion, setEditingQuestion] = useState<
 		QuestionFilesSubida | Completado | VerdaderoOFlaso | Question | null
 	>(null);
-	const [totalPeso, setTotalPeso] = useState<number>(0);
 
 	const actividadIdString = Array.isArray(actividadIdUrl)
 		? actividadIdUrl[0]
@@ -138,36 +137,6 @@ const Page: React.FC = () => {
 		}
 	}, [actividadIdNumber]);
 
-	const fetchTotalPeso = useCallback(async () => {
-		if (actividadIdNumber !== null) {
-			try {
-				const response = await fetch(
-					`/api/educadores/actividades/${actividadIdNumber}/totalPeso`
-				);
-
-				if (response.ok) {
-					const data = (await response.json()) as { totalPeso: number };
-					if (typeof data.totalPeso === 'number') {
-						setTotalPeso(data.totalPeso);
-					} else {
-						throw new Error('Respuesta inesperada del servidor');
-					}
-				} else {
-					const errorData = await response.text();
-					throw new Error(`Error al obtener el peso total: ${errorData}`);
-				}
-			} catch (error: unknown) {
-				const errorMessage =
-					error instanceof Error ? error.message : 'Error desconocido';
-				toast({
-					title: 'Error',
-					description: `No se pudo cargar el peso total: ${errorMessage}`,
-					variant: 'destructive',
-				});
-			}
-		}
-	}, [actividadIdNumber]);
-
 	useEffect(() => {
 		fetchActividad().catch((error) =>
 			console.error('Error fetching activity:', error)
@@ -175,17 +144,10 @@ const Page: React.FC = () => {
 	}, [fetchActividad]);
 
 	useEffect(() => {
-		fetchTotalPeso().catch((error) =>
-			console.error('Error fetching total peso:', error)
-		);
-	}, [fetchTotalPeso]);
-
-	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
 		if (savedColor) {
 			setColor(savedColor);
 		}
-		console.log(`Color guardado actividad: ${savedColor}`);
 	}, [courseIdNumber]);
 
 	const handleDeleteAct = async () => {
@@ -230,23 +192,13 @@ const Page: React.FC = () => {
 	};
 
 	const handleAddQuestion = () => {
-		if (totalPeso >= 100) {
-			toast({
-				title: 'Error',
-				description: 'El peso total de las preguntas no puede exceder el 100%.',
-				variant: 'destructive',
-			});
-			return;
-		}
-
 		if (selectedActivityType) {
-			setQuestions([selectedActivityType]);
+			setQuestions((prevQuestions) => [...prevQuestions, selectedActivityType]);
 			setSelectedActivityType('');
 		}
 	};
 
-	const handleFormSubmit = async () => {
-		await fetchTotalPeso();
+	const handleFormSubmit = () => {
 		setEditingQuestion(null);
 		setQuestions([]);
 	};
@@ -347,7 +299,8 @@ const Page: React.FC = () => {
 								Peso de la nota en el curso: <b>{actividad.pesoNota}%.</b>
 							</p>
 							<p className="font-semibold">
-								Es calificable?: <b>{actividad.revisada ? 'Si' : 'No'}.</b>
+								¿La actividad es calificable?:{' '}
+								<b>{actividad.revisada ? 'Si' : 'No'}.</b>
 							</p>
 							<p className="font-semibold">
 								Calificacion de la actividad: <b>{actividad.nota}.</b>
@@ -408,41 +361,29 @@ const Page: React.FC = () => {
 						<>
 							{actividadIdNumber !== null && (
 								<>
-									{editingQuestion &&
-										'parametros' in editingQuestion &&
-										'pesoNota' in editingQuestion && (
-											<FormActCompletado
-												activityId={actividadIdNumber}
-												editingQuestion={editingQuestion}
-												onSubmit={handleFormSubmit}
-											/>
-										)}
+									{editingQuestion && 'parametros' in editingQuestion && (
+										<FormActCompletado
+											activityId={actividadIdNumber}
+											editingQuestion={editingQuestion}
+										/>
+									)}
 									<QuestionSubidaList activityId={actividadIdNumber} />
 								</>
 							)}
 						</>
 					) : actividad?.type.id === 2 ? (
 						<>
-							{totalPeso < 100 ? (
-								<>
-									<SeleccionActi
-										selectedColor={color}
-										onSelectChange={setSelectedActivityType}
-									/>
-									{selectedActivityType && (
-										<Button
-											className="mx-auto mb-4 w-2/4 border-slate-300 text-black md:w-1/4 lg:w-1/4"
-											onClick={handleAddQuestion}
-										>
-											Agregar Pregunta
-										</Button>
-									)}
-								</>
-							) : (
-								<p className="text-center text-red-500">
-									El peso total de las preguntas ha alcanzado el 100%. No se
-									pueden agregar más preguntas.
-								</p>
+							<SeleccionActi
+								selectedColor={color}
+								onSelectChange={setSelectedActivityType}
+							/>
+							{selectedActivityType && (
+								<Button
+									className={`mx-auto mb-4 w-2/4 border-slate-300 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+									onClick={handleAddQuestion}
+								>
+									Agregar Pregunta
+								</Button>
 							)}
 							{questions.map((questionType, index) => (
 								<div key={index}>
@@ -473,7 +414,7 @@ const Page: React.FC = () => {
 										)}
 								</div>
 							))}
-							{actividadIdNumber !== null && (
+							{actividadIdNumber !== null && questions.length > 0 && (
 								<>
 									<QuestionVOFList activityId={actividadIdNumber} />
 									<QuestionList activityId={actividadIdNumber} />

@@ -73,7 +73,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					activityId,
-					questions: { ...questions },
+					questionsOM: { ...questions },
 				}),
 			});
 			const data: { message?: string } = (await response.json()) as {
@@ -147,7 +147,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 				await handleSubmit({
 					id: questionToEdit?.id ?? crypto.randomUUID(),
 					text: questionText,
-					options,
+					options: options.map((opt) => ({
+						...opt,
+						id: opt.id || crypto.randomUUID(),
+					})),
 					correctOptionId,
 				});
 			}}

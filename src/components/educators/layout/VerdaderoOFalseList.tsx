@@ -19,11 +19,7 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 	>(undefined);
 
 	useEffect(() => {
-		const interval = setInterval(() => {
-			void fetchQuestions();
-		}, 5000); // Polling cada 5 segundos
-
-		return () => clearInterval(interval);
+		void fetchQuestions();
 	}, [activityId]);
 
 	const fetchQuestions = async () => {
@@ -31,27 +27,15 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 			const response = await fetch(
 				`/api/educadores/question/VerdaderoOFalso?activityId=${activityId}`
 			);
-			console.log('API response:', response); // Add logging
 			if (!response.ok) {
 				throw new Error(`Error fetching questions: ${response.statusText}`);
 			}
 			const data = (await response.json()) as {
 				success: boolean;
-				questions?: VerdaderoOFlaso[];
+				questionsVOF?: VerdaderoOFlaso[];
 			};
-			console.log('API data:', data); // Add logging
-			if (data.success && data.questions) {
-				// Asegurarse de que los objetos dentro del arreglo options se están deserializando correctamente
-				const deserializedQuestions = data.questions.map((question) => ({
-					...question,
-					options: question.options
-						? question.options.map((option) => ({
-								...option,
-							}))
-						: [],
-				}));
-				console.log('Fetched questions:', deserializedQuestions); // Add logging
-				setQuestionsVOF(deserializedQuestions);
+			if (data.success && data.questionsVOF) {
+				setQuestionsVOF(data.questionsVOF);
 			} else {
 				console.error('Error fetching questions: No questions found');
 			}

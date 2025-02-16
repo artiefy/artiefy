@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questions`;
+		const key = `activity:${activityId}:questionsACompletar`; // Update key
 		const questions = (await redis.get<Completado[]>(key)) ?? [];
 		console.log(questions);
 		return NextResponse.json({ success: true, questions });
@@ -32,20 +32,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
-		const { activityId, questions } = (await request.json()) as {
+		const { activityId, questionsACompletar } = (await request.json()) as {
 			activityId: string;
-			questions: Completado;
+			questionsACompletar: Completado;
 		};
-		if (!activityId || !questions) {
+		if (!activityId || !questionsACompletar) {
 			return NextResponse.json(
-				{ success: false, message: 'Se requieren activityId y questions' },
+				{
+					success: false,
+					message: 'Se requieren activityId y questionsACompletar',
+				},
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questions`;
+		const key = `activity:${activityId}:questionsACompletar`; // Update key
 		const existingQuestions = (await redis.get<Completado[]>(key)) ?? [];
 
-		const updatedQuestions = [...existingQuestions, questions];
+		const updatedQuestions = [...existingQuestions, questionsACompletar];
 		await redis.set(key, updatedQuestions);
 		return NextResponse.json({
 			success: true,
@@ -62,21 +65,24 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
 	try {
-		const { activityId, questions } = (await request.json()) as {
+		const { activityId, questionsACompletar } = (await request.json()) as {
 			activityId: string;
-			questions: Completado;
+			questionsACompletar: Completado;
 		};
-		if (!activityId || !questions) {
+		if (!activityId || !questionsACompletar) {
 			return NextResponse.json(
-				{ success: false, message: 'Se requieren activityId y questions' },
+				{
+					success: false,
+					message: 'Se requieren activityId y questionsACompletar',
+				},
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questions`;
+		const key = `activity:${activityId}:questionsACompletar`; // Update key
 		const existingQuestions = (await redis.get<Completado[]>(key)) ?? [];
 
 		const updatedQuestions = existingQuestions.map((q) =>
-			q?.id === questions.id ? questions : q
+			q?.id === questionsACompletar.id ? questionsACompletar : q
 		);
 		await redis.set(key, updatedQuestions);
 		return NextResponse.json({
@@ -103,7 +109,7 @@ export async function DELETE(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questions`;
+		const key = `activity:${activityId}:questionsACompletar`; // Update key
 		const existingQuestions = (await redis.get<Completado[]>(key)) ?? [];
 		const updatedQuestions = existingQuestions.filter(
 			(q) => q && q.id !== questionId

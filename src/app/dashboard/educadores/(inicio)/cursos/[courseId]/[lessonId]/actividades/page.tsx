@@ -153,7 +153,6 @@ const Page: React.FC = () => {
 						revisada: true,
 						name: selectedParametro.name,
 						description: selectedParametro.description,
-						pesoNota: selectedParametro.porcentaje,
 					}));
 				}
 			} else {
