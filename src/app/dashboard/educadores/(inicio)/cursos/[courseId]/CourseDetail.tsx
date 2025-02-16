@@ -109,14 +109,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			try {
 				setLoading(true);
 				setError(null);
-
-				const responseParametros = await fetch(
-					`/api/educadores/parametros?courseId=${courseIdNumber}`
-				); // Obtener los parámetros
-
 				const response = await fetch(
 					`/api/educadores/courses/${courseIdNumber}`
 				);
+				const responseParametros = await fetch(
+					`/api/educadores/parametros?courseId=${courseIdNumber}`
+				); // Obtener los parámetros
 
 				if (!response.ok || !responseParametros.ok) {
 					throw new Error(response.statusText);
@@ -235,7 +233,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			);
 
-			const parametrosPromises = editParametros.map((p) =>
+			const updatedParametros = editParametros.map((ep, index) => ({
+				...ep,
+				id: parametros[index].id,
+			}));
+			setEditParametros(updatedParametros);
+
+			const parametrosPromises = updatedParametros.map((p) =>
 				fetch(`/api/educadores/parametros/${p.id}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
@@ -311,7 +315,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		setEditModalidad(parseInt(course?.modalidadesid ?? '0'));
 		setEditDificultad(parseInt(course?.dificultadid ?? '0'));
 		setEditCoverImageKey(course?.coverImageKey ?? '');
-		setEditParametros(parametros);
+		setEditParametros(
+			parametros.map((parametro) => ({
+				id: parametro.id,
+				name: parametro.name,
+				description: parametro.description,
+				porcentaje: parametro.porcentaje,
+				entrega: parametro.entrega,
+			}))
+		);
 		setIsModalOpen(true);
 	};
 
