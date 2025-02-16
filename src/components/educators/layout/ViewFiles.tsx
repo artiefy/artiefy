@@ -69,7 +69,6 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 				if (Array.isArray(data)) {
 					const files = data.filter((file: { key: string }) => file.key); // Filtrar claves vacías y nombres vacíos
 					setFiles(files); // Extraer claves y nombres de los archivos
-					console.log('Archivos:', files); // Verificar los archivos
 				} else {
 					setError('Datos incorrectos recibidos de la API');
 				}

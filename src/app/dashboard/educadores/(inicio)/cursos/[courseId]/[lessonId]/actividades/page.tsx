@@ -185,7 +185,6 @@ const Page: React.FC = () => {
 		if (savedColor) {
 			setColor(savedColor);
 		}
-		console.log(`Color guardado actividad: ${savedColor}`);
 	}, [courseIdNumber]);
 
 	const fetchCourse = useCallback(async () => {

@@ -1,5 +1,4 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
@@ -250,7 +249,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 									alt={lessons.title}
 									width={300}
 									height={100}
-									className="mx-auto rounded-lg object-contain"
+									className="mx-auto hidden rounded-lg object-contain md:block lg:block"
 									priority
 									quality={75}
 								/>
