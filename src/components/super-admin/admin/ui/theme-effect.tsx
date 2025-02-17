@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 export const ThemeEffect = () => {
 	useEffect(() => {
-		const theme = localStorage.getItem('edudash-theme') || 'light';
+		const theme = localStorage.getItem('edudash-theme') ?? 'light';
 		document.documentElement.setAttribute('data-theme', theme);
 	}, []);
 

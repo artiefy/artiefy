@@ -71,7 +71,7 @@ export async function PUT(
 			);
 		}
 
-		const data = await request.json();
+		const data = (await request.json()) as CourseData;
 		console.log(
 			'📌 Datos recibidos en el backend para actualizar curso:',
 			data
@@ -161,9 +161,6 @@ export async function POST(request: Request) {
 	}
 }
 
-interface DeleteCourseRequest {
-	id: string;
-}
 
 export async function DELETE(
 	request: Request,

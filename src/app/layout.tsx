@@ -75,7 +75,7 @@ function UserTracker() {
   }, [user]);
 
   // 🔥 Activa el rastreo SOLO si hay usuario autenticado
-  usePageTimeTracker(user?.id ?? null, null); // Assuming courseId is null for now
+  usePageTimeTracker(user?.id ?? null); // Assuming courseId is null for now
 
   return null;
 }

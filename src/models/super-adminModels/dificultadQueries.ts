@@ -1,6 +1,6 @@
+import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { dificultad } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 // Obtener todas las dificultades
 export async function getDificultades() {

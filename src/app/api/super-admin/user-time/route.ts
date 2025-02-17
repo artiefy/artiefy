@@ -1,11 +1,9 @@
 // src/app/api/super-admin/user-time/route.ts
-import { eq, and, type InferSelectModel } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "~/server/db/index";
 import { userTimeTracking } from "~/server/db/schema";
 
-// Tipo basado en la estructura de la base de datos
-type TimeTrackingRecord = InferSelectModel<typeof userTimeTracking>;
 
 export async function POST(req: Request) {
   try {

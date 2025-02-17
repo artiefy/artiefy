@@ -1,8 +1,19 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
+interface CourseData {
+	title: string;
+	description: string;
+	coverImageKey: string;
+	categoryid: number;
+	modalidadesid: number;
+	dificultadid: number;
+	instructor: string;
+	requerimientos: string;
+	creatorId: string;
+}
+
 import {
-	getAllCourses,
 	createCourse,
 	deleteCourse,
 	getCourseById,
@@ -98,8 +109,38 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
 
-		const data = await request.json();
+		const jsonData = await request.json() as {
+			title: string;
+			description: string;
+			coverImageKey: string;
+			categoryid: number;
+			modalidadesid: number;
+			dificultadid: number;
+			instructor: string;
+			requerimientos: string;
+			creatorId: string;
+		};
+
+		if (typeof jsonData !== 'object' || jsonData === null) {
+		throw new Error('Invalid data received');
+		}
+
+		// Validar manualmente que todas las propiedades existen antes de asignarlas
+		const data: CourseData = {
+		title: String(jsonData.title),
+		description: String(jsonData.description),
+		coverImageKey: String(jsonData.coverImageKey),
+		categoryid: Number(jsonData.categoryid),
+		modalidadesid: Number(jsonData.modalidadesid),
+		dificultadid: Number(jsonData.dificultadid),
+		instructor: String(jsonData.instructor),
+		requerimientos: String(jsonData.requerimientos),
+		creatorId: String(jsonData.creatorId),
+		};
+
 		const newCourse = await createCourse(data);
+
+
 		return NextResponse.json(newCourse, { status: 201 });
 	} catch (error) {
 		console.error('Error al crear el curso:', error);
@@ -117,7 +158,7 @@ export async function DELETE(request: Request) {
 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
 
-		const { id } = await request.json();
+		const { id }: { id: string } = await request.json() as { id: string };
 		const courseId = parseInt(id);
 
 		if (isNaN(courseId)) {

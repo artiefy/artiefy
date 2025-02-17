@@ -54,7 +54,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 	console.log(`lessonIdNumer: ${lessonIdNumber}`);
 	useEffect(() => {
 		localStorage.getItem(`selectedColor_${lessonId}`);
-	}, [lessonId]);
+	}, [lessonId, lessonIdNumber]);
 
 	useEffect(() => {
 		const fetchFiles = async () => {
@@ -83,7 +83,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 		};
 
 		fetchFiles().catch((err) => console.error('Error fetching files:', err));
-	}, [lessonId]);
+	}, [lessonId, lessonIdNumber]);
 
 	useEffect(() => {
 		const fetchFilesName = async () => {
@@ -116,7 +116,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 		fetchFilesName().catch((err) =>
 			console.error('Error fetching files:', err)
 		);
-	}, [lessonId]);
+	}, [lessonId, lessonIdNumber]);
 
 	if (loading) {
 		return <div>Cargando archivos...</div>;

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
 	AlertDialog,
@@ -34,16 +33,19 @@ import { toast } from '~/hooks/use-toast';
 
 interface Course {
 	id: number;
-	title: string;
-	description: string;
-	categoryid: string;
-	dificultadid: string;
-	modalidadesid: string;
-	instructor: string;
-	coverImageKey: string;
-	createdAt: string;
-	requerimientos: string;
-}
+		title: string;
+		description: string | null;
+		coverImageKey: string | null;
+		categoryid: number;
+		instructor: string;
+		createdAt: Date;
+		updatedAt: Date;
+		creatorId: string;
+		rating: number | null;
+		modalidadesid: number;
+		dificultadid: number;
+		requerimientos: string;
+	}
 const getContrastYIQ = (hexcolor: string) => {
 	if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
 	hexcolor = hexcolor.replace('#', '');
@@ -89,9 +91,8 @@ const CourseDetail = () => {
 	const [isEditing, setIsEditing] = useState(false);
 	const [editedTitle, setEditedTitle] = useState('');
 	const [editedDescription, setEditedDescription] = useState('');
-	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [newCoverImageKey, setNewCoverImageKey] = useState(
-		course?.coverImageKey || ''
+		course?.coverImageKey ?? ''
 	);
 
 	// 🔍 Validar courseId antes de convertirlo
@@ -111,7 +112,7 @@ const CourseDetail = () => {
 				const data = (await response.json()) as Course;
 				setCourse(data);
 				setEditedTitle(data.title);
-				setEditedDescription(data.description);
+				setEditedDescription(data.description ?? '');
 			} catch (error) {
 				console.error('Error cargando el curso:', error);
 				setError('No se pudo cargar el curso.');
@@ -208,11 +209,6 @@ const CourseDetail = () => {
 
 	const handleSaveChanges = async () => {
 		try {
-			console.log('📌 Curso actual:', course);
-			console.log('📌 Imagen actual:', course?.coverImageKey);
-			console.log('📌 Nueva imagen seleccionada:', newCoverImageKey);
-
-			// ✅ Si no hay una nueva imagen, usa la anterior
 			const finalCoverImageKey = newCoverImageKey || course?.coverImageKey;
 
 			if (!finalCoverImageKey) {
@@ -265,12 +261,14 @@ const CourseDetail = () => {
 				body: JSON.stringify(updatedData),
 			});
 
-			const responseData = await response.json();
+			const responseData: { error?: string } = (await response.json()) as {
+				error?: string;
+			};
 			console.log('✅ Respuesta de la API:', responseData);
 
 			if (!response.ok) {
 				console.error('🔴 Error en la API:', responseData);
-				throw new Error(responseData.error || 'Error al actualizar el curso');
+				throw new Error(responseData.error ?? 'Error al actualizar el curso');
 			}
 
 			toast({
@@ -314,7 +312,11 @@ const CourseDetail = () => {
 			if (!uploadResponse.ok)
 				throw new Error('❌ Error al obtener URL de carga');
 
-			const { url, fields } = await uploadResponse.json();
+			const uploadData = (await uploadResponse.json()) as {
+				url: string;
+				fields: Record<string, string>;
+			};
+			const { url, fields } = uploadData;
 			console.log('✅ URL de carga obtenida:', url);
 
 			const formData = new FormData();

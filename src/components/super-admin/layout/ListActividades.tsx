@@ -81,7 +81,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 
 			void fetchLessons();
 		}
-	}, [lessonId]); // Este efecto se ejecuta cada vez que el courseId cambia
+	}, [lessonId, lessonIdString]); // Este efecto se ejecuta cada vez que el courseId cambia
 
 	// Condicionales de renderizado: carga, error, lecciones vacías
 	if (loading) {

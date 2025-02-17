@@ -20,7 +20,7 @@ export default function ModalitiesPage() {
   const itemsPerPage = 8;
 
   useEffect(() => {
-    fetchModalities();
+    void fetchModalities();
   }, []);
 
   async function fetchModalities() {
@@ -28,7 +28,7 @@ export default function ModalitiesPage() {
       setLoading(true);
       const res = await fetch('/api/super-admin/modalities');
       if (!res.ok) throw new Error('Error al cargar modalidades');
-      const data = await res.json();
+      const data = (await res.json()) as { id: number; name: string; description: string }[];
       setModalities(data);
     } catch {
       setError('Error al obtener modalidades.');
@@ -46,7 +46,7 @@ export default function ModalitiesPage() {
       });
       setName('');
       setDescription('');
-      fetchModalities();
+      void fetchModalities();
       setShowCreateForm(false);
     } catch {
       setError('Error al guardar modalidad.');
@@ -64,7 +64,7 @@ export default function ModalitiesPage() {
       setEditingModality(null);
       setName('');
       setDescription('');
-      fetchModalities();
+      void fetchModalities();
       setShowEditForm(false);
     } catch {
       setError('Error al actualizar modalidad.');
@@ -78,7 +78,7 @@ export default function ModalitiesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
-      fetchModalities();
+      void fetchModalities();
       setShowConfirmDelete(null);
     } catch {
       setError('Error al eliminar modalidad.');
@@ -142,7 +142,7 @@ export default function ModalitiesPage() {
           <>
             <TableComponent
               data={paginatedModalities}
-              onEdit={(item) => {
+              onEdit={(item: { id: number; name: string; description: string }) => {
                 setEditingModality(item);
                 setName(item.name);
                 setDescription(item.description);
@@ -160,7 +160,23 @@ export default function ModalitiesPage() {
   );
 }
 
-const ModalForm = ({ title, onClose, onSubmit, name, setName, description, setDescription }) => (
+const ModalForm = ({
+  title,
+  onClose,
+  onSubmit,
+  name,
+  setName,
+  description,
+  setDescription,
+}: {
+  title: string;
+  onClose: () => void;
+  onSubmit: () => void;
+  name: string;
+  setName: (value: string) => void;
+  description: string;
+  setDescription: (value: string) => void;
+}) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center">
     <div className="absolute inset-0 bg-gradient-to-b from-[#01142B] to-[#01142B] opacity-80"></div>
     <div className="relative z-10 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg">
@@ -177,11 +193,11 @@ const ModalForm = ({ title, onClose, onSubmit, name, setName, description, setDe
   </div>
 );
 // ✅ Modal Confirmación de Eliminación
-const ConfirmDeleteModal = ({ item, onClose, onConfirm }) => (
+const ConfirmDeleteModal = ({ item, onClose, onConfirm }: { item: { id: number; name: string }; onClose: () => void; onConfirm: () => void }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center">
     <div className="absolute inset-0 bg-black opacity-80"></div>
     <div className="relative z-10 w-full max-w-sm rounded-lg bg-gray-800 p-6 shadow-lg">
-      <h2 className="text-lg font-bold text-white">¿Eliminar "{item.name}"?</h2>
+      <h2 className="text-lg font-bold text-white">¿Eliminar &quot;{item.name}&quot;?</h2>
       <p className="mt-2 text-gray-300">Esta acción no se puede deshacer.</p>
       <div className="mt-4 flex justify-end space-x-2">
         <button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md text-white hover:bg-gray-500">Cancelar</button>
@@ -192,7 +208,7 @@ const ConfirmDeleteModal = ({ item, onClose, onConfirm }) => (
 );
 
 
-const PaginationControls = ({ currentPage, totalPages, onPageChange }) => (
+const PaginationControls = ({ currentPage, totalPages, onPageChange }: { currentPage: number; totalPages: number; onPageChange: (page: number) => void }) => (
   <div className="flex justify-center mt-4 space-x-4">
     <button
       disabled={currentPage === 1}
@@ -214,9 +230,9 @@ const PaginationControls = ({ currentPage, totalPages, onPageChange }) => (
 
 const LoaderComponent = () => <div className="flex justify-center mt-6"><Loader2 className="size-6 animate-spin text-primary" /></div>;
 
-const ErrorMessage = ({ message }) => <div className="text-red-500 mt-6">{message}</div>;
+const ErrorMessage = ({ message }: { message: string }) => <div className="text-red-500 mt-6">{message}</div>;
 
-const TableComponent = ({ data, onEdit, onDelete }) => (
+const TableComponent = ({ data, onEdit, onDelete }: { data: { id: number; name: string; description: string }[]; onEdit: (item: { id: number; name: string; description: string }) => void; onDelete: (item: { id: number; name: string }) => void }) => (
   <table className="w-full mt-6 border-collapse bg-gray-800 text-white rounded-lg shadow-lg">
     <thead className="bg-[#00BDD8] text-[#01142B]">
       <tr>

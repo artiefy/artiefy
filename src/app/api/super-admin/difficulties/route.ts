@@ -37,7 +37,7 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
     try {
-        const { id } = await req.json();
+        const { id }: { id: number } = await req.json() as { id: number };
         await db.delete(dificultad).where(eq(dificultad.id, id));
         return NextResponse.json({ message: 'Dificultad eliminada' });
     } catch (error) {

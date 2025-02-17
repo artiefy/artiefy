@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
 	Timer,
 	Trophy,
@@ -28,6 +28,13 @@ function PreguntasOM() {
 	const [remainingTime, setRemainingTime] = useState(config.timeLimit);
 	const [showInstructions, setShowInstructions] = useState(true);
 
+	const handleFinishQuiz = useCallback(() => {
+		setIsPlaying(false);
+		alert(
+			`¡Quiz terminado!\n\nPuntaje final: ${score} de ${questions.length * config.points}`
+		);
+	}, [setIsPlaying, score, questions.length, config.points]);
+
 	useEffect(() => {
 		let timer: number;
 		if (isPlaying && config.isTimerEnabled && remainingTime > 0) {
@@ -42,7 +49,7 @@ function PreguntasOM() {
 			}, 1000);
 		}
 		return () => clearInterval(timer);
-	}, [isPlaying, config.isTimerEnabled, remainingTime]);
+	}, [isPlaying, config.isTimerEnabled, remainingTime, handleFinishQuiz]);
 
 	const handleAddQuestion = (question: Question) => {
 		setQuestions([...questions, question]);
@@ -78,13 +85,6 @@ function PreguntasOM() {
 		} else {
 			handleFinishQuiz();
 		}
-	};
-
-	const handleFinishQuiz = () => {
-		setIsPlaying(false);
-		alert(
-			`¡Quiz terminado!\n\nPuntaje final: ${score} de ${questions.length * config.points}`
-		);
 	};
 
 	const formatTime = (seconds: number) => {

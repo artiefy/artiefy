@@ -14,8 +14,6 @@ export function ThemeProvider({
 	defaultTheme = 'light',
 	storageKey = 'edudash-theme',
 	attribute = 'class', // Agrega esta línea para definir la propiedad attribute
-	enableSystem = true, // Agrega esta línea para definir la propiedad enableSystem
-	disableTransitionOnChange = false, // Agrega esta línea para definir la propiedad disableTransitionOnChange
 }: {
 	children: React.ReactNode;
 	defaultTheme?: string;
@@ -26,7 +24,7 @@ export function ThemeProvider({
 }) {
 	const [theme, setTheme] = useState<string>(() => {
 		if (typeof window !== 'undefined') {
-			return localStorage.getItem(storageKey) || defaultTheme;
+			return localStorage.getItem(storageKey) ?? defaultTheme;
 		}
 		return defaultTheme;
 	});

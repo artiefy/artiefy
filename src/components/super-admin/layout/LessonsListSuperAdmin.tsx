@@ -50,7 +50,6 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
-	const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 
@@ -258,10 +257,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 				courseId={courseId}
 				uploading={false}
 			/>
-			<StudentsModal
-    isOpen={isModalOpen}
-    onClose={() => setIsModalOpen(false)}
-    lessonId={selectedLesson}
+<StudentsModal
+	isOpen={isModalOpen}
+	onClose={() => setIsModalOpen(false)}
+	courseId={courseId}
 />
 
 		</>

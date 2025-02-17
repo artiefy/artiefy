@@ -244,7 +244,7 @@ function App() {
 													Las palabras pueden estar en cualquier dirección
 												</li>
 												<li>Las palabras encontradas se marcarán en verde</li>
-												<li>Presiona "Finalizar" cuando hayas terminado</li>
+												<li>Presiona &quot;Finalizar&quot; cuando hayas terminado</li>
 											</ul>
 											<button
 												onClick={() => setShowInstructions(false)}

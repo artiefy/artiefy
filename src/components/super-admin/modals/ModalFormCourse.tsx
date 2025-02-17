@@ -23,7 +23,7 @@ import ModalidadDropdown from '~/components/super-admin/layout/ModalidadDropdown
 
 interface CourseFormProps {
 	onSubmitAction: (
-		id: string,
+		id: string | number,
 		title: string,
 		description: string,
 		file: File | null,
@@ -137,59 +137,63 @@ export default function ModalFormCourse({
 
 	const handleSubmit = async () => {
 		console.log('Intentando enviar el curso...');
-		
+
 		const controller = new AbortController();
 		setUploadController(controller);
-	  
+
 		const newErrors = {
-		  title: !title.trim(),
-		  description: !description.trim(),
-		  categoryid: categoryid === 0,
-		  modalidadesid: modalidadesid === 0,
-		  dificultadid: dificultadid === 0,
-		  requerimientos: !requerimientos.trim(),
-		  file: !editingCourseId && !file && !currentCoverImageKey, // Solo validar si NO está editando
+			title: !title.trim(),
+			description: !description.trim(),
+			categoryid: categoryid === 0,
+			modalidadesid: modalidadesid === 0,
+			dificultadid: dificultadid === 0,
+			requerimientos: !requerimientos.trim(),
+			file: !editingCourseId && !file && !currentCoverImageKey, // Solo validar si NO está editando
 		};
-	  
+
 		console.log('Errores detectados:', newErrors);
-	  
-		if (Object.values(newErrors).some(error => error)) {
-		  setErrors(newErrors);
-		  return;
+
+		if (Object.values(newErrors).some((error) => error)) {
+			setErrors({
+				...newErrors,
+				category: false,
+				dificultad: false,
+				modalidad: false,
+			});
+			return;
 		}
-	  
+
 		setIsUploading(true);
 		try {
-		  console.log('Datos enviados:', {
-			title,
-			description,
-			categoryid,
-			modalidadesid,
-			dificultadid,
-			requerimientos,
-			file: file ? file.name : 'No file',
-		  });
-	  
-		  await onSubmitAction(
-			editingCourseId ? editingCourseId.toString() : '',
-			title,
-			description,
-			file,
-			categoryid,
-			modalidadesid,
-			dificultadid,
-			requerimientos
-		  );
-	  
-		  console.log('Curso creado/actualizado con éxito.');
-		  setIsUploading(false);
-		  onCloseAction(); // Cerrar modal después de crear
+			console.log('Datos enviados:', {
+				title,
+				description,
+				categoryid,
+				modalidadesid,
+				dificultadid,
+				requerimientos,
+				file: file ? file.name : 'No file',
+			});
+
+			await onSubmitAction(
+				editingCourseId ?? '', // ✅ Mantiene `number` o `string`, evita forzar `string`
+				title,
+				description,
+				file,
+				categoryid,
+				modalidadesid,
+				dificultadid,
+				requerimientos
+			);
+
+			console.log('Curso creado/actualizado con éxito.');
+			setIsUploading(false);
+			onCloseAction(); // Cerrar modal después de crear
 		} catch (error) {
-		  console.error('Error al enviar el curso:', error);
-		  setIsUploading(false);
+			console.error('Error al enviar el curso:', error);
+			setIsUploading(false);
 		}
-	  };
-	  
+	};
 
 	const handleCancel = () => {
 		if (uploadController) {
@@ -227,6 +231,12 @@ export default function ModalFormCourse({
 				break;
 		}
 	};
+
+	useEffect(() => {
+		if (modifiedFields.size > 0) {
+			console.log('Campos modificados:', modifiedFields);
+		}
+	}, [modifiedFields]);
 
 	useEffect(() => {
 		if (uploading) {
@@ -300,7 +310,7 @@ export default function ModalFormCourse({
 						placeholder="Título"
 						value={title}
 						onChange={(e) => handleFieldChange('title', e.target.value)}
-						className={`mb-4 text-primary w-full rounded border p-2 text-se outline-hidden ${errors.title ? 'border-red-500' : 'border-primary'}`}
+						className={`text-primary text-se mb-4 w-full rounded border p-2 outline-hidden ${errors.title ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.title && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -315,7 +325,7 @@ export default function ModalFormCourse({
 						placeholder="Descripción"
 						value={description}
 						onChange={(e) => handleFieldChange('description', e.target.value)}
-						className={`mb-3 h-auto w-full text-primary rounded border p-2 text-black outline-hidden ${errors.description ? 'border-red-500' : 'border-primary'}`}
+						className={`text-primary mb-3 h-auto w-full rounded border p-2 outline-hidden ${errors.description ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.description && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -332,7 +342,7 @@ export default function ModalFormCourse({
 						onChange={(e) =>
 							handleFieldChange('requerimientos', e.target.value)
 						}
-						className={`mb-3 h-auto w-full rounded border p-2 text-primary outline-hidden ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
+						className={`text-primary mb-3 h-auto w-full rounded border p-2 outline-hidden ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.requerimientos && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>

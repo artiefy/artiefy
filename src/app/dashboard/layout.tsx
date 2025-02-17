@@ -14,7 +14,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [user]);
 
   // 🔥 Activa el rastreo de tiempo dentro del Dashboard
-  usePageTimeTracker(user?.id ?? null, null);
+  usePageTimeTracker(user?.id ?? null);
 
   return <section className="p-4">Luis es una bitch {children}</section>;
 }

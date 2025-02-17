@@ -1,6 +1,10 @@
 // src/app/api/users/route.ts
 
 import { NextResponse } from 'next/server';
+
+
+import { db } from '~/server/db'; // Asegúrate de importar correctamente la conexión de Drizzle
+import { users } from '~/server/db/schema';
 import {
 	createUser,
 	getAdminUsers,
@@ -11,11 +15,6 @@ import {
 	updateUserStatus,
 	updateMultipleUserStatus,
 } from '~/server/queries/queries';
-
-
-import { db } from '~/server/db'; // Asegúrate de importar correctamente la conexión de Drizzle
-import { users } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 export async function GET(request: Request) {
 	try {
@@ -42,7 +41,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
 	try {
 		// 1. Obtener datos del request
-		const { firstName, lastName, email, role } = await request.json();
+		interface RequestBody { firstName: string; lastName: string; email: string; role: string };
+		const { firstName, lastName, email, role }: RequestBody = await request.json() as RequestBody;
 
 		// 2. Crear usuario en Clerk
 		const { user, generatedPassword } = await createUser(
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 			name: `${firstName} ${lastName}`,
 			email: user.emailAddresses.find(
 				(addr) => addr.id === user.primaryEmailAddressId
-			)?.emailAddress || email,
+			)?.emailAddress ?? email,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});
@@ -80,9 +80,12 @@ export async function POST(request: Request) {
 			user: safeUser,
 			generatedPassword,
 		});
-	} catch (error: any) {
-		console.error('Error al registrar usuario:', error);
-		return NextResponse.json({ error: error.message }, { status: 400 });
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			console.error('Error al registrar usuario:', error);
+			return NextResponse.json({ error: error.message }, { status: 400 });
+		}
+		return NextResponse.json({ error: 'Unknown error' }, { status: 400 });
 	}
 }
 
@@ -99,18 +102,25 @@ export async function DELETE(request: Request) {
 		}
 		await deleteUser(userId);
 		return NextResponse.json({ success: true });
-	} catch (error: any) {
-		return NextResponse.json({ error: error.message }, { status: 400 });
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			return NextResponse.json({ error: error.message }, { status: 400 });
+		}
+		return NextResponse.json({ error: 'Unknown error' }, { status: 400 });
 	}
 }
 
 // PATCH /api/users (para actualizar algo: rol, nombre, etc.)
 export async function PATCH(request: Request) {
 	try {
-		const body = await request.json();
-		const { action, id, role, firstName, lastName } = body;
+		interface RequestBody { action: string; id: string; role?: string; firstName?: string; lastName?: string; userIds?: string[]; status?: string; }
+		const body: RequestBody = await request.json() as RequestBody;
+		const { action, id, role, firstName, lastName, userIds, status } = body;
 
 		if (action === 'setRole') {
+			if (!role) {
+				return NextResponse.json({ error: 'Role is required' }, { status: 400 });
+			}
 			await setRoleWrapper({ id, role });
 			return NextResponse.json({ success: true });
 		}
@@ -131,22 +141,43 @@ export async function PATCH(request: Request) {
 		}
 
 		if (action === 'updateUserInfo') {
-			await updateUserInfo(id, firstName, lastName);
+			if (firstName && lastName) {
+				await updateUserInfo(id, firstName, lastName);
+				return NextResponse.json({ success: true });
+			} else {
+				return NextResponse.json({ error: 'First name and last name are required' }, { status: 400 });
+			}
 			return NextResponse.json({ success: true });
 		}
 
 		if (action === 'updateStatus') {
-			await updateUserStatus(id, status);
+			if (typeof status === 'string') {
+				await updateUserStatus(id, status);
+				return NextResponse.json({ success: true });
+			} else {
+				return NextResponse.json({ error: 'Status is required and must be a string' }, { status: 400 });
+			}
 			return NextResponse.json({ success: true });
 		}
 
 		if (action === 'updateMultipleStatus') {
-			await updateMultipleUserStatus(userIds, status);
+			if (userIds) {
+				if (typeof status === 'string') {
+					await updateMultipleUserStatus(userIds, status);
+				} else {
+					return NextResponse.json({ error: 'Status is required and must be a string' }, { status: 400 });
+				}
+			} else {
+				return NextResponse.json({ error: 'userIds is required' }, { status: 400 });
+			}
 			return NextResponse.json({ success: true });
 		}
 
 		return NextResponse.json({ error: 'Acción desconocida' }, { status: 400 });
-	} catch (error: any) {
-		return NextResponse.json({ error: error.message }, { status: 400 });
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			return NextResponse.json({ error: error.message }, { status: 400 });
+		}
+		return NextResponse.json({ error: 'Unknown error' }, { status: 400 });
 	}
 }

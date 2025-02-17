@@ -15,14 +15,17 @@ import { Button } from '~/components/estudiantes/ui/button';
 interface Course {
 	id: number;
 	title: string;
+	description: string | null;
 	coverImageKey: string | null;
-	categoryid: string;
-	description: string;
+	categoryid: number;
 	instructor: string;
-	rating?: number;
-	modalidadesid: string;
-	dificultadid: string;
-	createdAt: string;
+	createdAt: Date;
+	updatedAt: Date;
+	creatorId: string;
+	rating: number | null;
+	modalidadesid: number;
+	dificultadid: number;
+	requerimientos: string;
 }
 
 interface CourseListTeacherProps {

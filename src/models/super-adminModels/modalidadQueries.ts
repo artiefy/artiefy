@@ -1,6 +1,6 @@
+import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { modalidades } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 // Obtener todas las modalidades
 export async function getModalidades() {

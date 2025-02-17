@@ -52,6 +52,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			);
 		}
 	}, [user]);
+	useEffect(() => {
+		if (isMobile) {
+			console.log('Modo móvil activado');
+		}
+	}, [isMobile]);
 
 	// Definir los elementos del menú sin Cursos
 	const navItems = [

@@ -46,7 +46,7 @@ interface Lessons {
 		description: string;
 		instructor: string;
 		modalidadId: string;
-		categoryId: string;
+		categoryId: number;
 	};
 	createdAt: string;
 	updatedAt: string;

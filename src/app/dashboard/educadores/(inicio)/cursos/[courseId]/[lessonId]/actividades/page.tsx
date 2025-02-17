@@ -43,9 +43,22 @@ const Page: React.FC = () => {
 
 	console.log(`LessonsId activity ${lessonsId}`);
 
-	if (!lessonsId || !cursoIdNumber) {
-		return <p>Cargando parametros...</p>;
-	}
+	useEffect(() => {
+		if (isUploading) {
+			setUploadProgress(0);
+			const interval = setInterval(() => {
+				setUploadProgress((prev) => {
+					if (prev >= 100) {
+						clearInterval(interval);
+						return 100;
+					}
+					return prev + 10; // Incrementar de 10 en 10
+				});
+			}, 500);
+
+			return () => clearInterval(interval);
+		}
+	}, [isUploading]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -115,22 +128,9 @@ const Page: React.FC = () => {
 		}
 	};
 
-	useEffect(() => {
-		if (isUploading) {
-			setUploadProgress(0);
-			const interval = setInterval(() => {
-				setUploadProgress((prev) => {
-					if (prev >= 100) {
-						clearInterval(interval);
-						return 100;
-					}
-					return prev + 10; // Incrementar de 10 en 10
-				});
-			}, 500);
-
-			return () => clearInterval(interval);
-		}
-	}, [isUploading]);
+	if (!lessonsId || !cursoIdNumber) {
+		return <p>Cargando parametros...</p>;
+	}
 
 	return (
 		<>

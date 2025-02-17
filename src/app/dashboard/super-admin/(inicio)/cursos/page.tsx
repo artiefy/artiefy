@@ -6,11 +6,7 @@ import { FiPlus } from 'react-icons/fi';
 
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
-import {
-	getCourses,
-	createCourse,
-	updateCourse,
-} from '~/server/queries/queries';
+import { getCourses, updateCourse } from '~/server/queries/queries';
 import type { CourseData } from '~/server/queries/queries';
 import CourseListAdmin from './../../components/CourseListAdmin';
 import SuperAdminLayout from './../../super-admin-layout';
@@ -44,12 +40,21 @@ export default function Page() {
 		async function fetchData() {
 			try {
 				const coursesData = await getCourses();
-				setCourses(coursesData);
+				setCourses(
+					coursesData.map((course) => ({
+						...course,
+						id: course.id ?? 0, // ✅ Asegurar que `id` sea un número válido
+					}))
+				);
 
 				// Obtener métricas
 				const totalsResponse = await fetch('/api/super-admin/courses/totals');
 				if (!totalsResponse.ok) throw new Error('Error obteniendo totales');
-				const { totalCourses, totalStudents } = await totalsResponse.json();
+				const { totalCourses, totalStudents } =
+					(await totalsResponse.json()) as {
+						totalCourses: number;
+						totalStudents: number;
+					};
 
 				setTotalCourses(totalCourses);
 				setTotalStudents(totalStudents);
@@ -58,13 +63,16 @@ export default function Page() {
 				const categoriesResponse = await fetch('/api/super-admin/categories');
 				if (!categoriesResponse.ok)
 					throw new Error('Error obteniendo categorías');
-				const categoriesData = await categoriesResponse.json();
+				const categoriesData = (await categoriesResponse.json()) as {
+					id: number;
+					name: string;
+				}[];
 				setCategories(categoriesData);
 			} catch (error) {
 				console.error('❌ Error cargando datos:', error);
 			}
 		}
-		fetchData();
+		void fetchData();
 	}, []);
 
 	// ✅ Filtrar cursos por búsqueda y categoría
@@ -76,7 +84,7 @@ export default function Page() {
 
 	// ✅ Crear o actualizar curso
 	const handleCreateOrUpdateCourse = async (
-		id: number,
+		id: string | number,
 		title: string,
 		description: string | null,
 		file: File | null,
@@ -210,15 +218,60 @@ export default function Page() {
 
 				<CourseListAdmin
 					courses={filteredCourses}
-					onEditCourse={setEditingCourse}
-					onDeleteCourse={() => {}}
-				/>
+					onEditCourse={(course: CourseData | null) => setEditingCourse(course)}
+					onDeleteCourse={(courseId) => {
+						console.log(`Course with id ${courseId} deleted`);
+					}}
+					/>
+
 
 				{isModalOpen && (
 					<ModalFormCourse
 						isOpen={isModalOpen}
 						onCloseAction={() => setIsModalOpen(false)}
 						onSubmitAction={handleCreateOrUpdateCourse}
+						uploading={uploading}
+						editingCourseId={editingCourse?.id ?? null}
+						title={editingCourse?.title ?? ''}
+						setTitle={(title) =>
+							setEditingCourse((prev) => (prev ? { ...prev, title } : null))
+						}
+						description={editingCourse?.description ?? ''}
+						setDescription={(description) =>
+							setEditingCourse((prev) =>
+								prev ? { ...prev, description } : null
+							)
+						}
+						categoryid={editingCourse?.categoryid ?? 0}
+						setCategoryid={(categoryid) =>
+							setEditingCourse((prev) =>
+								prev ? { ...prev, categoryid } : null
+							)
+						}
+						modalidadesid={editingCourse?.modalidadesid ?? 0}
+						setModalidadesid={(modalidadesid) =>
+							setEditingCourse((prev) =>
+								prev ? { ...prev, modalidadesid } : null
+							)
+						}
+						dificultadid={editingCourse?.dificultadid ?? 0}
+						setDificultadid={(dificultadid) =>
+							setEditingCourse((prev) =>
+								prev ? { ...prev, dificultadid } : null
+							)
+						}
+						requerimientos={editingCourse?.requerimientos ?? ''}
+						setRequerimientos={(requerimientos) =>
+							setEditingCourse((prev) =>
+								prev ? { ...prev, requerimientos } : null
+							)
+						}
+						coverImageKey={editingCourse?.coverImageKey ?? ''}
+						setCoverImageKey={(coverImageKey) =>
+							setEditingCourse((prev) =>
+								prev ? { ...prev, coverImageKey } : null
+							)
+						}
 					/>
 				)}
 			</div>

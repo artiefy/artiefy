@@ -12,8 +12,6 @@ import {
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
 
-// Ensure deleteLessonsByCourseId is correctly typed
-type DeleteLessonsByCourseId = (courseId: number) => Promise<void>;
 import { deleteLessonsByCourseId } from './lessonsModels';
 
 export interface Lesson {
@@ -263,14 +261,10 @@ export const deleteCourse = async (courseId: number): Promise<void> => {
 		console.log(`📌 Eliminando curso con ID ${courseId}...`);
 		await db.delete(courses).where(eq(courses.id, courseId));
 		console.log('✅ Curso eliminado correctamente.');
-	} catch (error) {
-		console.error('❌ ERROR al eliminar el curso:', error);
+	} catch {
+		console.error('❌ ERROR al eliminar el curso:');
 
-		if (error instanceof Error) {
-			throw new Error(`Error al eliminar el curso: ${error.message}`);
-		} else {
-			throw new Error('Error desconocido al eliminar el curso.');
-		}
+		throw new Error('Error desconocido al eliminar el curso.');
 	}
 };
 
@@ -289,7 +283,7 @@ export async function getAllEducators() {
 		console.log('✅ [DB] Educadores encontrados:', educators);
 
 		return educators;
-	} catch (error) {
+	} catch {
 		throw new Error('Error al obtener educadores de la base de datos');
 	}
 }

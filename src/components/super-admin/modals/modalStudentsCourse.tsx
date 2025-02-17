@@ -33,16 +33,16 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
         const response = await fetch(`/api/super-admin/students?courseId=${courseId}`);
         if (!response.ok) throw new Error("Error al obtener estudiantes");
         
-        const data = await response.json();
+        const data = (await response.json()) as { students: Student[] };
         setStudents(data.students || []);
-      } catch (err) {
+      } catch {
         setError("No se pudieron cargar los estudiantes.");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchStudents();
+    fetchStudents().catch((err) => console.error(err));
   }, [isOpen, courseId]);
 
   if (!isOpen) return null;

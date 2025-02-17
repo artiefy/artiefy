@@ -43,10 +43,6 @@ const Page: React.FC = () => {
 
 	console.log(`LessonsId activity ${lessonsId}`);
 
-	if (!lessonsId || !cursoIdNumber) {
-		return <p>Cargando parametros...</p>;
-	}
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsUploading(true);
@@ -134,106 +130,114 @@ const Page: React.FC = () => {
 
 	return (
 		<>
-			<Breadcrumb>
-				<BreadcrumbList className="flex space-x-2 text-lg">
-					<BreadcrumbItem>
-						<BreadcrumbLink
-							className="hover:text-gray-300"
-							href="/dashboard/educadores/cursos"
+			{!lessonsId || !cursoIdNumber ? (
+				<p>Cargando parámetros...</p>
+			) : (
+				<>
+					<Breadcrumb>
+						<BreadcrumbList className="flex space-x-2 text-lg">
+							<BreadcrumbItem>
+								<BreadcrumbLink
+									className="hover:text-gray-300"
+									href="/dashboard/educadores/cursos"
+								>
+									Cursos
+								</BreadcrumbLink>
+							</BreadcrumbItem>
+							<BreadcrumbSeparator />
+							<BreadcrumbItem>
+								<BreadcrumbLink
+									className="hover:text-gray-300"
+									href={`/dashboard/educadores/cursos/${courseId}`}
+								>
+									Detalles curso
+								</BreadcrumbLink>
+							</BreadcrumbItem>
+							<BreadcrumbSeparator />
+							<BreadcrumbItem>
+								<BreadcrumbLink
+									href="#"
+									onClick={() => window.history.back()}
+									className="hover:text-gray-300"
+								>
+									Lession:
+								</BreadcrumbLink>
+							</BreadcrumbItem>
+							<BreadcrumbSeparator />
+							<BreadcrumbItem>
+								<BreadcrumbLink className="hover:text-gray-300">
+									Creacion de actividad:
+								</BreadcrumbLink>
+							</BreadcrumbItem>
+							<BreadcrumbSeparator />
+						</BreadcrumbList>
+					</Breadcrumb>
+					<div className="mt-5 h-auto w-full justify-center">
+						<form
+							className="mx-auto w-96 justify-center rounded-lg bg-white p-4 md:w-1/2 lg:w-1/2"
+							onSubmit={handleSubmit}
 						>
-							Cursos
-						</BreadcrumbLink>
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-					<BreadcrumbItem>
-						<BreadcrumbLink
-							className="hover:text-gray-300"
-							href={`/dashboard/educadores/cursos/${courseId}`}
-						>
-							Detalles curso
-						</BreadcrumbLink>
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-					<BreadcrumbItem>
-						<BreadcrumbLink
-							href="#"
-							onClick={() => window.history.back()}
-							className="hover:text-gray-300"
-						>
-							Lession:
-						</BreadcrumbLink>
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-					<BreadcrumbItem>
-						<BreadcrumbLink className="hover:text-gray-300">
-							Creacion de actividad:
-						</BreadcrumbLink>
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-				</BreadcrumbList>
-			</Breadcrumb>
-			<div className="mt-5 h-auto w-full justify-center">
-				<form
-					className="mx-auto w-96 justify-center rounded-lg bg-white p-4 md:w-1/2 lg:w-1/2"
-					onSubmit={handleSubmit}
-				>
-					<div className="mb-2 flex">
-						<Image
-							src="/favicon.ico"
-							alt="Artiefy logo"
-							width={70}
-							height={70}
-						/>
-						<h2 className="mt-5 text-center text-3xl font-semibold">
-							Creacion de actividad
-						</h2>
+							<div className="mb-2 flex">
+								<Image
+									src="/favicon.ico"
+									alt="Artiefy logo"
+									width={70}
+									height={70}
+								/>
+								<h2 className="mt-5 text-center text-3xl font-semibold">
+									Creacion de actividad
+								</h2>
+							</div>
+							{/* <p className="mb-2 text-2xl">Lección ID: {lessonTitle}</p> */}
+							<p className="mb-2 text-2xl">Lección ID: {lessonsId}</p>
+							<Label className="mb-2 text-xl text-black">Titulo</Label>
+							<Input
+								className="text-black"
+								type="text"
+								value={formData.name}
+								placeholder="Nombre de la actividad"
+								onChange={(e) =>
+									setFormData({ ...formData, name: e.target.value })
+								}
+							/>
+							<div className="my-4 flex flex-col">
+								<Label className="mb-2 text-xl text-black">
+									Descripcion actividad:
+								</Label>
+								<textarea
+									className="rounded-lg border border-slate-200 p-2 text-black outline-hidden"
+									value={formData.description}
+									placeholder="Descripcion de la actividad"
+									onChange={(e) =>
+										setFormData({ ...formData, description: e.target.value })
+									}
+								/>
+							</div>
+							<TypeActDropdown
+								typeActi={modalidadesid}
+								setTypeActividad={(id) => {
+									setModalidadesid(id);
+									setFormData({ ...formData, type: id.toString() });
+								}}
+								errors={errors}
+							/>
+							{isUploading && (
+								<div className="my-1">
+									<Progress value={uploadProgress} className="w-full" />
+									<p className="mt-2 text-center text-sm text-gray-500">
+										{uploadProgress}% Completado
+									</p>
+								</div>
+							)}
+							<Input
+								type="submit"
+								className="mx-auto w-1/2 cursor-pointer text-black hover:bg-slate-50"
+								value="Crear"
+							/>
+						</form>
 					</div>
-					{/* <p className="mb-2 text-2xl">Lección ID: {lessonTitle}</p> */}
-					<p className="mb-2 text-2xl">Lección ID: {lessonsId}</p>
-					<Label className="mb-2 text-xl text-black">Titulo</Label>
-					<Input
-						className="text-black"
-						type="text"
-						value={formData.name}
-						placeholder="Nombre de la actividad"
-						onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-					/>
-					<div className="my-4 flex flex-col">
-						<Label className="mb-2 text-xl text-black">
-							Descripcion actividad:
-						</Label>
-						<textarea
-							className="rounded-lg border border-slate-200 p-2 text-black outline-hidden"
-							value={formData.description}
-							placeholder="Descripcion de la actividad"
-							onChange={(e) =>
-								setFormData({ ...formData, description: e.target.value })
-							}
-						/>
-					</div>
-					<TypeActDropdown
-						typeActi={modalidadesid}
-						setTypeActividad={(id) => {
-							setModalidadesid(id);
-							setFormData({ ...formData, type: id.toString() });
-						}}
-						errors={errors}
-					/>
-					{isUploading && (
-						<div className="my-1">
-							<Progress value={uploadProgress} className="w-full" />
-							<p className="mt-2 text-center text-sm text-gray-500">
-								{uploadProgress}% Completado
-							</p>
-						</div>
-					)}
-					<Input
-						type="submit"
-						className="mx-auto w-1/2 cursor-pointer text-black hover:bg-slate-50"
-						value="Crear"
-					/>
-				</form>
-			</div>
+				</>
+			)}
 		</>
 	);
 };

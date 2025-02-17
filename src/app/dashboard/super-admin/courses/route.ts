@@ -8,7 +8,8 @@ import {
 	getCourseById,
 	getCoursesByUserId,
 	updateCourse,
-} from '~/models/super-adminModels/courseModelsSuperAdmin
+} from '~/models/super-adminModels/courseModelsSuperAdmin';
+import { ratelimit } from '../../../../server/ratelimit/ratelimit'; // Adjust the import path as necessary
 export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>

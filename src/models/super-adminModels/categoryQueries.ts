@@ -1,6 +1,6 @@
+import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { categories } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 // Obtener todas las categorías
 export async function getCategories() {
