@@ -14,6 +14,7 @@ interface Post {
 	userId: {
 		id: string;
 		name: string | null;
+		email: string | null;
 	};
 	content: string;
 	createdAt: string | number | Date;
@@ -34,6 +35,7 @@ interface Foru {
 	userId: {
 		id: string;
 		name: string;
+		email: string | null;
 	};
 }
 
@@ -67,6 +69,7 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
 				courseDescription: courses.description,
 				courseInstructor: courses.instructor,
 				userName: users.name,
+				userEmail: users.email,
 				courseCoverImageKey: courses.coverImageKey,
 			})
 			.from(forums)
@@ -93,6 +96,7 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
 			userId: {
 				id: forum.userId,
 				name: forum.userName ?? '',
+				email: forum.userEmail ?? '',
 			},
 			title: forum.title,
 			description: forum.description ?? '',
@@ -318,12 +322,13 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
 				content: posts.content,
 				createdAt: posts.createdAt,
 				updatedAt: posts.updatedAt,
-				userName: users.name, // Seleccionar el nombre del usuario
+				userName: users.name,
+				userEmail: users.email,
 			})
 			.from(posts)
-			.leftJoin(users, eq(posts.userId, users.id)) // Unir con la tabla de usuarios
+			.leftJoin(users, eq(posts.userId, users.id))
 			.where(eq(posts.forumId, forumId))
-			.orderBy(desc(posts.createdAt)); // Aquí usamos desc() para orden descendente
+			.orderBy(desc(posts.createdAt));
 
 		const typedPosts: Post[] = postRecords.map((post) => ({
 			id: post.id,
@@ -331,6 +336,7 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
 			userId: {
 				id: post.userId,
 				name: post.userName,
+				email: post.userEmail,
 			},
 			content: post.content,
 			createdAt: post.createdAt,
@@ -398,11 +404,12 @@ export async function getPostRepliesByPostId(postId: number) {
 			createdAt: postReplies.createdAt,
 			updatedAt: postReplies.updatedAt,
 			userName: users.name,
+			userEmail: users.email,
 		})
 		.from(postReplies)
 		.leftJoin(users, eq(postReplies.userId, users.id))
 		.where(eq(postReplies.postId, postId))
-		.orderBy(desc(postReplies.createdAt)); // Ordenar por fecha de creación, ascendente
+		.orderBy(desc(postReplies.createdAt));
 
 	const postRepliesData = postRepliesRecords.map((reply) => ({
 		id: reply.id,
@@ -410,6 +417,7 @@ export async function getPostRepliesByPostId(postId: number) {
 		userId: {
 			id: reply.userId,
 			name: reply.userName,
+			email: reply.userEmail,
 		},
 		content: reply.content,
 		createdAt: reply.createdAt,

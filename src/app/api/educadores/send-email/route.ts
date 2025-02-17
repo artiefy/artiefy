@@ -1,19 +1,20 @@
 import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 
 interface EmailRequestBody {
 	content: string;
 	recipients: string[];
+	forumTitle: string;
+	authorName: string;
 }
 
-export async function POST(
-	req: NextApiRequest & { body: EmailRequestBody },
-	res: NextApiResponse
-) {
+export async function POST(req: Request) {
 	try {
-		console.log('Received email request:', req.body);
+		console.log('Starting email send process...');
 		const { sessionClaims } = await auth();
+		const body = await req.json();
+		console.log('Request body:', body);
 
 		interface Metadata {
 			googleAccessToken?: string;
@@ -24,10 +25,13 @@ export async function POST(
 
 		if (!googleAccessToken) {
 			console.error('Google access token is not available');
-			return res
-				.status(400)
-				.json({ error: 'Google access token is not available' });
+			return NextResponse.json(
+				{ error: 'Google access token is not available' },
+				{ status: 400 }
+			);
 		}
+
+		console.log('Google token available:', !!googleAccessToken);
 
 		const authClient = new google.auth.OAuth2();
 		authClient.setCredentials({
@@ -36,26 +40,47 @@ export async function POST(
 
 		const gmail = google.gmail({ version: 'v1', auth: authClient });
 
-		const { content, recipients } = req.body as EmailRequestBody;
+		const { content, recipients, forumTitle, authorName } =
+			body as EmailRequestBody;
+
+		console.log('Preparing email for recipients:', recipients);
 
 		if (!recipients || recipients.length === 0) {
 			console.error('No recipients provided');
-			return res.status(400).json({ error: 'No recipients provided' });
+			return NextResponse.json(
+				{ error: 'No recipients provided' },
+				{ status: 400 }
+			);
 		}
 
 		const emailContent = [
-			`From: "Me" <me@example.com>`,
+			'MIME-Version: 1.0',
+			'Content-Type: text/html; charset=utf-8',
+			`From: "Sistema de Foros" <${process.env.GMAIL_USER}>`,
 			`To: ${recipients.join(', ')}`,
-			`Subject: Nuevo mensaje en el foro`,
-			'Content-Type: text/html; charset=UTF-8',
+			`Subject: =?utf-8?B?${Buffer.from(
+				`Nueva actividad en el foro: ${forumTitle}`
+			).toString('base64')}?=`,
 			'',
-			content,
-		].join('\n');
+			`
+			<div style="font-family: Arial, sans-serif; padding: 20px;">
+				<h2>Nueva actividad en el foro: ${forumTitle}</h2>
+				<p><strong>${authorName}</strong> ha publicado un nuevo mensaje:</p>
+				<div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0;">
+					${content}
+				</div>
+				<p>Puedes ver y responder a este mensaje accediendo al foro.</p>
+			</div>
+			`,
+		].join('\r\n');
+
+		console.log('Email content prepared');
 
 		const base64EncodedEmail = Buffer.from(emailContent)
 			.toString('base64')
 			.replace(/\+/g, '-')
-			.replace(/\//g, '_');
+			.replace(/\//g, '_')
+			.replace(/=+$/, '');
 
 		const request = {
 			userId: 'me',
@@ -64,13 +89,28 @@ export async function POST(
 			},
 		};
 
-		console.log('Sending email with content:', emailContent);
-		const result = await gmail.users.messages.send(request);
-
-		console.log('Email sent result:', result);
-		return res.status(200).json({ success: true, result });
+		console.log('Sending email...');
+		
+		try {
+			const result = await gmail.users.messages.send(request);
+			console.log('Email sent successfully:', result.data);
+			return NextResponse.json({ success: true, result: result.data });
+		} catch (gmailError) {
+			console.error('Gmail API Error:', gmailError);
+			return NextResponse.json(
+				{ 
+					error: 'Error sending email through Gmail API',
+					details: gmailError,
+					request: request 
+				},
+				{ status: 500 }
+			);
+		}
 	} catch (error) {
-		console.error('Error sending email:', error);
-		return res.status(500).json({ error: 'Error sending email' });
+		console.error('General error sending email:', error);
+		return NextResponse.json(
+			{ error: 'Error sending email', details: error },
+			{ status: 500 }
+		);
 	}
 }

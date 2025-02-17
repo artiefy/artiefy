@@ -137,7 +137,7 @@ export const Zone = () => {
 									onError={(e) => {
 										(e.target as HTMLImageElement).src = '/login-fondo.webp';
 									}}
-									className={`rounded-t-lg object-cover transition-opacity duration-500 ${
+									className={`rounded-t-lg bg-black object-cover transition-opacity duration-500 ${
 										loadedImages[forum.id] ? 'opacity-100' : 'opacity-0'
 									}`}
 									fill
