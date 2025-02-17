@@ -43,7 +43,6 @@ interface Course {
 	createdAt: string;
 	updatedAt: string;
 	requerimientos: string;
-	totalParametros: number;
 }
 interface CourseDetailProps {
 	courseId: number;
@@ -53,7 +52,6 @@ export interface Parametros {
 	id: number;
 	name: string;
 	description: string;
-	entrega: number;
 	porcentaje: number;
 	courseId: number;
 }
@@ -93,7 +91,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			name: string;
 			description: string;
 			porcentaje: number;
-			entrega: number;
 		}[]
 	>([]); // Nuevo estado para los parámetros
 
@@ -246,7 +243,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						name: p.name,
 						description: p.description,
 						porcentaje: p.porcentaje,
-						entrega: p.entrega,
 						courseId: courseIdNumber,
 					}),
 				})
@@ -320,7 +316,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				name: parametro.name,
 				description: parametro.description,
 				porcentaje: parametro.porcentaje,
-				entrega: parametro.entrega,
 			}))
 		);
 		setIsModalOpen(true);
@@ -652,7 +647,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						name: string;
 						description: string;
 						porcentaje: number;
-						entrega: number;
 					}[]
 				) => setEditParametros(parametros)}
 				onCloseAction={() => setIsModalOpen(false)}

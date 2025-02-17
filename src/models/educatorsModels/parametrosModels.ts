@@ -6,7 +6,6 @@ export interface Parametros {
 	id: number;
 	name: string;
 	description: string;
-	entrega: number;
 	porcentaje: number;
 	courseId: number;
 }
@@ -14,20 +13,17 @@ export interface Parametros {
 export const createParametros = async ({
 	name,
 	description,
-	entrega,
 	porcentaje,
 	courseId,
 }: {
 	name: string;
 	description: string;
-	entrega: number;
 	porcentaje: number;
 	courseId: number;
 }) => {
 	return db.insert(parametros).values({
 		name,
 		description,
-		entrega,
 		porcentaje,
 		courseId,
 	});
@@ -75,21 +71,19 @@ export const updateParametro = async ({
 	id,
 	name,
 	description,
-	entrega,
 	porcentaje,
 	courseId,
 }: {
 	id: number;
 	name: string;
 	description: string;
-	entrega: number;
 	porcentaje: number;
 	courseId: number;
 }) => {
 	try {
 		const parametroActualizado = await db
 			.update(parametros)
-			.set({ name, description, entrega, porcentaje, courseId })
+			.set({ name, description, porcentaje, courseId })
 			.where(eq(parametros.id, id));
 		return parametroActualizado;
 	} catch (error) {

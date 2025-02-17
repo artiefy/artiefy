@@ -25,7 +25,8 @@ export interface VerdaderoOFlaso {
 export interface Completado {
 	id: string;
 	text: string;
-	palabra: string;
+	correctAnswer: string;
+	answer?: string;
 }
 
 export interface QuestionFilesSubida {

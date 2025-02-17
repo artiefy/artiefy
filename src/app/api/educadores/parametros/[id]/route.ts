@@ -25,7 +25,6 @@ export async function PUT(
 			name: string;
 			description: string;
 			porcentaje: number;
-			entrega: number;
 			courseId: number;
 		};
 
@@ -34,7 +33,6 @@ export async function PUT(
 			name: data.name,
 			description: data.description,
 			porcentaje: data.porcentaje,
-			entrega: data.entrega,
 			courseId: data.courseId,
 		});
 

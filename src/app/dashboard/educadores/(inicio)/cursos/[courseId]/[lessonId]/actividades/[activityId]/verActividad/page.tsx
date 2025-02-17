@@ -33,6 +33,14 @@ interface ActivityDetails {
 		courseDescription: string;
 		courseInstructor: string;
 	};
+	revisada: boolean;
+}
+
+interface ActivityScore {
+	totalQuestions: number;
+	correctAnswers: number;
+	percentage: number;
+	passed: boolean;
 }
 
 const RealizarActividad: React.FC = () => {
@@ -47,6 +55,14 @@ const RealizarActividad: React.FC = () => {
 	const actividadIdNumber = actividadIdString
 		? parseInt(actividadIdString)
 		: null;
+	const [activityScore, setActivityScore] = useState<ActivityScore>({
+		totalQuestions: 0,
+		correctAnswers: 0,
+		percentage: 0,
+		passed: false,
+	});
+	const [totalQuestions, setTotalQuestions] = useState(0);
+
 	const fetchActividad = useCallback(async () => {
 		if (actividadIdNumber !== null) {
 			try {
@@ -87,6 +103,62 @@ const RealizarActividad: React.FC = () => {
 	useEffect(() => {
 		void fetchActividad();
 	}, [fetchActividad]);
+
+	useEffect(() => {
+		const countQuestions = async () => {
+			if (actividad?.id && actividad.type.id === 2) {
+				try {
+					const [omResponse, completarResponse, vofResponse] =
+						await Promise.all([
+							fetch(
+								`/api/educadores/question/opcionMulti?activityId=${actividad.id}`
+							),
+							fetch(
+								`/api/educadores/question/completar?activityId=${actividad.id}`
+							),
+							fetch(
+								`/api/educadores/question/VerdaderoOFalso?activityId=${actividad.id}`
+							),
+						]);
+
+					const [omData, completarData, vofData] = await Promise.all([
+						omResponse.json(),
+						completarResponse.json(),
+						vofResponse.json(),
+					]);
+
+					const total =
+						(omData.questionsOM?.length || 0) +
+						(completarData.questions?.length || 0) +
+						(vofData.questionsVOF?.length || 0);
+
+					setTotalQuestions(total);
+					setActivityScore((prev) => ({
+						...prev,
+						totalQuestions: total,
+					}));
+				} catch (error) {
+					console.error('Error contando preguntas:', error);
+				}
+			}
+		};
+
+		void countQuestions();
+	}, [actividad]);
+
+	const handleQuestionResult = (isCorrect: boolean) => {
+		setActivityScore((prev) => {
+			const newCorrect = prev.correctAnswers + (isCorrect ? 1 : 0);
+			const newPercentage = (newCorrect / totalQuestions) * 100;
+
+			return {
+				totalQuestions,
+				correctAnswers: newCorrect,
+				percentage: newPercentage,
+				passed: newPercentage >= 65,
+			};
+		});
+	};
 
 	if (loading) return <div>Cargando...</div>;
 	if (error) return <div>Error: {error}</div>;
@@ -167,12 +239,53 @@ const RealizarActividad: React.FC = () => {
 									Docente: {actividad.lesson.courseInstructor}
 								</p>
 								{actividad.type.id === 1 ? (
-										<ActSubida activityId={actividad.id} />
+									<ActSubida activityId={actividad.id} />
 								) : actividad.type.id === 2 ? (
 									<>
-										<VerQuestionList activityId={actividad.id} />
-										<VerListPreguntaAbierta activityId={actividad.id} />
-										<VerQuestionVOFList activityId={actividad.id} />
+										<VerQuestionList
+											activityId={actividad.id}
+											onQuestionAnswered={handleQuestionResult}
+										/>
+										<VerListPreguntaAbierta
+											activityId={actividad.id}
+											onQuestionAnswered={handleQuestionResult}
+										/>
+										<VerQuestionVOFList
+											activityId={actividad.id}
+											onQuestionAnswered={handleQuestionResult}
+										/>
+
+										{activityScore.totalQuestions > 0 && (
+											<div
+												className={`mt-4 rounded-lg p-4 text-center ${
+													activityScore.passed ? 'bg-green-100' : 'bg-red-100'
+												}`}
+											>
+												<h3 className="text-lg font-semibold">
+													Resultado de la Actividad
+												</h3>
+												<p>
+													Preguntas respondidas: {activityScore.totalQuestions}
+												</p>
+												<p>
+													Respuestas correctas: {activityScore.correctAnswers}
+												</p>
+												<p>
+													Porcentaje: {activityScore.percentage.toFixed(2)}%
+												</p>
+												<p
+													className={`font-bold ${
+														activityScore.passed
+															? 'text-green-600'
+															: 'text-red-600'
+													}`}
+												>
+													{activityScore.passed
+														? '¡Felicitaciones! Has aprobado la actividad 🎉'
+														: 'No has alcanzado el porcentaje mínimo requerido ❌'}
+												</p>
+											</div>
+										)}
 									</>
 								) : (
 									<p>

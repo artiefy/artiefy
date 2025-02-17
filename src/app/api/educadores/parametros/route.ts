@@ -47,17 +47,15 @@ export async function POST(request: NextRequest) {
 		interface RequestBody {
 			name: string;
 			description: string;
-			entrega: number;
 			porcentaje: number;
 			courseId: number;
 		}
 		const body: RequestBody = (await request.json()) as RequestBody;
-		const { name, description, entrega, porcentaje, courseId } = body;
+		const { name, description, porcentaje, courseId } = body;
 
 		const parametroCreado = await createParametros({
 			name,
 			description,
-			entrega,
 			porcentaje,
 			courseId,
 		});
@@ -103,7 +101,6 @@ export async function PUT(request: Request) {
 				name: string;
 				description: string;
 				porcentaje: number;
-				entrega: number;
 				courseId: number;
 			}[];
 		};

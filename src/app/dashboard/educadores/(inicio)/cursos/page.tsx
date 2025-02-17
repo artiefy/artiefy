@@ -57,7 +57,6 @@ export default function Page() {
 			name: string;
 			description: string;
 			porcentaje: number;
-			entrega: number;
 		}[]
 	>([]);
 
@@ -205,7 +204,6 @@ export default function Page() {
 						body: JSON.stringify({
 							name: parametro.name,
 							description: parametro.description,
-							entrega: parametro.entrega,
 							porcentaje: parametro.porcentaje,
 							courseId: responseData.id, // Asegúrate de pasar el courseId aquí
 						}),

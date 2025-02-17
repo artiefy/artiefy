@@ -79,8 +79,8 @@ export const activities = pgTable('activities', {
 		.references(() => lessons.id)
 		.notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-	pesoNota: integer('peso_nota'),
 	revisada: boolean('revisada').default(false),
+	parametroId: integer('parametro_id').references(() => parametros.id),
 });
 
 // Tabla de preferencias
@@ -297,7 +297,6 @@ export const parametros = pgTable('parametros', {
 	id: serial('id').primaryKey(),
 	name: varchar('name', { length: 255 }).notNull(),
 	description: text('description').notNull(),
-	entrega: integer('entrega').notNull(),
 	porcentaje: integer('porcentaje').notNull(),
 	courseId: integer('course_id')
 		.references(() => courses.id)

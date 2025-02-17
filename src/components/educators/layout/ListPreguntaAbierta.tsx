@@ -33,7 +33,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 			};
 			if (data.success) {
 				setQuestions(
-					data.questions?.filter((q) => q?.text && q?.palabra) ?? []
+					data.questions?.filter((q) => q?.text && q?.correctAnswer) ?? []
 				);
 			}
 			console.log('API response:', data); // Verificar la respuesta de la API
@@ -108,7 +108,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 							<h3 className="text-lg font-semibold">Pregunta:</h3>
 							<p>{question.text}</p>
 							<p className="my-2 font-bold">Respuesta:</p>
-							<p className="font-bold">{question.palabra}</p>
+							<p className="font-bold">{question.correctAnswer}</p>
 						</CardContent>
 						<CardFooter className="flex justify-end space-x-2">
 							<Button

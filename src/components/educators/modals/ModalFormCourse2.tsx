@@ -53,7 +53,6 @@ interface CourseFormProps {
 		name: string;
 		description: string;
 		porcentaje: number;
-		entrega: number;
 	}[];
 	setParametrosAction: (
 		parametros: {
@@ -61,7 +60,6 @@ interface CourseFormProps {
 			name: string;
 			description: string;
 			porcentaje: number;
-			entrega: number;
 		}[]
 	) => void;
 	isOpen: boolean;
@@ -172,7 +170,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					name: '',
 					description: '',
 					porcentaje: 0,
-					entrega: parametros.length + 1,
 				},
 			]);
 		}
@@ -204,7 +201,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			name: parametro.name,
 			description: parametro.description,
 			porcentaje: parametro.porcentaje,
-			entrega: i + 1,
 		}));
 		setParametrosAction(reassignedParametros);
 	};

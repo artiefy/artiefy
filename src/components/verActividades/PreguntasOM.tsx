@@ -6,16 +6,34 @@ import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 import type { Question } from '~/types/typesActi';
 
 interface QuestionListProps {
-	activityId: number | null;
+	activityId: number;
+	onQuestionAnswered: (isCorrect: boolean) => void;
 }
 
-const VerQuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
+interface SelectedOptions {
+	[key: string]: number;
+}
+
+interface Feedback {
+	isCorrect: boolean;
+	message: string;
+	attempted: boolean;
+}
+
+interface FeedbackState {
+	[key: string]: Feedback;
+}
+
+const VerQuestionList: React.FC<QuestionListProps> = ({
+	activityId,
+	onQuestionAnswered,
+}) => {
 	const [questions, setQuestions] = useState<Question[]>([]);
 	const [selectedOptions, setSelectedOptions] = useState<
-		Record<number, number | null>
+		Record<string, string>
 	>({});
 	const [loading, setLoading] = useState(true);
-	const [feedback, setFeedback] = useState<Record<number, string | null>>({});
+	const [feedback, setFeedback] = useState<FeedbackState>({});
 	const paramActivityId = activityId;
 	const activityIdNumber = paramActivityId
 		? parseInt(paramActivityId.toString())
@@ -32,14 +50,14 @@ const VerQuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		setLoading(true);
 		try {
 			const response = await fetch(
-				`/api/educadores/question?activityId=${activityIdNumber}`
+				`/api/educadores/question/opcionMulti?activityId=${activityIdNumber}`
 			);
 			const data = (await response.json()) as {
 				success: boolean;
-				questions: Question[];
+				questionsOM: Question[];
 			};
 			if (data.success) {
-				setQuestions(data.questions);
+				setQuestions(data.questionsOM);
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
@@ -48,36 +66,63 @@ const VerQuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	};
 
-	const handleOptionChange = (questionId: string, optionId: number) => {
+	const handleOptionChange = (questionId: string, optionId: string) => {
 		setSelectedOptions((prev) => ({
 			...prev,
 			[questionId]: optionId,
 		}));
 	};
 
-	const handleSubmit = (questionId: string, correctOptionId: number) => {
-		const selectedOptionId = selectedOptions[questionId];
+	const handleSubmit = (questionId: string, selectedOptionId: string) => {
+		const currentQuestion = questions.find((q) => q.id === questionId);
+
+		if (!selectedOptionId) {
+			setFeedback((prev) => ({
+				...prev,
+				[questionId]: {
+					isCorrect: false,
+					message: 'Por favor, seleccione una opción',
+					attempted: false,
+				},
+			}));
+			return;
+		}
+
+		const isCorrect = selectedOptionId === currentQuestion?.correctOptionId;
+		onQuestionAnswered(isCorrect);
+
 		setFeedback((prev) => ({
 			...prev,
-			[questionId]:
-				selectedOptionId === correctOptionId
-					? '¡Correcto!'
-					: 'Incorrecto, intenta de nuevo.',
+			[questionId]: {
+				isCorrect,
+				message: isCorrect
+					? '¡Correcto! 🎉'
+					: `Incorrecto. La respuesta correcta es: "${
+							currentQuestion?.options.find(
+								(opt) => opt.id === currentQuestion.correctOptionId
+							)?.text
+						}" ❌`,
+				attempted: true,
+			},
 		}));
 	};
 
 	if (loading) return <div className="text-center">Cargando actividad...</div>;
+	if (!questions || questions.length === 0) {
+		return <div className="text-center">No hay preguntas disponibles.</div>;
+	}
 
 	return (
 		<div className="space-y-4">
-			{questions.map((question: Question) => (
-				<Card key={question.id}>
+			{questions.map((question) => (
+				<Card key={question.id} className="relative">
 					<CardContent className="pt-6">
+						<h3>Pregunta:</h3>
 						<h3 className="mb-2 text-lg font-semibold">{question.text}</h3>
 						<ul className="space-y-1">
 							{question.options.map((option) => (
 								<li key={option.id}>
-									<label className={'text-black'}>
+									<label className="text-black">
 										<input
 											type="radio"
 											name={`question-${question.id}`}
@@ -87,25 +132,37 @@ const VerQuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 											onChange={() =>
 												handleOptionChange(question.id, option.id)
 											}
+											disabled={feedback[question.id]?.attempted}
 										/>
 										{option.text}
 									</label>
 								</li>
 							))}
 						</ul>
+						{feedback[question.id] && (
+							<p
+								className={`mt-2 ${
+									feedback[question.id].isCorrect
+										? 'text-green-600'
+										: 'text-red-600'
+								}`}
+							>
+								{feedback[question.id].message}
+							</p>
+						)}
 					</CardContent>
 					<CardFooter>
 						<Button
 							type="button"
 							variant="secondary"
-							className="mr-2"
+							className="absolute bottom-6 right-10"
 							onClick={() =>
-								handleSubmit(question.id, question.correctOptionId)
+								handleSubmit(question.id, selectedOptions[question.id] || '')
 							}
+							disabled={feedback[question.id]?.attempted}
 						>
 							Enviar
 						</Button>
-						{feedback[question.id] && <p>{feedback[question.id]}</p>}
 					</CardFooter>
 				</Card>
 			))}

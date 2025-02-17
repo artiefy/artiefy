@@ -24,7 +24,8 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 	const [formData, setFormData] = useState<Completado>({
 		id: '',
 		text: '',
-		palabra: '',
+		correctAnswer: '',
+		answer: '',
 	});
 	const [uploadProgress, setUploadProgress] = useState<number>(0);
 	const [isVisible, setIsVisible] = useState<boolean>(true);
@@ -36,7 +37,8 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 			setFormData({
 				id: '',
 				text: '',
-				palabra: '',
+				correctAnswer: '',
+				answer: '',
 			});
 		}
 	}, [questionToEdit]);
@@ -136,8 +138,8 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 					<Input
 						className="w-full rounded-lg border border-slate-400 p-2 outline-none"
 						placeholder="Digite aquí la palabra de completado"
-						name="palabra"
-						value={formData.palabra}
+						name="correctAnswer"
+						value={formData.correctAnswer}
 						onChange={handleChange}
 					/>
 					{isUploading && (

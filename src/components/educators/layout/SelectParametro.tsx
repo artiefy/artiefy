@@ -7,6 +7,7 @@ export interface Parametros {
 	entrega: number;
 	porcentaje: number;
 	courseId: number;
+	isUsed?: boolean;
 }
 
 interface ParametrosDropdownProps {
@@ -101,8 +102,13 @@ const SelectParametro: React.FC<ParametrosDropdownProps> = ({
 				>
 					<option value="">Selecciona un parametro:</option>
 					{parametros.map((parametro) => (
-						<option key={parametro.id} value={parametro.id}>
-							Parametro {parametro.entrega} perteneciente a: {parametro.name}
+						<option
+							key={parametro.id}
+							value={parametro.id}
+							disabled={parametro.isUsed}
+						>
+							Parametro: {parametro.name}{' '}
+							{parametro.isUsed ? '(Parametro en uso)' : ''}
 						</option>
 					))}
 				</select>

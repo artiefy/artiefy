@@ -7,14 +7,29 @@ import type { VerdaderoOFlaso } from '~/types/typesActi';
 
 interface QuestionListProps {
 	activityId: number;
+	onQuestionAnswered: (isCorrect: boolean) => void;
 }
 
-const VerQuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
+interface Feedback {
+	isCorrect: boolean;
+	message: string;
+	attempted: boolean;
+}
+
+interface FeedbackState {
+	[key: string]: Feedback;
+}
+
+const VerQuestionVOFList: React.FC<QuestionListProps> = ({
+	activityId,
+	onQuestionAnswered,
+}) => {
 	const [questionsVOF, setQuestionsVOF] = useState<VerdaderoOFlaso[]>([]);
 	const [selectedOptions, setSelectedOptions] = useState<
 		Record<string, string | null>
 	>({});
 	const [loading, setLoading] = useState(true);
+	const [feedback, setFeedback] = useState<FeedbackState>({});
 
 	useEffect(() => {
 		if (activityId !== null) {
@@ -58,11 +73,44 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 			setLoading(false);
 		}
 	};
-
-	const handleOptionChange = (questionId: string, optionId: number) => {
+	const handleOptionChange = (questionId: string, optionId: string) => {
 		setSelectedOptions((prev) => ({
 			...prev,
 			[questionId]: optionId,
+		}));
+	};
+
+	const handleSubmit = (questionId: string, selectedOptionId: string) => {
+		const currentQuestion = questionsVOF.find((q) => q.id === questionId);
+
+		if (!selectedOptionId) {
+			setFeedback((prev) => ({
+				...prev,
+				[questionId]: {
+					isCorrect: false,
+					message: 'Por favor, seleccione una opción',
+					attempted: false,
+				},
+			}));
+			return;
+		}
+
+		const isCorrect = selectedOptionId === currentQuestion?.correctOptionId;
+		onQuestionAnswered(isCorrect);
+
+		setFeedback((prev) => ({
+			...prev,
+			[questionId]: {
+				isCorrect,
+				message: isCorrect
+					? '¡Correcto! 🎉'
+					: `Incorrecto. La respuesta correcta es: "${
+							currentQuestion?.options.find(
+								(opt) => opt.id === currentQuestion.correctOptionId
+							)?.text
+						}" ❌`,
+				attempted: true,
+			},
 		}));
 	};
 
@@ -74,9 +122,10 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 				questionsVOF.map((question) => (
 					<Card
 						key={question.id}
-						className="justify-start border-none shadow-lg"
+						className="relative justify-start border-none shadow-lg"
 					>
 						<CardContent className="pt-6">
+							<h3>Pregunta:</h3>
 							<h3 className="mb-2 text-lg font-semibold">{question.text}</h3>
 							<ul className="space-y-1">
 								{question.options?.map((option) => (
@@ -85,26 +134,41 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 											<input
 												type="radio"
 												name={`question-${question.id}`}
-												value={Number(option.id)} // Asegurarse de que el valor sea de tipo number
+												value={option.id}
 												className="mr-2"
-												checked={
-													selectedOptions[question.id] === Number(option.id)
-												}
+												checked={selectedOptions[question.id] === option.id}
 												onChange={() =>
-													handleOptionChange(
-														question.id,
-														parseInt(option.id, 10)
-													)
+													handleOptionChange(question.id, option.id)
 												}
+												disabled={feedback[question.id]?.attempted}
 											/>
 											{option.text}
 										</label>
 									</li>
 								))}
 							</ul>
+							{feedback[question.id] && (
+								<p
+									className={`mt-2 ${
+										feedback[question.id].isCorrect
+											? 'text-green-600'
+											: 'text-red-600'
+									}`}
+								>
+									{feedback[question.id].message}
+								</p>
+							)}
 						</CardContent>
 						<CardFooter>
-							<Button type="button" variant="secondary" className="mr-2">
+							<Button
+								type="button"
+								variant="secondary"
+								className="absolute bottom-6 right-10"
+								onClick={() =>
+									handleSubmit(question.id, selectedOptions[question.id] || '')
+								}
+								disabled={feedback[question.id]?.attempted}
+							>
 								Enviar
 							</Button>
 						</CardFooter>

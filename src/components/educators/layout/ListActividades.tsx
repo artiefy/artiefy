@@ -62,7 +62,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 				setError(null);
 				try {
 					const response = await fetch(
-						`/api/educadores/actividades?lessonId=${lessonIdString}`
+						`/api/educadores/actividades/actividadesByLesson?lessonId=${lessonIdString}`
 					);
 
 					if (!response.ok) {

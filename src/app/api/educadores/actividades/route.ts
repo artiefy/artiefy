@@ -1,9 +1,12 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
+import { db } from '~/server/db';
+import { activities, lessons } from '~/server/db/schema';
+import { and, eq } from 'drizzle-orm';
 
 import {
 	createActivity,
-	getActivitiesByLessonId,
+	//getActivitiesByLessonId,
 	updateActivity,
 	deleteActivity,
 } from '~/models/educatorsModels/activitiesModels';
@@ -41,26 +44,20 @@ export async function POST(request: NextRequest) {
 			description: string;
 			lessonsId: number;
 			typeid: number;
-			pesoNota: number;
 			revisada: boolean;
+			parametroId?: number | null;
 		};
 
-		const {
-			name,
-			description,
-			lessonsId,
-			typeid,
-			pesoNota,
-			revisada,
-		} = body;
+		const { name, description, lessonsId, typeid, revisada, parametroId } =
+			body;
 
 		const newActivity = await createActivity({
 			name,
 			description,
 			typeid,
 			lessonsId,
-			pesoNota,
 			revisada,
+			parametroId: revisada ? parametroId : null,
 		});
 
 		console.log('Datos enviados al servidor:', {
@@ -68,7 +65,6 @@ export async function POST(request: NextRequest) {
 			description,
 			lessonsId,
 			typeid,
-			pesoNota,
 			revisada,
 		});
 
@@ -76,12 +72,10 @@ export async function POST(request: NextRequest) {
 			id: newActivity.id,
 			message: 'Actividad creada exitosamente',
 		});
-	} catch (error: unknown) {
-		console.error('Error al crear la actividad:', error);
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
+	} catch (error) {
+		console.error('Error detallado:', error);
 		return respondWithError(
-			`Error al crear la actividad: ${errorMessage}`,
+			`Error al crear la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`,
 			500
 		);
 	}
@@ -90,30 +84,42 @@ export async function POST(request: NextRequest) {
 // GET endpoint para obtener una actividad por ID
 export async function GET(request: NextRequest) {
 	try {
-		const { userId } = await auth();
-		if (!userId) {
-			return respondWithError('No autorizado', 403);
-		}
-
 		const { searchParams } = new URL(request.url);
-		const lessonsId = searchParams.get('lessonId');
-		if (!lessonsId) {
-			return respondWithError('ID de actividad no proporcionado', 400);
+		const courseId = searchParams.get('courseId');
+
+		if (!courseId) {
+			return NextResponse.json(
+				{ error: 'Course ID es requerido' },
+				{ status: 400 }
+			);
 		}
 
-		const activities = await getActivitiesByLessonId(parseInt(lessonsId, 10));
-		if (!activities) {
-			return respondWithError('Actividad no encontrada', 404);
-		}
+		// Primero obtener todas las lecciones del curso
+		const courseLessons = await db
+			.select()
+			.from(lessons)
+			.where(eq(lessons.courseId, parseInt(courseId)));
 
-		return NextResponse.json(activities);
-	} catch (error: unknown) {
-		console.error('Error al obtener la actividad:', error);
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-		return respondWithError(
-			`Error al obtener la actividad: ${errorMessage}`,
-			500
+		const lessonIds = courseLessons.map((lesson) => lesson.id);
+
+		// Luego obtener todas las actividades de esas lecciones
+		const actividades = await db
+			.select()
+			.from(activities)
+			.where(
+				and(
+					lessonIds.length > 0
+						? eq(activities.lessonsId, lessonIds[0])
+						: undefined
+				)
+			);
+
+		return NextResponse.json(actividades);
+	} catch (error) {
+		console.error('Error al obtener las actividades:', error);
+		return NextResponse.json(
+			{ error: 'Error al obtener las actividades' },
+			{ status: 500 }
 		);
 	}
 }
@@ -132,18 +138,15 @@ export async function PUT(request: NextRequest) {
 			description?: string;
 			typeid?: number;
 			revisada?: boolean;
-			pesoNota?: number;
 		};
 
-		const { id, name, description, typeid, revisada, pesoNota } =
-			body;
+		const { id, name, description, typeid, revisada } = body;
 
 		await updateActivity(id, {
 			name,
 			description,
 			typeid,
 			revisada,
-			pesoNota,
 		});
 
 		return NextResponse.json({

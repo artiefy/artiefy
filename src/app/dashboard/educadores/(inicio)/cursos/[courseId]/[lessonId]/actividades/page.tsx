@@ -63,6 +63,7 @@ interface Parametros {
 	porcentaje: number;
 	courseId: number;
 	typeid: number;
+	isUsed?: boolean;
 }
 
 const Page: React.FC = () => {
@@ -93,79 +94,130 @@ const Page: React.FC = () => {
 	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl;
 	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
 	const cursoIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
-	const [parametros, setParametros] = useState<Parametros[]>([]); // Restaurar setParametros
+	const [parametros, setParametros] = useState<Parametros[]>([]);
 	const router = useRouter(); // Usar useRouter de next/navigation
 	const [color, setColor] = useState<string>('#FFFFFF');
 	const [isActive, setIsActive] = useState(false);
 	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
 	const [showErrors, setShowErrors] = useState(false);
+	const [usedParametros, setUsedParametros] = useState<number[]>([]);
 
 	useEffect(() => {
 		const fetchParametros = async () => {
 			try {
-				const response = await fetch(
+				// Obtener parámetros
+				const parametrosResponse = await fetch(
 					`/api/educadores/parametros?courseId=${courseIdNumber}`
 				);
-				if (response.ok) {
-					const data = (await response.json()) as Parametros[];
-					setParametros(data);
-				} else {
-					const errorData = await response.text();
-					throw new Error(`Error al obtener los parámetros: ${errorData}`);
+				if (!parametrosResponse.ok) {
+					throw new Error('Error al obtener los parámetros');
 				}
+				const parametrosData =
+					(await parametrosResponse.json()) as Parametros[];
+
+				// Obtener actividades para verificar parámetros en uso
+				const actividadesResponse = await fetch(
+					`/api/educadores/actividades?courseId=${courseIdNumber}`
+				);
+				if (!actividadesResponse.ok) {
+					throw new Error('Error al obtener las actividades');
+				}
+				const actividadesData = await actividadesResponse.json();
+
+				// Obtener los IDs de parámetros que ya están siendo usados
+				const parametrosUsados = actividadesData
+					.filter((actividad: any) => actividad.parametroId)
+					.map((actividad: any) => actividad.parametroId);
+
+				setUsedParametros(parametrosUsados);
+
+				// Actualizar los parámetros marcando cuáles están en uso
+				const parametrosActualizados = parametrosData.map((parametro) => ({
+					...parametro,
+					isUsed: parametrosUsados.includes(parametro.id),
+					entrega: parametro.entrega,
+					porcentaje: parametro.porcentaje,
+					description: parametro.description,
+				}));
+
+				setParametros(parametrosActualizados);
 			} catch (error) {
-				console.error('Error detallado:', error);
+				console.error('Error:', error);
+				toast({
+					title: 'Error',
+					description: 'Error al cargar los parámetros',
+					variant: 'destructive',
+				});
 			}
 		};
 
 		if (courseIdNumber) {
-			fetchParametros().catch((error) =>
-				console.error('Error fetching parametros:', error)
-			);
+			fetchParametros();
 		}
 	}, [courseIdNumber]);
 
-	const handleParametroChange = (parametroId: number) => {
-		const selectedParametro = parametros.find(
-			(param: Parametros) => param.id === parametroId
-		);
-		if (selectedParametro) {
-			setFormData((prevFormData) => ({
-				...prevFormData,
-				parametro: selectedParametro.id,
-				name: selectedParametro.name,
-				description: selectedParametro.description,
-				pesoNota: selectedParametro.porcentaje,
-			}));
+	const handleParametroChange = async (parametroId: number) => {
+		try {
+			// Verificar en el backend si el parámetro ya está en uso
+			const response = await fetch(
+				`/api/educadores/actividades/check-parametro?parametroId=${parametroId}`
+			);
+
+			if (!response.ok) {
+				throw new Error('Error al verificar el parámetro');
+			}
+
+			const { isUsed } = await response.json();
+
+			if (isUsed) {
+				toast({
+					title: 'Error',
+					description:
+						'Este parámetro ya está siendo utilizado en otra actividad',
+					variant: 'destructive',
+				});
+				return;
+			}
+
+			const selectedParametro = parametros.find(
+				(param: Parametros) => param.id === parametroId
+			);
+
+			if (selectedParametro) {
+				setFormData((prevFormData) => ({
+					...prevFormData,
+					parametro: selectedParametro.id,
+					name: selectedParametro.name,
+					description: selectedParametro.description,
+					pesoNota: selectedParametro.porcentaje,
+				}));
+			}
+		} catch (error) {
+			console.error('Error:', error);
+			toast({
+				title: 'Error',
+				description: 'Error al verificar el parámetro',
+				variant: 'destructive',
+			});
 		}
 	};
 
 	const handleToggle = () => {
 		setIsActive((prevIsActive) => {
 			const newIsActive = !prevIsActive;
-			if (newIsActive && formData.parametro) {
-				const selectedParametro = parametros.find(
-					(param: Parametros) => param.id === formData.parametro
-				);
-				if (selectedParametro) {
-					setFormData((prevFormData) => ({
-						...prevFormData,
-						revisada: true,
-						name: selectedParametro.name,
-						description: selectedParametro.description,
-					}));
-				}
-			} else {
-				setFormData((prevFormData) => ({
-					...prevFormData,
-					revisada: false,
+			setFormData((prevFormData) => ({
+				...prevFormData,
+				revisada: newIsActive,
+				...(!newIsActive && {
 					name: '',
 					description: '',
 					pesoNota: 0,
-				}));
-			}
+					parametro: 0,
+				}),
+			}));
+
 			if (!newIsActive) {
-				setShowLongevidadForm(false); // Ocultar el formulario de longevidad si se desactiva
+				setShowLongevidadForm(false);
 			}
 			return newIsActive;
 		});
@@ -227,21 +279,20 @@ const Page: React.FC = () => {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsUploading(true);
-		setShowErrors(true); // Mostrar errores después de intentar enviar el formulario
+		setShowErrors(true);
+
 		try {
-			// Validar campos después de establecer las claves de los archivos
 			const newErrors = {
 				name: !formData.name,
 				description: !formData.description,
 				type: !formData.type,
-				pesoNota: showLongevidadForm && !formData.pesoNota,
-				parametro: showLongevidadForm && !formData.parametro,
+				parametro: formData.revisada && !formData.parametro,
 			};
-
-			console.log(newErrors);
-
 			if (Object.values(newErrors).some((error) => error) || !lessonsId) {
-				setErrors(newErrors);
+				setErrors({
+					...newErrors,
+					pesoNota: false,
+				});
 				toast({
 					title: 'Error',
 					description: 'Por favor completa los campos obligatorios.',
@@ -250,79 +301,23 @@ const Page: React.FC = () => {
 				setIsUploading(false);
 				return;
 			}
-			if (formData) {
-				console.log(formData);
-			}
 
-			let actividadId: number | null = null;
-
-			// Guardar en la tabla actividades
-			const actividadResponse = await fetch('/api/educadores/actividades', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					name: formData.name,
-					description: formData.description,
-					typeid: parseInt(formData.type, 10), // Asegurarse de que typeid sea un entero
-					lessonsId: parseInt(lessonsId, 10), // Asegurarse de que lessonsId sea un entero
-					pesoNota: formData.pesoNota, // Usar formData.pesoNota
-					revisada: formData.revisada, // Usar formData.revisada
-				}),
-			});
-
-			if (actividadResponse.ok) {
-				const actividadData = (await actividadResponse.json()) as {
-					id: number;
-				};
-				actividadId = actividadData.id; // Suponiendo que el backend devuelve el ID de la actividad creada
-				console.log(`Datos enviados al backend ${JSON.stringify(formData)}`);
-				toast({
-					title: 'Actividad creada',
-					description: 'La actividad se creó con éxito.',
-				});
-			} else {
-				const errorData = (await actividadResponse.json()) as {
-					error?: string;
-				};
-				toast({
-					title: 'Error',
-					description: errorData.error ?? 'Error al crear la actividad.',
-					variant: 'destructive',
-				});
-				setIsUploading(false);
-				return;
-			}
-
-			// Si la actividad es revisada, actualizar el parámetro
+			// Verificar si el parámetro está en uso antes de crear la actividad
 			if (formData.revisada && formData.parametro) {
-				const parametroResponse = await fetch(
-					`/api/educadores/parametros/${formData.id}`,
-					{
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({
-							name: formData.name,
-							description: formData.description,
-							entrega: formData.pesoNota,
-							porcentaje: formData.pesoNota,
-							typeid: parseInt(formData.type, 10),
-							courseId: courseIdNumber,
-						}),
-					}
+				const checkResponse = await fetch(
+					`/api/educadores/actividades/check-parametro?parametroId=${formData.parametro}`
 				);
 
-				if (parametroResponse.ok) {
-					toast({
-						title: 'Parámetro actualizado',
-						description: 'El parámetro se actualizó con éxito.',
-					});
-				} else {
-					const errorData = (await parametroResponse.json()) as {
-						error?: string;
-					};
+				if (!checkResponse.ok) {
+					throw new Error('Error al verificar el parámetro');
+				}
+
+				const { isUsed } = await checkResponse.json();
+				if (isUsed) {
 					toast({
 						title: 'Error',
-						description: errorData.error ?? 'Error al actualizar el parámetro.',
+						description:
+							'Este parámetro ya está siendo utilizado en otra actividad',
 						variant: 'destructive',
 					});
 					setIsUploading(false);
@@ -330,20 +325,70 @@ const Page: React.FC = () => {
 				}
 			}
 
+			const actividadResponse = await fetch('/api/educadores/actividades', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					name: formData.name,
+					description: formData.description,
+					typeid: parseInt(formData.type, 10),
+					lessonsId: parseInt(lessonsId, 10),
+					revisada: formData.revisada,
+					parametroId: formData.revisada ? formData.parametro : null,
+				}),
+			});
+
+			if (!actividadResponse.ok) {
+				const errorData = await actividadResponse.json();
+				throw new Error(errorData.error || 'Error al crear la actividad');
+			}
+
+			const actividadData = await actividadResponse.json();
+			const actividadId = actividadData.id;
+
+			// Si la actividad es revisada y tiene un parámetro seleccionado, actualizar el parámetro
+			if (formData.revisada && formData.parametro) {
+				const parametroResponse = await fetch(
+					`/api/educadores/parametros/${formData.parametro}`,
+					{
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							name: formData.name,
+							description: formData.description,
+							porcentaje: formData.pesoNota,
+							courseId: courseIdNumber,
+						}),
+					}
+				);
+
+				if (!parametroResponse.ok) {
+					throw new Error('Error al actualizar el parámetro');
+				}
+
+				toast({
+					title: 'Éxito',
+					description: 'Actividad creada y parámetro actualizado correctamente',
+				});
+			} else {
+				toast({
+					title: 'Éxito',
+					description: 'Actividad creada correctamente',
+				});
+			}
+
+			// Redireccionar
 			router.push(
 				`/dashboard/educadores/cursos/${cursoIdNumber}/${lessonsId}/actividades/${actividadId}`
 			);
-		} catch (e) {
-			if ((e as Error).name === 'AbortError') {
-				console.log('Upload cancelled');
-				return; // Salir de la función si se cancela la carga
-			} else {
-				toast({
-					title: 'Error',
-					description: `Error al procesar la solicitud: ${String(e)}`,
-					variant: 'destructive',
-				});
-			}
+		} catch (error) {
+			console.error('Error detallado:', error);
+			toast({
+				title: 'Error',
+				description:
+					error instanceof Error ? error.message : 'Error desconocido',
+				variant: 'destructive',
+			});
 		} finally {
 			setIsUploading(false);
 		}

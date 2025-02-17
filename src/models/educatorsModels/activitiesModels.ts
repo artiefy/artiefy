@@ -31,7 +31,6 @@ export interface ActivityDetails {
 		description: string;
 	};
 	revisada: boolean;
-	pesoNota: number | null;
 	lessonsId: {
 		id: number;
 		title: string;
@@ -45,52 +44,44 @@ export interface ActivityDetails {
 	};
 }
 
+interface CreateActivityParams {
+	name: string;
+	description: string;
+	typeid: number;
+	lessonsId: number;
+	revisada: boolean;
+	parametroId?: number | null;
+}
+
 // CRUD Operations
 // Crear una nueva actividad
-export const createActivity = async ({
-	name,
-	description,
-	typeid,
-	lessonsId,
-	pesoNota,
-	revisada,
-}: Omit<Activity, 'id'>): Promise<Activity> => {
-	// Cambiar el tipo de retorno a Promise<Activity>
+export async function createActivity(params: CreateActivityParams) {
 	try {
-		const [newActivity] = await db
+		const newActivity = await db
 			.insert(activities)
 			.values({
-				name,
-				description,
-				typeid,
-				lessonsId,
-				pesoNota,
-				revisada,
+				name: params.name,
+				description: params.description,
+				typeid: params.typeid,
+				lessonsId: params.lessonsId,
+				revisada: params.revisada,
+				parametroId: params.parametroId || null,
+				lastUpdated: new Date(),
 			})
-			.returning({
-				id: activities.id,
-				name: activities.name,
-				description: activities.description,
-				typeid: activities.typeid,
-				lessonsId: activities.lessonsId,
-				pesoNota: activities.pesoNota,
-				revisada: activities.revisada,
-			}); // Retornar todos los campos, incluyendo el ID
+			.returning();
 
-		if (!newActivity) {
-			throw new Error('Error al crear la actividad: actividad no creada');
+		if (!newActivity[0]) {
+			throw new Error('No se pudo crear la actividad');
 		}
-		return {
-			...newActivity,
-			revisada: newActivity.revisada ?? false,
-			pesoNota: newActivity.pesoNota ?? 0,
-		}; // Retornar la nueva actividad creada
+
+		return newActivity[0];
 	} catch (error) {
+		console.error('Error detallado:', error);
 		throw new Error(
 			`Error al crear la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
 		);
 	}
-};
+}
 
 // Obtener una actividad por ID
 export const getActivityById = async (activityId: number) => {
@@ -106,7 +97,6 @@ export const getActivityById = async (activityId: number) => {
 					description: typeActi.description,
 				},
 				revisada: activities.revisada,
-				pesoNota: activities.pesoNota,
 				lesson: {
 					id: lessons.id,
 					title: lessons.title,
@@ -153,7 +143,6 @@ export const getActivitiesByLessonId = async (
 					name: typeActi.name,
 					description: typeActi.description,
 				},
-				pesoNota: activities.pesoNota,
 				revisada: activities.revisada,
 				lesson: {
 					id: lessons.id,
@@ -181,7 +170,6 @@ export const getActivitiesByLessonId = async (
 				description: actividad.type?.description ?? '',
 			},
 			revisada: actividad.revisada ?? false,
-			pesoNota: actividad.pesoNota ?? 0,
 			lessonsId: {
 				id: actividad.lesson.id ?? 0,
 				title: actividad.lesson.title ?? '',
