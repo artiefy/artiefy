@@ -351,37 +351,6 @@ const Page: React.FC = () => {
 			const actividadData = await actividadResponse.json();
 			const actividadId = actividadData.id;
 
-			// Si la actividad es revisada y tiene un parámetro seleccionado, actualizar el parámetro
-			if (formData.revisada && formData.parametro) {
-				const parametroResponse = await fetch(
-					`/api/educadores/parametros/${formData.parametro}`,
-					{
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({
-							name: formData.name,
-							description: formData.description,
-							porcentaje: formData.porcentaje,
-							courseId: courseIdNumber,
-						}),
-					}
-				);
-
-				if (!parametroResponse.ok) {
-					throw new Error('Error al actualizar el parámetro');
-				}
-
-				toast({
-					title: 'Éxito',
-					description: 'Actividad creada y parámetro actualizado correctamente',
-				});
-			} else {
-				toast({
-					title: 'Éxito',
-					description: 'Actividad creada correctamente',
-				});
-			}
-
 			// Redireccionar
 			router.push(
 				`/dashboard/educadores/cursos/${cursoIdNumber}/${lessonsId}/actividades/${actividadId}`
