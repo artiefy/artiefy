@@ -11,6 +11,7 @@ import QuestionForm from '~/components/educators/layout/QuestionsForms';
 import QuestionList from '~/components/educators/layout/QuestionsList';
 import SeleccionActi from '~/components/educators/layout/SeleccionActi';
 import QuestionVOFForm from '~/components/educators/layout/VerdaderoOFalseForm';
+import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 import QuestionVOFList from '~/components/educators/layout/VerdaderoOFalseList';
 import {
 	AlertDialog,
@@ -301,9 +302,6 @@ const Page: React.FC = () => {
 								Descripción de la actividad: <b>{actividad.description}.</b>
 							</p>
 							<p className="font-semibold">
-								Peso de la nota en el curso: <b>{actividad.pesoNota}%.</b>
-							</p>
-							<p className="font-semibold">
 								¿La actividad es calificable?:{' '}
 								<b>{actividad.revisada ? 'Si' : 'No'}.</b>
 							</p>
@@ -370,6 +368,7 @@ const Page: React.FC = () => {
 										/>
 									)}
 									<QuestionSubidaList activityId={actividadIdNumber} />
+									<VerRespuestasArchivos activityId={actividadIdNumber} />
 								</>
 							)}
 						</>

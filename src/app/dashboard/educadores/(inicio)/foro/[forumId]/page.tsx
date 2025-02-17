@@ -174,7 +174,7 @@ const ForumPage = () => {
 				content: postContent,
 				recipients,
 				forumTitle: forumData.title,
-				authorName: user.fullName
+				authorName: user.fullName,
 			});
 
 			const response = await fetch('/api/educadores/send-email', {

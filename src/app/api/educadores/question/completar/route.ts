@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
 			);
 		}
 		const key = `activity:${activityId}:questionsACompletar`; // Update key
-		const questions = (await redis.get<Completado[]>(key)) ?? [];
-		console.log(questions);
-		return NextResponse.json({ success: true, questions });
+		const questionsACompletar = (await redis.get<Completado[]>(key)) ?? [];
+		console.log(questionsACompletar);
+		return NextResponse.json({ success: true, questionsACompletar });
 	} catch (error) {
 		console.error('Error en la API route:', error);
 		return NextResponse.json(

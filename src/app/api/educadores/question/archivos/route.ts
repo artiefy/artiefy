@@ -17,15 +17,19 @@ export async function GET(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questions`;
-		const questions = (await redis.get<QuestionFilesSubida[]>(key)) ?? [];
-		console.log('Fetched questions from Redis:', questions); // Add logging
-		if (questions.length === 0) {
-			console.log('No questions found for activityId:', activityId);
+		const key = `activity:${activityId}:questionsFilesSubida`;
+		const questionsFilesSubida =
+			(await redis.get<QuestionFilesSubida[]>(key)) ?? [];
+		console.log(
+			'Fetched questionsFilesSubida from Redis:',
+			questionsFilesSubida
+		); // Add logging
+		if (questionsFilesSubida.length === 0) {
+			console.log('No questionsFilesSubida found for activityId:', activityId);
 		}
 		return NextResponse.json({
 			success: true,
-			questions: questions,
+			questionsFilesSubida: questionsFilesSubida,
 		});
 	} catch (error) {
 		console.error('Error en la API route:', error);
@@ -38,15 +42,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
 	try {
-		const { activityId, questions } = (await request.json()) as {
+		const { activityId, questionsFilesSubida } = (await request.json()) as {
 			activityId: string;
-			questions: QuestionFilesSubida;
+			questionsFilesSubida: QuestionFilesSubida;
 		};
-		const key = `activity:${activityId}:questions`;
+		const key = `activity:${activityId}:questionsFilesSubida`;
 		const existingQuestions =
 			(await redis.get<QuestionFilesSubida[]>(key)) ?? [];
 
-		const updatedQuestions = [...existingQuestions, questions];
+		const updatedQuestions = [...existingQuestions, questionsFilesSubida];
 		await redis.set(key, updatedQuestions);
 		return NextResponse.json({
 			success: true,
@@ -63,16 +67,16 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
 	try {
-		const { activityId, questions } = (await request.json()) as {
+		const { activityId, questionsFilesSubida } = (await request.json()) as {
 			activityId: string;
-			questions: QuestionFilesSubida;
+			questionsFilesSubida: QuestionFilesSubida;
 		};
-		const key = `activity:${activityId}:questions`;
+		const key = `activity:${activityId}:questionsFilesSubida`;
 		const existingQuestions =
 			(await redis.get<QuestionFilesSubida[]>(key)) ?? [];
 
 		const updatedQuestions = existingQuestions.map((q) =>
-			q.id === questions.id ? questions : q
+			q.id === questionsFilesSubida.id ? questionsFilesSubida : q
 		);
 		await redis.set(key, updatedQuestions);
 		return NextResponse.json({
@@ -99,7 +103,7 @@ export async function DELETE(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questions`;
+		const key = `activity:${activityId}:questionsFilesSubida`;
 		const existingQuestions =
 			(await redis.get<QuestionFilesSubida[]>(key)) ?? [];
 		const updatedQuestions = existingQuestions.filter(

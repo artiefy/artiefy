@@ -77,7 +77,7 @@ const Page: React.FC = () => {
 		name: false,
 		description: false,
 		type: false,
-		pesoNota: false,
+		porcentaje: false,
 		parametro: false,
 	});
 	const [uploadProgress, setUploadProgress] = useState(0);
@@ -87,7 +87,7 @@ const Page: React.FC = () => {
 		name: '',
 		description: '',
 		type: '',
-		pesoNota: 0,
+		porcentaje: 0,
 		revisada: false,
 		parametro: 0,
 	});
@@ -189,7 +189,7 @@ const Page: React.FC = () => {
 					parametro: selectedParametro.id,
 					name: selectedParametro.name,
 					description: selectedParametro.description,
-					pesoNota: selectedParametro.porcentaje,
+					porcentaje: selectedParametro.porcentaje,
 				}));
 			}
 		} catch (error) {
@@ -211,7 +211,7 @@ const Page: React.FC = () => {
 				...(!newIsActive && {
 					name: '',
 					description: '',
-					pesoNota: 0,
+					porcentaje: 0,
 					parametro: 0,
 				}),
 			}));
@@ -278,30 +278,35 @@ const Page: React.FC = () => {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setIsUploading(true);
+
+		// Activar la visualización de errores
 		setShowErrors(true);
 
-		try {
-			const newErrors = {
-				name: !formData.name,
-				description: !formData.description,
-				type: !formData.type,
-				parametro: formData.revisada && !formData.parametro,
-			};
-			if (Object.values(newErrors).some((error) => error) || !lessonsId) {
-				setErrors({
-					...newErrors,
-					pesoNota: false,
-				});
-				toast({
-					title: 'Error',
-					description: 'Por favor completa los campos obligatorios.',
-					variant: 'destructive',
-				});
-				setIsUploading(false);
-				return;
-			}
+		// Verificar errores
+		const newErrors = {
+			name: !formData.name,
+			description: !formData.description,
+			type: !formData.type,
+			parametro: formData.revisada && !formData.parametro,
+			porcentaje: false,
+		};
 
+		// Actualizar los errores
+		setErrors(newErrors);
+
+		// Si hay errores, detener el envío
+		if (Object.values(newErrors).some((error) => error) || !lessonsId) {
+			toast({
+				title: 'Error',
+				description: 'Por favor completa los campos obligatorios.',
+				variant: 'destructive',
+			});
+			return;
+		}
+
+		setIsUploading(true);
+
+		try {
 			// Verificar si el parámetro está en uso antes de crear la actividad
 			if (formData.revisada && formData.parametro) {
 				const checkResponse = await fetch(
@@ -356,7 +361,7 @@ const Page: React.FC = () => {
 						body: JSON.stringify({
 							name: formData.name,
 							description: formData.description,
-							porcentaje: formData.pesoNota,
+							porcentaje: formData.porcentaje,
 							courseId: courseIdNumber,
 						}),
 					}
@@ -448,7 +453,7 @@ const Page: React.FC = () => {
 							onClick={() => window.history.back()}
 							className="text-primary hover:text-gray-300"
 						>
-							Lession:
+							Lession
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
@@ -527,19 +532,24 @@ const Page: React.FC = () => {
 												errors={errors}
 												selectedColor={color}
 											/>
+											{showErrors && errors.parametro && (
+												<p className="mt-1 text-sm text-red-500">
+													El parametro es requerido.
+												</p>
+											)}
 											<Label
-												htmlFor="pesoNota"
+												htmlFor="porcentaje"
 												className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 											>
 												Peso de la nota en el curso (0-100 en porcentaje %):
 											</Label>
 											<div>
 												<Input
-													value={formData.pesoNota}
+													value={formData.porcentaje}
 													className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 													type="number"
 													id="percentage"
-													name="pesoNota"
+													name="porcentaje"
 													min="0"
 													max="100"
 													step="1"
@@ -547,12 +557,12 @@ const Page: React.FC = () => {
 													onChange={(e) =>
 														setFormData({
 															...formData,
-															pesoNota: parseFloat(e.target.value),
+															porcentaje: parseFloat(e.target.value),
 														})
 													}
 												/>
 											</div>
-											{showErrors && errors.pesoNota && (
+											{showErrors && errors.porcentaje && (
 												<p className="mt-1 text-sm text-red-500">
 													El porcentaje de actividad es requerido.
 												</p>
@@ -611,7 +621,7 @@ const Page: React.FC = () => {
 							setTypeActividad={(type: number) =>
 								setFormData({ ...formData, type: type.toString() })
 							}
-							errors={errors}
+							errors={showErrors ? errors : { type: false }}
 							selectedColor={color}
 						/>
 						{showErrors && errors.type && (

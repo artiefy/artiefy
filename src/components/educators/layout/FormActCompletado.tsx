@@ -8,11 +8,15 @@ import type { QuestionFilesSubida } from '~/types/typesActi';
 interface formSubida {
 	activityId: number;
 	editingQuestion?: QuestionFilesSubida;
+	onSubmit?: () => void;
+	onCancel?: () => void;
 }
 
 const FormActCompletado: React.FC<formSubida> = ({
 	activityId,
 	editingQuestion,
+	onSubmit,
+	onCancel,
 }) => {
 	const [isUploading, setIsUploading] = useState<boolean>(false);
 	const [uploadProgress, setUploadProgress] = useState<number>(0);
@@ -83,6 +87,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 					description: 'La pregunta se guardó correctamente',
 					variant: 'default',
 				});
+				onSubmit?.();
 			} else if (data.success === false) {
 				toast({
 					title: 'Error',
@@ -130,18 +135,21 @@ const FormActCompletado: React.FC<formSubida> = ({
 						</div>
 					)}
 					<div className="flex justify-end space-x-2">
-						<Button
-							type="button"
-							variant="outline"
-							className="horver:bg-gray-500 text-gray-100 hover:text-gray-800"
-						>
-							Cancelar
-						</Button>
+						{editingQuestion && (
+							<Button
+								type="button"
+								variant="outline"
+								className="horver:bg-gray-500 text-gray-100 hover:text-gray-800"
+								onClick={onCancel}
+							>
+								Cancelar
+							</Button>
+						)}
 						<Button
 							type="submit"
 							className="border-none bg-green-400 text-white hover:bg-green-500"
 						>
-							Enviar
+							{editingQuestion ? 'Actualizar' : 'Enviar'}
 						</Button>
 					</div>
 				</form>
