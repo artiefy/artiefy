@@ -2,7 +2,6 @@
 
 import { NextResponse } from 'next/server';
 
-
 import { db } from '~/server/db'; // Asegúrate de importar correctamente la conexión de Drizzle
 import { users } from '~/server/db/schema';
 import {
@@ -41,8 +40,14 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
 	try {
 		// 1. Obtener datos del request
-		interface RequestBody { firstName: string; lastName: string; email: string; role: string };
-		const { firstName, lastName, email, role }: RequestBody = await request.json() as RequestBody;
+		interface RequestBody {
+			firstName: string;
+			lastName: string;
+			email: string;
+			role: string;
+		}
+		const { firstName, lastName, email, role }: RequestBody =
+			(await request.json()) as RequestBody;
 
 		// 2. Crear usuario en Clerk
 		const { user, generatedPassword } = await createUser(
@@ -57,9 +62,10 @@ export async function POST(request: Request) {
 			id: user.id,
 			role: role || 'estudiante',
 			name: `${firstName} ${lastName}`,
-			email: user.emailAddresses.find(
-				(addr) => addr.id === user.primaryEmailAddressId
-			)?.emailAddress ?? email,
+			email:
+				user.emailAddresses.find(
+					(addr) => addr.id === user.primaryEmailAddressId
+				)?.emailAddress ?? email,
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});
@@ -113,13 +119,24 @@ export async function DELETE(request: Request) {
 // PATCH /api/users (para actualizar algo: rol, nombre, etc.)
 export async function PATCH(request: Request) {
 	try {
-		interface RequestBody { action: string; id: string; role?: string; firstName?: string; lastName?: string; userIds?: string[]; status?: string; }
-		const body: RequestBody = await request.json() as RequestBody;
+		interface RequestBody {
+			action: string;
+			id: string;
+			role?: string;
+			firstName?: string;
+			lastName?: string;
+			userIds?: string[];
+			status?: string;
+		}
+		const body: RequestBody = (await request.json()) as RequestBody;
 		const { action, id, role, firstName, lastName, userIds, status } = body;
 
 		if (action === 'setRole') {
 			if (!role) {
-				return NextResponse.json({ error: 'Role is required' }, { status: 400 });
+				return NextResponse.json(
+					{ error: 'Role is required' },
+					{ status: 400 }
+				);
 			}
 			await setRoleWrapper({ id, role });
 			return NextResponse.json({ success: true });
@@ -145,7 +162,10 @@ export async function PATCH(request: Request) {
 				await updateUserInfo(id, firstName, lastName);
 				return NextResponse.json({ success: true });
 			} else {
-				return NextResponse.json({ error: 'First name and last name are required' }, { status: 400 });
+				return NextResponse.json(
+					{ error: 'First name and last name are required' },
+					{ status: 400 }
+				);
 			}
 			return NextResponse.json({ success: true });
 		}
@@ -155,7 +175,10 @@ export async function PATCH(request: Request) {
 				await updateUserStatus(id, status);
 				return NextResponse.json({ success: true });
 			} else {
-				return NextResponse.json({ error: 'Status is required and must be a string' }, { status: 400 });
+				return NextResponse.json(
+					{ error: 'Status is required and must be a string' },
+					{ status: 400 }
+				);
 			}
 			return NextResponse.json({ success: true });
 		}
@@ -165,10 +188,16 @@ export async function PATCH(request: Request) {
 				if (typeof status === 'string') {
 					await updateMultipleUserStatus(userIds, status);
 				} else {
-					return NextResponse.json({ error: 'Status is required and must be a string' }, { status: 400 });
+					return NextResponse.json(
+						{ error: 'Status is required and must be a string' },
+						{ status: 400 }
+					);
 				}
 			} else {
-				return NextResponse.json({ error: 'userIds is required' }, { status: 400 });
+				return NextResponse.json(
+					{ error: 'userIds is required' },
+					{ status: 400 }
+				);
 			}
 			return NextResponse.json({ success: true });
 		}
