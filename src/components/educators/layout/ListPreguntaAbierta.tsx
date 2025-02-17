@@ -82,6 +82,10 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 	};
 
+	const handleCancel = () => {
+		setEditingQuestion(undefined);
+	};
+
 	return (
 		<div className="my-2 space-y-4">
 			{editingQuestion ? (
@@ -89,6 +93,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 					activityId={activityId}
 					questionToEdit={editingQuestion}
 					onSubmit={handleFormSubmit}
+					onCancel={handleCancel}
 					isUploading={false}
 				/>
 			) : loading ? (
@@ -103,7 +108,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 							<h3 className="text-lg font-semibold">Pregunta:</h3>
 							<p>{question.text}</p>
 							<p className="my-2 font-bold">Respuesta:</p>
-							<p className="ml-2 font-bold">{question.palabra}</p>
+							<p className="font-bold">{question.palabra}</p>
 						</CardContent>
 						<CardFooter className="flex justify-end space-x-2">
 							<Button

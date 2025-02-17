@@ -10,6 +10,7 @@ interface PreguntasAbiertasProps {
 	activityId: number;
 	questionToEdit?: Completado;
 	onSubmit: (question: Completado) => void;
+	onCancel?: () => void;
 	isUploading: boolean;
 }
 
@@ -17,6 +18,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 	activityId,
 	questionToEdit,
 	onSubmit,
+	onCancel,
 	isUploading,
 }) => {
 	const [formData, setFormData] = useState<Completado>({
@@ -25,6 +27,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		palabra: '',
 	});
 	const [uploadProgress, setUploadProgress] = useState<number>(0);
+	const [isVisible, setIsVisible] = useState<boolean>(true);
 
 	useEffect(() => {
 		if (questionToEdit) {
@@ -106,6 +109,17 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		}
 	};
 
+	const handleCancel = () => {
+		if (onCancel) {
+			onCancel();
+		}
+		setIsVisible(false);
+	};
+
+	if (!isVisible) {
+		return null;
+	}
+
 	return (
 		<>
 			<div className="container my-2 rounded-lg bg-white p-3 text-black shadow-lg">
@@ -134,12 +148,12 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 							</p>
 						</div>
 					)}
-					<div className="flex justify-end space-x-2">
+					<div className="mt-3 flex justify-end space-x-2">
 						<Button
 							type="button"
 							variant="outline"
 							className="horver:bg-gray-500 text-gray-100 hover:text-gray-800"
-							onClick={() => onSubmit(formData)}
+							onClick={handleCancel}
 						>
 							Cancelar
 						</Button>

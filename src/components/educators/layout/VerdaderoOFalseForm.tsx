@@ -33,6 +33,7 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 	);
 	const [isUploading2, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
+	const [isVisible, setIsVisible] = useState<boolean>(true);
 
 	useEffect(() => {
 		if (questionToEdit) {
@@ -125,6 +126,17 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 		}
 	}, [isUploading2]);
 
+	const handleCancel = () => {
+		if (onCancel) {
+			onCancel();
+		}
+		setIsVisible(false);
+	};
+
+	if (!isVisible) {
+		return null;
+	}
+
 	return (
 		<form
 			onSubmit={async (e) => {
@@ -182,16 +194,15 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 				</div>
 			)}
 			<div className="flex justify-end space-x-2">
-				{onCancel && (
-					<Button
-						type="button"
-						onClick={onCancel}
-						variant="outline"
-						className="text-gray-100 hover:text-gray-800"
-					>
-						Cancelar
-					</Button>
-				)}
+				<Button
+					type="button"
+					onClick={handleCancel}
+					variant="outline"
+					className="text-gray-100 hover:text-gray-800"
+				>
+					Cancelar
+				</Button>
+
 				<Button
 					type="submit"
 					className="border-none bg-green-400 text-white hover:bg-green-500"

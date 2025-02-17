@@ -81,6 +81,10 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 	};
 
+	const handleCancel = () => {
+		setEditingQuestion(undefined);
+	};
+
 	return (
 		<div className="my-2 space-y-4">
 			{editingQuestion ? (
@@ -88,6 +92,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 					activityId={activityId}
 					questionToEdit={editingQuestion}
 					onSubmit={handleFormSubmit}
+					onCancel={handleCancel}
 					isUploading={false}
 				/>
 			) : questions.length > 0 ? (

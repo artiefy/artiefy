@@ -193,7 +193,7 @@ const Page: React.FC = () => {
 
 	const handleAddQuestion = () => {
 		if (selectedActivityType) {
-			setQuestions((prevQuestions) => [...prevQuestions, selectedActivityType]);
+			setQuestions([selectedActivityType]); // Solo mantener el nuevo formulario
 			setSelectedActivityType('');
 		}
 	};
@@ -201,6 +201,11 @@ const Page: React.FC = () => {
 	const handleFormSubmit = () => {
 		setEditingQuestion(null);
 		setQuestions([]);
+	};
+
+	const handleCancel = () => {
+		setEditingQuestion(null);
+		setQuestions([]); // Limpiar las preguntas para dejar de renderizar el formulario
 	};
 
 	if (loading)
@@ -391,6 +396,7 @@ const Page: React.FC = () => {
 										<QuestionForm
 											activityId={actividadIdNumber}
 											onSubmit={handleFormSubmit}
+											onCancel={handleCancel}
 											isUploading={false}
 											questionToEdit={editingQuestion as Question}
 										/>
@@ -399,6 +405,7 @@ const Page: React.FC = () => {
 										<QuestionVOFForm
 											activityId={actividadIdNumber}
 											onSubmit={handleFormSubmit}
+											onCancel={handleCancel}
 											isUploading={false}
 											questionToEdit={editingQuestion as VerdaderoOFlaso}
 										/>
@@ -408,6 +415,7 @@ const Page: React.FC = () => {
 											<PreguntasAbiertas
 												activityId={actividadIdNumber}
 												onSubmit={handleFormSubmit}
+												onCancel={handleCancel}
 												isUploading={false}
 												questionToEdit={editingQuestion as Completado}
 											/>
