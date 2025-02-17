@@ -3,9 +3,9 @@ import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import { getAllCategories } from '~/server/actions/categories/getAllCategories';
-import { getFeaturedCategories } from '~/server/actions/categories/getFeaturedCategories';
-import { getAllCourses } from '~/server/actions/courses/getAllCourses';
+import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
+import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
+import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import type { Category, Course } from '~/types';
 
 interface SearchParams {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
@@ -12,12 +13,17 @@ import { FaTimesCircle, FaTimes } from 'react-icons/fa';
 import { getProductById } from '~/utils/products';
 
 const PlansPage: React.FC = () => {
+  const { isSignedIn } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('personas');
 
   // Esta función maneja la selección del plan
   const handlePlanSelect = (plan: Plan) => {
+    if (!isSignedIn) {
+      alert('Debes iniciar sesión para seleccionar un plan.');
+      return;
+    }
     setSelectedPlan(plan);
     setShowModal(true); // Abre el modal cuando se selecciona un plan
   };
@@ -39,7 +45,7 @@ const PlansPage: React.FC = () => {
           </div>
           <div className="mt-8 flex justify-center space-x-4">
             <button
-              className={`button ${activeTab === 'personas' ? 'bg-primary text-white' : 'bg-white text-primary'}`}
+              className={`button-rounded ${activeTab === 'personas' ? 'bg-primary text-white' : 'bg-white text-primary'}`}
               onClick={() => setActiveTab('personas')}
             >
               Personas
@@ -48,7 +54,7 @@ const PlansPage: React.FC = () => {
               </div>
             </button>
             <button
-              className={`button ${activeTab === 'empresas' ? 'bg-primary text-white' : 'bg-white text-primary'}`}
+              className={`button-rounded ${activeTab === 'empresas' ? 'bg-primary text-white' : 'bg-white text-primary'}`}
               onClick={() => setActiveTab('empresas')}
             >
               Empresas

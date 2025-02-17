@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getCourseById } from '~/server/actions/courses/getCourseById';
+import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import type { Course } from '~/types';
 import CourseDetails from './CourseDetails';
 import Loading from '~/app/loading';
@@ -63,7 +63,7 @@ export async function generateMetadata(
   const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}/opengraph-image`;
 
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? ''),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'),
     title: `${course.title} | Artiefy`,
     description: `${course.description ?? 'No hay descripción disponible.'} ¡Subscríbete ya en este curso excelente!`,
     openGraph: {

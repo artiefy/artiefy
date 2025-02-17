@@ -9,6 +9,9 @@ export const env = createEnv({
     ACCOUNT_ID: z.string().nonempty(),
     API_LOGIN: z.string().nonempty(),
     API_KEY: z.string().nonempty(),
+    RESPONSE_URL: z.string().url(),
+    CONFIRMATION_URL: z.string().url(),
+    CLERK_SECRET_KEY: z.string().nonempty(), // Agrega esta línea
   },
 
   client: {},
@@ -20,6 +23,9 @@ export const env = createEnv({
     ACCOUNT_ID: process.env.ACCOUNT_ID,
     API_LOGIN: process.env.API_LOGIN,
     API_KEY: process.env.API_KEY,
+    RESPONSE_URL: process.env.RESPONSE_URL,
+    CONFIRMATION_URL: process.env.CONFIRMATION_URL,
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

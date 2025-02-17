@@ -1,5 +1,4 @@
-/* From Uiverse.io by Wendell47 */
-.button {
+.button-rounded {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7,8 +6,8 @@
   border: 0;
   position: relative;
   overflow: hidden;
-  border-radius: 10rem;
-  transition: all 0.02s;
+  border-radius: 1rem; /* Ajusta el radio de borde para que sea redondeado */
+  transition: all 0.2s;
   font-weight: bold;
   cursor: pointer;
   color: rgb(37, 37, 37);
@@ -16,12 +15,12 @@
   box-shadow: 0 0px 7px -5px rgba(0, 0, 0, 0.5);
 }
 
-.button:hover {
+.button-rounded:hover {
   background: rgb(193, 228, 248);
   color: rgb(33, 0, 85);
 }
 
-.button:active {
+.button-rounded:active {
   transform: scale(0.97);
 }
 
@@ -54,7 +53,7 @@
   opacity: 0.5;
 }
 
-.button:hover .hoverEffect div {
+.button-rounded:hover .hoverEffect div {
   width: 8rem;
   height: 8rem;
 }

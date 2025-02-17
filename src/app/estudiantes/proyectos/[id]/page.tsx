@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { getProjectById } from '~/server/actions/project/getProjectById';
+import { getProjectById } from '~/server/actions/estudiantes/project/getProjectById';
 import type { Project } from '~/types';
 
 const ProjectDetailPage = () => {

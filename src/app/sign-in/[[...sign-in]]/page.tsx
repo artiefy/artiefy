@@ -89,7 +89,7 @@ export default function SignInPage() {
         if (setActive) {
           await setActive({ session: signInAttempt.createdSessionId });
         }
-        router.replace(currentUrl);
+        router.replace(redirectTo);
       } else if (signInAttempt.status === 'needs_first_factor') {
         const supportedStrategies =
           signInAttempt.supportedFirstFactors?.map((factor) => factor.strategy) ?? [];
@@ -193,7 +193,7 @@ export default function SignInPage() {
         if (setActive) {
           await setActive({ session: result.createdSessionId });
         }
-        router.replace('/'); // Aquí puedes cambiar para redirigir a una URL específica si es necesario
+        router.replace(redirectTo);
       } else {
         setErrors([
           {

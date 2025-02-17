@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getCourseById } from '~/server/actions/courses/getCourseById';
+import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 export const alt = 'Course Image';
 export const size = {

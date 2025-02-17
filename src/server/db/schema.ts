@@ -25,6 +25,8 @@ export const users = pgTable('users', {
 	address: text('address'),
 	age: integer('age'),
 	birthDate: date('birth_date'),
+  subscriptionStatus: text('subscription_status').default('inactive').notNull(),
+  subscriptionEndDate: timestamp('subscription_end_date'),
 });
 
 // Tabla de categorías

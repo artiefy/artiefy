@@ -1,4 +1,3 @@
-// src/middleware.ts
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
@@ -13,13 +12,13 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
   const role = sessionClaims?.metadata?.role;
 
-  // Redirect to login page if not authenticated and the route is protected
+  // Redirigir a la página de inicio de sesión si no está autenticado y la ruta está protegida
   if (!userId && isProtectedRoute(req)) {
     const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
     return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${redirectTo}`);
   }
 
-  // Protect specific role routes
+  // Proteger rutas específicas por rol
   if (isAdminRoute(req) && role !== 'admin') {
     const url = new URL('/', req.url);
     return NextResponse.redirect(url);
@@ -35,13 +34,13 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(url);
   }
 
-  // Protect dynamic student routes
+  // Proteger rutas dinámicas de estudiantes
   if (isStudentClassRoute(req) && !userId) {
     const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
     return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${redirectTo}`);
   }
 
-  // Handle public routes
+  // Manejar rutas públicas
   if (!userId && publicRoutes(req)) {
     return NextResponse.next();
   }
@@ -51,9 +50,9 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
+    // Omitir internals de Next.js y todos los archivos estáticos, a menos que se encuentren en los parámetros de búsqueda
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
+    // Siempre ejecutar para rutas de API
     '/(api|trpc)(.*)',
   ],
 };

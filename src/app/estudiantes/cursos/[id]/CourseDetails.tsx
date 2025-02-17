@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Cambiar a 'next/navigation'
 import {
 	FaCalendar,
 	FaChevronDown,
@@ -42,10 +43,10 @@ import { Progress } from '~/components/estudiantes/ui/progress';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { useToast } from '~/hooks/use-toast';
 import { blurDataURL } from '~/lib/blurDataUrl';
-import { enrollInCourse } from '~/server/actions/courses/enrollInCourse';
-import { getCourseById } from '~/server/actions/courses/getCourseById';
-import { unenrollFromCourse } from '~/server/actions/courses/unenrollFromCourse';
-import { getLessonsByCourseId } from '~/server/actions/lessons/getLessonsByCourseId';
+import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
+import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
+import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 import type { Course, Enrollment } from '~/types';
 
 export default function CourseDetails({
@@ -62,7 +63,9 @@ export default function CourseDetails({
 	const [totalStudents, setTotalStudents] = useState(course.totalStudents);
 	const [isEnrolled, setIsEnrolled] = useState(false);
 	const { isSignedIn, userId } = useAuth();
+	const { user } = useUser();
 	const { toast } = useToast();
+	const router = useRouter(); // Asegúrate de importar 'useRouter' desde 'next/navigation'
 
 	useEffect(() => {
 		const fetchUserProgress = async () => {
@@ -127,6 +130,22 @@ export default function CourseDetails({
 		setEnrollmentError(null);
 
 		try {
+			// Verificar el estado de la suscripción del usuario
+			if (
+				!user?.publicMetadata?.subscriptionStatus ||
+				user.publicMetadata.subscriptionStatus !== 'active'
+			) {
+				toast({
+					title: 'Suscripción requerida',
+					description:
+						'Debes tener una suscripción activa para inscribirte en este curso.',
+					variant: 'destructive',
+				});
+				setIsEnrolling(false);
+				void router.push('/planes'); // Redirigir a la página de planes
+				return;
+			}
+
 			const result = await enrollInCourse(course.id);
 			if (result.success) {
 				setTotalStudents((prevTotal) => prevTotal + 1);
@@ -152,7 +171,6 @@ export default function CourseDetails({
 			setIsEnrolling(false);
 		}
 	};
-
 	const handleUnenroll = async () => {
 		if (!isSignedIn || isUnenrolling) {
 			return;
@@ -210,7 +228,7 @@ export default function CourseDetails({
 	const sortedLessons = [...course.lessons].sort((a, b) => a.order - b.order);
 
 	return (
-		<div className="bg-background min-h-screen">
+		<div className="min-h-screen bg-background">
 			<Header />
 			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
 				<Breadcrumb className="pb-6">
@@ -251,11 +269,8 @@ export default function CourseDetails({
 									sizes="100vw"
 									placeholder="blur"
 									blurDataURL={blurDataURL}
-									onError={(e) => {
-										e.currentTarget.src = '/fetch-error.jpg';
-									}}
 								/>
-								<div className="bg-linear-to-t absolute inset-x-0 bottom-0 from-black/70 to-transparent p-6">
+								<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
 									<h1 className="text-3xl font-bold text-white">
 										{course.title}
 									</h1>
@@ -265,7 +280,7 @@ export default function CourseDetails({
 						<CardContent className="space-y-6 p-6">
 							<div className="flex flex-wrap items-center justify-between gap-4">
 								<div>
-									<h3 className="text-background text-lg font-semibold">
+									<h3 className="text-lg font-semibold text-background">
 										{course.instructor}
 									</h3>
 									<p className="text-gray-600">Educador</p>
@@ -323,7 +338,7 @@ export default function CourseDetails({
 							</div>
 
 							<div>
-								<h2 className="text-background mb-4 text-2xl font-bold">
+								<h2 className="mb-4 text-2xl font-bold text-background">
 									Contenido del curso
 								</h2>
 								<div className="space-y-4">
@@ -351,7 +366,7 @@ export default function CourseDetails({
 															) : (
 																<FaLock className="mr-2 size-5 text-gray-400" />
 															)}
-															<span className="text-background font-medium">
+															<span className="font-medium text-background">
 																Clase {lesson.order}: {lesson.title}{' '}
 																<span className="ml-2 text-sm text-gray-500">
 																	({lesson.duration} mins)
@@ -395,7 +410,7 @@ export default function CourseDetails({
 														</div>
 														<Button
 															asChild
-															className="text-background mt-4 hover:underline active:scale-95"
+															className="mt-4 text-background hover:underline active:scale-95"
 														>
 															<Link href={`/estudiantes/clases/${lesson.id}`}>
 																Ver Clase
@@ -418,9 +433,9 @@ export default function CourseDetails({
 										<Button
 											onClick={handleEnroll}
 											disabled={isEnrolling}
-											className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px font-semibold leading-6 text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
+											className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 										>
-											<span className="bg-linear-to-r absolute inset-0 rounded-xl from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
+											<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
 
 											<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 												<div className="relative z-10 flex items-center justify-center space-x-2">
@@ -462,7 +477,7 @@ export default function CourseDetails({
 								{isEnrolled && (
 									<div className="flex w-full flex-col space-y-4 sm:w-auto">
 										<Button
-											className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+											className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
 											disabled={true}
 										>
 											<FaCheck className="mr-2" /> Suscrito Al Curso

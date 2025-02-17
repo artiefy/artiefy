@@ -1,771 +1,410 @@
-quiero implementar la pasarela de pagos con epayco sonsuminedo su api que es de apify por medio de next.js 15 usnaod app router y el modo de pago es de subcripciones a 3 planes que tengo que son pro, premium y enterprise con valores de moneda COP pagos mensaules pro 100mil, pro 150mil y enterprise 200mil y el pro contiene 15 dias gratis
+src\app\api\confirmPayment\route.ts
 
-1. paso crear el login para entrar a apiefy y se crea un jwt token que usamos para auth bearer para usar los demas endpoints que se vence cada 15 min. por ahora tengo esta configuracion pero tengo algunos errores que tengo que solucionar y quiero que tu copilot me ayudes con eso
+import { type NextApiRequest, type NextApiResponse } from 'next';
+import { updateUserSubscription } from '~/server/actions/estudiantes/confirmation/updateUserSubscription';
+import { verifySignature } from '~/utils/verifySignature';
 
-src\utils\auth.ts
-
-let authToken: string | null = null;
-let tokenExpiry: number | null = null;
-
-interface AuthResponse {
-	token: string;
+interface PaymentData {
+  email_buyer: string;
+  state_pol: string;
+  merchant_id: string;
+  reference_sale: string;
+  value: string;
+  currency: string;
 }
 
-const getAuthToken = async (): Promise<string> => {
-	if (authToken && tokenExpiry && Date.now() < tokenExpiry) {
-		console.log('Using existing JWT token');
-		return authToken;
-	}
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
 
-	const response = await fetch('https://apify.epayco.co/login', {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({
-			public_key: process.env.EPAYCO_PUBLIC_KEY,
-			private_key: process.env.EPAYCO_PRIVATE_KEY,
-		}),
-	});
+  const { signature, ...paymentData } = req.body as { signature: string } & PaymentData;
 
-	if (!response.ok) {
-		throw new Error('Error al obtener el token de autenticación');
-	}
+  // Verificar la firma
+  if (!verifySignature(paymentData, signature)) {
+    return res.status(400).json({ message: 'Invalid signature' });
+  }
 
-	const data: AuthResponse = await response.json() as AuthResponse;
-	authToken = data.token;
-	tokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutos
+  // Actualizar la suscripción del usuario
+  await updateUserSubscription(paymentData);
 
-	console.log('Obtained new JWT token:', authToken);
-
-	return authToken;
-};
-
-export { getAuthToken };
-
-src\app\api\token-card\route.ts
-/* eslint-disable */
-// app/api/token-card/route.ts (o pages/api/token-card.ts)
-
-import { NextResponse } from 'next/server';
-import { getAuthToken } from '~/utils/auth';
-
-export async function POST(request: Request) {
-	try {
-		console.log('Received request to generate token card');
-		const { cardNumber, cardExpYear, cardExpMonth, cardCvc } =
-			await request.json();
-
-		console.log('Request payload:', {
-			cardNumber,
-			cardExpYear,
-			cardExpMonth,
-			cardCvc,
-		});
-
-		const token = await getAuthToken();
-		console.log('Auth token obtained:', token);
-
-		const response = await fetch('https://apify.epayco.co/token/card', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				cardNumber,
-				cardExpYear,
-				cardExpMonth,
-				cardCvc,
-			}),
-		});
-
-		console.log('Response from token card API:', response);
-
-		if (!response.ok) {
-			throw new Error('Error al generar el token de la tarjeta');
-		}
-
-		const data = await response.json();
-		console.log('Token card generated:', data.data.id);
-		return NextResponse.json(data);
-	} catch (error) {
-		console.error('Error en la solicitud:', error);
-		if (error instanceof Error) {
-			return NextResponse.json({ error: error.message }, { status: 500 });
-		} else {
-			return NextResponse.json({ error: 'Unknown error' }, { status: 500 });
-		}
-	}
+  res.status(200).json({ message: 'Payment confirmed' });
 }
-src\app\api\create-customer\route.ts
-/* eslint-disable */
 
-// app/api/create-customer/route.ts (o pages/api/create-customer.ts)
+src\utils\notifications.ts
 
-import { NextResponse } from 'next/server';
-import { getAuthToken } from '~/utils/auth';
+import nodemailer from 'nodemailer';
 
-export async function POST(request: Request) {
-	try {
-		console.log('Received request to create customer');
-		const {
-			docType,
-			docNumber,
-			name,
-			lastName,
-			email,
-			cellPhone,
-			phone,
-			cardTokenId,
-		} = await request.json();
+export async function sendNotification(email: string, message: string) {
+  // Configurar el transportador de nodemailer
+  const transporter = nodemailer.createTransport({
+    service: 'gmail', // Puedes usar cualquier servicio de correo compatible con nodemailer
+    auth: {
+      user: process.env.EMAIL_USER, // Tu dirección de correo electrónico
+      pass: process.env.EMAIL_PASS, // Tu contraseña de correo electrónico
+    },
+  });
 
-		console.log('Request data:', {
-			docType,
-			docNumber,
-			name,
-			lastName,
-			email,
-			cellPhone,
-			phone,
-			cardTokenId,
-		});
+  // Configurar las opciones del correo electrónico
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Notificación de suscripción',
+    text: message,
+  };
 
-		const token = await getAuthToken();
-		console.log('Auth token received');
-
-		const response = await fetch('https://apify.epayco.co/token/customer', {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${token}`,
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				docType,
-				docNumber,
-				name,
-				lastName,
-				email,
-				cellPhone,
-				phone,
-				cardTokenId,
-			}),
-		});
-
-		console.log('Response received from customer creation API');
-
-		if (!response.ok) {
-			throw new Error('Error al crear el cliente');
-		}
-
-		const data = await response.json();
-		console.log('Customer created:', data.data.customerId);
-		return NextResponse.json(data);
-	} catch (error) {
-		console.error('Error en la solicitud:', error);
-		if (error instanceof Error) {
-			return NextResponse.json({ error: error.message }, { status: 500 });
-		} else {
-			return NextResponse.json({ error: 'Unknown error' }, { status: 500 });
-		}
-	}
-}
-src\app\api\create-subscription\route.ts
-
-/* eslint-disable */
-// app/api/create-subscription/route.ts (o pages/api/create-subscription.ts)
-
-import { NextResponse } from 'next/server';
-import { getAuthToken } from '~/utils/auth';
-
-export async function POST(request: Request) {
-	try {
-		const { customerId, planId } = await request.json();
-
-		const token = await getAuthToken();
-
-		const response = await fetch(
-			'https://apify.epayco.co/subscription/create',
-			{
-				method: 'POST',
-				headers: {
-					Authorization: `Bearer ${token}`,
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					customerId,
-					planId,
-				}),
-			}
-		);
-
-		if (!response.ok) {
-			throw new Error('Error al crear la suscripción');
-		}
-
-		const data = await response.json();
-		console.log('Subscription created:', data.data.subscriptionId);
-		return NextResponse.json(data);
-	} catch (error) {
-		console.error('Error en la solicitud:', error);
-		if (error instanceof Error) {
-			return NextResponse.json({ error: error.message }, { status: 500 });
-		} else {
-			return NextResponse.json({ error: 'Unknown error' }, { status: 500 });
-		}
-	}
-}
-src\app\api\charger-subscription\route.ts
-/* eslint-disable */
-// app/api/charge-subscription/route.ts
-import { NextRequest, NextResponse } from "next/server";
-
-export const runtime = "nodejs";
-
-export async function POST(req: NextRequest) {
+  // Enviar el correo electrónico
   try {
-    const body = await req.json();
-    const { id_plan, customer, token_card, doc_type, doc_number, ip } = body;
+    await transporter.sendMail(mailOptions);
+    console.log('Correo electrónico enviado: ' + email);
+  } catch (error) {
+    console.error('Error al enviar el correo electrónico: ', error);
+  }
+}
+src\utils\verifySignature.ts
 
-    const response = await fetch("https://api.secure.epayco.co/v1/charge", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.EPAYCO_PRIVATE_API_KEY}`,
-      },
-      body: JSON.stringify({
-        id_plan,
-        customer,
-        token_card,
-        doc_type,
-        doc_number,
-        ip,
-      }),
-    });
+import crypto from 'crypto';
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      return NextResponse.json({ error: errorData }, { status: response.status });
+interface PaymentData {
+  merchant_id: string;
+  reference_sale: string;
+  value: string;
+  currency: string;
+  state_pol: string;
+}
+
+function calculateMD5ForVerification(
+  apiKey: string,
+  merchantId: string,
+  referenceCode: string,
+  amount: string,
+  currency: string,
+  statePol: string
+): string {
+  const formattedValue = parseFloat(amount).toFixed(1);
+  const data = [apiKey, merchantId, referenceCode, formattedValue, currency, statePol].join('~');
+  return crypto.createHash('md5').update(data).digest('hex');
+}
+
+export function verifySignature(paymentData: PaymentData, signature: string): boolean {
+  const { merchant_id, reference_sale, value, currency, state_pol } = paymentData;
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
+    throw new Error('API_KEY is not defined');
+  }
+
+  const generatedSignature = calculateMD5ForVerification(apiKey, merchant_id, reference_sale, value, currency, state_pol);
+  return generatedSignature === signature;
+}
+src\server\actions\estudiantes\confirmation\updateUserSubscription.ts
+import { db } from '~/server/db';
+import { users } from '~/server/db/schema';
+import { sendNotification } from '~/utils/notifications';
+import { auth, clerkClient } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
+
+interface PaymentData {
+  email_buyer: string;
+  state_pol: string;
+}
+
+export async function updateUserSubscription(paymentData: PaymentData) {
+  const { email_buyer, state_pol } = paymentData;
+
+  if (state_pol === '4') { // Estado aprobado
+    const subscriptionEndDate = new Date();
+    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+
+    // Actualizar la suscripción en la base de datos
+    await db.update(users)
+      .set({
+        subscriptionStatus: 'active',
+        subscriptionEndDate: subscriptionEndDate,
+      })
+      .where(eq(users.email, email_buyer));
+
+    // Obtener el usuario de Clerk y actualizar la suscripción
+    const { userId } = await auth();
+    if (userId) {
+      const client = await clerkClient();
+      await client.users.updateUser(userId, {
+        publicMetadata: {
+          subscriptionStatus: 'active',
+          subscriptionEndDate: subscriptionEndDate.toISOString(),
+        },
+      });
     }
 
-    const charge = await response.json();
-    return NextResponse.json(charge, { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    // Notificar al usuario 3 días antes de que expire la suscripción
+    setTimeout(async () => {
+      await sendNotification(email_buyer, 'Tu suscripción está a punto de expirar');
+    }, (30 - 3) * 24 * 60 * 60 * 1000); // 27 días en milisegundos
   }
+}
+src\utils\form.ts
+import { type FormData, type Auth, type Product } from '~/types/payu';
+import { calculateMD5 } from './signature';
+import { generateReferenceCode } from './referenceCode';
+
+// Función que crea los datos del formulario utilizando los parámetros proporcionados
+export function createFormData(
+  auth: Auth,
+  product: Product,
+  buyerEmail: string,
+  buyerFullName: string,
+  telephone: string,
+  responseUrl: string,
+  confirmationUrl: string
+): FormData {
+  const referenceCode = generateReferenceCode();
+  const amount = product.amount;
+  const currency = 'COP';
+
+  const signature = calculateMD5(
+    auth.apiKey,
+    auth.merchantId,
+    referenceCode,
+    amount,
+    currency
+  );
+
+  return {
+    merchantId: auth.merchantId,
+    accountId: auth.accountId,
+    description: product.description,
+    referenceCode: referenceCode,
+    amount: amount,
+    tax: '3193', // Estos valores pueden ser ajustados según sea necesario
+    taxReturnBase: '16806', // Estos valores pueden ser ajustados según sea necesario
+    currency: currency,
+    signature: signature,
+    test: '1',
+    buyerEmail: buyerEmail,
+    buyerFullName: buyerFullName,
+    telephone: telephone,
+    responseUrl: responseUrl,
+    confirmationUrl: confirmationUrl,
+  };
 }
 src\components\estudiantes\layout\PaymentForm.tsx
-
-/* eslint-disable */
-
 'use client';
 
-import React, { useState } from 'react';
-import '~/styles/form.css'; // Import form.css
-import { Button } from '~/components/estudiantes/ui/button'; // Import Button component
+import React, { useState, useEffect } from 'react';
+import '~/styles/form.css';
+import { FaLock } from 'react-icons/fa';
+import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { type FormData, type Product } from '~/types/payu';
+import { validateFormData } from '~/utils/validation';
 
-interface PaymentFormProps {
-	onSuccess: (message: string) => void;
-	planId: string;
-}
-
-export const PaymentForm: React.FC<PaymentFormProps> = ({
-	onSuccess,
-	planId,
+const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
+  selectedProduct,
 }) => {
-	// Definimos el estado para los campos de la tarjeta
-	const [cardNumber, setCardNumber] = useState('');
-	const [cardExpYear, setCardExpYear] = useState('');
-	const [cardExpMonth, setCardExpMonth] = useState('');
-	const [cardCvc, setCardCvc] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyerFullName, setBuyerFullName] = useState('');
+  const [telephone, setTelephone] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const [errors, setErrors] = useState<{
+    buyerEmail?: string;
+    buyerFullName?: string;
+    telephone?: string;
+  }>({});
 
-	const [name, setName] = useState('');
-	const [address, setAddress] = useState('');
-	const [cellPhone, setCellPhone] = useState('');
-	const [email, setEmail] = useState('');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name === 'buyerEmail') setBuyerEmail(value);
+    if (name === 'buyerFullName') setBuyerFullName(value);
+    if (name === 'telephone') setTelephone(value);
 
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+    if (showErrors) {
+      const newErrors = validateFormData(buyerEmail, buyerFullName, telephone);
+      setErrors(newErrors);
+    }
+  };
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setLoading(true);
-		setError(null);
+  useEffect(() => {
+    if (showErrors) {
+      const newErrors = validateFormData(buyerEmail, buyerFullName, telephone);
+      setErrors(newErrors);
+    }
+  }, [buyerEmail, buyerFullName, telephone, showErrors]);
 
-		try {
-			// Generate token
-			const tokenResponse = await fetch('/api/token-card', {
-				method: 'POST',
-				body: JSON.stringify({
-					cardNumber,
-					cardExpYear,
-					cardExpMonth,
-					cardCvc,
-				}),
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			});
+  const handleSubmit = async (
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    event.preventDefault();
 
-			const tokenData = await tokenResponse.json();
+    const newErrors = validateFormData(buyerEmail, buyerFullName, telephone);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setShowErrors(true);
+      return;
+    }
 
-			if (!tokenData.success) {
-				setError('Error al generar el token');
-				setLoading(false);
-				return;
-			}
+    setLoading(true);
 
-			const tokenCardId = tokenData.data.id;
+    try {
+      const response = await fetch('/api/generatePaymentData', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: selectedProduct.id,
+          buyerEmail,
+          buyerFullName,
+          telephone,
+        }),
+      });
 
-			// Create customer
-			const customerResponse = await fetch('/api/create-customer', {
-				method: 'POST',
-				body: JSON.stringify({
-					name,
-					address,
-					cellPhone,
-					email,
-					cardTokenId: tokenCardId,
-				}),
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			});
+      if (!response.ok) {
+        throw new Error('Failed to fetch form data');
+      }
 
-			const customerData = await customerResponse.json();
+      const data: FormData = (await response.json()) as FormData;
+      console.log('Form Data:', data);
 
-			if (!customerData.success) {
-				setError('Error al crear el cliente');
-				setLoading(false);
-				return;
-			}
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action =
+        'https://checkout.payulatam.com/ppp-web-gateway-payu/';
 
-			const customerId = customerData.data.customerId;
+      for (const key in data) {
+        if (data.hasOwnProperty(key)) {
+          const hiddenField = document.createElement('input');
+          hiddenField.type = 'hidden';
+          hiddenField.name = key;
+          hiddenField.value = data[key as keyof FormData];
+          form.appendChild(hiddenField);
+        }
+      }
 
-			// Create subscription
-			const subscriptionResponse = await fetch('/api/create-subscription', {
-				method: 'POST',
-				body: JSON.stringify({
-					customerId,
-					planId,
-				}),
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			});
+      document.body.appendChild(form);
+      form.submit();
+    } catch (error) {
+      setError((error as Error).message);
+      setLoading(false);
+    }
+  };
 
-			const subscriptionData = await subscriptionResponse.json();
-
-			if (!subscriptionData.success) {
-				setError('Error al crear la suscripción');
-				setLoading(false);
-				return;
-			}
-
-			const subscriptionId = subscriptionData.data.subscriptionId;
-
-			// Charge subscription
-			const chargeResponse = await fetch('/api/charge-subscription', {
-				method: 'POST',
-				body: JSON.stringify({
-					id_plan: planId,
-					customer: customerId,
-					token_card: tokenCardId,
-					doc_type: 'CC',
-					doc_number: '5234567',
-					ip: '190.000.000.000',
-				}),
-				headers: {
-					'Content-Type': 'application/json',
-				},
-			});
-
-			const chargeData = await chargeResponse.json();
-
-			if (!chargeData.success) {
-				setError('Error al cobrar la suscripción');
-				setLoading(false);
-				return;
-			}
-
-			onSuccess('Suscripción creada y cobrada exitosamente');
-		} catch (error) {
-			console.error('Error en el pago:', error);
-			setError('Error al procesar el pago');
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	return (
-		<form onSubmit={handleSubmit} className="form">
-			<div className="split">
-				<div className="label">
-					<label htmlFor="name" className="block">
-						<span className="title">Nombre</span>
-						<input
-							type="text"
-							id="name"
-							value={name}
-							onChange={(e) => setName(e.target.value)}
-							placeholder="Joe"
-							required
-							className="input-field"
-						/>
-					</label>
-				</div>
-				<div className="label">
-					<label htmlFor="email" className="block">
-						<span className="title">Email</span>
-						<input
-							type="email"
-							id="email"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							placeholder="joe@payco.co"
-							required
-							className="input-field"
-						/>
-					</label>
-				</div>
-			</div>
-			<div className="split">
-				<div className="label">
-					<label htmlFor="address" className="block">
-						<span className="title">Dirección</span>
-						<input
-							type="text"
-							id="address"
-							value={address}
-							onChange={(e) => setAddress(e.target.value)}
-							placeholder="Cr 4 # 55 36"
-							required
-							className="input-field"
-						/>
-					</label>
-				</div>
-				<div className="label">
-					<label htmlFor="cellPhone" className="block">
-						<span className="title">Celular</span>
-						<input
-							type="text"
-							id="cellPhone"
-							value={cellPhone}
-							onChange={(e) => setCellPhone(e.target.value)}
-							placeholder="3010000001"
-							required
-							className="input-field"
-						/>
-					</label>
-				</div>
-			</div>
-			<div className="label">
-				<label htmlFor="cardNumber" className="block">
-					<span className="title">Número de tarjeta</span>
-					<input
-						type="text"
-						id="cardNumber"
-						value={cardNumber}
-						onChange={(e) => setCardNumber(e.target.value)}
-						placeholder="1234 5678 9876 5432"
-						required
-						className="input-field"
-					/>
-				</label>
-			</div>
-			<div className="split">
-				<div className="label">
-					<label htmlFor="cardExpMonth" className="block">
-						<span className="title">Mes de Expiración</span>
-						<input
-							type="text"
-							id="cardExpMonth"
-							value={cardExpMonth}
-							onChange={(e) => setCardExpMonth(e.target.value)}
-							placeholder="MM"
-							required
-							className="input-field"
-						/>
-					</label>
-				</div>
-				<div className="label">
-					<label htmlFor="cardExpYear" className="block">
-						<span className="title">Año de Expiración</span>
-						<input
-							type="text"
-							id="cardExpYear"
-							value={cardExpYear}
-							onChange={(e) => setCardExpYear(e.target.value)}
-							placeholder="YYYY"
-							required
-							className="input-field"
-						/>
-					</label>
-				</div>
-			</div>
-			<div className="label">
-				<label htmlFor="cardCvc" className="block">
-					<span className="title">CVC</span>
-					<input
-						type="text"
-						id="cardCvc"
-						value={cardCvc}
-						onChange={(e) => setCardCvc(e.target.value)}
-						placeholder="CVC"
-						required
-						className="input-field"
-					/>
-				</label>
-			</div>
-			{error && <p className="text-sm text-red-500">{error}</p>}
-			<Button type="submit" disabled={loading} className="checkout-btn">
-				{loading ? 'Procesando...' : 'Pagar'}
-			</Button>
-		</form>
-	);
+  return (
+    <form className="form">
+      <h3 className="payer-info-title">Datos del pagador</h3>
+      <BuyerInfoForm
+        formData={{ buyerEmail, buyerFullName, telephone }}
+        onChange={handleInputChange}
+        showErrors={showErrors}
+        errors={errors}
+      />
+      {error && <p className="error">{error}</p>}
+      <div className="security-message">
+        <FaLock className="lock-icon" />
+        <span>Estás en un formulario de pagos seguro</span>
+      </div>
+      <Button
+        type="button"
+        className="checkout-btn"
+        onClick={handleSubmit}
+        disabled={loading}
+      >
+        {loading ? (
+          <>
+            <Icons.spinner
+              className="mr-2 text-background"
+              style={{ width: '25px', height: '25px' }}
+            />
+            <span className="font-bold text-background">
+              Redirigiendo a PayU...
+            </span>
+          </>
+        ) : (
+          'Enviar'
+        )}
+      </Button>
+    </form>
+  );
 };
 
-API Services ePayco Producción
-En este documento podrá encontrar toda la información necesaria para consumir los servicios de Apiservices ePayco. Recuerde que debe ser un usuario registrado de ePayco para acceder a este servicio, en caso de no serlo lo invitamos a registrarse
+export default PaymentForm;
+src\components\estudiantes\layout\BuyerInfoForm.tsx
+import React from 'react';
+import { type FormData } from '~/types/payu';
 
-Certificados Digitales (Opcional)
-Si decide usar mutual TLS para las peticiones es necesario enviar un certificado digital el cual debe tener las siguientes características:
-
-características
-*Certificado Digital 2048 bits RSA
-
-*Se recibe certificado autofirmado: Si.
-
-Variables curl envio de certificado.
-CURLOPT_SSLCERT => 'ruta_absoluta.crt'
-
-CURLOPT_SSLKEY => 'ruta_absoluta.key'
-
-CURLOPT_SSLKEYPASSWD => 'clave para abrir el certificado'.
-
-Notas
-Si la petición no envía el certificado digital se rechazará inmediatamente solicitando el certificado.
-
-ApiFy ePayco Producción
-La Apify de ePayco le brinda la posibilidad de ejecutar una serie de acciones de la plataforma relacionadas con los clientes y sus respectivos saldos, catálagos, transacciones, movimientos, subscripciones. Básicamente, con el uso de estos servicios puede manejar todas las opciones que le brinda la plataforma.
-
-Consideraciones Generales del uso de la Api
-Debe tomar en cuenta primeramente que debe estar registrado en la plataforma ya que para la autenticación debe emplear unas llaves públicas y privadas que sólo puede obtener en el dashboard de la plataforma en el apartado integraciones.
-
-Así mismo, hay unos servicios que están disponibles solo para usuarios que tienen un plan adquirido en la plataforma, en cada sección de estos servicios se especifica esta opción.
-
-Errores generales
-Nota: Tome en cuenta que todas las solicitudes que realice a los endpoint deben realizarse del lado del servidor, ya que si lo realiza desde el lado del cliente obtendrá el error de solicitud de orígenes cruzados (CORS).
-
-La Api de la plataforma de ePayco tiene una serie de respuestas generales en caso que la solicitud no se esté realizando correctamente, estas respuestas se detallan a continuación:
-
-Si realiza una solicitud a un endpoint que no existe recibirá una respuesta con código HTTP/1.1 404 NOT FOUND.
-
-Si en la solicitud no se envía en la cabecera el token_apify (se genera al realizar el login de forma satisfactoria) obtendrá una respuesta con código HTTP/1.1 401 Unauthorized.
-
-También, existen unos códigos generales de respuestas de los servicios en caso de validación de campos o errores en parámetros enviados que se describen en la siguiente tabla:
-
-View More
-Código	Mensaje Respuesta: Descripción
-A001	field required: Validación de campos requeridos
-A002	field invalid: Validación de campos válidos
-A003	field max length: Validación del máximo de caracteres de un campo
-A004	code not found: Código no encontrado (Códigos maestros)
-A005	email already exist: Correo ya existe en ePayco (creación de cuenta)
-A006	restrictive list: Validación de listas restrictivas
-A007	error validation: Ocurrió un error en la validación
-AL001	URL not send: Validación de campo URL requerido
-AL002	URL is required: Validación de campo URL requerido
-AL003	The URL structure is wrong: Formato inválido de URL
-AED100	La información ingresada no cumple con los parámetros definidos en términos y condiciones. Diligencie el campo de nuevo.
-Sólo usuarios registrados pueden establecer una comunicación con la aplicación, en caso de no serlo lo invitamos a registrarse.
-
-Con la API de ePayco puede controlar varias acciones que tenemos disponibles para usted, la cual puede hacer uso con la siguiente url base que deberá reemplazar por la variable url_apify:
-
-Ambiente	API Url {{url_apify}}
-Producción	https://apify.epayco.co
-Colección en Postman
-Como plataforma poseemos una colección de nuestra API en postman que le permitirá realizar sus intregaciones de la manera mas fácil y simple, la cual puede obtener por medio del botón a continuación:
-
-paso 1. login ala api de epayco
-
-Login
-En esta sección de Login se encuentran los servicios necesarios para loguearse satisfactoriamente en la APIFY.
-
-Tenemos a su disposición diferentes formas de loguarse, las cuales puede emplear de acuerdo a la que se adapte a la configuración de su cuenta.
-
-POST
-Solicitar Jwt Login
-{{url_apify}}/login
-El proceso de login requiere hacer uso de este Endpoint, donde podrá generar el token_apify por medio de una autenticación Basic en los Headers. La solicitud debe contener las siguientes variables: PUBLIC_KEY y PRIVATE_KEY.
-
-Estas variables usted podrá obtenerlas accediendo a nuestro dashboard en la sección de integraciones -> llaves api) codificadas en base64.
-curl --location -g --request POST '{{url_apify}}/login' \
---header 'Content-Type: application/json' \
---data ''
-
-paso 2.
-
-POST
-Crear token tarjeta
-{{url_apify}}/token/card
-Si desea tener mayor seguridad al realizar transacciones con tarjeta de crédito, en este endpoint usted podrá crear un token de la tarjeta de crédito y procesar los futuros pagos empleando este token.
-
-¿Cómo tokenizar una tarjeta?
-Usted debe enviar los siguientes parámetros como obligatorios: 
-
-Parámetro	Descripción
-cardNumber	string(16) Número de tarjeta.
-cardExpYear	string(4) Fecha año de expiración (AAAA)
-cardExpMonth	string(2) Fecha mes de expiración.
-cardCvc	string(4) CVV.
-Importante
-Es muy importante almacenar los datos de los token cuando se procese por primera vez, y así evitar crear distintos token de una misma tarjeta ya generada anteriormente.
-
-AUTHORIZATION
-Bearer Token
-Token
-HEADERS
-Content-Type
-application/json
-
-Body
-raw
-{
-    "cardNumber":"4504070849985391",
-    "cardExpYear":"2022",
-    "cardExpMonth":"12",
-    "cardCvc":"677"
-}
-Example Request
-Crear token tarjeta respuesta exitosa
-curl
-curl --location -g '{{url_apify}}/token/card' \
---header 'Content-Type: application/json' \
---data '{
-    "cardNumber":"4575623182290326",
-    "cardExpYear":"2019",
-    "cardExpMonth":"12",
-    "cardCvc":"123"
-}'
-200 OK
-Example Response
-Body
-Headers (0)
-View More
-json
-{
-  "success": true,
-  "titleResponse": "Success token generate",
-  "textResponse": "Success token generate",
-  "lastAction": "token_card",
-  "data": {
-    "status": true,
-    "id": "6MPbuNLPbMiBR2PR9",
-    "success": true,
-    "type": "card",
-    "data": {
-      "status": "exitoso",
-      "id": "6MPbuNLPbMiBR2PR9",
-      "created": "12/18/2019",
-      "livemode": false
-    },
-    "card": {
-      "exp_month": "12",
-      "exp_year": "2019",
-      "name": "visa"
-    },
-    "object": "token"
-  }
+interface BuyerInfoFormProps {
+  formData: Pick<FormData, 'buyerEmail' | 'buyerFullName' | 'telephone'>;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  showErrors: boolean;
+  errors: {
+    buyerEmail?: string;
+    buyerFullName?: string;
+    telephone?: string;
+  };
 }
 
-paso 3. 
+const BuyerInfoForm: React.FC<BuyerInfoFormProps> = ({
+  formData,
+  onChange,
+  showErrors,
+  errors,
+}) => (
+  <div className="grid grid-cols-1 gap-y-4">
+    <label className="label">
+      <span className="title">Correo Electrónico</span>
+      <input
+        type="email"
+        name="buyerEmail"
+        placeholder="ejemplo@correo.com"
+        value={formData.buyerEmail}
+        onChange={onChange}
+        className={`input-field ${showErrors && errors.buyerEmail ? 'input-error' : ''}`}
+        required
+      />
+      {showErrors && errors.buyerEmail && (
+        <span className="error-message">{errors.buyerEmail}</span>
+      )}
+    </label>
+    <label className="label">
+      <span className="title">Nombre Completo</span>
+      <input
+        type="text"
+        name="buyerFullName"
+        placeholder="Juan Pérez"
+        value={formData.buyerFullName}
+        onChange={onChange}
+        className={`input-field ${showErrors && errors.buyerFullName ? 'input-error' : ''}`}
+        required
+      />
+      {showErrors && errors.buyerFullName && (
+        <span className="error-message">{errors.buyerFullName}</span>
+      )}
+    </label>
+    <label className="label">
+      <span className="title">Teléfono</span>
+      <input
+        type="tel"
+        name="telephone"
+        placeholder="+57 3113333332"
+        value={formData.telephone}
+        onChange={onChange}
+        className={`input-field ${showErrors && errors.telephone ? 'input-error' : ''}`}
+        required
+      />
+      {showErrors && errors.telephone && (
+        <span className="error-message">{errors.telephone}</span>
+      )}
+    </label>
+  </div>
+);
 
-POST
-Crear un customer
-{{url_apify}}/token/customer
-En este endpoint usted podrá crear el customer y/o asociar un token generado a un customer ya creado.
+export default BuyerInfoForm;
 
-¿Cómo tokenizar un customer?
-Para asignar un token a un customer usted debe enviar los siguientes parámetros como obligatorios:
+SEGUN ESTOS ARCHIVOS D ENEXTJS Y PAYULATAM YA ESTARIA LISTO PARA PODER HACER UNA COMPRA DE PRUEBA Y QUE EN LA BASE DE DATOS SE LE ACTUALIZE EL ESTADO A ACTIVO CUANDO PAGUE SE LE HABLIITE EL ACCESO COMPLETO ALA PLATAFORMA?
 
-View More
-Parámetro	Descripción
-docType	string(4) obligatorio Tipo documento cliente.
-docNumber	string(20) obligatorio Número documento cliente.
-name	string(50) obligatorio Nombre cliente.
-lastName	string(50) obligatorio Apellido cliente).
-email	string(50) obligatorio Email cliente.
-cellPhone	string(10) obligatorio Celular cliente.
-phone	string(10) obligatorio Teléfono cliente.
-requireCardToken	boolean obligatorio Condicional si se enviará o no el token id de la tarjeta
-cardTokenId	string(20) obligatorio Token de la tarjeta, si el parámetro anterior es true este campo se vuelve obligatorio.
-Parámetros opcionales:
-
-|Parámetro| Descripción| |----------|-----------|-------------------| |address| string(100) opcional Dirección cliente.| |city| string(100) opcional ciudad cliente.|
-
-Importante
-Es muy importante almacenar los datos de los token con los datos del cliente, para realizar las futuras transacciones empleando mismo datos de cliente con el token de la tarjeta.
-
-Para agregar más tokens de tarjetas de crédito al customer, se puede invocar nuevamente este método enviando el nuevo token de la tarjeta generado en este endpoint tokenCard
-
-AUTHORIZATION
-Bearer Token
-Token
-HEADERS
-Content-Type
-application/json
-
-Body
-raw
-{
-    "docType":"CC",
-    "docNumber":"123456789",
-    "name":"jon",
-    "lastName":"doe",
-    "email":"jondoe@hotmail.com",
-    "cellPhone":"0000000000",
-    "phone":"0000000",
-    "cardTokenId":"rdSHdTmJFioQdfp9k"
-}
-Example Request
-Crear un customer respuesta exitosa
-View More
-curl
-curl --location -g '{{url_apify}}/token/customer' \
---header 'Content-Type: application/json' \
---data-raw '{
-    "docType":"CC",
-    "docNumber":"123456789",
-    "name":"jon",
-    "lastName":"doe",
-    "email":"jondoe@hotmail.com",
-    "cellPhone":"0000000000",
-    "phone":"0000000",
-    "cardTokenId":"rdSHdTmJFioQdfp9k"
-}'
-200 OK
-Example Response
-Body
-Headers (0)
-View More
-json
-{
-  "success": true,
-  "titleResponse": "Success token generate",
-  "textResponse": "Success token generate",
-  "lastAction": "token_customer",
-  "data": {
-    "status": true,
-    "success": true,
-    "type": "Create customer",
-    "data": {
-      "status": "exitoso",
-      "description": "El cliente fue creado exitosamente con el id: DiYPdhgncppes9KAb",
-      "customerId": "DiYPdhgncppes9KAb",
-      "name": "jon",
-      "email": "jondoe@hotmail.com"
-    },
-    "object": "customer"
-  }
-}
+COMO HAGO UNA PRUEBA COMPLETA

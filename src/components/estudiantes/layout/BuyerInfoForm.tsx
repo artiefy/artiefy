@@ -29,7 +29,6 @@ const BuyerInfoForm: React.FC<BuyerInfoFormProps> = ({
 				onChange={onChange}
 				className={`input-field ${showErrors && errors.buyerEmail ? 'input-error' : ''}`}
 				required
-				pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
 			/>
 			{showErrors && errors.buyerEmail && (
 				<span className="error-message">{errors.buyerEmail}</span>
@@ -45,7 +44,6 @@ const BuyerInfoForm: React.FC<BuyerInfoFormProps> = ({
 				onChange={onChange}
 				className={`input-field ${showErrors && errors.buyerFullName ? 'input-error' : ''}`}
 				required
-				pattern="[a-zA-Z\s]+"
 			/>
 			{showErrors && errors.buyerFullName && (
 				<span className="error-message">{errors.buyerFullName}</span>
@@ -61,7 +59,6 @@ const BuyerInfoForm: React.FC<BuyerInfoFormProps> = ({
 				onChange={onChange}
 				className={`input-field ${showErrors && errors.telephone ? 'input-error' : ''}`}
 				required
-				pattern="\+57\s[0-9]{10}"
 			/>
 			{showErrors && errors.telephone && (
 				<span className="error-message">{errors.telephone}</span>

@@ -1,4 +1,4 @@
-import { invalidateCoursesCache } from '~/server/actions/courses/getAllCourses';
+import { invalidateCoursesCache } from '~/server/actions/estudiantes/courses/getAllCourses';
 import { db } from '~/server/db';
 import { courses } from '~/server/db/schema';
 import { type Course } from '~/types';
