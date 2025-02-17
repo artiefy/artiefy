@@ -89,10 +89,10 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 							<h2 className="text-center text-2xl font-bold">
 								Preguntas de tipo: Verdadero o Falso.
 							</h2>
-							<h3 className="mb-2 flex flex-col text-lg font-semibold">
-								Pregunta: {question.text}
-							</h3>
+							<h3 className="text-lg font-semibold">Pregunta:</h3>
+							<p className="ml-2">{question.text}</p>
 							<ul className="list-inside list-disc space-y-1">
+								<span className="font-bold">Respuesta:</span>
 								{question.options?.map((option) => (
 									<li
 										key={option.id}
@@ -100,7 +100,9 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 											option.id === question.correctOptionId ? 'font-bold' : ''
 										}
 									>
-										{option.text}
+										{option.text}{' '}
+										{option.id === question.correctOptionId &&
+											'(Respuesta correcta)'}
 									</li>
 								))}
 							</ul>

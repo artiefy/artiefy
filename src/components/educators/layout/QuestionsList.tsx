@@ -46,7 +46,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 		const interval = setInterval(() => {
 			void fetchQuestions();
-		},5000); // Polling cada 5 segundos
+		}, 5000); // Polling cada 5 segundos
 		return () => {
 			clearInterval(interval);
 		};
@@ -97,10 +97,10 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 							<h2 className="mb-2 text-center text-2xl font-bold">
 								Preguntas del tipo: opcion multiple
 							</h2>
-							<h3 className="mb-2 text-lg font-semibold">
-								Pregunta: {question.text}
-							</h3>
+							<h3 className="text-lg font-semibold">Pregunta:</h3>
+							<p className="mb-2">{question.text}</p>
 							<ul className="list-inside list-disc space-y-1">
+								<span className="font-bold">Respuesta:</span>
 								{question.options?.map((option) => (
 									<li
 										key={option.id}
@@ -108,7 +108,10 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 											option.id === question.correctOptionId ? 'font-bold' : ''
 										}
 									>
-										{option.text}
+										{option.text}{' '}
+										{option.id === question.correctOptionId
+											? '(Respuesta correcta)'
+											: ''}
 									</li>
 								))}
 							</ul>

@@ -48,7 +48,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 		const interval = setInterval(() => {
 			void fetchQuestions();
-		},5000); // Polling cada 5 segundos
+		}, 5000); // Polling cada 5 segundos
 
 		return () => clearInterval(interval);
 	}, [activityId]);
@@ -100,11 +100,10 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 							<h2 className="text-center text-2xl font-bold">
 								Preguntas de tipo: Completar.
 							</h2>
-							<h3 className="mb-2 text-lg font-semibold">
-								Pregunta: {question.text}
-							</h3>
-							<p>Respuesta:</p>
-							<p className="font-bold">{question.palabra}</p>
+							<h3 className="text-lg font-semibold">Pregunta:</h3>
+							<p>{question.text}</p>
+							<p className="my-2 font-bold">Respuesta:</p>
+							<p className="ml-2 font-bold">{question.palabra}</p>
 						</CardContent>
 						<CardFooter className="flex justify-end space-x-2">
 							<Button

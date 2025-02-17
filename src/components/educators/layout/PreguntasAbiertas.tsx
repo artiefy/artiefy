@@ -44,7 +44,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		const { name, value } = e.target;
 		setFormData((prevData) => ({
 			...prevData,
-			[name]: name === 'pesoPregunta' ? Number(value) : value,
+			[name]: value,
 		}));
 	};
 
@@ -69,7 +69,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					activityId,
-					questions: { ...formData, id: questionId },
+					questionsACompletar: { ...formData, id: questionId },
 				}),
 			});
 			if (!response.ok) {

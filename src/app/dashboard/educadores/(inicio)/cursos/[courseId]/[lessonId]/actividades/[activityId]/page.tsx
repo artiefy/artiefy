@@ -414,7 +414,7 @@ const Page: React.FC = () => {
 										)}
 								</div>
 							))}
-							{actividadIdNumber !== null && questions.length > 0 && (
+							{actividadIdNumber !== null && (
 								<>
 									<QuestionVOFList activityId={actividadIdNumber} />
 									<QuestionList activityId={actividadIdNumber} />

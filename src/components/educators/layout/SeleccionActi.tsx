@@ -17,7 +17,7 @@ const SeleccionActi: React.FC<TypeActDropdownProps> = ({
 	};
 
 	return (
-		<div className="flex flex-col items-center justify-center gap-2">
+		<div className="mt-3 flex flex-col items-center justify-center gap-2">
 			<label
 				htmlFor="category-select"
 				className={`text-lg font-medium`}
