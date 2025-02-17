@@ -12,12 +12,14 @@ interface QuestionListProps {
 const VerQuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 	const [questionsVOF, setQuestionsVOF] = useState<VerdaderoOFlaso[]>([]);
 	const [selectedOptions, setSelectedOptions] = useState<
-		Record<number, number | null>
+		Record<string, string | null>
 	>({});
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		void fetchQuestions();
+		if (activityId !== null) {
+			void fetchQuestions();
+		}
 	}, [activityId]);
 
 	const fetchQuestions = async () => {
@@ -57,7 +59,7 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	};
 
-	const handleOptionChange = (questionId: number, optionId: number) => {
+	const handleOptionChange = (questionId: string, optionId: number) => {
 		setSelectedOptions((prev) => ({
 			...prev,
 			[questionId]: optionId,
@@ -83,11 +85,16 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 											<input
 												type="radio"
 												name={`question-${question.id}`}
-												value={option.id}
+												value={Number(option.id)} // Asegurarse de que el valor sea de tipo number
 												className="mr-2"
-												checked={selectedOptions[question.id] === option.id}
+												checked={
+													selectedOptions[question.id] === Number(option.id)
+												}
 												onChange={() =>
-													handleOptionChange(question.id, option.id)
+													handleOptionChange(
+														question.id,
+														parseInt(option.id, 10)
+													)
 												}
 											/>
 											{option.text}

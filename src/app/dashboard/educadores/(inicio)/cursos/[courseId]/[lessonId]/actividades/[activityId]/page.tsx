@@ -307,9 +307,6 @@ const Page: React.FC = () => {
 								¿La actividad es calificable?:{' '}
 								<b>{actividad.revisada ? 'Si' : 'No'}.</b>
 							</p>
-							<p className="font-semibold">
-								Calificacion de la actividad: <b>{actividad.nota}.</b>
-							</p>
 						</div>
 						<div className="flex items-center justify-center">
 							<div className="text-center">

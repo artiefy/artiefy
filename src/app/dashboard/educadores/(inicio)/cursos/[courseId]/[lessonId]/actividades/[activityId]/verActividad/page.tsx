@@ -167,9 +167,7 @@ const RealizarActividad: React.FC = () => {
 									Docente: {actividad.lesson.courseInstructor}
 								</p>
 								{actividad.type.id === 1 ? (
-									<>
 										<ActSubida activityId={actividad.id} />
-									</>
 								) : actividad.type.id === 2 ? (
 									<>
 										<VerQuestionList activityId={actividad.id} />
@@ -177,10 +175,10 @@ const RealizarActividad: React.FC = () => {
 										<VerQuestionVOFList activityId={actividad.id} />
 									</>
 								) : (
-									<>
+									<p>
 										Actividad no encontrada, escribenos y comentanos que
 										actividad te gustaria ver aqui en Artiefy!!.
-									</>
+									</p>
 								)}
 							</>
 						)}

@@ -1,7 +1,6 @@
 'use client';
 import type React from 'react';
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 import type { Question } from '~/types/typesActi';
@@ -16,19 +15,18 @@ const VerQuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		Record<number, number | null>
 	>({});
 	const [loading, setLoading] = useState(true);
-
 	const [feedback, setFeedback] = useState<Record<number, string | null>>({});
-	const params = useParams();
-	const paramActivityId = params?.activityId;
-	const activityIdString = Array.isArray(paramActivityId)
-		? paramActivityId[0]
-		: paramActivityId;
-	const activityIdNumber = activityIdString ? parseInt(activityIdString) : null;
+	const paramActivityId = activityId;
+	const activityIdNumber = paramActivityId
+		? parseInt(paramActivityId.toString())
+		: null;
 	console.log(paramActivityId);
 
 	useEffect(() => {
-		void fetchQuestions();
-	}, [activityId]);
+		if (activityIdNumber !== null) {
+			void fetchQuestions();
+		}
+	}, [activityIdNumber]);
 
 	const fetchQuestions = async () => {
 		setLoading(true);
@@ -50,14 +48,14 @@ const VerQuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	};
 
-	const handleOptionChange = (questionId: number, optionId: number) => {
+	const handleOptionChange = (questionId: string, optionId: number) => {
 		setSelectedOptions((prev) => ({
 			...prev,
 			[questionId]: optionId,
 		}));
 	};
 
-	const handleSubmit = (questionId: number, correctOptionId: number) => {
+	const handleSubmit = (questionId: string, correctOptionId: number) => {
 		const selectedOptionId = selectedOptions[questionId];
 		setFeedback((prev) => ({
 			...prev,
