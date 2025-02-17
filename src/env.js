@@ -11,7 +11,7 @@ export const env = createEnv({
     API_KEY: z.string().nonempty(),
     RESPONSE_URL: z.string().url(),
     CONFIRMATION_URL: z.string().url(),
-    CLERK_SECRET_KEY: z.string().nonempty(), // Agrega esta línea
+    CLERK_SECRET_KEY: z.string().nonempty(),
   },
 
   client: {},

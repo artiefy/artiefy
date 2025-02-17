@@ -48,4 +48,4 @@ export async function updateUserSubscription(paymentData: PaymentData) {
       console.log('Notification sent to:', email_buyer); // Log the notification
     }, (30 - 3) * 24 * 60 * 60 * 1000); // 27 días en milisegundos
   }
-}
+}//6 3 el dia de pago
