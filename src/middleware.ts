@@ -12,13 +12,17 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
   const role = sessionClaims?.metadata?.role;
 
-  // Redirigir a la página de inicio de sesión si no está autenticado y la ruta está protegida
+  // Log for debugging
+  console.log('Request URL:', req.url);
+  console.log('Next URL:', req.nextUrl);
+
+  // Redirect to sign-in page if not authenticated and the route is protected
   if (!userId && isProtectedRoute(req)) {
-    const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
+    const redirectTo = encodeURIComponent(req.url + req.nextUrl.search);
     return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${redirectTo}`);
   }
 
-  // Proteger rutas específicas por rol
+  // Protect specific routes by role
   if (isAdminRoute(req) && role !== 'admin') {
     const url = new URL('/', req.url);
     return NextResponse.redirect(url);
@@ -34,13 +38,13 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(url);
   }
 
-  // Proteger rutas dinámicas de estudiantes
+  // Protect dynamic student routes
   if (isStudentClassRoute(req) && !userId) {
-    const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
+    const redirectTo = encodeURIComponent(req.url + req.nextUrl.search);
     return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${redirectTo}`);
   }
 
-  // Manejar rutas públicas
+  // Handle public routes
   if (!userId && publicRoutes(req)) {
     return NextResponse.next();
   }
@@ -50,9 +54,9 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Omitir internals de Next.js y todos los archivos estáticos, a menos que se encuentren en los parámetros de búsqueda
+    // Omit Next.js internals and all static files, unless found in search parameters
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Siempre ejecutar para rutas de API
+    // Always run for API routes
     '/(api|trpc)(.*)',
   ],
 };
