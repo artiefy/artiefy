@@ -96,11 +96,30 @@ export default function VerRespuestasArchivos({
 		setGrades((prev) => ({ ...prev, [key]: value }));
 	};
 
-	const handleGradeBlur = (key: string) => {
+	const handleSubmitGrade = async (key: string) => {
 		const grade = Number(grades[key]);
 		if (!isNaN(grade) && grade >= 0 && grade <= 5) {
 			const [, , questionId] = key.split(':');
-			calificarRespuesta(respuestas[key].userId, questionId, grade);
+			try {
+				await calificarRespuesta(respuestas[key].userId, questionId, grade);
+				toast({
+					title: 'Éxito',
+					description: 'Calificación enviada correctamente',
+				});
+			} catch (error) {
+				console.error('Error al enviar calificación:', error);
+				toast({
+					title: 'Error',
+					description: 'No se pudo enviar la calificación',
+					variant: 'destructive',
+				});
+			}
+		} else {
+			toast({
+				title: 'Error',
+				description: 'La calificación debe estar entre 0 y 5',
+				variant: 'destructive',
+			});
 		}
 	};
 
@@ -131,48 +150,87 @@ export default function VerRespuestasArchivos({
 	if (loading) return <div>Cargando respuestas...</div>;
 
 	return (
-		<div className="space-y-4">
-			{Object.entries(respuestas).length > 0 &&
-				Object.entries(respuestas).map(([key, respuesta]) => (
-					<Card key={key}>
-						<CardContent className="p-4">
-							<div className="flex items-center justify-between">
-								<div>
-									<p className="font-medium">Archivo: {respuesta.fileName}</p>
-									<p className="text-sm text-gray-500">
-										Fecha: {new Date(respuesta.submittedAt).toLocaleString()}
-									</p>
-									<p className="text-sm text-gray-500">
-										Usuario: {respuestas[key].userName}
-									</p>
-									<p className="text-sm text-gray-500">
-										Estado: {respuesta.status}
-									</p>
+		<div>
+			<h2 className="my-2 ml-4 text-xl font-semibold text-blue-600">
+				Respuestas de los Estudiantes
+			</h2>
+			<div className="grid gap-4 px-2 md:grid-cols-2">
+				{Object.entries(respuestas).length > 0 ? (
+					Object.entries(respuestas).map(([key, respuesta]) => (
+						<Card
+							key={key}
+							className="border-slate-200 transition-all hover:shadow-lg"
+						>
+							<CardContent className="p-6">
+								<div className="space-y-4">
+									<div className="flex items-start justify-between">
+										<div className="space-y-1">
+											<h3 className="text-lg font-semibold">
+												Estudiante: {respuesta.userName}
+											</h3>
+											<p className="text-sm text-gray-500">
+												Archivo: {respuesta.fileName}
+											</p>
+											<p className="text-sm text-gray-500">
+												Enviado:{' '}
+												{new Date(respuesta.submittedAt).toLocaleString()}
+											</p>
+											<span
+												className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+													respuesta.status === 'pendiente'
+														? 'bg-yellow-100 text-yellow-800'
+														: 'bg-green-100 text-green-800'
+												}`}
+											>
+												{respuesta.status}
+											</span>
+										</div>
+										<div className="flex flex-col items-end gap-2">
+											<div className="space-y-2">
+												<div className="flex items-center gap-2">
+													<label className="text-sm font-medium">
+														Calificación:
+													</label>
+													<Input
+														type="number"
+														min="0"
+														max="5"
+														step="0.1"
+														placeholder="0-5"
+														className="w-20 border-slate-300 text-center"
+														value={grades[key]}
+														onChange={(e) =>
+															handleGradeChange(key, e.target.value)
+														}
+													/>
+												</div>
+												<Button
+													onClick={() => handleSubmitGrade(key)}
+													className="w-full border-green-500 bg-green-500 text-white transition-colors hover:bg-green-600"
+												>
+													<span className="mr-2">✓</span>
+													Enviar Nota
+												</Button>
+											</div>
+											<Button
+												onClick={() => descargarArchivo(key)}
+												className="mt-2 w-full border-slate-300 text-black transition-colors hover:bg-blue-50"
+											>
+												<span className="mr-2">📥</span>
+												Descargar
+											</Button>
+										</div>
+									</div>
 								</div>
-								<div className="flex items-center gap-2">
-									<Input
-										type="number"
-										min="0"
-										max="5"
-										step="0.5"
-										placeholder="Nota..."
-										className="w-20 border-slate-500"
-										value={grades[key]}
-										onChange={(e) => handleGradeChange(key, e.target.value)}
-										onBlur={() => handleGradeBlur(key)}
-									/>
-									<Button
-										onClick={() => descargarArchivo(key)}
-										variant="outline"
-										className="text-white hover:text-blue-800"
-									>
-										Descargar
-									</Button>
-								</div>
-							</div>
-						</CardContent>
-					</Card>
-				))}
+							</CardContent>
+						</Card>
+					))
+				) : (
+					<p className="col-span-2 text-center text-gray-500">
+						No hay respuestas disponibles
+					</p>
+				)}
+			</div>
 		</div>
 	);
 }

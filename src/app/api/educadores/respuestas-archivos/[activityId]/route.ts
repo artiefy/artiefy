@@ -27,35 +27,25 @@ export async function GET(
 		}
 
 		const activityId = params.activityId;
-		const keys = await redis.keys(`activity:${activityId}:*`);
+		const activityIndex = `activity:${activityId}:submissions`;
 
-		if (!keys || !Array.isArray(keys)) {
-			return NextResponse.json({ respuestas: {} });
-		}
+		// Obtener todas las claves de archivos para esta actividad
+		const submissionKeys = await redis.smembers(activityIndex);
 
+		// Obtener los detalles de cada archivo
 		const respuestas: Record<string, any> = {};
-		const userIds = new Set<string>();
 
-		// Primero recolectamos todas las respuestas y los IDs de usuario únicos
-		for (const key of keys) {
-			try {
-				const respuesta = await redis.hgetall(key);
-				if (respuesta && Object.keys(respuesta).length > 0) {
-					respuestas[key] = {
-						fileName: respuesta.fileName || '',
-						submittedAt: respuesta.submittedAt || new Date().toISOString(),
-						userId: respuesta.userId || '',
-						userName: respuesta.userName || '',
-						status: respuesta.status || 'pendiente',
-						grade: respuesta.grade ? Number(respuesta.grade) : null,
-					};
-					if (respuesta.userId) {
-						userIds.add(String(respuesta.userId));
-					}
-				}
-			} catch (err) {
-				console.error(`Error al obtener respuesta para key ${key}:`, err);
-				continue;
+		for (const key of submissionKeys) {
+			const fileDetails = await redis.hgetall(key);
+			if (fileDetails) {
+				respuestas[key] = {
+					fileName: fileDetails.fileName,
+					submittedAt: fileDetails.submittedAt,
+					userId: fileDetails.userId,
+					userName: fileDetails.userName,
+					status: fileDetails.status,
+					grade: fileDetails.grade ? Number(fileDetails.grade) : null,
+				};
 			}
 		}
 

@@ -20,7 +20,9 @@ export async function POST(request: Request) {
 			return new Response('Faltan datos requeridos', { status: 400 });
 		}
 
-		const key = `activity:${activityId}:${questionId}:${userId}`;
+		// Generamos una clave única para cada archivo usando timestamp
+		const timestamp = new Date().getTime();
+		const key = `activity:${activityId}:${questionId}:${userId}:${timestamp}`;
 
 		await redis.hset(key, {
 			fileName: file.name,
@@ -28,8 +30,11 @@ export async function POST(request: Request) {
 			userId: userId,
 			userName: userName,
 			status: 'pendiente',
-			grade: null,
 		});
+
+		// Mantenemos un índice de todas las entregas para esta actividad
+		const activityIndex = `activity:${activityId}:submissions`;
+		await redis.sadd(activityIndex, key);
 
 		return new Response(JSON.stringify({ success: true }), {
 			status: 200,
