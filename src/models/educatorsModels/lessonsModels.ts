@@ -228,7 +228,6 @@ export const updateLesson = async (
     coverVideoKey,
     order,
     courseId,
-    porcentajecompletado,
     resourceKey,
     resourceNames,
   }: {
@@ -239,7 +238,6 @@ export const updateLesson = async (
     coverVideoKey?: string;
     order?: number;
     courseId?: number;
-    porcentajecompletado?: number;
     resourceKey?: string;
     resourceNames?: string;
   }
@@ -253,8 +251,6 @@ export const updateLesson = async (
   if (coverVideoKey) updateData.coverVideoKey = coverVideoKey;
   if (order) updateData.order = order;
   if (courseId) updateData.courseId = courseId;
-  if (porcentajecompletado !== undefined)
-    updateData.porcentajecompletado = porcentajecompletado;
   if (resourceKey) updateData.resourceKey = resourceKey;
   if (resourceNames) updateData.resourceNames = resourceNames;
 

@@ -7,7 +7,6 @@ import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
 import Image from 'next/image';
 import Link from 'next/link';
-
 import { useSearchParams, useRouter } from 'next/navigation';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
