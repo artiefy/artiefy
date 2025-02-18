@@ -119,6 +119,7 @@ export default function CourseDetails({
 				description: 'Debes iniciar sesión para inscribirte en este curso.',
 				variant: 'destructive',
 			});
+			void router.push('/sign-in'); // Redirigir a la página de inicio de sesión
 			return;
 		}
 
@@ -171,6 +172,7 @@ export default function CourseDetails({
 			setIsEnrolling(false);
 		}
 	};
+
 	const handleUnenroll = async () => {
 		if (!isSignedIn || isUnenrolling) {
 			return;

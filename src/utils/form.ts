@@ -34,7 +34,7 @@ export function createFormData(
     taxReturnBase: '16806', // Estos valores pueden ser ajustados según sea necesario
     currency: currency,
     signature: signature,
-    test: '1',
+    test: '0',
     buyerEmail: buyerEmail,
     buyerFullName: buyerFullName,
     telephone: telephone,
