@@ -51,7 +51,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 		{
 			icon: <FiBook size={24} />,
 			title: 'Cursos',
-			id: 'courses',
+			id: 'coursesd',
 			link: '/dashboard/educadores/cursos',
 		},
 		{
