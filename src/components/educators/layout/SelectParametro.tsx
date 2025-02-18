@@ -13,7 +13,6 @@ export interface Parametros {
 interface ParametrosDropdownProps {
 	courseId: number;
 	parametro: number;
-	setParametro: (parametroId: number) => void;
 	errors: {
 		parametro: boolean;
 	};
@@ -23,7 +22,6 @@ interface ParametrosDropdownProps {
 const SelectParametro: React.FC<ParametrosDropdownProps> = ({
 	courseId,
 	parametro,
-	setParametro,
 	errors,
 	selectedColor,
 }) => {
@@ -76,9 +74,7 @@ const SelectParametro: React.FC<ParametrosDropdownProps> = ({
 		<div className="flex flex-col gap-2">
 			<label
 				htmlFor="parametro-select"
-				className={`text-lg font-medium ${
-					errors.parametro ? 'text-red-500' : 'text-black'
-				}`}
+				className={`text-lg font-medium`}
 				style={{
 					backgroundColor: selectedColor,
 					color: getContrastYIQ(selectedColor),
@@ -94,21 +90,13 @@ const SelectParametro: React.FC<ParametrosDropdownProps> = ({
 					value={parametro || ''}
 					onChange={(e) => {
 						const selectedId = Number(e.target.value);
-						setParametro(selectedId);
 					}}
-					className={`mb-5 w-60 rounded border p-2 text-black outline-none ${
-						errors.parametro ? 'border-red-500' : 'border-black'
-					}`}
+					className={`mb-5 w-60 rounded border border-none p-2 text-black outline-none`}
 				>
 					<option value="">Selecciona un parametro:</option>
 					{parametros.map((parametro) => (
-						<option
-							key={parametro.id}
-							value={parametro.id}
-							disabled={parametro.isUsed}
-						>
-							Parametro: {parametro.name}{' '}
-							{parametro.isUsed ? '(Parametro en uso)' : ''}
+						<option key={parametro.id} value={parametro.id}>
+							Parametro: {parametro.name}
 						</option>
 					))}
 				</select>

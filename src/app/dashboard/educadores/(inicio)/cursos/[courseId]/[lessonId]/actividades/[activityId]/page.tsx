@@ -298,8 +298,9 @@ const Page: React.FC = () => {
 							<p className="font-semibold">
 								Permite: <b>{actividad.type?.description}</b>
 							</p>
-							<p className="font-semibold">
-								Descripción de la actividad: <b>{actividad.description}.</b>
+							<p className="w-11/12 font-semibold">
+								Descripción de la actividad:{' '}
+								<b className="w-11/12">{actividad.description}.</b>
 							</p>
 							<p className="font-semibold">
 								¿La actividad es calificable?:{' '}

@@ -36,7 +36,6 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 					data.questions?.filter((q) => q?.text && q?.correctAnswer) ?? []
 				);
 			}
-			console.log('API response:', data); // Verificar la respuesta de la API
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
 		} finally {

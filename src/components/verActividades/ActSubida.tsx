@@ -1,4 +1,5 @@
 'use client';
+import { useUser } from '@clerk/nextjs';
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { Button } from '~/components/educators/ui/button';
@@ -18,7 +19,10 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 		[key: string]: File | null;
 	}>({});
 	const [submitting, setSubmitting] = useState(false);
+	const { user } = useUser();
+	const userName = user?.fullName;
 
+	console.log('userName', userName);
 	useEffect(() => {
 		void fetchQuestions();
 	}, [activityId]);
@@ -49,6 +53,20 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 	};
 
 	const handleFileChange = (questionId: string, file: File | null) => {
+		if (file) {
+			// Validar tamaño del archivo (150MB = 150 * 1024 * 1024 bytes)
+			const maxSize = 150 * 1024 * 1024;
+			if (file.size > maxSize) {
+				toast({
+					title: 'Error',
+					description:
+						'El archivo es demasiado grande. El tamaño máximo permitido es 150MB.',
+					variant: 'destructive',
+				});
+				return;
+			}
+		}
+
 		setSelectedFiles((prev) => ({
 			...prev,
 			[questionId]: file,
@@ -68,11 +86,21 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 			formData.append('file', file);
 			formData.append('activityId', activityId.toString());
 			formData.append('questionId', questionId.toString());
+			formData.append('userId', user?.id ?? '');
+			formData.append('userName', userName ?? '');
+
+			for (const [key, value] of formData.entries()) {
+				console.log(`${key}: ${value}`);
+			}
+
+			console.log('formData', formData);
 
 			const response = await fetch('/api/estudiantes/subir-archivo', {
 				method: 'POST',
 				body: formData,
 			});
+
+			console.log('response', response);
 
 			if (!response.ok) {
 				throw new Error('Error al subir el archivo');
@@ -89,7 +117,11 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 			}));
 		} catch (error) {
 			console.error('Error:', error);
-			alert('Error al subir el archivo');
+			toast({
+				title: 'Error',
+				description: `Error al subir el archivo: ${error}. El archivo es demasiado grande.`,
+				variant: 'destructive',
+			});
 		} finally {
 			setSubmitting(false);
 		}
@@ -162,6 +194,7 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 											handleFileChange(question.id, e.target.files?.[0] ?? null)
 										}
 										disabled={submitting}
+										accept="*/*"
 									/>
 								</div>
 								<Button

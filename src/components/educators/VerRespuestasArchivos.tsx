@@ -143,7 +143,7 @@ export default function VerRespuestasArchivos({
 										Fecha: {new Date(respuesta.submittedAt).toLocaleString()}
 									</p>
 									<p className="text-sm text-gray-500">
-										Usuario: {respuesta.userName}
+										Usuario: {respuestas[key].userName}
 									</p>
 									<p className="text-sm text-gray-500">
 										Estado: {respuesta.status}

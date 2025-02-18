@@ -101,6 +101,9 @@ const Page: React.FC = () => {
 	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
 	const [showErrors, setShowErrors] = useState(false);
 	const [usedParametros, setUsedParametros] = useState<number[]>([]);
+	const [parametrosPorcentajes, setParametrosPorcentajes] = useState<{
+		[key: number]: number;
+	}>({});
 
 	useEffect(() => {
 		const fetchParametros = async () => {
@@ -155,52 +158,6 @@ const Page: React.FC = () => {
 			fetchParametros();
 		}
 	}, [courseIdNumber]);
-
-	const handleParametroChange = async (parametroId: number) => {
-		try {
-			// Verificar en el backend si el parámetro ya está en uso
-			const response = await fetch(
-				`/api/educadores/actividades/check-parametro?parametroId=${parametroId}`
-			);
-
-			if (!response.ok) {
-				throw new Error('Error al verificar el parámetro');
-			}
-
-			const { isUsed } = await response.json();
-
-			if (isUsed) {
-				toast({
-					title: 'Error',
-					description:
-						'Este parámetro ya está siendo utilizado en otra actividad',
-					variant: 'destructive',
-				});
-				return;
-			}
-
-			const selectedParametro = parametros.find(
-				(param: Parametros) => param.id === parametroId
-			);
-
-			if (selectedParametro) {
-				setFormData((prevFormData) => ({
-					...prevFormData,
-					parametro: selectedParametro.id,
-					name: selectedParametro.name,
-					description: selectedParametro.description,
-					porcentaje: selectedParametro.porcentaje,
-				}));
-			}
-		} catch (error) {
-			console.error('Error:', error);
-			toast({
-				title: 'Error',
-				description: 'Error al verificar el parámetro',
-				variant: 'destructive',
-			});
-		}
-	};
 
 	const handleToggle = () => {
 		setIsActive((prevIsActive) => {
@@ -276,6 +233,92 @@ const Page: React.FC = () => {
 		);
 	}, [fetchCourse]);
 
+	const validarPorcentaje = async (
+		parametroId: number,
+		nuevoPorcentaje: number
+	) => {
+		try {
+			// Obtener todas las actividades asociadas a este parámetro
+			const response = await fetch(
+				`/api/educadores/actividades?courseId=${cursoIdNumber}&parametroId=${parametroId}`
+			);
+
+			if (!response.ok) {
+				throw new Error('Error al obtener actividades');
+			}
+
+			const actividades = await response.json();
+
+			// Calcular el total de porcentajes existentes
+			const porcentajeExistente = actividades.reduce(
+				(total: number, act: any) => {
+					return total + (act.porcentaje || 0);
+				},
+				0
+			);
+
+			// Verificar si el nuevo porcentaje excedería el 100%
+			if (porcentajeExistente + nuevoPorcentaje > 100) {
+				toast({
+					title: 'Error de porcentaje',
+					description: `El porcentaje total excedería el 100%. 
+								Porcentaje actual: ${porcentajeExistente}%. 
+								Porcentaje disponible: ${100 - porcentajeExistente}%`,
+					variant: 'destructive',
+				});
+				return false;
+			}
+
+			// Si el porcentaje está cerca del límite, mostrar una advertencia
+			if (porcentajeExistente + nuevoPorcentaje === 100) {
+				toast({
+					title: 'Aviso',
+					description:
+						'Has alcanzado el 100% del porcentaje para este parámetro.',
+					variant: 'default',
+				});
+			}
+
+			return true;
+		} catch (error) {
+			console.error('Error al validar porcentaje:', error);
+			toast({
+				title: 'Error',
+				description: 'Error al validar el porcentaje',
+				variant: 'destructive',
+			});
+			return false;
+		}
+	};
+
+	const handlePorcentajeChange = async (value: string) => {
+		const nuevoPorcentaje = parseFloat(value);
+
+		if (formData.parametro && !isNaN(nuevoPorcentaje) && nuevoPorcentaje > 0) {
+			const esValido = await validarPorcentaje(
+				formData.parametro,
+				nuevoPorcentaje
+			);
+			if (esValido) {
+				setFormData({
+					...formData,
+					porcentaje: nuevoPorcentaje,
+				});
+			} else {
+				// Si no es válido, resetear el valor
+				setFormData({
+					...formData,
+					porcentaje: 0,
+				});
+			}
+		} else {
+			setFormData({
+				...formData,
+				porcentaje: nuevoPorcentaje,
+			});
+		}
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -294,42 +337,9 @@ const Page: React.FC = () => {
 		// Actualizar los errores
 		setErrors(newErrors);
 
-		// Si hay errores, detener el envío
-		if (Object.values(newErrors).some((error) => error) || !lessonsId) {
-			toast({
-				title: 'Error',
-				description: 'Por favor completa los campos obligatorios.',
-				variant: 'destructive',
-			});
-			return;
-		}
-
 		setIsUploading(true);
 
 		try {
-			// Verificar si el parámetro está en uso antes de crear la actividad
-			if (formData.revisada && formData.parametro) {
-				const checkResponse = await fetch(
-					`/api/educadores/actividades/check-parametro?parametroId=${formData.parametro}`
-				);
-
-				if (!checkResponse.ok) {
-					throw new Error('Error al verificar el parámetro');
-				}
-
-				const { isUsed } = await checkResponse.json();
-				if (isUsed) {
-					toast({
-						title: 'Error',
-						description:
-							'Este parámetro ya está siendo utilizado en otra actividad',
-						variant: 'destructive',
-					});
-					setIsUploading(false);
-					return;
-				}
-			}
-
 			const actividadResponse = await fetch('/api/educadores/actividades', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -339,7 +349,7 @@ const Page: React.FC = () => {
 					typeid: parseInt(formData.type, 10),
 					lessonsId: parseInt(lessonsId, 10),
 					revisada: formData.revisada,
-					parametroId: formData.revisada ? formData.parametro : null,
+					parametroId: formData.parametro,
 				}),
 			});
 
@@ -485,7 +495,11 @@ const Page: React.FC = () => {
 							<>
 								<div className="my-4">
 									<Button
-										onClick={handleLongevidadClick}
+										type="button"
+										onClick={(e) => {
+											e.preventDefault();
+											handleLongevidadClick();
+										}}
 										className="border-none bg-blue-500 text-white hover:bg-blue-500/90"
 									>
 										Asignar un parametro de evaluacion
@@ -497,20 +511,15 @@ const Page: React.FC = () => {
 											<SelectParametro
 												courseId={cursoIdNumber}
 												parametro={formData.parametro ?? 0}
-												setParametro={handleParametroChange}
 												errors={errors}
 												selectedColor={color}
 											/>
-											{showErrors && errors.parametro && (
-												<p className="mt-1 text-sm text-red-500">
-													El parametro es requerido.
-												</p>
-											)}
+
 											<Label
 												htmlFor="porcentaje"
 												className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 											>
-												Peso de la nota en el curso (0-100 en porcentaje %):
+												Peso de la nota en el parametro (0-100 en porcentaje %):
 											</Label>
 											<div>
 												<Input
@@ -524,18 +533,10 @@ const Page: React.FC = () => {
 													step="1"
 													placeholder="0-100"
 													onChange={(e) =>
-														setFormData({
-															...formData,
-															porcentaje: parseFloat(e.target.value),
-														})
+														handlePorcentajeChange(e.target.value)
 													}
 												/>
 											</div>
-											{showErrors && errors.porcentaje && (
-												<p className="mt-1 text-sm text-red-500">
-													El porcentaje de actividad es requerido.
-												</p>
-											)}
 										</div>
 									</div>
 								)}
@@ -555,11 +556,7 @@ const Page: React.FC = () => {
 								setFormData({ ...formData, name: e.target.value })
 							}
 						/>
-						{showErrors && errors.name && (
-							<p className="mt-1 text-sm text-red-500">
-								El titulo es requerido.
-							</p>
-						)}
+
 						<div className="my-4 flex flex-col">
 							<Label
 								className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
@@ -574,11 +571,6 @@ const Page: React.FC = () => {
 									setFormData({ ...formData, description: e.target.value })
 								}
 							/>
-							{showErrors && errors.description && (
-								<p className="mt-1 text-sm text-red-500">
-									La descripcion es requerida
-								</p>
-							)}
 						</div>
 						<Label
 							className={`mb-2 text-xl ${color == '#FFFFFF' ? 'text-black' : 'text-white'}`}
@@ -593,11 +585,7 @@ const Page: React.FC = () => {
 							errors={showErrors ? errors : { type: false }}
 							selectedColor={color}
 						/>
-						{showErrors && errors.type && (
-							<p className="mt-1 text-sm text-red-500">
-								El tipo de actividad es requerido.
-							</p>
-						)}
+
 						{isUploading && (
 							<div className="my-1">
 								<Progress value={uploadProgress} className="w-full" />

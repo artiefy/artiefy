@@ -45,6 +45,7 @@ export async function GET(
 						fileName: respuesta.fileName || '',
 						submittedAt: respuesta.submittedAt || new Date().toISOString(),
 						userId: respuesta.userId || '',
+						userName: respuesta.userName || '',
 						status: respuesta.status || 'pendiente',
 						grade: respuesta.grade ? Number(respuesta.grade) : null,
 					};
@@ -57,7 +58,7 @@ export async function GET(
 				continue;
 			}
 		}
-		
+
 		return NextResponse.json({ respuestas });
 	} catch (error) {
 		console.error('Error al obtener respuestas:', error);

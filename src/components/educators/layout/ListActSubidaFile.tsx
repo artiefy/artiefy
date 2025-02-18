@@ -90,7 +90,8 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 	return (
 		<div className="my-2 space-y-4">
 			<FormActCompletado activityId={activityId} onSubmit={handleFormSubmit} />
-			{questions && questions.length > 0 ? (
+			{questions &&
+				questions.length > 0 &&
 				questions.map((question) => (
 					<Card key={question.id} className="border-none shadow-lg">
 						{editingQuestion?.id === question.id ? (
@@ -132,10 +133,7 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 							</>
 						)}
 					</Card>
-				))
-			) : (
-				<p>No hay preguntas disponibles</p>
-			)}
+				))}
 		</div>
 	);
 };

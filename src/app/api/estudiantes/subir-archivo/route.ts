@@ -13,36 +13,32 @@ export async function POST(request: Request) {
 		const file = formData.get('file') as File;
 		const activityId = formData.get('activityId') as string;
 		const questionId = formData.get('questionId') as string;
+		const userId = formData.get('userId') as string;
+		const userName = formData.get('userName') as string;
 
-		const user = await currentUser();
-
-		if (!user) {
-			return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+		if (!file || !activityId || !questionId || !userId || !userName) {
+			return new Response('Faltan datos requeridos', { status: 400 });
 		}
 
-		// Convertir el archivo a base64 para almacenarlo
-		const arrayBuffer = await file.arrayBuffer();
-		const buffer = Buffer.from(arrayBuffer);
-		const base64File = buffer.toString('base64');
+		const key = `activity:${activityId}:${questionId}:${userId}`;
 
-		// Crear una clave única para la respuesta
-		const responseKey = `activity:${activityId}:question:${questionId}:user:${user.id}`;
-
-		// Almacenar la respuesta en Upstash
-		await redis.hset(responseKey, {
+		await redis.hset(key, {
 			fileName: file.name,
-			fileContent: base64File,
 			submittedAt: new Date().toISOString(),
-			userId: user.id,
+			userId: userId,
+			userName: userName,
 			status: 'pendiente',
 			grade: null,
 		});
 
-		return NextResponse.json({ success: true });
+		return new Response(JSON.stringify({ success: true }), {
+			status: 200,
+			headers: { 'Content-Type': 'application/json' },
+		});
 	} catch (error) {
 		console.error('Error al procesar la subida:', error);
-		return NextResponse.json(
-			{ error: 'Error al procesar la subida del archivo' },
+		return new Response(
+			JSON.stringify({ error: 'Error al procesar la subida' }),
 			{ status: 500 }
 		);
 	}

@@ -86,6 +86,7 @@ export async function GET(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
 		const courseId = searchParams.get('courseId');
+		const parametroId = searchParams.get('parametroId');
 
 		if (!courseId) {
 			return NextResponse.json(
@@ -102,17 +103,22 @@ export async function GET(request: NextRequest) {
 
 		const lessonIds = courseLessons.map((lesson) => lesson.id);
 
-		// Luego obtener todas las actividades de esas lecciones
+		// Construir las condiciones de la consulta
+		let conditions = [];
+
+		if (lessonIds.length > 0) {
+			conditions.push(eq(activities.lessonsId, lessonIds[0]));
+		}
+
+		if (parametroId) {
+			conditions.push(eq(activities.parametroId, parseInt(parametroId)));
+		}
+
+		// Realizar la consulta con las condiciones
 		const actividades = await db
 			.select()
 			.from(activities)
-			.where(
-				and(
-					lessonIds.length > 0
-						? eq(activities.lessonsId, lessonIds[0])
-						: undefined
-				)
-			);
+			.where(and(...conditions));
 
 		return NextResponse.json(actividades);
 	} catch (error) {
