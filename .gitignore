@@ -48,3 +48,4 @@ src/config/credenciales-gmail.json
 
 # Credenciales
 src/config/credenciales-gmail.json
+!src/config/credenciales-gmail.example.json
