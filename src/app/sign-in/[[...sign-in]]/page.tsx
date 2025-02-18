@@ -26,20 +26,20 @@ export default function SignInPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isForgotPassword, setIsForgotPassword] = useState(false);
 	const searchParams = useSearchParams();
-	const redirectTo = searchParams.get('redirect_url') ?? '/';
+	const redirectUrl = searchParams.get('redirect_url') ?? '/';
 	const router = useRouter();
-	const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
 	useEffect(() => {
 		if (isSignedIn) {
-			router.replace(redirectTo);
-		}
-	}, [isSignedIn, router, redirectTo]);
+      router.replace(redirectUrl ?? '/');
+    }
+	}, [isSignedIn, router, redirectUrl]);
 
 	if (!isLoaded || isSignedIn) {
 		return <Loading />;
 	}
 
+	// Actualiza la función signInWith
 	const signInWith = async (strategy: OAuthStrategy) => {
 		if (!signIn) {
 			setErrors([
@@ -57,19 +57,23 @@ export default function SignInPage() {
 		try {
 			await signIn.authenticateWithRedirect({
 				strategy,
-				redirectUrl: `/sign-in/sso-callback?redirect_url=${encodeURIComponent(currentUrl)}`,
-				redirectUrlComplete: currentUrl,
+				redirectUrl: `/sign-up/sso-callback`,
+				redirectUrlComplete: redirectUrl ?? '/',
 			});
 		} catch (err) {
 			setLoadingProvider(null);
-			setErrors([
-				{
-					code: 'oauth_error',
-					message: 'Error durante el inicio de sesión con OAuth',
-					longMessage: 'Error durante el inicio de sesión con OAuth',
-					meta: {},
-				},
-			]);
+			if (isClerkAPIResponseError(err)) {
+				setErrors(err.errors);
+			} else {
+				setErrors([
+					{
+						code: 'oauth_error',
+						message: 'Error durante el inicio de sesión con OAuth',
+						longMessage: 'Error durante el inicio de sesión con OAuth',
+						meta: {},
+					},
+				]);
+			}
 			console.error(err);
 		}
 	};
@@ -91,7 +95,7 @@ export default function SignInPage() {
 				if (setActive) {
 					await setActive({ session: signInAttempt.createdSessionId });
 				}
-				router.replace(redirectTo);
+				router.replace(redirectUrl ?? '/');
 			} else if (signInAttempt.status === 'needs_first_factor') {
 				const supportedStrategies =
 					signInAttempt.supportedFirstFactors?.map(
@@ -197,7 +201,7 @@ export default function SignInPage() {
 				if (setActive) {
 					await setActive({ session: result.createdSessionId });
 				}
-				router.replace(redirectTo);
+				router.replace('/'); // Aquí puedes cambiar para redirigir a una URL específica si es necesario
 			} else {
 				setErrors([
 					{
@@ -321,7 +325,7 @@ export default function SignInPage() {
 									>
 										<div className="flex w-full items-center justify-center">
 											{isSubmitting ? (
-												<Icons.spinner className="h-5 w-5 text-primary" />
+												<Icons.spinner className="h-5 w-5 animate-spin text-primary" />
 											) : (
 												<span className="inline-block font-bold">
 													COMIENZA YA

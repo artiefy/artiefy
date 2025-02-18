@@ -47,10 +47,9 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<ClerkProvider localization={esMX} afterSignOutUrl="/">
+		<ClerkProvider localization={esMX} dynamic>
 			<html lang="es" className={`${montserrat.variable}`}>
 				<head>
-					<Script src="https://checkout.epayco.co/epayco.min.js" />
 					<Script
 						id="json-ld"
 						type="application/ld+json"
