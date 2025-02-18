@@ -30,6 +30,7 @@ export async function POST(request: Request) {
 			email: string;
 			role?: string;
 		}[] = XLSX.utils.sheet_to_json(sheet);
+
 		const createdUsers = [];
 
 		for (const user of usersData) {
@@ -59,34 +60,21 @@ export async function POST(request: Request) {
 				updatedAt: new Date(),
 			});
 
-			// Guardar la información del usuario con la contraseña generada
+			// Agregar usuario a la lista de respuesta
 			createdUsers.push({
+				id: createdUser.id,
 				firstName,
 				lastName,
 				email,
 				role: role ?? 'estudiante',
-				password: generatedPassword, // Aquí se agrega la contraseña generada por Clerk
+				password: generatedPassword, // ⚠️ Devuelve la contraseña generada
 			});
 		}
 
-		// Generar archivo Excel con los usuarios y contraseñas
-		const ws = XLSX.utils.json_to_sheet(createdUsers);
-		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'Usuarios Creados');
-
-		// Convertir el archivo Excel a un buffer
-		const excelBuffer: ArrayBuffer = XLSX.write(wb, {
-			bookType: 'xlsx',
-			type: 'array',
-		}) as ArrayBuffer;
-
-		// Devolver el archivo Excel como respuesta
-		return new NextResponse(excelBuffer, {
-			headers: {
-				'Content-Type':
-					'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-				'Content-Disposition': 'attachment; filename=usuarios_creados.xlsx',
-			},
+		// ✅ **En lugar de devolver un archivo, devolvemos JSON con los usuarios creados**
+		return NextResponse.json({
+			message: 'Usuarios creados exitosamente',
+			users: createdUsers, // Enviamos los usuarios en la respuesta
 		});
 	} catch (error) {
 		console.error('Error al procesar el archivo:', error);

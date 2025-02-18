@@ -102,59 +102,56 @@ export default function AdminDashboard() {
 	const indexOfLastUser = currentPage * usersPerPage;
 	const indexOfFirstUser = indexOfLastUser - usersPerPage;
 	const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+	const fetchUsers = useCallback(async () => {
+		try {
+			const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`);
+			if (!res.ok) throw new Error('Error al cargar usuarios');
 
-	useEffect(() => {
-		async function fetchUsers() {
-			try {
-				const res = await fetch(
-					`/api/users?search=${encodeURIComponent(query)}`
-				);
-				if (!res.ok) throw new Error('Error al cargar usuarios');
+			const rawData: unknown = await res.json();
+			if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
 
-				const rawData: unknown = await res.json(); // ✅ Primero tratamos la respuesta como `unknown`
+			const data: User[] = rawData
+				.filter(
+					(item): item is User =>
+						typeof item === 'object' &&
+						item !== null &&
+						'id' in item &&
+						'firstName' in item &&
+						'lastName' in item &&
+						'email' in item &&
+						'role' in item &&
+						'status' in item
+				)
+				.map((item) => ({
+					id: String(item.id),
+					firstName: String(item.firstName),
+					lastName: String(item.lastName),
+					email: String(item.email),
+					role: String(item.role),
+					status: String(item.status),
+				}));
 
-				if (!Array.isArray(rawData)) {
-					throw new Error('Datos inválidos recibidos'); // ✅ Validación de seguridad
-				}
-
-				// ✅ Filtramos solo los objetos que tienen las propiedades esperadas
-				const data: User[] = rawData
-					.filter(
-						(item): item is User =>
-							typeof item === 'object' &&
-							item !== null &&
-							'id' in item &&
-							'firstName' in item &&
-							'lastName' in item &&
-							'email' in item &&
-							'role' in item &&
-							'status' in item
-					)
-					.map((item) => ({
-						id: String(item.id),
-						firstName: String(item.firstName),
-						lastName: String(item.lastName),
-						email: String(item.email),
-						role: String(item.role),
-						status: String(item.status),
-					}));
-
-				setUsers(data);
-			} catch (err) {
-				setError('Error al cargar los usuarios.');
-				console.error('Error fetching users:', err);
-			} finally {
-				setLoading(false);
-			}
+			setUsers(data);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Error desconocido');
+			console.error('Error fetching users:', err);
+		} finally {
+			setLoading(false);
 		}
+	}, [query]); // 👈 Ahora `query` es una dependencia estable y segura
 
-		void fetchUsers(); // ✅ Ejecutamos la función sin afectar ESLint
-	}, [query]);
+	// ✅ Ahora, `useEffect` ya no mostrará advertencias
+	useEffect(() => {
+		void fetchUsers();
+	}, [fetchUsers]);
 
-	const showNotification = (message: string, type: 'success' | 'error') => {
-		setNotification({ message, type });
-		setTimeout(() => setNotification(null), 3000);
-	};
+	const showNotification = useCallback(
+		(message: string, type: 'success' | 'error') => {
+			setNotification({ message, type });
+			setTimeout(() => setNotification(null), 3000);
+		},
+		[]
+	);
 
 	interface CreateUserResponse {
 		user: {
@@ -443,6 +440,32 @@ export default function AdminDashboard() {
 			}
 		})(); // ✅ Ejecutamos la función inmediatamente
 	};
+	const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
+
+	const handleMassUserUpload = useCallback(
+		(newUsers: User[]) => {
+			if (!newUsers || newUsers.length === 0) return;
+
+			// 🔹 Mantener `isNew: true` sin afectar los usuarios previos
+			setUsers((prevUsers) => [
+				...newUsers.map((user) => ({ ...user, isNew: true })), // Nuevos usuarios en azul
+				...prevUsers, // Mantener los usuarios anteriores
+			]);
+
+			// ✅ Mostrar notificación de éxito
+			showNotification(
+				`Se crearon ${newUsers.length} nuevos usuarios`,
+				'success'
+			);
+
+			// ✅ Cerrar el modal sin recargar la página
+
+			if (modalIsOpen) {
+				setModalIsOpen(false);
+			}
+		},
+		[showNotification, modalIsOpen]
+	);
 
 	const handleEditUser = (user: User) => {
 		setEditingUser(user.id);
@@ -591,7 +614,7 @@ export default function AdminDashboard() {
 								>
 									<UserPlus className="mr-2 size-5" /> Crear Usuario
 								</button>
-								<BulkUploadUsers />
+								<BulkUploadUsers onUsersUploaded={handleMassUserUpload} />
 							</div>
 						</div>
 						<div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -696,7 +719,9 @@ export default function AdminDashboard() {
 									{currentUsers.map((user) => (
 										<tr
 											key={user.id}
-											className={`transition duration-300 hover:bg-gray-800 hover:shadow-lg ${user.isNew ? 'bg-[#3AF4EF]' : ''}`}
+											className={`transition duration-300 hover:bg-gray-800 hover:shadow-lg ${
+												user.isNew ? 'bg-primary text-black' : ''
+											}`}
 										>
 											<td className="px-4 py-3">
 												<input

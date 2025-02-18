@@ -5,7 +5,7 @@ import { ArrowRightIcon } from '@heroicons/react/24/solid';
 import { ArrowUpFromLine } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import { LoadingCourses } from '~/app/dashboard/super-admin/(inicio)/cursos/page';
 import { Badge } from '~/components/educators/ui/badge';
 import {
 	Card,
@@ -51,7 +51,6 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	const [error, setError] = useState<string | null>(null);
 	const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
-
 
 	console.log(courseId);
 
@@ -227,8 +226,6 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 											</div>
 										</Link>
 									</Button>
-									
-
 								</CardFooter>
 							</Card>
 						</div>
@@ -257,12 +254,11 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 				courseId={courseId}
 				uploading={false}
 			/>
-<StudentsModal
-	isOpen={isModalOpen}
-	onClose={() => setIsModalOpen(false)}
-	courseId={courseId}
-/>
-
+			<StudentsModal
+				isOpen={isModalOpen}
+				onClose={() => setIsModalOpen(false)}
+				courseId={courseId}
+			/>
 		</>
 	);
 };

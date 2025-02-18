@@ -5,7 +5,7 @@ import { ArrowRightIcon } from '@heroicons/react/24/solid';
 import { ArrowUpFromLine } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import { LoadingCourses } from '~/app/dashboard/super-admin/(inicio)/cursos/page';
 import { Badge } from '~/components/educators/ui/badge';
 import {
 	Card,

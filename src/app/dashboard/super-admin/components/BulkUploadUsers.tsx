@@ -2,9 +2,25 @@
 import React, { useState } from 'react';
 import { FiUpload, FiDownload, FiX } from 'react-icons/fi';
 
-const BulkUploadUsers = () => {
+interface User {
+	id: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	role: string;
+	status: string;
+	selected?: boolean;
+	isNew?: boolean;
+}
+
+const BulkUploadUsers = ({
+	onUsersUploaded,
+}: {
+	onUsersUploaded: (newUsers: User[]) => void;
+}) => {
 	const [modalIsOpen, setModalIsOpen] = useState(false);
 	const [file, setFile] = useState<File | null>(null);
+	const [uploading, setUploading] = useState(false);
 
 	// Manejar la selección de archivo
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -12,12 +28,18 @@ const BulkUploadUsers = () => {
 		setFile(selectedFile);
 	};
 
-	// Subir archivo al servidor
+	const showNotification = (message: string, type: 'success' | 'error') => {
+		// Implement your notification logic here
+		alert(`${type.toUpperCase()}: ${message}`);
+	};
+
 	const handleUpload = async () => {
 		if (!file) {
-			alert('Por favor selecciona un archivo primero.');
+			showNotification('Por favor selecciona un archivo primero.', 'error');
 			return;
 		}
+		setUploading(true); // ✅ Indicar que la carga ha comenzado
+
 		const formData = new FormData();
 		formData.append('file', file);
 
@@ -27,27 +49,31 @@ const BulkUploadUsers = () => {
 				body: formData,
 			});
 
-			if (res.ok) {
-				alert('Usuarios subidos exitosamente');
-				setFile(null);
-				setModalIsOpen(false);
+			if (!res.ok) throw new Error('Error al subir los usuarios');
 
-				// Ahora manejamos la descarga del archivo Excel
-				const blob = await res.blob(); // Recibimos el archivo Excel como blob
-				const url = window.URL.createObjectURL(blob); // Creamos un objeto URL para el archivo
-				const link = document.createElement('a'); // Creamos un elemento <a> para descargar
-				link.href = url;
-				link.download = 'usuarios_creados.xlsx'; // Nombre del archivo para la descarga
-				link.click(); // Inicia la descarga
-			} else {
-				throw new Error('Error al subir los usuarios');
+			// 📌 Asegurar que la respuesta es JSON
+			const contentType = res.headers.get('content-type');
+			if (!contentType?.includes('application/json')) {
+				throw new Error('Respuesta inesperada del servidor, no es JSON.');
 			}
+
+			// ✅ Recibir JSON con usuarios creados
+			const { users: newUsers }: { users: User[] } = (await res.json()) as {
+				users: User[];
+			};
+
+			// ✅ Enviar los usuarios creados al Dashboard
+			onUsersUploaded(newUsers);
+
+			// ✅ Cerrar el modal después de la carga
+			setModalIsOpen(false);
 		} catch (error) {
-			if (error instanceof Error) {
-				alert(error.message);
-			} else {
-				alert('Error desconocido');
-			}
+			showNotification(
+				error instanceof Error ? error.message : 'Error desconocido',
+				'error'
+			);
+		} finally {
+			setUploading(false);
 		}
 	};
 
@@ -110,8 +136,9 @@ const BulkUploadUsers = () => {
 							<button
 								onClick={handleUpload}
 								className="mb-4 w-full rounded-md bg-[#00BDD8] px-6 py-2 text-[#01142B] transition hover:scale-105 hover:bg-[#00A5C0]"
+								disabled={uploading}
 							>
-								<FiUpload className="mr-2" /> Subir Archivo
+								{uploading ? 'Subiendo...' : 'Subir Archivo'}
 							</button>
 
 							{/* Botón para descargar plantilla */}
