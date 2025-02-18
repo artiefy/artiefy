@@ -16,8 +16,6 @@ export const SearchUsers = () => {
 					const formData = new FormData(form);
 					const queryTerm = formData.get('search') as string;
 
-					console.log('DEBUG: Enviando búsqueda con término:', queryTerm); // 🔥 DEBUG
-
 					router.push(`${pathname}?search=${queryTerm}`);
 				}}
 			>

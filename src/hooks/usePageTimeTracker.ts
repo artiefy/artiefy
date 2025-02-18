@@ -15,9 +15,6 @@ const usePageTimeTracker = (userId: string | null) => {
 		const resetTimer = () => {
 			if (isPopupActive) return; // ❌ Evita que el temporizador se resetee si el popup está abierto
 
-			console.log(
-				'🔄 Usuario activo, reseteando temporizador de inactividad...'
-			);
 			setIsInactivePopupOpen(false);
 			setIsPaused(false);
 			clearTimeout(timeout);
@@ -41,10 +38,6 @@ const usePageTimeTracker = (userId: string | null) => {
 
 			if (elapsedMinutes > 0) {
 				try {
-					console.log(
-						`⏳ Enviando ${elapsedMinutes} minutos para usuario ${userId}`
-					);
-
 					const response = await fetch('/api/super-admin/user-time', {
 						method: 'POST',
 						headers: {
@@ -59,7 +52,6 @@ const usePageTimeTracker = (userId: string | null) => {
 							await response.text()
 						);
 					} else {
-						console.log('✅ Tiempo registrado correctamente.');
 						localStorage.setItem('entryTime', Date.now().toString());
 					}
 				} catch (error) {

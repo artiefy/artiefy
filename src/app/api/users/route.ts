@@ -21,6 +21,7 @@ export async function GET(request: Request) {
 		const query = searchParams.get('search') ?? '';
 		const users = await getAdminUsers(query);
 
+
 		// 🔹 Recuperar el tiempo desde localStorage en el servidor no es posible directamente.
 		// 🔹 Lo manejaremos desde el frontend.
 		const usersWithTime = users.map((user) => ({

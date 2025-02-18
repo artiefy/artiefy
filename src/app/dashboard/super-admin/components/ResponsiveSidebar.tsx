@@ -45,14 +45,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 	}, []);
 
 	useEffect(() => {
-		if (user?.id) {
-			console.log(
-				'Usando el hook para rastrear tiempo para el usuario:',
-				user.id
-			);
-		}
-	}, [user]);
-	useEffect(() => {
 		if (isMobile) {
 			console.log('Modo móvil activado');
 		}

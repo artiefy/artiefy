@@ -28,6 +28,7 @@ interface User {
 	role: string;
 	status: string;
 	selected?: boolean;
+	isNew?: boolean;
 }
 
 type ConfirmationState = {
@@ -84,6 +85,7 @@ export default function AdminDashboard() {
 		);
 	}, []);
 
+	// 1️⃣ Filtrar usuarios
 	const filteredUsers = users.filter(
 		(user) =>
 			(searchQuery === '' ||
@@ -93,6 +95,13 @@ export default function AdminDashboard() {
 			(roleFilter ? user.role === roleFilter : true) &&
 			(statusFilter ? user.status === statusFilter : true)
 	);
+
+	// 2️⃣ Definir la paginación
+	const [currentPage, setCurrentPage] = useState(1);
+	const usersPerPage = 10;
+	const indexOfLastUser = currentPage * usersPerPage;
+	const indexOfFirstUser = indexOfLastUser - usersPerPage;
+	const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
 	useEffect(() => {
 		async function fetchUsers() {
@@ -205,7 +214,6 @@ export default function AdminDashboard() {
 
 			const username = safeUser.username;
 			setUsers([
-				...users,
 				{
 					id: safeUser.id,
 					firstName: newUser.firstName,
@@ -213,7 +221,9 @@ export default function AdminDashboard() {
 					email: newUser.email,
 					role: newUser.role,
 					status: 'activo',
+					isNew: true, // 🔹 Marcar como usuario nuevo
 				},
+				...users,
 			]);
 
 			setInfoDialogTitle('Usuario Creado');
@@ -683,10 +693,10 @@ export default function AdminDashboard() {
 									</tr>
 								</thead>
 								<tbody className="divide-y divide-gray-700">
-									{filteredUsers.map((user) => (
+									{currentUsers.map((user) => (
 										<tr
 											key={user.id}
-											className="transition duration-300 hover:bg-gray-800 hover:shadow-lg"
+											className={`transition duration-300 hover:bg-gray-800 hover:shadow-lg ${user.isNew ? 'bg-[#3AF4EF]' : ''}`}
 										>
 											<td className="px-4 py-3">
 												<input
@@ -784,6 +794,39 @@ export default function AdminDashboard() {
 									))}
 								</tbody>
 							</table>
+							<div className="mt-4 flex justify-center space-x-2">
+								<button
+									onClick={() =>
+										setCurrentPage((prev) => Math.max(prev - 1, 1))
+									}
+									disabled={currentPage === 1}
+									className="rounded bg-gray-700 px-4 py-2 text-white disabled:opacity-50"
+								>
+									Anterior
+								</button>
+
+								<span className="rounded bg-gray-800 px-4 py-2 text-white">
+									Página {currentPage} de{' '}
+									{Math.ceil(filteredUsers.length / usersPerPage)}
+								</span>
+
+								<button
+									onClick={() =>
+										setCurrentPage((prev) =>
+											prev < Math.ceil(filteredUsers.length / usersPerPage)
+												? prev + 1
+												: prev
+										)
+									}
+									disabled={
+										currentPage ===
+										Math.ceil(filteredUsers.length / usersPerPage)
+									}
+									className="rounded bg-gray-700 px-4 py-2 text-white disabled:opacity-50"
+								>
+									Siguiente
+								</button>
+							</div>
 						</div>
 					</>
 				)}

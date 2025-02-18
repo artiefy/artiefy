@@ -253,7 +253,6 @@ const CourseDetail = () => {
 				requerimientos: course?.requerimientos.trim(),
 			};
 
-			console.log('📤 Enviando a la API:', updatedData);
 
 			const response = await fetch(`/api/super-admin/courses/${course?.id}`, {
 				method: 'PUT',

@@ -14,10 +14,14 @@ import {
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query: string | undefined) {
 	console.log('DEBUG: Ejecutando getAdminUsers con query ->', query);
-
 	const client = await clerkClient();
-	const usersResponse = await client.users.getUserList();
+	const usersResponse = await client.users.getUserList({ limit: 100 });
 	const users = usersResponse.data;
+
+	console.log(
+		'📌 DEBUG: Lista de nombres de usuarios obtenidos:',
+		usersResponse.data.map((user) => user.firstName)
+	);
 
 	const filteredUsers = query
 		? users.filter(
@@ -185,23 +189,20 @@ export async function updateMultipleUserStatus(
 }
 
 export interface CourseData {
-    id?: number; 
-    title: string;
-    description?: string | null; // 🔹 Permitir `null` y hacerla opcional
-    coverImageKey: string | null; // 🔹 Permitir `null` y hacerla opcional
-    categoryid: number;
-    modalidadesid: number;
-    dificultadid: number;
-    requerimientos?: string; // 🔹 Permitir `null` y hacerla opcional
-    instructor: string;
-    creatorId: string;
-    createdAt: Date | string; // 🔹 Permitir `string` porque en errores previos llegaba como `string`
-    updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
-    rating?: number | null; // 🔹 Hacer opcional porque algunos cursos no lo tenían
+	id?: number;
+	title: string;
+	description?: string | null; // 🔹 Permitir `null` y hacerla opcional
+	coverImageKey: string | null; // 🔹 Permitir `null` y hacerla opcional
+	categoryid: number;
+	modalidadesid: number;
+	dificultadid: number;
+	requerimientos?: string; // 🔹 Permitir `null` y hacerla opcional
+	instructor: string;
+	creatorId: string;
+	createdAt: Date | string; // 🔹 Permitir `string` porque en errores previos llegaba como `string`
+	updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
+	rating?: number | null; // 🔹 Hacer opcional porque algunos cursos no lo tenían
 }
-
-
-
 
 export async function getCourses() {
 	try {
@@ -242,7 +243,9 @@ export async function createCourse(courseData: CourseData) {
 				creatorId: courseData.creatorId || 'defaultCreatorId', // ✅ Manejo de creatorId
 				requerimientos: courseData.requerimientos ?? '', // ✅ Asegurar que requerimientos sea siempre una cadena
 				createdAt: new Date(courseData.createdAt), // Convertir a Date
-				updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : undefined, // Convertir a Date si existe
+				updatedAt: courseData.updatedAt
+					? new Date(courseData.updatedAt)
+					: undefined, // Convertir a Date si existe
 			})
 			.returning();
 	} catch (error) {
@@ -260,7 +263,9 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
 				...courseData,
 				requerimientos: courseData.requerimientos ?? '',
 				createdAt: new Date(courseData.createdAt),
-				updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : undefined,
+				updatedAt: courseData.updatedAt
+					? new Date(courseData.updatedAt)
+					: undefined,
 			})
 			.where(eq(courses.id, courseId))
 			.returning();
@@ -290,8 +295,4 @@ export async function getDificultades() {
 	}
 }
 
-
-
 export {};
-
-
