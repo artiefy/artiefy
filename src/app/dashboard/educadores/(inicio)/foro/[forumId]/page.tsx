@@ -162,47 +162,47 @@ const ForumPage = () => {
 		}
 	}, [fetchPostReplays, posts]);
 
-	const sendForumEmail = async (
-		postContent: string,
-		recipients: string[],
-		isReply: boolean = false
-	) => {
-		try {
-			if (!forumData || !user) return;
+	// const sendForumEmail = async (
+	// 	postContent: string,
+	// 	recipients: string[],
+	// 	isReply: boolean = false
+	// ) => {
+	// 	try {
+	// 		if (!forumData || !user) return;
 
-			console.log('Sending email with data:', {
-				content: postContent,
-				recipients,
-				forumTitle: forumData.title,
-				authorName: user.fullName,
-			});
+	// 		console.log('Sending email with data:', {
+	// 			content: postContent,
+	// 			recipients,
+	// 			forumTitle: forumData.title,
+	// 			authorName: user.fullName,
+	// 		});
 
-			const response = await fetch('/api/educadores/send-email', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					content: postContent,
-					recipients: recipients,
-					forumTitle: forumData.title,
-					authorName: user.fullName || 'Usuario',
-				}),
-			});
+	// 		const response = await fetch('/api/educadores/send-email', {
+	// 			method: 'POST',
+	// 			headers: {
+	// 				'Content-Type': 'application/json',
+	// 			},
+	// 			body: JSON.stringify({
+	// 				content: postContent,
+	// 				recipients: recipients,
+	// 				forumTitle: forumData.title,
+	// 				authorName: user.fullName || 'Usuario',
+	// 			}),
+	// 		});
 
-			const result = await response.json();
+	// 		const result = await response.json();
 
-			if (!response.ok) {
-				console.error('Failed to send email. Status:', response.status);
-				console.error('Error details:', result);
-				return;
-			}
+	// 		if (!response.ok) {
+	// 			console.error('Failed to send email. Status:', response.status);
+	// 			console.error('Error details:', result);
+	// 			return;
+	// 		}
 
-			console.log('Email sent successfully:', result);
-		} catch (error) {
-			console.error('Error in sendForumEmail:', error);
-		}
-	};
+	// 		console.log('Email sent successfully:', result);
+	// 	} catch (error) {
+	// 		console.error('Error in sendForumEmail:', error);
+	// 	}
+	// };
 
 	// Crear nuevo Post
 	const handlePostSubmit = async () => {
@@ -282,7 +282,7 @@ const ForumPage = () => {
 							filteredEmails,
 							forumTitle: forumData?.title,
 						});
-						await sendForumEmail(message, filteredEmails);
+						// await sendForumEmail(message, filteredEmails);
 					} else {
 						console.log('No recipients to send email to');
 					}
@@ -367,7 +367,7 @@ const ForumPage = () => {
 							filteredEmails,
 							forumTitle: forumData?.title,
 						});
-						await sendForumEmail(replyMessage, filteredEmails, true);
+						// await sendForumEmail(replyMessage, filteredEmails, true);
 					} else {
 						console.log('No recipients to send email to');
 					}
