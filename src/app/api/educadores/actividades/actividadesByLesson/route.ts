@@ -1,7 +1,10 @@
 import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { getActivitiesByLessonId } from '~/models/educatorsModels/activitiesModels';
+import {
+	getActivitiesByLessonId,
+	getTotalPorcentajeByParametro,
+} from '~/models/educatorsModels/activitiesModels';
 
 function respondWithError(message: string, status: number) {
 	return NextResponse.json({ error: message }, { status });
@@ -35,5 +38,48 @@ export async function GET(request: NextRequest) {
 			`Error al obtener la actividad: ${errorMessage}`,
 			500
 		);
+	}
+}
+
+// Agregar nueva ruta para validar porcentaje
+export async function POST(request: NextRequest) {
+	try {
+		const { userId } = await auth();
+		if (!userId) {
+			return respondWithError('No autorizado', 403);
+		}
+
+		const data = await request.json();
+		const { parametroId, porcentaje } = data;
+
+		if (!parametroId || porcentaje === undefined) {
+			return respondWithError('Datos incompletos', 400);
+		}
+
+		const resultado = await getTotalPorcentajeByParametro(parametroId);
+		const nuevoPorcentajeTotal = resultado.total + porcentaje;
+
+		// Validación más estricta
+		if (nuevoPorcentajeTotal > 100 || nuevoPorcentajeTotal < 0) {
+			return respondWithError(
+				`No se puede exceder el 100% del parámetro.\n` +
+					`Porcentaje actual total: ${resultado.total}%\n` +
+					`Porcentajes asignados:\n${resultado.actividades
+						.map((act) => `- ${act.name}: ${act.porcentaje}%`)
+						.join('\n')}\n` +
+					`Disponible: ${Math.max(0, 100 - resultado.total)}%`,
+				400
+			);
+		}
+
+		return NextResponse.json({
+			isValid: true,
+			totalActual: resultado.total,
+			disponible: 100 - resultado.total,
+			detalles: resultado.actividades,
+		});
+	} catch (error) {
+		console.error('Error al validar porcentaje:', error);
+		return respondWithError('Error al validar el porcentaje', 500);
 	}
 }

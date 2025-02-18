@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
@@ -18,6 +18,8 @@ export interface Activity {
 	lessonsId: number;
 	pesoNota: number;
 	revisada: boolean;
+	parametroId?: number | null;
+	porcentaje: number;
 }
 
 // Actualizar la interfaz ActivityDetails
@@ -51,6 +53,7 @@ interface CreateActivityParams {
 	lessonsId: number;
 	revisada: boolean;
 	parametroId?: number | null;
+	porcentaje: number;
 }
 
 // CRUD Operations
@@ -66,6 +69,7 @@ export async function createActivity(params: CreateActivityParams) {
 				lessonsId: params.lessonsId,
 				revisada: params.revisada,
 				parametroId: params.parametroId || null,
+				porcentaje: params.porcentaje || 0,
 				lastUpdated: new Date(),
 			})
 			.returning();
@@ -144,6 +148,8 @@ export const getActivitiesByLessonId = async (
 					description: typeActi.description,
 				},
 				revisada: activities.revisada,
+				porcentaje: activities.porcentaje,
+				parametroId: activities.parametroId,
 				lesson: {
 					id: lessons.id,
 					title: lessons.title,
@@ -170,6 +176,8 @@ export const getActivitiesByLessonId = async (
 				description: actividad.type?.description ?? '',
 			},
 			revisada: actividad.revisada ?? false,
+			porcentaje: actividad.porcentaje ?? 0,
+			parametroId: actividad.parametroId ?? 0,
 			lessonsId: {
 				id: actividad.lesson.id ?? 0,
 				title: actividad.lesson.title ?? '',
@@ -232,3 +240,38 @@ export const deleteActivitiesByLessonId = async (lessonId: number) => {
 	// Elimina las actividades asociadas a la lección
 	await db.delete(activities).where(eq(activities.lessonsId, lessonId));
 };
+
+// Modificar la función getTotalPorcentajeByParametro para incluir más detalles
+export async function getTotalPorcentajeByParametro(
+	parametroId: number
+): Promise<{
+	total: number;
+	actividades: { id: number; name: string; porcentaje: number }[];
+}> {
+	try {
+		const actividades = await db
+			.select({
+				id: activities.id,
+				name: activities.name,
+				porcentaje: activities.porcentaje,
+			})
+			.from(activities)
+			.where(eq(activities.parametroId, parametroId));
+
+		const total = actividades.reduce(
+			(sum, act) => sum + (act.porcentaje || 0),
+			0
+		);
+
+		return {
+			total,
+			actividades: actividades.map(act => ({
+				...act,
+				porcentaje: act.porcentaje || 0
+			}))
+		};
+	} catch (error) {
+		console.error('Error al obtener el total de porcentajes:', error);
+		throw new Error('Error al calcular el total de porcentajes');
+	}
+}

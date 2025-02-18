@@ -46,10 +46,18 @@ export async function POST(request: NextRequest) {
 			typeid: number;
 			revisada: boolean;
 			parametroId?: number | null;
+			porcentaje: number;
 		};
 
-		const { name, description, lessonsId, typeid, revisada, parametroId } =
-			body;
+		const {
+			name,
+			description,
+			lessonsId,
+			typeid,
+			revisada,
+			parametroId,
+			porcentaje,
+		} = body;
 
 		const newActivity = await createActivity({
 			name,
@@ -58,6 +66,7 @@ export async function POST(request: NextRequest) {
 			lessonsId,
 			revisada,
 			parametroId: revisada ? parametroId : null,
+			porcentaje: revisada ? porcentaje : 0,
 		});
 
 		console.log('Datos enviados al servidor:', {
@@ -66,6 +75,8 @@ export async function POST(request: NextRequest) {
 			lessonsId,
 			typeid,
 			revisada,
+			parametroId,
+			porcentaje,
 		});
 
 		return NextResponse.json({

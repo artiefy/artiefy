@@ -10,18 +10,20 @@ export interface Parametros {
 	isUsed?: boolean;
 }
 
-interface ParametrosDropdownProps {
-	courseId: number;
+interface SelectParametroProps {
+	courseId: number | null;
 	parametro: number;
+	onParametroChange: (parametroId: number) => void;
 	errors: {
 		parametro: boolean;
 	};
 	selectedColor: string;
 }
 
-const SelectParametro: React.FC<ParametrosDropdownProps> = ({
+const SelectParametro: React.FC<SelectParametroProps> = ({
 	courseId,
 	parametro,
+	onParametroChange,
 	errors,
 	selectedColor,
 }) => {
@@ -87,9 +89,10 @@ const SelectParametro: React.FC<ParametrosDropdownProps> = ({
 			) : (
 				<select
 					id="parametro-select"
-					value={parametro || ''}
+					value={parametro.toString()}
 					onChange={(e) => {
 						const selectedId = Number(e.target.value);
+						onParametroChange(selectedId);
 					}}
 					className={`mb-5 w-60 rounded border border-none p-2 text-black outline-none`}
 				>

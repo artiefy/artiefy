@@ -101,9 +101,6 @@ const Page: React.FC = () => {
 	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
 	const [showErrors, setShowErrors] = useState(false);
 	const [usedParametros, setUsedParametros] = useState<number[]>([]);
-	const [parametrosPorcentajes, setParametrosPorcentajes] = useState<{
-		[key: number]: number;
-	}>({});
 
 	useEffect(() => {
 		const fetchParametros = async () => {
@@ -238,48 +235,39 @@ const Page: React.FC = () => {
 		nuevoPorcentaje: number
 	) => {
 		try {
-			// Obtener todas las actividades asociadas a este parámetro
 			const response = await fetch(
-				`/api/educadores/actividades?courseId=${cursoIdNumber}&parametroId=${parametroId}`
+				'/api/educadores/actividades/actividadesByLesson',
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ parametroId, porcentaje: nuevoPorcentaje }),
+				}
 			);
+
+			const data = await response.json();
 
 			if (!response.ok) {
-				throw new Error('Error al obtener actividades');
-			}
-
-			const actividades = await response.json();
-
-			// Calcular el total de porcentajes existentes
-			const porcentajeExistente = actividades.reduce(
-				(total: number, act: any) => {
-					return total + (act.porcentaje || 0);
-				},
-				0
-			);
-
-			// Verificar si el nuevo porcentaje excedería el 100%
-			if (porcentajeExistente + nuevoPorcentaje > 100) {
 				toast({
 					title: 'Error de porcentaje',
-					description: `El porcentaje total excedería el 100%. 
-								Porcentaje actual: ${porcentajeExistente}%. 
-								Porcentaje disponible: ${100 - porcentajeExistente}%`,
+					description: data.error,
 					variant: 'destructive',
 				});
 				return false;
 			}
 
-			// Si el porcentaje está cerca del límite, mostrar una advertencia
-			if (porcentajeExistente + nuevoPorcentaje === 100) {
-				toast({
-					title: 'Aviso',
-					description:
-						'Has alcanzado el 100% del porcentaje para este parámetro.',
-					variant: 'default',
-				});
-			}
+			// Mostrar información detallada
+			toast({
+				title: 'Información del parámetro',
+				description: `
+					Porcentaje total actual: ${data.totalActual}%
+					Porcentaje disponible: ${data.disponible}%
+					${data.detalles?.length ? '\nActividades asignadas:' : ''}
+					${data.detalles?.map((act: any) => `\n- ${act.name}: ${act.porcentaje}%`).join('') || ''}
+				`,
+				variant: 'default',
+			});
 
-			return true;
+			return nuevoPorcentaje <= data.disponible;
 		} catch (error) {
 			console.error('Error al validar porcentaje:', error);
 			toast({
@@ -292,54 +280,119 @@ const Page: React.FC = () => {
 	};
 
 	const handlePorcentajeChange = async (value: string) => {
-		const nuevoPorcentaje = parseFloat(value);
+		const nuevoPorcentaje = parseFloat(value) || 0;
 
-		if (formData.parametro && !isNaN(nuevoPorcentaje) && nuevoPorcentaje > 0) {
-			const esValido = await validarPorcentaje(
-				formData.parametro,
-				nuevoPorcentaje
-			);
-			if (esValido) {
-				setFormData({
-					...formData,
-					porcentaje: nuevoPorcentaje,
-				});
-			} else {
-				// Si no es válido, resetear el valor
-				setFormData({
-					...formData,
-					porcentaje: 0,
-				});
-			}
-		} else {
-			setFormData({
-				...formData,
-				porcentaje: nuevoPorcentaje,
-			});
-		}
+		// Primero actualizamos el estado sin validar
+		setFormData({
+			...formData,
+			porcentaje: nuevoPorcentaje,
+		});
+	};
+
+	const handleParametroChange = (parametroId: number) => {
+		setFormData({
+			...formData,
+			parametro: parametroId,
+			porcentaje: 0, // Resetear el porcentaje cuando cambia el parámetro
+		});
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-
-		// Activar la visualización de errores
 		setShowErrors(true);
 
-		// Verificar errores
+		// Validaciones específicas con mensajes de error
+		if (!formData.name) {
+			toast({
+				title: 'Error',
+				description: 'El nombre de la actividad es requerido',
+				variant: 'destructive',
+			});
+			return;
+		}
+
+		if (!formData.description) {
+			toast({
+				title: 'Error',
+				description: 'La descripción de la actividad es requerida',
+				variant: 'destructive',
+			});
+			return;
+		}
+
+		if (!formData.type) {
+			toast({
+				title: 'Error',
+				description: 'Debe seleccionar un tipo de actividad',
+				variant: 'destructive',
+			});
+			return;
+		}
+
+		// Validaciones específicas para actividades revisadas
+		if (formData.revisada) {
+			if (!formData.parametro) {
+				toast({
+					title: 'Error',
+					description:
+						'Debe seleccionar un parámetro de evaluación para actividades revisadas',
+					variant: 'destructive',
+				});
+				return;
+			}
+
+			if (!formData.porcentaje || formData.porcentaje <= 0) {
+				toast({
+					title: 'Error',
+					description:
+						'Debe asignar un porcentaje mayor a 0 para actividades revisadas',
+					variant: 'destructive',
+				});
+				return;
+			}
+		}
+
 		const newErrors = {
 			name: !formData.name,
 			description: !formData.description,
 			type: !formData.type,
 			parametro: formData.revisada && !formData.parametro,
-			porcentaje: false,
+			porcentaje:
+				formData.revisada && (!formData.porcentaje || formData.porcentaje <= 0),
 		};
 
-		// Actualizar los errores
 		setErrors(newErrors);
+
+		if (Object.values(newErrors).some((error) => error)) {
+			return;
+		}
+
+		// Validación final del porcentaje antes de crear la actividad
+		if (formData.revisada && formData.parametro) {
+			const porcentajeValido = await validarPorcentaje(
+				formData.parametro,
+				formData.porcentaje || 0
+			);
+
+			if (!porcentajeValido) {
+				toast({
+					title: 'Error',
+					description:
+						'El porcentaje excede el límite disponible para este parámetro',
+					variant: 'destructive',
+				});
+				return;
+			}
+		}
 
 		setIsUploading(true);
 
 		try {
+			// Asegurarnos de que el porcentaje sea un número
+			const porcentaje = formData.revisada ? formData.porcentaje || 0 : 0;
+			console.log(porcentaje);
+			console.log(lessonsId);
+
 			const actividadResponse = await fetch('/api/educadores/actividades', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -349,7 +402,8 @@ const Page: React.FC = () => {
 					typeid: parseInt(formData.type, 10),
 					lessonsId: parseInt(lessonsId, 10),
 					revisada: formData.revisada,
-					parametroId: formData.parametro,
+					parametroId: formData.parametro || null,
+					porcentaje: porcentaje,
 				}),
 			});
 
@@ -361,7 +415,13 @@ const Page: React.FC = () => {
 			const actividadData = await actividadResponse.json();
 			const actividadId = actividadData.id;
 
-			// Redireccionar
+			// Mostrar mensaje de éxito
+			toast({
+				title: 'Éxito',
+				description: 'Actividad creada correctamente',
+				variant: 'default',
+			});
+
 			router.push(
 				`/dashboard/educadores/cursos/${cursoIdNumber}/${lessonsId}/actividades/${actividadId}`
 			);
@@ -511,6 +571,7 @@ const Page: React.FC = () => {
 											<SelectParametro
 												courseId={cursoIdNumber}
 												parametro={formData.parametro ?? 0}
+												onParametroChange={handleParametroChange}
 												errors={errors}
 												selectedColor={color}
 											/>
@@ -523,7 +584,7 @@ const Page: React.FC = () => {
 											</Label>
 											<div>
 												<Input
-													value={formData.porcentaje}
+													value={formData.porcentaje || ''}
 													className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 													type="number"
 													id="percentage"
