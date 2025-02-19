@@ -1,5 +1,5 @@
 import CourseDetail from './CourseDetail'; // El componente CourseDetail
-import ResponsiveSidebar from '../../../../../dashboard/super-admin/components/ResponsiveSidebar';
+import ResponsiveSidebar from '~/app/dashboard/super-admin/components/ResponsiveSidebar'; // El componente ResponsiveSidebar
 
 export default async function Page({
   params,

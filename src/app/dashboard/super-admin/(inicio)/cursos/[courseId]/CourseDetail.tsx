@@ -33,19 +33,20 @@ import { toast } from '~/hooks/use-toast';
 
 interface Course {
 	id: number;
-		title: string;
-		description: string | null;
-		coverImageKey: string | null;
-		categoryid: number;
-		instructor: string;
-		createdAt: Date;
-		updatedAt: Date;
-		creatorId: string;
-		rating: number | null;
-		modalidadesid: number;
-		dificultadid: number;
-		requerimientos: string;
-	}
+	title: string;
+	description: string | null;
+	coverImageKey: string | null;
+	categoryid: number;
+	instructor: string;
+	createdAt: Date;
+	updatedAt: Date;
+	creatorId: string;
+	rating: number | null;
+	modalidadesid: number;
+	dificultadid: number;
+	requerimientos: string;
+}
+
 const getContrastYIQ = (hexcolor: string) => {
 	if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
 	hexcolor = hexcolor.replace('#', '');
@@ -55,7 +56,13 @@ const getContrastYIQ = (hexcolor: string) => {
 	const yiq = (r * 299 + g * 587 + b * 114) / 1000;
 	return yiq >= 128 ? 'black' : 'white';
 };
-const CourseDetail = () => {
+
+interface CourseDetailProps {
+	courseId: number;
+}
+
+const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
+	console.log('📌 Course ID recibido:', courseId);
 	useUser();
 	const params = useParams();
 	const router = useRouter();
@@ -252,7 +259,6 @@ const CourseDetail = () => {
 				instructor: course?.instructor.trim(),
 				requerimientos: course?.requerimientos.trim(),
 			};
-
 
 			const response = await fetch(`/api/super-admin/courses/${course?.id}`, {
 				method: 'PUT',

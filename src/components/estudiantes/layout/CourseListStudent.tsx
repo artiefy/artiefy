@@ -1,3 +1,4 @@
+import { auth } from '@clerk/nextjs/server';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -33,6 +34,7 @@ export default async function CourseListStudent({
 	category,
 	searchTerm,
 }: CourseListStudentProps) {
+	const { userId } = await auth();
 	if (!courses || courses.length === 0) {
 		return <div>No hay cursos disponibles</div>;
 	}
@@ -144,6 +146,7 @@ export default async function CourseListStudent({
 				route="/estudiantes"
 				category={category}
 				searchTerm={searchTerm}
+				userId={userId} // 👈 Asegúrate de pasar userId
 			/>
 		</>
 	);

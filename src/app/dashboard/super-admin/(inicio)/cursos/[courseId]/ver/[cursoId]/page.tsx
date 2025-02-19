@@ -235,7 +235,6 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 									className="object-cover"
 									priority
 									sizes="100vw"
-									placeholder="blur-sm"
 									blurDataURL={blurDataURL}
 									onError={(e) => {
 										e.currentTarget.src = '/fetch-error.jpg';
