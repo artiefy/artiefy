@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { db } from '~/server/db';
 import { activities, lessons } from '~/server/db/schema';
 import { and, eq } from 'drizzle-orm';
+import { Redis } from '@upstash/redis';
 
 import {
 	createActivity,
@@ -183,29 +184,81 @@ export async function PUT(request: NextRequest) {
 // DELETE endpoint para eliminar una actividad
 export async function DELETE(request: NextRequest) {
 	try {
-		const { userId } = await auth();
-		if (!userId) {
-			return respondWithError('No autorizado', 403);
-		}
-
 		const { searchParams } = new URL(request.url);
-		const activityId = searchParams.get('id');
-		if (!activityId) {
-			return respondWithError('ID de actividad no proporcionado', 400);
+		const id = searchParams.get('id');
+
+		if (!id) {
+			return NextResponse.json(
+				{ error: 'ID no proporcionado' },
+				{ status: 400 }
+			);
 		}
 
-		await deleteActivity(parseInt(activityId, 10));
+		// Obtener la actividad para verificar su tipo
+		const activity = await db
+			.select()
+			.from(activities)
+			.where(eq(activities.id, parseInt(id)))
+			.then((results) => results[0]);
 
-		return NextResponse.json({
-			message: 'Actividad eliminada exitosamente',
+		if (!activity) {
+			return NextResponse.json(
+				{ error: 'Actividad no encontrada' },
+				{ status: 404 }
+			);
+		}
+
+		const redis = new Redis({
+			url: process.env.UPSTASH_REDIS_REST_URL!,
+			token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 		});
-	} catch (error: unknown) {
+
+		// Si es una actividad de tipo subida de archivos (typeid === 1)
+		if (activity.typeid === 1) {
+			// Obtener todas las submissions de la actividad
+			const activityIndex = `activity:${id}:submissions`;
+			const submissionKeys = await redis.smembers(activityIndex);
+
+			// Eliminar cada submission
+			for (const key of submissionKeys) {
+				await redis.del(key);
+			}
+
+			// Eliminar el índice de submissions
+			await redis.del(activityIndex);
+
+			// Eliminar las preguntas de tipo subida de archivos
+			const questionsKey = `activity:${id}:questionsFilesSubida`;
+			await redis.del(questionsKey);
+		}
+		// Si es una actividad de tipo cuestionario (typeid === 2)
+		else if (activity.typeid === 2) {
+			// Eliminar preguntas de opción múltiple
+			const questionsOMKey = `activity:${id}:questionsOM`;
+			await redis.del(questionsOMKey);
+
+			// Eliminar preguntas de verdadero/falso
+			const questionsVOFKey = `activity:${id}:questionsVOF`;
+			await redis.del(questionsVOFKey);
+
+			// Eliminar preguntas de completar
+			const questionsACompletarKey = `activity:${id}:questionsACompletar`;
+			await redis.del(questionsACompletarKey);
+
+			// Eliminar las respuestas de los estudiantes si existen
+			const responsesKey = `activity:${id}:responses`;
+			await redis.del(responsesKey);
+		}
+
+		// Eliminar la actividad
+		await db.delete(activities).where(eq(activities.id, parseInt(id)));
+
+		return NextResponse.json({ success: true });
+	} catch (error) {
 		console.error('Error al eliminar la actividad:', error);
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-		return respondWithError(
-			`Error al eliminar la actividad: ${errorMessage}`,
-			500
+		return NextResponse.json(
+			{ error: 'Error al eliminar la actividad' },
+			{ status: 500 }
 		);
 	}
 }

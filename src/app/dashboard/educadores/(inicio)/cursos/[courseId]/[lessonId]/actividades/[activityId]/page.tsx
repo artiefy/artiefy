@@ -164,7 +164,8 @@ const Page: React.FC = () => {
 				if (response.ok) {
 					toast({
 						title: 'Actividad eliminada',
-						description: 'La actividad se eliminó con éxito.',
+						description:
+							'La actividad y todos sus archivos asociados se eliminaron con éxito.',
 					});
 					window.history.back();
 				} else {
