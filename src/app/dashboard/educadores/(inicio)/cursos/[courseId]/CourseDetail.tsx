@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
-import ModalFormCourse from '~/components/educators/modals/ModalFormCourse2';
+import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -100,6 +100,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		: courseIdUrl;
 	const courseIdString2 = courseIdString ?? '';
 	const courseIdNumber = parseInt(courseIdString2);
+	console.log('courseIdNumber', courseIdNumber);
 
 	const fetchCourse = useCallback(async () => {
 		if (courseIdNumber !== null) {
@@ -326,19 +327,32 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	const handleDelete = async (id: number) => {
 		try {
-			const responseAws = await fetch(
-				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`,
-				{
+			// Primero intentamos eliminar la imagen de S3
+			if (course.coverImageKey) {
+				const responseAws = await fetch('/api/upload', {
 					method: 'DELETE',
-				}
-			);
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						key: course.coverImageKey,
+					}),
+				});
 
+				if (!responseAws.ok) {
+					console.error('Error al eliminar la imagen de S3');
+				}
+			}
+
+			// Luego eliminamos el curso
 			const response = await fetch(`/api/educadores/courses?courseId=${id}`, {
 				method: 'DELETE',
 			});
 
-			if (!response.ok && !responseAws.ok)
-				throw new Error(`Error al eliminar el curso, id: ${id}`);
+			if (!response.ok) {
+				throw new Error(`Error al eliminar el curso, con id: ${id}`);
+			}
+
 			toast({
 				title: 'Curso eliminado',
 				description: 'El curso se ha eliminado con éxito.',
@@ -346,6 +360,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			router.push('/dashboard/educadores/cursos');
 		} catch (error) {
 			console.error('Error:', error);
+			toast({
+				title: 'Error',
+				description: 'No se pudo eliminar el curso completamente',
+				variant: 'destructive',
+			});
 		}
 	};
 

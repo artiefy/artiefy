@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ChangeEvent } from 'react';
+import { useState, type ChangeEvent, useEffect } from 'react';
 
 import FileUpload from '~/components/educators/layout/FilesUpload';
 import { Button } from '~/components/educators/ui/button';
@@ -20,6 +20,17 @@ interface LessonsFormProps {
 	isOpen: boolean;
 	onCloseAction: () => void;
 	courseId: number; // ID del curso relacionado
+	isEditing?: boolean;
+	editingLesson?: {
+		id?: number;
+		title?: string;
+		description?: string;
+		duration?: number;
+		coverImageKey?: string;
+		coverVideoKey?: string;
+		resourceKey?: string;
+		resourceName?: string;
+	};
 }
 
 const ModalFormLessons = ({
@@ -27,6 +38,8 @@ const ModalFormLessons = ({
 	isOpen,
 	onCloseAction,
 	courseId,
+	isEditing = false,
+	editingLesson,
 }: LessonsFormProps) => {
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [formData, setFormData] = useState({
@@ -51,6 +64,25 @@ const ModalFormLessons = ({
 	});
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
+
+	// Modificar el useEffect para inicializar con datos de edición
+	useEffect(() => {
+		if (isEditing && editingLesson) {
+			setFormData({
+				title: editingLesson.title ?? '',
+				description: editingLesson.description ?? '',
+				duration: editingLesson.duration ?? 0,
+				coverimage: undefined,
+				covervideo: undefined,
+				resourcefiles: [],
+				cover_image_key: editingLesson.coverImageKey ?? '',
+				cover_video_key: editingLesson.coverVideoKey ?? '',
+				resource_keys: editingLesson.resourceKey
+					? editingLesson.resourceKey.split(',')
+					: [],
+			});
+		}
+	}, [isEditing, editingLesson]);
 
 	// Manejador de cambio para inputs
 	const handleInputChange = (
@@ -261,29 +293,36 @@ const ModalFormLessons = ({
 			const concatenatedResourceKeys = resourceKeys.join(',');
 			const concatenatedFileNames = fileNames.join(',');
 
-			const response = await fetch('/api/educadores/lessons', {
-				method: 'POST',
+			const endpoint = isEditing
+				? `/api/educadores/lessons/${editingLesson?.id}`
+				: '/api/educadores/lessons';
+
+			const method = isEditing ? 'PUT' : 'POST';
+
+			const response = await fetch(endpoint, {
+				method: method,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					title: formData.title,
 					description: formData.description,
-					duration: formData.duration,
-					coverImageKey: coverImageKey,
-					coverVideoKey: coverVideoKey,
-					resourceKey: concatenatedResourceKeys,
-					resourceNames: concatenatedFileNames,
-					porcentajecompletado: 0,
-					courseId,
+					duration: Number(formData.duration),
+					coverImageKey: coverImageKey || formData.cover_image_key,
+					coverVideoKey: coverVideoKey || formData.cover_video_key,
+					resourceKey: concatenatedResourceKeys || '',
+					resourceNames: concatenatedFileNames || '',
+					courseId: Number(courseId),
 				}),
 			});
 
 			if (response.ok) {
 				toast({
-					title: 'Lección creada',
-					description: 'La lección se creó con éxito.',
+					title: isEditing ? 'Lección actualizada' : 'Lección creada',
+					description: isEditing
+						? 'La lección se actualizó con éxito.'
+						: 'La lección se creó con éxito.',
 				});
-				onCloseAction(); // Cierra el modal
-				window.location.reload(); // Refrescar la página
+				onCloseAction();
+				window.location.reload();
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				toast({

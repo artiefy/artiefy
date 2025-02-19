@@ -138,9 +138,9 @@ export const getCourseById = async (courseId: number) => {
 				title: courses.title,
 				description: courses.description,
 				coverImageKey: courses.coverImageKey,
-				categoryid: categories.name,
-				modalidadesid: modalidades.name,
-				dificultadid: dificultad.name,
+				categoryid: courses.categoryid,
+				modalidadesid: courses.modalidadesid,
+				dificultadid: courses.dificultadid,
 				rating: courses.rating,
 				instructor: courses.instructor,
 				creatorId: courses.creatorId,
@@ -149,9 +149,6 @@ export const getCourseById = async (courseId: number) => {
 				requerimientos: courses.requerimientos,
 			})
 			.from(courses)
-			.leftJoin(categories, eq(courses.categoryid, categories.id))
-			.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-			.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
 			.where(eq(courses.id, courseId))
 			.then((rows) => rows[0]);
 
@@ -159,10 +156,38 @@ export const getCourseById = async (courseId: number) => {
 			throw new Error('Curso no encontrado');
 		}
 
+		// Obtener los nombres de las relaciones por separado
+		const category = course.categoryid
+			? await db
+					.select({ name: categories.name })
+					.from(categories)
+					.where(eq(categories.id, course.categoryid))
+					.then((rows) => rows[0])
+			: null;
+
+		const modalidad = course.modalidadesid
+			? await db
+					.select({ name: modalidades.name })
+					.from(modalidades)
+					.where(eq(modalidades.id, course.modalidadesid))
+					.then((rows) => rows[0])
+			: null;
+
+		const dificultadNivel = course.dificultadid
+			? await db
+					.select({ name: dificultad.name })
+					.from(dificultad)
+					.where(eq(dificultad.id, course.dificultadid))
+					.then((rows) => rows[0])
+			: null;
+
 		const totalStudents = await getTotalStudents(courseId);
 
 		return {
 			...course,
+			categoryid: category?.name ?? course.categoryid,
+			modalidadesid: modalidad?.name ?? course.modalidadesid,
+			dificultadid: dificultadNivel?.name ?? course.dificultadid,
 			totalStudents,
 		};
 	} catch (error) {

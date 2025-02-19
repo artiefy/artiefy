@@ -84,55 +84,41 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-	const { key, fileName } = (await request.json()) as {
-		key: string;
-		fileName?: string;
-	};
-
 	try {
+		const body = await request.json();
+		const { key } = body;
+
+		if (!key) {
+			return NextResponse.json(
+				{ error: 'Se requiere una key para eliminar el archivo' },
+				{ status: 400 }
+			);
+		}
+
 		if (!process.env.AWS_BUCKET_NAME) {
 			throw new Error('AWS_BUCKET_NAME no está definido');
 		}
 
-		// Si se proporciona fileName, eliminar el archivo específico
-		if (fileName) {
-			const specificKey = `uploads/${fileName}`;
-			await client.send(
-				new DeleteObjectCommand({
-					Bucket: process.env.AWS_BUCKET_NAME,
-					Key: specificKey,
-				})
-			);
-		} else {
-			// Si no se proporciona fileName, eliminar todos los archivos que coincidan con la clave
-			const listObjectsResponse = await client.send(
-				new ListObjectsV2Command({
-					Bucket: process.env.AWS_BUCKET_NAME,
-					Prefix: key,
-				})
-			);
-
-			const deletePromises = listObjectsResponse.Contents?.map((object) =>
-				client.send(
-					new DeleteObjectCommand({
-						Bucket: process.env.AWS_BUCKET_NAME,
-						Key: object.Key!,
-					})
-				)
-			);
-
-			if (deletePromises) {
-				await Promise.all(deletePromises);
-			}
-		}
+		// Eliminar el archivo específico
+		await client.send(
+			new DeleteObjectCommand({
+				Bucket: process.env.AWS_BUCKET_NAME,
+				Key: key,
+			})
+		);
 
 		return NextResponse.json({
-			message: 'Archivo(s) eliminado(s) con éxito',
+			message: 'Archivo eliminado con éxito',
 		});
 	} catch (error) {
 		console.error('Error al eliminar el archivo:', error);
 		return NextResponse.json(
-			{ error: (error as Error).message },
+			{
+				error:
+					error instanceof Error
+						? error.message
+						: 'Error desconocido al eliminar el archivo',
+			},
 			{ status: 500 }
 		);
 	}

@@ -221,6 +221,16 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			requerimientos: !editingCourseId && !requerimientos,
 		};
 
+		// Validar que haya al menos un parámetro
+		if (parametros.length === 0) {
+			toast({
+				title: 'Error',
+				description: 'Debe agregar al menos un parámetro de evaluación',
+				variant: 'destructive',
+			});
+			return;
+		}
+
 		if (editingCourseId) {
 			newErrors.title = modifiedFields.has('title') && !title;
 			newErrors.description = modifiedFields.has('description') && !description;

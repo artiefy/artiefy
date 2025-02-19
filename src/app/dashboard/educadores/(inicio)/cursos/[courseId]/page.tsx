@@ -1,14 +1,13 @@
 import CourseDetail from './CourseDetail';
 
 export default async function CourseDetailPage({
-  params,
+	params,
 }: {
-  params: Promise<{ courseId: number }>;
+	params: { id: string };
 }) {
-  const resolvedParams = await params;
-  return (
-    <>
-      <CourseDetail courseId={resolvedParams.courseId} />
-    </>
-  );
+	return (
+		<>
+			<CourseDetail courseId={parseInt(params.id)} />
+		</>
+	);
 }

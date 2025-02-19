@@ -7,7 +7,7 @@ import { FiPlus } from 'react-icons/fi';
 
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
 import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
-import ModalFormCourse from '~/components/educators/modals/ModalFormCourse2';
+import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -120,6 +120,17 @@ export default function Page() {
 		options?: { signal: AbortSignal }
 	) => {
 		if (!user) return;
+
+		// Validar que haya al menos un parámetro
+		if (parametrosList.length === 0) {
+			toast({
+				title: 'Error',
+				description: 'Debe agregar al menos un parámetro de evaluación',
+				variant: 'destructive',
+			});
+			return;
+		}
+
 		let coverImageKey = '';
 		try {
 			setUploading(true);

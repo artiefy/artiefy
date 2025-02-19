@@ -66,7 +66,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			id: 'forum',
 			link: '/dashboard/educadores/foro',
 		},
-		{ icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: '/' },
+		{ icon: <FiUser size={24} />, title: 'Perfil', id: 'profile', link: '/' },
 		{
 			icon: <FiShieldOff size={24} />,
 			title: 'Reportar errores',

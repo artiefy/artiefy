@@ -223,48 +223,34 @@ export const getLessonById = async (
 	return (lessonData as unknown as Lesson) || null;
 };
 
-// Actualizar una lección
-export const updateLesson = async (
-	lessonId: number,
-	{
-		title,
-		description,
-		duration,
-		coverImageKey,
-		coverVideoKey,
-		order,
-		courseId,
-		porcentajecompletado,
-		resourceKey,
-		resourceNames,
-	}: {
-		title?: string;
-		description?: string;
-		duration?: number;
-		coverImageKey?: string;
-		coverVideoKey?: string;
-		order?: number;
-		courseId?: number;
-		porcentajecompletado?: number;
-		resourceKey?: string;
-		resourceNames?: string;
-	}
-): Promise<void> => {
-	const updateData: Record<string, unknown> = {};
+// Agregar esta interfaz si no existe
+interface UpdateLessonData {
+	title?: string;
+	description?: string;
+	duration?: number;
+	coverImageKey?: string;
+	coverVideoKey?: string;
+	resourceKey?: string;
+	resourceNames?: string;
+	courseId?: number;
+}
 
-	if (title) updateData.title = title;
-	if (description) updateData.description = description;
-	if (duration) updateData.duration = duration;
-	if (coverImageKey) updateData.coverImageKey = coverImageKey;
-	if (coverVideoKey) updateData.coverVideoKey = coverVideoKey;
-	if (order) updateData.order = order;
-	if (courseId) updateData.courseId = courseId;
-	if (porcentajecompletado !== undefined)
-		updateData.porcentajecompletado = porcentajecompletado;
-	if (resourceKey) updateData.resourceKey = resourceKey;
-	if (resourceNames) updateData.resourceNames = resourceNames;
+export const updateLesson = async (lessonId: number, data: UpdateLessonData) => {
+	const updateData: UpdateLessonData = {};
+	
+	if (data.title) updateData.title = data.title;
+	if (data.description) updateData.description = data.description;
+	if (typeof data.duration === 'number') updateData.duration = data.duration;
+	if (data.coverImageKey) updateData.coverImageKey = data.coverImageKey;
+	if (data.coverVideoKey) updateData.coverVideoKey = data.coverVideoKey;
+	if (data.resourceKey) updateData.resourceKey = data.resourceKey;
+	if (data.resourceNames) updateData.resourceNames = data.resourceNames;
+	if (typeof data.courseId === 'number') updateData.courseId = data.courseId;
 
-	await db.update(lessons).set(updateData).where(eq(lessons.id, lessonId));
+	return await db.update(lessons)
+		.set(updateData)
+		.where(eq(lessons.id, lessonId))
+		.returning();
 };
 
 // Eliminar una lección

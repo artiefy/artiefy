@@ -27,6 +27,7 @@ import {
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { toast } from '~/hooks/use-toast';
+import ModalFormLessons from '~/components/educators/modals/ModalFormLessons';
 
 interface Lessons {
 	id: number;
@@ -70,6 +71,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [color, setColor] = useState<string>(selectedColor || '#FFFFFF');
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
 	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
@@ -143,43 +145,92 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
 	const handleDelete = async (id: string) => {
 		try {
-			const responseAwsImg = await fetch(
-				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`,
-				{
+			// Eliminar imagen de portada
+			if (lessons.coverImageKey) {
+				const responseAwsImg = await fetch('/api/upload', {
 					method: 'DELETE',
-				}
-			);
-			const responseAwsVideo = await fetch(
-				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`,
-				{
-					method: 'DELETE',
-				}
-			);
-			const responseAwsFiles = await fetch(
-				`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.resourceKey}`,
-				{
-					method: 'DELETE',
-				}
-			);
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						key: lessons.coverImageKey,
+					}),
+				});
 
+				if (!responseAwsImg.ok) {
+					console.error('Error al eliminar la imagen de portada');
+				}
+			}
+
+			// Eliminar video
+			if (lessons.coverVideoKey) {
+				const responseAwsVideo = await fetch('/api/upload', {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						key: lessons.coverVideoKey,
+					}),
+				});
+
+				if (!responseAwsVideo.ok) {
+					console.error('Error al eliminar el video');
+				}
+			}
+
+			// Eliminar archivos de recursos
+			if (lessons.resourceKey) {
+				// Dividir la cadena de resourceKey en un array
+				const resourceKeys = lessons.resourceKey.split(',');
+
+				// Eliminar cada archivo de recurso
+				const deletePromises = resourceKeys.map(key => 
+					fetch('/api/upload', {
+						method: 'DELETE',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							key: key.trim(), // Eliminar espacios en blanco
+						}),
+					})
+				);
+
+				// Esperar a que todas las eliminaciones se completen
+				const responses = await Promise.all(deletePromises);
+				
+				// Verificar si hubo errores
+				responses.forEach((response, index) => {
+					if (!response.ok) {
+						console.error(`Error al eliminar el archivo ${resourceKeys[index]}`);
+					}
+				});
+			}
+
+			// Eliminar la lección de la base de datos
 			const response = await fetch(`/api/educadores/lessons?lessonId=${id}`, {
 				method: 'DELETE',
 			});
-			if (
-				!response.ok &&
-				!responseAwsImg &&
-				!responseAwsVideo &&
-				!responseAwsFiles
-			)
+
+			if (!response.ok) {
 				throw new Error('Error al eliminar la clase');
+			}
+
 			toast({
 				title: 'Clase eliminada',
 				description: `La clase ${lessons.title} ha sido eliminada exitosamente.`,
 				variant: 'default',
 			});
+			
 			router.back(); // Redirige a la página anterior
 		} catch (error) {
 			console.error('Error:', error);
+			toast({
+				title: 'Error',
+				description: 'No se pudo eliminar la clase completamente',
+				variant: 'destructive',
+			});
 		}
 	};
 
@@ -273,7 +324,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 									Ver clase
 								</Link>
 							</Button>
-							<Button className="border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600">
+							<Button
+								onClick={() => setIsEditModalOpen(true)}
+								className="border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600"
+							>
 								Editar clase
 							</Button>
 
@@ -357,6 +411,14 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					/>
 				</div>
 			</div>
+			<ModalFormLessons
+				isOpen={isEditModalOpen}
+				onCloseAction={() => setIsEditModalOpen(false)}
+				uploading={false}
+				courseId={courseIdNumber ?? 0}
+				isEditing={true}
+				editingLesson={lessons}
+			/>
 		</>
 	);
 };
