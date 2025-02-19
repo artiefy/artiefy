@@ -114,7 +114,7 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 		setEditingQuestion(undefined);
 	};
 
-	if (loading && questions.length === 0) {
+	if (loading && questions.length > 0) {
 		return <div>Cargando preguntas...</div>;
 	}
 
