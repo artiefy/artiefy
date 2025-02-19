@@ -90,6 +90,7 @@ const Page: React.FC = () => {
 		porcentaje: 0,
 		revisada: false,
 		parametro: 0,
+		fechaMaximaEntrega: null as string | null,
 	});
 	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl;
 	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
@@ -404,6 +405,9 @@ const Page: React.FC = () => {
 					revisada: formData.revisada,
 					parametroId: formData.parametro || null,
 					porcentaje: porcentaje,
+					fechaMaximaEntrega: formData.fechaMaximaEntrega
+						? new Date(formData.fechaMaximaEntrega).toISOString()
+						: null,
 				}),
 			});
 
@@ -527,7 +531,7 @@ const Page: React.FC = () => {
 						<div className="flex flex-col">
 							<p>¿La actividad es calificable?:</p>
 							<div className="flex space-x-2">
-								<label 
+								<label
 									htmlFor="toggle"
 									className="relative inline-block h-8 w-16"
 								>
@@ -598,6 +602,23 @@ const Page: React.FC = () => {
 													}
 												/>
 											</div>
+										</div>
+										<div className="my-4 flex flex-col">
+											<span
+												className={`text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+											>
+												Fecha maxima de entrega:
+											</span>
+											<input
+												type="date"
+												className={`w-1/2 rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+												onChange={(e) =>
+													setFormData({
+														...formData,
+														fechaMaximaEntrega: e.target.value,
+													})
+												}
+											/>
 										</div>
 									</div>
 								)}

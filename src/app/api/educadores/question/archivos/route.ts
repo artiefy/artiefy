@@ -20,10 +20,6 @@ export async function GET(request: NextRequest) {
 		const key = `activity:${activityId}:questionsFilesSubida`;
 		const questionsFilesSubida =
 			(await redis.get<QuestionFilesSubida[]>(key)) ?? [];
-		console.log(
-			'Fetched questionsFilesSubida from Redis:',
-			questionsFilesSubida
-		); // Add logging
 		if (questionsFilesSubida.length === 0) {
 			console.log('No questionsFilesSubida found for activityId:', activityId);
 		}

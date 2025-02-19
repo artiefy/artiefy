@@ -59,7 +59,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 		// Solo hacemos polling si estamos editando
 		let interval: NodeJS.Timeout | undefined;
 		if (fetchQuestions) {
-			interval = setInterval(() => void fetchQuestions(), 5000);
+			interval = setInterval(() => void fetchQuestions(), 10000);
 		}
 
 		return () => {

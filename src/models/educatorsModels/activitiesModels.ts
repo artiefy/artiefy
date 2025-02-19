@@ -20,6 +20,7 @@ export interface Activity {
 	revisada: boolean;
 	parametroId?: number | null;
 	porcentaje: number;
+	fechaMaximaEntrega: Date | null;
 }
 
 // Actualizar la interfaz ActivityDetails
@@ -44,6 +45,7 @@ export interface ActivityDetails {
 			instructor: string | null;
 		};
 	};
+	fechaMaximaEntrega: Date | null;
 }
 
 interface CreateActivityParams {
@@ -54,6 +56,7 @@ interface CreateActivityParams {
 	revisada: boolean;
 	parametroId?: number | null;
 	porcentaje: number;
+	fechaMaximaEntrega: Date | null;
 }
 
 // CRUD Operations
@@ -71,6 +74,7 @@ export async function createActivity(params: CreateActivityParams) {
 				parametroId: params.parametroId || null,
 				porcentaje: params.porcentaje || 0,
 				lastUpdated: new Date(),
+				fechaMaximaEntrega: params.fechaMaximaEntrega || null,
 			})
 			.returning();
 
@@ -110,6 +114,7 @@ export const getActivityById = async (activityId: number) => {
 					courseDescription: courses.description,
 					courseInstructor: courses.instructor,
 				},
+				fechaMaximaEntrega: activities.fechaMaximaEntrega,
 			})
 			.from(activities)
 			.leftJoin(typeActi, eq(activities.typeid, typeActi.id))
@@ -159,6 +164,7 @@ export const getActivitiesByLessonId = async (
 					courseDescription: courses.description,
 					courseInstructor: courses.instructor,
 				},
+				fechaMaximaEntrega: activities.fechaMaximaEntrega,
 			})
 			.from(activities)
 			.leftJoin(typeActi, eq(activities.typeid, typeActi.id))
@@ -189,6 +195,7 @@ export const getActivitiesByLessonId = async (
 					instructor: actividad.lesson.courseInstructor,
 				},
 			},
+			fechaMaximaEntrega: actividad.fechaMaximaEntrega ?? null,
 		}));
 	} catch (error) {
 		console.error('Error fetching activities by lesson ID:', error);
@@ -265,10 +272,10 @@ export async function getTotalPorcentajeByParametro(
 
 		return {
 			total,
-			actividades: actividades.map(act => ({
+			actividades: actividades.map((act) => ({
 				...act,
-				porcentaje: act.porcentaje || 0
-			}))
+				porcentaje: act.porcentaje || 0,
+			})),
 		};
 	} catch (error) {
 		console.error('Error al obtener el total de porcentajes:', error);

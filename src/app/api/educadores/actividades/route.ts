@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
 			revisada: boolean;
 			parametroId?: number | null;
 			porcentaje: number;
+			fechaMaximaEntrega: string | null;
 		};
 
 		const {
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
 			revisada,
 			parametroId,
 			porcentaje,
+			fechaMaximaEntrega,
 		} = body;
 
 		const newActivity = await createActivity({
@@ -68,6 +70,9 @@ export async function POST(request: NextRequest) {
 			revisada,
 			parametroId: revisada ? parametroId : null,
 			porcentaje: revisada ? porcentaje : 0,
+			fechaMaximaEntrega: fechaMaximaEntrega
+				? new Date(fechaMaximaEntrega)
+				: null,
 		});
 
 		console.log('Datos enviados al servidor:', {
@@ -78,6 +83,7 @@ export async function POST(request: NextRequest) {
 			revisada,
 			parametroId,
 			porcentaje,
+			fechaMaximaEntrega,
 		});
 
 		return NextResponse.json({
@@ -156,15 +162,18 @@ export async function PUT(request: NextRequest) {
 			description?: string;
 			typeid?: number;
 			revisada?: boolean;
+			fechaMaximaEntrega?: Date | null;
 		};
 
-		const { id, name, description, typeid, revisada } = body;
+		const { id, name, description, typeid, revisada, fechaMaximaEntrega } =
+			body;
 
 		await updateActivity(id, {
 			name,
 			description,
 			typeid,
 			revisada,
+			fechaMaximaEntrega,
 		});
 
 		return NextResponse.json({

@@ -63,6 +63,7 @@ interface ActivityDetails {
 		courseDescription: string;
 		courseInstructor: string;
 	};
+	fechaMaximaEntrega: string | null;
 }
 
 const getContrastYIQ = (hexcolor: string) => {
@@ -306,6 +307,17 @@ const Page: React.FC = () => {
 							<p className="font-semibold">
 								¿La actividad es calificable?:{' '}
 								<b>{actividad.revisada ? 'Si' : 'No'}.</b>
+							</p>
+							<p className="font-semibold">
+								Fecha máxima de entrega:{' '}
+								<b>
+									{actividad.fechaMaximaEntrega
+										? new Date(
+												actividad.fechaMaximaEntrega
+											).toLocaleDateString()
+										: 'No tiene fecha máxima de entrega'}
+									.
+								</b>
 							</p>
 						</div>
 						<div className="flex items-center justify-center">

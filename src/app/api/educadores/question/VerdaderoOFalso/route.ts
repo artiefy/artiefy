@@ -19,10 +19,6 @@ export async function GET(request: NextRequest) {
 		}
 		const key = `activity:${activityId}:questionsVOF`;
 		const questionsVOF = (await redis.get<VerdaderoOFlaso[]>(key)) ?? [];
-		console.log('Fetched questionsVOF from Redis:', questionsVOF); // Add logging
-		if (questionsVOF.length === 0) {
-			console.log('No questionsVOF found for activityId:', activityId);
-		}
 		return NextResponse.json({ success: true, questionsVOF: questionsVOF });
 	} catch (error) {
 		console.error('Error en la API route:', error);

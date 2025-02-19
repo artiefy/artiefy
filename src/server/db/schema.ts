@@ -83,6 +83,7 @@ export const activities = pgTable('activities', {
 	revisada: boolean('revisada').default(false),
 	parametroId: integer('parametro_id').references(() => parametros.id),
 	porcentaje: integer('porcentaje'),
+	fechaMaximaEntrega: timestamp('fecha_maxima_entrega'),
 });
 
 // Tabla de preferencias
