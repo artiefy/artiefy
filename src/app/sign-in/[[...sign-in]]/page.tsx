@@ -12,238 +12,225 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import Loading from '../../loading';
 
 export default function SignInPage() {
-	const { isLoaded, isSignedIn } = useAuth();
-	const { signIn, setActive } = useSignIn();
-	const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
-		null
-	);
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
-	const [code, setCode] = useState('');
-	const [successfulCreation, setSuccessfulCreation] = useState(false);
-	const [secondFactor, setSecondFactor] = useState(false);
-	const [errors, setErrors] = useState<ClerkAPIError[]>();
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [isForgotPassword, setIsForgotPassword] = useState(false);
-	const searchParams = useSearchParams();
-	const redirectUrl = searchParams.get('redirect_url') ?? '/';
-	const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { signIn, setActive } = useSignIn();
+  const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [successfulCreation, setSuccessfulCreation] = useState(false);
+  const [secondFactor, setSecondFactor] = useState(false);
+  const [errors, setErrors] = useState<ClerkAPIError[]>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect_url') ?? '/';
+  const router = useRouter();
 
-	useEffect(() => {
-		if (isSignedIn) {
-      router.replace(redirectUrl ?? '/');
+  useEffect(() => {
+    if (isSignedIn) {
+      console.log('🔄 Redirigiendo después de iniciar sesión a:', redirectTo);
+      router.replace(redirectTo);
     }
-	}, [isSignedIn, router, redirectUrl]);
+  }, [isSignedIn, router, redirectTo]);
 
-	if (!isLoaded || isSignedIn) {
-		return <Loading />;
-	}
+  if (!isLoaded || isSignedIn) {
+    return <Loading />;
+  }
 
-	// Actualiza la función signInWith
-	const signInWith = async (strategy: OAuthStrategy) => {
-		if (!signIn) {
-			setErrors([
-				{
-					code: 'sign_in_undefined',
-					message: 'SignIn no está definido',
-					longMessage: 'SignIn no está definido',
-					meta: {},
-				},
-			]);
-			setIsSubmitting(false);
-			return;
-		}
-		setLoadingProvider(strategy);
-		try {
-			await signIn.authenticateWithRedirect({
-				strategy,
-				redirectUrl: `/sign-up/sso-callback`,
-				redirectUrlComplete: redirectUrl ?? '/',
-			});
-		} catch (err) {
-			setLoadingProvider(null);
-			if (isClerkAPIResponseError(err)) {
-				setErrors(err.errors);
-			} else {
-				setErrors([
-					{
-						code: 'oauth_error',
-						message: 'Error durante el inicio de sesión con OAuth',
-						longMessage: 'Error durante el inicio de sesión con OAuth',
-						meta: {},
-					},
-				]);
-			}
-			console.error(err);
-		}
-	};
+  const signInWith = async (strategy: OAuthStrategy) => {
+    if (!signIn) {
+      setErrors([
+        {
+          code: 'sign_in_undefined',
+          message: 'SignIn no está definido',
+          longMessage: 'SignIn no está definido',
+          meta: {},
+        },
+      ]);
+      setIsSubmitting(false);
+      return;
+    }
+    setLoadingProvider(strategy);
+    try {
+      await signIn.authenticateWithRedirect({
+        strategy,
+        redirectUrl: `/sign-up/sso-callback?redirect_url=${encodeURIComponent(redirectTo)}`,
+        redirectUrlComplete: redirectTo,
+      });
+    } catch (err) {
+      setLoadingProvider(null);
+      setErrors([
+        {
+          code: 'oauth_error',
+          message: 'Error durante el inicio de sesión con OAuth',
+          longMessage: 'Error durante el inicio de sesión con OAuth',
+          meta: {},
+        },
+      ]);
+      console.error(err);
+    }
+  };
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors(undefined);
-		setIsSubmitting(true);
-		if (!signIn) return;
-		if (!isLoaded) return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
+    if (!signIn) return;
+    if (!isLoaded) return;
 
-		try {
-			const signInAttempt = await signIn.create({
-				identifier: email,
-				password,
-			});
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
 
-			if (signInAttempt.status === 'complete') {
-				if (setActive) {
-					await setActive({ session: signInAttempt.createdSessionId });
-				}
-				router.replace(redirectUrl ?? '/');
-			} else if (signInAttempt.status === 'needs_first_factor') {
-				const supportedStrategies =
-					signInAttempt.supportedFirstFactors?.map(
-						(factor) => factor.strategy
-					) ?? [];
-				if (!supportedStrategies.includes('password')) {
-					setErrors([
-						{
-							code: 'invalid_strategy',
-							message: 'Estrategia de verificación inválida',
-							longMessage: 'Estrategia de verificación inválida',
-							meta: {},
-						},
-					]);
-				}
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} catch (err) {
-			if (isClerkAPIResponseError(err)) {
-				setErrors(err.errors);
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+      if (signInAttempt.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: signInAttempt.createdSessionId });
+        }
+        router.replace(redirectTo);
+      } else if (signInAttempt.status === 'needs_first_factor') {
+        const supportedStrategies =
+          signInAttempt.supportedFirstFactors?.map((factor) => factor.strategy) ?? [];
+        if (!supportedStrategies.includes('password')) {
+          setErrors([
+            {
+              code: 'invalid_strategy',
+              message: 'Estrategia de verificación inválida',
+              longMessage: 'Estrategia de verificación inválida',
+              meta: {},
+            },
+          ]);
+        }
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-	const handleForgotPassword = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors(undefined);
-		setIsSubmitting(true);
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
 
-		try {
-			if (!signIn) return;
-			await signIn.create({
-				strategy: 'reset_password_email_code',
-				identifier: email,
-			});
-			setSuccessfulCreation(true);
-			setErrors(undefined);
-		} catch (err) {
-			if (isClerkAPIResponseError(err)) {
-				setErrors(err.errors);
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+    try {
+      if (!signIn) return;
+      await signIn.create({
+        strategy: 'reset_password_email_code',
+        identifier: email,
+      });
+      setSuccessfulCreation(true);
+      setErrors(undefined);
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-	const handleResetPassword = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors(undefined);
-		setIsSubmitting(true);
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
 
-		try {
-			if (!signIn) {
-				setErrors([
-					{
-						code: 'sign_in_undefined',
-						message: 'SignIn no está definido',
-						longMessage: 'SignIn no está definido',
-						meta: {},
-					},
-				]);
-				setIsSubmitting(false);
-				return;
-			}
-			const result = await signIn.attemptFirstFactor({
-				strategy: 'reset_password_email_code',
-				code,
-				password,
-			});
+    try {
+      if (!signIn) {
+        setErrors([
+          {
+            code: 'sign_in_undefined',
+            message: 'SignIn no está definido',
+            longMessage: 'SignIn no está definido',
+            meta: {},
+          },
+        ]);
+        setIsSubmitting(false);
+        return;
+      }
+      const result = await signIn.attemptFirstFactor({
+        strategy: 'reset_password_email_code',
+        code,
+        password,
+      });
 
-			if (result.status === 'needs_second_factor') {
-				setSecondFactor(true);
-				setErrors(undefined);
-			} else if (result.status === 'complete') {
-				if (setActive) {
-					await setActive({ session: result.createdSessionId });
-				}
-				router.replace('/'); // Aquí puedes cambiar para redirigir a una URL específica si es necesario
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} catch (err) {
-			if (isClerkAPIResponseError(err)) {
-				setErrors(err.errors);
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+      if (result.status === 'needs_second_factor') {
+        setSecondFactor(true);
+        setErrors(undefined);
+      } else if (result.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: result.createdSessionId });
+        }
+        router.replace(redirectTo); // Aquí puedes cambiar para redirigir a una URL específica si es necesario
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-	const emailError = errors?.some(
-		(error) => error.code === 'form_identifier_not_found'
-	);
-	const passwordError = errors?.some(
-		(error) => error.code === 'form_password_incorrect'
-	);
+  const emailError = errors?.some((error) => error.code === 'form_identifier_not_found');
+  const passwordError = errors?.some((error) => error.code === 'form_password_incorrect');
 
 	return (
 		<div className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
-			{/* Imagen de fondo */}
 			<Image
 				src="/login-fondo.webp"
 				alt="Fondo de inicio de sesión"
-				fill
+				layout="fill"
 				className="object-cover"
 				quality={85}
 				priority
@@ -325,7 +312,7 @@ export default function SignInPage() {
 									>
 										<div className="flex w-full items-center justify-center">
 											{isSubmitting ? (
-												<Icons.spinner className="h-5 w-5 animate-spin text-primary" />
+												<Icons.blocks className="h-5 w-5 animate-spin text-primary" />
 											) : (
 												<span className="inline-block font-bold">
 													COMIENZA YA

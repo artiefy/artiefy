@@ -1,19 +1,8 @@
-"use client"
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { AuthenticateWithRedirectCallback, useAuth } from '@clerk/nextjs';
+import { AuthenticateWithRedirectCallback } from '@clerk/nextjs'
 
-export default function SSOCallbackPage() {
-  const router = useRouter();
-  const { isLoaded, isSignedIn } = useAuth();
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      router.replace('/');
-    } else if (isLoaded && !isSignedIn) {
-      router.replace('/sign-up');
-    }
-  }, [isLoaded, isSignedIn, router]);
-
-  return <AuthenticateWithRedirectCallback />;
+export default function SSOCallback() {
+  // Handle the redirect flow by calling the Clerk.handleRedirectCallback() method
+  // or rendering the prebuilt <AuthenticateWithRedirectCallback/> component.
+  // This is the final step in the custom OAuth flow.
+  return <AuthenticateWithRedirectCallback />
 }

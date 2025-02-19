@@ -33,7 +33,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     console.log('User ID from auth:', userId); // Log the user ID from auth
     if (userId) {
       const client = await clerkClient();
-      const clerkUpdateResult = await client.users.updateUser(userId, {
+      const clerkUpdateResult = await client.users.updateUserMetadata(userId, {
         publicMetadata: {
           subscriptionStatus: 'active',
           subscriptionEndDate: subscriptionEndDate.toISOString(),
