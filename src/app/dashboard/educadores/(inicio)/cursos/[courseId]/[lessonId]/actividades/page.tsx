@@ -525,7 +525,7 @@ const Page: React.FC = () => {
 							</h2>
 						</div>
 						<div className="flex flex-col">
-							<p>¿La actividad es revisada?:</p>
+							<p>¿La actividad es calificable?:</p>
 							<div className="flex space-x-2">
 								<label
 									htmlFor="toggle"

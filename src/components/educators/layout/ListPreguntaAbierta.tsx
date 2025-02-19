@@ -1,6 +1,6 @@
 'use client';
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Edit, Trash } from 'lucide-react';
 import PreguntasAbiertas from '~/components/educators/layout/PreguntasAbiertas';
 import { Button } from '~/components/educators/ui/button';
@@ -19,8 +19,9 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 	>(undefined);
 	const [loading, setLoading] = useState<boolean>(true);
 
-	const fetchQuestions = async () => {
+	const fetchQuestions = useCallback(async () => {
 		try {
+			setLoading(true);
 			const response = await fetch(
 				`/api/educadores/question/completar?activityId=${activityId}`
 			);
@@ -29,28 +30,44 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 			const data = (await response.json()) as {
 				success: boolean;
-				questions: Completado[];
+				questionsACompletar: Completado[];
 			};
+
 			if (data.success) {
-				setQuestions(
-					data.questions?.filter((q) => q?.text && q?.correctAnswer) ?? []
-				);
+				const filteredQuestions =
+					data.questionsACompletar?.filter(
+						(q) => q?.text && q?.correctAnswer
+					) ?? [];
+
+				setQuestions(filteredQuestions);
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
+			toast({
+				title: 'Error',
+				description: 'Error al cargar las preguntas',
+				variant: 'destructive',
+			});
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [activityId]);
 
 	useEffect(() => {
 		void fetchQuestions();
-		const interval = setInterval(() => {
-			void fetchQuestions();
-		}, 5000); // Polling cada 5 segundos
 
-		return () => clearInterval(interval);
-	}, [activityId]);
+		// Solo hacemos polling si estamos editando
+		let interval: NodeJS.Timeout | undefined;
+		if (fetchQuestions) {
+			interval = setInterval(() => void fetchQuestions(), 5000);
+		}
+
+		return () => {
+			if (interval) {
+				clearInterval(interval);
+			}
+		};
+	}, [fetchQuestions, editingQuestion]);
 
 	const handleEdit = (question: Completado) => {
 		setEditingQuestion(question);
@@ -65,7 +82,10 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 				}
 			);
 			if (response.ok) {
-				void fetchQuestions();
+				// Actualizar el estado local en lugar de hacer fetch
+				setQuestions((prevQuestions) =>
+					prevQuestions.filter((q) => q.id !== questionId)
+				);
 				toast({
 					title: 'Pregunta eliminada',
 					description: 'La pregunta se eliminó correctamente',
@@ -73,17 +93,37 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 		} catch (error) {
 			console.error('Error al eliminar la pregunta:', error);
+			toast({
+				title: 'Error',
+				description: 'Error al eliminar la pregunta',
+				variant: 'destructive',
+			});
 		}
 	};
 
-	const handleFormSubmit = () => {
+	const handleFormSubmit = (question: Completado) => {
 		setEditingQuestion(undefined);
+		// Actualizamos el estado local inmediatamente
+		if (editingQuestion) {
+			// Si estamos editando, reemplazamos la pregunta existente
+			setQuestions((prevQuestions) =>
+				prevQuestions.map((q) => (q.id === question.id ? question : q))
+			);
+		} else {
+			// Si es una nueva pregunta, la añadimos al array
+			setQuestions((prevQuestions) => [...prevQuestions, question]);
+		}
+		// Hacemos fetch para asegurar sincronización con el servidor
 		void fetchQuestions();
 	};
 
 	const handleCancel = () => {
 		setEditingQuestion(undefined);
 	};
+
+	if (loading && questions.length === 0) {
+		return <div>Cargando preguntas...</div>;
+	}
 
 	return (
 		<div className="my-2 space-y-4">
@@ -95,8 +135,6 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 					onCancel={handleCancel}
 					isUploading={false}
 				/>
-			) : loading ? (
-				<p>Cargando preguntas...</p>
 			) : questions.length > 0 ? (
 				questions.map((question) => (
 					<Card key={question.id} className="border-none shadow-lg">

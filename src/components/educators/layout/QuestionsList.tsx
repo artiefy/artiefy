@@ -1,6 +1,6 @@
 'use client';
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Edit, Trash } from 'lucide-react';
 import QuestionForm from '~/components/educators/layout/QuestionsForms';
 import { Button } from '~/components/educators/ui/button';
@@ -17,9 +17,11 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 	const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(
 		undefined
 	);
+	const [loading, setLoading] = useState(true);
 
-	const fetchQuestions = async () => {
+	const fetchQuestions = useCallback(async () => {
 		try {
+			setLoading(true);
 			const response = await fetch(
 				`/api/educadores/question/opcionMulti?activityId=${activityId}`
 			);
@@ -27,30 +29,42 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 				success: boolean;
 				questionsOM: Question[];
 			};
+
 			if (data.success) {
-				setQuestions(
+				const filteredQuestions =
 					data.questionsOM?.filter(
 						(q) => q?.text && q?.options && Array.isArray(q.options)
-					) ?? []
-				);
-			} else {
-				setQuestions([]);
+					) ?? [];
+
+				setQuestions(filteredQuestions);
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
-			setQuestions([]);
+			toast({
+				title: 'Error',
+				description: 'Error al cargar las preguntas',
+				variant: 'destructive',
+			});
+		} finally {
+			setLoading(false);
 		}
-	};
+	}, [activityId]);
 
 	useEffect(() => {
 		void fetchQuestions();
-		const interval = setInterval(() => {
-			void fetchQuestions();
-		}, 5000); // Polling cada 5 segundos
+
+		// Solo hacemos polling si estamos editando
+		let interval: NodeJS.Timeout | undefined;
+		if (editingQuestion) {
+			interval = setInterval(() => void fetchQuestions(), 5000);
+		}
+
 		return () => {
-			clearInterval(interval);
+			if (interval) {
+				clearInterval(interval);
+			}
 		};
-	}, [activityId]);
+	}, [fetchQuestions, editingQuestion]);
 
 	const handleEdit = (question: Question) => {
 		setEditingQuestion(question);
@@ -65,7 +79,8 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 				}
 			);
 			if (response.ok) {
-				void fetchQuestions();
+				// Actualizar el estado local en lugar de hacer fetch
+				setQuestions(questions.filter((q) => q.id !== questionId));
 				toast({
 					title: 'Pregunta eliminada',
 					description: 'La pregunta se eliminó correctamente',
@@ -73,6 +88,11 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 		} catch (error) {
 			console.error('Error al eliminar la pregunta:', error);
+			toast({
+				title: 'Error',
+				description: 'Error al eliminar la pregunta',
+				variant: 'destructive',
+			});
 		}
 	};
 
@@ -84,6 +104,10 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 	const handleCancel = () => {
 		setEditingQuestion(undefined);
 	};
+
+	if (loading && questions.length === 0) {
+		return <div>Cargando preguntas...</div>;
+	}
 
 	return (
 		<div className="my-2 space-y-4">

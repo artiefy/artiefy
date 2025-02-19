@@ -109,6 +109,10 @@ const FormActCompletado: React.FC<formSubida> = ({
 	return (
 		<>
 			<div className="container my-2 rounded-lg bg-white p-3 text-black shadow-lg">
+				<h2 className="text-center text-2xl font-bold text-gray-800">
+					{editingQuestion ? 'Actualizar' : 'Crear'} Pregunta del tipo:
+					Presentacion de trabajo
+				</h2>
 				<form onSubmit={handleSubmit}>
 					<label>Pregunta</label>
 					<textarea

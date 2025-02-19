@@ -1,6 +1,6 @@
 'use client';
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Edit, Trash } from 'lucide-react';
 import FormActCompletado from '~/components/educators/layout/FormActCompletado';
 import { Button } from '~/components/educators/ui/button';
@@ -17,9 +17,11 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 	const [editingQuestion, setEditingQuestion] = useState<
 		QuestionFilesSubida | undefined
 	>(undefined);
+	const [loading, setLoading] = useState(true);
 
-	const fetchQuestions = async () => {
+	const fetchQuestions = useCallback(async () => {
 		try {
+			setLoading(true);
 			const response = await fetch(
 				`/api/educadores/question/archivos?activityId=${activityId}`
 			);
@@ -30,8 +32,14 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 				success: boolean;
 				questionsFilesSubida: QuestionFilesSubida[];
 			};
-			console.log('API response:', data); // Verificar la respuesta de la API
-			setQuestions(data.questionsFilesSubida);
+
+			// Comparar si las preguntas han cambiado antes de actualizar el estado
+			const hasQuestionsChanged =
+				JSON.stringify(data.questionsFilesSubida) !== JSON.stringify(questions);
+
+			if (hasQuestionsChanged) {
+				setQuestions(data.questionsFilesSubida);
+			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
 			toast({
@@ -40,19 +48,25 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 				variant: 'destructive',
 			});
 		} finally {
-			console.log('Preguntas cargadas:', questions);
+			setLoading(false);
 		}
-	};
+	}, [activityId, questions]);
 
 	useEffect(() => {
-		void fetchQuestions();
-		const interval = setInterval(() => {
-			void fetchQuestions();
-		}, 5000); // Polling cada 5 segundos
+		fetchQuestions();
+
+		// Solo hacemos polling si estamos editando
+		let interval: NodeJS.Timeout | undefined;
+		if (editingQuestion) {
+			interval = setInterval(fetchQuestions, 5000);
+		}
+
 		return () => {
-			clearInterval(interval);
+			if (interval) {
+				clearInterval(interval);
+			}
 		};
-	}, [activityId]);
+	}, [fetchQuestions, editingQuestion]);
 
 	const handleEdit = (question: QuestionFilesSubida) => {
 		setEditingQuestion(question);
@@ -67,7 +81,8 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 				}
 			);
 			if (response.ok) {
-				void fetchQuestions();
+				// Actualizar el estado local en lugar de hacer fetch
+				setQuestions(questions.filter((q) => q.id !== questionId));
 				toast({
 					title: 'Pregunta eliminada',
 					description: 'La pregunta se eliminó correctamente',
@@ -75,23 +90,31 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 		} catch (error) {
 			console.error('Error al eliminar la pregunta:', error);
+			toast({
+				title: 'Error',
+				description: 'Error al eliminar la pregunta',
+				variant: 'destructive',
+			});
 		}
 	};
 
 	const handleFormSubmit = () => {
 		setEditingQuestion(undefined);
-		void fetchQuestions();
+		fetchQuestions();
 	};
 
 	const handleCancel = () => {
 		setEditingQuestion(undefined);
 	};
 
+	if (loading && questions.length === 0) {
+		return <div>Cargando preguntas...</div>;
+	}
+
 	return (
 		<div className="my-2 space-y-4">
 			<FormActCompletado activityId={activityId} onSubmit={handleFormSubmit} />
-			{questions &&
-				questions.length > 0 &&
+			{questions.length > 0 ? (
 				questions.map((question) => (
 					<Card key={question.id} className="border-none shadow-lg">
 						{editingQuestion?.id === question.id ? (
@@ -133,7 +156,10 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 							</>
 						)}
 					</Card>
-				))}
+				))
+			) : (
+				<p className="text-center text-gray-500">No hay preguntas creadas</p>
+			)}
 		</div>
 	);
 };

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '~/components/educators/ui/card';
 import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
@@ -25,29 +25,27 @@ export default function VerRespuestasArchivos({
 	const [loading, setLoading] = useState(true);
 	const [grades, setGrades] = useState<Record<string, string>>({});
 
-	useEffect(() => {
-		fetchRespuestas();
-	}, [activityId]);
-
-	useEffect(() => {
-		// Inicializar las calificaciones cuando se cargan las respuestas
-		const initialGrades: Record<string, string> = {};
-		Object.entries(respuestas).forEach(([key, respuesta]) => {
-			initialGrades[key] = respuesta.grade?.toString() ?? '';
-		});
-		setGrades(initialGrades);
-	}, [respuestas]);
-
-	const fetchRespuestas = async () => {
+	const fetchRespuestas = useCallback(async () => {
 		try {
+			setLoading(true);
 			const response = await fetch(
 				`/api/educadores/respuestas-archivos/${activityId}`
 			);
 			if (!response.ok) throw new Error('Error al obtener respuestas');
 			const data = await response.json();
+
+			// Inicializar las calificaciones con los valores de la base de datos
+			const initialGrades: Record<string, string> = {};
+			Object.entries(data.respuestas).forEach(([key, respuesta]) => {
+				const grade = (respuesta as RespuestaArchivo).grade;
+				// Si grade es null o undefined, establecemos un string vacío
+				initialGrades[key] = grade !== null ? grade.toString() : '';
+			});
+
 			setRespuestas(data.respuestas);
+			setGrades(initialGrades);
 		} catch (error) {
-			console.error('Error:', error);
+			console.error('Error al cargar respuestas:', error);
 			toast({
 				title: 'Error',
 				description: 'No se pudieron cargar las respuestas',
@@ -56,12 +54,17 @@ export default function VerRespuestasArchivos({
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [activityId]);
+
+	useEffect(() => {
+		fetchRespuestas();
+	}, [fetchRespuestas]);
 
 	const calificarRespuesta = async (
 		userId: string,
 		questionId: string,
-		grade: number
+		grade: number,
+		submissionKey: string
 	) => {
 		try {
 			const response = await fetch('/api/educadores/calificar-archivo', {
@@ -72,45 +75,81 @@ export default function VerRespuestasArchivos({
 					questionId,
 					userId,
 					grade,
+					submissionKey,
 				}),
 			});
 
-			if (!response.ok) throw new Error('Error al calificar');
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data.error || 'Error al calificar');
+			}
+
+			if (!data.success) {
+				throw new Error('La calificación no se guardó correctamente');
+			}
+
+			// Actualizar el estado local inmediatamente
+			setRespuestas((prev) => ({
+				...prev,
+				[submissionKey]: {
+					...prev[submissionKey],
+					grade,
+					status: 'calificado',
+				},
+			}));
+
+			setGrades((prev) => ({
+				...prev,
+				[submissionKey]: grade.toString(),
+			}));
 
 			toast({
 				title: 'Éxito',
 				description: 'Calificación guardada correctamente',
 			});
-			await fetchRespuestas();
 		} catch (error) {
-			console.error('Error al calificar:', error);
+			console.error('Error detallado al calificar:', error);
 			toast({
 				title: 'Error',
-				description: 'No se pudo guardar la calificación',
+				description:
+					error instanceof Error ? error.message : 'Error al calificar',
 				variant: 'destructive',
 			});
+			throw error;
 		}
 	};
 
 	const handleGradeChange = (key: string, value: string) => {
-		setGrades((prev) => ({ ...prev, [key]: value }));
+		// Validar que el valor sea un número o vacío
+		if (
+			value === '' ||
+			(!isNaN(Number(value)) && Number(value) >= 0 && Number(value) <= 5)
+		) {
+			setGrades((prev) => ({ ...prev, [key]: value }));
+		}
 	};
 
 	const handleSubmitGrade = async (key: string) => {
 		const grade = Number(grades[key]);
 		if (!isNaN(grade) && grade >= 0 && grade <= 5) {
-			const [, , questionId] = key.split(':');
 			try {
-				await calificarRespuesta(respuestas[key].userId, questionId, grade);
-				toast({
-					title: 'Éxito',
-					description: 'Calificación enviada correctamente',
-				});
+				const keyParts = key.split(':');
+				const questionId = keyParts[2];
+
+				await calificarRespuesta(
+					respuestas[key].userId,
+					questionId,
+					grade,
+					key
+				);
 			} catch (error) {
-				console.error('Error al enviar calificación:', error);
+				console.error('Error en handleSubmitGrade:', error);
+				await fetchRespuestas();
 				toast({
 					title: 'Error',
-					description: 'No se pudo enviar la calificación',
+					description:
+						'No se pudo guardar la calificación. Intentando recargar los datos.',
 					variant: 'destructive',
 				});
 			}
@@ -154,7 +193,7 @@ export default function VerRespuestasArchivos({
 			<h2 className="my-2 ml-4 text-xl font-semibold text-blue-600">
 				Respuestas de los Estudiantes
 			</h2>
-			<div className="grid gap-4 px-2 md:grid-cols-2">
+			<div className="grid gap-4 px-2 pb-4 md:grid-cols-2">
 				{Object.entries(respuestas).length > 0 ? (
 					Object.entries(respuestas).map(([key, respuesta]) => (
 						<Card
@@ -169,7 +208,7 @@ export default function VerRespuestasArchivos({
 												Estudiante: {respuesta.userName}
 											</h3>
 											<p className="text-sm text-gray-500">
-												Archivo: {respuesta.fileName}
+												Archivo: <b>{respuesta.fileName}</b>
 											</p>
 											<p className="text-sm text-gray-500">
 												Enviado:{' '}
@@ -182,7 +221,9 @@ export default function VerRespuestasArchivos({
 														: 'bg-green-100 text-green-800'
 												}`}
 											>
-												{respuesta.status}
+												{respuesta.status === 'calificado'
+													? 'Calificado'
+													: 'Pendiente'}
 											</span>
 										</div>
 										<div className="flex flex-col items-end gap-2">
@@ -198,7 +239,7 @@ export default function VerRespuestasArchivos({
 														step="0.1"
 														placeholder="0-5"
 														className="w-20 border-slate-300 text-center"
-														value={grades[key]}
+														value={grades[key] ?? ''}
 														onChange={(e) =>
 															handleGradeChange(key, e.target.value)
 														}
@@ -206,10 +247,15 @@ export default function VerRespuestasArchivos({
 												</div>
 												<Button
 													onClick={() => handleSubmitGrade(key)}
-													className="w-full border-green-500 bg-green-500 text-white transition-colors hover:bg-green-600"
+													className={`w-full transition-colors ${
+														respuesta.status === 'calificado'
+															? 'border-blue-500 bg-blue-500 text-white hover:bg-blue-600'
+															: 'border-green-500 bg-green-500 text-white hover:bg-green-600'
+													}`}
 												>
-													<span className="mr-2">✓</span>
-													Enviar Nota
+													{respuesta.status === 'calificado'
+														? '✏️ Actualizar Nota'
+														: '✓ Enviar Nota'}
 												</Button>
 											</div>
 											<Button

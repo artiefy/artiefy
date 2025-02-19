@@ -362,11 +362,21 @@ const Page: React.FC = () => {
 						<div className="mt-8 space-y-6">
 							<div className="rounded-lg bg-white p-6 shadow-md">
 								<div className="space-y-4">
-									<h2 className="text-center text-2xl font-bold text-gray-800">
-										Presentacion de documentos
-									</h2>
 									{actividadIdNumber !== null && (
 										<>
+											<div className="rounded-lg border border-gray-200 bg-white">
+												<div className="rounded-lg bg-blue-50 p-4">
+													<h2 className="text-center text-2xl font-bold text-gray-800">
+														Gestión de Archivos y Calificaciones
+													</h2>
+													<p className="text-center text-sm text-black">
+														En esta sección puedes gestionar los archivos
+														subidos por los estudiantes y asignar
+														calificaciones.
+													</p>
+												</div>
+												<VerRespuestasArchivos activityId={actividadIdNumber} />
+											</div>
 											{editingQuestion && 'parametros' in editingQuestion && (
 												<FormActCompletado
 													activityId={actividadIdNumber}
@@ -375,19 +385,6 @@ const Page: React.FC = () => {
 											)}
 											<div className="rounded-lg border border-gray-200 bg-white p-6">
 												<QuestionSubidaList activityId={actividadIdNumber} />
-											</div>
-											<div className="rounded-lg border border-gray-200 bg-white">
-												<div className="rounded-lg bg-blue-50 p-4">
-													<h2 className="text-center text-2xl font-bold text-gray-800">
-														Gestión de Archivos y Calificaciones
-													</h2>
-													<p className="text-center text-sm text-blue-700">
-														En esta sección puedes gestionar los archivos
-														subidos por los estudiantes y asignar
-														calificaciones.
-													</p>
-												</div>
-												<VerRespuestasArchivos activityId={actividadIdNumber} />
 											</div>
 										</>
 									)}
