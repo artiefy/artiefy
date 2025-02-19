@@ -313,7 +313,7 @@ export default function SignInPage() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.blocks className="w-5 h-5 animate-spin text-primary" />
+                        <Icons.spinner className="w-5 h-5text-primary" />
                       ) : (
                         <span className="inline-block font-bold">COMIENZA YA</span>
                       )}
