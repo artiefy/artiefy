@@ -36,6 +36,7 @@ type ConfirmationState = {
 	title: string;
 	message: string;
 	onConfirm: () => void;
+	onCancel?: () => void;
 } | null;
 
 export default function AdminDashboard() {
@@ -102,6 +103,81 @@ export default function AdminDashboard() {
 	const indexOfLastUser = currentPage * usersPerPage;
 	const indexOfFirstUser = indexOfLastUser - usersPerPage;
 	const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+	const [showAssignModal, setShowAssignModal] = useState(false);
+	const handleSelectStudent = (userId: string) => {
+		setSelectedStudents((prev) =>
+			prev.includes(userId)
+				? prev.filter((id) => id !== userId)
+				: [...prev, userId]
+		);
+	};
+	const fetchCourses = useCallback(async () => {
+		try {
+			const res = await fetch('/api/super-admin/courses');
+			if (!res.ok) throw new Error('Error al cargar cursos');
+			const rawData: unknown = await res.json();
+			if (!Array.isArray(rawData)) throw new Error('Invalid data received');
+			const data: { id: string; title: string }[] = rawData.filter(
+				(item): item is { id: string; title: string } =>
+					typeof item === 'object' &&
+					item !== null &&
+					'id' in item &&
+					'title' in item
+			);
+			setCourses(data);
+		} catch (err) {
+			console.error('Error fetching courses:', err);
+		}
+	}, []);
+
+	const handleAssignStudents = async () => {
+		if (!selectedCourse || selectedStudents.length === 0) return;
+
+		try {
+			const res = await fetch('/api/enrollments', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					courseId: selectedCourse,
+					userIds: selectedStudents,
+				}),
+			});
+
+			if (!res.ok) throw new Error('Error al asignar estudiantes');
+
+			const result = await res.json() as { added: number; alreadyEnrolled: number; message: string };
+			const { message } = result;
+
+			// 🔹 Cierra el modal antes de mostrar la confirmación
+			setShowAssignModal(false);
+
+			// 🔹 Espera un pequeño tiempo para evitar superposición de animaciones
+			setTimeout(() => {
+				setConfirmation({
+					isOpen: true,
+					title: 'Asignación de Estudiantes',
+					message: `${message} \n\n❓ ¿Quieres seguir asignando más estudiantes?`,
+					onConfirm: () => {
+						// ✅ Si el usuario quiere seguir, vuelve a abrir el modal
+						setSelectedStudents([]);
+						setSelectedCourse(null);
+						setShowAssignModal(true);
+					},
+					onCancel: () => {
+						// ❌ Si el usuario no quiere seguir, cierra la confirmación
+						setConfirmation(null);
+					},
+				});
+			}, 300); // 🔹 Esperamos 300ms para evitar superposición de animaciones
+		} catch {
+			showNotification('Error al asignar estudiantes', 'error');
+		}
+	};
+
+	useEffect(() => {
+		void fetchCourses();
+	}, [fetchCourses]);
+
 	const fetchUsers = useCallback(async () => {
 		try {
 			const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`);
@@ -441,6 +517,9 @@ export default function AdminDashboard() {
 		})(); // ✅ Ejecutamos la función inmediatamente
 	};
 	const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
+	const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+	const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
 	const handleMassUserUpload = useCallback(
 		(newUsers: User[]) => {
@@ -570,6 +649,92 @@ export default function AdminDashboard() {
 								</div>
 							</div>
 						)}
+						{showAssignModal && (
+							<div className="bg-opacity-30 fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
+								<div className="w-full max-w-3xl rounded-lg bg-gray-800 p-6 shadow-2xl">
+									{/* Header del Modal */}
+									<div className="mb-4 flex items-center justify-between">
+										<h2 className="text-lg font-bold text-white">
+											Asignar Curso a Estudiantes
+										</h2>
+										<button onClick={() => setShowAssignModal(false)}>
+											<X className="size-6 text-gray-300 hover:text-white" />
+										</button>
+									</div>
+
+									{/* Contenido Principal */}
+									<div className="grid grid-cols-2 gap-4">
+										{/* Lista de Estudiantes */}
+										<div className="rounded-lg bg-gray-700 p-4">
+											<h3 className="mb-2 font-semibold text-white">
+												Seleccionar Estudiantes
+											</h3>
+											<div className="h-64 overflow-y-auto rounded border border-gray-600">
+												{users.map((user) => (
+													<label
+														key={user.id}
+														className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
+													>
+														<span className="text-white">
+															{user.firstName} {user.lastName}
+														</span>
+														<input
+															type="checkbox"
+															checked={selectedStudents.includes(user.id)}
+															onChange={() => handleSelectStudent(user.id)}
+															className="form-checkbox h-5 w-5 text-blue-500"
+														/>
+													</label>
+												))}
+											</div>
+										</div>
+
+										{/* Lista de Cursos */}
+										<div className="rounded-lg bg-gray-700 p-4">
+											<h3 className="mb-2 font-semibold text-white">
+												Seleccionar Curso
+											</h3>
+											<div className="h-64 overflow-y-auto rounded border border-gray-600">
+												{courses.map((course) => (
+													<label
+														key={course.id}
+														className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
+													>
+														<span className="text-white">{course.title}</span>
+														<input
+															type="radio"
+															name="selectedCourse"
+															checked={selectedCourse === course.id}
+															onChange={() => setSelectedCourse(course.id)}
+															className="form-radio h-5 w-5 text-blue-500"
+														/>
+													</label>
+												))}
+											</div>
+										</div>
+									</div>
+
+									{/* Botones de Acción */}
+									<div className="mt-6 flex justify-between">
+										<button
+											onClick={handleAssignStudents}
+											className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+											disabled={
+												selectedStudents.length === 0 || !selectedCourse
+											}
+										>
+											Asignar Estudiantes
+										</button>
+										<button
+											onClick={() => setShowAssignModal(false)}
+											className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+										>
+											Salir
+										</button>
+									</div>
+								</div>
+							</div>
+						)}
 
 						{/* Contenedor de botones arriba de la tabla */}
 						<div className="mb-4 flex items-center justify-between">
@@ -608,6 +773,13 @@ export default function AdminDashboard() {
 								>
 									<XCircle className="mr-2 size-5" /> Quitar Rol
 								</button>
+								<button
+									onClick={() => setShowAssignModal(true)}
+									className="bg-secondary hover:bg-primary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105"
+								>
+									Asignar Curso a Estudiantes
+								</button>
+
 								<button
 									onClick={() => setShowCreateForm(true)}
 									className="bg-secondary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-[#00A5C0]"
@@ -863,6 +1035,20 @@ export default function AdminDashboard() {
 					{notification.message}
 				</div>
 			)}
+			<ConfirmDialog
+				isOpen={confirmation?.isOpen ?? false}
+				title={confirmation?.title ?? ''}
+				message={confirmation?.message ?? ''}
+				onConfirm={async () => {
+					await Promise.resolve(confirmation?.onConfirm?.());
+					setConfirmation(null);
+				}}
+				onCancel={() => {
+					confirmation?.onCancel?.();
+					setConfirmation(null);
+				}}
+			/>
+
 			<ConfirmDialog
 				isOpen={confirmation?.isOpen ?? false}
 				title={confirmation?.title ?? ''}
