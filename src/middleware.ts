@@ -8,7 +8,7 @@ const isEducatorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
 const isStudentClassRoute = createRouteMatcher(['/estudiantes/clases/:id']);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
+  const { userId, sessionClaims, redirectToSignIn } = await auth();
   const role = sessionClaims?.metadata?.role;
   const currentUrl = req.nextUrl.pathname + req.nextUrl.search;
   const previousUrl = req.headers.get('referer') ?? '/';
@@ -20,9 +20,9 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Si el usuario no está autenticado y accede a una ruta protegida, redirigir a sign-in con redirect_url
   if (!userId && (isAdminRoute(req) || isSuperAdminRoute(req) || isEducatorRoute(req) || isStudentClassRoute(req))) {
-    const redirectTo = encodeURIComponent(previousUrl !== '/' ? previousUrl : currentUrl);
+    const redirectTo = previousUrl !== '/' ? previousUrl : currentUrl;
     console.log('🚀 Redirigiendo a /sign-in con redirect_url:', redirectTo);
-    return NextResponse.redirect(new URL(`/sign-in?redirect_url=${redirectTo}`, req.url));
+    return redirectToSignIn({ returnBackUrl: redirectTo });
   }
 
   // Verificación de roles para acceso a rutas específicas
