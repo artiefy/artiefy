@@ -162,49 +162,65 @@ const ForumPage = () => {
 		}
 	}, [fetchPostReplays, posts]);
 
-	// const sendForumEmail = async (
-	// 	postContent: string,
-	// 	recipients: string[],
-	// 	isReply: boolean = false
-	// ) => {
-	// 	try {
-	// 		if (!forumData || !user) return;
+	// Desbloquear y actualizar la función sendForumEmail
+	const sendForumEmail = async (
+		postContent: string,
+		recipients: string[],
+		isReply: boolean = false
+	) => {
+		try {
+			if (!forumData || !user) return;
 
-	// 		console.log('Sending email with data:', {
-	// 			content: postContent,
-	// 			recipients,
-	// 			forumTitle: forumData.title,
-	// 			authorName: user.fullName,
-	// 		});
+			// Verificar si el usuario tiene una cuenta de Google vinculada
+			const hasGoogleAccount = user.externalAccounts?.some(
+				(account) => account.provider === 'google'
+			);
 
-	// 		const response = await fetch('/api/educadores/send-email', {
-	// 			method: 'POST',
-	// 			headers: {
-	// 				'Content-Type': 'application/json',
-	// 			},
-	// 			body: JSON.stringify({
-	// 				content: postContent,
-	// 				recipients: recipients,
-	// 				forumTitle: forumData.title,
-	// 				authorName: user.fullName || 'Usuario',
-	// 			}),
-	// 		});
+			if (!hasGoogleAccount) {
+				// Aquí puedes mostrar un modal o mensaje pidiendo al usuario que vincule su cuenta
+				alert(
+					'Por favor, vincula tu cuenta de Google para poder enviar correos'
+				);
+				// Puedes redirigir al usuario a la página de configuración de su cuenta
+				// window.location.href = '/user/settings';
+				return;
+			}
 
-	// 		const result = await response.json();
+			console.log('Sending email with data:', {
+				content: postContent,
+				recipients,
+				forumTitle: forumData.title,
+				authorName: user.fullName,
+			});
 
-	// 		if (!response.ok) {
-	// 			console.error('Failed to send email. Status:', response.status);
-	// 			console.error('Error details:', result);
-	// 			return;
-	// 		}
+			const response = await fetch('/api/educadores/send-email', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					content: postContent,
+					recipients: recipients,
+					forumTitle: forumData.title,
+					authorName: user.fullName || 'Usuario',
+				}),
+			});
 
-	// 		console.log('Email sent successfully:', result);
-	// 	} catch (error) {
-	// 		console.error('Error in sendForumEmail:', error);
-	// 	}
-	// };
+			const result = await response.json();
 
-	// Crear nuevo Post
+			if (!response.ok) {
+				console.error('Failed to send email. Status:', response.status);
+				console.error('Error details:', result);
+				return;
+			}
+
+			console.log('Email sent successfully:', result);
+		} catch (error) {
+			console.error('Error in sendForumEmail:', error);
+		}
+	};
+
+	// Modificar handlePostSubmit para enviar emails solo cuando el usuario es educador
 	const handlePostSubmit = async () => {
 		if (!message.trim() || !user) return;
 		try {
@@ -231,41 +247,23 @@ const ForumPage = () => {
 				setMessage('');
 				await fetchPosts();
 
-				// Obtener emails únicos de todos los participantes del foro
-				const uniqueEmails = new Set<string>();
+				// Solo enviar emails si el usuario es educador
+				if (user.publicMetadata?.role === 'educador') {
+					const uniqueEmails = new Set<string>();
 
-				// Añadir emails de los participantes del foro
-				posts.forEach((post) => {
-					// Si el post es del mismo usuario que creó el post, usar su email de Clerk
-					if (post.userId.id === user.id) {
-						const userEmail = user.emailAddresses[0]?.emailAddress;
-						if (userEmail) uniqueEmails.add(userEmail);
+					// Añadir emails de los participantes del foro
+					posts.forEach((post) => {
+						if (post.userId.email) {
+							uniqueEmails.add(post.userId.email);
+						}
+					});
+
+					// Añadir el email del creador del foro
+					if (forumData?.userId.email) {
+						uniqueEmails.add(forumData.userId.email);
 					}
-					// Si el post tiene email en sus datos
-					else if (post.userId.email) {
-						uniqueEmails.add(post.userId.email);
-					}
-				});
 
-				// Añadir el email del creador del foro
-				if (forumData?.userId.id === user.id) {
-					const userEmail = user.emailAddresses[0]?.emailAddress;
-					if (userEmail) uniqueEmails.add(userEmail);
-				} else if (forumData?.userId.email) {
-					uniqueEmails.add(forumData.userId.email);
-				}
-
-				console.log('Collected unique emails:', uniqueEmails);
-
-				// Si el usuario es educador o es el creador del foro
-				if (
-					user.publicMetadata?.role === 'educador' ||
-					user.id === forumData?.userId.id
-				) {
-					console.log('User is authorized to send emails');
 					const emailList = Array.from(uniqueEmails);
-
-					// Asegurarse de que el usuario actual tenga un email
 					const userEmail = user.emailAddresses[0]?.emailAddress;
 					console.log('Current user email:', userEmail);
 
@@ -277,17 +275,8 @@ const ForumPage = () => {
 					console.log('Filtered emails:', filteredEmails);
 
 					if (filteredEmails.length > 0) {
-						console.log('Calling sendForumEmail with:', {
-							message,
-							filteredEmails,
-							forumTitle: forumData?.title,
-						});
-						// await sendForumEmail(message, filteredEmails);
-					} else {
-						console.log('No recipients to send email to');
+						await sendForumEmail(message, filteredEmails);
 					}
-				} else {
-					console.log('User is not authorized to send emails');
 				}
 			}
 		} catch (error) {
@@ -295,7 +284,7 @@ const ForumPage = () => {
 		}
 	};
 
-	// Crear una respuesta (PostReplay)
+	// Modificar handleReplySubmit para enviar emails solo cuando el usuario es educador
 	const handleReplySubmit = async () => {
 		if (!replyMessage.trim() || !user || replyingToPostId === null) return;
 
@@ -322,57 +311,32 @@ const ForumPage = () => {
 				setReplyingToPostId(null);
 				await fetchPostReplays();
 
-				// Si el usuario es educador o es el creador del foro
-				if (
-					user.publicMetadata?.rol === 'educador' ||
-					user.id === forumData?.userId.id
-				) {
-					console.log('User is authorized to send emails');
-					// Encontrar el post original y sus respuestas
+				// Solo enviar emails si el usuario es educador
+				if (user.publicMetadata?.role === 'educador') {
 					const originalPost = posts.find((p) => p.id === replyingToPostId);
 					const postReplies = postReplays.filter(
 						(r) => r.postId === replyingToPostId
 					);
 
-					console.log('Original post:', originalPost);
-					console.log('Post replies:', postReplies);
-
-					// Recolectar emails únicos
 					const uniqueEmails = new Set<string>();
 					if (originalPost?.userId.email) {
-						console.log(
-							'Adding original post author email:',
-							originalPost.userId.email
-						);
 						uniqueEmails.add(originalPost.userId.email);
 					}
 					postReplies.forEach((reply) => {
 						if (reply.userId.email) {
-							console.log('Adding reply author email:', reply.userId.email);
 							uniqueEmails.add(reply.userId.email);
 						}
 					});
 
-					// Filtrar el email del autor de la respuesta
 					const emailList = Array.from(uniqueEmails);
+					const userEmail = user.emailAddresses[0]?.emailAddress;
 					const filteredEmails = emailList.filter(
-						(email) => email !== user.emailAddresses[0]?.emailAddress
+						(email) => email !== userEmail
 					);
 
-					console.log('Filtered emails:', filteredEmails);
-
 					if (filteredEmails.length > 0) {
-						console.log('Calling sendForumEmail with:', {
-							replyMessage,
-							filteredEmails,
-							forumTitle: forumData?.title,
-						});
-						// await sendForumEmail(replyMessage, filteredEmails, true);
-					} else {
-						console.log('No recipients to send email to');
+						await sendForumEmail(replyMessage, filteredEmails, true);
 					}
-				} else {
-					console.log('User is not authorized to send emails');
 				}
 			}
 		} catch (error) {

@@ -1,6 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, getAuth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
+import { OAuth2Client } from 'google-auth-library';
 
 interface EmailRequestBody {
 	content: string;
@@ -12,36 +13,53 @@ interface EmailRequestBody {
 export async function POST(req: Request) {
 	try {
 		console.log('Starting email send process...');
-		const { sessionClaims } = await auth();
-		const body = await req.json();
-		console.log('Request body:', body);
+		const { userId } = auth();
 
-		interface Metadata {
-			googleAccessToken?: string;
+		if (!userId) {
+			return NextResponse.json(
+				{ error: 'Usuario no autenticado' },
+				{ status: 401 }
+			);
 		}
 
-		const metadata = sessionClaims?.metadata as Metadata;
-		const googleAccessToken = metadata?.googleAccessToken;
-
-		if (!googleAccessToken) {
-			console.error('Google access token is not available');
+		// Verificar si el usuario es educador
+		const user = await getAuth().getUser(userId);
+		if (user.publicMetadata?.role !== 'educador') {
 			return NextResponse.json(
-				{ error: 'Google access token is not available' },
+				{ error: 'Usuario no autorizado' },
+				{ status: 403 }
+			);
+		}
+
+		// Obtener el token directamente del header de autorización
+		const { getToken } = auth();
+		const token = await getToken({
+			template: 'google_oauth',
+		});
+
+		if (!token) {
+			return NextResponse.json(
+				{ error: 'No se encontró el token de Google' },
 				{ status: 400 }
 			);
 		}
 
-		console.log('Google token available:', !!googleAccessToken);
+		// Configurar el cliente de OAuth2
+		const oauth2Client = new google.auth.OAuth2(
+			process.env.GOOGLE_CLIENT_ID,
+			process.env.GOOGLE_CLIENT_SECRET,
+			process.env.GOOGLE_REDIRECT_URI
+		);
 
-		const authClient = new google.auth.OAuth2();
-		authClient.setCredentials({
-			access_token: googleAccessToken,
+		// Establecer las credenciales
+		oauth2Client.setCredentials({
+			access_token: token,
 		});
 
-		const gmail = google.gmail({ version: 'v1', auth: authClient });
+		const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-		const { content, recipients, forumTitle, authorName } =
-			body as EmailRequestBody;
+		const body = await req.json();
+		const { content, recipients, forumTitle, authorName } = body;
 
 		console.log('Preparing email for recipients:', recipients);
 
@@ -65,11 +83,13 @@ export async function POST(req: Request) {
 			`
 			<div style="font-family: Arial, sans-serif; padding: 20px;">
 				<h2>Nueva actividad en el foro: ${forumTitle}</h2>
-				<p><strong>${authorName}</strong> ha publicado un nuevo mensaje:</p>
+				<p><strong>${authorName}</strong> (Educador) ha publicado un nuevo mensaje:</p>
 				<div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0;">
 					${content}
 				</div>
 				<p>Puedes ver y responder a este mensaje accediendo al foro.</p>
+				<hr>
+				<p style="color: #666; font-size: 12px;">Este es un mensaje automático del sistema de foros. Por favor, no respondas directamente a este correo.</p>
 			</div>
 			`,
 		].join('\r\n');
@@ -101,7 +121,7 @@ export async function POST(req: Request) {
 				{
 					error: 'Error sending email through Gmail API',
 					details: gmailError,
-					request: request
+					request: request,
 				},
 				{ status: 500 }
 			);
