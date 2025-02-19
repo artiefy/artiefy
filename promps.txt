@@ -1,410 +1,231 @@
-src\app\api\confirmPayment\route.ts
-
-import { type NextApiRequest, type NextApiResponse } from 'next';
-import { updateUserSubscription } from '~/server/actions/estudiantes/confirmation/updateUserSubscription';
-import { verifySignature } from '~/utils/verifySignature';
-
-interface PaymentData {
-  email_buyer: string;
-  state_pol: string;
-  merchant_id: string;
-  reference_sale: string;
-  value: string;
-  currency: string;
-}
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  const { signature, ...paymentData } = req.body as { signature: string } & PaymentData;
-
-  // Verificar la firma
-  if (!verifySignature(paymentData, signature)) {
-    return res.status(400).json({ message: 'Invalid signature' });
-  }
-
-  // Actualizar la suscripción del usuario
-  await updateUserSubscription(paymentData);
-
-  res.status(200).json({ message: 'Payment confirmed' });
-}
-
-src\utils\notifications.ts
-
-import nodemailer from 'nodemailer';
-
-export async function sendNotification(email: string, message: string) {
-  // Configurar el transportador de nodemailer
-  const transporter = nodemailer.createTransport({
-    service: 'gmail', // Puedes usar cualquier servicio de correo compatible con nodemailer
-    auth: {
-      user: process.env.EMAIL_USER, // Tu dirección de correo electrónico
-      pass: process.env.EMAIL_PASS, // Tu contraseña de correo electrónico
-    },
-  });
-
-  // Configurar las opciones del correo electrónico
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Notificación de suscripción',
-    text: message,
-  };
-
-  // Enviar el correo electrónico
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log('Correo electrónico enviado: ' + email);
-  } catch (error) {
-    console.error('Error al enviar el correo electrónico: ', error);
-  }
-}
-src\utils\verifySignature.ts
-
-import crypto from 'crypto';
-
-interface PaymentData {
-  merchant_id: string;
-  reference_sale: string;
-  value: string;
-  currency: string;
-  state_pol: string;
-}
-
-function calculateMD5ForVerification(
-  apiKey: string,
-  merchantId: string,
-  referenceCode: string,
-  amount: string,
-  currency: string,
-  statePol: string
-): string {
-  const formattedValue = parseFloat(amount).toFixed(1);
-  const data = [apiKey, merchantId, referenceCode, formattedValue, currency, statePol].join('~');
-  return crypto.createHash('md5').update(data).digest('hex');
-}
-
-export function verifySignature(paymentData: PaymentData, signature: string): boolean {
-  const { merchant_id, reference_sale, value, currency, state_pol } = paymentData;
-  const apiKey = process.env.API_KEY;
-
-  if (!apiKey) {
-    throw new Error('API_KEY is not defined');
-  }
-
-  const generatedSignature = calculateMD5ForVerification(apiKey, merchant_id, reference_sale, value, currency, state_pol);
-  return generatedSignature === signature;
-}
-src\server\actions\estudiantes\confirmation\updateUserSubscription.ts
-import { db } from '~/server/db';
-import { users } from '~/server/db/schema';
-import { sendNotification } from '~/utils/notifications';
-import { auth, clerkClient } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
-
-interface PaymentData {
-  email_buyer: string;
-  state_pol: string;
-}
-
-export async function updateUserSubscription(paymentData: PaymentData) {
-  const { email_buyer, state_pol } = paymentData;
-
-  if (state_pol === '4') { // Estado aprobado
-    const subscriptionEndDate = new Date();
-    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
-
-    // Actualizar la suscripción en la base de datos
-    await db.update(users)
-      .set({
-        subscriptionStatus: 'active',
-        subscriptionEndDate: subscriptionEndDate,
-      })
-      .where(eq(users.email, email_buyer));
-
-    // Obtener el usuario de Clerk y actualizar la suscripción
-    const { userId } = await auth();
-    if (userId) {
-      const client = await clerkClient();
-      await client.users.updateUser(userId, {
-        publicMetadata: {
-          subscriptionStatus: 'active',
-          subscriptionEndDate: subscriptionEndDate.toISOString(),
-        },
-      });
-    }
-
-    // Notificar al usuario 3 días antes de que expire la suscripción
-    setTimeout(async () => {
-      await sendNotification(email_buyer, 'Tu suscripción está a punto de expirar');
-    }, (30 - 3) * 24 * 60 * 60 * 1000); // 27 días en milisegundos
-  }
-}
-src\utils\form.ts
-import { type FormData, type Auth, type Product } from '~/types/payu';
-import { calculateMD5 } from './signature';
-import { generateReferenceCode } from './referenceCode';
-
-// Función que crea los datos del formulario utilizando los parámetros proporcionados
-export function createFormData(
-  auth: Auth,
-  product: Product,
-  buyerEmail: string,
-  buyerFullName: string,
-  telephone: string,
-  responseUrl: string,
-  confirmationUrl: string
-): FormData {
-  const referenceCode = generateReferenceCode();
-  const amount = product.amount;
-  const currency = 'COP';
-
-  const signature = calculateMD5(
-    auth.apiKey,
-    auth.merchantId,
-    referenceCode,
-    amount,
-    currency
-  );
-
-  return {
-    merchantId: auth.merchantId,
-    accountId: auth.accountId,
-    description: product.description,
-    referenceCode: referenceCode,
-    amount: amount,
-    tax: '3193', // Estos valores pueden ser ajustados según sea necesario
-    taxReturnBase: '16806', // Estos valores pueden ser ajustados según sea necesario
-    currency: currency,
-    signature: signature,
-    test: '1',
-    buyerEmail: buyerEmail,
-    buyerFullName: buyerFullName,
-    telephone: telephone,
-    responseUrl: responseUrl,
-    confirmationUrl: confirmationUrl,
-  };
-}
-src\components\estudiantes\layout\PaymentForm.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import '~/styles/form.css';
-import { FaLock } from 'react-icons/fa';
-import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
-import { Button } from '~/components/estudiantes/ui/button';
+import { useState, useEffect } from 'react';
+import { useAuth, useSignIn } from '@clerk/nextjs';
+import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
+import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import { type FormData, type Product } from '~/types/payu';
-import { validateFormData } from '~/utils/validation';
+import Loading from '../../loading';
 
-const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
-  selectedProduct,
-}) => {
-  const [error, setError] = useState<string | null>(null);
-  const [buyerEmail, setBuyerEmail] = useState('');
-  const [buyerFullName, setBuyerFullName] = useState('');
-  const [telephone, setTelephone] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showErrors, setShowErrors] = useState(false);
-  const [errors, setErrors] = useState<{
-    buyerEmail?: string;
-    buyerFullName?: string;
-    telephone?: string;
-  }>({});
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    if (name === 'buyerEmail') setBuyerEmail(value);
-    if (name === 'buyerFullName') setBuyerFullName(value);
-    if (name === 'telephone') setTelephone(value);
-
-    if (showErrors) {
-      const newErrors = validateFormData(buyerEmail, buyerFullName, telephone);
-      setErrors(newErrors);
-    }
-  };
+export default function SignInPage() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { signIn, setActive } = useSignIn();
+  const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [successfulCreation, setSuccessfulCreation] = useState(false);
+  const [secondFactor, setSecondFactor] = useState(false);
+  const [errors, setErrors] = useState<ClerkAPIError[]>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect_url') ?? '/';
+  const router = useRouter();
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   useEffect(() => {
-    if (showErrors) {
-      const newErrors = validateFormData(buyerEmail, buyerFullName, telephone);
-      setErrors(newErrors);
+    if (isSignedIn) {
+      router.replace(redirectTo);
     }
-  }, [buyerEmail, buyerFullName, telephone, showErrors]);
+  }, [isSignedIn, router, redirectTo]);
 
-  const handleSubmit = async (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
-    event.preventDefault();
+  if (!isLoaded || isSignedIn) {
+    return <Loading />;
+  }
 
-    const newErrors = validateFormData(buyerEmail, buyerFullName, telephone);
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setShowErrors(true);
+  const signInWith = async (strategy: OAuthStrategy) => {
+    if (!signIn) {
+      setErrors([
+        {
+          code: 'sign_in_undefined',
+          message: 'SignIn no está definido',
+          longMessage: 'SignIn no está definido',
+          meta: {},
+        },
+      ]);
+      setIsSubmitting(false);
       return;
     }
-
-    setLoading(true);
-
+    setLoadingProvider(strategy);
     try {
-      const response = await fetch('/api/generatePaymentData', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId: selectedProduct.id,
-          buyerEmail,
-          buyerFullName,
-          telephone,
-        }),
+      await signIn.authenticateWithRedirect({
+        strategy,
+        redirectUrl: `/sign-up/sso-callback?redirect_url=${encodeURIComponent(currentUrl)}`,
+        redirectUrlComplete: currentUrl,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch form data');
-      }
-
-      const data: FormData = (await response.json()) as FormData;
-      console.log('Form Data:', data);
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action =
-        'https://checkout.payulatam.com/ppp-web-gateway-payu/';
-
-      for (const key in data) {
-        if (data.hasOwnProperty(key)) {
-          const hiddenField = document.createElement('input');
-          hiddenField.type = 'hidden';
-          hiddenField.name = key;
-          hiddenField.value = data[key as keyof FormData];
-          form.appendChild(hiddenField);
-        }
-      }
-
-      document.body.appendChild(form);
-      form.submit();
-    } catch (error) {
-      setError((error as Error).message);
-      setLoading(false);
+    } catch (err) {
+      setLoadingProvider(null);
+      setErrors([
+        {
+          code: 'oauth_error',
+          message: 'Error durante el inicio de sesión con OAuth',
+          longMessage: 'Error durante el inicio de sesión con OAuth',
+          meta: {},
+        },
+      ]);
+      console.error(err);
     }
   };
 
-  return (
-    <form className="form">
-      <h3 className="payer-info-title">Datos del pagador</h3>
-      <BuyerInfoForm
-        formData={{ buyerEmail, buyerFullName, telephone }}
-        onChange={handleInputChange}
-        showErrors={showErrors}
-        errors={errors}
-      />
-      {error && <p className="error">{error}</p>}
-      <div className="security-message">
-        <FaLock className="lock-icon" />
-        <span>Estás en un formulario de pagos seguro</span>
-      </div>
-      <Button
-        type="button"
-        className="checkout-btn"
-        onClick={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <Icons.spinner
-              className="mr-2 text-background"
-              style={{ width: '25px', height: '25px' }}
-            />
-            <span className="font-bold text-background">
-              Redirigiendo a PayU...
-            </span>
-          </>
-        ) : (
-          'Enviar'
-        )}
-      </Button>
-    </form>
-  );
-};
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
+    if (!signIn) return;
+    if (!isLoaded) return;
 
-export default PaymentForm;
-src\components\estudiantes\layout\BuyerInfoForm.tsx
-import React from 'react';
-import { type FormData } from '~/types/payu';
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
 
-interface BuyerInfoFormProps {
-  formData: Pick<FormData, 'buyerEmail' | 'buyerFullName' | 'telephone'>;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  showErrors: boolean;
-  errors: {
-    buyerEmail?: string;
-    buyerFullName?: string;
-    telephone?: string;
+      if (signInAttempt.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: signInAttempt.createdSessionId });
+        }
+        router.replace(currentUrl);
+      } else if (signInAttempt.status === 'needs_first_factor') {
+        const supportedStrategies =
+          signInAttempt.supportedFirstFactors?.map((factor) => factor.strategy) ?? [];
+        if (!supportedStrategies.includes('password')) {
+          setErrors([
+            {
+              code: 'invalid_strategy',
+              message: 'Estrategia de verificación inválida',
+              longMessage: 'Estrategia de verificación inválida',
+              meta: {},
+            },
+          ]);
+        }
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
+
+    try {
+      if (!signIn) return;
+      await signIn.create({
+        strategy: 'reset_password_email_code',
+        identifier: email,
+      });
+      setSuccessfulCreation(true);
+      setErrors(undefined);
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
+
+    try {
+      if (!signIn) {
+        setErrors([
+          {
+            code: 'sign_in_undefined',
+            message: 'SignIn no está definido',
+            longMessage: 'SignIn no está definido',
+            meta: {},
+          },
+        ]);
+        setIsSubmitting(false);
+        return;
+      }
+      const result = await signIn.attemptFirstFactor({
+        strategy: 'reset_password_email_code',
+        code,
+        password,
+      });
+
+      if (result.status === 'needs_second_factor') {
+        setSecondFactor(true);
+        setErrors(undefined);
+      } else if (result.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: result.createdSessionId });
+        }
+        router.replace('/'); // Aquí puedes cambiar para redirigir a una URL específica si es necesario
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const emailError = errors?.some((error) => error.code === 'form_identifier_not_found');
+  const passwordError = errors?.some((error) => error.code === 'form_password_incorrect');
+
+  return (
+    // Tu código JSX para el formulario de inicio de sesión
+  );
 }
-
-const BuyerInfoForm: React.FC<BuyerInfoFormProps> = ({
-  formData,
-  onChange,
-  showErrors,
-  errors,
-}) => (
-  <div className="grid grid-cols-1 gap-y-4">
-    <label className="label">
-      <span className="title">Correo Electrónico</span>
-      <input
-        type="email"
-        name="buyerEmail"
-        placeholder="ejemplo@correo.com"
-        value={formData.buyerEmail}
-        onChange={onChange}
-        className={`input-field ${showErrors && errors.buyerEmail ? 'input-error' : ''}`}
-        required
-      />
-      {showErrors && errors.buyerEmail && (
-        <span className="error-message">{errors.buyerEmail}</span>
-      )}
-    </label>
-    <label className="label">
-      <span className="title">Nombre Completo</span>
-      <input
-        type="text"
-        name="buyerFullName"
-        placeholder="Juan Pérez"
-        value={formData.buyerFullName}
-        onChange={onChange}
-        className={`input-field ${showErrors && errors.buyerFullName ? 'input-error' : ''}`}
-        required
-      />
-      {showErrors && errors.buyerFullName && (
-        <span className="error-message">{errors.buyerFullName}</span>
-      )}
-    </label>
-    <label className="label">
-      <span className="title">Teléfono</span>
-      <input
-        type="tel"
-        name="telephone"
-        placeholder="+57 3113333332"
-        value={formData.telephone}
-        onChange={onChange}
-        className={`input-field ${showErrors && errors.telephone ? 'input-error' : ''}`}
-        required
-      />
-      {showErrors && errors.telephone && (
-        <span className="error-message">{errors.telephone}</span>
-      )}
-    </label>
-  </div>
-);
-
-export default BuyerInfoForm;
-
-SEGUN ESTOS ARCHIVOS D ENEXTJS Y PAYULATAM YA ESTARIA LISTO PARA PODER HACER UNA COMPRA DE PRUEBA Y QUE EN LA BASE DE DATOS SE LE ACTUALIZE EL ESTADO A ACTIVO CUANDO PAGUE SE LE HABLIITE EL ACCESO COMPLETO ALA PLATAFORMA?
-
-COMO HAGO UNA PRUEBA COMPLETA

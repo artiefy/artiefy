@@ -8,7 +8,7 @@ const isEducatorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
 const isStudentClassRoute = createRouteMatcher(['/estudiantes/clases/:id']);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims, redirectToSignIn } = await auth();
+  const { userId, sessionClaims } = await auth();
   const role = sessionClaims?.metadata?.role;
   const currentUrl = req.nextUrl.pathname + req.nextUrl.search;
   const previousUrl = req.headers.get('referer') ?? '/';
@@ -17,13 +17,6 @@ export default clerkMiddleware(async (auth, req) => {
   console.log('🔍 URL Anterior (Referer):', previousUrl);
   console.log('🆔 Usuario:', userId ?? 'No autenticado');
   console.log('🔑 Rol del usuario:', role ?? 'No definido');
-
-  // Si el usuario no está autenticado y accede a una ruta protegida, redirigir a sign-in con redirect_url
-  if (!userId && (isAdminRoute(req) || isSuperAdminRoute(req) || isEducatorRoute(req) || isStudentClassRoute(req))) {
-    const redirectTo = previousUrl !== '/' ? previousUrl : currentUrl;
-    console.log('🚀 Redirigiendo a /sign-in con redirect_url:', redirectTo);
-    return redirectToSignIn({ returnBackUrl: redirectTo });
-  }
 
   // Verificación de roles para acceso a rutas específicas
   if (isAdminRoute(req) && role !== 'admin') {
@@ -36,6 +29,11 @@ export default clerkMiddleware(async (auth, req) => {
 
   if (isEducatorRoute(req) && role !== 'educador') {
     return NextResponse.redirect(new URL('/', req.url));
+  }
+
+  // Verificación de autenticación para la ruta de clases de estudiantes
+  if (isStudentClassRoute(req) && !userId) {
+    return NextResponse.redirect(new URL('/sign-in', req.url));
   }
 
   return NextResponse.next();
