@@ -154,3 +154,4 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 7. `npm audit fix`: Repara algunas fallas del servicio de paquetes de npm
 
 ---
+-Pasareladepago18*

@@ -313,7 +313,7 @@ export default function SignInPage() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.spinner className="w-5 h-5text-primary" />
+                        <Icons.spinner className="w-5 h-5 animate-spin text-primary" />
                       ) : (
                         <span className="inline-block font-bold">COMIENZA YA</span>
                       )}
@@ -425,7 +425,7 @@ export default function SignInPage() {
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
                   {loadingProvider === 'oauth_facebook' ? (
-                    <Icons.blocks className="w-10 h-10 animate-spin text-primary" />
+                    <Icons.spinner className="w-10 h-10 animate-spin text-primary" />
                   ) : (
                     <Icons.facebook />
                   )}

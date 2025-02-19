@@ -1,4 +1,6 @@
-'use client';
+"use client"
+
+import type React from "react"
 
 import { useState, useEffect } from 'react';
 import { useAuth, useSignIn } from '@clerk/nextjs';
@@ -12,218 +14,216 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import Loading from '../../loading';
 
 export default function SignInPage() {
-  const { isLoaded, isSignedIn } = useAuth();
-  const { signIn, setActive } = useSignIn();
-  const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(null);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
-  const [successfulCreation, setSuccessfulCreation] = useState(false);
-  const [secondFactor, setSecondFactor] = useState(false);
-  const [errors, setErrors] = useState<ClerkAPIError[]>();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect_url') ?? '/';
-  const router = useRouter();
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const { isLoaded, isSignedIn } = useAuth()
+  const { signIn, setActive } = useSignIn()
+  const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(null)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [code, setCode] = useState("")
+  const [successfulCreation, setSuccessfulCreation] = useState(false)
+  const [secondFactor, setSecondFactor] = useState(false)
+  const [errors, setErrors] = useState<ClerkAPIError[]>()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirect_url") ?? "/"
+  const router = useRouter()
 
   useEffect(() => {
     if (isSignedIn) {
-      router.replace(redirectTo);
+      router.replace(redirectTo)
     }
-  }, [isSignedIn, router, redirectTo]);
+  }, [isSignedIn, router, redirectTo])
 
   if (!isLoaded || isSignedIn) {
-    return <Loading />;
+    return <Loading />
   }
 
   const signInWith = async (strategy: OAuthStrategy) => {
     if (!signIn) {
       setErrors([
         {
-          code: 'sign_in_undefined',
-          message: 'SignIn no está definido',
-          longMessage: 'SignIn no está definido',
+          code: "sign_in_undefined",
+          message: "SignIn no está definido",
+          longMessage: "SignIn no está definido",
           meta: {},
         },
-      ]);
-      setIsSubmitting(false);
-      return;
+      ])
+      setIsSubmitting(false)
+      return
     }
-    setLoadingProvider(strategy);
+    setLoadingProvider(strategy)
     try {
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: `/sign-up/sso-callback?redirect_url=${encodeURIComponent(currentUrl)}`,
-        redirectUrlComplete: currentUrl,
-      });
+        redirectUrl: `/sign-up/sso-callback`,
+        redirectUrlComplete: redirectTo,
+      })
     } catch (err) {
-      setLoadingProvider(null);
+      setLoadingProvider(null)
       setErrors([
         {
-          code: 'oauth_error',
-          message: 'Error durante el inicio de sesión con OAuth',
-          longMessage: 'Error durante el inicio de sesión con OAuth',
+          code: "oauth_error",
+          message: "Error durante el inicio de sesión con OAuth",
+          longMessage: "Error durante el inicio de sesión con OAuth",
           meta: {},
         },
-      ]);
-      console.error(err);
+      ])
+      console.error(err)
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors(undefined);
-    setIsSubmitting(true);
-    if (!signIn) return;
-    if (!isLoaded) return;
+    e.preventDefault()
+    setErrors(undefined)
+    setIsSubmitting(true)
+    if (!signIn) return
+    if (!isLoaded) return
 
     try {
       const signInAttempt = await signIn.create({
         identifier: email,
         password,
-      });
+      })
 
-      if (signInAttempt.status === 'complete') {
+      if (signInAttempt.status === "complete") {
         if (setActive) {
-          await setActive({ session: signInAttempt.createdSessionId });
+          await setActive({ session: signInAttempt.createdSessionId })
         }
-        router.replace(currentUrl);
-      } else if (signInAttempt.status === 'needs_first_factor') {
-        const supportedStrategies =
-          signInAttempt.supportedFirstFactors?.map((factor) => factor.strategy) ?? [];
-        if (!supportedStrategies.includes('password')) {
+        router.replace(redirectTo)
+      } else if (signInAttempt.status === "needs_first_factor") {
+        const supportedStrategies = signInAttempt.supportedFirstFactors?.map((factor) => factor.strategy) ?? []
+        if (!supportedStrategies.includes("password")) {
           setErrors([
             {
-              code: 'invalid_strategy',
-              message: 'Estrategia de verificación inválida',
-              longMessage: 'Estrategia de verificación inválida',
+              code: "invalid_strategy",
+              message: "Estrategia de verificación inválida",
+              longMessage: "Estrategia de verificación inválida",
               meta: {},
             },
-          ]);
+          ])
         }
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
-        ]);
+        ])
       }
     } catch (err) {
       if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
+        setErrors(err.errors)
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
-        ]);
+        ])
       }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors(undefined);
-    setIsSubmitting(true);
+    e.preventDefault()
+    setErrors(undefined)
+    setIsSubmitting(true)
 
     try {
-      if (!signIn) return;
+      if (!signIn) return
       await signIn.create({
-        strategy: 'reset_password_email_code',
+        strategy: "reset_password_email_code",
         identifier: email,
-      });
-      setSuccessfulCreation(true);
-      setErrors(undefined);
+      })
+      setSuccessfulCreation(true)
+      setErrors(undefined)
     } catch (err) {
       if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
+        setErrors(err.errors)
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
-        ]);
+        ])
       }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors(undefined);
-    setIsSubmitting(true);
+    e.preventDefault()
+    setErrors(undefined)
+    setIsSubmitting(true)
 
     try {
       if (!signIn) {
         setErrors([
           {
-            code: 'sign_in_undefined',
-            message: 'SignIn no está definido',
-            longMessage: 'SignIn no está definido',
+            code: "sign_in_undefined",
+            message: "SignIn no está definido",
+            longMessage: "SignIn no está definido",
             meta: {},
           },
-        ]);
-        setIsSubmitting(false);
-        return;
+        ])
+        setIsSubmitting(false)
+        return
       }
       const result = await signIn.attemptFirstFactor({
-        strategy: 'reset_password_email_code',
+        strategy: "reset_password_email_code",
         code,
         password,
-      });
+      })
 
-      if (result.status === 'needs_second_factor') {
-        setSecondFactor(true);
-        setErrors(undefined);
-      } else if (result.status === 'complete') {
+      if (result.status === "needs_second_factor") {
+        setSecondFactor(true)
+        setErrors(undefined)
+      } else if (result.status === "complete") {
         if (setActive) {
-          await setActive({ session: result.createdSessionId });
+          await setActive({ session: result.createdSessionId })
         }
-        router.replace('/'); // Aquí puedes cambiar para redirigir a una URL específica si es necesario
+        router.replace(redirectTo)
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
-        ]);
+        ])
       }
     } catch (err) {
       if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
+        setErrors(err.errors)
       } else {
         setErrors([
           {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
+            code: "unknown_error",
+            message: "Ocurrió un error desconocido",
+            longMessage: "Ocurrió un error desconocido",
             meta: {},
           },
-        ]);
+        ])
       }
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
-  const emailError = errors?.some((error) => error.code === 'form_identifier_not_found');
-  const passwordError = errors?.some((error) => error.code === 'form_password_incorrect');
+  const emailError = errors?.some((error) => error.code === "form_identifier_not_found")
+  const passwordError = errors?.some((error) => error.code === "form_password_incorrect")
 
   return (
     // Tu código JSX para el formulario de inicio de sesión
