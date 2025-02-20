@@ -121,8 +121,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 					{/* Dashboard primero */}
 					<li>
 						<Link
-							href="/dashboard/"
-							className={`flex items-center space-x-2 rounded-lg p-2 transition-all duration-300 ${pathname === '/dashboard/' ? 'bg-primary text-[#01142B]' : 'hover:bg-secondary text-gray-600 hover:text-white'}`}
+							href="/dashboard/admin2"
+							className={`flex items-center space-x-2 rounded-lg p-2 transition-all duration-300 ${
+								pathname === '/dashboard/admin2'
+									? 'bg-primary text-[#01142B]'
+									: 'hover:bg-secondary text-gray-600 hover:text-white'
+							}`}
 						>
 							<FiHome size={24} />
 							<span>Dashboard</span>

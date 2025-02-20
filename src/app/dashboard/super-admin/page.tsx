@@ -9,7 +9,6 @@ import {
 	UserPlus,
 	Check,
 	Eye,
-	EyeOff,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
