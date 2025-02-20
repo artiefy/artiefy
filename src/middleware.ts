@@ -9,61 +9,45 @@ const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)']);
 const publicRoutes = createRouteMatcher(['/sign-in', '/sign-up']);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
-  const role = sessionClaims?.metadata?.role;
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
 
-  console.log('User ID:', userId);
-  console.log('Role:', role);
-  console.log('Request URL:', req.url);
+	// Si es una ruta pública, permitir acceso
+	if (publicRoutes(req)) {
+		return NextResponse.next();
+	}
 
-  // Redirect to login page if not authenticated and the route is protected
-  if (!userId && isProtectedRoute(req)) {
-    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
-    console.log('Redirecting to sign-in:', `${req.nextUrl.origin}/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`);
-    return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`);
-  }
+	// Redirigir a login si no está autenticado y la ruta es protegida
+	if (!userId && isProtectedRoute(req)) {
+		return NextResponse.redirect(new URL('/sign-in', req.url));
+	}
 
-  // Protect specific role routes
-  if (isAdminRoute(req) && role !== 'admin') {
-    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
-    console.log('Redirecting to home (admin route):', `${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
-    return NextResponse.redirect(`${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
-  }
+	// Proteger rutas específicas por rol
+	if (isAdminRoute(req) && role !== 'admin') {
+		return NextResponse.redirect(new URL('/', req.url));
+	}
 
-  if (isSuperAdminRoute(req) && role !== 'super-admin') {
-    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
-    console.log('Redirecting to home (super-admin route):', `${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
-    return NextResponse.redirect(`${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
-  }
+	if (isSuperAdminRoute(req) && role !== 'super-admin') {
+		return NextResponse.redirect(new URL('/', req.url));
+	}
 
-  if (isEducatorRoute(req) && role !== 'educador') {
-    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
-    console.log('Redirecting to home (educator route):', `${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
-    return NextResponse.redirect(`${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
-  }
+	if (isEducatorRoute(req) && role !== 'educador') {
+		return NextResponse.redirect(new URL('/', req.url));
+	}
 
-  // Protect dynamic student routes
-  if (isStudentClassRoute(req) && !userId) {
-    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
-    console.log('Redirecting to sign-in (student class route):', `${req.nextUrl.origin}/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`);
-    return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`);
-  }
+	// Proteger rutas dinámicas de estudiantes
+	if (isStudentClassRoute(req) && !userId) {
+		return NextResponse.redirect(new URL('/sign-in', req.url));
+	}
 
-  // Handle public routes
-  if (!userId && publicRoutes(req)) {
-    console.log('Public route, proceeding to next response');
-    return NextResponse.next();
-  }
-
-  console.log('Authenticated or public route, proceeding to next response');
-  return NextResponse.next();
+	return NextResponse.next();
 });
 
 export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
-  ],
+	matcher: [
+		// Skip Next.js internals and all static files, unless found in search params
+		'/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+		// Always run for API routes
+		'/(api|trpc)(.*)',
+	],
 };
