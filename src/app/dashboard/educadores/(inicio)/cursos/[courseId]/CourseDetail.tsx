@@ -29,6 +29,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import { toast } from '~/hooks/use-toast';
+import { Badge } from '~/components/educators/ui/badge';
 
 interface Course {
 	id: number;
@@ -414,11 +415,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					}}
 				>
 					<CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
-						<CardTitle
-							className={`text-2xl font-bold ${
-								selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-							}`}
-						>
+						<CardTitle className={`text-2xl font-bold text-primary`}>
 							Curso: {course.title}
 						</CardTitle>
 						<div className="ml-9 flex flex-col">
@@ -515,11 +512,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Curso:
 									</h2>
-									<h1
-										className={`mb-4 text-2xl font-bold ${
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}`}
-									>
+									<h1 className={`mb-4 text-2xl font-bold text-primary`}>
 										{course.title}
 									</h1>
 								</div>
@@ -531,13 +524,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Categoría:
 									</h2>
-									<p
-										className={
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.categoryid}
-									</p>
+									</Badge>
 								</div>
 							</div>
 							<div className="mb-4">
@@ -563,13 +555,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Educador:
 									</h2>
-									<p
-										className={
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.instructor}
-									</p>
+									</Badge>
 								</div>
 								<div className="flex flex-col">
 									<h2
@@ -579,13 +570,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Dificultad:
 									</h2>
-									<p
-										className={
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.dificultadid}
-									</p>
+									</Badge>
 								</div>
 								<div className="flex flex-col">
 									<h2
@@ -595,13 +585,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Modalidad:
 									</h2>
-									<p
-										className={
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.modalidadesid}
-									</p>
+									</Badge>
 								</div>
 							</div>
 						</div>

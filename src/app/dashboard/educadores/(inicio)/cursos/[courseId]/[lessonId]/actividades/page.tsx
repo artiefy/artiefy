@@ -99,6 +99,7 @@ const Page: React.FC = () => {
 	const router = useRouter(); // Usar useRouter de next/navigation
 	const [color, setColor] = useState<string>('#FFFFFF');
 	const [isActive, setIsActive] = useState(false);
+	const [fechaMaxima, setFechaMaxima] = useState(false);
 	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
 	const [showErrors, setShowErrors] = useState(false);
 	const [usedParametros, setUsedParametros] = useState<number[]>([]);
@@ -176,6 +177,14 @@ const Page: React.FC = () => {
 			}
 			return newIsActive;
 		});
+	};
+
+	const handleToggleFechaMaxima = () => {
+		setFechaMaxima((prevFechaMaxima) => !prevFechaMaxima);
+		setFormData((prevFormData) => ({
+			...prevFormData,
+			fechaMaximaEntrega: fechaMaxima ? new Date().toISOString() : null,
+		}));
 	};
 
 	const handleLongevidadClick = () => {
@@ -539,7 +548,7 @@ const Page: React.FC = () => {
 										type="checkbox"
 										id="toggle"
 										checked={isActive}
-										onChange={handleToggle} // Eliminar el atributo value
+										onChange={handleToggle}
 										className="absolute size-0"
 									/>
 									<span
@@ -579,7 +588,6 @@ const Page: React.FC = () => {
 												errors={errors}
 												selectedColor={color}
 											/>
-
 											<Label
 												htmlFor="porcentaje"
 												className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
@@ -604,28 +612,61 @@ const Page: React.FC = () => {
 											</div>
 										</div>
 										<div className="my-4 flex flex-col">
-											<span
-												className={`text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-											>
-												Fecha maxima de entrega:
-											</span>
-											<input
-												type="date"
-												className={`w-1/2 rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-												onChange={(e) =>
-													setFormData({
-														...formData,
-														fechaMaximaEntrega: e.target.value,
-													})
-												}
-											/>
+											<div className="flex flex-col">
+												<p className="font-bold">
+													¿La actividad tiene fecha de entrega?
+												</p>
+												<div className="flex space-x-2">
+													<label
+														htmlFor="toggleFechaMaxima"
+														className="relative inline-block h-8 w-16"
+													>
+														<input
+															type="checkbox"
+															id="toggleFechaMaxima"
+															checked={fechaMaxima}
+															onChange={handleToggleFechaMaxima}
+															className="absolute size-0"
+														/>
+														<span
+															className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
+														>
+															<span
+																className={`absolute left-1 top-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
+															></span>
+														</span>
+													</label>
+													<span className="mt-1 text-sm text-gray-400">
+														{fechaMaxima ? 'Si' : 'No'}
+													</span>
+												</div>
+											</div>
+											{fechaMaxima && (
+												<>
+													<span
+														className={`text-xl font-medium ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+													>
+														Fecha maxima de entrega:
+													</span>
+													<input
+														type="datetime-local"
+														className={`w-1/2 rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+														onChange={(e) =>
+															setFormData({
+																...formData,
+																fechaMaximaEntrega: e.target.value,
+															})
+														}
+													/>
+												</>
+											)}
 										</div>
 									</div>
 								)}
 							</>
 						)}
 						<Label
-							className={`mb-2 text-xl text-black ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+							className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						>
 							Titulo
 						</Label>

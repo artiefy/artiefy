@@ -193,9 +193,12 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 										</p>
 										<p className="text-sm font-bold italic">
 											Educador:{' '}
-											<span className="font-bold italic">
+											<Badge
+												variant="outline"
+												className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+											>
 												{lesson.course.instructor}
-											</span>
+											</Badge>
 										</p>
 										<p className="text-sm font-bold italic">
 											Clase #{' '}
