@@ -11,12 +11,22 @@ export async function GET(
 	{ params }: { params: { key: string } }
 ) {
 	try {
-		const key = params.key;
+		const { key } = params;
+		console.log(`Fetching file with key: ${key}`); // Agregar log para depuración
 		const respuesta = await redis.hgetall(key);
 
-		if (!respuesta || !respuesta.fileContent) {
+		if (!respuesta) {
+			console.error(`No data found for key: ${key}`); // Agregar log para depuración
 			return NextResponse.json(
 				{ error: 'Archivo no encontrado' },
+				{ status: 404 }
+			);
+		}
+
+		if (!respuesta.fileContent) {
+			console.error(`Empty file content for key: ${key}`); // Agregar log para depuración
+			return NextResponse.json(
+				{ error: 'Contenido del archivo vacío' },
 				{ status: 404 }
 			);
 		}

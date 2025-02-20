@@ -10,19 +10,13 @@ interface QuestionListProps {
 	onQuestionAnswered: (isCorrect: boolean) => void;
 }
 
-interface SelectedOptions {
-	[key: string]: number;
-}
-
 interface Feedback {
 	isCorrect: boolean;
 	message: string;
 	attempted: boolean;
 }
 
-interface FeedbackState {
-	[key: string]: Feedback;
-}
+type FeedbackState = Record<string, Feedback>;
 
 const VerQuestionList: React.FC<QuestionListProps> = ({
 	activityId,

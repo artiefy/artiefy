@@ -33,7 +33,6 @@ interface ActivityDetails {
 		courseDescription: string;
 		courseInstructor: string;
 	};
-	revisada: boolean;
 }
 
 interface ActivityScore {
@@ -122,14 +121,29 @@ const RealizarActividad: React.FC = () => {
 						]);
 
 					const [omData, completarData, vofData] = await Promise.all([
-						omResponse.json(),
-						completarResponse.json(),
-						vofResponse.json(),
+						omResponse.json() as Promise<{
+							questionsOM: {
+								id: number;
+								question: string;
+								options: string[];
+								correctOption: number;
+							}[];
+						}>,
+						completarResponse.json() as Promise<{
+							questionsACompletar: {
+								id: number;
+								question: string;
+								answer: string;
+							}[];
+						}>,
+						vofResponse.json() as Promise<{
+							questionsVOF: { id: number; question: string; isTrue: boolean }[];
+						}>,
 					]);
 
 					const total =
 						(omData.questionsOM?.length || 0) +
-						(completarData.questions?.length || 0) +
+						(completarData.questionsACompletar?.length || 0) +
 						(vofData.questionsVOF?.length || 0);
 
 					setTotalQuestions(total);
@@ -239,7 +253,9 @@ const RealizarActividad: React.FC = () => {
 									Docente: {actividad.lesson.courseInstructor}
 								</p>
 								{actividad.type.id === 1 ? (
-									<ActSubida activityId={actividad.id} />
+									<>
+										<ActSubida activityId={actividad.id} />
+									</>
 								) : actividad.type.id === 2 ? (
 									<>
 										<VerQuestionList
@@ -288,10 +304,10 @@ const RealizarActividad: React.FC = () => {
 										)}
 									</>
 								) : (
-									<p>
+									<>
 										Actividad no encontrada, escribenos y comentanos que
 										actividad te gustaria ver aqui en Artiefy!!.
-									</p>
+									</>
 								)}
 							</>
 						)}

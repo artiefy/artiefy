@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questionsACompletar`; // Update key
+		const key = `activity:${activityId}:questionsACompletar`;
 		const questionsACompletar = (await redis.get<Completado[]>(key)) ?? [];
 		return NextResponse.json({ success: true, questionsACompletar });
 	} catch (error) {
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questionsACompletar`; // Update key
+		const key = `activity:${activityId}:questionsACompletar`;
 		const existingQuestions = (await redis.get<Completado[]>(key)) ?? [];
 
 		const updatedQuestions = [...existingQuestions, questionsACompletar];
@@ -77,7 +77,7 @@ export async function PUT(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questionsACompletar`; // Update key
+		const key = `activity:${activityId}:questionsACompletar`;
 		const existingQuestions = (await redis.get<Completado[]>(key)) ?? [];
 
 		const updatedQuestions = existingQuestions.map((q) =>
@@ -108,7 +108,7 @@ export async function DELETE(request: NextRequest) {
 				{ status: 400 }
 			);
 		}
-		const key = `activity:${activityId}:questionsACompletar`; // Update key
+		const key = `activity:${activityId}:questionsACompletar`;
 		const existingQuestions = (await redis.get<Completado[]>(key)) ?? [];
 		const updatedQuestions = existingQuestions.filter(
 			(q) => q && q.id !== questionId

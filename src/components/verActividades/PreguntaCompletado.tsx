@@ -16,13 +16,9 @@ interface Feedback {
 	attempted: boolean;
 }
 
-interface Answers {
-	[key: string]: string;
-}
+type Answers = Record<string, string>;
 
-interface FeedbackState {
-	[key: string]: Feedback;
-}
+type FeedbackState = Record<string, Feedback>;
 
 const VerListPreguntaAbierta: React.FC<QuestionListProps> = ({
 	activityId,
@@ -48,10 +44,10 @@ const VerListPreguntaAbierta: React.FC<QuestionListProps> = ({
 			}
 			const data = (await response.json()) as {
 				success: boolean;
-				questions: Completado[];
+				questionsACompletar: Completado[];
 			};
 			if (data.success) {
-				setQuestions(data.questions);
+				setQuestions(data.questionsACompletar);
 			}
 			console.log('API response:', data); // Verificar la respuesta de la API
 		} catch (error) {

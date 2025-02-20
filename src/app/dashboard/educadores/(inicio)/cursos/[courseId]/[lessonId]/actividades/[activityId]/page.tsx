@@ -11,7 +11,6 @@ import QuestionForm from '~/components/educators/layout/QuestionsForms';
 import QuestionList from '~/components/educators/layout/QuestionsList';
 import SeleccionActi from '~/components/educators/layout/SeleccionActi';
 import QuestionVOFForm from '~/components/educators/layout/VerdaderoOFalseForm';
-import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 import QuestionVOFList from '~/components/educators/layout/VerdaderoOFalseList';
 import {
 	AlertDialog,
@@ -32,6 +31,7 @@ import {
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
+import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 import { toast } from '~/hooks/use-toast';
 import type {
 	QuestionFilesSubida,
@@ -388,7 +388,9 @@ const Page: React.FC = () => {
 														calificaciones.
 													</p>
 												</div>
-												<VerRespuestasArchivos activityId={actividadIdNumber} />
+												<VerRespuestasArchivos
+													activityId={actividadIdNumber.toString()}
+												/>
 											</div>
 											{editingQuestion && 'parametros' in editingQuestion && (
 												<FormActCompletado

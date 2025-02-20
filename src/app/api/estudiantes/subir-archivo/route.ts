@@ -1,6 +1,5 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
+import { NextResponse } from 'next/server';
 
 const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -16,34 +15,36 @@ export async function POST(request: Request) {
 		const userId = formData.get('userId') as string;
 		const userName = formData.get('userName') as string;
 
-		if (!file || !activityId || !questionId || !userId || !userName) {
-			return new Response('Faltan datos requeridos', { status: 400 });
+		if (!file) {
+			return NextResponse.json(
+				{ error: 'No se proporcionó ningún archivo' },
+				{ status: 400 }
+			);
 		}
 
-		// Generamos una clave única para cada archivo usando timestamp
-		const timestamp = new Date().getTime();
-		const key = `activity:${activityId}:${questionId}:${userId}:${timestamp}`;
+		const arrayBuffer = await file.arrayBuffer();
+		const buffer = Buffer.from(arrayBuffer);
+		const fileContent = buffer.toString('base64');
 
+		const key = `activity:${activityId}:${questionId}:${userId}:${Date.now()}`;
 		await redis.hset(key, {
+			fileContent,
 			fileName: file.name,
 			submittedAt: new Date().toISOString(),
-			userId: userId,
-			userName: userName,
+			userId,
+			userName,
 			status: 'pendiente',
 		});
 
-		// Mantenemos un índice de todas las entregas para esta actividad
+		// Agregar la clave al índice de la actividad
 		const activityIndex = `activity:${activityId}:submissions`;
 		await redis.sadd(activityIndex, key);
 
-		return new Response(JSON.stringify({ success: true }), {
-			status: 200,
-			headers: { 'Content-Type': 'application/json' },
-		});
+		return NextResponse.json({ success: true });
 	} catch (error) {
-		console.error('Error al procesar la subida:', error);
-		return new Response(
-			JSON.stringify({ error: 'Error al procesar la subida' }),
+		console.error('Error al subir el archivo:', error);
+		return NextResponse.json(
+			{ error: 'Error al subir el archivo' },
 			{ status: 500 }
 		);
 	}

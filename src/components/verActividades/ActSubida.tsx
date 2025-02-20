@@ -1,7 +1,7 @@
 'use client';
-import { useUser } from '@clerk/nextjs';
 import type React from 'react';
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 import { Input } from '~/components/educators/ui/input';
@@ -15,9 +15,9 @@ interface QuestionListProps {
 const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 	const [questions, setQuestions] = useState<QuestionFilesSubida[]>([]);
 	const [loading, setLoading] = useState(false);
-	const [selectedFiles, setSelectedFiles] = useState<{
-		[key: string]: File | null;
-	}>({});
+	const [selectedFiles, setSelectedFiles] = useState<
+		Record<string, File | null>
+	>({});
 	const [submitting, setSubmitting] = useState(false);
 	const { user } = useUser();
 	const userName = user?.fullName;
@@ -100,8 +100,6 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 				body: formData,
 			});
 
-			console.log('response', response);
-
 			if (!response.ok) {
 				throw new Error('Error al subir el archivo');
 			}
@@ -119,7 +117,7 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 			console.error('Error:', error);
 			toast({
 				title: 'Error',
-				description: `Error al subir el archivo: ${error}. El archivo es demasiado grande.`,
+				description: `Error al subir el archivo: ${error.message}`,
 				variant: 'destructive',
 			});
 		} finally {
@@ -142,7 +140,7 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 								<div className="rounded-full bg-blue-100 p-2">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
-										className="h-6 w-6 text-blue-600"
+										className="size-6 text-blue-600"
 										fill="none"
 										viewBox="0 0 24 24"
 										stroke="currentColor"

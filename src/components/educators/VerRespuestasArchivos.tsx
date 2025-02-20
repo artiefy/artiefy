@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent } from '~/components/educators/ui/card';
 import { Button } from '~/components/educators/ui/button';
+import { Card, CardContent } from '~/components/educators/ui/card';
 import { Input } from '~/components/educators/ui/input';
 import { toast } from '~/hooks/use-toast';
 
@@ -17,7 +17,7 @@ interface RespuestaArchivo {
 export default function VerRespuestasArchivos({
 	activityId,
 }: {
-	activityId: number;
+	activityId: string;
 }) {
 	const [respuestas, setRespuestas] = useState<
 		Record<string, RespuestaArchivo>
@@ -32,12 +32,14 @@ export default function VerRespuestasArchivos({
 				`/api/educadores/respuestas-archivos/${activityId}`
 			);
 			if (!response.ok) throw new Error('Error al obtener respuestas');
-			const data = await response.json();
+			const data = (await response.json()) as {
+				respuestas: Record<string, RespuestaArchivo>;
+			};
 
 			// Inicializar las calificaciones con los valores de la base de datos
 			const initialGrades: Record<string, string> = {};
 			Object.entries(data.respuestas).forEach(([key, respuesta]) => {
-				const grade = (respuesta as RespuestaArchivo).grade;
+				const grade = respuesta.grade;
 				// Si grade es null o undefined, establecemos un string vacío
 				initialGrades[key] = grade !== null ? grade.toString() : '';
 			});
@@ -57,7 +59,7 @@ export default function VerRespuestasArchivos({
 	}, [activityId]);
 
 	useEffect(() => {
-		fetchRespuestas();
+		void fetchRespuestas();
 	}, [fetchRespuestas]);
 
 	const calificarRespuesta = async (
@@ -79,10 +81,13 @@ export default function VerRespuestasArchivos({
 				}),
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as {
+				success: boolean;
+				data: RespuestaArchivo;
+			};
 
 			if (!response.ok) {
-				throw new Error(data.error || 'Error al calificar');
+				throw new Error('Error al calificar');
 			}
 
 			if (!data.success) {
@@ -94,7 +99,7 @@ export default function VerRespuestasArchivos({
 				...prev,
 				[submissionKey]: {
 					...prev[submissionKey],
-					grade,
+					grade: parseFloat(data.data.grade?.toString() ?? '0'),
 					status: 'calificado',
 				},
 			}));
@@ -165,7 +170,8 @@ export default function VerRespuestasArchivos({
 	const descargarArchivo = async (key: string) => {
 		try {
 			const response = await fetch(`/api/educadores/descargar-archivo/${key}`);
-			if (!response.ok) throw new Error('Error al descargar archivo');
+			if (!response.ok)
+				throw new Error(`Error al descargar archivo: ${response.statusText}`);
 
 			const blob = await response.blob();
 			const url = window.URL.createObjectURL(blob);
@@ -177,7 +183,7 @@ export default function VerRespuestasArchivos({
 			window.URL.revokeObjectURL(url);
 			document.body.removeChild(a);
 		} catch (error) {
-			console.error('Error:', error);
+			console.error('Error al descargar archivo:', error);
 			toast({
 				title: 'Error',
 				description: 'No se pudo descargar el archivo',

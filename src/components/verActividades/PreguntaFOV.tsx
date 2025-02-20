@@ -16,9 +16,7 @@ interface Feedback {
 	attempted: boolean;
 }
 
-interface FeedbackState {
-	[key: string]: Feedback;
-}
+type FeedbackState = Record<string, Feedback>;
 
 const VerQuestionVOFList: React.FC<QuestionListProps> = ({
 	activityId,
@@ -165,7 +163,7 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
 								variant="secondary"
 								className="absolute bottom-6 right-10"
 								onClick={() =>
-									handleSubmit(question.id, selectedOptions[question.id] || '')
+									handleSubmit(question.id, selectedOptions[question.id] ?? '')
 								}
 								disabled={feedback[question.id]?.attempted}
 							>
