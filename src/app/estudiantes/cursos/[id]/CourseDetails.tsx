@@ -5,7 +5,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Cambiar a 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'; // Cambiar a 'next/navigation'
 import {
 	FaCalendar,
 	FaChevronDown,
@@ -66,6 +66,7 @@ export default function CourseDetails({
 	const { user } = useUser();
 	const { toast } = useToast();
 	const router = useRouter(); // Asegúrate de importar 'useRouter' desde 'next/navigation'
+	const pathname = usePathname(); // Obtener la URL actual
 
 	useEffect(() => {
 		const fetchUserProgress = async () => {
@@ -119,7 +120,7 @@ export default function CourseDetails({
 				description: 'Debes iniciar sesión para inscribirte en este curso.',
 				variant: 'destructive',
 			});
-			void router.push('/sign-in'); // Redirigir a la página de inicio de sesión
+			void router.push(`/sign-in?redirect_url=${pathname}`); // Redirigir a la página de inicio de sesión con la URL actual
 			return;
 		}
 

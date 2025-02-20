@@ -1,4 +1,3 @@
-// src/middleware.ts
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
@@ -13,39 +12,50 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
   const role = sessionClaims?.metadata?.role;
 
+  console.log('User ID:', userId);
+  console.log('Role:', role);
+  console.log('Request URL:', req.url);
+
   // Redirect to login page if not authenticated and the route is protected
   if (!userId && isProtectedRoute(req)) {
-    const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${redirectTo}`);
+    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
+    console.log('Redirecting to sign-in:', `${req.nextUrl.origin}/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`);
+    return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`);
   }
 
   // Protect specific role routes
   if (isAdminRoute(req) && role !== 'admin') {
-    const url = new URL('/', req.url);
-    return NextResponse.redirect(url);
+    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
+    console.log('Redirecting to home (admin route):', `${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
+    return NextResponse.redirect(`${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
   }
 
   if (isSuperAdminRoute(req) && role !== 'super-admin') {
-    const url = new URL('/', req.url);
-    return NextResponse.redirect(url);
+    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
+    console.log('Redirecting to home (super-admin route):', `${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
+    return NextResponse.redirect(`${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
   }
 
   if (isEducatorRoute(req) && role !== 'educador') {
-    const url = new URL('/', req.url);
-    return NextResponse.redirect(url);
+    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
+    console.log('Redirecting to home (educator route):', `${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
+    return NextResponse.redirect(`${req.nextUrl.origin}/?redirect_url=${encodeURIComponent(redirectTo)}`);
   }
 
   // Protect dynamic student routes
   if (isStudentClassRoute(req) && !userId) {
-    const redirectTo = encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${redirectTo}`);
+    const redirectTo = `${req.nextUrl.origin}${req.nextUrl.pathname}${req.nextUrl.search}`;
+    console.log('Redirecting to sign-in (student class route):', `${req.nextUrl.origin}/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`);
+    return NextResponse.redirect(`${req.nextUrl.origin}/sign-in?redirect_url=${encodeURIComponent(redirectTo)}`);
   }
 
   // Handle public routes
   if (!userId && publicRoutes(req)) {
+    console.log('Public route, proceeding to next response');
     return NextResponse.next();
   }
 
+  console.log('Authenticated or public route, proceeding to next response');
   return NextResponse.next();
 });
 

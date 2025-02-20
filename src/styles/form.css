@@ -18,31 +18,29 @@
 
 .form .payer-info-title {
 	font-size: 18px;
+	padding-bottom: 20px;
 	font-weight: bold;
 	color: #21262e;
 	text-align: left;
 }
 
-.form .label:has(input:focus) .title,
-.form .label:has(input:not(:placeholder-shown)) .title {
-	top: 0;
-	left: 0;
-	color: #00bdd8;
-	background: white;
+.form .label {
+	position: relative;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center; /* Alinea verticalmente los elementos dentro del label */
 }
 
 .form .label .title {
 	padding: 0 10px;
-	transition: all 300ms;
 	font-size: 12px;
-	color: #8b8e98;
-	font-weight: 600;
-	width: -moz-fit-content;
-	width: fit-content;
-	top: 14px;
-	position: relative;
+	color: #00bdd8; /* Cambia el color a azul oscuro */
+	font-weight: bold; /* Aplica negrita */
+	position: absolute;
+	top: -10px; /* Ajusta la posición del título */
 	left: 15px;
 	background: white;
+	z-index: 1;
 }
 
 .form .input-field {
@@ -57,6 +55,7 @@
 	transition: all 0.3s;
 	caret-color: #00bdd8;
 	color: #0c0f14;
+	position: relative; /* Asegura que el input sea relativo */
 }
 
 .form .input-field:hover {
@@ -74,19 +73,38 @@
 	-webkit-text-fill-color: #0c0f14 !important;
 }
 
-.form .input-error {
-	border-color: red;
+/* Update the error message styles */
+.form .error-message {
+  color: red;
+  font-size: 12px;
+  font-weight: bold;
+  display: block;
+  width: 100%;
+  margin-top: 2px; /* Reduced top margin */
 }
 
-.form .error-message {
-	color: red;
-	font-size: 12px;
-	font-weight: bold;
-	display: none;
+/* Add text alignment for the checkbox error message */
+.form .error-message.text-center {
+  text-align: center;
+}
+
+/* Remove the previous positioning styles for error message */
+.form .input-error + .error-message {
+  display: block;
+  width: 100%;
+}
+
+/* Add margin left for checkbox error messages */
+.form .error-message.ml-6 {
+  margin-left: 1.5rem;
 }
 
 .form .input-error + .error-message {
 	display: block;
+	position: relative;
+	margin-top: 5px;
+	left: 0;
+	width: 100%; /* Ensure the error message takes the full width */
 }
 
 .form .error {
@@ -100,11 +118,9 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	margin: 10px 0;
 	color: #28a745;
 	font-size: 16px;
 	font-weight: bold;
-	padding: 10px;
 }
 
 .form .security-message .lock-icon {
@@ -122,8 +138,9 @@
 .form .split label {
 	width: 100%;
 }
+
 .form .checkout-btn {
-	padding: 20px 0;
+	padding: 5px 0;
 	border-radius: 25px;
 	font-weight: 700;
 	transition: all 0.3s cubic-bezier(0.15, 0.83, 0.66, 1);
@@ -140,6 +157,7 @@
 	background: #00bdd8;
 	transition: all 200ms;
 }
+
 .form .checkout-btn:active {
 	scale: 0.95;
 }
@@ -148,4 +166,16 @@
 	color: #00bdd8;
 	border: 2px solid #00bdd8;
 	background: transparent;
+}
+
+.form .checkbox-title {
+	margin-left: 10px; /* Añade espacio entre el checkbox y el texto */
+	font-size: 12px;
+	color: #00bdd8; /* Cambia el color a azul oscuro */
+	font-weight: bold; /* Aplica negrita */
+}
+
+.form .label-checkbox {
+	display: flex;
+	align-items: center; /* Alinea verticalmente los elementos dentro del label */
 }

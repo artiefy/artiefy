@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
@@ -11,9 +12,12 @@ import '~/styles/buttonPlanes.css';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimesCircle, FaTimes } from 'react-icons/fa';
 import { getProductById } from '~/utils/products';
+import { useToast } from '~/hooks/use-toast';
 
 const PlansPage: React.FC = () => {
   const { isSignedIn } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState('personas');
@@ -21,7 +25,12 @@ const PlansPage: React.FC = () => {
   // Esta función maneja la selección del plan
   const handlePlanSelect = (plan: Plan) => {
     if (!isSignedIn) {
-      alert('Debes iniciar sesión para seleccionar un plan.');
+      toast({
+        title: 'Debes iniciar sesión',
+        description: 'Por favor, inicia sesión para seleccionar un plan.',
+        variant: 'destructive',
+      });
+      router.push('/sign-in?redirect_url=/planes');
       return;
     }
     setSelectedPlan(plan);

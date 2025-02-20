@@ -1,32 +1,26 @@
 interface ValidationErrors {
-	buyerEmail?: string;
-	buyerFullName?: string;
-	telephone?: string;
+  telephone?: string
+  termsAndConditions?: string
+  privacyPolicy?: string
 }
 
 export function validateFormData(
-	buyerEmail: string,
-	buyerFullName: string,
-	telephone: string
+  telephone: string,
+  termsAndConditions: boolean,
+  privacyPolicy: boolean,
 ): ValidationErrors {
-	const errors: ValidationErrors = {};
+  const errors: ValidationErrors = {}
 
-	const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
-	const namePattern = /^[a-zA-Z\s]+$/;
-	const phonePattern = /^\+57\s[0-9]{10}$/;
+  const phonePattern = /^\+\d{1,3}\s\d{10}$/
 
-	if (!emailPattern.test(buyerEmail)) {
-		errors.buyerEmail =
-			'El correo electrónico es obligatorio y debe contener @.';
-	}
-	if (!namePattern.test(buyerFullName)) {
-		errors.buyerFullName =
-			'El nombre completo es obligatorio y debe contener solo letras.';
-	}
-	if (!phonePattern.test(telephone)) {
-		errors.telephone =
-			'El teléfono es obligatorio y debe seguir el formato +57 3113333332.';
-	}
+  if (!phonePattern.test(telephone) || telephone.length !== 14) {
+    errors.telephone = "Formato de teléfono inválido."
+  }
+  if (!termsAndConditions || !privacyPolicy) {
+    errors.termsAndConditions = "Debe aceptar los términos y condiciones y la política de privacidad"
+    errors.privacyPolicy = "Debe aceptar los términos y condiciones y la política de privacidad"
+  }
 
-	return errors;
+  return errors
 }
+

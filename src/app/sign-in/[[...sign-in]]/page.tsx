@@ -26,7 +26,6 @@ export default function SignInPage() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect_url') ?? '/';
   const router = useRouter();
-  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   useEffect(() => {
     if (isSignedIn) {
@@ -55,8 +54,8 @@ export default function SignInPage() {
     try {
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: `/sign-up/sso-callback?redirect_url=${encodeURIComponent(currentUrl)}`,
-        redirectUrlComplete: currentUrl,
+        redirectUrl: `/sign-up/sso-callback`,
+        redirectUrlComplete: redirectTo,
       });
     } catch (err) {
       setLoadingProvider(null);
@@ -89,7 +88,7 @@ export default function SignInPage() {
         if (setActive) {
           await setActive({ session: signInAttempt.createdSessionId });
         }
-        router.replace(currentUrl);
+        router.replace(redirectTo);
       } else if (signInAttempt.status === 'needs_first_factor') {
         const supportedStrategies =
           signInAttempt.supportedFirstFactors?.map((factor) => factor.strategy) ?? [];
@@ -193,7 +192,7 @@ export default function SignInPage() {
         if (setActive) {
           await setActive({ session: result.createdSessionId });
         }
-        router.replace('/'); // Aquí puedes cambiar para redirigir a una URL específica si es necesario
+        router.replace(redirectTo);
       } else {
         setErrors([
           {
