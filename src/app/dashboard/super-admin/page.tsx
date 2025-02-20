@@ -8,7 +8,10 @@ import {
 	Trash2,
 	UserPlus,
 	Check,
+	Eye,
+	EyeOff,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import {
 	setRoleWrapper,
@@ -38,6 +41,65 @@ type ConfirmationState = {
 	onConfirm: () => void;
 	onCancel?: () => void;
 } | null;
+
+interface ViewUserResponse {
+	id: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	role: string;
+	status: string;
+	profileImage?: string; // Opcional si viene de Clerk
+	password?: string; // Si la API lo devuelve, de lo contrario, elimínalo
+	createdAt?: string; // Fecha de creación opcional
+	courses?: Course[]; // Añadir cursos
+}
+
+interface UserData {
+	id: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	profileImage?: string;
+	createdAt?: string;
+	role?: string;
+	status?: string;
+	password?: string;
+}
+interface UserData {
+	id: string;
+	name: string;
+	email: string;
+	profileImage?: string;
+	createdAt?: string;
+	role?: string;
+	status?: string;
+	password?: string;
+}
+
+interface Course {
+	id: string;
+	title: string;
+	coverImageKey: string | null; // Añadimos la propiedad coverImageKey
+	coverImage?: string;
+}
+
+interface CoursesData {
+	courses: Course[];
+}
+
+interface ViewUserResponse {
+	id: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	profileImage?: string;
+	createdAt?: string;
+	role: string;
+	status: string;
+	password?: string;
+	courses?: Course[];
+}
 
 export default function AdminDashboard() {
 	const [users, setUsers] = useState<User[]>([]);
@@ -76,6 +138,9 @@ export default function AdminDashboard() {
 		role: 'estudiante',
 	});
 	const [creatingUser, setCreatingUser] = useState(false);
+	const [viewUser, setViewUser] = useState<ViewUserResponse | null>(null);
+	const [showPassword, setShowPassword] = useState(false);
+
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 	const handleUserSelection = useCallback((userId: string) => {
@@ -145,7 +210,11 @@ export default function AdminDashboard() {
 
 			if (!res.ok) throw new Error('Error al asignar estudiantes');
 
-			const result = await res.json() as { added: number; alreadyEnrolled: number; message: string };
+			const result = (await res.json()) as {
+				added: number;
+				alreadyEnrolled: number;
+				message: string;
+			};
 			const { message } = result;
 
 			// 🔹 Cierra el modal antes de mostrar la confirmación
@@ -156,21 +225,127 @@ export default function AdminDashboard() {
 				setConfirmation({
 					isOpen: true,
 					title: 'Asignación de Estudiantes',
-					message: `${message} \n\n❓ ¿Quieres seguir asignando más estudiantes?`,
+					message: `${message} \n\n ¿Quieres seguir asignando más estudiantes?`,
 					onConfirm: () => {
-						// ✅ Si el usuario quiere seguir, vuelve a abrir el modal
+						//  Si el usuario quiere seguir, vuelve a abrir el modal
 						setSelectedStudents([]);
 						setSelectedCourse(null);
 						setShowAssignModal(true);
 					},
 					onCancel: () => {
-						// ❌ Si el usuario no quiere seguir, cierra la confirmación
+						//  Si el usuario no quiere seguir, cierra la confirmación
 						setConfirmation(null);
 					},
 				});
 			}, 300); // 🔹 Esperamos 300ms para evitar superposición de animaciones
 		} catch {
 			showNotification('Error al asignar estudiantes', 'error');
+		}
+	};
+	const [newCoverImageKey, setNewCoverImageKey] = useState<string | null>(null);
+	const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		try {
+			const uploadResponse = await fetch('/api/upload', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
+			});
+
+			if (!uploadResponse.ok) throw new Error('Error al obtener URL de carga');
+
+			const uploadData = (await uploadResponse.json()) as { url: string; fields: Record<string, string> };
+			const { url, fields } = uploadData;
+
+			const formData = new FormData();
+			Object.entries(fields).forEach(([key, value]) => {
+				if (typeof value === 'string') {
+					formData.append(key, value);
+				}
+			});
+			formData.append('file', file);
+
+			const s3UploadResponse = await fetch(url, {
+				method: 'POST',
+				body: formData,
+			});
+
+			if (!s3UploadResponse.ok) throw new Error('Error al subir imagen');
+
+			// Actualizamos el estado con la nueva clave de la imagen
+			setNewCoverImageKey(fields.key);
+			console.log('Nuevo valor de newCoverImageKey:', (fields as { key: string }).key); // Verifica si la clave es válida
+		} catch (error) {
+			console.error('Error al subir imagen:', error);
+		}
+	};
+
+	// Definir la interfaz de los datos del usuario
+
+	const handleViewUser = async (user: User): Promise<void> => {
+		try {
+			// Obtener información básica del usuario
+			const userRes = await fetch(`/api/super-admin/infoUser?id=${user.id}`);
+			if (!userRes.ok) throw new Error('Error al obtener datos del usuario');
+
+			const userData: UserData = (await userRes.json()) as UserData;
+
+			// Validar que los datos sean correctos
+			if (!userData?.name || !userData?.email || !userData?.id) {
+				throw new Error('Datos del usuario inválidos');
+			}
+
+			// Extraer el primer y segundo nombre de `name` (en caso de que tenga más de un nombre)
+			const [firstName, lastName] = userData.name.split(' ');
+
+			const validUserData: ViewUserResponse = {
+				id: String(userData.id),
+				firstName: firstName || 'Nombre no disponible',
+				lastName: lastName || 'Apellido no disponible',
+				email: String(userData.email),
+				profileImage: userData.profileImage ?? '/default-avatar.png',
+				createdAt: userData.createdAt ?? 'Fecha no disponible',
+				role: userData.role ?? 'Sin rol',
+				status: userData.status ?? 'Activo',
+				password: userData.password ?? 'No disponible',
+				courses: [], // Esto se completará con los cursos más tarde
+			};
+
+			// Guardar el usuario con los cursos en el estado
+			setViewUser(validUserData);
+
+			// Obtener los cursos
+			const coursesRes = await fetch(
+				`/api/super-admin/userCourses?userId=${user.id}`
+			);
+			if (!coursesRes.ok) throw new Error('Error al obtener los cursos');
+
+			const coursesData = (await coursesRes.json()) as CoursesData;
+
+			// Validar que los cursos sean correctos
+			if (!coursesData || !Array.isArray(coursesData.courses)) {
+				throw new Error('Error en los datos de los cursos');
+			}
+
+			// Mapear los cursos
+			const courses = coursesData.courses.map((course) => ({
+				id: course.id,
+				title: course.title || 'Sin título',
+				coverImageKey: course.coverImageKey ?? null,
+				coverImage: course.coverImage ?? '/default-course.jpg',
+			}));
+
+			// Actualizar el estado con los cursos
+			setViewUser({
+				...validUserData,
+				courses,
+			});
+
+			setShowPassword(false);
+		} catch (error) {
+			console.error('Error al obtener usuario o cursos:', error);
 		}
 	};
 
@@ -214,7 +389,7 @@ export default function AdminDashboard() {
 		} finally {
 			setLoading(false);
 		}
-	}, [query]); // 👈 Ahora `query` es una dependencia estable y segura
+	}, [query]);
 
 	// ✅ Ahora, `useEffect` ya no mostrará advertencias
 	useEffect(() => {
@@ -649,6 +824,113 @@ export default function AdminDashboard() {
 								</div>
 							</div>
 						)}
+						{viewUser && (
+							<div className="fixed inset-0 z-[10000] flex items-center justify-center backdrop-blur-md">
+								<div className="relative z-50 w-full max-w-5xl rounded-lg bg-[#01142B] p-8 text-white shadow-xl">
+									{/* Información del Usuario */}
+									<div className="flex">
+										{/* Foto de Perfil */}
+										<div className="mr-8 h-48 w-48 overflow-hidden rounded-full border-4 border-[#3AF4EF]">
+											{viewUser.profileImage ? (
+												<img
+													src={viewUser.profileImage}
+													alt="Foto de perfil"
+													className="h-full w-full object-cover"
+												/>
+											) : (
+												<div className="flex h-full w-full items-center justify-center bg-gray-600 text-center text-5xl text-white">
+													{viewUser.firstName?.charAt(0)}
+												</div>
+											)}
+										</div>
+
+										{/* Información del Usuario */}
+										<div className="flex ml-80 flex-col justify-start space-x-4">
+  <p className="text-4xl font-semibold">
+    {viewUser.firstName} {viewUser.lastName}
+  </p>
+  <p className="text-lg text-gray-400">{viewUser.email}</p>
+  <p className="mt-2 text-lg">
+    <strong>Rol:</strong>{' '}
+    <span className="font-bold text-[#3AF4EF]">
+      {viewUser.role}
+    </span>
+  </p>
+  <p className="text-lg">
+    <strong>Estado:</strong>{' '}
+    <span className="font-bold text-[#3AF4EF]">
+      {viewUser.status}
+    </span>
+  </p>
+  <p className="text-lg">
+    <strong>Fecha de Creación:</strong>{' '}
+    {viewUser.createdAt ?? 'Fecha no disponible'}
+  </p>
+</div>
+
+									</div>
+
+									{/* Cursos en los que está inscrito */}
+									{/* Cursos en los que está inscrito */}
+<div className="mt-8 w-full">
+  <h3 className="mb-4 text-2xl font-semibold text-white">
+    Cursos en los que está inscrito
+  </h3>
+
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+    {viewUser.courses && viewUser.courses.length > 0 ? (
+      viewUser.courses.map((course, index) => (
+        <div
+          key={course.id}
+          className="rounded-lg bg-gray-800 p-4 shadow-md"
+          style={{
+			gridColumn: (viewUser.courses?.length ?? 0) === 1
+              ? 'span 6' // Si hay un solo curso, ocupará toda la fila
+			  : (viewUser.courses?.length ?? 0) === 2
+              ? 'span 3' // Si hay dos cursos, cada uno ocupará la mitad de la fila
+			  : (viewUser.courses?.length ?? 0) > 2 && (viewUser.courses?.length ?? 0) <= 6
+              ? 'span 2' // Si hay entre 3 y 6 cursos, cada uno ocupará el 50% del espacio
+              : undefined
+          }}
+        >
+          <div className="relative mb-4 h-24 w-full">
+            {course.coverImageKey ? (
+              <Image
+                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+                alt={course.title}
+                layout="fill"
+                objectFit="cover"
+                className="rounded-lg"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-300 text-white">
+                Imagen no disponible
+              </div>
+            )}
+          </div>
+          <h4 className="text-lg font-semibold text-white">{course.title}</h4>
+        </div>
+      ))
+    ) : (
+      <p className="text-gray-400">Este usuario no está inscrito en ningún curso.</p>
+    )}
+  </div>
+</div>
+
+
+									{/* Botón de Cerrar */}
+									<div className="mt-6 text-center">
+										<button
+											onClick={() => setViewUser(null)}
+											className="rounded bg-red-500 px-6 py-3 text-white transition hover:bg-red-600"
+										>
+											Cerrar
+										</button>
+									</div>
+								</div>
+							</div>
+						)}
+
 						{showAssignModal && (
 							<div className="bg-opacity-30 fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
 								<div className="w-full max-w-3xl rounded-lg bg-gray-800 p-6 shadow-2xl">
@@ -965,6 +1247,13 @@ export default function AdminDashboard() {
 												</select>
 											</td>
 											<td className="flex space-x-2 px-4 py-3">
+												<button
+													onClick={() => handleViewUser(user)}
+													className="flex items-center rounded-md bg-blue-500 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-blue-600"
+												>
+													<Eye size={14} className="mr-1" /> Ver
+												</button>
+
 												{editingUser === user.id ? (
 													<button
 														onClick={() => handleSaveUser(user.id)}

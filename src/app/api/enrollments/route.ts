@@ -47,15 +47,15 @@ export async function POST(request: Request) {
 			await db.insert(enrollments).values(
 				newUsers.map((userId) => ({
 					userId,
-					courseId: parsedCourseId, // 🔥 Asegurar que courseId es un número
+					courseId: parsedCourseId, //  Asegurar que courseId es un número
 					enrolledAt: new Date(),
 					completed: false,
 				}))
 			);
 		}
 		// 🔹 Construir el mensaje de respuesta
-		const message = `✅ Se asignaron ${newUsers.length} estudiantes al curso. 
-		⚠️ ${existingUserIds.length} ya estaban inscritos.`;
+		const message = `Se asignaron ${newUsers.length} estudiantes al curso. 
+		 ${existingUserIds.length} ya estaban inscritos.`;
 
 		// 🔹 Responder con la cantidad de usuarios agregados
 		return NextResponse.json({

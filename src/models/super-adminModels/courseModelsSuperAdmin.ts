@@ -94,6 +94,7 @@ export const createCourse = async ({
 
 // Obtener todos los cursos de un profesor
 export const getCoursesByUserId = async (userId: string) => {
+	console.log('UserId recibido:', userId); // Asegúrate de que el ID del usuario sea el correcto
 	return db
 		.select({
 			id: courses.id,
@@ -298,4 +299,38 @@ export const updateCourseInstructor = async (
 		.set({ instructor: newInstructor })
 		.where(eq(courses.id, courseId))
 		.execute();
+};
+
+
+export const getCoursesByUserIdSimplified = async (userId: string) => {
+  console.log('UserId recibido:', userId); // Verifica que el ID sea correcto
+
+  try {
+    // Realiza la consulta para obtener los cursos en los que el usuario está inscrito
+    const coursesData = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        description: courses.description,
+        coverImageKey: courses.coverImageKey, // Asegúrate de que este campo existe
+      })
+      .from(courses)
+      .innerJoin(enrollments, eq(enrollments.courseId, courses.id)) // Realiza el join con la tabla de enrollments
+      .where(eq(enrollments.userId, userId)); // Filtra por el userId en la tabla de enrollments
+
+    // Verifica los datos obtenidos de la consulta
+    console.log('Cursos obtenidos:', coursesData);
+
+    // Si no se obtienen cursos, retornar un array vacío
+    if (coursesData.length === 0) {
+      console.log('No se encontraron cursos para el usuario');
+      return [];
+    }
+
+    // De lo contrario, devolver los cursos
+    return coursesData;
+  } catch (error) {
+    console.error('Error al obtener los cursos:', error);
+    throw new Error('Error al obtener los cursos');
+  }
 };
