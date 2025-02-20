@@ -5,7 +5,7 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation'; // Cambiar a 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation';
 import {
 	FaCalendar,
 	FaChevronDown,
@@ -65,8 +65,8 @@ export default function CourseDetails({
 	const { isSignedIn, userId } = useAuth();
 	const { user } = useUser();
 	const { toast } = useToast();
-	const router = useRouter(); // Asegúrate de importar 'useRouter' desde 'next/navigation'
-	const pathname = usePathname(); // Obtener la URL actual
+	const router = useRouter();
+	const pathname = usePathname();
 
 	useEffect(() => {
 		const fetchUserProgress = async () => {
@@ -102,7 +102,7 @@ export default function CourseDetails({
 		}, 1000);
 
 		return () => clearTimeout(timer);
-	}, [course.enrollments, userId, isEnrolled, course.id]);
+	}, [course.enrollments, userId, course.id, isEnrolled]);
 
 	const toggleLesson = (lessonId: number) => {
 		if (isEnrolled) {
@@ -120,7 +120,7 @@ export default function CourseDetails({
 				description: 'Debes iniciar sesión para inscribirte en este curso.',
 				variant: 'destructive',
 			});
-			void router.push(`/sign-in?redirect_url=${pathname}`); // Redirigir a la página de inicio de sesión con la URL actual
+			void router.push(`/sign-in?redirect_url=${pathname}`);
 			return;
 		}
 
@@ -132,7 +132,6 @@ export default function CourseDetails({
 		setEnrollmentError(null);
 
 		try {
-			// Verificar el estado de la suscripción del usuario
 			if (
 				!user?.publicMetadata?.subscriptionStatus ||
 				user.publicMetadata.subscriptionStatus !== 'active'
@@ -144,7 +143,7 @@ export default function CourseDetails({
 					variant: 'destructive',
 				});
 				setIsEnrolling(false);
-				void router.push('/planes'); // Redirigir a la página de planes
+				void router.push('/planes');
 				return;
 			}
 

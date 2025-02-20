@@ -37,7 +37,7 @@ export default function SignInPage() {
       redirectUrl = hashParams.get('redirect_url');
     }
 
-    return redirectUrl ?? '/'; // Si no hay redirect_url, por defecto a /dashboard
+    return redirectUrl ?? '/'; // Si no hay redirect_url, por defecto a /
   };
 
   const redirectUrl = getRedirectUrl();

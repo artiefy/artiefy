@@ -68,6 +68,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 		};
 
 		void fetchComments();
+		void checkEnrollment();
 
 		// Polling every 10 seconds to check enrollment status
 		const interval = setInterval(() => {
@@ -82,6 +83,10 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		if (!isSignedIn) {
+			setMessage('Debes iniciar sesión para dejar un comentario.');
+			return;
+		}
 		if (!isEnrolled) {
 			setMessage('Debes estar inscrito en el curso para dejar un comentario.');
 			return;
@@ -180,12 +185,7 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 						onBlur={(e) => (e.target.placeholder = 'Escribe tu comentario')}
 						required
 						placeholder="Escribe tu comentario"
-						disabled={!isSignedIn || !isEnrolled}
-						className={`mt-1 block w-full rounded-md border text-primary shadow-xs placeholder:text-gray-400 focus:ring-primary sm:text-sm ${
-							!isSignedIn || !isEnrolled
-								? 'border-gray-300'
-								: 'focus:border-2 focus:border-secondary'
-						}`}
+						className={`mt-1 block w-full rounded-md border text-primary shadow-xs placeholder:text-gray-400 focus:border-2 focus:border-secondary focus:ring-primary sm:text-sm`}
 						style={{
 							height: '100px',
 							padding: '10px',
