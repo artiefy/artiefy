@@ -1,182 +1,119 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-@layer base {
-	:root {
-		--background: 212.9 95.5% 8.6%; /* {#01142B} */
-		--foreground: 178.4 89.4% 59.2%; /* {#3AF4EF} */
-		--card: 0 0% 100%;
-		--card-foreground: 240 10% 3.9%;
-		--popover: 0 0% 100%;
-		--popover-foreground: 240 10% 3.9%;
-		--primary: 178.4 89.4% 59.2%; /* {#3AF4EF} */
-		--primary-foreground: 178.4 89.4% 59.2%;
-		--secondary: 187.5 100% 42.4%; /* {#00BDD8} */
-		--secondary-foreground: 240 5.9% 10%;
-		--muted: 240 4.8% 95.9%;
-		--muted-foreground: 240 3.8% 46.1%;
-		--accent: 240 4.8% 95.9%;
-		--accent-foreground: 240 5.9% 10%;
-		--destructive: 0 84.2% 60.2%;
-		--destructive-foreground: 0 0% 98%;
-		--border: 178.4 89.4% 59.2%; /* {#3AF4EF} */
-		--input: 240 5.9% 90%;
-		--ring: 240 5.9% 10%;
-		--radius: 0.5rem;
-		--chart-1: 12 76% 61%;
-		--chart-2: 173 58% 39%;
-		--chart-3: 197 37% 24%;
-		--chart-4: 43 74% 66%;
-		--chart-5: 27 87% 67%;
-	}
-	/* Otros colores personalizados */
-	.dark {
-		--background: 240 10% 3.9%;
-		--foreground: 0 0% 98%;
-		--card: 240 10% 3.9%;
-		--card-foreground: 0 0% 98%;
-		--popover: 240 10% 3.9%;
-		--popover-foreground: 0 0% 98%;
-		--primary: 0 0% 98%;
-		--primary-foreground: 240 5.9% 10%;
-		--secondary: 240 3.7% 15.9%;
-		--secondary-foreground: 0 0% 98%;
-		--muted: 240 3.7% 15.9%;
-		--muted-foreground: 240 5% 64.9%;
-		--accent: 240 3.7% 15.9%;
-		--accent-foreground: 0 0% 98%;
-		--destructive: 0 62.8% 30.6%;
-		--destructive-foreground: 0 0% 98%;
-		--border: 240 3.7% 15.9%;
-		--input: 240 3.7% 15.9%;
-		--ring: 240 4.9% 83.9%;
-		--chart-1: 220 70% 50%;
-		--chart-2: 160 60% 45%;
-		--chart-3: 30 80% 55%;
-		--chart-4: 280 65% 60%;
-		--chart-5: 340 75% 55%;
-	}
+@config "../../tailwind.config.js";
+
+@custom-variant dark (&:is(.dark *));
+
+/* 🔹 Variables de tema */
+@theme {
+  /* Tamaños de pantalla */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* Colores */
+  --color-background: hsl(212.9, 95.5%, 8.6%);
+  --color-foreground: hsl(178.4, 89.4%, 59.2%);
+  --color-card: hsl(0, 0%, 100%);
+  --color-card-foreground: hsl(240, 10%, 3.9%);
+  --color-popover: hsl(0, 0%, 100%);
+  --color-popover-foreground: hsl(240, 10%, 3.9%);
+  --color-primary: hsl(178.4, 89.4%, 59.2%);
+  --color-primary-foreground: hsl(178.4, 89.4%, 59.2%);
+  --color-secondary: hsl(187.5, 100%, 42.4%);
+  --color-secondary-foreground: hsl(240, 5.9%, 10%);
+  --color-muted: hsl(240, 4.8%, 95.9%);
+  --color-muted-foreground: hsl(240, 3.8%, 46.1%);
+  --color-accent: hsl(240, 4.8%, 95.9%);
+  --color-accent-foreground: hsl(240, 5.9%, 10%);
+  --color-destructive: hsl(0, 84.2%, 60.2%);
+  --color-destructive-foreground: hsl(0, 0%, 98%);
+  --color-border: hsl(178.4, 89.4%, 59.2%);
+  --color-input: hsl(240, 5.9%, 90%);
+  --color-ring: hsl(240, 5.9%, 10%);
+
+  /* Colores para gráficos */
+  --color-chart-1: hsl(12, 76%, 61%);
+  --color-chart-2: hsl(173, 58%, 39%);
+  --color-chart-3: hsl(197, 37%, 24%);
+  --color-chart-4: hsl(43, 74%, 66%);
+  --color-chart-5: hsl(27, 87%, 67%);
+
+  /* Fuentes */
+  --font-sans: var(--font-montserrat);
 }
 
-@layer base {
-	* {
-		@apply border-border;
-	}
-	body {
-		@apply bg-background;
-	}
+
+/* 🟠 Keyframes */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
 }
 
-@layer utilities {
-	.text-shadow {
-		text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
-	}
-	.animate-gradient {
-		animation: borderRotate 4s linear infinite;
-		background-size: 300% 300%;
-	}
-}
-
-@keyframes bounce-right {
-	0%,
-	100% {
-		transform: translateX(0);
-	}
-	50% {
-		transform: translateX(5px);
-	}
-}
-
-@keyframes sh02 {
-	from {
-		opacity: 0;
-		left: 0%;
-	}
-	50% {
-		opacity: 1;
-	}
-	to {
-		opacity: 0;
-		left: 100%;
-	}
-}
-
-@keyframes gradient-x {
-	0% {
-		background-position: 0% 50%;
-	}
-	50% {
-		background-position: 100% 50%;
-	}
-	100% {
-		background-position: 0% 50%;
-	}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
 }
 
 @keyframes borderRotate {
-	0%,
-	100% {
-		background-position: 0% 50%;
-	}
-	50% {
-		background-position: 100% 50%;
-	}
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-.animate-gradient-x {
-	background: linear-gradient(270deg, #3af4ef, #00bdd8, #01142b);
-	background-size: 600% 600%;
-	animation: gradient-x 4s ease infinite;
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.animate-bounce-right {
-	animation: bounce-right 1s infinite;
+
+/* 🌐 Estilos base */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background;
+  }
+}
+
+/* 🎨 Clases de utilidades */
+.text-shadow {
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.animate-gradient {
+  animation: borderRotate 4s linear infinite;
+  background-size: 300% 300%;
 }
 
 .button-hover:hover .button-hover-effect {
-	animation: sh02 0.5s 0s linear;
+  animation: sh02 0.5s 0s linear;
 }
 
 .cl-formButtonPrimary {
-	font-size: 14px;
-	text-transform: none;
-	background-color: #00bdd8;
+  font-size: 14px;
+  text-transform: none;
+  background-color: #00bdd8;
 }
 
 .cl-formButtonPrimary:hover,
 .cl-formButtonPrimary:focus,
 .cl-formButtonPrimary:active {
-	background-color: #3af4ef;
+  background-color: #3af4ef;
 }
 
 .cl-userButtonOuterIdentifier {
-	color: #ff6347;
-}
-
-.custom-padding {
-	padding-left: 32px;
-	padding-right: 32px;
-}
-
-@media (min-width: 768px) {
-	.custom-padding {
-		padding-left: 36px;
-		padding-right: 36px;
-	}
+  color: #ff6347;
 }
 
 .zoom-in {
-	animation: zoomIn 0.5s ease-in-out;
-}
-
-@keyframes zoomIn {
-	from {
-		transform: scale(0.9);
-		opacity: 0;
-	}
-	to {
-		transform: scale(1);
-		opacity: 1;
-	}
+  animation: zoomIn 0.5s ease-in-out;
 }

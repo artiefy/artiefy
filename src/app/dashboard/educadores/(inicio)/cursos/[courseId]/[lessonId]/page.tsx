@@ -163,7 +163,7 @@ const Page: React.FC = () => {
 
 	return (
 		<>
-			<div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background p-6">
+			<div className="bg-background container mx-auto mt-2 h-auto w-full rounded-lg p-6">
 				<Breadcrumb>
 					<BreadcrumbList>
 						<BreadcrumbItem>
@@ -201,7 +201,7 @@ const Page: React.FC = () => {
 					</BreadcrumbList>
 				</Breadcrumb>
 				<div className="group relative h-auto w-full">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
 					<Card
 						className={`relative z-20 mt-5 border-transparent bg-black p-5 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						style={{

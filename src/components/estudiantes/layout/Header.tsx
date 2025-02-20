@@ -63,7 +63,7 @@ export function Header() {
 							<SignedOut>
 								<SignInButton>
 									<Button
-										className="relative skew-x-[-15deg] rounded-none border border-primary bg-primary p-5 text-xl font-light italic text-background transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+										className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 										style={{
 											transition: '0.5s',
 											width: '175px',
@@ -164,7 +164,7 @@ export function Header() {
 						<SignedOut>
 							<SignInButton>
 								<Button
-									className="button-hover relative skew-x-[-15deg] rounded-none border border-background bg-primary p-5 text-xl font-light italic text-background transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+									className="button-hover border-background bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 									style={{
 										transition: '0.5s',
 										width: '175px',
@@ -179,7 +179,7 @@ export function Header() {
 										) : (
 											<>
 												Iniciar Sesión
-												<span className="button-hover-effect absolute left-0 top-0 h-full w-0 skew-x-[-20deg] bg-white opacity-0 shadow-[0_0_50px_30px_white] transition-all duration-500"></span>
+												<span className="button-hover-effect absolute top-0 left-0 h-full w-0 skew-x-[-20deg] bg-white opacity-0 shadow-[0_0_50px_30px_white] transition-all duration-500"></span>
 											</>
 										)}
 									</span>

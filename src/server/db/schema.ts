@@ -8,6 +8,7 @@ import {
 	text,
 	timestamp,
 	varchar,
+	date,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -443,3 +444,13 @@ export const postRelations = relations(posts, ({ one }) => ({
 		references: [users.id],
 	}), // Un post tiene un usuario creador
 }));
+
+
+export const userTimeTracking = pgTable('user_time_tracking', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  date: date('date').defaultNow().notNull(),
+  timeSpent: integer('time_spent').default(0).notNull(),
+});

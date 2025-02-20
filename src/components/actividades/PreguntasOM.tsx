@@ -61,7 +61,7 @@ const QuestionForm: React.FC<Props> = ({ onSubmit }) => {
 					id="question"
 					value={questionText}
 					onChange={(e) => setQuestionText(e.target.value)}
-					className="w-full rounded-lg border border-gray-300 px-4 py-2 font-normal text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+					className="w-full rounded-lg border border-gray-300 px-4 py-2 font-normal text-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
 					rows={3}
 					placeholder="Escribe tu pregunta aquí..."
 					required
@@ -102,7 +102,7 @@ const QuestionForm: React.FC<Props> = ({ onSubmit }) => {
 									onChange={(e) =>
 										handleOptionChange(option.id, e.target.value)
 									}
-									className="w-full rounded-lg border border-gray-300 px-4 py-2 text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									className="w-full rounded-lg border border-gray-300 px-4 py-2 text-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-hidden"
 									placeholder={`Opción ${index + 1}`}
 									required
 								/>
