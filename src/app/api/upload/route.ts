@@ -1,7 +1,6 @@
 import {
 	CreateMultipartUploadCommand,
 	DeleteObjectCommand,
-	ListObjectsV2Command,
 	S3Client,
 } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
@@ -15,17 +14,16 @@ const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
 const client = new S3Client({ region: process.env.AWS_REGION });
 
 export async function POST(request: Request) {
-	const { contentType, fileSize, fileName } = (await request.json()) as {
+	const { contentType, fileSize } = (await request.json()) as {
 		contentType: string;
 		fileSize: number;
-		fileName: string;
 	};
 
 	try {
 		if (!process.env.AWS_BUCKET_NAME) {
 			throw new Error('AWS_BUCKET_NAME no está definido');
 		}
-		const key = `uploads/${uuidv4()}-${fileName}`; // Agregamos un prefijo 'uploads/' para mejor organización
+		const key = `uploads/${uuidv4()}`; // Agregamos un prefijo 'uploads/' para mejor organización
 
 		if (fileSize > MAX_FILE_SIZE) {
 			throw new Error(
@@ -53,7 +51,6 @@ export async function POST(request: Request) {
 				url,
 				fields,
 				key,
-				fileName,
 				uploadType: 'simple',
 			});
 		} else {
@@ -70,7 +67,6 @@ export async function POST(request: Request) {
 			return NextResponse.json({
 				uploadId: multipartUpload.UploadId,
 				key: key,
-				fileName: fileName,
 				uploadType: 'multipart',
 			});
 		}
@@ -85,7 +81,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
 	try {
-		const body = await request.json();
+		const body = (await request.json()) as { key: string };
 		const { key } = body;
 
 		if (!key) {
