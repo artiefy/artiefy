@@ -328,9 +328,7 @@ const Page: React.FC = () => {
 									className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 								>
 									{actividad.fechaMaximaEntrega
-										? new Date(
-												actividad.fechaMaximaEntrega
-											).toLocaleDateString()
+										? new Date(actividad.fechaMaximaEntrega).toLocaleString()
 										: 'No tiene fecha máxima de entrega'}
 									.
 								</Badge>

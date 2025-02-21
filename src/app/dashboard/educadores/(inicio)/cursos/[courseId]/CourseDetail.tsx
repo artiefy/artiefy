@@ -233,15 +233,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			);
 
 			if (addParametros) {
-				const updatedParametros = editParametros.map((ep, index) => ({
-					...ep,
-					id: parametros[index].id,
-				}));
-				setEditParametros(updatedParametros);
+				const parametrosPromises = editParametros.map((p) => {
+					const existingParametro = parametros.find(
+						(param) => param.id === p.id
+					);
+					const method = existingParametro ? 'PUT' : 'POST';
+					const url = existingParametro
+						? `/api/educadores/parametros/${existingParametro.id}`
+						: '/api/educadores/parametros';
 
-				const parametrosPromises = updatedParametros.map((p) =>
-					fetch(`/api/educadores/parametros/${p.id}`, {
-						method: 'PUT',
+					return fetch(url, {
+						method,
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({
 							name: p.name,
@@ -249,8 +251,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 							porcentaje: p.porcentaje,
 							courseId: courseIdNumber,
 						}),
-					})
-				);
+					});
+				});
 
 				const parametrosResponses = await Promise.all(parametrosPromises);
 
@@ -310,13 +312,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	};
 
 	const handleEditCourse = () => {
-		setEditTitle(course?.title ?? '');
-		setEditDescription(course?.description ?? '');
-		setEditRequerimientos(course?.requerimientos ?? '');
-		setEditCategory(parseInt(course?.categoryid ?? '0'));
-		setEditModalidad(parseInt(course?.modalidadesid ?? '0'));
-		setEditDificultad(parseInt(course?.dificultadid ?? '0'));
-		setEditCoverImageKey(course?.coverImageKey ?? '');
+		if (!course) return; // Verificación adicional
+		setEditTitle(course.title);
+		setEditDescription(course.description);
+		setEditRequerimientos(course.requerimientos);
+		setEditCategory(parseInt(course.categoryid));
+		setEditModalidad(parseInt(course.modalidadesid));
+		setEditDificultad(parseInt(course.dificultadid));
+		setEditCoverImageKey(course.coverImageKey);
 		setEditParametros(
 			parametros.map((parametro) => ({
 				id: parametro.id,

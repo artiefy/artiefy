@@ -162,10 +162,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const handleAddParametro = () => {
 		if (parametros.length < 10) {
 			setParametrosAction([
-				...parametros.map((parametro, index) => ({
-					...parametro,
-					id: index + 1,
-				})),
+				...parametros,
 				{
 					id: parametros.length + 1,
 					name: '',
@@ -186,6 +183,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			...updatedParametros[index],
 			[field]: value,
 		};
+
+		// Validar que la suma de los porcentajes no supere el 100%
+		const sumaPorcentajes = updatedParametros.reduce(
+			(acc, parametro) => acc + parametro.porcentaje,
+			0
+		);
+		if (sumaPorcentajes > 100) {
+			toast({
+				title: 'Error',
+				description: 'La suma de los porcentajes no puede superar el 100%',
+				variant: 'destructive',
+			});
+			return;
+		}
+
 		setParametrosAction(
 			updatedParametros.map((parametro, index) => ({
 				...parametro,

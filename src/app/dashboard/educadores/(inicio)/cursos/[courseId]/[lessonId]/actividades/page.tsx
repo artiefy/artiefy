@@ -189,7 +189,7 @@ const Page: React.FC = () => {
 
 	const handleLongevidadClick = () => {
 		setShowLongevidadForm(true);
-	};  
+	};
 
 	if (!lessonsId || !cursoIdNumber) {
 		return <p>Cargando parametros...</p>;
@@ -387,8 +387,12 @@ const Page: React.FC = () => {
 			if (!porcentajeValido) {
 				toast({
 					title: 'Error',
-					description:
-						'El porcentaje excede el límite disponible para este parámetro',
+					description: `
+					Porcentaje total actual: ${data.totalActual}%
+					Porcentaje disponible: ${data.disponible}%
+					${data.detalles?.length ? '\nActividades asignadas:' : ''}
+					${data.detalles?.map((act: any) => `\n- ${act.name}: ${act.porcentaje}%`).join('') || ''}
+				`,
 					variant: 'destructive',
 				});
 				return;
