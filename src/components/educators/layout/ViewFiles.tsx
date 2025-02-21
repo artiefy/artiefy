@@ -123,7 +123,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 	}
 
 	if (files.length === 0) {
-		return <div>No hay archivos disponibles</div>;
+		return <div>No hay archivos subidos actualmente</div>;
 	}
 
 	if (error) {

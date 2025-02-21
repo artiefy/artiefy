@@ -295,7 +295,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						</CardHeader>
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 lg:gap-6">
 							{/* Columna izquierda - Imagen */}
-							<div className="relative w-full">
+							<div className="relative flex w-full">
 								<Image
 									src={
 										lessons.coverImageKey
@@ -305,7 +305,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 									alt={lessons.title}
 									width={300}
 									height={100}
-									className="mx-auto hidden rounded-lg object-contain md:block lg:block"
+									className="mx-auto hidden justify-center rounded-lg object-contain md:block lg:block"
 									priority
 									quality={75}
 								/>

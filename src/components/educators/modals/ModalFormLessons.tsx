@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ChangeEvent, useEffect } from 'react';
+import { useState, type ChangeEvent, useEffect, useRef } from 'react';
 
 import FileUpload from '~/components/educators/layout/FilesUpload';
 import { Button } from '~/components/educators/ui/button';
@@ -65,6 +65,9 @@ const ModalFormLessons = ({
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
 
+	const videoRef = useRef<HTMLVideoElement | null>(null);
+	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
 	// Modificar el useEffect para inicializar con datos de edición
 	useEffect(() => {
 		if (isEditing && editingLesson) {
@@ -112,6 +115,31 @@ const ModalFormLessons = ({
 		});
 	};
 
+	const captureFrame = () => {
+		if (videoRef.current && canvasRef.current) {
+			const video = videoRef.current;
+			const canvas = canvasRef.current;
+			const context = canvas.getContext('2d');
+			if (context) {
+				canvas.width = video.videoWidth;
+				canvas.height = video.videoHeight;
+				context.drawImage(video, 0, 0, canvas.width, canvas.height);
+				canvas.toBlob((blob) => {
+					if (blob) {
+						const file = new File([blob], 'coverimage.png', {
+							type: 'image/png',
+						});
+						setFormData((prev) => ({
+							...prev,
+							coverimage: file,
+							cover_image_key: 'coverimage.png', // Establecer la clave de la imagen de portada
+						}));
+					}
+				}, 'image/png');
+			}
+		}
+	};
+
 	// Manejador de archivos
 	const handleFileChange = async (
 		field: keyof typeof formData,
@@ -134,6 +162,9 @@ const ModalFormLessons = ({
 							duration: Math.round(duration),
 							[field]: file,
 						}));
+						if (videoRef.current) {
+							videoRef.current.src = URL.createObjectURL(file);
+						}
 					} catch (error) {
 						console.error('Error al obtener la duración del video:', error);
 					}
@@ -213,7 +244,7 @@ const ModalFormLessons = ({
 			const resourceKeys: string[] = [];
 			const fileNames: string[] = [];
 
-			let coverImageKey = '';
+			let coverImageKey = formData.cover_image_key;
 			let coverVideoKey = '';
 			let coverImageName = '';
 			let coverVideoName = '';
@@ -424,6 +455,7 @@ const ModalFormLessons = ({
 							onFileChange={(file) =>
 								handleFileChange('coverimage', file ?? null)
 							}
+							file={formData.coverimage} // Mostrar la imagen capturada
 						/>
 						<FileUpload
 							key="covervideo"
@@ -449,6 +481,26 @@ const ModalFormLessons = ({
 							}
 						/>
 					</div>
+					{formData.covervideo && (
+						<div className="mt-4 space-y-5">
+							<video
+								ref={videoRef}
+								controls
+								className="mx-auto rounded-lg md:w-1/2 lg:w-1/2"
+							>
+								<source
+									src={URL.createObjectURL(formData.covervideo)}
+									type="video/mp4"
+								/>
+							</video>
+							<div className="mx-auto mt-2 w-fit">
+								<Button onClick={captureFrame}>
+									Capturar frame como imagen de portada
+								</Button>
+								<canvas ref={canvasRef} className="hidden"></canvas>
+							</div>
+						</div>
+					)}
 					{(uploading || isUploading) && (
 						<div className="mt-4">
 							<Progress value={uploadProgress} className="w-full" />
