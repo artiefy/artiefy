@@ -124,7 +124,11 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 							>
 								<CardHeader>
 									<Image
-										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`}
+										src={
+											coverImageKey
+												? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
+												: `/favicon.ico`
+										}
 										alt={actividad.name || 'Imagen del curso'}
 										className={`relative mx-auto w-40 rounded-lg object-cover transition-opacity duration-500`}
 										height={150}

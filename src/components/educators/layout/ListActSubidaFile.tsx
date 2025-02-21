@@ -53,12 +53,14 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 	}, [activityId, questions]);
 
 	useEffect(() => {
-		fetchQuestions();
+		void fetchQuestions();
 
 		// Solo hacemos polling si estamos editando
 		let interval: NodeJS.Timeout | undefined;
 		if (editingQuestion) {
-			interval = setInterval(fetchQuestions, 5000);
+			interval = setInterval(() => {
+				void fetchQuestions();
+			}, 5000);
 		}
 
 		return () => {
@@ -100,7 +102,7 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 
 	const handleFormSubmit = () => {
 		setEditingQuestion(undefined);
-		fetchQuestions();
+		void fetchQuestions();
 	};
 
 	const handleCancel = () => {

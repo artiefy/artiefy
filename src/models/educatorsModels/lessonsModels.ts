@@ -15,13 +15,13 @@ export interface Lesson {
 	title: string;
 	description: string | null;
 	duration: number;
-	coverImageKey: string;
-	coverVideoKey: string;
-	order: number;
+	coverImageKey?: string | null;
+	coverVideoKey?: string | null;
 	courseId: number;
 	createdAt: string | number | Date;
 	updatedAt: string | number | Date;
-	resourceKey: string;
+	resourceKey?: string;
+	resourceNames?: string;
 	_modalidadesId: {
 		id: number;
 		name: string;
@@ -46,29 +46,19 @@ export async function createLesson({
 	title: string;
 	description: string;
 	duration: number;
-	coverImageKey: string;
-	coverVideoKey: string;
+	coverImageKey?: string;
+	coverVideoKey?: string;
 	courseId: number;
-	resourceKey: string;
-	resourceNames: string;
+	resourceKey?: string;
+	resourceNames?: string;
 }) {
 	try {
-		// Obtener el valor máximo actual del campo `order` para el curso específico
-		const maxOrder = await db
-			.select({ maxOrder: sql`MAX(${lessons.order})` })
-			.from(lessons)
-			.where(eq(lessons.courseId, courseId))
-			.then((rows) => Number(rows[0]?.maxOrder) ?? 0);
-
-		const newOrder = maxOrder + 1;
-
 		const newLesson = await db.insert(lessons).values({
 			title,
 			description,
 			duration,
 			coverImageKey,
 			coverVideoKey,
-			order: newOrder, // Asignar el nuevo valor de `order`
 			courseId,
 			resourceKey,
 			resourceNames,
@@ -120,7 +110,6 @@ export async function getLessonsByCourseId(courseId: number) {
 				resourceNames: lessons.resourceNames,
 				createAt: lessons.createdAt,
 				updateAt: lessons.updatedAt,
-				lessonOrder: lessons.order,
 				courseId: lessons.courseId,
 				courseTitle: courses.title,
 				courseDescription: courses.description,
@@ -139,11 +128,10 @@ export async function getLessonsByCourseId(courseId: number) {
 				lessonTitle: string;
 				lessonDescription: string | null;
 				lessonDuration: number;
-				coverImageKey: string;
-				coverVideoKey: string;
-				resourceKey: string;
-				resourceNames: string;
-				lessonOrder: number;
+				coverImageKey: string | null;
+				coverVideoKey: string | null;
+				resourceKey: string | null;
+				resourceNames: string | null;
 				createAt: string | number | Date;
 				updateAt: string | number | Date;
 				courseId: number;
@@ -156,15 +144,14 @@ export async function getLessonsByCourseId(courseId: number) {
 			}) => ({
 				id: Lesson.lessonId,
 				title: Lesson.lessonTitle,
-				coverImageKey: Lesson.coverImageKey,
-				coverVideoKey: Lesson.coverVideoKey,
-				resourceKey: Lesson.resourceKey,
-				resourceNames: Lesson.resourceNames,
+				coverImageKey: Lesson.coverImageKey ?? '',
+				coverVideoKey: Lesson.coverVideoKey ?? '',
+				resourceKey: Lesson.resourceKey ?? '',
+				resourceNames: Lesson.resourceNames ?? '',
 				description: Lesson.lessonDescription ?? '',
 				createdAt: Lesson.createAt,
 				updatedAt: Lesson.updateAt,
 				duration: Lesson.lessonDuration,
-				order: Lesson.lessonOrder,
 				course: {
 					id: Lesson.courseId,
 					title: Lesson.courseTitle,
@@ -197,7 +184,6 @@ export const getLessonById = async (
 			duration: lessons.duration,
 			coverImageKey: lessons.coverImageKey,
 			coverVideoKey: lessons.coverVideoKey,
-			order: lessons.order,
 			courseId: lessons.courseId,
 			createdAt: lessons.createdAt,
 			updatedAt: lessons.updatedAt,
@@ -235,9 +221,12 @@ interface UpdateLessonData {
 	courseId?: number;
 }
 
-export const updateLesson = async (lessonId: number, data: UpdateLessonData) => {
+export const updateLesson = async (
+	lessonId: number,
+	data: UpdateLessonData
+) => {
 	const updateData: UpdateLessonData = {};
-	
+
 	if (data.title) updateData.title = data.title;
 	if (data.description) updateData.description = data.description;
 	if (typeof data.duration === 'number') updateData.duration = data.duration;
@@ -247,7 +236,8 @@ export const updateLesson = async (lessonId: number, data: UpdateLessonData) => 
 	if (data.resourceNames) updateData.resourceNames = data.resourceNames;
 	if (typeof data.courseId === 'number') updateData.courseId = data.courseId;
 
-	return await db.update(lessons)
+	return await db
+		.update(lessons)
 		.set(updateData)
 		.where(eq(lessons.id, lessonId))
 		.returning();

@@ -27,7 +27,6 @@ interface LessonsModels {
 	description: string;
 	createdAt: string;
 	duration: number;
-	order: number;
 	course: {
 		id: number;
 		title: string;
@@ -144,8 +143,8 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 			<h2 className={`mb-4 mt-10 text-2xl font-bold`}>Lista de clases:</h2>
 			<div className="flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
-					{lessons.map((lesson) => (
-						<div key={lesson.id} className="group relative">
+					{lessons.map((lesson, index) => (
+						<div key={index} className="group relative">
 							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 							<Card
 								key={lesson.id}
@@ -159,7 +158,11 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 									<CardHeader>
 										<div className="relative size-full">
 											<Image
-												src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`}
+												src={
+													lesson.coverImageKey
+														? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`
+														: `/favicon.ico`
+												}
 												alt={lesson.title}
 												className="rounded-lg object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
 												width={350}
@@ -173,8 +176,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
-										<CardTitle className="rounded-lg text-lg">
-											<div className={`font-bold`}>Clase: {lesson.title}</div>
+										<CardTitle className="rounded-lg text-lg text-primary">
+											Clase:
+											{lesson.title}
 										</CardTitle>
 										<div className="mb-2 items-center">
 											<p className="text-sm font-bold">
@@ -199,10 +203,6 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 											>
 												{lesson.course.instructor}
 											</Badge>
-										</p>
-										<p className="text-sm font-bold italic">
-											Clase #{' '}
-											<span className="font-bold italic">{lesson.order}</span>
 										</p>
 										<p className="text-sm font-bold italic">
 											Duración:{' '}

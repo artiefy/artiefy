@@ -8,7 +8,6 @@ import {
 	text,
 	timestamp,
 	varchar,
-	numeric,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -116,17 +115,16 @@ export const lessons = pgTable('lessons', {
 	title: varchar('title', { length: 255 }).notNull(), // Título de la lección
 	description: text('description'), // Descripción de la lección
 	duration: integer('duration').notNull(),
-	coverImageKey: text('cover_image_key').notNull(), // Clave de la imagen en S3
-	coverVideoKey: text('cover_video_key').notNull(), // Clave del video en S3
-	order: serial('order').notNull(), // Orden autoincremental de la lección en el curso
+	coverImageKey: text('cover_image_key'), // Clave de la imagen en S3
+	coverVideoKey: text('cover_video_key'), // Clave del video en S3
 	courseId: integer('course_id')
 		.references(() => courses.id)
 		.notNull(), // Relación con la tabla cursos
 	createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
 	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(), // Fecha de última actualización
-	resourceKey: text('resource_key').notNull(), // Clave del recurso en S3
-	resourceNames: text('resource_names').notNull(), // Nombre del recurso
+	resourceKey: text('resource_key'), // Clave del recurso en S3
+	resourceNames: text('resource_names'), // Nombre del recurso
 });
 
 export const modalidades = pgTable('modalidades', {

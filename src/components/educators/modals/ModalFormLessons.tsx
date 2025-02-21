@@ -268,15 +268,10 @@ const ModalFormLessons = ({
 				title: !formData.title,
 				description: !formData.description,
 				duration: !formData.duration,
-				cover_image_key: !coverImageKey,
-				cover_video_key: !coverVideoKey,
-				resource_keys: resourceKeys.length === 0,
 			};
 
-			console.log('Validando campos: ', formData);
-
 			if (Object.values(newErrors).some((error) => error)) {
-				setErrors(newErrors);
+				setErrors((prevErrors) => ({ ...prevErrors, ...newErrors }));
 				toast({
 					title: 'Error',
 					description: 'Por favor completa los campos obligatorios.',
@@ -306,10 +301,10 @@ const ModalFormLessons = ({
 					title: formData.title,
 					description: formData.description,
 					duration: Number(formData.duration),
-					coverImageKey: coverImageKey || formData.cover_image_key,
-					coverVideoKey: coverVideoKey || formData.cover_video_key,
-					resourceKey: concatenatedResourceKeys || '',
-					resourceNames: concatenatedFileNames || '',
+					coverImageKey: coverImageKey || formData.cover_image_key || undefined,
+					coverVideoKey: coverVideoKey || formData.cover_video_key || undefined,
+					resourceKey: concatenatedResourceKeys || undefined,
+					resourceNames: concatenatedFileNames || undefined,
 					courseId: Number(courseId),
 				}),
 			});
@@ -358,9 +353,12 @@ const ModalFormLessons = ({
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
 			<DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
 				<DialogHeader className="mt-4">
-					<DialogTitle className="text-4xl">Crear Clase</DialogTitle>
+					<DialogTitle className="text-4xl">
+						{isEditing ? 'Actualizar' : 'Crear'} clase
+					</DialogTitle>
 					<DialogDescription className="text-xl text-white">
-						Llena los detalles para crear la nuevo clase
+						Llena los detalles para crear la nuevo clase, la cual puede ser solo
+						lectura.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="rounded-lg bg-background px-6 text-black shadow-md">
@@ -468,7 +466,8 @@ const ModalFormLessons = ({
 						Cancelar
 					</Button>
 					<Button onClick={handleSubmit} variant="save" disabled={uploading}>
-						{uploading ? 'Subiendo...' : 'Crear Clase'}
+						{isEditing ? 'Actualizar' : isUploading ? 'Subiendo' : 'Crear'}{' '}
+						Clase
 					</Button>
 				</DialogFooter>
 			</DialogContent>

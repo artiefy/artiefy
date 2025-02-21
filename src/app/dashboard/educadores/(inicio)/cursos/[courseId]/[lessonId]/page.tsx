@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import ListActividadesEducator from '~/components/educators/layout/ListActividades';
 import ViewFiles from '~/components/educators/layout/ViewFiles';
+import ModalFormLessons from '~/components/educators/modals/ModalFormLessons';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -17,6 +18,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
+import { Badge } from '~/components/educators/ui/badge';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -27,7 +29,6 @@ import {
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { toast } from '~/hooks/use-toast';
-import ModalFormLessons from '~/components/educators/modals/ModalFormLessons';
 
 interface Lessons {
 	id: number;
@@ -185,7 +186,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				const resourceKeys = lessons.resourceKey.split(',');
 
 				// Eliminar cada archivo de recurso
-				const deletePromises = resourceKeys.map(key => 
+				const deletePromises = resourceKeys.map((key) =>
 					fetch('/api/upload', {
 						method: 'DELETE',
 						headers: {
@@ -199,11 +200,13 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
 				// Esperar a que todas las eliminaciones se completen
 				const responses = await Promise.all(deletePromises);
-				
+
 				// Verificar si hubo errores
 				responses.forEach((response, index) => {
 					if (!response.ok) {
-						console.error(`Error al eliminar el archivo ${resourceKeys[index]}`);
+						console.error(
+							`Error al eliminar el archivo ${resourceKeys[index]}`
+						);
 					}
 				});
 			}
@@ -222,7 +225,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				description: `La clase ${lessons.title} ha sido eliminada exitosamente.`,
 				variant: 'default',
 			});
-			
+
 			router.back(); // Redirige a la página anterior
 		} catch (error) {
 			console.error('Error:', error);
@@ -286,9 +289,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						}}
 					>
 						<CardHeader>
-							<CardTitle
-								className={`text-2xl font-bold ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-							>
+							<CardTitle className={`text-2xl font-bold text-primary`}>
 								Clase: {lessons.title}
 							</CardTitle>
 						</CardHeader>
@@ -296,7 +297,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 							{/* Columna izquierda - Imagen */}
 							<div className="relative w-full">
 								<Image
-									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverImageKey}`}
+									src={
+										lessons.coverImageKey
+											? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverImageKey}`
+											: `/favicon.ico`
+									}
 									alt={lessons.title}
 									width={300}
 									height={100}
@@ -306,11 +311,30 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 								/>
 							</div>
 							{/* Columna derecha - Información */}
-							<video className="h-72 w-full rounded-lg object-cover" controls>
-								<source
-									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`}
-								/>
-							</video>
+							<div className="relative w-full">
+								{lessons.coverVideoKey ? (
+									<video
+										className="h-72 w-full rounded-lg object-cover"
+										controls
+									>
+										<source
+											src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`}
+										/>
+									</video>
+								) : (
+									<>
+										<h4 className="hidden">No hay videos por el momento!.</h4>
+										<Image
+											src={'/NoHayVideos.jpg'}
+											className="mx-auto rounded-lg object-cover"
+											alt="No hay imagen o video disponible actualmente"
+											width={350}
+											height={80}
+											quality={75}
+										/>
+									</>
+								)}
+							</div>
 						</div>
 						{/* Zona de los files */}
 						<div>
@@ -367,12 +391,19 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 								<br />
 								<div className="grid grid-cols-2">
 									<div className="flex flex-col">
-										<h2 className="text-lg font-semibold">Lesion:</h2>
-										<h1 className="mb-4 text-2xl font-bold">{lessons.title}</h1>
+										<h2 className="text-lg font-semibold">Clase:</h2>
+										<h1 className="mb-4 text-2xl font-bold text-primary">
+											{lessons.title}
+										</h1>
 									</div>
 									<div className="flex flex-col">
 										<h2 className="text-lg font-semibold">Categoría:</h2>
-										<p>{lessons.course?.categoryId}</p>
+										<Badge
+											variant="outline"
+											className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+										>
+											{lessons.course?.categoryId}
+										</Badge>
 									</div>
 								</div>
 								<div className="mb-4">
@@ -382,11 +413,21 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 								<div className="grid grid-cols-2">
 									<div className="flex flex-col">
 										<h2 className="text-lg font-semibold">Educador:</h2>
-										<p>{lessons.course?.instructor}</p>
+										<Badge
+											variant="outline"
+											className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+										>
+											{lessons.course?.instructor}
+										</Badge>
 									</div>
 									<div className="flex flex-col">
 										<h2 className="text-lg font-semibold">Modalidad:</h2>
-										<p>{lessons.course?.modalidadId}</p>
+										<Badge
+											variant="outline"
+											className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+										>
+											{lessons.course?.modalidadId}
+										</Badge>
 									</div>
 								</div>
 							</div>

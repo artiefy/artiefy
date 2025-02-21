@@ -23,6 +23,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
+import { Badge } from '~/components/educators/ui/badge';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -282,20 +283,27 @@ const Page: React.FC = () => {
 					style={{ backgroundColor: color, color: getContrastYIQ(color) }}
 				>
 					<div className="mb-3 grid grid-cols-1 items-center justify-between space-y-4 text-3xl font-semibold md:grid-cols-2">
-						<h2 className="flex flex-col text-4xl font-extrabold">
+						<h2 className="flex flex-col text-4xl font-extrabold text-primary">
 							Actividad: <b>{actividad.name}</b>
 						</h2>
-						<h3 className="text-xl md:mr-8 lg:mr-24">
+						<h3 className="text-xl text-primary md:mr-8 lg:mr-24">
 							Perteneciente a la clase: {actividad.lesson?.title}
 						</h3>
 					</div>
 					<div className="my-4 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2">
 						<div className="space-y-5 text-lg">
 							<p className="font-semibold">
-								Del docente: <b>{actividad.lesson.courseInstructor}</b>
+								Del docente:{' '}
+								<Badge
+									variant="outline"
+									className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+								>
+									{actividad.lesson.courseInstructor}
+								</Badge>
 							</p>
 							<p className="font-semibold">
-								Tipo de actividad: <b>{actividad.type?.name}</b>
+								Tipo de actividad:{' '}
+								<b className="text-primary">{actividad.type?.name}</b>
 							</p>
 							<p className="font-semibold">
 								Permite: <b>{actividad.type?.description}</b>
@@ -306,24 +314,36 @@ const Page: React.FC = () => {
 							</p>
 							<p className="font-semibold">
 								¿La actividad es calificable?:{' '}
-								<b>{actividad.revisada ? 'Si' : 'No'}.</b>
+								<Badge
+									variant="outline"
+									className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+								>
+									{actividad.revisada ? 'Si' : 'No'}.
+								</Badge>
 							</p>
 							<p className="font-semibold">
 								Fecha máxima de entrega:{' '}
-								<b>
+								<Badge
+									variant="outline"
+									className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+								>
 									{actividad.fechaMaximaEntrega
 										? new Date(
 												actividad.fechaMaximaEntrega
 											).toLocaleDateString()
 										: 'No tiene fecha máxima de entrega'}
 									.
-								</b>
+								</Badge>
 							</p>
 						</div>
 						<div className="flex items-center justify-center">
 							<div className="text-center">
 								<Image
-									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${actividad.lesson.coverImageKey}`}
+									src={
+										actividad.lesson.coverImageKey
+											? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${actividad.lesson.coverImageKey}`
+											: `/favicon.ico`
+									}
 									alt="Imagen de la lección"
 									width={250}
 									height={250}
