@@ -125,7 +125,7 @@ export default function CourseDetails({
 		}
 
 		if (isEnrolling) {
-			return;
+			return; // Evitar múltiples llamadas
 		}
 
 		setIsEnrolling(true);
@@ -175,7 +175,7 @@ export default function CourseDetails({
 
 	const handleUnenroll = async () => {
 		if (!isSignedIn || isUnenrolling) {
-			return;
+			return; // Evitar múltiples llamadas
 		}
 
 		setIsUnenrolling(true);
