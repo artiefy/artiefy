@@ -117,7 +117,9 @@ export default function Page() {
 		modalidadesid: number,
 		dificultadid: number,
 		requerimientos: string,
-		addParametros: boolean // Cambiar options por addParametros
+		addParametros: boolean, // Cambiar options por addParametros
+		coverImageKey: string,
+		fileName: string // Nuevo parámetro
 	) => {
 		if (!user) return;
 
@@ -131,14 +133,17 @@ export default function Page() {
 			return;
 		}
 
-		let coverImageKey = '';
 		try {
 			setUploading(true);
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
+					body: JSON.stringify({
+						contentType: file.type,
+						fileSize: file.size,
+						fileName: file.name, // Asegúrate de pasar el fileName correcto
+					}),
 				});
 
 				if (!uploadResponse.ok) {
@@ -147,10 +152,16 @@ export default function Page() {
 					);
 				}
 
-				const { url, fields } = (await uploadResponse.json()) as {
+				const uploadData = (await uploadResponse.json()) as {
 					url: string;
 					fields: Record<string, string>;
+					key: string;
+					fileName: string;
 				};
+
+				const { url, fields, key, fileName: responseFileName } = uploadData;
+				coverImageKey = key;
+				fileName = responseFileName;
 
 				const formData = new FormData();
 				Object.entries(fields).forEach(([key, value]) => {
@@ -164,12 +175,6 @@ export default function Page() {
 					method: 'POST',
 					body: formData,
 				});
-				if (!uploadResponse.ok) {
-					throw new Error(
-						`Error: al iniciar la carga: ${uploadResponse.statusText}`
-					);
-				}
-				coverImageKey = fields.key ?? '';
 			}
 			setUploading(false);
 		} catch (e: unknown) {
@@ -184,6 +189,7 @@ export default function Page() {
 				title,
 				description,
 				coverImageKey,
+				fileName, // Agregar fileName al cuerpo de la solicitud
 				categoryid,
 				modalidadesid,
 				instructor: user.fullName,

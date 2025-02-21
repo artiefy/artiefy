@@ -30,7 +30,9 @@ interface CourseFormProps {
 		modalidadesid: number,
 		dificultadid: number,
 		requerimientos: string,
-		addParametros: boolean // Nuevo parámetro
+		addParametros: boolean,
+		coverImageKey: string, // Agregar coverImageKey
+		fileName: string // Agregar fileName
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -271,6 +273,51 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		setIsEditing(true);
 		setIsUploading(true);
 		try {
+			let coverImageKey = currentCoverImageKey ?? '';
+			let uploadedFileName = fileName ?? '';
+
+			if (file) {
+				const uploadResponse = await fetch('/api/upload', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						contentType: file.type,
+						fileSize: file.size,
+						fileName: file.name, // Asegúrate de pasar el fileName correcto
+					}),
+				});
+
+				if (!uploadResponse.ok) {
+					throw new Error(
+						`Error: al iniciar la carga: ${uploadResponse.statusText}`
+					);
+				}
+
+				const uploadData = (await uploadResponse.json()) as {
+					url: string;
+					fields: Record<string, string>;
+					key: string;
+					fileName: string;
+				};
+
+				const { url, fields, key, fileName: responseFileName } = uploadData;
+				coverImageKey = key;
+				uploadedFileName = responseFileName;
+
+				const formData = new FormData();
+				Object.entries(fields).forEach(([key, value]) => {
+					if (typeof value === 'string') {
+						formData.append(key, value);
+					}
+				});
+				formData.append('file', file);
+
+				await fetch(url, {
+					method: 'POST',
+					body: formData,
+				});
+			}
+
 			await onSubmitAction(
 				editingCourseId ? editingCourseId.toString() : '',
 				title,
@@ -280,7 +327,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				modalidadesid,
 				dificultadid,
 				requerimientos,
-				addParametros // Pasar el nuevo parámetro
+				addParametros,
+				coverImageKey,
+				uploadedFileName // Pasar el fileName obtenido
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');

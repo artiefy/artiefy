@@ -171,16 +171,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		modalidadesid: number,
 		dificultadid: number,
 		requerimientos: string,
-		addParametros: boolean // Nuevo parámetro
+		addParametros: boolean, // Nuevo parámetro
+		coverImageKey: string,
+		fileName: string // Nuevo parámetro
 	) => {
 		try {
 			let coverImageKey = course?.coverImageKey ?? '';
+			let uploadedFileName = fileName ?? '';
 
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ contentType: file.type }),
+					body: JSON.stringify({
+						contentType: file.type,
+						fileSize: file.size,
+						fileName: file.name, // Asegúrate de pasar el fileName correcto
+					}),
 				});
 
 				if (!uploadResponse.ok) {
@@ -190,15 +197,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				const uploadData = (await uploadResponse.json()) as {
 					url: string;
 					fields: Record<string, string>;
+					key: string;
+					fileName: string;
 				};
 
-				const { url, fields } = uploadData;
+				const { url, fields, key, fileName: responseFileName } = uploadData;
+				coverImageKey = key;
+				uploadedFileName = responseFileName;
+
 				const formData = new FormData();
-				if (fields) {
-					Object.entries(fields).forEach(([key, value]) =>
-						formData.append(key, value)
-					);
-				}
+				Object.entries(fields).forEach(([key, value]) => {
+					if (typeof value === 'string') {
+						formData.append(key, value);
+					}
+				});
 				formData.append('file', file);
 
 				const uploadResult = await fetch(url, {
@@ -207,10 +219,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				});
 				if (!uploadResult.ok) {
 					throw new Error('Error al subir la imagen al servidor');
-				}
-
-				if (fields?.key) {
-					coverImageKey = fields.key;
 				}
 			}
 
@@ -223,6 +231,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						title,
 						description,
 						coverImageKey,
+						fileName: uploadedFileName, // Agregar fileName al cuerpo de la solicitud
 						categoryid,
 						modalidadesid,
 						dificultadid,
@@ -624,7 +633,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					modalidadesid: number,
 					dificultadid: number,
 					requerimientos: string,
-					addParametros: boolean // Nuevo parámetro
+					addParametros: boolean, // Nuevo parámetro
+					coverImageKey: string,
+					fileName: string // Nuevo parámetro
 				) =>
 					handleUpdateCourse(
 						id,
@@ -635,7 +646,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						modalidadesid,
 						dificultadid,
 						requerimientos,
-						addParametros // Pasar el nuevo parámetro
+						addParametros, // Pasar el nuevo parámetro
+						coverImageKey,
+						fileName // Pasar el nuevo parámetro
 					)
 				}
 				editingCourseId={course.id}

@@ -225,7 +225,6 @@ const ModalFormLessons = ({
 			body: formData,
 			signal: controller.signal,
 		});
-		console.log('Form Data:', formData);
 		if (!uploadResult.ok) {
 			throw new Error(`Error al cargar el archivo: ${uploadResult.statusText}`);
 		}
