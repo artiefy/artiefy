@@ -387,7 +387,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 							<div
 								className={`pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 							>
-								<h2 className="text-2xl font-bold">Información de la clase</h2>
+								<h2 className="text-2xl font-bold text-primary">
+									Información de la clase
+								</h2>
 								<br />
 								<div className="grid grid-cols-2">
 									<div className="flex flex-col">

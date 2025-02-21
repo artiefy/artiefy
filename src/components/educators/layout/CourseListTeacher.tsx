@@ -56,7 +56,9 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
 
 						<CardContent className="flex grow flex-col justify-between space-y-2 px-2">
 							<CardTitle className="rounded-lg text-lg text-background">
-								<div className="font-bold text-primary">{course.title}</div>
+								<div className="w-full font-bold text-primary">
+									{course.title}
+								</div>
 							</CardTitle>
 							<div className="flex items-center">
 								Categoria:

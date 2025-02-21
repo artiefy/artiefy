@@ -18,6 +18,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
+import { Badge } from '~/components/educators/ui/badge';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -29,7 +30,6 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import { toast } from '~/hooks/use-toast';
-import { Badge } from '~/components/educators/ui/badge';
 
 interface Course {
 	id: number;
@@ -170,7 +170,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		categoryid: number,
 		modalidadesid: number,
 		dificultadid: number,
-		requerimientos: string
+		requerimientos: string,
+		addParametros: boolean // Nuevo parámetro
 	) => {
 		try {
 			let coverImageKey = course?.coverImageKey ?? '';
@@ -231,45 +232,47 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			);
 
-			const updatedParametros = editParametros.map((ep, index) => ({
-				...ep,
-				id: parametros[index].id,
-			}));
-			setEditParametros(updatedParametros);
+			if (addParametros) {
+				const updatedParametros = editParametros.map((ep, index) => ({
+					...ep,
+					id: parametros[index].id,
+				}));
+				setEditParametros(updatedParametros);
 
-			const parametrosPromises = updatedParametros.map((p) =>
-				fetch(`/api/educadores/parametros/${p.id}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						name: p.name,
-						description: p.description,
-						porcentaje: p.porcentaje,
-						courseId: courseIdNumber,
-					}),
-				})
-			);
+				const parametrosPromises = updatedParametros.map((p) =>
+					fetch(`/api/educadores/parametros/${p.id}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							name: p.name,
+							description: p.description,
+							porcentaje: p.porcentaje,
+							courseId: courseIdNumber,
+						}),
+					})
+				);
 
-			const parametrosResponses = await Promise.all(parametrosPromises);
+				const parametrosResponses = await Promise.all(parametrosPromises);
 
-			for (const responseParametros of parametrosResponses) {
-				if (!responseParametros.ok) {
-					const errorData = (await responseParametros.json()) as {
-						error?: string;
-					};
-					toast({
-						title: 'Error',
-						description:
-							errorData.error ?? 'Error al actualizar los parámetros',
-						variant: 'destructive',
-					});
-					throw new Error(
-						errorData.error ?? 'Error al actualizar los parámetros'
-					);
+				for (const responseParametros of parametrosResponses) {
+					if (!responseParametros.ok) {
+						const errorData = (await responseParametros.json()) as {
+							error?: string;
+						};
+						toast({
+							title: 'Error',
+							description:
+								errorData.error ?? 'Error al actualizar los parámetros',
+							variant: 'destructive',
+						});
+						throw new Error(
+							errorData.error ?? 'Error al actualizar los parámetros'
+						);
+					}
 				}
 			}
 
-			if (!response.ok && !parametrosResponses.every((r) => r.ok)) {
+			if (!response.ok) {
 				const errorData = (await response.json()) as { error?: string };
 				toast({
 					title: 'Error',
@@ -288,11 +291,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				description: 'El curso se ha actualizado con éxito.',
 				variant: 'default',
 			});
-			toast({
-				title: 'Parámetros actualizados',
-				description: 'Los parámetros se han actualizado con éxito.',
-				variant: 'default',
-			});
+			if (addParametros) {
+				toast({
+					title: 'Parámetros actualizados',
+					description: 'Los parámetros se han actualizado con éxito.',
+					variant: 'default',
+				});
+			}
 		} catch (error) {
 			console.error('Error:', error);
 			toast({
@@ -400,7 +405,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink className="text-primary hover:text-gray-300">
-							Detalles curso {course.title}
+							Detalles del curso
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 				</BreadcrumbList>
@@ -495,11 +500,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						</div>
 						{/* Columna derecha - Información */}
 						<div className="pb-6">
-							<h2
-								className={`text-2xl font-bold ${
-									selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-								}`}
-							>
+							<h2 className={`text-2xl font-bold text-primary`}>
 								Información del curso
 							</h2>
 							<br />
@@ -619,7 +620,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					categoryid: number,
 					modalidadesid: number,
 					dificultadid: number,
-					requerimientos: string
+					requerimientos: string,
+					addParametros: boolean // Nuevo parámetro
 				) =>
 					handleUpdateCourse(
 						id,
@@ -629,7 +631,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						categoryid,
 						modalidadesid,
 						dificultadid,
-						requerimientos
+						requerimientos,
+						addParametros // Pasar el nuevo parámetro
 					)
 				}
 				editingCourseId={course.id}

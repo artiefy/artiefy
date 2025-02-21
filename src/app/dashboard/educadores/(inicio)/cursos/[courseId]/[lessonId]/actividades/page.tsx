@@ -154,7 +154,7 @@ const Page: React.FC = () => {
 		};
 
 		if (courseIdNumber) {
-			fetchParametros();
+			void fetchParametros();
 		}
 	}, [courseIdNumber]);
 
@@ -189,7 +189,7 @@ const Page: React.FC = () => {
 
 	const handleLongevidadClick = () => {
 		setShowLongevidadForm(true);
-	};
+	};  
 
 	if (!lessonsId || !cursoIdNumber) {
 		return <p>Cargando parametros...</p>;
@@ -400,8 +400,6 @@ const Page: React.FC = () => {
 		try {
 			// Asegurarnos de que el porcentaje sea un número
 			const porcentaje = formData.revisada ? formData.porcentaje || 0 : 0;
-			console.log(porcentaje);
-			console.log(lessonsId);
 
 			const actividadResponse = await fetch('/api/educadores/actividades', {
 				method: 'POST',

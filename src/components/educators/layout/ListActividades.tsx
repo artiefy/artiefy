@@ -4,6 +4,7 @@ import { ArrowRightIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import { Badge } from '~/components/educators/ui/badge';
 import {
 	Card,
 	CardContent,
@@ -142,17 +143,25 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 									}`}
 								>
 									<CardTitle className="text-lg">
-										<div className="font-bold">Actividad: {actividad.name}</div>
+										<div className="font-bold">
+											Actividad: <p>{actividad.name}</p>
+										</div>
 									</CardTitle>
 									<div className="my-2 flex flex-col space-y-2">
-										<p className="text-sm font-bold">
-											Clase: {actividad.lessonsId.title}
+										<p className="flex flex-col text-sm font-bold">
+											Clase:
+											<Badge
+												variant="outline"
+												className="w-fit border-primary bg-background text-primary hover:bg-black/70"
+											>
+												{actividad.lessonsId.title}
+											</Badge>
 										</p>
-										<p className="text-sm font-bold">
-											Descripcion: {actividad.description}
+										<p className="flex flex-col text-sm font-bold">
+											Descripcion: <span>{actividad.description}</span>
 										</p>
-										<p className="text-sm font-bold">
-											Tipo de actividad: {actividad.type.name}
+										<p className="flex flex-col text-sm font-bold">
+											Tipo de actividad: <span> {actividad.type.name}</span>
 										</p>
 									</div>
 								</CardContent>

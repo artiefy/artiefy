@@ -117,12 +117,12 @@ export default function Page() {
 		modalidadesid: number,
 		dificultadid: number,
 		requerimientos: string,
-		options?: { signal: AbortSignal }
+		addParametros: boolean // Cambiar options por addParametros
 	) => {
 		if (!user) return;
 
-		// Validar que haya al menos un parámetro
-		if (parametrosList.length === 0) {
+		// Validar que haya al menos un parámetro si addParametros es true
+		if (addParametros && parametrosList.length === 0) {
 			toast({
 				title: 'Error',
 				description: 'Debe agregar al menos un parámetro de evaluación',
@@ -177,7 +177,6 @@ export default function Page() {
 			throw new Error(`Error to upload the file type ${errorMessage}`);
 		}
 		const response = await fetch('/api/educadores/courses', {
-			...options,
 			method: 'POST', // Asegúrate de usar 'POST' cuando no estás editando
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
@@ -204,38 +203,40 @@ export default function Page() {
 					: 'El curso se creó con éxito',
 			});
 
-			// Guardar parámetros en la base de datos
-			for (const parametro of parametrosList) {
-				try {
-					const response = await fetch('/api/educadores/parametros', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							name: parametro.name,
-							description: parametro.description,
-							porcentaje: parametro.porcentaje,
-							courseId: responseData.id, // Asegúrate de pasar el courseId aquí
-						}),
-					});
-
-					if (response.ok) {
-						toast({
-							title: 'Parámetro creado exitosamente',
-							description: 'El parámetro se ha creado exitosamente',
-							variant: 'default',
+			// Guardar parámetros en la base de datos si addParametros es true
+			if (addParametros) {
+				for (const parametro of parametrosList) {
+					try {
+						const response = await fetch('/api/educadores/parametros', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								name: parametro.name,
+								description: parametro.description,
+								porcentaje: parametro.porcentaje,
+								courseId: responseData.id, // Asegúrate de pasar el courseId aquí
+							}),
 						});
-					} else {
-						const errorData = (await response.json()) as { error: string };
-						throw new Error(errorData.error);
+
+						if (response.ok) {
+							toast({
+								title: 'Parámetro creado exitosamente',
+								description: 'El parámetro se ha creado exitosamente',
+								variant: 'default',
+							});
+						} else {
+							const errorData = (await response.json()) as { error: string };
+							throw new Error(errorData.error);
+						}
+					} catch (error) {
+						toast({
+							title: 'Error al crear el parámetro',
+							description: `Ha ocurrido un error al crear el parámetro: ${(error as Error).message}`,
+							variant: 'destructive',
+						});
 					}
-				} catch (error) {
-					toast({
-						title: 'Error al crear el parámetro',
-						description: `Ha ocurrido un error al crear el parámetro: ${(error as Error).message}`,
-						variant: 'destructive',
-					});
 				}
 			}
 

@@ -116,14 +116,24 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 	}, [lessonId]);
 
 	if (loading) {
-		return <div>Cargando archivos...</div>;
+		return (
+			<div className="font-semibold text-primary">Cargando archivos...</div>
+		);
 	}
 	if (loadingNames) {
-		return <div>Cargando nombre de archivos...</div>;
+		return (
+			<div className="font-semibold text-primary">
+				Cargando nombre de archivos...
+			</div>
+		);
 	}
 
 	if (files.length === 0) {
-		return <div>No hay archivos subidos actualmente</div>;
+		return (
+			<div className="font-semibold text-primary">
+				No hay archivos subidos actualmente!.
+			</div>
+		);
 	}
 
 	if (error) {

@@ -30,7 +30,7 @@ interface CourseFormProps {
 		modalidadesid: number,
 		dificultadid: number,
 		requerimientos: string,
-		options?: { signal: AbortSignal }
+		addParametros: boolean // Nuevo parámetro
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -114,6 +114,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
 	const [coverImage, setCoverImage] = useState<string | null>(null);
+	const [addParametros, setAddParametros] = useState(false);
 
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -196,7 +197,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const handleRemoveParametro = (index: number) => {
 		const updatedParametros = parametros.filter((_, i) => i !== index);
 		// Reasignar los valores de entrega
-		const reassignedParametros = updatedParametros.map((parametro, i) => ({
+		const reassignedParametros = updatedParametros.map((parametro) => ({
 			id: parametro.id,
 			name: parametro.name,
 			description: parametro.description,
@@ -221,16 +222,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			requerimientos: !editingCourseId && !requerimientos,
 		};
 
-		// Validar que haya al menos un parámetro
-		if (parametros.length === 0) {
-			toast({
-				title: 'Error',
-				description: 'Debe agregar al menos un parámetro de evaluación',
-				variant: 'destructive',
-			});
-			return;
-		}
-
 		if (editingCourseId) {
 			newErrors.title = modifiedFields.has('title') && !title;
 			newErrors.description = modifiedFields.has('description') && !description;
@@ -249,7 +240,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			(acc, parametro) => acc + parametro.porcentaje,
 			0
 		);
-		if (sumaPorcentajes !== 100) {
+		if (addParametros && sumaPorcentajes !== 100) {
 			toast({
 				title: 'Error',
 				description: 'La suma de los porcentajes debe ser igual a 100%',
@@ -277,7 +268,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				modalidadesid,
 				dificultadid,
 				requerimientos,
-				{ signal: controller.signal }
+				addParametros // Pasar el nuevo parámetro
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
@@ -393,6 +384,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setCoverImage(coverImageKey);
 		}
 	}, [editingCourseId]);
+
+	const handleToggleParametro = () => {
+		setAddParametros((prevAddParametro) => !prevAddParametro);
+	};
 
 	useEffect(() => {
 		if (isOpen && !editingCourseId) {
@@ -612,73 +607,114 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							)}
 						</div>
 					</div>
-					<div className="my-4 flex flex-col">
-						<label
-							htmlFor="totalParametros"
-							className="text-lg font-medium text-primary"
-						>
-							Parametros de evaluación
-						</label>
-						<Button
-							onClick={handleAddParametro}
-							disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
-							className="mt-2 w-10/12 lg:w-1/2"
-						>
-							{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo parametro
-							<Plus />
-						</Button>
-						{parametros.map((parametro, index) => (
-							<div key={index} className="mt-4 rounded-lg border p-4">
-								<div className="flex items-center justify-between">
-									<h3 className="text-lg font-medium text-primary">
-										Parámetro {index + 1}
-									</h3>
-									<Button
-										variant="destructive"
-										onClick={() => handleRemoveParametro(index)}
-									>
-										Eliminar
-									</Button>
-								</div>
-								<label className="mt-2 text-lg font-medium text-primary">
-									Nombre
-								</label>
+					<div className="mt-6 flex flex-col text-white">
+						<p>
+							¿Desea {editingCourseId ? 'actualizar' : 'agregar'} parametros
+							<span className={`${editingCourseId ? 'hidden' : ''}`}>
+								{' '}
+								'Solo para cursos que seran calificados'
+							</span>
+							?:
+						</p>
+						<div className="flex space-x-2">
+							<label
+								htmlFor="toggle"
+								className="relative inline-block h-8 w-16"
+							>
 								<input
-									type="text"
-									value={parametro.name}
-									onChange={(e) =>
-										handleParametroChange(index, 'name', e.target.value)
-									}
-									className="mt-1 w-full rounded border p-2 text-black outline-none"
+									type="checkbox"
+									id="toggle"
+									checked={addParametros}
+									onChange={handleToggleParametro}
+									className="absolute size-0"
 								/>
-								<label className="mt-2 text-lg font-medium text-primary">
-									Descripción
-								</label>
-								<textarea
-									value={parametro.description}
-									onChange={(e) =>
-										handleParametroChange(index, 'description', e.target.value)
-									}
-									className="mt-1 w-full rounded border p-2 text-black outline-none"
-								/>
-								<label className="mt-2 text-lg font-medium text-primary">
-									Porcentaje %
-								</label>
-								<input
-									type="number"
-									value={parametro.porcentaje}
-									onChange={(e) =>
-										handleParametroChange(
-											index,
-											'porcentaje',
-											Math.max(1, Math.min(100, parseFloat(e.target.value)))
-										)
-									}
-									className="mt-1 w-full rounded border p-2 text-black outline-none"
-								/>
-							</div>
-						))}
+								<span
+									className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
+								>
+									<span
+										className={`absolute left-1 top-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
+									></span>
+								</span>
+							</label>
+							<span className="mt-1 text-sm text-gray-400">
+								{addParametros ? 'Si' : 'No'}
+							</span>
+						</div>
 					</div>
+					{addParametros && (
+						<div className="my-4 flex flex-col">
+							<label
+								htmlFor="totalParametros"
+								className="text-lg font-medium text-primary"
+							>
+								Parametros de evaluación
+							</label>
+							<Button
+								onClick={handleAddParametro}
+								disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
+								className="mt-2 w-10/12 lg:w-1/2"
+							>
+								{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
+								parametro
+								<Plus />
+							</Button>
+							{parametros.map((parametro, index) => (
+								<div key={index} className="mt-4 rounded-lg border p-4">
+									<div className="flex items-center justify-between">
+										<h3 className="text-lg font-medium text-primary">
+											Parámetro {index + 1}
+										</h3>
+										<Button
+											variant="destructive"
+											onClick={() => handleRemoveParametro(index)}
+										>
+											Eliminar
+										</Button>
+									</div>
+									<label className="mt-2 text-lg font-medium text-primary">
+										Nombre
+									</label>
+									<input
+										type="text"
+										value={parametro.name}
+										onChange={(e) =>
+											handleParametroChange(index, 'name', e.target.value)
+										}
+										className="mt-1 w-full rounded border p-2 text-black outline-none"
+									/>
+									<label className="mt-2 text-lg font-medium text-primary">
+										Descripción
+									</label>
+									<textarea
+										value={parametro.description}
+										onChange={(e) =>
+											handleParametroChange(
+												index,
+												'description',
+												e.target.value
+											)
+										}
+										className="mt-1 w-full rounded border p-2 text-black outline-none"
+									/>
+									<label className="mt-2 text-lg font-medium text-primary">
+										Porcentaje %
+									</label>
+									<input
+										type="number"
+										value={parametro.porcentaje}
+										onChange={(e) =>
+											handleParametroChange(
+												index,
+												'porcentaje',
+												Math.max(1, Math.min(100, parseFloat(e.target.value)))
+											)
+										}
+										className="mt-1 w-full rounded border p-2 text-black outline-none"
+									/>
+								</div>
+							))}
+						</div>
+					)}
 					{(uploading || isUploading) && (
 						<div className="mt-4">
 							<Progress

@@ -177,8 +177,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 										}`}
 									>
 										<CardTitle className="rounded-lg text-lg text-primary">
-											Clase:
-											{lesson.title}
+											Clase: {lesson.title}
 										</CardTitle>
 										<div className="mb-2 items-center">
 											<p className="text-sm font-bold">
@@ -192,9 +191,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 												{lesson.course.title}
 											</Badge>
 										</div>
-										<p className="mb-2 line-clamp-2 text-sm">
-											Descripción: {lesson.description}
-										</p>
+										<div className="mb-2 line-clamp-2 flex flex-col text-sm">
+											<p>Descripción:</p>
+											<p> {lesson.description}</p>
+										</div>
 										<p className="text-sm font-bold italic">
 											Educador:{' '}
 											<Badge
