@@ -15,7 +15,6 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 			modalidad: true,
 			dificultad: true,
 			lessons: {
-				orderBy: (lessons, { asc }) => [asc(lessons.order)],
 				with: {
 					activities: true,
 				},
@@ -35,6 +34,11 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 			})
 		: [];
 
+	// Manually sort lessons in ascending order by createdAt
+	course.lessons.sort(
+		(a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+	);
+
 	const transformedCourse: Course = {
 		...course,
 		totalStudents: course.enrollments?.length ?? 0,
@@ -49,7 +53,9 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 					isCompleted: lessonProgress ? lessonProgress.isCompleted : false,
 					userProgress: lessonProgress ? lessonProgress.progress : 0,
 					porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
-          resourceNames: lesson.resourceNames ? lesson.resourceNames.split(',') : [], // Convertir texto a array
+					resourceNames: lesson.resourceNames
+						? lesson.resourceNames.split(',')
+						: [], // Convertir texto a array
 					activities:
 						lesson.activities?.map((activity) => ({
 							...activity,

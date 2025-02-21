@@ -25,8 +25,8 @@ export const users = pgTable('users', {
 	address: text('address'),
 	age: integer('age'),
 	birthDate: date('birth_date'),
-  subscriptionStatus: text('subscription_status').default('inactive').notNull(),
-  subscriptionEndDate: timestamp('subscription_end_date'),
+	subscriptionStatus: text('subscription_status').default('inactive').notNull(),
+	subscriptionEndDate: timestamp('subscription_end_date'),
 });
 
 // Tabla de categorías
@@ -83,7 +83,6 @@ export const lessons = pgTable('lessons', {
 	duration: integer('duration').notNull(),
 	coverImageKey: text('cover_image_key').notNull(),
 	coverVideoKey: text('cover_video_key').notNull(),
-	order: serial('order').notNull(),
 	courseId: integer('course_id')
 		.references(() => courses.id)
 		.notNull(),
@@ -91,7 +90,7 @@ export const lessons = pgTable('lessons', {
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 	resourceKey: text('resource_key').notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-  resourceNames: text('resource_names').notNull(),
+	resourceNames: text('resource_names').notNull(),
 });
 
 // Tabla de tipos de actividades
