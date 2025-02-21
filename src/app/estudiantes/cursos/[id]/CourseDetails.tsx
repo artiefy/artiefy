@@ -75,9 +75,9 @@ export default function CourseDetails({
 					const lessons = await getLessonsByCourseId(course.id);
 					setCourse((prevCourse) => ({
 						...prevCourse,
-						lessons: lessons.map((lesson) => ({
+						lessons: lessons.map((lesson, index) => ({
 							...lesson,
-							isLocked: lesson.userProgress === 0 && lesson.order !== 1,
+							isLocked: lesson.userProgress === 0 && index !== 0,
 							porcentajecompletado: lesson.userProgress,
 						})),
 					}));
@@ -227,8 +227,6 @@ export default function CourseDetails({
 		console.error(toastDescription, error);
 	};
 
-	const sortedLessons = [...course.lessons].sort((a, b) => a.order - b.order);
-
 	return (
 		<div className="min-h-screen bg-background">
 			<Header />
@@ -344,7 +342,7 @@ export default function CourseDetails({
 									Contenido del curso
 								</h2>
 								<div className="space-y-4">
-									{sortedLessons.map((lesson) => {
+									{course.lessons.map((lesson, index) => {
 										const isUnlocked = isEnrolled && !lesson.isLocked;
 
 										return (
@@ -369,7 +367,7 @@ export default function CourseDetails({
 																<FaLock className="mr-2 size-5 text-gray-400" />
 															)}
 															<span className="font-medium text-background">
-																Clase {lesson.order}: {lesson.title}{' '}
+																Clase {index + 1}: {lesson.title}{' '}
 																<span className="ml-2 text-sm text-gray-500">
 																	({lesson.duration} mins)
 																</span>

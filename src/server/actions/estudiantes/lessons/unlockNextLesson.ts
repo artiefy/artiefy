@@ -37,7 +37,7 @@ export async function unlockNextLesson(
 	const nextLesson = await db.query.lessons.findFirst({
 		where: and(
 			eq(lessons.courseId, currentLesson.courseId),
-			eq(lessons.order, currentLesson.order + 1)
+			eq(lessons.id, currentLesson.id + 1) // Assuming lessons are sequentially ordered by ID
 		),
 	});
 
