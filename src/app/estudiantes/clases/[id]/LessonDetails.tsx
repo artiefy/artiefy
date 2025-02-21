@@ -3,15 +3,15 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NProgress from 'nprogress';
 import { FaRobot } from 'react-icons/fa';
-import RecursosLesson from '~/components/estudiantes/layout/RecursosLesson';
 import ChatBot from '~/components/estudiantes/layout/ChatBot';
+import ClassComments from '~/components/estudiantes/layout/ClassComments';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import ClassComments from '~/components/estudiantes/layout/ClassComments';
 import LessonActivities from '~/components/estudiantes/layout/LessonActivities';
 import LessonCards from '~/components/estudiantes/layout/LessonCards';
 import LessonNavigation from '~/components/estudiantes/layout/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/LessonPlayer';
+import RecursosLesson from '~/components/estudiantes/layout/RecursosLesson';
 import { useToast } from '~/hooks/use-toast';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
@@ -74,7 +74,10 @@ export default function LessonDetails({
 						porcentajecompletado: progress ? progress.progress : 0,
 					};
 				})
-				.sort((a, b) => a.order - b.order);
+				.sort(
+					(a, b) =>
+						new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+				);
 			setLessonsState(lessonsWithProgress);
 		};
 
@@ -107,7 +110,7 @@ export default function LessonDetails({
 	useEffect(() => {
 		setLessonsState((prevLessons) =>
 			prevLessons.map((l) =>
-				l.order === 1
+				new Date(l.createdAt).getTime() === new Date(lessons[0].createdAt).getTime()
 					? {
 							...l,
 							isLocked: false,
@@ -117,7 +120,7 @@ export default function LessonDetails({
 					: l
 			)
 		);
-	}, []);
+	}, [lessons]);
 
 	// Set initial progress and video completion state based on lesson data
 	useEffect(() => {
@@ -128,7 +131,7 @@ export default function LessonDetails({
 
 	// Redirect if the lesson is locked and not the first lesson
 	useEffect(() => {
-		if (lesson.isLocked && lesson.order !== 1) {
+		if (lesson.isLocked && lessonsState[0].id !== lesson.id) {
 			toast({
 				title: 'Lección bloqueada',
 				description:
@@ -142,7 +145,7 @@ export default function LessonDetails({
 
 			return () => clearTimeout(timeoutId);
 		}
-	}, [lesson.isLocked, lesson.order, router, toast]);
+	}, [lesson.isLocked, lessonsState, lesson.id, router, toast]);
 
 	// Handle video end event
 	const handleVideoEnd = async () => {
@@ -276,7 +279,7 @@ export default function LessonDetails({
 			prevLessons.map((l) => ({
 				...l,
 				isLocked:
-					l.order === 1
+					lessons[0].id === l.id
 						? false
 						: l.id === lesson.id
 							? false
@@ -287,11 +290,14 @@ export default function LessonDetails({
 									: l.isLocked,
 			}))
 		);
-	}, [lesson.id]);
+	}, [lesson.id, lessons]);
 
 	// Function to handle navigation
 	const handleNavigation = (direction: 'prev' | 'next') => {
-		const sortedLessons = [...lessonsState].sort((a, b) => a.order - b.order);
+		const sortedLessons = [...lessonsState].sort(
+			(a, b) =>
+				new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+		);
 		const currentIndex = sortedLessons.findIndex(
 			(l) => l.id === selectedLessonId
 		);
@@ -341,7 +347,7 @@ export default function LessonDetails({
 						<LessonNavigation
 							handleNavigation={handleNavigation}
 							lessonsState={lessonsState}
-							lessonOrder={lesson.order}
+							lessonOrder={new Date(lesson.createdAt).getTime()}
 						/>
 						<LessonPlayer
 							lesson={lesson}
