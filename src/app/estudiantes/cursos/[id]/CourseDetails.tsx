@@ -68,41 +68,44 @@ export default function CourseDetails({
 	const router = useRouter();
 	const pathname = usePathname();
 
-	useEffect(() => {
-		const fetchUserProgress = async () => {
-			if (userId && isEnrolled) {
-				try {
-					const lessons = await getLessonsByCourseId(course.id);
-					setCourse((prevCourse) => ({
-						...prevCourse,
-						lessons: lessons.map((lesson, index) => ({
-							...lesson,
-							isLocked: lesson.userProgress === 0 && index !== 0,
-							porcentajecompletado: lesson.userProgress,
-						})),
-					}));
-				} catch (error) {
-					console.error('Error fetching user progress:', error);
-				}
-			}
-		};
-
-		if (Array.isArray(course.enrollments) && userId) {
-			const userEnrolled = course.enrollments.some(
-				(enrollment: Enrollment) => enrollment.userId === userId
-			);
-			setIsEnrolled(userEnrolled);
-			if (userEnrolled) {
-				void fetchUserProgress();
-			}
-		}
-
-		const timer = setTimeout(() => {
-			setLoading(false);
-		}, 1000);
-
-		return () => clearTimeout(timer);
-	}, [course.enrollments, userId, course.id, isEnrolled]);
+  useEffect(() => {
+    const fetchUserProgress = async () => {
+      if (userId && isEnrolled && !loading) {
+        try {
+          const lessons = await getLessonsByCourseId(course.id);
+          setCourse((prevCourse) => ({
+            ...prevCourse,
+            lessons: lessons.map((lesson, index) => ({
+              ...lesson,
+              isLocked: lesson.userProgress === 0 && index !== 0,
+              porcentajecompletado: lesson.userProgress,
+            })),
+          }));
+        } catch (error) {
+          console.error('Error fetching user progress:', error);
+        }
+      }
+    };
+  
+    // Evitar actualizar el estado innecesariamente
+    setIsEnrolled((prevIsEnrolled) => {
+      const userEnrolled = Array.isArray(course.enrollments) && userId
+        ? course.enrollments.some((enrollment: Enrollment) => enrollment.userId === userId)
+        : false;
+  
+      return prevIsEnrolled !== userEnrolled ? userEnrolled : prevIsEnrolled;
+    });
+  
+    if (isEnrolled) {
+      void fetchUserProgress();
+    }
+  
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  
+    return () => clearTimeout(timer);
+  }, [course.enrollments, userId, course.id, isEnrolled, loading]);
 
 	const toggleLesson = (lessonId: number) => {
 		if (isEnrolled) {

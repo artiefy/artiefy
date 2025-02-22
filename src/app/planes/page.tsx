@@ -99,7 +99,7 @@ const PlansPage: React.FC = () => {
                           { className: 'size-8 text-background' }
                         )}
                       </div>
-                      <div className="m-4 flex flex-col items-start">
+                      <div className="m-4 flex flex-col items-center">
                         <span className="text-4xl font-extrabold text-background">
                           ${plan.price.toLocaleString('es-CO')}
                           <span className="text-lg font-normal">/mes</span>
