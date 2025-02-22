@@ -75,8 +75,7 @@ Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, pued
 
 Tecnologias Que Se Usan:
 
-- Next.js 15, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM,
-  PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Upstash.
+- Next.js 15, App Router, Clerk, Tailwind CSS, Shadcn/UI, Drizzle ORM, PostgreSQL, Neon, Vercel, TypeScript, AWS S3, Upstash.
 
 ---
 
