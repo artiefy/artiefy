@@ -17,18 +17,17 @@ function getPlanAmount(planName: string): string {
 
 // ✅ Creación de los productos (planes de suscripción)
 export const products: Product[] = [
-  ...plansPersonas.map((plan) => createProduct(plan)),
-  ...plansEmpresas.map((plan) => createProduct(plan)),
+  ...plansPersonas.map(createProduct),
+  ...plansEmpresas.map(createProduct),
 ];
 
-// ✅ Función para crear un producto con su información correcta
+// ✅ Función para crear un producto correctamente
 function createProduct(plan: Plan): Product {
   return {
     id: plan.id,
     name: plan.name,
     amount: getPlanAmount(plan.name), // ✅ Se obtiene el precio del plan
     description: `Plan ${plan.name} mensual`,
-    referenceCode: "", // ✅ Se genera dinámicamente en cada compra
   };
 }
 

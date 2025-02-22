@@ -2,9 +2,12 @@ import { type FormData, type Auth, type Product } from "~/types/payu";
 import { calculateMD5 } from "./signature";
 import { generateReferenceCode } from "./referenceCode";
 
-// ✅ Función para formatear `amount` como string correctamente
+// ✅ Función para formatear `amount` correctamente
 function formatAmount(amount: number | string): string {
-  const numAmount = Number(amount); // ✅ Asegurar conversión a número
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount <= 0) {
+    throw new Error(`Invalid amount: ${amount}`);
+  }
   return numAmount % 1 === 0 ? numAmount.toFixed(1) : numAmount.toFixed(2);
 }
 
@@ -19,7 +22,7 @@ export function createFormData(
   confirmationUrl: string
 ): FormData {
   const referenceCode = generateReferenceCode();
-  const formattedAmount = formatAmount(product.amount); // ✅ Aplicar formateo correctamente
+  const formattedAmount = formatAmount(product.amount); // ✅ Aplicar formateo correcto
   const currency = "COP";
 
   // ✅ Generar firma MD5 con el formato correcto
@@ -36,7 +39,7 @@ export function createFormData(
     accountId: auth.accountId,
     description: product.description,
     referenceCode: referenceCode,
-    amount: formattedAmount, // ✅ `amount` siempre en formato correcto como `string`
+    amount: formattedAmount,
     tax: "3193", // Ajustable según el producto
     taxReturnBase: "16806", // Ajustable según el producto
     currency: currency,
