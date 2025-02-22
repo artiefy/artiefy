@@ -1,34 +1,39 @@
-import { type Product } from '~/types/payu';
-import { plansPersonas, plansEmpresas, type Plan } from '~/types/plans';
-import { generateReferenceCode } from '~/utils/referenceCode';
+import { type Product } from "~/types/payu";
+import { plansPersonas, plansEmpresas, type Plan } from "~/types/plans";
 
-// Creación de los productos (planes de suscripción)
-export const products: Product[] = [
-	...plansPersonas.map((plan) => createProduct(plan)),
-	...plansEmpresas.map((plan) => createProduct(plan)),
-];
-
-// Función para crear un producto con una referencia única
-function createProduct(plan: Plan): Product {
-	let amount = '100000'; // Default amount
-	if (plan.name === 'Pro') {
-		amount = '100000';
-	} else if (plan.name === 'Premium') {
-		amount = '150000';
-	} else if (plan.name === 'Enterprise') {
-		amount = '200000';
-	}
-
-	return {
-		id: plan.id,
-		name: plan.name,
-		amount: amount,
-		description: `Plan ${plan.name} mensual`,
-		referenceCode: generateReferenceCode(),
-	};
+// ✅ Función para definir el precio de cada plan
+function getPlanAmount(planName: string): string {
+  switch (planName) {
+    case "Pro":
+      return "100000";
+    case "Premium":
+      return "150000";
+    case "Enterprise":
+      return "200000";
+    default:
+      return "100000"; // Default en caso de un plan desconocido
+  }
 }
 
-// Función para obtener un producto por su ID
+// ✅ Creación de los productos (planes de suscripción)
+export const products: Product[] = [
+  ...plansPersonas.map((plan) => createProduct(plan)),
+  ...plansEmpresas.map((plan) => createProduct(plan)),
+];
+
+// ✅ Función para crear un producto con su información correcta
+function createProduct(plan: Plan): Product {
+  return {
+    id: plan.id,
+    name: plan.name,
+    amount: getPlanAmount(plan.name), // ✅ Se obtiene el precio del plan
+    description: `Plan ${plan.name} mensual`,
+    referenceCode: "", // ✅ Se genera dinámicamente en cada compra
+  };
+}
+
+// ✅ Función para obtener un producto por su ID
 export function getProductById(productId: number): Product | undefined {
-	return products.find((product) => product.id === productId);
+  if (!productId || isNaN(productId)) return undefined; // ✅ Validación extra
+  return products.find((product) => product.id === productId);
 }
