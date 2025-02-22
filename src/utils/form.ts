@@ -1,8 +1,13 @@
-import { type FormData, type Auth, type Product } from '~/types/payu';
-import { calculateMD5 } from './signature';
-import { generateReferenceCode } from './referenceCode';
+import { type FormData, type Auth, type Product } from "~/types/payu";
+import { calculateMD5 } from "./signature";
+import { generateReferenceCode } from "./referenceCode";
 
-// Función que crea los datos del formulario utilizando los parámetros proporcionados
+// ✅ Función para formatear el `amount`
+function formatAmount(amount: number): string {
+  return amount % 1 === 0 ? amount.toFixed(1) : amount.toFixed(2);
+}
+
+// ✅ Crear datos del formulario
 export function createFormData(
   auth: Auth,
   product: Product,
@@ -13,14 +18,15 @@ export function createFormData(
   confirmationUrl: string
 ): FormData {
   const referenceCode = generateReferenceCode();
-  const amount = product.amount;
-  const currency = 'COP';
+  const formattedAmount = formatAmount(Number(product.amount)); // ✅ Convertir `amount` a número antes de formatear
+  const currency = "COP";
 
+  // ✅ Generar firma MD5 con el formato correcto
   const signature = calculateMD5(
     auth.apiKey,
     auth.merchantId,
     referenceCode,
-    amount,
+    formattedAmount,
     currency
   );
 
@@ -29,12 +35,12 @@ export function createFormData(
     accountId: auth.accountId,
     description: product.description,
     referenceCode: referenceCode,
-    amount: amount,
-    tax: '3193', // Estos valores pueden ser ajustados según sea necesario
-    taxReturnBase: '16806', // Estos valores pueden ser ajustados según sea necesario
+    amount: formattedAmount, // ✅ Mantener `amount` como string
+    tax: "3193", // Ajustable según el producto
+    taxReturnBase: "16806", // Ajustable según el producto
     currency: currency,
     signature: signature,
-    test: '0',
+    test: "0",
     buyerEmail: buyerEmail,
     buyerFullName: buyerFullName,
     telephone: telephone,
