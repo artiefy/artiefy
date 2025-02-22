@@ -9,7 +9,7 @@ interface PaymentData {
   reference_sale: string;
   value: string;
   currency: string;
-  sign: string;
+  sign: string; // ✅ Ahora siempre es un string
 }
 
 export async function POST(req: NextRequest) {
@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
 
     // ✅ Verificar que `sign` existe antes de asignarlo
-    const sign = formData.get("sign") as string | null;
-    if (!sign) {
+    const sign = formData.get("sign");
+    if (!sign || typeof sign !== "string") {
       console.error("❌ Error: No se recibió la firma.");
       return NextResponse.json({ message: "Missing signature" }, { status: 400 });
     }
