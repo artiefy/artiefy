@@ -119,6 +119,19 @@ export default function CourseDetails({
 	const formatDate = (dateString: string | number | Date) =>
 		new Date(dateString).toISOString().split('T')[0];
 
+	useEffect(() => {
+		const checkSubscriptionStatus = () => {
+			if (userId) {
+				const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+				if (userSubscriptionStatus === 'active') {
+					setIsEnrolled(true);
+				}
+			}
+		};
+
+		checkSubscriptionStatus();
+	}, [userId, user]);
+
 	const handleEnroll = async () => {
 		if (!isSignedIn) {
 			toast({
@@ -478,9 +491,13 @@ export default function CourseDetails({
 								)}
 							</div>
 							<div
-								className={`transition-opacity duration-500 ${isEnrolled ? 'opacity-100' : 'opacity-0'}`}
+								className={`transition-opacity duration-500 ${
+									user?.publicMetadata?.subscriptionStatus === 'active'
+										? 'opacity-100'
+										: 'opacity-0'
+								}`}
 							>
-								{isEnrolled && (
+								{user?.publicMetadata?.subscriptionStatus === 'active' && (
 									<div className="flex w-full flex-col space-y-4 sm:w-auto">
 										<Button
 											className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
