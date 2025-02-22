@@ -123,13 +123,17 @@ export default function CourseDetails({
 		const checkSubscriptionStatus = () => {
 			if (userId) {
 				const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+				console.log(
+					'Estado de suscripción detectado en frontend:',
+					userSubscriptionStatus
+				);
 				if (userSubscriptionStatus === 'active') {
 					setIsEnrolled(true);
 				}
 			}
 		};
 
-		checkSubscriptionStatus();
+		void checkSubscriptionStatus();
 	}, [userId, user]);
 
 	const handleEnroll = async () => {
@@ -444,84 +448,79 @@ export default function CourseDetails({
 							</div>
 						</CardContent>
 						<CardFooter className="flex flex-col items-center justify-between space-y-4">
-							<div
-								className={`transition-opacity duration-500 ${isEnrolled ? 'opacity-0' : 'opacity-100'}`}
-							>
-								{!isEnrolled && (
-									<div className="group relative">
-										<Button
-											onClick={handleEnroll}
-											disabled={isEnrolling}
-											className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
-										>
-											<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
-
-											<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
-												<div className="relative z-10 flex items-center justify-center space-x-2">
-													{isEnrolling ? (
-														<Icons.spinner
-															className="animate-spin text-white"
-															style={{ width: '25px', height: '25px' }}
-														/>
-													) : (
-														<>
-															<span className="transition-all duration-500 group-hover:translate-x-1">
-																Inscribirse al curso
-															</span>
-															<svg
-																className="size-6 transition-transform duration-500 group-hover:translate-x-1"
-																data-slot="icon"
-																aria-hidden="true"
-																fill="currentColor"
-																viewBox="0 0 20 20"
-																xmlns="http://www.w3.org/2000/svg"
-															>
-																<path
-																	clipRule="evenodd"
-																	d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
-																	fillRule="evenodd"
-																></path>
-															</svg>
-														</>
-													)}
-												</div>
-											</span>
-										</Button>
-									</div>
-								)}
-							</div>
-							<div
-								className={`transition-opacity duration-500 ${
-									user?.publicMetadata?.subscriptionStatus === 'active'
-										? 'opacity-100'
-										: 'opacity-0'
-								}`}
-							>
-								{user?.publicMetadata?.subscriptionStatus === 'active' && (
-									<div className="flex w-full flex-col space-y-4 sm:w-auto">
-										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
-											disabled={true}
-										>
-											<FaCheck className="mr-2" /> Suscrito Al Curso
-										</Button>
-										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-											onClick={handleUnenroll}
-											disabled={isUnenrolling}
-										>
-											{isUnenrolling ? (
-												<Icons.spinner
-													className="animate-spin text-white"
-													style={{ width: '25px', height: '25px' }}
-												/>
-											) : (
-												'Cancelar Suscripción'
-											)}
-										</Button>
-									</div>
-								)}
-							</div>
+						<div
+  className={`transition-opacity duration-500 ${isEnrolled ? 'opacity-100' : 'opacity-0'}`}
+>
+  {isEnrolled && (
+    <div className="flex w-full flex-col space-y-4 sm:w-auto">
+      <Button
+        className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+        disabled={true}
+      >
+        <FaCheck className="mr-2" /> Suscrito Al Curso
+      </Button>
+      <Button
+        className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+        onClick={handleUnenroll}
+        disabled={isUnenrolling}
+      >
+        {isUnenrolling ? (
+          <Icons.spinner
+            className="animate-spin text-white"
+            style={{ width: '25px', height: '25px' }}
+          />
+        ) : (
+          'Cancelar Suscripción'
+        )}
+      </Button>
+    </div>
+  )}
+</div>
+<div
+  className={`transition-opacity duration-500 ${!isEnrolled ? 'opacity-100' : 'opacity-0'}`}
+>
+  {!isEnrolled && (
+    <div className="group relative">
+      <Button
+        onClick={handleEnroll}
+        disabled={isEnrolling}
+        className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
+      >
+        <span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
+        <span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
+          <div className="relative z-10 flex items-center justify-center space-x-2">
+            {isEnrolling ? (
+              <Icons.spinner
+                className="animate-spin text-white"
+                style={{ width: '25px', height: '25px' }}
+              />
+            ) : (
+              <>
+                <span className="transition-all duration-500 group-hover:translate-x-1">
+                  Inscribirse al curso
+                </span>
+                <svg
+                  className="size-6 transition-transform duration-500 group-hover:translate-x-1"
+                  data-slot="icon"
+                  aria-hidden="true"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    clipRule="evenodd"
+                    d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
+                    fillRule="evenodd"
+                  ></path>
+                </svg>
+              </>
+            )}
+          </div>
+        </span>
+      </Button>
+    </div>
+  )}
+</div>
 							<ChatbotModal />
 						</CardFooter>
 					</Card>
