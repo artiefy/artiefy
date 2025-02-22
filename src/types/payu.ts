@@ -6,13 +6,13 @@ export interface Auth {
   apiKey: string;
 }
 
-// Definición de la interfaz para los productos
+// ✅ Definición de la interfaz para los productos (referenceCode es opcional)
 export interface Product {
   id: number;
   name: string;
   amount: string;
   description: string;
-  referenceCode: string;
+  referenceCode?: string; // ✅ Ahora es opcional
 }
 
 // Definición de la interfaz para los datos del formulario

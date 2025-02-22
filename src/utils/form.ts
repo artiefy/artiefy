@@ -11,7 +11,7 @@ function formatAmount(amount: number | string): string {
   return numAmount % 1 === 0 ? numAmount.toFixed(1) : numAmount.toFixed(2);
 }
 
-// ✅ Crear datos del formulario
+// ✅ Crear datos del formulario (genera referenceCode dinámico)
 export function createFormData(
   auth: Auth,
   product: Product,
@@ -21,8 +21,8 @@ export function createFormData(
   responseUrl: string,
   confirmationUrl: string
 ): FormData {
-  const referenceCode = generateReferenceCode();
-  const formattedAmount = formatAmount(product.amount); // ✅ Aplicar formateo correcto
+  const referenceCode = generateReferenceCode(); // ✅ Se genera aquí en cada compra
+  const formattedAmount = formatAmount(product.amount);
   const currency = "COP";
 
   // ✅ Generar firma MD5 con el formato correcto
@@ -38,7 +38,7 @@ export function createFormData(
     merchantId: auth.merchantId,
     accountId: auth.accountId,
     description: product.description,
-    referenceCode: referenceCode,
+    referenceCode: referenceCode, // ✅ Se usa el referenceCode dinámico aquí
     amount: formattedAmount,
     tax: "3193", // Ajustable según el producto
     taxReturnBase: "16806", // Ajustable según el producto

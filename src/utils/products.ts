@@ -21,7 +21,7 @@ export const products: Product[] = [
   ...plansEmpresas.map(createProduct),
 ];
 
-// ✅ Función para crear un producto correctamente
+// ✅ Función para crear un producto correctamente (sin referenceCode)
 function createProduct(plan: Plan): Product {
   return {
     id: plan.id,
