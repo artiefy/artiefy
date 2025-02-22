@@ -45,7 +45,9 @@ export async function enrollInCourse(
 		}
 
 		// Verificar el estado de la suscripción del usuario
-		if (existingUser?.subscriptionStatus !== 'active') {
+		const userSubscriptionStatus =
+			existingUser?.subscriptionStatus ?? 'inactive';
+		if (userSubscriptionStatus !== 'active') {
 			return {
 				success: false,
 				message:
