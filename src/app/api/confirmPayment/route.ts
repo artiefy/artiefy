@@ -9,7 +9,7 @@ interface PaymentData {
   reference_sale: string;
   value: string;
   currency: string;
-  sign: string; // ✅ Ahora `sign` es obligatorio
+  sign: string;
 }
 
 export async function POST(req: NextRequest) {
