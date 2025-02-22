@@ -70,15 +70,15 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 		void fetchComments();
 		void checkEnrollment();
 
-		// Polling every 10 seconds to check enrollment status
-		const interval = setInterval(() => {
-			if (userId) {
-				void checkEnrollment();
-			}
-		}, 10000);
+		// Remove polling interval
+		// const interval = setInterval(() => {
+		// 	if (userId) {
+		// 		void checkEnrollment();
+		// 	}
+		// }, 10000);
 
 		// Clean up interval on component unmount
-		return () => clearInterval(interval);
+		// return () => clearInterval(interval);
 	}, [courseId, userId]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
