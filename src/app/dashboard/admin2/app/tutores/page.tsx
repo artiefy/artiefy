@@ -1,9 +1,46 @@
 'use client';
 
+import { DropdownMenuSeparator } from '~/components/admin/ui/dropdown-menu';
+
+import { DropdownMenuLabel } from '~/components/admin/ui/dropdown-menu';
+
 import { useState } from 'react';
-import { Users, BookOpen, Star, Search, Plus } from 'lucide-react';
-import { Button } from '~/components/admin/ui/button'; // Cambiado a la ruta correcta
-import { DashboardMetrics } from '~/components/admin/ui/DashboardMetrics';
+import { Button } from '~/components/admin/ui/button';
+import { Input } from '~/components/admin/ui/input';
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from '~/components/admin/ui/card';
+import { Badge } from '~/components/admin/ui/badge';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '~/components/admin/ui/alert-dialog';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '~/components/admin/ui/dropdown-menu';
+import {
+	Filter,
+	Plus,
+	FileOutputIcon as FileExport,
+	Settings2,
+	MoreHorizontal,
+	History,
+} from 'lucide-react';
+import type { HistoryEntry } from '~/types/types';
+import { EducatorForm } from '~/components/admin/ui/educator-form';
+import { EducatorHistory } from '~/components/admin/ui/educator-history';
 import {
 	Table,
 	TableBody,
@@ -12,229 +49,378 @@ import {
 	TableHeader,
 	TableRow,
 } from '~/components/admin/ui/table';
-import TutorDetalle from '~/components/admin/ui/TutorDetalle';
-import TutorForm from '~/components/admin/ui/TutorForm';
+import { Checkbox } from '~/components/admin/ui/checkbox';
 import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from '~/components/estudiantes/ui/card';
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from '~/components/estudiantes/ui/dialog';
-import { Input } from '~/components/estudiantes/ui/input';
-import type { Tutor } from '~/types/tutor';
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '~/components/admin/ui/select';
 
-export default function Tutores() {
-	const [tutores, setTutores] = useState<Tutor[]>([
-		{
-			id: 1,
-			nombre: 'Dr. Juan Pérez',
-			email: 'juan.perez@universidad.edu',
-			especialidad: 'Ciencias de la Computación',
-			cursos: ['Introducción a la Programación', 'Estructuras de Datos'],
-			estudiantes: 45,
-			calificacion: 4.8,
-			name: '',
-			subject: '',
-			rating: 0,
-			experience: 0,
-		},
-		{
-			id: 2,
-			nombre: 'Dra. María Rodríguez',
-			email: 'maria.rodriguez@universidad.edu',
-			especialidad: 'Inteligencia Artificial',
-			cursos: ['Machine Learning', 'Redes Neuronales'],
-			estudiantes: 38,
-			calificacion: 4.9,
-			name: '',
-			subject: '',
-			rating: 0,
-			experience: 0,
-		},
-	]);
+// Añadir al principio del archivo, después de las importaciones:
 
-	const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
-	const [searchTerm, setSearchTerm] = useState('');
+const SPECIALIZATIONS = [
+	'Matemáticas',
+	'Ciencias',
+	'Literatura',
+	'Historia',
+	'Idiomas',
+	'Arte',
+	'Música',
+	'Educación Física',
+	'Tecnología',
+	'Filosofía',
+];
 
-	const handleAddTutor = (
-		nuevoTutor: Omit<Tutor, 'id' | 'estudiantes' | 'calificacion'>
-	) => {
-		setTutores([
-			...tutores,
-			{
-				...nuevoTutor,
-				id: tutores.length + 1,
-				estudiantes: 0,
-				calificacion: 0,
-			},
-		]);
-	};
+// Modificar la interfaz Educator para reflejar que la especialización ahora es una de las predefinidas:
 
-	const handleEditTutor = (
-		tutorEditado: Omit<Tutor, 'id' | 'estudiantes' | 'calificacion'>
-	) => {
-		setTutores(
-			tutores.map((tutor) =>
-				tutor.id === selectedTutor?.id
-					? {
-							...tutor,
-							...tutorEditado,
-							estudiantes: tutor.estudiantes,
-							calificacion: tutor.calificacion,
-						}
-					: tutor
-			)
-		);
-		setSelectedTutor(null);
-	};
+interface Educator {
+	id: string;
+	name: string;
+	email: string;
+	phone: string;
+	specialization: (typeof SPECIALIZATIONS)[number];
+	courses: string[];
+	status: 'active' | 'inactive';
+	role: 'teacher' | 'admin';
+	joinDate: string;
+	avatar: string;
+}
 
-	const filteredTutores = tutores.filter(
-		(tutor) =>
-			tutor.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			tutor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			tutor.especialidad.toLowerCase().includes(searchTerm.toLowerCase())
+// Mock data...
+const mockEducators: Educator[] = [
+	{
+		id: 'EDU-001',
+		name: 'María González',
+		email: 'maria.g@example.com',
+		phone: '+34 600000001',
+		specialization: 'Matemáticas',
+		courses: ['Matemáticas Avanzadas', 'Cálculo I'],
+		status: 'active',
+		role: 'teacher',
+		joinDate: '2024-01-15',
+		avatar: '/placeholder.svg?height=40&width=40',
+	},
+	// ... más educadores
+];
+
+const mockHistory: HistoryEntry[] = [
+	{
+		id: '1',
+		educatorId: 'EDU-001',
+		action: 'create',
+		changes: { status: 'active', role: 'teacher' },
+		timestamp: '2024-01-15T10:00:00Z',
+		performedBy: 'Admin',
+	},
+	// ... más entradas de historial
+];
+
+export default function EducatorsDashboard() {
+	const [educators, setEducators] = useState<Educator[]>(mockEducators);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [formOpen, setFormOpen] = useState(false);
+	const [selectedEducator, setSelectedEducator] = useState<
+		Educator | undefined
+	>();
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+	const [currentHistory, setCurrentHistory] = useState<HistoryEntry[]>([]);
+
+	const filteredEducators = educators.filter(
+		(educator) =>
+			educator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			educator.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			educator.specialization.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
+	const handleCreateEducator = (data: any) => {
+		// Implementar lógica de creación
+		setFormOpen(false);
+	};
+
+	const handleEditEducator = (educator: Educator) => {
+		setSelectedEducator(educator);
+		setFormOpen(true);
+	};
+
+	const handleDeleteEducator = (educator: Educator) => {
+		setSelectedEducator(educator);
+		setDeleteDialogOpen(true);
+	};
+
+	const handleViewHistory = (educator: Educator) => {
+		setCurrentHistory(mockHistory.filter((h) => h.educatorId === educator.id));
+		setHistoryDialogOpen(true);
+	};
+
+	const handleSpecializationChange = (
+		educatorId: string,
+		newSpecialization: string
+	) => {
+		setEducators((prevEducators) =>
+			prevEducators.map((educator) =>
+				educator.id === educatorId
+					? {
+							...educator,
+							specialization:
+								newSpecialization as (typeof SPECIALIZATIONS)[number],
+						}
+					: educator
+			)
+		);
+	};
+
 	return (
-		<div className="space-y-6 bg-background p-8 text-foreground">
-			<h2 className="mb-6 text-3xl font-bold tracking-tight text-foreground">
-				Gestión de Tutores
-			</h2>
+		<div className="min-h-screen space-y-6 bg-background p-4 text-foreground md:p-6">
+			<h1 className="text-2xl font-bold text-primary md:text-3xl">
+				Gestión de Educadores
+			</h1>
 
-			<DashboardMetrics
-				metrics={[
-					{
-						title: 'Total Tutores',
-						value: tutores.length.toString(),
-						icon: Users,
-						href: '/tutores',
-					},
-					{
-						title: 'Cursos Impartidos',
-						value: tutores
-							.reduce((acc, tutor) => acc + tutor.cursos.length, 0)
-							.toString(),
-						icon: BookOpen,
-						href: '/cursos',
-					},
-					{
-						title: 'Calificación Promedio',
-						value: (
-							tutores.reduce((acc, tutor) => acc + tutor.calificacion, 0) /
-							tutores.length
-						).toFixed(1),
-						icon: Star,
-						href: '/analisis',
-					},
-				]}
-			/>
+			<div className="grid gap-4 md:grid-cols-2">
+				<Card className="bg-secondary">
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">
+							Total de Educadores
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">{educators.length}</div>
+					</CardContent>
+				</Card>
+				<Card className="bg-green-600">
+					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+						<CardTitle className="text-sm font-medium">
+							Educadores Activos
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<div className="text-2xl font-bold">
+							{educators.filter((e) => e.status === 'active').length}
+						</div>
+					</CardContent>
+				</Card>
+			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Buscar y Agregar Tutores</CardTitle>
-				</CardHeader>
-				<CardContent className="flex items-center justify-between space-x-4">
-					<div className="relative w-full max-w-sm">
-						<Search className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-						<Input
-							placeholder="Buscar tutores..."
-							value={searchTerm}
-							onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-								setSearchTerm(e.target.value)
-							}
-							className="w-full border-0 bg-white pl-8 text-muted-foreground focus:ring-2 focus:ring-primary"
-						/>
-					</div>
-					<Dialog>
-						<DialogTrigger asChild>
-							<Button>
-								<Plus className="mr-2 size-4 text-white" /> Agregar Tutor
+			<div className="flex items-center justify-between">
+				<div className="flex items-center space-x-2">
+					<Input
+						placeholder="Buscar educadores..."
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						className="w-[300px] text-foreground"
+					/>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="outline" size="icon" className="text-foreground">
+								<Filter className="h-4 w-4" />
 							</Button>
-						</DialogTrigger>
-						<DialogContent className="text-white sm:max-w-[425px]">
-							<DialogHeader>
-								<DialogTitle>Agregar Nuevo Tutor</DialogTitle>
-							</DialogHeader>
-							<TutorForm onSubmit={handleAddTutor} />
-						</DialogContent>
-					</Dialog>
-				</CardContent>
-			</Card>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent className="text-popover-foreground">
+							<DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
+							<DropdownMenuSeparator />
+							<DropdownMenuLabel>Estado</DropdownMenuLabel>
+							<DropdownMenuItem>
+								<Checkbox id="active" className="mr-2" />
+								<label htmlFor="active">Activos</label>
+							</DropdownMenuItem>
+							<DropdownMenuItem>
+								<Checkbox id="inactive" className="mr-2" />
+								<label htmlFor="inactive">Inactivos</label>
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuLabel>Especialización</DropdownMenuLabel>
+							{SPECIALIZATIONS.map((spec) => (
+								<DropdownMenuItem key={spec}>
+									<Checkbox id={`spec-${spec}`} className="mr-2" />
+									<label htmlFor={`spec-${spec}`}>{spec}</label>
+								</DropdownMenuItem>
+							))}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+				<div className="flex space-x-2">
+					<Button
+						variant="default"
+						className="bg-primary text-black text-primary-foreground"
+						onClick={() => {
+							setSelectedEducator(undefined);
+							setFormOpen(true);
+						}}
+					>
+						<Plus className="mr-2 h-4 w-4 text-black" />
+						Nuevo Educador
+					</Button>
+					<Button
+						variant="outline"
+						className="bg-secondary text-black text-foreground"
+					>
+						<FileExport className="mr-2 h-4 w-4" />
+						Exportar
+					</Button>
+				</div>
+			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Lista de Tutores</CardTitle>
-				</CardHeader>
-				<CardContent>
+			<div className="space-y-4">
+				<div className="rounded-md border">
 					<Table>
 						<TableHeader>
 							<TableRow>
+								<TableHead className="w-[100px]">ID</TableHead>
 								<TableHead>Nombre</TableHead>
 								<TableHead>Email</TableHead>
-								<TableHead>Especialidad</TableHead>
-								<TableHead>Estudiantes</TableHead>
-								<TableHead>Calificación</TableHead>
-								<TableHead>Acciones</TableHead>
+								<TableHead>Especialización</TableHead>
+								<TableHead>Cursos Asociados</TableHead>
+								<TableHead>Estado</TableHead>
+								<TableHead>Rol</TableHead>
+								<TableHead className="text-right">Acciones</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
-							{filteredTutores.map((tutor) => (
-								<TableRow key={tutor.id}>
-									<TableCell className="font-medium">{tutor.nombre}</TableCell>
-									<TableCell>{tutor.email}</TableCell>
-									<TableCell>{tutor.especialidad}</TableCell>
-									<TableCell>{tutor.estudiantes}</TableCell>
-									<TableCell>{tutor.calificacion.toFixed(1)}</TableCell>
+							{filteredEducators.map((educator) => (
+								<TableRow key={educator.id}>
+									<TableCell className="font-medium">{educator.id}</TableCell>
+									<TableCell>{educator.name}</TableCell>
+									<TableCell>{educator.email}</TableCell>
 									<TableCell>
-										<Button
-											variant="outline"
-											size="sm"
-											className="mr-2 text-primary hover:bg-primary hover:text-white"
-											onClick={() => setSelectedTutor(tutor)}
+										<Select
+											value={educator.specialization}
+											onValueChange={(value) =>
+												handleSpecializationChange(educator.id, value)
+											}
 										>
-											Ver Detalles
-										</Button>
-										<Dialog>
-											<DialogTrigger asChild>
-												<Button variant="outline" size="sm">
-													Editar
+											<SelectTrigger className="w-[180px]">
+												<SelectValue>{educator.specialization}</SelectValue>
+											</SelectTrigger>
+											<SelectContent>
+												{SPECIALIZATIONS.map((spec) => (
+													<SelectItem key={spec} value={spec}>
+														{spec}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</TableCell>
+									<TableCell>
+										<div className="flex flex-wrap gap-1">
+											{educator.courses.map((course) => (
+												<Badge
+													key={course}
+													variant="secondary"
+													className="bg-accent text-accent-foreground"
+												>
+													{course}
+												</Badge>
+											))}
+										</div>
+									</TableCell>
+									<TableCell>
+										<Badge
+											variant={
+												educator.status === 'active' ? 'default' : 'secondary'
+											}
+											className={
+												educator.status === 'active'
+													? 'bg-green-600'
+													: 'bg-secondary'
+											}
+										>
+											{educator.status === 'active' ? 'Activo' : 'Inactivo'}
+										</Badge>
+									</TableCell>
+									<TableCell>
+										<Badge
+											variant="outline"
+											className="bg-secondary text-foreground"
+										>
+											{educator.role}
+										</Badge>
+									</TableCell>
+									<TableCell className="text-right">
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<Button
+													variant="ghost"
+													size="icon"
+													className="text-foreground"
+												>
+													<MoreHorizontal className="h-4 w-4" />
 												</Button>
-											</DialogTrigger>
-											<DialogContent className="text-white sm:max-w-[425px]">
-												<DialogHeader>
-													<DialogTitle>Editar Tutor</DialogTitle>
-												</DialogHeader>
-												<TutorForm onSubmit={handleEditTutor} tutor={tutor} />
-											</DialogContent>
-										</Dialog>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent
+												align="end"
+												className="bg-popover text-popover-foreground"
+											>
+												<DropdownMenuItem
+													onClick={() => handleEditEducator(educator)}
+												>
+													Editar
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													onClick={() => handleViewHistory(educator)}
+												>
+													<History className="mr-2 h-4 w-4" />
+													Ver historial
+												</DropdownMenuItem>
+												<DropdownMenuItem
+													className="text-destructive"
+													onClick={() => handleDeleteEducator(educator)}
+												>
+													Eliminar
+												</DropdownMenuItem>
+											</DropdownMenuContent>
+										</DropdownMenu>
 									</TableCell>
 								</TableRow>
 							))}
 						</TableBody>
 					</Table>
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 
-			{selectedTutor && (
-				<Dialog
-					open={!!selectedTutor}
-					onOpenChange={() => setSelectedTutor(null)}
-				>
-					<DialogContent className="text-white sm:max-w-[625px]">
-						<DialogHeader>
-							<DialogTitle>Detalles del Tutor</DialogTitle>
-						</DialogHeader>
-						<TutorDetalle tutor={selectedTutor} />
-					</DialogContent>
-				</Dialog>
-			)}
+			<EducatorForm
+				open={formOpen}
+				onOpenChangeAction={setFormOpen}
+				educator={selectedEducator}
+				onSubmitAction={handleCreateEducator}
+			/>
+
+			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+				<AlertDialogContent className="bg-background text-foreground">
+					<AlertDialogHeader>
+						<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Esta acción no se puede deshacer. Se eliminará permanentemente el
+							educador y todos sus datos asociados.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel className="bg-secondary text-foreground">
+							Cancelar
+						</AlertDialogCancel>
+						<AlertDialogAction className="bg-destructive text-destructive-foreground">
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			<AlertDialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+				<AlertDialogContent className="max-w-3xl bg-background text-foreground">
+					<AlertDialogHeader>
+						<AlertDialogTitle>Historial de Cambios</AlertDialogTitle>
+					</AlertDialogHeader>
+					<div className="max-h-[60vh] overflow-y-auto">
+						<EducatorHistory history={currentHistory} />
+					</div>
+					<AlertDialogFooter>
+						<AlertDialogCancel className="bg-secondary text-foreground">
+							Cerrar
+						</AlertDialogCancel>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 }

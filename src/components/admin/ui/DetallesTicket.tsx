@@ -362,11 +362,11 @@ export const DetallesTicket = ({
 					</CardContent>
 				</Card>
 
-				<div className="flex justify-end gap-2">
+				<div className="flex justify-end space-x-4 text-white">
 					<Button onClick={onCerrarAction} variant="outline">
 						Cancelar
 					</Button>
-					<Button onClick={handleSubmit}>Guardar cambios</Button>
+					<Button className='text-gray-800' onClick={handleSubmit}>Guardar cambios</Button>
 				</div>
 			</div>
 		</ScrollArea>

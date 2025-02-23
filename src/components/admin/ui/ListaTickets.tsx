@@ -40,15 +40,15 @@ export const ListaTickets = ({ tickets, onSeleccionarTicket }: ListaTicketsProps
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 mt-4">
       {tickets.map((ticket) => (
         <Card
           key={ticket.id}
-          className="cursor-pointer transition-all hover:shadow-md"
+          className="cursor-pointer transition-all hover:shadow-md hover:scale-105 duration-300"
           onClick={() => onSeleccionarTicket(ticket)}
         >
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-start">
+          <CardHeader className="pb-2 ">
+            <div className="flex justify-between items-start ">
               <div>
                 <CardTitle className="text-lg">{ticket.titulo}</CardTitle>
                 <CardDescription>{ticket.id}</CardDescription>
@@ -57,8 +57,8 @@ export const ListaTickets = ({ tickets, onSeleccionarTicket }: ListaTicketsProps
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm mb-2 line-clamp-2">{ticket.descripcion}</p>
-            <div className="flex justify-between items-center mb-2">
+            <p className="text-sm mb-2 line-clamp-2 ">{ticket.descripcion}</p>
+            <div className="flex justify-between items-center mb-2 ">
               <Badge variant="outline" className={getPrioridadColor(ticket.prioridad)}>
                 {ticket.prioridad}
               </Badge>

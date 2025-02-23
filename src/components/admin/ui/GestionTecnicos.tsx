@@ -39,15 +39,15 @@ export const GestionTecnicos = ({ tecnicos, setTecnicosAction, categoriasDisponi
 
   return (
     <>
-      <Button onClick={() => setEstaAbierto(true)} className="mt-4">
+      <Button onClick={() => setEstaAbierto(true)} className="text-sm font-semibold text-gray-800 ">
         Gestionar Técnicos
       </Button>
       <Dialog open={estaAbierto} onOpenChange={setEstaAbierto}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl w-full p-4 space-y-4 bg-white">
           <DialogHeader>
-            <DialogTitle>Gestión de Técnicos</DialogTitle>
+            <DialogTitle >Gestión de Técnicos</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <Card>
               <CardHeader>
                 <CardTitle>Lista de Técnicos</CardTitle>
@@ -161,7 +161,7 @@ export const GestionTecnicos = ({ tecnicos, setTecnicosAction, categoriasDisponi
                         ))}
                       </div>
                     </div>
-                    <Button type="submit">Guardar Cambios</Button>
+                    <Button className="text-gray-800" type="submit">Guardar Cambios</Button>
                   </form>
                 </CardContent>
               </Card>

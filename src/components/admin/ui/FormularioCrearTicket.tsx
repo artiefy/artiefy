@@ -24,6 +24,7 @@ export const FormularioCrearTicket = ({ onCerrarAction, onEnviarAction, categori
     prioridad: "Media",
     descripcion: "",
     categorias: [],
+    archivado: false,
   })
 
   const handleChange = (campo: keyof Omit<Ticket, "id" | "fecha" | "fechaCreacion">, valor: string) => {
@@ -36,7 +37,7 @@ export const FormularioCrearTicket = ({ onCerrarAction, onEnviarAction, categori
   }
 
   return (
-    <div className="grid gap-4 py-4 text-white">
+    <div className="grid gap-4 py-4 text-black">
       <div>
         <Label htmlFor="titulo">Título</Label>
         <Input id="titulo" value={nuevoTicket.titulo} onChange={(e) => handleChange("titulo", e.target.value)} />
@@ -105,11 +106,11 @@ export const FormularioCrearTicket = ({ onCerrarAction, onEnviarAction, categori
           ))}
         </div>
       </div>
-      <div className="flex justify-end space-x-2 ">
+      <div className="flex justify-end space-x-2 text-white">
         <Button onClick={onCerrarAction} variant="outline">
           Cancelar
         </Button>
-        <Button onClick={handleSubmit}>Crear Ticket</Button>
+        <Button onClick={handleSubmit} className="text-white">Crear Ticket</Button>
       </div>
     </div>
   )

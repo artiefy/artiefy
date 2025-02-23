@@ -17,7 +17,6 @@ import {
 	FiAlertOctagon,
 	FiBookOpen,
 	FiArchive,
-	FiHardDrive,
 } from 'react-icons/fi';
 import { ModalError } from '~/components/admin/ui/modalerror';
 import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
@@ -91,22 +90,10 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			link: './',
 		},
 		{
-			icon: <FiShieldOff size={24} />,
-			title: 'Reporta errores',
-			id: 'errores',
-			onClick: () => setIsModalOpen(true),
-		},
-		{
 			icon: <FiBook size={24} />,
 			title: 'Cursos',
 			id: 'Cursos',
 			link: './app/cursos',
-		},
-    {
-			icon: <FiBook size={24} />,
-			title: 'Estudiantes',
-			id: 'estudiantes',
-			link: './estudiantes',
 		},
 		{
 			icon: <FiFileText size={24} />,
@@ -119,18 +106,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			title: 'Settings',
 			id: 'settings',
 			link: './app/settings',
-		},
-		{
-			icon: <FiHardDrive size={24} />,
-			title: 'Evaluaciones',
-			id: 'evaluaciones',
-			link: './app/evaluaciones',
-		},
-		{
-			icon: <FiHardDrive size={24} />,
-			title: 'Interacciones',
-			id: 'Interaciones',
-			link: './interaciones',
 		},
 		{
 			icon: <FiAlertOctagon size={24} />,
@@ -149,6 +124,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			title: 'Foro',
 			id: 'foros',
 			link: './foros',
+		},
+		{
+			icon: <FiUser size={24} />,
+			title: 'Roles',
+			id: 'foros',
+			link: '/src/app/dashboard/super-admin/page.tsx',
 		},
 	];
 

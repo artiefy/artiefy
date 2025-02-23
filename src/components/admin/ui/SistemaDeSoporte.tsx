@@ -27,7 +27,7 @@ import { FormularioCrearTicket } from './FormularioCrearTicket';
 import { GestionTecnicos } from './GestionTecnicos';
 import { ListaTickets } from './ListaTickets';
 import { exportarACSV } from './utilidadesExportacion';
-import { ChatButton } from './ChatButton';
+import ChatButton from './ChatButton';
 import { FiltrosTickets } from './FiltrosTickets';
 
 export interface Ticket {
@@ -43,6 +43,7 @@ export interface Ticket {
 	fechaResolucion?: string;
 	tiempoEstimado?: number;
 	categorias: string[];
+	archivado: boolean;
 }
 
 interface Tecnico {
@@ -83,6 +84,9 @@ const SistemaDeSoporte = () => {
 		tecnicoAsignado: '',
 		categorias: [],
 	});
+	const [vistaActual, setVistaActual] = useState<
+		'todos' | 'asignados' | 'noAsignados' | 'archivados'
+	>('todos');
 
 	useEffect(() => {
 		// Cargar datos iniciales (reemplazar con llamadas API reales)
@@ -97,6 +101,7 @@ const SistemaDeSoporte = () => {
 				descripcion: 'El servidor principal no responde',
 				fechaCreacion: '2024-01-20T10:00:00Z',
 				categorias: ['Hardware', 'Red'],
+				archivado: false,
 			},
 			{
 				id: 'TKT-002',
@@ -108,6 +113,20 @@ const SistemaDeSoporte = () => {
 				descripcion: 'Los usuarios no pueden enviar correos',
 				fechaCreacion: '2024-01-19T14:30:00Z',
 				categorias: ['Software'],
+				archivado: false,
+			},
+			{
+				id: 'TKT-003',
+				titulo: 'Actualización de Software Completada',
+				estado: 'completado',
+				asignadoA: 'Ana García',
+				prioridad: 'Baja',
+				fecha: '2024-01-18',
+				descripcion: 'Actualización exitosa del software de gestión',
+				fechaCreacion: '2024-01-18T09:00:00Z',
+				fechaResolucion: '2024-01-18T11:30:00Z',
+				categorias: ['Software'],
+				archivado: true,
 			},
 		]);
 		setTecnicos([
@@ -128,20 +147,21 @@ const SistemaDeSoporte = () => {
 				cedula: '0987654321',
 				correo: 'ana@example.com',
 				rol: 'admin',
-				ticketsAsignados: 0,
+				ticketsAsignados: 1,
 				etiquetasAsignadas: ['Software', 'Base de datos'],
 			},
 		]);
 	}, []);
 
 	const agregarTicket = (
-		nuevoTicket: Omit<Ticket, 'id' | 'fecha' | 'fechaCreacion'>
+		nuevoTicket: Omit<Ticket, 'id' | 'fecha' | 'fechaCreacion' | 'archivado'>
 	) => {
 		const ticket: Ticket = {
 			...nuevoTicket,
 			id: `TKT-${tickets.length + 1}`,
 			fecha: new Date().toISOString().split('T')[0],
 			fechaCreacion: new Date().toISOString(),
+			archivado: false,
 		};
 		setTickets([...tickets, ticket]);
 		setEstaCreando(false);
@@ -149,13 +169,25 @@ const SistemaDeSoporte = () => {
 
 	const actualizarTicket = (ticketActualizado: Ticket) => {
 		setTickets(
-			tickets.map((t) =>
-				t.id === ticketActualizado.id ? ticketActualizado : t
-			)
+			tickets.map((t) => {
+				if (t.id === ticketActualizado.id) {
+					// Si el ticket se marca como completado, también se archiva
+					if (ticketActualizado.estado === 'completado') {
+						return { ...ticketActualizado, archivado: true };
+					}
+					return ticketActualizado;
+				}
+				return t;
+			})
 		);
 	};
 
 	const ticketsFiltrados = tickets.filter((ticket) => {
+		if (vistaActual === 'archivados' && !ticket.archivado) return false;
+		if (vistaActual !== 'archivados' && ticket.archivado) return false;
+		if (vistaActual === 'asignados' && !ticket.asignadoA) return false;
+		if (vistaActual === 'noAsignados' && ticket.asignadoA) return false;
+
 		return (
 			(filtros.terminoBusqueda === '' ||
 				ticket.titulo
@@ -186,32 +218,43 @@ const SistemaDeSoporte = () => {
 			<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<BurbujaTicket
 					titulo="Total de Tickets"
-					cantidad={tickets.length}
-					onClick={() => setFiltros({ ...filtros, estado: '', categorias: [] })}
+					cantidad={tickets.filter((t) => !t.archivado).length}
+					onClick={() => {
+						setVistaActual('todos');
+						setFiltros({ ...filtros, estado: '', categorias: [] });
+					}}
 					className="bg-card text-card-foreground"
 				/>
 				<BurbujaTicket
 					titulo="Tickets Pendientes"
-					cantidad={tickets.filter((t) => t.estado === 'pendiente').length}
-					onClick={() =>
-						setFiltros({ ...filtros, estado: 'pendiente', categorias: [] })
+					cantidad={
+						tickets.filter((t) => t.estado === 'pendiente' && !t.archivado)
+							.length
 					}
+					onClick={() => {
+						setVistaActual('todos');
+						setFiltros({ ...filtros, estado: 'pendiente', categorias: [] });
+					}}
 					className="bg-yellow-500 text-yellow-50"
 				/>
 				<BurbujaTicket
 					titulo="Tickets Críticos"
-					cantidad={tickets.filter((t) => t.estado === 'critico').length}
-					onClick={() =>
-						setFiltros({ ...filtros, estado: 'critico', categorias: [] })
+					cantidad={
+						tickets.filter((t) => t.estado === 'critico' && !t.archivado).length
 					}
+					onClick={() => {
+						setVistaActual('todos');
+						setFiltros({ ...filtros, estado: 'critico', categorias: [] });
+					}}
 					className="bg-red-500 text-red-50"
 				/>
 				<BurbujaTicket
-					titulo="Tickets Completados"
-					cantidad={tickets.filter((t) => t.estado === 'completado').length}
-					onClick={() =>
-						setFiltros({ ...filtros, estado: 'completado', categorias: [] })
-					}
+					titulo="Tickets Archivados"
+					cantidad={tickets.filter((t) => t.archivado).length}
+					onClick={() => {
+						setVistaActual('archivados');
+						setFiltros({ ...filtros, estado: '', categorias: [] });
+					}}
 					className="bg-green-500 text-green-50"
 				/>
 			</div>
@@ -230,32 +273,42 @@ const SistemaDeSoporte = () => {
 					<FiltrosTickets
 						filtros={filtros}
 						tecnicos={tecnicos}
-						onFiltrosChange={setFiltros}
+						onFiltrosChangeAction={setFiltros}
 						categoriasDisponibles={categoriasDisponibles}
 					/>
 				</div>
 				<div className="flex items-center gap-2">
 					<Button
 						onClick={() => setEstaCreando(true)}
-						className="bg-primary text-primary-foreground hover:bg-primary/90"
+						className="bg-primary text-gray-800 hover:bg-primary/90"
 					>
 						Crear Ticket
 					</Button>
 					<Button
 						onClick={() => exportarACSV(tickets)}
 						variant="outline"
-						className="border-primary text-primary hover:bg-primary/10"
+						className="bg-primary text-gray-800 hover:bg-primary/90"
 					>
 						Exportar
 					</Button>
+					<GestionTecnicos
+						tecnicos={tecnicos}
+						setTecnicosAction={setTecnicos}
+						categoriasDisponibles={categoriasDisponibles}
+					/>
 				</div>
 			</div>
 
-			<Tabs defaultValue="todos" className="w-full">
+			<Tabs
+				value={vistaActual}
+				onValueChange={(value) => setVistaActual(value as typeof vistaActual)}
+				className="w-full"
+			>
 				<TabsList className="bg-card text-card-foreground">
 					<TabsTrigger value="todos">Todos</TabsTrigger>
 					<TabsTrigger value="asignados">Asignados</TabsTrigger>
 					<TabsTrigger value="noAsignados">No Asignados</TabsTrigger>
+					<TabsTrigger value="archivados">Archivados</TabsTrigger>
 				</TabsList>
 				<TabsContent value="todos">
 					<ListaTickets
@@ -275,10 +328,16 @@ const SistemaDeSoporte = () => {
 						onSeleccionarTicket={setTicketSeleccionado}
 					/>
 				</TabsContent>
+				<TabsContent value="archivados">
+					<ListaTickets
+						tickets={ticketsFiltrados}
+						onSeleccionarTicket={setTicketSeleccionado}
+					/>
+				</TabsContent>
 			</Tabs>
 
 			<Dialog open={estaCreando} onOpenChange={setEstaCreando}>
-				<DialogContent>
+				<DialogContent className='bg-card text-card-foreground rounded-lg shadow-lg p-6 max-w-4xl'>
 					<DialogHeader>
 						<DialogTitle>Crear Nuevo Ticket</DialogTitle>
 						<DialogDescription>
@@ -298,9 +357,9 @@ const SistemaDeSoporte = () => {
 					open={!!ticketSeleccionado}
 					onOpenChange={() => setTicketSeleccionado(null)}
 				>
-					<DialogContent className="max-h-[90vh] max-w-4xl p-6">
-						<DialogHeader className="mb-4">
-							<DialogTitle className="text-2xl">
+					<DialogContent className="max-h-[90vh] max-w-4xl p-6 overflow-y-auto bg-card text-card-foreground rounded-lg shadow-lg">
+						<DialogHeader className="mb-4 pb-4 border-b border-card-foreground">
+							<DialogTitle className="text-2xl font-bold text-primary mb-2">
 								Detalles del Ticket
 							</DialogTitle>
 						</DialogHeader>
@@ -315,11 +374,6 @@ const SistemaDeSoporte = () => {
 				</Dialog>
 			)}
 
-			<GestionTecnicos
-				tecnicos={tecnicos}
-				setTecnicosAction={setTecnicos}
-				categoriasDisponibles={categoriasDisponibles}
-			/>
 			<ChatButton />
 		</div>
 	);

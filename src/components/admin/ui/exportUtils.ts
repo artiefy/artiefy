@@ -1,4 +1,4 @@
-import type { Ticket } from "~/components/admin/ui/SupportTicketSystem"
+import type { Ticket } from "~/components/admin/ui/SistemaDeSoporte"
 
 export const exportToCSV = (tickets: Ticket[]) => {
   const csvContent =
