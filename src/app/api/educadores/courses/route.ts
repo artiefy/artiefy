@@ -7,6 +7,8 @@ import {
 	getCourseById,
 	getCoursesByUserId,
 	updateCourse,
+	getTotalStudents,
+	getLessonsByCourseId,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { ratelimit } from '~/server/ratelimit/ratelimit';
@@ -42,10 +44,16 @@ export async function GET(req: NextRequest) {
 		let courses;
 		if (courseId) {
 			const course = await getCourseById(parseInt(courseId));
+			const totalStudents = await getTotalStudents(parseInt(courseId));
+			const lessons = await getLessonsByCourseId(parseInt(courseId));
 			if (!course) {
 				return respondWithError('Curso no encontrado', 404);
 			}
-			courses = course;
+			if (course) {
+				courses = { ...course, totalStudents, lessons };
+			} else {
+				courses = course;
+			}
 		} else if (userId) {
 			courses = await getCoursesByUserId(userId);
 		} else {

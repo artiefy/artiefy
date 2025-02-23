@@ -163,11 +163,7 @@ const ForumPage = () => {
 	}, [fetchPostReplays, posts]);
 
 	// Desbloquear y actualizar la función sendForumEmail
-	const sendForumEmail = async (
-		postContent: string,
-		recipients: string[],
-		isReply: boolean = false
-	) => {
+	const sendForumEmail = async (postContent: string, recipients: string[]) => {
 		try {
 			if (!forumData || !user) return;
 
@@ -197,16 +193,17 @@ const ForumPage = () => {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					Authorization: `Bearer ${await (user.getToken ? user.getToken({ template: 'your-template-id' }) : '')}`,
 				},
 				body: JSON.stringify({
 					content: postContent,
 					recipients: recipients,
 					forumTitle: forumData.title,
-					authorName: user.fullName || 'Usuario',
+					authorName: user.fullName ?? 'Usuario',
 				}),
 			});
 
-			const result = await response.json();
+			const result = (await response.json()) as { success: boolean; message: string };
 
 			if (!response.ok) {
 				console.error('Failed to send email. Status:', response.status);
@@ -247,7 +244,6 @@ const ForumPage = () => {
 				setMessage('');
 				await fetchPosts();
 
-				// Solo enviar emails si el usuario es educador
 				if (user.publicMetadata?.role === 'educador') {
 					const uniqueEmails = new Set<string>();
 
@@ -265,14 +261,11 @@ const ForumPage = () => {
 
 					const emailList = Array.from(uniqueEmails);
 					const userEmail = user.emailAddresses[0]?.emailAddress;
-					console.log('Current user email:', userEmail);
 
 					// No enviar email al autor del post
 					const filteredEmails = emailList.filter(
 						(email) => email !== userEmail
 					);
-
-					console.log('Filtered emails:', filteredEmails);
 
 					if (filteredEmails.length > 0) {
 						await sendForumEmail(message, filteredEmails);
@@ -311,7 +304,6 @@ const ForumPage = () => {
 				setReplyingToPostId(null);
 				await fetchPostReplays();
 
-				// Solo enviar emails si el usuario es educador
 				if (user.publicMetadata?.role === 'educador') {
 					const originalPost = posts.find((p) => p.id === replyingToPostId);
 					const postReplies = postReplays.filter(
@@ -335,7 +327,7 @@ const ForumPage = () => {
 					);
 
 					if (filteredEmails.length > 0) {
-						await sendForumEmail(replyMessage, filteredEmails, true);
+						await sendForumEmail(replyMessage, filteredEmails);
 					}
 				}
 			}

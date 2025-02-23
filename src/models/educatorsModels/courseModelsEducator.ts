@@ -7,6 +7,7 @@ import {
 	modalidades,
 	enrollments,
 	dificultad,
+	lessons,
 } from '~/server/db/schema';
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
 import { deleteLessonsByCourseId } from './lessonsModels'; // Importar la función para eliminar lecciones
@@ -127,6 +128,21 @@ export const getTotalStudents = async (course_id: number): Promise<number> => {
 		.from(enrollments)
 		.where(eq(enrollments.courseId, course_id));
 	return result[0]?.totalStudents ?? 0;
+};
+
+export const getLessonsByCourseId = async (courseId: number) => {
+	return db
+		.select({
+			id: lessons.id,
+			title: lessons.title,
+			duration: lessons.duration,
+			description: lessons.description,
+			courseId: lessons.courseId,
+			createdAt: lessons.createdAt,
+			updatedAt: lessons.updatedAt,
+		})
+		.from(lessons)
+		.where(eq(lessons.courseId, courseId));
 };
 
 // Obtener un curso por ID

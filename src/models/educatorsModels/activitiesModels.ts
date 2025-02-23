@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
@@ -71,10 +71,10 @@ export async function createActivity(params: CreateActivityParams) {
 				typeid: params.typeid,
 				lessonsId: params.lessonsId,
 				revisada: params.revisada,
-				parametroId: params.parametroId || null,
-				porcentaje: params.porcentaje || 0,
+				parametroId: params.parametroId ?? null,
+				porcentaje: params.porcentaje ?? 0,
 				lastUpdated: new Date(),
-				fechaMaximaEntrega: params.fechaMaximaEntrega || null,
+				fechaMaximaEntrega: params.fechaMaximaEntrega ?? null,
 			})
 			.returning();
 
@@ -266,7 +266,7 @@ export async function getTotalPorcentajeByParametro(
 			.where(eq(activities.parametroId, parametroId));
 
 		const total = actividades.reduce(
-			(sum, act) => sum + (act.porcentaje || 0),
+			(sum, act) => sum + (act.porcentaje ?? 0),
 			0
 		);
 
@@ -274,7 +274,7 @@ export async function getTotalPorcentajeByParametro(
 			total,
 			actividades: actividades.map((act) => ({
 				...act,
-				porcentaje: act.porcentaje || 0,
+				porcentaje: act.porcentaje ?? 0,
 			})),
 		};
 	} catch (error) {

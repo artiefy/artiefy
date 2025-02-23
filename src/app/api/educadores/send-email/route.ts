@@ -1,7 +1,6 @@
 import { auth, getAuth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
-import { NextResponse } from 'next/server';
-import { OAuth2Client } from 'google-auth-library';
+import { NextResponse, type NextRequest } from 'next/server';
 
 interface EmailRequestBody {
 	content: string;
@@ -10,11 +9,10 @@ interface EmailRequestBody {
 	authorName: string;
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
 	try {
 		console.log('Starting email send process...');
-		const { userId } = auth();
-
+		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json(
 				{ error: 'Usuario no autenticado' },
@@ -23,8 +21,11 @@ export async function POST(req: Request) {
 		}
 
 		// Verificar si el usuario es educador
-		const user = await getAuth().getUser(userId);
-		if (user.publicMetadata?.role !== 'educador') {
+		const authObject = getAuth(req);
+		if (
+			(authObject.sessionClaims?.publicMetadata as { role?: string })?.role !==
+			'educador'
+		) {
 			return NextResponse.json(
 				{ error: 'Usuario no autorizado' },
 				{ status: 403 }
@@ -32,8 +33,8 @@ export async function POST(req: Request) {
 		}
 
 		// Obtener el token directamente del header de autorización
-		const { getToken } = auth();
-		const token = await getToken({
+		const authResult = await auth();
+		const token = await authResult.getToken({
 			template: 'google_oauth',
 		});
 
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
 
 		const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-		const body = await req.json();
+		const body: EmailRequestBody = (await req.json()) as EmailRequestBody;
 		const { content, recipients, forumTitle, authorName } = body;
 
 		console.log('Preparing email for recipients:', recipients);
