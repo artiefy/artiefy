@@ -45,7 +45,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
 							key={course.id}
 							className="relative w-64 flex-shrink-0 overflow-hidden rounded-lg bg-gray-800 shadow-md"
 						>
-							{/* Imagen del curso */}
+							{/* Imagen */}
 							{course.coverImageKey ? (
 								<Image
 									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
@@ -59,17 +59,18 @@ export default function CourseCarousel({ courses, userId }: Props) {
 									Sin imagen
 								</div>
 							)}
-
-							{/* Información del curso */}
+							{/* Información */}
 							<div className="p-3 text-white">
 								<h2 className="text-sm font-semibold">{course.title}</h2>
 								<button
 									onClick={() =>
-										router.push(`/dashboard/curso/${course.id}?user=${userId}`)
+										router.push(
+											`/dashboard/super-admin/stats/${course.id}?user=${userId}`
+										)
 									}
 									className="mt-2 w-full rounded bg-blue-500 px-3 py-2 text-sm font-bold text-white hover:bg-blue-600"
 								>
-									Ver Dashboard
+									Ver
 								</button>
 							</div>
 						</div>

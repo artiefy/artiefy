@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
 import {
 	setRoleWrapper,
@@ -65,6 +66,7 @@ interface UserData {
 	role?: string;
 	status?: string;
 	password?: string;
+	permissions?: string[]; // Add permissions property
 }
 interface UserData {
 	id: string;
@@ -117,7 +119,8 @@ export default function AdminDashboard() {
 		message: string;
 		type: 'success' | 'error';
 	} | null>(null);
-	const [editingUser, setEditingUser] = useState<string | null>(null);
+	const [editingUser, setEditingUser] = useState<User | null>(null);
+
 	const [editValues, setEditValues] = useState<{
 		firstName: string;
 		lastName: string;
@@ -168,6 +171,7 @@ export default function AdminDashboard() {
 	const indexOfLastUser = currentPage * usersPerPage;
 	const indexOfFirstUser = indexOfLastUser - usersPerPage;
 	const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
 	const [showAssignModal, setShowAssignModal] = useState(false);
 	const handleSelectStudent = (userId: string) => {
 		setSelectedStudents((prev) =>
@@ -367,28 +371,21 @@ export default function AdminDashboard() {
 			const rawData: unknown = await res.json();
 			if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
 
-			const data: User[] = rawData
-				.filter(
-					(item): item is User =>
-						typeof item === 'object' &&
-						item !== null &&
-						'id' in item &&
-						'firstName' in item &&
-						'lastName' in item &&
-						'email' in item &&
-						'role' in item &&
-						'status' in item
-				)
-				.map((item) => ({
-					id: String(item.id),
-					firstName: String(item.firstName),
-					lastName: String(item.lastName),
-					email: String(item.email),
-					role: String(item.role),
-					status: String(item.status),
-				}));
+			const data: User[] = (rawData as User[]).map((item) => ({
+				id: String(item.id),
+				firstName: String(item.firstName),
+				lastName: String(item.lastName),
+				email: String(item.email),
+				role: String(item.role),
+				status: String(item.status),
+				permissions:
+					'permissions' in item && Array.isArray(item.permissions)
+						? item.permissions
+						: [], // ✅ Asegura que `permissions` se guarden correctamente
+			}));
 
 			setUsers(data);
+			console.log('✅ Usuarios cargados con permisos:', data);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Error desconocido');
 			console.error('Error fetching users:', err);
@@ -667,17 +664,21 @@ export default function AdminDashboard() {
 		});
 	};
 
-	const handleSaveUser = (userId: string) => {
-		if (updatingUserId === null) return; // Evita que sea null
+	const handleSaveUser = () => {
+		if (!editingUser) return; // Evita que sea null
 
 		void (async () => {
 			try {
-				setUpdatingUserId(userId);
-				await updateUserInfo(userId, editValues.firstName, editValues.lastName);
+				setUpdatingUserId(editingUser.id);
+				await updateUserInfo(
+					editingUser.id,
+					editValues.firstName,
+					editValues.lastName
+				);
 
 				setUsers(
 					users.map((user) =>
-						user.id === userId
+						user.id === editingUser.id
 							? {
 									...user,
 									firstName: editValues.firstName,
@@ -686,17 +687,17 @@ export default function AdminDashboard() {
 							: user
 					)
 				);
-				setEditingUser(null);
 
+				setEditingUser(null);
 				showNotification('Usuario actualizado con éxito.', 'success');
 			} catch {
 				showNotification('Error al actualizar usuario.', 'error');
 			} finally {
 				setUpdatingUserId(null);
-				setEditingUser(null);
 			}
-		})(); // ✅ Ejecutamos la función inmediatamente
+		})();
 	};
+
 	const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
 	const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -727,9 +728,45 @@ export default function AdminDashboard() {
 		[showNotification, modalIsOpen]
 	);
 
-	const handleEditUser = (user: User) => {
-		setEditingUser(user.id);
-		setEditValues({ firstName: user.firstName, lastName: user.lastName });
+	const handleEditUser = async (user: User) => {
+		try {
+			// 🔹 Obtener los datos del usuario desde Clerk
+			const res = await fetch(`/api/super-admin/infoUserUpdate?id=${user.id}`);
+			if (!res.ok) throw new Error('Error al obtener datos del usuario');
+
+			const userData: UserData = (await res.json()) as UserData;
+
+			// ✅ Extraer correctamente `firstName` y `lastName`
+			const firstName = userData.firstName ?? user.firstName; // Usa `firstName` desde Clerk si existe
+			const lastName = userData.lastName ?? user.lastName; // Usa `lastName` desde Clerk si existe
+
+			// 🔹 Asegurar que los permisos sean un array
+			const userWithPermissions = {
+				...userData,
+				firstName, // ✅ Ahora `firstName` se almacena correctamente
+				lastName, // ✅ Ahora `lastName` se almacena correctamente
+				permissions: Array.isArray(userData.permissions)
+					? userData.permissions
+					: [],
+			};
+
+			console.log('📌 Usuario con permisos:', userWithPermissions);
+
+			// ✅ Guardar el usuario en el estado para abrir el modal con la info actualizada
+			setEditingUser({
+				...userWithPermissions,
+				role: userWithPermissions.role ?? 'sin-role',
+				status: userWithPermissions.status ?? 'sin-status',
+			});
+
+			// ✅ Asegurar que los campos de edición se actualicen con `firstName` y `lastName`
+			setEditValues({
+				firstName,
+				lastName,
+			});
+		} catch (error) {
+			console.error('❌ Error al obtener usuario:', error);
+		}
 	};
 
 	return (
@@ -836,7 +873,7 @@ export default function AdminDashboard() {
 									{/* Información del Usuario */}
 									<div className="flex">
 										{/* Foto de Perfil */}
-										<div className="mr-8 h-48 w-48 overflow-hidden rounded-full border-4 border-[#3AF4EF]">
+										<div className="ml-20 h-48 w-48 overflow-hidden rounded-full border-4 border-[#3AF4EF]">
 											{viewUser.profileImage ? (
 												<img
 													src={viewUser.profileImage}
@@ -921,10 +958,34 @@ export default function AdminDashboard() {
 									{/* Contenido Principal */}
 									<div className="grid grid-cols-2 gap-4">
 										{/* Lista de Estudiantes */}
+										{/* Lista de Estudiantes */}
 										<div className="rounded-lg bg-gray-700 p-4">
 											<h3 className="mb-2 font-semibold text-white">
 												Seleccionar Estudiantes
 											</h3>
+
+											{/* Checkbox "Seleccionar Todos" */}
+											<div className="mb-2 flex items-center justify-between rounded bg-gray-600 px-3 py-2">
+												<span className="font-semibold text-white">
+													Seleccionar Todos
+												</span>
+												<input
+													type="checkbox"
+													checked={
+														selectedStudents.length === users.length &&
+														users.length > 0
+													}
+													onChange={(e) => {
+														if (e.target.checked) {
+															setSelectedStudents(users.map((user) => user.id)); // Selecciona todos
+														} else {
+															setSelectedStudents([]); // Deselecciona todos
+														}
+													}}
+													className="form-checkbox h-5 w-5 text-blue-500"
+												/>
+											</div>
+
 											<div className="h-64 overflow-y-auto rounded border border-gray-600">
 												{users.map((user) => (
 													<label
@@ -1160,7 +1221,7 @@ export default function AdminDashboard() {
 											</td>
 
 											<td className="px-4 py-3 text-sm text-gray-300">
-												{editingUser === user.id ? (
+												{editingUser?.id === user.id ? (
 													<div className="flex space-x-2">
 														<input
 															type="text"
@@ -1228,16 +1289,16 @@ export default function AdminDashboard() {
 													<Eye size={14} className="mr-1" /> Ver
 												</button>
 
-												{editingUser === user.id ? (
+												{editingUser?.id === user.id ? (
 													<button
-														onClick={() => handleSaveUser(user.id)}
+														onClick={handleSaveUser} // ✅ Ya no necesita recibir user.id
 														className="flex items-center rounded-md bg-green-500 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-green-600"
 													>
 														<Edit size={14} className="mr-1" /> Guardar
 													</button>
 												) : (
 													<button
-														onClick={() => handleEditUser(user)}
+														onClick={() => handleEditUser(user)} // ✅ Pasamos el objeto completo
 														className="flex items-center rounded-md bg-blue-500 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-blue-600"
 													>
 														<Edit size={14} className="mr-1" /> Editar
@@ -1298,6 +1359,25 @@ export default function AdminDashboard() {
 					{notification.message}
 				</div>
 			)}
+			{editingUser && (
+				<EditUserModal
+					isOpen={!!editingUser}
+					user={editingUser} // ✅ Pasamos el usuario completo
+					onClose={() => setEditingUser(null)}
+					onSave={(updatedUser, updatedPermissions) => {
+						setUsers(
+							users.map((user) =>
+								user.id === updatedUser.id
+									? { ...updatedUser, permissions: updatedPermissions }
+									: user
+							)
+						);
+						setEditingUser(null);
+						showNotification('Usuario actualizado con éxito.', 'success');
+					}}
+				/>
+			)}
+
 			<ConfirmDialog
 				isOpen={confirmation?.isOpen ?? false}
 				title={confirmation?.title ?? ''}

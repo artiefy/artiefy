@@ -11,8 +11,7 @@ interface ClerkUserResponse {
 	public_metadata?: { role?: string; status?: string; permissions?: string[] }; // Los metadatos públicos, que pueden incluir el rol, estado y permisos
 }
 
-
-const getClerkUser = async (userId: string) => {
+const getUser = async (userId: string) => {
 	try {
 		const res = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
 			headers: {
@@ -28,16 +27,9 @@ const getClerkUser = async (userId: string) => {
 		// ✅ Tipamos correctamente la respuesta de Clerk
 		const userData: ClerkUserResponse = (await res.json()) as ClerkUserResponse;
 
-		// Verificar el valor de created_at que llega de Clerk
-		console.log('Fecha de creación recibida:', userData.created_at);
-
-		// ✅ Asegurarnos de que la fecha sea válida
-		const createdAt = new Date(userData.created_at);
-		const formattedCreatedAt =
-			createdAt instanceof Date && !isNaN(createdAt.getTime())
-				? createdAt.toLocaleDateString() // Si la fecha es válida, la formateamos
-				: 'Fecha no disponible'; // Si no es válida, mostramos un valor predeterminado
-		console.log('Fecha formateada:', formattedCreatedAt); // Ver el resultado de la conversión
+		// ✅ Extraer `firstName` y `lastName`
+		const firstName = userData.first_name ?? 'Sin nombre';
+		const lastName = userData.last_name ?? 'Sin apellido';
 
 		// ✅ Obtener rol y estado de los metadatos
 		const role = userData.public_metadata?.role ?? 'Sin rol';
@@ -52,9 +44,10 @@ const getClerkUser = async (userId: string) => {
 
 		const user = {
 			id: userData.id,
-			name: `${userData.first_name} ${userData.last_name}`,
+			firstName, // ✅ Ahora enviamos `firstName` correctamente
+			lastName, // ✅ Ahora enviamos `lastName` correctamente
 			email: userData.email_addresses?.[0]?.email_address || 'Sin correo',
-			createdAt: formattedCreatedAt,
+			createdAt: new Date(userData.created_at).toLocaleDateString(),
 			profileImage: userData.profile_image_url || '/default-avatar.png',
 			role,
 			status,
@@ -84,7 +77,7 @@ export async function GET(request: Request) {
 			);
 		}
 
-		const user = await getClerkUser(userId);
+		const user = await getUser(userId);
 
 		if (!user) {
 			return NextResponse.json(

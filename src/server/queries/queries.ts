@@ -295,4 +295,44 @@ export async function getDificultades() {
 	}
 }
 
+export async function updateUserInClerk({
+	userId,
+	firstName,
+	lastName,
+	role,
+	status,
+	permissions,
+}: {
+	userId: string;
+	firstName: string;
+	lastName: string;
+	role: string;
+	status: string;
+	permissions: string[];
+}) {
+	try {
+		const client = await clerkClient();
+
+		// 🔥 Aseguramos que Clerk reciba TODOS los valores correctamente
+		const updatedUser = await client.users.updateUser(userId, {
+			firstName,
+			lastName,
+			publicMetadata: {
+				role: role || 'estudiante', // Valor por defecto si no existe
+				status: status || 'activo',
+				permissions: Array.isArray(permissions) ? permissions : [], // Validar array
+			},
+		});
+
+		console.log(
+			`✅ Usuario ${userId} actualizado correctamente en Clerk.`,
+			updatedUser
+		);
+		return true;
+	} catch (error) {
+		console.error('❌ Error al actualizar usuario en Clerk:', error);
+		return false;
+	}
+}
+
 export {};
