@@ -30,13 +30,7 @@ export async function updateUserSubscription(
 
   try {
     // Obtener el usuario actual desde Clerk
-    const { userId } = await auth().catch((error: unknown) => {
-      if (error instanceof Error) {
-        throw new Error(`Error al autenticar usuario: ${error.message}`);
-      } else {
-        throw new Error('Error al autenticar usuario');
-      }
-    });
+    const { userId } = await auth();
 
     if (!userId) {
       throw new Error('Usuario no autenticado');
