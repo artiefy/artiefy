@@ -1,60 +1,64 @@
 {
-	"functions": {
-		"app/api/upload": {
-			"memory": 1024,
-			"maxDuration": 30
-		},
-		"app/api/confirmPayment": {
-			"memory": 1024,
-			"maxDuration": 30
-		}
-	},
-	"framework": "nextjs",
-	"ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
-	"installCommand": "npm install",
-	"public": true,
-	"headers": [
-		{
-			"source": "/(.*)",
-			"headers": [
-				{
-					"key": "X-Content-Type-Options",
-					"value": "nosniff"
-				},
-				{
-					"key": "X-Frame-Options",
-					"value": "DENY"
-				},
-				{
-					"key": "X-XSS-Protection",
-					"value": "1; mode=block"
-				}
-			]
-		},
-		{
-			"source": "/assets/(.*)",
-			"headers": [
-				{
-					"key": "Cache-Control",
-					"value": "public, max-age=31536000, immutable"
-				}
-			]
-		},
-		{
-			"source": "/api/(.*)",
-			"headers": [
-				{
-					"key": "Cache-Control",
-					"value": "no-store"
-				}
-			]
-		}
-	],
-	"crons": [
-		{
-			"path": "/api/cron/check-subscriptions",
-			"schedule": "0 0 * * *"
-		}
-	],
-	"trailingSlash": false
+  "functions": {
+    "app/api/upload": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "app/api/confirmPayment": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "app/api/cron/check-subscriptions": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  },
+  "framework": "nextjs",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
+  "installCommand": "npm install",
+  "public": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/check-subscriptions",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "trailingSlash": false
 }
