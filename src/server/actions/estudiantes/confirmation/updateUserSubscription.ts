@@ -1,6 +1,5 @@
-import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
+import { currentUser, clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { type NextRequest } from 'next/server';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { sendNotification } from '~/utils/notifications';
@@ -10,10 +9,7 @@ interface PaymentData {
   state_pol: string;
 }
 
-export async function updateUserSubscription(
-  req: NextRequest,
-  paymentData: PaymentData
-) {
+export async function updateUserSubscription(paymentData: PaymentData) {
   const { email_buyer, state_pol } = paymentData;
   console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
 
@@ -30,18 +26,13 @@ export async function updateUserSubscription(
 
   try {
     // Obtener el usuario actual desde Clerk
-    const { userId } = await auth();
-
-    if (!userId) {
-      throw new Error('Usuario no autenticado');
-    }
-
-    // Obtener información adicional del usuario actual
     const user = await currentUser();
 
-    if (!user) {
+    if (!user?.id) {
       throw new Error('Usuario no autenticado');
     }
+
+    const userId = user.id;
 
     // 🔍 Buscar usuario en la base de datos
     const existingUser = await db.query.users.findFirst({
@@ -75,27 +66,28 @@ export async function updateUserSubscription(
         })
         .where(eq(users.id, userId));
 
-      console.log(`✅ Usuario existente actualizado a activo: ${existingUser.email}`);
+      console.log(`✅ Usuario existente actualizado a activo: ${user.emailAddresses[0].emailAddress}`);
     }
 
     // 🔍 Actualizar `publicMetadata` en Clerk
-    await (await clerkClient()).users.updateUserMetadata(userId, {
+    const clerkClientInstance = await clerkClient();
+    await clerkClientInstance.users.updateUser(userId, {
       publicMetadata: {
         subscriptionStatus: 'active',
         subscriptionEndDate: subscriptionEndDate.toISOString(),
       },
     });
 
-    console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
+    console.log(`✅ Clerk metadata actualizado para ${user.emailAddresses[0].emailAddress}`);
 
     // 📢 Notificar al usuario 3 días antes de que expire la suscripción
     setTimeout(
       async () => {
         await sendNotification(
-          email_buyer,
+          user.emailAddresses[0].emailAddress,
           'Tu suscripción está a punto de expirar'
         );
-        console.log(`📢 Notificación enviada a: ${email_buyer}`);
+        console.log(`📢 Notificación enviada a: ${user.emailAddresses[0].emailAddress}`);
       },
       (5 - 3) * 60 * 1000 // 2 minutos en milisegundos
     );
