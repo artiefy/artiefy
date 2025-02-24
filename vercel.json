@@ -9,17 +9,6 @@
   "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
   "installCommand": "npm install",
   "public": true,
-  "headers": [
-    {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    }
-  ],
   "regions": ["sfo1", "iad1"],
   "functionFailoverRegions": ["iad1", "sfo1"],
   "crons": [
