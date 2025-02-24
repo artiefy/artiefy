@@ -15,11 +15,19 @@
   "public": true,
   "headers": [
     {
-      "source": "/assets/(.*)",
+      "source": "/(.*)",
       "headers": [
         {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
     },
@@ -40,6 +48,5 @@
       "path": "/api/cron/check-subscriptions",
       "schedule": "*/5 * * * *"
     }
-  ],
-  "trailingSlash": false
+  ]
 }
