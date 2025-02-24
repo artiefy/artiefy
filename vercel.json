@@ -15,27 +15,31 @@
   "public": true,
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/assets/(.*)",
       "headers": [
         {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
         {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
+          "key": "Cache-Control",
+          "value": "no-store"
         }
       ]
     }
   ],
+  "regions": ["sfo1", "iad1"],
+  "functionFailoverRegions": ["iad1", "sfo1"],
   "crons": [
     {
       "path": "/api/cron/check-subscriptions",
       "schedule": "*/5 * * * *"
     }
-  ]
+  ],
+  "trailingSlash": false
 }
