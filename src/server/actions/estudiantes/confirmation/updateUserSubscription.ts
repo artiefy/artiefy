@@ -24,7 +24,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 
   // 🗓️ Calcular fecha de expiración (5 minutos desde ahora)
   const subscriptionEndDate = new Date();
-  subscriptionEndDate.setMinutes(subscriptionEndDate.getMinutes() + 5);
+  subscriptionEndDate.setMinutes(subscriptionEndDate.getMinutes() + 1);
 
   try {
     // 🔍 Buscar usuario en la base de datos
