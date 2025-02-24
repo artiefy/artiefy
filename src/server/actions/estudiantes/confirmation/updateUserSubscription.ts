@@ -79,8 +79,7 @@ export async function updateUserSubscription(
     }
 
     // 🔍 Actualizar `publicMetadata` en Clerk
-    const clerk = await clerkClient();
-    await clerk.users.updateUser(userId, {
+    await (await clerkClient()).users.updateUserMetadata(userId, {
       publicMetadata: {
         subscriptionStatus: 'active',
         subscriptionEndDate: subscriptionEndDate.toISOString(),
