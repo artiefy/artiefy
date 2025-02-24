@@ -50,25 +50,6 @@ export async function enrollInCourse(
       }
     }
 
-    // 🔥 Nueva validación: Si la suscripción ha vencido, cambiar a `inactive`
-    const now = new Date();
-    if (existingUser.subscriptionEndDate && existingUser.subscriptionEndDate < now) {
-      await db
-        .update(users)
-        .set({
-          subscriptionStatus: 'inactive',
-          updatedAt: new Date(),
-        })
-        .where(eq(users.id, userId));
-
-      console.log(`⚠️ Suscripción expirada para ${existingUser.email}, cambiando a inactive.`);
-
-      return {
-        success: false,
-        message: 'Tu suscripción ha expirado. Renueva para acceder a los cursos.',
-      };
-    }
-
     // Verificar si el usuario ya está inscrito
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)),
