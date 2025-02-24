@@ -47,6 +47,7 @@ interface Course {
 		duration: string;
 	}[];
 	lessons: {
+		id: number;
 		title: string;
 		coverImageKey: string;
 		duration: number;
@@ -126,14 +127,15 @@ function App() {
 				});
 			}
 		},
-		[user]
+		[selectedCourse]
 	);
 
 	const FetchLessonsProgress = useCallback(
-		async (courseId: number) => {
+		async (lessonIds: number[]) => {
+			if (!lessonIds || lessonIds.length === 0) return; // Verificación adicional
 			try {
 				const response = await fetch(
-					`/api/educadores/courses?courseId=${courseId}`
+					`/api/educadores/lessons/${lessonIds.join(',')}`
 				);
 				if (response.ok) {
 					const data = (await response.json()) as {
@@ -145,11 +147,13 @@ function App() {
 							? {
 									...prevCourse,
 									progressLessons: data.progressLessons,
-									lessons: data.lessons.map((lesson) => ({
-										...lesson,
-										progress: lesson.progress ?? 0,
-										completed: lesson.completed ?? false,
-									})),
+									lessons: data.lessons
+										? data.lessons.map((lesson) => ({
+												...lesson,
+												progress: lesson.progress ?? 0,
+												completed: lesson.completed ?? false,
+											}))
+										: [],
 								}
 							: null
 					);
@@ -159,7 +163,8 @@ function App() {
 									...prevCourse,
 									completionRate:
 										(prevCourse.completionRate ?? 0) +
-										prevCourse.progressLessons / prevCourse.lessons.length,
+										(prevCourse.progressLessons ?? 0) /
+											(prevCourse.lessons?.length ?? 1),
 								}
 							: null
 					);
@@ -182,7 +187,11 @@ function App() {
 				});
 			}
 		},
-		[user]
+		[fetchLessons]
+	);
+
+	console.log(
+		`Total de estudiantes del curso: ${selectedCourse?.totalStudents}`
 	);
 
 	const totalDuracion =
@@ -197,15 +206,17 @@ function App() {
 				console.error('Error fetching courses:', error)
 			);
 		}
-	}, [user, fetchCourses]);
+	}, [user]);
 
 	useEffect(() => {
-		if (selectedCourse) {
-			FetchLessonsProgress(selectedCourse.id).catch((error) =>
+		if (selectedCourse?.lessons && selectedCourse?.lessons.length > 0) {
+			FetchLessonsProgress(
+				selectedCourse.lessons.map((lesson) => lesson.id)
+			).catch((error) =>
 				console.error('Error fetching to loading the lessonsProgress:', error)
 			);
 		}
-	}, [selectedCourse, FetchLessonsProgress]);
+	}, [fetchLessons]);
 
 	useEffect(() => {
 		if (selectedCourse) {
@@ -213,7 +224,7 @@ function App() {
 				console.error('Error fetching lessons:', error)
 			);
 		}
-	}, [selectedCourse, fetchLessons]);
+	}, [selectedCourse, fetchCourses]);
 
 	// Función para cambiar al siguiente curso
 	const moveToNextCourse = useCallback(() => {
@@ -229,7 +240,7 @@ function App() {
 
 	// Efecto para el cambio automático
 	useEffect(() => {
-		const interval = setInterval(moveToNextCourse, 5000);
+		const interval = setInterval(moveToNextCourse, 10000);
 		return () => clearInterval(interval);
 	}, [moveToNextCourse]);
 
@@ -344,7 +355,7 @@ function App() {
 							/>
 							<StatCard
 								icon={<Clock className="size-6" />}
-								title="Duracion del cursos (minutos)"
+								title="Duracion del curso (minutos)"
 								value={totalDuracion.toString()}
 							/>
 							<StatCard
@@ -383,36 +394,27 @@ function App() {
 								</div>
 							</div>
 
-							{/* Sidebar */}
-							<div className="space-y-6">
-								<div className="rounded-lg bg-white p-6 shadow-md">
-									<h3 className="mb-4 text-lg font-semibold text-gray-900">
-										Upcoming Sessions
-									</h3>
-									<div className="space-y-4">
-										{selectedCourse.upcomingSessions?.map((session, index) => (
-											<UpcomingSession
-												key={index}
-												title={session.title}
-												date={session.date}
-												duration={session.duration}
-											/>
-										)) ?? <p>No upcoming sessions available.</p>}
+							{selectedCourse.modalidadesid && (
+								<div className="space-y-6">
+									<div className="rounded-lg bg-white p-6 shadow-md">
+										<h3 className="mb-4 text-lg font-semibold text-gray-900">
+											Sesiones del curso
+										</h3>
+										<div className="space-y-4">
+											{selectedCourse.upcomingSessions?.map(
+												(session, index) => (
+													<UpcomingSession
+														key={index}
+														title={session.title}
+														date={session.date}
+														duration={session.duration}
+													/>
+												)
+											) ?? <p>No hay secciones disponibles actulamente.</p>}
+										</div>
 									</div>
 								</div>
-
-								{/* <div className="rounded-lg bg-white p-6 shadow-md">
-									<h3 className="mb-4 text-lg font-semibold text-gray-900">
-										Resources
-									</h3>
-									<div className="space-y-3">
-										<ResourceLink title="Course Materials" count={24} />
-										<ResourceLink title="Video Lectures" count={36} />
-										<ResourceLink title="Practice Exercises" count={48} />
-										<ResourceLink title="Additional Reading" count={12} />
-									</div>
-								</div> */}
-							</div>
+							)}
 						</div>
 					)}
 				</main>
@@ -488,17 +490,5 @@ function UpcomingSession({ title, date, duration }: UpcomingSessionProps) {
 		</div>
 	);
 }
-
-// function ResourceLink({ title, count }: { title: string; count: number }) {
-// 	return (
-// 		<div className="flex items-center justify-between">
-// 			<div className="flex items-center">
-// 				<BookOpen className="size-4 text-primary" />
-// 				<span className="ml-2 text-sm text-gray-700">{title}</span>
-// 			</div>
-// 			<span className="text-sm text-gray-500">{count}</span>
-// 		</div>
-// 	);
-// }
 
 export default App;

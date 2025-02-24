@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import {
 	getLessonById,
 	updateLesson,
+	getLessonsProgressByLessonId,
 } from '~/models/educatorsModels/lessonsModels';
 
 export async function GET(
@@ -19,6 +20,7 @@ export async function GET(
 		}
 
 		const lesson = await getLessonById(LessonsId);
+		const progreso = await getLessonsProgressByLessonId(LessonsId);
 		if (!lesson) {
 			return NextResponse.json(
 				{ error: 'Curso no encontrado' },
@@ -26,7 +28,10 @@ export async function GET(
 			);
 		}
 
-		return NextResponse.json(lesson);
+		return NextResponse.json({
+			lesson: lesson || {},
+			progreso: progreso || [],
+		});
 	} catch (error) {
 		console.error('Error al obtener el curso:', error);
 		return NextResponse.json(

@@ -1,4 +1,4 @@
-import { eq, count, and } from 'drizzle-orm';
+import { eq, count } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
 	courses,
@@ -8,7 +8,6 @@ import {
 	enrollments,
 	dificultad,
 	lessons,
-	userLessonsProgress,
 } from '~/server/db/schema';
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
 import { deleteLessonsByCourseId } from './lessonsModels'; // Importar la función para eliminar lecciones
@@ -144,54 +143,6 @@ export const getLessonsByCourseId = async (courseId: number) => {
 		})
 		.from(lessons)
 		.where(eq(lessons.courseId, courseId));
-};
-
-export const getLessonsProgressByCourseId = async (courseId: number) => {
-	const lessons = await getLessonsByCourseId(courseId);
-
-	const progress = await Promise.all(
-		lessons.map(async (lesson) => {
-			const totalActivities = await db
-				.select({ totalActivities: count() })
-				.from(userLessonsProgress)
-				.where(eq(userLessonsProgress.lessonId, lesson.id))
-				.then((rows) => rows[0]?.totalActivities ?? 0);
-
-			const completedActivitiesQuery = await db
-				.select({ completedActivities: count() })
-				.from(userLessonsProgress)
-				.where(
-					and(
-						eq(userLessonsProgress.lessonId, lesson.id),
-						eq(userLessonsProgress.isCompleted, true)
-					)
-				);
-			const completedActivitiesResult = completedActivitiesQuery;
-			const completedActivities =
-				completedActivitiesResult[0]?.completedActivities ?? 0;
-
-			return {
-				lessonId: lesson.id,
-				totalActivities,
-				completedActivities,
-				progress:
-					totalActivities > 0
-						? (completedActivities / totalActivities) * 100
-						: 0,
-				completed: completedActivities === totalActivities,
-			};
-		})
-	);
-
-	const totalLessonsProgressId = progress.reduce(
-		(acc, curr) => acc + curr.lessonId,
-		0
-	);
-
-	return {
-		progress,
-		totalLessonsProgressId,
-	};
 };
 
 // Obtener un curso por ID
