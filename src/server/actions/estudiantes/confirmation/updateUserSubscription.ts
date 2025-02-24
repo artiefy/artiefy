@@ -15,7 +15,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 
   if (state_pol !== '4') {
     console.warn(
-      `⚠️ Pago con estado ${state_pol}, no se actualiza la suscripción.`
+      `⚠️ Pago con estado ${state_pol}, no se actualiza suscripción.`
     );
     return;
   }
