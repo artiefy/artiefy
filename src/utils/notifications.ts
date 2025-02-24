@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-export async function sendNotification(email: string, message: string) {
+export async function sendNotification(email: string, subject: string, htmlContent: string) {
   // Configurar el transportador de nodemailer
   const transporter = nodemailer.createTransport({
     service: 'gmail', // Puedes usar cualquier servicio de correo compatible con nodemailer
@@ -14,8 +14,8 @@ export async function sendNotification(email: string, message: string) {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Notificación de suscripción',
-    text: message,
+    subject: subject,
+    html: htmlContent, // Contenido HTML del correo electrónico
   };
 
   // Enviar el correo electrónico
