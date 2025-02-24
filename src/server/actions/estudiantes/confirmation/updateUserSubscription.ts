@@ -1,5 +1,6 @@
-import { currentUser, clerkClient } from '@clerk/nextjs/server';
+import { auth, currentUser, clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
+import { type NextRequest } from 'next/server';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { sendNotification } from '~/utils/notifications';
@@ -9,7 +10,10 @@ interface PaymentData {
   state_pol: string;
 }
 
-export async function updateUserSubscription(paymentData: PaymentData) {
+export async function updateUserSubscription(
+  req: NextRequest,
+  paymentData: PaymentData
+) {
   const { email_buyer, state_pol } = paymentData;
   console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
 
@@ -26,13 +30,24 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 
   try {
     // Obtener el usuario actual desde Clerk
-    const user = await currentUser();
+    const { userId } = await auth().catch((error: unknown) => {
+      if (error instanceof Error) {
+        throw new Error(`Error al autenticar usuario: ${error.message}`);
+      } else {
+        throw new Error('Error al autenticar usuario');
+      }
+    });
 
-    if (!user?.id) {
+    if (!userId) {
       throw new Error('Usuario no autenticado');
     }
 
-    const userId = user.id;
+    // Obtener información adicional del usuario actual
+    const user = await currentUser();
+
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
 
     // 🔍 Buscar usuario en la base de datos
     const existingUser = await db.query.users.findFirst({
@@ -66,7 +81,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         })
         .where(eq(users.id, userId));
 
-      console.log(`✅ Usuario existente actualizado a activo: ${user.emailAddresses[0].emailAddress}`);
+      console.log(`✅ Usuario existente actualizado a activo: ${existingUser.email}`);
     }
 
     // 🔍 Actualizar `publicMetadata` en Clerk
@@ -78,24 +93,20 @@ export async function updateUserSubscription(paymentData: PaymentData) {
       },
     });
 
-    console.log(`✅ Clerk metadata actualizado para ${user.emailAddresses[0].emailAddress}`);
+    console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
 
     // 📢 Notificar al usuario 3 días antes de que expire la suscripción
     setTimeout(
       async () => {
         await sendNotification(
-          user.emailAddresses[0].emailAddress,
+          email_buyer,
           'Tu suscripción está a punto de expirar'
         );
-        console.log(`📢 Notificación enviada a: ${user.emailAddresses[0].emailAddress}`);
+        console.log(`📢 Notificación enviada a: ${email_buyer}`);
       },
       (5 - 3) * 60 * 1000 // 2 minutos en milisegundos
     );
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error(`❌ Error en updateUserSubscription:`, error.message);
-    } else {
-      console.error('❌ Error desconocido en updateUserSubscription');
-    }
+  } catch (error) {
+    console.error(`❌ Error en updateUserSubscription:`, error);
   }
 }

@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     if (paymentData.state_pol === "4") {
       console.log("✅ Pago aprobado. Actualizando suscripción...");
-      await updateUserSubscription(paymentData);
+      await updateUserSubscription(req, paymentData);
     } else {
       console.warn(`⚠️ Pago con estado ${paymentData.state_pol}, no se actualiza suscripción.`);
     }

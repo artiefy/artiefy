@@ -46,8 +46,6 @@
       ]
     }
   ],
-  "regions": ["sfo1", "iad1"],
-  "functionFailoverRegions": ["iad1", "sfo1"],
   "crons": [
     {
       "path": "/api/cron/check-subscriptions",
