@@ -4,6 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { users, enrollments, lessons, userLessonsProgress } from '~/server/db/schema';
+import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
 
 export async function enrollInCourse(
   courseId: number
@@ -34,6 +35,7 @@ export async function enrollInCourse(
         name: user.fullName,
         email: user.emailAddresses[0].emailAddress,
         subscriptionStatus: 'active', // Se crea con `active` si hay pago
+        subscriptionEndDate: new Date(), // Debes asegurarte de agregar una fecha de vencimiento
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -48,11 +50,22 @@ export async function enrollInCourse(
       }
     }
 
-    // Verificar el estado de la suscripción
-    if (existingUser.subscriptionStatus !== 'active') {
+    // 🔥 Nueva validación: Si la suscripción ha vencido, cambiar a `inactive`
+    const now = new Date();
+    if (existingUser.subscriptionEndDate && existingUser.subscriptionEndDate < now) {
+      await db
+        .update(users)
+        .set({
+          subscriptionStatus: 'inactive',
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+
+      console.log(`⚠️ Suscripción expirada para ${existingUser.email}, cambiando a inactive.`);
+
       return {
         success: false,
-        message: 'Debes tener una suscripción activa para inscribirte en este curso',
+        message: 'Tu suscripción ha expirado. Renueva para acceder a los cursos.',
       };
     }
 
@@ -85,21 +98,27 @@ export async function enrollInCourse(
       where: eq(lessons.courseId, courseId),
     });
 
-    const sortedLessons = lessonsList.sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
+    const sortedLessons = lessonsList.sort((a, b) => a.title.localeCompare(b.title));
 
     const firstLesson = sortedLessons[0];
 
     if (firstLesson) {
-      await db.insert(userLessonsProgress).values({
-        userId,
-        lessonId: firstLesson.id,
-        progress: 0,
-        isCompleted: false,
-        isLocked: false,
-        lastUpdated: new Date(),
-      });
+      const { lessonsProgress } = await getUserLessonsProgress(userId);
+
+      const existingProgress = lessonsProgress.find(
+        (progress) => progress.lessonId === firstLesson.id
+      );
+
+      if (!existingProgress) {
+        await db.insert(userLessonsProgress).values({
+          userId,
+          lessonId: firstLesson.id,
+          progress: 0,
+          isCompleted: false,
+          isLocked: false,
+          lastUpdated: new Date(),
+        });
+      }
     }
 
     return { success: true, message: 'Inscripción exitosa' };
@@ -114,7 +133,7 @@ export async function enrollInCourse(
   }
 }
 
-// Exportar isUserEnrolled para que otros módulos puedan importarlo
+// Exportar `isUserEnrolled` para verificar si un usuario está inscrito
 export async function isUserEnrolled(
   courseId: number,
   userId: string

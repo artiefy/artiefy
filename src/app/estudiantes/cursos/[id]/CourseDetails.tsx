@@ -7,15 +7,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-	FaCalendar,
-	FaChevronDown,
-	FaChevronUp,
-	FaClock,
-	FaHome,
-	FaUserGraduate,
-	FaCheck,
-	FaLock,
-	FaCheckCircle,
+  FaCalendar,
+  FaChevronDown,
+  FaChevronUp,
+  FaClock,
+  FaHome,
+  FaUserGraduate,
+  FaCheck,
+  FaLock,
+  FaCheckCircle,
 } from 'react-icons/fa';
 import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
 import Comments from '~/components/estudiantes/layout/Comments';
@@ -24,19 +24,19 @@ import { Header } from '~/components/estudiantes/layout/Header';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from '~/components/estudiantes/ui/breadcrumb';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
 } from '~/components/estudiantes/ui/card';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
@@ -50,206 +50,208 @@ import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLe
 import type { Course, Enrollment } from '~/types';
 
 export default function CourseDetails({
-	course: initialCourse,
+  course: initialCourse,
 }: {
-	course: Course;
+  course: Course;
 }) {
-	const [course, setCourse] = useState<Course>(initialCourse);
-	const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [isEnrolling, setIsEnrolling] = useState(false);
-	const [isUnenrolling, setIsUnenrolling] = useState(false);
-	const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
-	const [totalStudents, setTotalStudents] = useState(course.totalStudents);
-	const [isEnrolled, setIsEnrolled] = useState(false);
-	const { isSignedIn, userId } = useAuth();
-	const { user } = useUser();
-	const { toast } = useToast();
-	const router = useRouter();
-	const pathname = usePathname();
+  const [course, setCourse] = useState<Course>(initialCourse);
+  const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [isUnenrolling, setIsUnenrolling] = useState(false);
+  const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
+  const [totalStudents, setTotalStudents] = useState(course.totalStudents);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const { isSignedIn, userId } = useAuth();
+  const { user } = useUser();
+  const { toast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
 
-	useEffect(() => {
-		const fetchUserProgress = async () => {
-			if (userId && isEnrolled && !loading) {
-				try {
-					const lessons = await getLessonsByCourseId(course.id);
-					setCourse((prevCourse) => ({
-						...prevCourse,
-						lessons: lessons.map((lesson, index) => ({
-							...lesson,
-							isLocked: lesson.userProgress === 0 && index !== 0,
-							porcentajecompletado: lesson.userProgress,
-						})),
-					}));
-				} catch (error) {
-					console.error('Error fetching user progress:', error);
-				}
-			}
-		};
+  useEffect(() => {
+    const fetchUserProgress = async () => {
+      if (userId && isEnrolled && !loading) {
+        try {
+          const lessons = await getLessonsByCourseId(course.id);
+          setCourse((prevCourse) => ({
+            ...prevCourse,
+            lessons: lessons
+              .map((lesson, index) => ({
+                ...lesson,
+                isLocked: lesson.userProgress === 0 && index !== 0,
+                porcentajecompletado: lesson.userProgress,
+              }))
+              .sort((a, b) => a.title.localeCompare(b.title)), // Ordenar por título
+          }));
+        } catch (error) {
+          console.error('Error fetching user progress:', error);
+        }
+      }
+    };
 
-		// Evitar actualizar el estado innecesariamente
-		setIsEnrolled((prevIsEnrolled) => {
-			const userEnrolled =
-				Array.isArray(course.enrollments) && userId
-					? course.enrollments.some(
-							(enrollment: Enrollment) => enrollment.userId === userId
-						)
-					: false;
+    // Evitar actualizar el estado innecesariamente
+    setIsEnrolled((prevIsEnrolled) => {
+      const userEnrolled =
+        Array.isArray(course.enrollments) && userId
+          ? course.enrollments.some(
+              (enrollment: Enrollment) => enrollment.userId === userId
+            )
+          : false;
 
-			return prevIsEnrolled !== userEnrolled ? userEnrolled : prevIsEnrolled;
-		});
+      return prevIsEnrolled !== userEnrolled ? userEnrolled : prevIsEnrolled;
+    });
 
-		if (isEnrolled) {
-			void fetchUserProgress();
-		}
+    if (isEnrolled) {
+      void fetchUserProgress();
+    }
 
-		const timer = setTimeout(() => {
-			setLoading(false);
-		}, 1000);
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
 
-		return () => clearTimeout(timer);
-	}, [course.enrollments, userId, course.id, isEnrolled, loading]);
+    return () => clearTimeout(timer);
+  }, [course.enrollments, userId, course.id, isEnrolled, loading]);
 
-	const toggleLesson = (lessonId: number) => {
-		if (isEnrolled) {
-			setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
-		}
-	};
+  const toggleLesson = (lessonId: number) => {
+    if (isEnrolled) {
+      setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
+    }
+  };
 
-	const formatDate = (dateString: string | number | Date) =>
-		new Date(dateString).toISOString().split('T')[0];
+  const formatDate = (dateString: string | number | Date) =>
+    new Date(dateString).toISOString().split('T')[0];
 
-	useEffect(() => {
-		const checkSubscriptionStatus = () => {
-			if (userId) {
-				const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-				console.log(
-					'Estado de suscripción detectado en frontend:',
-					userSubscriptionStatus
-				);
-				if (userSubscriptionStatus === 'active') {
-					setIsEnrolled(true);
-				}
-			}
-		};
+  useEffect(() => {
+    const checkSubscriptionStatus = () => {
+      if (userId) {
+        const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+        console.log(
+          'Estado de suscripción detectado en frontend:',
+          userSubscriptionStatus
+        );
+        if (userSubscriptionStatus === 'active') {
+          setIsEnrolled(true);
+        }
+      }
+    };
 
-		void checkSubscriptionStatus();
-	}, [userId, user]);
+    void checkSubscriptionStatus();
+  }, [userId, user]);
 
-	const handleEnroll = async () => {
-		if (!isSignedIn) {
-			toast({
-				title: 'Debes iniciar sesión',
-				description: 'Debes iniciar sesión para inscribirte en este curso.',
-				variant: 'destructive',
-			});
-			void router.push(`/sign-in?redirect_url=${pathname}`);
-			return;
-		}
+  const handleEnroll = async () => {
+    if (!isSignedIn) {
+      toast({
+        title: 'Debes iniciar sesión',
+        description: 'Debes iniciar sesión para inscribirte en este curso.',
+        variant: 'destructive',
+      });
+      void router.push(`/sign-in?redirect_url=${pathname}`);
+      return;
+    }
 
-		if (isEnrolling) {
-			return; // Evitar múltiples llamadas
-		}
+    if (isEnrolling) {
+      return; // Evitar múltiples llamadas
+    }
 
-		setIsEnrolling(true);
-		setEnrollmentError(null);
+    setIsEnrolling(true);
+    setEnrollmentError(null);
 
-		try {
-			if (
-				!user?.publicMetadata?.subscriptionStatus ||
-				user.publicMetadata.subscriptionStatus !== 'active'
-			) {
-				toast({
-					title: 'Suscripción requerida',
-					description:
-						'Debes tener una suscripción activa para inscribirte en este curso.',
-					variant: 'destructive',
-				});
-				setIsEnrolling(false);
-				void router.push('/planes');
-				return;
-			}
+    try {
+      if (
+        !user?.publicMetadata?.subscriptionStatus ||
+        user.publicMetadata.subscriptionStatus !== 'active'
+      ) {
+        toast({
+          title: 'Suscripción requerida',
+          description:
+            'Debes tener una suscripción activa para inscribirte en este curso.',
+          variant: 'destructive',
+        });
+        setIsEnrolling(false);
+        void router.push('/planes');
+        return;
+      }
 
-			const result = await enrollInCourse(course.id);
-			if (result.success) {
-				setTotalStudents((prevTotal) => prevTotal + 1);
-				setIsEnrolled(true);
-				const updatedCourse = await getCourseById(course.id);
-				if (updatedCourse) {
-					setCourse({
-						...updatedCourse,
-						lessons: updatedCourse.lessons ?? [],
-					});
-				}
-				toast({
-					title: 'Suscripción exitosa',
-					description: '¡Te has Inscrito exitosamente en el curso!',
-					variant: 'default',
-				});
-			} else {
-				throw new Error(result.message);
-			}
-		} catch (error: unknown) {
-			handleError(error, 'Error de Suscripción', 'Error al inscribirse');
-		} finally {
-			setIsEnrolling(false);
-		}
-	};
+      const result = await enrollInCourse(course.id);
+      if (result.success) {
+        setTotalStudents((prevTotal) => prevTotal + 1);
+        setIsEnrolled(true);
+        const updatedCourse = await getCourseById(course.id);
+        if (updatedCourse) {
+          setCourse({
+            ...updatedCourse,
+            lessons: updatedCourse.lessons ?? [],
+          });
+        }
+        toast({
+          title: 'Suscripción exitosa',
+          description: '¡Te has Inscrito exitosamente en el curso!',
+          variant: 'default',
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: unknown) {
+      handleError(error, 'Error de Suscripción', 'Error al inscribirse');
+    } finally {
+      setIsEnrolling(false);
+    }
+  };
 
-	const handleUnenroll = async () => {
-		if (!isSignedIn || isUnenrolling) {
-			return; // Evitar múltiples llamadas
-		}
+  const handleUnenroll = async () => {
+    if (!isSignedIn || isUnenrolling) {
+      return; // Evitar múltiples llamadas
+    }
 
-		setIsUnenrolling(true);
-		setEnrollmentError(null);
+    setIsUnenrolling(true);
+    setEnrollmentError(null);
 
-		try {
-			await unenrollFromCourse(course.id);
-			setTotalStudents((prevTotal) => prevTotal - 1);
-			setIsEnrolled(false);
-			const updatedCourse = await getCourseById(course.id);
-			if (updatedCourse) {
-				setCourse({
-					...updatedCourse,
-					lessons: updatedCourse.lessons ?? [],
-				});
-			}
-			toast({
-				title: 'Cancelar Suscripción',
-				description: 'Se Canceló El Curso Correctamente',
-				variant: 'default',
-			});
-		} catch (error: unknown) {
-			handleError(error, 'Error de desuscripción', 'Error al desuscribirse');
-		} finally {
-			setIsUnenrolling(false);
-		}
-	};
+    try {
+      await unenrollFromCourse(course.id);
+      setTotalStudents((prevTotal) => prevTotal - 1);
+      setIsEnrolled(false);
+      const updatedCourse = await getCourseById(course.id);
+      if (updatedCourse) {
+        setCourse({
+          ...updatedCourse,
+          lessons: updatedCourse.lessons ?? [],
+        });
+      }
+      toast({
+        title: 'Cancelar Suscripción',
+        description: 'Se Canceló El Curso Correctamente',
+        variant: 'default',
+      });
+    } catch (error: unknown) {
+      handleError(error, 'Error de desuscripción', 'Error al desuscribirse');
+    } finally {
+      setIsUnenrolling(false);
+    }
+  };
 
-	const handleError = (
-		error: unknown,
-		toastTitle: string,
-		toastDescription: string
-	) => {
-		if (error instanceof Error) {
-			setEnrollmentError(error.message);
-			toast({
-				title: toastTitle,
-				description: `${toastDescription}: ${error.message}`,
-				variant: 'destructive',
-			});
-		} else {
-			setEnrollmentError('Error desconocido');
-			toast({
-				title: toastTitle,
-				description: 'Error desconocido',
-				variant: 'destructive',
-			});
-		}
-		console.error(toastDescription, error);
-	};
-
+  const handleError = (
+    error: unknown,
+    toastTitle: string,
+    toastDescription: string
+  ) => {
+    if (error instanceof Error) {
+      setEnrollmentError(error.message);
+      toast({
+        title: toastTitle,
+        description: `${toastDescription}: ${error.message}`,
+        variant: 'destructive',
+      });
+    } else {
+      setEnrollmentError('Error desconocido');
+      toast({
+        title: toastTitle,
+        description: 'Error desconocido',
+        variant: 'destructive',
+      });
+    }
+    console.error(toastDescription, error);
+  };
+  
 	return (
 		<div className="min-h-screen bg-background">
 			<Header />
@@ -365,162 +367,164 @@ export default function CourseDetails({
 									Contenido del curso
 								</h2>
 								<div className="space-y-4">
-									{course.lessons.map((lesson, index) => {
-										const isUnlocked = isEnrolled && !lesson.isLocked;
+									{course.lessons
+										.sort((a, b) => a.title.localeCompare(b.title)) // Ordenar por título
+										.map((lesson, index) => {
+											const isUnlocked = isEnrolled && !lesson.isLocked;
 
-										return (
-											<div
-												key={lesson.id}
-												className={`overflow-hidden rounded-lg border transition-colors ${
-													isUnlocked
-														? 'bg-gray-50 hover:bg-gray-100'
-														: 'bg-gray-100 opacity-75'
-												}`}
-											>
-												<button
-													className="flex w-full items-center justify-between px-6 py-4"
-													onClick={() => toggleLesson(lesson.id)}
-													disabled={!isUnlocked}
+											return (
+												<div
+													key={lesson.id}
+													className={`overflow-hidden rounded-lg border transition-colors ${
+														isUnlocked
+															? 'bg-gray-50 hover:bg-gray-100'
+															: 'bg-gray-100 opacity-75'
+													}`}
 												>
-													<div className="flex w-full items-center justify-between">
-														<div className="flex items-center space-x-2">
-															{isUnlocked ? (
-																<FaCheckCircle className="mr-2 size-5 text-green-500" />
-															) : (
-																<FaLock className="mr-2 size-5 text-gray-400" />
-															)}
-															<span className="font-medium text-background">
-																Clase {index + 1}: {lesson.title}{' '}
-																<span className="ml-2 text-sm text-gray-500">
-																	({lesson.duration} mins)
-																</span>
-															</span>
-														</div>
-														<div className="flex items-center space-x-2">
-															{isUnlocked &&
-																(expandedLesson === lesson.id ? (
-																	<FaChevronUp className="text-gray-400" />
+													<button
+														className="flex w-full items-center justify-between px-6 py-4"
+														onClick={() => toggleLesson(lesson.id)}
+														disabled={!isUnlocked}
+													>
+														<div className="flex w-full items-center justify-between">
+															<div className="flex items-center space-x-2">
+																{isUnlocked ? (
+																	<FaCheckCircle className="mr-2 size-5 text-green-500" />
 																) : (
-																	<FaChevronDown className="text-gray-400" />
-																))}
-														</div>
-													</div>
-												</button>
-												{expandedLesson === lesson.id && isUnlocked && (
-													<div className="border-t bg-white px-6 py-4">
-														<p className="mb-4 text-gray-700">
-															{lesson.description ??
-																'No hay descripción disponible para esta clase.'}
-														</p>
-														<div className="mb-4">
-															<div className="mb-2 flex items-center justify-between">
-																<p className="text-sm font-semibold text-gray-700">
-																	Progreso De La Clase:
-																</p>
-																<span className="text-sm font-medium text-gray-600">
-																	{lesson.porcentajecompletado}%
+																	<FaLock className="mr-2 size-5 text-gray-400" />
+																)}
+																<span className="font-medium text-background">
+																	Clase {index + 1}: {lesson.title}{' '}
+																	<span className="ml-2 text-sm text-gray-500">
+																		({lesson.duration} mins)
+																	</span>
 																</span>
 															</div>
-															<Progress
-																value={lesson.porcentajecompletado}
-																className="w-full bg-gray-200"
-																style={
-																	{
-																		'--progress-background': 'green',
-																	} as React.CSSProperties
-																}
-															/>
+															<div className="flex items-center space-x-2">
+																{isUnlocked &&
+																	(expandedLesson === lesson.id ? (
+																		<FaChevronUp className="text-gray-400" />
+																	) : (
+																		<FaChevronDown className="text-gray-400" />
+																	))}
+															</div>
 														</div>
-														<Button
-															asChild
-															className="mt-4 text-background hover:underline active:scale-95"
-														>
-															<Link href={`/estudiantes/clases/${lesson.id}`}>
-																Ver Clase
-															</Link>
-														</Button>
-													</div>
-												)}
-											</div>
-										);
-									})}
+													</button>
+													{expandedLesson === lesson.id && isUnlocked && (
+														<div className="border-t bg-white px-6 py-4">
+															<p className="mb-4 text-gray-700">
+																{lesson.description ??
+																	'No hay descripción disponible para esta clase.'}
+															</p>
+															<div className="mb-4">
+																<div className="mb-2 flex items-center justify-between">
+																	<p className="text-sm font-semibold text-gray-700">
+																		Progreso De La Clase:
+																	</p>
+																	<span className="text-sm font-medium text-gray-600">
+																		{lesson.porcentajecompletado}%
+																	</span>
+																</div>
+																<Progress
+																	value={lesson.porcentajecompletado}
+																	className="w-full bg-gray-200"
+																	style={
+																		{
+																			'--progress-background': 'green',
+																		} as React.CSSProperties
+																	}
+																/>
+															</div>
+															<Button
+																asChild
+																className="mt-4 text-background hover:underline active:scale-95"
+															>
+																<Link href={`/estudiantes/clases/${lesson.id}`}>
+																	Ver Clase
+																</Link>
+															</Button>
+														</div>
+													)}
+												</div>
+											);
+										})}
 								</div>
 							</div>
 						</CardContent>
 						<CardFooter className="flex flex-col items-center justify-between space-y-4">
-						<div
-  className={`transition-opacity duration-500 ${isEnrolled ? 'opacity-100' : 'opacity-0'}`}
->
-  {isEnrolled && (
-    <div className="flex w-full flex-col space-y-4 sm:w-auto">
-      <Button
-        className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
-        disabled={true}
-      >
-        <FaCheck className="mr-2" /> Suscrito Al Curso
-      </Button>
-      <Button
-        className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-        onClick={handleUnenroll}
-        disabled={isUnenrolling}
-      >
-        {isUnenrolling ? (
-          <Icons.spinner
-            className="animate-spin text-white"
-            style={{ width: '25px', height: '25px' }}
-          />
-        ) : (
-          'Cancelar Suscripción'
-        )}
-      </Button>
-    </div>
-  )}
-</div>
-<div
-  className={`transition-opacity duration-500 ${!isEnrolled ? 'opacity-100' : 'opacity-0'}`}
->
-  {!isEnrolled && (
-    <div className="group relative">
-      <Button
-        onClick={handleEnroll}
-        disabled={isEnrolling}
-        className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
-      >
-        <span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
-        <span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
-          <div className="relative z-10 flex items-center justify-center space-x-2">
-            {isEnrolling ? (
-              <Icons.spinner
-                className="animate-spin text-white"
-                style={{ width: '25px', height: '25px' }}
-              />
-            ) : (
-              <>
-                <span className="transition-all duration-500 group-hover:translate-x-1">
-                  Inscribirse al curso
-                </span>
-                <svg
-                  className="size-6 transition-transform duration-500 group-hover:translate-x-1"
-                  data-slot="icon"
-                  aria-hidden="true"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    clipRule="evenodd"
-                    d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
-                    fillRule="evenodd"
-                  ></path>
-                </svg>
-              </>
-            )}
-          </div>
-        </span>
-      </Button>
-    </div>
-  )}
-</div>
+							<div
+								className={`transition-opacity duration-500 ${isEnrolled ? 'opacity-100' : 'opacity-0'}`}
+							>
+								{isEnrolled && (
+									<div className="flex w-full flex-col space-y-4 sm:w-auto">
+										<Button
+											className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+											disabled={true}
+										>
+											<FaCheck className="mr-2" /> Suscrito Al Curso
+										</Button>
+										<Button
+											className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+											onClick={handleUnenroll}
+											disabled={isUnenrolling}
+										>
+											{isUnenrolling ? (
+												<Icons.spinner
+													className="animate-spin text-white"
+													style={{ width: '25px', height: '25px' }}
+												/>
+											) : (
+												'Cancelar Suscripción'
+											)}
+										</Button>
+									</div>
+								)}
+							</div>
+							<div
+								className={`transition-opacity duration-500 ${!isEnrolled ? 'opacity-100' : 'opacity-0'}`}
+							>
+								{!isEnrolled && (
+									<div className="group relative">
+										<Button
+											onClick={handleEnroll}
+											disabled={isEnrolling}
+											className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
+										>
+											<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
+											<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
+												<div className="relative z-10 flex items-center justify-center space-x-2">
+													{isEnrolling ? (
+														<Icons.spinner
+															className="animate-spin text-white"
+															style={{ width: '25px', height: '25px' }}
+														/>
+													) : (
+														<>
+															<span className="transition-all duration-500 group-hover:translate-x-1">
+																Inscribirse al curso
+															</span>
+															<svg
+																className="size-6 transition-transform duration-500 group-hover:translate-x-1"
+																data-slot="icon"
+																aria-hidden="true"
+																fill="currentColor"
+																viewBox="0 0 20 20"
+																xmlns="http://www.w3.org/2000/svg"
+															>
+																<path
+																	clipRule="evenodd"
+																	d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
+																	fillRule="evenodd"
+																></path>
+															</svg>
+														</>
+													)}
+												</div>
+											</span>
+										</Button>
+									</div>
+								)}
+							</div>
 							<ChatbotModal />
 						</CardFooter>
 					</Card>

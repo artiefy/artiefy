@@ -119,7 +119,7 @@ async function CourseContent({ id }: { id: string }) {
   const courseForDetails: Course = {
     ...course,
     totalStudents: course.enrollments?.length ?? 0,
-    lessons: course.lessons ?? [],
+    lessons: course.lessons?.sort((a, b) => a.title.localeCompare(b.title)) ?? [], // Ordenar por título
     category: course.category
       ? {
           id: course.category.id,

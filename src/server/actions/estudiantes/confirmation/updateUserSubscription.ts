@@ -1,6 +1,5 @@
-import { clerkClient, type User } from '@clerk/nextjs/server'; // ✅ Importar Clerk
+import { currentUser, clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { sendNotification } from '~/utils/notifications';
@@ -26,26 +25,36 @@ export async function updateUserSubscription(paymentData: PaymentData) {
   subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
 
   try {
+    // Obtener el usuario actual desde Clerk
+    const user = await currentUser();
+
+    if (!user?.id) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const userId = user.id;
+
     // 🔍 Buscar usuario en la base de datos
     const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email_buyer),
+      where: eq(users.id, userId),
     });
 
-    let userId = existingUser?.id;
-
     if (!existingUser) {
-      // 🆕 Si el usuario no existe, crearlo con un ID único
-      userId = uuidv4();
+      if (!user.fullName || !user.emailAddresses[0]?.emailAddress) {
+        throw new Error('Información del usuario incompleta');
+      }
+
+      // 🆕 Si el usuario no existe, crearlo con el ID de Clerk
       await db.insert(users).values({
         id: userId,
-        email: email_buyer,
+        email: user.emailAddresses[0].emailAddress,
         role: 'student',
         subscriptionStatus: 'active',
         subscriptionEndDate,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      console.log(`✅ Usuario creado en la base de datos: ${email_buyer}`);
+      console.log(`✅ Usuario creado en la base de datos: ${user.emailAddresses[0].emailAddress}`);
     } else {
       // 🔄 Si el usuario ya existe, actualizar su estado de suscripción
       await db
@@ -55,44 +64,30 @@ export async function updateUserSubscription(paymentData: PaymentData) {
           subscriptionEndDate,
           updatedAt: new Date(),
         })
-        .where(eq(users.email, email_buyer));
+        .where(eq(users.id, userId));
 
-      console.log(`✅ Usuario existente actualizado a activo: ${email_buyer}`);
+      console.log(`✅ Usuario existente actualizado a activo: ${user.emailAddresses[0].emailAddress}`);
     }
 
-    // 🔍 Buscar usuario en Clerk y actualizar `publicMetadata`
+    // 🔍 Actualizar `publicMetadata` en Clerk
     const clerkClientInstance = await clerkClient();
-    const clerkUsers = await clerkClientInstance.users.getUserList({
-      emailAddress: [email_buyer],
+    await clerkClientInstance.users.updateUser(userId, {
+      publicMetadata: {
+        subscriptionStatus: 'active',
+        subscriptionEndDate: subscriptionEndDate.toISOString(),
+      },
     });
 
-    if (clerkUsers.data.length > 0) {
-      const clerkUser = clerkUsers.data[0] as User | undefined;
-      if (!clerkUser) {
-        console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
-        return;
-      }
-
-      await clerkClientInstance.users.updateUser(clerkUser.id, {
-        publicMetadata: {
-          subscriptionStatus: 'active',
-          subscriptionEndDate: subscriptionEndDate.toISOString(),
-        },
-      });
-
-      console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
-    } else {
-      console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
-    }
+    console.log(`✅ Clerk metadata actualizado para ${user.emailAddresses[0].emailAddress}`);
 
     // 📢 Notificar al usuario 3 días antes de que expire la suscripción
     setTimeout(
       async () => {
         await sendNotification(
-          email_buyer,
+          user.emailAddresses[0].emailAddress,
           'Tu suscripción está a punto de expirar'
         );
-        console.log(`📢 Notificación enviada a: ${email_buyer}`);
+        console.log(`📢 Notificación enviada a: ${user.emailAddresses[0].emailAddress}`);
       },
       (30 - 3) * 24 * 60 * 60 * 1000
     ); // 27 días en milisegundos
