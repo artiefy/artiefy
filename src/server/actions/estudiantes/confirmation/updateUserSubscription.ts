@@ -1,4 +1,4 @@
-import { clerkClient, type User } from '@clerk/nextjs/server'; // ✅ Importar Clerk
+import { clerkClient, type User } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '~/server/db';
@@ -21,9 +21,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     return;
   }
 
-    // 🗓️ Calcular fecha de expiración (5 minutos desde ahora)
-    const subscriptionEndDate = new Date();
-    subscriptionEndDate.setMinutes(subscriptionEndDate.getMinutes() + 5);
+  // 🗓️ Calcular fecha de expiración (5 minutos desde ahora)
+  const subscriptionEndDate = new Date();
+  subscriptionEndDate.setMinutes(subscriptionEndDate.getMinutes() + 5);
 
   try {
     // 🔍 Buscar usuario en la base de datos
@@ -85,8 +85,8 @@ export async function updateUserSubscription(paymentData: PaymentData) {
       console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
     }
 
-     // 📢 Notificar al usuario 3 días antes de que expire la suscripción
-     setTimeout(
+    // 📢 Notificar al usuario 2 minutos antes de que expire la suscripción
+    setTimeout(
       async () => {
         await sendNotification(
           email_buyer,
@@ -94,7 +94,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         );
         console.log(`📢 Notificación enviada a: ${email_buyer}`);
       },
-      (5 - 3) * 60 * 1000 // 2 minutos en milisegundos
+      (5 - 2) * 60 * 1000 // 3 minutos en milisegundos
     );
   } catch (error) {
     console.error(`❌ Error en updateUserSubscription:`, error);
