@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import path from 'path';
 
 export async function sendNotification(email: string, subject: string, htmlContent: string) {
   // Configurar el transportador de nodemailer
@@ -16,6 +17,13 @@ export async function sendNotification(email: string, subject: string, htmlConte
     to: email,
     subject: subject,
     html: htmlContent, // Contenido HTML del correo electrónico
+    attachments: [
+      {
+        filename: 'artiefy-logo.png',
+        path: path.join(__dirname, '../../public/images/artiefy-logo.png'),
+        cid: 'logo@artiefy.com', // Mismo cid que en el src de la imagen en el HTML
+      },
+    ],
   };
 
   // Enviar el correo electrónico

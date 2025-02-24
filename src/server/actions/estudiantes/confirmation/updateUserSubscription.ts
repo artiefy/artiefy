@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { sendNotification } from '~/utils/notifications';
+import { generateEmailTemplate } from '~/utils/emailTemplate';
 
 interface PaymentData {
   email_buyer: string;
@@ -88,9 +89,14 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     // 📢 Notificar al usuario 2 minutos antes de que expire la suscripción
     setTimeout(
       async () => {
-        await sendNotification(
+        const emailContent = generateEmailTemplate(
           email_buyer,
           'Tu suscripción está a punto de expirar'
+        );
+        await sendNotification(
+          email_buyer,
+          'Notificación de suscripción',
+          emailContent
         );
         console.log(`📢 Notificación enviada a: ${email_buyer}`);
       },
