@@ -5,8 +5,8 @@
 			"maxDuration": 30
 		},
 		"app/api/confirmPayment": {
-			"memory": 2048,
-			"maxDuration": 60
+			"memory": 1024,
+			"maxDuration": 30
 		}
 	},
 	"framework": "nextjs",
