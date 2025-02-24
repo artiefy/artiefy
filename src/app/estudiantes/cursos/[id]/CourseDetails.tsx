@@ -7,15 +7,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  FaCalendar,
-  FaChevronDown,
-  FaChevronUp,
-  FaClock,
-  FaHome,
-  FaUserGraduate,
-  FaCheck,
-  FaLock,
-  FaCheckCircle,
+	FaCalendar,
+	FaChevronDown,
+	FaChevronUp,
+	FaClock,
+	FaHome,
+	FaUserGraduate,
+	FaCheck,
+	FaLock,
+	FaCheckCircle,
 } from 'react-icons/fa';
 import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
 import Comments from '~/components/estudiantes/layout/Comments';
@@ -24,19 +24,19 @@ import { Header } from '~/components/estudiantes/layout/Header';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
 } from '~/components/estudiantes/ui/breadcrumb';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
 } from '~/components/estudiantes/ui/card';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
@@ -48,210 +48,211 @@ import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseByI
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 import type { Course, Enrollment } from '~/types';
+import '~/styles/buttonclass.css';
 
 export default function CourseDetails({
-  course: initialCourse,
+	course: initialCourse,
 }: {
-  course: Course;
+	course: Course;
 }) {
-  const [course, setCourse] = useState<Course>(initialCourse);
-  const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isEnrolling, setIsEnrolling] = useState(false);
-  const [isUnenrolling, setIsUnenrolling] = useState(false);
-  const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
-  const [totalStudents, setTotalStudents] = useState(course.totalStudents);
-  const [isEnrolled, setIsEnrolled] = useState(false);
-  const { isSignedIn, userId } = useAuth();
-  const { user } = useUser();
-  const { toast } = useToast();
-  const router = useRouter();
-  const pathname = usePathname();
+	const [course, setCourse] = useState<Course>(initialCourse);
+	const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [isEnrolling, setIsEnrolling] = useState(false);
+	const [isUnenrolling, setIsUnenrolling] = useState(false);
+	const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
+	const [totalStudents, setTotalStudents] = useState(course.totalStudents);
+	const [isEnrolled, setIsEnrolled] = useState(false);
+	const { isSignedIn, userId } = useAuth();
+	const { user } = useUser();
+	const { toast } = useToast();
+	const router = useRouter();
+	const pathname = usePathname();
 
-  useEffect(() => {
-    const fetchUserProgress = async () => {
-      if (userId && isEnrolled && !loading) {
-        try {
-          const lessons = await getLessonsByCourseId(course.id);
-          setCourse((prevCourse) => ({
-            ...prevCourse,
-            lessons: lessons
-              .map((lesson, index) => ({
-                ...lesson,
-                isLocked: lesson.userProgress === 0 && index !== 0,
-                porcentajecompletado: lesson.userProgress,
-              }))
-              .sort((a, b) => a.title.localeCompare(b.title)), // Ordenar por título
-          }));
-        } catch (error) {
-          console.error('Error fetching user progress:', error);
-        }
-      }
-    };
+	useEffect(() => {
+		const fetchUserProgress = async () => {
+			if (userId && isEnrolled && !loading) {
+				try {
+					const lessons = await getLessonsByCourseId(course.id);
+					setCourse((prevCourse) => ({
+						...prevCourse,
+						lessons: lessons
+							.map((lesson, index) => ({
+								...lesson,
+								isLocked: lesson.userProgress === 0 && index !== 0,
+								porcentajecompletado: lesson.userProgress,
+							}))
+							.sort((a, b) => a.title.localeCompare(b.title)), // Ordenar por título
+					}));
+				} catch (error) {
+					console.error('Error fetching user progress:', error);
+				}
+			}
+		};
 
-    // Evitar actualizar el estado innecesariamente
-    setIsEnrolled((prevIsEnrolled) => {
-      const userEnrolled =
-        Array.isArray(course.enrollments) && userId
-          ? course.enrollments.some(
-              (enrollment: Enrollment) => enrollment.userId === userId
-            )
-          : false;
+		// Evitar actualizar el estado innecesariamente
+		setIsEnrolled((prevIsEnrolled) => {
+			const userEnrolled =
+				Array.isArray(course.enrollments) && userId
+					? course.enrollments.some(
+							(enrollment: Enrollment) => enrollment.userId === userId
+						)
+					: false;
 
-      return prevIsEnrolled !== userEnrolled ? userEnrolled : prevIsEnrolled;
-    });
+			return prevIsEnrolled !== userEnrolled ? userEnrolled : prevIsEnrolled;
+		});
 
-    if (isEnrolled) {
-      void fetchUserProgress();
-    }
+		if (isEnrolled) {
+			void fetchUserProgress();
+		}
 
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+		const timer = setTimeout(() => {
+			setLoading(false);
+		}, 1000);
 
-    return () => clearTimeout(timer);
-  }, [course.enrollments, userId, course.id, isEnrolled, loading]);
+		return () => clearTimeout(timer);
+	}, [course.enrollments, userId, course.id, isEnrolled, loading]);
 
-  const toggleLesson = (lessonId: number) => {
-    if (isEnrolled) {
-      setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
-    }
-  };
+	const toggleLesson = (lessonId: number) => {
+		if (isEnrolled) {
+			setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
+		}
+	};
 
-  const formatDate = (dateString: string | number | Date) =>
-    new Date(dateString).toISOString().split('T')[0];
+	const formatDate = (dateString: string | number | Date) =>
+		new Date(dateString).toISOString().split('T')[0];
 
-  useEffect(() => {
-    const checkSubscriptionStatus = () => {
-      if (userId) {
-        const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-        console.log(
-          'Estado de suscripción detectado en frontend:',
-          userSubscriptionStatus
-        );
-        if (userSubscriptionStatus === 'active') {
-          setIsEnrolled(true);
-        }
-      }
-    };
+	useEffect(() => {
+		const checkSubscriptionStatus = () => {
+			if (userId) {
+				const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+				console.log(
+					'Estado de suscripción detectado en frontend:',
+					userSubscriptionStatus
+				);
+				if (userSubscriptionStatus === 'active') {
+					setIsEnrolled(true);
+				}
+			}
+		};
 
-    void checkSubscriptionStatus();
-  }, [userId, user]);
+		void checkSubscriptionStatus();
+	}, [userId, user]);
 
-  const handleEnroll = async () => {
-    if (!isSignedIn) {
-      toast({
-        title: 'Debes iniciar sesión',
-        description: 'Debes iniciar sesión para inscribirte en este curso.',
-        variant: 'destructive',
-      });
-      void router.push(`/sign-in?redirect_url=${pathname}`);
-      return;
-    }
+	const handleEnroll = async () => {
+		if (!isSignedIn) {
+			toast({
+				title: 'Debes iniciar sesión',
+				description: 'Debes iniciar sesión para inscribirte en este curso.',
+				variant: 'destructive',
+			});
+			void router.push(`/sign-in?redirect_url=${pathname}`);
+			return;
+		}
 
-    if (isEnrolling) {
-      return; // Evitar múltiples llamadas
-    }
+		if (isEnrolling) {
+			return; // Evitar múltiples llamadas
+		}
 
-    setIsEnrolling(true);
-    setEnrollmentError(null);
+		setIsEnrolling(true);
+		setEnrollmentError(null);
 
-    try {
-      if (
-        !user?.publicMetadata?.subscriptionStatus ||
-        user.publicMetadata.subscriptionStatus !== 'active'
-      ) {
-        toast({
-          title: 'Suscripción requerida',
-          description:
-            'Debes tener una suscripción activa para inscribirte en este curso.',
-          variant: 'destructive',
-        });
-        setIsEnrolling(false);
-        void router.push('/planes');
-        return;
-      }
+		try {
+			if (
+				!user?.publicMetadata?.subscriptionStatus ||
+				user.publicMetadata.subscriptionStatus !== 'active'
+			) {
+				toast({
+					title: 'Suscripción requerida',
+					description:
+						'Debes tener una suscripción activa para inscribirte en este curso.',
+					variant: 'destructive',
+				});
+				setIsEnrolling(false);
+				void router.push('/planes');
+				return;
+			}
 
-      const result = await enrollInCourse(course.id);
-      if (result.success) {
-        setTotalStudents((prevTotal) => prevTotal + 1);
-        setIsEnrolled(true);
-        const updatedCourse = await getCourseById(course.id);
-        if (updatedCourse) {
-          setCourse({
-            ...updatedCourse,
-            lessons: updatedCourse.lessons ?? [],
-          });
-        }
-        toast({
-          title: 'Suscripción exitosa',
-          description: '¡Te has Inscrito exitosamente en el curso!',
-          variant: 'default',
-        });
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error: unknown) {
-      handleError(error, 'Error de Suscripción', 'Error al inscribirse');
-    } finally {
-      setIsEnrolling(false);
-    }
-  };
+			const result = await enrollInCourse(course.id);
+			if (result.success) {
+				setTotalStudents((prevTotal) => prevTotal + 1);
+				setIsEnrolled(true);
+				const updatedCourse = await getCourseById(course.id);
+				if (updatedCourse) {
+					setCourse({
+						...updatedCourse,
+						lessons: updatedCourse.lessons ?? [],
+					});
+				}
+				toast({
+					title: 'Suscripción exitosa',
+					description: '¡Te has Inscrito exitosamente en el curso!',
+					variant: 'default',
+				});
+			} else {
+				throw new Error(result.message);
+			}
+		} catch (error: unknown) {
+			handleError(error, 'Error de Suscripción', 'Error al inscribirse');
+		} finally {
+			setIsEnrolling(false);
+		}
+	};
 
-  const handleUnenroll = async () => {
-    if (!isSignedIn || isUnenrolling) {
-      return; // Evitar múltiples llamadas
-    }
+	const handleUnenroll = async () => {
+		if (!isSignedIn || isUnenrolling) {
+			return; // Evitar múltiples llamadas
+		}
 
-    setIsUnenrolling(true);
-    setEnrollmentError(null);
+		setIsUnenrolling(true);
+		setEnrollmentError(null);
 
-    try {
-      await unenrollFromCourse(course.id);
-      setTotalStudents((prevTotal) => prevTotal - 1);
-      setIsEnrolled(false);
-      const updatedCourse = await getCourseById(course.id);
-      if (updatedCourse) {
-        setCourse({
-          ...updatedCourse,
-          lessons: updatedCourse.lessons ?? [],
-        });
-      }
-      toast({
-        title: 'Cancelar Suscripción',
-        description: 'Se Canceló El Curso Correctamente',
-        variant: 'default',
-      });
-    } catch (error: unknown) {
-      handleError(error, 'Error de desuscripción', 'Error al desuscribirse');
-    } finally {
-      setIsUnenrolling(false);
-    }
-  };
+		try {
+			await unenrollFromCourse(course.id);
+			setTotalStudents((prevTotal) => prevTotal - 1);
+			setIsEnrolled(false);
+			const updatedCourse = await getCourseById(course.id);
+			if (updatedCourse) {
+				setCourse({
+					...updatedCourse,
+					lessons: updatedCourse.lessons ?? [],
+				});
+			}
+			toast({
+				title: 'Cancelar Suscripción',
+				description: 'Se Canceló El Curso Correctamente',
+				variant: 'default',
+			});
+		} catch (error: unknown) {
+			handleError(error, 'Error de desuscripción', 'Error al desuscribirse');
+		} finally {
+			setIsUnenrolling(false);
+		}
+	};
 
-  const handleError = (
-    error: unknown,
-    toastTitle: string,
-    toastDescription: string
-  ) => {
-    if (error instanceof Error) {
-      setEnrollmentError(error.message);
-      toast({
-        title: toastTitle,
-        description: `${toastDescription}: ${error.message}`,
-        variant: 'destructive',
-      });
-    } else {
-      setEnrollmentError('Error desconocido');
-      toast({
-        title: toastTitle,
-        description: 'Error desconocido',
-        variant: 'destructive',
-      });
-    }
-    console.error(toastDescription, error);
-  };
-  
+	const handleError = (
+		error: unknown,
+		toastTitle: string,
+		toastDescription: string
+	) => {
+		if (error instanceof Error) {
+			setEnrollmentError(error.message);
+			toast({
+				title: toastTitle,
+				description: `${toastDescription}: ${error.message}`,
+				variant: 'destructive',
+			});
+		} else {
+			setEnrollmentError('Error desconocido');
+			toast({
+				title: toastTitle,
+				description: 'Error desconocido',
+				variant: 'destructive',
+			});
+		}
+		console.error(toastDescription, error);
+	};
+
 	return (
 		<div className="min-h-screen bg-background">
 			<Header />
@@ -437,7 +438,7 @@ export default function CourseDetails({
 															</div>
 															<Button
 																asChild
-																className="mt-4 text-background hover:underline active:scale-95"
+																className="button mt-4 text-background hover:underline active:scale-95"
 															>
 																<Link href={`/estudiantes/clases/${lesson.id}`}>
 																	Ver Clase
