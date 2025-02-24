@@ -9,10 +9,10 @@ import {
 	updateCourse,
 	getTotalStudents,
 	getLessonsByCourseId,
+	getLessonsProgressByCourseId,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { ratelimit } from '~/server/ratelimit/ratelimit';
-
 export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>
@@ -46,14 +46,18 @@ export async function GET(req: NextRequest) {
 			const course = await getCourseById(parseInt(courseId));
 			const totalStudents = await getTotalStudents(parseInt(courseId));
 			const lessons = await getLessonsByCourseId(parseInt(courseId));
+			const { progress } = await getLessonsProgressByCourseId(
+				parseInt(courseId)
+			);
 			if (!course) {
 				return respondWithError('Curso no encontrado', 404);
 			}
-			if (course) {
-				courses = { ...course, totalStudents, lessons };
-			} else {
-				courses = course;
-			}
+			courses = {
+				...course,
+				totalStudents,
+				lessons,
+				progressLessons: progress,
+			};
 		} else if (userId) {
 			courses = await getCoursesByUserId(userId);
 		} else {

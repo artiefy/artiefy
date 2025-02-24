@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import {
-	BookOpen,
+	//BookOpen,
 	Users,
 	Clock,
 	GraduationCap,
@@ -51,8 +51,11 @@ interface Course {
 		coverImageKey: string;
 		duration: number;
 		description: string;
+		progress: number;
+		completed: boolean;
 	}[];
 	totalStudents: number;
+	progressLessons: number;
 }
 
 function App() {
@@ -67,10 +70,8 @@ function App() {
 		if (!user) return;
 		try {
 			const response = await fetch(`/api/educadores/courses?userId=${user.id}`);
-
 			if (response.ok) {
 				const data = (await response.json()) as Course[];
-				console.log('Cursos cargados:', data);
 				setCourses(data);
 				setSelectedCourse(data[0] || null);
 			} else {
@@ -128,6 +129,62 @@ function App() {
 		[user]
 	);
 
+	const FetchLessonsProgress = useCallback(
+		async (courseId: number) => {
+			try {
+				const response = await fetch(
+					`/api/educadores/courses?courseId=${courseId}`
+				);
+				if (response.ok) {
+					const data = (await response.json()) as {
+						progressLessons: Course['progressLessons'];
+						lessons: Course['lessons'];
+					};
+					setSelectedCourse((prevCourse) =>
+						prevCourse
+							? {
+									...prevCourse,
+									progressLessons: data.progressLessons,
+									lessons: data.lessons.map((lesson) => ({
+										...lesson,
+										progress: lesson.progress ?? 0,
+										completed: lesson.completed ?? false,
+									})),
+								}
+							: null
+					);
+					setSelectedCourse((prevCourse) =>
+						prevCourse
+							? {
+									...prevCourse,
+									completionRate:
+										(prevCourse.completionRate ?? 0) +
+										prevCourse.progressLessons / prevCourse.lessons.length,
+								}
+							: null
+					);
+				} else {
+					const errorData = (await response.json()) as { error?: string };
+					const errorMessage = errorData.error ?? response.statusText;
+					toast({
+						title: 'Error',
+						description: `No se pudieron cargar las lecciones: ${errorMessage}`,
+						variant: 'destructive',
+					});
+				}
+			} catch (error) {
+				const errorMessage =
+					error instanceof Error ? error.message : 'Unknown error';
+				toast({
+					title: 'Error',
+					description: `No se pudieron cargar las lecciones: ${errorMessage}`,
+					variant: 'destructive',
+				});
+			}
+		},
+		[user]
+	);
+
 	const totalDuracion =
 		selectedCourse?.lessons?.reduce(
 			(acc, lesson) => acc + lesson.duration,
@@ -144,11 +201,19 @@ function App() {
 
 	useEffect(() => {
 		if (selectedCourse) {
+			FetchLessonsProgress(selectedCourse.id).catch((error) =>
+				console.error('Error fetching to loading the lessonsProgress:', error)
+			);
+		}
+	}, [selectedCourse, FetchLessonsProgress]);
+
+	useEffect(() => {
+		if (selectedCourse) {
 			fetchLessons(selectedCourse.id).catch((error) =>
 				console.error('Error fetching lessons:', error)
 			);
 		}
-	}, [user, selectedCourse, fetchLessons]);
+	}, [selectedCourse, fetchLessons]);
 
 	// Función para cambiar al siguiente curso
 	const moveToNextCourse = useCallback(() => {
@@ -221,7 +286,6 @@ function App() {
 						</div>
 					</div>
 				</header>
-
 				{/* Main Content */}
 				<main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 					{/* Course Selector */}
@@ -275,7 +339,7 @@ function App() {
 						<div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
 							<StatCard
 								icon={<Users className="size-6" />}
-								title="Total estudiantes"
+								title="Total estudiantes registrados"
 								value={selectedCourse.totalStudents?.toString() ?? 'N/A'}
 							/>
 							<StatCard
@@ -286,12 +350,12 @@ function App() {
 							<StatCard
 								icon={<Trophy className="size-6" />}
 								title="Rango de completacion"
-								value={`${selectedCourse.completionRate}%`}
+								value={`${Number(selectedCourse.completionRate)}%`}
 							/>
 							<StatCard
 								icon={<Star className="size-6" />}
-								title="Average Rating"
-								value={`${selectedCourse.rating}/5`}
+								title="Rating"
+								value={`${selectedCourse.rating}`}
 								trend="Basado en la retroalimentacion de los estudiantes"
 							/>
 						</div>
@@ -311,8 +375,8 @@ function App() {
 											<ProgressModule
 												key={index}
 												title={lesson.title}
-												// progress={lesson.progress}
-												// completed={lesson.completed}
+												progress={lesson.progress}
+												completed={lesson.completed}
 											/>
 										)) ?? <p>No modules available.</p>}
 									</div>
@@ -337,7 +401,7 @@ function App() {
 									</div>
 								</div>
 
-								<div className="rounded-lg bg-white p-6 shadow-md">
+								{/* <div className="rounded-lg bg-white p-6 shadow-md">
 									<h3 className="mb-4 text-lg font-semibold text-gray-900">
 										Resources
 									</h3>
@@ -347,7 +411,7 @@ function App() {
 										<ResourceLink title="Practice Exercises" count={48} />
 										<ResourceLink title="Additional Reading" count={12} />
 									</div>
-								</div>
+								</div> */}
 							</div>
 						</div>
 					)}
@@ -383,24 +447,23 @@ function StatCard({ icon, title, value, trend }: StatCardProps) {
 
 interface ProgressModuleProps {
 	title: string;
-	// progress: number;
-	// completed: boolean;
+	progress: number;
+	completed: boolean;
 }
 
-function ProgressModule({ title }: ProgressModuleProps) {
+function ProgressModule({ title, progress, completed }: ProgressModuleProps) {
 	return (
 		<div className="space-y-2">
 			<div className="flex items-center justify-between">
 				<span className="text-sm font-medium text-gray-900">
 					Clase: {title}
 				</span>
-				{/* <span className="text-sm text-gray-500">{progress}%</span> */}
+				<span className="text-sm text-gray-500">{progress}%</span>
 			</div>
 			<div className="h-2 overflow-hidden rounded-full bg-gray-200">
 				<div
-					className={`h-full rounded-full`}
-					// style={{ width: `${progress}%` }}
-					// ${completed ? 'bg-green-500' : 'bg-primary'}
+					className={`h-full rounded-full ${completed ? 'bg-green-500' : 'bg-primary'}`}
+					style={{ width: `${progress}%` }}
 				/>
 			</div>
 		</div>
@@ -426,16 +489,16 @@ function UpcomingSession({ title, date, duration }: UpcomingSessionProps) {
 	);
 }
 
-function ResourceLink({ title, count }: { title: string; count: number }) {
-	return (
-		<div className="flex items-center justify-between">
-			<div className="flex items-center">
-				<BookOpen className="size-4 text-primary" />
-				<span className="ml-2 text-sm text-gray-700">{title}</span>
-			</div>
-			<span className="text-sm text-gray-500">{count}</span>
-		</div>
-	);
-}
+// function ResourceLink({ title, count }: { title: string; count: number }) {
+// 	return (
+// 		<div className="flex items-center justify-between">
+// 			<div className="flex items-center">
+// 				<BookOpen className="size-4 text-primary" />
+// 				<span className="ml-2 text-sm text-gray-700">{title}</span>
+// 			</div>
+// 			<span className="text-sm text-gray-500">{count}</span>
+// 		</div>
+// 	);
+// }
 
 export default App;
