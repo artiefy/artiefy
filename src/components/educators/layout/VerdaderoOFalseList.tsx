@@ -54,7 +54,7 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 		// Solo hacemos polling si estamos editando
 		let interval: NodeJS.Timeout | undefined;
 		if (editingQuestion) {
-			interval = setInterval(() => void fetchQuestions(), 10000);
+			interval = setInterval(() => void fetchQuestions(), 5000);
 		}
 
 		return () => {
