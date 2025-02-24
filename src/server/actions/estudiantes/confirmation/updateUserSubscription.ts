@@ -20,9 +20,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     return;
   }
 
-  // 🗓️ Calcular fecha de expiración (1 mes desde hoy)
+  // 🗓️ Calcular fecha de expiración (5 minutos desde ahora)
   const subscriptionEndDate = new Date();
-  subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+  subscriptionEndDate.setMinutes(subscriptionEndDate.getMinutes() + 5);
 
   try {
     // Obtener el usuario actual desde Clerk
@@ -70,8 +70,8 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     }
 
     // 🔍 Actualizar `publicMetadata` en Clerk
-    const clerkClientInstance = await clerkClient();
-    await clerkClientInstance.users.updateUser(userId, {
+    const clerk = await clerkClient();
+    await clerk.users.updateUser(userId, {
       publicMetadata: {
         subscriptionStatus: 'active',
         subscriptionEndDate: subscriptionEndDate.toISOString(),
@@ -89,9 +89,13 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         );
         console.log(`📢 Notificación enviada a: ${user.emailAddresses[0].emailAddress}`);
       },
-      (30 - 3) * 24 * 60 * 60 * 1000
-    ); // 27 días en milisegundos
-  } catch (error) {
-    console.error(`❌ Error en updateUserSubscription:`, error);
+      (5 - 3) * 60 * 1000 // 2 minutos en milisegundos
+    );
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(`❌ Error en updateUserSubscription:`, error.message);
+    } else {
+      console.error('❌ Error desconocido en updateUserSubscription');
+    }
   }
 }

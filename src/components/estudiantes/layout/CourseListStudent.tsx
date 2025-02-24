@@ -1,4 +1,4 @@
-import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
+import { ArrowRightIcon, StarIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
@@ -13,6 +13,8 @@ import {
   CardTitle,
 } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
+import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
+import { currentUser } from '@clerk/nextjs/server';
 import type { Course } from '~/types';
 
 interface CourseListStudentProps {
@@ -32,6 +34,9 @@ export default async function CourseListStudent({
   category,
   searchTerm,
 }: CourseListStudentProps) {
+  const user = await currentUser();
+  const userId = user?.id;
+
   if (!courses || courses.length === 0) {
     return <div>No hay cursos disponibles</div>;
   }
@@ -55,6 +60,8 @@ export default async function CourseListStudent({
               console.error('Error fetching image from AWS S3:', error);
               blurDataURL = undefined;
             }
+
+            const isEnrolled = userId ? await isUserEnrolled(course.id, userId) : false;
 
             return (
               <div key={course.id} className="group relative">
@@ -84,13 +91,19 @@ export default async function CourseListStudent({
                         {course.title}
                       </div>
                     </CardTitle>
-                    <div className="flex items-center">
+                    <div className="flex items-center justify-between">
                       <Badge
                         variant="outline"
                         className="border-primary bg-background text-primary hover:bg-black/70"
                       >
                         {course.category?.name}
                       </Badge>
+                      {isEnrolled && (
+                        <div className="flex items-center text-green-500">
+                          <CheckCircleIcon className="size-5" />
+                          <span className="ml-1 text-sm font-bold">Inscrito</span>
+                        </div>
+                      )}
                     </div>
                     <p className="line-clamp-2 text-sm text-gray-300">
                       {course.description}
