@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+import CourseCarousel from '~/components/super-admin/CourseCarousel';
 import {
 	setRoleWrapper,
 	deleteUser,
@@ -255,7 +256,10 @@ export default function AdminDashboard() {
 
 			if (!uploadResponse.ok) throw new Error('Error al obtener URL de carga');
 
-			const uploadData = (await uploadResponse.json()) as { url: string; fields: Record<string, string> };
+			const uploadData = (await uploadResponse.json()) as {
+				url: string;
+				fields: Record<string, string>;
+			};
 			const { url, fields } = uploadData;
 
 			const formData = new FormData();
@@ -275,7 +279,10 @@ export default function AdminDashboard() {
 
 			// Actualizamos el estado con la nueva clave de la imagen
 			setNewCoverImageKey(fields.key);
-			console.log('Nuevo valor de newCoverImageKey:', (fields as { key: string }).key); // Verifica si la clave es válida
+			console.log(
+				'Nuevo valor de newCoverImageKey:',
+				(fields as { key: string }).key
+			); // Verifica si la clave es válida
 		} catch (error) {
 			console.error('Error al subir imagen:', error);
 		}
@@ -844,78 +851,46 @@ export default function AdminDashboard() {
 										</div>
 
 										{/* Información del Usuario */}
-										<div className="flex ml-80 flex-col justify-start space-x-4">
-  <p className="text-4xl font-semibold">
-    {viewUser.firstName} {viewUser.lastName}
-  </p>
-  <p className="text-lg text-gray-400">{viewUser.email}</p>
-  <p className="mt-2 text-lg">
-    <strong>Rol:</strong>{' '}
-    <span className="font-bold text-[#3AF4EF]">
-      {viewUser.role}
-    </span>
-  </p>
-  <p className="text-lg">
-    <strong>Estado:</strong>{' '}
-    <span className="font-bold text-[#3AF4EF]">
-      {viewUser.status}
-    </span>
-  </p>
-  <p className="text-lg">
-    <strong>Fecha de Creación:</strong>{' '}
-    {viewUser.createdAt ?? 'Fecha no disponible'}
-  </p>
-</div>
-
+										<div className="ml-80 flex flex-col justify-start space-x-4">
+											<p className="text-4xl font-semibold">
+												{viewUser.firstName} {viewUser.lastName}
+											</p>
+											<p className="text-lg text-gray-400">{viewUser.email}</p>
+											<p className="mt-2 text-lg">
+												<strong>Rol:</strong>{' '}
+												<span className="font-bold text-[#3AF4EF]">
+													{viewUser.role}
+												</span>
+											</p>
+											<p className="text-lg">
+												<strong>Estado:</strong>{' '}
+												<span className="font-bold text-[#3AF4EF]">
+													{viewUser.status}
+												</span>
+											</p>
+											<p className="text-lg">
+												<strong>Fecha de Creación:</strong>{' '}
+												{viewUser.createdAt ?? 'Fecha no disponible'}
+											</p>
+										</div>
 									</div>
 
-									{/* Cursos en los que está inscrito */}
-									{/* Cursos en los que está inscrito */}
-<div className="mt-8 w-full">
-  <h3 className="mb-4 text-2xl font-semibold text-white">
-    Cursos en los que está inscrito
-  </h3>
-
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-    {viewUser.courses && viewUser.courses.length > 0 ? (
-      viewUser.courses.map((course, index) => (
-        <div
-          key={course.id}
-          className="rounded-lg bg-gray-800 p-4 shadow-md"
-          style={{
-			gridColumn: (viewUser.courses?.length ?? 0) === 1
-              ? 'span 6' // Si hay un solo curso, ocupará toda la fila
-			  : (viewUser.courses?.length ?? 0) === 2
-              ? 'span 3' // Si hay dos cursos, cada uno ocupará la mitad de la fila
-			  : (viewUser.courses?.length ?? 0) > 2 && (viewUser.courses?.length ?? 0) <= 6
-              ? 'span 2' // Si hay entre 3 y 6 cursos, cada uno ocupará el 50% del espacio
-              : undefined
-          }}
-        >
-          <div className="relative mb-4 h-24 w-full">
-            {course.coverImageKey ? (
-              <Image
-                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
-                alt={course.title}
-                layout="fill"
-                objectFit="cover"
-                className="rounded-lg"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-300 text-white">
-                Imagen no disponible
-              </div>
-            )}
-          </div>
-          <h4 className="text-lg font-semibold text-white">{course.title}</h4>
-        </div>
-      ))
-    ) : (
-      <p className="text-gray-400">Este usuario no está inscrito en ningún curso.</p>
-    )}
-  </div>
-</div>
-
+									{/* 🔹 Carrusel de Cursos dentro del modal */}
+									<div className="mt-6">
+										<h3 className="text-2xl font-bold text-white">
+											Cursos del Estudiante
+										</h3>
+										{viewUser.courses && viewUser.courses.length > 0 ? (
+											<CourseCarousel
+												courses={viewUser.courses}
+												userId={viewUser.id}
+											/>
+										) : (
+											<p className="text-gray-400">
+												Este usuario no está inscrito en ningún curso.
+											</p>
+										)}
+									</div>
 
 									{/* Botón de Cerrar */}
 									<div className="mt-6 text-center">
