@@ -3,14 +3,14 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import NProgress from 'nprogress';
 import { FaRobot } from 'react-icons/fa';
-import ChatBot from '~/components/estudiantes/layout/ChatBot';
-import ClassComments from '~/components/estudiantes/layout/ClassComments';
+import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
+import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import LessonActivities from '~/components/estudiantes/layout/LessonActivities';
-import LessonCards from '~/components/estudiantes/layout/LessonCards';
-import LessonNavigation from '~/components/estudiantes/layout/LessonNavigation';
-import LessonPlayer from '~/components/estudiantes/layout/LessonPlayer';
+import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
+import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
+import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
+import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
 import RecursosLesson from '~/components/estudiantes/layout/RecursosLesson';
 import { useToast } from '~/hooks/use-toast';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
@@ -354,7 +354,7 @@ export default function LessonDetails({
             <FaRobot className="text-xl" />
           </button>
 
-          <ChatBot />
+          <LessonChatBot />
         </div>
         <Footer />
       </div>

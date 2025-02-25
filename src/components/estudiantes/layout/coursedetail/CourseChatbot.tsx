@@ -7,7 +7,7 @@ import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
 import '~/styles/chatmodal.css';
 
-const ChatbotModal = () => {
+const CourseChatbot = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [messages, setMessages] = useState([
 		{ id: 1, text: '¡Hola! ¿En qué puedo ayudarte hoy?', sender: 'bot' },
@@ -179,4 +179,4 @@ const ChatbotModal = () => {
 	);
 };
 
-export default ChatbotModal;
+export default CourseChatbot;

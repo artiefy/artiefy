@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { FaTimes, FaRobot } from 'react-icons/fa';
 import '~/styles/chatmodal.css'; // Import the CSS file
 
-const ChatBot: React.FC = () => {
+const LessonChatBot: React.FC = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [chatMessages, setChatMessages] = useState<
 		{ text: string; sender: string }[]
@@ -130,4 +130,4 @@ const ChatBot: React.FC = () => {
 	);
 };
 
-export default ChatBot;
+export default LessonChatBot;

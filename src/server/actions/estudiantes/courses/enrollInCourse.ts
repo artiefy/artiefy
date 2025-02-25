@@ -18,10 +18,23 @@ export async function enrollInCourse(
   const userId = user.id;
 
   try {
-    // Buscar si el usuario ya existe en la base de datos
+    // Verificar suscripción activa primero
     let existingUser = await db.query.users.findFirst({
       where: eq(users.id, userId),
     });
+
+    // Verificar estado de suscripción y fecha de vencimiento
+    if (existingUser) {
+      const subscriptionEndDate = existingUser.subscriptionEndDate;
+      const isExpired = subscriptionEndDate && new Date(subscriptionEndDate) < new Date();
+      
+      if (isExpired || existingUser.subscriptionStatus !== 'active') {
+        return {
+          success: false,
+          message: 'Tu suscripción ha expirado. Por favor, renuévala para continuar.',
+        };
+      }
+    }
 
     // Si el usuario no existe, crearlo con estado `active` si hay pago
     if (!existingUser) {
@@ -34,13 +47,12 @@ export async function enrollInCourse(
         role: 'student',
         name: user.fullName,
         email: user.emailAddresses[0].emailAddress,
-        subscriptionStatus: 'active', // Se crea con `active` si hay pago
-        subscriptionEndDate: new Date(), // Debes asegurarte de agregar una fecha de vencimiento
+        subscriptionStatus: 'active',
+        subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días desde ahora
         createdAt: new Date(),
         updatedAt: new Date(),
       });
 
-      // Recuperar el usuario recién creado para evitar `undefined`
       existingUser = await db.query.users.findFirst({
         where: eq(users.id, userId),
       });
@@ -80,12 +92,10 @@ export async function enrollInCourse(
     });
 
     const sortedLessons = lessonsList.sort((a, b) => a.title.localeCompare(b.title));
-
     const firstLesson = sortedLessons[0];
 
     if (firstLesson) {
       const { lessonsProgress } = await getUserLessonsProgress(userId);
-
       const existingProgress = lessonsProgress.find(
         (progress) => progress.lessonId === firstLesson.id
       );
@@ -114,7 +124,6 @@ export async function enrollInCourse(
   }
 }
 
-// Exportar `isUserEnrolled` para verificar si un usuario está inscrito
 export async function isUserEnrolled(
   courseId: number,
   userId: string

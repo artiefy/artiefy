@@ -34,7 +34,7 @@ interface Comment {
 	userId: string;
 }
 
-const Comments: React.FC<CommentProps> = ({ courseId }) => {
+const CourseComments: React.FC<CommentProps> = ({ courseId }) => {
 	const [content, setContent] = useState('');
 	const [rating, setRating] = useState(0);
 	const [message, setMessage] = useState('');
@@ -328,4 +328,4 @@ const Comments: React.FC<CommentProps> = ({ courseId }) => {
 	);
 };
 
-export default Comments;
+export default CourseComments;

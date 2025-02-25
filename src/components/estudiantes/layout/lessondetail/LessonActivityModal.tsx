@@ -22,7 +22,7 @@ interface ActivityModalProps {
 	markActivityAsCompleted: () => void; // New prop for activity completion callback
 }
 
-const ActivityModal = ({
+const LessonActivityModal = ({
 	isOpen,
 	onClose,
 	activity,
@@ -189,4 +189,4 @@ const ActivityModal = ({
 	);
 };
 
-export default ActivityModal;
+export default LessonActivityModal;

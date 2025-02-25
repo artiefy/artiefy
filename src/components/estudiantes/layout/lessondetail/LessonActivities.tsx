@@ -4,7 +4,7 @@ import { PiArrowFatLineLeftFill } from "react-icons/pi"; // Import PiArrowFatLin
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity } from '~/types';
-import ActivityModal from './ActivityModal';
+import LessonActivityModal from './LessonActivityModal';
 
 interface LessonActivitiesProps {
   activity: Activity | null;
@@ -101,7 +101,7 @@ const LessonActivities = ({
         <p className="text-gray-600">No hay actividades disponibles</p>
       )}
       {activity && (
-        <ActivityModal
+        <LessonActivityModal
           isOpen={isModalOpen}
           onClose={closeModal}
           activity={activity}
