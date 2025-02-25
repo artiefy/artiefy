@@ -1,11 +1,11 @@
 import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
-import { Analytics } from "@vercel/analytics/react"
+import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
 import Script from 'next/script';
-import Provider from '~/components/estudiantes/layout/ProgressBarProvider';
+import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from '~/components/estudiantes/ui/toaster';
 import { metadata as siteMetadata } from '~/lib/metadata';
 import '~/styles/globals.css';
@@ -60,15 +60,19 @@ export default function RootLayout({
 					/>
 				</head>
 				<body className="bg-background font-sans text-primary">
+					<NextTopLoader
+						color="#2563eb"
+						height={3}
+						showSpinner={false}
+						shadow="0 0 10px #2563eb,0 0 5px #2563eb"
+					/>
 					<ClerkLoading>
 						<Loading />
 					</ClerkLoading>
 					<ClerkLoaded>
-						<Provider>
-							{children}
-							<SpeedInsights />
-              <Analytics />
-						</Provider>
+						{children}
+						<SpeedInsights />
+						<Analytics />
 						<Toaster />
 					</ClerkLoaded>
 				</body>

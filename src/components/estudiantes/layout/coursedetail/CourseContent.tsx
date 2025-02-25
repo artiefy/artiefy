@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import NProgress from 'nprogress';
 import {
 	FaChevronDown,
 	FaChevronUp,
@@ -92,7 +91,6 @@ export function CourseContent({
 
 							const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 								e.preventDefault();
-								NProgress.start();
 								router.push(`/estudiantes/clases/${lesson.id}`);
 							};
 
