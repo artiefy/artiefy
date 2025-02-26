@@ -68,10 +68,10 @@ export function CourseHeader({
 				{/* Instructor info and stats */}
 				<div className="flex flex-wrap items-center justify-between gap-4">
 					<div>
-						<h3 className="text-lg font-semibold text-background">
+						<h3 className="text-lg font-extrabold text-background">
 							{course.instructor}
 						</h3>
-						<p className="text-gray-600">Educador</p>
+						<em className="text-gray-600 font-bold">Educador</em>
 					</div>
 					<div className="flex items-center space-x-6">
 						<div className="flex items-center">

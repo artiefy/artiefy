@@ -1,36 +1,44 @@
-import nodemailer from 'nodemailer';
 import path from 'path';
+import nodemailer from 'nodemailer';
 
-export async function sendNotification(email: string, subject: string, htmlContent: string) {
-  // Configurar el transportador de nodemailer
-  const transporter = nodemailer.createTransport({
-    service: 'gmail', // Puedes usar cualquier servicio de correo compatible con nodemailer
-    auth: {
-      user: process.env.EMAIL_USER, // Tu dirección de correo electrónico
-      pass: process.env.EMAIL_PASS, // Tu contraseña de correo electrónico
-    },
-  });
+export async function sendNotification(
+	email: string,
+	subject: string,
+	htmlContent: string
+) {
+	const transporter = nodemailer.createTransport({
+		host: 'smtp.gmail.com',
+		port: 465,
+		secure: true, // true para 465, false para otros puertos
+		auth: {
+			user: process.env.EMAIL_USER,
+			pass: process.env.EMAIL_PASS, // Usar contraseña de aplicación de Google
+		},
+		tls: {
+			rejectUnauthorized: false, // Necesario en algunos casos
+		},
+	});
 
-  // Configurar las opciones del correo electrónico
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: subject,
-    html: htmlContent, // Contenido HTML del correo electrónico
-    attachments: [
-      {
-        filename: 'artiefy-logo.png',
-        path: path.join(__dirname, '../../public/images/artiefy-logo.png'),
-        cid: 'logo@artiefy.com', // Mismo cid que en el src de la imagen en el HTML
-      },
-    ],
-  };
+	const mailOptions = {
+		from: `"Artiefy" <${process.env.EMAIL_USER}>`, // Nombre personalizado
+		to: email,
+		subject: subject,
+		html: htmlContent,
+		attachments: [
+			{
+				filename: 'artiefy-logo.png',
+				path: path.join(process.cwd(), 'public/artiefy-logo2.png'),
+				cid: 'logo@artiefy.com',
+			},
+		],
+	};
 
-  // Enviar el correo electrónico
-  try {
-    await transporter.sendMail(mailOptions);
-    console.log('Correo electrónico enviado: ' + email);
-  } catch (error) {
-    console.error('Error al enviar el correo electrónico: ', error);
-  }
+	try {
+		const info = await transporter.sendMail(mailOptions);
+		console.log('Correo enviado:', info.messageId);
+		return true;
+	} catch (error) {
+		console.error('Error al enviar correo:', error);
+		return false;
+	}
 }

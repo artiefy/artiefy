@@ -1,5 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
+@plugin 'tailwindcss-animate';
+
 @import 'tailwindcss';
 
 @config "../../tailwind.config.js";
@@ -55,9 +57,10 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-primary, currentColor);
+    @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background;
+    @apply bg-background text-foreground;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
@@ -166,3 +169,5 @@
     opacity: 1;
   }
 }
+
+

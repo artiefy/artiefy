@@ -37,6 +37,17 @@ export default function CourseDetails({
 	const router = useRouter();
 	const pathname = usePathname();
 
+	const errorMessages = {
+		enrollment: {
+			title: 'Error de inscripción',
+			description: 'No se pudo completar la inscripción',
+		},
+		unenrollment: {
+			title: 'Error al cancelar inscripción',
+			description: 'No se pudo cancelar la inscripción',
+		},
+	} as const;
+
 	useEffect(() => {
 		const checkEnrollmentAndProgress = async () => {
 			if (userId) {
@@ -99,66 +110,68 @@ export default function CourseDetails({
 	]);
 
 	const handleEnroll = async () => {
-    if (!isSignedIn) {
-      toast({
-        title: 'Debes iniciar sesión',
-        description: 'Debes iniciar sesión para inscribirte en este curso.',
-        variant: 'destructive',
-      });
-      void router.push(`/sign-in?redirect_url=${pathname}`);
-      return;
-    }
+		if (!isSignedIn) {
+			toast({
+				title: 'Acceso Requerido',
+				description: 'Debes iniciar sesión para inscribirte en este curso.',
+				variant: 'destructive',
+			});
+			void router.push(`/sign-in?redirect_url=${pathname}`);
+			return;
+		}
 
-    if (isEnrolling) return;
+		if (isEnrolling) return;
 
-    setIsEnrolling(true);
-    setEnrollmentError(null);
+		setIsEnrolling(true);
+		setEnrollmentError(null);
 
-    // Check subscription status
-    const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-    const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as string;
-    const isActive =
-      userSubscriptionStatus === 'active' &&
-      (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+		// Check subscription status
+		const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+		const subscriptionEndDate = user?.publicMetadata
+			?.subscriptionEndDate as string;
+		const isActive =
+			userSubscriptionStatus === 'active' &&
+			(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
 
-    if (!isActive) {
-      toast({
-        title: 'Suscripción requerida',
-        description: 'Necesitas una suscripción activa para acceder a este curso.',
-        variant: 'destructive',
-      });
-      setIsEnrolling(false);
-      void router.push('/planes');
-      return;
-    }
+		if (!isActive) {
+			toast({
+				title: 'Suscripción requerida',
+				description:
+					'Necesitas una suscripción activa para acceder a este curso.',
+				variant: 'destructive',
+			});
+			setIsEnrolling(false);
+			void router.push('/planes');
+			return;
+		}
 
-    try {
-      const result = await enrollInCourse(course.id);
-      
-      if (result.success) {
-        setTotalStudents((prev) => prev + 1);
-        setIsEnrolled(true);
-        const updatedCourse = await getCourseById(course.id);
-        if (updatedCourse) {
-          setCourse({
-            ...updatedCourse,
-            lessons: updatedCourse.lessons ?? [],
-          });
-        }
-        toast({
-          title: '¡Inscripción exitosa!',
-          description: 'Te has inscrito correctamente al curso.',
-          variant: 'default',
-        });
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error: unknown) {
-      handleError(error, 'Error de inscripción', 'No se pudo completar la inscripción');
-    } finally {
-      setIsEnrolling(false);
-    }
-  };
+		try {
+			const result = await enrollInCourse(course.id);
+
+			if (result.success) {
+				setTotalStudents((prev) => prev + 1);
+				setIsEnrolled(true);
+				const updatedCourse = await getCourseById(course.id);
+				if (updatedCourse) {
+					setCourse({
+						...updatedCourse,
+						lessons: updatedCourse.lessons ?? [],
+					});
+				}
+				toast({
+					title: '¡Inscripción exitosa!',
+					description: 'Te has inscrito correctamente al curso.',
+					variant: 'default',
+				});
+			} else {
+				throw new Error(result.message);
+			}
+		} catch (error: unknown) {
+			handleError(error, 'enrollment');
+		} finally {
+			setIsEnrolling(false);
+		}
+	};
 
 	const handleUnenroll = async () => {
 		if (!isSignedIn || isUnenrolling) return;
@@ -178,38 +191,32 @@ export default function CourseDetails({
 				});
 			}
 			toast({
-				title: 'Cancelar inscripción',
+				title: 'Cancelar Inscripción',
 				description: 'Has cancelado tu inscripción al curso correctamente',
 				variant: 'default',
 			});
 		} catch (error: unknown) {
-			handleError(
-				error,
-				'Error al cancelar inscripción',
-				'Error al cancelar la inscripción'
-			);
+			handleError(error, 'unenrollment');
 		} finally {
 			setIsUnenrolling(false);
 		}
 	};
 
-	const handleError = (error: unknown, title: string, description: string) => {
-		if (error instanceof Error) {
-			setEnrollmentError(error.message);
-			toast({
-				title,
-				description: `${description}: ${error.message}`,
-				variant: 'destructive',
-			});
-		} else {
-			setEnrollmentError('Error desconocido');
-			toast({
-				title,
-				description: 'Error desconocido',
-				variant: 'destructive',
-			});
-		}
-		console.error(description, error);
+	const handleError = (
+		error: unknown,
+		errorType: keyof typeof errorMessages
+	) => {
+		const message = errorMessages[errorType];
+		const errorMessage =
+			error instanceof Error ? error.message : 'Error desconocido';
+
+		setEnrollmentError(errorMessage);
+		toast({
+			title: message.title,
+			description: `${message.description}: ${errorMessage}`,
+			variant: 'destructive',
+		});
+		console.error(`${message.title}:`, error);
 	};
 
 	return (

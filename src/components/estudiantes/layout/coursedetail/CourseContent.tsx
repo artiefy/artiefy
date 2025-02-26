@@ -55,7 +55,7 @@ export function CourseContent({
 						<FaCrown className="size-8 text-red-500" />
 						<div className="flex-1">
 							<AlertTitle className="mb-2 text-xl font-bold text-red-700">
-								¡Tu suscripción premium ha expirado!
+								¡Tu suscripción ha expirado!
 							</AlertTitle>
 							<AlertDescription className="text-base text-red-600">
 								<p className="mb-4">

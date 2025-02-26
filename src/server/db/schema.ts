@@ -26,7 +26,10 @@ export const users = pgTable('users', {
 	age: integer('age'),
 	birthDate: date('birth_date'),
 	subscriptionStatus: text('subscription_status').default('inactive').notNull(),
-	subscriptionEndDate: timestamp('subscription_end_date'),
+	subscriptionEndDate: timestamp('subscription_end_date', {
+		withTimezone: true, // Esto hace que PostgreSQL maneje la zona horaria
+		mode: 'date',
+	}),
 });
 
 // Tabla de categorías
