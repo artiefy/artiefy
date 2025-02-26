@@ -1,4 +1,4 @@
-import { eq, sql, inArray, and, count } from 'drizzle-orm';
+import { eq, sql, inArray, and } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
 	categories,
@@ -7,7 +7,7 @@ import {
 	modalidades,
 	users,
 	activities,
-	userLessonsProgress,
+	userLessonsProgress
 } from '~/server/db/schema';
 
 export interface Lesson {
@@ -172,53 +172,26 @@ export async function getLessonsByCourseId(courseId: number) {
 	}
 }
 
-export const getLessonsProgressByLessonId = async (lessonId: number) => {
-	const lessons = await getLessonsByCourseId(lessonId);
 
-	const progress = await Promise.all(
-		lessons.map(async (lesson) => {
-			const totalActivities = await db
-				.select({ totalActivities: count(userLessonsProgress.lessonId) })
-				.from(userLessonsProgress)
-				.where(eq(userLessonsProgress.lessonId, lesson.id))
-				.then((rows) => Number(rows[0]?.totalActivities) ?? 0);
-
-			const completedActivitiesQuery = await db
-				.select({ completedActivities: count() })
-				.from(userLessonsProgress)
-				.where(
-					and(
-						eq(userLessonsProgress.lessonId, lesson.id),
-						eq(userLessonsProgress.isCompleted, true)
-					)
-				);
-			const completedActivitiesResult = completedActivitiesQuery;
-			const completedActivities =
-				completedActivitiesResult[0]?.completedActivities ?? 0;
-
-			return {
-				lessonId: lesson.id,
-				totalActivities,
-				completedActivities,
-				progress:
-					totalActivities > 0
-						? (completedActivities / totalActivities) * 100
-						: 0,
-				completed: completedActivities === totalActivities,
-			};
+export const getUserProgressByLessonId = async (
+	lessonId: number,
+	userId: string
+) => {
+	const progress = await db
+		.select({
+			progress: userLessonsProgress.progress,
 		})
-	);
+		.from(userLessonsProgress)
+		.where(
+			and(
+				eq(userLessonsProgress.lessonId, lessonId),
+				eq(userLessonsProgress.userId, userId)
+			)
+		)
+		.then((rows) => rows[0]?.progress);
 
-	const totalLessonsProgressId = progress.reduce(
-		(acc, curr) => acc + curr.lessonId,
-		0
-	);
-
-	return {
-		progress,
-		totalLessonsProgressId,
-	};
-};
+	return progress;
+}
 
 // Obtener una lección por ID
 export const getLessonById = async (

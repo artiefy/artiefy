@@ -131,7 +131,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		);
 	}, [user, lessonId]);
 
-	if (loading) return <div>Cargando leccion...</div>;
+	if (loading) {
+		return (
+			<main className="flex h-screen items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
+
 	if (error) return <div>Error: {error}</div>;
 	if (!lessons) return <div>No se encontró la leccion.</div>;
 

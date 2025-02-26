@@ -174,7 +174,17 @@ const RealizarActividad: React.FC = () => {
 		});
 	};
 
-	if (loading) return <div>Cargando...</div>;
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
+
 	if (error) return <div>Error: {error}</div>;
 
 	return (

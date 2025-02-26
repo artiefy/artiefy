@@ -124,12 +124,14 @@ const Page: React.FC = () => {
 				if (!actividadesResponse.ok) {
 					throw new Error('Error al obtener las actividades');
 				}
-				const actividadesData = await actividadesResponse.json();
+				const actividadesData = (await actividadesResponse.json()) as {
+					parametroId: number;
+				}[];
 
 				// Obtener los IDs de parámetros que ya están siendo usados
 				const parametrosUsados = actividadesData
-					.filter((actividad: any) => actividad.parametroId)
-					.map((actividad: any) => actividad.parametroId);
+					.filter((actividad: { parametroId: number }) => actividad.parametroId)
+					.map((actividad: { parametroId: number }) => actividad.parametroId);
 
 				setUsedParametros(parametrosUsados);
 
@@ -254,12 +256,12 @@ const Page: React.FC = () => {
 				}
 			);
 
-			const data = await response.json();
+			const data = await response.json() as { totalActual: number; disponible: number; detalles?: { name: string; porcentaje: number }[] };
 
 			if (!response.ok) {
 				toast({
 					title: 'Error de porcentaje',
-					description: data.error,
+					description: 'Error desconocido',
 					variant: 'destructive',
 				});
 				return false;
@@ -272,7 +274,7 @@ const Page: React.FC = () => {
 					Porcentaje total actual: ${data.totalActual}%
 					Porcentaje disponible: ${data.disponible}%
 					${data.detalles?.length ? '\nActividades asignadas:' : ''}
-					${data.detalles?.map((act: any) => `\n- ${act.name}: ${act.porcentaje}%`).join('') || ''}
+					${data.detalles?.map((act: { name: string; porcentaje: number }) => `\n- ${act.name}: ${act.porcentaje}%`).join('') ?? ''}
 				`,
 				variant: 'default',
 			});
@@ -289,7 +291,7 @@ const Page: React.FC = () => {
 		}
 	};
 
-	const handlePorcentajeChange = async (value: string) => {
+	const handlePorcentajeChange = (value: string) => {
 		const nuevoPorcentaje = parseFloat(value) || 0;
 
 		// Primero actualizamos el estado sin validar
@@ -423,11 +425,11 @@ const Page: React.FC = () => {
 			});
 
 			if (!actividadResponse.ok) {
-				const errorData = await actividadResponse.json();
-				throw new Error(errorData.error || 'Error al crear la actividad');
+				const errorData = await actividadResponse.json() as { error?: string };
+				throw new Error(errorData.error ?? 'Error al crear la actividad');
 			}
 
-			const actividadData = await actividadResponse.json();
+			const actividadData = (await actividadResponse.json()) as { id: number };
 			const actividadId = actividadData.id;
 
 			// Mostrar mensaje de éxito

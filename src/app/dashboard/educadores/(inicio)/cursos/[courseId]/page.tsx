@@ -1,6 +1,6 @@
 import CourseDetail from './CourseDetail';
 
-export default async function CourseDetailPage({
+export default function CourseDetailPage({
 	params,
 }: {
 	params: { id: string };

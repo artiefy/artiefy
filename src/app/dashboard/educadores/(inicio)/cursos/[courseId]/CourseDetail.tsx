@@ -95,7 +95,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}[]
 	>([]); // Nuevo estado para los parámetros
 
-	// Verifica que courseId no sea un array ni undefined, y lo convierte a número
 	const courseIdString = Array.isArray(courseIdUrl)
 		? courseIdUrl[0]
 		: courseIdUrl;
@@ -340,7 +339,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		setIsModalOpen(true);
 	};
 
-	if (loading) return <div>Cargando curso...</div>;
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
+
 	if (!course) return <div>No se encontró el curso.</div>;
 
 	const handleDelete = async (id: number) => {
@@ -386,7 +395,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}
 	};
 
-	if (error) return <div>Error: {error}</div>;
+	if (error) {
+		return (
+			<main className="flex h-screen items-center justify-center">
+				<div className="text-center">
+					<p className="text-lg font-semibold text-red-500">
+						Error tipo: {error}
+					</p>
+					<button
+						onClick={fetchCourse}
+						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+					>
+						Reintentar
+					</button>
+				</div>
+			</main>
+		);
+	}
 
 	const handlePredefinedColorChange = (color: string) => {
 		setSelectedColor(color);

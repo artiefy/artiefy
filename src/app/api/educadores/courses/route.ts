@@ -9,6 +9,7 @@ import {
 	updateCourse,
 	getTotalStudents,
 	getLessonsByCourseId,
+	getTotalDuration,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { ratelimit } from '~/server/ratelimit/ratelimit';
@@ -38,6 +39,7 @@ export async function GET(req: NextRequest) {
 	const { searchParams } = new URL(req.url);
 	const courseId = searchParams.get('courseId');
 	const userId = searchParams.get('userId');
+	console.log('CourseId en api route', courseId);
 
 	try {
 		let courses;
@@ -45,6 +47,7 @@ export async function GET(req: NextRequest) {
 			const course = await getCourseById(parseInt(courseId));
 			const totalStudents = await getTotalStudents(parseInt(courseId));
 			const lessons = await getLessonsByCourseId(parseInt(courseId));
+			const totalDuration = await getTotalDuration(parseInt(courseId));
 
 			if (!course) {
 				return respondWithError('Curso no encontrado', 404);
@@ -52,6 +55,7 @@ export async function GET(req: NextRequest) {
 			courses = {
 				...course,
 				totalStudents,
+				totalDuration,
 				lessons,
 			};
 		} else if (userId) {
@@ -59,6 +63,7 @@ export async function GET(req: NextRequest) {
 		} else {
 			courses = await getAllCourses();
 		}
+		console.log('Courses en api route', courses);
 		return NextResponse.json(courses);
 	} catch (error) {
 		console.error('Error:', error);

@@ -175,10 +175,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
 	};
 
-	// const navigateToLesson = (lessonId: number) => {
-	// 	window.location.href = `/dashboard/educadores/cursos/${courseIdNumber}/lecciones/${lessonId}`;
-	// };
-
 	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
 		if (savedColor) {
@@ -187,7 +183,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		console.log(`Color guardado ${savedColor}`);
 	}, [courseIdNumber]);
 
-	if (loading) return <div>Cargando curso...</div>;
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
+
 	if (error) return <div>Error: {error}</div>;
 	if (!course) return <div>No se encontró el curso.</div>;
 

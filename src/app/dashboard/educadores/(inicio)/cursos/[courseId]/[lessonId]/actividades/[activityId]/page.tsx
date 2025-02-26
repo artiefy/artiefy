@@ -211,15 +211,35 @@ const Page: React.FC = () => {
 		setEditingQuestion(null);
 		setQuestions([]); // Limpiar las preguntas para dejar de renderizar el formulario
 	};
-
-	if (loading)
+	if (loading) {
 		return (
-			<div className="animate-pulse text-center text-xl">
-				Cargando actividad...
-			</div>
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
 		);
-	if (error)
-		return <div className="text-center text-xl text-red-500">{error}</div>;
+	}
+
+	if (error) {
+		return (
+			<main className="flex h-screen items-center justify-center">
+				<div className="text-center">
+					<p className="text-lg font-semibold text-red-500">
+						Error tipo: {error}
+					</p>
+					<button
+						onClick={fetchActividad}
+						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+					>
+						Reintentar
+					</button>
+				</div>
+			</main>
+		);
+	}
+
 	if (!actividad)
 		return (
 			<div className="text-center text-xl">No se encontró la actividad.</div>

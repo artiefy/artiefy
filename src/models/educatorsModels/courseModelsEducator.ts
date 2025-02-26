@@ -1,4 +1,4 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, sum } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
 	courses,
@@ -143,6 +143,15 @@ export const getLessonsByCourseId = async (courseId: number) => {
 		})
 		.from(lessons)
 		.where(eq(lessons.courseId, courseId));
+};
+
+//obtener duracion total de todas las clases por courseId
+export const getTotalDuration = async (courseId: number) => {
+	const result = await db
+		.select({ totalDuration: sum(lessons.duration) })
+		.from(lessons)
+		.where(eq(lessons.courseId, courseId));
+	return result[0]?.totalDuration ?? 0;
 };
 
 // Obtener un curso por ID
