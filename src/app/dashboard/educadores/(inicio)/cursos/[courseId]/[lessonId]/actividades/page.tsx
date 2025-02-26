@@ -95,14 +95,13 @@ const Page: React.FC = () => {
 	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl;
 	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
 	const cursoIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
-	const [parametros, setParametros] = useState<Parametros[]>([]);
 	const router = useRouter(); // Usar useRouter de next/navigation
 	const [color, setColor] = useState<string>('#FFFFFF');
 	const [isActive, setIsActive] = useState(false);
 	const [fechaMaxima, setFechaMaxima] = useState(false);
 	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
 	const [showErrors, setShowErrors] = useState(false);
-	const [usedParametros, setUsedParametros] = useState<number[]>([]);
+	const [parametros, setParametros] = useState<Parametros[]>([]); // Definir setParametros
 
 	useEffect(() => {
 		const fetchParametros = async () => {
@@ -132,8 +131,6 @@ const Page: React.FC = () => {
 				const parametrosUsados = actividadesData
 					.filter((actividad: { parametroId: number }) => actividad.parametroId)
 					.map((actividad: { parametroId: number }) => actividad.parametroId);
-
-				setUsedParametros(parametrosUsados);
 
 				// Actualizar los parámetros marcando cuáles están en uso
 				const parametrosActualizados = parametrosData.map((parametro) => ({
@@ -256,7 +253,11 @@ const Page: React.FC = () => {
 				}
 			);
 
-			const data = await response.json() as { totalActual: number; disponible: number; detalles?: { name: string; porcentaje: number }[] };
+			const data = (await response.json()) as {
+				totalActual: number;
+				disponible: number;
+				detalles?: { name: string; porcentaje: number }[];
+			};
 
 			if (!response.ok) {
 				toast({
@@ -274,7 +275,7 @@ const Page: React.FC = () => {
 					Porcentaje total actual: ${data.totalActual}%
 					Porcentaje disponible: ${data.disponible}%
 					${data.detalles?.length ? '\nActividades asignadas:' : ''}
-					${data.detalles?.map((act: { name: string; porcentaje: number }) => `\n- ${act.name}: ${act.porcentaje}%`).join('') ?? ''}
+					${data.detalles?.map((act) => `\n- ${act.name}: ${act.porcentaje}%`).join('') ?? ''}
 				`,
 				variant: 'default',
 			});
@@ -343,21 +344,14 @@ const Page: React.FC = () => {
 
 		// Validaciones específicas para actividades revisadas
 		if (formData.revisada) {
-			if (!formData.parametro) {
+			if (
+				formData.parametro &&
+				(!formData.porcentaje || formData.porcentaje <= 0)
+			) {
 				toast({
 					title: 'Error',
 					description:
-						'Debe seleccionar un parámetro de evaluación para actividades revisadas',
-					variant: 'destructive',
-				});
-				return;
-			}
-
-			if (!formData.porcentaje || formData.porcentaje <= 0) {
-				toast({
-					title: 'Error',
-					description:
-						'Debe asignar un porcentaje mayor a 0 para actividades revisadas',
+						'Debe asignar un porcentaje mayor a 0 para actividades revisadas con parámetro',
 					variant: 'destructive',
 				});
 				return;
@@ -368,9 +362,12 @@ const Page: React.FC = () => {
 			name: !formData.name,
 			description: !formData.description,
 			type: !formData.type,
-			parametro: formData.revisada && !formData.parametro,
-			porcentaje:
-				formData.revisada && (!formData.porcentaje || formData.porcentaje <= 0),
+			parametro: false,
+			porcentaje: !!(
+				formData.revisada &&
+				formData.parametro &&
+				(!formData.porcentaje || formData.porcentaje <= 0)
+			),
 		};
 
 		setErrors(newErrors);
@@ -389,12 +386,7 @@ const Page: React.FC = () => {
 			if (!porcentajeValido) {
 				toast({
 					title: 'Error',
-					description: `
-					Porcentaje total actual: ${data.totalActual}%
-					Porcentaje disponible: ${data.disponible}%
-					${data.detalles?.length ? '\nActividades asignadas:' : ''}
-					${data.detalles?.map((act: any) => `\n- ${act.name}: ${act.porcentaje}%`).join('') || ''}
-				`,
+					description: 'El porcentaje asignado excede el disponible',
 					variant: 'destructive',
 				});
 				return;
@@ -425,7 +417,9 @@ const Page: React.FC = () => {
 			});
 
 			if (!actividadResponse.ok) {
-				const errorData = await actividadResponse.json() as { error?: string };
+				const errorData = (await actividadResponse.json()) as {
+					error?: string;
+				};
 				throw new Error(errorData.error ?? 'Error al crear la actividad');
 			}
 
@@ -615,60 +609,60 @@ const Page: React.FC = () => {
 												/>
 											</div>
 										</div>
-										<div className="my-4 flex flex-col">
-											<div className="flex flex-col">
-												<p className="font-bold">
-													¿La actividad tiene fecha de entrega?
-												</p>
-												<div className="flex space-x-2">
-													<label
-														htmlFor="toggleFechaMaxima"
-														className="relative inline-block h-8 w-16"
-													>
-														<input
-															type="checkbox"
-															id="toggleFechaMaxima"
-															checked={fechaMaxima}
-															onChange={handleToggleFechaMaxima}
-															className="absolute size-0"
-														/>
-														<span
-															className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
-														>
-															<span
-																className={`absolute left-1 top-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
-															></span>
-														</span>
-													</label>
-													<span className="mt-1 text-sm text-gray-400">
-														{fechaMaxima ? 'Si' : 'No'}
-													</span>
-												</div>
-											</div>
-											{fechaMaxima && (
-												<>
-													<span
-														className={`text-xl font-medium ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-													>
-														Fecha maxima de entrega:
-													</span>
-													<input
-														type="datetime-local"
-														className={`w-1/2 rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-														onChange={(e) =>
-															setFormData({
-																...formData,
-																fechaMaximaEntrega: e.target.value,
-															})
-														}
-													/>
-												</>
-											)}
-										</div>
 									</div>
 								)}
 							</>
 						)}
+						<div className="my-4 flex flex-col">
+							<div className="flex flex-col">
+								<p className="font-bold">
+									¿La actividad tiene fecha de entrega?
+								</p>
+								<div className="flex space-x-2">
+									<label
+										htmlFor="toggleFechaMaxima"
+										className="relative inline-block h-8 w-16"
+									>
+										<input
+											type="checkbox"
+											id="toggleFechaMaxima"
+											checked={fechaMaxima}
+											onChange={handleToggleFechaMaxima}
+											className="absolute size-0"
+										/>
+										<span
+											className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
+										>
+											<span
+												className={`absolute left-1 top-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
+											></span>
+										</span>
+									</label>
+									<span className="mt-1 text-sm text-gray-400">
+										{fechaMaxima ? 'Si' : 'No'}
+									</span>
+								</div>
+							</div>
+							{fechaMaxima && (
+								<>
+									<span
+										className={`text-xl font-medium ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+									>
+										Fecha maxima de entrega:
+									</span>
+									<input
+										type="datetime-local"
+										className={`w-1/2 rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												fechaMaximaEntrega: e.target.value,
+											})
+										}
+									/>
+								</>
+							)}
+						</div>
 						<Label
 							className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						>

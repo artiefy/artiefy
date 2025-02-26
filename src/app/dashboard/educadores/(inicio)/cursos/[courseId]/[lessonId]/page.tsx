@@ -140,19 +140,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		}
 	};
 
-	if (!lessons) return <div>No se encontró la leccion.</div>;
-
 	const handleDelete = async (id: string) => {
 		try {
 			// Eliminar imagen de portada
-			if (lessons.coverImageKey) {
+			if (lessons?.coverImageKey) {
 				const responseAwsImg = await fetch('/api/upload', {
 					method: 'DELETE',
 					headers: {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						key: lessons.coverImageKey,
+						key: lessons?.coverImageKey,
 					}),
 				});
 
@@ -162,14 +160,14 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 			}
 
 			// Eliminar video
-			if (lessons.coverVideoKey) {
+			if (lessons?.coverVideoKey) {
 				const responseAwsVideo = await fetch('/api/upload', {
 					method: 'DELETE',
 					headers: {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						key: lessons.coverVideoKey,
+						key: lessons?.coverVideoKey,
 					}),
 				});
 
@@ -179,9 +177,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 			}
 
 			// Eliminar archivos de recursos
-			if (lessons.resourceKey) {
+			if (lessons?.resourceKey) {
 				// Dividir la cadena de resourceKey en un array
-				const resourceKeys = lessons.resourceKey.split(',');
+				const resourceKeys = lessons?.resourceKey.split(',');
 
 				// Eliminar cada archivo de recurso
 				const deletePromises = resourceKeys.map((key) =>
@@ -220,7 +218,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
 			toast({
 				title: 'Clase eliminada',
-				description: `La clase ${lessons.title} ha sido eliminada exitosamente.`,
+				description: `La clase ${lessons?.title} ha sido eliminada exitosamente.`,
 				variant: 'default',
 			});
 
@@ -269,6 +267,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 			</main>
 		);
 	}
+
+	if (!lessons) return <div>No se encontró la leccion.</div>;
 
 	return (
 		<>
