@@ -76,13 +76,6 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
 	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
-	const lessonIdString = Array.isArray(lessonId) ? lessonId[0] : lessonId;
-	const lessonIdNumber = lessonIdString ? parseInt(lessonIdString) : null;
-
-	console.log('lessonId:', lessonId);
-	console.log('lessonIdString:', lessonIdString);
-	console.log('lessonIdNumber:', lessonIdNumber);
-
 	useEffect(() => {
 		const savedColor = localStorage.getItem(
 			`selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
@@ -93,13 +86,15 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 	}, [courseId]);
 
 	useEffect(() => {
-		if (!lessonIdNumber) {
+		if (!lessonId) {
 			setError('lessonId is null or invalid');
 			setLoading(false);
 			return;
 		}
 
-		if (isNaN(lessonIdNumber) || lessonIdNumber <= 0) {
+		const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
+		const lessonsIdNumber = parseInt(lessonsId2 ?? '');
+		if (isNaN(lessonsIdNumber) || lessonsIdNumber <= 0) {
 			setError('lessonId is not a valid number');
 			setLoading(false);
 			return;
@@ -111,7 +106,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				setLoading(true);
 				setError(null);
 				const response = await fetch(
-					`/api/educadores/lessons/${lessonIdNumber}`
+					`/api/educadores/lessons/${lessonsIdNumber}`
 				);
 				if (response.ok) {
 					const data = (await response.json()) as Lessons;
@@ -143,7 +138,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		fetchLessons().catch((error) =>
 			console.error('Error fetching lessons:', error)
 		);
-	}, [user, lessonIdNumber]);
+	}, [user, lessonId]);
 
 	if (loading) return <div>Cargando leccion...</div>;
 	if (error) return <div>Error: {error}</div>;
@@ -392,9 +387,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 							<div
 								className={`pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 							>
-								<h2 className="text-2xl font-bold text-primary">
-									Información de la clase
-								</h2>
+								<h2 className="text-2xl font-bold">Información de la clase</h2>
 								<br />
 								<div className="grid grid-cols-2">
 									<div className="flex flex-col">

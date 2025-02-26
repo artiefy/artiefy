@@ -157,7 +157,7 @@ function App() {
 				variant: 'destructive',
 			});
 		}
-	}, [courseIdNumber, fetchCourses]);
+	}, [courses, courseIdNumber, fetchCourses]);
 
 	useEffect(() => {
 		if (user && courseIdNumber) {
@@ -173,7 +173,7 @@ function App() {
 				console.error('Error fetching user progress:', error)
 			);
 		}
-	}, [user, fetchUserProgress, courses]);
+	}, [user, courses, fetchUserProgress]);
 
 	const averageProgress = courses
 		? calculateAverageProgress(courses.lessons)
@@ -295,7 +295,7 @@ function App() {
 								<h3 className="my-2 ml-4 text-xl font-semibold text-gray-900">
 									Progreso de las Lecciones
 								</h3>
-								<ul className="space-y-4">
+								<ul className="flex flex-col-reverse space-y-4">
 									{courses.lessons.map((lesson) => (
 										<li
 											key={lesson.id}

@@ -26,9 +26,7 @@ export async function GET(
 			);
 		}
 
-		return NextResponse.json({
-			lesson: lesson || {},
-		});
+		return NextResponse.json(lesson);
 	} catch (error) {
 		console.error('Error al obtener el curso:', error);
 		return NextResponse.json(
