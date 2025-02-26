@@ -27,9 +27,10 @@ export async function GET(request: Request) {
 		const filteredCourses = courses.map((course) => ({
 			id: course.id,
 			title: course.title,
+			coverImageKey: course.coverImageKey ?? null, // ✅ Mantiene `coverImageKey` sin modificar
 			coverImage: course.coverImageKey
-				? `/path/to/images/${course.coverImageKey}` // Si `coverImageKey` tiene una ruta completa o clave, lo muestra
-				: '/default-course-image.png', // Si no, muestra una imagen predeterminada
+				? `/path/to/images/${course.coverImageKey}`
+				: '/default-course-image.png',
 		}));
 
 		// Log para ver los cursos filtrados antes de devolverlos

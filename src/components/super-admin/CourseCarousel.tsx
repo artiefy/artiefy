@@ -48,7 +48,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
 							{/* Imagen */}
 							{course.coverImageKey ? (
 								<Image
-									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${encodeURIComponent(course.coverImageKey)}`}
 									alt={course.title}
 									width={256}
 									height={144}

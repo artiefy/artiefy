@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 
-// ✅ Definimos la interfaz para los datos de usuario que esperamos de Clerk
 interface ClerkUserResponse {
 	id: string;
 	first_name: string;
 	last_name: string;
 	email_addresses: { email_address: string }[];
-	created_at: string; // La fecha de creación en formato string
-	profile_image_url: string; // URL de la imagen de perfil
-	public_metadata?: { role?: string; status?: string; permissions?: string[] }; // Los metadatos públicos, que pueden incluir el rol, estado y permisos
+	created_at: string; 
+	profile_image_url: string; 
+	public_metadata?: { role?: string; status?: string; permissions?: string[] };
 }
 
 
@@ -25,25 +24,25 @@ const getClerkUser = async (userId: string) => {
 			throw new Error(`Error al obtener usuario: ${res.statusText}`);
 		}
 
-		// ✅ Tipamos correctamente la respuesta de Clerk
+		// Tipamos correctamente la respuesta de Clerk
 		const userData: ClerkUserResponse = (await res.json()) as ClerkUserResponse;
 
 		// Verificar el valor de created_at que llega de Clerk
 		console.log('Fecha de creación recibida:', userData.created_at);
 
-		// ✅ Asegurarnos de que la fecha sea válida
+		// Asegurarnos de que la fecha sea válida
 		const createdAt = new Date(userData.created_at);
 		const formattedCreatedAt =
 			createdAt instanceof Date && !isNaN(createdAt.getTime())
-				? createdAt.toLocaleDateString() // Si la fecha es válida, la formateamos
-				: 'Fecha no disponible'; // Si no es válida, mostramos un valor predeterminado
-		console.log('Fecha formateada:', formattedCreatedAt); // Ver el resultado de la conversión
+				? createdAt.toLocaleDateString() 
+				: 'Fecha no disponible'; 
+		console.log('Fecha formateada:', formattedCreatedAt); 
 
-		// ✅ Obtener rol y estado de los metadatos
+		// Obtener rol y estado de los metadatos
 		const role = userData.public_metadata?.role ?? 'Sin rol';
-		const status = userData.public_metadata?.status ?? 'Activo'; // Usamos "Activo" si no existe un estado
+		const status = userData.public_metadata?.status ?? 'Activo'; 
 
-		// Extraer permisos y asegurarse de que es un array de strings
+		
 		const permissions: string[] = Array.isArray(
 			userData.public_metadata?.permissions
 		)
@@ -59,7 +58,7 @@ const getClerkUser = async (userId: string) => {
 			role,
 			status,
 			password: 'No disponible', // Clerk no expone la contraseña
-			permissions, // Ahora es seguro y correctamente tipado
+			permissions, 
 		};
 
 		return user;
@@ -69,13 +68,12 @@ const getClerkUser = async (userId: string) => {
 	}
 };
 
-// ✅ API Route para obtener detalles de un usuario por ID
+// API Route para obtener detalles de un usuario por ID
 export async function GET(request: Request) {
 	try {
-		const url = new URL(request.url); // Accede a la URL de la solicitud
-		const userId = url.searchParams.get('id'); // Extrae el parámetro "id" desde la URL
+		const url = new URL(request.url); 
+		const userId = url.searchParams.get('id'); 
 
-		console.log('ID recibido:', userId); // Agregar un log para verificar que el parámetro está presente
 
 		if (!userId) {
 			return NextResponse.json(

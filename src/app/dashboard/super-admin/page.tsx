@@ -340,6 +340,10 @@ export default function AdminDashboard() {
 			}
 
 			// Mapear los cursos
+			console.log(
+				'📌 Cursos obtenidos en `handleViewUser`:',
+				coursesData.courses
+			);
 			const courses = coursesData.courses.map((course) => ({
 				id: course.id,
 				title: course.title || 'Sin título',
