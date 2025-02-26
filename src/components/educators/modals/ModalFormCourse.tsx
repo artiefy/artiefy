@@ -29,6 +29,7 @@ interface CourseFormProps {
 		categoryid: number,
 		modalidadesid: number,
 		dificultadid: number,
+		rating: number, // Añadir esta línea
 		requerimientos: string,
 		addParametros: boolean,
 		coverImageKey: string, // Agregar coverImageKey
@@ -66,6 +67,8 @@ interface CourseFormProps {
 	) => void;
 	isOpen: boolean;
 	onCloseAction: () => void;
+	rating: number; // Añadir esta línea
+	setRating: (rating: number) => void; // Añadir esta línea
 }
 
 const ModalFormCourse: React.FC<CourseFormProps> = ({
@@ -78,6 +81,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	setDescription,
 	requerimientos,
 	setRequerimientos,
+	rating, // Añadir esta línea
+	setRating, // Añadir esta línea
 	categoryid,
 	setCategoryid,
 	modalidadesid,
@@ -103,6 +108,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		categoryid: false,
 		category: false,
 		modalidadesid: false,
+		rating: false, // Añadir esta línea
 		dificultadid: false,
 		file: false,
 		dificultad: false,
@@ -231,6 +237,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			modalidadesid: !editingCourseId && !modalidadesid,
 			dificultadid: !editingCourseId && !dificultadid,
 			dificultad: false,
+			rating: !editingCourseId && !rating, // Añadir esta línea
 			file: !editingCourseId && !file && !currentCoverImageKey,
 			modalidad: false,
 			requerimientos: !editingCourseId && !requerimientos,
@@ -247,6 +254,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				modifiedFields.has('modalidadesid') && !modalidadesid;
 			newErrors.requerimientos =
 				modifiedFields.has('requerimientos') && !requerimientos;
+			newErrors.rating = modifiedFields.has('rating') && !rating; // Añadir esta línea
 		}
 
 		// Validar que la suma de los porcentajes sea igual a 100
@@ -326,6 +334,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				categoryid,
 				modalidadesid,
 				dificultadid,
+				rating, // Añadir esta línea
 				requerimientos,
 				addParametros,
 				coverImageKey,
@@ -375,6 +384,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				break;
 			case 'modalidadesid':
 				setModalidadesid(value as number);
+				break;
+			case 'rating':
+				setRating(value as number);
 				break;
 			case 'dificultadid':
 				setDificultadid(value as number);
@@ -440,6 +452,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setDescription(description);
 			setRequerimientos(requerimientos);
 			setCategoryid(categoryid);
+			setRating(rating); // Añadir esta línea
 			setModalidadesid(modalidadesid);
 			setDificultadid(dificultadid);
 			setCoverImage(coverImageKey);
@@ -459,6 +472,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setModalidadesid(0);
 			setDificultadid(0);
 			setCoverImage('');
+			setRating(0);
 			setParametrosAction([]);
 		}
 	}, [isOpen, editingCourseId]);
@@ -577,6 +591,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								</p>
 							)}
 						</div>
+					</div>
+					<div>
+						<label
+							htmlFor="rating"
+							className="text-lg font-medium text-primary"
+						>
+							Rating
+						</label>
+						<input
+							type="number"
+							value={rating}
+							onChange={(e) => setRating(Number(e.target.value))}
+							className="mt-1 w-full rounded border p-2 text-black outline-none"
+						/>
 					</div>
 					<label
 						htmlFor="instructor"

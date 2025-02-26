@@ -100,48 +100,46 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 			return;
 		}
 
-		const fetchLessons = async () => {
-			if (!user) return;
-			try {
-				setLoading(true);
-				setError(null);
-				const response = await fetch(
-					`/api/educadores/lessons/${lessonsIdNumber}`
-				);
-				if (response.ok) {
-					const data = (await response.json()) as Lessons;
-					setLessons(data);
-				} else {
-					const errorData = (await response.json()) as { error?: string };
-					const errorMessage = errorData.error ?? response.statusText;
-					setError(`Error al cargar la leccion: ${errorMessage}`);
-					toast({
-						title: 'Error',
-						description: `No se pudo cargar la leccion: ${errorMessage}`,
-						variant: 'destructive',
-					});
-				}
-			} catch (error) {
-				const errorMessage =
-					error instanceof Error ? error.message : 'Error desconocido';
+		fetchLessons(lessonsIdNumber).catch((error) =>
+			console.error('Error fetching lessons:', error)
+		);
+	}, [user, lessonId]);
+
+	const fetchLessons = async (lessonsIdNumber: number) => {
+		if (!user) return;
+		try {
+			setLoading(true);
+			setError(null);
+			const response = await fetch(
+				`/api/educadores/lessons/${lessonsIdNumber}`
+			);
+			if (response.ok) {
+				const data = (await response.json()) as Lessons;
+				setLessons(data);
+			} else {
+				const errorData = (await response.json()) as { error?: string };
+				const errorMessage = errorData.error ?? response.statusText;
 				setError(`Error al cargar la leccion: ${errorMessage}`);
 				toast({
 					title: 'Error',
 					description: `No se pudo cargar la leccion: ${errorMessage}`,
 					variant: 'destructive',
 				});
-			} finally {
-				setLoading(false);
 			}
-		};
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Error desconocido';
+			setError(`Error al cargar la leccion: ${errorMessage}`);
+			toast({
+				title: 'Error',
+				description: `No se pudo cargar la leccion: ${errorMessage}`,
+				variant: 'destructive',
+			});
+		} finally {
+			setLoading(false);
+		}
+	};
 
-		fetchLessons().catch((error) =>
-			console.error('Error fetching lessons:', error)
-		);
-	}, [user, lessonId]);
-
-	if (loading) return <div>Cargando leccion...</div>;
-	if (error) return <div>Error: {error}</div>;
 	if (!lessons) return <div>No se encontró la leccion.</div>;
 
 	const handleDelete = async (id: string) => {
@@ -236,6 +234,41 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 			});
 		}
 	};
+
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
+
+	if (error) {
+		return (
+			<main className="flex h-screen items-center justify-center">
+				<div className="text-center">
+					<p className="text-lg font-semibold text-red-500">
+						Error tipo: {error}
+					</p>
+					<button
+						onClick={async () => {
+							if (lessonId) {
+								await fetchLessons(
+									parseInt(Array.isArray(lessonId) ? lessonId[0] : lessonId)
+								);
+							}
+						}}
+						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+					>
+						Reintentar
+					</button>
+				</div>
+			</main>
+		);
+	}
 
 	return (
 		<>

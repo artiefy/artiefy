@@ -31,6 +31,7 @@ export interface CourseModel {
 	dificultadid: string; // Add this line
 	requerimientos: string;
 	totalParametros: number; // Add this line
+	rating: number; // Añadir esta línea
 }
 
 export function LoadingCourses() {
@@ -109,18 +110,19 @@ export default function Page() {
 	}, [user, fetchCourses]);
 
 	const handleCreateOrEditCourse = async (
-		id: string,
-		title: string,
-		description: string,
-		file: File | null,
-		categoryid: number,
-		modalidadesid: number,
-		dificultadid: number,
-		requerimientos: string,
-		addParametros: boolean, // Cambiar options por addParametros
-		coverImageKey: string,
-		fileName: string // Nuevo parámetro
-	) => {
+			id: string,
+			title: string,
+			description: string,
+			file: File | null,
+			categoryid: number,
+			modalidadesid: number,
+			dificultadid: number,
+			rating: number, // Añadir esta línea
+			requerimientos: string,
+			addParametros: boolean, // Cambiar options por addParametros
+			coverImageKey: string,
+			fileName: string // Nuevo parámetro
+		) => {
 		if (!user) return;
 
 		// Validar que haya al menos un parámetro si addParametros es true
@@ -196,6 +198,7 @@ export default function Page() {
 				creatorId: user.id,
 				dificultadid,
 				requerimientos,
+				rating, // Añadir esta línea
 			}),
 		});
 
@@ -368,6 +371,7 @@ export default function Page() {
 												dificultadid: '',
 												requerimientos: '',
 												totalParametros: 0,
+												rating: 0, // Añadir esta línea
 											}
 								)
 							}
@@ -389,6 +393,7 @@ export default function Page() {
 												dificultadid: '',
 												requerimientos: '',
 												totalParametros: 0,
+												rating: 0, // Añadir esta línea
 											}
 								)
 							}
@@ -410,6 +415,7 @@ export default function Page() {
 												dificultadid: '',
 												requerimientos,
 												totalParametros: 0,
+												rating: 0, // Añadir esta línea
 											}
 								)
 							}
@@ -431,6 +437,7 @@ export default function Page() {
 												dificultadid: '',
 												requerimientos: '',
 												totalParametros: 0,
+												rating: 0, // Añadir esta línea
 											}
 								)
 							}
@@ -452,6 +459,7 @@ export default function Page() {
 												dificultadid: '',
 												requerimientos: '',
 												totalParametros: 0,
+												rating: 0, // Añadir esta línea
 											}
 								)
 							}
@@ -473,6 +481,7 @@ export default function Page() {
 												dificultadid: String(dificultadid),
 												requerimientos: '',
 												totalParametros: 0,
+												rating: 0, // Añadir esta línea
 											}
 								)
 							}
@@ -494,6 +503,7 @@ export default function Page() {
 												dificultadid: '',
 												requerimientos: '',
 												totalParametros: 0,
+												rating: 0, // Añadir esta línea
 											}
 								)
 							}
@@ -504,6 +514,28 @@ export default function Page() {
 							setParametrosAction={setParametrosList}
 							isOpen={isModalOpen}
 							onCloseAction={handleCloseModal}
+							rating={editingCourse?.rating ?? 0} // Añadir esta línea
+							setRating={(rating: number) =>
+								setEditingCourse((prev) =>
+									prev
+										? { ...prev, rating }
+										: {
+												id: 0,
+												title: '',
+												description: '',
+												categoryid: '',
+												modalidadesid: '',
+												createdAt: '',
+												instructor: '',
+												coverImageKey: '',
+												creatorId: '',
+												dificultadid: '',
+												requerimientos: '',
+												totalParametros: 0,
+												rating, // Añadir esta línea
+											}
+								)
+							}
 						/>
 					)}
 				</div>

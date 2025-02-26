@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
 			categoryid: number;
 			modalidadesid: number;
 			dificultadid: number;
+			rating: number;
 			creatorId: string;
 			instructor: string;
 			requerimientos: string;
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
+			rating,
 			dificultadid,
 			creatorId,
 			instructor,
@@ -122,6 +124,7 @@ export async function POST(request: NextRequest) {
 			creatorId: userId,
 			coverImageKey,
 			categoryid,
+			rating,
 			modalidadesid,
 			dificultadid,
 			instructor,
@@ -134,6 +137,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			creatorId,
+			rating,
 			modalidadesid,
 			dificultadid,
 			instructor,

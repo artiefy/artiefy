@@ -44,6 +44,7 @@ interface Course {
 	createdAt: string;
 	updatedAt: string;
 	requerimientos: string;
+	rating: number; // Añadir esta línea
 }
 interface CourseDetailProps {
 	courseId: number;
@@ -94,6 +95,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			porcentaje: number;
 		}[]
 	>([]); // Nuevo estado para los parámetros
+	const [editRating, setEditRating] = useState(0); // Añadir esta línea
 
 	const courseIdString = Array.isArray(courseIdUrl)
 		? courseIdUrl[0]
@@ -172,7 +174,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		requerimientos: string,
 		addParametros: boolean, // Nuevo parámetro
 		coverImageKey: string,
-		fileName: string // Nuevo parámetro
+		fileName: string, // Nuevo parámetro
+		rating: number // Añadir esta línea
 	) => {
 		try {
 			let coverImageKey = course?.coverImageKey ?? '';
@@ -236,6 +239,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						dificultadid,
 						instructor: course?.instructor,
 						requerimientos,
+						rating, // Añadir esta línea
 					}),
 				}
 			);
@@ -336,6 +340,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				porcentaje: parametro.porcentaje,
 			}))
 		);
+		setEditRating(course.rating); // Añadir esta línea
 		setIsModalOpen(true);
 	};
 
@@ -657,6 +662,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					categoryid: number,
 					modalidadesid: number,
 					dificultadid: number,
+					rating: number, // Añadir esta línea
 					requerimientos: string,
 					addParametros: boolean, // Nuevo parámetro
 					coverImageKey: string,
@@ -673,7 +679,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						requerimientos,
 						addParametros, // Pasar el nuevo parámetro
 						coverImageKey,
-						fileName // Pasar el nuevo parámetro
+						fileName, // Pasar el nuevo parámetro
+						rating // Añadir esta línea
 					)
 				}
 				editingCourseId={course.id}
@@ -685,7 +692,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				dificultadid={editDificultad}
 				coverImageKey={editCoverImageKey}
 				parametros={editParametros}
-				uploading={false}
+				rating={editRating} // Añadir esta línea
 				setTitle={setEditTitle}
 				setDescription={setEditDescription}
 				setRequerimientos={setEditRequerimientos}
@@ -701,7 +708,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						porcentaje: number;
 					}[]
 				) => setEditParametros(parametros)}
+				setRating={setEditRating} // Añadir esta línea
 				onCloseAction={() => setIsModalOpen(false)}
+				uploading={false} // Añadir esta línea
 			/>
 		</div>
 	);

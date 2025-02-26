@@ -67,6 +67,7 @@ export const createCourse = async ({
 	dificultadid,
 	instructor,
 	creatorId,
+	rating,
 	requerimientos,
 }: {
 	title: string;
@@ -77,6 +78,7 @@ export const createCourse = async ({
 	dificultadid: number;
 	instructor: string;
 	creatorId: string;
+	rating: number;
 	requerimientos: string;
 }) => {
 	const [insertedCourse] = await db
@@ -89,6 +91,7 @@ export const createCourse = async ({
 			modalidadesid,
 			dificultadid,
 			instructor,
+			rating,
 			creatorId,
 			requerimientos,
 		})
@@ -108,6 +111,7 @@ export const getCoursesByUserId = async (userId: string) => {
 			modalidadesid: modalidades.name,
 			dificultadid: dificultad.name,
 			instructor: courses.instructor,
+			rating:courses.rating,
 			creatorId: courses.creatorId,
 			createdAt: courses.createdAt,
 			updatedAt: courses.updatedAt,
