@@ -182,106 +182,120 @@ export default function Home() {
 					<BreadcrumbSeparator />
 				</BreadcrumbList>
 			</Breadcrumb>
-			<div className="mb-3 rounded-lg bg-white shadow">
-				<div className="mx-auto flex max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-					<GraduationCap className="h-14 w-12 text-primary" />
-					<div className="ml-4 flex flex-col">
-						<h1 className="text-2xl font-bold text-gray-900">
-							<span className="text-primary">Artiefy</span> panel de control
-						</h1>
-						<p className="text-gray-500">
-							¡Bienvenido al panel de vuelta, educador: {user?.firstName}!
-						</p>
+			<div className="group relative">
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+				<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 py-4 text-white transition-transform duration-300 ease-in-out zoom-in">
+					<div className="flex w-full rounded-lg px-4 sm:px-6 lg:px-8">
+						<GraduationCap className="h-14 w-12 text-primary" />
+						<div className="ml-4 flex flex-col">
+							<h1 className="text-2xl font-bold text-gray-200">
+								<span className="text-primary">Artiefy</span> panel de control
+							</h1>
+							<p className="text-white">
+								¡Bienvenido al panel de vuelta, educador: {user?.firstName}!
+							</p>
+						</div>
 					</div>
 				</div>
 			</div>
-
-			<div className="mx-auto max-w-7xl px-4 py-2 sm:px-6 lg:px-0">
+			<div className="mx-auto mt-4 max-w-7xl p-4 sm:px-6 lg:px-0">
 				<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 					{/* Average Grade Card */}
-					<div className="overflow-hidden rounded-lg bg-white shadow">
-						<div className="p-5">
-							<div className="flex items-center">
-								<div className="shrink-0">
-									<FaGraduationCap className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
-								</div>
-								<div className="ml-5 w-0 flex-1">
-									<dl>
-										<dt className="truncate text-sm font-medium text-gray-500">
-											Promedio General de estudiantes
-										</dt>
-										<dd className="flex items-baseline">
-											<div className="text-2xl font-semibold text-gray-900">
-												{stats.totalEnrollments ?? 0}
-											</div>
-										</dd>
-									</dl>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div className="overflow-hidden rounded-lg bg-white shadow">
-						<div className="p-5">
-							<div className="flex items-center">
-								<div className="shrink-0">
-									<FaBook className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
-								</div>
-								<div className="ml-5 w-0 flex-1">
-									<dl>
-										<dt className="truncate text-sm font-medium text-gray-500">
-											Total de Cursos
-										</dt>
-										<dd className="flex items-baseline">
-											<div className="text-2xl font-semibold text-gray-900">
-												{stats.totalCourses ?? 0}
-											</div>
-										</dd>
-									</dl>
+					<div className="group relative">
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
+							<div className="p-5">
+								<div className="flex items-center">
+									<div className="shrink-0">
+										<FaGraduationCap className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
+									</div>
+									<div className="ml-5 w-0 flex-1">
+										<dl>
+											<dt className="truncate text-sm font-medium text-gray-300">
+												Promedio General de estudiantes
+											</dt>
+											<dd className="flex items-baseline">
+												<div className="text-2xl font-semibold text-white">
+													{stats.totalEnrollments ?? 0}
+												</div>
+											</dd>
+										</dl>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<div className="overflow-hidden rounded-lg bg-white shadow">
-						<div className="p-5">
-							<div className="flex items-center">
-								<div className="shrink-0">
-									<FaChalkboardTeacher className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
-								</div>
-								<div className="ml-5 w-0 flex-1">
-									<dl>
-										<dt className="truncate text-sm font-medium text-gray-500">
-											Total de Clases
-										</dt>
-										<dd className="flex items-baseline">
-											<div className="text-2xl font-semibold text-gray-900">
-												{stats.totalLessons ?? 0}
-											</div>
-										</dd>
-									</dl>
+					<div className="group relative">
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
+							<div className="p-5">
+								<div className="flex items-center">
+									<div className="shrink-0">
+										<FaBook className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
+									</div>
+									<div className="ml-5 w-0 flex-1">
+										<dl>
+											<dt className="truncate text-sm font-medium text-gray-200">
+												Total de Cursos
+											</dt>
+											<dd className="flex items-baseline">
+												<div className="text-2xl font-semibold text-white">
+													{stats.totalCourses ?? 0}
+												</div>
+											</dd>
+										</dl>
+									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 
-					<div className="overflow-hidden rounded-lg bg-white shadow">
-						<div className="p-5">
-							<div className="flex items-center">
-								<div className="shrink-0">
-									<FaClock className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
+					<div className="group relative">
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
+							<div className="p-5">
+								<div className="flex items-center">
+									<div className="shrink-0">
+										<FaChalkboardTeacher className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
+									</div>
+									<div className="ml-5 w-0 flex-1">
+										<dl>
+											<dt className="truncate text-sm font-medium text-gray-200">
+												Total de Clases
+											</dt>
+											<dd className="flex items-baseline">
+												<div className="text-2xl font-semibold text-white">
+													{stats.totalLessons ?? 0}
+												</div>
+											</dd>
+										</dl>
+									</div>
 								</div>
-								<div className="ml-5 w-0 flex-1">
-									<dl>
-										<dt className="truncate text-sm font-medium text-gray-500">
-											Duración Total de las clases
-										</dt>
-										<dd className="flex items-baseline">
-											<div className="text-2xl font-semibold text-gray-900">
-												{stats.totalDuration ?? 0}
-											</div>
-										</dd>
-									</dl>
+							</div>
+						</div>
+					</div>
+
+					<div className="group relative">
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
+							<div className="p-5">
+								<div className="flex items-center">
+									<div className="shrink-0">
+										<FaClock className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
+									</div>
+									<div className="ml-5 w-0 flex-1">
+										<dl>
+											<dt className="truncate text-sm font-medium text-gray-200">
+												Duración Total de las clases
+											</dt>
+											<dd className="flex items-baseline">
+												<div className="text-2xl font-semibold text-white">
+													{stats.totalDuration ?? 0}
+												</div>
+											</dd>
+										</dl>
+									</div>
 								</div>
 							</div>
 						</div>

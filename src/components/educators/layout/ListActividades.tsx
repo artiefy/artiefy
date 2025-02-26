@@ -44,7 +44,10 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	const lessonIdString = lessonId.toString();
+	const lessonIdString = lessonId ? lessonId.toString() : '';
+
+	console.log('lessonId:', lessonId);
+	console.log('lessonIdString:', lessonIdString);
 
 	const getContrastYIQ = (hexcolor: string) => {
 		hexcolor = hexcolor.replace('#', '');
@@ -57,7 +60,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 
 	// Fetch de las lecciones cuando el courseId cambia
 	useEffect(() => {
-		if (lessonId) {
+		if (lessonIdString) {
 			const fetchLessons = async () => {
 				setLoading(true);
 				setError(null);
@@ -85,7 +88,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 
 			void fetchLessons();
 		}
-	}, [lessonId]); // Este efecto se ejecuta cada vez que el courseId cambia
+	}, [lessonIdString]); // Este efecto se ejecuta cada vez que el courseId cambia
 
 	// Condicionales de renderizado: carga, error, lecciones vacías
 	if (loading) {

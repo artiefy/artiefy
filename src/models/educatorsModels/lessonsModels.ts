@@ -287,3 +287,33 @@ export const deleteLessonsByCourseId = async (courseId: number) => {
 	// Elimina todas las lecciones asociadas a un curso por su ID
 	await db.delete(lessons).where(eq(lessons.courseId, courseId));
 };
+
+export const getUserProgressByCourseId = async (courseId: number) => {
+	// Obtener todas las lecciones vinculadas al curso
+	const lessonsIds = await db
+		.select({ id: lessons.id })
+		.from(lessons)
+		.where(eq(lessons.courseId, courseId))
+		.then((rows) => rows.map((row) => row.id));
+
+	// Obtener el progreso de los usuarios para las lecciones obtenidas
+	const progress = await db
+		.select({
+			lessonId: userLessonsProgress.lessonId,
+			userId: userLessonsProgress.userId,
+			progress: userLessonsProgress.progress,
+		})
+		.from(userLessonsProgress)
+		.where(inArray(userLessonsProgress.lessonId, lessonsIds));
+
+	// Transformar los datos en un formato más conveniente
+	const progressByLesson: Record<number, Record<string, number>> = {};
+	progress.forEach(({ lessonId, userId, progress }) => {
+		if (!progressByLesson[lessonId]) {
+			progressByLesson[lessonId] = {};
+		}
+		progressByLesson[lessonId][userId] = progress;
+	});
+
+	return progressByLesson;
+};

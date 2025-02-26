@@ -8,7 +8,6 @@ import {
 	Calendar,
 	Trophy,
 	Star,
-	ChevronDown,
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import {
@@ -60,14 +59,19 @@ function calculateAverageProgress(lessons: Course['lessons']) {
 	return lessons.length ? totalProgress / lessons.length : 0;
 }
 
-async function fetchUserProgressFromAPI(courseId: number, userId: string) {
+async function fetchUserProgressFromAPI(
+	courseId: number
+): Promise<Record<number, Record<string, number>>> {
 	const response = await fetch(
-		`/api/educadores/user-progress?courseId=${courseId}&userId=${userId}`
+		`/api/educadores/progressUser?courseId=${courseId}`
 	);
 	if (response.ok) {
 		const contentType = response.headers.get('content-type');
-		if (contentType && contentType.includes('application/json')) {
-			const data = await response.json();
+		if (contentType?.includes('application/json')) {
+			const data = (await response.json()) as Record<
+				number,
+				Record<string, number>
+			>;
 			return data;
 		} else {
 			throw new Error('Respuesta no es JSON');
@@ -85,7 +89,6 @@ function App() {
 	const { user } = useUser();
 	const params = useParams();
 	const courseIdNumber = params?.id ? Number(params.id) : 0;
-	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [courses, setCourses] = useState<Course | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -126,19 +129,23 @@ function App() {
 	}, [user, courseIdNumber]);
 
 	const fetchUserProgress = useCallback(async () => {
-		if (!user || !courses) return;
+		if (!courses) return;
 		try {
-			const userProgress = await fetchUserProgressFromAPI(
-				courseIdNumber,
-				user.id
-			);
-			const updatedLessons = courses.lessons.map((lesson) => ({
-				...lesson,
-				progress:
-					userProgress[lesson.id] !== undefined
-						? userProgress[lesson.id]
-						: lesson.progress,
-			}));
+			const userProgress: Record<
+				number,
+				Record<string, number>
+			> = await fetchUserProgressFromAPI(courseIdNumber);
+			const updatedLessons = courses.lessons.map((lesson) => {
+				const lessonProgress = userProgress[lesson.id];
+				const averageProgress = lessonProgress
+					? Object.values(lessonProgress).reduce((a, b) => a + b, 0) /
+						Object.values(lessonProgress).length
+					: 0;
+				return {
+					...lesson,
+					progress: averageProgress,
+				};
+			});
 			setCourses((prevCourses) =>
 				prevCourses ? { ...prevCourses, lessons: updatedLessons } : null
 			);
@@ -146,11 +153,11 @@ function App() {
 			console.error('Error fetching user progress:', error);
 			toast({
 				title: 'Error',
-				description: `No se pudo obtener el progreso del usuario: ${error.message}`,
+				description: `No se pudo obtener el progreso del usuario: ${error instanceof Error ? error.message : 'Unknown error'}`,
 				variant: 'destructive',
 			});
 		}
-	}, [user, courses, courseIdNumber]);
+	}, [courseIdNumber, fetchCourses]);
 
 	useEffect(() => {
 		if (user && courseIdNumber) {
@@ -158,7 +165,7 @@ function App() {
 				console.error('Error fetching courses:', error)
 			);
 		}
-	}, [user, courseIdNumber]);
+	}, [user, courseIdNumber, fetchCourses]);
 
 	useEffect(() => {
 		if (user && courses) {
@@ -166,7 +173,7 @@ function App() {
 				console.error('Error fetching user progress:', error)
 			);
 		}
-	}, [user, courses]);
+	}, [user, fetchUserProgress, courses]);
 
 	const averageProgress = courses
 		? calculateAverageProgress(courses.lessons)
@@ -231,7 +238,9 @@ function App() {
 							<div className="flex items-center">
 								<GraduationCap className="size-8 text-primary" />
 								<h1 className="ml-2 text-2xl font-bold text-gray-900">
-									<span className="text-primary">Panel de control curso:</span>{' '}
+									<span className="text-primary">
+										Panel de control del curso:
+									</span>{' '}
 									{courses?.title}
 								</h1>
 							</div>
@@ -240,24 +249,15 @@ function App() {
 				</header>
 				{/* Main Content */}
 				<main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-					{/* Course Selector */}
-					<div className="relative mb-6">
-						<button
-							onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-							className="flex w-full justify-between rounded-lg bg-white p-4 shadow-md transition-colors hover:bg-gray-50"
-						>
-							<div>
-								<h2 className="justify-start text-2xl font-bold text-gray-900">
-									Curso: {courses?.title ?? 'Selecciona un curso'}
-								</h2>
-								<p className="mt-1 text-gray-600">
-									Descripcion: {courses?.description ?? 'Descripción del curso'}
-								</p>
-							</div>
-							<ChevronDown
-								className={`size-6 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
-							/>
-						</button>
+					<div className="relative mb-6 rounded-lg bg-white p-4 shadow-md">
+						<div>
+							<h2 className="justify-start text-2xl font-bold text-gray-900">
+								Curso: {courses?.title ?? 'Selecciona un curso'}
+							</h2>
+							<p className="mt-1 text-gray-600">
+								Descripcion: {courses?.description ?? 'Descripción del curso'}
+							</p>
+						</div>
 					</div>
 
 					{/* Stats Grid */}
@@ -275,19 +275,14 @@ function App() {
 							/>
 							<StatCard
 								icon={<Trophy className="size-6" />}
-								title="Rango de completacion"
-								value={`${Number(courses.completionRate)}%`}
+								title="Promedio de avance"
+								value={`${averageProgress.toFixed(2)}%`}
 							/>
 							<StatCard
 								icon={<Star className="size-6" />}
 								title="Rating"
 								value={`${courses.rating}`}
 								trend="Basado en la retroalimentacion de los estudiantes"
-							/>
-							<StatCard
-								icon={<Trophy className="size-6" />}
-								title="Promedio de avance"
-								value={`${averageProgress.toFixed(2)}%`}
 							/>
 						</div>
 					)}
@@ -312,23 +307,20 @@ function App() {
 											<div className="flex justify-between">
 												<div>
 													<p className="text-sm text-gray-600">
-														{lesson.description}
-													</p>
-													<p className="text-sm text-gray-600">
 														Duración: {lesson.duration} minutos
 													</p>
 												</div>
 												<div>
 													<p className="text-sm text-gray-600">
 														{lesson.progress !== undefined
-															? `${lesson.progress}% completado`
+															? `${lesson.progress.toFixed(2)}%`
 															: 'Sin progreso'}
 													</p>
 												</div>
 											</div>
 											<div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
 												<div
-													className="h-full rounded-full bg-primary"
+													className="h-full rounded-full bg-green-500"
 													style={{ width: `${lesson.progress ?? 0}%` }}
 												/>
 											</div>
