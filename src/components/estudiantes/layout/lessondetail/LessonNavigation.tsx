@@ -44,7 +44,7 @@ const LessonNavigation = ({
 				className="flex items-center gap-2 active:scale-95"
 				variant="outline"
 			>
-				<FaArrowLeft /> Lección Anterior
+				<FaArrowLeft /> Clase Anterior
 			</Button>
 			<Button
 				onClick={() => onNavigate('next')}
@@ -52,7 +52,7 @@ const LessonNavigation = ({
 				className="flex items-center gap-2 active:scale-95"
 				variant="outline"
 			>
-				Siguiente Lección <FaArrowRight />
+				Siguiente Clase <FaArrowRight />
 			</Button>
 		</div>
 	);
