@@ -157,7 +157,7 @@ function App() {
 				variant: 'destructive',
 			});
 		}
-	}, [courseIdNumber, courses]);
+	}, [courseIdNumber]);
 
 	useEffect(() => {
 		if (courses && user) {
@@ -165,7 +165,8 @@ function App() {
 				console.error('Error fetching user progress:', error)
 			);
 		}
-	}, [courses, user, fetchUserProgress]);
+	}, [user, fetchUserProgress]);
+	//Agregar estado fetch "courses" para que se ejecute el useEffect a fetchUserProgress
 
 	useEffect(() => {
 		if (user && courseIdNumber) {
@@ -335,7 +336,9 @@ function App() {
 												</li>
 											))
 										) : (
-											<p className='ml-4 text-gray-400/70'>No hay lecciones creadas actualmente.</p>
+											<p className="ml-4 text-gray-400/70">
+												No hay lecciones creadas actualmente.
+											</p>
 										)}
 									</ul>
 								</div>
