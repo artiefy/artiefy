@@ -49,26 +49,29 @@ export function CourseContent({
 			{isEnrolled && !isSubscriptionActive && (
 				<Alert
 					variant="destructive"
-					className="mb-6 border-2 border-red-500 bg-red-50"
+					className="mb-6 border-2 border-red-500 bg-red-50/80"
 				>
-					<div className="flex items-center gap-3">
+					<div className="flex items-start space-x-4">
 						<FaCrown className="size-8 text-red-500" />
 						<div className="flex-1">
-							<AlertTitle className="mb-2 text-xl font-bold text-red-700">
+							<AlertTitle className="text-xl font-bold text-red-700">
 								¡Tu suscripción ha expirado!
 							</AlertTitle>
-							<AlertDescription className="text-base text-red-600">
-								<p className="mb-4">
-									Para seguir disfrutando de todo el contenido premium y
-									continuar tu aprendizaje, necesitas renovar tu suscripción.
-								</p>
-								<Button
-									onClick={() => router.push('/planes')}
-									className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
-								>
-									<FaCrown className="mr-2" />
-									Renovar Suscripción Ahora
-								</Button>
+							<AlertDescription className="mt-2 text-base text-red-600">
+								Para seguir disfrutando de todo el contenido premium y continuar
+								tu aprendizaje, necesitas renovar tu suscripción.
+								<div className="mt-4">
+									<Button
+										onClick={() => router.push('/planes')}
+										className="group relative overflow-hidden rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:bg-red-600 active:scale-95"
+									>
+										<div className="relative z-10 flex items-center">
+											<FaCrown className="mr-2" />
+											<span>Renovar Suscripción Ahora</span>
+										</div>
+										<div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+									</Button>
+								</div>
 							</AlertDescription>
 						</div>
 					</div>
