@@ -303,36 +303,40 @@ function App() {
 										Progreso de las Lecciones
 									</h3>
 									<ul className="flex flex-col-reverse space-y-4">
-										{courses.lessons.map((lesson) => (
-											<li
-												key={lesson.id}
-												className="rounded-lg bg-transparent p-4 shadow-md"
-											>
-												<h4 className="text-sm font-semibold text-white">
-													{lesson.title}
-												</h4>
-												<div className="flex justify-between">
-													<div>
-														<p className="text-sm text-gray-400">
-															Duración: {lesson.duration} minutos
-														</p>
+										{courses.lessons.length > 0 ? (
+											courses.lessons.map((lesson) => (
+												<li
+													key={lesson.id}
+													className="rounded-lg bg-transparent p-4 shadow-md"
+												>
+													<h4 className="text-sm font-semibold text-white">
+														{lesson.title}
+													</h4>
+													<div className="flex justify-between">
+														<div>
+															<p className="text-sm text-gray-400">
+																Duración: {lesson.duration} minutos
+															</p>
+														</div>
+														<div>
+															<p className="text-sm text-gray-400">
+																{lesson.progress !== undefined
+																	? `${lesson.progress.toFixed(2)}%`
+																	: 'Sin progreso'}
+															</p>
+														</div>
 													</div>
-													<div>
-														<p className="text-sm text-gray-400">
-															{lesson.progress !== undefined
-																? `${lesson.progress.toFixed(2)}%`
-																: 'Sin progreso'}
-														</p>
+													<div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+														<div
+															className="h-full rounded-full bg-green-500"
+															style={{ width: `${lesson.progress ?? 0}%` }}
+														/>
 													</div>
-												</div>
-												<div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-													<div
-														className="h-full rounded-full bg-green-500"
-														style={{ width: `${lesson.progress ?? 0}%` }}
-													/>
-												</div>
-											</li>
-										))}
+												</li>
+											))
+										) : (
+											<p className='ml-4 text-gray-400/70'>No hay lecciones creadas actualmente.</p>
+										)}
 									</ul>
 								</div>
 							</div>

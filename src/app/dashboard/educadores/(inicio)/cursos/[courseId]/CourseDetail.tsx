@@ -643,18 +643,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			</div>
 			{loading ? (
 				<LoadingCourses />
-			) : courseIdNumber !== null && courseIdNumber > 0 ? (
-				<>
-					<LessonsListEducator
-						courseId={courseIdNumber}
-						selectedColor={selectedColor}
-					/>
-				</>
 			) : (
-				<>
-					<DashboardEstudiantes />
-				</>
+				courseIdNumber !== null &&
+				courseIdNumber > 0 && (
+					<>
+						<LessonsListEducator
+							courseId={courseIdNumber}
+							selectedColor={selectedColor}
+						/>
+					</>
+				)
 			)}
+			<DashboardEstudiantes selectedColor={selectedColor} />
 			<ModalFormCourse
 				isOpen={isModalOpen}
 				onSubmitAction={(

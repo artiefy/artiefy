@@ -98,7 +98,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	}
 	if (lessons.length === 0 || lessons === null) {
 		return (
-			<div className="mt-7 items-center justify-center gap-4 px-8 text-center lg:px-5">
+			<div className="my-7 items-center justify-center gap-4 px-8 text-center lg:px-5">
 				<h2 className={`mb-4 text-2xl font-bold text-primary`}>
 					Lista de clases creadas
 				</h2>
@@ -141,7 +141,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	return (
 		<>
 			<h2 className={`mb-4 mt-10 text-2xl font-bold`}>Lista de clases:</h2>
-			<div className="flex w-full flex-col">
+			<div className="mb-5 flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
 					{lessons.map((lesson, index) => (
 						<div key={index} className="group relative">
