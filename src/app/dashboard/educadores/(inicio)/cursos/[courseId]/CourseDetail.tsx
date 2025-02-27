@@ -654,7 +654,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					</>
 				)
 			)}
-			<DashboardEstudiantes selectedColor={selectedColor} />
+			<DashboardEstudiantes
+				courseId={courseIdNumber}
+				selectedColor={selectedColor}
+			/>
 			<ModalFormCourse
 				isOpen={isModalOpen}
 				onSubmitAction={(

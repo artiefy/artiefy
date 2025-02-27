@@ -2,18 +2,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, Eye } from 'lucide-react';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
 import CourseCarousel from '~/components/educators/modals/CourseCarousel';
+import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
 
 interface User {
 	id: string;
 	firstName: string;
 	lastName: string;
 	email: string;
-	role: string;
-	status: string;
-	selected?: boolean;
-	isNew?: boolean;
 }
 
 interface ViewUserResponse {
@@ -77,12 +73,12 @@ interface ViewUserResponse {
 }
 
 interface LessonsListProps {
-	// courseId: number;
+	courseId: number;
 	selectedColor: string;
 }
 
 const DashboardEstudiantes: React.FC<LessonsListProps> = ({
-	// courseId,
+	courseId,
 	selectedColor,
 }) => {
 	const [users, setUsers] = useState<User[]>([]);
@@ -98,8 +94,6 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 		firstName: '',
 		lastName: '',
 	});
-	const searchParams = useSearchParams();
-	const query = searchParams?.get('search') ?? '';
 	const [viewUser, setViewUser] = useState<ViewUserResponse | null>(null);
 
 	// 1️⃣ Filtrar usuarios
@@ -113,23 +107,14 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
 	// 2️⃣ Definir la paginación
 	const [currentPage, setCurrentPage] = useState(1);
+	const [loadingCourse, setLoadingCourse] = useState(false);
 	const usersPerPage = 12;
 	const indexOfLastUser = currentPage * usersPerPage;
 	const indexOfFirstUser = indexOfLastUser - usersPerPage;
 	const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
-	const fetchCourses = useCallback(async () => {
-		try {
-			const res = await fetch('/api/super-admin/courses');
-			if (!res.ok) throw new Error('Error al cargar cursos');
-			const rawData: unknown = await res.json();
-			if (!Array.isArray(rawData)) throw new Error('Invalid data received');
-		} catch (err) {
-			console.error('Error fetching courses:', err);
-		}
-	}, []);
-	// Definir la interfaz de los datos del usuario
 
 	const handleViewUser = async (user: User): Promise<void> => {
+		setLoadingCourse(true);
 		try {
 			// Obtener información básica del usuario
 			const userRes = await fetch(`/api/educadores/infoUser?id=${user.id}`);
@@ -193,50 +178,33 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 			});
 		} catch (error) {
 			console.error('Error al obtener usuario o cursos:', error);
+		} finally {
+			setLoadingCourse(false);
 		}
 	};
 
-	useEffect(() => {
-		void fetchCourses();
-	}, [fetchCourses]);
-
-	const fetchUsers = useCallback(async () => {
+	const fetchEnrolledUsers = useCallback(async (courseId: number) => {
 		try {
-			const res = await fetch(
-				`/api/educadores/users?search=${encodeURIComponent(query)}`
-			);
-			if (!res.ok) throw new Error('Error al cargar usuarios');
-
-			const rawData: unknown = await res.json();
-			if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
-
-			const data: User[] = (rawData as User[]).map((item) => ({
-				id: String(item.id),
-				firstName: String(item.firstName),
-				lastName: String(item.lastName),
-				email: String(item.email),
-				role: String(item.role),
-				status: String(item.status),
-				permissions:
-					'permissions' in item && Array.isArray(item.permissions)
-						? item.permissions
-						: [], // ✅ Asegura que `permissions` se guarden correctamente
+			const users = await getUsersEnrolledInCourse(courseId);
+			const formattedUsers = users.map((user) => ({
+				...user,
+				firstName: user.firstName ?? 'Nombre no disponible',
+				lastName: user.lastName ?? 'Apellido no disponible',
+				email: user.email ?? 'Correo no disponible',
 			}));
-
-			setUsers(data);
-			console.log('✅ Usuarios cargados con permisos:', data);
+			setUsers(formattedUsers);
+			console.log('✅ Usuarios inscritos cargados:', users);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Error desconocido');
-			console.error('Error fetching users:', err);
+			console.error('Error fetching enrolled users:', err);
 		} finally {
 			setLoading(false);
 		}
-	}, [query]);
+	}, []);
 
-	// ✅ Ahora, `useEffect` ya no mostrará advertencias
 	useEffect(() => {
-		void fetchUsers();
-	}, [fetchUsers]);
+		void fetchEnrolledUsers(courseId);
+	}, [fetchEnrolledUsers]);
 
 	return (
 		<>
@@ -250,7 +218,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 					className="relative z-20 rounded-lg p-6"
 					style={{ backgroundColor: selectedColor }}
 				>
-					{error && (
+					{error && currentUsers.length <= 0 && (
 						<div className="mb-6 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
 							<p>{error}</p>
 						</div>
@@ -318,6 +286,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 													courses={viewUser.courses}
 													userId={viewUser.id}
 												/>
+											) : loadingCourse ? (
+												<p className="text-gray-400">
+													Cargando cursos del usuario....
+												</p>
 											) : (
 												<p className="text-gray-400">
 													Este usuario no está inscrito en ningún curso.
@@ -367,56 +339,62 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 											</tr>
 										</thead>
 										<tbody className="divide-y divide-gray-700">
-											{currentUsers.map((user) => (
-												<tr
-													key={user.id}
-													className={`relative z-50 rounded-lg transition duration-300 hover:bg-gray-800 hover:shadow-lg ${
-														user.isNew ? 'bg-primary text-black' : ''
-													}`}
-												>
-													<td className="rounded-lg px-4 py-3 text-sm text-gray-300">
-														{editingUser?.id === user.id ? (
-															<div className="flex space-x-2">
-																<input
-																	type="text"
-																	className="w-1/2 rounded-lg border-none bg-gray-800 px-2 py-1 text-xs text-white"
-																	value={editValues.firstName}
-																	onChange={(e) =>
-																		setEditValues({
-																			...editValues,
-																			firstName: e.target.value,
-																		})
-																	}
-																/>
-																<input
-																	type="text"
-																	className="w-1/2 rounded-lg border-none bg-gray-800 px-2 py-1 text-xs text-white"
-																	value={editValues.lastName}
-																	onChange={(e) =>
-																		setEditValues({
-																			...editValues,
-																			lastName: e.target.value,
-																		})
-																	}
-																/>
-															</div>
-														) : (
-															`${user.firstName} ${user.lastName}`
-														)}
-													</td>
-													<td className="px-4 py-3 text-xs text-gray-400">
-														{user.email}
-													</td>
-													<td className="flex space-x-2 px-4 py-3">
-														<button
-															onClick={() => handleViewUser(user)}
-															className="flex items-center rounded-md bg-primary px-2 py-1 text-xs font-medium text-black shadow-md transition duration-300"
-														>
-															<Eye size={14} className="mr-1" /> Ver
-														</button>
+											{currentUsers.length > 0 ? (
+												currentUsers.map((user, index) => (
+													<tr
+														key={`${user.id}-${index}`} // Asegúrate de que la clave sea única
+														className={`relative z-50 rounded-lg transition duration-300 hover:bg-gray-800 hover:shadow-lg`}
+													>
+														<td className="rounded-lg px-4 py-3 text-sm text-gray-300">
+															{editingUser?.id === user.id ? (
+																<div className="flex space-x-2">
+																	<input
+																		type="text"
+																		className="w-1/2 rounded-lg border-none bg-gray-800 px-2 py-1 text-xs text-white"
+																		value={editValues.firstName}
+																		onChange={(e) =>
+																			setEditValues({
+																				...editValues,
+																				firstName: e.target.value,
+																			})
+																		}
+																	/>
+																	<input
+																		type="text"
+																		className="w-1/2 rounded-lg border-none bg-gray-800 px-2 py-1 text-xs text-white"
+																		value={editValues.lastName}
+																		onChange={(e) =>
+																			setEditValues({
+																				...editValues,
+																				lastName: e.target.value,
+																			})
+																		}
+																	/>
+																</div>
+															) : (
+																`${user.firstName} ${user.lastName}`
+															)}
+														</td>
+														<td className="px-4 py-3 text-xs text-gray-400">
+															{user.email}
+														</td>
+														<td className="flex space-x-2 px-4 py-3">
+															<button
+																onClick={() => handleViewUser(user)}
+																className="flex items-center rounded-md bg-primary px-2 py-1 text-xs font-medium text-black shadow-md transition duration-300"
+															>
+																<Eye size={14} className="mr-1" /> Ver
+															</button>
+														</td>
+													</tr>
+												))
+											) : (
+												<tr className="text-center">
+													<td colSpan={3} className="py-4 text-gray-400">
+														No hay usuarios por el momento
 													</td>
 												</tr>
-											))}
+											)}
 										</tbody>
 									</table>
 									<div className="mt-4 flex justify-center space-x-2">
