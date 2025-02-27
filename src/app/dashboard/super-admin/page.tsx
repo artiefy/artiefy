@@ -84,6 +84,9 @@ interface Course {
 	title: string;
 	coverImageKey: string | null; // Añadimos la propiedad coverImageKey
 	coverImage?: string;
+	instructor: string;
+	modalidad?: { name: string };
+	rating?: number;
 }
 
 interface CoursesData {
@@ -349,6 +352,7 @@ export default function AdminDashboard() {
 				title: course.title || 'Sin título',
 				coverImageKey: course.coverImageKey ?? null,
 				coverImage: course.coverImage ?? '/default-course.jpg',
+				instructor: course.instructor || 'Instructor no disponible',
 			}));
 
 			// Actualizar el estado con los cursos
@@ -872,8 +876,8 @@ export default function AdminDashboard() {
 							</div>
 						)}
 						{viewUser && (
-							<div className="fixed inset-0 z-[10000] flex items-center justify-center backdrop-blur-md">
-								<div className="relative z-50 w-full max-w-5xl rounded-lg bg-[#01142B] p-8 text-white shadow-xl">
+							<div className="fixed inset-0 z-[10000] flex items-center justify-center backdrop-blur-md ">
+							<div className="relative z-50 w-full max-w-5xl rounded-lg bg-[#01142B] p-8 text-white shadow-[0_0px_50px_rgba(0,189,216,0.7)]">
 									{/* Información del Usuario */}
 									<div className="flex">
 										{/* Foto de Perfil */}
@@ -917,7 +921,7 @@ export default function AdminDashboard() {
 									</div>
 
 									{/* 🔹 Carrusel de Cursos dentro del modal */}
-									<div className="mt-6">
+									<div className="">
 										<h3 className="text-2xl font-bold text-white">
 											Cursos del Estudiante
 										</h3>
@@ -934,7 +938,7 @@ export default function AdminDashboard() {
 									</div>
 
 									{/* Botón de Cerrar */}
-									<div className="mt-6 text-center">
+									<div className="mt-0 text-center">
 										<button
 											onClick={() => setViewUser(null)}
 											className="rounded bg-red-500 px-6 py-3 text-white transition hover:bg-red-600"

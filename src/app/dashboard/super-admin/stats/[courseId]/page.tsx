@@ -94,9 +94,8 @@ export default function StudentCourseDashboard() {
 			...detail,
 			details: detail.details ?? `Información adicional sobre ${detail.title}`,
 			activities:
-				detail.title === 'Nota Global del Curso' ||
-				detail.title === 'Detalles Adicionales'
-					? (stats?.activities ?? [])
+				detail.title === 'Actividades Completadas'
+					? (stats?.activities.filter((activity) => activity.isCompleted) ?? []) // 🔥 Filtra solo completadas
 					: [],
 			lessons:
 				detail.title === 'Progreso Promedio en Lecciones (%)' ||
@@ -115,6 +114,7 @@ export default function StudentCourseDashboard() {
 							]
 					: [],
 		});
+
 		setIsModalOpen(true);
 	};
 
@@ -185,12 +185,14 @@ export default function StudentCourseDashboard() {
 				<h2 className="text-2xl font-bold text-white">Dashboard del Curso</h2>
 
 				{/* Información del Usuario y Curso */}
-				<div className="mt-6 flex justify-between rounded-lg bg-gray-900 p-4 text-white">
+				<div className="bg-background mt-6 flex justify-between rounded-xl p-6 shadow-[0_4px_10px_rgba(58,244,239,0.3)]">
 					{/* Info del Usuario */}
 					<div className="flex flex-col">
-						<div className="flex items-center gap-2">
-							<User className="size-5 text-blue-400" />
-							<p className="font-semibold">{userInfo?.firstName}</p>
+						<div className="flex items-center gap-3">
+							<User className="text-primary size-6" />
+							<p className="text-lg font-semibold text-white">
+								{userInfo?.firstName}
+							</p>
 						</div>
 						<p className="text-sm text-gray-400">{userInfo?.email}</p>
 						<p className="text-sm text-gray-400">Rol: {userInfo?.role}</p>
@@ -198,9 +200,11 @@ export default function StudentCourseDashboard() {
 
 					{/* Info del Curso */}
 					<div className="flex flex-col text-left">
-						<div className="flex items-center gap-2">
-							<GraduationCap className="size-5 text-green-400" />
-							<p className="font-semibold">{courseInfo?.title}</p>
+						<div className="flex items-center gap-3">
+							<GraduationCap className="text-primary size-6" />
+							<p className="text-lg font-semibold text-white">
+								{courseInfo?.title}
+							</p>
 						</div>
 						<p className="text-sm text-gray-400">
 							Instructor: {courseInfo?.instructor}
@@ -345,13 +349,11 @@ export default function StudentCourseDashboard() {
 							<div
 								key={stat.title}
 								onClick={() => openModal(stat)}
-								className="cursor-pointer rounded-lg bg-gray-800 p-4 hover:bg-gray-700"
+								className="cursor-pointer rounded-xl bg-gray-800 p-6 transition-all duration-300 hover:shadow-[0_6px_15px_rgba(0,189,216,0.4)]"
 							>
-								<stat.icon className="mr-2 size-5 text-blue-400" />
-								<div>
-									<h4 className="text-lg font-bold">{stat.value}</h4>
-									<p className="text-sm text-gray-400">{stat.title}</p>
-								</div>
+								<stat.icon className="text-primary mb-3 size-6 transition-all duration-300" />
+								<h4 className="text-lg font-bold text-white">{stat.value}</h4>
+								<p className="text-sm text-gray-400">{stat.title}</p>
 							</div>
 						))}
 					</div>
@@ -471,98 +473,102 @@ export default function StudentCourseDashboard() {
 										</div>
 									</div>
 								)}
+							{/* 📘 Tabla de Lecciones Completadas */}
+							{selectedDetail.title === 'Lecciones Completadas' &&
+								selectedDetail.lessons && (
+									<div className="mt-6">
+										<h3 className="text-lg font-semibold text-white">
+											📘 Detalles de Lecciones Completadas
+										</h3>
+										<div className="overflow-x-auto">
+											<table className="mt-2 w-full border-collapse border border-gray-700">
+												<thead>
+													<tr className="bg-gray-800 text-white">
+														<th className="border border-gray-700 p-2">
+															Lección
+														</th>
+														<th className="border border-gray-700 p-2">
+															Progreso
+														</th>
+														<th className="border border-gray-700 p-2">
+															Estado
+														</th>
+														<th className="border border-gray-700 p-2">
+															Última actualización
+														</th>
+													</tr>
+												</thead>
+												<tbody>
+													{selectedDetail.lessons.length > 0 ? (
+														selectedDetail.lessons
+															.filter((lesson) => lesson.isCompleted) // Solo mostrar completadas
+															.map((lesson) => (
+																<tr
+																	key={lesson.lessonId}
+																	className="text-gray-300"
+																>
+																	<td className="border border-gray-700 p-2 font-semibold">
+																		{lesson.title}
+																	</td>
+																	<td className="border border-gray-700 p-2 text-center">
+																		{lesson.progress}%
+																	</td>
+																	<td className="border border-gray-700 p-2 text-center">
+																		✅ Completada
+																	</td>
+																	<td className="border border-gray-700 p-2 text-center">
+																		{lesson.lastUpdated !== 'N/A'
+																			? new Date(
+																					lesson.lastUpdated
+																				).toLocaleDateString()
+																			: 'N/A'}
+																	</td>
+																</tr>
+															))
+													) : (
+														<tr>
+															<td
+																colSpan={4}
+																className="p-2 text-center text-gray-400"
+															>
+																No hay lecciones completadas.
+															</td>
+														</tr>
+													)}
+												</tbody>
+											</table>
+										</div>
+									</div>
+								)}
 
 							{/* 🏆 Resumen General */}
-							<div className="mt-6 rounded-lg bg-gray-800 p-4 text-left text-white">
-								<h3 className="text-lg font-semibold">🏆 Resumen General</h3>
-								<p>
-									<strong>📊 Progreso del Curso:</strong>{' '}
-									{stats?.progressPercentage}%
-								</p>
-								<p>
-									<strong>📘 Lecciones Completadas:</strong>{' '}
-									{stats?.completedLessons} / {stats?.totalLessons}
-								</p>
-								<p>
-									<strong>📌 Actividades Completadas:</strong>{' '}
-									{stats?.completedActivities} / {stats?.totalActivities}
-								</p>
-								<p>
-									<strong>⏳ Tiempo Total:</strong> {stats?.totalTimeSpent}{' '}
-									minutos
-								</p>
-								<p>
-									<strong>🎯 Nota Global:</strong> {stats?.globalCourseScore}
-								</p>
-							</div>
+							{selectedDetail.title === 'Detalles Adicionales' && (
+								<div className="mt-6 rounded-lg bg-gray-800 p-4 text-left text-white">
+									<h3 className="text-lg font-semibold">🏆 Resumen General</h3>
+									<p>
+										<strong>📊 Progreso del Curso:</strong>{' '}
+										{stats?.progressPercentage}%
+									</p>
+									<p>
+										<strong>📘 Lecciones Completadas:</strong>{' '}
+										{stats?.completedLessons} / {stats?.totalLessons}
+									</p>
+									<p>
+										<strong>📌 Actividades Completadas:</strong>{' '}
+										{stats?.completedActivities} / {stats?.totalActivities}
+									</p>
+									<p>
+										<strong>⏳ Tiempo Total:</strong> {stats?.totalTimeSpent}{' '}
+										minutos
+									</p>
+									<p>
+										<strong>🎯 Nota Global:</strong> {stats?.globalCourseScore}
+									</p>
+								</div>
+							)}
 						</div>
 
 						{/* 📌 Tabla de Actividades */}
-						{selectedDetail.title.includes('Actividades') &&
-							selectedDetail.activities && (
-								<div className="mt-6">
-									<h3 className="text-lg font-semibold text-white">
-										📌 Detalles de Actividades
-									</h3>
-									<div className="overflow-x-auto">
-										<table className="mt-2 w-full border-collapse border border-gray-700">
-											<thead>
-												<tr className="bg-gray-800 text-white">
-													<th className="border border-gray-700 p-2">
-														Actividad
-													</th>
-													<th className="border border-gray-700 p-2">
-														Descripción
-													</th>
-													<th className="border border-gray-700 p-2">Estado</th>
-													<th className="border border-gray-700 p-2">
-														Puntaje
-													</th>
-												</tr>
-											</thead>
-											<tbody>
-												{selectedDetail.activities.length > 0 ? (
-													selectedDetail.activities.map((activity) => (
-														<tr
-															key={activity.activityId}
-															className="text-gray-300"
-														>
-															<td className="border border-gray-700 p-2 font-semibold">
-																{activity.name}
-															</td>
-															<td className="border border-gray-700 p-2">
-																{activity.description || 'Sin descripción'}
-															</td>
-															<td className="border border-gray-700 p-2 text-center">
-																{activity.isCompleted
-																	? '✅ Completada'
-																	: '⏳ Pendiente'}
-															</td>
-															<td className="border border-gray-700 p-2 text-center">
-																{activity.score || '0'}
-															</td>
-															<td className="border border-gray-700 p-2 text-center">
-																{activity.isCompleted
-																	? '🎉 Revisión'
-																	: '📌 Pendiente de completar'}
-															</td>
-														</tr>
-													))
-												) : (
-													<tr>
-														<td
-															colSpan={5}
-															className="p-2 text-center text-gray-400"
-														>
-															No hay actividades registradas.
-														</td>
-													</tr>
-												)}
-											</tbody>
-										</table>
-									</div>
-								</div>
-							)}
 
 						{/* 📌 Botones */}
 						<div className="mt-6 flex justify-end gap-2">
