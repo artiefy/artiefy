@@ -73,7 +73,7 @@ export default async function CourseListStudent({
                         <Image
                           src={imageUrl}
                           alt={course.title || 'Imagen del curso'}
-                          className="rounded-2xl object-cover p-2 transition-transform duration-300 hover:scale-105"
+                          className="rounded-2xl object-cover transition-transform duration-300 hover:scale-105"
                           fill
                           {...(blurDataURL
                             ? { placeholder: 'blur', blurDataURL }
