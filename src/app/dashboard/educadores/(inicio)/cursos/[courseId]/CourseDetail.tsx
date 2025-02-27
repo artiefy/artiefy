@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
 import {
@@ -650,7 +651,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					/>
 				</>
 			) : (
-				<></>
+				<>
+					<DashboardEstudiantes />
+				</>
 			)}
 			<ModalFormCourse
 				isOpen={isModalOpen}

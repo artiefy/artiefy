@@ -111,7 +111,7 @@ export const getCoursesByUserId = async (userId: string) => {
 			modalidadesid: modalidades.name,
 			dificultadid: dificultad.name,
 			instructor: courses.instructor,
-			rating:courses.rating,
+			rating: courses.rating,
 			creatorId: courses.creatorId,
 			createdAt: courses.createdAt,
 			updatedAt: courses.updatedAt,
@@ -324,4 +324,38 @@ export const deleteCourse = async (courseId: number) => {
 	await deleteLessonsByCourseId(courseId);
 	// Finalmente, elimina el curso
 	return db.delete(courses).where(eq(courses.id, courseId));
+};
+
+export const getCoursesByUserIdSimplified = async (userId: string) => {
+	console.log('UserId recibido:', userId); // Verifica que el ID sea correcto
+
+	try {
+		// Realiza la consulta para obtener los cursos en los que el usuario está inscrito
+		const coursesData = await db
+			.select({
+				id: courses.id,
+				title: courses.title,
+				description: courses.description,
+				coverImageKey: courses.coverImageKey, // Asegúrate de que este campo existe
+			})
+			.from(courses)
+			.innerJoin(enrollments, eq(enrollments.courseId, courses.id)) // Realiza el join con la tabla de enrollments
+			.where(eq(enrollments.userId, userId)); // Filtra por el userId en la tabla de enrollments
+
+		// Verifica los datos obtenidos de la consulta
+		debugger;
+		console.log('Cursos obtenidos:', coursesData);
+
+		// Si no se obtienen cursos, retornar un array vacío
+		if (coursesData.length === 0) {
+			console.log('No se encontraron cursos para el usuario');
+			return [];
+		}
+
+		// De lo contrario, devolver los cursos
+		return coursesData;
+	} catch (error) {
+		console.error('Error al obtener los cursos:', error);
+		throw new Error('Error al obtener los cursos');
+	}
 };
