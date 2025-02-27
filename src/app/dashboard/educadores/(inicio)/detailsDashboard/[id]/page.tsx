@@ -157,10 +157,10 @@ function App() {
 				variant: 'destructive',
 			});
 		}
-	}, [courseIdNumber]);
+	}, [user, courseIdNumber]);
 
 	useEffect(() => {
-		if (courses && user) {
+		if (user) {
 			fetchUserProgress().catch((error) =>
 				console.error('Error fetching user progress:', error)
 			);
