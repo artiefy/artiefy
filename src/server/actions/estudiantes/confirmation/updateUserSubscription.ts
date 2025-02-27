@@ -4,7 +4,10 @@ import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
-import { scheduleSubscriptionNotifications } from '~/utils/email/notifications';
+import {
+	scheduleSubscriptionNotifications,
+	sendExpirationNotifications,
+} from '~/utils/email/notifications';
 
 // Definir constantes de tiempo
 const SUBSCRIPTION_DURATION = 5 * 60 * 1000; // 5 minutos
@@ -122,6 +125,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			console.error('❌ Error programando notificaciones:', errorMessage);
 		}
 
+		// Enviar notificaciones de expiración a los usuarios
+		await sendExpirationNotifications();
+
 		console.log(
 			`📅 Inicio suscripción (Bogotá): ${formatInTimeZone(
 				bogotaDate,
@@ -132,7 +138,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		console.log(
 			`📅 Fin suscripción (Bogotá): ${formatInTimeZone(subscriptionEndDate, 'America/Bogota', 'yyyy-MM-dd HH:mm:ss')}`
 		);
-	} catch (error) {
+	} catch (error: unknown) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error';
 		console.error('❌ Error:', errorMessage);

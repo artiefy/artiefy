@@ -1,4 +1,5 @@
 import path from 'path';
+import { lt } from 'drizzle-orm';
 import type { Transporter } from 'nodemailer';
 import nodemailer from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
@@ -7,6 +8,8 @@ import type {
 	SentMessageInfo,
 } from 'nodemailer/lib/smtp-transport';
 import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
+import { db } from '~/server/db';
+import { users } from '~/server/db/schema';
 
 interface EmailAttachment {
 	filename: string;
@@ -208,6 +211,46 @@ export async function scheduleSubscriptionNotifications(
 	});
 
 	await Promise.all(notifications);
+}
+
+export async function sendExpirationNotifications(): Promise<void> {
+	const now = new Date();
+	const expirationThreshold = new Date(
+		now.getTime() + REMINDER_TIMES.BEFORE_1_DAY
+	);
+
+	try {
+		const expiringUsers = await db.query.users.findMany({
+			where: lt(users.subscriptionEndDate, expirationThreshold),
+		});
+
+		for (const user of expiringUsers) {
+			if (!user.subscriptionEndDate) {
+				console.warn(`⚠️ Usuario ${user.email} no tiene fecha de expiración`);
+				continue;
+			}
+
+			const emailContent = EmailTemplateSubscription({
+				userName: user.email,
+				expirationDate: user.subscriptionEndDate.toLocaleString('es-ES', {
+					timeZone: 'America/Bogota',
+				}),
+				timeLeft: getTimeLeftText(
+					user.subscriptionEndDate.getTime() - now.getTime()
+				),
+			});
+
+			await sendNotification(
+				user.email,
+				'⚠️ Tu suscripción está por expirar - Artiefy',
+				emailContent
+			);
+
+			console.log(`✅ Notificación de expiración enviada a ${user.email}`);
+		}
+	} catch (error) {
+		console.error('❌ Error enviando notificaciones de expiración:', error);
+	}
 }
 
 function getTimeLeftText(milliseconds: number): string {
