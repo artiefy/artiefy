@@ -23,6 +23,10 @@ import {
 	type LessonWithProgress,
 	type UserActivitiesProgress,
 } from '~/types';
+import {
+	saveScrollPosition,
+	restoreScrollPosition,
+} from '~/utils/scrollPosition';
 
 export default function LessonDetails({
 	lesson,
@@ -89,12 +93,18 @@ export default function LessonDetails({
 	// Handle lesson navigation
 	useEffect(() => {
 		if (selectedLessonId !== null && selectedLessonId !== lesson?.id) {
+			saveScrollPosition();
 			setProgress(0);
 			setIsVideoCompleted(false);
 			setIsActivityCompleted(false);
 			router.push(`/estudiantes/clases/${selectedLessonId}`);
 		}
 	}, [selectedLessonId, lesson?.id, router]);
+
+	// Restore scroll position on route change
+	useEffect(() => {
+		restoreScrollPosition();
+	}, [lesson?.id]);
 
 	// Set initial progress and video completion state based on lesson data
 	useEffect(() => {
@@ -295,16 +305,17 @@ export default function LessonDetails({
 		start();
 
 		try {
+			saveScrollPosition();
 			// Store the navigation button element position
 			const navigationElement = document.querySelector('.navigation-buttons');
 			const yOffset = navigationElement?.getBoundingClientRect().top ?? 0;
-			const scrollPosition = yOffset + window.scrollY - 100; // Subtract 100px to give some space above
+			const scrollPosition = yOffset + window.scrollY + 40; // Add 200px to scroll further down
 
 			await Promise.all([
 				new Promise((resolve) => setTimeout(resolve, 300)),
 				router.push(`/estudiantes/clases/${targetId}`, { scroll: false }),
 			]);
-
+			restoreScrollPosition();
 			// Scroll to the navigation buttons after route change
 			window.scrollTo({
 				top: scrollPosition,

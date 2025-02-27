@@ -15,7 +15,7 @@ const Loading: React.FC = () => {
 		<div className="fullscreen-background">
 			<div className={`card ${launch ? 'launch' : ''}`}>
 				<div className="card-info">
-					<div className="spinnerloading-container">
+					<div className="loading-container">
 						<div className="loader" aria-live="assertive" role="alert"></div>
 					</div>
 					<span className="animate-pulse-text">CARGANDO!</span>
