@@ -7,7 +7,7 @@ import {
 	modalidades,
 	users,
 	activities,
-	userLessonsProgress
+	userLessonsProgress,
 } from '~/server/db/schema';
 
 export interface Lesson {
@@ -172,7 +172,6 @@ export async function getLessonsByCourseId(courseId: number) {
 	}
 }
 
-
 export const getUserProgressByLessonId = async (
 	lessonId: number,
 	userId: string
@@ -191,7 +190,7 @@ export const getUserProgressByLessonId = async (
 		.then((rows) => rows[0]?.progress);
 
 	return progress;
-}
+};
 
 // Obtener una lección por ID
 export const getLessonById = async (
@@ -272,7 +271,19 @@ export const deleteLesson = async (lessonId: number): Promise<void> => {
 };
 
 export const deleteLessonsByCourseId = async (courseId: number) => {
-	// Elimina todas las actividades asociadas a las lecciones del curso
+	// Obtener todas las lecciones asociadas al curso
+	const lessonIds = await db
+		.select({ id: lessons.id })
+		.from(lessons)
+		.where(eq(lessons.courseId, courseId))
+		.then((rows) => rows.map((row) => row.id));
+
+	// Eliminar el progreso de los usuarios asociado a las lecciones del curso
+	await db
+		.delete(userLessonsProgress)
+		.where(inArray(userLessonsProgress.lessonId, lessonIds));
+
+	// Eliminar todas las actividades asociadas a las lecciones del curso
 	await db
 		.delete(activities)
 		.where(

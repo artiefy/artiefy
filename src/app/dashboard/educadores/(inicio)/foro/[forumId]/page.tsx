@@ -193,7 +193,7 @@ const ForumPage = () => {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					Authorization: `Bearer ${await (user.getToken ? user.getToken({ template: 'your-template-id' }) : '')}`,
+					// Authorization: `Bearer ${await (user.getToken ? user.getToken({ template: 'your-template-id' }) : '')}`,
 				},
 				body: JSON.stringify({
 					content: postContent,
@@ -203,7 +203,10 @@ const ForumPage = () => {
 				}),
 			});
 
-			const result = (await response.json()) as { success: boolean; message: string };
+			const result = (await response.json()) as {
+				success: boolean;
+				message: string;
+			};
 
 			if (!response.ok) {
 				console.error('Failed to send email. Status:', response.status);
@@ -461,56 +464,52 @@ const ForumPage = () => {
 					{reply.userId.id === user?.id && (
 						<div className="mt-4 space-x-2">
 							{editingReplyId === reply.id ? (
-								<>
-									<Collapsible className="absolute right-3 top-4">
-										<CollapsibleTrigger>
-											<EllipsisVertical className="text-white" />
-										</CollapsibleTrigger>
-										<CollapsibleContent>
-											<button
-												className="mt-2 text-sm text-red-400"
-												onClick={() => setEditingReplyId(null)}
-											>
-												Cancelar
-											</button>
-										</CollapsibleContent>
-										<CollapsibleContent>
-											<button
-												className="mt-2 text-sm text-red-400"
-												onClick={() => handleDeleteReply(reply.id)}
-											>
-												Eliminar Respuesta
-											</button>
-										</CollapsibleContent>
-									</Collapsible>
-								</>
+								<Collapsible className="absolute right-3 top-4">
+									<CollapsibleTrigger>
+										<EllipsisVertical className="text-white" />
+									</CollapsibleTrigger>
+									<CollapsibleContent>
+										<button
+											className="mt-2 text-sm text-red-400"
+											onClick={() => setEditingReplyId(null)}
+										>
+											Cancelar
+										</button>
+									</CollapsibleContent>
+									<CollapsibleContent>
+										<button
+											className="mt-2 text-sm text-red-400"
+											onClick={() => handleDeleteReply(reply.id)}
+										>
+											Eliminar Respuesta
+										</button>
+									</CollapsibleContent>
+								</Collapsible>
 							) : (
-								<>
-									<Collapsible className="absolute right-3 top-4">
-										<CollapsibleTrigger>
-											<EllipsisVertical className="text-white" />
-										</CollapsibleTrigger>
-										<CollapsibleContent>
-											<button
-												className="mt-2 text-sm text-yellow-400"
-												onClick={() => {
-													setEditingReplyId(reply.id);
-													setEditReplyContent(reply.content);
-												}}
-											>
-												Editar Respuesta
-											</button>
-										</CollapsibleContent>
-										<CollapsibleContent>
-											<button
-												className="mt-2 text-sm text-red-400"
-												onClick={() => handleDeleteReply(reply.id)}
-											>
-												Eliminar Respuesta
-											</button>
-										</CollapsibleContent>
-									</Collapsible>
-								</>
+								<Collapsible className="absolute right-3 top-4">
+									<CollapsibleTrigger>
+										<EllipsisVertical className="text-white" />
+									</CollapsibleTrigger>
+									<CollapsibleContent>
+										<button
+											className="mt-2 text-sm text-yellow-400"
+											onClick={() => {
+												setEditingReplyId(reply.id);
+												setEditReplyContent(reply.content);
+											}}
+										>
+											Editar Respuesta
+										</button>
+									</CollapsibleContent>
+									<CollapsibleContent>
+										<button
+											className="mt-2 text-sm text-red-400"
+											onClick={() => handleDeleteReply(reply.id)}
+										>
+											Eliminar Respuesta
+										</button>
+									</CollapsibleContent>
+								</Collapsible>
 							)}
 						</div>
 					)}
@@ -519,7 +518,16 @@ const ForumPage = () => {
 		));
 	};
 
-	if (loading) return <div>Cargando Foro...</div>;
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
 
 	return (
 		<>

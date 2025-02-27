@@ -89,7 +89,7 @@ function App() {
 	const { user } = useUser();
 	const params = useParams();
 	const courseIdNumber = params?.id ? Number(params.id) : 0;
-	const [courses, setCourses] = useState<Course | null>(null);
+	const [courses, setCourses] = useState<Course>();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -147,7 +147,7 @@ function App() {
 				};
 			});
 			setCourses((prevCourses) =>
-				prevCourses ? { ...prevCourses, lessons: updatedLessons } : null
+				prevCourses ? { ...prevCourses, lessons: updatedLessons } : prevCourses
 			);
 		} catch (error) {
 			console.error('Error fetching user progress:', error);
@@ -157,7 +157,15 @@ function App() {
 				variant: 'destructive',
 			});
 		}
-	}, [courses, courseIdNumber, fetchCourses]);
+	}, [courseIdNumber, courses]);
+
+	useEffect(() => {
+		if (courses && user) {
+			fetchUserProgress().catch((error) =>
+				console.error('Error fetching user progress:', error)
+			);
+		}
+	}, [courses, user, fetchUserProgress]);
 
 	useEffect(() => {
 		if (user && courseIdNumber) {
@@ -166,14 +174,6 @@ function App() {
 			);
 		}
 	}, [user, courseIdNumber, fetchCourses]);
-
-	useEffect(() => {
-		if (user && courses) {
-			fetchUserProgress().catch((error) =>
-				console.error('Error fetching user progress:', error)
-			);
-		}
-	}, [user, courses, fetchUserProgress]);
 
 	const averageProgress = courses
 		? calculateAverageProgress(courses.lessons)
@@ -213,7 +213,7 @@ function App() {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/"
+							href="/dashboard/educadores"
 						>
 							Inicio
 						</BreadcrumbLink>
@@ -230,14 +230,16 @@ function App() {
 					<BreadcrumbSeparator />
 				</BreadcrumbList>
 			</Breadcrumb>
-			<div className="mt-2 min-h-screen rounded-lg bg-gray-50/5">
+			<div className="mt-2 min-h-screen rounded-lg border-0 text-white shadow-lg">
 				{/* Header */}
-				<header className="rounded-md bg-white shadow-sm">
-					<div className="mx-auto max-w-7xl p-4 sm:px-6 lg:px-8">
+				<div className="group relative">
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in"></div>
+					<div className="relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in">
 						<div className="flex items-center justify-between">
 							<div className="flex items-center">
 								<GraduationCap className="size-8 text-primary" />
-								<h1 className="ml-2 text-2xl font-bold text-gray-900">
+								<h1 className="ml-2 text-2xl font-bold text-white">
 									<span className="text-primary">
 										Panel de control del curso:
 									</span>{' '}
@@ -246,17 +248,20 @@ function App() {
 							</div>
 						</div>
 					</div>
-				</header>
+				</div>
 				{/* Main Content */}
-				<main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-					<div className="relative mb-6 rounded-lg bg-white p-4 shadow-md">
-						<div>
-							<h2 className="justify-start text-2xl font-bold text-gray-900">
-								Curso: {courses?.title ?? 'Selecciona un curso'}
-							</h2>
-							<p className="mt-1 text-gray-600">
-								Descripcion: {courses?.description ?? 'Descripción del curso'}
-							</p>
+				<main className="mx-auto max-w-7xl px-2 py-8">
+					<div className="group relative mb-4">
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in">
+							<div>
+								<h2 className="justify-start text-2xl font-bold text-white">
+									Curso: {courses?.title ?? 'Selecciona un curso'}
+								</h2>
+								<p className="mt-1 text-gray-500/70">
+									Descripcion: {courses?.description ?? 'Descripción del curso'}
+								</p>
+							</div>
 						</div>
 					</div>
 
@@ -289,60 +294,67 @@ function App() {
 
 					{/* Course Details */}
 					{courses && (
-						<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+						<div className="flex flex-col justify-between gap-6 lg:flex-row">
 							{/* Lessons List */}
-							<div className="rounded-lg bg-white shadow-md lg:col-span-2">
-								<h3 className="my-2 ml-4 text-xl font-semibold text-gray-900">
-									Progreso de las Lecciones
-								</h3>
-								<ul className="flex flex-col-reverse space-y-4">
-									{courses.lessons.map((lesson) => (
-										<li
-											key={lesson.id}
-											className="rounded-lg bg-white p-4 shadow-md"
-										>
-											<h4 className="text-sm font-semibold text-gray-900">
-												{lesson.title}
-											</h4>
-											<div className="flex justify-between">
-												<div>
-													<p className="text-sm text-gray-600">
-														Duración: {lesson.duration} minutos
-													</p>
+							<div className="group relative h-fit w-full">
+								<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+								<div className="relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in">
+									<h3 className="my-2 ml-4 text-xl font-semibold text-white">
+										Progreso de las Lecciones
+									</h3>
+									<ul className="flex flex-col-reverse space-y-4">
+										{courses.lessons.map((lesson) => (
+											<li
+												key={lesson.id}
+												className="rounded-lg bg-transparent p-4 shadow-md"
+											>
+												<h4 className="text-sm font-semibold text-white">
+													{lesson.title}
+												</h4>
+												<div className="flex justify-between">
+													<div>
+														<p className="text-sm text-gray-400">
+															Duración: {lesson.duration} minutos
+														</p>
+													</div>
+													<div>
+														<p className="text-sm text-gray-400">
+															{lesson.progress !== undefined
+																? `${lesson.progress.toFixed(2)}%`
+																: 'Sin progreso'}
+														</p>
+													</div>
 												</div>
-												<div>
-													<p className="text-sm text-gray-600">
-														{lesson.progress !== undefined
-															? `${lesson.progress.toFixed(2)}%`
-															: 'Sin progreso'}
-													</p>
+												<div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+													<div
+														className="h-full rounded-full bg-green-500"
+														style={{ width: `${lesson.progress ?? 0}%` }}
+													/>
 												</div>
-											</div>
-											<div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
-												<div
-													className="h-full rounded-full bg-green-500"
-													style={{ width: `${lesson.progress ?? 0}%` }}
-												/>
-											</div>
-										</li>
-									))}
-								</ul>
+											</li>
+										))}
+									</ul>
+								</div>
 							</div>
+							{/* Course Details */}
 							{courses.modalidadesid && (
-								<div className="space-y-6">
-									<div className="rounded-lg bg-white p-6 shadow-md">
-										<h3 className="mb-4 text-lg font-semibold text-gray-900">
-											Sesiones del curso
-										</h3>
-										<div className="space-y-4">
-											{courses.upcomingSessions?.map((session, index) => (
-												<UpcomingSession
-													key={index}
-													title={session.title}
-													date={session.date}
-													duration={session.duration}
-												/>
-											)) ?? <p>No hay secciones disponibles actualmente.</p>}
+								<div className="group relative h-fit w-1/3">
+									<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+									<div className="relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-gray-400 transition-transform duration-300 ease-in-out zoom-in">
+										<div className="space-y-6">
+											<h3 className="mb-4 text-lg font-semibold text-white">
+												Sesiones del curso
+											</h3>
+											<div className="space-y-4">
+												{courses.upcomingSessions?.map((session, index) => (
+													<UpcomingSession
+														key={index}
+														title={session.title}
+														date={session.date}
+														duration={session.duration}
+													/>
+												)) ?? <p>No hay secciones disponibles actualmente.</p>}
+											</div>
 										</div>
 									</div>
 								</div>
@@ -364,15 +376,18 @@ interface StatCardProps {
 
 function StatCard({ icon, title, value, trend }: StatCardProps) {
 	return (
-		<div className="rounded-lg bg-white p-6 shadow-md">
-			<div className="flex items-center">
-				<div className="rounded-lg bg-primary/10 p-2">
-					{React.cloneElement(icon, { className: 'h-6 w-6 text-primary' })}
-				</div>
-				<div className="ml-4">
-					<p className="text-sm font-medium text-gray-600">{title}</p>
-					<p className="text-2xl font-semibold text-gray-900">{value}</p>
-					{trend && <p className="text-sm text-gray-500">{trend}</p>}
+		<div className="group relative">
+			<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+			<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in">
+				<div className="flex items-center">
+					<div className="rounded-lg bg-primary/10 p-2">
+						{React.cloneElement(icon, { className: 'h-6 w-6 text-primary' })}
+					</div>
+					<div className="ml-4">
+						<p className="text-sm font-medium text-white">{title}</p>
+						<p className="text-2xl font-semibold text-white">{value}</p>
+						{trend && <p className="text-sm text-white">{trend}</p>}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -387,12 +402,16 @@ interface UpcomingSessionProps {
 
 function UpcomingSession({ title, date, duration }: UpcomingSessionProps) {
 	return (
-		<div className="flex items-start space-x-4">
-			<Calendar className="size-5 shrink-0 text-primary" />
-			<div>
-				<p className="text-sm font-medium text-gray-900">{title}</p>
-				<p className="text-sm text-gray-500">{date}</p>
-				<p className="text-sm text-gray-500">{duration}</p>
+		<div className="group relative">
+			<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+			<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in"></div>
+			<div className="flex items-start space-x-4">
+				<Calendar className="size-5 shrink-0 text-primary" />
+				<div>
+					<p className="text-sm font-medium text-gray-900">{title}</p>
+					<p className="text-sm text-gray-500">{date}</p>
+					<p className="text-sm text-gray-500">{duration}</p>
+				</div>
 			</div>
 		</div>
 	);
