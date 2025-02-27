@@ -30,6 +30,11 @@ export const users = pgTable('users', {
 		withTimezone: true, // Esto hace que PostgreSQL maneje la zona horaria
 		mode: 'date',
 	}),
+	planType: text('plan_type', { enum: ['Pro', 'Premium', 'Enterprise'] }),
+	purchaseDate: timestamp('purchase_date', {
+		withTimezone: true,
+		mode: 'date',
+	}),
 });
 
 // Tabla de categorías

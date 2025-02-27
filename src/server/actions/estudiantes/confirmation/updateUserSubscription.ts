@@ -12,10 +12,11 @@ const SUBSCRIPTION_DURATION = 5 * 60 * 1000; // 5 minutos
 interface PaymentData {
 	email_buyer: string;
 	state_pol: string;
+	reference_sale: string; // Añadir para extraer el tipo de plan
 }
 
 export async function updateUserSubscription(paymentData: PaymentData) {
-	const { email_buyer, state_pol } = paymentData;
+	const { email_buyer, state_pol, reference_sale } = paymentData;
 	console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
 
 	if (state_pol !== '4') {
@@ -24,6 +25,15 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		);
 		return;
 	}
+
+	// Extraer el tipo de plan del reference_sale o pasarlo como parámetro adicional
+	const planType = reference_sale.includes('pro')
+		? 'Pro'
+		: reference_sale.includes('premium')
+			? 'Premium'
+			: reference_sale.includes('enterprise')
+				? 'Enterprise'
+				: 'Pro'; // Default
 
 	// 🗓️ Calcular fecha de expiración en zona horaria de Bogotá
 	const bogotaDate = new Date(
@@ -51,6 +61,8 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				subscriptionStatus: 'active',
 				// Aquí el cambio: pasar directamente el objeto Date
 				subscriptionEndDate: subscriptionEndDate,
+				planType: planType,
+				purchaseDate: bogotaDate,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			});
@@ -63,6 +75,8 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 					subscriptionStatus: 'active',
 					// Aquí también: pasar directamente el objeto Date
 					subscriptionEndDate: subscriptionEndDate,
+					planType: planType,
+					purchaseDate: bogotaDate,
 					updatedAt: new Date(),
 				})
 				.where(eq(users.email, email_buyer));
@@ -88,6 +102,8 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				publicMetadata: {
 					subscriptionStatus: 'active',
 					subscriptionEndDate: subscriptionEndDate.toISOString(),
+					planType: planType,
+					purchaseDate: bogotaDate.toISOString(),
 				},
 			});
 
