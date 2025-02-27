@@ -157,7 +157,7 @@ function App() {
 				variant: 'destructive',
 			});
 		}
-	}, [user, courseIdNumber]);
+	}, [user, courses,courseIdNumber]);
 
 	useEffect(() => {
 		if (user) {
