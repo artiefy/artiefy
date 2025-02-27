@@ -38,6 +38,7 @@ export interface StatsModel {
 	totalLessons: number;
 	totalEnrollments: number;
 	totalDuration: number;
+	averageEnrollments: number;
 }
 
 export default function Home() {
@@ -50,6 +51,7 @@ export default function Home() {
 		totalLessons: 0,
 		totalEnrollments: 0,
 		totalDuration: 0,
+		averageEnrollments: 0,
 	});
 
 	// Fetch stats
@@ -216,7 +218,7 @@ export default function Home() {
 											</dt>
 											<dd className="flex items-baseline">
 												<div className="text-2xl font-semibold text-white">
-													{stats.totalEnrollments ?? 0}
+													{stats.averageEnrollments ?? 0}
 												</div>
 											</dd>
 										</dl>

@@ -165,7 +165,7 @@ function App() {
 				console.error('Error fetching user progress:', error)
 			);
 		}
-	}, [user, fetchUserProgress]);
+	}, [user, courses, fetchUserProgress]);
 	//Agregar estado fetch "courses" para que se ejecute el useEffect a fetchUserProgress
 
 	useEffect(() => {
