@@ -1,5 +1,4 @@
 'use client';
-// Remove unused imports
 import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { type LessonWithProgress } from '~/types';
@@ -9,6 +8,7 @@ interface LessonCardsProps {
 	selectedLessonId: number | null;
 	onLessonClick: (id: number) => void;
 	progress: number;
+	isNavigating: boolean; // Add new prop
 }
 
 const LessonCards = ({
@@ -16,8 +16,10 @@ const LessonCards = ({
 	selectedLessonId,
 	onLessonClick,
 	progress,
+	isNavigating,
 }: LessonCardsProps) => {
 	const handleClick = (lessonItem: LessonWithProgress) => {
+		if (isNavigating) return; // Prevent clicks while navigating
 		if (!lessonItem.isLocked) {
 			onLessonClick(lessonItem.id);
 		} else {
@@ -37,7 +39,15 @@ const LessonCards = ({
 			<div
 				key={lessonItem.id}
 				onClick={() => handleClick(lessonItem)}
-				className={`mb-2 rounded-lg p-4 transition-all ${isAccessible ? 'cursor-pointer hover:bg-blue-50' : 'cursor-not-allowed opacity-75'} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${isCompleted ? 'border-green-500' : ''} `}
+				className={`mb-2 rounded-lg p-4 transition-all ${
+					isNavigating ? 'cursor-not-allowed opacity-50' : ''
+				} ${
+					isAccessible
+						? 'cursor-pointer hover:bg-blue-50'
+						: 'cursor-not-allowed opacity-75'
+				} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${
+					isCompleted ? 'border-green-500' : ''
+				} `}
 			>
 				<div className="mb-2 flex items-center justify-between">
 					<h3

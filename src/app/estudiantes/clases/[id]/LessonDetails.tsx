@@ -39,6 +39,8 @@ export default function LessonDetails({
 	userActivitiesProgress: UserActivitiesProgress[];
 	userId: string;
 }) {
+	// Add new state
+	const [isNavigating, setIsNavigating] = useState(false);
 	// State and hooks initialization
 	const [isChatOpen, setIsChatOpen] = useState(false);
 	const [selectedLessonId, setSelectedLessonId] = useState<number | null>(
@@ -252,6 +254,7 @@ export default function LessonDetails({
 
 	// Function to handle navigation
 	const handleNavigationClick = async (direction: 'prev' | 'next') => {
+		if (isNavigating) return;
 		const sortedLessons = [...lessonsState].sort((a, b) =>
 			a.title.localeCompare(b.title)
 		);
@@ -279,29 +282,33 @@ export default function LessonDetails({
 
 	// Handle lesson card click
 	const handleCardClick = async (targetId: number) => {
-		if (targetId !== selectedLessonId) {
+		if (!isNavigating && targetId !== selectedLessonId) {
 			await navigateWithProgress(targetId);
 		}
 	};
 
 	// Helper function for navigation with progress
 	const navigateWithProgress = async (targetId: number) => {
-		start();
-		try {
-			setProgress(0);
-			setSelectedLessonId(targetId);
-			setIsVideoCompleted(false);
-			setIsActivityCompleted(false);
+		if (isNavigating) return;
 
+		setIsNavigating(true);
+		start();
+
+		try {
 			await Promise.all([
 				new Promise((resolve) => setTimeout(resolve, 300)),
-				Promise.resolve(
-					router.push(`/estudiantes/clases/${targetId}`, { scroll: false })
-				),
+				router.push(`/estudiantes/clases/${targetId}`, { scroll: false }),
 			]);
+
 			await new Promise((resolve) => setTimeout(resolve, 200));
+
+			setSelectedLessonId(targetId);
+			setProgress(0);
+			setIsVideoCompleted(false);
+			setIsActivityCompleted(false);
 		} finally {
 			stop();
+			setIsNavigating(false);
 		}
 	};
 
@@ -331,6 +338,7 @@ export default function LessonDetails({
 							selectedLessonId={selectedLessonId}
 							onLessonClick={handleCardClick}
 							progress={progress}
+							isNavigating={isNavigating}
 						/>
 					</div>
 
@@ -340,6 +348,7 @@ export default function LessonDetails({
 							onNavigate={handleNavigationClick}
 							lessonsState={lessonsState}
 							lessonOrder={new Date(lesson.createdAt).getTime()}
+							isNavigating={isNavigating}
 						/>
 						<LessonPlayer
 							lesson={lesson}

@@ -12,12 +12,14 @@ interface LessonNavigationProps {
 	onNavigate: (direction: 'prev' | 'next') => void;
 	lessonsState: LessonWithProgress[];
 	lessonOrder: number;
+	isNavigating: boolean; // Add new prop
 }
 
 const LessonNavigation = ({
 	onNavigate,
 	lessonsState,
 	lessonOrder,
+	isNavigating,
 }: LessonNavigationProps) => {
 	// Sort lessons by title
 	const sortedLessons = [...lessonsState].sort((a, b) =>
@@ -40,16 +42,20 @@ const LessonNavigation = ({
 		<div className="mb-4 flex justify-between">
 			<Button
 				onClick={() => onNavigate('prev')}
-				disabled={!hasPreviousLesson}
-				className="flex items-center gap-2 active:scale-95"
+				disabled={!hasPreviousLesson || isNavigating}
+				className={`flex items-center gap-2 active:scale-95 ${
+					isNavigating ? 'opacity-50' : ''
+				}`}
 				variant="outline"
 			>
 				<FaArrowLeft /> Clase Anterior
 			</Button>
 			<Button
 				onClick={() => onNavigate('next')}
-				disabled={!hasNextLesson}
-				className="flex items-center gap-2 active:scale-95"
+				disabled={!hasNextLesson || isNavigating}
+				className={`flex items-center gap-2 active:scale-95 ${
+					isNavigating ? 'opacity-50' : ''
+				}`}
 				variant="outline"
 			>
 				Siguiente Clase <FaArrowRight />
