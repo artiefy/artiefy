@@ -4,10 +4,7 @@ import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
-import {
-	scheduleSubscriptionNotifications,
-	sendExpirationNotifications,
-} from '~/utils/email/notifications';
+// import { scheduleSubscriptionNotifications, sendExpirationNotifications } from '~/utils/email/notifications';
 
 // Definir constantes de tiempo
 const SUBSCRIPTION_DURATION = 5 * 60 * 1000; // 5 minutos
@@ -116,18 +113,18 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
 		}
 
-		// Programar las notificaciones y esperar a que se complete
-		try {
-			await scheduleSubscriptionNotifications(email_buyer, subscriptionEndDate);
-			console.log(`✅ Notificaciones programadas para ${email_buyer}`);
-		} catch (error) {
-			const errorMessage =
-				error instanceof Error ? error.message : 'Unknown error';
-			console.error('❌ Error programando notificaciones:', errorMessage);
-		}
+		// Desactivar notificaciones por ahora
+		// try {
+		// 	await scheduleSubscriptionNotifications(email_buyer, subscriptionEndDate);
+		// 	console.log(`✅ Notificaciones programadas para ${email_buyer}`);
+		// } catch (error) {
+		// 	const errorMessage =
+		// 		error instanceof Error ? error.message : 'Unknown error';
+		// 	console.error('❌ Error programando notificaciones:', errorMessage);
+		// }
 
 		// Enviar notificaciones de expiración a los usuarios
-		await sendExpirationNotifications();
+		// await sendExpirationNotifications();
 
 		console.log(
 			`📅 Inicio suscripción (Bogotá): ${formatInTimeZone(
@@ -139,7 +136,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		console.log(
 			`📅 Fin suscripción (Bogotá): ${formatInTimeZone(subscriptionEndDate, 'America/Bogota', 'yyyy-MM-dd HH:mm:ss')}`
 		);
-	} catch (error: unknown) {
+	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error';
 		console.error('❌ Error:', errorMessage);
