@@ -2,68 +2,16 @@ import { clerkClient, type User } from '@clerk/nextjs/server';
 import { formatInTimeZone } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { EmailTemplate } from '~/components/estudiantes/layout/EmailTemplate';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
-import { generateCalendarEvent } from '~/utils/email/calendarEvent';
-import { sendNotification } from '~/utils/email/notifications';
+import { scheduleSubscriptionNotifications } from '~/utils/email/notifications';
 
 // Definir constantes de tiempo
 const SUBSCRIPTION_DURATION = 5 * 60 * 1000; // 5 minutos
-const NOTIFICATION_BEFORE = 2 * 60 * 1000; // 2 minutos antes de expirar
 
 interface PaymentData {
 	email_buyer: string;
 	state_pol: string;
-}
-
-async function scheduleNotification(email: string, expirationDate: Date) {
-	const timeUntilNotification = SUBSCRIPTION_DURATION - NOTIFICATION_BEFORE;
-
-	console.log(`⏰ Programando notificación para ${email}`);
-	console.log(
-		`📅 Tiempo hasta notificación: ${timeUntilNotification / 1000} segundos`
-	);
-
-	return new Promise((resolve) => {
-		const timer = setTimeout(async () => {
-			try {
-				console.log(`🔔 Ejecutando notificación para ${email}`);
-
-				const emailContent = EmailTemplate({
-					userName: email,
-					message: `Tu suscripción expirará en 2 minutos.\n
-            Fecha de expiración: ${formatInTimeZone(
-							expirationDate,
-							'America/Bogota',
-							'yyyy-MM-dd HH:mm:ss'
-						)} (hora de Bogotá)`,
-				});
-
-				const sent = await sendNotification(
-					email,
-					'⚠️ Tu suscripción está por expirar - Artiefy',
-					emailContent,
-					[
-						{
-							filename: 'calendar-event.ics',
-							content: generateCalendarEvent(expirationDate), // Implementar esta función
-							contentType: 'text/calendar',
-						},
-					]
-				);
-
-				console.log(`✉️ Resultado del envío: ${sent ? 'Exitoso' : 'Fallido'}`);
-				resolve(sent);
-			} catch (error) {
-				console.error('❌ Error en notificación:', error);
-				resolve(false);
-			}
-		}, timeUntilNotification);
-
-		// Asegurarse de que el timer no impida que Node.js se cierre
-		timer.unref();
-	});
 }
 
 export async function updateUserSubscription(paymentData: PaymentData) {
@@ -148,11 +96,15 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
 		}
 
-		// Calcular tiempo para notificación
-		const timeUntilNotification = SUBSCRIPTION_DURATION - NOTIFICATION_BEFORE;
-
-		// Usar scheduleNotification en lugar del setTimeout directo
-		void scheduleNotification(email_buyer, subscriptionEndDate);
+		// Programar las notificaciones y esperar a que se complete
+		try {
+			await scheduleSubscriptionNotifications(email_buyer, subscriptionEndDate);
+			console.log(`✅ Notificaciones programadas para ${email_buyer}`);
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Unknown error';
+			console.error('❌ Error programando notificaciones:', errorMessage);
+		}
 
 		console.log(
 			`📅 Inicio suscripción (Bogotá): ${formatInTimeZone(
@@ -164,13 +116,10 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		console.log(
 			`📅 Fin suscripción (Bogotá): ${formatInTimeZone(subscriptionEndDate, 'America/Bogota', 'yyyy-MM-dd HH:mm:ss')}`
 		);
-		console.log(`⏰ Notificación en: ${timeUntilNotification / 1000} segundos`);
 	} catch (error) {
-		if (error instanceof Error) {
-			console.error(`❌ Error en updateUserSubscription: ${error.message}`);
-		} else {
-			console.error('❌ Error desconocido en updateUserSubscription');
-		}
-		throw error;
+		const errorMessage =
+			error instanceof Error ? error.message : 'Unknown error';
+		console.error('❌ Error:', errorMessage);
+		throw new Error(errorMessage);
 	}
 }

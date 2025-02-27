@@ -1,18 +1,17 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import NProgress from 'nprogress';
+import { useRouter } from 'next/navigation';
 import { FaRobot } from 'react-icons/fa';
-import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
-import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
+import { toast } from 'sonner';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
+import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
+import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
 import RecursosLesson from '~/components/estudiantes/layout/RecursosLesson';
-import { useToast } from '~/hooks/use-toast';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -54,8 +53,6 @@ export default function LessonDetails({
   const [isCompletingActivity, setIsCompletingActivity] = useState(false);
   const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { toast } = useToast();
 
   // Initialize lessons state with progress and locked status
   useEffect(() => {
@@ -87,18 +84,12 @@ export default function LessonDetails({
   // Handle lesson navigation
   useEffect(() => {
     if (selectedLessonId !== null && selectedLessonId !== lesson?.id) {
-      NProgress.start();
       setProgress(0);
       setIsVideoCompleted(false);
       setIsActivityCompleted(false);
       router.push(`/estudiantes/clases/${selectedLessonId}`);
     }
   }, [selectedLessonId, lesson?.id, router]);
-
-  // Ensure initial lesson loading is complete
-  useEffect(() => {
-    NProgress.done();
-  }, [searchParams]);
 
   // Set initial progress and video completion state based on lesson data
   useEffect(() => {
@@ -110,11 +101,9 @@ export default function LessonDetails({
   // Redirect if the lesson is locked
   useEffect(() => {
     if (lesson?.isLocked) {
-      toast({
-        title: 'Lección bloqueada',
+      toast.error('Lección bloqueada', {
         description:
           'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
-        variant: 'destructive',
       });
 
       const timeoutId = setTimeout(() => {
@@ -123,7 +112,7 @@ export default function LessonDetails({
 
       return () => clearTimeout(timeoutId);
     }
-  }, [lesson?.isLocked, router, toast]);
+  }, [lesson?.isLocked, router]);
 
   // Handle video end event
   const handleVideoEnd = async () => {
@@ -143,12 +132,10 @@ export default function LessonDetails({
             : l
         )
       );
-      toast({
-        title: 'Video Completado',
+      toast.success('Video Completado', {
         description: activity
           ? 'Ahora completa la actividad para desbloquear la siguiente clase'
           : 'Has completado la clase',
-        variant: 'default',
       });
 
       // Unlock next lesson if no activity
@@ -160,10 +147,8 @@ export default function LessonDetails({
               l.id === result.nextLessonId ? { ...l, isLocked: false } : l
             )
           );
-          toast({
-            title: 'Clase Completada',
+          toast.success('Clase Completada', {
             description: '¡Avanzando a la siguiente clase!',
-            variant: 'default',
           });
 
           // Navigate to next lesson
@@ -176,10 +161,8 @@ export default function LessonDetails({
       }
     } catch (error) {
       console.error('Error al actualizar el progreso de la lección:', error);
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'No se pudo actualizar el progreso de la lección.',
-        variant: 'destructive',
       });
     }
   };
@@ -226,10 +209,8 @@ export default function LessonDetails({
             l.id === result.nextLessonId ? { ...l, isLocked: false } : l
           )
         );
-        toast({
-          title: 'Clase Completada',
+        toast.success('Clase Completada', {
           description: '¡Avanzando a la siguiente clase!',
-          variant: 'default',
         });
 
         // Navigate to next lesson
@@ -241,10 +222,8 @@ export default function LessonDetails({
       }
     } catch (error) {
       console.error('Error al completar la actividad:', error);
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'No se pudo completar la actividad.',
-        variant: 'destructive',
       });
     } finally {
       setIsCompletingActivity(false);
@@ -272,8 +251,8 @@ export default function LessonDetails({
 
   // Function to handle navigation
   const handleNavigation = (direction: 'prev' | 'next') => {
-    const sortedLessons = [...lessonsState].sort(
-      (a, b) => a.title.localeCompare(b.title)
+    const sortedLessons = [...lessonsState].sort((a, b) =>
+      a.title.localeCompare(b.title)
     );
     const currentIndex = sortedLessons.findIndex(
       (l) => l.id === selectedLessonId

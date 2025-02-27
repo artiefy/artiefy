@@ -6,6 +6,7 @@ import type {
 	Options as SMTPTransportOptions,
 	SentMessageInfo,
 } from 'nodemailer/lib/smtp-transport';
+import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
 
 interface EmailAttachment {
 	filename: string;
@@ -23,6 +24,13 @@ interface CustomMailOptions extends Mail.Options {
 		recipient?: string;
 	};
 }
+
+const REMINDER_TIMES = {
+	BEFORE_2_MIN: 2 * 60 * 1000, // 2 minutos antes (para pruebas)
+	BEFORE_7_DAYS: 7 * 24 * 60 * 60 * 1000, // 7 días antes (producción)
+	BEFORE_3_DAYS: 3 * 24 * 60 * 60 * 1000, // 3 días antes (producción)
+	BEFORE_1_DAY: 24 * 60 * 60 * 1000, // 1 día antes (producción)
+};
 
 let transporter: Transporter<SentMessageInfo> | null = null;
 
@@ -140,6 +148,76 @@ export async function sendNotification(
 			}
 		}
 	}
+}
+
+export async function scheduleSubscriptionNotifications(
+	email: string,
+	expirationDate: Date
+): Promise<void> {
+	const notificationTimes = [REMINDER_TIMES.BEFORE_2_MIN];
+
+	const notifications = notificationTimes.map(async (timeBeforeExpiration) => {
+		const notificationDate = new Date(
+			expirationDate.getTime() - timeBeforeExpiration
+		);
+		const now = new Date();
+
+		if (notificationDate > now) {
+			const timeUntilNotification = notificationDate.getTime() - now.getTime();
+
+			console.log(
+				`📅 Programando notificación para ${email} en ${timeUntilNotification / 1000}s`
+			);
+
+			return new Promise<void>((resolve) => {
+				const timer = setTimeout(async () => {
+					try {
+						const timeLeft = getTimeLeftText(timeBeforeExpiration);
+						const formattedDate = expirationDate.toLocaleString('es-ES', {
+							timeZone: 'America/Bogota',
+						});
+
+						const emailContent = EmailTemplateSubscription({
+							userName: email,
+							expirationDate: formattedDate,
+							timeLeft,
+						});
+
+						await sendNotification(
+							email,
+							'⚠️ Tu suscripción está por expirar - Artiefy',
+							emailContent
+						);
+
+						console.log(
+							`✅ Notificación enviada a ${email} (${timeLeft} antes de expirar)`
+						);
+					} catch (error) {
+						console.error(
+							'❌ Error enviando notificación:',
+							error instanceof Error ? error.message : 'Unknown error'
+						);
+					}
+					resolve();
+				}, timeUntilNotification);
+
+				timer.unref();
+			});
+		}
+		return Promise.resolve();
+	});
+
+	await Promise.all(notifications);
+}
+
+function getTimeLeftText(milliseconds: number): string {
+	const minutes = milliseconds / (1000 * 60);
+	const hours = milliseconds / (1000 * 60 * 60);
+	const days = milliseconds / (1000 * 60 * 60 * 24);
+
+	if (minutes < 60) return `${Math.round(minutes)} minutos`;
+	if (hours < 24) return `${Math.round(hours)} horas`;
+	return `${Math.round(days)} días`;
 }
 
 // Limpiar el pool de conexiones al salir
