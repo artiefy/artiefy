@@ -265,7 +265,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 						<>
 							{viewUser && (
 								<div className="fixed inset-0 z-[10000] flex items-center justify-center backdrop-blur-md">
-									<div className="relative z-50 w-full max-w-5xl rounded-lg bg-[#01142B] p-8 text-white shadow-xl">
+									<div className="relative w-full max-w-5xl rounded-lg bg-[#01142B] p-8 text-white shadow-xl">
 										{/* Información del Usuario */}
 										<div className="flex">
 											{/* Foto de Perfil */}
@@ -370,7 +370,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 											{currentUsers.map((user) => (
 												<tr
 													key={user.id}
-													className={`rounded-lg transition duration-300 hover:bg-gray-800 hover:shadow-lg ${
+													className={`relative z-50 rounded-lg transition duration-300 hover:bg-gray-800 hover:shadow-lg ${
 														user.isNew ? 'bg-primary text-black' : ''
 													}`}
 												>

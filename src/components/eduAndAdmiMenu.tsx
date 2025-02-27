@@ -133,7 +133,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 	return (
 		<div className="min-h-screen bg-background">
 			{/* Navbar */}
-			<nav className="fixed top-0 z-50 w-full border-b border-gray-200 bg-background shadow-sm">
+			<nav className="fixed top-0 z-10 w-full border-b border-gray-200 bg-background shadow-sm">
 				<div className="p-3 lg:px-5 lg:pl-3">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center">
@@ -175,7 +175,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			{/* Sidebar */}
 			<aside
 				className={cn(
-					'fixed left-0 top-0 z-40 h-screen w-64 border-r border-gray-200 bg-background pt-20 transition-transform dark:border-gray-700 dark:bg-gray-800 sm:translate-x-0',
+					'fixed left-0 top-0 z-0 h-screen w-64 border-r border-gray-200 bg-background pt-20 transition-transform dark:border-gray-700 dark:bg-gray-800 sm:translate-x-0',
 					!isOpen && '-translate-x-full'
 				)}
 				aria-label="Sidebar"
