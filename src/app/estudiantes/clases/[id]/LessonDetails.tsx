@@ -295,10 +295,21 @@ export default function LessonDetails({
 		start();
 
 		try {
+			// Store the navigation button element position
+			const navigationElement = document.querySelector('.navigation-buttons');
+			const yOffset = navigationElement?.getBoundingClientRect().top ?? 0;
+			const scrollPosition = yOffset + window.scrollY - 100; // Subtract 100px to give some space above
+
 			await Promise.all([
 				new Promise((resolve) => setTimeout(resolve, 300)),
 				router.push(`/estudiantes/clases/${targetId}`, { scroll: false }),
 			]);
+
+			// Scroll to the navigation buttons after route change
+			window.scrollTo({
+				top: scrollPosition,
+				behavior: 'smooth',
+			});
 
 			await new Promise((resolve) => setTimeout(resolve, 200));
 
@@ -344,12 +355,16 @@ export default function LessonDetails({
 
 					{/* Main Content */}
 					<div className="flex-1 p-6">
-						<LessonNavigation
-							onNavigate={handleNavigationClick}
-							lessonsState={lessonsState}
-							lessonOrder={new Date(lesson.createdAt).getTime()}
-							isNavigating={isNavigating}
-						/>
+						<div className="navigation-buttons">
+							{' '}
+							{/* Add this wrapper div with class */}
+							<LessonNavigation
+								onNavigate={handleNavigationClick}
+								lessonsState={lessonsState}
+								lessonOrder={new Date(lesson.createdAt).getTime()}
+								isNavigating={isNavigating}
+							/>
+						</div>
 						<LessonPlayer
 							lesson={lesson}
 							progress={progress}
