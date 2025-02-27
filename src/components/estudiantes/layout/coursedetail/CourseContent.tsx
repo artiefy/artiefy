@@ -46,7 +46,7 @@ export function CourseContent({
 				Contenido del curso
 			</h2>
 
-			{isEnrolled && !isSubscriptionActive && (
+			{isEnrolled && (!isSubscriptionActive || isSubscriptionActive === null) && (
 				<Alert
 					variant="destructive"
 					className="mb-6 border-2 border-red-500 bg-red-50/80"
@@ -80,7 +80,7 @@ export function CourseContent({
 
 			<div
 				className={
-					isEnrolled && !isSubscriptionActive
+					isEnrolled && (!isSubscriptionActive || isSubscriptionActive === null)
 						? 'pointer-events-none opacity-50 blur-[1px] filter'
 						: ''
 				}
