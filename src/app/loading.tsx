@@ -1,7 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import '~/styles/rocket.css';
 import '~/styles/loading.css';
 
 const Loading: React.FC = () => {
@@ -16,9 +15,9 @@ const Loading: React.FC = () => {
       <div className={`card ${launch ? 'launch' : ''}`}>
         <div className="card-info">
           <div className="loading-container">
-            <div className="loader animate-spin" aria-live="assertive" role="alert"></div>
+            <div className="loader" aria-live="assertive" role="alert"></div>
           </div>
-          <span className="animate-pulse-text">CARGANDO!</span>
+          <span className="animate-pulse">CARGANDO!</span>
         </div>
         <Image
           src="/cursor.png"
