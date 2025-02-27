@@ -6,7 +6,7 @@ import { useUser } from "@clerk/nextjs"
 import "~/styles/form.css"
 import BuyerInfoForm from "~/components/estudiantes/layout/BuyerInfoForm"
 import type { FormData, Product } from "~/types/payu"
-import { validateFormData } from "~/utils/validation"
+import { validateFormData } from "~/utils/paygateway/validation"
 
 const PaymentForm: React.FC<{ selectedProduct: Product }> = ({ selectedProduct }) => {
   const { user } = useUser()

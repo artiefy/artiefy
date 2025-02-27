@@ -36,7 +36,6 @@
   --color-destructive-foreground: hsl(0, 0%, 98%);
   --color-border: hsl(178.4, 89.4%, 59.2%);
   --color-input: hsl(240, 5.9%, 90%);
-  --color-ring: hsl(240, 5.9%, 10%);
 
 	/* Colores para gráficos */
 	--color-chart-1: hsl(12, 76%, 61%);
@@ -56,11 +55,10 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-primary, currentColor);
-    @apply border-border outline-ring/50;
+    border-color: var(--color-gray-200, currentColor);
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background;
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {

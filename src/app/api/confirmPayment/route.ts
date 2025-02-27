@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateUserSubscription } from "~/server/actions/estudiantes/confirmation/updateUserSubscription";
-import { verifySignature } from "~/utils/verifySignature";
+import { verifySignature } from "~/utils/paygateway/verifySignature";
 
 interface PaymentData {
   email_buyer: string;

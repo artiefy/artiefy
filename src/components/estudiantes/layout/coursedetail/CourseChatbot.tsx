@@ -5,9 +5,14 @@ import { BsPersonCircle } from 'react-icons/bs';
 import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
+import { toast } from 'sonner';
 import '~/styles/chatmodal.css';
 
-const CourseChatbot = () => {
+interface CourseChatbotProps {
+	isEnrolled: boolean;
+}
+
+const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [messages, setMessages] = useState([
 		{ id: 1, text: '¡Hola! ¿En qué puedo ayudarte hoy?', sender: 'bot' },
@@ -33,6 +38,16 @@ const CourseChatbot = () => {
 
 	const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		if (!isEnrolled) {
+			toast.error('Debes estar inscrito en el curso para usar el chat', {
+				description: 'Por favor, inscríbete primero para acceder al chat.',
+				action: {
+					label: 'Cerrar',
+					onClick: () => console.log('Cerrado'),
+				},
+			});
+			return;
+		}
 		if (!inputText.trim()) return;
 
 		const newUserMessage = {
@@ -56,13 +71,33 @@ const CourseChatbot = () => {
 		}, 1000);
 	};
 
+	const handleClick = () => {
+		if (!isEnrolled) {
+			toast.error('Acceso restringido', {
+				description:
+					'Se necesita estar inscrito al curso para poder usar la IA de Artie',
+				action: {
+					label: 'Entendido',
+					onClick: () => console.log('Closed'),
+				},
+				duration: 5000,
+			});
+			return;
+		}
+		setIsOpen(true);
+	};
+
 	return (
 		<>
 			<button
-				onClick={() => setIsOpen(true)}
-				className="button"
+				onClick={handleClick}
+				className={`button ${!isEnrolled && 'cursor-not-allowed opacity-50'}`}
 				style={{ display: isOpen ? 'none' : 'flex' }}
-				aria-label="Abrir chat"
+				aria-label={
+					isEnrolled
+						? 'Abrir chat'
+						: 'Chat disponible solo para estudiantes inscritos'
+				}
 			>
 				<div className="button__text">
 					{Array.from('-ARTI-IA-ARTI-IA').map((char, i) => (
@@ -80,7 +115,7 @@ const CourseChatbot = () => {
 				</div>
 			</button>
 
-			{isOpen && (
+			{isOpen && isEnrolled && (
 				<div className="chat-modal">
 					<div
 						className="chat-container"
@@ -152,15 +187,19 @@ const CourseChatbot = () => {
 						</div>
 
 						<form onSubmit={handleSendMessage} className="input-container">
-							<div className="flex space-x-2 w-full">
+							<div className="flex w-full space-x-2">
 								<input
 									ref={inputRef}
 									type="text"
 									value={inputText}
 									onChange={(e) => setInputText(e.target.value)}
-									placeholder="Escribe tu mensaje..."
+									placeholder={
+										isEnrolled
+											? 'Escribe tu mensaje...'
+											: 'Inscríbete para chatear'
+									}
 									className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
-									disabled={isLoading}
+									disabled={!isEnrolled || isLoading}
 								/>
 								<button
 									type="submit"

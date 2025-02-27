@@ -143,18 +143,10 @@ export function CourseContent({
 													<p className="text-sm font-semibold text-gray-700">
 														Progreso De La Clase:
 													</p>
-													<span className="text-sm font-medium text-gray-600">
-														{lesson.porcentajecompletado}%
-													</span>
 												</div>
 												<Progress
 													value={lesson.porcentajecompletado}
-													className="w-full bg-gray-200"
-													style={
-														{
-															'--progress-background': 'green',
-														} as React.CSSProperties
-													}
+													showPercentage={true}
 												/>
 											</div>
 											<Link

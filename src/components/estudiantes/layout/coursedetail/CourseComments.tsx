@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import {
 	StarIcon,
@@ -17,11 +18,13 @@ import {
 	editComment,
 	deleteComment,
 	likeComment,
-} from '~/server/actions/estudiantes/comment/commentActions';
+} from '~/server/actions/estudiantes/comment/courseCommentActions';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
 interface CommentProps {
 	courseId: number;
+	isEnrolled: boolean;
+	onEnrollmentChange?: (enrolled: boolean) => void;
 }
 
 interface Comment {
@@ -32,15 +35,20 @@ interface Comment {
 	userName: string;
 	likes: number;
 	userId: string;
+	hasLiked: boolean; // Añadir esta propiedad
 }
 
-const CourseComments: React.FC<CommentProps> = ({ courseId }) => {
+const CourseComments: React.FC<CommentProps> = ({
+	courseId,
+	isEnrolled: initialIsEnrolled,
+	onEnrollmentChange,
+}) => {
 	const [content, setContent] = useState('');
 	const [rating, setRating] = useState(0);
 	const [message, setMessage] = useState('');
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [isEnrolled, setIsEnrolled] = useState(false);
+	const [localIsEnrolled, setLocalIsEnrolled] = useState(initialIsEnrolled);
 	const [isSubmitting, setIsSubmitting] = useState(false); // Estado para manejar el envío
 	const [editMode, setEditMode] = useState<null | string>(null); // Estado para manejar el modo de edición
 	const [deletingComment, setDeletingComment] = useState<null | string>(null); // Estado para manejar la eliminación
@@ -60,37 +68,58 @@ const CourseComments: React.FC<CommentProps> = ({ courseId }) => {
 			}
 		};
 
-		const checkEnrollment = async () => {
-			if (userId) {
-				const enrolled = await isUserEnrolled(courseId, userId);
-				setIsEnrolled(enrolled);
-			}
-		};
-
 		void fetchComments();
+	}, [courseId]);
+
+	useEffect(() => {
+		setLocalIsEnrolled(initialIsEnrolled);
+	}, [initialIsEnrolled]);
+
+	const checkEnrollment = useCallback(async () => {
+		if (userId) {
+			try {
+				const enrolled = await isUserEnrolled(courseId, userId);
+				setLocalIsEnrolled(enrolled);
+				onEnrollmentChange?.(enrolled);
+			} catch (error) {
+				console.error('Error checking enrollment:', error);
+			}
+		}
+	}, [courseId, userId, onEnrollmentChange]);
+
+	useEffect(() => {
 		void checkEnrollment();
+	}, [checkEnrollment, userId]);
 
-		// Remove polling interval
-		// const interval = setInterval(() => {
-		// 	if (userId) {
-		// 		void checkEnrollment();
-		// 	}
-		// }, 10000);
-
-		// Clean up interval on component unmount
-		// return () => clearInterval(interval);
-	}, [courseId, userId]);
+	const RequirementsMessage = () => {
+		if (!isSignedIn) {
+			return (
+				<div className="mb-4 rounded-md bg-yellow-50 p-4">
+					<p className="text-yellow-700">
+						Debes iniciar sesión para dejar un comentario.
+					</p>
+				</div>
+			);
+		}
+		if (!localIsEnrolled) {
+			return (
+				<div className="mb-4 rounded-md bg-yellow-50 p-4">
+					<p className="text-yellow-700">
+						Debes estar inscrito en el curso para dejar un comentario.
+					</p>
+				</div>
+			);
+		}
+		return null;
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (!isSignedIn) {
-			setMessage('Debes iniciar sesión para dejar un comentario.');
-			return;
+
+		if (!isSignedIn || !localIsEnrolled) {
+			return; // No intentar enviar si no cumple los requisitos
 		}
-		if (!isEnrolled) {
-			setMessage('Debes estar inscrito en el curso para dejar un comentario.');
-			return;
-		}
+
 		setIsSubmitting(true); // Mostrar el spinner
 		try {
 			let response;
@@ -165,81 +194,102 @@ const CourseComments: React.FC<CommentProps> = ({ courseId }) => {
 		setEditMode(null);
 	};
 
+	// Agregar función de formateo de fecha consistente
+	const formatDate = (dateString: string) => {
+		const date = new Date(dateString);
+		// Usar opciones fijas para evitar diferencias de localización
+		const options: Intl.DateTimeFormatOptions = {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+		};
+		return date.toLocaleDateString('es-ES', options);
+	};
+
 	return (
 		<div className="mt-8">
 			<h2 className="mb-4 text-2xl font-bold">Deja un comentario</h2>
+
+			<RequirementsMessage />
+
 			<form onSubmit={handleSubmit} className="space-y-4">
-				<div>
-					<label
-						htmlFor="content"
-						className="block text-sm font-medium text-primary"
-					>
-						Comentario:
-					</label>
-					<Textarea
-						id="content"
-						ref={textareaRef}
-						value={content}
-						onChange={(e) => setContent(e.target.value)}
-						onFocus={(e) => (e.target.placeholder = '')}
-						onBlur={(e) => (e.target.placeholder = 'Escribe tu comentario')}
-						required
-						placeholder="Escribe tu comentario"
-						className={`mt-1 block w-full rounded-md border text-primary shadow-xs placeholder:text-gray-400 focus:border-2 focus:border-secondary focus:ring-primary sm:text-sm`}
-						style={{
-							height: '100px',
-							padding: '10px',
-							caretColor: 'var(--color-primary)',
-							textAlign: 'left',
-							verticalAlign: 'middle',
-						}}
-					/>
-				</div>
-				<div>
-					<label
-						htmlFor="rating"
-						className="block text-sm font-medium text-primary"
-					>
-						Calificación:
-					</label>
-					<div className="mt-1 flex items-center">
-						{[1, 2, 3, 4, 5].map((star) => (
-							<StarIcon
-								key={star}
-								className={`size-6 cursor-pointer ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
-								onClick={() => setRating(star)}
-							/>
-						))}
-					</div>
-				</div>
-				<div className="flex items-center space-x-2">
-					<Button
-						type="submit"
-						className="inline-flex items-center justify-center rounded-md border border-transparent bg-secondary px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:outline-hidden active:scale-95"
-						style={{ width: '100px', height: '38px' }}
-					>
-						{isSubmitting ? (
-							<div className="flex items-center">
-								<Icons.spinner
-									className="animate-spin text-white"
-									style={{ width: '20px', height: '20px' }}
-								/>
-							</div>
-						) : editMode ? (
-							'Editar'
-						) : (
-							'Enviar'
-						)}
-					</Button>
-					{editMode && (
-						<button
-							type="button"
-							onClick={handleCancelEdit}
-							className="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden active:scale-95"
+				<div
+					className={
+						!isSignedIn || !localIsEnrolled
+							? 'pointer-events-none opacity-50'
+							: ''
+					}
+				>
+					<div>
+						<label
+							htmlFor="content"
+							className="block text-sm font-medium text-primary"
 						>
-							<XMarkIcon className="size-5" />
-						</button>
-					)}
+							Comentario:
+						</label>
+						<Textarea
+							id="content"
+							ref={textareaRef}
+							value={content}
+							onChange={(e) => setContent(e.target.value)}
+							onFocus={(e) => (e.target.placeholder = '')}
+							onBlur={(e) => (e.target.placeholder = 'Escribe tu comentario')}
+							required
+							placeholder="Escribe tu comentario"
+							className="mt-1 block w-full border-[1px] text-primary transition-colors duration-200 hover:border-secondary focus:border-[2px] focus:border-secondary"
+							style={{
+								height: '100px',
+								padding: '10px',
+								caretColor: 'var(--color-primary)',
+							}}
+						/>
+					</div>
+					<div>
+						<label
+							htmlFor="rating"
+							className="m-1 block text-sm font-medium text-primary"
+						>
+							Calificación:
+						</label>
+						<div className="mt-1 flex items-center">
+							{[1, 2, 3, 4, 5].map((star) => (
+								<StarIcon
+									key={star}
+									className={`size-6 cursor-pointer ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
+									onClick={() => setRating(star)}
+								/>
+							))}
+						</div>
+					</div>
+					<div className="flex items-center mt-2">
+						<Button
+							type="submit"
+							className="inline-flex items-center justify-center rounded-md border border-transparent bg-secondary text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:outline-hidden active:scale-95"
+							style={{ width: '100px', height: '38px' }}
+						>
+							{isSubmitting ? (
+								<div className="flex items-center">
+									<Icons.spinner
+										className="animate-spin text-white"
+										style={{ width: '20px', height: '20px' }}
+									/>
+								</div>
+							) : editMode ? (
+								'Editar'
+							) : (
+								'Enviar'
+							)}
+						</Button>
+						{editMode && (
+							<button
+								type="button"
+								onClick={handleCancelEdit}
+								className="ml-2 inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden active:scale-95"
+							>
+								<XMarkIcon className="size-5" />
+							</button>
+						)}
+					</div>
 				</div>
 			</form>
 			{message && <p className="mt-4 text-sm text-green-600">{message}</p>}
@@ -248,7 +298,13 @@ const CourseComments: React.FC<CommentProps> = ({ courseId }) => {
 					Comentarios ({comments.length})
 				</h3>
 				{loading ? (
-					<p>Cargando comentarios...</p>
+					<div className="flex items-center gap-2 text-primary">
+						<p>Cargando Comentarios...</p>
+						<Icons.spinner
+							className="animate-spin"
+							style={{ width: '20px', height: '20px' }}
+						/>
+					</div>
 				) : (
 					<ul className="space-y-4">
 						{comments.map((comment) => (
@@ -262,7 +318,7 @@ const CourseComments: React.FC<CommentProps> = ({ courseId }) => {
 											/>
 										))}
 										<span className="ml-2 text-sm text-gray-600">
-											{new Date(comment.createdAt).toLocaleDateString()}
+											{formatDate(comment.createdAt)}
 										</span>
 									</div>
 									<div className="flex items-center space-x-2">
@@ -279,12 +335,12 @@ const CourseComments: React.FC<CommentProps> = ({ courseId }) => {
 											>
 												{likingComment === comment.id ? (
 													<Icons.spinner
-														className="animate-spin text-blue-600"
+														className="animate-spin text-secondary"
 														style={{ width: '20px', height: '20px' }}
 													/>
 												) : (
 													<HandThumbUpIcon
-														className={`-mb-2 size-5 cursor-pointer ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'} hover:text-blue-600`}
+														className={`-mb-2 size-5 cursor-pointer transition-colors duration-200 ${comment.hasLiked ? 'text-blue-500' : 'text-gray-400'} hover:text-blue-500`}
 													/>
 												)}
 											</button>

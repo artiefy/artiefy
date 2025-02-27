@@ -60,25 +60,34 @@ export async function addComment(
 	}
 }
 
+// Modificar la función getCommentsByCourseId para incluir el estado de like del usuario actual
 export async function getCommentsByCourseId(
 	courseId: number
 ): Promise<{ comments: Comment[] }> {
 	try {
+		const user = await currentUser();
+		const userId = user?.id;
 		const keys = await redis.keys(`comment:*:${courseId}:*`);
+
 		const comments = await Promise.all(
 			keys.map(async (key) => {
 				const comment = await redis.hgetall(key);
-				if (!comment) {
-					return null;
-				}
+				if (!comment) return null;
+
+				// Verificar si el usuario actual ha dado like
+				const hasLiked = userId
+					? await redis.exists(`like:${userId}:${key}`)
+					: false;
+
 				return {
 					id: key,
 					content: comment.content as string,
 					rating: Number(comment.rating),
 					createdAt: comment.createdAt as string,
 					userName: comment.userName as string,
-					likes: Number(comment.likes), // Añadir la cantidad de "me gustas"
+					likes: Number(comment.likes),
 					userId: comment.userId as string,
+					hasLiked, // Agregar esta propiedad
 				};
 			})
 		);
@@ -221,6 +230,7 @@ export async function likeComment(
 	}
 }
 
+// Actualizar la interface Comment
 interface Comment {
 	id: string;
 	content: string;
@@ -229,4 +239,5 @@ interface Comment {
 	userName: string;
 	likes: number;
 	userId: string;
+	hasLiked: boolean; // Agregar esta propiedad
 }
