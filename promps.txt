@@ -79,4 +79,593 @@
 }
 
 -------------------------------------------------------------
+DOCUMENTACION BPROGRESS/NEXT.JS
+
+no en pagina cion no funciona asi con link entonces toca importarlo directamente pero con bpgoress
+
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import NProgress from 'nprogress';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '~/components/estudiantes/ui/pagination';
+
+interface Props {
+  totalPages: number;
+  currentPage: number;
+  totalCourses: number;
+  route?: string;
+  category?: string;
+  searchTerm?: string;
+}
+
+const PaginationContainer = ({
+  totalPages,
+  currentPage,
+  totalCourses,
+  route = '/estudiantes',
+  category,
+  searchTerm,
+}: Props) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    NProgress.done();
+  }, [searchParams]);
+
+  if (totalPages <= 1) return null;
+
+  const handlePageChange = (page: number) => {
+    NProgress.start();
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (page === 1) {
+      params.delete('page');
+    } else {
+      params.set('page', page.toString());
+    }
+
+    if (category) params.set('category', category);
+    if (searchTerm) params.set('searchTerm', searchTerm);
+
+    const queryString = params.toString();
+    const newUrl =
+      page === 1 && !category && !searchTerm
+        ? route
+        : `${route}?${queryString}`;
+
+    router.push(newUrl, { scroll: false });
+  };
+
+  const startItem = (currentPage - 1) * 9 + 1;
+  const endItem = Math.min(currentPage * 9, totalCourses);
+
+  return (
+    <div className="flex flex-col items-center justify-between space-y-4 py-8">
+      <p className="text-sm text-gray-600">
+        Mostrando {startItem}-{endItem} de {totalCourses} cursos
+      </p>
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => handlePageChange(currentPage - 1)}
+              className={`cursor-pointer active:scale-95 ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}`}
+            />
+          </PaginationItem>
+          {Array.from({ length: totalPages }).map((_, index) => {
+            const pageNumber = index + 1;
+            if (
+              pageNumber === 1 ||
+              pageNumber === totalPages ||
+              (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+            ) {
+              return (
+                <PaginationItem key={pageNumber}>
+                  <PaginationLink
+                    onClick={() => handlePageChange(pageNumber)}
+                    isActive={currentPage === pageNumber}
+                    className="cursor-pointer active:scale-95"
+                  >
+                    {pageNumber}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            } else if (
+              (pageNumber === currentPage - 2 && currentPage > 3) ||
+              (pageNumber === currentPage + 2 && currentPage < totalPages - 2)
+            ) {
+              return <PaginationEllipsis key={pageNumber} />;
+            }
+            return null;
+          })}
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => handlePageChange(currentPage + 1)}
+              className={`cursor-pointer active:scale-95 ${currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}`}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </div>
+  );
+};
+
+export default PaginationContainer;
+
+Migration from NProgress-V2
+Migrate from NProgress-V2 to BProgress
+
+To clarify the library’s identity and enable it to evolve more freely, we decided to move away from the name NProgress-V2 and adopt a new identity: BProgress. This rebranding gives us the opportunity to start fresh on a solid foundation, introduce new features, and provide more integration libraries while fostering a richer ecosystem around the project.
+
+There are two differences with the nprogress-v2 package.
+
+The first difference is the name of the nprogress-v2 package, which is now called @bprogress/core. So you can change the import like this:
+
+
+- import { NProgress } from 'nprogress-v2';
++ import { BProgress } from '@bprogress/core';
+The second difference is that all occurrences of “nprogress” have been replaced by “bprogress” in the code.
+
+So you can change your code like this for example:
+
+
+- NProgress.start();
++ BProgress.start();
+CSS has also changed, so if you're using custom CSS, be sure to rename all your .nprogress to .bprogress.
+
+
+- .nprogress
++ .bprogress
+And then you can use the BProgress object as you would use the NProgress object.
+
+Warning
+
+The nprogress-v2 package remains available and can still be used in its current version. However, it will no longer receive updates or maintenance in the future. While migrating to @bprogress/core is not mandatory, we recommend doing so to benefit from ongoing improvements and new features.
+Upgrade form 1.0 to 1.1
+Upgrade from NProgress-V2 version 1.0 to BProgress version 1.1
+
+In addition to migrating to BProgress, if you are migrating from version 1.0 of NProgress-V2, you may need to make some changes.
+
+With version 1.1 there are a few new features and small changes.
+
+The only change will be in the CSS. If you have a custom css, replace the id selector # with a class selector . for nprogress, which has now become bprogress.
+
+This will give you something like this:
+
+
+- #nprogress
++ .bprogress
+What's new
+The big news is the ability to use multiple progress bars anywhere in your code.
+
+To do this you need to set a template to null:
+
+
+BProgress.configure({
+  template: null,
+});
+And add one or more templates like this to your code:
+
+
+<div class="bprogress" style="display: none">
+  <div class="bar" role="bar">
+    <div class="peg"></div>
+  </div>
+  <div class="spinner" role="spinner">
+    <div class="spinner-icon"></div>
+  </div>
+</div>
+Pay Attention
+
+Don't forget to set the div with the nprogress class to display:none by default.
+Another new feature is the addition of the width value for positionUsing. This allows for greater flexibility, including the ability to create progress bars positioned absolutely within elements that are not directly aligned with the edges of the screen.
+
+
+BProgress.configure({
+  positionUsing: 'width',
+});
+Note
+
+By default, positionUsing will give priority to translate3d (depending on browser compatibility), as this method leverages GPU acceleration, providing smoother animations and better performance, especially for complex or frequently updated UI elements. Using translate3d helps reduce layout recalculations and enhances rendering efficiency compared to other positioning methods.
+React
+Progress Components
+Progress
+Use one or more progress bars anywhere in your code
+
+One of the great new features of BProgress version 1.1 is the ability to integrate one or more progress bars anywhere in your code.
+
+The Progress component is optional, meaning you can use it to create one or more progress bars in your code. If you don't, the default progress bar will be created automatically.
+
+Warning
+
+When using a custom component for the progress bar, the component will not be dynamically added or removed from the DOM. Instead, it will simply toggle between display: block and display: none.
+This behavior may impact performance, especially if the component involves complex rendering or layout calculations.
+
+Progress
+Import
+You can import the Progress component like this:
+
+
+import { Progress } from '@bprogress/...';
+Note
+
+Replace the ... in the import with the library you're using. For example, if you use @bprogress/next, import by doing from '@bprogress/next'
+
+Warning
+
+The Progress component must be used inside the ProgressProvider with the option template set to null.
+
+
+<ProgressProvider options={{
+  template: null,
+}}>
+  <Progress />
+</ProgressProvider>
+Usage
+You can use one or more progressive components anywhere in your code.
+
+Warning
+
+The Progress component has a display:none; style by default, and this will change to display:block; for display. You won't be able to play with the component's display property.
+
+You can use with no children:
+
+
+<Progress />
+This will automatically create a complete progress element like this:
+
+
+<Progress>
+  <Bar>
+    <Peg />
+  </Bar>
+  <Spinner>
+    <SpinnerIcon />
+  </Spinner>
+</Progress>
+You can also use any children you wish like this:
+
+
+<Progress>
+  <Bar />
+</Progress>
+This can be a good solution if you want to customize your Progress component with TailwindCSS classes like this:
+
+
+<div className="fixed top-4 overflow-hidden inset-x-4 rounded-lg bg-neutral-100 h-10">
+  <Progress>
+    <Bar className="!absolute z-[9999] !bottom-0 !top-auto"></Bar>
+    <Spinner className="!top-16">
+      <SpinnerIcon />
+    </Spinner>
+  </Progress>
+</div>
+Note
+
+Here we use ! to set classes to !important, as we're using basic CSS. However, if you're using custom CSS or no CSS with the disableStyle property, you don't need to set the classes to !important.
+
+Props
+Name	Type	Default	Description
+as	React.ElementType	'div'	The component to render the progress element
+children	React.ReactNode	undefinded	The children of the progress element
+...rest	React.ComponentPropsWithoutRef<T>	-	The rest of the props are passed to the progress element
+Advanced Usage
+To create absolute position progress bars inside elements that are not directly aligned with the screen edges, you'll need to set the positionUsing option to width.
+
+
+<ProgressProvider options={{
+  template: null,
+  positionUsing: 'width',
+}}>
+  <Progress />
+</ProgressProvider>
+Note
+
+By default, positionUsing will give priority to translate3d (depending on browser compatibility), as this method leverages GPU acceleration, providing smoother animations and better performance, especially for complex or frequently updated UI elements. Using translate3d helps reduce layout recalculations and enhances rendering efficiency compared to other positioning methods.
+React
+Progress Components
+Bar
+Use the `Bar` component
+
+The Bar component must be used inside the Progress component.
+
+Import
+
+import { Bar } from '@bprogress/...';
+Note
+
+Replace the ... in the import with the library you're using. For example, if you use @bprogress/next, import by doing from '@bprogress/next'
+
+Usage
+The Bar component is used to create the progress bar element.
+
+
+<Bar />
+It can be used with a children (like Peg or your custom component) like this:
+
+
+<Bar>
+  <Peg />
+</Bar>
+Props
+Name	Type	Default	Description
+as	React.ElementType	'div'	The component to render the progress element
+children	React.ReactNode	undefinded	The children of the progress element
+classSelector	string	'bar'	The class selector of the progress element (depends on your css)
+role	string	'bar'	The role of the progress element (depends on the barSelector and spinnerSelector options you set)
+...rest	React.ComponentPropsWithoutRef<T>	-	The rest of the props are passed to the progress element
+React
+Progress Components
+Peg
+Use the `Peg` component
+
+The Peg component must be used inside the Bar component.
+
+Import
+
+import { Peg } from '@bprogress/...';
+Note
+
+Replace the ... in the import with the library you're using. For example, if you use @bprogress/next, import by doing from '@bprogress/next'
+
+Usage
+The Peg component is used to create a shadow that acts like a luminous halo.
+
+
+<Peg />
+The Peg component can be used with children.
+
+Props
+Name	Type	Default	Description
+as	React.ElementType	'div'	The component to render the progress element
+children	React.ReactNode	undefinded	The children of the progress element
+classSelector	string	'peg'	The class selector of the progress element (depends on your css)
+...rest	React.ComponentPropsWithoutRef<T>	-	The rest of the props are passed to the progress element
+React
+Progress Components
+Spinner
+Use the `Spinner` component
+
+The Spinner component must be used inside the Progress component.
+
+Import
+
+import { Spinner } from '@bprogress/...';
+Note
+
+Replace the ... in the import with the library you're using. For example, if you use @bprogress/next, import by doing from '@bprogress/next'
+
+Usage
+This component is used to display the spinner.
+
+
+<Spinner />
+It can be used with a children like SpinnerIcon:
+
+
+<Spinner>
+  <SpinnerIcon />
+</Spinner>
+Or with a custom spinner component like this:
+
+
+<Spinner>
+  <LoaderCircle className="animate-spin size-6" />
+</Spinner>
+Props
+Name	Type	Default	Description
+as	React.ElementType	'div'	The component to render the progress element
+children	React.ReactNode	undefinded	The children of the progress element
+classSelector	string	'spinner'	The class selector of the progress element (depends on your css)
+role	string	'spinner'	The role of the progress element (depends on the barSelector and spinnerSelector options you set)
+...rest	React.ComponentPropsWithoutRef<T>	-	The rest of the props are passed to the progress element
+React
+Progress Components
+SpinnerIcon
+Use the `SpinnerIcon` component
+
+The SpinnerIcon component must be used inside the Spinner component.
+
+Import
+
+import { SpinnerIcon } from '@bprogress/...';
+Note
+
+Replace the ... in the import with the library you're using. For example, if you use @bprogress/next, import by doing from '@bprogress/next'
+
+Usage
+This component is used to display the spinner icon.
+
+
+<SpinnerIcon />
+Props
+Name	Type	Default	Description
+as	React.ElementType	'div'	The component to render the progress element
+children	React.ReactNode	undefinded	The children of the progress element
+classSelector	string	'peg'	The class selector of the progress element (depends on your css)
+...rest	React.ComponentPropsWithoutRef<T>	-	The rest of the props are passed to the progress element
+React
+useProgress
+Use `useProgress` hook
+
+The useProgress hook is used to manipulate the progress state.
+
+Import
+
+import { useProgress } from '@bprogress/...';
+Note
+
+Replace the ... in the import with the library you're using. For example, if you use @bprogress/next, import by doing from '@bprogress/next'
+
+Usage
+
+const { start, stop, inc, set, pause, resume, setOptions, getOptions } = useProgress();
+Methods
+start
+Start the progress bar.
+
+
+start();
+// or
+start(0.3, 1000);
+stop
+Stop the progress bar.
+
+
+stop();
+// or
+stop(1000);
+inc
+Increase the progress bar (between 0 and 1).
+
+
+inc(0.1);
+set
+Set the progress bar (between 0 and 1).
+
+
+set(0.5);
+pause
+Pause the progress bar.
+
+
+pause();
+resume
+Resume the progress bar.
+
+
+resume();
+setOptions
+Set the progress bar options.
+
+
+setOptions({ showSpinner: false });
+// or
+setOptions((options) => ({ ...options, showSpinner: true }));
+getOptions
+Get the progress bar options.
+
+
+const options = getOptions();
+Types
+
+interface ProgressContextValue {
+  start: (startPosition?: number, delay?: number) => void;
+  stop: (stopDelay?: number, forcedStopDelay?: number) => void;
+  inc: (amount?: number) => void;
+  set: (n: number) => void;
+  pause: () => void;
+  resume: () => void;
+  setOptions: (
+    options:
+      | Partial<BProgressOptions>
+      | ((prevOptions: BProgressOptions) => Partial<BProgressOptions>),
+  ) => void;
+  getOptions: () => BProgressOptions;
+}
+React
+useAnchorProgress
+Use `useAnchorProgress` hook
+
+There are two ways to set up a progress bar that is triggered during navigation:
+
+If the framework has a router that detects the start and end of navigation (like the Next.js Pages Directory router, for example), you can use the useProgress hook to trigger the progress bar at the start of navigation and stop it when you reach the target page.
+If the framework has a router that doesn't detect the start and end of navigation (like the Next.js App Directory router, for example), you can use this useAnchorProgress hook to activate navigation detection based on <a> elements in dom and window.history.
+Import
+
+import { useAnchorProgress } from '@bprogress/react';
+Usage
+
+useAnchorProgress(
+  {
+    shallowRouting,
+    disableSameURL,
+    startPosition,
+    delay,
+    stopDelay,
+    targetPreprocessor,
+    disableAnchorClick,
+    startOnLoad,
+  },
+  [navigation],
+)
+Parameters
+
+function useAnchorProgress(options: UseAnchorProgressOptions, deps: any[]): void;
+Options
+Prop	Type	Default
+shallowRouting
+
+boolean
+false
+disableSameURL
+
+boolean
+true
+startPosition
+
+number
+0
+delay
+
+number
+0
+stopDelay
+
+number
+0
+targetPreprocessor
+
+(url: URL) => URL
+undefined
+disableAnchorClick
+
+boolean
+false
+startOnLoad
+
+boolean
+false
+forcedStopDelay
+
+number
+0
+Example
+progress.tsx
+
+import {
+  useAnchorProgress,
+  withMemo,
+  type AnchorProgressProps,
+} from '@bprogress/react';
+import { useRouterNavigation } from '...';
+ 
+const ProgressComponent = (props: AnchorProgressProps) => {
+  const routerNavigation = useRouterNavigation();
+ 
+  useAnchorProgress(
+    {
+      ...props,
+      forcedStopDelay: 500,
+    },
+    [routerNavigation],
+  );
+ 
+  return null;
+};
+ 
+export const Progress = withMemo(ProgressComponent);
+ 
+Progress.displayName = 'Progress';
+---------------------------------------------------------
 documentacion nodemailer

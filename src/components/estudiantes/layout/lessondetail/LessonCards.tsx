@@ -1,5 +1,5 @@
 'use client';
-import { useRouter } from 'next/navigation';
+// Remove unused imports
 import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { type LessonWithProgress } from '~/types';
@@ -7,17 +7,25 @@ import { type LessonWithProgress } from '~/types';
 interface LessonCardsProps {
 	lessonsState: LessonWithProgress[];
 	selectedLessonId: number | null;
-	setSelectedLessonId: (id: number | null) => void;
+	onLessonClick: (id: number) => void;
 	progress: number;
 }
 
 const LessonCards = ({
 	lessonsState,
 	selectedLessonId,
-	setSelectedLessonId,
+	onLessonClick,
 	progress,
 }: LessonCardsProps) => {
-	const router = useRouter();
+	const handleClick = (lessonItem: LessonWithProgress) => {
+		if (!lessonItem.isLocked) {
+			onLessonClick(lessonItem.id);
+		} else {
+			toast.error('Clase Bloqueada', {
+				description: 'Debes completar las clases anteriores primero.',
+			});
+		}
+	};
 
 	const renderLessonCard = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
@@ -28,17 +36,7 @@ const LessonCards = ({
 		return (
 			<div
 				key={lessonItem.id}
-				onClick={() => {
-					if (isAccessible) {
-						setSelectedLessonId(lessonItem.id);
-						router.push(`/estudiantes/clases/${lessonItem.id}`);
-					} else {
-						toast.error('Lección bloqueada', {
-							description:
-								'Completa las lecciones anteriores para desbloquear esta.',
-						});
-					}
-				}}
+				onClick={() => handleClick(lessonItem)}
 				className={`mb-2 rounded-lg p-4 transition-all ${isAccessible ? 'cursor-pointer hover:bg-blue-50' : 'cursor-not-allowed opacity-75'} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${isCompleted ? 'border-green-500' : ''} `}
 			>
 				<div className="mb-2 flex items-center justify-between">
@@ -79,7 +77,10 @@ const LessonCards = ({
 	return (
 		<>
 			{lessonsState
-				.sort((a, b) => a.title.localeCompare(b.title)) // Ordenar en orden ascendente por título
+				.sort(
+					(a, b) =>
+						new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+				)
 				.map(renderLessonCard)}
 		</>
 	);
