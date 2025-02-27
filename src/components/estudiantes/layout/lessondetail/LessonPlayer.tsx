@@ -30,10 +30,10 @@ const LessonPlayer = ({
         <p className="text-gray-600">{lesson.description}</p>
         <div className="mt-4">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-gray-700">Progreso de la clase</span>
-            <span className="text-gray-600">{progress}%</span>
+            <span className="text-gray-700 font-bold">Progreso de la clase :</span>
+            <span className="text-gray-600"></span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} showPercentage={true} />
         </div>
       </div>
     </div>
