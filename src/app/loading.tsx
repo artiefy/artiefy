@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import '~/styles/rocket.css';
-import '~/styles/spinner.css';
+import '~/styles/loading.css';
 
 const Loading: React.FC = () => {
 	const [launch, setLaunch] = useState(false);
