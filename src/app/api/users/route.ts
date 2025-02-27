@@ -21,7 +21,6 @@ export async function GET(request: Request) {
 		const query = searchParams.get('search') ?? '';
 		const users = await getAdminUsers(query);
 
-
 		// 🔹 Recuperar el tiempo desde localStorage en el servidor no es posible directamente.
 		// 🔹 Lo manejaremos desde el frontend.
 		const usersWithTime = users.map((user) => ({
@@ -70,6 +69,7 @@ export async function POST(request: Request) {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		});
+		console.log('✅ Usuario guardado en la BD correctamente');
 
 		// 4. Preparar usuario seguro para la respuesta
 		const safeUser = {
