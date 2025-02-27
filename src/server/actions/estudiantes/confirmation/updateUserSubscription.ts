@@ -45,6 +45,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 	const subscriptionEndDate = new Date(
 		bogotaDate.getTime() + SUBSCRIPTION_DURATION
 	);
+	const purchaseDate = new Date(
+		formatInTimeZone(new Date(), 'America/Bogota', 'yyyy-MM-dd HH:mm:ss')
+	);
 
 	try {
 		// 🔍 Buscar usuario en la base de datos
@@ -62,10 +65,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				email: email_buyer,
 				role: 'student',
 				subscriptionStatus: 'active',
-				// Aquí el cambio: pasar directamente el objeto Date
 				subscriptionEndDate: subscriptionEndDate,
 				planType: planType,
-				purchaseDate: bogotaDate,
+				purchaseDate: purchaseDate,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			});
@@ -76,10 +78,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				.update(users)
 				.set({
 					subscriptionStatus: 'active',
-					// Aquí también: pasar directamente el objeto Date
 					subscriptionEndDate: subscriptionEndDate,
 					planType: planType,
-					purchaseDate: bogotaDate,
+					purchaseDate: purchaseDate,
 					updatedAt: new Date(),
 				})
 				.where(eq(users.email, email_buyer));
@@ -106,7 +107,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 					subscriptionStatus: 'active',
 					subscriptionEndDate: subscriptionEndDate.toISOString(),
 					planType: planType,
-					purchaseDate: bogotaDate.toISOString(),
+					purchaseDate: purchaseDate.toISOString(),
 				},
 			});
 
