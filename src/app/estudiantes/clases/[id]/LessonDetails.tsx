@@ -1,8 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useProgress } from '@bprogress/next';
-import { useUser } from '@clerk/nextjs';
-import { formatInTimeZone } from 'date-fns-tz';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
@@ -30,8 +28,6 @@ import {
 	restoreScrollPosition,
 } from '~/utils/scrollPosition';
 
-const TIME_ZONE = 'America/Bogota';
-
 export default function LessonDetails({
 	lesson,
 	activity,
@@ -50,8 +46,6 @@ export default function LessonDetails({
 	// Add new state
 	const [isNavigating, setIsNavigating] = useState(false);
 	// State and hooks initialization
-	const { user } = useUser();
-	const router = useRouter();
 	const [isChatOpen, setIsChatOpen] = useState(false);
 	const [selectedLessonId, setSelectedLessonId] = useState<number | null>(
 		lesson?.id ?? null
@@ -65,6 +59,7 @@ export default function LessonDetails({
 	);
 	const [isCompletingActivity, setIsCompletingActivity] = useState(false);
 	const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
+	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { start, stop } = useProgress();
 
@@ -351,45 +346,6 @@ export default function LessonDetails({
 			stop();
 		}
 	};
-
-	// Add new effect to check subscription status
-	useEffect(() => {
-		const checkSubscriptionStatus = () => {
-			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-			const rawSubscriptionEndDate = user?.publicMetadata
-				?.subscriptionEndDate as string | null;
-
-			console.log('Subscription Status:', subscriptionStatus); // Debug log
-			console.log('Raw Subscription End Date:', rawSubscriptionEndDate); // Debug log
-
-			const formattedSubscriptionEndDate = rawSubscriptionEndDate
-				? formatInTimeZone(
-						new Date(rawSubscriptionEndDate),
-						TIME_ZONE,
-						'yyyy-MM-dd HH:mm:ss'
-					)
-				: null;
-
-			console.log(
-				'Formatted Subscription End Date (Bogotá):',
-				formattedSubscriptionEndDate
-			); // Debug log
-
-			const isSubscriptionActive =
-				subscriptionStatus === 'active' &&
-				(!formattedSubscriptionEndDate ||
-					new Date(formattedSubscriptionEndDate) > new Date());
-
-			if (!isSubscriptionActive) {
-				toast.error(
-					'Debes tener una suscripción activa para poder ver las clases.'
-				);
-				void router.push('/planes');
-			}
-		};
-
-		checkSubscriptionStatus();
-	}, [user, router]);
 
 	return (
 		<>
