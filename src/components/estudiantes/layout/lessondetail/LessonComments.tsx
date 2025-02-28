@@ -33,6 +33,7 @@ interface ClassComment {
 	userName: string;
 	likes: number;
 	userId: string;
+	userLiked: boolean; // Add this property to track if the user liked the comment
 }
 
 const ClassComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
@@ -261,7 +262,7 @@ const ClassComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 													/>
 												) : (
 													<HandThumbUpIcon
-														className={`-mb-2 size-5 cursor-pointer ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'} hover:text-blue-600`}
+														className={`-mb-2 size-5 cursor-pointer ${comment.userLiked ? 'text-blue-600' : 'text-gray-400'} hover:text-blue-600`}
 													/>
 												)}
 											</button>
