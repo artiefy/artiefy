@@ -1,5 +1,5 @@
 import { clerkClient, type User } from '@clerk/nextjs/server';
-import { formatInTimeZone } from 'date-fns-tz';
+import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '~/server/db';
@@ -20,7 +20,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 
 	if (state_pol !== '4') {
 		console.warn(
-			`⚠️ Pago con estado ${state_pol}, no se actualizo la suscripción.`
+			`⚠️ Pago con estado ${state_pol}, no se actualizó la suscripción.`
 		);
 		return;
 	}
@@ -34,20 +34,23 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				? 'Enterprise'
 				: 'Pro';
 
-	// Calcular fechas en zona horaria de Bogotá
-	const bogotaDate = new Date(
-		formatInTimeZone(new Date(), TIME_ZONE, 'yyyy-MM-dd HH:mm:ss')
+	// Obtener la fecha actual en UTC y convertirla a Bogotá
+	const nowUtc = new Date();
+	const bogotaDate = toZonedTime(nowUtc, TIME_ZONE);
+
+	// Calcular la fecha de expiración correctamente en Bogotá
+	const subscriptionEndDate = toZonedTime(
+		new Date(bogotaDate.getTime() + SUBSCRIPTION_DURATION),
+		TIME_ZONE
 	);
-	const subscriptionEndDate = new Date(
-		bogotaDate.getTime() + SUBSCRIPTION_DURATION
-	);
-	const purchaseDate = formatInTimeZone(
-		new Date(),
+
+	// Formatear fechas en Bogotá para la base de datos y Clerk
+	const formattedPurchaseDate = formatInTimeZone(
+		bogotaDate,
 		TIME_ZONE,
 		'yyyy-MM-dd HH:mm:ss'
 	);
 
-	// Formatear la fecha de expiración en el formato deseado
 	const formattedSubscriptionEndDate = formatInTimeZone(
 		subscriptionEndDate,
 		TIME_ZONE,
@@ -72,7 +75,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				subscriptionStatus: 'active',
 				subscriptionEndDate: subscriptionEndDate,
 				planType: planType,
-				purchaseDate: new Date(purchaseDate),
+				purchaseDate: new Date(formattedPurchaseDate),
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			});
@@ -84,7 +87,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 					subscriptionStatus: 'active',
 					subscriptionEndDate: subscriptionEndDate,
 					planType: planType,
-					purchaseDate: new Date(purchaseDate),
+					purchaseDate: new Date(formattedPurchaseDate),
 					updatedAt: new Date(),
 				})
 				.where(eq(users.email, email_buyer));
@@ -109,7 +112,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			await clerkClientInstance.users.updateUserMetadata(clerkUser.id, {
 				publicMetadata: {
 					subscriptionStatus: 'active',
-					subscriptionEndDate: formattedSubscriptionEndDate, // Ahora tiene el formato correcto
+					subscriptionEndDate: String(formattedSubscriptionEndDate), // Fecha correcta en Bogotá
 				},
 			});
 
@@ -119,20 +122,8 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		}
 
 		// Logs de fechas
-		console.log(
-			`📅 Inicio suscripción (Bogotá): ${formatInTimeZone(
-				bogotaDate,
-				TIME_ZONE,
-				'yyyy-MM-dd HH:mm:ss'
-			)}`
-		);
-		console.log(
-			`📅 Fin suscripción (Bogotá): ${formatInTimeZone(
-				subscriptionEndDate,
-				TIME_ZONE,
-				'yyyy-MM-dd HH:mm:ss'
-			)}`
-		);
+		console.log(`📅 Inicio suscripción (Bogotá): ${formattedPurchaseDate}`);
+		console.log(`📅 Fin suscripción (Bogotá): ${formattedSubscriptionEndDate}`);
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error';
