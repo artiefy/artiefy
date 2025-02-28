@@ -34,14 +34,13 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				? 'Enterprise'
 				: 'Pro';
 
-	// Obtener la fecha actual en UTC y convertirla a Bogotá
-	const nowUtc = new Date();
-	const bogotaDate = toZonedTime(nowUtc, TIME_ZONE);
+	// Obtener la fecha actual en Bogotá
+	const now = new Date();
+	const bogotaDate = toZonedTime(now, TIME_ZONE);
 
 	// Calcular la fecha de expiración correctamente en Bogotá
-	const subscriptionEndDate = toZonedTime(
-		new Date(bogotaDate.getTime() + SUBSCRIPTION_DURATION),
-		TIME_ZONE
+	const subscriptionEndDate = new Date(
+		bogotaDate.getTime() + SUBSCRIPTION_DURATION
 	);
 
 	// Formatear fechas en Bogotá para la base de datos y Clerk
@@ -73,7 +72,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				email: email_buyer,
 				role: 'student',
 				subscriptionStatus: 'active',
-				subscriptionEndDate: subscriptionEndDate,
+				subscriptionEndDate: new Date(formattedSubscriptionEndDate),
 				planType: planType,
 				purchaseDate: new Date(formattedPurchaseDate),
 				createdAt: new Date(),
@@ -85,7 +84,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				.update(users)
 				.set({
 					subscriptionStatus: 'active',
-					subscriptionEndDate: subscriptionEndDate,
+					subscriptionEndDate: new Date(formattedSubscriptionEndDate),
 					planType: planType,
 					purchaseDate: new Date(formattedPurchaseDate),
 					updatedAt: new Date(),
@@ -112,7 +111,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			await clerkClientInstance.users.updateUserMetadata(clerkUser.id, {
 				publicMetadata: {
 					subscriptionStatus: 'active',
-					subscriptionEndDate: String(formattedSubscriptionEndDate), // Fecha correcta en Bogotá
+					subscriptionEndDate: formattedSubscriptionEndDate, // Fecha correcta en Bogotá
 				},
 			});
 
