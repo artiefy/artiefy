@@ -14,7 +14,7 @@ import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonCh
 import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
-import RecursosLesson from '~/components/estudiantes/layout/RecursosLesson';
+import RecursosLesson from '~/components/estudiantes/layout/lessondetail/RecursosLesson';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';

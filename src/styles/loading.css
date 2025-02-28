@@ -1,4 +1,4 @@
-.loader {
+.loading-loader {
 	--hue: 210;
 	--size: 35px;
 	--border: 5px;
@@ -6,7 +6,7 @@
 	--blur: var(--border);
 }
 
-.loader {
+.loading-loader {
 	width: var(--border);
 	aspect-ratio: 1;
 	background: white;
@@ -14,11 +14,11 @@
 	position: absolute;
 	--y: calc((var(--size) * -0.5) + (var(--border) * 0.5));
 	transform: rotate(0deg) translateY(var(--y));
-	animation: spin var(--speed) infinite linear;
+	animation: loading-spin var(--speed) infinite linear;
 	display: none;
 }
 
-.loader::before {
+.loading-loader::before {
 	content: '';
 	position: absolute;
 	inset: calc(var(--border) * -0.5);
@@ -28,7 +28,7 @@
 	z-index: -1;
 }
 
-.loader::after {
+.loading-loader::after {
 	content: '';
 	width: var(--size);
 	aspect-ratio: 1;
@@ -49,7 +49,7 @@
 	);
 }
 
-@keyframes spin {
+@keyframes loading-spin {
 	to {
 		transform: rotate(-360deg) translateY(var(--y));
 	}
@@ -63,12 +63,12 @@
 	align-items: center;
 }
 
-.card-info {
+.loading-card-info {
 	display: flex;
 	align-items: center;
 }
 
-.fullscreen-background {
+.loading-fullscreen-background {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -85,7 +85,7 @@
 	overflow: hidden;
 }
 
-.card {
+.loading-card {
 	width: 100%;
 	height: 100%;
 	display: flex;
@@ -96,7 +96,7 @@
 	transition: all 1s ease;
 }
 
-.card-info span {
+.loading-card-info span {
 	font-size: 2.2rem;
 	color: #3af4ef;
 	font-weight: 900;
@@ -104,14 +104,14 @@
 	margin-left: 10px;
 }
 
-.wrapper {
+.loading-wrapper {
 	width: 200px;
 	height: 60px;
 	position: relative;
 	z-index: 1;
 }
 
-.circle {
+.loading-circle {
 	width: 20px;
 	height: 20px;
 	position: absolute;
@@ -119,10 +119,10 @@
 	background-color: #fff;
 	left: 15%;
 	transform-origin: 50%;
-	animation: circle7124 0.5s alternate infinite ease;
+	animation: loading-circle7124 0.5s alternate infinite ease;
 }
 
-@keyframes circle7124 {
+@keyframes loading-circle7124 {
 	0% {
 		top: 60px;
 		height: 5px;
@@ -141,18 +141,18 @@
 	}
 }
 
-.circle:nth-child(2) {
+.loading-circle:nth-child(2) {
 	left: 45%;
 	animation-delay: 0.2s;
 }
 
-.circle:nth-child(3) {
+.loading-circle:nth-child(3) {
 	left: auto;
 	right: 15%;
 	animation-delay: 0.3s;
 }
 
-.shadow {
+.loading-shadow {
 	width: 20px;
 	height: 4px;
 	border-radius: 50%;
@@ -163,10 +163,10 @@
 	z-index: -1;
 	left: 15%;
 	filter: blur(1px);
-	animation: shadow046 0.5s alternate infinite ease;
+	animation: loading-shadow046 0.5s alternate infinite ease;
 }
 
-@keyframes shadow046 {
+@keyframes loading-shadow046 {
 	0% {
 		transform: scaleX(1.5);
 	}
@@ -182,12 +182,12 @@
 	}
 }
 
-.shadow:nth-child(4) {
+.loading-shadow:nth-child(4) {
 	left: 45%;
 	animation-delay: 0.2s;
 }
 
-.shadow:nth-child(5) {
+.loading-shadow:nth-child(5) {
 	left: auto;
 	right: 15%;
 	animation-delay: 0.3s;

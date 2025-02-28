@@ -14,23 +14,23 @@ const Loading: React.FC = () => {
 	}, []);
 
 	return (
-		<div className="fullscreen-background">
-			<div className={`card ${launch ? 'launch' : ''}`}>
-				<div className="card-info">
-					<div className="wrapper">
-						<div className="circle"></div>
-						<div className="circle"></div>
-						<div className="circle"></div>
-						<div className="shadow"></div>
-						<div className="shadow"></div>
-						<div className="shadow"></div>
+		<div className="loading-fullscreen-background">
+			<div className={`loading-card ${launch ? 'loading-launch' : ''}`}>
+				<div className="loading-card-info">
+					<div className="loading-wrapper">
+						<div className="loading-circle"></div>
+						<div className="loading-circle"></div>
+						<div className="loading-circle"></div>
+						<div className="loading-shadow"></div>
+						<div className="loading-shadow"></div>
+						<div className="loading-shadow"></div>
 					</div>
-					<span className="animate-pulse">CARGANDO!</span>
+					<span className="loading-animate-pulse">CARGANDO!</span>
 				</div>
 				<Image
 					src="/cursor.png"
 					alt="Logo"
-					className="logo"
+					className="loading-logo"
 					width={140}
 					height={140}
 					priority
