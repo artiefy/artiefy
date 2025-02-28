@@ -82,7 +82,7 @@ export default function LessonDetails({
 						porcentajecompletado: progress ? progress.progress : 0,
 					};
 				})
-				.sort((a, b) => a.title.localeCompare(b.title)); // Ordenar por título
+				.sort((a, b) => a.title.localeCompare(b.title));
 			setLessonsState(lessonsWithProgress);
 		};
 
