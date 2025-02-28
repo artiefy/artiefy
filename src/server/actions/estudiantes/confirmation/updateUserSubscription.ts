@@ -65,9 +65,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				email: email_buyer,
 				role: 'student',
 				subscriptionStatus: 'active',
-				subscriptionEndDate: subscriptionEndUtc, // Guardamos en UTC
+				subscriptionEndDate: new Date(subscriptionEndBogota), // Guardamos en formato Bogotá
 				planType: planType,
-				purchaseDate: new Date(),
+				purchaseDate: new Date(bogotaNow), // Guardamos en formato Bogotá
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			});
@@ -77,9 +77,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				.update(users)
 				.set({
 					subscriptionStatus: 'active',
-					subscriptionEndDate: subscriptionEndUtc, // Guardamos en UTC
+					subscriptionEndDate: new Date(subscriptionEndBogota), // Guardamos en formato Bogotá
 					planType: planType,
-					purchaseDate: new Date(),
+					purchaseDate: new Date(bogotaNow), // Guardamos en formato Bogotá
 					updatedAt: new Date(),
 				})
 				.where(eq(users.email, email_buyer));
