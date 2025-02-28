@@ -2,8 +2,10 @@ import { clerkClient, type User } from '@clerk/nextjs/server';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
+import { sendEmail } from '~/utils/email/notifications';
 
 const SUBSCRIPTION_DURATION = 5 * 60 * 1000; // 5 minutos
 const TIME_ZONE = 'America/Bogota'; // Zona horaria de Bogotá
@@ -110,6 +112,23 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		} else {
 			console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
 		}
+
+		// Schedule email notification 2 minutes before subscription ends
+		const notificationTime = new Date(
+			subscriptionEndDate.getTime() - 2 * 60 * 1000
+		);
+		setTimeout(async () => {
+			const emailHtml = EmailTemplateSubscription({
+				userName: email_buyer,
+				expirationDate: subscriptionEndBogota,
+				timeLeft: '2 minutos',
+			});
+			await sendEmail({
+				to: email_buyer,
+				subject: 'Tu suscripción está por expirar',
+				html: emailHtml,
+			});
+		}, notificationTime.getTime() - now.getTime());
 
 		// Logs de depuración
 		console.log(`📅 Inicio suscripción (Bogotá): ${bogotaNow}`);

@@ -27,7 +27,7 @@ export function EmailTemplateSubscription({
       </div>
       
       <div style="text-align: center; margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/planes" 
+        <a href="${process.env.NEXT_PUBLIC_APP_URL}/planes"  
            style="background-color: #00BDD8; color: white; padding: 12px 25px; 
                   text-decoration: none; border-radius: 5px; font-weight: bold;">
           Renovar Suscripción

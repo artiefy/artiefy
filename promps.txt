@@ -1,751 +1,559 @@
-'use client';
+Nodemailer
+Nodemailer is a module for Node.js applications that allows easy email sending. The project started in 2010 when there were few reliable options for sending email messages, and today, it is the default solution for most Node.js users.
 
-import { useState, useEffect } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
-import { StarIcon } from '@heroicons/react/24/solid';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
-import NProgress from 'nprogress';
-import {
-	FaCalendar,
-	FaChevronDown,
-	FaChevronUp,
-	FaClock,
-	FaHome,
-	FaUserGraduate,
-	FaCheck,
-	FaLock,
-	FaCheckCircle,
-} from 'react-icons/fa';
-import Comments from '~/components/estudiantes/layout/coursedetail/CourseComments';
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
-import ChatbotModal from '~/components/estudiantes/layout/lessondetail/LessonChatbotModal';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
-} from '~/components/estudiantes/ui/breadcrumb';
-import { Button } from '~/components/estudiantes/ui/button';
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-} from '~/components/estudiantes/ui/card';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { Progress } from '~/components/estudiantes/ui/progress';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
-import { useToast } from '~/hooks/use-toast';
-import { blurDataURL } from '~/lib/blurDataUrl';
-import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
-import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
-import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
-import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
-import type { Course, Enrollment } from '~/types';
-import '~/styles/buttonclass.css';
+npm install nodemailer
+Check out EmailEngine – a self-hosted email gateway that allows you to make REST requests to IMAP and SMTP servers. EmailEngine also sends webhooks whenever something changes on the registered accounts.
 
-export default function CourseDetails({
-	course: initialCourse,
-}: {
-	course: Course;
-}) {
-	const [course, setCourse] = useState<Course>(initialCourse);
-	const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [isEnrolling, setIsEnrolling] = useState(false);
-	const [isUnenrolling, setIsUnenrolling] = useState(false);
-	const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
-	const [totalStudents, setTotalStudents] = useState(course.totalStudents);
-	const [isEnrolled, setIsEnrolled] = useState(false);
-	const [isSubscriptionActive, setIsSubscriptionActive] = useState(true); // New state for subscription status
-	const { isSignedIn, userId } = useAuth();
-	const { user } = useUser();
-	const { toast } = useToast();
-	const router = useRouter();
-	const pathname = usePathname();
+Using the email accounts registered with EmailEngine, you can receive and send emails. It supports OAuth2, delayed sends, opens and clicks tracking, bounce detection, and more, all without needing an external MTA service.
 
-	useEffect(() => {
-		const fetchUserProgress = async () => {
-			if (userId && isEnrolled && !loading) {
-				try {
-					const lessons = await getLessonsByCourseId(course.id);
-					setCourse((prevCourse) => ({
-						...prevCourse,
-						lessons: lessons
-							.map((lesson, index) => ({
-								...lesson,
-								isLocked: lesson.userProgress === 0 && index !== 0,
-								porcentajecompletado: lesson.userProgress,
-							}))
-							.sort((a, b) => a.title.localeCompare(b.title)), // Ordenar por título
-					}));
-				} catch (error) {
-					console.error('Error fetching user progress:', error);
-				}
-			}
-		};
+Nodemailer features
+A single module with zero dependencies – easy to audit the code with no hidden complexities
+Emphasis on security – avoid RCE vulnerabilities
+Unicode support to use any characters, including emoji 💪
+Windows support – install with npm on Windows without any compiled dependencies. Perfect for use with Azure or on your local Windows machine
+Send HTML content with plain text alternatives
+Attach Attachments to emails
+Embed Images in HTML emails so your design doesn’t get blocked
+Secure email delivery with TLS/STARTTLS
+Various transport methods beyond the default SMTP support
+Sign emails with DKIM
+Custom Plugin support for advanced message manipulation
+Supports OAuth2 authentication
+Proxies for SMTP connections
+ES6 codebase – fewer chances of memory leaks from hoisted var’s
+Autogenerated test email accounts from Ethereal.email
+Requirements
+Node.js v6.0.0 or newer. That’s all you need.
+If you’re running Node.js version 6 or later, you can use Nodemailer. There are no specific platform or resource requirements. All Nodemailer methods support both callbacks and Promises (if no callback is provided). If you want to use async..await, you’ll need Node.js v8.0.0 or newer.
 
-		// Evitar actualizar el estado innecesariamente
-		setIsEnrolled((prevIsEnrolled) => {
-			const userEnrolled =
-				Array.isArray(course.enrollments) && userId
-					? course.enrollments.some(
-							(enrollment: Enrollment) => enrollment.userId === userId
-						)
-					: false;
+TL;DR
+To send an email, follow these steps:
 
-			return prevIsEnrolled !== userEnrolled ? userEnrolled : prevIsEnrolled;
-		});
+Create a Nodemailer transporter using either SMTP or another transport method
+Set up your message options (who sends what to whom)
+Deliver the message using the sendMail() method of your transporter
+Example
+Below is an example to send an email with both plain text and HTML content using Ethereal Email.
 
-		if (isEnrolled) {
-			void fetchUserProgress();
-		}
+const nodemailer = require("nodemailer");
 
-		const timer = setTimeout(() => {
-			setLoading(false);
-		}, 1000);
+const transporter = nodemailer.createTransport({
+  host: "smtp.ethereal.email",
+  port: 587,
+  secure: false, // true for port 465, false for other ports
+  auth: {
+    user: "maddison53@ethereal.email",
+    pass: "jn7jnAPss4f63QBp6D",
+  },
+});
 
-		return () => clearTimeout(timer);
-	}, [course.enrollments, userId, course.id, isEnrolled, loading]);
+// async..await is not allowed in global scope, must use a wrapper
+async function main() {
+  // send mail with defined transport object
+  const info = await transporter.sendMail({
+    from: '"Maddison Foo Koch 👻" <maddison53@ethereal.email>', // sender address
+    to: "bar@example.com, baz@example.com", // list of receivers
+    subject: "Hello ✔", // Subject line
+    text: "Hello world?", // plain text body
+    html: "<b>Hello world?</b>", // html body
+  });
 
-	const toggleLesson = (lessonId: number) => {
-		if (isEnrolled) {
-			setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
-		}
-	};
-
-	const formatDate = (dateString: string | number | Date) =>
-		new Date(dateString).toISOString().split('T')[0];
-
-	useEffect(() => {
-		const checkSubscriptionStatus = () => {
-			if (userId) {
-				const userSubscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-				console.log(
-					'Estado de suscripción detectado en frontend:',
-					userSubscriptionStatus
-				);
-				if (userSubscriptionStatus === 'active') {
-					setIsEnrolled(true);
-					setIsSubscriptionActive(true); // Set subscription status to active
-				} else {
-					setIsSubscriptionActive(false); // Set subscription status to inactive
-				}
-			}
-		};
-
-		void checkSubscriptionStatus();
-	}, [userId, user]);
-
-	const handleEnroll = async () => {
-		if (!isSignedIn) {
-			toast({
-				title: 'Debes iniciar sesión',
-				description: 'Debes iniciar sesión para inscribirte en este curso.',
-				variant: 'destructive',
-			});
-			void router.push(`/sign-in?redirect_url=${pathname}`);
-			return;
-		}
-
-		if (isEnrolling) {
-			return;
-		}
-
-		setIsEnrolling(true);
-		setEnrollmentError(null);
-
-		try {
-			if (
-				!user?.publicMetadata?.subscriptionStatus ||
-				user.publicMetadata.subscriptionStatus !== 'active'
-			) {
-				toast({
-					title: 'Suscripción requerida',
-					description:
-						'Debes tener una suscripción activa para inscribirte en este curso.',
-					variant: 'destructive',
-				});
-				setIsEnrolling(false);
-				void router.push('/planes');
-				return;
-			}
-
-			const result = await enrollInCourse(course.id);
-			if (result.success) {
-				setTotalStudents((prevTotal) => prevTotal + 1);
-				setIsEnrolled(true);
-				const updatedCourse = await getCourseById(course.id);
-				if (updatedCourse) {
-					setCourse({
-						...updatedCourse,
-						lessons: updatedCourse.lessons ?? [],
-					});
-				}
-				toast({
-					title: 'Suscripción exitosa',
-					description: '¡Te has Inscrito exitosamente en el curso!',
-					variant: 'default',
-				});
-			} else {
-				throw new Error(result.message);
-			}
-		} catch (error: unknown) {
-			handleError(error, 'Error de Suscripción', 'Error al inscribirse');
-		} finally {
-			setIsEnrolling(false);
-		}
-	};
-
-	const handleUnenroll = async () => {
-		if (!isSignedIn || isUnenrolling) {
-			return;
-		}
-
-		setIsUnenrolling(true);
-		setEnrollmentError(null);
-
-		try {
-			await unenrollFromCourse(course.id);
-			setTotalStudents((prevTotal) => prevTotal - 1);
-			setIsEnrolled(false);
-			const updatedCourse = await getCourseById(course.id);
-			if (updatedCourse) {
-				setCourse({
-					...updatedCourse,
-					lessons: updatedCourse.lessons ?? [],
-				});
-			}
-			toast({
-				title: 'Cancelar Suscripción',
-				description: 'Se Canceló El Curso Correctamente',
-				variant: 'default',
-			});
-		} catch (error: unknown) {
-			handleError(error, 'Error de desuscripción', 'Error al desuscribirse');
-		} finally {
-			setIsUnenrolling(false);
-		}
-	};
-
-	const handleError = (
-		error: unknown,
-		toastTitle: string,
-		toastDescription: string
-	) => {
-		if (error instanceof Error) {
-			setEnrollmentError(error.message);
-			toast({
-				title: toastTitle,
-				description: `${toastDescription}: ${error.message}`,
-				variant: 'destructive',
-			});
-		} else {
-			setEnrollmentError('Error desconocido');
-			toast({
-				title: toastTitle,
-				description: 'Error desconocido',
-				variant: 'destructive',
-			});
-		}
-		console.error(toastDescription, error);
-	};
-
-	return (
-		<div className="min-h-screen bg-background">
-			<Header />
-			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
-				<Breadcrumb className="pb-6">
-					<BreadcrumbList>
-						<BreadcrumbItem>
-							<BreadcrumbLink href="/">
-								<FaHome className="mr-1 inline-block" /> Inicio
-							</BreadcrumbLink>
-						</BreadcrumbItem>
-						<BreadcrumbSeparator />
-						<BreadcrumbItem>
-							<BreadcrumbLink href="/estudiantes">
-								<FaUserGraduate className="mr-1 inline-block" /> Cursos
-							</BreadcrumbLink>
-						</BreadcrumbItem>
-						<BreadcrumbSeparator />
-						<BreadcrumbItem>
-							<BreadcrumbPage>{course.title}</BreadcrumbPage>
-						</BreadcrumbItem>
-					</BreadcrumbList>
-				</Breadcrumb>
-				{loading ? (
-					<Skeleton className="h-[500px] w-full rounded-lg" />
-				) : (
-					<Card className="overflow-hidden">
-						<CardHeader className="p-0">
-							<AspectRatio ratio={16 / 6}>
-								<Image
-									src={
-										course.coverImageKey
-											? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-											: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-									}
-									alt={course.title}
-									fill
-									className="object-cover"
-									priority
-									sizes="100vw"
-									placeholder="blur"
-									blurDataURL={blurDataURL}
-								/>
-								<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
-									<h1 className="text-3xl font-bold text-white">
-										{course.title}
-									</h1>
-								</div>
-							</AspectRatio>
-						</CardHeader>
-						<CardContent className="space-y-6 p-6">
-							<div className="flex flex-wrap items-center justify-between gap-4">
-								<div>
-									<h3 className="text-lg font-semibold text-background">
-										{course.instructor}
-									</h3>
-									<p className="text-gray-600">Educador</p>
-								</div>
-								<div className="flex items-center space-x-6">
-									<div className="flex items-center">
-										<FaUserGraduate className="mr-2 text-blue-600" />
-										<span className="text-background">
-											{totalStudents} Estudiantes
-										</span>
-									</div>
-									<div className="flex items-center">
-										{Array.from({ length: 5 }).map((_, index) => (
-											<StarIcon
-												key={index}
-												className={`size-5 ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
-											/>
-										))}
-										<span className="ml-2 text-lg font-semibold text-yellow-400">
-											{course.rating?.toFixed(1)}
-										</span>
-									</div>
-								</div>
-							</div>
-							<div className="flex flex-wrap items-center justify-between gap-4">
-								<div className="flex items-center space-x-4">
-									<Badge
-										variant="outline"
-										className="border-primary bg-background text-primary hover:bg-black/70"
-									>
-										{course.category?.name}
-									</Badge>
-									<div className="flex items-center">
-										<FaCalendar className="mr-2 text-gray-600" />
-										<span className="text-sm text-gray-600">
-											Creado: {formatDate(course.createdAt)}
-										</span>
-									</div>
-									<div className="flex items-center">
-										<FaClock className="mr-2 text-gray-600" />
-										<span className="text-sm text-gray-600">
-											Última actualización: {formatDate(course.updatedAt)}
-										</span>
-									</div>
-								</div>
-								<Badge className="bg-red-500 text-white hover:bg-red-700">
-									{course.modalidad?.name}
-								</Badge>
-							</div>
-
-							<div className="prose max-w-none">
-								<p className="leading-relaxed text-gray-700">
-									{course.description ?? 'No hay descripción disponible.'}
-								</p>
-							</div>
-
-							<div>
-								<h2 className="mb-4 text-2xl font-bold text-background">
-									Contenido del curso
-								</h2>
-								<div className="space-y-4">
-									{course.lessons
-										.sort((a, b) => a.title.localeCompare(b.title)) // Ordenar por título
-										.map((lesson, index) => {
-											const isUnlocked =
-												isEnrolled && !lesson.isLocked && isSubscriptionActive; // Check subscription status
-
-											const handleClick = (
-												e: React.MouseEvent<HTMLAnchorElement, MouseEvent>
-											) => {
-												e.preventDefault();
-												NProgress.start();
-												router.push(`/estudiantes/clases/${lesson.id}`);
-											};
-
-											return (
-												<div
-													key={lesson.id}
-													className={`overflow-hidden rounded-lg border transition-colors ${
-														isUnlocked
-															? 'bg-gray-50 hover:bg-gray-100'
-															: 'bg-gray-100 opacity-75'
-													}`}
-												>
-													<button
-														className="flex w-full items-center justify-between px-6 py-4"
-														onClick={() => toggleLesson(lesson.id)}
-														disabled={!isUnlocked}
-													>
-														<div className="flex w-full items-center justify-between">
-															<div className="flex items-center space-x-2">
-																{isUnlocked ? (
-																	<FaCheckCircle className="mr-2 size-5 text-green-500" />
-																) : (
-																	<FaLock className="mr-2 size-5 text-gray-400" />
-																)}
-																<span className="font-medium text-background">
-																	Clase {index + 1}: {lesson.title}{' '}
-																	<span className="ml-2 text-sm text-gray-500">
-																		({lesson.duration} mins)
-																	</span>
-																</span>
-															</div>
-															<div className="flex items-center space-x-2">
-																{isUnlocked &&
-																	(expandedLesson === lesson.id ? (
-																		<FaChevronUp className="text-gray-400" />
-																	) : (
-																		<FaChevronDown className="text-gray-400" />
-																	))}
-															</div>
-														</div>
-													</button>
-													{expandedLesson === lesson.id && isUnlocked && (
-														<div className="border-t bg-white px-6 py-4">
-															<p className="mb-4 text-gray-700">
-																{lesson.description ??
-																	'No hay descripción disponible para esta clase.'}
-															</p>
-															<div className="mb-4">
-																<div className="mb-2 flex items-center justify-between">
-																	<p className="text-sm font-semibold text-gray-700">
-																		Progreso De La Clase:
-																	</p>
-																	<span className="text-sm font-medium text-gray-600">
-																		{lesson.porcentajecompletado}%
-																	</span>
-																</div>
-																<Progress
-																	value={lesson.porcentajecompletado}
-																	className="w-full bg-gray-200"
-																	style={
-																		{
-																			'--progress-background': 'green',
-																		} as React.CSSProperties
-																	}
-																/>
-															</div>
-															<Link
-																href={`/estudiantes/clases/${lesson.id}`}
-																onClick={handleClick}
-															>
-																<button className="buttonclass text-background active:scale-95">
-																	<div className="outline"></div>
-																	<div className="state state--default">
-																		<div className="icon">
-																			<svg
-																				xmlns="http://www.w3.org/2000/svg"
-																				fill="none"
-																				viewBox="0 0 24 24"
-																				height="1.2em"
-																				width="1.2em"
-																			>
-																				<g style={{ filter: 'url(#shadow)' }}>
-																					<path
-																						fill="currentColor"
-																						d="M14.2199 21.63C13.0399 21.63 11.3699 20.8 10.0499 16.83L9.32988 14.67L7.16988 13.95C3.20988 12.63 2.37988 10.96 2.37988 9.78001C2.37988 8.61001 3.20988 6.93001 7.16988 5.60001L15.6599 2.77001C17.7799 2.06001 19.5499 2.27001 20.6399 3.35001C21.7299 4.43001 21.9399 6.21001 21.2299 8.33001L18.3999 16.82C17.0699 20.8 15.3999 21.63 14.2199 21.63ZM7.63988 7.03001C4.85988 7.96001 3.86988 9.06001 3.86988 9.78001C3.86988 10.5 4.85988 11.6 7.63988 12.52L10.1599 13.36C10.3799 13.43 10.5599 13.61 10.6299 13.83L11.4699 16.35C12.3899 19.13 13.4999 20.12 14.2199 20.12C14.9399 20.12 16.0399 19.13 16.9699 16.35L19.7999 7.86001C20.3099 6.32001 20.2199 5.06001 19.5699 4.41001C18.9199 3.76001 17.6599 3.68001 16.1299 4.19001L7.63988 7.03001Z"
-																					></path>
-																					<path
-																						fill="currentColor"
-																						d="M10.11 14.4C9.92005 14.4 9.73005 14.33 9.58005 14.18C9.29005 13.89 9.29005 13.41 9.58005 13.12L13.16 9.53C13.45 9.24 13.93 9.24 14.22 9.53C14.51 9.82 14.51 10.3 14.22 10.59L10.64 14.18C10.5 14.33 10.3 14.4 10.11 14.4Z"
-																					></path>
-																				</g>
-																				<defs>
-																					<filter id="shadow">
-																						<feDropShadow
-																							floodOpacity="0.6"
-																							stdDeviation="0.8"
-																							dy="1"
-																							dx="0"
-																						></feDropShadow>
-																					</filter>
-																				</defs>
-																			</svg>
-																		</div>
-																		<p>
-																			<span
-																				style={
-																					{ '--i': 0 } as React.CSSProperties
-																				}
-																			>
-																				V
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 1 } as React.CSSProperties
-																				}
-																			>
-																				e
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 2 } as React.CSSProperties
-																				}
-																			>
-																				r
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 3 } as React.CSSProperties
-																				}
-																			>
-																				{' '}
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 4 } as React.CSSProperties
-																				}
-																			>
-																				C
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 5 } as React.CSSProperties
-																				}
-																			>
-																				l
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 6 } as React.CSSProperties
-																				}
-																			>
-																				a
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 7 } as React.CSSProperties
-																				}
-																			>
-																				s
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 8 } as React.CSSProperties
-																				}
-																			>
-																				e
-																			</span>
-																		</p>
-																	</div>
-																	<div className="state state--sent">
-																		<div className="icon">
-																			<svg
-																				stroke="black"
-																				strokeWidth="0.5px"
-																				width="1.2em"
-																				height="1.2em"
-																				viewBox="0 0 24 24"
-																				fill="none"
-																				xmlns="http://www.w3.org/2000/svg"
-																			>
-																				<g style={{ filter: 'url(#shadow)' }}>
-																					<path
-																						d="M12 22.75C6.07 22.75 1.25 17.93 1.25 12C1.25 6.07 6.07 1.25 12 1.25C17.93 1.25 22.75 6.07 22.75 12C22.75 17.93 17.93 22.75 12 22.75ZM12 2.75C6.9 2.75 2.75 6.9 2.75 12C2.75 17.1 6.9 21.25 12 21.25C17.1 21.25 21.25 17.1 21.25 12C21.25 6.9 17.1 2.75 12 2.75Z"
-																						fill="currentColor"
-																					></path>
-																					<path
-																						d="M10.5795 15.5801C10.3795 15.5801 10.1895 15.5001 10.0495 15.3601L7.21945 12.5301C6.92945 12.2401 6.92945 11.7601 7.21945 11.4701C7.50945 11.1801 7.98945 11.1801 8.27945 11.4701L10.5795 13.7701L15.7195 8.6301C16.0095 8.3401 16.4895 8.3401 16.7795 8.6301C17.0695 8.9201 17.0695 9.4001 16.7795 9.6901L11.1095 15.3601C10.9695 15.5001 10.7795 15.5801 10.5795 15.5801Z"
-																						fill="currentColor"
-																					></path>
-																				</g>
-																			</svg>
-																		</div>
-																		<p>
-																			<span
-																				style={
-																					{ '--i': 5 } as React.CSSProperties
-																				}
-																			>
-																				V
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 6 } as React.CSSProperties
-																				}
-																			>
-																				i
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 7 } as React.CSSProperties
-																				}
-																			>
-																				s
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 8 } as React.CSSProperties
-																				}
-																			>
-																				t
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 9 } as React.CSSProperties
-																				}
-																			>
-																				o
-																			</span>
-																			<span
-																				style={
-																					{ '--i': 10 } as React.CSSProperties
-																				}
-																			>
-																				!
-																			</span>
-																		</p>
-																	</div>
-																</button>
-															</Link>
-														</div>
-													)}
-												</div>
-											);
-										})}
-								</div>
-							</div>
-						</CardContent>
-						<CardFooter className="flex flex-col items-center justify-between space-y-4">
-							<div
-								className={`transition-opacity duration-500 ${isEnrolled ? 'opacity-100' : 'opacity-0'}`}
-							>
-								{isEnrolled && (
-									<div className="flex w-full flex-col space-y-4 sm:w-auto">
-										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
-											disabled={true}
-										>
-											<FaCheck className="mr-2" /> Suscrito Al Curso
-										</Button>
-										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-											onClick={handleUnenroll}
-											disabled={isUnenrolling}
-										>
-											{isUnenrolling ? (
-												<Icons.spinner
-													className="animate-spin text-white"
-													style={{ width: '25px', height: '25px' }}
-												/>
-											) : (
-												'Cancelar Suscripción'
-											)}
-										</Button>
-									</div>
-								)}
-							</div>
-							<div
-								className={`transition-opacity duration-500 ${!isEnrolled ? 'opacity-100' : 'opacity-0'}`}
-							>
-								{!isEnrolled && (
-									<div className="group relative">
-										<Button
-											onClick={handleEnroll}
-											disabled={isEnrolling}
-											className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
-										>
-											<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
-											<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
-												<div className="relative z-10 flex items-center justify-center space-x-2">
-													{isEnrolling ? (
-														<Icons.spinner
-															className="animate-spin text-white"
-															style={{ width: '25px', height: '25px' }}
-														/>
-													) : (
-														<>
-															<span className="transition-all duration-500 group-hover:translate-x-1">
-																Inscribirse al curso
-															</span>
-															<svg
-																className="size-6 transition-transform duration-500 group-hover:translate-x-1"
-																data-slot="icon"
-																aria-hidden="true"
-																fill="currentColor"
-																viewBox="0 0 20 20"
-																xmlns="http://www.w3.org/2000/svg"
-															>
-																<path
-																	clipRule="evenodd"
-																	d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
-																	fillRule="evenodd"
-																></path>
-															</svg>
-														</>
-													)}
-												</div>
-											</span>
-										</Button>
-									</div>
-								)}
-							</div>
-							<ChatbotModal />
-						</CardFooter>
-					</Card>
-				)}
-				{enrollmentError && (
-					<div className="mt-4 rounded-md bg-red-50 p-4">
-						<div className="flex">
-							<div className="ml-3">
-								<h3 className="text-sm font-medium text-red-800">
-									Error de {isEnrolled ? 'desuscripción' : 'suscripción'}
-								</h3>
-								<div className="mt-2 text-sm text-red-700">
-									<p>{enrollmentError}</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				)}
-				{/* Añadir el componente de comentarios aquí */}
-				<Comments courseId={course.id} />
-			</main>
-			<Footer />
-		</div>
-	);
+  console.log("Message sent: %s", info.messageId);
+  // Message sent: <d786aa62-4e0a-070a-47ed-0b0666549519@ethereal.email>
 }
 
-analiza todo este codigo y dividide todo este codigo e varios subcomponnetes y un componnete padre y que quede todo funcionando igual
+main().catch(console.error);
+Examples
+Nodemailer AMQP example: Learn how to use RabbitMQ with Nodemailer for email message management. Source.
+Output from the example script viewed through the Ethereal mail catching service:
 
-src\components\estudiantes\layout\coursedetail\CourseBreadcrumb.tsx
 
-src\components\estudiantes\layout\coursedetail\CourseChatbot.tsx
 
-src\components\estudiantes\layout\coursedetail\CourseComments.tsx
+Source
+Find the Nodemailer source code on GitHub.
 
-src\components\estudiantes\layout\coursedetail\CourseContent.tsx
+Nodemailer was created by Andris Reinman, and the Nodemailer logo was designed by Sven Kristjansen.
 
-src\components\estudiantes\layout\coursedetail\CourseHeader.tsx
+Usage
+Setting it up
+Install Nodemailer from npm
 
-src\app\estudiantes\cursos[id]\CourseDetails.tsx con estos 5 archivos y el componnete padre
+npm install nodemailer
+To send emails you need a transporter object
 
---------------------------------------------------------------------
+let transporter = nodemailer.createTransport(transport[, defaults])
+Where
 
-- curl -X GET "https://artiefy.com/api/cron/check-subscriptions" -H "Authorization: Bearer 6a8cfb161629e387044a10761c6503639bec96a8e7c7dc7922b4982633fd5c4e"
-{"message":"Suscripciones verificadas y actualizadas"}
+transporter is going to be an object that is able to send mail
+transport is the transport configuration object, connection url or a transport plugin instance
+defaults is an object that defines default values for mail options
+You have to create the transporter object only once. If you already have a transporter object you can use it to send mail as much as you like.
+Send using SMTP
+See the details about setting up a SMTP based transporter here.
+
+Send using a transport plugin
+See the details about setting up a plugin based transporter here.
+
+Sending mail
+Once you have a transporter object you can send mail with it:
+
+transporter.sendMail(data[, callback])
+Where
+
+data defines the mail content (see Message Configuration for possible options)
+callback is an optional callback function to run once the message is delivered or it failed
+err is the error object if message failed
+info includes the result, the exact format depends on the transport mechanism used
+info.messageId most transports should return the final Message-Id value used with this property
+info.envelope includes the envelope object for the message
+info.accepted is an array returned by SMTP transports (includes recipient addresses that were accepted by the server)
+info.rejected is an array returned by SMTP transports (includes recipient addresses that were rejected by the server)
+info.pending is an array returned by Direct SMTP transport. Includes recipient addresses that were temporarily rejected together with the server response
+response is a string returned by SMTP transports and includes the last SMTP response from the server
+If the message includes several recipients then the message is considered sent if at least one recipient is accepted
+If callback argument is not set then the method returns a Promise object. Nodemailer itself does not use Promises internally but it wraps the return into a Promise for convenience.
+SMTP? Say what?
+You might wonder why you would need to set something up while in comparison PHP’s mail command works out of the box with no special configuration whatsoever. Just call mail(…) and you’re already sending mail. So what’s going on in Node.js?
+
+The difference is in the software stack required for your application to work. While Node.js stack is thin, all you need for your app to work is the node binary, then PHP’s stack is fat. The server you’re running your PHP code on has several different components installed.
+
+Firstly the PHP interpreter itself. Then there’s some kind of web server, most probably Apache or Nginx. Web server needs some way to interact with the PHP interpreter, so you have a (fast-)CGI process manager. There might be MySQL also running in the same host. Depending on the installation type you might even have imagemagick executables or other helpers lying around somewhere. And finally, you have the sendmail binary.
+
+What PHP’s mail() call actually does is that it passes your mail data to sendmail’s stdin and thats it, no magic involved. sendmail does all the heavy lifting of queueing your message and trying to send it to the recipients' MX mail server.
+
+In fact you can achieve the exact same behavior in Nodemailer as well by using the sendmail transport. The difference being that in case of PHP the sendmail configuration resides in php.ini but in case of Node.js the sendmail configuration is part of Nodemailer setup.
+
+Unfortunately this might not always work – as it was already said, the stack for Node.js is thin and this means that sendmail might not have been installed to the server your application is running on. This is why it is better to rely on an actual SMTP service that is always accessible.
+Using Gmail
+Even though Gmail is the fastest way to get started with sending emails, it is by no means a preferable solution unless you are using OAuth2 authentication. Gmail expects the user to be an actual user not a robot so it runs a lot of heuristics for every login attempt and blocks anything that looks suspicious to defend the user from account hijacking attempts. For example you might run into trouble if your server is in another geographical location – everything works in your dev machine but messages are blocked in production.
+
+Additionally Gmail has came up with the concept of “Less Secure” apps which is basically anyone who uses plain password to login to Gmail, so you might end up in a situation where one username can send mail (support for “less secure” apps is enabled) but other is blocked (support for “less secure” apps is disabled). You can configure your Gmail account to allow less secure apps here. When using this method make sure to also enable the required functionality by completing the “Captcha Enable” challenge. Without this, less secure connections probably would not work.
+
+If you are using 2FA you would have to create an “Application Specific” password for Nodemailer to work.
+
+Gmail also always sets authenticated username as the From: email address. So if you authenticate as foo@example.com and set bar@example.com as the from: address, then Gmail reverts this and replaces the sender with the authenticated user.
+
+To prevent having login issues you should either use OAuth2 (see details here) or use another delivery provider and preferably a dedicated one. Usually these providers have free plans available that are comparable to the daily sending limits of Gmail. Gmail has a limit of 500 recipients a day (a message with one To and one Cc address counts as two messages since it has two recipients) for @gmail.com addresses and 2000 for Google Apps customers, larger SMTP providers usually offer about 200-300 recipients a day for free.
+
+Delivering bulk mail
+Here are some tips how to handle bulk mail, for example if you need to send 10 million messages at once.
+
+Use a dedicated delivery provider. Do not use services that offer SMTP as a sideline or for free (that’s Gmail or the SMTP of your homepage hosting company) to send bulk mail – you’ll hit all the hard limits immediately or get labelled as spammer. Basically you get what you pay for and if you pay zero then your deliverability is near zero as well. Email might seem free but it is only free to a certain amount and that amount certainly does not include 10 million emails in a short period of time.
+Use a dedicated queue manager, for example RabbitMQ for queueing the emails. Nodemailer creates a callback function with related scopes etc. for every message so it might be hard on memory if you pile up the data for 10 million messages at once. Better to take the data from a queue when there’s a free spot in the connection pool (previously sent message returns its callback).
+Use pooled SMTP by setting pool option to true (assuming you always send using the same credentials). You do not want to have the overhead of creating a new connection and doing the SMTP handshake dance for every single email. Pooled connections make it possible to bring this overhead to a minimum.
+Set maxMessages option to Infinity for the pooled SMTP transport. Dedicated SMTP providers happily accept all your emails as long you are paying for these, so no need to disconnect in the middle if everything is going smoothly. The default value is 100 which means that once a connection is used to send 100 messages it is removed from the pool and a new connection is created.
+Set maxConnections to whatever your system can handle. There might be limits to this on the receiving side, so do not set it to Infinity, even 20 is probably much better than the default 5. A larger number means a larger amount of messages are sent in parallel.
+Use file paths not URLs for attachments. If you are reading the same file from the disk several million times, the contents for the file probably get cached somewhere between your app and the physical hard disk, so you get your files back quicker (assuming you send the same attachment to all recipients). There is nothing like this for URLs – every new message makes a fresh HTTP fetch to receive the file from the server.
+If the SMTP service accepts HTTP API as well you still might prefer SMTP and not the HTTP API as HTTP introduces additional overhead. You probably want to use HTTP over SMTP if the HTTP API is bulk aware – you send a message template and the list of 10 million recipients and the service compiles this information into emails itself, you can’t beat this with SMTP.
+Message configuration
+The following are the possible fields of an email message:
+
+Common fields
+from - The email address of the sender. All email addresses can be plain ‘sender@server.com’ or formatted '“Sender Name” sender@server.com', see Address object for details
+to - Comma separated list or an array of recipients email addresses that will appear on the To: field
+cc - Comma separated list or an array of recipients email addresses that will appear on the Cc: field
+bcc - Comma separated list or an array of recipients email addresses that will appear on the Bcc: field
+subject - The subject of the email
+text - The plaintext version of the message as an Unicode string, Buffer, Stream or an attachment-like object ({path: ‘/var/data/…'})
+html - The HTML version of the message as an Unicode string, Buffer, Stream or an attachment-like object ({path: ‘http://…'})
+attachments - An array of attachment objects (see Using attachments for details). Attachments can be used for embedding images as well.
+A large majority of emails sent look a lot like this, using only a few basic fields:
+
+var message = {
+  from: "sender@server.com",
+  to: "receiver@sender.com",
+  subject: "Message title",
+  text: "Plaintext version of the message",
+  html: "<p>HTML version of the message</p>",
+};
+All text fields (email addresses, plaintext body, html body, attachment filenames) use UTF-8 as the encoding. Attachments are streamed as binary.
+More advanced fields
+Routing options
+sender - An email address that will appear on the Sender: field (always prefer from if you’re not sure which one to use)
+replyTo - An email address that will appear on the Reply-To: field
+inReplyTo - The Message-ID this message is replying to
+references - Message-ID list (an array or space separated string)
+envelope - optional SMTP envelope, if auto generated envelope is not suitable (see SMTP envelope for details)
+Content options
+attachDataUrls – if true then convert data: images in the HTML content of this message to embedded attachments
+watchHtml - Apple Watch specific HTML version of the message. Latest watches have no problems rendering text/html content so watchHtml is most probably never seen by the recipient
+amp - AMP4EMAIL specific HTML version of the message, same usage as with text and html. See AMP example below for usage or this blogpost for sending and rendering
+When using `amp` then make sure it is a full and valid AMP4EMAIL document, otherwise the displaying email client most probably falls back to `html` and ignores the `amp` part. Validate your AMP4EMAIL content [here](https://validator.ampproject.org/#htmlFormat=AMP4EMAIL)
+icalEvent – iCalendar event to use as an alternative. See details here
+alternatives - An array of alternative text contents (in addition to text and html parts) (see Using alternative content for details)
+encoding - identifies encoding for text/html strings (defaults to ‘utf-8’, other values are ‘hex’ and ‘base64’)
+raw - existing MIME message to use instead of generating a new one. See details here
+textEncoding - force content-transfer-encoding for text values (either quoted-printable or base64). By default the best option is detected (for lots of ascii use quoted-printable, otherwise base64)
+Header options
+priority - Sets message importance headers, either ‘high’, ‘normal’ (default) or ‘low’.
+headers - An object or array of additional header fields (e.g. {“X-Key-Name”: “key value”} or [{key: “X-Key-Name”, value: “val1”}, {key: “X-Key-Name”, value: “val2”}]). Read more about custom headers here
+messageId - optional Message-Id value, random value will be generated if not set
+date - optional Date value, current UTC string will be used if not set
+list - helper for setting List-* headers (see more here)
+Security options
+disableFileAccess if true, then does not allow to use files as content. Use it when you want to use JSON data from untrusted source as the email. If an attachment or message node tries to fetch something from a file the sending returns an error. If this field is also set in the transport options, then the value in mail data is ignored
+disableUrlAccess if true, then does not allow to use Urls as content. If this field is also set in the transport options, then the value in mail data is ignored
+var message = {
+    ...,
+    headers: {
+        'My-Custom-Header': 'header value'
+    },
+    date: new Date('2000-01-01 00:00:00')
+};
+**Memory leak warning!** When using readable streams as content and sending fails then Nodemailer does not abort the already opened but not yet finished stream, you need to do this yourself. Nodemailer only closes the streams it has opened itself (eg. file paths, URLs)
+var htmlstream = fs.createReadStream("content.html");
+transport.sendMail({ html: htmlstream }, function (err) {
+  if (err) {
+    // check if htmlstream is still open and close it to clean up
+  }
+});
+AMP example
+let message = {
+    from: 'Nodemailer <example@nodemailer.com>',
+    to: 'Nodemailer <example@nodemailer.com>',
+    subject: 'AMP4EMAIL message',
+    text: 'For clients with plaintext support only',
+    html: '<p>For clients that do not support AMP4EMAIL or amp content is not valid</p>',
+    amp: `<!doctype html>
+    <html ⚡4email>
+      <head>
+        <meta charset="utf-8">
+        <style amp4email-boilerplate>body{visibility:hidden}</style>
+        <script async src="https://cdn.ampproject.org/v0.js"></script>
+        <script async custom-element="amp-anim" src="https://cdn.ampproject.org/v0/amp-anim-0.1.js"></script>
+      </head>
+      <body>
+        <p>Image: <amp-img src="https://cldup.com/P0b1bUmEet.png" width="16" height="16"/></p>
+        <p>GIF (requires "amp-anim" script in header):<br/>
+          <amp-anim src="https://cldup.com/D72zpdwI-i.gif" width="500" height="350"/></p>
+      </body>
+    </html>`
+}
+Attachments
+attachments option in the message object that contains an array of attachment objects.
+
+Attachment object consists of the following properties:
+
+filename - filename to be reported as the name of the attached file. Use of unicode is allowed.
+content - String, Buffer or a Stream contents for the attachment
+path - path to the file if you want to stream the file instead of including it (better for larger attachments)
+href – an URL to the file (data uris are allowed as well)
+httpHeaders - optional HTTP headers to pass on with the href request, eg. {authorization: "bearer ..."}
+contentType - optional content type for the attachment, if not set will be derived from the filename property
+contentDisposition - optional content disposition type for the attachment, defaults to ‘attachment’
+cid - optional content id for using inline images in HTML message source
+encoding - If set and content is string, then encodes the content to a Buffer using the specified encoding. Example values: ‘base64’, ‘hex’, ‘binary’ etc. Useful if you want to use binary attachments in a JSON formatted email object.
+headers - custom headers for the attachment node. Same usage as with message headers
+raw - is an optional special value that overrides entire contents of current mime node including mime headers. Useful if you want to prepare node contents yourself
+Attachments can be added as many as you want.
+
+Example
+
+let message = {
+    ...
+    attachments: [
+        {   // utf-8 string as an attachment
+            filename: 'text1.txt',
+            content: 'hello world!'
+        },
+        {   // binary buffer as an attachment
+            filename: 'text2.txt',
+            content: new Buffer('hello world!','utf-8')
+        },
+        {   // file on disk as an attachment
+            filename: 'text3.txt',
+            path: '/path/to/file.txt' // stream this file
+        },
+        {   // filename and content type is derived from path
+            path: '/path/to/file.txt'
+        },
+        {   // stream as an attachment
+            filename: 'text4.txt',
+            content: fs.createReadStream('file.txt')
+        },
+        {   // define custom content type for the attachment
+            filename: 'text.bin',
+            content: 'hello world!',
+            contentType: 'text/plain'
+        },
+        {   // use URL as an attachment
+            filename: 'license.txt',
+            path: 'https://raw.github.com/nodemailer/nodemailer/master/LICENSE'
+        },
+        {   // encoded string as an attachment
+            filename: 'text1.txt',
+            content: 'aGVsbG8gd29ybGQh',
+            encoding: 'base64'
+        },
+        {   // data uri as an attachment
+            path: 'data:text/plain;base64,aGVsbG8gd29ybGQ='
+        },
+        {
+            // use pregenerated MIME node
+            raw: 'Content-Type: text/plain\r\n' +
+                 'Content-Disposition: attachment;\r\n' +
+                 '\r\n' +
+                 'Hello world!'
+        }
+    ]
+}
+Alternatives
+In addition to text and HTML, any kind of data can be inserted as an alternative content of the main body - for example a word processing document with the same text as in the HTML field. It is the job of the email client to select and show the best fitting alternative to the reader. Usually this field is used for calendar events and such.
+
+If you want to use a calendar event as the alternative, the consider using the **icalEvent** option instead. See details [here](/message/calendar-events/).
+Alternative objects use the same options as attachment objects. The difference between an attachment and an alternative is the fact that attachments are placed into multipart/mixed or multipart/related parts of the message white alternatives are placed into multipart/alternative part.
+
+Usage example:
+
+let message = {
+    ...
+    html: '<b>Hello world!</b>',
+    alternatives: [
+        {
+            contentType: 'text/x-web-markdown',
+            content: '**Hello world!**'
+        }
+    ]
+}
+Address object
+All email addresses can be plain email addresses
+
+'foobar@example.com'
+or with formatted name (includes unicode support)
+'Ноде Майлер <foobar@example.com>'
+Notice that all address fields (even *from:*) are comma separated lists, so if you want to use a comma (or any other special symbol) in the name part, make sure you enclose the name in double quotes like this: `'"Майлер, Ноде" '`
+or as an address object (in this case you do not need to worry about the formatting, no need to use quotes etc.)
+{
+    name: 'Майлер, Ноде',
+    address: 'foobar@example.com'
+}
+All address fields accept values as a comma separated list of emails or an array of emails or an array of comma separated list of emails or address objects - use it as you like. Formatting can be mixed.
+
+...,
+to: 'foobar@example.com, "Ноде Майлер" <bar@example.com>, "Name, User" <baz@example.com>',
+cc: [
+    'foobar@example.com',
+    '"Ноде Майлер" <bar@example.com>,
+    "Name, User" <baz@example.com>'
+],
+bcc: [
+    'foobar@example.com',
+    {
+        name: 'Майлер, Ноде',
+        address: 'foobar@example.com'
+    }
+]
+...
+You can even use unicode domains, these are automatically converted to punycode
+
+'"Unicode Domain" <info@müriaad-polüteism.info>'
+Calendar events
+Calendar events are tricky because different email clients handle these differently. Nodemailer uses the same style as Gmail for attaching calendar files which should ensure maximum compatibility. If you want to attach a calendar event to your email then you can use the message option icalEvent:
+
+icalEvent – an object to define calendar event
+
+method – optional method, case insensitive, defaults to ‘publish’. Other possible values would be ‘request’, ‘reply’, ‘cancel’ or any other valid calendar method listed in RFC5546. This should match the METHOD: value in calendar event file.
+filename – optional filename, defaults to ‘invite.ics’
+content – is the event file, it can be a string, a buffer, a stream
+path – is an alternative for content to load the calendar data from a file
+href – is an alternative for content to load the calendar data from an URL
+encoding – defines optional content encoding, eg. ‘base64’ or ‘hex’. This only applies if the content is a string. By default an unicode string is assumed.
+You can use modules like ical-generator to generate the actual calendar file content, Nodemailer acts as a transport layer only and does not generate the event file structure.
+
+In general it is not a good idea to add additional attachments to calendar messages as it might mess up the behavior of some email clients. Try to keep it only to **text**, **html** and **icalEvent** without any additional **alternatives** or **attachments**
+Examples
+1. Send a REQUEST event as a string
+let content = 'BEGIN:VCALENDAR\r\nPRODID:-//ACME/DesktopCalendar//EN\r\nMETHOD:REQUEST\r\n...';
+
+let message = {
+    from: 'sender@example.com',
+    to: 'recipient@example.com',
+    subject: 'Appointment',
+    text: 'Please see the attached appointment',
+    icalEvent: {
+        filename: 'invitation.ics',
+        method: 'request',
+        content: content
+    }
+};
+2. Send a PUBLISH event from a file
+Event data is loaded from the provided file and attached to the message.
+
+let message = {
+    from: 'sender@example.com',
+    to: 'recipient@example.com',
+    subject: 'Appointment',
+    text: 'Please see the attached appointment',
+    icalEvent: {
+        method: 'PUBLISH',
+        path: '/path/to/file'
+    }
+};
+3. Send a CANCEL event from an URL
+Event data is downloaded from the provided URL and attached to the message as regular calendar file.
+
+let message = {
+    from: 'sender@example.com',
+    to: 'recipient@example.com',
+    subject: 'Appointment',
+    text: 'Please see the attached appointment',
+    icalEvent: {
+        method: 'CANCEL',
+        href: 'http://www.example.com/events?event=123'
+    }
+};
+Embedded images
+Attachments can be used as embedded images in the HTML body. To use this feature, you need to set additional property of the attachment - cid (unique identifier of the file) which is a reference to the attachment file. The same cid value must be used as the image URL in HTML (using cid: as the URL protocol, see example below).
+
+**NB!** the cid value should be as unique as possible!
+Example
+let message = {
+    ...
+    html: 'Embedded image: <img src="cid:unique@nodemailer.com"/>',
+    attachments: [{
+        filename: 'image.png',
+        path: '/path/to/file',
+        cid: 'unique@nodemailer.com' //same cid value as in the html img src
+    }]
+}
+List headers
+Nodemailer includes a helper for setting more complex List-* headers with ease. You can use this by providing message option list. It’s an object where key names are converted into list headers. List key help becomes List-Help header etc.
+
+General rules
+
+If the value is a string, it is treated as an URL
+If you want to provide an optional comment, use {url:‘url’, comment: ‘comment’} object
+If you want to have multiple header rows for the same List-* key, use an array as the value for this key
+If you want to have multiple URLs for single List-* header row, use an array inside an array
+List-* headers are treated as pregenerated values, this means that lines are not folded and strings are not encoded. Use only ascii characters and be prepared for longer header lines
+Examples
+1. Setup different List-* headers
+let message = {
+    from: 'sender@example.com',
+    to: 'recipient@example.com',
+    subject: 'List Message',
+    text: 'I hope no-one unsubscribes from this list!',
+    list: {
+        // List-Help: <mailto:admin@example.com?subject=help>
+        help: 'admin@example.com?subject=help',
+        // List-Unsubscribe: <http://example.com> (Comment)
+        unsubscribe: {
+            url: 'http://example.com',
+            comment: 'Comment'
+        },
+        // List-Subscribe: <mailto:admin@example.com?subject=subscribe>
+        // List-Subscribe: <http://example.com> (Subscribe)
+        subscribe: [
+            'admin@example.com?subject=subscribe',
+            {
+                url: 'http://example.com',
+                comment: 'Subscribe'
+            }
+        ],
+        // List-Post: <http://example.com/post>, <mailto:admin@example.com?subject=post> (Post)
+        post: [
+            [
+                'http://example.com/post',
+                {
+                    url: 'admin@example.com?subject=post',
+                    comment: 'Post'
+                }
+            ]
+        ]
+    }
+};
+Custom headers
+Most messages do not need any kind of tampering with the headers. If you do need to add custom headers either to the message or to an attachment/alternative, you can add these values with the headers option. Values are processed automatically, non-ascii strings are encoded as mime-words and long lines are folded.
+
+headers – is an object of key-value pairs, where key names are converted into message header keys
+Examples
+1. Set custom headers
+let message = {
+    ...,
+    headers: {
+        'x-my-key': 'header value',
+        'x-another-key': 'another value'
+    }
+}
+
+// Becomes:
+//   X-My-Key: header value
+//   X-Another-Key: another value
+2. Multiple rows with the same key
+The same header key can be used multiple times if the header value is an Array
+
+let message = {
+    ...,
+    headers: {
+        'x-my-key': [
+            'value for row 1',
+            'value for row 2',
+            'value for row 3'
+        ]
+    }
+}
+
+// X-My-Key: value for row 1
+// X-My-Key: value for row 2
+// X-My-Key: value for row 3
+3. Prepared headers
+Normally all headers are encoded and folded to meet the requirement of having plain-ASCII messages with lines no longer than 78 bytes. Sometimes it is preferable to not modify header values and pass these as provided. This can be achieved with the prepared option:
+
+let message = {
+    ...,
+    headers: {
+        'x-processed': 'a really long header or value with non-ascii characters 👮',
+        'x-unprocessed': {
+            prepared: true,
+            value: 'a really long header or value with non-ascii characters 👮'
+        }
+    }
+}
+
+// X-Processed: a really long header or value with non-ascii characters
+//  =?UTF-8?Q?=F0=9F=91=AE?=
+// X-Unprocessed: a really long header or value with non-ascii characters ?
+Custom source
+If you want to use your own custom generated RFC822 formatted message source, instead of letting Nodemailer to generate it from the message options, use option raw. This can be used both for the entire message or alternatively per-attachment or per-alternative.
+
+Don't forget to set the **envelope** option when using **raw** as the message source
+Examples
+1. Use string as a message body
+This example loads the entire message source from a string value. You don’t have to worry about proper newlines, these are handled by Nodemailer.
+
+let message = {
+    envelope: {
+        from: 'sender@example.com',
+        to: ['recipient@example.com']
+    },
+    raw: `From: sender@example.com
+To: recipient@example.com
+Subject: test message
+
+Hello world!`
+};
+2. Set EML file as message body
+This example loads the entire message source from a file
+
+let message = {
+    envelope: {
+        from: 'sender@example.com',
+        to: ['recipient@example.com']
+    },
+    raw: {
+        path: '/path/to/message.eml'
+    }
+};
+3. Set string as attachment body
+When using raw for attachments then you need to provide all content headers youself, Nodemailer does not process it in any way (besides newline processing), it is inserted into the MIME tree as is.
+
+let message = {
+    from: 'sender@example.com',
+    to: 'recipient@example.com',
+    subject: 'Custom attachment',
+    attachments: [{
+        raw: `Content-Type: text/plain
+Content-Disposition: attachment
+
+Attached text file`}]
+};
