@@ -199,31 +199,32 @@ export default function EditUserModal({
 							</select>
 						</label>
 
-						{/* Lista de permisos */}
-						<div>
-							<h3 className="text-gray-300">Permisos en Clerk</h3>
-							{selectedPermissions.length === 0 && (
-								<p className="text-sm text-gray-400">
-									Este usuario no tiene permisos asignados.
-								</p>
-							)}
-							<div className="mt-2 flex flex-wrap gap-2">
-								{AVAILABLE_PERMISSIONS.map((permission) => (
-									<label
-										key={permission}
-										className="flex items-center space-x-2"
-									>
-										<input
-											type="checkbox"
-											checked={selectedPermissions.includes(permission)} // ✅ Se marcan solo los que el usuario ya tiene
-											onChange={() => handlePermissionChange(permission)}
-											className="form-checkbox text-blue-500"
-										/>
-										<span className="text-gray-300">{permission}</span>
-									</label>
-								))}
+						{updatedUser.role !== 'estudiante' && (
+							<div>
+								<h3 className="text-gray-300">Permisos en Clerk</h3>
+								{selectedPermissions.length === 0 && (
+									<p className="text-sm text-gray-400">
+										Este usuario no tiene permisos asignados.
+									</p>
+								)}
+								<div className="mt-2 flex flex-wrap gap-2">
+									{AVAILABLE_PERMISSIONS.map((permission) => (
+										<label
+											key={permission}
+											className="flex items-center space-x-2"
+										>
+											<input
+												type="checkbox"
+												checked={selectedPermissions.includes(permission)}
+												onChange={() => handlePermissionChange(permission)}
+												className="form-checkbox text-blue-500"
+											/>
+											<span className="text-gray-300">{permission}</span>
+										</label>
+									))}
+								</div>
 							</div>
-						</div>
+						)}
 					</div>
 				</div>
 

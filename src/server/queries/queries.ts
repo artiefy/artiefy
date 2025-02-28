@@ -119,39 +119,51 @@ function generateUsername(firstName: string, lastName: string): string {
 }
 
 export async function createUser(
-	firstName: string,
-	lastName: string,
-	email: string,
-	role: string
+    firstName: string,
+    lastName: string,
+    email: string,
+    role: string
 ) {
-	try {
-		const generatedPassword = generateRandomPassword(12);
-		const username = generateUsername(firstName, lastName);
-		const client = await clerkClient();
-		const newUser = await client.users.createUser({
-			firstName,
-			lastName,
-			username: username,
-			password: generatedPassword,
-			emailAddress: [email],
-			publicMetadata: { role },
-		});
+    try {
+        // 🔹 Obtener la primera letra del primer nombre y primer apellido
+        const firstInitial = firstName.charAt(0).toLowerCase();
+        const lastInitial = lastName?.split(' ')[0]?.charAt(0).toLowerCase() || 'x'; // 'x' si no hay apellido
 
-		console.log(`DEBUG: Usuario ${newUser.id} creado exitosamente`);
-		return {
-			user: newUser,
-			generatedPassword,
-		};
-	} catch (error: unknown) {
-		console.error(
-			'DEBUG: Error al crear usuario en Clerk:',
-			JSON.stringify(error, null, 2)
-		);
-		throw new Error(
-			(error as { message: string }).message || 'No se pudo crear el usuario'
-		);
-	}
+        // 🔹 Generar la contraseña base (iniciales del nombre y apellido)
+        let generatedPassword = `${firstInitial}${lastInitial}`;
+
+        // 🔹 Si la contraseña es menor a 8 caracteres, agregar "12345678" hasta completar
+        if (generatedPassword.length < 8) {
+            generatedPassword += "12345678".slice(0, 8 - generatedPassword.length);
+        }
+
+        // 🔹 Agregar un número aleatorio para evitar que la contraseña sea "pwned"
+        const randomDigits = Math.floor(10 + Math.random() * 90); // Número entre 10 y 99
+        generatedPassword += randomDigits;
+
+        // 🔹 Generar un nombre de usuario válido (mínimo 4 caracteres, máximo 64)
+        let username = `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
+        if (username.length < 4) username += "user";
+        username = username.slice(0, 64);
+
+        const client = await clerkClient();
+        const newUser = await client.users.createUser({
+            firstName,
+            lastName,
+            username,
+            password: generatedPassword,
+            emailAddress: [email],
+            publicMetadata: { role, mustChangePassword: true },
+        });
+
+        console.log(`DEBUG: Usuario ${newUser.id} creado con contraseña: ${generatedPassword}`);
+        return { user: newUser, generatedPassword };
+    } catch (error: unknown) {
+        console.error('DEBUG: Error al crear usuario en Clerk:', JSON.stringify(error, null, 2));
+        throw new Error((error as { message: string }).message || 'No se pudo crear el usuario');
+    }
 }
+
 
 export async function updateUserStatus(id: string, status: string) {
 	try {
