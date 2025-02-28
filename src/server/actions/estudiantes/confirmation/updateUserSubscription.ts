@@ -34,27 +34,19 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				? 'Enterprise'
 				: 'Pro';
 
-	// Obtener la fecha actual en Bogotá
+	// Obtener la fecha actual en Bogotá y calcular el fin de suscripción
 	const now = new Date();
-	const bogotaDate = toZonedTime(now, TIME_ZONE);
+	const bogotaNow = formatInTimeZone(now, TIME_ZONE, 'yyyy-MM-dd HH:mm:ss');
 
-	// Calcular la fecha de expiración correctamente en Bogotá
-	const subscriptionEndDate = new Date(
-		bogotaDate.getTime() + SUBSCRIPTION_DURATION
-	);
-
-	// Formatear fechas en Bogotá para la base de datos y Clerk
-	const formattedPurchaseDate = formatInTimeZone(
-		bogotaDate,
-		TIME_ZONE,
-		'yyyy-MM-dd HH:mm:ss'
-	);
-
-	const formattedSubscriptionEndDate = formatInTimeZone(
+	const subscriptionEndDate = new Date(now.getTime() + SUBSCRIPTION_DURATION);
+	const subscriptionEndBogota = formatInTimeZone(
 		subscriptionEndDate,
 		TIME_ZONE,
 		'yyyy-MM-dd HH:mm:ss'
 	);
+
+	// Convertir a UTC antes de guardar en la base de datos
+	const subscriptionEndUtc = toZonedTime(subscriptionEndDate, TIME_ZONE);
 
 	try {
 		// Buscar usuario en la base de datos
@@ -64,7 +56,6 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 
 		let userId = existingUser?.id;
 
-		// Base de datos: Mantener todos los campos
 		if (!existingUser) {
 			userId = uuidv4();
 			await db.insert(users).values({
@@ -72,9 +63,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				email: email_buyer,
 				role: 'student',
 				subscriptionStatus: 'active',
-				subscriptionEndDate: new Date(formattedSubscriptionEndDate),
+				subscriptionEndDate: subscriptionEndUtc, // Guardamos en UTC
 				planType: planType,
-				purchaseDate: new Date(formattedPurchaseDate),
+				purchaseDate: new Date(),
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			});
@@ -84,9 +75,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				.update(users)
 				.set({
 					subscriptionStatus: 'active',
-					subscriptionEndDate: new Date(formattedSubscriptionEndDate),
+					subscriptionEndDate: subscriptionEndUtc, // Guardamos en UTC
 					planType: planType,
-					purchaseDate: new Date(formattedPurchaseDate),
+					purchaseDate: new Date(),
 					updatedAt: new Date(),
 				})
 				.where(eq(users.email, email_buyer));
@@ -94,24 +85,24 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			console.log(`✅ Usuario existente actualizado a activo: ${email_buyer}`);
 		}
 
-		// Clerk: Solo actualizar subscriptionStatus y subscriptionEndDate
-		const clerkClientInstance = await clerkClient();
-		const clerkUsers = await clerkClientInstance.users.getUserList({
+		// Actualizar metadata en Clerk
+		const clerk = await clerkClient();
+		const clerkUsers = await clerk.users.getUserList({
 			emailAddress: [email_buyer],
 		});
 
-		if (clerkUsers.data.length > 0) {
+		if (clerkUsers.totalCount > 0) {
 			const clerkUser = clerkUsers.data[0] as User | undefined;
 			if (!clerkUser) {
 				console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
 				return;
 			}
 
-			// Solo actualizamos los dos campos necesarios en Clerk
-			await clerkClientInstance.users.updateUserMetadata(clerkUser.id, {
+			// Guardamos la fecha en formato de Bogotá en Clerk
+			await clerk.users.updateUserMetadata(clerkUser.id, {
 				publicMetadata: {
 					subscriptionStatus: 'active',
-					subscriptionEndDate: formattedSubscriptionEndDate, // Fecha correcta en Bogotá
+					subscriptionEndDate: subscriptionEndBogota, // Formateamos en Bogotá
 				},
 			});
 
@@ -120,9 +111,12 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
 		}
 
-		// Logs de fechas
-		console.log(`📅 Inicio suscripción (Bogotá): ${formattedPurchaseDate}`);
-		console.log(`📅 Fin suscripción (Bogotá): ${formattedSubscriptionEndDate}`);
+		// Logs de depuración
+		console.log(`📅 Inicio suscripción (Bogotá): ${bogotaNow}`);
+		console.log(`📅 Fin suscripción (Bogotá): ${subscriptionEndBogota}`);
+		console.log(
+			`🌍 Fin suscripción (UTC): ${subscriptionEndUtc.toISOString()}`
+		);
 	} catch (error) {
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error';
