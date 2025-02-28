@@ -105,6 +105,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				publicMetadata: {
 					subscriptionStatus: 'active',
 					subscriptionEndDate: subscriptionEndBogota, // Formateamos en Bogotá
+					planType: planType, // Incluimos el tipo de plan
 				},
 			});
 

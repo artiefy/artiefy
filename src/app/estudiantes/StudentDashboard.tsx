@@ -117,29 +117,31 @@ export default function StudentDashboard({
                       />
                     </div>
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
-                      <h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">
-                        {course.title}
-                      </h2>
-                      <Badge
-                        variant="outline"
-                        className="mb-2 border-primary text-primary"
-                      >
-                        {course.category?.name ?? 'Sin categoría'}
-                      </Badge>
-                      <p className="mb-2 hidden text-center text-sm sm:block sm:text-base md:text-lg lg:text-xl">
-                        {course.description}
-                      </p>
-                      <p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">
-                        Educador: {course.instructor}
-                      </p>
-                      <p className="mb-1 hidden text-sm font-bold text-red-500 sm:block sm:text-base md:text-lg">
-                        {course.modalidad?.name ?? 'Modalidad no especificada'}
-                      </p>
-                      <div className="flex items-center">
-                        <StarIcon className="size-4 text-yellow-500 sm:size-5" />
-                        <span className="ml-1 text-sm text-yellow-500 sm:text-base">
-                          {(course.rating ?? 0).toFixed(1)}
-                        </span>
+                      <div className="max-w-4xl w-[90%] mx-auto text-center">
+                        <h2 className="mb-2 text-center text-2xl font-semibold sm:mb-4 sm:text-3xl md:text-4xl">
+                          {course.title}
+                        </h2>
+                        <Badge
+                          variant="outline"
+                          className="mb-2 border-primary text-primary"
+                        >
+                          {course.category?.name ?? 'Sin categoría'}
+                        </Badge>
+                        <p className="mb-2 hidden text-center text-sm sm:block sm:text-base md:text-lg lg:text-xl line-clamp-2">
+                          {course.description}
+                        </p>
+                        <p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">
+                          Educador: {course.instructor}
+                        </p>
+                        <p className="mb-1 hidden text-sm font-bold text-red-500 sm:block sm:text-base md:text-lg">
+                          {course.modalidad?.name ?? 'Modalidad no especificada'}
+                        </p>
+                        <div className="flex items-center justify-center">
+                          <StarIcon className="size-4 text-yellow-500 sm:size-5" />
+                          <span className="ml-1 text-sm text-yellow-500 sm:text-base">
+                            {(course.rating ?? 0).toFixed(1)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
