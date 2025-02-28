@@ -24,12 +24,14 @@ interface CourseContentProps {
 	course: Course;
 	isEnrolled: boolean;
 	isSubscriptionActive: boolean;
+	subscriptionEndDate: string | null;
 }
 
 export function CourseContent({
 	course,
 	isEnrolled,
 	isSubscriptionActive,
+	subscriptionEndDate,
 }: CourseContentProps) {
 	const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
 	const router = useRouter();
@@ -73,6 +75,12 @@ export function CourseContent({
 						</div>
 					</div>
 				</Alert>
+			)}
+
+			{isEnrolled && isSubscriptionActive && subscriptionEndDate && (
+				<p className="mb-4 text-sm text-gray-600">
+					Tu suscripción es válida hasta: {new Date(subscriptionEndDate).toLocaleDateString()}
+				</p>
 			)}
 
 			<div

@@ -27,7 +27,7 @@ export const users = pgTable('users', {
 	birthDate: date('birth_date'),
 	subscriptionStatus: text('subscription_status').default('inactive').notNull(),
 	subscriptionEndDate: timestamp('subscription_end_date', {
-		withTimezone: true, // Esto hace que PostgreSQL maneje la zona horaria
+		withTimezone: true,
 		mode: 'date',
 	}),
 	planType: text('plan_type', { enum: ['Pro', 'Premium', 'Enterprise'] }),

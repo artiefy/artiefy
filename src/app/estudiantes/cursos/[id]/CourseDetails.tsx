@@ -51,10 +51,16 @@ export default function CourseDetails({
 			if (userId) {
 				// Verificar estado de suscripción primero
 				const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-				console.log('Subscription Status:', subscriptionStatus); // Debug log
+				const subscriptionEndDate = user?.publicMetadata
+					?.subscriptionEndDate as string | null;
 
-				// Actualizar estado de suscripción
-				setIsSubscriptionActive(subscriptionStatus === 'active');
+				console.log('Subscription Status:', subscriptionStatus); // Debug log
+				console.log('Subscription End Date:', subscriptionEndDate); // Debug log
+
+				const isSubscriptionActive =
+					subscriptionStatus === 'active' &&
+					(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+				setIsSubscriptionActive(isSubscriptionActive);
 
 				// Verificar inscripción
 				const isUserEnrolled =
@@ -104,12 +110,21 @@ export default function CourseDetails({
 		try {
 			// Verificar suscripción activa
 			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+			const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
+				| string
+				| null;
 
 			// Debug logs
 			console.log('Current subscription status:', subscriptionStatus);
+			console.log('Subscription End Date:', subscriptionEndDate);
+
+			const isSubscriptionActive =
+				subscriptionStatus === 'active' &&
+				(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+
 			console.log('Is subscription active:', isSubscriptionActive);
 
-			if (subscriptionStatus !== 'active') {
+			if (!isSubscriptionActive) {
 				toast.error('Suscripción requerida', {
 					description: 'Necesitas una suscripción activa para inscribirte.',
 				});
@@ -201,6 +216,9 @@ export default function CourseDetails({
 							isEnrolling={isEnrolling}
 							isUnenrolling={isUnenrolling}
 							isSubscriptionActive={isSubscriptionActive}
+							subscriptionEndDate={
+								user?.publicMetadata?.subscriptionEndDate as string | null
+							}
 							onEnroll={handleEnroll}
 							onUnenroll={handleUnenroll}
 						/>

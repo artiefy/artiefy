@@ -23,6 +23,7 @@ interface CourseHeaderProps {
 	isEnrolling: boolean;
 	isUnenrolling: boolean;
 	isSubscriptionActive: boolean;
+	subscriptionEndDate: string | null;
 	onEnroll: () => Promise<void>;
 	onUnenroll: () => Promise<void>;
 }
@@ -34,6 +35,7 @@ export function CourseHeader({
 	isEnrolling,
 	isUnenrolling,
 	isSubscriptionActive,
+	subscriptionEndDate,
 	onEnroll,
 	onUnenroll,
 }: CourseHeaderProps) {
@@ -133,6 +135,7 @@ export function CourseHeader({
 					course={course}
 					isEnrolled={isEnrolled}
 					isSubscriptionActive={isSubscriptionActive}
+					subscriptionEndDate={subscriptionEndDate}
 				/>
 
 				{/* Enrollment buttons */}
