@@ -1,60 +1,72 @@
 // @ts-check
 
-import './src/env.js';
-import withPlaiceholder from '@plaiceholder/next';
+import './src/env.js'; // Importa variables de entorno
+import withPlaiceholder from '@plaiceholder/next'; // Importa la configuración de @plaiceholder/next
 
 /**
  * @type {import('next').NextConfig}
  */
 
 const nextConfig = {
-  reactStrictMode: true,
-  images: {
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'inline',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 's3.us-east-2.amazonaws.com',
-        port: '',
-        pathname: '/artiefy-upload/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
-  experimental: {
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
-      },
-      resolveAlias: {
-        underscore: 'lodash',
-        mocha: { browser: 'mocha/browser-entry.js' },
-      },
-      resolveExtensions: [
-        '.mdx',
-        '.tsx',
-        '.ts',
-        '.jsx',
-        '.js',
-        '.mjs',
-        '.json',
-      ],
-    },
-  },
-  expireTime: 3600,
+	reactStrictMode: true, // Habilita el modo estricto de React para detectar problemas potenciales en la aplicación
+	images: {
+		dangerouslyAllowSVG: true, // Permite el uso de imágenes SVG
+		contentDispositionType: 'inline', // Configura el tipo de disposición del contenido para imágenes
+		contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Configura la política de seguridad de contenido para imágenes
+		deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840], // Define los tamaños de dispositivo para imágenes responsivas
+		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Define los tamaños de imagen para imágenes responsivas
+		minimumCacheTTL: 60, // Define el tiempo mínimo de vida en caché para imágenes en segundos
+		remotePatterns: [
+			{
+				protocol: 'https',
+				hostname: 's3.us-east-2.amazonaws.com',
+				port: '',
+				pathname: '/artiefy-upload/**',
+			},
+			{
+				protocol: 'https',
+				hostname: 'placehold.co',
+				port: '',
+				pathname: '/**',
+			},
+		], // Define patrones remotos para permitir la carga de imágenes desde dominios específicos
+	},
+	experimental: {
+		turbo: {
+			rules: {
+				'*.svg': {
+					loaders: ['@svgr/webpack'], // Define el cargador para archivos SVG
+					as: '*.js', // Define la extensión de salida para archivos SVG
+				},
+			},
+			resolveAlias: {
+				underscore: 'lodash', // Alias para reemplazar 'underscore' con 'lodash'
+				mocha: { browser: 'mocha/browser-entry.js' }, // Alias para reemplazar 'mocha' con la entrada del navegador de 'mocha'
+			},
+			resolveExtensions: [
+				'.mdx',
+				'.tsx',
+				'.ts',
+				'.jsx',
+				'.js',
+				'.mjs',
+				'.json',
+			], // Define las extensiones de archivo que se resolverán automáticamente
+		},
+		useCache: true, // Habilita el uso de la directiva 'use cache'
+		dynamicIO: true, // Habilita la característica experimental 'dynamicIO'
+		serverActions: {
+			bodySizeLimit: '2mb', // Configura el límite del tamaño del cuerpo de las solicitudes a Server Actions
+		},
+		cacheLife: {
+			courses: {
+				stale: 3600, // Define el tiempo en segundos que el cliente debe almacenar en caché un valor sin verificar con el servidor (1 hora)
+				revalidate: 900, // Define la frecuencia en segundos con la que la caché debe actualizarse en el servidor (15 minutos)
+				expire: 86400, // Define la duración máxima en segundos que un valor puede permanecer obsoleto antes de cambiar a la obtención dinámica (1 día)
+			},
+		}, // Define perfiles de caché personalizados
+	},
+	expireTime: 3600, // Define un tiempo de expiración personalizado para el encabezado Cache-Control (1 hora)
 };
 
 export default withPlaiceholder(nextConfig);

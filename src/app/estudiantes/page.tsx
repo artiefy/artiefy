@@ -95,12 +95,12 @@ export default async function CoursesPage({ searchParams }: Props) {
 			<>
 				<Header />
 				<Suspense
-					fallback={<Skeleton/>}
+					fallback={<Skeleton className="mx-auto h-10 w-full max-w-lg" />}
 				>
 					<StudentDashboard initialCourses={allCourses} />
 				</Suspense>
 				<Suspense
-					fallback={<Skeleton/>}
+					fallback={<Skeleton className="mx-auto h-10 w-full max-w-lg" />}
 				>
 					<CourseCategories
 						allCategories={data.categories}
