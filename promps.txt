@@ -1,3 +1,6 @@
+---------------------------------------------------------
+USO DE CACHE NEXT.JS 15 EXPERIMENTAL
+
 useCache
 This feature is currently available in the canary channel and subject to change. Try it out by upgrading Next.js, and share your feedback on GitHub.
 The useCache flag is an experimental feature in Next.js that enables the use cache directive to be used independently of dynamicIO. When enabled, you can use use cache in your application even if dynamicIO is turned off.
@@ -652,11 +655,9 @@ When dynamicIO is enabled, you can use the following cache functions and configu
 The use cache directive
 The cacheLife function with use cache
 The cacheTag function
----------------------------------------------------------
-CACHE NEXT.JS 15 EXPERIMENTAL
 
---------------------------------------------------------
-CACHE NEXT.JS 15 ESTABLE
+-----------------------------------------------------------------------------
+USO DE CACHE NEXT.JS 15 ESTABLE
 
 Data Fetching and Caching
 This guide will walk you through the basics of data fetching and caching in Next.js, providing practical examples and best practices.

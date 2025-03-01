@@ -11,11 +11,11 @@ export function validateFormData(
 ): ValidationErrors {
 	const errors: ValidationErrors = {};
 
-	// Ensure the telephone number follows the structure +00 0000000000
-	const phonePattern = /^\+57\s3\d{9}$/;
+	// Ensure the telephone number follows the structure +000000000000
+	const phonePattern = /^\+\d{12}$/;
 
 	if (!phonePattern.test(telephone)) {
-		errors.telephone = 'Formato de teléfono inválido. Debe ser +00 0000000000.';
+		errors.telephone = 'Formato de teléfono inválido. Debe ser +000000000000.';
 	}
 	if (!termsAndConditions || !privacyPolicy) {
 		errors.termsAndConditions =
