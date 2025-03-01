@@ -1,15 +1,19 @@
 'use server';
+'use cache';
 
 import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { unstable_cacheTag as cacheTag } from 'next/cache';
+import {
+	unstable_cacheTag as cacheTag,
+	unstable_cacheLife as cacheLife,
+} from 'next/cache';
 import { db } from '~/server/db';
 import { courses, userLessonsProgress } from '~/server/db/schema';
 import type { Course } from '~/types';
 
 export async function getCourseById(courseId: number): Promise<Course | null> {
-	'use cache';
 	cacheTag(`course-${courseId}`);
+	cacheLife('hours');
 
 	const course = await db.query.courses.findFirst({
 		where: eq(courses.id, courseId),

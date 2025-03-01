@@ -1,3 +1,6 @@
+'use server';
+'use cache';
+
 import { eq, desc } from 'drizzle-orm';
 import 'server-only';
 import { unstable_cacheLife as cacheLife } from 'next/cache';
@@ -10,7 +13,6 @@ import {
 } from '~/server/db/schema';
 
 const getCachedCoursesData = async () => {
-	'use cache';
 	cacheLife('courses');
 
 	const coursesData = await db
