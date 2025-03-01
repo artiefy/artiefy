@@ -9,6 +9,31 @@ import Link from 'next/link';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
+const DotIcon = () => {
+	return (
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 512 512"
+			fill="currentColor"
+		>
+			<path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z" />
+		</svg>
+	);
+};
+
+const CustomPage = () => {
+	return (
+		<div>
+			<h1>Custom page</h1>
+			<p>This is the content of the custom page.</p>
+			<p>
+				Welcome to the custom page! Here you can find personalized content and
+				settings.
+			</p>
+		</div>
+	);
+};
+
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -85,7 +110,22 @@ export function Header() {
 								</SignInButton>
 							</SignedOut>
 							<SignedIn>
-								<UserButton showName />
+								<UserButton>
+									<UserButton.UserProfilePage
+										label="Custom Page"
+										url="custom"
+										labelIcon={<DotIcon />}
+									>
+										<CustomPage />
+									</UserButton.UserProfilePage>
+									<UserButton.UserProfileLink
+										label="Homepage"
+										url="/"
+										labelIcon={<DotIcon />}
+									/>
+									<UserButton.UserProfilePage label="account" />
+									<UserButton.UserProfilePage label="security" />
+								</UserButton>
 							</SignedIn>
 						</div>
 					</div>
@@ -190,7 +230,22 @@ export function Header() {
 							</SignInButton>
 						</SignedOut>
 						<SignedIn>
-							<UserButton showName />
+							<UserButton>
+								<UserButton.UserProfilePage
+									label="Custom Page"
+									url="custom"
+									labelIcon={<DotIcon />}
+								>
+									<CustomPage />
+								</UserButton.UserProfilePage>
+								<UserButton.UserProfileLink
+									label="Homepage"
+									url="/"
+									labelIcon={<DotIcon />}
+								/>
+								<UserButton.UserProfilePage label="account" />
+								<UserButton.UserProfilePage label="security" />
+							</UserButton>
 						</SignedIn>
 					</div>
 				</DialogPanel>

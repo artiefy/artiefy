@@ -123,6 +123,8 @@ Tutorial UPDATE DEPENDENCIES:
 13. `npx @clerk/upgrade --from=core-1` // Instala la última versión de Clerk para Next.js 1
 14. `npx @clerk/upgrade -g` // Instala la última versión de Clerk para Next.js 2
 15. `npm install drizzle-orm@latest` // Instala la última versión de Drizzle ORM
+16. `npx @next/codemod@canary upgrade latest` // Ayuda a actualizar tu código para que sea compatible con la última versión de Next.js
+17. `npm i next@latest react@latest react-dom@latest eslint-config-next@latest` // Este comando instala las últimas versiones estables de los paquetes core necesarios para Next.js
 
 ---
 

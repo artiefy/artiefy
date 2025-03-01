@@ -1,8 +1,10 @@
+import { Suspense } from 'react';
 import StudentDashboard from '~/app/estudiantes/StudentDashboard';
 import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
@@ -92,19 +94,46 @@ export default async function CoursesPage({ searchParams }: Props) {
 		return (
 			<>
 				<Header />
-				<StudentDashboard initialCourses={allCourses} />
-				<CourseCategories
-					allCategories={data.categories}
-					featuredCategories={data.featuredCategories}
-				/>
-				<CourseListStudent
-					courses={data.courses}
-					currentPage={data.page}
-					totalPages={data.totalPages}
-					totalCourses={data.total}
-					category={data.categoryId?.toString()}
-					searchTerm={data.searchTerm}
-				/>
+				<Suspense
+					fallback={<Skeleton/>}
+				>
+					<StudentDashboard initialCourses={allCourses} />
+				</Suspense>
+				<Suspense
+					fallback={<Skeleton/>}
+				>
+					<CourseCategories
+						allCategories={data.categories}
+						featuredCategories={data.featuredCategories}
+					/>
+				</Suspense>
+				<Suspense
+					fallback={
+						<div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
+							{Array.from({ length: 9 }).map((_, i) => (
+								<div key={i} className="group relative p-4">
+									<Skeleton className="relative h-40 w-full md:h-56" />
+									<div className="mt-3 flex flex-col space-y-2">
+										<Skeleton className="h-6 w-3/4" />
+										<Skeleton className="h-4 w-1/2" />
+										<Skeleton className="h-4 w-full" />
+										<Skeleton className="h-4 w-full" />
+										<Skeleton className="h-4 w-1/2" />
+									</div>
+								</div>
+							))}
+						</div>
+					}
+				>
+					<CourseListStudent
+						courses={data.courses}
+						currentPage={data.page}
+						totalPages={data.totalPages}
+						totalCourses={data.total}
+						category={data.categoryId?.toString()}
+						searchTerm={data.searchTerm}
+					/>
+				</Suspense>
 				<Footer />
 			</>
 		);

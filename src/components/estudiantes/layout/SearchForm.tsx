@@ -80,7 +80,8 @@ const SearchForm: React.FC = () => {
       >
         Buscar
       </Button>
-    </div>
+    
+</div>
   );
 };
 
