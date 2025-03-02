@@ -1,7 +1,7 @@
 'use server';
 
 import { Redis } from '@upstash/redis';
-import { unstable_cacheTag as cacheTag } from 'next/cache';
+import { unstable_cache } from 'next/cache';
 import { getRelatedActivities } from '~/server/actions/estudiantes/activities/getRelatedActivities';
 import type { Activity, Question } from '~/types';
 import { getUserActivityProgress } from './getUserActivityProgress';
@@ -11,90 +11,90 @@ const redis = new Redis({
 	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-export async function getActivityContent(
-	lessonId: number,
-	userId: string
-): Promise<Activity[]> {
-	'use cache';
-	cacheTag(`lesson-${lessonId}-activities`);
+const getActivityContent = unstable_cache(
+	async (lessonId: number, userId: string): Promise<Activity[]> => {
+		try {
+			console.log(`Fetching related activities for lesson ${lessonId}`);
+			const relatedActivities = await getRelatedActivities(lessonId);
 
-	try {
-		console.log(`Fetching related activities for lesson ${lessonId}`);
-		const relatedActivities = await getRelatedActivities(lessonId);
+			if (relatedActivities.length === 0) {
+				console.log(`No related activities found for lesson ${lessonId}`);
+				return [];
+			}
 
-		if (relatedActivities.length === 0) {
-			console.log(`No related activities found for lesson ${lessonId}`);
-			return [];
-		}
+			console.log(`Fetching user progress for user ${userId}`);
+			const userProgress = await getUserActivityProgress(userId);
 
-		console.log(`Fetching user progress for user ${userId}`);
-		const userProgress = await getUserActivityProgress(userId);
+			const activitiesWithContent = await Promise.all(
+				relatedActivities.map(async (activity) => {
+					const contentKey = `activity:${activity.id}:questions`;
+					console.log(
+						`Fetching content for activity ${activity.id} with key ${contentKey}`
+					);
+					const activityContent = await redis.get(contentKey);
 
-		const activitiesWithContent = await Promise.all(
-			relatedActivities.map(async (activity) => {
-				const contentKey = `activity:${activity.id}:questions`;
-				console.log(
-					`Fetching content for activity ${activity.id} with key ${contentKey}`
-				);
-				const activityContent = await redis.get(contentKey);
+					if (!activityContent) {
+						console.log(`No content found for activity ${activity.id}`);
+						return null;
+					}
 
-				if (!activityContent) {
-					console.log(`No content found for activity ${activity.id}`);
-					return null;
-				}
+					let parsedContent: Question[];
 
-				let parsedContent: Question[];
-
-				if (typeof activityContent === 'string') {
-					try {
-						parsedContent = JSON.parse(activityContent) as Question[];
-					} catch (error) {
+					if (typeof activityContent === 'string') {
+						try {
+							parsedContent = JSON.parse(activityContent) as Question[];
+						} catch (error) {
+							console.error(
+								`Error parsing content for activity ${activity.id}:`,
+								error
+							);
+							return null;
+						}
+					} else if (Array.isArray(activityContent)) {
+						parsedContent = activityContent as Question[];
+					} else {
 						console.error(
-							`Error parsing content for activity ${activity.id}:`,
-							error
+							`Unexpected content format for activity ${activity.id}:`,
+							activityContent
 						);
 						return null;
 					}
-				} else if (Array.isArray(activityContent)) {
-					parsedContent = activityContent as Question[];
-				} else {
-					console.error(
-						`Unexpected content format for activity ${activity.id}:`,
-						activityContent
+
+					const activityProgress = userProgress.find(
+						(progress) => progress.activityId === activity.id
 					);
-					return null;
-				}
 
-				const activityProgress = userProgress.find(
-					(progress) => progress.activityId === activity.id
-				);
-
-				return {
-					...activity,
-					content: {
-						questions: parsedContent,
-					},
-					isCompleted: activityProgress?.isCompleted ?? false,
-					userProgress: activityProgress?.progress ?? 0,
-				} as Activity;
-			})
-		);
-
-		const validActivities = activitiesWithContent.filter(
-			(activity): activity is Activity => activity !== null
-		);
-
-		if (validActivities.length === 0) {
-			console.log(`No valid activities found for lesson ${lessonId}`);
-		} else {
-			console.log(
-				`Found ${validActivities.length} valid activities for lesson ${lessonId}`
+					return {
+						...activity,
+						content: {
+							questions: parsedContent,
+						},
+						isCompleted: activityProgress?.isCompleted ?? false,
+						userProgress: activityProgress?.progress ?? 0,
+					} as Activity;
+				})
 			);
-		}
 
-		return validActivities;
-	} catch (error) {
-		console.error('Error fetching activity content:', error);
-		return [];
-	}
-}
+			const validActivities = activitiesWithContent.filter(
+				(activity): activity is Activity => activity !== null
+			);
+
+			if (validActivities.length === 0) {
+				console.log(`No valid activities found for lesson ${lessonId}`);
+			} else {
+				console.log(
+					`Found ${validActivities.length} valid activities for lesson ${lessonId}`
+				);
+			}
+
+			return validActivities;
+		} catch (error) {
+			console.error('Error fetching activity content:', error);
+			return [];
+		}
+	},
+	['lesson-activities'],
+	{ revalidate: 3600, tags: ['lesson-activities'] }
+);
+
+export { getActivityContent };
