@@ -1,6 +1,7 @@
 'use server';
 
 import { eq, desc } from 'drizzle-orm';
+import { unstable_cache } from 'next/cache';
 import { db } from '~/server/db';
 import {
 	courses,
@@ -8,7 +9,6 @@ import {
 	modalidades,
 	dificultad,
 } from '~/server/db/schema';
-import { unstable_cache } from 'next/cache';
 
 const getAllCourses = unstable_cache(
 	async (forceUpdate = false) => {

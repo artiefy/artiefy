@@ -1,13 +1,13 @@
 'use server';
 
 import { eq } from 'drizzle-orm';
+import { unstable_cache } from 'next/cache';
 import { db } from '~/server/db';
 import {
 	userLessonsProgress,
 	userActivitiesProgress,
 } from '~/server/db/schema';
 import type { UserLessonsProgress, UserActivitiesProgress } from '~/types';
-import { unstable_cache } from 'next/cache';
 
 // Obtener el progreso de las lecciones del usuario
 const getUserLessonsProgress = unstable_cache(

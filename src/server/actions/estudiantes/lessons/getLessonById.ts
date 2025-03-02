@@ -1,6 +1,7 @@
 'use server';
 
 import { eq, and } from 'drizzle-orm';
+import { unstable_cache } from 'next/cache';
 import { db } from '~/server/db';
 import {
 	lessons,
@@ -8,7 +9,6 @@ import {
 	userActivitiesProgress,
 } from '~/server/db/schema';
 import type { Lesson, Activity } from '~/types';
-import { unstable_cache } from 'next/cache';
 
 const getLessonById = unstable_cache(
 	async (lessonId: number, userId: string): Promise<Lesson | null> => {
