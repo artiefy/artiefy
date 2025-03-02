@@ -8,8 +8,8 @@ const redis = new Redis({
 
 export async function POST(request: Request) {
 	try {
-		const { activityId, questionId, userId, grade, submissionKey } =
-			await request.json();
+		const { activityId, questionId, userId, grade, submissionKey }: { activityId: string, questionId: string, userId: string, grade: number, submissionKey: string } =
+			await request.json() as { activityId: string, questionId: string, userId: string, grade: number, submissionKey: string };
 
 		if (
 			!activityId ||

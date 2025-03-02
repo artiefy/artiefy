@@ -1,16 +1,14 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { type NextRequest, NextResponse } from 'next/server';
-import { db } from '~/server/db';
-import { activities, lessons } from '~/server/db/schema';
-import { and, eq } from 'drizzle-orm';
 import { Redis } from '@upstash/redis';
-
+import { and, eq } from 'drizzle-orm';
+import { type NextRequest, NextResponse } from 'next/server';
 import {
 	createActivity,
-	//getActivitiesByLessonId,
 	updateActivity,
-	deleteActivity,
 } from '~/models/educatorsModels/activitiesModels';
+import { db } from '~/server/db';
+import { activities, lessons } from '~/server/db/schema';
+
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 function respondWithError(message: string, status: number) {
@@ -122,7 +120,7 @@ export async function GET(request: NextRequest) {
 		const lessonIds = courseLessons.map((lesson) => lesson.id);
 
 		// Construir las condiciones de la consulta
-		let conditions = [];
+		const conditions = [];
 
 		if (lessonIds.length > 0) {
 			conditions.push(eq(activities.lessonsId, lessonIds[0]));

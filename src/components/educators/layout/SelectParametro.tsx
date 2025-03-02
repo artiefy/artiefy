@@ -14,9 +14,6 @@ interface SelectParametroProps {
 	courseId: number | null;
 	parametro: number;
 	onParametroChange: (parametroId: number) => void;
-	errors: {
-		parametro: boolean;
-	};
 	selectedColor: string;
 }
 
@@ -24,7 +21,6 @@ const SelectParametro: React.FC<SelectParametroProps> = ({
 	courseId,
 	parametro,
 	onParametroChange,
-	errors,
 	selectedColor,
 }) => {
 	const [parametros, setParametros] = useState<Parametros[]>([]);

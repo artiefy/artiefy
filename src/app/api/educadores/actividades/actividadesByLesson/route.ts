@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 			return respondWithError('No autorizado', 403);
 		}
 
-		const data = await request.json();
+		const data = await request.json() as { parametroId: number; porcentaje: number };
 		const { parametroId, porcentaje } = data;
 
 		if (!parametroId || porcentaje === undefined) {

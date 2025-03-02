@@ -204,7 +204,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
 	useEffect(() => {
 		void fetchEnrolledUsers(courseId);
-	}, [fetchEnrolledUsers]);
+	}, [fetchEnrolledUsers, courseId]);
 
 	return (
 		<>

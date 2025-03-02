@@ -29,33 +29,35 @@ const VerListPreguntaAbierta: React.FC<QuestionListProps> = ({
 	const [answers, setAnswers] = useState<Answers>({});
 	const [feedback, setFeedback] = useState<FeedbackState>({});
 
+	
+
 	useEffect(() => {
+		const fetchQuestions = async () => {
+			setLoading(true);
+			try {
+				const response = await fetch(
+					`/api/educadores/question/completar?activityId=${activityId}`
+				);
+				if (!response.ok) {
+					throw new Error('Error al obtener las preguntas');
+				}
+				const data = (await response.json()) as {
+					success: boolean;
+					questionsACompletar: Completado[];
+				};
+				if (data.success) {
+					setQuestions(data.questionsACompletar);
+				}
+				console.log('API response:', data); // Verificar la respuesta de la API
+			} catch (error) {
+				console.error('Error al cargar las preguntas:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
 		void fetchQuestions();
 	}, [activityId]);
-
-	const fetchQuestions = async () => {
-		setLoading(true);
-		try {
-			const response = await fetch(
-				`/api/educadores/question/completar?activityId=${activityId}`
-			);
-			if (!response.ok) {
-				throw new Error('Error al obtener las preguntas');
-			}
-			const data = (await response.json()) as {
-				success: boolean;
-				questionsACompletar: Completado[];
-			};
-			if (data.success) {
-				setQuestions(data.questionsACompletar);
-			}
-			console.log('API response:', data); // Verificar la respuesta de la API
-		} catch (error) {
-			console.error('Error al cargar las preguntas:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
 
 	const handleSubmit = (questionId: string, userAnswer: string) => {
 		const currentQuestion = questions.find((q) => q.id === questionId);

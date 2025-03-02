@@ -12,7 +12,7 @@ interface QuestionListProps {
 	activityId: number;
 }
 
-const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
+const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 	const [questions, setQuestions] = useState<QuestionFilesSubida[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [selectedFiles, setSelectedFiles] = useState<
@@ -24,33 +24,33 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 
 	console.log('userName', userName);
 	useEffect(() => {
+		const fetchQuestions = async () => {
+			setLoading(true);
+			try {
+				const response = await fetch(
+					`/api/educadores/question/archivos?activityId=${activityId}`
+				);
+				if (!response.ok) {
+					throw new Error('Error al obtener las preguntas');
+				}
+				const data = (await response.json()) as {
+					success: boolean;
+					questionsFilesSubida: QuestionFilesSubida[];
+				};
+				console.log('API response:', data); // Verificar la respuesta de la API
+				if (data) {
+					setQuestions(data.questionsFilesSubida);
+				} else {
+					console.error('Formato de datos incorrecto:', data);
+				}
+				setLoading(false);
+			} catch (error) {
+				console.error('Error al cargar las preguntas:', error);
+			}
+		};
+
 		void fetchQuestions();
 	}, [activityId]);
-
-	const fetchQuestions = async () => {
-		setLoading(true);
-		try {
-			const response = await fetch(
-				`/api/educadores/question/archivos?activityId=${activityId}`
-			);
-			if (!response.ok) {
-				throw new Error('Error al obtener las preguntas');
-			}
-			const data = (await response.json()) as {
-				success: boolean;
-				questionsFilesSubida: QuestionFilesSubida[];
-			};
-			console.log('API response:', data); // Verificar la respuesta de la API
-			if (data) {
-				setQuestions(data.questionsFilesSubida);
-			} else {
-				console.error('Formato de datos incorrecto:', data);
-			}
-			setLoading(false);
-		} catch (error) {
-			console.error('Error al cargar las preguntas:', error);
-		}
-	};
 
 	const handleFileChange = (questionId: string, file: File | null) => {
 		if (file) {
@@ -90,7 +90,7 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 			formData.append('userName', userName ?? '');
 
 			for (const [key, value] of formData.entries()) {
-				console.log(`${key}: ${value}`);
+				console.log(`${key}: ${value instanceof File ? value.name : value}`);
 			}
 
 			console.log('formData', formData);
@@ -117,7 +117,7 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 			console.error('Error:', error);
 			toast({
 				title: 'Error',
-				description: `Error al subir el archivo: ${error.message}`,
+				description: `Error al subir el archivo: ${(error as Error).message}`,
 				variant: 'destructive',
 			});
 		} finally {
@@ -216,4 +216,4 @@ const actSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 	);
 };
 
-export default actSubida;
+export default ActSubida;

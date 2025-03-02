@@ -1,6 +1,5 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -70,7 +69,6 @@ const getContrastYIQ = (hexcolor: string) => {
 };
 
 const CourseDetail: React.FC<CourseDetailProps> = () => {
-	const { user } = useUser();
 	const router = useRouter();
 	const params = useParams();
 	const courseIdUrl = params?.courseId;
@@ -149,7 +147,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setLoading(false);
 			}
 		}
-	}, [user, courseIdNumber]);
+	}, [courseIdNumber]);
 
 	useEffect(() => {
 		fetchCourse().catch((error) =>

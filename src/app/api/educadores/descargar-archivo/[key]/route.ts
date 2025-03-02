@@ -36,7 +36,7 @@ export async function GET(
 		return new NextResponse(buffer, {
 			headers: {
 				'Content-Type': 'application/octet-stream',
-				'Content-Disposition': `attachment; filename="${respuesta.fileName}"`,
+				'Content-Disposition': `attachment; filename="${respuesta.fileName as string}"`,
 			},
 		});
 	} catch (error) {

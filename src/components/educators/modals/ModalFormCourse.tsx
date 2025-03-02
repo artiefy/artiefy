@@ -1,4 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
+
 import { useEffect, useState, type ChangeEvent } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Plus } from 'lucide-react';
@@ -137,6 +139,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setFileSize(null);
 			setErrors((prev) => ({ ...prev, file: true }));
 		}
+		console.log('coverImageKey', coverImage);
 	};
 
 	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -591,7 +594,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							)}
 						</div>
 					</div>
-					<div className="mb-4 flex flex-col space-y-2">
+					<div>
 						<label
 							htmlFor="rating"
 							className="text-lg font-medium text-primary"
@@ -600,13 +603,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						</label>
 						<input
 							type="number"
-							min="0"
-							max="5"
-							step="0.1"
-							placeholder="0-5"
-							className="w-full rounded-md border border-primary p-2 outline-none"
 							value={rating}
 							onChange={(e) => setRating(Number(e.target.value))}
+							className="mt-1 w-full rounded border p-2 text-black outline-none"
 						/>
 					</div>
 					<label
@@ -701,9 +700,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					</div>
 					<div className="mt-6 flex flex-col text-white">
 						<p>
-							¿Es calificable?: {editingCourseId ? 'actualizar' : 'agregar'}{' '}
+							¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
 							parametros
-							<span className={`${editingCourseId ? 'hidden' : ''}`}> </span>
 						</p>
 						<div className="flex space-x-2">
 							<label

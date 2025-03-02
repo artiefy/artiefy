@@ -35,30 +35,30 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
 	console.log(paramActivityId);
 
 	useEffect(() => {
+		const fetchQuestions = async () => {
+			setLoading(true);
+			try {
+				const response = await fetch(
+					`/api/educadores/question/opcionMulti?activityId=${activityIdNumber}`
+				);
+				const data = (await response.json()) as {
+					success: boolean;
+					questionsOM: Question[];
+				};
+				if (data.success) {
+					setQuestions(data.questionsOM);
+				}
+			} catch (error) {
+				console.error('Error al cargar las preguntas:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
+
 		if (activityIdNumber !== null) {
 			void fetchQuestions();
 		}
-	}, [activityIdNumber]);
-
-	const fetchQuestions = async () => {
-		setLoading(true);
-		try {
-			const response = await fetch(
-				`/api/educadores/question/opcionMulti?activityId=${activityIdNumber}`
-			);
-			const data = (await response.json()) as {
-				success: boolean;
-				questionsOM: Question[];
-			};
-			if (data.success) {
-				setQuestions(data.questionsOM);
-			}
-		} catch (error) {
-			console.error('Error al cargar las preguntas:', error);
-		} finally {
-			setLoading(false);
-		}
-	};
+	}, [activityId, activityIdNumber]);
 
 	const handleOptionChange = (questionId: string, optionId: string) => {
 		setSelectedOptions((prev) => ({

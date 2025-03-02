@@ -1,10 +1,7 @@
 'use client';
-
 import { useCallback, useEffect, useState } from 'react';
-
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
-
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
 import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
@@ -110,19 +107,19 @@ export default function Page() {
 	}, [user, fetchCourses]);
 
 	const handleCreateOrEditCourse = async (
-			id: string,
-			title: string,
-			description: string,
-			file: File | null,
-			categoryid: number,
-			modalidadesid: number,
-			dificultadid: number,
-			rating: number, // Añadir esta línea
-			requerimientos: string,
-			addParametros: boolean, // Cambiar options por addParametros
-			coverImageKey: string,
-			fileName: string // Nuevo parámetro
-		) => {
+		id: string,
+		title: string,
+		description: string,
+		file: File | null,
+		categoryid: number,
+		modalidadesid: number,
+		dificultadid: number,
+		rating: number, // Añadir esta línea
+		requerimientos: string,
+		addParametros: boolean, // Cambiar options por addParametros
+		coverImageKey: string,
+		fileName: string // Nuevo parámetro
+	) => {
 		if (!user) return;
 
 		// Validar que haya al menos un parámetro si addParametros es true
@@ -266,7 +263,21 @@ export default function Page() {
 	};
 
 	const handleCreateCourse = () => {
-		setEditingCourse(null);
+		setEditingCourse({
+			id: 0,
+			title: '',
+			description: '',
+			categoryid: '',
+			modalidadesid: '',
+			createdAt: '',
+			instructor: '',
+			coverImageKey: '',
+			creatorId: '',
+			dificultadid: '',
+			requerimientos: '',
+			totalParametros: 0,
+			rating: 0, // Añadir esta línea
+		});
 		setParametrosList([]); // Resetear la lista de parámetros al crear un nuevo curso
 		setIsModalOpen(true);
 	};
@@ -275,6 +286,45 @@ export default function Page() {
 		setIsModalOpen(false);
 		setEditingCourse(null);
 		setParametrosList([]);
+	};
+
+	// Asegúrate de que las funciones de setState no se llamen en cada renderizado
+	const setTitle = (title: string) => {
+		setEditingCourse((prev) => (prev ? { ...prev, title } : prev));
+	};
+
+	const setDescription = (description: string) => {
+		setEditingCourse((prev) => (prev ? { ...prev, description } : prev));
+	};
+
+	const setRequerimientos = (requerimientos: string) => {
+		setEditingCourse((prev) => (prev ? { ...prev, requerimientos } : prev));
+	};
+
+	const setCategoryid = (categoryid: number) => {
+		setEditingCourse((prev) =>
+			prev ? { ...prev, categoryid: String(categoryid) } : prev
+		);
+	};
+
+	const setModalidadesid = (modalidadesid: number) => {
+		setEditingCourse((prev) =>
+			prev ? { ...prev, modalidadesid: String(modalidadesid) } : prev
+		);
+	};
+
+	const setDificultidid = (dificultadid: number) => {
+		setEditingCourse((prev) =>
+			prev ? { ...prev, dificultadid: String(dificultadid) } : prev
+		);
+	};
+
+	const setCoverImageKey = (coverImageKey: string) => {
+		setEditingCourse((prev) => (prev ? { ...prev, coverImageKey } : prev));
+	};
+
+	const setRating = (rating: number) => {
+		setEditingCourse((prev) => (prev ? { ...prev, rating } : prev));
 	};
 
 	return (
@@ -329,7 +379,7 @@ export default function Page() {
 							</p>
 							<p className="my-2 text-gray-500">
 								Comienza creando tu primer curso haciendo clic en el botón
-								"Crear Curso"
+								&quot;Crear Curso&quot;
 							</p>
 							<span>&#128071;&#128071;&#128071;</span>
 							<Button
@@ -354,159 +404,19 @@ export default function Page() {
 							uploading={uploading}
 							editingCourseId={editingCourse ? editingCourse.id : null}
 							title={editingCourse?.title ?? ''}
-							setTitle={(title: string) =>
-								setEditingCourse((prev) =>
-									prev
-										? { ...prev, title }
-										: {
-												id: 0,
-												title,
-												description: '',
-												categoryid: '',
-												modalidadesid: '',
-												createdAt: '',
-												instructor: '',
-												coverImageKey: '',
-												creatorId: '',
-												dificultadid: '',
-												requerimientos: '',
-												totalParametros: 0,
-												rating: 0, // Añadir esta línea
-											}
-								)
-							}
+							setTitle={setTitle}
 							description={editingCourse?.description ?? ''}
-							setDescription={(description: string) =>
-								setEditingCourse((prev) =>
-									prev
-										? { ...prev, description }
-										: {
-												id: 0,
-												title: '',
-												description,
-												categoryid: '',
-												modalidadesid: '',
-												createdAt: '',
-												instructor: '',
-												coverImageKey: '',
-												creatorId: '',
-												dificultadid: '',
-												requerimientos: '',
-												totalParametros: 0,
-												rating: 0, // Añadir esta línea
-											}
-								)
-							}
+							setDescription={setDescription}
 							requerimientos={editingCourse?.requerimientos ?? ''}
-							setRequerimientos={(requerimientos: string) =>
-								setEditingCourse((prev) =>
-									prev
-										? { ...prev, requerimientos }
-										: {
-												id: 0,
-												title: '',
-												description: '',
-												categoryid: '',
-												modalidadesid: '',
-												createdAt: '',
-												instructor: '',
-												coverImageKey: '',
-												creatorId: '',
-												dificultadid: '',
-												requerimientos,
-												totalParametros: 0,
-												rating: 0, // Añadir esta línea
-											}
-								)
-							}
+							setRequerimientos={setRequerimientos}
 							categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
-							setCategoryid={(categoryid: number) =>
-								setEditingCourse((prev) =>
-									prev
-										? { ...prev, categoryid: String(categoryid) }
-										: {
-												id: 0,
-												title: '',
-												description: '',
-												categoryid: String(categoryid),
-												modalidadesid: '',
-												createdAt: '',
-												instructor: '',
-												coverImageKey: '',
-												creatorId: '',
-												dificultadid: '',
-												requerimientos: '',
-												totalParametros: 0,
-												rating: 0, // Añadir esta línea
-											}
-								)
-							}
+							setCategoryid={setCategoryid}
 							modalidadesid={Number(editingCourse?.modalidadesid) ?? 0}
-							setModalidadesid={(modalidadesid: number) =>
-								setEditingCourse((prev) =>
-									prev
-										? { ...prev, modalidadesid: String(modalidadesid) }
-										: {
-												id: 0,
-												title: '',
-												description: '',
-												categoryid: '',
-												modalidadesid: String(modalidadesid),
-												createdAt: '',
-												instructor: '',
-												coverImageKey: '',
-												creatorId: '',
-												dificultadid: '',
-												requerimientos: '',
-												totalParametros: 0,
-												rating: 0, // Añadir esta línea
-											}
-								)
-							}
+							setModalidadesid={setModalidadesid}
 							dificultadid={Number(editingCourse?.dificultadid) ?? 0}
-							setDificultadid={(dificultadid: number) =>
-								setEditingCourse((prev) =>
-									prev
-										? { ...prev, dificultadid: String(dificultadid) }
-										: {
-												id: 0,
-												title: '',
-												description: '',
-												categoryid: '',
-												modalidadesid: '',
-												createdAt: '',
-												instructor: '',
-												coverImageKey: '',
-												creatorId: '',
-												dificultadid: String(dificultadid),
-												requerimientos: '',
-												totalParametros: 0,
-												rating: 0, // Añadir esta línea
-											}
-								)
-							}
+							setDificultadid={setDificultidid}
 							coverImageKey={editingCourse?.coverImageKey ?? ''}
-							setCoverImageKey={(coverImageKey: string) =>
-								setEditingCourse((prev) =>
-									prev
-										? { ...prev, coverImageKey }
-										: {
-												id: 0,
-												title: '',
-												description: '',
-												categoryid: '',
-												modalidadesid: '',
-												createdAt: '',
-												instructor: '',
-												coverImageKey,
-												creatorId: '',
-												dificultadid: '',
-												requerimientos: '',
-												totalParametros: 0,
-												rating: 0, // Añadir esta línea
-											}
-								)
-							}
+							setCoverImageKey={setCoverImageKey}
 							parametros={parametrosList.map((parametro, index) => ({
 								...parametro,
 								id: index,
@@ -515,27 +425,7 @@ export default function Page() {
 							isOpen={isModalOpen}
 							onCloseAction={handleCloseModal}
 							rating={editingCourse?.rating ?? 0} // Añadir esta línea
-							setRating={(rating: number) =>
-								setEditingCourse((prev) =>
-									prev
-										? { ...prev, rating }
-										: {
-												id: 0,
-												title: '',
-												description: '',
-												categoryid: '',
-												modalidadesid: '',
-												createdAt: '',
-												instructor: '',
-												coverImageKey: '',
-												creatorId: '',
-												dificultadid: '',
-												requerimientos: '',
-												totalParametros: 0,
-												rating, // Añadir esta línea
-											}
-								)
-							}
+							setRating={setRating}
 						/>
 					)}
 				</div>

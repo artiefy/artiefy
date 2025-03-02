@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -85,27 +85,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		}
 	}, [courseId]);
 
-	useEffect(() => {
-		if (!lessonId) {
-			setError('lessonId is null or invalid');
-			setLoading(false);
-			return;
-		}
-
-		const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
-		const lessonsIdNumber = parseInt(lessonsId2 ?? '');
-		if (isNaN(lessonsIdNumber) || lessonsIdNumber <= 0) {
-			setError('lessonId is not a valid number');
-			setLoading(false);
-			return;
-		}
-
-		fetchLessons(lessonsIdNumber).catch((error) =>
-			console.error('Error fetching lessons:', error)
-		);
-	}, [user, lessonId]);
-
-	const fetchLessons = async (lessonsIdNumber: number) => {
+	const fetchLessons = useCallback(async (lessonsIdNumber: number) => {
 		if (!user) return;
 		try {
 			setLoading(true);
@@ -138,7 +118,27 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [user]);
+
+	useEffect(() => {
+		if (!lessonId) {
+			setError('lessonId is null or invalid');
+			setLoading(false);
+			return;
+		}
+
+		const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
+		const lessonsIdNumber = parseInt(lessonsId2 ?? '');
+		if (isNaN(lessonsIdNumber) || lessonsIdNumber <= 0) {
+			setError('lessonId is not a valid number');
+			setLoading(false);
+			return;
+		}
+
+		fetchLessons(lessonsIdNumber).catch((error) =>
+			console.error('Error fetching lessons:', error)
+		);
+	}, [lessonId, fetchLessons]);
 
 	const handleDelete = async (id: string) => {
 		try {

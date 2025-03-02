@@ -31,18 +31,26 @@ export async function GET(
 		// Obtener todas las claves de archivos para esta actividad
 		const submissionKeys = await redis.smembers(activityIndex);
 		console.log('Claves de envíos:', submissionKeys); // Para debugging
-		const respuestas: Record<string, any> = {};
+		const respuestas: Record<string, {
+			fileName: string;
+			submittedAt: string;
+			userId: string;
+			userName: string;
+			status: string;
+			fileContent: string;
+			grade: number | null;
+		}> = {};
 
 		for (const key of submissionKeys) {
 			const fileDetails = await redis.hgetall(key);
 			if (fileDetails) {
 				respuestas[key] = {
-					fileName: fileDetails.fileName || '',
-					submittedAt: fileDetails.submittedAt || new Date().toISOString(),
-					userId: fileDetails.userId || '',
-					userName: fileDetails.userName || '',
-					status: fileDetails.status || 'pendiente',
-					fileContent: fileDetails.fileContent || '',
+					fileName: typeof fileDetails.fileName === 'string' ? fileDetails.fileName : '',
+					submittedAt: typeof fileDetails.submittedAt === 'string' ? fileDetails.submittedAt : new Date().toISOString(),
+					userId: typeof fileDetails.userId === 'string' ? fileDetails.userId : '',
+					userName: typeof fileDetails.userName === 'string' ? fileDetails.userName : '',
+					status: typeof fileDetails.status === 'string' ? fileDetails.status : 'pendiente',
+					fileContent: typeof fileDetails.fileContent === 'string' ? fileDetails.fileContent : '',
 					grade:
 						fileDetails.grade && typeof fileDetails.grade === 'string'
 							? parseFloat(fileDetails.grade)

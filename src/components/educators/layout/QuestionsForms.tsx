@@ -77,8 +77,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 					questionsOM: { ...questions },
 				}),
 			});
-			const data: { message?: string; success: boolean } =
-				await response.json();
+			const data = (await response.json()) as {
+				message?: string;
+				success: boolean;
+			};
 			if (response.ok && data.success) {
 				toast({
 					title: 'Pregunta guardada',

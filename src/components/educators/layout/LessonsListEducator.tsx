@@ -90,7 +90,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
 			void fetchLessons();
 		}
-	}, [courseId]); // Este efecto se ejecuta cada vez que el courseId cambia
+	}, [courseId, courseIdString]); // Este efecto se ejecuta cada vez que el courseId cambia
 
 	// Condicionales de renderizado: carga, error, lecciones vacías
 	if (loading) {
@@ -107,7 +107,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 				</p>
 				<p className="my-2 text-gray-500">
 					Comienza creando tu primer clase haciendo clic en el botón de abajo
-					<br /> "Crear Clase"
+					<br /> &quot;Crear Clase&quot;
 				</p>
 				<span>&#128071;&#128071;&#128071;</span>
 				<div className="mt-3">

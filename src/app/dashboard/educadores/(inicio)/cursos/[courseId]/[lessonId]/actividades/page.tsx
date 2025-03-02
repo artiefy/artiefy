@@ -73,13 +73,6 @@ const Page: React.FC = () => {
 	const searchParams = useSearchParams();
 	const lessonsId = searchParams?.get('lessonId');
 	const [isUploading, setIsUploading] = useState(false);
-	const [errors, setErrors] = useState({
-		name: false,
-		description: false,
-		type: false,
-		porcentaje: false,
-		parametro: false,
-	});
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [course, setCourse] = useState<Course | null>(null);
 	const [formData, setFormData] = useState({
@@ -100,7 +93,6 @@ const Page: React.FC = () => {
 	const [isActive, setIsActive] = useState(false);
 	const [fechaMaxima, setFechaMaxima] = useState(false);
 	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
-	const [showErrors, setShowErrors] = useState(false);
 	const [parametros, setParametros] = useState<Parametros[]>([]); // Definir setParametros
 
 	useEffect(() => {
@@ -155,7 +147,7 @@ const Page: React.FC = () => {
 		if (courseIdNumber) {
 			void fetchParametros();
 		}
-	}, [courseIdNumber]);
+	}, [courseIdNumber, lessonsId, parametros]);
 
 	const handleToggle = () => {
 		setIsActive((prevIsActive) => {
@@ -190,16 +182,16 @@ const Page: React.FC = () => {
 		setShowLongevidadForm(true);
 	};
 
-	if (!lessonsId || !cursoIdNumber) {
-		return <p>Cargando parametros...</p>;
-	}
-
 	useEffect(() => {
+		if (!lessonsId || !cursoIdNumber) {
+			return;
+		}
+		console.log(parametros);
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
 		if (savedColor) {
 			setColor(savedColor);
 		}
-	}, [courseIdNumber]);
+	}, [lessonsId, parametros, courseIdNumber, cursoIdNumber]);
 
 	const fetchCourse = useCallback(async () => {
 		if (!user) return;
@@ -312,7 +304,6 @@ const Page: React.FC = () => {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setShowErrors(true);
 
 		// Validaciones específicas con mensajes de error
 		if (!formData.name) {
@@ -370,8 +361,6 @@ const Page: React.FC = () => {
 			),
 		};
 
-		setErrors(newErrors);
-
 		if (Object.values(newErrors).some((error) => error)) {
 			return;
 		}
@@ -406,7 +395,7 @@ const Page: React.FC = () => {
 					name: formData.name,
 					description: formData.description,
 					typeid: parseInt(formData.type, 10),
-					lessonsId: parseInt(lessonsId, 10),
+					lessonsId: lessonsId ? parseInt(lessonsId, 10) : 0,
 					revisada: formData.revisada,
 					parametroId: formData.parametro || null,
 					porcentaje: porcentaje,
@@ -583,7 +572,6 @@ const Page: React.FC = () => {
 												courseId={cursoIdNumber}
 												parametro={formData.parametro ?? 0}
 												onParametroChange={handleParametroChange}
-												errors={errors}
 												selectedColor={color}
 											/>
 											<Label
@@ -703,7 +691,6 @@ const Page: React.FC = () => {
 							setTypeActividad={(type: number) =>
 								setFormData({ ...formData, type: type.toString() })
 							}
-							errors={showErrors ? errors : { type: false }}
 							selectedColor={color}
 						/>
 

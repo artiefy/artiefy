@@ -9,16 +9,12 @@ interface TypeAct {
 interface TypeActDropdownProps {
 	typeActi: number;
 	setTypeActividad: (categoryId: number) => void;
-	errors: {
-		type: boolean;
-	};
 	selectedColor: string;
 }
 
 const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
 	typeActi,
 	setTypeActividad,
-	errors,
 	selectedColor,
 }) => {
 	const [allTypeAct, setTypeAct] = useState<TypeAct[]>([]);
