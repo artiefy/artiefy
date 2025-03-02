@@ -1,3 +1,5 @@
+// @ts-check
+
 import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
 
