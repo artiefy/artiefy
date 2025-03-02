@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { EllipsisVertical } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import '@reach/menu-button/styles.css';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
