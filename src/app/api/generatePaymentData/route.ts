@@ -7,8 +7,6 @@ import { getProductById } from '~/utils/paygateway/products';
 
 // Configure route behavior
 export const dynamic = 'force-dynamic'
-export const runtime = 'edge'
-export const preferredRegion = 'auto'
 
 // Types
 interface PaymentRequestBody {
