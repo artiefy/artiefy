@@ -34,5 +34,7 @@ export const getAllCategories = unstable_cache(
 					(error instanceof Error ? error.message : String(error))
 			);
 		}
-	}
+	},
+	['all-categories'],
+	{ revalidate: 3600 }
 );
