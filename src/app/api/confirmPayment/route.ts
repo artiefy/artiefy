@@ -3,8 +3,6 @@ import { verifySignature } from '~/utils/paygateway/verifySignature';
 
 // Configure route behavior
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
-export const preferredRegion = 'auto';
 
 // Types
 interface PaymentData {
