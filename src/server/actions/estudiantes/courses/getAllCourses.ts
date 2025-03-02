@@ -1,9 +1,8 @@
 'use server';
-'use cache';
 
 import { eq, desc } from 'drizzle-orm';
 import 'server-only';
-import { unstable_cacheLife as cacheLife } from 'next/cache';
+import { unstable_cache } from 'next/cache';
 import { db } from '~/server/db';
 import {
 	courses,
@@ -12,38 +11,40 @@ import {
 	dificultad,
 } from '~/server/db/schema';
 
-const getCachedCoursesData = async () => {
-	cacheLife('courses');
+const getCachedCoursesData = unstable_cache(
+	async () => {
+		const coursesData = await db
+			.select({
+				id: courses.id,
+				title: courses.title,
+				description: courses.description,
+				coverImageKey: courses.coverImageKey,
+				categoryid: courses.categoryid,
+				instructor: courses.instructor,
+				createdAt: courses.createdAt,
+				updatedAt: courses.updatedAt,
+				creatorId: courses.creatorId,
+				rating: courses.rating,
+				modalidadesid: courses.modalidadesid,
+				dificultadid: courses.dificultadid,
+				categoryName: categories.name,
+				categoryDescription: categories.description,
+				modalidadName: modalidades.name,
+				dificultadName: dificultad.name,
+				isFeatured: categories.is_featured,
+			})
+			.from(courses)
+			.leftJoin(categories, eq(courses.categoryid, categories.id))
+			.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+			.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
+			.orderBy(desc(courses.createdAt))
+			.limit(100);
 
-	const coursesData = await db
-		.select({
-			id: courses.id,
-			title: courses.title,
-			description: courses.description,
-			coverImageKey: courses.coverImageKey,
-			categoryid: courses.categoryid,
-			instructor: courses.instructor,
-			createdAt: courses.createdAt,
-			updatedAt: courses.updatedAt,
-			creatorId: courses.creatorId,
-			rating: courses.rating,
-			modalidadesid: courses.modalidadesid,
-			dificultadid: courses.dificultadid,
-			categoryName: categories.name,
-			categoryDescription: categories.description,
-			modalidadName: modalidades.name,
-			dificultadName: dificultad.name,
-			isFeatured: categories.is_featured,
-		})
-		.from(courses)
-		.leftJoin(categories, eq(courses.categoryid, categories.id))
-		.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-		.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
-		.orderBy(desc(courses.createdAt))
-		.limit(100);
-
-	return coursesData;
-};
+		return coursesData;
+	},
+	['all-courses'],
+	{ revalidate: 3600 }
+);
 
 export const getAllCourses = async (forceUpdate = false) => {
 	try {
