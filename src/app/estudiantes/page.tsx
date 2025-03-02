@@ -94,19 +94,11 @@ export default async function CoursesPage({ searchParams }: Props) {
 		return (
 			<>
 				<Header />
-				<Suspense
-					fallback={<Skeleton className="mx-auto h-10 w-full max-w-lg" />}
-				>
-					<StudentDashboard initialCourses={allCourses} />
-				</Suspense>
-				<Suspense
-					fallback={<Skeleton className="mx-auto h-10 w-full max-w-lg" />}
-				>
-					<CourseCategories
-						allCategories={data.categories}
-						featuredCategories={data.featuredCategories}
-					/>
-				</Suspense>
+				<StudentDashboard initialCourses={allCourses} />
+				<CourseCategories
+					allCategories={data.categories}
+					featuredCategories={data.featuredCategories}
+				/>
 				<Suspense
 					fallback={
 						<div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
@@ -150,5 +142,5 @@ export default async function CoursesPage({ searchParams }: Props) {
 	}
 }
 
-export const revalidate = 60;
+export const revalidate = 3600;
 export const dynamic = 'force-dynamic';

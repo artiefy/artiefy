@@ -1,8 +1,6 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
-import { unstable_cache } from 'next/cache';
 import { db } from '~/server/db';
 import {
 	lessons,
@@ -10,15 +8,11 @@ import {
 	userActivitiesProgress,
 } from '~/server/db/schema';
 import type { Lesson, Activity } from '~/types';
+import { unstable_cache } from 'next/cache';
 
-export const getLessonById = unstable_cache(
-	async (lessonId: number): Promise<Lesson | null> => {
+const getLessonById = unstable_cache(
+	async (lessonId: number, userId: string): Promise<Lesson | null> => {
 		try {
-			const user = await currentUser();
-			if (!user?.id) {
-				throw new Error('Usuario no autenticado');
-			}
-
 			const lesson = await db.query.lessons.findFirst({
 				where: eq(lessons.id, lessonId),
 				with: {
@@ -29,17 +23,17 @@ export const getLessonById = unstable_cache(
 
 			const lessonProgress = await db.query.userLessonsProgress.findFirst({
 				where: and(
-					eq(userLessonsProgress.userId, user.id),
+					eq(userLessonsProgress.userId, userId),
 					eq(userLessonsProgress.lessonId, lessonId)
 				),
 			});
 
 			const userActivitiesProgressData =
 				await db.query.userActivitiesProgress.findMany({
-					where: eq(userActivitiesProgress.userId, user.id),
+					where: eq(userActivitiesProgress.userId, userId),
 				});
 
-			return {
+			const transformedLesson: Lesson = {
 				...lesson,
 				porcentajecompletado: lessonProgress?.progress ?? 0,
 				isLocked: lessonProgress?.isLocked ?? true,
@@ -60,11 +54,15 @@ export const getLessonById = unstable_cache(
 						};
 					}) ?? [],
 			};
+
+			return transformedLesson;
 		} catch (error) {
 			console.error('Error al obtener la lección por ID:', error);
 			throw new Error('Error al obtener la lección por ID');
 		}
 	},
-	['lesson'],
+	['lesson-content'],
 	{ revalidate: 3600 }
 );
+
+export { getLessonById };

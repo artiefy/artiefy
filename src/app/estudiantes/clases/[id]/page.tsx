@@ -37,7 +37,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 			return notFound();
 		}
 
-		const lessonData = await getLessonById(lessonId);
+		const lessonData = await getLessonById(lessonId, userId);
 		if (!lessonData) {
 			console.log('Lección no encontrada');
 			return notFound();
@@ -58,14 +58,14 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 					}
 				: null;
 
-		const course = await getCourseById(lesson.courseId);
+		const course = await getCourseById(lesson.courseId, userId);
 		if (!course) {
 			console.log('Curso no encontrado');
 			return notFound();
 		}
 
 		const [lessons, userProgress] = await Promise.all([
-			getLessonsByCourseId(lesson.courseId),
+			getLessonsByCourseId(lesson.courseId, userId),
 			getUserLessonsProgress(userId),
 		]);
 

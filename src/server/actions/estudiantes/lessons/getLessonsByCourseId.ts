@@ -1,8 +1,6 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
 import { eq, asc } from 'drizzle-orm';
-import { unstable_cache } from 'next/cache';
 import { db } from '~/server/db';
 import {
 	lessons,
@@ -10,14 +8,10 @@ import {
 	userActivitiesProgress,
 } from '~/server/db/schema';
 import type { Lesson } from '~/types';
+import { unstable_cache } from 'next/cache';
 
-export const getLessonsByCourseId = unstable_cache(
-	async (courseId: number): Promise<Lesson[]> => {
-		const user = await currentUser();
-		if (!user?.id) {
-			throw new Error('Usuario no autenticado');
-		}
-
+const getLessonsByCourseId = unstable_cache(
+	async (courseId: number, userId: string): Promise<Lesson[]> => {
 		const lessonsData = await db.query.lessons.findMany({
 			where: eq(lessons.courseId, courseId),
 			orderBy: [asc(lessons.title)], // ✅ Asegurar orden ascendente por título
@@ -28,13 +22,13 @@ export const getLessonsByCourseId = unstable_cache(
 
 		const userLessonsProgressData = await db.query.userLessonsProgress.findMany(
 			{
-				where: eq(userLessonsProgress.userId, user.id),
+				where: eq(userLessonsProgress.userId, userId),
 			}
 		);
 
 		const userActivitiesProgressData =
 			await db.query.userActivitiesProgress.findMany({
-				where: eq(userActivitiesProgress.userId, user.id),
+				where: eq(userActivitiesProgress.userId, userId),
 			});
 
 		// 🔥 Extra: Normalizar los títulos antes de ordenarlos
@@ -44,7 +38,7 @@ export const getLessonsByCourseId = unstable_cache(
 			});
 		});
 
-		return sortedLessons.map((lesson) => {
+		const transformedLessons = sortedLessons.map((lesson) => {
 			const lessonProgress = userLessonsProgressData.find(
 				(progress) => progress.lessonId === lesson.id
 			);
@@ -71,7 +65,11 @@ export const getLessonsByCourseId = unstable_cache(
 					}) ?? [],
 			};
 		});
+
+		return transformedLessons;
 	},
 	['course-lessons'],
 	{ revalidate: 3600 }
 );
+
+export { getLessonsByCourseId };

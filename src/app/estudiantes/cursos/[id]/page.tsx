@@ -1,10 +1,11 @@
-import { Suspense } from 'react';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
-import Loading from '~/app/loading';
+import { auth } from '@clerk/nextjs/server';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import type { Course } from '~/types';
 import CourseDetails from './CourseDetails';
+import { Header } from '~/components/estudiantes/layout/Header';
+import Footer from '~/components/estudiantes/layout/Footer';
 
 interface Props {
 	params: Promise<{ id: string }>;
@@ -50,7 +51,8 @@ export async function generateMetadata(
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
 	const { id } = await params;
-	const course = await getCourseById(Number(id));
+	const { userId } = await auth();
+	const course = await getCourseById(Number(id), userId);
 
 	if (!course) {
 		return {
@@ -102,17 +104,26 @@ export async function generateMetadata(
 // Componente principal de la página del curso
 export default async function Page({ params }: Props) {
 	const { id } = await params;
+	const { userId } = await auth();
 
 	return (
-		<Suspense fallback={<Loading />}>
-			<CourseContent id={id} />
-		</Suspense>
+		<div>
+			<Header />
+			<CourseContent id={id} userId={userId} />
+			<Footer />
+		</div>
 	);
 }
 
 // Componente para renderizar los detalles del curso
-async function CourseContent({ id }: { id: string }) {
-	const course = await getCourseById(Number(id));
+async function CourseContent({
+	id,
+	userId,
+}: {
+	id: string;
+	userId: string | null;
+}) {
+	const course = await getCourseById(Number(id), userId);
 
 	if (!course) {
 		notFound();
@@ -154,5 +165,5 @@ async function CourseContent({ id }: { id: string }) {
 	);
 }
 
-export const revalidate = 60;
+export const revalidate = 3600;
 export const dynamic = 'force-dynamic';

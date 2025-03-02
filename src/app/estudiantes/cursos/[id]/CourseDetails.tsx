@@ -8,9 +8,6 @@ import { CourseBreadcrumb } from '~/components/estudiantes/layout/coursedetail/C
 import CourseChatbot from '~/components/estudiantes/layout/coursedetail/CourseChatbot';
 import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
 import { CourseHeader } from '~/components/estudiantes/layout/coursedetail/CourseHeader';
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
@@ -74,7 +71,7 @@ export default function CourseDetails({
 				// Si está inscrito, cargar progreso
 				if (isUserEnrolled) {
 					try {
-						const lessons = await getLessonsByCourseId(course.id);
+						const lessons = await getLessonsByCourseId(course.id, userId);
 						setCourse((prev) => ({
 							...prev,
 							lessons: lessons
@@ -140,7 +137,7 @@ export default function CourseDetails({
 				toast.success('¡Te has inscrito exitosamente!');
 
 				// Actualizar curso
-				const updatedCourse = await getCourseById(course.id);
+				const updatedCourse = await getCourseById(course.id, userId);
 				if (updatedCourse) {
 					setCourse({
 						...updatedCourse,
@@ -167,7 +164,7 @@ export default function CourseDetails({
 			await unenrollFromCourse(course.id);
 			setTotalStudents((prev) => prev - 1);
 			setIsEnrolled(false);
-			const updatedCourse = await getCourseById(course.id);
+			const updatedCourse = await getCourseById(course.id, userId);
 			if (updatedCourse) {
 				setCourse({
 					...updatedCourse,
@@ -201,48 +198,39 @@ export default function CourseDetails({
 
 	return (
 		<div className="min-h-screen bg-background">
-			<Header />
 			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
 				<CourseBreadcrumb title={course.title} />
+				<CourseHeader
+					course={course}
+					totalStudents={totalStudents}
+					isEnrolled={isEnrolled}
+					isEnrolling={isEnrolling}
+					isUnenrolling={isUnenrolling}
+					isSubscriptionActive={isSubscriptionActive}
+					subscriptionEndDate={
+						user?.publicMetadata?.subscriptionEndDate as string | null
+					}
+					onEnroll={handleEnroll}
+					onUnenroll={handleUnenroll}
+				/>
 
-				{!course.lessons ? (
-					<Skeleton className="h-[500px] w-full rounded-lg" />
-				) : (
-					<>
-						<CourseHeader
-							course={course}
-							totalStudents={totalStudents}
-							isEnrolled={isEnrolled}
-							isEnrolling={isEnrolling}
-							isUnenrolling={isUnenrolling}
-							isSubscriptionActive={isSubscriptionActive}
-							subscriptionEndDate={
-								user?.publicMetadata?.subscriptionEndDate as string | null
-							}
-							onEnroll={handleEnroll}
-							onUnenroll={handleUnenroll}
-						/>
-
-						{/* Mostrar mensajes de error si existen */}
-						{enrollmentError && (
-							<div className="mt-4 rounded-md bg-red-50 p-4">
-								{/* ...error message content... */}
-							</div>
-						)}
-
-						{/* Siempre mostrar comentarios y chatbot */}
-						<div className="mt-8 space-y-8">
-							<CourseComments
-								courseId={course.id}
-								isEnrolled={isEnrolled}
-								onEnrollmentChange={handleEnrollmentChange}
-							/>
-							<CourseChatbot isEnrolled={isEnrolled} />
-						</div>
-					</>
+				{/* Mostrar mensajes de error si existen */}
+				{enrollmentError && (
+					<div className="mt-4 rounded-md bg-red-50 p-4">
+						{/* ...error message content... */}
+					</div>
 				)}
+
+				{/* Siempre mostrar comentarios y chatbot */}
+				<div className="mt-8 space-y-8">
+					<CourseComments
+						courseId={course.id}
+						isEnrolled={isEnrolled}
+						onEnrollmentChange={handleEnrollmentChange}
+					/>
+					<CourseChatbot isEnrolled={isEnrolled} />
+				</div>
 			</main>
-			<Footer />
 		</div>
 	);
 }

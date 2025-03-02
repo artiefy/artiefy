@@ -110,7 +110,7 @@ export function Header() {
 								</SignInButton>
 							</SignedOut>
 							<SignedIn>
-								<UserButton>
+								<UserButton showName>
 									<UserButton.UserProfilePage
 										label="Custom Page"
 										url="custom"

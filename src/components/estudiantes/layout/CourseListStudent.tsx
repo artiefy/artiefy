@@ -67,9 +67,14 @@ export default async function CourseListStudent({
 							blurDataURL = undefined;
 						}
 
-						const isEnrolled = userId
-							? await isUserEnrolled(course.id, userId)
-							: false;
+						let isEnrolled = false;
+						try {
+							isEnrolled = userId
+								? await isUserEnrolled(course.id, userId)
+								: false;
+						} catch (error) {
+							console.error('Error checking enrollment status:', error);
+						}
 
 						return (
 							<div key={course.id} className="group relative">
