@@ -116,6 +116,6 @@ export const getAllCourses = async (forceUpdate = false) => {
 	}
 };
 
-export const preloadAllCourses = () => {
-	void getAllCourses();
+export const preloadAllCourses = async () => {
+	await getAllCourses();
 };

@@ -93,7 +93,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			emailAddress: [email_buyer],
 		});
 
-		if (clerkUsers.totalCount > 0) {
+		if (clerkUsers.data.length > 0) {
 			const clerkUser = clerkUsers.data[0] as User | undefined;
 			if (!clerkUser) {
 				console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
