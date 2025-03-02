@@ -24,12 +24,10 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "~/*": ["./src/*"]
-    },
-    "forceConsistentCasingInFileNames": true,
-    "typeRoots": [
-      "./node_modules/@types"
-    ]
+      "~/*": [
+        "./src/*"
+      ],
+    }
   },
   "include": [
     "**/*.ts",
@@ -38,14 +36,11 @@
     "**/*.tsx",
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    ".prettierrc.mjs",
-    "eslint.config.mjs"
+    ".prettierrc.mjs"
   ],
   "exclude": [
     "node_modules",
     ".next",
-    "dist",
-    "build",
-    ".vercel"
+    "dist"
   ]
 }
