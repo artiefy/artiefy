@@ -7,8 +7,8 @@ import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { sendEmail } from '~/utils/email/notifications';
 
-const SUBSCRIPTION_DURATION = 5 * 60 * 1000; // 5 minutos
-const TIME_ZONE = 'America/Bogota'; // Zona horaria de Bogotá
+const SUBSCRIPTION_DURATION = 5 * 60 * 1000;
+const TIME_ZONE = 'America/Bogota';
 
 interface PaymentData {
 	email_buyer: string;
@@ -93,7 +93,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			emailAddress: [email_buyer],
 		});
 
-		if (clerkUsers.totalCount > 0) {
+		if (clerkUsers.data.length > 0) {
 			const clerkUser = clerkUsers.data[0] as User | undefined;
 			if (!clerkUser) {
 				console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);

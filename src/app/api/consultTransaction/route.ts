@@ -3,8 +3,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 // Configure route behavior
 export const dynamic = 'force-dynamic';
-export const runtime = 'edge';
-export const preferredRegion = 'auto';
 
 // Constants
 const PAYU_API_URL =

@@ -1,17 +1,17 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
-import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import type { Activity, Question } from '~/types';
 import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity'; // Import completeActivity action
 import { saveActivityScore } from '~/server/actions/estudiantes/progress/saveActivityScore'; // Import saveActivityScore action
+import type { Activity, Question } from '~/types';
 
 interface ActivityModalProps {
 	isOpen: boolean;

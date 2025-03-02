@@ -5,6 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimesCircle, FaTimes } from 'react-icons/fa';
+import { toast } from 'sonner';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
@@ -12,7 +13,6 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { plansPersonas, plansEmpresas, type Plan } from '~/types/plans';
 import '~/styles/buttonPlanes.css';
 import { getProductById } from '~/utils/paygateway/products';
-import { toast } from 'sonner';
 
 const PlansPage: React.FC = () => {
 	const { isSignedIn } = useAuth();

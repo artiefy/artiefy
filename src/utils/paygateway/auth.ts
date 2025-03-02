@@ -1,5 +1,5 @@
-import { type Auth } from '~/types/payu';
 import { env } from '~/env';
+import { type Auth } from '~/types/payu';
 
 // Función para obtener las variables de entorno para la autenticación
 export function getAuthConfig(): Auth {

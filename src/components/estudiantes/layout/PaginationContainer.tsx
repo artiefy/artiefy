@@ -1,8 +1,8 @@
 'use client'; // Esto asegura que el código se ejecute en el cliente
 
 import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useProgress } from '@bprogress/next';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
 	Pagination,
 	PaginationContent,
