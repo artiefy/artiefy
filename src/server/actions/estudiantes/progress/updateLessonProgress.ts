@@ -2,9 +2,9 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
+import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { db } from '~/server/db';
 import { userLessonsProgress } from '~/server/db/schema';
-import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 
 // Actualizar el progreso de una lección
 export async function updateLessonProgress(

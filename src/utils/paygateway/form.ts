@@ -1,6 +1,6 @@
 import { type FormData, type Auth, type Product } from '~/types/payu';
-import { calculateMD5 } from './signature';
 import { generateReferenceCode } from './referenceCode';
+import { calculateMD5 } from './signature';
 
 // ✅ Función para formatear `amount` correctamente
 function formatAmount(amount: number | string): string {
