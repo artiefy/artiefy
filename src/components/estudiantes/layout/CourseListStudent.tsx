@@ -6,6 +6,7 @@ import {
 } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
+
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -47,7 +48,7 @@ export default async function CourseListStudent({
 
 	return (
 		<>
-			<h2 className="my-6 ml-8 text-3xl font-bold text-primary lg:ml-20">
+			<h2 className="text-primary my-6 ml-8 text-3xl font-bold lg:ml-20">
 				Cursos Artie
 			</h2>
 			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
@@ -165,6 +166,7 @@ export default async function CourseListStudent({
 				route="/estudiantes"
 				category={category}
 				searchTerm={searchTerm}
+				userId={userId} // 👈 Asegúrate de pasar userId
 			/>
 		</>
 	);

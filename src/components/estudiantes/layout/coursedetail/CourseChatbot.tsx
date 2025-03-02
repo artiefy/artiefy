@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+
 import { BsPersonCircle } from 'react-icons/bs';
 import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
@@ -125,7 +126,7 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
 					>
 						<div className="chat-header">
 							<div className="flex items-center space-x-2">
-								<FaRobot className="text-2xl text-secondary" />
+								<FaRobot className="text-secondary text-2xl" />
 								<h2
 									id="modal-title"
 									className="text-lg font-semibold text-gray-800"
@@ -156,7 +157,7 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
 										}`}
 									>
 										{message.sender === 'bot' ? (
-											<FaRobot className="mt-2 text-xl text-secondary" />
+											<FaRobot className="text-secondary mt-2 text-xl" />
 										) : (
 											<BsPersonCircle className="mt-2 text-xl text-gray-500" />
 										)}

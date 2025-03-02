@@ -22,7 +22,11 @@ export async function POST(request: Request) {
 			throw new Error('AWS_BUCKET_NAME no está definido');
 		}
 
+<<<<<<< HEAD
 		const key = `uploads/${uuidv4()}`;
+=======
+		const key = `uploads/${uuidv4()}`; // Agregamos un prefijo 'uploads/' para mejor organización
+>>>>>>> 7c64d4cf64f3b98e5b4933d85649252f79acde49
 
 		if (fileSize > MAX_FILE_SIZE) {
 			throw new Error(
@@ -47,12 +51,20 @@ export async function POST(request: Request) {
 
 			return Response.json({ url, fields, key, uploadType: 'simple' });
 		} else {
+<<<<<<< HEAD
+=======
+			// Carga multiparte para archivos grandes (100 MB - 1 GB)
+>>>>>>> 7c64d4cf64f3b98e5b4933d85649252f79acde49
 			const multipartUpload = await client.send(
 				new CreateMultipartUploadCommand({
 					Bucket: process.env.AWS_BUCKET_NAME,
 					Key: key,
 					ContentType: contentType,
+<<<<<<< HEAD
 					ACL: 'public-read',
+=======
+					ACL: 'public-read', // Aseguramos que el objeto sea público
+>>>>>>> 7c64d4cf64f3b98e5b4933d85649252f79acde49
 				})
 			);
 

@@ -55,16 +55,18 @@ export async function getLessonById(lessonId: number): Promise<Lesson | null> {
 				? lesson.resourceNames.split(',')
 				: [], // Convertir texto a array
 			activities:
-				(lesson.activities as Activity[] | undefined)?.map((activity) => {
-					const activityProgress = userActivitiesProgressData.find(
-						(progress) => progress.activityId === activity.id
-					);
-					return {
-						...activity,
-						isCompleted: activityProgress?.isCompleted ?? false,
-						userProgress: activityProgress?.progress ?? 0,
-					};
-				}) ?? [],
+				(lesson.activities as unknown as Activity[] | undefined)?.map(
+					(activity) => {
+						const activityProgress = userActivitiesProgressData.find(
+							(progress) => progress.activityId === activity.id
+						);
+						return {
+							...activity,
+							isCompleted: activityProgress?.isCompleted ?? false,
+							userProgress: activityProgress?.progress ?? 0,
+						};
+					}
+				) ?? [],
 		};
 	} catch (error) {
 		console.error('Error al obtener la lección por ID:', error);

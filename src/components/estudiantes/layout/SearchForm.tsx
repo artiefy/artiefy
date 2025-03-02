@@ -8,8 +8,8 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Input } from '~/components/estudiantes/ui/input';
 import {
-  saveScrollPosition,
-  restoreScrollPosition,
+	saveScrollPosition,
+	restoreScrollPosition,
 } from '~/utils/scrollPosition';
 
 const SearchForm: React.FC = () => {
