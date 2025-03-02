@@ -74,7 +74,7 @@
     "lru-cache": "^11.0.2",
     "lucide-react": "^0.476.0",
     "multer": "^1.4.5-lts.1",
-    "next": "^15.2.1-canary.4",
+    "next": "^15.2.0",
     "next-themes": "^0.4.4",
     "next-nprogress-bar": "^2.4.7",
     "nextjs-toploader": "^3.7.15",
@@ -106,13 +106,7 @@
     "@eslint/config-array": "^0.19.2",
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.21.0",
-<<<<<<< HEAD
-    "@eslint/object-schema": "^2.1.6",
-    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
-    "@next/eslint-plugin-next": "^15.1.7",
-=======
     "@next/eslint-plugin-next": "^15.2.0",
->>>>>>> ad8ae9648e432fffd76d37d3f079c4bfa604c996
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/postcss": "^4.0.8",
     "@tsconfig/next": "^2.0.3",
