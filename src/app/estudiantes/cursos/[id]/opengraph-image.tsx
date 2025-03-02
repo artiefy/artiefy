@@ -1,3 +1,4 @@
+import { auth } from '@clerk/nextjs/server';
 import { ImageResponse } from 'next/og';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
@@ -10,7 +11,8 @@ export const contentType = 'image/png';
 
 export default async function Image({ params }: { params: { id: string } }) {
 	try {
-		const course = await getCourseById(Number(params.id));
+		const { userId } = await auth();
+		const course = await getCourseById(Number(params.id), userId);
 
 		if (!course) {
 			return new ImageResponse(
