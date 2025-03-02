@@ -500,7 +500,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									quality={75}
 								/>
 							</div>
-							<div className="mt-8 grid grid-cols-3 gap-5">
+							<div className="mt-8 grid grid-cols-4 gap-5">
 								<Button
 									className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
 								>
@@ -513,6 +513,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
 								>
 									Editar curso
+								</Button>
+								<Button className="border-primary bg-primary text-white hover:bg-primary/90">
+									<Link
+										href={`/dashboard/educadores/detailsDashboard/${course.id}`}
+									>
+										Estadisticas
+									</Link>
 								</Button>
 								<AlertDialog>
 									<AlertDialogTrigger asChild>
@@ -644,8 +651,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			{loading ? (
 				<LoadingCourses />
 			) : (
-				courseIdNumber !== null &&
-				courseIdNumber > 0 && (
+				courseIdNumber !== null && (
 					<>
 						<LessonsListEducator
 							courseId={courseIdNumber}

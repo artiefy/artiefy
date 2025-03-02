@@ -214,7 +214,7 @@ export default function Home() {
 									<div className="ml-5 w-0 flex-1">
 										<dl>
 											<dt className="truncate text-sm font-medium text-gray-300">
-												Promedio General de estudiantes
+												Total de estudiantes
 											</dt>
 											<dd className="flex items-baseline">
 												<div className="text-2xl font-semibold text-white">
@@ -289,11 +289,11 @@ export default function Home() {
 									<div className="ml-5 w-0 flex-1">
 										<dl>
 											<dt className="truncate text-sm font-medium text-gray-200">
-												Duración Total de las clases
+												Duración total
 											</dt>
 											<dd className="flex items-baseline">
 												<div className="text-2xl font-semibold text-white">
-													{stats.totalDuration ?? 0}
+													{stats.totalDuration ?? 0} minutos
 												</div>
 											</dd>
 										</dl>
