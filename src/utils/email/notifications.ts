@@ -1,3 +1,4 @@
+/*
 import * as dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 
@@ -33,3 +34,4 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
 		console.error('Error sending email:', error);
 	}
 }
+*/

@@ -2,13 +2,13 @@ import { clerkClient, type User } from '@clerk/nextjs/server';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
+// import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
-import { sendEmail } from '~/utils/email/notifications';
+// import { sendEmail } from '~/utils/email/notifications';
 
-const SUBSCRIPTION_DURATION = 5 * 60 * 1000; // 5 minutos
-const TIME_ZONE = 'America/Bogota'; // Zona horaria de Bogotá
+const SUBSCRIPTION_DURATION = 5 * 60 * 1000;
+const TIME_ZONE = 'America/Bogota';
 
 interface PaymentData {
 	email_buyer: string;
@@ -115,6 +115,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		}
 
 		// Schedule email notification 2 minutes before subscription ends
+		/*
 		const notificationTime = new Date(
 			subscriptionEndDate.getTime() - 2 * 60 * 1000
 		);
@@ -130,6 +131,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				html: emailHtml,
 			});
 		}, notificationTime.getTime() - now.getTime());
+		*/
 
 		// Logs de depuración
 		console.log(`📅 Inicio suscripción (Bogotá): ${bogotaNow}`);
