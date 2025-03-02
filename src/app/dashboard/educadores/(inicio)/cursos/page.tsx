@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
+import { toast } from 'sonner';
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
 import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
@@ -13,7 +14,6 @@ import {
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
-import { toast } from '~/hooks/use-toast';
 
 export interface CourseModel {
 	id: number;
@@ -78,20 +78,16 @@ export default function Page() {
 				const errorData = (await response.json()) as { error?: string };
 				const errorMessage = errorData.error ?? response.statusText;
 				setError(`Error al cargar los cursos: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast.error('Error', {
 					description: `No se pudieron cargar los cursos: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'Error desconocido';
 			setError(`Error al cargar los cursos: ${errorMessage}`);
-			toast({
-				title: 'Error',
+			toast.error('Error', {
 				description: `No se pudieron cargar los cursos: ${errorMessage}`,
-				variant: 'destructive',
 			});
 		} finally {
 			setLoading(false);
@@ -124,10 +120,8 @@ export default function Page() {
 
 		// Validar que haya al menos un parámetro si addParametros es true
 		if (addParametros && parametrosList.length === 0) {
-			toast({
-				title: 'Error',
+			toast.error('Error', {
 				description: 'Debe agregar al menos un parámetro de evaluación',
-				variant: 'destructive',
 			});
 			return;
 		}
@@ -202,8 +196,7 @@ export default function Page() {
 		if (response.ok) {
 			const responseData = (await response.json()) as { id: number };
 
-			toast({
-				title: editingCourse ? 'Curso actualizado' : 'Curso creado',
+			toast.success(editingCourse ? 'Curso actualizado' : 'Curso creado', {
 				description: editingCourse
 					? 'El curso se actualizó con éxito'
 					: 'El curso se creó con éxito',
@@ -227,20 +220,16 @@ export default function Page() {
 						});
 
 						if (response.ok) {
-							toast({
-								title: 'Parámetro creado exitosamente',
+							toast.success('Parámetro creado exitosamente', {
 								description: 'El parámetro se ha creado exitosamente',
-								variant: 'default',
 							});
 						} else {
 							const errorData = (await response.json()) as { error: string };
 							throw new Error(errorData.error);
 						}
 					} catch (error) {
-						toast({
-							title: 'Error al crear el parámetro',
+						toast.error('Error al crear el parámetro', {
 							description: `Ha ocurrido un error al crear el parámetro: ${(error as Error).message}`,
-							variant: 'destructive',
 						});
 					}
 				}
@@ -253,11 +242,9 @@ export default function Page() {
 			setIsModalOpen(false);
 		} else {
 			const errorData = (await response.json()) as { error?: string };
-			toast({
-				title: 'Error',
+			toast.error('Error', {
 				description:
 					errorData.error ?? 'Ocurrió un error al procesar la solicitud',
-				variant: 'destructive',
 			});
 		}
 	};
@@ -357,7 +344,7 @@ export default function Page() {
 						<h1 className="text-3xl font-bold">Panel de cursos</h1>
 						<Button
 							onClick={handleCreateCourse}
-							className="bg-primary text-background transition-transform hover:text-primary active:scale-95"
+							className="bg-primary text-background hover:text-primary transition-transform active:scale-95"
 						>
 							<FiPlus className="mr-2" />
 							Crear Curso
@@ -384,7 +371,7 @@ export default function Page() {
 							<span>&#128071;&#128071;&#128071;</span>
 							<Button
 								onClick={handleCreateCourse}
-								className="mt-5 bg-primary text-background transition-transform hover:text-primary active:scale-95"
+								className="bg-primary text-background hover:text-primary mt-5 transition-transform active:scale-95"
 							>
 								<FiPlus className="mr-2" />
 								Crear Curso
@@ -392,7 +379,7 @@ export default function Page() {
 						</div>
 					) : (
 						<>
-							<h2 className="mb-4 mt-5 text-2xl font-bold">
+							<h2 className="mt-5 mb-4 text-2xl font-bold">
 								Lista de cursos creados
 							</h2>
 							<CourseListTeacher courses={courses} />

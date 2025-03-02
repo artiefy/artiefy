@@ -6,6 +6,7 @@ import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { toast } from 'sonner';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -17,7 +18,6 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
-import { toast } from '~/hooks/use-toast';
 
 //import { FaImage } from 'react-icons/fa';
 import { Button } from '../educators/ui/button';
@@ -108,14 +108,15 @@ export const Zone = () => {
 				method: 'DELETE',
 			});
 			if (!response.ok) throw new Error('Error al eliminar el foro');
-			toast({
-				title: 'Foro eliminado',
+			toast.success('Foro eliminado', {
 				description: 'El foro ha sido eliminado correctamente',
-				variant: 'destructive',
 			});
 			window.location.reload(); // Refrescar la página
 		} catch (error) {
 			console.error('Error:', error);
+			toast.error('Error', {
+				description: 'No se pudo eliminar el foro',
+			});
 		}
 	};
 
@@ -162,7 +163,7 @@ export const Zone = () => {
               <FaImage className="text-gray-600" />
             </label> */}
 						</div>
-						<div className="grid grid-cols-2 bg-background p-5">
+						<div className="bg-background grid grid-cols-2 p-5">
 							<div className="flex flex-col justify-center text-center">
 								<p>Del curso:</p>
 								<p className="mt-2 text-white"> {forum.courseId.title}</p>
@@ -176,7 +177,7 @@ export const Zone = () => {
 							<p className="mb-4 text-gray-600">{forum.description}</p>
 							<div className="flex justify-between">
 								<Link
-									className="mx-auto rounded-md bg-primary px-4 py-2 text-white"
+									className="bg-primary mx-auto rounded-md px-4 py-2 text-white"
 									href={`/dashboard/educadores/foro/${forum.id}`}
 								>
 									Ingresar al foro

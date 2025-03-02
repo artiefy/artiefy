@@ -16,7 +16,7 @@ const eslintConfig = [
 			'/*.d.ts',
 			'src/components/estudiantes/ui/',
 			'src/components/admin/ui/',
-			'src/components/educadores/ui/',
+			'src/components/educators/ui/',
 		],
 	},
 	{

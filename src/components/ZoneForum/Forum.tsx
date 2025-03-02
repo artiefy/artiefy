@@ -206,7 +206,7 @@ const ForumHome = () => {
 									>
 										Cancelar
 									</Button>
-									<Button variant="save" onClick={handleCreateForum}>
+									<Button variant="default" onClick={handleCreateForum}>
 										Crear Foro
 									</Button>
 								</DialogFooter>
