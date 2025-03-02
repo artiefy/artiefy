@@ -53,18 +53,6 @@ const nextConfig = {
 				'.json',
 			], // Define las extensiones de archivo que se resolverán automáticamente
 		},
-		useCache: true, // Habilita el uso de la directiva 'use cache'
-		dynamicIO: true, // Habilita la característica experimental 'dynamicIO'
-		serverActions: {
-			bodySizeLimit: '2mb', // Configura el límite del tamaño del cuerpo de las solicitudes a Server Actions
-		},
-		cacheLife: {
-			courses: {
-				stale: 3600, // Define el tiempo en segundos que el cliente debe almacenar en caché un valor sin verificar con el servidor (1 hora)
-				revalidate: 900, // Define la frecuencia en segundos con la que la caché debe actualizarse en el servidor (15 minutos)
-				expire: 86400, // Define la duración máxima en segundos que un valor puede permanecer obsoleto antes de cambiar a la obtención dinámica (1 día)
-			},
-		}, // Define perfiles de caché personalizados
 	},
 	expireTime: 3600, // Define un tiempo de expiración personalizado para el encabezado Cache-Control (1 hora)
 };
