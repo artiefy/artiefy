@@ -161,19 +161,35 @@ export default function CourseDetails({
 		setEnrollmentError(null);
 
 		try {
-			await unenrollFromCourse(course.id);
-			setTotalStudents((prev) => prev - 1);
-			setIsEnrolled(false);
-			toast.success('Has cancelado tu inscripción al curso correctamente'); // Move this line here
-			const updatedCourse = await getCourseById(course.id, userId);
-			if (updatedCourse) {
-				setCourse({
-					...updatedCourse,
-					lessons: updatedCourse.lessons ?? [],
-				});
+			const result = await unenrollFromCourse(course.id);
+
+			if (result.success) {
+				setIsEnrolled(false);
+				setTotalStudents((prev) => prev - 1);
+				setCourse((prev) => ({
+					...prev,
+					enrollments: Array.isArray(prev.enrollments)
+						? prev.enrollments.filter(
+								(enrollment: Enrollment) => enrollment.userId !== userId
+							)
+						: [],
+					lessons: prev.lessons?.map((lesson) => ({
+						...lesson,
+						userProgress: 0,
+						isLocked: true,
+					})),
+				}));
+
+				toast.success('Has cancelado tu inscripción al curso correctamente');
+			} else {
+				throw new Error(result.message);
 			}
-		} catch (error: unknown) {
-			handleError(error, 'unenrollment');
+		} catch (error) {
+			if (error instanceof Error) {
+				handleError(error, 'unenrollment');
+			} else {
+				handleError(new Error('Error desconocido'), 'unenrollment');
+			}
 		} finally {
 			setIsUnenrolling(false);
 		}
