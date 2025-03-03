@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from '~/hooks/use-toast';
 import type { Completado } from '~/types/typesActi';
 
 interface PreguntasAbiertasProps {
@@ -86,25 +86,19 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 				questions: Completado[];
 			};
 			if (data.success) {
-				toast({
-					title: 'Pregunta guardada',
+				toast('Pregunta guardada', {
 					description: 'La pregunta se guardó correctamente',
-					variant: 'default',
 				});
 				onSubmit({ ...formData, id: questionId });
 			} else if (data.success === false) {
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: 'Error al guardar la pregunta',
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
 			console.error('Error al guardar la pregunta:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: `Error al guardar la pregunta: ${(error as Error).message}`,
-				variant: 'destructive',
 			});
 		} finally {
 			clearInterval(interval);

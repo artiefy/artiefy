@@ -5,7 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
 import Script from 'next/script';
-import { Toaster } from '~/components/estudiantes/ui/sonner';
+import { Toaster } from 'sonner';
 import { metadata as siteMetadata } from '~/lib/metadata';
 import '~/styles/globals.css';
 import Loading from './loading';

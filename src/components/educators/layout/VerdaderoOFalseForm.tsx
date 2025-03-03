@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '~/components/educators/ui/button';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 import type { VerdaderoOFlaso, OptionVOF } from '~/types/typesActi';
 
 interface QuestionFormProps {
@@ -85,24 +85,19 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 			};
 
 			if (data.success) {
-				toast({
-					title: 'Pregunta guardada',
+				toast('Pregunta guardada',{
 					description: 'La pregunta se guardó correctamente',
 				});
 				onSubmit(question);
 			} else if (data.success === false) {
-				toast({
-					title: 'Error',
+				toast('Error',{
 					description: 'Error al guardar la pregunta',
-					variant: 'destructive',
 				});
 			}
 		} catch (error: unknown) {
 			console.error('Error al guardar la pregunta:', error);
-			toast({
-				title: 'Error',
+			toast('Error',{
 				description: `Error al guardar la pregunta: ${error instanceof Error ? error.message : 'Unknown error'}`,
-				variant: 'destructive',
 			});
 		} finally {
 			setIsUploading(false);

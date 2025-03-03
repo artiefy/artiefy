@@ -2,11 +2,11 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from '~/hooks/use-toast';
 import type { Question, OptionOM } from '~/types/typesActi';
 
 interface QuestionFormProps {
@@ -82,24 +82,19 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 				success: boolean;
 			};
 			if (response.ok && data.success) {
-				toast({
-					title: 'Pregunta guardada',
+				toast('Pregunta guardada',{
 					description: 'La pregunta se guardó correctamente',
 				});
 				onSubmit(questions);
 			} else {
-				toast({
-					title: 'Error',
+				toast( 'Error',{
 					description: data.message ?? 'Error al guardar la pregunta',
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
 			console.error('Error al guardar la pregunta:', error);
-			toast({
-				title: 'Error',
+			toast('Error',{
 				description: `Error al guardar la pregunta: ${error instanceof Error ? error.message : 'Unknown error'}`,
-				variant: 'destructive',
 			});
 		} finally {
 			setIsUploading(false);

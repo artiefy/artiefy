@@ -2,10 +2,10 @@
 import type React from 'react';
 import { useEffect, useState, useCallback } from 'react';
 import { Edit, Trash } from 'lucide-react';
+import { toast } from 'sonner';
 import QuestionVOFForm from '~/components/educators/layout/VerdaderoOFalseForm';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
-import { toast } from '~/hooks/use-toast';
 import type { VerdaderoOFlaso } from '~/types/typesActi';
 
 interface QuestionListProps {
@@ -38,10 +38,8 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'Error al cargar las preguntas',
-				variant: 'destructive',
 			});
 		} finally {
 			setLoading(false);
@@ -79,17 +77,14 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 			if (response.ok) {
 				// Actualizar el estado local en lugar de hacer fetch
 				setQuestionsVOF(questions.filter((q) => q.id !== questionId));
-				toast({
-					title: 'Pregunta eliminada',
+				toast('Pregunta eliminada', {
 					description: 'La pregunta se eliminó correctamente',
 				});
 			}
 		} catch (error) {
 			console.error('Error al eliminar la pregunta:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'Error al eliminar la pregunta',
-				variant: 'destructive',
 			});
 		}
 	};

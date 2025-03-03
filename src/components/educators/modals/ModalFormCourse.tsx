@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import Image from 'next/image';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
+import { toast } from 'sonner';
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
@@ -20,7 +21,6 @@ import {
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from 'sonner';
 
 interface CourseFormProps {
 	onSubmitAction: (
@@ -200,10 +200,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			0
 		);
 		if (sumaPorcentajes > 100) {
-			toast('Error',{
-			
+			toast('Error', {
 				description: 'La suma de los porcentajes no puede superar el 100%',
-	
 			});
 			return;
 		}
@@ -265,10 +263,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			0
 		);
 		if (addParametros && sumaPorcentajes !== 100) {
-			toast('Error',{
-			
+			toast('Error', {
 				description: 'La suma de los porcentajes debe ser igual a 100%',
-		
 			});
 			return;
 		}
@@ -658,7 +654,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 									/>
 									<label
 										htmlFor="file-upload"
-										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
+										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
 									>
 										Seleccionar Archivo
 									</label>
@@ -679,7 +675,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 											setFileSize(null);
 											setErrors((prev) => ({ ...prev, file: true }));
 										}}
-										className="absolute right-2 top-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+										className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
 									>
 										<MdClose className="z-20 size-5" />
 									</button>
@@ -719,7 +715,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 									className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
 								>
 									<span
-										className={`absolute left-1 top-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
+										className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
 									></span>
 								</span>
 							</label>

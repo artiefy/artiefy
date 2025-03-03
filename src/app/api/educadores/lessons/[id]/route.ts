@@ -34,7 +34,6 @@ export async function GET(
 			{ status: 500 }
 		);
 	}
-<<<<<<< HEAD
 }
 
 export async function PUT(
@@ -87,6 +86,4 @@ export async function PUT(
 			}
 		);
 	}
-=======
->>>>>>> develop
 }

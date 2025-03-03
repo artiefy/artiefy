@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent } from '~/components/educators/ui/card';
 import { Input } from '~/components/educators/ui/input';
-import { toast } from '~/hooks/use-toast';
 
 interface RespuestaArchivo {
 	fileName: string;
@@ -48,10 +48,8 @@ export default function VerRespuestasArchivos({
 			setGrades(initialGrades);
 		} catch (error) {
 			console.error('Error al cargar respuestas:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'No se pudieron cargar las respuestas',
-				variant: 'destructive',
 			});
 		} finally {
 			setLoading(false);
@@ -109,17 +107,14 @@ export default function VerRespuestasArchivos({
 				[submissionKey]: grade.toString(),
 			}));
 
-			toast({
-				title: 'Éxito',
+			toast('Éxito', {
 				description: 'Calificación guardada correctamente',
 			});
 		} catch (error) {
 			console.error('Error detallado al calificar:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description:
 					error instanceof Error ? error.message : 'Error al calificar',
-				variant: 'destructive',
 			});
 			throw error;
 		}
@@ -151,18 +146,14 @@ export default function VerRespuestasArchivos({
 			} catch (error) {
 				console.error('Error en handleSubmitGrade:', error);
 				await fetchRespuestas();
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description:
 						'No se pudo guardar la calificación. Intentando recargar los datos.',
-					variant: 'destructive',
 				});
 			}
 		} else {
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'La calificación debe estar entre 0 y 5',
-				variant: 'destructive',
 			});
 		}
 	};
@@ -184,10 +175,8 @@ export default function VerRespuestasArchivos({
 			document.body.removeChild(a);
 		} catch (error) {
 			console.error('Error al descargar archivo:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'No se pudo descargar el archivo',
-				variant: 'destructive',
 			});
 		}
 	};

@@ -469,3 +469,12 @@ export const userActivitiesProgressRelations = relations(
 		}),
 	})
 );
+
+export const userTimeTracking = pgTable('user_time_tracking', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	date: date('date').defaultNow().notNull(),
+	timeSpent: integer('time_spent').default(0).notNull(),
+});

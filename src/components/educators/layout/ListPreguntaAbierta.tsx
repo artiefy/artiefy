@@ -2,10 +2,10 @@
 import type React from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import { Edit, Trash } from 'lucide-react';
+import { toast } from 'sonner';
 import PreguntasAbiertas from '~/components/educators/layout/PreguntasAbiertas';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
-import { toast } from '~/hooks/use-toast';
 import type { Completado } from '~/types/typesActi';
 
 interface QuestionListProps {
@@ -43,10 +43,8 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'Error al cargar las preguntas',
-				variant: 'destructive',
 			});
 		} finally {
 			setLoading(false);
@@ -86,17 +84,14 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 				setQuestions((prevQuestions) =>
 					prevQuestions.filter((q) => q.id !== questionId)
 				);
-				toast({
-					title: 'Pregunta eliminada',
+				toast('Pregunta eliminada', {
 					description: 'La pregunta se eliminó correctamente',
 				});
 			}
 		} catch (error) {
 			console.error('Error al eliminar la pregunta:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'Error al eliminar la pregunta',
-				variant: 'destructive',
 			});
 		}
 	};
