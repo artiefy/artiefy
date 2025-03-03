@@ -164,6 +164,7 @@ export default function CourseDetails({
 			await unenrollFromCourse(course.id);
 			setTotalStudents((prev) => prev - 1);
 			setIsEnrolled(false);
+			toast.success('Has cancelado tu inscripción al curso correctamente'); // Move this line here
 			const updatedCourse = await getCourseById(course.id, userId);
 			if (updatedCourse) {
 				setCourse({
@@ -171,7 +172,6 @@ export default function CourseDetails({
 					lessons: updatedCourse.lessons ?? [],
 				});
 			}
-			toast.success('Has cancelado tu inscripción al curso correctamente');
 		} catch (error: unknown) {
 			handleError(error, 'unenrollment');
 		} finally {

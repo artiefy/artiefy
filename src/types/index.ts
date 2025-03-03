@@ -143,6 +143,10 @@ export interface Activity {
 	content?: {
 		questions: Question[];
 	};
+	revisada: boolean;
+	parametroId: number;
+	porcentaje: number;
+	fechaMaximaEntrega: Date;
 }
 
 export interface Question {
