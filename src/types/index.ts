@@ -135,10 +135,10 @@ export interface Activity {
 	description: string | null;
 	lastUpdated: Date;
 	lessonsId: number;
-	revisada: boolean;
+	revisada: boolean | null; // Cambiado de boolean a boolean | null
 	porcentaje: number | null;
 	parametroId: number | null;
-  typeActi?: TypeActi;
+	typeActi?: TypeActi;
 	userActivitiesProgress?: UserActivitiesProgress[];
 	content?: {
 		questions: Question[];
