@@ -30,6 +30,12 @@ interface Stats {
 	globalCourseScore: string; // 🔹 Nota global del curso
 	activities: ActivityDetail[]; // 🔹 Lista de actividades detalladas
 	lessonDetails: LessonDetail[]; // Add this line
+	evaluationParameters: {
+		id: number;
+		name: string;
+		description: string;
+		percentage: number;
+	}[];
 }
 
 interface ActivityDetail {
@@ -65,6 +71,7 @@ interface SelectedDetail {
 	details?: string;
 	activities?: ActivityDetail[]; // Para mostrar actividades en el modal
 	lessons?: LessonDetail[]; // Para mostrar lecciones en el modal
+	extraInfo?: { label: string; value: string; description?: string }[]; // Add this line
 }
 
 export default function StudentCourseDashboard() {
@@ -86,37 +93,34 @@ export default function StudentCourseDashboard() {
 	const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [lessonDetails, setLessonDetails] = useState<LessonDetail[]>([]);
+	const [evaluationParameters, setEvaluationParameters] = useState<
+		{ id: number; name: string; description: string; percentage: number }[]
+	>([]);
 
 	const openModal = (detail: SelectedDetail) => {
 		console.log('🟢 Mostrando detalle:', detail);
-
+	
+		if (detail.title === 'Parámetros de Evaluación') {
+			console.log('📊 Parámetros enviados al modal:', evaluationParameters);
+		}
+	
 		setSelectedDetail({
 			...detail,
 			details: detail.details ?? `Información adicional sobre ${detail.title}`,
-			activities:
-				detail.title === 'Actividades Completadas'
-					? (stats?.activities.filter((activity) => activity.isCompleted) ?? []) // 🔥 Filtra solo completadas
-					: [],
-			lessons:
-				detail.title === 'Progreso Promedio en Lecciones (%)' ||
-				detail.title === 'Lecciones Totales' ||
-				detail.title === 'Detalles Adicionales'
-					? lessonDetails.length > 0
-						? lessonDetails
-						: [
-								{
-									lessonId: 0,
-									title: 'No hay lecciones registradas',
-									progress: 0,
-									isCompleted: false,
-									lastUpdated: 'N/A',
-								},
-							]
+			extraInfo:
+				detail.title === 'Parámetros de Evaluación'
+					? evaluationParameters.map((param) => ({
+							label: param.name,
+							value: `${param.percentage}%`,
+							description: param.description,
+						}))
 					: [],
 		});
-
+		
+	
 		setIsModalOpen(true);
 	};
+	
 
 	const closeModal = () => {
 		setSelectedDetail(null);
@@ -126,50 +130,50 @@ export default function StudentCourseDashboard() {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const res = await fetch(
-					`/api/super-admin/course/${courseId}/stats/${user}`
-				);
+				const res = await fetch(`/api/super-admin/course/${courseId}/stats/${user}`);
 				const data = (await res.json()) as {
 					statistics: Stats;
 					user: UserInfo;
 					course: CourseInfo;
 					lessonDetails: LessonDetail[];
+					evaluationParameters: {
+						id: number;
+						name: string;
+						description: string;
+						percentage: number;
+					}[];
 				};
-
+					const evaluationParams = data.evaluationParameters && Array.isArray(data.evaluationParameters)
+						? data.evaluationParameters
+						: [];
+	
+				// Corregir cómo se asigna `evaluationParameters`
+				setEvaluationParameters(
+					data.statistics.evaluationParameters && Array.isArray(data.statistics.evaluationParameters)
+						? data.statistics.evaluationParameters
+						: []
+				);
+					
 				setStats({
 					...data.statistics,
-					averageLessonProgress: data.statistics.averageLessonProgress, // Agregamos este campo
-					activities:
-						data.statistics.activities.length > 0
-							? data.statistics.activities
-							: [], // ✅ Aseguramos que nunca sea undefined
+					averageLessonProgress: data.statistics.averageLessonProgress,
+					activities: data.statistics.activities ?? [],
 				});
-
-				setLessonDetails(
-					data.statistics.lessonDetails.length > 0
-						? data.statistics.lessonDetails
-						: [
-								{
-									lessonId: 0,
-									title: 'No hay lecciones registradas',
-									progress: 0,
-									isCompleted: false,
-									lastUpdated: 'N/A',
-								},
-							]
-				);
-
+	
+				setLessonDetails(data.lessonDetails ?? []);
+	
 				setUserInfo(data.user);
 				setCourseInfo(data.course);
 			} catch (error) {
-				console.error('Error cargando estadísticas:', error);
+				console.error('❌ Error cargando estadísticas:', error);
 			} finally {
 				setLoading(false);
 			}
 		};
-
+	
 		void fetchData();
 	}, [courseId, user]);
+	
 
 	return (
 		<SuperAdminLayout>
@@ -345,6 +349,22 @@ export default function StudentCourseDashboard() {
 								activities: stats.activities,
 								lessons: lessonDetails,
 							},
+
+							// 🔹 Nueva tarjeta para parámetros de evaluación:
+							{
+								title: 'Parámetros de Evaluación',
+								value: '📊 Ver detalles',
+								icon: BarChart,
+								details: `Criterios de evaluación para el curso.`,
+								extraInfo:
+									selectedDetail?.title === 'Parámetros de Evaluación'
+										? evaluationParameters?.map((param) => ({
+												label: param.name,
+												value: `${param.percentage}%`,
+												description: param.description,
+											})) || []
+										: [],
+							},
 						].map((stat) => (
 							<div
 								key={stat.title}
@@ -368,9 +388,50 @@ export default function StudentCourseDashboard() {
 							{selectedDetail.title}
 						</h2>
 						<div className="text-center text-gray-300">
-							<p>{selectedDetail.details}</p>
+							{selectedDetail.title === 'Parámetros de Evaluación' &&
+								selectedDetail.extraInfo && (
+									<div className="mt-6">
+										<h3 className="text-lg font-semibold text-white">
+											📊 Detalles de Parámetros de Evaluación
+										</h3>
+										<div className="overflow-x-auto">
+											<table className="mt-2 w-full border-collapse border border-gray-700">
+												<thead>
+													<tr className="bg-gray-800 text-white">
+														<th className="border border-gray-700 p-2">
+															Parámetro
+														</th>
+														<th className="border border-gray-700 p-2 text-center">
+															Porcentaje
+														</th>
+														<th className="border border-gray-700 p-2">
+															Descripción
+														</th>
+													</tr>
+												</thead>
+												<tbody>
+	{selectedDetail?.extraInfo?.length > 0 ? (
+		selectedDetail.extraInfo.map((param, index) => (
+			<tr key={index} className="text-gray-300">
+				<td className="border border-gray-700 p-2">{param.label}</td>
+				<td className="border border-gray-700 p-2 text-center">{param.value}</td>
+				<td className="border border-gray-700 p-2">{param.description}</td>
+			</tr>
+		))
+	) : (
+		<tr>
+			<td colSpan={3} className="p-2 text-center text-gray-400">
+				⚠ No hay parámetros de evaluación registrados.
+			</td>
+		</tr>
+	)}
+</tbody>
 
-							{/* 📘 Tabla de Lecciones */}
+											</table>
+										</div>
+									</div>
+								)}
+
 							{selectedDetail.lessons && selectedDetail.lessons.length > 0 && (
 								<div className="mt-6">
 									<h3 className="text-lg font-semibold text-white">
@@ -420,7 +481,6 @@ export default function StudentCourseDashboard() {
 									</div>
 								</div>
 							)}
-
 							{/* 📌 Tabla de Actividades */}
 							{selectedDetail.activities &&
 								selectedDetail.activities.length > 0 && (
@@ -540,7 +600,6 @@ export default function StudentCourseDashboard() {
 										</div>
 									</div>
 								)}
-
 							{/* 🏆 Resumen General */}
 							{selectedDetail.title === 'Detalles Adicionales' && (
 								<div className="mt-6 rounded-lg bg-gray-800 p-4 text-left text-white">

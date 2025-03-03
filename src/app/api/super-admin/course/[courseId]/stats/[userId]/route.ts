@@ -12,14 +12,16 @@ import {
 	courses,
 	dificultad,
 	activities,
-	userTimeTracking, // 🔹 Se agregó para corregir error
+	userTimeTracking,
+	parametros,
 } from '~/server/db/schema';
 
 export async function GET(
 	req: Request,
 	context: { params: { courseId?: string; userId?: string } }
 ) {
-	const { courseId, userId } = context.params;
+	const courseId = context?.params?.courseId;
+	const userId = context?.params?.userId;
 
 	if (!courseId || !userId) {
 		return NextResponse.json(
@@ -59,7 +61,28 @@ export async function GET(
 			.where(eq(users.id, userId))
 			.limit(1);
 
-		// 🔹 Obtener datos del curso
+		// 🔹 Obtener los parámetros de evaluación del curso
+		const evaluationParameters = await db
+			.select({
+				id: parametros.id,
+				name: parametros.name,
+				description: parametros.description,
+				percentage: parametros.porcentaje,
+				courseId: parametros.courseId,
+			})
+			.from(parametros)
+			.where(eq(parametros.courseId, Number(courseId)));
+
+		// 🔹 Asegurar que `evaluationParameters` sea un array
+		const formattedEvaluationParameters = Array.isArray(evaluationParameters)
+			? evaluationParameters
+			: [];
+
+		console.log(
+			'📊 Parámetros de Evaluación obtenidos:',
+			formattedEvaluationParameters
+		);
+
 		const courseInfo = await db
 			.select({
 				title: courses.title,
@@ -72,24 +95,11 @@ export async function GET(
 			.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
 			.limit(1);
 
-		// 🔹 Obtener lecciones del curso
-		const courseLessons = await db
-			.select({ lessonId: lessons.id })
-			.from(lessons)
-			.where(eq(lessons.courseId, Number(courseId)));
-
-		const lessonIds = courseLessons.map((lesson) => lesson.lessonId);
-
 		// 🔹 Obtener progreso en lecciones
 		const totalLessons = await db
 			.select()
 			.from(userLessonsProgress)
-			.where(
-				and(
-					eq(userLessonsProgress.userId, userId),
-					inArray(userLessonsProgress.lessonId, lessonIds)
-				)
-			);
+			.where(eq(userLessonsProgress.userId, userId));
 
 		const completedLessons = totalLessons.filter(
 			(lesson) => lesson.isCompleted
@@ -103,20 +113,26 @@ export async function GET(
 
 		// 🔹 Obtener progreso en actividades
 		const activityDetails = await db
-	.select({
-		activityId: userActivitiesProgress.activityId,
-		name: activities.name,
-		description: activities.description,
-		isCompleted: userActivitiesProgress.isCompleted,
-		score: scores.score || 0,
-	})
-	.from(userActivitiesProgress)
-	.leftJoin(activities, eq(userActivitiesProgress.activityId, activities.id))
-	.leftJoin(scores, and(eq(scores.userId, userId), eq(userActivitiesProgress.activityId, activities.id))) // 👈 Corrección en la relación
-	.where(eq(userActivitiesProgress.userId, userId));
-
-console.log('🔍 Detalles de actividades:', activityDetails);
-
+			.select({
+				activityId: userActivitiesProgress.activityId,
+				name: activities.name,
+				description: activities.description,
+				isCompleted: userActivitiesProgress.isCompleted,
+				score: scores.score || 0,
+			})
+			.from(userActivitiesProgress)
+			.leftJoin(
+				activities,
+				eq(userActivitiesProgress.activityId, activities.id)
+			)
+			.leftJoin(
+				scores,
+				and(
+					eq(scores.userId, userId),
+					eq(userActivitiesProgress.activityId, activities.id)
+				)
+			)
+			.where(eq(userActivitiesProgress.userId, userId));
 
 		const totalActivities = activityDetails.length;
 		const completedActivities = activityDetails.filter(
@@ -135,43 +151,6 @@ console.log('🔍 Detalles de actividades:', activityDetails);
 			.from(scores)
 			.where(eq(scores.userId, userId))
 			.limit(1);
-
-		// Obtener progreso en lecciones (añadiendo el progreso real de cada lección)
-			const lessonProgress = await db
-			.select({
-				lessonId: userLessonsProgress.lessonId,
-				progress: userLessonsProgress.progress,
-				isCompleted: userLessonsProgress.isCompleted,
-			})
-			.from(userLessonsProgress)
-			.where(eq(userLessonsProgress.userId, userId));
-			// Obtener progreso en lecciones (con detalles de cada lección)
-			const lessonDetails = await db
-			.select({
-				lessonId: userLessonsProgress.lessonId,
-				title: lessons.title, // ✅ Título de la lección
-				progress: userLessonsProgress.progress,
-				isCompleted: userLessonsProgress.isCompleted,
-				lastUpdated: userLessonsProgress.lastUpdated,
-			})
-			.from(userLessonsProgress)
-			.leftJoin(lessons, eq(userLessonsProgress.lessonId, lessons.id)) // ✅ Relaciona con lecciones
-			.where(eq(userLessonsProgress.userId, userId));
-
-
-			const totalLessonProgress = lessonProgress.reduce(
-				(sum, lesson) => sum + (lesson.progress ?? 0),
-				0
-			);
-			
-			const averageLessonProgress =
-				lessonProgress.length > 0
-					? Number((totalLessonProgress / lessonProgress.length).toFixed(2))
-					: 0;
-			
-			console.log('📊 averageLessonProgress:', averageLessonProgress); // <-- Verifica que no sea undefined
-			
-
 
 		const userScore = userScoreResult.length > 0 ? userScoreResult[0].score : 0;
 
@@ -196,7 +175,27 @@ console.log('🔍 Detalles de actividades:', activityDetails);
 				? (totalActivityScore / totalActivities).toFixed(2)
 				: '0.00';
 
-		// 🔹 Responder con todos los datos
+		// 🔹 Enviar la respuesta final con los parámetros corregidos
+		console.log('📊 Enviando respuesta final:', {
+			success: true,
+			enrolled: true,
+			user: userInfo[0] || {},
+			course: courseInfo[0] || {},
+			statistics: {
+				totalLessons: totalLessons.length,
+				completedLessons: completedLessons.length,
+				progressPercentage,
+				totalActivities,
+				completedActivities,
+				forumPosts: forumPosts.length,
+				userScore,
+				totalTimeSpent: totalTime,
+				globalCourseScore,
+				activities: activityDetails,
+				evaluationParameters: formattedEvaluationParameters, // ✅ Se asegura que es un array
+			},
+		});
+
 		return NextResponse.json({
 			success: true,
 			enrolled: true,
@@ -210,15 +209,15 @@ console.log('🔍 Detalles de actividades:', activityDetails);
 				completedActivities,
 				forumPosts: forumPosts.length,
 				userScore,
-				totalTimeSpent: totalTime, // Tiempo total en minutos
-				globalCourseScore, // Nota global del curso basada en actividades
-				activities: activityDetails, // Detalle de actividades con notas
-				averageLessonProgress,
-				lessonDetails, 
+				totalTimeSpent: totalTime,
+				globalCourseScore,
+				activities: activityDetails,
+				evaluationParameters: Array.isArray(evaluationParameters) ? evaluationParameters : [], // ✅ Enviar como array válido
 			},
 		});
+		
 	} catch (error) {
-		console.error('Error obteniendo datos del curso:', error);
+		console.error('❌ Error obteniendo datos del curso:', error);
 		return NextResponse.json(
 			{ error: 'Error interno del servidor' },
 			{ status: 500 }

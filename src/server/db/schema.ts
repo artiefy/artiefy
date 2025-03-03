@@ -80,6 +80,10 @@ export const activities = pgTable('activities', {
 		.references(() => lessons.id)
 		.notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+	revisada: boolean('revisada').default(false),
+	parametroId: integer('parametro_id').references(() => parametros.id),
+	porcentaje: integer('porcentaje'),
+	fechaMaximaEntrega: timestamp('fecha_maxima_entrega'),
 });
 
 // Tabla de preferencias
@@ -453,4 +457,16 @@ export const userTimeTracking = pgTable('user_time_tracking', {
     .notNull(),
   date: date('date').defaultNow().notNull(),
   timeSpent: integer('time_spent').default(0).notNull(),
+});
+
+
+//Tabla de parametros
+export const parametros = pgTable('parametros', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: text('description').notNull(),
+	porcentaje: integer('porcentaje').notNull(),
+	courseId: integer('course_id')
+		.references(() => courses.id)
+		.notNull(),
 });
