@@ -274,7 +274,7 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 	progress: real('progress').default(0).notNull(),
 	isCompleted: boolean('is_completed').default(false).notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-  revisada: boolean('revisada').references(() => activities.revisada),
+	revisada: boolean('revisada').references(() => activities.revisada),
 });
 
 //Tabla de sistema de tickets
