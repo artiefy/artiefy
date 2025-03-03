@@ -1,59 +1,52 @@
-import { NextResponse } from 'next/server';
-import { env } from '~/env';
+import { type NextRequest, NextResponse } from 'next/server';
+import { type FormData } from '~/types/payu';
 import { getAuthConfig } from '~/utils/paygateway/auth';
 import { createFormData } from '~/utils/paygateway/form';
 import { getProductById } from '~/utils/paygateway/products';
+import { env } from '~/env';
 
-interface RequestBody {
-	productId: number;
-	buyerEmail: string;
-	buyerFullName: string;
-	telephone: string;
-}
-
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
 	try {
-		const body = (await request.json()) as RequestBody;
-		const { productId, buyerEmail, buyerFullName, telephone } = body;
+		const body = (await req.json()) as {
+			productId: number;
+			buyerEmail: string;
+			buyerFullName: string;
+			telephone: string;
+		};
 
-		// Validar que todos los campos necesarios estén presentes
-		if (!productId || !buyerEmail || !buyerFullName || !telephone) {
+		if (
+			!body.productId ||
+			!body.buyerEmail ||
+			!body.buyerFullName ||
+			!body.telephone
+		) {
 			return NextResponse.json(
-				{ error: 'Faltan campos requeridos' },
+				{ error: 'Missing required fields' },
 				{ status: 400 }
 			);
 		}
 
-		const product = getProductById(productId);
+		const product = getProductById(body.productId);
 		if (!product) {
-			return NextResponse.json(
-				{ error: 'Producto no encontrado' },
-				{ status: 404 }
-			);
+			return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 		}
 
 		const auth = getAuthConfig();
-
-		// Validar que las variables de entorno estén configuradas
-		if (!auth.merchantId || !auth.accountId || !auth.apiKey || !auth.apiLogin) {
-			throw new Error('Faltan configuraciones de PayU');
-		}
-
-		const formData = createFormData(
+		const formData: FormData = createFormData(
 			auth,
 			product,
-			buyerEmail,
-			buyerFullName,
-			telephone,
+			body.buyerEmail,
+			body.buyerFullName,
+			body.telephone,
 			env.RESPONSE_URL,
 			env.CONFIRMATION_URL
 		);
 
 		return NextResponse.json(formData);
 	} catch (error) {
-		console.error('Error generando datos de pago:', error);
+		console.error(error);
 		return NextResponse.json(
-			{ error: 'Error generando datos de pago' },
+			{ error: 'Internal Server Error' },
 			{ status: 500 }
 		);
 	}

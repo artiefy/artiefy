@@ -1,7 +1,17 @@
 import { type FormData, type Auth, type Product } from '~/types/payu';
-import { generateReferenceCode } from './referenceCode';
 import { calculateMD5 } from './signature';
+import { generateReferenceCode } from './referenceCode';
 
+// ✅ Función para formatear `amount` correctamente
+function formatAmount(amount: number | string): string {
+	const numAmount = Number(amount);
+	if (isNaN(numAmount) || numAmount <= 0) {
+		throw new Error(`Invalid amount: ${amount}`);
+	}
+	return numAmount % 1 === 0 ? numAmount.toFixed(1) : numAmount.toFixed(2);
+}
+
+// ✅ Crear datos del formulario (genera referenceCode dinámico)
 export function createFormData(
 	auth: Auth,
 	product: Product,
@@ -11,65 +21,34 @@ export function createFormData(
 	responseUrl: string,
 	confirmationUrl: string
 ): FormData {
-	// Validar que los campos requeridos no estén vacíos
-	if (!auth.merchantId || !auth.accountId) {
-		throw new Error('merchantId y accountId son requeridos');
-	}
-
-	if (!product.description || !product.amount) {
-		throw new Error('description y amount son requeridos');
-	}
-
-	const referenceCode = generateReferenceCode();
+	const referenceCode = generateReferenceCode(); // ✅ Se genera aquí en cada compra
 	const formattedAmount = formatAmount(product.amount);
 	const currency = 'COP';
 
-	// Validar que todos los campos requeridos tengan valor
-	const formData: FormData = {
+	// ✅ Generar firma MD5 con el formato correcto
+	const signature = calculateMD5(
+		auth.apiKey,
+		auth.merchantId,
+		referenceCode,
+		formattedAmount,
+		currency
+	);
+
+	return {
 		merchantId: auth.merchantId,
 		accountId: auth.accountId,
 		description: product.description,
-		referenceCode: referenceCode,
+		referenceCode: referenceCode, // ✅ Se usa el referenceCode dinámico aquí
 		amount: formattedAmount,
-		tax: '3193',
-		taxReturnBase: '16806',
+		tax: '3193', // Ajustable según el producto
+		taxReturnBase: '16806', // Ajustable según el producto
 		currency: currency,
-		signature: calculateMD5(
-			auth.apiKey,
-			auth.merchantId,
-			referenceCode,
-			formattedAmount,
-			currency
-		),
+		signature: signature,
 		test: '1',
-		buyerEmail,
-		buyerFullName,
-		telephone,
-		responseUrl,
-		confirmationUrl,
+		buyerEmail: buyerEmail,
+		buyerFullName: buyerFullName,
+		telephone: telephone,
+		responseUrl: responseUrl,
+		confirmationUrl: confirmationUrl,
 	};
-
-	// Validación final de campos requeridos
-	const requiredFields = [
-		'merchantId',
-		'accountId',
-		'description',
-		'referenceCode',
-		'amount',
-	];
-	for (const field of requiredFields) {
-		if (!formData[field as keyof FormData]) {
-			throw new Error(`El campo ${field} no puede estar vacío`);
-		}
-	}
-
-	return formData;
-}
-
-function formatAmount(amount: number | string): string {
-	const numAmount = Number(amount);
-	if (isNaN(numAmount) || numAmount <= 0) {
-		throw new Error(`Monto inválido: ${amount}`);
-	}
-	return numAmount.toFixed(2);
 }
