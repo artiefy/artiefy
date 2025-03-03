@@ -94,7 +94,7 @@ const getActivityContent = unstable_cache(
 		}
 	},
 	['lesson-activities'],
-	{ revalidate: 3600, tags: ['lesson-activities'] }
+	{ revalidate: 3600 }
 );
 
 export { getActivityContent };

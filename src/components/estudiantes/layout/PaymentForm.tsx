@@ -81,7 +81,7 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({ selectedProduct }
       form.action = "https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/"
 
       for (const key in data) {
-        if (data.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(data, key)) {
           const hiddenField = document.createElement("input")
           hiddenField.type = "hidden"
           hiddenField.name = key

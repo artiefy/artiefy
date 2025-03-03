@@ -69,7 +69,7 @@ Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, pued
 8. `tsc`: Ejecuta el compilador TypeScript globalmente.
 9. `npm install -D eslint-config-next@latest`: Actualizar ESLint en Next
 10. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
-11. `npm install --save-dev eslint @eslint/eslintrc @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y eslint-plugin-simple-import-sort eslint-plugin-unicorn eslint-plugin-svelte eslint-plugin-playwright eslint-plugin-prettier eslint-plugin-next` : Dependencias para que funcione el archivo eslint.config.mjs
+11. `npm install --save-dev eslint @eslint/eslintrc @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y eslint-plugin-simple-import-sort eslint-config-next` : Dependencias para que funcione el archivo eslint.config.mjs
 
 ---
 

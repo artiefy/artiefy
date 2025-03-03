@@ -29,6 +29,7 @@
 		"typescript",
 		"typescriptreact"
 	],
+  "eslint.debug": true,
 	"tailwindCSS.includeLanguages": {
 		"typescript": "javascript",
 		"typescriptreact": "javascript",

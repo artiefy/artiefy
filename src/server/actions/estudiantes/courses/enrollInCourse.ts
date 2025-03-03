@@ -142,11 +142,16 @@ export async function isUserEnrolled(
 	courseId: number,
 	userId: string
 ): Promise<boolean> {
-	const existingEnrollment = await db.query.enrollments.findFirst({
-		where: and(
-			eq(enrollments.userId, userId),
-			eq(enrollments.courseId, courseId)
-		),
-	});
-	return !!existingEnrollment;
+	try {
+		const existingEnrollment = await db.query.enrollments.findFirst({
+			where: and(
+				eq(enrollments.userId, userId),
+				eq(enrollments.courseId, courseId)
+			),
+		});
+		return !!existingEnrollment;
+	} catch (error) {
+		console.error('Error checking enrollment:', error);
+		throw new Error('Failed to check enrollment status');
+	}
 }

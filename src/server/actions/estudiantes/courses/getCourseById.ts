@@ -1,14 +1,13 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
 import { db } from '~/server/db';
 import { courses, userLessonsProgress } from '~/server/db/schema';
 import type { Course } from '~/types';
 
-export const getCourseById = unstable_cache(
-	async (courseId: number): Promise<Course | null> => {
+const getCourseById = unstable_cache(
+	async (courseId: number, userId: string | null): Promise<Course | null> => {
 		const course = await db.query.courses.findFirst({
 			where: eq(courses.id, courseId),
 			with: {
@@ -28,10 +27,9 @@ export const getCourseById = unstable_cache(
 			return null;
 		}
 
-		const user = await currentUser();
-		const userLessonsProgressData = user?.id
+		const userLessonsProgressData = userId
 			? await db.query.userLessonsProgress.findMany({
-					where: eq(userLessonsProgress.userId, user.id),
+					where: eq(userLessonsProgress.userId, userId),
 				})
 			: [];
 
@@ -68,6 +66,8 @@ export const getCourseById = unstable_cache(
 
 		return transformedCourse;
 	},
-	['course'],
+	['course-content'],
 	{ revalidate: 3600 }
 );
+
+export { getCourseById };
