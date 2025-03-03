@@ -314,6 +314,17 @@ export default function Page() {
 		setEditingCourse((prev) => (prev ? { ...prev, rating } : prev));
 	};
 
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
+
 	return (
 		<>
 			<main className="h-auto">
@@ -344,7 +355,7 @@ export default function Page() {
 						<h1 className="text-3xl font-bold">Panel de cursos</h1>
 						<Button
 							onClick={handleCreateCourse}
-							className="bg-primary text-background hover:text-primary transition-transform active:scale-95"
+							className="bg-primary text-black transition-transform active:scale-95"
 						>
 							<FiPlus className="mr-2" />
 							Crear Curso
@@ -355,6 +366,12 @@ export default function Page() {
 					) : error ? (
 						<div className="mt-10 flex flex-col items-center justify-center py-10 text-center">
 							<p className="text-xl text-red-600">{error}</p>
+							<button
+								onClick={fetchCourses}
+								className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+							>
+								Reintentar
+							</button>
 						</div>
 					) : courses.length === 0 ? (
 						<div className="mt-10 flex flex-col items-center justify-center py-10 text-center">
@@ -371,7 +388,7 @@ export default function Page() {
 							<span>&#128071;&#128071;&#128071;</span>
 							<Button
 								onClick={handleCreateCourse}
-								className="bg-primary text-background hover:text-primary mt-5 transition-transform active:scale-95"
+								className="mt-5 bg-primary text-background transition-transform hover:text-primary active:scale-95"
 							>
 								<FiPlus className="mr-2" />
 								Crear Curso
@@ -398,9 +415,9 @@ export default function Page() {
 							setRequerimientos={setRequerimientos}
 							categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
 							setCategoryid={setCategoryid}
-							modalidadesid={Number(editingCourse?.modalidadesid) ?? 0}
+							modalidadesid={Number(editingCourse?.modalidadesid) || 0}
 							setModalidadesid={setModalidadesid}
-							dificultadid={Number(editingCourse?.dificultadid) ?? 0}
+							dificultadid={Number(editingCourse?.dificultadid) || 0}
 							setDificultadid={setDificultidid}
 							coverImageKey={editingCourse?.coverImageKey ?? ''}
 							setCoverImageKey={setCoverImageKey}

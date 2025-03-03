@@ -20,6 +20,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
+import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 
 interface CourseFormProps {
@@ -477,7 +478,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
-			<DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
 				<DialogHeader className="mt-4">
 					<DialogTitle className="text-4xl">
 						{editingCourseId ? 'Editar Curso' : 'Crear Curso'}
@@ -497,7 +498,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						placeholder="Título"
 						value={title}
 						onChange={(e) => handleFieldChange('title', e.target.value)}
-						className={`mb-4 w-full rounded border p-2 text-black outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.title && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -512,7 +513,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						placeholder="Descripción"
 						value={description}
 						onChange={(e) => handleFieldChange('description', e.target.value)}
-						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.description && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -529,7 +530,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						onChange={(e) =>
 							handleFieldChange('requerimientos', e.target.value)
 						}
-						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.requerimientos && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -597,11 +598,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						>
 							Rating
 						</label>
-						<input
+						<Input
 							type="number"
+							min="0"
+							max="5"
+							step="0.1"
+							placeholder="0-5"
+							className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
 							value={rating}
 							onChange={(e) => setRating(Number(e.target.value))}
-							className="mt-1 w-full rounded border p-2 text-black outline-none"
 						/>
 					</div>
 					<label
@@ -735,7 +740,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							<Button
 								onClick={handleAddParametro}
 								disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
-								className="mt-2 w-10/12 lg:w-1/2"
+								className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
 							>
 								{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
 								parametro
@@ -763,7 +768,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										onChange={(e) =>
 											handleParametroChange(index, 'name', e.target.value)
 										}
-										className="mt-1 w-full rounded border p-2 text-black outline-none"
+										className="mt-1 w-full rounded border p-2 text-white outline-none"
 									/>
 									<label className="mt-2 text-lg font-medium text-primary">
 										Descripción
@@ -777,7 +782,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 												e.target.value
 											)
 										}
-										className="mt-1 w-full rounded border p-2 text-black outline-none"
+										className="mt-1 w-full rounded border p-2 text-white outline-none"
 									/>
 									<label className="mt-2 text-lg font-medium text-primary">
 										Porcentaje %
@@ -792,7 +797,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 												Math.max(1, Math.min(100, parseFloat(e.target.value)))
 											)
 										}
-										className="mt-1 w-full rounded border p-2 text-black outline-none"
+										className="mt-1 w-full rounded border p-2 text-white outline-none"
 									/>
 								</div>
 							))}
@@ -817,7 +822,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					>
 						Cancelar
 					</Button>
-					<Button onClick={handleSubmit} variant="default" disabled={uploading}>
+					<Button
+						onClick={handleSubmit}
+						className="bg-green-400 text-white hover:bg-green-400/70"
+						disabled={uploading}
+					>
 						{uploading
 							? 'Subiendo...'
 							: editingCourseId
