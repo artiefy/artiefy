@@ -60,13 +60,13 @@ export function CourseHeader({
 						placeholder="blur"
 						blurDataURL={blurDataURL}
 					/>
-					<div className="p-6 absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent">
+					<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
 						<h1 className="text-3xl font-bold text-white">{course.title}</h1>
 					</div>
 				</AspectRatio>
 			</CardHeader>
 
-			<CardContent className="space-y-4 mx-6">
+			<CardContent className="mx-6 space-y-4">
 				{/* Instructor info and stats */}
 				<div className="flex flex-wrap items-center justify-between gap-4">
 					<div>
