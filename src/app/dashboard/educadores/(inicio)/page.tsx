@@ -16,7 +16,7 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 export interface CourseModel {
 	id: number;
@@ -67,19 +67,15 @@ export default function Home() {
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				const errorMessage = errorData.error ?? response.statusText;
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudieron cargar las estadísticas: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'Error desconocido';
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: `No se pudieron cargar las estadísticas: ${errorMessage}`,
-				variant: 'destructive',
 			});
 		}
 	}, [user]);
@@ -114,20 +110,16 @@ export default function Home() {
 				const errorData = (await response.json()) as { error?: string };
 				const errorMessage = errorData.error ?? response.statusText;
 				setError(`Error al cargar los cursos: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudieron cargar los cursos: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'Error desconocido';
 			setError(`Error al cargar los cursos: ${errorMessage}`);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: `No se pudieron cargar los cursos: ${errorMessage}`,
-				variant: 'destructive',
 			});
 		} finally {
 			setLoading(false);
@@ -305,7 +297,7 @@ export default function Home() {
 				</div>
 			</div>
 			<div>
-				<h2 className="mb-2 mt-5 text-2xl font-bold">
+				<h2 className="mt-5 mb-2 text-2xl font-bold">
 					Lista de cursos asignados al docente
 				</h2>
 				<CourseListDetails courses={courses} />

@@ -1,13 +1,71 @@
 {
-  "functions": {
-    "app/api/upload/route.ts": {
-      "memory": 1024,
-      "maxDuration": 30
-    }
-  },
-  "framework": "nextjs",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
-  "installCommand": "npm install",
-  "public": true
+	"functions": {
+		"app/api/**/*": {
+			"memory": 1024,
+			"maxDuration": 30
+		}
+	},
+	"framework": "nextjs",
+	"ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
+	"installCommand": "npm install",
+	"public": true,
+	"crons": [
+		{
+			"path": "/api/cron/check-subscriptions",
+			"schedule": "0 0 * * *"
+		}
+	],
+	"trailingSlash": false,
+	"headers": [
+		{
+			"source": "/api/(.*)",
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "no-store"
+				}
+			]
+		},
+		{
+			"source": "/app/(.*)",
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "public, max-age=3600, must-revalidate"
+				}
+			]
+		},
+		{
+			"source": "/(.*)",
+			"headers": [
+				{
+					"key": "X-Content-Type-Options",
+					"value": "nosniff"
+				},
+				{
+					"key": "X-Frame-Options",
+					"value": "DENY"
+				},
+				{
+					"key": "X-XSS-Protection",
+					"value": "1; mode=block"
+				}
+			]
+		},
+		{
+			"source": "/:path*",
+			"has": [
+				{
+					"type": "query",
+					"key": "authorized"
+				}
+			],
+			"headers": [
+				{
+					"key": "x-authorized",
+					"value": "true"
+				}
+			]
+		}
+	]
 }
-

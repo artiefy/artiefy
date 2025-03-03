@@ -231,7 +231,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
 					<span className="sr-only"></span>
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -254,7 +254,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 								);
 							}
 						}}
-						className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
 					>
 						Reintentar
 					</button>
@@ -267,7 +267,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
 	return (
 		<>
-			<div className="bg-background container mx-auto mt-2 h-auto w-full rounded-lg">
+			<div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background">
 				<Breadcrumb>
 					<BreadcrumbList>
 						<BreadcrumbItem>
@@ -308,7 +308,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					</BreadcrumbList>
 				</Breadcrumb>
 				<div className="group relative h-auto w-full">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
 					<Card
 						className={`relative z-20 mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						style={{
@@ -317,7 +317,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						}}
 					>
 						<CardHeader>
-							<CardTitle className={`text-primary text-2xl font-bold`}>
+							<CardTitle className={`text-2xl font-bold text-primary`}>
 								Clase: {lessons.title}
 							</CardTitle>
 						</CardHeader>
@@ -420,7 +420,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 								<div className="grid grid-cols-2">
 									<div className="flex flex-col">
 										<h2 className="text-lg font-semibold">Clase:</h2>
-										<h1 className="text-primary mb-4 text-2xl font-bold">
+										<h1 className="mb-4 text-2xl font-bold text-primary">
 											{lessons.title}
 										</h1>
 									</div>
@@ -428,7 +428,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 										<h2 className="text-lg font-semibold">Categoría:</h2>
 										<Badge
 											variant="outline"
-											className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+											className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 										>
 											{lessons.course?.categoryId}
 										</Badge>
@@ -443,7 +443,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 										<h2 className="text-lg font-semibold">Educador:</h2>
 										<Badge
 											variant="outline"
-											className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+											className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 										>
 											{lessons.course?.instructor}
 										</Badge>
@@ -452,7 +452,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 										<h2 className="text-lg font-semibold">Modalidad:</h2>
 										<Badge
 											variant="outline"
-											className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+											className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 										>
 											{lessons.course?.modalidadId}
 										</Badge>

@@ -29,7 +29,7 @@ import {
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Course {
 	id: number;
@@ -128,20 +128,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
 					setError(`Error al cargar el curso: ${errorMessage}`);
-					toast({
-						title: 'Error',
+					toast('Error',{
+					
 						description: `No se pudo cargar el curso: ${errorMessage}`,
-						variant: 'destructive',
+						
 					});
 				}
 			} catch (error: unknown) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
 				setError(`Error al cargar el curso: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error',{
+				
 					description: `No se pudo cargar el curso: ${errorMessage}`,
-					variant: 'destructive',
+			
 				});
 			} finally {
 				setLoading(false);
@@ -272,11 +272,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						const errorData = (await responseParametros.json()) as {
 							error?: string;
 						};
-						toast({
-							title: 'Error',
+						toast('Error',{
+							
 							description:
 								errorData.error ?? 'Error al actualizar los parámetros',
-							variant: 'destructive',
+						
 						});
 						throw new Error(
 							errorData.error ?? 'Error al actualizar los parámetros'
@@ -287,10 +287,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 			if (!response.ok) {
 				const errorData = (await response.json()) as { error?: string };
-				toast({
-					title: 'Error',
+				toast( 'Error',{
+				
 					description: errorData.error ?? 'Error al actualizar el curso',
-					variant: 'destructive',
+				
 				});
 				throw new Error(errorData.error ?? 'Error al actualizar el curso');
 			}
@@ -299,25 +299,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			setCourse(updatedCourse);
 
 			setIsModalOpen(false);
-			toast({
-				title: 'Curso actualizado',
+			toast('Curso actualizado',{
+			
 				description: 'El curso se ha actualizado con éxito.',
-				variant: 'default',
+		
 			});
 			if (addParametros) {
-				toast({
-					title: 'Parámetros actualizados',
+				toast('Parámetros actualizados',{
+			
 					description: 'Los parámetros se han actualizado con éxito.',
-					variant: 'default',
+				
 				});
 			}
 		} catch (error) {
 			console.error('Error:', error);
-			toast({
-				title: 'Error',
+			toast('Error',{
+				
 				description:
 					error instanceof Error ? error.message : 'Error desconocido',
-				variant: 'destructive',
+				
 			});
 		}
 	};
@@ -384,17 +384,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				throw new Error(`Error al eliminar el curso, con id: ${id}`);
 			}
 
-			toast({
-				title: 'Curso eliminado',
+			toast('Curso eliminado',{
 				description: 'El curso se ha eliminado con éxito.',
 			});
 			router.push('/dashboard/educadores/cursos');
 		} catch (error) {
 			console.error('Error:', error);
-			toast({
-				title: 'Error',
+			toast( 'Error',{
+				
 				description: 'No se pudo eliminar el curso completamente',
-				variant: 'destructive',
 			});
 		}
 	};
@@ -452,9 +450,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
 				<Card
-					className={`relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out zoom-in`}
+					className={`zoom-in relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),

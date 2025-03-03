@@ -163,7 +163,7 @@ export const Zone = () => {
               <FaImage className="text-gray-600" />
             </label> */}
 						</div>
-						<div className="bg-background grid grid-cols-2 p-5">
+						<div className="grid grid-cols-2 bg-background p-5">
 							<div className="flex flex-col justify-center text-center">
 								<p>Del curso:</p>
 								<p className="mt-2 text-white"> {forum.courseId.title}</p>
@@ -177,7 +177,7 @@ export const Zone = () => {
 							<p className="mb-4 text-gray-600">{forum.description}</p>
 							<div className="flex justify-between">
 								<Link
-									className="bg-primary mx-auto rounded-md px-4 py-2 text-white"
+									className="mx-auto rounded-md bg-primary px-4 py-2 text-white"
 									href={`/dashboard/educadores/foro/${forum.id}`}
 								>
 									Ingresar al foro

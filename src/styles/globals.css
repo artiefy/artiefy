@@ -9,33 +9,33 @@
 @custom-variant hover (&:hover);
 
 @media (hover: hover) {
-	.hover\:underline:hover {
-		text-decoration: underline;
-	}
+  .hover\:underline:hover {
+    text-decoration: underline;
+  }
 }
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-	/* Colores */
-	--color-background: hsl(212.9, 95.5%, 8.6%);
-	--color-foreground: hsl(178.4, 89.4%, 59.2%);
-	--color-card: hsl(0, 0%, 100%);
-	--color-card-foreground: hsl(240, 10%, 3.9%);
-	--color-popover: hsl(0, 0%, 100%);
-	--color-popover-foreground: hsl(240, 10%, 3.9%);
-	--color-primary: hsl(178.4, 89.4%, 59.2%);
-	--color-primary-foreground: hsl(178.4, 89.4%, 59.2%);
-	--color-secondary: hsl(187.5, 100%, 42.4%);
-	--color-secondary-foreground: hsl(240, 5.9%, 10%);
-	--color-muted: hsl(240, 4.8%, 95.9%);
-	--color-muted-foreground: hsl(240, 3.8%, 46.1%);
-	--color-accent: hsl(240, 4.8%, 95.9%);
-	--color-accent-foreground: hsl(240, 5.9%, 10%);
-	--color-destructive: hsl(0, 84.2%, 60.2%);
-	--color-destructive-foreground: hsl(0, 0%, 98%);
-	--color-border: hsl(178.4, 89.4%, 59.2%);
-	--color-input: hsl(240, 5.9%, 90%);
+  /* Colores */
+  --color-background: hsl(212.9, 95.5%, 8.6%);
+  --color-foreground: hsl(178.4, 89.4%, 59.2%);
+  --color-card: hsl(0, 0%, 100%);
+  --color-card-foreground: hsl(240, 10%, 3.9%);
+  --color-popover: hsl(0, 0%, 100%);
+  --color-popover-foreground: hsl(240, 10%, 3.9%);
+  --color-primary: hsl(178.4, 89.4%, 59.2%);
+  --color-primary-foreground: hsl(178.4, 89.4%, 59.2%);
+  --color-secondary: hsl(187.5, 100%, 42.4%);
+  --color-secondary-foreground: hsl(240, 5.9%, 10%);
+  --color-muted: hsl(240, 4.8%, 95.9%);
+  --color-muted-foreground: hsl(240, 3.8%, 46.1%);
+  --color-accent: hsl(240, 4.8%, 95.9%);
+  --color-accent-foreground: hsl(240, 5.9%, 10%);
+  --color-destructive: hsl(0, 84.2%, 60.2%);
+  --color-destructive-foreground: hsl(0, 0%, 98%);
+  --color-border: hsl(178.4, 89.4%, 59.2%);
+  --color-input: hsl(240, 5.9%, 90%);
 
 	/* Colores para gráficos */
 	--color-chart-1: hsl(12, 76%, 61%);
@@ -50,120 +50,121 @@
 
 /* 🌐 Estilos base */
 @layer base {
-	*,
-	::after,
-	::before,
-	::backdrop,
-	::file-selector-button {
-		border-color: var(--color-gray-200, currentColor);
-	}
-	body {
-		@apply bg-background;
-	}
-	button:not(:disabled),
-	[role='button']:not(:disabled) {
-		cursor: pointer;
-	}
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+  body {
+    @apply bg-background;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 /* 🎨 Clases de utilidades */
 .text-shadow {
-	text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
 .button-hover:hover .button-hover-effect {
-	animation: sh02 0.5s 0s linear;
+  animation: sh02 0.5s 0s linear;
 }
 
 .cl-formButtonPrimary {
-	font-size: 14px;
-	text-transform: none;
-	background-color: #00bdd8;
+  font-size: 14px;
+  text-transform: none;
+  background-color: #00bdd8;
 }
 
 .cl-formButtonPrimary:hover,
 .cl-formButtonPrimary:focus,
 .cl-formButtonPrimary:active {
-	background-color: #3af4ef;
+  background-color: #3af4ef;
 }
 
 .cl-userButtonOuterIdentifier {
-	color: #3af4ef;
+  color: azure;
 }
 
 .zoom-in {
-	animation: zoomIn 0.5s ease-in-out;
+  animation: zoomIn 0.5s ease-in-out;
 }
 
 @keyframes zoomIn {
-	from {
-		transform: scale(0.9);
-		opacity: 0;
-	}
-	to {
-		transform: scale(1);
-		opacity: 1;
-	}
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .animate-gradient {
-	animation: borderRotate 4s linear infinite;
-	background-size: 300% 300%;
+  animation: borderRotate 4s linear infinite;
+  background-size: 300% 300%;
 }
 
 @keyframes borderRotate {
-	0%,
-	100% {
-		background-position: 0% 50%;
-	}
-	50% {
-		background-position: 100% 50%;
-	}
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .animate-bounce-right {
-	animation: bounce-left-right 1s infinite;
+  animation: bounce-left-right 1s infinite;
 }
 
 @keyframes bounce-left-right {
-	0%,
-	100% {
-		transform: translateX(0);
-	}
-	50% {
-		transform: translateX(7px);
-	}
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(7px);
+  }
 }
 
 .animate-bounce-up-down {
-	animation: bounce-up-down 1s infinite;
+  animation: bounce-up-down 1s infinite;
 }
 
 @keyframes bounce-up-down {
-	0%,
-	100% {
-		transform: translateY(0);
-	}
-	50% {
-		transform: translateY(-10px);
-	}
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @utility animate-pulse-text {
-	animation: pulse 1.5s infinite ease-in-out;
+  animation: pulse 1.5s infinite ease-in-out;
 }
 
 @keyframes pulse {
-	0% {
-		transform: scale(1);
-		opacity: 1;
-	}
-	50% {
-		transform: scale(1.1);
-		opacity: 0.8;
-	}
-	100% {
-		transform: scale(1);
-		opacity: 1;
-	}
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
+

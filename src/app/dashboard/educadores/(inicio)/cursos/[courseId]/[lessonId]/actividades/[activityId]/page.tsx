@@ -33,7 +33,7 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 import type {
 	QuestionFilesSubida,
 	Completado,
@@ -119,20 +119,16 @@ const Page: React.FC = () => {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
 					setError(`Error al cargar la actividad: ${errorMessage}`);
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: `No se pudo cargar la actividad: ${errorMessage}`,
-						variant: 'destructive',
 					});
 				}
 			} catch (error: unknown) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
 				setError(`Error al cargar la actividad: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudo cargar la actividad: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			} finally {
 				setLoading(false);
@@ -164,18 +160,15 @@ const Page: React.FC = () => {
 				);
 
 				if (response.ok) {
-					toast({
-						title: 'Actividad eliminada',
+					toast('Actividad eliminada', {
 						description:
 							'La actividad y todos sus archivos asociados se eliminaron con éxito.',
 					});
 					window.history.back();
 				} else {
 					const errorData = (await response.json()) as { error?: string };
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: errorData.error ?? 'Error al eliminar la actividad.',
-						variant: 'destructive',
 					});
 				}
 			} catch (error: unknown) {
@@ -185,10 +178,8 @@ const Page: React.FC = () => {
 				} else {
 					const errorMessage =
 						error instanceof Error ? error.message : 'Error desconocido';
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: `Error al eliminar la actividad: ${errorMessage}`,
-						variant: 'destructive',
 					});
 				}
 			}

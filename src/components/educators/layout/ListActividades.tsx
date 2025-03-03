@@ -96,7 +96,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 	}
 	if (actividades.length === 0 || actividades === null) {
 		return (
-			<div className="mt-4 flex flex-col items-center justify-center rounded-lg bg-background py-10 text-center">
+			<div className="bg-background mt-4 flex flex-col items-center justify-center rounded-lg py-10 text-center">
 				<h2 className="mb-4 text-2xl font-bold">
 					Lista de actividades creadas
 				</h2>
@@ -113,7 +113,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 	// Renderizamos las lecciones si todo es correcto
 	return (
 		<>
-			<h2 className="mb-4 mt-10 text-2xl font-bold">Lista de actividades:</h2>
+			<h2 className="mt-10 mb-4 text-2xl font-bold">Lista de actividades:</h2>
 			<div className="flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{actividades.map((actividad, index) => (
@@ -176,7 +176,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 									>
 										<p>Ver actividad</p>
 										<ArrowRightIcon className="animate-bounce-right size-5" />
-										<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+										<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 											<div className="relative h-full w-10 bg-white/30"></div>
 										</div>
 									</Link>

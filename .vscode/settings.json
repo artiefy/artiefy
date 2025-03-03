@@ -5,10 +5,9 @@
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": "explicit"
 	},
-	"typescript.tsdk": "./node_modules/typescript/lib",
 	"eslint.rules.customizations": [
 		{ "rule": "import/order", "severity": "off" },
-		{ "rule": "@typescript-eslint/no-unused-vars", "severity": "warn" }
+		{ "rule": "no-unused-vars", "severity": "warn" }
 	],
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"[javascript]": {
@@ -23,13 +22,14 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
+	"eslint.nodePath": "./node_modules",
 	"eslint.validate": [
 		"javascript",
 		"javascriptreact",
 		"typescript",
 		"typescriptreact"
 	],
-	"typescript.enablePromptUseWorkspaceTsdk": false,
+	"eslint.debug": true,
 	"tailwindCSS.includeLanguages": {
 		"typescript": "javascript",
 		"typescriptreact": "javascript",
@@ -40,5 +40,11 @@
 	"css.validate": false,
 	"scss.validate": false,
 	"less.validate": false,
-	"CodeGPT.apiKey": "CodeGPT Plus Beta"
+	"files.associations": {
+		"*.css": "tailwindcss"
+	},
+	"editor.quickSuggestions": {
+		"strings": "on"
+	},
+	"typescript.tsdk": "./node_modules/typescript/lib"
 }

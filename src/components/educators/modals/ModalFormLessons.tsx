@@ -13,7 +13,7 @@ import {
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface LessonsFormProps {
 	uploading: boolean;
@@ -302,10 +302,8 @@ const ModalFormLessons = ({
 
 			if (Object.values(newErrors).some((error) => error)) {
 				setErrors((prevErrors) => ({ ...prevErrors, ...newErrors }));
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: 'Por favor completa los campos obligatorios.',
-					variant: 'destructive',
 				});
 				return;
 			}
@@ -340,8 +338,7 @@ const ModalFormLessons = ({
 			});
 
 			if (response.ok) {
-				toast({
-					title: isEditing ? 'Lección actualizada' : 'Lección creada',
+				toast(isEditing ? 'Lección actualizada' : 'Lección creada', {
 					description: isEditing
 						? 'La lección se actualizó con éxito.'
 						: 'La lección se creó con éxito.',
@@ -350,10 +347,8 @@ const ModalFormLessons = ({
 				window.location.reload();
 			} else {
 				const errorData = (await response.json()) as { error?: string };
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: errorData.error ?? 'Error al crear la lección.',
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
@@ -361,10 +356,8 @@ const ModalFormLessons = ({
 				console.log('Upload cancelled');
 				return; // Salir de la función si se cancela la carga
 			} else {
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `Error al procesar la solicitud: ${String(error)}`,
-					variant: 'destructive',
 				});
 			}
 		} finally {
@@ -516,7 +509,7 @@ const ModalFormLessons = ({
 					>
 						Cancelar
 					</Button>
-					<Button onClick={handleSubmit} variant="save" disabled={uploading}>
+					<Button onClick={handleSubmit} variant="default" disabled={uploading}>
 						{isEditing ? 'Actualizar' : isUploading ? 'Subiendo' : 'Crear'}{' '}
 						Clase
 					</Button>

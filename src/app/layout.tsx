@@ -59,7 +59,7 @@ export default function RootLayout({
 						strategy="afterInteractive"
 					/>
 				</head>
-				<body className="bg-background text-primary font-sans">
+				<body className="bg-background font-sans text-primary">
 					<ClerkLoading>
 						<Loading />
 					</ClerkLoading>

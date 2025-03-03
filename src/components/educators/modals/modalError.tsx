@@ -188,13 +188,13 @@ export const ModalError = ({
 							<button
 								type="button"
 								onClick={onClose}
-								className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-gray-500 focus:ring-offset-2"
+								className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
 							>
 								Cancelar
 							</button>
 							<button
 								type="submit"
-								className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+								className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
 							>
 								Enviar
 							</button>

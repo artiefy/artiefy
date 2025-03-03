@@ -194,7 +194,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 						/>
 						<label
 							htmlFor={`file-upload-${type}`}
-							className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+							className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 						>
 							Seleccionar {tipo}
 						</label>
@@ -212,7 +212,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 								/>
 								<button
 									onClick={() => handleRemoveFile(0)}
-									className="absolute right-2 top-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+									className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
 								>
 									<MdClose className="size-5" />
 								</button>
@@ -233,7 +233,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 								</video>
 								<button
 									onClick={() => handleRemoveFile(0)}
-									className="absolute right-2 top-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+									className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
 								>
 									<MdClose className="size-5" />
 								</button>
@@ -265,7 +265,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 										</p>
 										<button
 											onClick={() => handleRemoveFile(index)}
-											className="absolute right-2 top-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+											className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
 										>
 											<MdClose className="size-5" />
 										</button>
@@ -284,7 +284,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 										/>{' '}
 										<label
 											htmlFor={`additional-file-upload-${type}`}
-											className="inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+											className="inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 										>
 											{' '}
 											Subir más archivos{' '}

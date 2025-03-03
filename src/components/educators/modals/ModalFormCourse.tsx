@@ -20,7 +20,7 @@ import {
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface CourseFormProps {
 	onSubmitAction: (
@@ -200,10 +200,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			0
 		);
 		if (sumaPorcentajes > 100) {
-			toast({
-				title: 'Error',
+			toast('Error',{
+			
 				description: 'La suma de los porcentajes no puede superar el 100%',
-				variant: 'destructive',
+	
 			});
 			return;
 		}
@@ -265,10 +265,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			0
 		);
 		if (addParametros && sumaPorcentajes !== 100) {
-			toast({
-				title: 'Error',
+			toast('Error',{
+			
 				description: 'La suma de los porcentajes debe ser igual a 100%',
-				variant: 'destructive',
+		
 			});
 			return;
 		}
@@ -821,7 +821,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					>
 						Cancelar
 					</Button>
-					<Button onClick={handleSubmit} variant="save" disabled={uploading}>
+					<Button onClick={handleSubmit} variant="default" disabled={uploading}>
 						{uploading
 							? 'Subiendo...'
 							: editingCourseId

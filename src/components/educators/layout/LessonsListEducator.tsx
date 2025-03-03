@@ -186,7 +186,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
 											<Badge
 												variant="outline"
-												className="ml-1 border-primary bg-background text-primary hover:bg-black/70"
+												className="border-primary bg-background text-primary ml-1 hover:bg-black/70"
 											>
 												{lesson.course.title}
 											</Badge>
@@ -220,7 +220,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 										>
 											<p>Ver clase</p>
 											<ArrowRightIcon className="animate-bounce-right size-5" />
-											<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+											<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 												<div className="relative h-full w-10 bg-white/30"></div>
 											</div>
 										</Link>

@@ -17,7 +17,7 @@ import {
 import { Input } from '~/components/educators/ui/input'; // Assuming you have ShadCN's Input component
 import { Progress } from '~/components/educators/ui/progress';
 import { Zone } from '~/components/ZoneForum/Zone'; // Assuming you have a Zone component
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface CoursesModels {
 	id: number;
@@ -61,10 +61,8 @@ const ForumHome = () => {
 			}
 			setUploadProgress(100); // Actualizamos el progreso al 100%
 			const data: ResponseData = (await response.json()) as ResponseData;
-			toast({
-				title: 'Foro creado exitosamente!.',
+			toast('Foro creado exitosamente!.', {
 				description: `El foro se ha creado satisfactoriamente:`,
-				variant: 'default',
 			});
 			console.log(data);
 			setIsDialogOpen(false); // Cerrar el Dialog
@@ -219,9 +217,9 @@ const ForumHome = () => {
 							placeholder="Buscar una discusion..."
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
-							className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-2 focus:ring-white"
+							className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-white focus:ring-2 focus:ring-white focus:outline-none"
 						/>
-						<FaSearch className="absolute left-3 top-3 text-gray-400" />
+						<FaSearch className="absolute top-3 left-3 text-gray-400" />
 					</div>
 				</div>
 				{/* Zona para mostrar la lista de foros */}

@@ -12,7 +12,7 @@ import ActSubida from '~/components/verActividades/ActSubida';
 import VerListPreguntaAbierta from '~/components/verActividades/PreguntaCompletado';
 import VerQuestionVOFList from '~/components/verActividades/PreguntaFOV';
 import VerQuestionList from '~/components/verActividades/PreguntasOM';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface ActivityDetails {
 	id: number;
@@ -78,20 +78,16 @@ const RealizarActividad: React.FC = () => {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
 					setError(`Error al cargar la actividad: ${errorMessage}`);
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: `No se pudo cargar la actividad: ${errorMessage}`,
-						variant: 'destructive',
 					});
 				}
 			} catch (error: unknown) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
 				setError(`Error al cargar la actividad: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudo cargar la actividad: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			} finally {
 				setLoading(false);

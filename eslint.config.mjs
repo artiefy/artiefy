@@ -1,3 +1,5 @@
+// @ts-check
+
 import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
 
@@ -20,19 +22,22 @@ const eslintConfig = [
 		],
 	},
 	{
-		files: ['/*.{js,jsx,mjs,cjs,ts,tsx}'],
+		files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
 	},
 	...compat.config({
 		extends: [
-			'next/core-web-vitals',
-			'plugin:@typescript-eslint/recommended',
-			'plugin:@typescript-eslint/recommended-type-checked',
-			'plugin:@typescript-eslint/stylistic-type-checked',
-			'plugin:import/recommended',
-			'plugin:import/typescript',
-			'plugin:@next/next/recommended',
-			'prettier',
-		],
+      'next/core-web-vitals',
+      'eslint:recommended',
+      'next',
+      'next/typescript',
+      'plugin:@next/next/recommended',
+      'plugin:@typescript-eslint/recommended',
+      'plugin:@typescript-eslint/recommended-type-checked',
+      'plugin:@typescript-eslint/stylistic-type-checked',
+      'plugin:import/recommended',
+      'plugin:import/typescript',
+      'prettier',
+  ],
 		parser: '@typescript-eslint/parser',
 		parserOptions: {
 			project: './tsconfig.json',

@@ -27,7 +27,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
@@ -136,10 +136,8 @@ const Page: React.FC = () => {
 				setParametros(parametrosActualizados);
 			} catch (error) {
 				console.error('Error:', error);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: 'Error al cargar los parámetros',
-					variant: 'destructive',
 				});
 			}
 		};
@@ -207,19 +205,15 @@ const Page: React.FC = () => {
 				} else {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: `No se pudo cargar el curso: ${errorMessage}`,
-						variant: 'destructive',
 					});
 				}
 			} catch (error: unknown) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudo cargar el curso: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			}
 		}
@@ -252,33 +246,27 @@ const Page: React.FC = () => {
 			};
 
 			if (!response.ok) {
-				toast({
-					title: 'Error de porcentaje',
+				toast('Error de porcentaje', {
 					description: 'Error desconocido',
-					variant: 'destructive',
 				});
 				return false;
 			}
 
 			// Mostrar información detallada
-			toast({
-				title: 'Información del parámetro',
+			toast('Información del parámetro', {
 				description: `
 					Porcentaje total actual: ${data.totalActual}%
 					Porcentaje disponible: ${data.disponible}%
 					${data.detalles?.length ? '\nActividades asignadas:' : ''}
 					${data.detalles?.map((act) => `\n- ${act.name}: ${act.porcentaje}%`).join('') ?? ''}
 				`,
-				variant: 'default',
 			});
 
 			return nuevoPorcentaje <= data.disponible;
 		} catch (error) {
 			console.error('Error al validar porcentaje:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'Error al validar el porcentaje',
-				variant: 'destructive',
 			});
 			return false;
 		}
@@ -307,28 +295,22 @@ const Page: React.FC = () => {
 
 		// Validaciones específicas con mensajes de error
 		if (!formData.name) {
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'El nombre de la actividad es requerido',
-				variant: 'destructive',
 			});
 			return;
 		}
 
 		if (!formData.description) {
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'La descripción de la actividad es requerida',
-				variant: 'destructive',
 			});
 			return;
 		}
 
 		if (!formData.type) {
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: 'Debe seleccionar un tipo de actividad',
-				variant: 'destructive',
 			});
 			return;
 		}
@@ -339,11 +321,9 @@ const Page: React.FC = () => {
 				formData.parametro &&
 				(!formData.porcentaje || formData.porcentaje <= 0)
 			) {
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description:
 						'Debe asignar un porcentaje mayor a 0 para actividades revisadas con parámetro',
-					variant: 'destructive',
 				});
 				return;
 			}
@@ -373,10 +353,8 @@ const Page: React.FC = () => {
 			);
 
 			if (!porcentajeValido) {
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: 'El porcentaje asignado excede el disponible',
-					variant: 'destructive',
 				});
 				return;
 			}
@@ -416,10 +394,8 @@ const Page: React.FC = () => {
 			const actividadId = actividadData.id;
 
 			// Mostrar mensaje de éxito
-			toast({
-				title: 'Éxito',
+			toast('Éxito', {
 				description: 'Actividad creada correctamente',
-				variant: 'default',
 			});
 
 			router.push(
@@ -427,11 +403,9 @@ const Page: React.FC = () => {
 			);
 		} catch (error) {
 			console.error('Error detallado:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description:
 					error instanceof Error ? error.message : 'Error desconocido',
-				variant: 'destructive',
 			});
 		} finally {
 			setIsUploading(false);
@@ -542,7 +516,7 @@ const Page: React.FC = () => {
 										className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${isActive ? 'bg-gray-300' : 'bg-red-500'}`}
 									>
 										<span
-											className={`absolute left-1 top-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
+											className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
 										></span>
 									</span>
 								</label>
@@ -622,7 +596,7 @@ const Page: React.FC = () => {
 											className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
 										>
 											<span
-												className={`absolute left-1 top-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
+												className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
 											></span>
 										</span>
 									</label>

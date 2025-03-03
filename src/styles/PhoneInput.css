@@ -1,0 +1,21 @@
+.phone-input {
+  display: flex;
+  justify-content: center; /* Centra el input de teléfono */
+}
+
+.phone-input input {
+  height: calc(1.5em + 0.75rem + 2px); /* Ajusta la altura del input */
+  padding-left: 60px !important; /* Ajusta este valor según sea necesario */
+}
+
+.phone-input .special-label {
+  display: none; /* Oculta el título predeterminado */
+}
+
+.phone-input .form-control {
+  padding-left: 60px !important; /* Ajusta este valor según sea necesario */
+}
+
+.phone-input .flag-dropdown {
+  left: 10px; /* Ajusta la posición del dropdown de la bandera */
+}

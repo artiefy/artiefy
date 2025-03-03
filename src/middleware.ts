@@ -1,54 +1,53 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-const isAdminRoute = createRouteMatcher(["/dashboard/admin(.*)"]);
-const isSuperAdminRoute = createRouteMatcher(["/dashboard/super-admin(.*)"]);
-const isEducatorRoute = createRouteMatcher(["/dashboard/educadores(.*)"]);
-const isStudentClassRoute = createRouteMatcher(["/estudiantes/clases/:id"]);
+const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
+const isSuperAdminRoute = createRouteMatcher(['/dashboard/super-admin(.*)']);
+const isEducatorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
+const isStudentClassRoute = createRouteMatcher(['/estudiantes/clases/:id']);
+const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)']);
+const publicRoutes = createRouteMatcher(['/sign-in', '/sign-up']);
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
-  const role = sessionClaims?.metadata?.role;
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata?.role;
 
-  // Proteger todas las rutas que comienzan con el rol`/admin`
-  if (isAdminRoute(req) && role !== "admin") {
-    const url = new URL("/", req.url);
-    return NextResponse.redirect(url);
-  }
+	// Si es una ruta pública, permitir acceso
+	if (publicRoutes(req)) {
+		return NextResponse.next();
+	}
 
-  // Proteger todas las rutas que comienzan con el rol `/super-admin`
-  if (isSuperAdminRoute(req) && role !== "super-admin") {
-    const url = new URL("/", req.url);
-    return NextResponse.redirect(url);
-  }
+	// Redirigir a login si no está autenticado y la ruta es protegida
+	if (!userId && isProtectedRoute(req)) {
+		return NextResponse.redirect(new URL('/sign-in', req.url));
+	}
 
-  // Proteger todas las rutas que comienzan con el rol `/educador`
-  if (isEducatorRoute(req) && role !== "educador") {
-    const url = new URL("/", req.url);
-    return NextResponse.redirect(url);
-  }
+	// Proteger rutas específicas por rol
+	if (isAdminRoute(req) && role !== 'admin') {
+		return NextResponse.redirect(new URL('/', req.url));
+	}
 
-  // Proteger rutas dinámicas de estudiantes
-  if (isStudentClassRoute(req) && !userId) {
-    const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.url);
-    return NextResponse.redirect(signInUrl);
-  }
+	if (isSuperAdminRoute(req) && role !== 'super-admin') {
+		return NextResponse.redirect(new URL('/', req.url));
+	}
 
-  // Manejar redirecciones de OAuth
-  if (req.nextUrl.pathname === "/sso-callback") {
-    const redirectUrl = req.nextUrl.searchParams.get("redirect_url");
-    if (redirectUrl) {
-      return NextResponse.redirect(redirectUrl);
-    }
-  }
+	if (isEducatorRoute(req) && role !== 'educador') {
+		return NextResponse.redirect(new URL('/', req.url));
+	}
+
+	// Proteger rutas dinámicas de estudiantes
+	if (isStudentClassRoute(req) && !userId) {
+		return NextResponse.redirect(new URL('/sign-in', req.url));
+	}
+
+	return NextResponse.next();
 });
 
 export const config = {
-  matcher: [
-    // Omitir internos de Next.js y todos los archivos estáticos, a menos que se encuentren en los parámetros de búsqueda
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Siempre ejecutar para rutas de API
-    "/(api|trpc)(.*)",
-  ],
+	matcher: [
+		// Skip Next.js internals and all static files, unless found in search params
+		'/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+		// Always run for API routes
+		'/(api|trpc)(.*)',
+	],
 };
