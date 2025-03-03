@@ -18,7 +18,7 @@ import {
 	BreadcrumbPage,
 } from '~/components/educators/ui/breadcrumb';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Course {
 	id: number;
@@ -112,20 +112,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
 					setError(`Error al cargar el curso: ${errorMessage}`);
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: `No se pudo cargar el curso: ${errorMessage}`,
-						variant: 'destructive',
 					});
 				}
 			} catch (error: unknown) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
 				setError(`Error al cargar el curso: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudo cargar el curso: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			} finally {
 				setLoading(false);
@@ -451,7 +447,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					>
 						<ArrowLeftIcon className="animate-bounce-right size-5" />
 						<p className="font-bold">Volver</p>
-						<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+						<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 							<div className="relative h-full w-10 bg-white/30"></div>
 						</div>
 					</Link>

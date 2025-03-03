@@ -15,7 +15,7 @@ import {
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Lessons {
 	id: number;
@@ -106,20 +106,16 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
 					setError(`Error al cargar la leccion: ${errorMessage}`);
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: `No se pudo cargar la leccion: ${errorMessage}`,
-						variant: 'info',
 					});
 				}
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
 				setError(`Error al cargar la leccion: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudo cargar la leccion: ${errorMessage}`,
-					variant: 'info',
 				});
 			} finally {
 				setLoading(false);
@@ -165,10 +161,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					return;
 				}
 			}
-			toast({
-				title: 'Información',
+			toast('Información', {
 				description: 'No hay más clases anteriores.',
-				variant: 'default',
 			});
 		} else if (direction === 'next') {
 			for (let i = currentIndex + 1; i < sortedLessons.length; i++) {
@@ -181,10 +175,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					return;
 				}
 			}
-			toast({
-				title: 'Información',
+			toast('Información', {
 				description: 'No hay más clases siguientes.',
-				variant: 'default',
 			});
 		}
 	};
@@ -241,7 +233,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				<div className="mt-4 flex items-center justify-between">
 					<Button onClick={() => handleNavigation('prev', [lessons])}>
 						<ArrowLeftIcon className="animate-bounce-right size-5" />
-						<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+						<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 							<div className="relative h-full w-10 bg-white/30"></div>
 						</div>
 						Clase Anterior
@@ -249,7 +241,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					<Button onClick={() => handleNavigation('next', [lessons])}>
 						Siguiente Clase
 						<ArrowRightIcon className="animate-bounce-right size-5" />
-						<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+						<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 							<div className="relative h-full w-10 bg-white/30"></div>
 						</div>
 					</Button>
@@ -257,7 +249,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				<div className="group relative h-auto w-full">
 					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 					<div
-						className="container relative z-20 mt-4 grid grid-cols-1 gap-5 rounded-lg bg-black p-5 md:grid-cols-2 lg:grid-cols-2"
+						className="relative z-20 container mt-4 grid grid-cols-1 gap-5 rounded-lg bg-black p-5 md:grid-cols-2 lg:grid-cols-2"
 						style={{ backgroundColor: color }}
 					>
 						{/* Columna derecha - Información */}
@@ -316,7 +308,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						>
 							<ArrowLeftIcon className="animate-bounce-right size-5" />
 							<p className="font-bold">Volver</p>
-							<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+							<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 								<div className="relative h-full w-10 bg-white/30"></div>
 							</div>
 						</Link>

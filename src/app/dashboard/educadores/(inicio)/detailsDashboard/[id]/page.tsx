@@ -17,7 +17,7 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
-import { toast } from '~/hooks/use-toast';
+import { toast } from 'sonner';
 
 interface Course {
 	id: number;
@@ -108,20 +108,16 @@ function App() {
 				const errorData = (await response.json()) as { error?: string };
 				const errorMessage = errorData.error ?? response.statusText;
 				setError(`Error al cargar los cursos: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudieron cargar los cursos: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'Unknown error';
 			setError(`Error al cargar los cursos: ${errorMessage}`);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: `No se pudieron cargar los cursos: ${errorMessage}`,
-				variant: 'destructive',
 			});
 		} finally {
 			setLoading(false);
@@ -151,10 +147,8 @@ function App() {
 			);
 		} catch (error) {
 			console.error('Error fetching user progress:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: `No se pudo obtener el progreso del usuario: ${error instanceof Error ? error.message : 'Unknown error'}`,
-				variant: 'destructive',
 			});
 		}
 	}, [courses, courseIdNumber]);
