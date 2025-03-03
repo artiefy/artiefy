@@ -133,21 +133,20 @@ export interface Activity {
 	id: number;
 	name: string;
 	description: string | null;
-	typeid: number;
-	lessonsId: number;
-	isCompleted: boolean | null;
-	userProgress: number | null;
 	lastUpdated: Date;
-	lesson?: Lesson;
-	typeActi?: TypeActi;
+	lessonsId: number;
+	revisada: boolean;
+	porcentaje: number | null;
+	parametroId: number | null;
+  typeActi?: TypeActi;
 	userActivitiesProgress?: UserActivitiesProgress[];
 	content?: {
 		questions: Question[];
 	};
-	revisada: boolean;
-	parametroId: number;
-	porcentaje: number;
-	fechaMaximaEntrega: Date;
+	fechaMaximaEntrega: Date | null;
+	typeid: number;
+	isCompleted: boolean;
+	userProgress: number;
 }
 
 export interface Question {
