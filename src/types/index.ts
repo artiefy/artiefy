@@ -104,6 +104,7 @@ export interface UserActivitiesProgress {
 	progress: number;
 	isCompleted: boolean;
 	lastUpdated: Date;
+	revisada: boolean | null; // Add this field
 }
 
 export interface Modalidad {
