@@ -5,6 +5,8 @@ import { createFormData } from '~/utils/paygateway/form';
 import { getProductById } from '~/utils/paygateway/products';
 import { env } from '~/env';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
 	try {
 		const body = (await req.json()) as {
