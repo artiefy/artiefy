@@ -1,9 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifySignature } from '~/utils/paygateway/verifySignature';
 
-// Configure route behavior
-export const dynamic = 'force-dynamic';
-
 // Types
 interface PaymentData {
 	email_buyer: string;

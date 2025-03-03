@@ -1,9 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { type NextRequest, NextResponse } from 'next/server';
 
-// Configure route behavior
-export const dynamic = 'force-dynamic';
-
 // Constants
 const PAYU_API_URL =
 	'https://sandbox.api.payulatam.com/reports-api/4.0/service.cgi';
