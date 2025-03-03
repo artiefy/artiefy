@@ -104,4 +104,3 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 }
 
 export const revalidate = 60;
-export const dynamic = 'force-dynamic';

@@ -143,4 +143,3 @@ export default async function CoursesPage({ searchParams }: Props) {
 }
 
 export const revalidate = 3600;
-export const dynamic = 'force-dynamic';

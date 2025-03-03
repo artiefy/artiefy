@@ -166,4 +166,3 @@ async function CourseContent({
 }
 
 export const revalidate = 3600;
-export const dynamic = 'force-dynamic';
