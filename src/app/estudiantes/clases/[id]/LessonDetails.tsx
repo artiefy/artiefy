@@ -431,7 +431,27 @@ export default function LessonDetails({
 					{/* Right Sidebar - Activities and Resources */}
 					<div className="flex flex-col">
 						<LessonActivities
-							activity={activity}
+							activity={
+								activity ?? {
+									id: 0, // Use 0 instead of null
+									name: '',
+									description: '',
+									lessonsId: lesson.id,
+									content: {
+										// Match the expected type
+										questions: [],
+									},
+									isCompleted: false,
+									userProgress: 0,
+									lastUpdated: new Date(),
+									revisada: false,
+									porcentaje: 0,
+									parametroId: null,
+									createdAt: new Date(),
+									fechaMaximaEntrega: null,
+									typeid: 0,
+								}
+							}
 							isVideoCompleted={isVideoCompleted}
 							isActivityCompleted={isActivityCompleted}
 							isCompletingActivity={isCompletingActivity}

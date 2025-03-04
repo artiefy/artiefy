@@ -147,13 +147,17 @@ export interface Activity {
 	typeid: number;
 	isCompleted: boolean;
 	userProgress: number;
+	createdAt: Date; // Added createdAt property
 }
 
 export interface Question {
 	id: string;
 	text: string;
-	options: Option[];
-	correctOptionId: string;
+	type: 'VOF' | 'OM' | 'COMPLETAR';
+	correctOptionId?: string;
+	options?: Option[];
+	correctAnswer?: string;
+	answer?: string;
 }
 
 export interface Option {

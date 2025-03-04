@@ -8,9 +8,6 @@ import {
 	DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
-import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity'; // Import completeActivity action
-import { saveActivityScore } from '~/server/actions/estudiantes/progress/saveActivityScore'; // Import saveActivityScore action
 import type { Activity, Question } from '~/types';
 
 interface ActivityModalProps {
@@ -26,86 +23,94 @@ const LessonActivityModal = ({
 	isOpen,
 	onClose,
 	activity,
-	userId,
-	onQuestionsAnswered,
-	markActivityAsCompleted,
 }: ActivityModalProps) => {
+	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+	const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
 	const [questions, setQuestions] = useState<Question[]>([]);
-	const [selectedAnswers, setSelectedAnswers] = useState<
-		Record<string, string>
-	>({});
 	const [isLoading, setIsLoading] = useState(true);
-	const [score, setScore] = useState(0);
-	const [allCorrect, setAllCorrect] = useState(false);
-	const [isCompleting, setIsCompleting] = useState(false); // New state for spinner
-	const [attempts, setAttempts] = useState<Record<string, number>>({}); // New state for attempts
 
-	// Fetch questions when the modal is open
 	useEffect(() => {
-		const fetchQuestions = async () => {
-			setIsLoading(true);
-			try {
-				const activityContent = await getActivityContent(
-					activity.lessonsId,
-					userId
-				); // Ensure lessonsId is a number
-				if (
-					activityContent.length > 0 &&
-					activityContent[0].content?.questions
-				) {
-					setQuestions(activityContent[0].content.questions);
-				} else {
-					setQuestions([]);
-				}
-			} catch (error) {
-				console.error('Error fetching activity content:', error);
-				setQuestions([]);
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		if (isOpen) {
-			void fetchQuestions();
+		if (activity?.content?.questions) {
+			setQuestions(activity.content.questions);
 		}
-	}, [isOpen, activity.lessonsId, userId]);
+		setIsLoading(false);
+	}, [activity]);
 
-	// Handle answer selection
-	const handleAnswerChange = (questionId: string, optionId: string) => {
-		if (attempts[questionId] >= 2) return; // Prevent more than 2 attempts
+	const currentQuestion = questions[currentQuestionIndex];
+	const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
-		const updatedAnswers = { ...selectedAnswers, [questionId]: optionId };
-		setSelectedAnswers(updatedAnswers);
-
-		const updatedAttempts = {
-			...attempts,
-			[questionId]: (attempts[questionId] || 0) + 1,
-		};
-		setAttempts(updatedAttempts);
-
-		const allAnswered = questions.every((q) => updatedAnswers[q.id]);
-		onQuestionsAnswered(allAnswered);
-
-		// Calculate score and check if all answers are correct in real-time
-		const correctAnswers = questions.filter(
-			(q) => updatedAnswers[q.id] === q.correctOptionId
-		).length;
-		setScore(correctAnswers);
-		setAllCorrect(correctAnswers === questions.length);
+	const handleAnswer = (answer: string) => {
+		setUserAnswers((prev) => ({
+			...prev,
+			[currentQuestion.id]: answer,
+		}));
 	};
 
-	// Handle activity completion
-	const handleCompleteActivity = async () => {
-		setIsCompleting(true); // Set spinner state to true
-		try {
-			await completeActivity(activity.id); // Mark activity as completed in the database
-			await saveActivityScore(activity.id.toString(), userId, score); // Ensure activity.id is a string
-			markActivityAsCompleted();
-			onClose();
-		} catch (error) {
-			console.error('Error completing activity:', error);
-		} finally {
-			setIsCompleting(false); // Set spinner state to false
+	const handleNext = () => {
+		if (!isLastQuestion) {
+			setCurrentQuestionIndex((prev) => prev + 1);
+		}
+	};
+
+	const renderQuestion = () => {
+		if (!currentQuestion) return null;
+
+		switch (currentQuestion.type) {
+			case 'VOF':
+				return (
+					<div className="space-y-4">
+						<h3 className="font-semibold">{currentQuestion.text}</h3>
+						<div className="space-y-2">
+							{currentQuestion.options?.map((option) => (
+								<label key={option.id} className="block">
+									<input
+										type="radio"
+										name={currentQuestion.id}
+										value={option.id}
+										checked={userAnswers[currentQuestion.id] === option.id}
+										onChange={(e) => handleAnswer(e.target.value)}
+									/>
+									<span className="ml-2">{option.text}</span>
+								</label>
+							))}
+						</div>
+					</div>
+				);
+
+			case 'OM':
+				return (
+					<div className="space-y-4">
+						<h3 className="font-semibold">{currentQuestion.text}</h3>
+						<div className="space-y-2">
+							{currentQuestion.options?.map((option) => (
+								<label key={option.id} className="block">
+									<input
+										type="radio"
+										name={currentQuestion.id}
+										value={option.id}
+										checked={userAnswers[currentQuestion.id] === option.id}
+										onChange={(e) => handleAnswer(e.target.value)}
+									/>
+									<span className="ml-2">{option.text}</span>
+								</label>
+							))}
+						</div>
+					</div>
+				);
+
+			case 'COMPLETAR':
+				return (
+					<div className="space-y-4">
+						<h3 className="font-semibold">{currentQuestion.text}</h3>
+						<input
+							type="text"
+							value={userAnswers[currentQuestion.id] || ''}
+							onChange={(e) => handleAnswer(e.target.value)}
+							className="w-full rounded-md border p-2"
+							placeholder="Escribe tu respuesta..."
+						/>
+					</div>
+				);
 		}
 	};
 
@@ -113,77 +118,34 @@ const LessonActivityModal = ({
 		<Dialog open={isOpen} onOpenChange={onClose}>
 			<DialogContent>
 				<DialogHeader>
-					<DialogTitle className="flex flex-col items-center justify-center text-2xl font-bold">
-						Bienvenido a la Actividad
-					</DialogTitle>
-					<p className="flex flex-col items-center justify-center text-sm text-gray-500">
-						Por favor, selecciona las respuestas correctamente.
-					</p>
+					<DialogTitle>Actividad</DialogTitle>
 				</DialogHeader>
+
 				{isLoading ? (
-					<div className="flex flex-col items-center justify-center">
-						Cargando preguntas...
-						<Icons.blocks className="mt-4 h-16 w-16 fill-primary" />
+					<div className="flex justify-center">
+						<Icons.spinner className="h-8 w-8 animate-spin" />
 					</div>
 				) : (
-					<div>
-						{questions.length > 0 ? (
-							questions.map((question) => (
-								<div key={question.id} className="mb-4">
-									<h3 className="font-semibold">{question.text}</h3>
-									<div className="mt-2">
-										{question.options.map((option) => (
-											<label key={option.id} className="mb-2 block">
-												<input
-													type="radio"
-													name={question.id}
-													value={option.id}
-													checked={selectedAnswers[question.id] === option.id}
-													onChange={() =>
-														handleAnswerChange(question.id, option.id)
-													}
-													className="mr-2"
-													disabled={attempts[question.id] >= 2} // Disable input after 2 attempts
-												/>
-												{option.text}
-											</label>
-										))}
-									</div>
-									{attempts[question.id] >= 2 && (
-										<p className="text-red-500">
-											Has alcanzado el límite de intentos para esta pregunta.
-										</p>
-									)}
-								</div>
-							))
-						) : (
-							<div className="text-center">No hay preguntas disponibles.</div>
-						)}
-						<div className="mt-4 text-center">
-							{allCorrect ? (
-								<h4 className="font-semibold text-green-500">
-									¡Felicidades! Respondiste todas las preguntas correctamente.
-									Calificación: 5.0
-								</h4>
-							) : (
-								<h4 className="font-semibold">
-									Calificación: {score} / {questions.length}
-								</h4>
-							)}
+					<div className="space-y-6">
+						{renderQuestion()}
+
+						<div className="flex justify-between">
+							<Button
+								onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
+								disabled={currentQuestionIndex === 0}
+							>
+								Anterior
+							</Button>
+
+							<Button
+								onClick={handleNext}
+								disabled={!userAnswers[currentQuestion?.id]}
+							>
+								{isLastQuestion ? 'Finalizar' : 'Siguiente'}
+							</Button>
 						</div>
 					</div>
 				)}
-				<Button
-					onClick={handleCompleteActivity}
-					className="mt-4 w-full bg-[#00BDD8] text-white hover:bg-[#00A5C0] active:scale-95"
-					disabled={!allCorrect || isCompleting} // Disable button if not all questions are answered correctly or if completing
-				>
-					{isCompleting ? (
-						<Icons.spinner style={{ width: '25px', height: '25px' }} />
-					) : (
-						'Completar Actividad'
-					)}
-				</Button>
 			</DialogContent>
 		</Dialog>
 	);
