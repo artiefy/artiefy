@@ -10,7 +10,7 @@ import {
 	dificultad,
 } from '~/server/db/schema';
 
-const getAllCourses = unstable_cache(
+export const getAllCourses = unstable_cache(
 	async (forceUpdate = false) => {
 		try {
 			let coursesData;
@@ -108,8 +108,6 @@ const getAllCourses = unstable_cache(
 	['all-courses'],
 	{ revalidate: 3600 }
 );
-
-export { getAllCourses };
 
 export const preloadAllCourses = async () => {
 	await getAllCourses();

@@ -71,8 +71,11 @@ const getCourseById = unstable_cache(
 
 		return transformedCourse;
 	},
-	['course-content'],
-	{ revalidate: 3600 }
+	['course-details'],
+	{
+		revalidate: 3600, // Cache por 1 hora
+		tags: ['course-details'],
+	}
 );
 
 export { getCourseById };

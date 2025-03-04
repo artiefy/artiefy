@@ -168,6 +168,3 @@ async function CourseContent({
 		</section>
 	);
 }
-
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
