@@ -1,12 +1,13 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useState, type ChangeEvent } from 'react';
-
 import { useUser } from '@clerk/nextjs';
+import { Plus } from 'lucide-react';
 import Image from 'next/image';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
-
+import { toast } from 'sonner';
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
@@ -19,6 +20,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
+import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 
 interface CourseFormProps {
@@ -29,9 +31,12 @@ interface CourseFormProps {
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadesid: number,
+		dificultadid: number,
+		rating: number, // Añadir esta línea
 		requerimientos: string,
-		options?: { signal: AbortSignal }
+		addParametros: boolean,
+		coverImageKey: string, // Agregar coverImageKey
+		fileName: string // Agregar fileName
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -49,39 +54,64 @@ interface CourseFormProps {
 	setDificultadid: (dificultadid: number) => void;
 	coverImageKey: string;
 	setCoverImageKey: (coverImageKey: string) => void;
+	parametros: {
+		id: number;
+		name: string;
+		description: string;
+		porcentaje: number;
+	}[];
+	setParametrosAction: (
+		parametros: {
+			id: number;
+			name: string;
+			description: string;
+			porcentaje: number;
+		}[]
+	) => void;
 	isOpen: boolean;
 	onCloseAction: () => void;
+	rating: number; // Añadir esta línea
+	setRating: (rating: number) => void; // Añadir esta línea
 }
 
-export default function ModalFormCourse({
+const ModalFormCourse: React.FC<CourseFormProps> = ({
 	onSubmitAction,
 	uploading,
 	editingCourseId,
+	title,
+	setTitle,
+	description,
+	setDescription,
+	requerimientos,
+	setRequerimientos,
+	rating, // Añadir esta línea
+	setRating, // Añadir esta línea
+	categoryid,
+	setCategoryid,
+	modalidadesid,
+	setModalidadesid,
+	dificultadid,
+	setDificultadid,
+	coverImageKey,
+	parametros = [], // Asegúrate de que no sea undefined
+	setParametrosAction,
 	isOpen,
 	onCloseAction,
-	coverImageKey,
-}: CourseFormProps) {
+}) => {
 	const { user } = useUser();
-	const [title, setTitle] = useState('');
-	const [description, setDescription] = useState('');
-	const [requerimientos, setRequerimientos] = useState('');
-	const [categoryid, setCategoryid] = useState(0);
-	const [modalidadesid, setModalidadesid] = useState(0);
-	const [dificultadid, setDificultadid] = useState(0);
 	const [file, setFile] = useState<File | null>(null);
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [fileSize, setFileSize] = useState<number | null>(null);
 	const [progress, setProgress] = useState(0);
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDragging, setIsDragging] = useState(false);
-	const [creatorId, setCreatorId] = useState<string | null>(null);
 	const [errors, setErrors] = useState({
 		title: false,
 		description: false,
 		categoryid: false,
 		category: false,
-		creatorId: false,
 		modalidadesid: false,
+		rating: false, // Añadir esta línea
 		dificultadid: false,
 		file: false,
 		dificultad: false,
@@ -94,6 +124,8 @@ export default function ModalFormCourse({
 	const [currentCoverImageKey] = useState(coverImageKey);
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
+	const [coverImage, setCoverImage] = useState<string | null>(null);
+	const [addParametros, setAddParametros] = useState(false);
 
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -108,6 +140,7 @@ export default function ModalFormCourse({
 			setFileSize(null);
 			setErrors((prev) => ({ ...prev, file: true }));
 		}
+		console.log('coverImageKey', coverImage);
 	};
 
 	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -137,6 +170,63 @@ export default function ModalFormCourse({
 		}
 	};
 
+	const handleAddParametro = () => {
+		if (parametros.length < 10) {
+			setParametrosAction([
+				...parametros,
+				{
+					id: parametros.length + 1,
+					name: '',
+					description: '',
+					porcentaje: 0,
+				},
+			]);
+		}
+	};
+
+	const handleParametroChange = (
+		index: number,
+		field: 'name' | 'description' | 'porcentaje',
+		value: string | number
+	) => {
+		const updatedParametros = [...parametros];
+		updatedParametros[index] = {
+			...updatedParametros[index],
+			[field]: value,
+		};
+
+		// Validar que la suma de los porcentajes no supere el 100%
+		const sumaPorcentajes = updatedParametros.reduce(
+			(acc, parametro) => acc + parametro.porcentaje,
+			0
+		);
+		if (sumaPorcentajes > 100) {
+			toast('Error', {
+				description: 'La suma de los porcentajes no puede superar el 100%',
+			});
+			return;
+		}
+
+		setParametrosAction(
+			updatedParametros.map((parametro, index) => ({
+				...parametro,
+				id: index + 1,
+			}))
+		);
+	};
+
+	const handleRemoveParametro = (index: number) => {
+		const updatedParametros = parametros.filter((_, i) => i !== index);
+		// Reasignar los valores de entrega
+		const reassignedParametros = updatedParametros.map((parametro) => ({
+			id: parametro.id,
+			name: parametro.name,
+			description: parametro.description,
+			porcentaje: parametro.porcentaje,
+		}));
+		setParametrosAction(reassignedParametros);
+	};
+
 	const handleSubmit = async () => {
 		const controller = new AbortController();
 		setUploadController(controller);
@@ -146,9 +236,9 @@ export default function ModalFormCourse({
 			categoryid: !editingCourseId && !categoryid,
 			category: false,
 			modalidadesid: !editingCourseId && !modalidadesid,
-			creatorId: false,
 			dificultadid: !editingCourseId && !dificultadid,
 			dificultad: false,
+			rating: !editingCourseId && !rating, // Añadir esta línea
 			file: !editingCourseId && !file && !currentCoverImageKey,
 			modalidad: false,
 			requerimientos: !editingCourseId && !requerimientos,
@@ -157,25 +247,84 @@ export default function ModalFormCourse({
 		if (editingCourseId) {
 			newErrors.title = modifiedFields.has('title') && !title;
 			newErrors.description = modifiedFields.has('description') && !description;
-			newErrors.dificultadid =
-				modifiedFields.has('dificultadid') && !dificultadid;
+			newErrors.dificultadid = modifiedFields.has('dificultadid')
+				? !dificultadid
+				: !!newErrors.dificultadid;
 			newErrors.file = modifiedFields.has('file') && !file;
 			newErrors.modalidadesid =
 				modifiedFields.has('modalidadesid') && !modalidadesid;
-			newErrors.creatorId = modifiedFields.has('creatorId') && !creatorId;
 			newErrors.requerimientos =
 				modifiedFields.has('requerimientos') && !requerimientos;
+			newErrors.rating = modifiedFields.has('rating') && !rating; // Añadir esta línea
+		}
+
+		// Validar que la suma de los porcentajes sea igual a 100
+		const sumaPorcentajes = parametros.reduce(
+			(acc, parametro) => acc + parametro.porcentaje,
+			0
+		);
+		if (addParametros && sumaPorcentajes !== 100) {
+			toast('Error', {
+				description: 'La suma de los porcentajes debe ser igual a 100%',
+			});
+			return;
 		}
 
 		setErrors(newErrors);
 
 		if (Object.values(newErrors).some((error) => error)) {
+			console.log('Validation errors:', newErrors); // Registro de depuración
 			return;
 		}
 
 		setIsEditing(true);
 		setIsUploading(true);
 		try {
+			let coverImageKey = currentCoverImageKey ?? '';
+			let uploadedFileName = fileName ?? '';
+
+			if (file) {
+				const uploadResponse = await fetch('/api/upload', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						contentType: file.type,
+						fileSize: file.size,
+						fileName: file.name, // Asegúrate de pasar el fileName correcto
+					}),
+				});
+
+				if (!uploadResponse.ok) {
+					throw new Error(
+						`Error: al iniciar la carga: ${uploadResponse.statusText}`
+					);
+				}
+
+				const uploadData = (await uploadResponse.json()) as {
+					url: string;
+					fields: Record<string, string>;
+					key: string;
+					fileName: string;
+				};
+
+				const { url, fields, key, fileName: responseFileName } = uploadData;
+				coverImageKey = key;
+				uploadedFileName = responseFileName;
+
+				const formData = new FormData();
+				Object.entries(fields).forEach(([key, value]) => {
+					if (typeof value === 'string') {
+						formData.append(key, value);
+					}
+				});
+				formData.append('file', file);
+
+				await fetch(url, {
+					method: 'POST',
+					body: formData,
+				});
+			}
+
 			await onSubmitAction(
 				editingCourseId ? editingCourseId.toString() : '',
 				title,
@@ -184,24 +333,18 @@ export default function ModalFormCourse({
 				categoryid,
 				modalidadesid,
 				dificultadid,
+				rating, // Añadir esta línea
 				requerimientos,
-				{ signal: controller.signal } // Pasar el signal al onSubmitAction
+				addParametros,
+				coverImageKey,
+				uploadedFileName // Pasar el fileName obtenido
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
-				return; // Salir de la función si se cancela la carga
+				return;
 			}
+
 			setIsUploading(false);
-			console.log('Datos enviados:', {
-				title,
-				description,
-				file,
-				creatorId,
-				categoryid,
-				modalidadesid,
-				dificultadid,
-				requerimientos,
-			});
 		} catch (error) {
 			if ((error as Error).name === 'AbortError') {
 				console.log('Upload cancelled');
@@ -238,13 +381,13 @@ export default function ModalFormCourse({
 			case 'categoryid':
 				setCategoryid(value as number);
 				break;
-			case 'creatorId':
-				setCreatorId(value as string);
-				break;
 			case 'modalidadesid':
 				setModalidadesid(value as number);
 				break;
-			case 'dificultadesid':
+			case 'rating':
+				setRating(value as number);
+				break;
+			case 'dificultadid':
 				setDificultadid(value as number);
 				break;
 			case 'file':
@@ -265,7 +408,6 @@ export default function ModalFormCourse({
 					return prev + 1;
 				});
 			}, 50); // Ajusta el intervalo según sea necesario
-
 			return () => clearInterval(interval);
 		}
 	}, [uploading]);
@@ -303,9 +445,40 @@ export default function ModalFormCourse({
 		}
 	}, [isUploading]);
 
+	useEffect(() => {
+		if (editingCourseId) {
+			setTitle(title);
+			setDescription(description);
+			setRequerimientos(requerimientos);
+			setCategoryid(categoryid);
+			setRating(rating); // Añadir esta línea
+			setModalidadesid(modalidadesid);
+			setDificultadid(dificultadid);
+			setCoverImage(coverImageKey);
+		}
+	}, [editingCourseId]);
+
+	const handleToggleParametro = () => {
+		setAddParametros((prevAddParametro) => !prevAddParametro);
+	};
+
+	useEffect(() => {
+		if (isOpen && !editingCourseId) {
+			setTitle('');
+			setDescription('');
+			setRequerimientos('');
+			setCategoryid(0);
+			setModalidadesid(0);
+			setDificultadid(0);
+			setCoverImage('');
+			setRating(0);
+			setParametrosAction([]);
+		}
+	}, [isOpen, editingCourseId]);
+
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
-			<DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
 				<DialogHeader className="mt-4">
 					<DialogTitle className="text-4xl">
 						{editingCourseId ? 'Editar Curso' : 'Crear Curso'}
@@ -325,7 +498,7 @@ export default function ModalFormCourse({
 						placeholder="Título"
 						value={title}
 						onChange={(e) => handleFieldChange('title', e.target.value)}
-						className={`mb-4 w-full rounded border p-2 text-black outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.title && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -340,7 +513,7 @@ export default function ModalFormCourse({
 						placeholder="Descripción"
 						value={description}
 						onChange={(e) => handleFieldChange('description', e.target.value)}
-						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.description && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -357,7 +530,7 @@ export default function ModalFormCourse({
 						onChange={(e) =>
 							handleFieldChange('requerimientos', e.target.value)
 						}
-						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.requerimientos && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -418,6 +591,24 @@ export default function ModalFormCourse({
 							)}
 						</div>
 					</div>
+					<div>
+						<label
+							htmlFor="rating"
+							className="text-lg font-medium text-primary"
+						>
+							Rating
+						</label>
+						<Input
+							type="number"
+							min="0"
+							max="5"
+							step="0.1"
+							placeholder="0-5"
+							className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
+							value={rating}
+							onChange={(e) => setRating(Number(e.target.value))}
+						/>
+					</div>
 					<label
 						htmlFor="instructor"
 						className="text-lg font-medium text-primary"
@@ -468,7 +659,7 @@ export default function ModalFormCourse({
 									/>
 									<label
 										htmlFor="file-upload"
-										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
+										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
 									>
 										Seleccionar Archivo
 									</label>
@@ -489,7 +680,7 @@ export default function ModalFormCourse({
 											setFileSize(null);
 											setErrors((prev) => ({ ...prev, file: true }));
 										}}
-										className="absolute right-2 top-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+										className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
 									>
 										<MdClose className="z-20 size-5" />
 									</button>
@@ -501,8 +692,117 @@ export default function ModalFormCourse({
 									</div>
 								</div>
 							)}
+							{errors.file && (
+								<p className="text-sm text-red-500">
+									Este campo es obligatorio.
+								</p>
+							)}
 						</div>
 					</div>
+					<div className="mt-6 flex flex-col text-white">
+						<p>
+							¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
+							parametros
+						</p>
+						<div className="flex space-x-2">
+							<label
+								htmlFor="toggle"
+								className="relative inline-block h-8 w-16"
+							>
+								<input
+									type="checkbox"
+									id="toggle"
+									checked={addParametros}
+									onChange={handleToggleParametro}
+									className="absolute size-0"
+								/>
+								<span
+									className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
+								>
+									<span
+										className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
+									></span>
+								</span>
+							</label>
+							<span className="mt-1 text-sm text-gray-400">
+								{addParametros ? 'Si' : 'No'}
+							</span>
+						</div>
+					</div>
+					{addParametros && (
+						<div className="my-4 flex flex-col">
+							<label
+								htmlFor="totalParametros"
+								className="text-lg font-medium text-primary"
+							>
+								Parametros de evaluación
+							</label>
+							<Button
+								onClick={handleAddParametro}
+								disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
+								className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
+							>
+								{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
+								parametro
+								<Plus />
+							</Button>
+							{parametros.map((parametro, index) => (
+								<div key={index} className="mt-4 rounded-lg border p-4">
+									<div className="flex items-center justify-between">
+										<h3 className="text-lg font-medium text-primary">
+											Parámetro {index + 1}
+										</h3>
+										<Button
+											variant="destructive"
+											onClick={() => handleRemoveParametro(index)}
+										>
+											Eliminar
+										</Button>
+									</div>
+									<label className="mt-2 text-lg font-medium text-primary">
+										Nombre
+									</label>
+									<input
+										type="text"
+										value={parametro.name}
+										onChange={(e) =>
+											handleParametroChange(index, 'name', e.target.value)
+										}
+										className="mt-1 w-full rounded border p-2 text-white outline-none"
+									/>
+									<label className="mt-2 text-lg font-medium text-primary">
+										Descripción
+									</label>
+									<textarea
+										value={parametro.description}
+										onChange={(e) =>
+											handleParametroChange(
+												index,
+												'description',
+												e.target.value
+											)
+										}
+										className="mt-1 w-full rounded border p-2 text-white outline-none"
+									/>
+									<label className="mt-2 text-lg font-medium text-primary">
+										Porcentaje %
+									</label>
+									<input
+										type="number"
+										value={parametro.porcentaje}
+										onChange={(e) =>
+											handleParametroChange(
+												index,
+												'porcentaje',
+												Math.max(1, Math.min(100, parseFloat(e.target.value)))
+											)
+										}
+										className="mt-1 w-full rounded border p-2 text-white outline-none"
+									/>
+								</div>
+							))}
+						</div>
+					)}
 					{(uploading || isUploading) && (
 						<div className="mt-4">
 							<Progress
@@ -515,9 +815,6 @@ export default function ModalFormCourse({
 						</div>
 					)}
 				</div>
-				{errors.file && (
-					<p className="text-sm text-red-500">Este campo es obligatorio.</p>
-				)}
 				<DialogFooter className="mt-4 grid grid-cols-2 gap-4">
 					<Button
 						onClick={handleCancel}
@@ -525,7 +822,11 @@ export default function ModalFormCourse({
 					>
 						Cancelar
 					</Button>
-					<Button onClick={handleSubmit} variant="save" disabled={uploading}>
+					<Button
+						onClick={handleSubmit}
+						className="bg-green-400 text-white hover:bg-green-400/70"
+						disabled={uploading}
+					>
 						{uploading
 							? 'Subiendo...'
 							: editingCourseId
@@ -538,4 +839,6 @@ export default function ModalFormCourse({
 			</DialogContent>
 		</Dialog>
 	);
-}
+};
+
+export default ModalFormCourse;

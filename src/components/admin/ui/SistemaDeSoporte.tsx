@@ -29,6 +29,7 @@ import { ListaTickets } from './ListaTickets';
 import { exportarACSV } from './utilidadesExportacion';
 import ChatButton from './ChatButton';
 import { FiltrosTickets } from './FiltrosTickets';
+import { CreateTicketInput } from '~/types/Tickets';
 
 export interface Ticket {
 	id: string;
@@ -38,7 +39,7 @@ export interface Ticket {
 	prioridad: 'Baja' | 'Media' | 'Alta' | 'Crítica';
 	fecha: string;
 	descripcion: string;
-	urlImagen?: string;
+	urlImagen?: string | null;
 	fechaCreacion: string;
 	fechaResolucion?: string;
 	tiempoEstimado?: number;
@@ -89,79 +90,49 @@ const SistemaDeSoporte = () => {
 	>('todos');
 
 	useEffect(() => {
-		// Cargar datos iniciales (reemplazar con llamadas API reales)
-		setTickets([
-			{
-				id: 'TKT-001',
-				titulo: 'Servidor Caído',
-				estado: 'critico',
-				asignadoA: 'Juan Pérez',
-				prioridad: 'Alta',
-				fecha: '2024-01-20',
-				descripcion: 'El servidor principal no responde',
-				fechaCreacion: '2024-01-20T10:00:00Z',
-				categorias: ['Hardware', 'Red'],
-				archivado: false,
-			},
-			{
-				id: 'TKT-002',
-				titulo: 'Problema con Cliente de Correo',
-				estado: 'pendiente',
-				asignadoA: null,
-				prioridad: 'Media',
-				fecha: '2024-01-19',
-				descripcion: 'Los usuarios no pueden enviar correos',
-				fechaCreacion: '2024-01-19T14:30:00Z',
-				categorias: ['Software'],
-				archivado: false,
-			},
-			{
-				id: 'TKT-003',
-				titulo: 'Actualización de Software Completada',
-				estado: 'completado',
-				asignadoA: 'Ana García',
-				prioridad: 'Baja',
-				fecha: '2024-01-18',
-				descripcion: 'Actualización exitosa del software de gestión',
-				fechaCreacion: '2024-01-18T09:00:00Z',
-				fechaResolucion: '2024-01-18T11:30:00Z',
-				categorias: ['Software'],
-				archivado: true,
-			},
-		]);
-		setTecnicos([
-			{
-				id: 'TECH-001',
-				nombre: 'Juan',
-				apellido: 'Pérez',
-				cedula: '1234567890',
-				correo: 'juan@example.com',
-				rol: 'tecnico',
-				ticketsAsignados: 1,
-				etiquetasAsignadas: ['Hardware', 'Red'],
-			},
-			{
-				id: 'TECH-002',
-				nombre: 'Ana',
-				apellido: 'García',
-				cedula: '0987654321',
-				correo: 'ana@example.com',
-				rol: 'admin',
-				ticketsAsignados: 1,
-				etiquetasAsignadas: ['Software', 'Base de datos'],
-			},
-		]);
+		const fetchTickets = async () => {
+			const ticketsData = await fetch('/api/tickets').then((res) => res.json());
+			const tickets: Ticket[] = ticketsData.map((ticket: any) => ({
+				id: ticket.id,
+				titulo: ticket.titulo,
+				estado: ticket.estado,
+				asignadoA: ticket.asignadoA,
+				prioridad: ticket.prioridad,
+				fecha: ticket.fecha,
+				descripcion: ticket.descripcion,
+				urlImagen: ticket.urlImagen,
+				fechaCreacion: ticket.fechaCreacion,
+				fechaResolucion: ticket.fechaResolucion,
+				tiempoEstimado: ticket.tiempoEstimado,
+				categorias: ticket.categorias,
+				archivado: ticket.archivado,
+			}));
+			setTickets(tickets);
+		};
+		fetchTickets();
 	}, []);
 
-	const agregarTicket = (
-		nuevoTicket: Omit<Ticket, 'id' | 'fecha' | 'fechaCreacion' | 'archivado'>
-	) => {
+	const agregarTicket = async (nuevoTicket: CreateTicketInput) => {
+		const ticketData = await fetch('/api/tickets', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(nuevoTicket),
+		}).then((res) => res.json());
+
 		const ticket: Ticket = {
-			...nuevoTicket,
-			id: `TKT-${tickets.length + 1}`,
-			fecha: new Date().toISOString().split('T')[0],
-			fechaCreacion: new Date().toISOString(),
-			archivado: false,
+			id: ticketData.id.toString(),
+			titulo: ticketData.titulo,
+			estado: ticketData.estado ? 'pendiente' : 'completado', // Adjust this logic based on your actual status mapping
+			asignadoA: ticketData.asignadoA,
+			prioridad: ticketData.prioridad,
+			descripcion: ticketData.descripcion,
+			urlImagen: ticketData.urlImagen,
+			fecha: ticketData.fecha, // Ensure this property is present
+			fechaCreacion: ticketData.fechaCreacion,
+			categorias: ticketData.categorias,
+			archivado: ticketData.archivado,
 		};
 		setTickets([...tickets, ticket]);
 		setEstaCreando(false);
@@ -210,8 +181,8 @@ const SistemaDeSoporte = () => {
 	});
 
 	return (
-		<div className="min-h-screen bg-[#01142B] p-6 text-foreground">
-			<h1 className="mb-6 text-3xl font-bold text-primary">
+		<div className="text-foreground min-h-screen bg-[#01142B] p-6">
+			<h1 className="text-primary mb-6 text-3xl font-bold">
 				Gestión de Tickets
 			</h1>
 
@@ -280,14 +251,14 @@ const SistemaDeSoporte = () => {
 				<div className="flex items-center gap-2">
 					<Button
 						onClick={() => setEstaCreando(true)}
-						className="bg-primary text-gray-800 hover:bg-primary/90"
+						className="bg-primary hover:bg-primary/90 text-gray-800"
 					>
 						Crear Ticket
 					</Button>
 					<Button
 						onClick={() => exportarACSV(tickets)}
 						variant="outline"
-						className="bg-primary text-gray-800 hover:bg-primary/90"
+						className="bg-primary hover:bg-primary/90 text-gray-800"
 					>
 						Exportar
 					</Button>
@@ -337,7 +308,7 @@ const SistemaDeSoporte = () => {
 			</Tabs>
 
 			<Dialog open={estaCreando} onOpenChange={setEstaCreando}>
-				<DialogContent className='bg-card text-card-foreground rounded-lg shadow-lg p-6 max-w-4xl'>
+				<DialogContent className="bg-card text-card-foreground max-w-4xl rounded-lg p-6 shadow-lg">
 					<DialogHeader>
 						<DialogTitle>Crear Nuevo Ticket</DialogTitle>
 						<DialogDescription>
@@ -357,9 +328,9 @@ const SistemaDeSoporte = () => {
 					open={!!ticketSeleccionado}
 					onOpenChange={() => setTicketSeleccionado(null)}
 				>
-					<DialogContent className="max-h-[90vh] max-w-4xl p-6 overflow-y-auto bg-card text-card-foreground rounded-lg shadow-lg">
-						<DialogHeader className="mb-4 pb-4 border-b border-card-foreground">
-							<DialogTitle className="text-2xl font-bold text-primary mb-2">
+					<DialogContent className="bg-card text-card-foreground max-h-[90vh] max-w-4xl overflow-y-auto rounded-lg p-6 shadow-lg">
+						<DialogHeader className="border-card-foreground mb-4 border-b pb-4">
+							<DialogTitle className="text-primary mb-2 text-2xl font-bold">
 								Detalles del Ticket
 							</DialogTitle>
 						</DialogHeader>

@@ -23,7 +23,6 @@ export interface LocalTicket {
 	image?: string; // URL of the uploaded image
 }
 
-
 export interface TicketListProps {
 	tickets: ExtendedLocalTicket[];
 	onSelectTicket: (ticket: ExtendedLocalTicket) => void;
@@ -41,11 +40,10 @@ export interface TicketListProps {
 	prioridad?: string;
 	imagen?: string;
 	fechaCreacion?: string | Date;
-
 }
 
 export interface Ticket {
-	id: string; // Cambiar el tipo de number a string
+	id: number;
 	title: string;
 	description: string;
 	status: 'abierto' | 'en progreso' | 'cerrado';
@@ -61,10 +59,21 @@ export interface Ticket {
 	estado?: 'Abierto' | 'En Progreso' | 'Resuelto';
 }
 
+export interface CreateTicketInput {
+	titulo: string;
+	estado: 'pendiente' | 'en_proceso' | 'critico' | 'completado';
+	asignadoA: string | null;
+	prioridad: 'Baja' | 'Media' | 'Alta' | 'Crítica';
+	descripcion: string;
+	urlImagen?: File;
+	categorias: string[];
+}
 
 interface ExtendedLocalTicket extends Ticket {
 	interactions: string[];
 	// otras propiedades extendidas...
 }
+
+// Ensure ticket.id is a number
 
 

@@ -1,39 +1,19 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Users, TrendingUp, Search, Plus } from 'lucide-react';
-import Link from 'next/link';
 import { FiPlus } from 'react-icons/fi';
-import { Button } from '~/components/admin/ui/button';
+import { toast } from 'sonner';
+import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
+import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
+import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
 import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from '~/components/admin/ui/card';
-import { CourseDetails } from '~/components/admin/ui/CourseDetails';
-import { CourseForm } from '~/components/admin/ui/Courseform';
-import { DashboardMetrics } from '~/components/admin/ui/DashboardMetrics';
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from '~/components/admin/ui/dialog';
-import { Input } from '~/components/admin/ui/input';
-import ModalFormCourse from '~/components/admin/ui/ModalFormCourse';
-import {
-	Pagination,
-	PaginationContent,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from '~/components/admin/ui/pagination';
-import { toast } from '~/hooks/use-toast';
-import { type Course } from '~/types/course';
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from '~/components/educators/ui/breadcrumb';
+import { Button } from '~/components/educators/ui/button';
 
 export interface CourseModel {
 	id: number;
@@ -47,105 +27,80 @@ export interface CourseModel {
 	creatorId: string;
 	dificultadid: string; // Add this line
 	requerimientos: string;
+	totalParametros: number; // Add this line
+	rating: number; // Añadir esta línea
 }
 
-export default function Cursos() {
-	const [courses, setCourses] = useState<Course[]>([
-		{
-			id: 1,
-			title: 'Introducción a la Programación',
-			coverImageKey: null,
-			category: { id: 1, name: 'Programación' },
-			description: 'Un curso básico para principiantes en programación',
-			instructor: 'Juan Pérez',
-			rating: 4.5,
-			createdAt: '2023-01-01',
-			updatedAt: '2023-06-15',
-			totalStudents: 100,
-			modalidad: { name: 'Online' },
-			lessons: [
-				{
-					id: 1,
-					title: 'Introducción a los algoritmos',
-					duration: 60,
-					description: 'Conceptos básicos de algoritmos',
-				},
-				{
-					id: 2,
-					title: 'Variables y tipos de datos',
-					duration: 45,
-					description: 'Entendiendo las variables y tipos en programación',
-				},
-			],
-		},
-		// Añade más cursos aquí para probar la paginación
-	]);
+export function LoadingCourses() {
+	return (
+		<div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+			{Array.from({ length: 9 }).map((_, index) => (
+				<SkeletonCard key={index} />
+			))}
+		</div>
+	);
+}
 
-	const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-	const [searchTerm, setSearchTerm] = useState('');
-	const [currentPage, setCurrentPage] = useState(1);
-	const coursesPerPage = 6;
-	const [totalCourses, setTotalCourses] = useState<number>(0);
+export default function Page() {
+	const { user } = useUser();
+	const [courses, setCourses] = useState<CourseModel[]>([]);
+	const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
+	const [uploading, setUploading] = useState(false);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [parametrosList, setParametrosList] = useState<
+		{
+			id: number;
+			name: string;
+			description: string;
+			porcentaje: number;
+		}[]
+	>([]);
+
+	const fetchCourses = useCallback(async () => {
+		if (!user) return;
+		try {
+			setLoading(true);
+			setError(null);
+			const response = await fetch(`/api/educadores/courses?userId=${user.id}`);
+			if (response.ok) {
+				const data = (await response.json()) as CourseModel[];
+				setCourses(
+					data.map((course) => ({
+						...course,
+						dificultadid: course.dificultadid ?? '', // Map it properly
+						categoryid: course.categoryid, // Map categoryid properly
+						modalidadesid: course.modalidadesid, // Map modalidadesid properly
+					})) as CourseModel[]
+				);
+			} else {
+				const errorData = (await response.json()) as { error?: string };
+				const errorMessage = errorData.error ?? response.statusText;
+				setError(`Error al cargar los cursos: ${errorMessage}`);
+				toast.error('Error', {
+					description: `No se pudieron cargar los cursos: ${errorMessage}`,
+				});
+			}
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Error desconocido';
+			setError(`Error al cargar los cursos: ${errorMessage}`);
+			toast.error('Error', {
+				description: `No se pudieron cargar los cursos: ${errorMessage}`,
+			});
+		} finally {
+			setLoading(false);
+		}
+	}, [user]);
 
 	useEffect(() => {
-		const fetchTotalCourses = async () => {
-			try {
-				const response = await fetch('/api/admin/couses');
-				if (!response.ok) {
-					throw new Error('Error fetching total courses');
-				}
-				const data: { total: number } = (await response.json()) as {
-					total: number;
-				};
-				setTotalCourses(data.total);
-			} catch (error) {
-				console.error('Error fetching total courses:', error);
-			}
-		};
-
-		void fetchTotalCourses();
-	}, []);
-
-	const handleAddCourse = (newCourse: Partial<Course>) => {
-		const course: Course = {
-			...newCourse,
-			id: courses.length + 1,
-			coverImageKey: null,
-			rating: null,
-			createdAt: new Date().toISOString(),
-			updatedAt: new Date().toISOString(),
-			totalStudents: 0,
-		} as Course;
-		setCourses([...courses, course]);
-	};
-
-	const filteredCourses = courses.filter(
-		(course) =>
-			course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-			course.instructor.toLowerCase().includes(searchTerm.toLowerCase())
-	);
-	const [uploading, setUploading] = useState(false);
-	const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const { user } = useUser();
-	console.log(user?.id);
-	const indexOfLastCourse = currentPage * coursesPerPage;
-	const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
-	const currentCourses = filteredCourses.slice(
-		indexOfFirstCourse,
-		indexOfLastCourse
-	);
-
-	const handleCreateCourse = () => {
-		setEditingCourse(null);
-		setIsModalOpen(true);
-	};
-
-	const handleCloseModal = () => {
-		setIsModalOpen(false);
-	};
-
-	const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+		if (user) {
+			fetchCourses().catch((error) =>
+				console.error('Error fetching courses:', error)
+			);
+		}
+	}, [user, fetchCourses]);
 
 	const handleCreateOrEditCourse = async (
 		id: string,
@@ -155,17 +110,33 @@ export default function Cursos() {
 		categoryid: number,
 		modalidadesid: number,
 		dificultadid: number,
-		requerimientos: string
+		rating: number, // Añadir esta línea
+		requerimientos: string,
+		addParametros: boolean, // Cambiar options por addParametros
+		coverImageKey: string,
+		fileName: string // Nuevo parámetro
 	) => {
 		if (!user) return;
-		let coverImageKey = '';
+
+		// Validar que haya al menos un parámetro si addParametros es true
+		if (addParametros && parametrosList.length === 0) {
+			toast.error('Error', {
+				description: 'Debe agregar al menos un parámetro de evaluación',
+			});
+			return;
+		}
+
 		try {
 			setUploading(true);
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
+					body: JSON.stringify({
+						contentType: file.type,
+						fileSize: file.size,
+						fileName: file.name, // Asegúrate de pasar el fileName correcto
+					}),
 				});
 
 				if (!uploadResponse.ok) {
@@ -174,10 +145,16 @@ export default function Cursos() {
 					);
 				}
 
-				const { url, fields } = (await uploadResponse.json()) as {
+				const uploadData = (await uploadResponse.json()) as {
 					url: string;
 					fields: Record<string, string>;
+					key: string;
+					fileName: string;
 				};
+
+				const { url, fields, key, fileName: responseFileName } = uploadData;
+				coverImageKey = key;
+				fileName = responseFileName;
 
 				const formData = new FormData();
 				Object.entries(fields).forEach(([key, value]) => {
@@ -191,253 +168,272 @@ export default function Cursos() {
 					method: 'POST',
 					body: formData,
 				});
-				if (!uploadResponse.ok) {
-					throw new Error(
-						`Error: al iniciar la carga: ${uploadResponse.statusText}`
-					);
-				}
-				coverImageKey = fields.key ?? '';
 			}
 			setUploading(false);
-		} catch (e) {
-			throw new Error(`Error to upload the file type ${(e as Error).message}`);
+		} catch (e: unknown) {
+			const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+			throw new Error(`Error to upload the file type ${errorMessage}`);
 		}
 		const response = await fetch('/api/educadores/courses', {
-			method: editingCourse ? 'PUT' : 'POST',
+			method: 'POST', // Asegúrate de usar 'POST' cuando no estás editando
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				id: editingCourse?.id,
 				title,
 				description,
 				coverImageKey,
+				fileName, // Agregar fileName al cuerpo de la solicitud
 				categoryid,
 				modalidadesid,
 				instructor: user.fullName,
 				creatorId: user.id,
 				dificultadid,
 				requerimientos,
+				rating, // Añadir esta línea
 			}),
 		});
 
 		if (response.ok) {
-			toast({
-				title: editingCourse ? 'Curso actualizado' : 'Curso creado',
+			const responseData = (await response.json()) as { id: number };
+
+			toast.success(editingCourse ? 'Curso actualizado' : 'Curso creado', {
 				description: editingCourse
 					? 'El curso se actualizó con éxito'
 					: 'El curso se creó con éxito',
 			});
+
+			// Guardar parámetros en la base de datos si addParametros es true
+			if (addParametros) {
+				for (const parametro of parametrosList) {
+					try {
+						const response = await fetch('/api/educadores/parametros', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								name: parametro.name,
+								description: parametro.description,
+								porcentaje: parametro.porcentaje,
+								courseId: responseData.id, // Asegúrate de pasar el courseId aquí
+							}),
+						});
+
+						if (response.ok) {
+							toast.success('Parámetro creado exitosamente', {
+								description: 'El parámetro se ha creado exitosamente',
+							});
+						} else {
+							const errorData = (await response.json()) as { error: string };
+							throw new Error(errorData.error);
+						}
+					} catch (error) {
+						toast.error('Error al crear el parámetro', {
+							description: `Ha ocurrido un error al crear el parámetro: ${(error as Error).message}`,
+						});
+					}
+				}
+			}
+
+			fetchCourses().catch((error) =>
+				console.error('Error fetching courses:', error)
+			);
 			setEditingCourse(null);
 			setIsModalOpen(false);
 		} else {
 			const errorData = (await response.json()) as { error?: string };
-			toast({
-				title: 'Error',
+			toast.error('Error', {
 				description:
 					errorData.error ?? 'Ocurrió un error al procesar la solicitud',
-				variant: 'destructive',
 			});
 		}
 	};
 
-	return (
-		<div className="space-y-6 bg-background p-4 sm:p-6 md:p-8">
-			<h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-				Gestión de Cursos
-			</h2>
+	const handleCreateCourse = () => {
+		setEditingCourse({
+			id: 0,
+			title: '',
+			description: '',
+			categoryid: '',
+			modalidadesid: '',
+			createdAt: '',
+			instructor: '',
+			coverImageKey: '',
+			creatorId: '',
+			dificultadid: '',
+			requerimientos: '',
+			totalParametros: 0,
+			rating: 0, // Añadir esta línea
+		});
+		setParametrosList([]); // Resetear la lista de parámetros al crear un nuevo curso
+		setIsModalOpen(true);
+	};
 
-			<div className="grid gap-4">
-				<div className="grid gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-					<Card>
-						<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-							<CardTitle className="text-sm font-medium">
-								Total de Cursos
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<div className="text-2xl font-bold">{totalCourses}</div>
-							<Link
-								href={'/cursos'}
-								className="text-xs text-muted-foreground hover:underline"
-							>
-								Ver detalles
-							</Link>
-						</CardContent>
-					</Card>
+	const handleCloseModal = () => {
+		setIsModalOpen(false);
+		setEditingCourse(null);
+		setParametrosList([]);
+	};
 
-					<DashboardMetrics
-						metrics={[
-							{
-								title: 'Estudiantes Inscritos',
-								value: courses
-									.reduce((acc, course) => acc + course.totalStudents, 0)
-									.toString(),
-								icon: Users,
-								href: '/estudiantes',
-							},
-							{
-								title: 'Promedio de Calificación',
-								value: (
-									courses.reduce(
-										(acc, course) => acc + (course.rating ?? 0),
-										0
-									) / courses.length
-								).toFixed(1),
-								icon: TrendingUp,
-								href: '/analisis',
-							},
-						]}
-					/>
+	// Asegúrate de que las funciones de setState no se llamen en cada renderizado
+	const setTitle = (title: string) => {
+		setEditingCourse((prev) => (prev ? { ...prev, title } : prev));
+	};
+
+	const setDescription = (description: string) => {
+		setEditingCourse((prev) => (prev ? { ...prev, description } : prev));
+	};
+
+	const setRequerimientos = (requerimientos: string) => {
+		setEditingCourse((prev) => (prev ? { ...prev, requerimientos } : prev));
+	};
+
+	const setCategoryid = (categoryid: number) => {
+		setEditingCourse((prev) =>
+			prev ? { ...prev, categoryid: String(categoryid) } : prev
+		);
+	};
+
+	const setModalidadesid = (modalidadesid: number) => {
+		setEditingCourse((prev) =>
+			prev ? { ...prev, modalidadesid: String(modalidadesid) } : prev
+		);
+	};
+
+	const setDificultidid = (dificultadid: number) => {
+		setEditingCourse((prev) =>
+			prev ? { ...prev, dificultadid: String(dificultadid) } : prev
+		);
+	};
+
+	const setCoverImageKey = (coverImageKey: string) => {
+		setEditingCourse((prev) => (prev ? { ...prev, coverImageKey } : prev));
+	};
+
+	const setRating = (rating: number) => {
+		setEditingCourse((prev) => (prev ? { ...prev, rating } : prev));
+	};
+
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
 				</div>
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-lg sm:text-xl">
-							Buscar y Agregar Cursos
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="flex flex-col items-start justify-between space-y-4 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
-						<div className="relative w-full max-w-sm">
-							<Search className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-							<Input
-								placeholder="Buscar cursos..."
-								value={searchTerm}
-								onChange={(e) => setSearchTerm(e.target.value)}
-								className="w-full pl-8"
-							/>
-						</div>
-						<Dialog>
-							<DialogTrigger asChild>
-								<Button className="w-full sm:w-auto">
-									<Plus className="mr-2 size-4" /> Agregar Curso
-								</Button>
-							</DialogTrigger>
-							<DialogContent className="sm:max-w-[550px]">
-								<DialogHeader>
-									<DialogTitle>Agregar Nuevo Curso</DialogTitle>
-								</DialogHeader>
-								<CourseForm onSubmit={handleAddCourse} />
-							</DialogContent>
-						</Dialog>
-					</CardContent>
-				</Card>
-			</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
 
-			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-				{currentCourses.map((course) => (
-					<Card key={course.id} className="flex flex-col">
-						<CardHeader>
-							<CardTitle className="text-lg">{course.title}</CardTitle>
-						</CardHeader>
-						<CardContent className="grow">
-							<p className="mb-2 text-sm text-muted-foreground">
-								{course.instructor}
-							</p>
-							<p className="line-clamp-3 text-sm">{course.description}</p>
-						</CardContent>
-						<CardFooter className="flex items-center justify-between">
-							<span className="text-sm font-medium">
-								{course.totalStudents} estudiantes
-							</span>
-							<Button
-								variant="outline"
-								onClick={() => setSelectedCourse(course)}
+	return (
+		<>
+			<main className="h-auto">
+				<Breadcrumb>
+					<BreadcrumbList>
+						<BreadcrumbItem>
+							<BreadcrumbLink
+								className="text-primary hover:text-gray-300"
+								href="../educadores"
 							>
-								Ver Detalles
+								Inicio
+							</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+						<BreadcrumbItem>
+							<BreadcrumbLink
+								className="text-primary hover:text-gray-300"
+								href="/"
+							>
+								Lista de cursos
+							</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+					</BreadcrumbList>
+				</Breadcrumb>
+				<div className="container mx-auto px-2">
+					<div className="mt-2 flex justify-between">
+						<h1 className="text-3xl font-bold">Panel de cursos</h1>
+						<Button
+							onClick={handleCreateCourse}
+							className="bg-primary text-black transition-transform active:scale-95"
+						>
+							<FiPlus className="mr-2" />
+							Crear Curso
+						</Button>
+					</div>
+					{loading ? (
+						<LoadingCourses />
+					) : error ? (
+						<div className="mt-10 flex flex-col items-center justify-center py-10 text-center">
+							<p className="text-xl text-red-600">{error}</p>
+							<button
+								onClick={fetchCourses}
+								className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+							>
+								Reintentar
+							</button>
+						</div>
+					) : courses.length === 0 ? (
+						<div className="mt-10 flex flex-col items-center justify-center py-10 text-center">
+							<h2 className="mb-4 text-2xl font-bold">
+								Lista de cursos creados
+							</h2>
+							<p className="text-xl text-gray-600">
+								No hay cursos creados todavía
+							</p>
+							<p className="my-2 text-gray-500">
+								Comienza creando tu primer curso haciendo clic en el botón
+								&quot;Crear Curso&quot;
+							</p>
+							<span>&#128071;&#128071;&#128071;</span>
+							<Button
+								onClick={handleCreateCourse}
+								className="mt-5 bg-primary text-background transition-transform hover:text-primary active:scale-95"
+							>
+								<FiPlus className="mr-2" />
+								Crear Curso
 							</Button>
-						</CardFooter>
-					</Card>
-				))}
-			</div>
-			<Button
-				onClick={handleCreateCourse}
-				className="bg-primary text-background transition-transform hover:text-primary active:scale-95"
-			>
-				<FiPlus className="mr-2" />
-				Crear Curso
-			</Button>
-			{isModalOpen && (
-				<ModalFormCourse
-					onSubmitAction={handleCreateOrEditCourse}
-					uploading={uploading}
-					editingCourseId={editingCourse ? editingCourse.id : null}
-					title={editingCourse?.title ?? ''}
-					setTitle={(title: string) =>
-						setEditingCourse((prev) => (prev ? { ...prev, title } : null))
-					}
-					description={editingCourse?.description ?? ''}
-					setDescription={(description: string) =>
-						setEditingCourse((prev) => (prev ? { ...prev, description } : null))
-					}
-					requerimientos={editingCourse?.requerimientos ?? ''}
-					setRequerimientos={(requerimientos: string) =>
-						setEditingCourse((prev) =>
-							prev ? { ...prev, requerimientos } : null
-						)
-					}
-					categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
-					setCategoryid={(categoryid: number) =>
-						setEditingCourse((prev) =>
-							prev ? { ...prev, categoryid: String(categoryid) } : null
-						)
-					}
-					modalidadesid={Number(editingCourse?.modalidadesid) ?? 0}
-					setModalidadesid={(modalidadesid: number) =>
-						setEditingCourse((prev) =>
-							prev ? { ...prev, modalidadesid: String(modalidadesid) } : null
-						)
-					}
-					dificultadid={Number(editingCourse?.dificultadid) ?? 0}
-					setDificultadid={(dificultadid: number) =>
-						setEditingCourse((prev) =>
-							prev ? { ...prev, dificultadid: String(dificultadid) } : null
-						)
-					}
-					coverImageKey={editingCourse?.coverImageKey ?? ''}
-					setCoverImageKey={(coverImageKey: string) =>
-						setEditingCourse((prev) =>
-							prev ? { ...prev, coverImageKey } : null
-						)
-					}
-					isOpen={isModalOpen}
-					onCloseAction={handleCloseModal}
-				/>
-			)}
-
-			<div className="mt-6 flex justify-center">
-				<Pagination>
-					<PaginationContent>
-						<PaginationItem>
-							<PaginationPrevious onClick={() => paginate(currentPage - 1)} />
-						</PaginationItem>
-						{Array.from(
-							{ length: Math.ceil(filteredCourses.length / coursesPerPage) },
-							(_, index) => (
-								<PaginationItem key={index}>
-									<PaginationLink
-										onClick={() => paginate(index + 1)}
-										isActive={index + 1 === currentPage}
-									>
-										{index + 1}
-									</PaginationLink>
-								</PaginationItem>
-							)
-						)}
-						<PaginationItem>
-							<PaginationNext onClick={() => paginate(currentPage + 1)} />
-						</PaginationItem>
-					</PaginationContent>
-				</Pagination>
-			</div>
-
-			{selectedCourse && (
-				<Dialog
-					open={!!selectedCourse}
-					onOpenChange={() => setSelectedCourse(null)}
-				>
-					<DialogContent className="h-[90vh] w-full p-0 sm:max-w-[425px] md:max-w-[700px] lg:max-w-[900px]">
-						<CourseDetails course={selectedCourse} />
-					</DialogContent>
-				</Dialog>
-			)}
-		</div>
+						</div>
+					) : (
+						<>
+							<h2 className="mt-5 mb-4 text-2xl font-bold">
+								Lista de cursos creados
+							</h2>
+							<CourseListTeacher courses={courses} />
+						</>
+					)}
+					{isModalOpen && (
+						<ModalFormCourse
+							onSubmitAction={handleCreateOrEditCourse}
+							uploading={uploading}
+							editingCourseId={editingCourse ? editingCourse.id : null}
+							title={editingCourse?.title ?? ''}
+							setTitle={setTitle}
+							description={editingCourse?.description ?? ''}
+							setDescription={setDescription}
+							requerimientos={editingCourse?.requerimientos ?? ''}
+							setRequerimientos={setRequerimientos}
+							categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
+							setCategoryid={setCategoryid}
+							modalidadesid={Number(editingCourse?.modalidadesid) || 0}
+							setModalidadesid={setModalidadesid}
+							dificultadid={Number(editingCourse?.dificultadid) || 0}
+							setDificultadid={setDificultidid}
+							coverImageKey={editingCourse?.coverImageKey ?? ''}
+							setCoverImageKey={setCoverImageKey}
+							parametros={parametrosList.map((parametro, index) => ({
+								...parametro,
+								id: index,
+							}))}
+							setParametrosAction={setParametrosList}
+							isOpen={isModalOpen}
+							onCloseAction={handleCloseModal}
+							rating={editingCourse?.rating ?? 0} // Añadir esta línea
+							setRating={setRating}
+						/>
+					)}
+				</div>
+			</main>
+		</>
 	);
 }

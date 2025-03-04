@@ -31,6 +31,7 @@ import {
 	Timer,
 } from 'lucide-react';
 import type { Ticket as OriginalTicket } from './SistemaDeSoporte';
+import { Ticket as TicketType } from '~/types/Tickets';
 
 interface Ticket extends OriginalTicket {
 	categorias: string[];
@@ -62,14 +63,14 @@ export const DetallesTicket = ({
 	tecnicos,
 	categoriasDisponibles = [],
 }: DetallesTicketProps) => {
-	const [ticketEditado, setTicketEditado] = useState(ticket);
+	const [ticketEditado, setTicketEditado] = useState<Ticket>(ticket);
 
 	const handleChange = (campo: keyof Ticket, valor: any) => {
 		setTicketEditado({ ...ticketEditado, [campo]: valor });
 	};
 
-	const handleSubmit = () => {
-		onActualizarAction(ticketEditado);
+	const handleSubmit = async () => {
+		await onActualizarAction(ticketEditado);
 		onCerrarAction();
 	};
 
@@ -162,28 +163,28 @@ export const DetallesTicket = ({
 
 						<div className="bg-muted/50 grid grid-cols-1 gap-4 rounded-lg p-4 md:grid-cols-3">
 							<div className="flex items-center gap-2">
-								<CalendarIcon className="h-5 w-5 text-muted-foreground" />
+								<CalendarIcon className="text-muted-foreground h-5 w-5" />
 								<div className="space-y-1">
 									<p className="text-sm font-medium">Fecha de Creación</p>
-									<p className="text-sm text-muted-foreground">
+									<p className="text-muted-foreground text-sm">
 										{new Date(ticketEditado.fechaCreacion).toLocaleString()}
 									</p>
 								</div>
 							</div>
 							<div className="flex items-center gap-2">
-								<ClockIcon className="h-5 w-5 text-muted-foreground" />
+								<ClockIcon className="text-muted-foreground h-5 w-5" />
 								<div className="space-y-1">
 									<p className="text-sm font-medium">Tiempo Transcurrido</p>
-									<p className="text-sm text-muted-foreground">
+									<p className="text-muted-foreground text-sm">
 										{calcularTiempoTranscurrido(ticketEditado.fechaCreacion)}
 									</p>
 								</div>
 							</div>
 							<div className="flex items-center gap-2">
-								<UserIcon className="h-5 w-5 text-muted-foreground" />
+								<UserIcon className="text-muted-foreground h-5 w-5" />
 								<div className="space-y-1">
 									<p className="text-sm font-medium">Asignado a</p>
-									<p className="text-sm text-muted-foreground">
+									<p className="text-muted-foreground text-sm">
 										{ticketEditado.asignadoA || 'Sin asignar'}
 									</p>
 								</div>
@@ -279,7 +280,7 @@ export const DetallesTicket = ({
 									}
 									className="max-w-[200px]"
 								/>
-								<span className="text-sm text-muted-foreground">horas</span>
+								<span className="text-muted-foreground text-sm">horas</span>
 							</div>
 						</div>
 
@@ -318,7 +319,7 @@ export const DetallesTicket = ({
 									))}
 								</div>
 							) : (
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									No hay categorías disponibles.
 								</p>
 							)}
@@ -366,7 +367,9 @@ export const DetallesTicket = ({
 					<Button onClick={onCerrarAction} variant="outline">
 						Cancelar
 					</Button>
-					<Button className='text-gray-800' onClick={handleSubmit}>Guardar cambios</Button>
+					<Button className="text-gray-800" onClick={handleSubmit}>
+						Guardar cambios
+					</Button>
 				</div>
 			</div>
 		</ScrollArea>
