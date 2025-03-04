@@ -109,7 +109,7 @@ export default async function Page({ params }: Props) {
 	const { userId } = await auth();
 
 	return (
-		<div>
+		<div className="flex min-h-screen flex-col">
 			<Header />
 			<Suspense fallback={<CourseDetailsSkeleton />}>
 				<CourseContent id={id} userId={userId} />
@@ -169,4 +169,5 @@ async function CourseContent({
 	);
 }
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
