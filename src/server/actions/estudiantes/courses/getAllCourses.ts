@@ -111,6 +111,6 @@ export const getAllCourses = unstable_cache(
 );
 
 // Precargar datos
-export const preloadAllCourses = () => {
-	void getAllCourses();
+export const preloadAllCourses = async () => {
+	await getAllCourses();
 };
