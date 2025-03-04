@@ -115,7 +115,8 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
 
 	return (
 		<div className="my-2 space-y-4">
-			{questionsVOF && questionsVOF.length > 0 ? (
+			{questionsVOF &&
+				questionsVOF.length > 0 &&
 				questionsVOF.map((question) => (
 					<Card
 						key={question.id}
@@ -160,7 +161,7 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
 							<Button
 								type="button"
 								variant="secondary"
-								className="absolute bottom-6 right-10"
+								className="absolute right-10 bottom-6"
 								onClick={() =>
 									handleSubmit(question.id, selectedOptions[question.id] ?? '')
 								}
@@ -170,10 +171,7 @@ const VerQuestionVOFList: React.FC<QuestionListProps> = ({
 							</Button>
 						</CardFooter>
 					</Card>
-				))
-			) : (
-				<p>No hay preguntas disponibles.</p>
-			)}
+				))}
 		</div>
 	);
 };

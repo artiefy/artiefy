@@ -102,9 +102,6 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
 	};
 
 	if (loading) return <div className="text-center">Cargando actividad...</div>;
-	if (!questions || questions.length === 0) {
-		return <div className="text-center">No hay preguntas disponibles.</div>;
-	}
 
 	return (
 		<div className="space-y-4">
@@ -149,7 +146,7 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
 						<Button
 							type="button"
 							variant="secondary"
-							className="absolute bottom-6 right-10"
+							className="absolute right-10 bottom-6"
 							onClick={() =>
 								handleSubmit(question.id, selectedOptions[question.id] || '')
 							}

@@ -2,10 +2,10 @@
 import type React from 'react';
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 import { Input } from '~/components/educators/ui/input';
-import { toast } from '~/hooks/use-toast';
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
 interface QuestionListProps {
@@ -57,11 +57,9 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 			// Validar tamaño del archivo (150MB = 150 * 1024 * 1024 bytes)
 			const maxSize = 150 * 1024 * 1024;
 			if (file.size > maxSize) {
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description:
 						'El archivo es demasiado grande. El tamaño máximo permitido es 150MB.',
-					variant: 'destructive',
 				});
 				return;
 			}
@@ -104,10 +102,8 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 				throw new Error('Error al subir el archivo');
 			}
 
-			toast({
-				title: 'Archivo subido',
+			toast('Archivo subido', {
 				description: 'El archivo se subió correctamente',
-				variant: 'default',
 			});
 			setSelectedFiles((prev) => ({
 				...prev,
@@ -115,10 +111,8 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
 			}));
 		} catch (error) {
 			console.error('Error:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description: `Error al subir el archivo: ${(error as Error).message}`,
-				variant: 'destructive',
 			});
 		} finally {
 			setSubmitting(false);
