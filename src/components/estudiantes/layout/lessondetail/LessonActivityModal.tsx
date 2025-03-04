@@ -9,7 +9,6 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity, Question } from '~/types';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 interface ActivityModalProps {
 	isOpen: boolean;
@@ -122,13 +121,8 @@ const LessonActivityModal = ({
 					<DialogHeader>
 						<DialogTitle>Actividad</DialogTitle>
 					</DialogHeader>
-					<div className="space-y-4">
-						<Skeleton className="h-8 w-3/4" />
-						<Skeleton className="h-32 w-full" />
-						<div className="flex justify-between">
-							<Skeleton className="h-10 w-24" />
-							<Skeleton className="h-10 w-24" />
-						</div>
+					<div className="flex justify-center">
+						<Icons.spinner className="h-8 w-8 animate-spin" />
 					</div>
 				</DialogContent>
 			</Dialog>
@@ -141,32 +135,24 @@ const LessonActivityModal = ({
 				<DialogHeader>
 					<DialogTitle>Actividad</DialogTitle>
 				</DialogHeader>
+				<div className="space-y-6">
+					{renderQuestion()}
+					<div className="flex justify-between">
+						<Button
+							onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
+							disabled={currentQuestionIndex === 0}
+						>
+							Anterior
+						</Button>
 
-				{isLoading ? (
-					<div className="flex justify-center">
-						<Icons.spinner className="h-8 w-8 animate-spin" />
+						<Button
+							onClick={handleNext}
+							disabled={!userAnswers[currentQuestion?.id]}
+						>
+							{isLastQuestion ? 'Finalizar' : 'Siguiente'}
+						</Button>
 					</div>
-				) : (
-					<div className="space-y-6">
-						{renderQuestion()}
-
-						<div className="flex justify-between">
-							<Button
-								onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
-								disabled={currentQuestionIndex === 0}
-							>
-								Anterior
-							</Button>
-
-							<Button
-								onClick={handleNext}
-								disabled={!userAnswers[currentQuestion?.id]}
-							>
-								{isLastQuestion ? 'Finalizar' : 'Siguiente'}
-							</Button>
-						</div>
-					</div>
-				)}
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

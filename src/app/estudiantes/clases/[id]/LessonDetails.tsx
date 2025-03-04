@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -13,7 +13,6 @@ import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonCo
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
 import RecursosLesson from '~/components/estudiantes/layout/lessondetail/LessonResource';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -397,79 +396,73 @@ export default function LessonDetails({
 	}, [user, router]);
 
 	return (
-		<div className="flex min-h-screen flex-col bg-background">
+		<div className="flex min-h-screen flex-col">
 			<div className="flex flex-1 px-4 py-6">
 				{/* Left Sidebar */}
-				<Suspense fallback={<Skeleton className="h-full w-80" />}>
-					<div className="w-80 bg-background p-4 shadow-lg">
-						<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
-						<LessonCards
+				<div className="w-80 bg-background p-4">
+					<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
+					<LessonCards
+						lessonsState={lessonsState}
+						selectedLessonId={selectedLessonId}
+						onLessonClick={handleCardClick}
+						progress={progress}
+						isNavigating={isNavigating}
+					/>
+				</div>
+
+				{/* Main Content */}
+				<div className="flex-1 p-6">
+					<div className="navigation-buttons">
+						{' '}
+						{/* Add this wrapper div with class */}
+						<LessonNavigation
+							onNavigate={handleNavigationClick}
 							lessonsState={lessonsState}
-							selectedLessonId={selectedLessonId}
-							onLessonClick={handleCardClick}
-							progress={progress}
+							lessonOrder={new Date(lesson.createdAt).getTime()}
 							isNavigating={isNavigating}
 						/>
 					</div>
-				</Suspense>
+					<LessonPlayer
+						lesson={lesson}
+						progress={progress}
+						handleVideoEnd={handleVideoEnd}
+						handleProgressUpdate={handleProgressUpdate}
+					/>
+					<ClassComments lessonId={lesson.id} />
+				</div>
 
-				{/* Main Content */}
-				<Suspense fallback={<Skeleton className="h-full flex-1" />}>
-					<div className="flex-1 p-6">
-						<div className="navigation-buttons">
-							{' '}
-							{/* Add this wrapper div with class */}
-							<LessonNavigation
-								onNavigate={handleNavigationClick}
-								lessonsState={lessonsState}
-								lessonOrder={new Date(lesson.createdAt).getTime()}
-								isNavigating={isNavigating}
-							/>
-						</div>
-						<LessonPlayer
-							lesson={lesson}
-							progress={progress}
-							handleVideoEnd={handleVideoEnd}
-							handleProgressUpdate={handleProgressUpdate}
-						/>
-						<ClassComments lessonId={lesson.id} />
-					</div>
-				</Suspense>
-
-				{/* Right Sidebar - Activities and Resources */}
-				<Suspense fallback={<Skeleton className="h-full w-72" />}>
-					<div className="flex flex-col">
-						<LessonActivities
-							activity={
-								activity ?? {
-									id: 0, // Use 0 instead of null
-									name: '',
-									description: '',
-									lessonsId: lesson.id,
-									content: {
-										// Match the expected type
-										questions: [],
-									},
-									isCompleted: false,
-									userProgress: 0,
-									lastUpdated: new Date(),
-									revisada: false,
-									porcentaje: 0,
-									parametroId: null,
-									createdAt: new Date(),
-									fechaMaximaEntrega: null,
-									typeid: 0,
-								}
+				{/* Right Sidebar */}
+				<div className="flex flex-col">
+					<LessonActivities
+						activity={
+							activity ?? {
+								id: 0, // Use 0 instead of null
+								name: '',
+								description: '',
+								lessonsId: lesson.id,
+								content: {
+									// Match the expected type
+									questions: [],
+								},
+								isCompleted: false,
+								userProgress: 0,
+								lastUpdated: new Date(),
+								revisada: false,
+								porcentaje: 0,
+								parametroId: null,
+								createdAt: new Date(),
+								fechaMaximaEntrega: null,
+								typeid: 0,
 							}
-							isVideoCompleted={isVideoCompleted}
-							isActivityCompleted={isActivityCompleted}
-							isCompletingActivity={isCompletingActivity}
-							handleActivityCompletion={handleActivityCompletion}
-							userId={userId}
-						/>
-						<RecursosLesson resourceNames={lesson.resourceNames} />
-					</div>
-				</Suspense>
+						}
+						isVideoCompleted={isVideoCompleted}
+						isActivityCompleted={isActivityCompleted}
+						isCompletingActivity={isCompletingActivity}
+						handleActivityCompletion={handleActivityCompletion}
+						userId={userId}
+					/>
+					<RecursosLesson resourceNames={lesson.resourceNames} />
+				</div>
 
 				{/* Chatbot Button and Modal */}
 				<button

@@ -37,9 +37,11 @@ export default async function LessonPage({ params }: PageProps) {
 	return (
 		<>
 			<Header />
-			<Suspense fallback={<LessonSkeleton />}>
-				<LessonContent id={id} userId={userId} />
-			</Suspense>
+			<main>
+				<Suspense fallback={<LessonSkeleton />}>
+					<LessonContent id={id} userId={userId} />
+				</Suspense>
+			</main>
 			<Footer />
 		</>
 	);
