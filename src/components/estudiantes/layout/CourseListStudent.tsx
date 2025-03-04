@@ -140,7 +140,6 @@ export default async function CourseListStudent({
 											<Button asChild>
 												<Link
 													href={`/estudiantes/cursos/${course.id}`}
-													prefetch={true} // Precarga automática de la página del curso
 													className="group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
 												>
 													<p className="font-bold">Ver Curso</p>
