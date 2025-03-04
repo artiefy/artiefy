@@ -119,22 +119,23 @@ const LessonActivities = ({
 							disabled={!isVideoCompleted}
 							className={`relative w-full overflow-hidden ${
 								activityCompleted
-									? 'bg-green-500 text-white hover:bg-green-600'
+									? 'bg-green-500 text-white hover:bg-green-700'
 									: isVideoCompleted
-										? 'font-semibold text-black'
+										? 'font-semibold text-black hover:text-green-800'
 										: 'bg-gray-400 text-background'
 							}`}
 						>
 							{/* Fondo animado solo para el estado activo no completado */}
 							{isVideoCompleted && !activityCompleted && (
-								<div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71]" />
+								<div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] hover:from-[#2ecc71] hover:to-[#3AF4EF]" />
 							)}
 
 							{/* Texto siempre por encima del gradiente */}
 							<span className="relative z-10">
 								{activityCompleted ? (
 									<>
-										Ver Resultados <FaCheckCircle className="ml-2 inline" />
+										Ver Resultados{' '}
+										<FaCheckCircle className="ml-2 inline text-white" />
 									</>
 								) : (
 									'Ver Actividad'

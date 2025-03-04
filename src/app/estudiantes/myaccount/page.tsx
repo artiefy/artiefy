@@ -4,6 +4,9 @@ import { Header } from '~/components/estudiantes/layout/Header';
 import MyCoursesStudent, { CourseCardSkeleton } from '~/components/estudiantes/layout/MyCoursesStudent';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function MisCoursesPage() {
   return (
     <div className="flex min-h-screen flex-col">
