@@ -213,40 +213,43 @@ export default function LessonDetails({
 	// Handle activity completion event
 	const handleActivityCompletion = async () => {
 		if (!activity || !isVideoCompleted) return;
-
 		setIsCompletingActivity(true);
 
 		try {
+			// 1. Completar actividad y esperar resultado
 			await completeActivity(activity.id);
 			setIsActivityCompleted(true);
-			setLessonsState((prevLessons) =>
-				prevLessons.map((l) =>
-					l.id === lesson.id ? { ...l, isCompleted: true } : l
-				)
-			);
 
+			// 2. Completar lección y esperar resultado
+			await updateLessonProgress(lesson.id, 100);
+
+			// 3. Desbloquear siguiente lección
 			const result = await unlockNextLesson(lesson.id);
-			if (
-				result.success &&
-				'nextLessonId' in result &&
-				typeof result.nextLessonId === 'number'
-			) {
+
+			if (result.success && result.nextLessonId) {
+				// 4. Actualizar estados locales
 				setLessonsState((prevLessons) =>
 					prevLessons.map((l) =>
-						l.id === result.nextLessonId ? { ...l, isLocked: false } : l
+						l.id === lesson.id
+							? { ...l, isCompleted: true, porcentajecompletado: 100 }
+							: l.id === result.nextLessonId
+								? { ...l, isLocked: false, porcentajecompletado: 0 }
+								: l
 					)
 				);
-				toast.success('Clase Completada', {
-					description: '¡Avanzando a la siguiente clase!',
+
+				toast.success('¡Actividad completada!', {
+					description: 'La siguiente clase ha sido desbloqueada',
 				});
 
-				await handleAutoNavigation(result.nextLessonId);
+				// 5. Navegar a la siguiente lección después de un breve delay
+				setTimeout(async () => {
+					await handleAutoNavigation(result.nextLessonId!);
+				}, 1500);
 			}
 		} catch (error) {
-			console.error('Error al completar la actividad:', error);
-			toast.error('Error', {
-				description: 'No se pudo completar la actividad.',
-			});
+			console.error('Error:', error);
+			toast.error('Error al completar la actividad');
 		} finally {
 			setIsCompletingActivity(false);
 		}
