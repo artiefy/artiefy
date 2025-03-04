@@ -153,7 +153,7 @@ export interface Activity {
 	typeid: number;
 	isCompleted: boolean;
 	userProgress: number;
-	createdAt: Date; // Added createdAt property
+	createdAt?: Date; // Make createdAt optional
 }
 
 export interface Question {

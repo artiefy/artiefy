@@ -60,9 +60,10 @@ export async function getLessonsByCourseId(
 						...activity,
 						isCompleted: activityProgress?.isCompleted ?? false,
 						userProgress: activityProgress?.progress ?? 0,
+						createdAt: activity.lastUpdated, // Use lastUpdated as createdAt if not present
 					};
 				}) ?? [],
-		};
+		} as Lesson; // Add type assertion here
 	});
 
 	return transformedLessons;
