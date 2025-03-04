@@ -29,11 +29,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				return;
 			}
 
-			const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
 			try {
+				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
 				const response = await fetch(url);
-				if (response.status === 403) {
-					setError('No tienes acceso a este video');
+
+				if (!response.ok) {
+					if (response.status === 403) {
+						setError('No tienes acceso a este video');
+					} else {
+						setError('Error al cargar el video');
+					}
 					setVideoUrl('');
 				} else {
 					setVideoUrl(url);

@@ -15,7 +15,11 @@ const LessonPlayer = ({
 	handleVideoEnd,
 	handleProgressUpdate,
 }: LessonPlayerProps) => {
-	if (lesson.isLocked) {
+	// Verificar si la lección está explícitamente bloqueada o no existe registro
+	const isLocked = lesson.isLocked === true;
+
+	// Si la lección está bloqueada, mostrar mensaje de bloqueo
+	if (isLocked) {
 		return (
 			<div className="flex h-[400px] items-center justify-center rounded-lg bg-gray-100">
 				<div className="text-center">
@@ -31,6 +35,7 @@ const LessonPlayer = ({
 		);
 	}
 
+	// Si la lección no está bloqueada, mostrar el reproductor
 	return (
 		<div className="mx-auto max-w-4xl">
 			<div className="relative mb-6 aspect-video overflow-hidden rounded-lg bg-black">

@@ -85,8 +85,14 @@ export interface Lesson {
 
 export interface LessonWithProgress extends Lesson {
 	porcentajecompletado: number;
-	isLocked: boolean;
 	isCompleted: boolean;
+	isLocked: boolean; // Cambiado de 'boolean | null' a 'boolean'
+	resourceNames: string[];
+	courseId: number;
+	createdAt: Date;
+	content?: {
+		questions?: Question[];
+	};
 }
 
 export interface UserLessonsProgress {
@@ -227,3 +233,16 @@ export type UserWithEnrollments = User & { enrollments: Enrollment[] };
 export type UserWithCreatedCourses = User & { createdCourses: Course[] };
 export type CourseWithEnrollments = Course & { enrollments: Enrollment[] };
 export type CategoryWithPreferences = Category & { preferences: Preference[] };
+
+export interface SavedAnswer {
+	questionId: string;
+	answer: string;
+	isCorrect: boolean;
+}
+
+export interface ActivityResults {
+	score: number;
+	answers: Record<string, SavedAnswer>;
+	passed: boolean;
+	submittedAt: string;
+}

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { CogIcon } from '@heroicons/react/24/solid';
 import { toast } from 'sonner';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
@@ -9,7 +10,7 @@ import {
 	DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import type { Activity, Question } from '~/types';
+import type { Activity, Question, SavedAnswer } from '~/types';
 
 interface ActivityModalProps {
 	isOpen: boolean;
@@ -19,6 +20,10 @@ interface ActivityModalProps {
 	onQuestionsAnswered: (allAnswered: boolean) => void;
 	markActivityAsCompleted: () => Promise<void>; // Update type to Promise<void>
 	onActivityCompleted: () => Promise<void>; // Add this new prop
+	savedResults?: {
+		score: number;
+		answers: Record<string, SavedAnswer>;
+	} | null;
 }
 
 interface UserAnswer {
@@ -40,6 +45,7 @@ const LessonActivityModal = ({
 	onQuestionsAnswered,
 	markActivityAsCompleted,
 	onActivityCompleted, // Add this new prop
+	savedResults,
 }: ActivityModalProps) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
@@ -50,6 +56,7 @@ const LessonActivityModal = ({
 	const [showResults, setShowResults] = useState(false);
 	const [finalScore, setFinalScore] = useState(0);
 	const [canClose, setCanClose] = useState(false);
+	const [isUnlocking, setIsUnlocking] = useState(false);
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
@@ -57,6 +64,14 @@ const LessonActivityModal = ({
 		}
 		setIsLoading(false);
 	}, [activity]);
+
+	useEffect(() => {
+		if (savedResults) {
+			setFinalScore(savedResults.score ?? 0);
+			setUserAnswers(savedResults.answers ?? {});
+			setShowResults(true);
+		}
+	}, [savedResults]);
 
 	const currentQuestion = questions[currentQuestionIndex];
 	const isLastQuestion = currentQuestionIndex === questions.length - 1;
@@ -143,18 +158,25 @@ const LessonActivityModal = ({
 		}
 	};
 
+	const renderUnlockingState = () => (
+		<div className="flex flex-col items-center justify-center p-8">
+			<Icons.blocks className="h-16 w-16 fill-primary" />
+			<p className="mt-4 text-center text-sm text-gray-500">
+				Desbloqueando siguiente clase...
+			</p>
+		</div>
+	);
+
 	const handleFinishAndNavigate = async () => {
 		if (!canClose) return;
 
 		try {
+			setIsUnlocking(true);
+			// Esperar un momento antes de cerrar para mostrar la animación
+			await new Promise((resolve) => setTimeout(resolve, 500));
 			await markActivityAsCompleted();
-			await onActivityCompleted(); // Call parent's handler
+			await onActivityCompleted();
 			onQuestionsAnswered(true);
-
-			toast.success('¡Actividad completada!', {
-				description: 'La siguiente clase ha sido desbloqueada',
-			});
-
 			onClose();
 		} catch (error) {
 			console.error('Error:', error);
@@ -317,9 +339,17 @@ const LessonActivityModal = ({
 			{finalScore >= 3 ? (
 				<Button
 					onClick={handleFinishAndNavigate}
+					disabled={isUnlocking}
 					className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 font-semibold text-white hover:from-blue-600 hover:to-blue-800"
 				>
-					Cerrar y desbloquear siguiente clase
+					{isUnlocking ? (
+						<>
+							<Icons.blocks className="mr-2 h-4 w-4 animate-spin" />
+							Desbloqueando siguiente clase...
+						</>
+					) : (
+						'Cerrar y desbloquear siguiente clase'
+					)}
 				</Button>
 			) : (
 				<div className="mt-4 space-y-4">
@@ -367,10 +397,17 @@ const LessonActivityModal = ({
 			}}
 		>
 			<DialogContent>
-				<DialogHeader>
-					<DialogTitle className="text-center text-xl">Actividad</DialogTitle>
+				<DialogHeader className="relative">
+					<DialogTitle className="text-center text-xl">
+						Actividad
+						<div className="absolute top-0 right-2">
+							<CogIcon className="h-5 w-5 animate-spin text-primary" />
+						</div>
+					</DialogTitle>
 				</DialogHeader>
-				{showResults ? (
+				{isUnlocking ? (
+					renderUnlockingState()
+				) : showResults ? (
 					renderResults()
 				) : (
 					<div className="space-y-6">

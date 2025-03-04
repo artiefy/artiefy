@@ -1,16 +1,11 @@
 import { Redis } from '@upstash/redis';
 import { type NextRequest, NextResponse } from 'next/server';
-
-interface UserAnswer {
-	questionId: string;
-	answer: string;
-	isCorrect: boolean;
-}
+import type { SavedAnswer, ActivityResults } from '~/types';
 
 interface SaveAnswersRequest {
 	activityId: number;
 	userId: string;
-	answers: Record<string, UserAnswer>;
+	answers: Record<string, SavedAnswer>;
 	score: number;
 	allQuestionsAnswered: boolean;
 }
@@ -23,12 +18,9 @@ const redis = new Redis({
 export async function POST(request: NextRequest) {
 	try {
 		const data = (await request.json()) as SaveAnswersRequest;
-
-		// Solo considerar exitoso si respondió todo Y aprobó
 		const success = data.allQuestionsAnswered && data.score >= 3;
 
-		// Guardar en Redis independientemente del resultado
-		const redisData = {
+		const redisData: ActivityResults = {
 			answers: data.answers,
 			score: data.score,
 			passed: data.score >= 3,
@@ -37,7 +29,6 @@ export async function POST(request: NextRequest) {
 
 		const redisKey = `activity:${data.activityId}:user:${data.userId}:answers`;
 
-		// Importante: Convertir a string antes de guardar
 		await redis.set(redisKey, JSON.stringify(redisData));
 
 		return NextResponse.json({

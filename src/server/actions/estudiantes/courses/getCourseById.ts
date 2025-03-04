@@ -63,6 +63,8 @@ const getCourseById = unstable_cache(
 									porcentaje: activity.porcentaje ?? 0,
 									parametroId: activity.parametroId ?? null,
 									fechaMaximaEntrega: activity.fechaMaximaEntrega ?? null,
+									createdAt: activity.lastUpdated, // Use lastUpdated as createdAt
+									content: { questions: [] }, // Add default content if needed
 								})
 							) ?? [],
 					};
