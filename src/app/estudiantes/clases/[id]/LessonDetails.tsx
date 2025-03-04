@@ -124,17 +124,34 @@ export default function LessonDetails({
 
 	// Redirect if the lesson is locked
 	useEffect(() => {
+		let redirectTimeout: NodeJS.Timeout;
+
 		if (lesson?.isLocked) {
-			toast.error('Lección bloqueada', {
-				description:
-					'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
-			});
+			// Usar una única función para manejar el toast y la redirección
+			const handleLockedLesson = () => {
+				// Limpiar cualquier timeout existente
+				if (redirectTimeout) clearTimeout(redirectTimeout);
 
-			const timeoutId = setTimeout(() => {
-				router.push('/estudiantes');
-			}, 3000);
+				// Mostrar un único toast
+				toast.error('Lección bloqueada', {
+					description:
+						'Completa las lecciones anteriores para desbloquear esta clase.',
+					// Evitar que el toast se muestre múltiples veces
+					id: 'lesson-locked',
+				});
 
-			return () => clearTimeout(timeoutId);
+				// Configurar la redirección con un nuevo timeout
+				redirectTimeout = setTimeout(() => {
+					router.replace('/estudiantes');
+				}, 2000);
+			};
+
+			handleLockedLesson();
+
+			// Limpiar el timeout si el componente se desmonta
+			return () => {
+				if (redirectTimeout) clearTimeout(redirectTimeout);
+			};
 		}
 	}, [lesson?.isLocked, router]);
 

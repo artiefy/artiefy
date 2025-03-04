@@ -14,26 +14,40 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	isVideoCompleted,
 }) => {
 	const [videoUrl, setVideoUrl] = useState('');
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState('');
 	const videoRef = useRef<HTMLVideoElement>(null);
 
 	useEffect(() => {
 		const fetchVideoUrl = async () => {
-			const url = videoKey
-				? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`
-				: '';
+			setIsLoading(true);
+			setError('');
+
+			if (!videoKey) {
+				setError('Video no disponible');
+				setIsLoading(false);
+				return;
+			}
+
+			const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
 			try {
 				const response = await fetch(url);
 				if (response.status === 403) {
+					setError('No tienes acceso a este video');
 					setVideoUrl('');
 				} else {
 					setVideoUrl(url);
+					setError('');
 				}
 			} catch {
+				setError('Error al cargar el video');
 				setVideoUrl('');
+			} finally {
+				setIsLoading(false);
 			}
 		};
 
-		fetchVideoUrl().catch(console.error);
+		void fetchVideoUrl();
 	}, [videoKey]);
 
 	const handleTimeUpdate = () => {
@@ -48,22 +62,34 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		onVideoEnd();
 	};
 
+	if (isLoading) {
+		return (
+			<div className="flex h-[400px] items-center justify-center">
+				<div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className="flex h-[400px] items-center justify-center">
+				<p className="text-center text-gray-600">{error}</p>
+			</div>
+		);
+	}
+
 	return (
 		<div className="flex items-center justify-center">
-			{videoUrl ? (
-				<video
-					ref={videoRef}
-					controls
-					className="h-auto w-full"
-					onEnded={handleVideoEnd}
-					onTimeUpdate={handleTimeUpdate}
-				>
-					<source src={videoUrl} type="video/mp4" />
-					Your browser does not support the video tag.
-				</video>
-			) : (
-				<p>Video not available</p>
-			)}
+			<video
+				ref={videoRef}
+				controls
+				className="h-auto w-full rounded-lg"
+				onEnded={handleVideoEnd}
+				onTimeUpdate={handleTimeUpdate}
+			>
+				<source src={videoUrl} type="video/mp4" />
+				Tu navegador no soporta la reproducción de videos.
+			</video>
 		</div>
 	);
 };
