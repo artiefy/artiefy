@@ -117,21 +117,29 @@ const LessonActivities = ({
 						<Button
 							onClick={handleCompletedActivityClick}
 							disabled={!isVideoCompleted}
-							className={`w-full ${
+							className={`relative w-full overflow-hidden ${
 								activityCompleted
-									? 'bg-blue-500 text-white hover:bg-blue-600'
+									? 'bg-green-500 text-white hover:bg-green-600'
 									: isVideoCompleted
-										? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]'
+										? 'font-semibold text-black'
 										: 'bg-gray-400 text-background'
 							}`}
 						>
-							{activityCompleted ? (
-								<>
-									Ver Resultados <FaCheckCircle className="ml-2" />
-								</>
-							) : (
-								'Ver Actividad'
+							{/* Fondo animado solo para el estado activo no completado */}
+							{isVideoCompleted && !activityCompleted && (
+								<div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71]" />
 							)}
+
+							{/* Texto siempre por encima del gradiente */}
+							<span className="relative z-10">
+								{activityCompleted ? (
+									<>
+										Ver Resultados <FaCheckCircle className="ml-2 inline" />
+									</>
+								) : (
+									'Ver Actividad'
+								)}
+							</span>
 						</Button>
 
 						{activityCompleted && nextLessonId && (
