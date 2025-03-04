@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent, useEffect, useRef } from 'react';
 
+import { toast } from 'sonner';
 import FileUpload from '~/components/educators/layout/FilesUpload';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -13,7 +14,6 @@ import {
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from 'sonner';
 
 interface LessonsFormProps {
 	uploading: boolean;
@@ -384,7 +384,7 @@ const ModalFormLessons = ({
 						lectura.
 					</DialogDescription>
 				</DialogHeader>
-				<div className="rounded-lg bg-background px-6 text-black shadow-md">
+				<div className="rounded-lg bg-background px-6 shadow-md">
 					<label htmlFor="title" className="text-lg font-medium text-primary">
 						Título
 					</label>
@@ -393,7 +393,7 @@ const ModalFormLessons = ({
 						placeholder="Título"
 						value={formData.title}
 						onChange={(e) => handleInputChange(e, 'title')}
-						className={`mb-4 w-full rounded border p-2 text-black outline-none ${
+						className={`mb-4 w-full rounded border p-2 text-white outline-none ${
 							errors.title ? 'border-red-500' : 'border-primary'
 						}`}
 					/>
@@ -411,7 +411,7 @@ const ModalFormLessons = ({
 						placeholder="Descripción"
 						value={formData.description}
 						onChange={(e) => handleInputChange(e, 'description')}
-						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-none ${
+						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${
 							errors.description ? 'border-red-500' : 'border-primary'
 						}`}
 					/>
@@ -426,10 +426,11 @@ const ModalFormLessons = ({
 					</label>
 					<input
 						type="number"
+						min="0"
 						placeholder="Duración"
 						value={formData.duration}
 						onChange={(e) => handleInputChange(e, 'duration')}
-						className={`mb-4 w-full rounded border p-2 text-black outline-none ${
+						className={`mb-4 w-full rounded border p-2 text-white outline-none ${
 							errors.duration ? 'border-red-500' : 'border-primary'
 						}`}
 					/>

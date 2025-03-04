@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
@@ -29,7 +30,6 @@ import {
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
-import { toast } from 'sonner';
 
 interface Course {
 	id: number;
@@ -128,20 +128,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
 					setError(`Error al cargar el curso: ${errorMessage}`);
-					toast('Error',{
-					
+					toast('Error', {
 						description: `No se pudo cargar el curso: ${errorMessage}`,
-						
 					});
 				}
 			} catch (error: unknown) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
 				setError(`Error al cargar el curso: ${errorMessage}`);
-				toast('Error',{
-				
+				toast('Error', {
 					description: `No se pudo cargar el curso: ${errorMessage}`,
-			
 				});
 			} finally {
 				setLoading(false);
@@ -272,11 +268,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						const errorData = (await responseParametros.json()) as {
 							error?: string;
 						};
-						toast('Error',{
-							
+						toast('Error', {
 							description:
 								errorData.error ?? 'Error al actualizar los parámetros',
-						
 						});
 						throw new Error(
 							errorData.error ?? 'Error al actualizar los parámetros'
@@ -287,10 +281,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 			if (!response.ok) {
 				const errorData = (await response.json()) as { error?: string };
-				toast( 'Error',{
-				
+				toast('Error', {
 					description: errorData.error ?? 'Error al actualizar el curso',
-				
 				});
 				throw new Error(errorData.error ?? 'Error al actualizar el curso');
 			}
@@ -299,25 +291,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			setCourse(updatedCourse);
 
 			setIsModalOpen(false);
-			toast('Curso actualizado',{
-			
+			toast('Curso actualizado', {
 				description: 'El curso se ha actualizado con éxito.',
-		
 			});
 			if (addParametros) {
-				toast('Parámetros actualizados',{
-			
+				toast('Parámetros actualizados', {
 					description: 'Los parámetros se han actualizado con éxito.',
-				
 				});
 			}
 		} catch (error) {
 			console.error('Error:', error);
-			toast('Error',{
-				
+			toast('Error', {
 				description:
 					error instanceof Error ? error.message : 'Error desconocido',
-				
 			});
 		}
 	};
@@ -384,14 +370,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				throw new Error(`Error al eliminar el curso, con id: ${id}`);
 			}
 
-			toast('Curso eliminado',{
+			toast('Curso eliminado', {
 				description: 'El curso se ha eliminado con éxito.',
 			});
 			router.push('/dashboard/educadores/cursos');
 		} catch (error) {
 			console.error('Error:', error);
-			toast( 'Error',{
-				
+			toast('Error', {
 				description: 'No se pudo eliminar el curso completamente',
 			});
 		}
@@ -452,7 +437,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			<div className="group relative h-auto w-full">
 				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
 				<Card
-					className={`zoom-in relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
+					className={`relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out zoom-in`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
@@ -475,7 +460,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									<Button
 										key={color}
 										style={{ backgroundColor: color }}
-										className={`size-8 ${selectedColor === '#FFFFFF' ? 'border-black' : 'border-white'}`}
+										className={`size-8 border ${selectedColor === '#FFFFFF' ? 'border-black' : 'border-white'} `}
 										onClick={() => handlePredefinedColorChange(color)}
 									/>
 								))}

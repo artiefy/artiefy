@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -27,7 +28,6 @@ import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import LessonsListEducator from '~/components/super-admin/layout/LessonsListSuperAdmin';
 import ModalFormCourse from '~/components/super-admin/modals/studentModal';
-import { toast } from '~/hooks/use-toast';
 
 // Agrega un estado para el modal
 
@@ -220,8 +220,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 
 			if (!finalCoverImageKey) {
 				console.error('❌ Error: `coverImageKey` es undefined');
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: 'No se encontró la imagen del curso.',
 				});
 				return;
@@ -240,8 +239,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 
 			if (!categoryid || !modalidadesid || !dificultadid) {
 				console.error('⛔ Error: No se encontraron IDs válidos');
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: 'Hubo un problema con los valores seleccionados.',
 				});
 				return;
@@ -276,8 +274,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 				throw new Error(responseData.error ?? 'Error al actualizar el curso');
 			}
 
-			toast({
-				title: 'Curso actualizado',
+			toast('Curso actualizado', {
 				description: 'Los cambios fueron guardados con éxito',
 			});
 
@@ -296,7 +293,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 			setIsEditing(false);
 		} catch (error) {
 			console.error('❌ Error al guardar cambios:', error);
-			toast({ title: 'Error', description: 'No se pudo actualizar el curso' });
+			toast('Error', { description: 'No se pudo actualizar el curso' });
 		}
 	};
 
@@ -391,8 +388,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 			// 🔄 Actualizar estado con la versión correcta del backend
 			setCourse(updatedCourse);
 
-			toast({
-				title: `${type.charAt(0).toUpperCase() + type.slice(1)} actualizada`,
+			toast(`${type.charAt(0).toUpperCase() + type.slice(1)} actualizada`, {
 				description: `Nuevo valor asignado.`,
 			});
 
@@ -418,8 +414,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 			setCourse((prev) =>
 				prev ? { ...prev, instructor: newInstructor } : null
 			);
-			toast({
-				title: 'Educador actualizado',
+			toast('Educador actualizado', {
 				description: `Nuevo educador: ${newInstructor}`,
 			});
 			setShowDropdown(false);
@@ -451,8 +446,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 
 			if (!response.ok)
 				throw new Error(`Error al eliminar el curso, id: ${id}`);
-			toast({
-				title: 'Curso eliminado',
+			toast('Curso eliminado', {
 				description: 'El curso se ha eliminado con éxito.',
 			});
 			router.push('/dashboard/super-admin/cursos');
@@ -462,7 +456,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 	};
 
 	return (
-		<div className="bg-background container h-auto w-full rounded-lg p-6">
+		<div className="container h-auto w-full rounded-lg bg-background p-6">
 			{/* 🔗 Navegación Breadcrumb */}
 			<Breadcrumb>
 				<BreadcrumbList>
@@ -540,7 +534,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 			</div>
 
 			<Card
-				className={`zoom-in relative z-20 mt-3 h-auto border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
+				className={`relative z-20 mt-3 h-auto border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out zoom-in`}
 				style={{
 					backgroundColor: selectedColor,
 					color: getContrastYIQ(selectedColor),
@@ -632,7 +626,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 							{/* Sección de Categoría con botón de cambio */}
 							<div className="relative flex flex-col">
 								<h2 className="text-lg font-semibold text-white">Categoría:</h2>
-								<span className="text-primary font-medium">
+								<span className="font-medium text-primary">
 									{categorias.find(
 										(cat) => cat.id === Number(course.categoryid)
 									)?.name ?? 'No asignada'}
@@ -643,7 +637,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 										onClick={() =>
 											setShowDropdownCategoria(!showDropdownCategoria)
 										}
-										className="bg-secondary rounded-md px-3 py-1 text-xs text-[#01142B] transition hover:bg-[#00A5C0]"
+										className="rounded-md bg-secondary px-3 py-1 text-xs text-[#01142B] transition hover:bg-[#00A5C0]"
 										aria-expanded={showDropdownCategoria}
 									>
 										Cambiar
@@ -677,14 +671,14 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 							{/* Educador con opción de cambio */}
 							<div className="relative flex flex-col overflow-visible">
 								<h2 className="text-lg font-semibold text-white">Educador:</h2>
-								<span className="text-primary font-medium">
+								<span className="font-medium text-primary">
 									{course.instructor}
 								</span>
 
 								<div className="mt-2">
 									<Button
 										onClick={() => setShowDropdown(!showDropdown)}
-										className="bg-secondary rounded-md px-3 py-1 text-xs text-[#01142B] transition hover:bg-[#00A5C0]"
+										className="rounded-md bg-secondary px-3 py-1 text-xs text-[#01142B] transition hover:bg-[#00A5C0]"
 										aria-expanded={showDropdown}
 									>
 										Cambiar
@@ -723,7 +717,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 								<h2 className="text-lg font-semibold text-white">
 									Dificultad:
 								</h2>
-								<span className="text-primary font-medium">
+								<span className="font-medium text-primary">
 									{dificultades.find(
 										(dif) => dif.id === Number(course.dificultadid)
 									)?.name ?? 'No asignada'}
@@ -734,7 +728,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 										onClick={() =>
 											setShowDropdownDificultad(!showDropdownDificultad)
 										}
-										className="bg-secondary rounded-md px-3 py-1 text-xs text-[#01142B] transition hover:bg-[#00A5C0]"
+										className="rounded-md bg-secondary px-3 py-1 text-xs text-[#01142B] transition hover:bg-[#00A5C0]"
 										aria-expanded={showDropdownDificultad}
 									>
 										Cambiar
@@ -767,7 +761,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 							{/* Sección de Modalidad con opción de cambio */}
 							<div className="relative flex flex-col">
 								<h2 className="text-lg font-semibold text-white">Modalidad:</h2>
-								<span className="text-primary font-medium">
+								<span className="font-medium text-primary">
 									{modalidades.find(
 										(mod) => mod.id === Number(course.modalidadesid)
 									)?.name ?? 'No asignada'}
@@ -778,7 +772,7 @@ const CourseDetail: React.FC<CourseDetailProps> = ({ courseId }) => {
 										onClick={() =>
 											setShowDropdownModalidad(!showDropdownModalidad)
 										}
-										className="bg-secondary rounded-md px-3 py-1 text-xs text-[#01142B] transition hover:bg-[#00A5C0]"
+										className="rounded-md bg-secondary px-3 py-1 text-xs text-[#01142B] transition hover:bg-[#00A5C0]"
 										aria-expanded={showDropdownModalidad}
 									>
 										Cambiar

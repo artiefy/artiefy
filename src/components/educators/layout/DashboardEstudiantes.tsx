@@ -312,6 +312,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
 							<div className="mt-6 flex flex-col gap-4">
 								{/* 🔍 Buscador por Nombre o Correo */}
+								<h2 className="ml-2 font-bold">Buscar estudiante</h2>
 								<div className="flex items-center gap-2 rounded-lg bg-white p-4 text-black shadow-md">
 									<input
 										type="text"

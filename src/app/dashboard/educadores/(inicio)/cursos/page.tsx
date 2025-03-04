@@ -350,7 +350,7 @@ export default function Page() {
 						<BreadcrumbSeparator />
 					</BreadcrumbList>
 				</Breadcrumb>
-				<div className="container mx-auto px-2">
+				<div className="container">
 					<div className="mt-2 flex justify-between">
 						<h1 className="text-3xl font-bold">Panel de cursos</h1>
 						<Button

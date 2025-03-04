@@ -8,6 +8,7 @@ import {
 	FaClock,
 	FaChalkboardTeacher,
 } from 'react-icons/fa';
+import { toast } from 'sonner';
 import CourseListDetails from '~/components/educators/layout/CourseListDetails';
 import {
 	Breadcrumb,
@@ -16,7 +17,6 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
-import { toast } from 'sonner';
 
 export interface CourseModel {
 	id: number;
@@ -206,7 +206,7 @@ export default function Home() {
 									<div className="ml-5 w-0 flex-1">
 										<dl>
 											<dt className="truncate text-sm font-medium text-gray-300">
-												Total de estudiantes
+												Promedio estudiantes
 											</dt>
 											<dd className="flex items-baseline">
 												<div className="text-2xl font-semibold text-white">

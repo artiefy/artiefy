@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -28,7 +29,6 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/super-admin/ui/alert-dialog';
-import { toast } from '~/hooks/use-toast';
 
 interface Lessons {
 	id: number;
@@ -114,20 +114,16 @@ const Page: React.FC = () => {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
 					setError(`Error al cargar la leccion: ${errorMessage}`);
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: `No se pudo cargar la leccion: ${errorMessage}`,
-						variant: 'destructive',
 					});
 				}
 			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
 				setError(`Error al cargar la leccion: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudo cargar la leccion: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			} finally {
 				setLoading(false);
@@ -150,10 +146,8 @@ const Page: React.FC = () => {
 			});
 
 			if (!response.ok) throw new Error('Error al eliminar la clase');
-			toast({
-				title: 'Clase eliminada',
+			toast('Clase eliminada', {
 				description: `La clase ${lessons.title} ha sido eliminada exitosamente.`,
-				variant: 'default',
 			});
 			router.back(); // Redirige a la página anterior
 		} catch (error) {
@@ -163,7 +157,7 @@ const Page: React.FC = () => {
 
 	return (
 		<>
-			<div className="bg-background container mx-auto mt-2 h-auto w-full rounded-lg p-6">
+			<div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background p-6">
 				<Breadcrumb>
 					<BreadcrumbList>
 						<BreadcrumbItem>

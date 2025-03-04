@@ -13,18 +13,18 @@ import {
 	FaArrowRight,
 } from 'react-icons/fa';
 
-import ChatBot from '~/components/estudiantes/layout/ChatBot';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import VideoPlayer from '~/components/estudiantes/layout/VideoPlayer';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Progress } from '~/components/estudiantes/ui/progress';
+import { type Activity, type UserLessonsProgress } from '~/types';
+import ChatBot from '~/components/estudiantes/layout/ChatBot';
+import VideoPlayer from '~/components/estudiantes/layout/VideoPlayer';
 import { useToast } from '~/hooks/use-toast';
 import { unlockNextLesson } from '~/server/actions/lessons/unlockNextLesson';
 import { completeActivity } from '~/server/actions/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/progress/updateLessonProgress';
-import { type Activity, type UserLessonsProgress } from '~/types';
 
 interface Lesson {
 	id: number;
@@ -377,11 +377,11 @@ export default function LessonDetails({
 	return (
 		<>
 			<Header />
-			<div className="bg-background flex min-h-screen flex-col">
+			<div className="flex min-h-screen flex-col bg-background">
 				<div className="flex flex-1 px-4 py-6">
 					{/* Left Sidebar */}
-					<div className="bg-background w-80 p-4 shadow-lg">
-						<h2 className="text-primary mb-4 text-2xl font-bold">Cursos</h2>
+					<div className="w-80 bg-background p-4 shadow-lg">
+						<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
 						{lessonsState
 							.sort((a, b) => a.order - b.order)
 							.map(renderLessonCard)}
@@ -446,8 +446,8 @@ export default function LessonDetails({
 					</div>
 
 					{/* Right Sidebar - Activities */}
-					<div className="bg-background w-72 p-4 shadow-lg">
-						<h2 className="text-primary mb-4 text-2xl font-bold">
+					<div className="w-72 bg-background p-4 shadow-lg">
+						<h2 className="mb-4 text-2xl font-bold text-primary">
 							Actividades
 						</h2>
 						{activity ? (
@@ -477,11 +477,11 @@ export default function LessonDetails({
 									className={`mt-4 w-full ${
 										isVideoCompleted
 											? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]'
-											: 'text-background bg-gray-400'
+											: 'bg-gray-400 text-background'
 									}`}
 								>
 									{isCompletingActivity ? (
-										<Icons.spinner className="text-background mr-2" />
+										<Icons.spinner className="mr-2 text-background" />
 									) : isActivityCompleted ? (
 										'Actividad Completada'
 									) : isVideoCompleted ? (

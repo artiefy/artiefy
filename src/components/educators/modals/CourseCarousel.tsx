@@ -39,7 +39,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
 	return (
 		<div className="relative w-full">
 			<div className="overflow-hidden" ref={emblaRef}>
-				<div className="flex space-x-4">
+				<div className="flex justify-center space-x-4 text-center">
 					{courses.map((course) => (
 						<div
 							key={course.id}
@@ -65,12 +65,12 @@ export default function CourseCarousel({ courses, userId }: Props) {
 								<button
 									onClick={() =>
 										router.push(
-											`/dashboard/super-admin/stats/${course.id}?user=${userId}`
+											`/dashboard/educadores/cursos/${course.id}/dashboardEstudiante/${userId}`
 										)
 									}
 									className="mt-2 w-full rounded bg-blue-500 px-3 py-2 text-sm font-bold text-white hover:bg-blue-600"
 								>
-									Ver
+									Ver estadisticas
 								</button>
 							</div>
 						</div>
@@ -82,7 +82,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
 			{courses.length > 3 && (
 				<>
 					<button
-						className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full bg-gray-900 p-2 text-white shadow-md hover:bg-gray-700"
+						className="absolute top-1/2 left-0 -translate-y-1/2 rounded-full bg-gray-900 p-2 text-white shadow-md hover:bg-gray-700"
 						onClick={() => emblaApi?.scrollPrev()}
 						disabled={!canScrollPrev}
 					>
@@ -90,7 +90,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
 					</button>
 
 					<button
-						className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full bg-gray-900 p-2 text-white shadow-md hover:bg-gray-700"
+						className="absolute top-1/2 right-0 -translate-y-1/2 rounded-full bg-gray-900 p-2 text-white shadow-md hover:bg-gray-700"
 						onClick={() => emblaApi?.scrollNext()}
 						disabled={!canScrollNext}
 					>
