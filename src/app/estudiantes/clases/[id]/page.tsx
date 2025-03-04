@@ -1,5 +1,9 @@
+import { Suspense } from 'react';
 import { auth } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonSkeleton';
 import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';
@@ -7,6 +11,9 @@ import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLe
 import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
 import type { Activity, LessonWithProgress } from '~/types';
 import LessonDetails from './LessonDetails';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface PageProps {
 	params: Promise<{
@@ -27,9 +34,18 @@ export default async function LessonPage({ params }: PageProps) {
 		return redirectToSignIn();
 	}
 
-	return LessonContent({ id, userId });
+	return (
+		<>
+			<Header />
+			<Suspense fallback={<LessonSkeleton />}>
+				<LessonContent id={id} userId={userId} />
+			</Suspense>
+			<Footer />
+		</>
+	);
 }
 
+// Move LessonContent to a separate file for better organization
 async function LessonContent({ id, userId }: { id: string; userId: string }) {
 	try {
 		const lessonId = Number.parseInt(id, 10);
@@ -102,5 +118,3 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 		return notFound();
 	}
 }
-
-export const revalidate = 60;

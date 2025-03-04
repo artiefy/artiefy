@@ -9,6 +9,7 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity, Question } from '~/types';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 interface ActivityModalProps {
 	isOpen: boolean;
@@ -113,6 +114,26 @@ const LessonActivityModal = ({
 				);
 		}
 	};
+
+	if (isLoading) {
+		return (
+			<Dialog open={isOpen} onOpenChange={onClose}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Actividad</DialogTitle>
+					</DialogHeader>
+					<div className="space-y-4">
+						<Skeleton className="h-8 w-3/4" />
+						<Skeleton className="h-32 w-full" />
+						<div className="flex justify-between">
+							<Skeleton className="h-10 w-24" />
+							<Skeleton className="h-10 w-24" />
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
+		);
+	}
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>

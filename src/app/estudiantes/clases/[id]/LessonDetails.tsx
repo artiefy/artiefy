@@ -1,20 +1,19 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
 import { formatInTimeZone } from 'date-fns-tz';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
 import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
 import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
-import RecursosLesson from '~/components/estudiantes/layout/lessondetail/RecursosLesson';
+import RecursosLesson from '~/components/estudiantes/layout/lessondetail/LessonResource';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -67,6 +66,12 @@ export default function LessonDetails({
 	const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
 	const searchParams = useSearchParams();
 	const { start, stop } = useProgress();
+
+	// Show loading progress on initial render
+	useEffect(() => {
+		start();
+		return () => stop();
+	}, [start, stop]);
 
 	// Initialize lessons state with progress and locked status
 	useEffect(() => {
@@ -392,11 +397,10 @@ export default function LessonDetails({
 	}, [user, router]);
 
 	return (
-		<>
-			<Header />
-			<div className="flex min-h-screen flex-col bg-background">
-				<div className="flex flex-1 px-4 py-6">
-					{/* Left Sidebar */}
+		<div className="flex min-h-screen flex-col bg-background">
+			<div className="flex flex-1 px-4 py-6">
+				{/* Left Sidebar */}
+				<Suspense fallback={<Skeleton className="h-full w-80" />}>
 					<div className="w-80 bg-background p-4 shadow-lg">
 						<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
 						<LessonCards
@@ -407,8 +411,10 @@ export default function LessonDetails({
 							isNavigating={isNavigating}
 						/>
 					</div>
+				</Suspense>
 
-					{/* Main Content */}
+				{/* Main Content */}
+				<Suspense fallback={<Skeleton className="h-full flex-1" />}>
 					<div className="flex-1 p-6">
 						<div className="navigation-buttons">
 							{' '}
@@ -428,7 +434,10 @@ export default function LessonDetails({
 						/>
 						<ClassComments lessonId={lesson.id} />
 					</div>
-					{/* Right Sidebar - Activities and Resources */}
+				</Suspense>
+
+				{/* Right Sidebar - Activities and Resources */}
+				<Suspense fallback={<Skeleton className="h-full w-72" />}>
 					<div className="flex flex-col">
 						<LessonActivities
 							activity={
@@ -460,19 +469,18 @@ export default function LessonDetails({
 						/>
 						<RecursosLesson resourceNames={lesson.resourceNames} />
 					</div>
+				</Suspense>
 
-					{/* Chatbot Button and Modal */}
-					<button
-						onClick={() => setIsChatOpen(!isChatOpen)}
-						className="fixed right-6 bottom-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
-					>
-						<FaRobot className="text-xl" />
-					</button>
+				{/* Chatbot Button and Modal */}
+				<button
+					onClick={() => setIsChatOpen(!isChatOpen)}
+					className="fixed right-6 bottom-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
+				>
+					<FaRobot className="text-xl" />
+				</button>
 
-					<LessonChatBot />
-				</div>
-				<Footer />
+				<LessonChatBot />
 			</div>
-		</>
+		</div>
 	);
 }

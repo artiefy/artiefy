@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import StudentDashboard from '~/app/estudiantes/StudentDashboard';
-import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
-import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
+import CourseCategories from '~/components/estudiantes/layout/CategoriesCourse';
+import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';

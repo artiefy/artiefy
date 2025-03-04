@@ -1,4 +1,4 @@
-import VideoPlayer from '~/components/estudiantes/layout/lessondetail/VideoPlayer';
+import VideoPlayer from '~/components/estudiantes/layout/lessondetail/LessonVideo';
 import { Progress } from '~/components/estudiantes/ui/progress';
 import { type LessonWithProgress } from '~/types';
 
