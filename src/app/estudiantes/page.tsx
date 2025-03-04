@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import StudentDashboard from '~/app/estudiantes/StudentDashboard';
-import CourseCategories from '~/components/estudiantes/layout/CategoriesCourse';
+import CategoriesCourse from '~/components/estudiantes/layout/CategoriesCourse';
 import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -54,8 +54,8 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 		const lowercasedQuery = params.query.toLowerCase();
 		filteredCourses = filteredCourses.filter(
 			(course) =>
-				course.title.toLowerCase().includes(lowercasedQuery) ||
-				course.description?.toLowerCase().includes(lowercasedQuery) ||
+				course.title.toLowerCase().includes(lowercasedQuery) ??
+				course.description?.toLowerCase().includes(lowercasedQuery) ??
 				course.category?.name.toLowerCase().includes(lowercasedQuery)
 		);
 	}
@@ -95,7 +95,7 @@ export default async function CoursesPage({ searchParams }: Props) {
 			<>
 				<Header />
 				<StudentDashboard initialCourses={allCourses} />
-				<CourseCategories
+				<CategoriesCourse
 					allCategories={data.categories}
 					featuredCategories={data.featuredCategories}
 				/>

@@ -11,7 +11,7 @@ interface LessonActivitiesProps {
 	isVideoCompleted: boolean;
 	isActivityCompleted: boolean;
 	isCompletingActivity: boolean;
-	handleActivityCompletion: () => void;
+	handleActivityCompletion: () => Promise<void>; // Updated to Promise<void>
 	userId: string; // Añadimos userId aquí
 }
 
@@ -37,11 +37,12 @@ const LessonActivities = ({
 
 	const markActivityAsCompleted = async (): Promise<void> => {
 		setActivityCompleted(true);
-		await Promise.resolve(); // Makes the function return a Promise
+		// Return a resolved promise instead of awaiting Promise.resolve()
+		return Promise.resolve();
 	};
 
-	const handleActivityComplete = () => {
-		handleActivityCompletion();
+	const handleActivityComplete = async () => {
+		await handleActivityCompletion(); // Now properly awaits the Promise
 		closeModal();
 	};
 
@@ -120,6 +121,7 @@ const LessonActivities = ({
 					onQuestionsAnswered={handleQuestionsAnswered}
 					userId={userId} // Pasamos userId aquí
 					markActivityAsCompleted={markActivityAsCompleted} // Now returns Promise<void>
+					onActivityCompleted={handleActivityCompletion} // Add this new prop
 				/>
 			)}
 		</div>

@@ -34,7 +34,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
 	'Ciencia De Datos': <FiDatabase />,
 };
 
-export default function CourseCategories({
+export default function CategoriesCourse({
 	allCategories,
 	featuredCategories,
 }: CourseCategoriesProps) {

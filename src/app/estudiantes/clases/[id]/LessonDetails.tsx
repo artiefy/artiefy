@@ -216,18 +216,18 @@ export default function LessonDetails({
 		setIsCompletingActivity(true);
 
 		try {
-			// 1. Completar actividad y esperar resultado
+			// 1. Completar actividad
 			await completeActivity(activity.id);
 			setIsActivityCompleted(true);
 
-			// 2. Completar lección y esperar resultado
+			// 2. Marcar lección como completada
 			await updateLessonProgress(lesson.id, 100);
 
 			// 3. Desbloquear siguiente lección
 			const result = await unlockNextLesson(lesson.id);
 
 			if (result.success && result.nextLessonId) {
-				// 4. Actualizar estados locales
+				// 4. Actualizar estado local
 				setLessonsState((prevLessons) =>
 					prevLessons.map((l) =>
 						l.id === lesson.id
@@ -237,15 +237,6 @@ export default function LessonDetails({
 								: l
 					)
 				);
-
-				toast.success('¡Actividad completada!', {
-					description: 'La siguiente clase ha sido desbloqueada',
-				});
-
-				// 5. Navegar a la siguiente lección después de un breve delay
-				setTimeout(async () => {
-					await handleAutoNavigation(result.nextLessonId!);
-				}, 1500);
 			}
 		} catch (error) {
 			console.error('Error:', error);

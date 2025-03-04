@@ -18,6 +18,7 @@ interface ActivityModalProps {
 	userId: string;
 	onQuestionsAnswered: (allAnswered: boolean) => void;
 	markActivityAsCompleted: () => Promise<void>; // Update type to Promise<void>
+	onActivityCompleted: () => Promise<void>; // Add this new prop
 }
 
 interface UserAnswer {
@@ -38,6 +39,7 @@ const LessonActivityModal = ({
 	userId,
 	onQuestionsAnswered,
 	markActivityAsCompleted,
+	onActivityCompleted, // Add this new prop
 }: ActivityModalProps) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
@@ -142,16 +144,17 @@ const LessonActivityModal = ({
 	};
 
 	const handleFinishAndNavigate = async () => {
+		if (!canClose) return;
+
 		try {
-			// Primero intentamos completar la actividad
 			await markActivityAsCompleted();
+			await onActivityCompleted(); // Call parent's handler
 			onQuestionsAnswered(true);
 
 			toast.success('¡Actividad completada!', {
-				description: 'La siguiente clase ha sido desbloqueada.',
+				description: 'La siguiente clase ha sido desbloqueada',
 			});
 
-			// Cerramos el modal después de completar todo
 			onClose();
 		} catch (error) {
 			console.error('Error:', error);
