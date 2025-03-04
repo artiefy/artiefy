@@ -26,6 +26,7 @@ interface CourseHeaderProps {
 	subscriptionEndDate: string | null;
 	onEnroll: () => Promise<void>;
 	onUnenroll: () => Promise<void>;
+	isCheckingEnrollment?: boolean;
 }
 
 export function CourseHeader({
@@ -37,7 +38,7 @@ export function CourseHeader({
 	isSubscriptionActive,
 	subscriptionEndDate,
 	onEnroll,
-	onUnenroll,
+	onUnenroll
 }: CourseHeaderProps) {
 	const formatDate = (dateString: string | number | Date) =>
 		new Date(dateString).toISOString().split('T')[0];
@@ -60,13 +61,13 @@ export function CourseHeader({
 						placeholder="blur"
 						blurDataURL={blurDataURL}
 					/>
-					<div className="p-6 absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent">
+					<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
 						<h1 className="text-3xl font-bold text-white">{course.title}</h1>
 					</div>
 				</AspectRatio>
 			</CardHeader>
 
-			<CardContent className="space-y-4 mx-6">
+			<CardContent className="mx-6 space-y-4">
 				{/* Instructor info and stats */}
 				<div className="flex flex-wrap items-center justify-between gap-4">
 					<div>
@@ -138,10 +139,10 @@ export function CourseHeader({
 					subscriptionEndDate={subscriptionEndDate}
 				/>
 
-				{/* Enrollment buttons */}
+				{/* Enrollment buttons - Simplificado sin skeleton */}
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
-						{/* Enrolled state buttons */}
+						{/* Botones cuando está inscrito */}
 						<div
 							className={`absolute top-0 left-0 flex w-full flex-col space-y-4 transition-all duration-300 ${
 								isEnrolled ? 'visible opacity-100' : 'invisible opacity-0'
@@ -169,7 +170,7 @@ export function CourseHeader({
 							</Button>
 						</div>
 
-						{/* Not enrolled state button */}
+						{/* Botón cuando no está inscrito */}
 						<div
 							className={`absolute top-0 left-0 transition-all duration-300 ${
 								!isEnrolled ? 'visible opacity-100' : 'invisible opacity-0'
@@ -177,7 +178,7 @@ export function CourseHeader({
 						>
 							<Button
 								onClick={onEnroll}
-								disabled={isEnrolling || !isSubscriptionActive}
+								disabled={isEnrolling}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
 								<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>

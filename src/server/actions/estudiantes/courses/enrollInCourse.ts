@@ -2,7 +2,6 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
-import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
 import { db } from '~/server/db';
 import {
 	users,
@@ -26,7 +25,39 @@ export async function enrollInCourse(
 
 		const userId = user.id;
 
-		// Verificar si el usuario ya está inscrito
+		// 1. Primero, asegurarse de que el usuario existe en nuestra base de datos
+		const dbUser = await db.query.users.findFirst({
+			where: eq(users.id, userId),
+		});
+
+		if (!dbUser) {
+			// Si el usuario no existe, crearlo primero
+			const primaryEmail = user.emailAddresses.find(
+				(email) => email.id === user.primaryEmailAddressId
+			);
+
+			if (!primaryEmail?.emailAddress) {
+				return {
+					success: false,
+					message: 'No se pudo obtener el email del usuario',
+				};
+			}
+
+			await db.insert(users).values({
+				id: userId,
+				name:
+					user.firstName && user.lastName
+						? `${user.firstName} ${user.lastName}`
+						: 'Usuario',
+				email: primaryEmail.emailAddress,
+				role: 'student',
+				subscriptionStatus: 'active',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
+		}
+
+		// 2. Verificar si ya está inscrito
 		const existingEnrollment = await db.query.enrollments.findFirst({
 			where: and(
 				eq(enrollments.userId, userId),
@@ -41,82 +72,38 @@ export async function enrollInCourse(
 			};
 		}
 
-		// Verificar si el usuario existe en la base de datos
-		const existingUser = await db.query.users.findFirst({
-			where: eq(users.id, userId),
+		// 3. Crear la inscripción
+		const newEnrollment = await db.insert(enrollments).values({
+			userId: userId,
+			courseId: courseId,
+			enrolledAt: new Date(),
+			completed: false,
 		});
-
-		// Si el usuario no existe en la base de datos, crearlo
-		if (!existingUser) {
-			const primaryEmail = user.emailAddresses.find(
-				(email) => email.id === user.primaryEmailAddressId
-			);
-
-			if (!user.fullName || !primaryEmail?.emailAddress) {
-				return {
-					success: false,
-					message: 'Información del usuario incompleta en Clerk',
-				};
-			}
-
-			try {
-				await db.insert(users).values({
-					id: userId,
-					role: 'student',
-					name: user.fullName,
-					email: primaryEmail.emailAddress,
-					subscriptionStatus: 'active', // Por defecto active ya que solo usuarios con plan pueden inscribirse
-					subscriptionEndDate: new Date(Date.now()),
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
-			} catch (error) {
-				console.error('Error creating user:', error);
-				return {
-					success: false,
-					message: 'Error al crear el usuario en la base de datos',
-				};
-			}
-		}
-
-		// Crear la inscripción
-		const [newEnrollment] = await db
-			.insert(enrollments)
-			.values({
-				userId,
-				courseId,
-				enrolledAt: new Date(),
-				completed: false,
-			})
-			.returning();
 
 		if (!newEnrollment) {
-			return {
-				success: false,
-				message: 'Error al crear la inscripción',
-			};
+			throw new Error('No se pudo crear la inscripción');
 		}
 
-		// Configurar la primera lección
-		const lessonsList = await db.query.lessons.findMany({
+		// 4. Configurar la primera lección como desbloqueada
+		const courseLesson = await db.query.lessons.findFirst({
 			where: eq(lessons.courseId, courseId),
+			orderBy: (lessons, { asc }) => [asc(lessons.title)],
 		});
 
-		if (lessonsList.length > 0) {
-			const sortedLessons = lessonsList.sort((a, b) =>
-				a.title.localeCompare(b.title)
-			);
-			const firstLesson = sortedLessons[0];
+		if (courseLesson) {
+			// Verificar si ya existe un progreso para esta lección
+			const existingProgress = await db.query.userLessonsProgress.findFirst({
+				where: and(
+					eq(userLessonsProgress.userId, userId),
+					eq(userLessonsProgress.lessonId, courseLesson.id)
+				),
+			});
 
-			const { lessonsProgress } = await getUserLessonsProgress(userId);
-			const existingProgress = lessonsProgress.find(
-				(progress) => progress.lessonId === firstLesson.id
-			);
-
+			// Solo crear el progreso si no existe
 			if (!existingProgress) {
 				await db.insert(userLessonsProgress).values({
-					userId,
-					lessonId: firstLesson.id,
+					userId: userId,
+					lessonId: courseLesson.id,
 					progress: 0,
 					isCompleted: false,
 					isLocked: false,
@@ -129,11 +116,23 @@ export async function enrollInCourse(
 			success: true,
 			message: 'Inscripción exitosa',
 		};
-	} catch (error: unknown) {
-		console.error('Error al inscribirse en el curso:', error);
+	} catch (error) {
+		console.error('Error en enrollInCourse:', error);
+
+		// Si el error es de duplicado de enrollment
+		if (error instanceof Error && error.message.includes('duplicate key')) {
+			return {
+				success: false,
+				message: 'Ya estás inscrito en este curso',
+			};
+		}
+
 		return {
 			success: false,
-			message: error instanceof Error ? error.message : 'Error desconocido',
+			message:
+				error instanceof Error
+					? error.message
+					: 'Error desconocido al inscribirse',
 		};
 	}
 }

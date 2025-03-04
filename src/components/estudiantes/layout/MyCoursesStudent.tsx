@@ -54,7 +54,7 @@ export default async function MyCoursesStudent() {
   const courses = await getEnrolledCourses();
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto mb-22 px-4">
       {/* User Profile Section */}
       <div className="mb-8 rounded-lg bg-gray-800 p-6 text-white">
         <div className="flex items-center gap-4">
