@@ -109,7 +109,7 @@ export default async function Page({ params }: Props) {
 	const { userId } = await auth();
 
 	return (
-		<div className="flex min-h-screen flex-col">
+		<div>
 			<Header />
 			<Suspense fallback={<CourseDetailsSkeleton />}>
 				<CourseContent id={id} userId={userId} />
@@ -168,3 +168,5 @@ async function CourseContent({
 		</section>
 	);
 }
+
+export const revalidate = 3600;
