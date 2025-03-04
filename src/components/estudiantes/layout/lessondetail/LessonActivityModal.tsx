@@ -1,6 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { CogIcon } from '@heroicons/react/24/solid';
+import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
+import {
+	CogIcon,
+	CheckCircleIcon,
+	XCircleIcon,
+	LightBulbIcon,
+	ChevronRightIcon,
+	StarIcon as StarSolidIcon,
+} from '@heroicons/react/24/solid';
 import { toast } from 'sonner';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
@@ -11,6 +19,7 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity, Question, SavedAnswer } from '~/types';
+import '~/styles/arrowactivity.css';
 
 interface ActivityModalProps {
 	isOpen: boolean;
@@ -57,6 +66,7 @@ const LessonActivityModal = ({
 	const [finalScore, setFinalScore] = useState(0);
 	const [canClose, setCanClose] = useState(false);
 	const [isUnlocking, setIsUnlocking] = useState(false);
+	const [hasNavigatedOnce, setHasNavigatedOnce] = useState(false);
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
@@ -160,7 +170,7 @@ const LessonActivityModal = ({
 
 	const renderUnlockingState = () => (
 		<div className="flex flex-col items-center justify-center p-8">
-			<Icons.blocks className="h-16 w-16 fill-primary" />
+			<Icons.blocks className="size-22 fill-primary" />
 			<p className="mt-4 text-center text-sm text-gray-500">
 				Desbloqueando siguiente clase...
 			</p>
@@ -172,12 +182,13 @@ const LessonActivityModal = ({
 
 		try {
 			setIsUnlocking(true);
-			// Esperar un momento antes de cerrar para mostrar la animación
-			await new Promise((resolve) => setTimeout(resolve, 500));
 			await markActivityAsCompleted();
 			await onActivityCompleted();
 			onQuestionsAnswered(true);
-			onClose();
+			setIsUnlocking(false);
+
+			// Marcar que ya se ha navegado una vez
+			setHasNavigatedOnce(true);
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error al completar la actividad');
@@ -234,111 +245,149 @@ const LessonActivityModal = ({
 	const renderQuestion = () => {
 		if (!currentQuestion) return null;
 
-		switch (currentQuestion.type) {
-			case 'VOF':
-				return (
-					<div className="space-y-4">
-						<h3 className="font-semibold">{currentQuestion.text}</h3>
-						<div className="space-y-2">
-							{currentQuestion.options?.map((option) => (
-								<label key={option.id} className="block">
-									<input
-										type="radio"
-										name={currentQuestion.id}
-										value={option.id}
-										checked={
-											userAnswers[currentQuestion.id]?.answer === option.id
-										}
-										onChange={(e) => handleAnswer(e.target.value)}
-									/>
-									<span className="ml-2">{option.text}</span>
-								</label>
-							))}
-						</div>
-					</div>
-				);
+		const isQuestionAnswered = userAnswers[currentQuestion.id];
 
-			case 'OM':
-				return (
-					<div className="space-y-4">
-						<h3 className="font-semibold">{currentQuestion.text}</h3>
-						<div className="space-y-2">
-							{currentQuestion.options?.map((option) => (
-								<label key={option.id} className="block">
-									<input
-										type="radio"
-										name={currentQuestion.id}
-										value={option.id}
-										checked={
-											userAnswers[currentQuestion.id]?.answer === option.id
-										}
-										onChange={(e) => handleAnswer(e.target.value)}
-									/>
-									<span className="ml-2">{option.text}</span>
-								</label>
-							))}
-						</div>
+		return (
+			<div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+				<h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
+					<div className="flex items-center">
+						<span className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 font-bold text-background">
+							{currentQuestionIndex + 1}
+						</span>
+						{currentQuestion.text}
 					</div>
-				);
+					<LightBulbIcon
+						className={`h-6 w-6 transition-all duration-300 ${
+							isQuestionAnswered
+								? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]'
+								: 'text-gray-300'
+						}`}
+					/>
+				</h3>
 
-			case 'COMPLETAR':
-				return (
-					<div className="space-y-4">
-						<h3 className="font-semibold">{currentQuestion.text}</h3>
+				<div className="space-y-3">
+					{currentQuestion.type === 'COMPLETAR' ? (
 						<input
 							type="text"
 							value={userAnswers[currentQuestion.id]?.answer || ''}
 							onChange={(e) => handleAnswer(e.target.value)}
-							className="w-full rounded-md border p-2"
+							className="w-full rounded-md border border-gray-300 p-3 text-background shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
 							placeholder="Escribe tu respuesta..."
 						/>
-					</div>
-				);
+					) : (
+						<div className="grid gap-3">
+							{currentQuestion.options?.map((option) => (
+								<label
+									key={option.id}
+									className="flex cursor-pointer items-center rounded-lg border border-gray-200 p-4 transition-all hover:bg-gray-50"
+								>
+									<input
+										type="radio"
+										name={currentQuestion.id}
+										value={option.id}
+										checked={
+											userAnswers[currentQuestion.id]?.answer === option.id
+										}
+										onChange={(e) => handleAnswer(e.target.value)}
+										className="h-4 w-4 text-primary focus:ring-primary"
+									/>
+									<span className="ml-3 text-gray-700">{option.text}</span>
+								</label>
+							))}
+						</div>
+					)}
+				</div>
+			</div>
+		);
+	};
 
-			default:
-				return null;
-		}
+	const renderStars = (score: number) => {
+		const totalStars = 5;
+		const starScore = Math.round((score / 5) * totalStars);
+
+		return (
+			<div className="flex justify-center gap-1">
+				{Array.from({ length: totalStars }, (_, index) =>
+					index < starScore ? (
+						<StarSolidIcon key={index} className="h-8 w-8 text-yellow-400" />
+					) : (
+						<StarOutlineIcon key={index} className="h-8 w-8 text-gray-300" />
+					)
+				)}
+			</div>
+		);
 	};
 
 	const renderResults = () => (
-		<div className="space-y-4 p-4">
-			<h3 className="text-xl font-bold">Resultados</h3>
-			<div className="rounded-lg bg-gray-50 p-4">
-				<p className="mb-4 text-center text-lg font-semibold">
-					Tu calificación: {finalScore}/5
-				</p>
-				<div className="mt-4 space-y-2">
-					{questions.map((question, idx) => {
-						const userAnswer = userAnswers[question.id];
-						const displayAnswer = userAnswer
-							? getDisplayAnswer(userAnswer, question)
-							: '';
-						const displayCorrectAnswer = getDisplayCorrectAnswer(question);
+		// Reducido el padding vertical de 4 a 2
+		<div className="-mt-14 space-y-3 px-4">
+			<div className="text-center">
+				{/* Reducido el tamaño del texto y el espacio superior */}
+				<h3 className="text-xl font-bold text-background">Resultados</h3>
+				<div className="mt-1">
+					{renderStars(finalScore)}
+					<p className="mt-1 text-lg font-medium text-gray-600">
+						Calificación: <span className="text-primary">{finalScore}/5</span>
+					</p>
+				</div>
+			</div>
 
-						return (
-							<div
-								key={question.id}
-								className={`rounded-md p-3 ${userAnswer?.isCorrect ? 'bg-green-100' : 'bg-red-100'}`}
-							>
-								<p className="font-medium">
-									Pregunta {idx + 1}: {question.text}
-								</p>
-								<p className="text-sm">Tu respuesta: {displayAnswer}</p>
-								{!userAnswer?.isCorrect && (
-									<p className="text-sm text-red-600">
-										Respuesta correcta: {displayCorrectAnswer}
+			<div className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+				{questions.map((question, idx) => {
+					const userAnswer = userAnswers[question.id];
+					const isCorrect = userAnswer?.isCorrect;
+					const displayAnswer = userAnswer
+						? getDisplayAnswer(userAnswer, question)
+						: '';
+					const displayCorrectAnswer = getDisplayCorrectAnswer(question);
+
+					return (
+						<div
+							key={question.id}
+							className="space-y-3 p-4 transition-all hover:bg-gray-50"
+						>
+							<div className="flex items-start justify-between">
+								<div className="flex-1">
+									<p className="font-medium text-gray-900">
+										<span className="mr-2 text-gray-500">
+											Pregunta {idx + 1}:
+										</span>
+										{question.text}
 									</p>
+								</div>
+								{isCorrect ? (
+									<CheckCircleIcon className="h-6 w-6 text-green-600" />
+								) : (
+									<XCircleIcon className="h-6 w-6 text-red-600" />
 								)}
 							</div>
-						);
-					})}
-				</div>
+
+							<div className="ml-6 space-y-2">
+								<div
+									className={`rounded-md p-2 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}
+								>
+									<p className="text-sm">
+										<span className="font-bold">Tu respuesta:</span>{' '}
+										<span className="font-bold">{displayAnswer}</span>
+									</p>
+								</div>
+
+								{!isCorrect && (
+									<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
+										<span className="font-bold">Respuesta correcta:</span>{' '}
+										<span className="font-bold">{displayCorrectAnswer}</span>
+									</div>
+								)}
+							</div>
+						</div>
+					);
+				})}
 			</div>
 
 			{/* Mostrar el botón si la puntuación es suficiente */}
 			{finalScore >= 3 ? (
 				<Button
-					onClick={handleFinishAndNavigate}
+					onClick={hasNavigatedOnce ? onClose : handleFinishAndNavigate}
 					disabled={isUnlocking}
 					className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 font-semibold text-white hover:from-blue-600 hover:to-blue-800"
 				>
@@ -347,8 +396,10 @@ const LessonActivityModal = ({
 							<Icons.blocks className="mr-2 h-4 w-4 animate-spin" />
 							Desbloqueando siguiente clase...
 						</>
+					) : hasNavigatedOnce ? (
+						'Cerrar'
 					) : (
-						'Cerrar y desbloquear siguiente clase'
+						'Desbloquear siguiente clase'
 					)}
 				</Button>
 			) : (
@@ -371,6 +422,19 @@ const LessonActivityModal = ({
 			)}
 		</div>
 	);
+
+	const getQuestionTypeLabel = (type: string) => {
+		switch (type) {
+			case 'VOF':
+				return 'Verdadero o Falso';
+			case 'OM':
+				return 'Selección Múltiple';
+			case 'COMPLETAR':
+				return 'Completar Texto';
+			default:
+				return 'Pregunta';
+		}
+	};
 
 	if (isLoading) {
 		return (
@@ -396,12 +460,12 @@ const LessonActivityModal = ({
 				}
 			}}
 		>
-			<DialogContent>
-				<DialogHeader className="relative">
-					<DialogTitle className="text-center text-xl">
-						Actividad
-						<div className="absolute top-0 right-2">
-							<CogIcon className="h-5 w-5 animate-spin text-primary" />
+			<DialogContent className="sm:max-w-[500px] [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background">
+				<DialogHeader className="relative pb-6">
+					<DialogTitle className="text-center text-3xl font-bold">
+						ACTIVIDAD
+						<div className="absolute top-0 right-4">
+							<CogIcon className="-mt-2 size-12 animate-spin text-primary" />
 						</div>
 					</DialogTitle>
 				</DialogHeader>
@@ -411,30 +475,33 @@ const LessonActivityModal = ({
 					renderResults()
 				) : (
 					<div className="space-y-6">
-						<div className="mb-4">
-							<span className="text-sm text-gray-500">
-								Pregunta {currentQuestionIndex + 1} de {questions.length}
+						<div className="mb-8 flex flex-col items-center justify-center text-center">
+							<span className="text-2xl font-bold text-primary">
+								{getQuestionTypeLabel(currentQuestion?.type ?? '')}
+							</span>
+							<span className="mt-2 text-sm text-gray-500">
+								{currentQuestionIndex + 1} de {questions.length}
 							</span>
 						</div>
 						{renderQuestion()}
 						<div className="flex justify-between">
-							<Button
+							<button
 								onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
 								disabled={currentQuestionIndex === 0}
-								variant="outline"
+								className="btn-arrow btn-arrow-prev"
 							>
-								Anterior
-							</Button>
+								<ChevronRightIcon />
+								<span>Anterior</span>
+							</button>
 
-							<Button
+							<button
 								onClick={isLastQuestion ? handleFinish : handleNext}
 								disabled={!canProceedToNext}
-								className={
-									isLastQuestion ? 'bg-green-600 hover:bg-green-700' : ''
-								}
+								className={`btn-arrow ${isLastQuestion ? 'btn-arrow-success' : ''}`}
 							>
-								{isLastQuestion ? 'Ver resultados' : 'Siguiente'}
-							</Button>
+								<span>{isLastQuestion ? 'Ver resultados' : 'Siguiente'}</span>
+								<ChevronRightIcon />
+							</button>
 						</div>
 					</div>
 				)}

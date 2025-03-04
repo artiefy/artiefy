@@ -372,7 +372,7 @@ export default function LessonDetails({
 				)
 			);
 
-			toast.success('Lección completada', {
+			toast.success('Clase completada', {
 				description: activity
 					? 'Ahora completa la actividad para continuar'
 					: '¡La siguiente clase ha sido desbloqueada!',

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa';
-import { PiArrowFatLineLeftFill } from 'react-icons/pi';
+import { PiArrowFatLinesLeft } from 'react-icons/pi';
 import { toast } from 'sonner';
 import { Button } from '~/components/estudiantes/ui/button';
 import type { Activity, ActivityResults, SavedAnswer } from '~/types';
@@ -113,37 +113,42 @@ const LessonActivities = ({
 							<FaArrowDown className="animate-bounce-up-down my-4 mb-1 text-green-500" />{' '}
 						</div>
 					)}
-					<Button
-						onClick={
-							activityCompleted ? handleCompletedActivityClick : openModal
-						}
-						className={`mt-2 w-full ${
-							activityCompleted
-								? 'bg-green-500 text-white hover:bg-green-600'
-								: isVideoCompleted
-									? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]'
-									: 'bg-gray-400 text-background'
-						}`}
-						disabled={!isVideoCompleted}
-					>
-						{activityCompleted ? (
-							<>
-								Actividad Completada <FaCheckCircle className="ml-2" />
-							</>
-						) : (
-							'Ver Actividad'
+					<div className="space-y-2">
+						<Button
+							onClick={handleCompletedActivityClick}
+							disabled={!isVideoCompleted}
+							className={`w-full ${
+								activityCompleted
+									? 'bg-blue-500 text-white hover:bg-blue-600'
+									: isVideoCompleted
+										? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]'
+										: 'bg-gray-400 text-background'
+							}`}
+						>
+							{activityCompleted ? (
+								<>
+									Ver Resultados <FaCheckCircle className="ml-2" />
+								</>
+							) : (
+								'Ver Actividad'
+							)}
+						</Button>
+
+						{activityCompleted && nextLessonId && (
+							<div className="mt-4 flex flex-col items-center space-y-2">
+								<div className="h-px w-full bg-gray-200" />
+								<Link
+									href={`/estudiantes/clases/${nextLessonId}`}
+									className="group flex flex-col items-center text-center"
+								>
+									<PiArrowFatLinesLeft className="h-8 w-8 -rotate-90 text-background transition-transform group-hover:-translate-y-1" />
+									<span className="mt-1 text-sm text-gray-600 group-hover:text-blue-500">
+										Ir a la siguiente clase
+									</span>
+								</Link>
+							</div>
 						)}
-					</Button>
-					{activityCompleted && nextLessonId && (
-						<Link href={`/estudiantes/clases/${nextLessonId}`}>
-							<Button className="next-lesson-base next-lesson-gradient hover:next-lesson-gradient-hover">
-								<span className="next-lesson-content">
-									Siguiente Clase <PiArrowFatLineLeftFill className="ml-2" />
-								</span>
-								<div className="next-lesson-overlay" />
-							</Button>
-						</Link>
-					)}
+					</div>
 				</div>
 			) : (
 				<p className="text-gray-600">No hay actividades disponibles</p>
