@@ -5,24 +5,24 @@ import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
-import type { Completado } from '~/types/typesActi';
+import type { Completado2 } from '~/types/typesActi';
 
 interface PreguntasAbiertasProps {
 	activityId: number;
-	editingQuestion?: Completado;
-	onSubmit: (question: Completado) => void;
+	editingQuestion?: Completado2;
+	onSubmit: (question: Completado2) => void;
 	onCancel?: () => void;
 	isUploading: boolean;
 }
 
-const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
+const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 	activityId,
 	editingQuestion,
 	onSubmit,
 	onCancel,
 	isUploading,
 }) => {
-	const [formData, setFormData] = useState<Completado>({
+	const [formData, setFormData] = useState<Completado2>({
 		id: '',
 		text: '',
 		correctAnswer: '',
@@ -58,14 +58,15 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 
 	const validateTotalPercentage = async (newPesoPregunta: number) => {
 		const response = await fetch(
-			`/api/educadores/question/totalPercentage?activityId=${activityId}`
+			`/api/educadores/question/totalPercentage2?activityId=${activityId}`
 		);
 		const data = (await response.json()) as { totalPercentage: number };
 		const totalPercentage =
 			data.totalPercentage +
 			newPesoPregunta -
 			(editingQuestion?.pesoPregunta ?? 0);
-		return totalPercentage <= 100;
+		const comprobacion = totalPercentage <= 100 ? false : true;
+		return comprobacion;
 	};
 
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -94,12 +95,12 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		}, 500);
 
 		try {
-			const response = await fetch('/api/educadores/question/completar', {
+			const response = await fetch('/api/educadores/question/completar2', {
 				method,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					activityId,
-					questionsACompletar: { ...formData, id: questionId },
+					questionsACompletar2: { ...formData, id: questionId },
 				}),
 			});
 			if (!response.ok) {
@@ -108,7 +109,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 			}
 			const data = (await response.json()) as {
 				success: boolean;
-				questions: Completado[];
+				questions: Completado2[];
 			};
 			if (data.success) {
 				toast('Pregunta guardada', {
@@ -201,7 +202,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 						<div className="my-1">
 							<Progress value={uploadProgress} className="w-full" />
 							<p className="mt-2 text-center text-sm text-gray-500">
-								{uploadProgress}% Completado
+								{uploadProgress}% Completado2
 							</p>
 						</div>
 					)}
@@ -227,4 +228,4 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 	);
 };
 
-export default PreguntasAbiertas;
+export default PreguntasAbiertas2;

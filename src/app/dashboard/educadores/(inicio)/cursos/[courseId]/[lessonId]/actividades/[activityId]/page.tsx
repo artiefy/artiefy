@@ -4,10 +4,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
+import CalificarPreguntas from '~/components/educators/dashboard/CalificarPreguntas';
 import FormActCompletado from '~/components/educators/layout/FormActCompletado';
 import QuestionSubidaList from '~/components/educators/layout/ListActSubidaFile';
 import ListPreguntaAbierta from '~/components/educators/layout/ListPreguntaAbierta';
+import ListPreguntaAbierta2 from '~/components/educators/layout/ListPreguntaAbierta2';
 import PreguntasAbiertas from '~/components/educators/layout/PreguntasAbiertas';
+import PreguntasAbiertas2 from '~/components/educators/layout/PreguntasAbiertas2';
 import QuestionForm from '~/components/educators/layout/QuestionsForms';
 import QuestionList from '~/components/educators/layout/QuestionsList';
 import SeleccionActi from '~/components/educators/layout/SeleccionActi';
@@ -457,7 +460,7 @@ const Page: React.FC = () => {
 											onSubmit={handleFormSubmit}
 											onCancel={handleCancel}
 											isUploading={false}
-											questionToEdit={editingQuestion as Question}
+											editingQuestion={editingQuestion as Question}
 										/>
 									)}
 									{questionType === 'FOV' && actividadIdNumber !== null && (
@@ -466,7 +469,7 @@ const Page: React.FC = () => {
 											onSubmit={handleFormSubmit}
 											onCancel={handleCancel}
 											isUploading={false}
-											questionToEdit={editingQuestion as VerdaderoOFlaso}
+											editingQuestion={editingQuestion as VerdaderoOFlaso}
 										/>
 									)}
 									{questionType === 'COMPLETADO' &&
@@ -476,7 +479,6 @@ const Page: React.FC = () => {
 												onSubmit={handleFormSubmit}
 												onCancel={handleCancel}
 												isUploading={false}
-												questionToEdit={editingQuestion as Completado}
 											/>
 										)}
 								</div>
@@ -488,6 +490,16 @@ const Page: React.FC = () => {
 									<ListPreguntaAbierta activityId={actividadIdNumber} />
 								</>
 							)}
+						</>
+					) : actividad.type.id === 4 && actividadIdNumber !== null ? (
+						<>
+							<CalificarPreguntas activityId={actividadIdNumber} />
+							<PreguntasAbiertas2
+								activityId={actividadIdNumber}
+								onSubmit={handleFormSubmit}
+								isUploading={false}
+							/>
+							<ListPreguntaAbierta2 activityId={actividadIdNumber} />
 						</>
 					) : (
 						<div className="text-center text-xl text-red-500">

@@ -97,7 +97,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 			{editingQuestion ? (
 				<QuestionForm
 					activityId={activityId}
-					questionToEdit={editingQuestion}
+					editingQuestion={editingQuestion}
 					onSubmit={handleFormSubmit}
 					onCancel={handleCancel}
 					isUploading={false}
@@ -111,6 +111,8 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 							</h2>
 							<h3 className="text-lg font-semibold">Pregunta:</h3>
 							<p className="mb-2">{question.text}</p>
+							<h4 className="text-sm font-semibold">Peso de la pregunta</h4>
+							<p>{question.pesoPregunta}%</p>
 							<ul className="list-inside list-disc space-y-1">
 								<span className="font-bold">Respuesta:</span>
 								{question.options?.map((option) => (

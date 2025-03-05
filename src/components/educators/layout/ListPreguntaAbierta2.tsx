@@ -1,40 +1,45 @@
 'use client';
 import type React from 'react';
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
-import QuestionVOFForm from '~/components/educators/layout/VerdaderoOFalseForm';
+import PreguntasAbiertas2 from '~/components/educators/layout/PreguntasAbiertas2';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
-import type { VerdaderoOFlaso } from '~/types/typesActi';
+import type { Completado } from '~/types/typesActi';
 
 interface QuestionListProps {
 	activityId: number;
 }
 
-const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
-	const [questions, setQuestionsVOF] = useState<VerdaderoOFlaso[]>([]);
+const ListPreguntaAbierta2: React.FC<QuestionListProps> = ({ activityId }) => {
+	const [questions, setQuestions] = useState<Completado[]>([]);
 	const [editingQuestion, setEditingQuestion] = useState<
-		VerdaderoOFlaso | undefined
+		Completado | undefined
 	>(undefined);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState<boolean>(true);
 
 	const fetchQuestions = useCallback(async () => {
 		try {
 			setLoading(true);
 			const response = await fetch(
-				`/api/educadores/question/VerdaderoOFalso?activityId=${activityId}`
+				`/api/educadores/question/completar2?activityId=${activityId}`
 			);
 			if (!response.ok) {
-				throw new Error(`Error fetching questions: ${response.statusText}`);
+				throw new Error('Error al obtener las preguntas');
 			}
 			const data = (await response.json()) as {
 				success: boolean;
-				questionsVOF?: VerdaderoOFlaso[];
+				questionsACompletar2: Completado[];
 			};
 
-			if (data.success && data.questionsVOF) {
-				setQuestionsVOF(data.questionsVOF);
+			if (data.success) {
+				const filteredQuestions =
+					data.questionsACompletar2?.filter(
+						(q) => q?.text && q?.correctAnswer
+					) ?? [];
+
+				setQuestions(filteredQuestions);
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
@@ -50,21 +55,23 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 	}, [fetchQuestions]);
 
-	const handleEdit = (questionVOF: VerdaderoOFlaso) => {
-		setEditingQuestion(questionVOF);
+	const handleEdit = (question: Completado) => {
+		setEditingQuestion(question);
 	};
 
 	const handleDelete = async (questionId: string) => {
 		try {
 			const response = await fetch(
-				`/api/educadores/question/VerdaderoOFalso?activityId=${activityId}&questionId=${questionId}`,
+				`/api/educadores/question/completar?activityId=${activityId}&questionId=${questionId}`,
 				{
 					method: 'DELETE',
 				}
 			);
 			if (response.ok) {
 				// Actualizar el estado local en lugar de hacer fetch
-				setQuestionsVOF(questions.filter((q) => q.id !== questionId));
+				setQuestions((prevQuestions) =>
+					prevQuestions.filter((q) => q.id !== questionId)
+				);
 				toast('Pregunta eliminada', {
 					description: 'La pregunta se eliminó correctamente',
 				});
@@ -77,17 +84,16 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	};
 
-	const handleFormSubmit = (question: VerdaderoOFlaso) => {
-		setEditingQuestion(undefined);
+	const handleFormSubmit = (question: Completado) => {
 		// Actualizamos el estado local inmediatamente
 		if (editingQuestion) {
 			// Si estamos editando, reemplazamos la pregunta existente
-			setQuestionsVOF((prevQuestions) =>
+			setQuestions((prevQuestions) =>
 				prevQuestions.map((q) => (q.id === question.id ? question : q))
 			);
 		} else {
 			// Si es una nueva pregunta, la añadimos al array
-			setQuestionsVOF((prevQuestions) => [...prevQuestions, question]);
+			setQuestions((prevQuestions) => [...prevQuestions, question]);
 		}
 		// Hacemos fetch para asegurar sincronización con el servidor
 		void fetchQuestions();
@@ -104,40 +110,26 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 	return (
 		<div className="my-2 space-y-4">
 			{editingQuestion ? (
-				<QuestionVOFForm
+				<PreguntasAbiertas2
 					activityId={activityId}
 					editingQuestion={editingQuestion}
 					onSubmit={handleFormSubmit}
 					onCancel={handleCancel}
 					isUploading={false}
 				/>
-			) : (
-				questions.length > 0 &&
+			) : questions.length > 0 ? (
 				questions.map((question) => (
 					<Card key={question.id} className="border-none shadow-lg">
 						<CardContent className="pt-6">
 							<h2 className="text-center text-2xl font-bold">
-								Preguntas de tipo: Verdadero o Falso.
+								Preguntas de tipo: Completar.
 							</h2>
 							<h3 className="text-lg font-semibold">Pregunta:</h3>
-							<p className="ml-2">{question.text}</p>
-							<h4 className="text-sm font-semibold">Peso de la pregunta</h4>
+							<p className="text-sm font-semibold">{question.text}</p>
+							<p>Pregunta abierta</p>
 							<p>{question.pesoPregunta}%</p>
-							<ul className="list-inside list-disc space-y-1">
-								<span className="font-bold">Respuesta:</span>
-								{question.options?.map((option) => (
-									<li
-										key={option.id}
-										className={
-											option.id === question.correctOptionId ? 'font-bold' : ''
-										}
-									>
-										{option.text}{' '}
-										{option.id === question.correctOptionId &&
-											'(Respuesta correcta)'}
-									</li>
-								))}
-							</ul>
+							<p className="my-2 font-bold">Respuesta:</p>
+							<p className="font-bold">{question.correctAnswer}</p>
 						</CardContent>
 						<CardFooter className="flex justify-end space-x-2">
 							<Button
@@ -159,9 +151,11 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 						</CardFooter>
 					</Card>
 				))
+			) : (
+				<></>
 			)}
 		</div>
 	);
 };
 
-export default QuestionVOFList;
+export default ListPreguntaAbierta2;

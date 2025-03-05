@@ -10,7 +10,7 @@ import type { VerdaderoOFlaso, OptionVOF } from '~/types/typesActi';
 
 interface QuestionFormProps {
 	activityId: number;
-	questionToEdit?: VerdaderoOFlaso;
+	editingQuestion?: VerdaderoOFlaso;
 	onSubmit: (question: VerdaderoOFlaso) => void;
 	onCancel?: () => void;
 	isUploading: boolean;
@@ -18,31 +18,34 @@ interface QuestionFormProps {
 
 const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 	activityId,
-	questionToEdit,
+	editingQuestion,
 	onSubmit,
 	onCancel,
 	isUploading,
 }) => {
-	const [questionText, setQuestionText] = useState(questionToEdit?.text ?? '');
+	const [questionText, setQuestionText] = useState(editingQuestion?.text ?? '');
 	const [options, setOptions] = useState<OptionVOF[]>([
 		{ id: 'true', text: 'Verdadero' },
 		{ id: 'false', text: 'Falso' },
 	]);
+	const [pesoPregunta, setPesoPregunta] = useState<number>(
+		editingQuestion?.pesoPregunta ?? 0
+	);
 	const [correctOptionId, setCorrectOptionId] = useState(
-		questionToEdit?.correctOptionId ?? ''
+		editingQuestion?.correctOptionId ?? ''
 	);
 	const [isUploading2, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [isVisible, setIsVisible] = useState<boolean>(true);
 
 	useEffect(() => {
-		if (questionToEdit) {
-			setQuestionText(questionToEdit.text);
+		if (editingQuestion) {
+			setQuestionText(editingQuestion.text);
 			setOptions([
 				{ id: 'true', text: 'Verdadero' },
 				{ id: 'false', text: 'Falso' },
 			]);
-			setCorrectOptionId(questionToEdit.correctOptionId);
+			setCorrectOptionId(editingQuestion.correctOptionId);
 		} else {
 			setQuestionText('');
 			setOptions([
@@ -51,10 +54,30 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 			]);
 			setCorrectOptionId('');
 		}
-	}, [questionToEdit]);
+	}, [editingQuestion]);
+
+	const validateTotalPercentage = async (newPesoPregunta: number) => {
+		const response = await fetch(
+			`/api/educadores/question/totalPercentage?activityId=${activityId}`
+		);
+		const data = (await response.json()) as { totalPercentage: number };
+		const totalPercentage =
+			data.totalPercentage +
+			newPesoPregunta -
+			(editingQuestion?.pesoPregunta ?? 0);
+		return totalPercentage <= 100;
+	};
 
 	const handleSubmit = async (question: VerdaderoOFlaso) => {
-		const method = questionToEdit ? 'PUT' : 'POST';
+		if (await validateTotalPercentage(pesoPregunta)) {
+			toast('Error', {
+				description:
+					'El porcentaje total de las preguntas no puede exceder el 100%',
+			});
+			setIsUploading(false);
+			return;
+		}
+		const method = editingQuestion ? 'PUT' : 'POST';
 		setIsUploading(true);
 		setUploadProgress(0);
 		const interval = setInterval(() => {
@@ -137,30 +160,51 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 			onSubmit={async (e) => {
 				e.preventDefault();
 				await handleSubmit({
-					id: questionToEdit?.id ?? crypto.randomUUID(),
+					id: editingQuestion?.id ?? crypto.randomUUID(),
 					text: questionText,
 					correctOptionId,
 					options,
 					correct: correctOptionId === 'true',
+					pesoPregunta: pesoPregunta,
 				});
 			}}
 			className="space-y-6 rounded-lg bg-white p-6 shadow-md"
 		>
-			<div>
-				<Label
-					htmlFor="question"
-					className="block text-lg font-medium text-gray-700"
-				>
-					Pregunta tipo verdadera o falso
-				</Label>
-				<textarea
-					id="question"
-					value={questionText}
-					onChange={(e) => setQuestionText(e.target.value)}
-					placeholder="Escribe tu pregunta aquí"
-					required
-					className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
-				/>
+			<div className="flex-col space-y-4 md:flex md:flex-row md:space-x-4">
+				<div className="w-full md:w-3/4">
+					<Label
+						htmlFor="questions"
+						className="block text-lg font-medium text-gray-700"
+					>
+						Pregunta
+					</Label>
+					<textarea
+						id="questions"
+						value={questionText}
+						onChange={(e) => setQuestionText(e.target.value)}
+						placeholder="Escribe tu pregunta aquí"
+						required
+						className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
+					/>
+				</div>
+				<div className="w-11/12 md:w-1/4">
+					<Label
+						htmlFor="pesoPregunta"
+						className="block text-lg font-medium text-gray-700"
+					>
+						Porcentaje de la pregunta
+					</Label>
+					<input
+						type="number"
+						id="pesoPregunta"
+						value={pesoPregunta}
+						onChange={(e) => setPesoPregunta(Number(e.target.value))}
+						min={1}
+						max={100}
+						required
+						className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
+					/>
+				</div>
 			</div>
 			<div className="space-y-4">
 				<Label className="block text-lg font-medium text-gray-700">
@@ -202,7 +246,7 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 					type="submit"
 					className="border-none bg-green-400 text-white hover:bg-green-500"
 				>
-					{questionToEdit ? 'Actualizar' : 'Crear'} Pregunta
+					{editingQuestion ? 'Actualizar' : 'Crear'} Pregunta
 				</Button>
 			</div>
 		</form>

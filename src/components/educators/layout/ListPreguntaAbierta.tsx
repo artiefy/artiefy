@@ -85,7 +85,6 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 	};
 
 	const handleFormSubmit = (question: Completado) => {
-		setEditingQuestion(undefined);
 		// Actualizamos el estado local inmediatamente
 		if (editingQuestion) {
 			// Si estamos editando, reemplazamos la pregunta existente
@@ -113,7 +112,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 			{editingQuestion ? (
 				<PreguntasAbiertas
 					activityId={activityId}
-					questionToEdit={editingQuestion}
+					editingQuestion={editingQuestion}
 					onSubmit={handleFormSubmit}
 					onCancel={handleCancel}
 					isUploading={false}
@@ -126,7 +125,9 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 								Preguntas de tipo: Completar.
 							</h2>
 							<h3 className="text-lg font-semibold">Pregunta:</h3>
-							<p>{question.text}</p>
+							<p className="text-sm font-semibold">{question.text}</p>
+							<p>Pregunta abierta</p>
+							<p>{question.pesoPregunta}%</p>
 							<p className="my-2 font-bold">Respuesta:</p>
 							<p className="font-bold">{question.correctAnswer}</p>
 						</CardContent>

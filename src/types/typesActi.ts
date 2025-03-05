@@ -12,6 +12,7 @@ export interface Question {
 	text: string;
 	options: OptionOM[];
 	correctOptionId: string;
+	pesoPregunta:number;
 }
 
 export interface VerdaderoOFlaso {
@@ -20,6 +21,7 @@ export interface VerdaderoOFlaso {
 	correct: boolean;
 	options: OptionVOF[];
 	correctOptionId: string;
+	pesoPregunta:number;
 }
 
 export interface Completado {
@@ -27,6 +29,15 @@ export interface Completado {
 	text: string;
 	correctAnswer: string;
 	answer?: string;
+	pesoPregunta:number;
+}
+
+export interface Completado2 {
+	id: string;
+	text: string;
+	correctAnswer: string;
+	answer?: string;
+	pesoPregunta:number;
 }
 
 export interface QuestionFilesSubida {

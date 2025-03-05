@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -12,7 +13,7 @@ import ActSubida from '~/components/verActividades/ActSubida';
 import VerListPreguntaAbierta from '~/components/verActividades/PreguntaCompletado';
 import VerQuestionVOFList from '~/components/verActividades/PreguntaFOV';
 import VerQuestionList from '~/components/verActividades/PreguntasOM';
-import { toast } from 'sonner';
+import ResponderPreguntas from '~/components/verActividades/ResponderPreguntas';
 
 interface ActivityDetails {
 	id: number;
@@ -308,6 +309,13 @@ const RealizarActividad: React.FC = () => {
 												</p>
 											</div>
 										)}
+									</>
+								) : actividad.type.id === 4 ? (
+									<>
+										<ResponderPreguntas
+											onQuestionAnswered={handleQuestionResult}
+											activityId={actividad.id}
+										/>
 									</>
 								) : (
 									<>
