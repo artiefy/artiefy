@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 import {
 	Users,
 	Clock,
@@ -10,6 +11,7 @@ import {
 	Star,
 } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -17,7 +19,7 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
-import { toast } from 'sonner';
+import { Button } from '~/components/educators/ui/button';
 
 interface Course {
 	id: number;
@@ -225,6 +227,13 @@ function App() {
 					<BreadcrumbSeparator />
 				</BreadcrumbList>
 			</Breadcrumb>
+			<Button
+				onClick={() => window.history.back()}
+				className="mt-4 bg-gray-800 text-center hover:bg-gray-800/80"
+			>
+				<ArrowLeftIcon className="animate-bounce-right size-5" />
+				Volver
+			</Button>
 			<div className="mt-2 min-h-screen rounded-lg border-0 text-white shadow-lg">
 				{/* Header */}
 				<div className="group relative">
@@ -297,7 +306,7 @@ function App() {
 									<h3 className="my-2 ml-4 text-xl font-semibold text-white">
 										Progreso de las Lecciones
 									</h3>
-									<ul className="flex flex-col-reverse space-y-4">
+									<ul className="flex flex-col space-y-4">
 										{courses.lessons.length > 0 ? (
 											courses.lessons.map((lesson) => (
 												<li

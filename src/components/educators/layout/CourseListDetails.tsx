@@ -41,8 +41,9 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
 								<div className="relative size-full">
 									<Image
 										src={
-											`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}` ||
-											'/placeholder.svg'
+											course.coverImageKey
+												? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+												: '/placeholder.svg'
 										}
 										alt={course.title || 'Imagen del curso'}
 										className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
@@ -75,7 +76,7 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
 						</CardContent>
 						<CardFooter className="flex flex-col items-start justify-between space-y-2 px-2">
 							<div className="flex w-full justify-between">
-								<p className="text-sm font-bold italic text-gray-300">
+								<p className="text-sm font-bold text-gray-300 italic">
 									Educador:{' '}
 									<span className="font-bold italic">{course.instructor}</span>
 								</p>
@@ -91,7 +92,7 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
 									>
 										<p className="font-bold">Ver estadisticas del curso</p>
 										<ArrowRightIcon className="animate-bounce-right size-5" />
-										<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+										<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 											<div className="relative h-full w-10 bg-white/30"></div>
 										</div>
 									</Link>
