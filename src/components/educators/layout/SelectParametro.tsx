@@ -81,7 +81,11 @@ const SelectParametro: React.FC<SelectParametroProps> = ({
 				Selecciona un parametro:
 			</label>
 			{isLoading ? (
-				<p className="text-black">Cargando parametro...</p>
+				<p
+					className={`my-3 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+				>
+					Cargando parametro...
+				</p>
 			) : (
 				<select
 					id="parametro-select"
@@ -90,7 +94,7 @@ const SelectParametro: React.FC<SelectParametroProps> = ({
 						const selectedId = Number(e.target.value);
 						onParametroChange(selectedId);
 					}}
-					className={`mb-5 w-60 rounded border border-none p-2 text-black outline-none`}
+					className={`mb-5 w-11/12 rounded border border-none bg-white p-2 text-black outline-none`}
 				>
 					<option value="">Selecciona un parametro:</option>
 					{parametros.map((parametro) => (

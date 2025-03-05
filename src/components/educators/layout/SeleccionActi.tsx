@@ -30,7 +30,7 @@ const SeleccionActi: React.FC<TypeActDropdownProps> = ({
 			</label>
 			<select
 				id="typesAct-select"
-				className={`mb-5 w-80 rounded border border-slate-300 p-2 text-black outline-none`}
+				className={`mb-5 w-80 rounded border border-slate-300 bg-white p-2 text-black outline-none`}
 				onChange={(e) => onSelectChange(e.target.value)}
 			>
 				<option value="">Selecciona un tipo de actividad</option>

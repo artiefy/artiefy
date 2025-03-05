@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import FormActCompletado from '~/components/educators/layout/FormActCompletado';
 import QuestionSubidaList from '~/components/educators/layout/ListActSubidaFile';
 import ListPreguntaAbierta from '~/components/educators/layout/ListPreguntaAbierta';
@@ -33,7 +34,6 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
-import { toast } from 'sonner';
 import type {
 	QuestionFilesSubida,
 	Completado,
@@ -290,7 +290,7 @@ const Page: React.FC = () => {
 			<div className="group relative h-auto w-full">
 				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 				<div
-					className="relative z-20 mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-8 shadow-lg"
+					className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-8 shadow-lg"
 					style={{ backgroundColor: color, color: getContrastYIQ(color) }}
 				>
 					<div className="mb-3 grid grid-cols-1 items-center justify-between space-y-4 text-3xl font-semibold md:grid-cols-2">
@@ -361,16 +361,16 @@ const Page: React.FC = () => {
 							</div>
 						</div>
 					</div>
-					<div className="flex items-center justify-evenly space-x-4">
+					<div className="justify-items-centerer mx-auto flex w-fit justify-evenly space-x-10">
 						<Link
 							href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-							className="rounded-lg bg-blue-500 px-4 py-1.5 text-white hover:bg-blue-600"
+							className="w-fit rounded-lg bg-blue-500 py-1.5 text-white hover:bg-blue-600"
 						>
 							Realizar Actividad
 						</Link>
 						<AlertDialog>
 							<AlertDialogTrigger asChild>
-								<Button className="mx-auto w-1/3 border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600 md:w-1/6 lg:w-1/6">
+								<Button className="mx-auto w-1/3 border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
 									Eliminar
 								</Button>
 							</AlertDialogTrigger>
@@ -443,7 +443,7 @@ const Page: React.FC = () => {
 							/>
 							{selectedActivityType && (
 								<Button
-									className={`mx-auto mb-4 w-2/4 border-slate-300 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+									className={`mx-auto mb-4 w-2/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 									onClick={handleAddQuestion}
 								>
 									Agregar Pregunta

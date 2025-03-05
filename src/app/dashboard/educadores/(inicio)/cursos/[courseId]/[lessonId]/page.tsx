@@ -310,7 +310,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				<div className="group relative h-auto w-full">
 					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
 					<Card
-						className={`relative z-20 mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+						className={`relative mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						style={{
 							backgroundColor: color,
 							color: getContrastYIQ(color),

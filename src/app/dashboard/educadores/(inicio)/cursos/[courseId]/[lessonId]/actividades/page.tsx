@@ -1,8 +1,9 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { useRouter, useSearchParams, useParams } from 'next/navigation'; // Cambiar la importación de useRouter
+import { toast } from 'sonner';
 import SelectParametro from '~/components/educators/layout/SelectParametro';
 import TypeActDropdown from '~/components/educators/layout/TypesActDropdown';
 import {
@@ -27,7 +28,6 @@ import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from 'sonner';
 
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
@@ -87,13 +87,13 @@ const Page: React.FC = () => {
 	});
 	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl;
 	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
-	const cursoIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
 	const router = useRouter(); // Usar useRouter de next/navigation
 	const [color, setColor] = useState<string>('#FFFFFF');
 	const [isActive, setIsActive] = useState(false);
 	const [fechaMaxima, setFechaMaxima] = useState(false);
 	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
 	const [parametros, setParametros] = useState<Parametros[]>([]); // Definir setParametros
+	console.log(parametros);
 
 	useEffect(() => {
 		const fetchParametros = async () => {
@@ -145,7 +145,42 @@ const Page: React.FC = () => {
 		if (courseIdNumber) {
 			void fetchParametros();
 		}
-	}, [courseIdNumber, lessonsId, parametros]);
+	}, [courseIdNumber]);
+
+	useEffect(() => {
+		if (!lessonsId || !courseIdNumber) {
+			return;
+		}
+		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
+		if (savedColor) {
+			setColor(savedColor);
+		}
+	}, [lessonsId, courseIdNumber]);
+
+	useEffect(() => {
+		const fetchCourse = async () => {
+			if (!user) return;
+			if (courseIdNumber !== null) {
+				try {
+					const response = await fetch(
+						`/api/educadores/courses/${courseIdNumber}`
+					);
+
+					if (response.ok) {
+						const data = (await response.json()) as Course;
+						setCourse(data);
+					}
+				} catch (error: unknown) {
+					const errorMessage =
+						error instanceof Error ? error.message : 'Error desconocido';
+					toast('Error', {
+						description: `No se pudo cargar el curso: ${errorMessage}`,
+					});
+				}
+			}
+		};
+		void fetchCourse();
+	}, [user, courseIdNumber]);
 
 	const handleToggle = () => {
 		setIsActive((prevIsActive) => {
@@ -180,51 +215,6 @@ const Page: React.FC = () => {
 		setShowLongevidadForm(true);
 	};
 
-	useEffect(() => {
-		if (!lessonsId || !cursoIdNumber) {
-			return;
-		}
-		console.log(parametros);
-		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
-		if (savedColor) {
-			setColor(savedColor);
-		}
-	}, [lessonsId, parametros, courseIdNumber, cursoIdNumber]);
-
-	const fetchCourse = useCallback(async () => {
-		if (!user) return;
-		if (courseIdNumber !== null) {
-			try {
-				const response = await fetch(
-					`/api/educadores/courses/${courseIdNumber}`
-				);
-
-				if (response.ok) {
-					const data = (await response.json()) as Course;
-					setCourse(data);
-				} else {
-					const errorData = (await response.json()) as { error?: string };
-					const errorMessage = errorData.error ?? response.statusText;
-					toast('Error', {
-						description: `No se pudo cargar el curso: ${errorMessage}`,
-					});
-				}
-			} catch (error: unknown) {
-				const errorMessage =
-					error instanceof Error ? error.message : 'Error desconocido';
-				toast('Error', {
-					description: `No se pudo cargar el curso: ${errorMessage}`,
-				});
-			}
-		}
-	}, [user, courseIdNumber]);
-
-	useEffect(() => {
-		fetchCourse().catch((error) =>
-			console.error('Error fetching course:', error)
-		);
-	}, [fetchCourse]);
-
 	const validarPorcentaje = async (
 		parametroId: number,
 		nuevoPorcentaje: number
@@ -246,7 +236,7 @@ const Page: React.FC = () => {
 			};
 
 			if (!response.ok) {
-				toast('Error de porcentaje', {
+				toast.error('Error de porcentaje', {
 					description: 'Error desconocido',
 				});
 				return false;
@@ -399,7 +389,7 @@ const Page: React.FC = () => {
 			});
 
 			router.push(
-				`/dashboard/educadores/cursos/${cursoIdNumber}/${lessonsId}/actividades/${actividadId}`
+				`/dashboard/educadores/cursos/${courseIdNumber}/${lessonsId}/actividades/${actividadId}`
 			);
 		} catch (error) {
 			console.error('Error detallado:', error);
@@ -480,7 +470,7 @@ const Page: React.FC = () => {
 			</Breadcrumb>
 			<div className="group relative mx-auto h-auto w-full md:w-3/5 lg:w-3/5">
 				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
-				<div className="relative z-20 mt-5 h-auto w-full justify-center">
+				<div className="relative mt-5 h-auto w-full justify-center">
 					<form
 						className="mx-auto w-full justify-center rounded-lg bg-white p-4"
 						onSubmit={handleSubmit}
@@ -498,132 +488,134 @@ const Page: React.FC = () => {
 								<p className="text-sm">Del curso: {course?.title}</p>
 							</h2>
 						</div>
-						<div className="flex flex-col">
-							<p>¿La actividad es calificable?:</p>
-							<div className="flex space-x-2">
-								<label
-									htmlFor="toggle"
-									className="relative inline-block h-8 w-16"
-								>
-									<input
-										type="checkbox"
-										id="toggle"
-										checked={isActive}
-										onChange={handleToggle}
-										className="absolute size-0"
-									/>
-									<span
-										className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${isActive ? 'bg-gray-300' : 'bg-red-500'}`}
-									>
-										<span
-											className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
-										></span>
-									</span>
-								</label>
-								<span className="mt-1 text-sm text-gray-400">
-									{isActive ? 'Si' : 'No'}
-								</span>
-							</div>
-						</div>
-						{isActive && (
-							<>
-								<div className="my-4">
-									<Button
-										type="button"
-										onClick={(e) => {
-											e.preventDefault();
-											handleLongevidadClick();
-										}}
-										className="border-none bg-blue-500 text-white hover:bg-blue-500/90"
-									>
-										Asignar un parametro de evaluacion
-									</Button>
-								</div>
-								{showLongevidadForm && (
-									<div className="my-4">
-										<div className="flex flex-col">
-											<SelectParametro
-												courseId={cursoIdNumber}
-												parametro={formData.parametro ?? 0}
-												onParametroChange={handleParametroChange}
-												selectedColor={color}
-											/>
-											<Label
-												htmlFor="porcentaje"
-												className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-											>
-												Peso de la nota en el parametro (0-100 en porcentaje %):
-											</Label>
-											<div>
-												<Input
-													value={formData.porcentaje || ''}
-													className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-													type="number"
-													id="percentage"
-													name="porcentaje"
-													min="0"
-													max="100"
-													step="1"
-													placeholder="0-100"
-													onChange={(e) =>
-														handlePorcentajeChange(e.target.value)
-													}
-												/>
-											</div>
-										</div>
-									</div>
-								)}
-							</>
-						)}
-						<div className="my-4 flex flex-col">
+						<div className="grid grid-cols-1 lg:grid-cols-2">
 							<div className="flex flex-col">
-								<p className="font-bold">
-									¿La actividad tiene fecha de entrega?
-								</p>
-								<div className="flex space-x-2">
-									<label
-										htmlFor="toggleFechaMaxima"
-										className="relative inline-block h-8 w-16"
-									>
-										<input
-											type="checkbox"
-											id="toggleFechaMaxima"
-											checked={fechaMaxima}
-											onChange={handleToggleFechaMaxima}
-											className="absolute size-0"
-										/>
-										<span
-											className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
+								<div className="flex flex-col">
+									<p>¿La actividad es calificable?:</p>
+									<div className="flex">
+										<label
+											htmlFor="toggle"
+											className="relative inline-block h-8 w-16"
 										>
+											<input
+												type="checkbox"
+												id="toggle"
+												checked={isActive}
+												onChange={handleToggle}
+												className="absolute size-0"
+											/>
 											<span
-												className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
-											></span>
+												className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${isActive ? 'bg-gray-300' : 'bg-red-500'}`}
+											>
+												<span
+													className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
+												></span>
+											</span>
+										</label>
+										<span className="mt-1 text-sm text-gray-400">
+											{isActive ? 'Si' : 'No'}
 										</span>
-									</label>
-									<span className="mt-1 text-sm text-gray-400">
-										{fechaMaxima ? 'Si' : 'No'}
-									</span>
+									</div>
 								</div>
+								{isActive && (
+									<>
+										<div className="my-1">
+											<Button
+												type="button"
+												onClick={(e) => {
+													e.preventDefault();
+													handleLongevidadClick();
+												}}
+												className="border-none bg-blue-500 text-white hover:bg-blue-500/90"
+											>
+												Asignar un parametro de evaluacion
+											</Button>
+										</div>
+										{showLongevidadForm && (
+											<div className="my-4">
+												<div>
+													<SelectParametro
+														courseId={courseIdNumber}
+														parametro={formData.parametro ?? 0}
+														onParametroChange={handleParametroChange}
+														selectedColor={color}
+													/>
+													<Label
+														htmlFor="porcentaje"
+														className={`mb-2 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+													>
+														Peso actividad en el parametro (0-100 en porcentaje%):
+													</Label>
+													<div>
+														<Input
+															value={formData.porcentaje || ''}
+															className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+															type="number"
+															id="percentage"
+															name="porcentaje"
+															min="0"
+															max="100"
+															step="1"
+															placeholder="0-100"
+															onChange={(e) =>
+																handlePorcentajeChange(e.target.value)
+															}
+														/>
+													</div>
+												</div>
+											</div>
+										)}
+									</>
+								)}
 							</div>
-							{fechaMaxima && (
-								<>
-									<span
-										className={`text-xl font-medium ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-									>
-										Fecha maxima de entrega:
-									</span>
-									<input
-										type="datetime-local"
-										className={`w-1/2 rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												fechaMaximaEntrega: e.target.value,
-											})
-										}
-									/>
-								</>
-							)}
+							<div className="flex flex-col">
+								<div className="flex flex-col">
+									<p>¿La actividad tiene fecha de entrega?</p>
+									<div className="flex space-x-2">
+										<label
+											htmlFor="toggleFechaMaxima"
+											className="relative inline-block h-8 w-16"
+										>
+											<input
+												type="checkbox"
+												id="toggleFechaMaxima"
+												checked={fechaMaxima}
+												onChange={handleToggleFechaMaxima}
+												className="absolute size-0"
+											/>
+											<span
+												className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
+											>
+												<span
+													className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
+												></span>
+											</span>
+										</label>
+										<span className="mt-1 text-sm text-gray-400">
+											{fechaMaxima ? 'Si' : 'No'}
+										</span>
+									</div>
+								</div>
+								{fechaMaxima && (
+									<>
+										<span
+											className={`text-xl font-medium ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+										>
+											Fecha maxima de entrega:
+										</span>
+										<input
+											type="datetime-local"
+											className={`w-full rounded-lg border border-slate-200 bg-white p-2 text-black outline-none`}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													fechaMaximaEntrega: e.target.value,
+												})
+											}
+										/>
+									</>
+								)}
+							</div>
 						</div>
 						<Label
 							className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
@@ -667,7 +659,6 @@ const Page: React.FC = () => {
 							}
 							selectedColor={color}
 						/>
-
 						{isUploading && (
 							<div className="my-1">
 								<Progress value={uploadProgress} className="w-full" />

@@ -83,6 +83,7 @@ const ForumPage = () => {
 	const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
 	const [editPostContent, setEditPostContent] = useState<string>('');
 	const [editReplyContent, setEditReplyContent] = useState<string>('');
+	// const [error, setError] = useState(false);
 	const ForumIdString = Array.isArray(forumId) ? forumId[0] : forumId;
 	const ForumIdNumber = ForumIdString ? parseInt(ForumIdString) : null;
 
@@ -107,6 +108,7 @@ const ForumPage = () => {
 	// Fetch de los posts principales
 	const fetchPosts = useCallback(async () => {
 		setLoadingPosts(true);
+		//setError(true)
 		try {
 			const responsePosts = await fetch(
 				`/api/forums/posts?foroId=${ForumIdNumber}`
@@ -432,7 +434,7 @@ const ForumPage = () => {
 		const replies = postReplays.filter((reply) => reply.postId === postId);
 
 		return replies.map((reply) => (
-			<div className="ml-6 mt-2 space-y-2" key={reply.id}>
+			<div className="mt-2 ml-6 space-y-2" key={reply.id}>
 				<div className="relative rounded-lg bg-gray-800 p-3">
 					<p className="mb-3 font-bold text-gray-200">
 						{reply.userId.name}, dijo:
@@ -440,7 +442,7 @@ const ForumPage = () => {
 					{editingReplyId === reply.id ? (
 						<div>
 							<textarea
-								className="w-full rounded-lg p-2 text-black outline-none"
+								className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
 								value={editReplyContent}
 								onChange={(e) => setEditReplyContent(e.target.value)}
 							/>
@@ -449,6 +451,12 @@ const ForumPage = () => {
 								className="mt-2 rounded bg-blue-500 px-4 py-2 text-white"
 							>
 								Actualizar Respuesta
+							</button>
+							<button
+								className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
+								onClick={() => setEditingReplyId(null)}
+							>
+								Cancelar
 							</button>
 						</div>
 					) : (
@@ -463,9 +471,12 @@ const ForumPage = () => {
 					{reply.userId.id === user?.id && (
 						<div className="mt-4 space-x-2">
 							{editingReplyId === reply.id ? (
-								<Collapsible className="absolute right-3 top-4">
-									<CollapsibleTrigger>
-										<EllipsisVertical className="text-white" />
+								<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
+									<CollapsibleTrigger
+										asChild
+										className="absolute cursor-pointer"
+									>
+										<EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
 									</CollapsibleTrigger>
 									<CollapsibleContent>
 										<button
@@ -475,23 +486,18 @@ const ForumPage = () => {
 											Cancelar
 										</button>
 									</CollapsibleContent>
-									<CollapsibleContent>
-										<button
-											className="mt-2 text-sm text-red-400"
-											onClick={() => handleDeleteReply(reply.id)}
-										>
-											Eliminar Respuesta
-										</button>
-									</CollapsibleContent>
 								</Collapsible>
 							) : (
-								<Collapsible className="absolute right-3 top-4">
-									<CollapsibleTrigger>
-										<EllipsisVertical className="text-white" />
+								<Collapsible className="absolute top-4 right-3 flex w-[160px] flex-col">
+									<CollapsibleTrigger
+										asChild
+										className="absolute cursor-pointer"
+									>
+										<EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
 									</CollapsibleTrigger>
-									<CollapsibleContent>
+									<CollapsibleContent className="justify-start text-left">
 										<button
-											className="mt-2 text-sm text-yellow-400"
+											className="mt-2 text-sm text-green-400"
 											onClick={() => {
 												setEditingReplyId(reply.id);
 												setEditReplyContent(reply.content);
@@ -499,8 +505,6 @@ const ForumPage = () => {
 										>
 											Editar Respuesta
 										</button>
-									</CollapsibleContent>
-									<CollapsibleContent>
 										<button
 											className="mt-2 text-sm text-red-400"
 											onClick={() => handleDeleteReply(reply.id)}
@@ -590,15 +594,21 @@ const ForumPage = () => {
 								{editingPostId === post.id ? (
 									<div>
 										<textarea
-											className="w-full p-2 text-black"
+											className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
 											value={editPostContent}
 											onChange={(e) => setEditPostContent(e.target.value)}
 										/>
 										<button
 											onClick={() => handlePostUpdate(post.id)}
-											className="mt-2 rounded bg-blue-500 px-4 py-2 text-white"
+											className="mt-2 rounded bg-primary px-4 py-2 text-white"
 										>
 											Actualizar Post
+										</button>
+										<button
+											className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
+											onClick={() => setEditingPostId(null)}
+										>
+											Cancelar
 										</button>
 									</div>
 								) : (
@@ -615,9 +625,12 @@ const ForumPage = () => {
 								{post.userId.id === user?.id && (
 									<div className="mt-4 space-x-2">
 										{editingPostId === post.id ? (
-											<Collapsible className="absolute right-3 top-4">
-												<CollapsibleTrigger>
-													<EllipsisVertical className="text-white" />
+											<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
+												<CollapsibleTrigger
+													asChild
+													className="absolute cursor-pointer"
+												>
+													<EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
 												</CollapsibleTrigger>
 												<CollapsibleContent>
 													<button
@@ -627,23 +640,18 @@ const ForumPage = () => {
 														Cancelar
 													</button>
 												</CollapsibleContent>
-												<CollapsibleContent>
-													<button
-														className="mt-2 text-sm text-red-400"
-														onClick={() => handleDeletePost(post.id)}
-													>
-														Eliminar Post
-													</button>
-												</CollapsibleContent>
 											</Collapsible>
 										) : (
-											<Collapsible className="absolute right-3 top-4">
-												<CollapsibleTrigger>
-													<EllipsisVertical className="text-white" />
+											<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
+												<CollapsibleTrigger
+													asChild
+													className="absolute cursor-pointer"
+												>
+													<EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
 												</CollapsibleTrigger>
-												<CollapsibleContent>
+												<CollapsibleContent className="justify-start text-left">
 													<button
-														className="mt-2 text-sm text-yellow-400"
+														className="mt-2 text-sm text-green-400"
 														onClick={() => {
 															setEditingPostId(post.id);
 															setEditPostContent(post.content);
@@ -651,8 +659,7 @@ const ForumPage = () => {
 													>
 														Editar Post
 													</button>
-												</CollapsibleContent>
-												<CollapsibleContent>
+
 													<button
 														className="mt-2 text-sm text-red-400"
 														onClick={() => handleDeletePost(post.id)}
@@ -667,21 +674,21 @@ const ForumPage = () => {
 								{/* Mostrar formulario de respuesta */}
 								<div>
 									{replyingToPostId === post.id ? (
-										<div>
+										<div className="my-3">
 											<textarea
-												className="w-full rounded-lg p-2 text-black outline-none"
+												className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
 												placeholder="Escribe tu respuesta..."
 												value={replyMessage}
 												onChange={(e) => setReplyMessage(e.target.value)}
 											/>
 											<button
-												className="mr-2 mt-2 rounded bg-blue-500 px-4 py-2 text-white"
+												className="mt-2 mr-2 rounded bg-primary px-4 py-2 text-white"
 												onClick={handleReplySubmit}
 											>
 												Enviar Respuesta
 											</button>
 											<button
-												className="mt-2 text-sm text-red-400"
+												className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
 												onClick={() => setReplyingToPostId(null)}
 											>
 												Cancelar
@@ -709,13 +716,13 @@ const ForumPage = () => {
 				{/* Crear nuevo Post */}
 				<div className="mt-4">
 					<textarea
-						className="w-full rounded-lg p-2 text-black outline-none"
+						className="w-full rounded-lg border-2 border-gray-700 bg-white p-2 text-black outline-none"
 						placeholder="Escribe un nuevo mensaje..."
 						value={message}
 						onChange={(e) => setMessage(e.target.value)}
-					></textarea>
+					/>
 					<button
-						className="mt-2 rounded bg-blue-500 px-4 py-2 text-white"
+						className="mt-2 rounded bg-primary px-4 py-2 font-light text-black"
 						onClick={handlePostSubmit}
 					>
 						Enviar

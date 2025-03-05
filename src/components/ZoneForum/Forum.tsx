@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs'; // Importa el hook de Clerk
 import { FaSearch, FaPlus } from 'react-icons/fa';
 
+import { toast } from 'sonner';
 import { Button } from '~/components/educators/ui/button'; // Importa el botón de ShadCN
 import {
 	Dialog,
@@ -17,7 +18,6 @@ import {
 import { Input } from '~/components/educators/ui/input'; // Assuming you have ShadCN's Input component
 import { Progress } from '~/components/educators/ui/progress';
 import { Zone } from '~/components/ZoneForum/Zone'; // Assuming you have a Zone component
-import { toast } from 'sonner';
 
 interface CoursesModels {
 	id: number;
@@ -43,9 +43,7 @@ const ForumHome = () => {
 		// Aquí manejas la creación del foro
 		if (!user) return null;
 		setIsUploading(true);
-		console.log('user:', user.id);
 		const userId = user.id;
-		console.log({ courseId, title, description, userId });
 		try {
 			// Aquí haces la petición POST al servidor
 			const response = await fetch('/api/forums', {
@@ -61,7 +59,7 @@ const ForumHome = () => {
 			}
 			setUploadProgress(100); // Actualizamos el progreso al 100%
 			const data: ResponseData = (await response.json()) as ResponseData;
-			toast('Foro creado exitosamente!.', {
+			toast.success('Foro creado exitosamente!.', {
 				description: `El foro se ha creado satisfactoriamente:`,
 			});
 			console.log(data);
@@ -129,7 +127,7 @@ const ForumHome = () => {
 								</DialogHeader>
 
 								{/* Formulario para crear un foro */}
-								<div className="space-y-4">
+								<div className="flex flex-col space-y-4">
 									<label
 										htmlFor="category-select"
 										className="text-lg font-medium text-primary"
@@ -195,16 +193,20 @@ const ForumHome = () => {
 								)}
 								<DialogFooter>
 									<Button
-										variant="outline"
+										className="border border-primary-foreground bg-transparent hover:bg-gray-700/10"
 										onClick={() => {
 											setCourseId('');
 											setTitle('');
 											setDescription('');
+											setIsDialogOpen(false); // Cerrar el diálogo
 										}}
 									>
 										Cancelar
 									</Button>
-									<Button variant="default" onClick={handleCreateForum}>
+									<Button
+										onClick={handleCreateForum}
+										className="border-none bg-green-500 text-white hover:bg-green-500/80"
+									>
 										Crear Foro
 									</Button>
 								</DialogFooter>
