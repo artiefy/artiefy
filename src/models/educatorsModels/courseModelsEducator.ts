@@ -343,7 +343,6 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 			.where(eq(enrollments.userId, userId)); // Filtra por el userId en la tabla de enrollments
 
 		// Verifica los datos obtenidos de la consulta
-		debugger;
 		console.log('Cursos obtenidos:', coursesData);
 
 		// Si no se obtienen cursos, retornar un array vacío

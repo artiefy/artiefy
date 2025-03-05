@@ -102,6 +102,15 @@ export const activities = pgTable('activities', {
 	fechaMaximaEntrega: timestamp('fecha_maxima_entrega'),
 });
 
+// Tabla de anuncios
+export const anuncios = pgTable('anuncios', {
+	id: serial('id').primaryKey(),
+	titulo: text('titulo').notNull(),
+	descripcion: text('descripcion').notNull(),
+	imagenUrl: text('cover_image_key').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // Tabla de inscripciones
 export const enrollments = pgTable('enrollments', {
 	id: serial('id').primaryKey(),
@@ -352,6 +361,8 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
 		references: [categories.id],
 	}),
 	coursesTaken: many(coursesTaken),
+	userLessonsProgress: many(userLessonsProgress),
+	userActivitiesProgress: many(userActivitiesProgress),
 }));
 
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({

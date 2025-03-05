@@ -1,8 +1,8 @@
 'use server';
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { enrollments } from '~/server/db/schema';
+import { enrollments, userLessonsProgress } from '~/server/db/schema';
 
 // Función para obtener usuarios inscritos en un curso específico
 export async function getUsersEnrolledInCourse(courseId: number) {
@@ -22,16 +22,46 @@ export async function getUsersEnrolledInCourse(courseId: number) {
 
 	const filteredUsers = users.filter((user) => userIds.includes(user.id));
 
-	const simplifiedUsers = filteredUsers.map((user) => ({
-		id: user.id,
-		firstName: user.firstName,
-		lastName: user.lastName,
-		email: user.emailAddresses.find(
-			(email) => email.id === user.primaryEmailAddressId
-		)?.emailAddress,
-		role: user.publicMetadata.role || 'estudiante',
-		status: user.publicMetadata.status || 'activo',
-	}));
-	console.log(`Usuarios inscritos en el curso ${courseId}:`, simplifiedUsers);
+	const simplifiedUsers = await Promise.all(
+		filteredUsers.map(async (user) => {
+			const lessonsProgress = await db
+				.select({
+					lessonId: userLessonsProgress.lessonId,
+					progress: userLessonsProgress.progress,
+					isCompleted: userLessonsProgress.isCompleted,
+				})
+				.from(userLessonsProgress)
+				.where(
+					and(
+						eq(userLessonsProgress.userId, user.id)
+						// eq(userLessonsProgress.courseId, courseId)
+					)
+				);
+
+			return {
+				id: user.id,
+				firstName: user.firstName,
+				lastName: user.lastName,
+				email: user.emailAddresses.find(
+					(email) => email.id === user.primaryEmailAddressId
+				)?.emailAddress,
+				createdAt: user.createdAt,
+				role: user.publicMetadata.role || 'estudiante',
+				status: user.publicMetadata.status || 'activo',
+				lastConnection: user.lastActiveAt, // Añadir última fecha de conexión
+				lessonsProgress: lessonsProgress.map((lesson) => ({
+					lessonId: lesson.lessonId,
+					progress: lesson.progress,
+					isCompleted: lesson.isCompleted,
+				})),
+			};
+		})
+	);
+
+	console.log(
+		`Usuarios inscritos en el curso ${courseId} y progreso:`,
+		simplifiedUsers,
+		enrolledUsers
+	);
 	return simplifiedUsers;
 }

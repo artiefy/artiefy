@@ -7,6 +7,7 @@ interface ClerkUserResponse {
 	email_addresses: { email_address: string }[];
 	created_at: string;
 	profile_image_url: string;
+	last_login: string;
 	public_metadata?: { role?: string; status?: string; permissions?: string[] };
 }
 
@@ -53,9 +54,9 @@ const getClerkUser = async (userId: string) => {
 			email: userData.email_addresses?.[0]?.email_address || 'Sin correo',
 			createdAt: formattedCreatedAt,
 			profileImage: userData.profile_image_url || '/default-avatar.png',
+			lastLogin: userData.last_login,
 			role,
 			status,
-			password: 'No disponible', // Clerk no expone la contraseña
 			permissions,
 		};
 
