@@ -53,19 +53,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 
 	useEffect(() => {
 		void fetchQuestions();
-
-		// Solo hacemos polling si estamos editando
-		let interval: NodeJS.Timeout | undefined;
-		if (fetchQuestions) {
-			interval = setInterval(() => void fetchQuestions(), 10000);
-		}
-
-		return () => {
-			if (interval) {
-				clearInterval(interval);
-			}
-		};
-	}, [fetchQuestions, editingQuestion]);
+	}, [fetchQuestions]);
 
 	const handleEdit = (question: Completado) => {
 		setEditingQuestion(question);

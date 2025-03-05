@@ -100,6 +100,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 			setIsUploading(false);
 		}
 	};
+
 	return (
 		<>
 			<div className="container my-2 rounded-lg bg-white p-3 text-black shadow-lg">
