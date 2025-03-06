@@ -33,14 +33,6 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 	const [searchQuery, setSearchQuery] = useState(''); // Búsqueda por nombre o correo
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const [editingUser] = useState<User | null>(null);
-	const [editValues, setEditValues] = useState<{
-		firstName: string;
-		lastName: string;
-	}>({
-		firstName: '',
-		lastName: '',
-	});
 
 	// 1️⃣ Filtrar usuarios
 	const filteredUsers = users.filter(
@@ -136,70 +128,43 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 										/>
 									</div>
 								</div>
-								<div className="mt-6 overflow-x-auto rounded-lg bg-gray-800 p-4 shadow-md">
-									<table className="w-full rounded-lg text-white shadow-lg">
+								<div className="mt-6 overflow-x-auto rounded-lg bg-gray-700 p-4 shadow-md">
+									<table className="w-full text-white shadow-lg">
 										<thead className="rounded-lg bg-primary text-[#01142B]">
-											<tr className="rounded-lg">
-												<th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">
+											<tr className="space-x-5">
+												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
 													Nombre
 												</th>
-												<th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">
+												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
 													Correo
 												</th>
-												<th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">
+												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
 													Progreso
 												</th>
-												<th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">
+												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
 													Ultima conexion
 												</th>
 
-												<th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">
+												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
 													Acciones
 												</th>
 											</tr>
 										</thead>
-										<tbody className="divide-y divide-gray-700">
+										<tbody className="">
 											{currentUsers.length > 0 ? (
 												currentUsers.map((user, index) => (
 													<tr
 														key={`${user.id}-${index}`} // Asegúrate de que la clave sea única
-														className={`relative z-50 rounded-lg transition duration-300 hover:bg-gray-800 hover:shadow-lg`}
+														className={`relative z-50 text-center transition duration-300`}
 													>
-														<td className="rounded-lg px-4 py-3 text-sm text-gray-300">
-															{editingUser?.id === user.id ? (
-																<div className="flex space-x-2">
-																	<input
-																		type="text"
-																		className="w-1/2 rounded-lg border-none bg-gray-800 px-2 py-1 text-xs text-white"
-																		value={editValues.firstName}
-																		onChange={(e) =>
-																			setEditValues({
-																				...editValues,
-																				firstName: e.target.value,
-																			})
-																		}
-																	/>
-																	<input
-																		type="text"
-																		className="w-1/2 rounded-lg border-none bg-gray-800 px-2 py-1 text-xs text-white"
-																		value={editValues.lastName}
-																		onChange={(e) =>
-																			setEditValues({
-																				...editValues,
-																				lastName: e.target.value,
-																			})
-																		}
-																	/>
-																</div>
-															) : (
-																`${user.firstName} ${user.lastName}`
-															)}
+														<td className="mx-2 px-2 py-3 text-sm text-gray-300">
+															{user.firstName} {user.lastName}
 														</td>
-														<td className="px-4 py-3 text-xs text-gray-400">
+														<td className="px-2 py-3 text-xs text-gray-400">
 															{user.email}
 														</td>
-														<td className="flex space-x-2 px-4 py-3 text-xs text-gray-400">
-															<div className="mt-1 h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+														<td className="flex px-2 py-3 text-xs text-gray-400">
+															<div className="mt-1 mr-2 h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
 																<div
 																	className="h-2.5 rounded-full bg-blue-600"
 																	style={{ width: `${user.averageProgress}%` }}
@@ -207,13 +172,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 															</div>
 															<p>{user.averageProgress.toFixed(1)}%</p>
 														</td>
-														<td className="px-4 py-3 text-xs text-gray-400">
+														<td className="px-2 py-3 text-xs text-gray-400">
 															{user.lastConnection ?? 'Fecha no disponible'}
 														</td>
-														<td className="flex space-x-2 px-4 py-3">
+														<td className="flex space-x-2 px-2 py-3">
 															<button
 																// onClick={() => handleViewUser(user)}
-																className="flex items-center rounded-md bg-primary px-2 py-1 text-xs font-medium text-black shadow-md transition duration-300"
+																className="mx-auto flex items-center justify-center rounded-md bg-primary px-2 py-1 text-xs font-medium text-black shadow-md transition duration-300"
 															>
 																<Eye size={14} className="mr-1" /> Ver
 															</button>
