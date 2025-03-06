@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { env } from '~/env';
 import { type FormData } from '~/types/payu';
 import { getAuthConfig } from '~/utils/paygateway/auth';
 import { createFormData } from '~/utils/paygateway/form';
 import { getProductById } from '~/utils/paygateway/products';
-import { env } from '~/env';
 
 export async function POST(req: NextRequest) {
 	try {
@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
 			body.buyerFullName,
 			body.telephone,
 			env.RESPONSE_URL,
-			env.CONFIRMATION_URL
+			env.CONFIRMATION_URL,
+			'sha256' // Specify the hashing algorithm here
 		);
 
 		return NextResponse.json(formData);

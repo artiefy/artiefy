@@ -1,6 +1,6 @@
 import { type FormData, type Auth, type Product } from '~/types/payu';
-import { calculateMD5 } from './signature';
 import { generateReferenceCode } from './referenceCode';
+import { calculateSignature } from './signature';
 
 // ✅ Función para formatear `amount` correctamente
 function formatAmount(amount: number | string): string {
@@ -19,19 +19,21 @@ export function createFormData(
 	buyerFullName: string,
 	telephone: string,
 	responseUrl: string,
-	confirmationUrl: string
+	confirmationUrl: string,
+	algorithm: 'md5' | 'sha1' | 'sha256' = 'md5'
 ): FormData {
 	const referenceCode = generateReferenceCode(); // ✅ Se genera aquí en cada compra
 	const formattedAmount = formatAmount(product.amount);
 	const currency = 'COP';
 
 	// ✅ Generar firma MD5 con el formato correcto
-	const signature = calculateMD5(
+	const signature = calculateSignature(
 		auth.apiKey,
 		auth.merchantId,
 		referenceCode,
 		formattedAmount,
-		currency
+		currency,
+		algorithm
 	);
 
 	return {
