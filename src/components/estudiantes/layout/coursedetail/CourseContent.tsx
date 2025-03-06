@@ -27,7 +27,8 @@ interface CourseContentProps {
 	subscriptionEndDate: string | null;
 }
 
-export const dynamic = 'force-dynamic'; // Esto asegura que las lecciones siempre se actualicen
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export function CourseContent({
 	course,

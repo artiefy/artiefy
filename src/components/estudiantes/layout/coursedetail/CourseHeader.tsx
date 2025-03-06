@@ -16,6 +16,8 @@ import { blurDataURL } from '~/lib/blurDataUrl';
 import type { Course } from '~/types';
 import { CourseContent } from './CourseContent';
 
+export const revalidate = 3600; // 1 hora de caché
+
 interface CourseHeaderProps {
 	course: Course;
 	totalStudents: number;
@@ -38,7 +40,7 @@ export function CourseHeader({
 	isSubscriptionActive,
 	subscriptionEndDate,
 	onEnroll,
-	onUnenroll
+	onUnenroll,
 }: CourseHeaderProps) {
 	const formatDate = (dateString: string | number | Date) =>
 		new Date(dateString).toISOString().split('T')[0];

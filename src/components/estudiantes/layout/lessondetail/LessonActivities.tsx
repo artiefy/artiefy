@@ -4,6 +4,7 @@ import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa';
 import { PiArrowFatLinesLeft } from 'react-icons/pi';
 import { toast } from 'sonner';
 import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import type { Activity, ActivityResults, SavedAnswer } from '~/types';
 import LessonActivityModal from './LessonActivityModal';
 
@@ -34,6 +35,7 @@ const LessonActivities = ({
 		useState(isActivityCompleted);
 
 	const [savedResults, setSavedResults] = useState<SavedResults | null>(null);
+	const [isLoadingResults, setIsLoadingResults] = useState(false);
 
 	const openModal = () => setIsModalOpen(true);
 	const closeModal = () => setIsModalOpen(false);
@@ -85,7 +87,9 @@ const LessonActivities = ({
 
 	const handleCompletedActivityClick = async () => {
 		if (activityCompleted) {
+			setIsLoadingResults(true);
 			await fetchSavedResults();
+			setIsLoadingResults(false);
 			openModal();
 		} else {
 			openModal();
@@ -117,24 +121,27 @@ const LessonActivities = ({
 						<Button
 							onClick={handleCompletedActivityClick}
 							disabled={!isVideoCompleted}
-							className={`relative w-full overflow-hidden ${
+							className={`group relative w-full overflow-hidden ${
 								activityCompleted
-									? 'bg-green-500 text-white hover:bg-green-700'
+									? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
 									: isVideoCompleted
-										? 'font-semibold text-black hover:text-green-800'
+										? 'font-semibold text-black'
 										: 'bg-gray-400 text-background'
 							}`}
 						>
 							{/* Fondo animado solo para el estado activo no completado */}
 							{isVideoCompleted && !activityCompleted && (
-								<div className="absolute inset-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] hover:from-[#2ecc71] hover:to-[#3AF4EF]" />
+								<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
 							)}
 
 							{/* Texto siempre por encima del gradiente */}
-							<span className="relative z-10">
+							<span className="relative z-10 flex items-center justify-center">
 								{activityCompleted ? (
 									<>
-										Ver Resultados{' '}
+										{isLoadingResults && (
+											<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
+										)}
+										<span className="">Ver Resultados</span>
 										<FaCheckCircle className="ml-2 inline text-white" />
 									</>
 								) : (
@@ -151,7 +158,7 @@ const LessonActivities = ({
 									className="group flex flex-col items-center text-center"
 								>
 									<PiArrowFatLinesLeft className="h-8 w-8 -rotate-90 text-background transition-transform group-hover:-translate-y-1" />
-									<span className="mt-1 text-sm text-gray-600 group-hover:text-blue-500">
+									<span className="mt-1 text-sm text-gray-600 group-hover:text-blue-500 hover:underline">
 										Ir a la siguiente clase
 									</span>
 								</Link>

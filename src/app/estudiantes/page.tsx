@@ -10,6 +10,8 @@ import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/g
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import type { Category, Course } from '~/types';
 
+export const revalidate = 3600; // 1 hora de caché
+
 interface SearchParams {
 	category?: string;
 	query?: string;
@@ -142,4 +144,3 @@ export default async function CoursesPage({ searchParams }: Props) {
 	}
 }
 
-export const revalidate = 3600;

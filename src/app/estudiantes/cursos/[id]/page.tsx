@@ -168,5 +168,3 @@ async function CourseContent({
 		</section>
 	);
 }
-
-export const revalidate = 3600;

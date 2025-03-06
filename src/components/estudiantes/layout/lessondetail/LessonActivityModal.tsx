@@ -387,16 +387,20 @@ const LessonActivityModal = ({
 			{/* Mostrar el botón si la puntuación es suficiente */}
 			{finalScore >= 3 ? (
 				<Button
-					onClick={hasNavigatedOnce ? onClose : handleFinishAndNavigate}
+					onClick={
+						hasNavigatedOnce || activity.isCompleted
+							? onClose
+							: handleFinishAndNavigate
+					}
 					disabled={isUnlocking}
-					className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 font-semibold text-white hover:from-blue-600 hover:to-blue-800"
+					className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 font-semibold text-white hover:from-blue-600 hover:to-blue-800 active:scale-95"
 				>
 					{isUnlocking ? (
 						<>
-							<Icons.blocks className="mr-2 h-4 w-4 animate-spin" />
+							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 							Desbloqueando siguiente clase...
 						</>
-					) : hasNavigatedOnce ? (
+					) : hasNavigatedOnce || activity.isCompleted ? (
 						'Cerrar'
 					) : (
 						'Desbloquear siguiente clase'
