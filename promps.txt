@@ -58,4 +58,7 @@ const TestPage = () => {
 // Wrong export to trigger warnings
 module.exports = TestPage
 ---------------------------------------------------------
-page.tsx de testing para eslint
+FORZAR EL CRON
+curl -X GET https://artiefy.com/api/cron/check-subscriptions \
+-H "Authorization: Bearer 6a8cfb161629e387044a10761c6503639bec96a8e7c7dc7922b4982633fd5c4e"
+---------------------------------------------------------

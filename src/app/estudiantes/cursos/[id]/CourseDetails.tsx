@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { CourseBreadcrumb } from '~/components/estudiantes/layout/coursedetail/CourseBreadcrumb';
 import CourseChatbot from '~/components/estudiantes/layout/coursedetail/CourseChatbot';
 import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
+import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import { CourseHeader } from '~/components/estudiantes/layout/coursedetail/CourseHeader';
 import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
@@ -26,6 +27,8 @@ export default function CourseDetails({
 	const [totalStudents, setTotalStudents] = useState(course.totalStudents);
 	const [isEnrolled, setIsEnrolled] = useState(false);
 	const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
 
 	const { isSignedIn, userId } = useAuth();
 	const { user } = useUser();
@@ -45,32 +48,29 @@ export default function CourseDetails({
 
 	useEffect(() => {
 		const checkEnrollmentAndProgress = async () => {
-			if (userId) {
-				// Verificar estado de suscripción primero
-				const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-				const subscriptionEndDate = user?.publicMetadata
-					?.subscriptionEndDate as string | null;
+			setIsCheckingEnrollment(true);
+			try {
+				if (userId) {
+					// Verificar inscripción primero para actualización rápida
+					const isUserEnrolled =
+						Array.isArray(course.enrollments) &&
+						course.enrollments.some(
+							(enrollment: Enrollment) => enrollment.userId === userId
+						);
+					setIsEnrolled(isUserEnrolled);
 
-				console.log('Subscription Status:', subscriptionStatus); // Debug log
-				console.log('Subscription End Date:', subscriptionEndDate); // Debug log
+					// Verificar suscripción en paralelo
+					const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+					const subscriptionEndDate = user?.publicMetadata
+						?.subscriptionEndDate as string | null;
+					const isSubscriptionActive =
+						subscriptionStatus === 'active' &&
+						(!subscriptionEndDate ||
+							new Date(subscriptionEndDate) > new Date());
+					setIsSubscriptionActive(isSubscriptionActive);
 
-				const isSubscriptionActive =
-					subscriptionStatus === 'active' &&
-					(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
-				setIsSubscriptionActive(isSubscriptionActive);
-
-				// Verificar inscripción
-				const isUserEnrolled =
-					Array.isArray(course.enrollments) &&
-					course.enrollments.some(
-						(enrollment: Enrollment) => enrollment.userId === userId
-					);
-
-				setIsEnrolled(isUserEnrolled);
-
-				// Si está inscrito, cargar progreso
-				if (isUserEnrolled) {
-					try {
+					// Si está inscrito, cargar progreso
+					if (isUserEnrolled) {
 						const lessons = await getLessonsByCourseId(course.id, userId);
 						setCourse((prev) => ({
 							...prev,
@@ -82,15 +82,22 @@ export default function CourseDetails({
 								}))
 								.sort((a, b) => a.title.localeCompare(b.title)),
 						}));
-					} catch (error) {
-						console.error('Error cargando progreso:', error);
 					}
 				}
+			} catch (error) {
+				console.error('Error checking enrollment:', error);
+			} finally {
+				setIsCheckingEnrollment(false);
+				setIsLoading(false);
 			}
 		};
 
 		void checkEnrollmentAndProgress();
 	}, [course.enrollments, course.id, userId, user]);
+
+	if (isLoading) {
+		return <CourseDetailsSkeleton />;
+	}
 
 	const handleEnroll = async () => {
 		if (!isSignedIn) {
@@ -161,19 +168,35 @@ export default function CourseDetails({
 		setEnrollmentError(null);
 
 		try {
-			await unenrollFromCourse(course.id);
-			setTotalStudents((prev) => prev - 1);
-			setIsEnrolled(false);
-			toast.success('Has cancelado tu inscripción al curso correctamente'); // Move this line here
-			const updatedCourse = await getCourseById(course.id, userId);
-			if (updatedCourse) {
-				setCourse({
-					...updatedCourse,
-					lessons: updatedCourse.lessons ?? [],
-				});
+			const result = await unenrollFromCourse(course.id);
+
+			if (result.success) {
+				setIsEnrolled(false);
+				setTotalStudents((prev) => prev - 1);
+				setCourse((prev) => ({
+					...prev,
+					enrollments: Array.isArray(prev.enrollments)
+						? prev.enrollments.filter(
+								(enrollment: Enrollment) => enrollment.userId !== userId
+							)
+						: [],
+					lessons: prev.lessons?.map((lesson) => ({
+						...lesson,
+						userProgress: 0,
+						isLocked: true,
+					})),
+				}));
+
+				toast.success('Has cancelado tu inscripción al curso correctamente');
+			} else {
+				throw new Error(result.message);
 			}
-		} catch (error: unknown) {
-			handleError(error, 'unenrollment');
+		} catch (error) {
+			if (error instanceof Error) {
+				handleError(error, 'unenrollment');
+			} else {
+				handleError(new Error('Error desconocido'), 'unenrollment');
+			}
 		} finally {
 			setIsUnenrolling(false);
 		}
@@ -212,6 +235,7 @@ export default function CourseDetails({
 					}
 					onEnroll={handleEnroll}
 					onUnenroll={handleUnenroll}
+					isCheckingEnrollment={isCheckingEnrollment}
 				/>
 
 				{/* Mostrar mensajes de error si existen */}

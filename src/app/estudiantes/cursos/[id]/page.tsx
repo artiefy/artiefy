@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { auth } from '@clerk/nextjs/server';
 import type { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
+import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
@@ -109,7 +111,9 @@ export default async function Page({ params }: Props) {
 	return (
 		<div>
 			<Header />
-			<CourseContent id={id} userId={userId} />
+			<Suspense fallback={<CourseDetailsSkeleton />}>
+				<CourseContent id={id} userId={userId} />
+			</Suspense>
 			<Footer />
 		</div>
 	);
@@ -164,6 +168,3 @@ async function CourseContent({
 		</section>
 	);
 }
-
-export const revalidate = 3600;
-export const dynamic = 'force-dynamic';

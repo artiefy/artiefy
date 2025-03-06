@@ -27,6 +27,9 @@ interface CourseContentProps {
 	subscriptionEndDate: string | null;
 }
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export function CourseContent({
 	course,
 	isEnrolled,
@@ -79,7 +82,8 @@ export function CourseContent({
 
 			{isEnrolled && isSubscriptionActive && subscriptionEndDate && (
 				<p className="mb-4 text-sm text-gray-600">
-					Tu suscripción es válida hasta: {new Date(subscriptionEndDate).toLocaleDateString()}
+					Tu suscripción es válida hasta:{' '}
+					{new Date(subscriptionEndDate).toLocaleDateString()}
 				</p>
 			)}
 

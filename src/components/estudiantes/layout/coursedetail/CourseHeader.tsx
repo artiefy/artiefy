@@ -16,6 +16,8 @@ import { blurDataURL } from '~/lib/blurDataUrl';
 import type { Course } from '~/types';
 import { CourseContent } from './CourseContent';
 
+export const revalidate = 3600; // 1 hora de caché
+
 interface CourseHeaderProps {
 	course: Course;
 	totalStudents: number;
@@ -26,6 +28,7 @@ interface CourseHeaderProps {
 	subscriptionEndDate: string | null;
 	onEnroll: () => Promise<void>;
 	onUnenroll: () => Promise<void>;
+	isCheckingEnrollment?: boolean;
 }
 
 export function CourseHeader({
@@ -138,10 +141,10 @@ export function CourseHeader({
 					subscriptionEndDate={subscriptionEndDate}
 				/>
 
-				{/* Enrollment buttons */}
+				{/* Enrollment buttons - Simplificado sin skeleton */}
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
-						{/* Enrolled state buttons */}
+						{/* Botones cuando está inscrito */}
 						<div
 							className={`absolute top-0 left-0 flex w-full flex-col space-y-4 transition-all duration-300 ${
 								isEnrolled ? 'visible opacity-100' : 'invisible opacity-0'
@@ -169,7 +172,7 @@ export function CourseHeader({
 							</Button>
 						</div>
 
-						{/* Not enrolled state button */}
+						{/* Botón cuando no está inscrito */}
 						<div
 							className={`absolute top-0 left-0 transition-all duration-300 ${
 								!isEnrolled ? 'visible opacity-100' : 'invisible opacity-0'
@@ -177,7 +180,7 @@ export function CourseHeader({
 						>
 							<Button
 								onClick={onEnroll}
-								disabled={isEnrolling || !isSubscriptionActive}
+								disabled={isEnrolling}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
 								<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>

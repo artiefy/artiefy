@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import StudentDashboard from '~/app/estudiantes/StudentDashboard';
-import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
-import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
+import CategoriesCourse from '~/components/estudiantes/layout/CategoriesCourse';
+import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
@@ -9,6 +9,8 @@ import { getAllCategories } from '~/server/actions/estudiantes/categories/getAll
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import type { Category, Course } from '~/types';
+
+export const revalidate = 3600; // 1 hora de caché
 
 interface SearchParams {
 	category?: string;
@@ -54,8 +56,8 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 		const lowercasedQuery = params.query.toLowerCase();
 		filteredCourses = filteredCourses.filter(
 			(course) =>
-				course.title.toLowerCase().includes(lowercasedQuery) ||
-				course.description?.toLowerCase().includes(lowercasedQuery) ||
+				course.title.toLowerCase().includes(lowercasedQuery) ??
+				course.description?.toLowerCase().includes(lowercasedQuery) ??
 				course.category?.name.toLowerCase().includes(lowercasedQuery)
 		);
 	}
@@ -95,7 +97,7 @@ export default async function CoursesPage({ searchParams }: Props) {
 			<>
 				<Header />
 				<StudentDashboard initialCourses={allCourses} />
-				<CourseCategories
+				<CategoriesCourse
 					allCategories={data.categories}
 					featuredCategories={data.featuredCategories}
 				/>
@@ -142,5 +144,3 @@ export default async function CoursesPage({ searchParams }: Props) {
 	}
 }
 
-export const revalidate = 3600;
-export const dynamic = 'force-dynamic';

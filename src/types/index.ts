@@ -85,8 +85,14 @@ export interface Lesson {
 
 export interface LessonWithProgress extends Lesson {
 	porcentajecompletado: number;
-	isLocked: boolean;
 	isCompleted: boolean;
+	isLocked: boolean; // Cambiado de 'boolean | null' a 'boolean'
+	resourceNames: string[];
+	courseId: number;
+	createdAt: Date;
+	content?: {
+		questions?: Question[];
+	};
 }
 
 export interface UserLessonsProgress {
@@ -104,6 +110,7 @@ export interface UserActivitiesProgress {
 	progress: number;
 	isCompleted: boolean;
 	lastUpdated: Date;
+	revisada: boolean | null; // Add this field
 }
 
 export interface Modalidad {
@@ -132,28 +139,31 @@ export interface Activity {
 	id: number;
 	name: string;
 	description: string | null;
-	typeid: number;
-	lessonsId: number;
-	isCompleted: boolean | null;
-	userProgress: number | null;
 	lastUpdated: Date;
-	lesson?: Lesson;
+	lessonsId: number;
+	revisada: boolean | null; // Cambiado de boolean a boolean | null
+	porcentaje: number | null;
+	parametroId: number | null;
 	typeActi?: TypeActi;
 	userActivitiesProgress?: UserActivitiesProgress[];
 	content?: {
 		questions: Question[];
 	};
-	revisada: boolean;
-	parametroId: number;
-	porcentaje: number;
-	fechaMaximaEntrega: Date;
+	fechaMaximaEntrega: Date | null;
+	typeid: number;
+	isCompleted: boolean;
+	userProgress: number;
+	createdAt?: Date; // Make createdAt optional
 }
 
 export interface Question {
 	id: string;
 	text: string;
-	options: Option[];
-	correctOptionId: string;
+	type: 'VOF' | 'OM' | 'COMPLETAR';
+	correctOptionId?: string;
+	options?: Option[];
+	correctAnswer?: string;
+	answer?: string;
 }
 
 export interface Option {
@@ -223,3 +233,16 @@ export type UserWithEnrollments = User & { enrollments: Enrollment[] };
 export type UserWithCreatedCourses = User & { createdCourses: Course[] };
 export type CourseWithEnrollments = Course & { enrollments: Enrollment[] };
 export type CategoryWithPreferences = Category & { preferences: Preference[] };
+
+export interface SavedAnswer {
+	questionId: string;
+	answer: string;
+	isCorrect: boolean;
+}
+
+export interface ActivityResults {
+	score: number;
+	answers: Record<string, SavedAnswer>;
+	passed: boolean;
+	submittedAt: string;
+}

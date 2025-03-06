@@ -1,7 +1,6 @@
 'use server';
 
 import { eq, and } from 'drizzle-orm';
-import { unstable_cache } from 'next/cache';
 import { db } from '~/server/db';
 import {
 	lessons,
@@ -10,29 +9,55 @@ import {
 } from '~/server/db/schema';
 import type { Lesson, Activity } from '~/types';
 
-const getLessonById = unstable_cache(
-	async (lessonId: number, userId: string): Promise<Lesson | null> => {
-		try {
-			const lesson = await db.query.lessons.findFirst({
-				where: eq(lessons.id, lessonId),
-				with: {
-					activities: true,
-				},
+export async function getLessonById(
+	lessonId: number,
+	userId: string
+): Promise<Lesson | null> {
+	try {
+		const lesson = await db.query.lessons.findFirst({
+			where: eq(lessons.id, lessonId),
+			with: {
+				activities: true,
+			},
+		});
+
+		if (!lesson) return null;
+
+		const lessonProgress = await db.query.userLessonsProgress.findFirst({
+			where: and(
+				eq(userLessonsProgress.userId, userId),
+				eq(userLessonsProgress.lessonId, lessonId)
+			),
+		});
+
+		const userActivitiesProgressData =
+			await db.query.userActivitiesProgress.findMany({
+				where: eq(userActivitiesProgress.userId, userId),
 			});
-			if (!lesson) return null;
 
-			const lessonProgress = await db.query.userLessonsProgress.findFirst({
-				where: and(
-					eq(userLessonsProgress.userId, userId),
-					eq(userLessonsProgress.lessonId, lessonId)
-				),
-			});
+		const transformedLesson: Lesson = {
+			...lesson,
+			porcentajecompletado: lessonProgress?.progress ?? 0,
+			isLocked: lessonProgress?.isLocked ?? true,
+			userProgress: lessonProgress?.progress ?? 0,
+			isCompleted: lessonProgress?.isCompleted ?? false,
+			resourceNames: lesson.resourceNames
+				? lesson.resourceNames.split(',')
+				: [], // Convertir texto a array
+			activities:
+				(lesson.activities as Activity[] | undefined)?.map((activity) => {
+					const activityProgress = userActivitiesProgressData.find(
+						(progress) => progress.activityId === activity.id
+					);
+					return {
+						...activity,
+						isCompleted: activityProgress?.isCompleted ?? false,
+						userProgress: activityProgress?.progress ?? 0,
+					};
+				}) ?? [],
+		};
 
-			const userActivitiesProgressData =
-				await db.query.userActivitiesProgress.findMany({
-					where: eq(userActivitiesProgress.userId, userId),
-				});
-
+<<<<<<< HEAD
 			const transformedLesson: Lesson = {
 				...lesson,
 				porcentajecompletado: lessonProgress?.progress ?? 0,
@@ -66,3 +91,11 @@ const getLessonById = unstable_cache(
 );
 
 export { getLessonById };
+=======
+		return transformedLesson;
+	} catch (error) {
+		console.error('Error al obtener la lección por ID:', error);
+		throw new Error('Error al obtener la lección por ID');
+	}
+}
+>>>>>>> d105e52b23a7b69f457e6aa4f0e7e980986c50f7

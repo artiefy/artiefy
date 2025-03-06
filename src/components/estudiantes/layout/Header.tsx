@@ -4,35 +4,11 @@ import { useState } from 'react';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
-
-const DotIcon = () => {
-	return (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			viewBox="0 0 512 512"
-			fill="currentColor"
-		>
-			<path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z" />
-		</svg>
-	);
-};
-
-const CustomPage = () => {
-	return (
-		<div>
-			<h1>Custom page</h1>
-			<p>This is the content of the custom page.</p>
-			<p>
-				Welcome to the custom page! Here you can find personalized content and
-				settings.
-			</p>
-		</div>
-	);
-};
 
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -111,20 +87,15 @@ export function Header() {
 							</SignedOut>
 							<SignedIn>
 								<UserButton showName>
-									<UserButton.UserProfilePage
-										label="Custom Page"
-										url="custom"
-										labelIcon={<DotIcon />}
-									>
-										<CustomPage />
-									</UserButton.UserProfilePage>
-									<UserButton.UserProfileLink
-										label="Homepage"
-										url="/"
-										labelIcon={<DotIcon />}
-									/>
-									<UserButton.UserProfilePage label="account" />
-									<UserButton.UserProfilePage label="security" />
+									<UserButton.MenuItems>
+										<UserButton.Link
+											label="Mis Cursos"
+											labelIcon={<UserCircleIcon className="size-4" />}
+											href="/estudiantes/myaccount"
+										/>
+										<UserButton.Action label="manageAccount" />
+										<UserButton.Action label="signOut" />
+									</UserButton.MenuItems>
 								</UserButton>
 							</SignedIn>
 						</div>
@@ -231,20 +202,13 @@ export function Header() {
 						</SignedOut>
 						<SignedIn>
 							<UserButton>
-								<UserButton.UserProfilePage
-									label="Custom Page"
-									url="custom"
-									labelIcon={<DotIcon />}
-								>
-									<CustomPage />
-								</UserButton.UserProfilePage>
-								<UserButton.UserProfileLink
-									label="Homepage"
-									url="/"
-									labelIcon={<DotIcon />}
-								/>
-								<UserButton.UserProfilePage label="account" />
-								<UserButton.UserProfilePage label="security" />
+								<UserButton.MenuItems>
+									<UserButton.Link
+										label="Mis Cursos"
+										labelIcon={<UserCircleIcon className="size-4" />}
+										href="/estudiantes/mis-cursos"
+									/>
+								</UserButton.MenuItems>
 							</UserButton>
 						</SignedIn>
 					</div>
