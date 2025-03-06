@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import CryptoJS from 'crypto-js';
 
 // Función para calcular el hash MD5
 export function calculateMD5(
@@ -9,5 +9,5 @@ export function calculateMD5(
 	currency: string
 ): string {
 	const data = [apiKey, merchantId, referenceCode, amount, currency].join('~');
-	return crypto.createHash('md5').update(data).digest('hex');
+	return CryptoJS.MD5(data).toString();
 }
