@@ -1,4 +1,4 @@
-import MD5 from 'crypto-js/md5';
+import crypto from 'crypto';
 
 export function calculateMD5(
 	apiKey: string,
@@ -8,5 +8,5 @@ export function calculateMD5(
 	currency: string
 ): string {
 	const data = [apiKey, merchantId, referenceCode, amount, currency].join('~');
-	return MD5(data).toString();
+	return crypto.createHash('md5').update(data).digest('hex');
 }

@@ -5,8 +5,6 @@ import { createFormData } from '~/utils/paygateway/form';
 import { getProductById } from '~/utils/paygateway/products';
 import { env } from '~/env';
 
-export const dynamic = 'force-dynamic';
-
 export async function POST(req: NextRequest) {
 	try {
 		const body = (await req.json()) as {
@@ -34,10 +32,6 @@ export async function POST(req: NextRequest) {
 		}
 
 		const auth = getAuthConfig();
-		if (!auth) {
-			return NextResponse.json({ error: 'Authentication configuration error' }, { status: 500 });
-		}
-
 		const formData: FormData = createFormData(
 			auth,
 			product,
@@ -48,13 +42,9 @@ export async function POST(req: NextRequest) {
 			env.CONFIRMATION_URL
 		);
 
-		if (!formData) {
-			return NextResponse.json({ error: 'Form data creation error' }, { status: 500 });
-		}
-
 		return NextResponse.json(formData);
 	} catch (error) {
-		console.error('Error in POST /api/generatePaymentData:', error);
+		console.error(error);
 		return NextResponse.json(
 			{ error: 'Internal Server Error' },
 			{ status: 500 }
