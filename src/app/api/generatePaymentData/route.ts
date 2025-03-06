@@ -39,8 +39,7 @@ export async function POST(req: NextRequest) {
 			body.buyerFullName,
 			body.telephone,
 			env.RESPONSE_URL,
-			env.CONFIRMATION_URL,
-			'sha256' // Specify the hashing algorithm here
+			env.CONFIRMATION_URL
 		);
 
 		return NextResponse.json(formData);

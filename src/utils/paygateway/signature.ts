@@ -5,9 +5,8 @@ export function calculateSignature(
 	merchantId: string,
 	referenceCode: string,
 	amount: string,
-	currency: string,
-	algorithm: 'md5' | 'sha1' | 'sha256' = 'md5'
+	currency: string
 ): string {
 	const data = [apiKey, merchantId, referenceCode, amount, currency].join('~');
-	return crypto.createHash(algorithm).update(data).digest('hex');
+	return crypto.createHash('md5').update(data).digest('hex');
 }

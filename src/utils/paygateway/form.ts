@@ -19,8 +19,7 @@ export function createFormData(
 	buyerFullName: string,
 	telephone: string,
 	responseUrl: string,
-	confirmationUrl: string,
-	algorithm: 'md5' | 'sha1' | 'sha256' = 'md5'
+	confirmationUrl: string
 ): FormData {
 	const referenceCode = generateReferenceCode(); // ✅ Se genera aquí en cada compra
 	const formattedAmount = formatAmount(product.amount);
@@ -32,8 +31,7 @@ export function createFormData(
 		auth.merchantId,
 		referenceCode,
 		formattedAmount,
-		currency,
-		algorithm
+		currency
 	);
 
 	return {
