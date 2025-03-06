@@ -1,7 +1,27 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
+import { Dialog } from '@headlessui/react';
+import {
+	Chart as ChartJS,
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend,
+} from 'chart.js';
 import { Loader2, Eye } from 'lucide-react';
+import { Bar } from 'react-chartjs-2';
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
+
+ChartJS.register(
+	CategoryScale,
+	LinearScale,
+	BarElement,
+	Title,
+	Tooltip,
+	Legend
+);
 
 interface LessonProgress {
 	lessonId: number;
@@ -33,6 +53,8 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 	const [searchQuery, setSearchQuery] = useState(''); // Búsqueda por nombre o correo
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
 	// 1️⃣ Filtrar usuarios
 	const filteredUsers = users.filter(
@@ -85,12 +107,112 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 		}
 	}, []);
 
+	//Abrir modal o popup para ver detalles del usuario
+	const openUserDetails = (user: User) => {
+		setSelectedUser(user);
+		setIsModalOpen(true);
+	};
+
+	const closeModal = () => {
+		setIsModalOpen(false);
+		setSelectedUser(null);
+	};
+
+	const getChartData = (user: User) => {
+		return {
+			labels: user.lessonsProgress.map(
+				(lesson) => `Lección ${lesson.lessonId}`
+			),
+			datasets: [
+				{
+					label: 'Progreso',
+					data: user.lessonsProgress.map((lesson) => lesson.progress),
+					backgroundColor: 'rgba(54, 162, 235, 0.6)',
+					borderColor: 'rgba(54, 162, 235, 1)',
+					borderWidth: 1,
+				},
+			],
+		};
+	};
+
 	useEffect(() => {
 		void fetchEnrolledUsers(courseId);
 	}, [fetchEnrolledUsers, courseId]);
 
 	return (
 		<>
+			{/* Modal de detalles del usuario */}
+			<Dialog
+				open={isModalOpen}
+				onClose={closeModal}
+				className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
+			>
+				<div className="min-h-screen px-4 text-center">
+					<span
+						className="inline-block h-screen align-middle"
+						aria-hidden="true"
+					>
+						&#8203;
+					</span>
+					<div className="my-8 inline-block w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+						<Dialog.Title
+							as="h3"
+							className="text-lg leading-6 font-medium text-gray-900"
+						>
+							Detalles del Usuario
+						</Dialog.Title>
+						<div className="mt-4">
+							{selectedUser && (
+								<div className="space-y-2">
+									<p className="text-base">
+										<strong>Nombre:</strong> {selectedUser.firstName}{' '}
+										{selectedUser.lastName}
+									</p>
+									<p className="text-base">
+										<strong>Correo:</strong> {selectedUser.email}
+									</p>
+									<p className="text-base">
+										<strong>Progreso Promedio:</strong>{' '}
+										{selectedUser.averageProgress.toFixed(1)}%
+									</p>
+									<p className="text-base">
+										<strong>Última Conexión:</strong>{' '}
+										{selectedUser.lastConnection}
+									</p>
+									{/* Gráfico de progreso */}
+									<div className="mt-4">
+										<Bar
+											data={getChartData(selectedUser)}
+											options={{
+												responsive: true,
+												plugins: {
+													legend: {
+														position: 'top',
+													},
+													title: {
+														display: true,
+														text: 'Progreso por Lección',
+													},
+												},
+											}}
+										/>
+									</div>
+								</div>
+							)}
+						</div>
+						<div className="mt-4">
+							<button
+								type="button"
+								className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+								onClick={closeModal}
+							>
+								Cerrar
+							</button>
+						</div>
+					</div>
+				</div>
+			</Dialog>
+			{/* Fin del modal */}
 			<div className="group relative">
 				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 				<header className="relative z-20 flex justify-between rounded-lg bg-primary p-6 text-3xl font-bold text-[#01142B] shadow-md">
@@ -144,7 +266,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
 													Ultima conexion
 												</th>
-
+												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
+													Tiempo en el curso
+												</th>
 												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
 													Acciones
 												</th>
@@ -166,7 +290,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 														<td className="flex px-2 py-3 text-xs text-gray-400">
 															<div className="mt-1 mr-2 h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
 																<div
-																	className="h-2.5 rounded-full bg-blue-600"
+																	className="h-2.5 w-10/12 rounded-full bg-blue-600"
 																	style={{ width: `${user.averageProgress}%` }}
 																></div>
 															</div>
@@ -175,9 +299,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 														<td className="px-2 py-3 text-xs text-gray-400">
 															{user.lastConnection ?? 'Fecha no disponible'}
 														</td>
+														<td className="px-2 py-3 text-xs text-gray-400">
+															{user.lastConnection ?? 'Fecha no disponible'}
+														</td>
 														<td className="flex space-x-2 px-2 py-3">
 															<button
-																// onClick={() => handleViewUser(user)}
+																onClick={() => openUserDetails(user)}
 																className="mx-auto flex items-center justify-center rounded-md bg-primary px-2 py-1 text-xs font-medium text-black shadow-md transition duration-300"
 															>
 																<Eye size={14} className="mr-1" /> Ver

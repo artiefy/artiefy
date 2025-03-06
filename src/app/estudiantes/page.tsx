@@ -1,14 +1,16 @@
 import { Suspense } from 'react';
 import StudentDashboard from '~/app/estudiantes/StudentDashboard';
-import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
-import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
+//import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
+//import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
-import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
-import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
+// import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
+// import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
-import type { Category, Course } from '~/types';
+import type { 
+	//Category,
+	 Course } from '~/types';
 
 // interface SearchParams {
 // 	category?: string;
@@ -85,20 +87,22 @@ async function fetchAllCourses(): Promise<Course[]> {
 	return await getAllCourses();
 }
 
-export default async function CoursesPage({ searchParams }: Props) {
+export default async function CoursesPage(
+	//{ searchParams }: Props
+) {
 	try {
-		const params = await searchParams;
-		const data = await fetchCourseData(params);
+		// const params = await searchParams;
+		// const data = await fetchCourseData(params);
 		const allCourses = await fetchAllCourses();
 
 		return (
 			<>
 				<Header />
 				<StudentDashboard initialCourses={allCourses} />
-				<CourseCategories
+				{/* <CourseCategories
 					allCategories={data.categories}
 					featuredCategories={data.featuredCategories}
-				/>
+				/> */}
 				<Suspense
 					fallback={
 						<div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
@@ -117,14 +121,14 @@ export default async function CoursesPage({ searchParams }: Props) {
 						</div>
 					}
 				>
-					<CourseListStudent
+					{/* <CourseListStudent
 						courses={data.courses}
 						currentPage={data.page}
 						totalPages={data.totalPages}
 						totalCourses={data.total}
 						category={data.categoryId?.toString()}
 						searchTerm={data.searchTerm}
-					/>
+					/> */}
 				</Suspense>
 				<Footer />
 			</>

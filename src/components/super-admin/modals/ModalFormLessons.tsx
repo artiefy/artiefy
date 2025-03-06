@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent } from 'react';
 
+import { toast } from 'sonner';
 import FileUpload from '~/components/educators/layout/FilesUpload';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -13,7 +14,6 @@ import {
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from '~/hooks/use-toast';
 
 interface LessonsFormProps {
 	uploading: boolean;
@@ -216,10 +216,8 @@ const ModalFormLessons = ({
 
 			if (Object.values(newErrors).some((error) => error)) {
 				setErrors(newErrors);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: 'Por favor completa los campos obligatorios.',
-					variant: 'destructive',
 				});
 				return;
 			}
@@ -249,18 +247,15 @@ const ModalFormLessons = ({
 			});
 
 			if (response.ok) {
-				toast({
-					title: 'Lección creada',
+				toast('Lección creada', {
 					description: 'La lección se creó con éxito.',
 				});
 				onCloseAction(); // Cierra el modal
 				window.location.reload(); // Refrescar la página
 			} else {
 				const errorData = (await response.json()) as { error?: string };
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: errorData.error ?? 'Error al crear la lección.',
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
@@ -268,10 +263,8 @@ const ModalFormLessons = ({
 				console.log('Upload cancelled');
 				return; // Salir de la función si se cancela la carga
 			} else {
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `Error al procesar la solicitud: ${String(error)}`,
-					variant: 'destructive',
 				});
 			}
 		} finally {
@@ -295,8 +288,8 @@ const ModalFormLessons = ({
 						Llena los detalles para crear la nuevo clase
 					</DialogDescription>
 				</DialogHeader>
-				<div className="bg-background rounded-lg px-6 text-black shadow-md">
-					<label htmlFor="title" className="text-primary text-lg font-medium">
+				<div className="rounded-lg bg-background px-6 text-black shadow-md">
+					<label htmlFor="title" className="text-lg font-medium text-primary">
 						Título
 					</label>
 					<input
@@ -314,7 +307,7 @@ const ModalFormLessons = ({
 
 					<label
 						htmlFor="description"
-						className="text-primary text-lg font-medium"
+						className="text-lg font-medium text-primary"
 					>
 						Descripción
 					</label>
@@ -331,7 +324,7 @@ const ModalFormLessons = ({
 					)}
 					<label
 						htmlFor="duration"
-						className="text-primary text-lg font-medium"
+						className="text-lg font-medium text-primary"
 					>
 						Duración (minutos)
 					</label>
@@ -399,7 +392,7 @@ const ModalFormLessons = ({
 					>
 						Cancelar
 					</Button>
-					<Button onClick={handleSubmit} variant="save" disabled={uploading}>
+					<Button onClick={handleSubmit} variant="default" disabled={uploading}>
 						{uploading ? 'Subiendo...' : 'Crear Clase'}
 					</Button>
 				</DialogFooter>
