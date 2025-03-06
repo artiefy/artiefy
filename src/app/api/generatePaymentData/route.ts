@@ -34,6 +34,10 @@ export async function POST(req: NextRequest) {
 		}
 
 		const auth = getAuthConfig();
+		if (!auth) {
+			return NextResponse.json({ error: 'Authentication configuration error' }, { status: 500 });
+		}
+
 		const formData: FormData = createFormData(
 			auth,
 			product,
@@ -44,9 +48,13 @@ export async function POST(req: NextRequest) {
 			env.CONFIRMATION_URL
 		);
 
+		if (!formData) {
+			return NextResponse.json({ error: 'Form data creation error' }, { status: 500 });
+		}
+
 		return NextResponse.json(formData);
 	} catch (error) {
-		console.error(error);
+		console.error('Error in POST /api/generatePaymentData:', error);
 		return NextResponse.json(
 			{ error: 'Internal Server Error' },
 			{ status: 500 }
