@@ -14,7 +14,7 @@ import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
-} from '~/components/ui/collapsible';
+} from '~/components/educators/ui/collapsible';
 
 // Interfaces
 interface Foro {

@@ -37,7 +37,7 @@ export interface Completado2 {
 	text: string;
 	correctAnswer: string;
 	answer?: string;
-	pesoPregunta:number;
+	pesoPregunta: number;
 }
 
 export interface QuestionFilesSubida {
