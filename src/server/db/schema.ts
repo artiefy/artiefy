@@ -449,16 +449,14 @@ export const postRelations = relations(posts, ({ one }) => ({
 	}), // Un post tiene un usuario creador
 }));
 
-
 export const userTimeTracking = pgTable('user_time_tracking', {
-  id: serial('id').primaryKey(),
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(),
-  date: date('date').defaultNow().notNull(),
-  timeSpent: integer('time_spent').default(0).notNull(),
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	date: date('date').defaultNow().notNull(),
+	timeSpent: integer('time_spent').default(0).notNull(),
 });
-
 
 //Tabla de parametros
 export const parametros = pgTable('parametros', {
@@ -469,4 +467,12 @@ export const parametros = pgTable('parametros', {
 	courseId: integer('course_id')
 		.references(() => courses.id)
 		.notNull(),
+});
+
+export const anuncios = pgTable('anuncios', {
+	id: serial('id').primaryKey(),
+	titulo: text('titulo').notNull(),
+	descripcion: text('descripcion').notNull(),
+	cover_image_key: text('cover_image_key').notNull(),
+	activo: boolean('activo').default(true),
 });

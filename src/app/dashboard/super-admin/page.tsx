@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
 import {
@@ -134,6 +135,19 @@ export default function AdminDashboard() {
 	const [infoDialogOpen, setInfoDialogOpen] = useState(false);
 	const [infoDialogTitle, setInfoDialogTitle] = useState('');
 	const [infoDialogMessage, setInfoDialogMessage] = useState('');
+	interface Anuncio {
+		id: string;
+		title: string;
+	}
+
+	const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+	const [showAnuncioModal, setShowAnuncioModal] = useState(false);
+	const [newAnuncio, setNewAnuncio] = useState({
+		titulo: '',
+		descripcion: '',
+		imagen: null as File | null,
+		previewImagen: null as string | null,
+	});
 
 	const searchParams = useSearchParams();
 	const query = searchParams.get('search') ?? '';
@@ -201,6 +215,97 @@ export default function AdminDashboard() {
 			console.error('Error fetching courses:', err);
 		}
 	}, []);
+	const fetchAnuncios = async () => {
+		try {
+			const res = await fetch('/api/super-admin/anuncios');
+			const data = (await res.json()) as { id: string; title: string }[];
+			setAnuncios(data);
+		} catch (error) {
+			console.error('❌ Error al obtener anuncios:', error);
+		}
+	};
+
+	// Llamar la función cuando el componente se monta
+	useEffect(() => {
+		fetchAnuncios();
+	}, []);
+	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		if (event.target.files?.length) {
+			const file = event.target.files[0];
+			setNewAnuncio((prev) => ({
+				...prev,
+				imagen: file,
+				previewImagen: URL.createObjectURL(file),
+			}));
+		}
+	};
+
+	const handleCreateAnuncio = async () => {
+		if (
+			!newAnuncio.titulo.trim() ||
+			!newAnuncio.descripcion.trim() ||
+			!newAnuncio.imagen
+		) {
+			alert('Todos los campos son obligatorios');
+			return;
+		}
+
+		try {
+			// 🔹 Subir la imagen a S3
+			const uploadRequest = await fetch('/api/upload', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					contentType: newAnuncio.imagen.type,
+					fileSize: newAnuncio.imagen.size,
+				}),
+			});
+
+			if (!uploadRequest.ok) throw new Error('Error al obtener la URL firmada');
+
+			const uploadData = (await uploadRequest.json()) as {
+				url: string;
+				fields: Record<string, string>;
+				key: string;
+			};
+			const { url, fields, key } = uploadData;
+
+			const formData = new FormData();
+			Object.entries(fields).forEach(([key, value]) =>
+				formData.append(key, value)
+			);
+			formData.append('file', newAnuncio.imagen);
+
+			const s3UploadResponse = await fetch(url, {
+				method: 'POST',
+				body: formData,
+			});
+
+			if (!s3UploadResponse.ok) throw new Error('Error al subir la imagen');
+
+			const imageUrl = `https://artiefy-upload.s3.us-east-2.amazonaws.com/${key}`;
+
+			// 🔹 Guardar el anuncio en la base de datos
+			const response = await fetch('/api/super-admin/anuncios', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					titulo: newAnuncio.titulo,
+					descripcion: newAnuncio.descripcion,
+					imagenUrl: imageUrl,
+				}),
+			});
+
+			if (!response.ok) throw new Error('Error al guardar el anuncio');
+
+			alert('Anuncio guardado correctamente');
+			setShowAnuncioModal(false);
+			fetchAnuncios(); // Recargar la lista de anuncios
+		} catch (error) {
+			console.error('❌ Error al guardar anuncio:', error);
+			alert('Error al guardar el anuncio.');
+		}
+	};
 
 	const handleAssignStudents = async () => {
 		if (!selectedCourse || selectedStudents.length === 0) return;
@@ -876,8 +981,8 @@ export default function AdminDashboard() {
 							</div>
 						)}
 						{viewUser && (
-							<div className="fixed inset-0 z-[10000] flex items-center justify-center backdrop-blur-md ">
-							<div className="relative z-50 w-full max-w-5xl rounded-lg bg-[#01142B] p-8 text-white shadow-[0_0px_50px_rgba(0,189,216,0.7)]">
+							<div className="fixed inset-0 z-[10000] flex items-center justify-center backdrop-blur-md">
+								<div className="relative z-50 w-full max-w-5xl rounded-lg bg-[#01142B] p-8 text-white shadow-[0_0px_50px_rgba(0,189,216,0.7)]">
 									{/* Información del Usuario */}
 									<div className="flex">
 										{/* Foto de Perfil */}
@@ -1103,6 +1208,12 @@ export default function AdminDashboard() {
 									className="bg-secondary hover:bg-primary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105"
 								>
 									Asignar Curso a Estudiantes
+								</button>
+								<button
+									onClick={() => setShowAnuncioModal(true)}
+									className="bg-secondary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-[#00A5C0]"
+								>
+									<UserPlus className="mr-2 size-5" /> Crear Anuncio
 								</button>
 
 								<button
@@ -1367,6 +1478,64 @@ export default function AdminDashboard() {
 					{notification.message}
 				</div>
 			)}
+			{showAnuncioModal && (
+				<div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+					<div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+						<button
+							onClick={() => setShowAnuncioModal(false)}
+							className="absolute top-4 right-4 text-white hover:text-red-500"
+						>
+							<X size={24} />
+						</button>
+
+						<h2 className="mb-6 text-center text-3xl font-bold">
+							Crear Anuncio
+						</h2>
+
+						{/* Inputs que actualizan la vista previa en tiempo real */}
+						<input
+							type="text"
+							placeholder="Título del anuncio"
+							value={newAnuncio.titulo}
+							onChange={(e) =>
+								setNewAnuncio({ ...newAnuncio, titulo: e.target.value })
+							}
+							className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+						/>
+
+						<textarea
+							placeholder="Descripción"
+							value={newAnuncio.descripcion}
+							onChange={(e) =>
+								setNewAnuncio({ ...newAnuncio, descripcion: e.target.value })
+							}
+							className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+						/>
+
+						<input
+							type="file"
+							accept="image/*"
+							onChange={handleFileChange}
+							className="mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white"
+						/>
+
+						{/* 🔹 Componente de Vista Previa del Anuncio */}
+						<AnuncioPreview
+							titulo={newAnuncio.titulo}
+							descripcion={newAnuncio.descripcion}
+							imagenUrl={newAnuncio.previewImagen ?? ''}
+						/>
+
+						<button
+							onClick={handleCreateAnuncio}
+							className="mt-6 w-full rounded-lg bg-blue-600 py-3 text-lg font-semibold text-white hover:bg-blue-700"
+						>
+							Guardar Anuncio
+						</button>
+					</div>
+				</div>
+			)}
+
 			{editingUser && (
 				<EditUserModal
 					isOpen={!!editingUser}

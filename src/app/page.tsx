@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-
+import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { FaArrowRight } from 'react-icons/fa';
 
+import AnuncioPopup from '~/app/dashboard/super-admin/anuncios/AnuncioPopup';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -14,6 +14,8 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 export default function Home() {
 	const { user } = useUser();
 	const [loading, setLoading] = useState(false);
+	const [showAnuncio, setShowAnuncio] = useState(false);
+	const [anuncioActual, setAnuncioActual] = useState<{ titulo: string; descripcion: string; cover_image_key: string } | null>(null);
 
 	const dashboardRoute =
 		user?.publicMetadata?.role === 'admin'
@@ -22,12 +24,38 @@ export default function Home() {
 				? '/dashboard/educadores'
 				: '/estudiantes';
 
-	const handleButtonClick = () => {
-		setLoading(true);
-	};
+	// Obtener el anuncio activo cuando se carga la página
+	useEffect(() => {
+		const fetchAnuncioActivo = async () => {
+			try {
+				const res = await fetch('/api/super-admin/anuncios/view-anuncio');
+				if (!res.ok) throw new Error('Error al obtener el anuncio activo');
+
+				const data = await res.json() as { titulo: string; descripcion: string; cover_image_key: string };
+				if (data) {
+					setAnuncioActual(data); // Guardar el anuncio en el estado
+					setShowAnuncio(true); // Mostrar el popup
+				}
+			} catch (error) {
+				console.error('❌ Error al obtener el anuncio activo:', error);
+			}
+		};
+
+		fetchAnuncioActivo().catch(error => console.error('❌ Error al obtener el anuncio activo:', error));
+	}, []);
 
 	return (
 		<div className="relative flex min-h-screen flex-col">
+			{/* Mostrar el popup solo si hay un anuncio activo */}
+			{showAnuncio && anuncioActual && (
+				<AnuncioPopup
+					onClose={() => setShowAnuncio(false)}
+					titulo={anuncioActual.titulo}
+					descripcion={anuncioActual.descripcion}
+					imagenUrl={anuncioActual.cover_image_key} // Usamos la clave de la imagen desde la BD
+				/>
+			)}
+
 			<SmoothGradient />
 			<div className="relative z-10 flex min-h-screen flex-col">
 				<Header />
@@ -51,7 +79,7 @@ export default function Home() {
 									transition: '0.5s',
 									width: '250px',
 								}}
-								onClick={handleButtonClick}
+								onClick={() => setLoading(true)}
 							>
 								<Link href={dashboardRoute}>
 									<div className="flex w-full items-center justify-center">
