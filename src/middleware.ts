@@ -1,12 +1,26 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import {
+	clerkMiddleware,
+	createRouteMatcher,
+	type ClerkMiddlewareOptions,
+} from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
 const isSuperAdminRoute = createRouteMatcher(['/dashboard/super-admin(.*)']);
 const isEducatorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
 const isStudentClassRoute = createRouteMatcher(['/estudiantes/clases/:id']);
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)']);
+const isProtectedRoute = createRouteMatcher(['/dashboard(.*)']);
 const publicRoutes = createRouteMatcher(['/sign-in', '/sign-up']);
+
+// Configuración del middleware con tipos correctos
+const middlewareConfig: ClerkMiddlewareOptions = {
+	authorizedParties: [
+		'https://artiefy.com',
+		...(process.env.NODE_ENV === 'development'
+			? ['http://localhost:3000']
+			: []),
+	],
+};
 
 export default clerkMiddleware(async (auth, req) => {
 	const { userId, sessionClaims } = await auth();
@@ -41,13 +55,11 @@ export default clerkMiddleware(async (auth, req) => {
 	}
 
 	return NextResponse.next();
-});
+}, middlewareConfig);
 
 export const config = {
 	matcher: [
-		// Skip Next.js internals and all static files, unless found in search params
 		'/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-		// Always run for API routes
 		'/(api|trpc)(.*)',
 	],
 };

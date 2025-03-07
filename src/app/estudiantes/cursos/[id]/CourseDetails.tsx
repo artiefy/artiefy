@@ -75,9 +75,9 @@ export default function CourseDetails({
 						setCourse((prev) => ({
 							...prev,
 							lessons: lessons
-								.map((lesson, index) => ({
+								.map((lesson) => ({
 									...lesson,
-									isLocked: lesson.userProgress === 0 && index !== 0,
+									isLocked: lesson.isLocked,
 									porcentajecompletado: lesson.userProgress,
 								}))
 								.sort((a, b) => a.title.localeCompare(b.title)),

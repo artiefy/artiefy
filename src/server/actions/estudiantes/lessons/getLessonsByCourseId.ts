@@ -33,7 +33,7 @@ export async function getLessonsByCourseId(
 	// 🔥 Extra: Normalizar los títulos antes de ordenarlos
 	const sortedLessons = lessonsData.sort((a, b) => {
 		return a.title.trim().localeCompare(b.title.trim(), 'es', {
-			numeric: true, // Ordenar números correctamente (Clase 1, Clase 2...)
+			numeric: true,
 		});
 	});
 
