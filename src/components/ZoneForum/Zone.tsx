@@ -130,9 +130,9 @@ export const Zone = () => {
 							<AspectRatio ratio={16 / 9}>
 								<Image
 									src={
-										`
-                  ${`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.courseId.coverImageKey}`} ` ||
-										'/login-fondo.webp'
+										forum.courseId.coverImageKey
+											? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.courseId.coverImageKey}`
+											: '/login-fondo.webp'
 									}
 									alt={forum.title}
 									onError={(e) => {
