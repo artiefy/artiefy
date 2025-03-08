@@ -1,11 +1,13 @@
+import Image from 'next/image';
+import Link from 'next/link';
+
 import { currentUser } from '@clerk/nextjs/server';
 import {
 	ArrowRightCircleIcon,
 	StarIcon,
 	CheckCircleIcon,
 } from '@heroicons/react/24/solid';
-import Image from 'next/image';
-import Link from 'next/link';
+
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -19,6 +21,7 @@ import {
 } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
+
 import type { Course } from '~/types';
 
 interface CourseListStudentProps {
@@ -78,7 +81,7 @@ export default async function CourseListStudent({
 
 						return (
 							<div key={course.id} className="group relative">
-								<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
+								<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 								<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
 									<CardHeader className="">
 										<AspectRatio ratio={16 / 9}>
@@ -145,7 +148,7 @@ export default async function CourseListStudent({
 													<p className="font-bold">Ver Curso</p>
 													<ArrowRightCircleIcon className="animate-bounce-right mr-2 ml-1 size-5" />
 													<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-														<div className="relative h-full w-10 bg-white/30"></div>
+														<div className="relative h-full w-10 bg-white/30" />
 													</div>
 												</Link>
 											</Button>

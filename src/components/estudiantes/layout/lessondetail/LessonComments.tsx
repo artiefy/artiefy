@@ -1,7 +1,7 @@
 'use client';
 
-import type React from 'react';
 import { useState, useEffect, useRef } from 'react';
+
 import { useAuth } from '@clerk/nextjs';
 import {
 	StarIcon,
@@ -10,6 +10,7 @@ import {
 	HandThumbUpIcon,
 	XMarkIcon,
 } from '@heroicons/react/24/solid';
+
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Textarea } from '~/components/estudiantes/ui/textarea';

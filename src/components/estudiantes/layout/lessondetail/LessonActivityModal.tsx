@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
 	CogIcon,
@@ -10,6 +11,7 @@ import {
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
 import { toast } from 'sonner';
+
 import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Dialog,
@@ -18,6 +20,7 @@ import {
 	DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
+
 import type { Activity, Question, SavedAnswer } from '~/types';
 import '~/styles/arrowactivity.css';
 

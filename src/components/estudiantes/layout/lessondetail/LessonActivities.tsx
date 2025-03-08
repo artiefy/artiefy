@@ -1,12 +1,17 @@
 import { useState } from 'react';
+
 import Link from 'next/link';
+
 import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa';
 import { PiArrowFatLinesLeft } from 'react-icons/pi';
 import { toast } from 'sonner';
+
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import type { Activity, ActivityResults, SavedAnswer } from '~/types';
+
 import LessonActivityModal from './LessonActivityModal';
+
+import type { Activity, ActivityResults, SavedAnswer } from '~/types';
 
 interface LessonActivitiesProps {
 	activity: Activity | null;

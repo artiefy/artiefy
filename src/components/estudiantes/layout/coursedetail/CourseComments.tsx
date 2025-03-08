@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+
 import { useAuth } from '@clerk/nextjs';
 import {
 	StarIcon,
@@ -9,6 +10,7 @@ import {
 	HandThumbUpIcon,
 	XMarkIcon,
 } from '@heroicons/react/24/solid';
+
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Textarea } from '~/components/estudiantes/ui/textarea';
@@ -261,7 +263,7 @@ const CourseComments: React.FC<CommentProps> = ({
 							))}
 						</div>
 					</div>
-					<div className="flex items-center mt-2">
+					<div className="mt-2 flex items-center">
 						<Button
 							type="submit"
 							className="inline-flex items-center justify-center rounded-md border border-transparent bg-secondary text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:outline-hidden active:scale-95"

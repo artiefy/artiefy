@@ -2,6 +2,7 @@ import { clerkClient, type User } from '@clerk/nextjs/server';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+
 import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';

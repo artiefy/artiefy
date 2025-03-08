@@ -1,5 +1,6 @@
-import axios, { AxiosError } from 'axios';
 import { type NextRequest, NextResponse } from 'next/server';
+
+import axios, { AxiosError } from 'axios';
 
 // Constants
 const PAYU_API_URL =

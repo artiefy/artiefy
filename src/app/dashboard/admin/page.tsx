@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { UserButton } from '@clerk/nextjs'; // Botón de usuario de Clerk
+
 import { getAdminUsers } from '~/server/queries/queries'; // Importar la función de la lógica del servidor
+
 import { ChangeRole } from './ChangeRole';
 import { SearchUsers } from './SearchUsers'; // Componente de búsqueda
 
@@ -26,7 +28,7 @@ export default async function AdminDashboard(params: {
 	return (
 		<>
 			<div>
-				<header className="bg-primary text-background p-5 text-2xl font-extrabold">
+				<header className="bg-primary p-5 text-2xl font-extrabold text-background">
 					<h1>Dashboard Admin</h1>
 					{/* Botón de usuario de Clerk */}
 					<UserButton showName />

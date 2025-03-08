@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useProgress } from '@bprogress/next';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+
 import Form from 'next/form';
 import { useSearchParams } from 'next/navigation';
+
+import { useProgress } from '@bprogress/next';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Input } from '~/components/estudiantes/ui/input';

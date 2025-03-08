@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+
 import { BsPersonCircle } from 'react-icons/bs';
 import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
@@ -176,9 +177,9 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
 								<div className="flex justify-start">
 									<div className="rounded-lg bg-gray-100 p-3">
 										<div className="flex space-x-2">
-											<div className="loading-dot"></div>
-											<div className="loading-dot"></div>
-											<div className="loading-dot"></div>
+											<div className="loading-dot" />
+											<div className="loading-dot" />
+											<div className="loading-dot" />
 										</div>
 									</div>
 								</div>

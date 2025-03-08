@@ -311,3 +311,8 @@
 		transform: scale(1);
 	}
 }
+
+/* Disable transition effects */
+.transition-none {
+	transition: none !important;
+}

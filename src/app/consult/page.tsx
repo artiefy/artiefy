@@ -1,4 +1,5 @@
 import React from 'react';
+
 import ConsultForm from '~/components/estudiantes/layout/ConsultForm';
 
 const ConsultPage: React.FC = () => {

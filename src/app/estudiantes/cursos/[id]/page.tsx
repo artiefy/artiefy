@@ -1,13 +1,18 @@
 import { Suspense } from 'react';
-import { auth } from '@clerk/nextjs/server';
-import type { Metadata, ResolvingMetadata } from 'next';
+
 import { notFound } from 'next/navigation';
+
+import { auth } from '@clerk/nextjs/server';
+
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
-import type { Course } from '~/types';
+
 import CourseDetails from './CourseDetails';
+
+import type { Metadata, ResolvingMetadata } from 'next';
+import type { Course } from '~/types';
 
 interface Props {
 	params: Promise<{ id: string }>;

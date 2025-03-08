@@ -1,5 +1,7 @@
-import { Redis } from '@upstash/redis';
 import { type NextRequest, NextResponse } from 'next/server';
+
+import { Redis } from '@upstash/redis';
+
 import type { ActivityResults } from '~/types';
 
 const redis = new Redis({

@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
+
 import { useRouter, usePathname } from 'next/navigation';
+
+import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
+
 import { CourseBreadcrumb } from '~/components/estudiantes/layout/coursedetail/CourseBreadcrumb';
 import CourseChatbot from '~/components/estudiantes/layout/coursedetail/CourseChatbot';
 import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
@@ -13,6 +16,7 @@ import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCou
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
+
 import type { Course, Enrollment } from '~/types';
 
 export default function CourseDetails({

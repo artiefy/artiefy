@@ -1,50 +1,81 @@
 {
-	"editor.formatOnSave": true,
-	"editor.formatOnSaveMode": "file",
-	"files.autoSave": "afterDelay",
-	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": "explicit"
-	},
-	"eslint.rules.customizations": [
-		{ "rule": "import/order", "severity": "off" },
-		{ "rule": "no-unused-vars", "severity": "warn" }
-	],
-	"editor.defaultFormatter": "esbenp.prettier-vscode",
-	"[javascript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[javascriptreact]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[typescript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[typescriptreact]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"eslint.nodePath": "./node_modules",
-	"eslint.validate": [
-		"javascript",
-		"javascriptreact",
-		"typescript",
-		"typescriptreact"
-	],
+  // Editor Configuration
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "never"
+  },
+
+  // File Configuration
+  "files.autoSave": "afterDelay",
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+
+  // Language-specific Formatters
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // ESLint Configuration
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.workingDirectories": ["./"],
+  "eslint.useFlatConfig": true,
+  "eslint.run": "onType",
+  "eslint.nodePath": "./node_modules",
   "eslint.debug": true,
-	"tailwindCSS.includeLanguages": {
-		"typescript": "javascript",
-		"typescriptreact": "javascript",
-		"html": "html",
-		"css": "css"
-	},
-	"tailwindCSS.emmetCompletions": true,
-	"css.validate": false,
-	"scss.validate": false,
-	"less.validate": false,
-	"files.associations": {
-		"*.css": "tailwindcss"
-	},
-	"editor.quickSuggestions": {
-		"strings": "on"
-	},
-	"typescript.tsdk": "./node_modules/typescript/lib"
+  "eslint.rules.customizations": [
+    { "rule": "import/order", "severity": "off" },
+    { "rule": "no-unused-vars", "severity": "warn" }
+  ],
+
+  // Tailwind CSS Configuration
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript",
+    "html": "html",
+    "css": "css"
+  },
+  "tailwindCSS.emmetCompletions": true,
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    "ngClass",
+    "class:list",
+    "classList"
+  ],
+  "tailwindCSS.suggestions": true,
+  "tailwindCSS.hovers": true,
+  "tailwindCSS.codeActions": true,
+  "tailwindCSS.validate": true,
+  "tailwindCSS.showPixelEquivalents": true,
+  "tailwindCSS.colorDecorators": true,
+
+  // CSS Validation
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+
+  // TypeScript Configuration
+  "typescript.tsdk": "./node_modules/typescript/lib"
 }

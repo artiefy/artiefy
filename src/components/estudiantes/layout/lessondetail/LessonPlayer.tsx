@@ -56,7 +56,7 @@ const LessonPlayer = ({
 						<span className="font-bold text-gray-700">
 							Progreso de la clase :
 						</span>
-						<span className="text-gray-600"></span>
+						<span className="text-gray-600" />
 					</div>
 					<Progress value={progress} showPercentage={true} />
 				</div>

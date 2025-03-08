@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+
 import { useProgress } from '@bprogress/next';
 import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import {
 	FiBarChart,
 	FiCamera,
@@ -12,13 +14,15 @@ import {
 	FiMusic,
 	FiPenTool,
 } from 'react-icons/fi';
+
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Input } from '~/components/estudiantes/ui/input';
-import type { Category } from '~/types';
 import {
 	saveScrollPosition,
 	restoreScrollPosition,
 } from '~/utils/scrollPosition';
+
+import type { Category } from '~/types';
 
 interface CourseCategoriesProps {
 	allCategories: Category[];

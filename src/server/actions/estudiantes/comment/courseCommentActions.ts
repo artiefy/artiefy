@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
+
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
 const redis = new Redis({

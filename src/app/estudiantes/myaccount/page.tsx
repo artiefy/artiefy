@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
+
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/nextjs';
+
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import MyCoursesStudent, {

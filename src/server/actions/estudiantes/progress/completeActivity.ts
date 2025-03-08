@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
+
 import { db } from '~/server/db';
 import { userActivitiesProgress } from '~/server/db/schema';
 

@@ -19,7 +19,7 @@ export function CourseDetailsSkeleton() {
 							{/* Course Cover Image */}
 							<AspectRatio ratio={16 / 6}>
 								<Skeleton className="h-full w-full bg-gray-300" />
-								<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6"></div>
+								<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6" />
 							</AspectRatio>
 
 							<div className="space-y-6 p-6">

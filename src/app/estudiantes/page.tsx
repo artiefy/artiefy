@@ -1,13 +1,15 @@
 import { Suspense } from 'react';
+
 import StudentDashboard from '~/app/estudiantes/StudentDashboard';
 import CategoriesCourse from '~/components/estudiantes/layout/CategoriesCourse';
-import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
+
 import type { Category, Course } from '~/types';
 
 export const revalidate = 3600; // 1 hora de caché
@@ -143,4 +145,3 @@ export default async function CoursesPage({ searchParams }: Props) {
 		);
 	}
 }
-

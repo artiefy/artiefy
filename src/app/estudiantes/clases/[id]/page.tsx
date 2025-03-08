@@ -1,6 +1,9 @@
 import { Suspense } from 'react';
-import { auth } from '@clerk/nextjs/server';
+
 import { notFound } from 'next/navigation';
+
+import { auth } from '@clerk/nextjs/server';
+
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonSkeleton';
@@ -9,8 +12,10 @@ import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseByI
 import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
-import type { Activity, LessonWithProgress } from '~/types';
+
 import LessonDetails from './LessonDetails';
+
+import type { Activity, LessonWithProgress } from '~/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
