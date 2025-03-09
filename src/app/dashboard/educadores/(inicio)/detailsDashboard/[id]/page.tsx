@@ -21,6 +21,9 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 
+//Dashboard especifico para los detalles de un curso
+
+// Definir la interfaz Course
 interface Course {
 	id: number;
 	title: string;
@@ -53,6 +56,7 @@ interface Course {
 	progressLessons: number;
 }
 
+// Definir la funcion calculateAverageProgress "progreso en general de las clases"
 function calculateAverageProgress(lessons: Course['lessons']) {
 	const totalProgress = lessons.reduce(
 		(acc, lesson) => acc + lesson.progress,
@@ -61,6 +65,7 @@ function calculateAverageProgress(lessons: Course['lessons']) {
 	return lessons.length ? totalProgress / lessons.length : 0;
 }
 
+// Definir la funcion fetchUserProgressFromAPI "obtener el progreso de los usuario desde la API"
 async function fetchUserProgressFromAPI(
 	courseId: number
 ): Promise<Record<number, Record<string, number>>> {
@@ -88,13 +93,14 @@ async function fetchUserProgressFromAPI(
 }
 
 function App() {
-	const { user } = useUser();
-	const params = useParams();
-	const courseIdNumber = params?.id ? Number(params.id) : 0;
-	const [courses, setCourses] = useState<Course>();
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const { user } = useUser(); // Obtener el usuario actual
+	const params = useParams(); // Obtener los parametros de la URL
+	const courseIdNumber = params?.id ? Number(params.id) : 0; // Obtener el id del curso
+	const [courses, setCourses] = useState<Course>(); // Definir el estado courses
+	const [loading, setLoading] = useState(false); // Definir el estado loading
+	const [error, setError] = useState<string | null>(null); // Definir el estado error
 
+	// Definir la funcion fetchCourses "obtener el curso by id"
 	const fetchCourses = useCallback(async () => {
 		if (!user) return;
 		setLoading(true);
@@ -126,6 +132,7 @@ function App() {
 		}
 	}, [user, courseIdNumber]);
 
+	// Definir la funcion fetchUserProgress "obtener el progreso del usuario"
 	const fetchUserProgress = useCallback(async () => {
 		if (!courses) return;
 		try {
@@ -155,6 +162,7 @@ function App() {
 		}
 	}, [courses, courseIdNumber]);
 
+	// Definir los efectos
 	useEffect(() => {
 		if (user) {
 			fetchUserProgress().catch((error) =>
@@ -162,8 +170,9 @@ function App() {
 			);
 		}
 	}, [user, courses, fetchUserProgress]);
-	//Agregar estado fetch "courses" para que se ejecute el useEffect a fetchUserProgress
+	//Corregir el efecto para que se ejecute solo cuando el usuario y el id del curso esten definidos y no haga fetch innecesarios como con "courses" como dependencia
 
+	// Definir el efecto para cargar los cursos
 	useEffect(() => {
 		if (user && courseIdNumber) {
 			fetchCourses().catch((error) =>
@@ -172,10 +181,12 @@ function App() {
 		}
 	}, [user, courseIdNumber, fetchCourses]);
 
+	// Calcular el promedio de progreso
 	const averageProgress = courses
 		? calculateAverageProgress(courses.lessons)
 		: 0;
 
+	// Mostrar el estado de carga
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
@@ -187,6 +198,7 @@ function App() {
 		);
 	}
 
+	// Mostrar el error y recargar
 	if (error) {
 		return (
 			<main className="flex h-screen items-center justify-center">
@@ -203,6 +215,7 @@ function App() {
 		);
 	}
 
+	// Mostrar la vista principal
 	return (
 		<>
 			<Breadcrumb>

@@ -7,6 +7,9 @@ import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 import type { Completado } from '~/types/typesActi';
 
+//La validacion del porcentaje no se encuentra implementada
+
+// Propiedades del componente para las preguntas abiertas
 interface PreguntasAbiertasProps {
 	activityId: number;
 	editingQuestion?: Completado;
@@ -28,10 +31,11 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		correctAnswer: '',
 		answer: '',
 		pesoPregunta: 0,
-	});
-	const [uploadProgress, setUploadProgress] = useState<number>(0);
-	const [isVisible, setIsVisible] = useState<boolean>(true);
+	}); // Estado para los datos del formulario
+	const [uploadProgress, setUploadProgress] = useState<number>(0); // Estado para el progreso de carga
+	const [isVisible, setIsVisible] = useState<boolean>(true); // Estado para la visibilidad del formulario
 
+	// Efecto para cargar los datos de la pregunta
 	useEffect(() => {
 		if (editingQuestion) {
 			setFormData(editingQuestion);
@@ -46,6 +50,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		}
 	}, [editingQuestion]);
 
+	// Maneja el cambio en los campos del formulario
 	const handleChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 	) => {
@@ -56,6 +61,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		}));
 	};
 
+	// Valida que el porcentaje total de las preguntas no sea mayor a 100% 'No finalizado'
 	const validateTotalPercentage = async (newPesoPregunta: number) => {
 		const response = await fetch(
 			`/api/educadores/question/totalPercentage?activityId=${activityId}`
@@ -68,6 +74,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		return totalPercentage <= 100;
 	};
 
+	// Maneja el envio del formulario para guardar la pregunta
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		if (!(await validateTotalPercentage(formData.pesoPregunta))) {
@@ -130,6 +137,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		}
 	};
 
+	// Maneja el cancelar la edición de la pregunta
 	const handleCancel = () => {
 		if (onCancel) {
 			onCancel();
@@ -137,10 +145,12 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		setIsVisible(false);
 	};
 
+	// Retorno la vista del componente
 	if (!isVisible) {
 		return null;
 	}
 
+	// Retorno la vista del componente
 	return (
 		<>
 			<div className="container my-2 rounded-lg bg-white p-3 text-black shadow-lg">

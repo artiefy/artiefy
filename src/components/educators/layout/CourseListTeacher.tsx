@@ -12,6 +12,7 @@ import {
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
 
+// Interfaz para los cursos
 interface Course {
 	id: number;
 	title: string;
@@ -25,11 +26,13 @@ interface Course {
 	createdAt: string;
 }
 
+// Propiedades del componente para la lista de cursos
 interface CourseListTeacherProps {
 	courses: Course[];
 }
 
 export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
+	// Retorno la vista del componente que muestra la lista de cursos para los educadores en el dashboard
 	return (
 		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-2">
 			{courses.map((course) => (

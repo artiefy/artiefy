@@ -11,6 +11,9 @@ import {
 	ModalFooter,
 } from '~/components/educators/ui/modal';
 
+// OJO: ESTA INTERFAZ NO ESTA TERMINADA POR TEMAS DE TIEMPO
+
+// Interfaz para las respuestas de los estudiantes
 interface StudentAnswer {
 	id: string;
 	studentName: string;
@@ -24,14 +27,15 @@ interface StudentAnswer {
 const CalificarPreguntas: React.FC<{ activityId: number }> = ({
 	activityId,
 }) => {
-	const [studentAnswers, setStudentAnswers] = useState<StudentAnswer[]>([]);
+	const [studentAnswers, setStudentAnswers] = useState<StudentAnswer[]>([]); // Estado para las respuestas de los estudiantes
 	const [selectedAnswer, setSelectedAnswer] = useState<StudentAnswer | null>(
 		null
-	);
-	const [grade, setGrade] = useState<number | undefined>(undefined);
-	const [comment, setComment] = useState<string>('');
-	const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+	); // Estado para la respuesta seleccionada
+	const [grade, setGrade] = useState<number | undefined>(undefined); // Estado para la calificación
+	const [comment, setComment] = useState<string>(''); // Estado para el comentario
+	const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // Estado para el modal
 
+	// Efecto para obtener las respuestas de los estudiantes
 	useEffect(() => {
 		const fetchStudentAnswers = async () => {
 			try {
@@ -51,6 +55,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
 		void fetchStudentAnswers();
 	}, [activityId]);
 
+	// Función para abrir el modal
 	const handleOpenModal = (answer: StudentAnswer) => {
 		setSelectedAnswer(answer);
 		setGrade(answer.grade);
@@ -58,6 +63,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
 		setIsModalOpen(true);
 	};
 
+	// Función para cerrar el modal
 	const handleCloseModal = () => {
 		setSelectedAnswer(null);
 		setGrade(undefined);
@@ -65,6 +71,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
 		setIsModalOpen(false);
 	};
 
+	// Función para guardar la calificación
 	const handleSave = async () => {
 		if (!selectedAnswer) return;
 
@@ -101,6 +108,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
 		}
 	};
 
+	// Renderiza la vista
 	return (
 		<div className="container mx-auto p-4">
 			<h1 className="mb-4 text-2xl font-bold">Calificar Preguntas</h1>

@@ -57,6 +57,7 @@ export interface Course {
 	requerimientos: string;
 }
 
+// CRUD de cursos
 // Crear un nuevo curso
 export const createCourse = async ({
 	title,
@@ -134,6 +135,7 @@ export const getTotalStudents = async (course_id: number): Promise<number> => {
 	return result[0]?.totalStudents ?? 0;
 };
 
+// Obtener todas las lecciones de un curso
 export const getLessonsByCourseId = async (courseId: number) => {
 	return db
 		.select({
@@ -312,7 +314,7 @@ export const updateCourse = async (
 	return db.update(courses).set(updateData).where(eq(courses.id, courseId));
 };
 
-// Eliminar un curso y su foro asociado
+// Eliminar un curso y sus datos asociado
 export const deleteCourse = async (courseId: number) => {
 	// Primero elimina las inscripciones asociadas al curso
 	await db.delete(enrollments).where(eq(enrollments.courseId, courseId));
@@ -326,6 +328,7 @@ export const deleteCourse = async (courseId: number) => {
 	return db.delete(courses).where(eq(courses.id, courseId));
 };
 
+// Obtener los cursos en los que el usuario está inscrito
 export const getCoursesByUserIdSimplified = async (userId: string) => {
 	console.log('UserId recibido:', userId); // Verifica que el ID sea correcto
 

@@ -10,6 +10,7 @@ export interface Parametros {
 	courseId: number;
 }
 
+// Crear un parámetro
 export const createParametros = async ({
 	name,
 	description,
@@ -29,13 +30,10 @@ export const createParametros = async ({
 	});
 };
 
+// Obtener parámetros
 export async function getParametros() {
-	try {
-		const result: Parametros[] = await db.select().from(parametros);
-		return result;
-	} catch (error) {
-		throw error;
-	}
+	const result: Parametros[] = await db.select().from(parametros);
+	return result;
 }
 
 // Obtener parámetros por ID de curso
@@ -54,16 +52,13 @@ export async function getParametrosByCourseId(
 	}
 }
 
+// Obtener parámetro por ID
 export async function getParametroById(id: number) {
-	try {
-		const result: Parametros[] = await db
-			.select()
-			.from(parametros)
-			.where(eq(parametros.id, id));
-		return result;
-	} catch (error) {
-		throw error;
-	}
+	const result: Parametros[] = await db
+		.select()
+		.from(parametros)
+		.where(eq(parametros.id, id));
+	return result;
 }
 
 // Actualizar un parámetro
@@ -92,15 +87,12 @@ export const updateParametro = async ({
 	}
 };
 
+// Eliminar un parámetro
 export async function deleteParametro(id: number) {
-	try {
-		const parametroEliminado = await db
-			.delete(parametros)
-			.where(eq(parametros.id, id));
-		return parametroEliminado;
-	} catch (error) {
-		throw error;
-	}
+	const parametroEliminado = await db
+		.delete(parametros)
+		.where(eq(parametros.id, id));
+	return parametroEliminado;
 }
 
 // Eliminar parámetros por ID de curso

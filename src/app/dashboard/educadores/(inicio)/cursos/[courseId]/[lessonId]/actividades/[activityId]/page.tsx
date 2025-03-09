@@ -44,6 +44,9 @@ import type {
 	Question,
 } from '~/types/typesActi';
 
+//Renderizar la creacion y configuracion de la actividad segun su id
+
+// Definir la interfaz de la actividad
 interface ActivityDetails {
 	id: number;
 	name: string;
@@ -70,6 +73,7 @@ interface ActivityDetails {
 	fechaMaximaEntrega: string | null;
 }
 
+// Definir la interfaz de la actividad
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
 	hexcolor = hexcolor.replace('#', '');
@@ -81,31 +85,33 @@ const getContrastYIQ = (hexcolor: string) => {
 };
 
 const Page: React.FC = () => {
-	const params = useParams();
-	const actividadIdUrl = params?.activityId ?? null;
-	const lessonsId = params?.lessonId ?? null;
-	const courseId = params?.courseId ?? null;
-	const [actividad, setActividad] = useState<ActivityDetails | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [color, setColor] = useState<string>('#FFFFFF');
-	const [selectedActivityType, setSelectedActivityType] = useState<string>('');
-	const [questions, setQuestions] = useState<string[]>([]);
+	const params = useParams(); // Obtener los parametros de la URL
+	const actividadIdUrl = params?.activityId ?? null; // Obtener el id de la actividad
+	const lessonsId = params?.lessonId ?? null; // Obtener el id de la leccion
+	const courseId = params?.courseId ?? null; // Obtener el id del curso
+	const [actividad, setActividad] = useState<ActivityDetails | null>(null); // Estado de la actividad
+	const [loading, setLoading] = useState(true); // Estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado de error
+	const [color, setColor] = useState<string>('#FFFFFF'); // Estado del color
+	const [selectedActivityType, setSelectedActivityType] = useState<string>(''); // Estado del tipo de actividad seleccionado
+	const [questions, setQuestions] = useState<string[]>([]); // Estado de las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
 		QuestionFilesSubida | Completado | VerdaderoOFlaso | Question | null
-	>(null);
+	>(null); // Estado de la edicion de la pregunta
 
+	// Convertir los parametros de la URL a numeros
 	const actividadIdString = Array.isArray(actividadIdUrl)
 		? actividadIdUrl[0]
-		: actividadIdUrl;
+		: actividadIdUrl; // Obtener el id de la actividad
 	const actividadIdNumber = actividadIdString
 		? parseInt(actividadIdString)
-		: null;
-	const lessonIdString = Array.isArray(lessonsId) ? lessonsId[0] : lessonsId;
-	const lessonIdNumber = lessonIdString ? parseInt(lessonIdString) : null;
-	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
-	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
+		: null; // Convertir el id de la actividad a numero
+	const lessonIdString = Array.isArray(lessonsId) ? lessonsId[0] : lessonsId; // Obtener el id de la leccion
+	const lessonIdNumber = lessonIdString ? parseInt(lessonIdString) : null; // Convertir el id de la leccion a numero
+	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId; // Obtener el id del curso
+	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null; // Convertir el id del curso a numero
 
+	// Funcion para cargar la actividad
 	const fetchActividad = useCallback(async () => {
 		if (actividadIdNumber !== null) {
 			try {
@@ -139,12 +145,14 @@ const Page: React.FC = () => {
 		}
 	}, [actividadIdNumber]);
 
+	// Cargar la actividad
 	useEffect(() => {
 		fetchActividad().catch((error) =>
 			console.error('Error fetching activity:', error)
 		);
 	}, [fetchActividad]);
 
+	// Guardar el color seleccionado en el localStorage
 	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
 		if (savedColor) {
@@ -152,6 +160,7 @@ const Page: React.FC = () => {
 		}
 	}, [courseIdNumber]);
 
+	// Funcion para eliminar la actividad
 	const handleDeleteAct = async () => {
 		if (actividadIdNumber) {
 			try {
@@ -189,6 +198,7 @@ const Page: React.FC = () => {
 		}
 	};
 
+	// Funcion del boton para agregar una pregunta a la actividad
 	const handleAddQuestion = () => {
 		if (selectedActivityType) {
 			setQuestions([selectedActivityType]); // Solo mantener el nuevo formulario
@@ -196,15 +206,19 @@ const Page: React.FC = () => {
 		}
 	};
 
+	// Funcion para manejar el envio del formulario
 	const handleFormSubmit = () => {
 		setEditingQuestion(null);
 		setQuestions([]);
 	};
 
+	// Funcion para cancelar la edicion de la pregunta
 	const handleCancel = () => {
 		setEditingQuestion(null);
 		setQuestions([]); // Limpiar las preguntas para dejar de renderizar el formulario
 	};
+
+	// Spinner de carga
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
@@ -216,6 +230,7 @@ const Page: React.FC = () => {
 		);
 	}
 
+	// Mostrar el error con boton para volver a cargar
 	if (error) {
 		return (
 			<main className="flex h-screen items-center justify-center">
@@ -234,11 +249,13 @@ const Page: React.FC = () => {
 		);
 	}
 
+	// Mostrar mensaje si no se encuentra la actividad
 	if (!actividad)
 		return (
 			<div className="text-center text-xl">No se encontró la actividad.</div>
 		);
 
+	// Renderizar la pagina
 	return (
 		<>
 			<Breadcrumb>
@@ -402,7 +419,7 @@ const Page: React.FC = () => {
 							</AlertDialogContent>
 						</AlertDialog>
 					</div>
-					{/* Zona de actividades */}
+					{/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
 					{actividad?.type.id === 1 ? (
 						<div className="mt-8 space-y-6">
 							<div className="rounded-lg bg-white p-6 shadow-md">
@@ -491,20 +508,19 @@ const Page: React.FC = () => {
 								</>
 							)}
 						</>
-					) : actividad.type.id === 4 && actividadIdNumber !== null ? (
-						<>
-							<CalificarPreguntas activityId={actividadIdNumber} />
-							<PreguntasAbiertas2
-								activityId={actividadIdNumber}
-								onSubmit={handleFormSubmit}
-								isUploading={false}
-							/>
-							<ListPreguntaAbierta2 activityId={actividadIdNumber} />
-						</>
 					) : (
-						<div className="text-center text-xl text-red-500">
-							No se encontró la actividad.
-						</div>
+						actividad.type.id === 4 &&
+						actividadIdNumber !== null && (
+							<>
+								<CalificarPreguntas activityId={actividadIdNumber} />
+								<PreguntasAbiertas2
+									activityId={actividadIdNumber}
+									onSubmit={handleFormSubmit}
+									isUploading={false}
+								/>
+								<ListPreguntaAbierta2 activityId={actividadIdNumber} />
+							</>
+						)
 					)}
 				</div>
 			</div>

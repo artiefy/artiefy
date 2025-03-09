@@ -15,6 +15,7 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 
+// Define el modelo de datos del curso
 export interface CourseModel {
 	id: number;
 	title: string;
@@ -25,12 +26,13 @@ export interface CourseModel {
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
-	dificultadid: string; // Add this line
+	dificultadid: string;
 	requerimientos: string;
-	totalParametros: number; // Add this line
-	rating: number; // Añadir esta línea
+	totalParametros: number;
+	rating: number;
 }
 
+// Define el modelo de datos de los parámetros de evaluación
 export function LoadingCourses() {
 	return (
 		<div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -42,13 +44,13 @@ export function LoadingCourses() {
 }
 
 export default function Page() {
-	const { user } = useUser();
-	const [courses, setCourses] = useState<CourseModel[]>([]);
-	const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
-	const [uploading, setUploading] = useState(false);
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const { user } = useUser(); // interfaz de usuario
+	const [courses, setCourses] = useState<CourseModel[]>([]); // interfaz de cursos
+	const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null); // interfaz de cursos
+	const [uploading, setUploading] = useState(false); // interfaz de cursos
+	const [isModalOpen, setIsModalOpen] = useState(false); // interfaz de cursos
+	const [loading, setLoading] = useState(true); // interfaz de cursos
+	const [error, setError] = useState<string | null>(null); // interfaz de cursos
 	const [parametrosList, setParametrosList] = useState<
 		{
 			id: number;
@@ -56,8 +58,9 @@ export default function Page() {
 			description: string;
 			porcentaje: number;
 		}[]
-	>([]);
+	>([]); // interfaz de cursos
 
+	// Función para cargar los cursos by userId
 	const fetchCourses = useCallback(async () => {
 		if (!user) return;
 		try {
@@ -94,6 +97,7 @@ export default function Page() {
 		}
 	}, [user]);
 
+	// Cargar los cursos al montar el componente
 	useEffect(() => {
 		if (user) {
 			fetchCourses().catch((error) =>
@@ -102,6 +106,7 @@ export default function Page() {
 		}
 	}, [user, fetchCourses]);
 
+	// Función para crear o editar un curso "los datos vienen del modal"
 	const handleCreateOrEditCourse = async (
 		id: string,
 		title: string,
@@ -249,6 +254,7 @@ export default function Page() {
 		}
 	};
 
+	// Función para abrir el modal de creación de cursos
 	const handleCreateCourse = () => {
 		setEditingCourse({
 			id: 0,
@@ -269,51 +275,60 @@ export default function Page() {
 		setIsModalOpen(true);
 	};
 
+	// Función para cerrar el modal de creación de cursos
 	const handleCloseModal = () => {
 		setIsModalOpen(false);
 		setEditingCourse(null);
 		setParametrosList([]);
 	};
 
-	// Asegúrate de que las funciones de setState no se llamen en cada renderizado
+	// Manejo del título del curso en el modal si no es null
 	const setTitle = (title: string) => {
 		setEditingCourse((prev) => (prev ? { ...prev, title } : prev));
 	};
 
+	// Manejo de la descripción del curso en el modal si no es null
 	const setDescription = (description: string) => {
 		setEditingCourse((prev) => (prev ? { ...prev, description } : prev));
 	};
 
+	// Manejo de los requerimientos del curso en el modal si no es null
 	const setRequerimientos = (requerimientos: string) => {
 		setEditingCourse((prev) => (prev ? { ...prev, requerimientos } : prev));
 	};
 
+	// Manejo de la categoría del curso en el modal si no es null
 	const setCategoryid = (categoryid: number) => {
 		setEditingCourse((prev) =>
 			prev ? { ...prev, categoryid: String(categoryid) } : prev
 		);
 	};
 
+	// Manejo de la modalidad del curso en el modal si no es null
 	const setModalidadesid = (modalidadesid: number) => {
 		setEditingCourse((prev) =>
 			prev ? { ...prev, modalidadesid: String(modalidadesid) } : prev
 		);
 	};
 
+	// Manejo de la dificultad del curso en el modal si no es null
 	const setDificultidid = (dificultadid: number) => {
 		setEditingCourse((prev) =>
 			prev ? { ...prev, dificultadid: String(dificultadid) } : prev
 		);
 	};
 
+	// Manejo de la imagen de portada del curso en el modal si no es null
 	const setCoverImageKey = (coverImageKey: string) => {
 		setEditingCourse((prev) => (prev ? { ...prev, coverImageKey } : prev));
 	};
 
+	// Manejo de la calificación del curso en el modal si no es null
 	const setRating = (rating: number) => {
 		setEditingCourse((prev) => (prev ? { ...prev, rating } : prev));
 	};
 
+	// spinner de carga
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
@@ -325,6 +340,7 @@ export default function Page() {
 		);
 	}
 
+	// Renderizado de la vista
 	return (
 		<>
 			<main className="h-auto">

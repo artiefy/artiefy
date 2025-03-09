@@ -14,6 +14,7 @@ import { Loader2, Eye } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
 
+// Registro de los plugins de ChartJS que son para las estadísticas de los estudiantes 'No terminado' 
 ChartJS.register(
 	CategoryScale,
 	LinearScale,
@@ -23,12 +24,14 @@ ChartJS.register(
 	Legend
 );
 
+// Interfaz para el progreso de las lecciones
 interface LessonProgress {
 	lessonId: number;
 	progress: number;
 	isCompleted: boolean;
 }
 
+// Interfaz para los usuarios
 interface User {
 	id: string;
 	firstName: string;
@@ -39,6 +42,7 @@ interface User {
 	averageProgress: number; // Add averageProgress property
 }
 
+// Propiedades del componente para la lista de lecciones
 interface LessonsListProps {
 	courseId: number;
 	selectedColor: string;
@@ -51,10 +55,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 	const [users, setUsers] = useState<User[]>([]);
 	// 🔍 Estados de búsqueda y filtros
 	const [searchQuery, setSearchQuery] = useState(''); // Búsqueda por nombre o correo
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [selectedUser, setSelectedUser] = useState<User | null>(null);
+	const [loading, setLoading] = useState(true); // Estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado de error
+	const [isModalOpen, setIsModalOpen] = useState(false); // Estado del modal
+	const [selectedUser, setSelectedUser] = useState<User | null>(null); // Usuario seleccionado
 
 	// 1️⃣ Filtrar usuarios
 	const filteredUsers = users.filter(
@@ -72,6 +76,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 	const indexOfFirstUser = indexOfLastUser - usersPerPage;
 	const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
+	// 3️⃣ Obtener usuarios inscritos en el curso
 	const fetchEnrolledUsers = useCallback(async (courseId: number) => {
 		try {
 			const users = await getUsersEnrolledInCourse(courseId);
@@ -113,11 +118,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 		setIsModalOpen(true);
 	};
 
+	//Cerrar modal o popup
 	const closeModal = () => {
 		setIsModalOpen(false);
 		setSelectedUser(null);
 	};
 
+	// 4️⃣ Obtener datos para el gráfico de progreso
 	const getChartData = (user: User) => {
 		return {
 			labels: user.lessonsProgress.map(
@@ -135,10 +142,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 		};
 	};
 
+	// 5️⃣ Efecto para cargar los usuarios inscritos
 	useEffect(() => {
 		void fetchEnrolledUsers(courseId);
 	}, [fetchEnrolledUsers, courseId]);
 
+	// 6️⃣ Vista del componente 'un dashboard de estudiantes que tiene una tabla con los estudiantes inscritos en un curso'
 	return (
 		<>
 			{/* Modal de detalles del usuario */}

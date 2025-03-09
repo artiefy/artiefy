@@ -8,17 +8,19 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 import type { VerdaderoOFlaso } from '~/types/typesActi';
 
+// Propiedades del componente para la lista de preguntas
 interface QuestionListProps {
 	activityId: number;
 }
 
 const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
-	const [questions, setQuestionsVOF] = useState<VerdaderoOFlaso[]>([]);
+	const [questions, setQuestionsVOF] = useState<VerdaderoOFlaso[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
 		VerdaderoOFlaso | undefined
-	>(undefined);
-	const [loading, setLoading] = useState(true);
+	>(undefined); // Estado para la edición de preguntas
+	const [loading, setLoading] = useState(true); // Estado para el estado de carga
 
+	// Función para obtener las preguntas
 	const fetchQuestions = useCallback(async () => {
 		try {
 			setLoading(true);
@@ -46,14 +48,17 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	}, [activityId]);
 
+	// Efecto para obtener las preguntas al cargar el componente
 	useEffect(() => {
 		void fetchQuestions();
 	}, [fetchQuestions]);
 
+	// Función para editar una pregunta
 	const handleEdit = (questionVOF: VerdaderoOFlaso) => {
 		setEditingQuestion(questionVOF);
 	};
 
+	// Función para eliminar una pregunta
 	const handleDelete = async (questionId: string) => {
 		try {
 			const response = await fetch(
@@ -77,6 +82,7 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	};
 
+	// Función para manejar la submisión del formulario
 	const handleFormSubmit = (question: VerdaderoOFlaso) => {
 		setEditingQuestion(undefined);
 		// Actualizamos el estado local inmediatamente
@@ -93,10 +99,12 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 	};
 
+	// Función para cancelar la edición
 	const handleCancel = () => {
 		setEditingQuestion(undefined);
 	};
 
+	// Retorno la vista del componente
 	if (loading && questions.length > 0) {
 		return <div>Cargando preguntas...</div>;
 	}

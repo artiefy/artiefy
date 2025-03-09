@@ -6,6 +6,7 @@ import { FilePlus2, FileVideo, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import { MdClose } from 'react-icons/md';
 
+// Propiedades del componente para subir archivos
 interface FileUploadProps {
 	type: 'image' | 'video' | 'file';
 	label: string;
@@ -27,14 +28,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
 	multiple = false,
 	onFileChange,
 	tipo,
-	file, // Agregar la propiedad file
+	file, 
 }) => {
-	const [files, setFiles] = useState<File[]>([]);
-	const [fileNames, setFileNames] = useState<string[]>([]);
-	const [fileSizes, setFileSizes] = useState<number[]>([]);
-	const [isDragging, setIsDragging] = useState(false);
-	const [errors, setErrors] = useState('');
+	const [files, setFiles] = useState<File[]>([]); // Cambiar el estado de files a un array de archivos
+	const [fileNames, setFileNames] = useState<string[]>([]); // Cambiar el estado de fileNames a un array de strings
+	const [fileSizes, setFileSizes] = useState<number[]>([]); // Cambiar el estado de fileSizes a un array de números
+	const [isDragging, setIsDragging] = useState(false); // Cambiar el estado de isDragging a un booleano
+	const [errors, setErrors] = useState(''); // Cambiar el estado de errors a un string
 
+	// Efecto para manejar el archivo
 	useEffect(() => {
 		if (file) {
 			setFiles([file]);
@@ -43,6 +45,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 		}
 	}, [file]);
 
+	// Función para manejar el cambio de archivo en el input y validar el archivo
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const selectedFiles = Array.from(e.target.files ?? []);
 		const validFileTypes = [
@@ -84,15 +87,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
 		onFileChange(multiple ? [...files, ...validFiles] : validFiles[0]);
 	};
 
+	// Función para manejar el arrastre de archivos
 	const handleDragOver = (e: React.DragEvent) => {
 		e.preventDefault();
 		setIsDragging(true);
 	};
 
+	// Función para manejar el arrastre de archivos
 	const handleDragLeave = () => {
 		setIsDragging(false);
 	};
 
+	// Función para manejar el arrastre de archivos
 	const handleDrop = (e: React.DragEvent) => {
 		e.preventDefault();
 		setIsDragging(false);
@@ -136,6 +142,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 		onFileChange(multiple ? [...files, ...validFiles] : validFiles[0]);
 	};
 
+	// Función para manejar la eliminación de archivos
 	const handleRemoveFile = (index: number) => {
 		setFiles((prev) => prev.filter((_, i) => i !== index));
 		setFileNames((prev) => prev.filter((_, i) => i !== index));
@@ -144,6 +151,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 		onFileChange(files.length > 1 ? files.filter((_, i) => i !== index) : null);
 	};
 
+	// Retorno la vista del componente
 	return (
 		<div className="flex flex-col items-center">
 			<label className="text-center text-lg font-medium text-primary">

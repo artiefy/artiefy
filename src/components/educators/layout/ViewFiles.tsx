@@ -72,7 +72,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 				} else {
 					setError('Datos incorrectos recibidos de la API');
 				}
-			} catch (err) {
+			} catch (err: unknown) {
 				console.error('Error en la solicitud de archivos:', err);
 				setError('Hubo un problema al cargar los archivos');
 			} finally {
@@ -80,7 +80,9 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 			}
 		};
 
-		fetchFiles().catch((err) => console.error('Error fetching files:', err));
+		fetchFiles().catch((err: unknown) =>
+			console.error('Error fetching files:', err)
+		);
 	}, [lessonId, lessonIdNumber]);
 
 	useEffect(() => {
@@ -102,7 +104,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 						'Datos incorrectos recibidos de la API name Files sources'
 					);
 				}
-			} catch (err) {
+			} catch (err: unknown) {
 				console.error('Error en la solicitud del nombre de los archivos:', err);
 				setErrorNames('Hubo un problema al cargar el nombre de los archivos');
 			} finally {
@@ -110,7 +112,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 			}
 		};
 
-		fetchFilesName().catch((err) =>
+		fetchFilesName().catch((err: unknown) =>
 			console.error('Error fetching files:', err)
 		);
 	}, [lessonId, lessonIdNumber]);
@@ -155,11 +157,10 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 					if (!file) return null; // Manejar caso de clave vacía
 					const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3
 					const icon = getIconForFileType(file.fileName); // Icono basado en la extensión del archivo
-					if (!lessonFileName === null) {
+					if (lessonFileName === null) {
 						return null; // Manejar caso de nombre de archivo vacío
-					} else {
 					}
-					const resourceNames = lessonFileName?.resourceNames.split(',') ?? []; // Separar resourceNames por comas}
+					const resourceNames = lessonFileName.resourceNames.split(','); // Separar resourceNames por comas
 
 					return (
 						<Link

@@ -23,6 +23,7 @@ import {
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 
+// Interfaz para los parámetros del formulario del course
 interface CourseFormProps {
 	onSubmitAction: (
 		id: string,
@@ -32,11 +33,11 @@ interface CourseFormProps {
 		categoryid: number,
 		modalidadesid: number,
 		dificultadid: number,
-		rating: number, // Añadir esta línea
+		rating: number,
 		requerimientos: string,
 		addParametros: boolean,
-		coverImageKey: string, // Agregar coverImageKey
-		fileName: string // Agregar fileName
+		coverImageKey: string,
+		fileName: string
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -70,10 +71,11 @@ interface CourseFormProps {
 	) => void;
 	isOpen: boolean;
 	onCloseAction: () => void;
-	rating: number; // Añadir esta línea
-	setRating: (rating: number) => void; // Añadir esta línea
+	rating: number;
+	setRating: (rating: number) => void;
 }
 
+// Componente ModalFormCourse
 const ModalFormCourse: React.FC<CourseFormProps> = ({
 	onSubmitAction,
 	uploading,
@@ -84,8 +86,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	setDescription,
 	requerimientos,
 	setRequerimientos,
-	rating, // Añadir esta línea
-	setRating, // Añadir esta línea
+	rating,
+	setRating,
 	categoryid,
 	setCategoryid,
 	modalidadesid,
@@ -93,18 +95,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	dificultadid,
 	setDificultadid,
 	coverImageKey,
-	parametros = [], // Asegúrate de que no sea undefined
+	parametros = [],
 	setParametrosAction,
 	isOpen,
 	onCloseAction,
 }) => {
-	const { user } = useUser();
-	const [file, setFile] = useState<File | null>(null);
-	const [fileName, setFileName] = useState<string | null>(null);
-	const [fileSize, setFileSize] = useState<number | null>(null);
-	const [progress, setProgress] = useState(0);
-	const [isEditing, setIsEditing] = useState(false);
-	const [isDragging, setIsDragging] = useState(false);
+	const { user } = useUser(); // Obtiene el usuario actual
+	const [file, setFile] = useState<File | null>(null); // Estado para el archivo
+	const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
+	const [fileSize, setFileSize] = useState<number | null>(null); // Estado para el tamaño del archivo
+	const [progress, setProgress] = useState(0); // Estado para el progreso
+	const [isEditing, setIsEditing] = useState(false); // Estado para la edición
+	const [isDragging, setIsDragging] = useState(false); // Estado para el arrastre
 	const [errors, setErrors] = useState({
 		title: false,
 		description: false,
@@ -117,16 +119,17 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		dificultad: false,
 		modalidad: false,
 		requerimientos: false,
-	});
-	const [uploadProgress, setUploadProgress] = useState(0);
-	const [isUploading, setIsUploading] = useState(false);
-	const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set());
-	const [currentCoverImageKey] = useState(coverImageKey);
+	}); // Estado para los errores
+	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
+	const [isUploading, setIsUploading] = useState(false); // Estado para la subida
+	const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set()); // Estado para los campos modificados
+	const [currentCoverImageKey] = useState(coverImageKey); // Estado para la imagen de portada
 	const [uploadController, setUploadController] =
-		useState<AbortController | null>(null);
-	const [coverImage, setCoverImage] = useState<string | null>(null);
-	const [addParametros, setAddParametros] = useState(false);
+		useState<AbortController | null>(null); // Estado para el controlador de subida
+	const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
+	const [addParametros, setAddParametros] = useState(false); // Estado para los parámetros
 
+	// Función para manejar el cambio de archivo
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
 		if (files?.[0]) {
@@ -140,19 +143,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setFileSize(null);
 			setErrors((prev) => ({ ...prev, file: true }));
 		}
-		console.log('coverImageKey', coverImage);
+		console.log('coverImageKey', coverImage); // Registro de depuración
 	};
 
+	// Función para manejar el arrastre de archivos
 	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		setIsDragging(true);
 	};
 
+	// Función para manejar el arrastre de salida
 	const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		setIsDragging(false);
 	};
 
+	// Función para manejar el arrastre de soltar
 	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		setIsDragging(false);
@@ -170,6 +176,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	};
 
+	// Función para manejar la adición o creacion de parámetros
 	const handleAddParametro = () => {
 		if (parametros.length < 10) {
 			setParametrosAction([
@@ -184,6 +191,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	};
 
+	// Función para manejar el cambio de parámetros
 	const handleParametroChange = (
 		index: number,
 		field: 'name' | 'description' | 'porcentaje',
@@ -215,6 +223,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		);
 	};
 
+	// Función para manejar la eliminación de parámetros
 	const handleRemoveParametro = (index: number) => {
 		const updatedParametros = parametros.filter((_, i) => i !== index);
 		// Reasignar los valores de entrega
@@ -227,9 +236,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		setParametrosAction(reassignedParametros);
 	};
 
+	// Función para obtener los archivos de subida y enviarselo al componente padre donde se hace el metodo POST
 	const handleSubmit = async () => {
 		const controller = new AbortController();
 		setUploadController(controller);
+		// Validar los campos del formulario
 		const newErrors = {
 			title: !editingCourseId && !title,
 			description: !editingCourseId && !description,
@@ -283,6 +294,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			let coverImageKey = currentCoverImageKey ?? '';
 			let uploadedFileName = fileName ?? '';
 
+			// Subir la imagen de portada a S3
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
@@ -325,6 +337,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				});
 			}
 
+			// Enviar los datos a post
 			await onSubmitAction(
 				editingCourseId ? editingCourseId.toString() : '',
 				title,
@@ -333,11 +346,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				categoryid,
 				modalidadesid,
 				dificultadid,
-				rating, // Añadir esta línea
+				rating,
 				requerimientos,
 				addParametros,
 				coverImageKey,
-				uploadedFileName // Pasar el fileName obtenido
+				uploadedFileName
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
@@ -356,6 +369,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	};
 
+	// Función para cancelar la carga
 	const handleCancel = () => {
 		if (uploadController) {
 			uploadController.abort();
@@ -363,6 +377,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		onCloseAction();
 	};
 
+	// Función para manejar el cambio de campo
 	const handleFieldChange = (
 		field: string,
 		value: string | number | File | null
@@ -396,6 +411,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	};
 
+	// Efecto para manejar el progreso de carga
 	useEffect(() => {
 		if (uploading) {
 			setProgress(0);
@@ -407,11 +423,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					}
 					return prev + 1;
 				});
-			}, 50); // Ajusta el intervalo según sea necesario
+			}, 50);
 			return () => clearInterval(interval);
 		}
 	}, [uploading]);
 
+	// Efecto para manejar el progreso de carga al 100%
 	useEffect(() => {
 		if (progress === 100) {
 			const timeout = setTimeout(() => {
@@ -422,12 +439,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [progress]);
 
+	// Efecto para manejar la carga de archivos
 	useEffect(() => {
 		if (!uploading && isEditing) {
 			setIsEditing(false);
 		}
 	}, [uploading, isEditing]);
 
+	// Efecto para manejar la carga de archivos
 	useEffect(() => {
 		if (isUploading) {
 			setUploadProgress(0);
@@ -445,6 +464,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [isUploading]);
 
+	// Efecto para manejar la carga de los inputs
 	useEffect(() => {
 		if (editingCourseId) {
 			setTitle(title);
@@ -458,10 +478,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [editingCourseId]);
 
+	// Efecto para manejar la creacion o edicion de parametros
 	const handleToggleParametro = () => {
 		setAddParametros((prevAddParametro) => !prevAddParametro);
 	};
 
+	// Efecto para manejar la creacion o edicion del curso
 	useEffect(() => {
 		if (isOpen && !editingCourseId) {
 			setTitle('');
@@ -476,6 +498,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [isOpen, editingCourseId]);
 
+	// Render la vista
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
 			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">

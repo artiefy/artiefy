@@ -16,7 +16,7 @@ import {
 	CollapsibleTrigger,
 } from '~/components/educators/ui/collapsible';
 
-// Interfaces
+// Interfaces del foro
 interface Foro {
 	id: number;
 	title: string;
@@ -34,6 +34,7 @@ interface Foro {
 	};
 }
 
+// Interfaces de los posts
 interface Post {
 	id: number;
 	userId: {
@@ -47,6 +48,7 @@ interface Post {
 	updatedAt: string;
 }
 
+// Interfaces de las respuestas a los posts
 interface PostReplay {
 	id: number;
 	userId: {
@@ -60,6 +62,7 @@ interface PostReplay {
 	updatedAt: string;
 }
 
+// Función para formatear la fecha
 const formatDate = (dateString: string | number | Date) => {
 	const date = new Date(dateString);
 	return isNaN(date.getTime())
@@ -70,19 +73,19 @@ const formatDate = (dateString: string | number | Date) => {
 const ForumPage = () => {
 	const params = useParams();
 	const forumId = params?.forumId;
-	const { user } = useUser();
-	const [forumData, setForumData] = useState<Foro | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [posts, setPosts] = useState<Post[]>([]);
-	const [postReplays, setPostReplays] = useState<PostReplay[]>([]);
-	const [message, setMessage] = useState('');
-	const [replyMessage, setReplyMessage] = useState('');
-	const [replyingToPostId, setReplyingToPostId] = useState<number | null>(null);
-	const [loadingPosts, setLoadingPosts] = useState(false);
-	const [editingPostId, setEditingPostId] = useState<number | null>(null);
-	const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
-	const [editPostContent, setEditPostContent] = useState<string>('');
-	const [editReplyContent, setEditReplyContent] = useState<string>('');
+	const { user } = useUser(); // Obtener el usuario actual
+	const [forumData, setForumData] = useState<Foro | null>(null); // Estado del foro
+	const [loading, setLoading] = useState(true); // Estado de carga
+	const [posts, setPosts] = useState<Post[]>([]); // Estado de los posts
+	const [postReplays, setPostReplays] = useState<PostReplay[]>([]); // Estado de las respuestas de los posts
+	const [message, setMessage] = useState(''); // Estado del mensaje
+	const [replyMessage, setReplyMessage] = useState(''); // Estado de la respuesta
+	const [replyingToPostId, setReplyingToPostId] = useState<number | null>(null); // Estado de la respuesta
+	const [loadingPosts, setLoadingPosts] = useState(false); // Estado de carga de los posts
+	const [editingPostId, setEditingPostId] = useState<number | null>(null); // Estado de edición del post
+	const [editingReplyId, setEditingReplyId] = useState<number | null>(null); // Estado de edición de la respuesta
+	const [editPostContent, setEditPostContent] = useState<string>(''); // Estado de edición del post
+	const [editReplyContent, setEditReplyContent] = useState<string>(''); // Estado de edición de la respuesta
 	// const [error, setError] = useState(false);
 	const ForumIdString = Array.isArray(forumId) ? forumId[0] : forumId;
 	const ForumIdNumber = ForumIdString ? parseInt(ForumIdString) : null;
@@ -146,6 +149,7 @@ const ForumPage = () => {
 		}
 	}, [posts]);
 
+	// Fetch de los foro y las posts
 	useEffect(() => {
 		fetchPosts().catch((error) =>
 			console.error('Error fetching posts:', error)
@@ -155,6 +159,7 @@ const ForumPage = () => {
 		);
 	}, [fetchPosts, fetchForum]);
 
+	// Fetch de las respuestas después de obtener los posts
 	useEffect(() => {
 		if (posts.length > 0) {
 			fetchPostReplays().catch((error) =>
@@ -163,7 +168,7 @@ const ForumPage = () => {
 		}
 	}, [fetchPostReplays, posts]);
 
-	// Desbloquear y actualizar la función sendForumEmail
+	// Desbloquear y actualizar la función sendForumEmail 'Sin terminar'
 	const sendForumEmail = async (postContent: string, recipients: string[]) => {
 		try {
 			if (!forumData || !user) return;
@@ -281,7 +286,7 @@ const ForumPage = () => {
 		}
 	};
 
-	// Modificar handleReplySubmit para enviar emails solo cuando el usuario es educador
+	// Modificar handleReplySubmit para enviar emails solo cuando el usuario es el dueño del pósts
 	const handleReplySubmit = async () => {
 		if (!replyMessage.trim() || !user || replyingToPostId === null) return;
 
@@ -441,6 +446,7 @@ const ForumPage = () => {
 					</p>
 					{editingReplyId === reply.id ? (
 						<div>
+							{/* Editar respuesta */}
 							<textarea
 								className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
 								value={editReplyContent}
@@ -460,7 +466,10 @@ const ForumPage = () => {
 							</button>
 						</div>
 					) : (
-						<p className="text-justify text-gray-200">{reply.content}</p>
+						<>
+							{/* Mostrar respuesta */}
+							<p className="text-justify text-gray-200">{reply.content}</p>
+						</>
 					)}
 					<p className="mt-4 text-xs text-gray-400">
 						Creado en: {formatDate(reply.createdAt)}
@@ -472,6 +481,7 @@ const ForumPage = () => {
 						<div className="mt-4 space-x-2">
 							{editingReplyId === reply.id ? (
 								<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
+									{/* Cancelar edición menu collapsible*/}
 									<CollapsibleTrigger
 										asChild
 										className="absolute cursor-pointer"
@@ -489,6 +499,7 @@ const ForumPage = () => {
 								</Collapsible>
 							) : (
 								<Collapsible className="absolute top-4 right-3 flex w-[160px] flex-col">
+									{/* Editar y eliminar respuesta menu collapsible*/}
 									<CollapsibleTrigger
 										asChild
 										className="absolute cursor-pointer"
@@ -521,6 +532,7 @@ const ForumPage = () => {
 		));
 	};
 
+	// Renderizar el spinner de carga
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
@@ -626,6 +638,7 @@ const ForumPage = () => {
 									<div className="mt-4 space-x-2">
 										{editingPostId === post.id ? (
 											<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
+												{/* Cancelar edición menu collapsible*/}
 												<CollapsibleTrigger
 													asChild
 													className="absolute cursor-pointer"
@@ -643,6 +656,7 @@ const ForumPage = () => {
 											</Collapsible>
 										) : (
 											<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
+												{/* Editar y eliminar post menu collapsible*/}
 												<CollapsibleTrigger
 													asChild
 													className="absolute cursor-pointer"

@@ -1,7 +1,5 @@
 'use client';
-
 import { useState, type ChangeEvent, useEffect, useRef } from 'react';
-
 import { toast } from 'sonner';
 import FileUpload from '~/components/educators/layout/FilesUpload';
 import { Button } from '~/components/educators/ui/button';
@@ -15,11 +13,12 @@ import {
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
 
+// Interfaz para los props del formulario de lecciones
 interface LessonsFormProps {
 	uploading: boolean;
 	isOpen: boolean;
 	onCloseAction: () => void;
-	courseId: number; // ID del curso relacionado
+	courseId: number;
 	isEditing?: boolean;
 	editingLesson?: {
 		id?: number;
@@ -41,7 +40,7 @@ const ModalFormLessons = ({
 	isEditing = false,
 	editingLesson,
 }: LessonsFormProps) => {
-	const [uploadProgress, setUploadProgress] = useState(0);
+	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
 	const [formData, setFormData] = useState({
 		title: '',
 		description: '',
@@ -52,8 +51,8 @@ const ModalFormLessons = ({
 		cover_image_key: '',
 		cover_video_key: '',
 		resource_keys: [] as string[],
-	});
-	const [isUploading, setIsUploading] = useState(false);
+	}); // Estado para los datos del formulario
+	const [isUploading, setIsUploading] = useState(false); // Estado para la subida de archivos
 	const [errors, setErrors] = useState({
 		title: false,
 		description: false,
@@ -61,12 +60,12 @@ const ModalFormLessons = ({
 		cover_image_key: false,
 		cover_video_key: false,
 		resource_keys: false,
-	});
+	}); // Estado para los errores del formulario
 	const [uploadController, setUploadController] =
-		useState<AbortController | null>(null);
+		useState<AbortController | null>(null); // Estado para el controlador de subida
 
-	const videoRef = useRef<HTMLVideoElement | null>(null);
-	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const videoRef = useRef<HTMLVideoElement | null>(null); // Referencia al video para capturar un frame
+	const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referencia al canvas para capturar un frame
 
 	// Modificar el useEffect para inicializar con datos de edición
 	useEffect(() => {
@@ -97,6 +96,7 @@ const ModalFormLessons = ({
 		setFormData((prev) => ({ ...prev, [field]: value }));
 	};
 
+	// Función para obtener la duración de un video
 	const getVideoDuration = (file: File): Promise<number> => {
 		return new Promise((resolve, reject) => {
 			const video = document.createElement('video');
@@ -115,6 +115,7 @@ const ModalFormLessons = ({
 		});
 	};
 
+	// Función para capturar un frame del video y convertirlo en imagen, pasandola a la portada
 	const captureFrame = () => {
 		if (videoRef.current && canvasRef.current) {
 			const video = videoRef.current;
@@ -175,7 +176,7 @@ const ModalFormLessons = ({
 		}
 	};
 
-	// Subida de archivos
+	// Subida de archivos a la API de S3
 	const uploadFile = async (file: File, index: number, totalFiles: number) => {
 		const controller = new AbortController();
 		setUploadController(controller);
@@ -212,6 +213,7 @@ const ModalFormLessons = ({
 			fileName: string;
 		};
 
+		// Crear un FormData con los campos requeridos
 		const formData = new FormData();
 		Object.entries(fields).forEach(([key, value]) => {
 			if (typeof value === 'string') {
@@ -233,7 +235,7 @@ const ModalFormLessons = ({
 		return { key, fileName };
 	};
 
-	// Manejador del submit
+	// Manejador del submit 'cabe recalcar que este un formulario autonomo que solo depende de la props del ID del curso'
 	const handleSubmit = async () => {
 		const controller = new AbortController();
 		setUploadController(controller);
@@ -313,13 +315,16 @@ const ModalFormLessons = ({
 				return; // Salir de la función si se cancela la carga
 			}
 
+			// Concatenar las claves de los archivos para solo guardarlas en 1 campo
 			const concatenatedResourceKeys = resourceKeys.join(',');
+			// Concatenar los nombres de los archivos para solo guardarlo en 1 campo
 			const concatenatedFileNames = fileNames.join(',');
 
 			const endpoint = isEditing
 				? `/api/educadores/lessons/${editingLesson?.id}`
 				: '/api/educadores/lessons';
 
+			// Método para la solicitud
 			const method = isEditing ? 'PUT' : 'POST';
 
 			const response = await fetch(endpoint, {
@@ -365,6 +370,7 @@ const ModalFormLessons = ({
 		}
 	};
 
+	// Manejador para cancelar la carga de archivos
 	const handleCancel = () => {
 		if (uploadController) {
 			uploadController.abort();
@@ -372,6 +378,7 @@ const ModalFormLessons = ({
 		onCloseAction();
 	};
 
+	// Renderizar el formulario
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
 			<DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">

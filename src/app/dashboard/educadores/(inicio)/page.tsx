@@ -18,6 +18,7 @@ import {
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
 
+// Define the CourseModel interface
 export interface CourseModel {
 	id: number;
 	title: string;
@@ -33,6 +34,7 @@ export interface CourseModel {
 	totalParametros: number; // Add this line
 }
 
+// Define the StatsModel interface
 export interface StatsModel {
 	totalCourses: number;
 	totalLessons: number;
@@ -42,22 +44,23 @@ export interface StatsModel {
 }
 
 export default function Home() {
-	const { user } = useUser();
-	const [courses, setCourses] = useState<CourseModel[]>([]);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [stats, setStats] = useState<StatsModel>({
+	const { user } = useUser(); // Get the user from Clerk
+	const [courses, setCourses] = useState<CourseModel[]>([]); // Initialize courses state
+	const [loading, setLoading] = useState(false); // Initialize loading state
+	const [error, setError] = useState<string | null>(null); // Initialize error state
+	const [stats, setStats] = useState<StatsModel>({ 
 		totalCourses: 0,
 		totalLessons: 0,
 		totalEnrollments: 0,
 		totalDuration: 0,
 		averageEnrollments: 0,
-	});
+	}); // Initialize stats state "datos del dashboard"
 
 	// Fetch stats
 	const fetchStats = useCallback(async () => {
 		if (!user) return;
 		try {
+			// Fetch the stats from the API of dashboard by user Id
 			const response = await fetch(
 				`/api/educadores/dashboard?userId=${user.id}`
 			);
@@ -82,6 +85,7 @@ export default function Home() {
 
 	console.log('stats', stats);
 
+	// Fetch courses
 	useEffect(() => {
 		if (user) {
 			fetchStats().catch((error) =>
@@ -90,6 +94,7 @@ export default function Home() {
 		}
 	}, [user, fetchStats]);
 
+	// Fetch courses
 	const fetchCourses = useCallback(async () => {
 		if (!user) return;
 		try {
@@ -126,6 +131,7 @@ export default function Home() {
 		}
 	}, [user]);
 
+	// Fetch courses
 	useEffect(() => {
 		if (user) {
 			fetchCourses().catch((error) =>
@@ -134,6 +140,7 @@ export default function Home() {
 		}
 	}, [user, fetchCourses]);
 
+	// Render the component loading, error or data
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
@@ -161,6 +168,7 @@ export default function Home() {
 		);
 	}
 
+	// Render the component with the data of dashboard en general
 	return (
 		<main>
 			<Breadcrumb className="mb-4">

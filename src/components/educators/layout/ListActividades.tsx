@@ -13,6 +13,7 @@ import {
 	CardTitle,
 } from '~/components/educators/ui/card';
 
+// Interfaz para las actividades
 interface ActividadModels {
 	id: number;
 	name: string;
@@ -27,6 +28,7 @@ interface ActividadModels {
 	};
 }
 
+// Propiedades del componente para la lista de actividades
 interface ActividadListProps {
 	lessonId: number;
 	selectedColor: string;
@@ -40,15 +42,13 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 	courseId,
 	coverImageKey,
 }) => {
-	const [actividades, setActividades] = useState<ActividadModels[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const [actividades, setActividades] = useState<ActividadModels[]>([]); // Estado para las actividades
+	const [loading, setLoading] = useState(true); // Estado para el estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado para el error
 
-	const lessonIdString = lessonId ? lessonId.toString() : '';
+	const lessonIdString = lessonId ? lessonId.toString() : ''; // Convertimos el lessonId a string
 
-	console.log('lessonId:', lessonId);
-	console.log('lessonIdString:', lessonIdString);
-
+	// Función para obtener el contraste de un color
 	const getContrastYIQ = (hexcolor: string) => {
 		hexcolor = hexcolor.replace('#', '');
 		const r = parseInt(hexcolor.substr(0, 2), 16);

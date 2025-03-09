@@ -7,6 +7,7 @@ import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page'
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardTitle } from '~/components/educators/ui/card';
 
+// Interfaz para las actividades
 interface ActividadModels {
 	id: number;
 	name: string;
@@ -21,6 +22,7 @@ interface ActividadModels {
 	};
 }
 
+// Propiedades del componente para la lista de actividades
 interface ActividadListProps {
 	lessonId: number;
 	selectedColor: string;
@@ -34,12 +36,14 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
 	courseId,
 	coverImageKey,
 }) => {
-	const [actividades, setActividades] = useState<ActividadModels[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const [actividades, setActividades] = useState<ActividadModels[]>([]); // Estado para las actividades
+	const [loading, setLoading] = useState(true); // Estado para el estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado para el error
 
+	// Convertimos el lessonId a string
 	const lessonIdString = lessonId.toString();
 
+	// Función para obtener el contraste de un color
 	const getContrastYIQ = (hexcolor: string) => {
 		hexcolor = hexcolor.replace('#', '');
 		const r = parseInt(hexcolor.substr(0, 2), 16);
@@ -85,18 +89,6 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
 	if (loading) {
 		return <LoadingCourses />; // Componente de carga mientras obtenemos los datos
 	}
-	// if (actividades.length === 0 || actividades === null) {
-	// 	return (
-	// 		<div className="mt-4 flex flex-col items-center justify-center rounded-lg bg-background py-10 text-center">
-	// 			<h2 className="mb-4 text-2xl font-bold">
-	// 				Lista de actividades creadas
-	// 			</h2>
-	// 			<p className="text-xl text-gray-600">
-	// 				No hay actividades creadas hasta el momento
-	// 			</p>
-	// 		</div>
-	// 	);
-	// }
 	if (error) {
 		return <div>Se presentó un error: {error}</div>;
 	}

@@ -1,47 +1,55 @@
+// Representa una opción de una pregunta de opción múltiple
 export interface OptionOM {
-	id: string;
-	text: string;
+	id: string; // Identificador único de la opción
+	text: string; // Texto de la opción
 }
+
+// Representa una opción de una pregunta de verdadero o falso
 export interface OptionVOF {
-	id: string;
-	text: string;
+	id: string; // Identificador único de la opción
+	text: string; // Texto de la opción
 }
 
+// Representa una pregunta de opción múltiple
 export interface Question {
-	id: string;
-	text: string;
-	options: OptionOM[];
-	correctOptionId: string;
-	pesoPregunta:number;
+	id: string; // Identificador único de la pregunta
+	text: string; // Texto de la pregunta
+	options: OptionOM[]; // Lista de opciones de la pregunta
+	correctOptionId: string; // Identificador de la opción correcta
+	pesoPregunta: number; // Peso de la pregunta en la evaluación
 }
 
+// Representa una pregunta de verdadero o falso
 export interface VerdaderoOFlaso {
-	id: string;
-	text: string;
-	correct: boolean;
-	options: OptionVOF[];
-	correctOptionId: string;
-	pesoPregunta:number;
+	id: string; // Identificador único de la pregunta
+	text: string; // Texto de la pregunta
+	correct: boolean; // Indica si la respuesta es verdadera o falsa
+	options: OptionVOF[]; // Lista de opciones de la pregunta
+	correctOptionId: string; // Identificador de la opción correcta
+	pesoPregunta: number; // Peso de la pregunta en la evaluación
 }
 
+// Representa una pregunta de completado
 export interface Completado {
-	id: string;
-	text: string;
-	correctAnswer: string;
-	answer?: string;
-	pesoPregunta:number;
+	id: string; // Identificador único de la pregunta
+	text: string; // Texto de la pregunta
+	correctAnswer: string; // Respuesta correcta de la pregunta
+	answer?: string; // Respuesta proporcionada por el usuario (opcional)
+	pesoPregunta: number; // Peso de la pregunta en la evaluación
 }
 
+// Representa una pregunta de completado con un segundo formato
 export interface Completado2 {
-	id: string;
-	text: string;
-	correctAnswer: string;
-	answer?: string;
-	pesoPregunta: number;
+	id: string; // Identificador único de la pregunta
+	text: string; // Texto de la pregunta
+	correctAnswer: string; // Respuesta correcta de la pregunta
+	answer?: string; // Respuesta proporcionada por el usuario (opcional)
+	pesoPregunta: number; // Peso de la pregunta en la evaluación
 }
 
+// Representa una pregunta que requiere la subida de archivos
 export interface QuestionFilesSubida {
-	id: string;
-	text: string;
-	parametros: string;
+	id: string; // Identificador único de la pregunta
+	text: string; // Texto de la pregunta
+	parametros: string; // Parámetros adicionales de la pregunta
 }

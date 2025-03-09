@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import ListActividadesLookStudent from '~/components/educators/layout/ListActividadesByStudent';
 import VerFileByStudent from '~/components/educators/layout/verFileBystudent';
 import {
@@ -15,8 +16,10 @@ import {
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
-import { toast } from 'sonner';
 
+// Ver clase como vista estudiantes, consideraciones: Lo mismo que en course
+
+// Definir la interfaz de la lección
 interface Lessons {
 	id: number;
 	title: string;
@@ -50,22 +53,25 @@ interface Lessons {
 // };
 
 const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
-	const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
-	const { user } = useUser();
-	const params = useParams();
-	const courseId = params?.courseId ?? null;
-	const lessonId = params?.lessonId ?? null;
-	const [lessons, setLessons] = useState<Lessons | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [color, setColor] = useState<string>(selectedColor || '#FFFFFF');
-	const router = useRouter();
+	const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null); // Estado para almacenar el id de la lección seleccionada
+	const { user } = useUser(); // Obtener el usuario actual
+	const params = useParams(); // Obtener los parámetros de la URL
+	const courseId = params?.courseId ?? null; // Obtener el id del curso de los parámetros
+	const lessonId = params?.lessonId ?? null; // Obtener el id de la lección de los parámetros
+	const [lessons, setLessons] = useState<Lessons | null>(null); // Estado para almacenar la lección
+	const [loading, setLoading] = useState(true); // Estado para almacenar el estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado para almacenar errores
+	const [color, setColor] = useState<string>(selectedColor || '#FFFFFF'); // Estado para almacenar el color de la lección
+	const router = useRouter(); // Obtener el router
 
+	// Convertir el id del curso a número
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
 	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
 	console.log(
 		`courseIdString: ${courseIdString}, courseIdNumber: ${courseIdNumber}`
 	);
+
+	// Obtener el color de la lección guardado en el local storage
 	useEffect(() => {
 		const savedColor = localStorage.getItem(
 			`selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
@@ -76,6 +82,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		console.log(`Color guardado lessons: ${savedColor}`);
 	}, [courseId]);
 
+	// Obtener la lección
 	useEffect(() => {
 		if (!lessonId) {
 			setError('lessonId is null or invalid');
@@ -127,6 +134,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		);
 	}, [user, lessonId]);
 
+	// Mostrar un mensaje de carga si la lección está cargando
 	if (loading) {
 		return (
 			<main className="flex h-screen items-center justify-center">
@@ -138,10 +146,12 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		);
 	}
 
+	// Mostrar un mensaje de error si la lección no se pudo cargar
 	if (error) return <div>Error: {error}</div>;
+	// Mostrar un mensaje si no se encontró la lección
 	if (!lessons) return <div>No se encontró la leccion.</div>;
 
-	// Add this function to handle navigation
+	// Funcion para navegar entre las clases 'prev'' y ''next', no finalizado
 	const handleNavigation = (direction: 'prev' | 'next', lessons: Lessons[]) => {
 		const sortedLessons = [...(lessons ?? [])].sort(
 			(a, b) => a.order - b.order
@@ -181,6 +191,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		}
 	};
 
+	// Renderizar la vista de la clase
 	return (
 		<>
 			<div className="container">

@@ -5,6 +5,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Progress } from '~/components/educators/ui/progress';
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
+// Interfaz para la subida de preguntas tipo completado
 interface formSubida {
 	activityId: number;
 	editingQuestion?: QuestionFilesSubida;
@@ -18,14 +19,15 @@ const FormActCompletado: React.FC<formSubida> = ({
 	onSubmit,
 	onCancel,
 }) => {
-	const [isUploading, setIsUploading] = useState<boolean>(false);
-	const [uploadProgress, setUploadProgress] = useState<number>(0);
+	const [isUploading, setIsUploading] = useState<boolean>(false); // Estado para el estado de carga
+	const [uploadProgress, setUploadProgress] = useState<number>(0); // Estado para el progreso de carga
 	const [formData, setFormData] = useState<QuestionFilesSubida>({
 		id: '',
 		text: '',
 		parametros: '',
-	});
+	}); // Estado para los datos del formulario
 
+	// Efecto para cargar los datos de la pregunta
 	useEffect(() => {
 		if (editingQuestion) {
 			setFormData(editingQuestion);
@@ -38,6 +40,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 		}
 	}, [editingQuestion]);
 
+	// Maneja el cambio en los campos del formulario
 	const handleChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 	) => {
@@ -48,6 +51,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 		}));
 	};
 
+	// Maneja el envio del formulario para guardar la pregunta
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const method = editingQuestion ? 'PUT' : 'POST';
@@ -101,6 +105,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 		}
 	};
 
+	// Retorno la vista del componente
 	return (
 		<>
 			<div className="container my-2 rounded-lg bg-white p-3 text-black shadow-lg">

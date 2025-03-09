@@ -12,6 +12,7 @@ export interface User {
 	updatedAt: Date;
 }
 
+// Obtener usuario por ID
 export async function getUserById(id: string): Promise<User | null> {
 	const result = await db
 		.select({
@@ -29,6 +30,7 @@ export async function getUserById(id: string): Promise<User | null> {
 	return result[0] ?? null;
 }
 
+// Obtener todos los usuarios
 export async function getAllUsers(): Promise<User[]> {
 	return db
 		.select({
@@ -42,6 +44,7 @@ export async function getAllUsers(): Promise<User[]> {
 		.from(users);
 }
 
+// Crear un nuevo usuario
 export async function createUser(
 	id: string,
 	role: string,
@@ -56,6 +59,7 @@ export async function createUser(
 	});
 }
 
+// eliminar un usuario by ID
 export async function deleteUserById(id: string): Promise<void> {
 	await db.transaction(async (trx) => {
 		await trx.delete(courses).where(eq(courses.creatorId, id));

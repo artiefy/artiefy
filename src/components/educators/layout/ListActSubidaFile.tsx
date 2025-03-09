@@ -8,17 +8,19 @@ import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 import { toast } from 'sonner';
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
+// Propiedades del componente para la lista de preguntas
 interface QuestionListProps {
 	activityId: number;
 }
 
 const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
-	const [questions, setQuestions] = useState<QuestionFilesSubida[]>([]);
+	const [questions, setQuestions] = useState<QuestionFilesSubida[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
 		QuestionFilesSubida | undefined
-	>(undefined);
-	const [loading, setLoading] = useState(true);
+	>(undefined); // Estado para la edición de preguntas
+	const [loading, setLoading] = useState(true); // Estado para el estado de carga
 
+	// Función para obtener las preguntas
 	const fetchQuestions = useCallback(async () => {
 		try {
 			setLoading(true);
@@ -50,6 +52,7 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	}, [activityId, questions]);
 
+	// Efecto para obtener las preguntas al cargar el componente y hacer polling si estamos editando
 	useEffect(() => {
 		void fetchQuestions();
 
@@ -68,10 +71,12 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 		};
 	}, [fetchQuestions, editingQuestion]);
 
+	// Función para editar una pregunta
 	const handleEdit = (question: QuestionFilesSubida) => {
 		setEditingQuestion(question);
 	};
 
+	// Función para eliminar una pregunta
 	const handleDelete = async (questionId: string) => {
 		try {
 			const response = await fetch(
@@ -95,19 +100,23 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	};
 
+	// Función para manejar el envio del formulario
 	const handleFormSubmit = () => {
 		setEditingQuestion(undefined);
 		void fetchQuestions();
 	};
 
+	// Función para cancelar la edición de una pregunta
 	const handleCancel = () => {
 		setEditingQuestion(undefined);
 	};
 
+	// Retorno la vista del componente
 	if (loading && questions.length > 0) {
 		return <div>Cargando preguntas...</div>;
 	}
 
+	// Retorno la vista del componente
 	return (
 		<div className="my-2 space-y-4">
 			<FormActCompletado activityId={activityId} onSubmit={handleFormSubmit} />

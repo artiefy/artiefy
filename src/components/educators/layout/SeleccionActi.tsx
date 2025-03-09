@@ -1,3 +1,5 @@
+// props de SeleccionActi
+// - selectedColor
 interface TypeActDropdownProps {
 	selectedColor: string;
 	onSelectChange: (value: string) => void;
@@ -7,6 +9,7 @@ const SeleccionActi: React.FC<TypeActDropdownProps> = ({
 	selectedColor,
 	onSelectChange,
 }) => {
+	// Función para obtener el contraste de un color
 	const getContrastYIQ = (hexcolor: string) => {
 		hexcolor = hexcolor.replace('#', '');
 		const r = parseInt(hexcolor.substr(0, 2), 16);
@@ -16,6 +19,7 @@ const SeleccionActi: React.FC<TypeActDropdownProps> = ({
 		return yiq >= 128 ? 'black' : 'white';
 	};
 
+	// Retorno la vista del componente
 	return (
 		<div className="mt-3 flex flex-col items-center justify-center gap-2">
 			<label

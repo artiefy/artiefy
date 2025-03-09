@@ -13,12 +13,13 @@ interface QuestionListProps {
 }
 
 const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
-	const [questions, setQuestions] = useState<Question[]>([]);
+	const [questions, setQuestions] = useState<Question[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(
 		undefined
-	);
-	const [loading, setLoading] = useState(true);
+	); // Estado para la edición de preguntas
+	const [loading, setLoading] = useState(true); // Estado para el estado de carga
 
+	// Función para obtener las preguntas
 	const fetchQuestions = useCallback(async () => {
 		try {
 			setLoading(true);
@@ -48,14 +49,17 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	}, [activityId]);
 
+	// Efecto para obtener las preguntas al cargar el componente
 	useEffect(() => {
 		void fetchQuestions();
 	}, [fetchQuestions]);
 
+	// Función para editar una pregunta
 	const handleEdit = (question: Question) => {
 		setEditingQuestion(question);
 	};
 
+	// Función para eliminar una pregunta
 	const handleDelete = async (questionId: string) => {
 		try {
 			const response = await fetch(
@@ -79,15 +83,18 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	};
 
+	// Función para manejar el envío del formulario
 	const handleFormSubmit = (_question: Question) => {
 		setEditingQuestion(undefined);
 		void fetchQuestions();
 	};
 
+	// Función para cancelar la edición
 	const handleCancel = () => {
 		setEditingQuestion(undefined);
 	};
 
+	// Retorno la vista del componente
 	if (loading && questions.length > 0) {
 		return <div>Cargando preguntas...</div>;
 	}

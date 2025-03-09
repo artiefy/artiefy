@@ -1,10 +1,9 @@
 // pages/viewFiles.tsx
 import { useEffect, useState } from 'react';
-
 import Link from 'next/link';
-
 import { Icons } from '~/components/educators/ui/icons';
 
+// Función para obtener el icono de un archivo basado en su extensión
 const getIconForFileType = (fileName: string) => {
 	if (fileName === null || fileName === '') return <Icons.txt />;
 	const ext = fileName.split('.').pop()?.toLowerCase();
@@ -26,35 +25,40 @@ const getIconForFileType = (fileName: string) => {
 	}
 };
 
+// Interfaz para los archivos
 interface FilesModels {
 	key: string;
 	fileName: string;
 }
 
+// Interfaz para los nombres de los archivos
 interface LessonsModels {
 	resourceNames: string;
 }
 
+// Propiedades del componente para la vista de archivos
 interface ViewFilesProps {
 	lessonId: number;
 	selectedColor: string;
 }
 
 const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
-	const [files, setFiles] = useState<FilesModels[]>([]);
+	const [files, setFiles] = useState<FilesModels[]>([]); // Estado para los archivos
 	const [lessonFileName, setLessonFileName] = useState<LessonsModels | null>(
 		null
-	);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [loadingNames, setLoadingNames] = useState(true);
-	const [errorNames, setErrorNames] = useState<string | null>(null);
+	); // Estado para los nombres de los archivos
+	const [loading, setLoading] = useState(true); // Estado para el estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado para el error
+	const [loadingNames, setLoadingNames] = useState(true); // Estado para el estado de carga
+	const [errorNames, setErrorNames] = useState<string | null>(null); // Estado para el error
 
+	// Convertimos el lessonId a número
 	const lessonIdNumber = Number(lessonId);
 	useEffect(() => {
 		localStorage.getItem(`selectedColor_${lessonId}`);
 	}, [lessonId, lessonIdNumber]);
 
+	// Efecto para obtener los archivos de la api route enlazados a la leccion
 	useEffect(() => {
 		const fetchFiles = async () => {
 			try {
@@ -81,9 +85,11 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
 			}
 		};
 
+		// Llamada a la función para obtener los archivos
 		fetchFiles().catch((err) => console.error('Error fetching files:', err));
 	}, [lessonId, lessonIdNumber]);
 
+	// Efecto para obtener los nombres de los archivos de la api route enlazados a la leccion
 	useEffect(() => {
 		const fetchFilesName = async () => {
 			try {
@@ -117,24 +123,29 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
 		);
 	}, [lessonId, lessonIdNumber]);
 
+	// Verificar si hay archivos
 	if (loading) {
 		return <div>Cargando archivos...</div>;
 	}
+	// Verificar si hay nombres de archivos
 	if (loadingNames) {
 		return <div>Cargando nombre de archivos...</div>;
 	}
-
+	// Verificar si no hay archivos
 	if (files.length === 0) {
 		return <div>No hay archivos disponibles</div>;
 	}
 
+	// Verificar si hay errores
 	if (error) {
 		return <div>{error}</div>;
 	}
+	// Verificar si hay errores en los nombres
 	if (errorNames) {
 		return <div>{errorNames}</div>;
 	}
 
+	// Retorno de la vista del componente
 	return (
 		<div className="mt-6">
 			<h1
@@ -147,30 +158,47 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
 					if (!file) return null; // Manejar caso de clave vacía
 					const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3
 					const icon = getIconForFileType(file.fileName); // Icono basado en la extensión del archivo
-					if (!lessonFileName === null) {
-						return null; // Manejar caso de nombre de archivo vacío
-					} else {
-					}
-					const resourceNames = lessonFileName?.resourceNames.split(',') ?? []; // Separar resourceNames por comas}
+					if (lessonFileName !== null) {
+						const resourceNames = lessonFileName.resourceNames.split(','); // Separar resourceNames por comas
 
-					return (
-						<Link
-							key={index}
-							href={fileUrl}
-							target="_blank"
-							rel="noopener noreferrer"
-							className="relative mb-3 flex h-11 w-full space-x-2 rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40 lg:w-3/5"
-						>
-							{icon}
-
-							<p
-								className={`no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+						return (
+							<Link
+								key={index}
+								href={fileUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="relative mb-3 flex h-11 w-full space-x-2 rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40 lg:w-3/5"
 							>
-								{resourceNames[index] ?? file.fileName}
-								{/* Nombre del archivo */}
-							</p>
-						</Link>
-					);
+								{icon}
+
+								<p
+									className={`no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+								>
+									{resourceNames[index] ?? file.fileName}
+									{/* Nombre del archivo */}
+								</p>
+							</Link>
+						);
+					} else {
+						return (
+							<Link
+								key={index}
+								href={fileUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								className="relative mb-3 flex h-11 w-full space-x-2 rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40 lg:w-3/5"
+							>
+								{icon}
+
+								<p
+									className={`no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+								>
+									{file.fileName}
+									{/* Nombre del archivo */}
+								</p>
+							</Link>
+						);
+					}
 				})}
 			</ul>
 		</div>

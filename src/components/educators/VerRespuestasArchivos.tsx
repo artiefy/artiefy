@@ -14,6 +14,13 @@ interface RespuestaArchivo {
 	grade: number | null;
 }
 
+/**
+ * Componente para ver y calificar las respuestas de los estudiantes en una actividad.
+ *
+ * @param {Object} props - Las propiedades del componente.
+ * @param {string} props.activityId - El ID de la actividad para la cual se están viendo las respuestas.
+ * @returns {JSX.Element} El componente de React.
+ */
 export default function VerRespuestasArchivos({
 	activityId,
 }: {
@@ -25,6 +32,9 @@ export default function VerRespuestasArchivos({
 	const [loading, setLoading] = useState(true);
 	const [grades, setGrades] = useState<Record<string, string>>({});
 
+	/**
+	 * Función para obtener las respuestas de los estudiantes desde la API.
+	 */
 	const fetchRespuestas = useCallback(async () => {
 		try {
 			setLoading(true);
@@ -60,6 +70,14 @@ export default function VerRespuestasArchivos({
 		void fetchRespuestas();
 	}, [fetchRespuestas]);
 
+	/**
+	 * Función para calificar una respuesta de un estudiante.
+	 *
+	 * @param {string} userId - El ID del usuario.
+	 * @param {string} questionId - El ID de la pregunta.
+	 * @param {number} grade - La calificación asignada.
+	 * @param {string} submissionKey - La clave de la respuesta.
+	 */
 	const calificarRespuesta = async (
 		userId: string,
 		questionId: string,
@@ -120,6 +138,12 @@ export default function VerRespuestasArchivos({
 		}
 	};
 
+	/**
+	 * Función para manejar el cambio de calificación en el input.
+	 *
+	 * @param {string} key - La clave de la respuesta.
+	 * @param {string} value - El valor de la calificación.
+	 */
 	const handleGradeChange = (key: string, value: string) => {
 		// Validar que el valor sea un número o vacío
 		if (
@@ -130,6 +154,11 @@ export default function VerRespuestasArchivos({
 		}
 	};
 
+	/**
+	 * Función para enviar la calificación de una respuesta.
+	 *
+	 * @param {string} key - La clave de la respuesta.
+	 */
 	const handleSubmitGrade = async (key: string) => {
 		const grade = Number(grades[key]);
 		if (!isNaN(grade) && grade >= 0 && grade <= 5) {
@@ -158,6 +187,11 @@ export default function VerRespuestasArchivos({
 		}
 	};
 
+	/**
+	 * Función para descargar el archivo de una respuesta.
+	 *
+	 * @param {string} key - La clave de la respuesta.
+	 */
 	const descargarArchivo = async (key: string) => {
 		try {
 			const response = await fetch(`/api/educadores/descargar-archivo/${key}`);

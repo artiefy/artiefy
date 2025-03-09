@@ -1,4 +1,4 @@
-import { eq, sql, inArray, and } from 'drizzle-orm';
+import { eq, inArray, and } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
 	categories,
@@ -73,15 +73,15 @@ export async function createLesson({
 }
 
 // Contar el número de lecciones por curso y dificultad
-export const countLessonsByCourseAndDifficulty = async (courseId: number) => {
-	const count = await db
-		.select({ count: sql`COUNT(${lessons.id})` })
-		.from(lessons)
-		.where(eq(lessons.courseId, courseId))
-		.then((rows) => Number(rows[0]?.count) ?? 0);
+// export const countLessonsByCourseAndDifficulty = async (courseId: number) => {
+// 	const count = await db
+// 		.select({ count: sql`COUNT(${lessons.id})` })
+// 		.from(lessons)
+// 		.where(eq(lessons.courseId, courseId))
+// 		.then((rows) => Number(rows[0]?.count) ?? 0);
 
-	return count;
-};
+// 	return count;
+// };
 
 // Obtener la dificultad del curso
 export const getCourseDifficulty = async (courseId: number) => {
@@ -172,6 +172,7 @@ export async function getLessonsByCourseId(courseId: number) {
 	}
 }
 
+// Obtener el progreso de un usuario en una lección
 export const getUserProgressByLessonId = async (
 	lessonId: number,
 	userId: string
@@ -241,6 +242,7 @@ interface UpdateLessonData {
 	courseId?: number;
 }
 
+// Actualizar una lección
 export const updateLesson = async (
 	lessonId: number,
 	data: UpdateLessonData
@@ -263,13 +265,14 @@ export const updateLesson = async (
 		.returning();
 };
 
-// Eliminar una lección
+// Eliminar una lección por su ID y datos asociados
 export const deleteLesson = async (lessonId: number): Promise<void> => {
 	//Elimina las actividades asociadas a la lección
 	await db.delete(activities).where(eq(activities.lessonsId, lessonId));
 	await db.delete(lessons).where(eq(lessons.id, lessonId));
 };
 
+// Eliminar todas las lecciones asociadas a un curso por su ID
 export const deleteLessonsByCourseId = async (courseId: number) => {
 	// Obtener todas las lecciones asociadas al curso
 	const lessonIds = await db
@@ -299,6 +302,7 @@ export const deleteLessonsByCourseId = async (courseId: number) => {
 	await db.delete(lessons).where(eq(lessons.courseId, courseId));
 };
 
+// Obtener el progreso de los usuarios por lección
 export const getUserProgressByCourseId = async (courseId: number) => {
 	// Obtener todas las lecciones vinculadas al curso
 	const lessonsIds = await db

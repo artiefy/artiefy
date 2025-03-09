@@ -8,6 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FaCalendar, FaClock, FaUserGraduate } from 'react-icons/fa';
+import { toast } from 'sonner';
 import { Badge } from '~/components/educators/ui/badge';
 import {
 	Breadcrumb,
@@ -18,8 +19,10 @@ import {
 	BreadcrumbPage,
 } from '~/components/educators/ui/breadcrumb';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
-import { toast } from 'sonner';
 
+// Consideraciones de diseño: validar con los contratadores si al pulsar ver course se debe abrir directamente en la vista de estudiante o en la vista de educador
+
+// Interfaces
 interface Course {
 	id: number;
 	title: string;
@@ -36,10 +39,13 @@ interface Course {
 	requerimientos: string;
 	totalStudents: number;
 }
+
+// Props
 interface CourseDetailProps {
 	courseId: number;
 }
 
+// Interfaces de las lecciones
 interface LessonsModels {
 	id: number;
 	title: string;
@@ -59,8 +65,9 @@ interface LessonsModels {
 	};
 }
 
+// Función para obtener el color de contraste
 const getContrastYIQ = (hexcolor: string) => {
-	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
+	if (!hexcolor) return 'black';
 	hexcolor = hexcolor.replace('#', '');
 	const r = parseInt(hexcolor.substr(0, 2), 16);
 	const g = parseInt(hexcolor.substr(2, 2), 16);
@@ -69,6 +76,7 @@ const getContrastYIQ = (hexcolor: string) => {
 	return yiq >= 128 ? 'black' : 'white';
 };
 
+// Función para formatear la fecha
 const formatDate = (dateString: string | number | Date) => {
 	const date = new Date(dateString);
 	return isNaN(date.getTime())
@@ -77,15 +85,15 @@ const formatDate = (dateString: string | number | Date) => {
 };
 
 const CourseDetail: React.FC<CourseDetailProps> = () => {
-	const { user } = useUser();
-	const params = useParams();
-	const courseIdUrl = params?.courseId;
-	const [course, setCourse] = useState<Course | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [lessons, setLessons] = useState<LessonsModels[]>([]);
-	const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
-	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF');
+	const { user } = useUser(); // Obtiene el usuario actual
+	const params = useParams(); // Obtiene los parámetros de la URL
+	const courseIdUrl = params?.courseId; // Obtiene el id del curso de la URL
+	const [course, setCourse] = useState<Course | null>(null); // Estado del curso
+	const [loading, setLoading] = useState(true); // Estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado de error
+	const [lessons, setLessons] = useState<LessonsModels[]>([]); // Estado de las lecciones
+	const [expandedLesson, setExpandedLesson] = useState<number | null>(null); // Estado de la lección expandida
+	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Estado del color seleccionado
 
 	// Verifica que courseId no sea un array ni undefined, y lo convierte a número
 	const courseIdString = Array.isArray(courseIdUrl)
@@ -94,6 +102,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const courseIdString2 = courseIdString ?? '';
 	const courseIdNumber = parseInt(courseIdString2);
 
+	// Función para obtener el curso
 	const fetchCourse = useCallback(async () => {
 		if (!user) return;
 		if (courseIdNumber !== null) {
@@ -129,6 +138,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}
 	}, [user, courseIdNumber]);
 
+	// Fetch del curso al cargar el componente
 	useEffect(() => {
 		fetchCourse().catch((error) =>
 			console.error('Error fetching course:', error)
@@ -163,14 +173,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			};
 
+			// Llama a la función fetchLessons
 			void fetchLessons();
 		}
 	}, [course?.id]); // Este efecto se ejecuta cada vez que el courseId cambia
 
+	// Función para expandir o contraer una lección
 	const toggleLesson = (lessonId: number) => {
 		setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
 	};
 
+	// Guardar el color seleccionado en el localStorage
 	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
 		if (savedColor) {
@@ -179,6 +192,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		console.log(`Color guardado ${savedColor}`);
 	}, [courseIdNumber]);
 
+	// Carga del spinner mientras se carga el course
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
@@ -190,9 +204,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		);
 	}
 
+	// Si hay un error al cargar el curso
 	if (error) return <div>Error: {error}</div>;
+	// Si no hay curso
 	if (!course) return <div>No se encontró el curso.</div>;
 
+	// Render del componente
 	return (
 		<div className="h-auto w-full rounded-lg bg-background">
 			<Breadcrumb>

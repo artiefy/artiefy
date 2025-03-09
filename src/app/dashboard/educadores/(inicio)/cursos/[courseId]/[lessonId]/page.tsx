@@ -30,6 +30,9 @@ import {
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 
+// Detallado de las lecciones
+
+// Definir la interfaz de las lecciones
 interface Lessons {
 	id: number;
 	title: string;
@@ -52,6 +55,7 @@ interface Lessons {
 	updatedAt: string;
 }
 
+// Función para obtener el contraste del color
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
 	hexcolor = hexcolor.replace('#', '');
@@ -63,19 +67,22 @@ const getContrastYIQ = (hexcolor: string) => {
 };
 
 const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
-	const { user } = useUser();
-	const router = useRouter();
-	const params = useParams();
-	const courseId = params?.courseId ?? null;
-	const lessonId = params?.lessonId ?? null;
-	const [lessons, setLessons] = useState<Lessons | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [color, setColor] = useState<string>(selectedColor || '#FFFFFF');
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const { user } = useUser(); // obtener el usuario logeado para verificar permisos
+	const router = useRouter(); // Hook para manejar la navegación
+	const params = useParams(); // Hook para obtener los parámetros de la URL
+	const courseId = params?.courseId ?? null; // Obtener el id del curso
+	const lessonId = params?.lessonId ?? null; // Obtener el id de la lección
+	const [lessons, setLessons] = useState<Lessons | null>(null); // Estado de la lección
+	const [loading, setLoading] = useState(true); // Estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado de error
+	const [color, setColor] = useState<string>(selectedColor || '#FFFFFF'); // Estado del color
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado del modal de edición
 
+	// Obtener el id del curso
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
-	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null;
+	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null; // Convertir a número
+
+	// Obtener el color guardado en el localStorage
 	useEffect(() => {
 		const savedColor = localStorage.getItem(
 			`selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
@@ -85,6 +92,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		}
 	}, [courseId]);
 
+	// Función para obtener las lecciones
 	const fetchLessons = useCallback(
 		async (lessonsIdNumber: number) => {
 			if (!user) return;
@@ -119,6 +127,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		[user]
 	);
 
+	// Cargar las lecciones al cargar la
 	useEffect(() => {
 		if (!lessonId) {
 			setError('lessonId is null or invalid');
@@ -139,6 +148,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		);
 	}, [lessonId, fetchLessons]);
 
+	// Función para eliminar la lección
 	const handleDelete = async (id: string) => {
 		try {
 			// Eliminar imagen de portada
@@ -228,6 +238,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		}
 	};
 
+	// Si está cargando, mostrar el spinner
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
@@ -239,6 +250,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		);
 	}
 
+	// Si hay un error, mostrar el mensaje de error
 	if (error) {
 		return (
 			<main className="flex h-screen items-center justify-center">
@@ -263,8 +275,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		);
 	}
 
+	// Si no hay lecciones, mostrar el mensaje de error
 	if (!lessons) return <div>No se encontró la leccion.</div>;
 
+	// Renderizar la página
 	return (
 		<>
 			<div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background">

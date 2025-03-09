@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
+// Interfaz para las categorías
 interface Category {
 	id: number;
 	name: string;
 	description: string;
 }
 
+// Propiedades del componente para la creacion de un curso en componente padre
 interface CategoryDropdownProps {
 	category: number;
 	setCategory: (categoryId: number) => void;
@@ -19,9 +21,10 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
 	setCategory,
 	errors,
 }) => {
-	const [categories, setCategories] = useState<Category[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [categories, setCategories] = useState<Category[]>([]); // Estado para las categorías
+	const [isLoading, setIsLoading] = useState(true); // Estado para el estado de carga
 
+	// Efecto para obtener las categorías
 	useEffect(() => {
 		const fetchCategories = async () => {
 			setIsLoading(true);
@@ -47,11 +50,13 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
 			}
 		};
 
+		// Llamada a la función para obtener las categorías
 		fetchCategories().catch((error) =>
 			console.error('Error fetching categories:', error)
 		);
 	}, []);
 
+	// Retorno la vista del componente
 	return (
 		<div className="flex flex-col gap-2">
 			<label

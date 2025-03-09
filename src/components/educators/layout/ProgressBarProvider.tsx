@@ -3,6 +3,7 @@
 
 import { AppProgressBar as ProgressBar } from 'next-nprogress-bar';
 
+// Componente para envolver la aplicación con los proveedores necesarios
 const Providers = ({ children }: { children: React.ReactNode }) => {
 	return (
 		<>

@@ -8,17 +8,19 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 import type { Completado } from '~/types/typesActi';
 
+// Propiedades del componente para la lista de preguntas
 interface QuestionListProps {
 	activityId: number;
 }
 
 const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
-	const [questions, setQuestions] = useState<Completado[]>([]);
+	const [questions, setQuestions] = useState<Completado[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
 		Completado | undefined
-	>(undefined);
-	const [loading, setLoading] = useState<boolean>(true);
+	>(undefined); // Estado para la edición de preguntas
+	const [loading, setLoading] = useState<boolean>(true); // Estado para el estado de carga
 
+	// Función para obtener las preguntas
 	const fetchQuestions = useCallback(async () => {
 		try {
 			setLoading(true);
@@ -51,14 +53,17 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	}, [activityId]);
 
+	// Efecto para obtener las preguntas al cargar el componente
 	useEffect(() => {
 		void fetchQuestions();
 	}, [fetchQuestions]);
 
+	// Función para editar una pregunta
 	const handleEdit = (question: Completado) => {
 		setEditingQuestion(question);
 	};
 
+	// Función para eliminar una pregunta
 	const handleDelete = async (questionId: string) => {
 		try {
 			const response = await fetch(
@@ -84,6 +89,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 		}
 	};
 
+	// Función para manejar el envio del formulario
 	const handleFormSubmit = (question: Completado) => {
 		// Actualizamos el estado local inmediatamente
 		if (editingQuestion) {
@@ -99,14 +105,17 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 	};
 
+	// Función para cancelar la edición
 	const handleCancel = () => {
 		setEditingQuestion(undefined);
 	};
 
+	// Retorno la vista del componente y manejo de estados
 	if (loading && questions.length > 0) {
 		return <div>Cargando preguntas...</div>;
 	}
 
+	// Retorno la vista del componente
 	return (
 		<div className="my-2 space-y-4">
 			{editingQuestion ? (

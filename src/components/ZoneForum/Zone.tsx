@@ -1,11 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-
 import { useUser } from '@clerk/nextjs';
 import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 import Image from 'next/image';
 import Link from 'next/link';
-
 import { toast } from 'sonner';
 import {
 	AlertDialog,
@@ -18,10 +16,9 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
-
-//import { FaImage } from 'react-icons/fa';
 import { Button } from '../educators/ui/button';
 
+// Interfaz para los modelos de foros
 interface ForumsModels {
 	id: number;
 	courseId: {
@@ -37,38 +34,21 @@ interface ForumsModels {
 		id: string;
 		name: string;
 	};
-	// change: {
-	//   image: string;
-	// };
 }
 
 export const Zone = () => {
-	const { user } = useUser();
-	const [forums, setForums] = useState<ForumsModels[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	// const [change, setChange] = useState<{ image: string }>({ image: '' });
-	// const [localImageUrl, setLocalImageUrl] = useState(change.image);
-	const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
+	const { user } = useUser(); // Obtiene el usuario actual
+	const [forums, setForums] = useState<ForumsModels[]>([]); // Estado para la lista de foros
+	const [loading, setLoading] = useState(true); // Estado para la carga de foros
+	const [error, setError] = useState<string | null>(null); // Estado para el manejo de errores
+	const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({}); // Estado para las imágenes cargadas
 
+	// Maneja la carga de imágenes
 	const handleImageLoad = (courseId: number) => {
 		setLoadedImages((prev) => ({ ...prev, [courseId]: true }));
 	};
 
-	// useEffect(() => {
-	//   setLocalImageUrl(change.image);
-	// }, [change]);
-
-	// const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-	//   const files = e.target.files;
-	//   if (files?.[0]) {
-	//     const file = files[0];
-	//     const imageUrl = URL.createObjectURL(file);
-	//     setLocalImageUrl(imageUrl);
-	//     setChange({ image: imageUrl });
-	//   }
-	// };
-
+	// Efecto para obtener los foros del usuario
 	useEffect(() => {
 		const fetchLessons = async () => {
 			if (!user) return null; // Si no hay usuario logueado, no se hace nada
@@ -91,17 +71,7 @@ export const Zone = () => {
 		void fetchLessons();
 	}, [user]); // Este efecto se ejecuta cada vez que el userId cambia
 
-	if (loading) return <p>Cargando...</p>;
-	if (forums.length === 0) {
-		return (
-			<div className="mt-10 flex h-auto items-center justify-center">
-				<p className="text-2xl text-gray-600">
-					No hay foros disponibles actualmente
-				</p>
-			</div>
-		);
-	} else if (error) return <p>{error}</p>;
-
+	// Maneja la eliminación de un foro
 	const handleDelete = async (id: number) => {
 		try {
 			const response = await fetch(`/api/forums?id=${id}`, {
@@ -119,6 +89,18 @@ export const Zone = () => {
 			});
 		}
 	};
+
+	// Renderiza la vista
+	if (loading) return <p>Cargando...</p>;
+	if (forums.length === 0) {
+		return (
+			<div className="mt-10 flex h-auto items-center justify-center">
+				<p className="text-2xl text-gray-600">
+					No hay foros disponibles actualmente
+				</p>
+			</div>
+		);
+	} else if (error) return <p>{error}</p>;
 
 	return (
 		<ul className="grid grid-cols-1 gap-7 rounded-l shadow-md sm:grid-cols-2 lg:grid-cols-3">
@@ -153,15 +135,6 @@ export const Zone = () => {
 									{forum.title}
 								</h2>
 							</div>
-							{/* <label className="absolute bottom-2 right-2 cursor-pointer rounded-full bg-white p-2 hover:bg-gray-100">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-              <FaImage className="text-gray-600" />
-            </label> */}
 						</div>
 						<div className="grid grid-cols-2 bg-background p-5">
 							<div className="flex flex-col justify-center text-center">

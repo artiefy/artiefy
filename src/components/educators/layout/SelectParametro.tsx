@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
+// Interfaz para los parámetros
 export interface Parametros {
 	id: number;
 	name: string;
@@ -10,6 +11,7 @@ export interface Parametros {
 	isUsed?: boolean;
 }
 
+// Propiedades del componente para la creacion de un curso en componente padre
 interface SelectParametroProps {
 	courseId: number | null;
 	parametro: number;
@@ -23,9 +25,10 @@ const SelectParametro: React.FC<SelectParametroProps> = ({
 	onParametroChange,
 	selectedColor,
 }) => {
-	const [parametros, setParametros] = useState<Parametros[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [parametros, setParametros] = useState<Parametros[]>([]); // Estado para los parámetros
+	const [isLoading, setIsLoading] = useState(true); // Estado para el estado de carga
 
+	// Función para obtener el contraste de un color
 	const getContrastYIQ = (hexcolor: string) => {
 		hexcolor = hexcolor.replace('#', '');
 		const r = parseInt(hexcolor.substr(0, 2), 16);
@@ -35,6 +38,7 @@ const SelectParametro: React.FC<SelectParametroProps> = ({
 		return yiq >= 128 ? 'black' : 'white';
 	};
 
+	// Fetch de los parámetros cuando el courseId cambia
 	useEffect(() => {
 		const fetchParametros = async () => {
 			setIsLoading(true);
@@ -63,11 +67,13 @@ const SelectParametro: React.FC<SelectParametroProps> = ({
 			}
 		};
 
+		// Llamada a la función para obtener los parámetros
 		fetchParametros().catch((error) =>
 			console.error('Error fetching parametros:', error)
 		);
 	}, [courseId]);
 
+	// Retorno la vista del componente
 	return (
 		<div className="flex flex-col gap-2">
 			<label

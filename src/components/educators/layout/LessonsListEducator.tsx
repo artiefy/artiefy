@@ -18,6 +18,7 @@ import {
 import ModalFormLessons from '../modals/ModalFormLessons';
 import { Button } from '../ui/button';
 
+// Interfaz para las lecciones
 interface LessonsModels {
 	id: number;
 	title: string;
@@ -35,6 +36,7 @@ interface LessonsModels {
 	};
 }
 
+// Propiedades del componente para la lista de lecciones
 interface LessonsListProps {
 	courseId: number;
 	selectedColor: string;
@@ -44,13 +46,15 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	courseId,
 	selectedColor,
 }) => {
-	const [lessons, setLessons] = useState<LessonsModels[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [isModalOpenLessons, setIsModalOpenLessons] = useState(false);
+	const [lessons, setLessons] = useState<LessonsModels[]>([]); // Estado para las lecciones
+	const [loading, setLoading] = useState(true); // Estado para el estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado para el error
+	const [isModalOpenLessons, setIsModalOpenLessons] = useState(false); // Estado para el modal de creación de lecciones
 
+	// Convertimos el courseId a string
 	const courseIdString = courseId.toString();
 
+	// Función para obtener el contraste de un color
 	const getContrastYIQ = (hexcolor: string) => {
 		hexcolor = hexcolor.replace('#', '');
 		const r = parseInt(hexcolor.substr(0, 2), 16);

@@ -5,6 +5,7 @@ export default function CourseDetailPage({
 }: {
 	params: { id: string };
 }) {
+	// Renderiza el detallado del curso y se le pasa el id de este
 	return (
 		<>
 			<CourseDetail courseId={parseInt(params.id)} />

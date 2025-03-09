@@ -9,6 +9,9 @@ import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 import type { Question, OptionOM } from '~/types/typesActi';
 
+//La validacion del porcentaje no se encuentra implementada
+
+// Propiedades del componente para el formulario de preguntas
 interface QuestionFormProps {
 	activityId: number;
 	editingQuestion?: Question;
@@ -24,23 +27,24 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 	onCancel,
 	isUploading,
 }) => {
-	const [questionText, setQuestionText] = useState(editingQuestion?.text ?? '');
+	const [questionText, setQuestionText] = useState(editingQuestion?.text ?? ''); // Estado para el texto de la pregunta
 	const [options, setOptions] = useState<OptionOM[]>(
 		editingQuestion?.options ??
 			Array(4)
 				.fill(null)
 				.map(() => ({ id: crypto.randomUUID(), text: '' }))
-	);
+	); // Estado para las opciones de la pregunta
 	const [correctOptionId, setCorrectOptionId] = useState(
 		editingQuestion?.correctOptionId ?? ''
-	);
+	); // Estado para la opción correcta de la pregunta
 	const [pesoPregunta, setPesoPregunta] = useState<number>(
 		editingQuestion?.pesoPregunta ?? 0
-	);
-	const [isUploading2, setIsUploading] = useState(false);
-	const [uploadProgress, setUploadProgress] = useState(0);
-	const [isVisible, setIsVisible] = useState<boolean>(true);
+	); // Estado para el peso de la pregunta
+	const [isUploading2, setIsUploading] = useState(false); // Estado para el estado de carga
+	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de carga
+	const [isVisible, setIsVisible] = useState<boolean>(true); // Estado para la visibilidad del formulario
 
+	// Efecto para cargar los datos de la pregunta
 	useEffect(() => {
 		if (editingQuestion) {
 			setQuestionText(editingQuestion.text);
@@ -57,6 +61,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 		}
 	}, [editingQuestion]);
 
+	// Validar el porcentaje total de las preguntas
 	const validateTotalPercentage = async (newPesoPregunta: number) => {
 		const response = await fetch(
 			`/api/educadores/question/totalPercentage?activityId=${activityId}`
@@ -69,6 +74,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 		return totalPercentage > 100;
 	};
 
+	// Maneja el envio del formulario para guardar la pregunta
 	const handleSubmit = async (questions: Question) => {
 		if (await validateTotalPercentage(pesoPregunta)) {
 			toast('Error', {
@@ -124,16 +130,19 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 		}
 	};
 
+	// Maneja el cambio de una opción
 	const handleOptionChange = (id: string, text: string) => {
 		setOptions(options.map((opt) => (opt.id === id ? { ...opt, text } : opt)));
 	};
 
+	// Maneja la adición de una opción
 	const handleAddOption = () => {
 		if (options.length < 4) {
 			setOptions([...options, { id: crypto.randomUUID(), text: '' }]);
 		}
 	};
 
+	// Maneja la eliminación de una opción
 	const handleRemoveOption = (id: string) => {
 		if (options.length > 1) {
 			setOptions(options.filter((opt) => opt.id !== id));
@@ -143,6 +152,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 		}
 	};
 
+	// Efecto para actualizar el progreso de carga
 	useEffect(() => {
 		if (isUploading2) {
 			setUploadProgress(0);
@@ -160,6 +170,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 		}
 	}, [isUploading2]);
 
+	// Maneja la cancelación del formulario
 	const handleCancel = () => {
 		if (onCancel) {
 			onCancel();
@@ -167,6 +178,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 		setIsVisible(false);
 	};
 
+	// Retorno la vista del componente
 	if (!isVisible) {
 		return null;
 	}

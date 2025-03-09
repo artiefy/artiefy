@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { IoMdClose } from 'react-icons/io';
 
+// Interfaz para los errores del formulario
 type FormErrors = Record<string, string>;
 
 export const ModalError = ({
@@ -11,15 +12,16 @@ export const ModalError = ({
 	isOpen: boolean;
 	onClose: () => void;
 }) => {
-	const { user } = useUser();
+	const { user } = useUser(); // Obtiene el usuario actual
 	const [formData, setFormData] = useState({
 		description: '',
 		comments: '',
 		email: '',
 		userId: user?.id ?? '',
-	});
-	const [errors, setErrors] = useState<FormErrors>({});
+	}); // Estado para los datos del formulario
+	const [errors, setErrors] = useState<FormErrors>({}); // Estado para los errores del formulario
 
+	// Maneja el cambio en los campos del formulario
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 	) => {
@@ -36,6 +38,7 @@ export const ModalError = ({
 		}
 	};
 
+	// Efecto para actualizar el ID del usuario
 	useEffect(() => {
 		setFormData((prev) => ({
 			...prev,
@@ -43,6 +46,7 @@ export const ModalError = ({
 		}));
 	}, [user]);
 
+	// Función para validar el formulario
 	const validateForm = () => {
 		const newErrors: FormErrors = {};
 		if (!formData.description.trim()) {
@@ -64,6 +68,7 @@ export const ModalError = ({
 		return Object.keys(newErrors).length === 0;
 	};
 
+	// Función para manejar el envío del formulario
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (validateForm()) {
@@ -98,8 +103,10 @@ export const ModalError = ({
 		}
 	};
 
+	// Renderiza el modal
 	if (!isOpen) return null;
 
+	// Vistas del modal
 	return (
 		<div className="fixed inset-0 z-50 overflow-y-auto">
 			<div className="flex min-h-screen items-center justify-center px-4">

@@ -29,6 +29,9 @@ import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 
+// Crear actividad
+
+// Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
 	hexcolor = hexcolor.replace('#', '');
@@ -39,6 +42,7 @@ const getContrastYIQ = (hexcolor: string) => {
 	return yiq >= 128 ? 'black' : 'white';
 };
 
+// Definir las interfaces de los datos
 interface Course {
 	id: number;
 	title: string;
@@ -55,6 +59,7 @@ interface Course {
 	totalParametros: number;
 }
 
+// Definir la interfaz de los parámetros
 interface Parametros {
 	id: number;
 	name: string;
@@ -67,14 +72,14 @@ interface Parametros {
 }
 
 const Page: React.FC = () => {
-	const { user } = useUser();
-	const params = useParams();
-	const cursoIdUrl = params?.courseId;
-	const searchParams = useSearchParams();
-	const lessonsId = searchParams?.get('lessonId');
-	const [isUploading, setIsUploading] = useState(false);
-	const [uploadProgress, setUploadProgress] = useState(0);
-	const [course, setCourse] = useState<Course | null>(null);
+	const { user } = useUser(); // Usar useUser de Clerk
+	const params = useParams(); // Usar useParams de next/navigation
+	const cursoIdUrl = params?.courseId; // Obtener el ID del curso de los parámetros
+	const searchParams = useSearchParams(); // Usar useSearchParams de next/navigation
+	const lessonsId = searchParams?.get('lessonId'); // Obtener el ID de la lección de los parámetros
+	const [isUploading, setIsUploading] = useState(false); // Definir isUploading
+	const [uploadProgress, setUploadProgress] = useState(0); // Definir uploadProgress
+	const [course, setCourse] = useState<Course | null>(null); // Definir course
 	const [formData, setFormData] = useState({
 		id: 0,
 		name: '',
@@ -84,17 +89,18 @@ const Page: React.FC = () => {
 		revisada: false,
 		parametro: 0,
 		fechaMaximaEntrega: null as string | null,
-	});
-	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl;
-	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
+	}); // Definir formData
+	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl; // Obtener el ID del curso como string
+	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null; // Convertir el ID del curso a número
 	const router = useRouter(); // Usar useRouter de next/navigation
-	const [color, setColor] = useState<string>('#FFFFFF');
-	const [isActive, setIsActive] = useState(false);
-	const [fechaMaxima, setFechaMaxima] = useState(false);
-	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
+	const [color, setColor] = useState<string>('#FFFFFF'); // Definir color
+	const [isActive, setIsActive] = useState(false); // Definir isActive
+	const [fechaMaxima, setFechaMaxima] = useState(false); // Definir fechaMaxima
+	const [showLongevidadForm, setShowLongevidadForm] = useState(false); // Definir showLongevidadForm
 	const [parametros, setParametros] = useState<Parametros[]>([]); // Definir setParametros
 	console.log(parametros);
 
+	// Obtener los parámetros
 	useEffect(() => {
 		const fetchParametros = async () => {
 			try {
@@ -147,6 +153,7 @@ const Page: React.FC = () => {
 		}
 	}, [courseIdNumber]);
 
+	// Obtener el color guardado
 	useEffect(() => {
 		if (!lessonsId || !courseIdNumber) {
 			return;
@@ -157,6 +164,7 @@ const Page: React.FC = () => {
 		}
 	}, [lessonsId, courseIdNumber]);
 
+	// Guardar el color seleccionado y actualizar el color
 	useEffect(() => {
 		const fetchCourse = async () => {
 			if (!user) return;
@@ -182,6 +190,7 @@ const Page: React.FC = () => {
 		void fetchCourse();
 	}, [user, courseIdNumber]);
 
+	// Función para manejar el cambio de color y guardarlo
 	const handleToggle = () => {
 		setIsActive((prevIsActive) => {
 			const newIsActive = !prevIsActive;
@@ -203,6 +212,7 @@ const Page: React.FC = () => {
 		});
 	};
 
+	// Función para manejar el cambio de la fecha máxima de entrega
 	const handleToggleFechaMaxima = () => {
 		setFechaMaxima((prevFechaMaxima) => !prevFechaMaxima);
 		setFormData((prevFormData) => ({
@@ -211,10 +221,12 @@ const Page: React.FC = () => {
 		}));
 	};
 
+	// Función para manejar el click en el botón de asignar parámetro
 	const handleLongevidadClick = () => {
 		setShowLongevidadForm(true);
 	};
 
+	// Función para validar el porcentaje de la actividad
 	const validarPorcentaje = async (
 		parametroId: number,
 		nuevoPorcentaje: number
@@ -262,6 +274,7 @@ const Page: React.FC = () => {
 		}
 	};
 
+	// Función para manejar el cambio del porcentaje
 	const handlePorcentajeChange = (value: string) => {
 		const nuevoPorcentaje = parseFloat(value) || 0;
 
@@ -272,6 +285,7 @@ const Page: React.FC = () => {
 		});
 	};
 
+	// Función para manejar el cambio del parámetro y seleccionar el porcentaje para la actividad
 	const handleParametroChange = (parametroId: number) => {
 		setFormData({
 			...formData,
@@ -280,6 +294,7 @@ const Page: React.FC = () => {
 		});
 	};
 
+	// Función para manejar el envío del formulario
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -319,6 +334,7 @@ const Page: React.FC = () => {
 			}
 		}
 
+		// Validaciones finales
 		const newErrors = {
 			name: !formData.name,
 			description: !formData.description,
@@ -402,6 +418,7 @@ const Page: React.FC = () => {
 		}
 	};
 
+	// Barra de carga al crear la actividad
 	useEffect(() => {
 		if (isUploading) {
 			setUploadProgress(0);
@@ -419,6 +436,7 @@ const Page: React.FC = () => {
 		}
 	}, [isUploading]);
 
+	// Renderizar el formulario
 	return (
 		<>
 			<Breadcrumb>
@@ -544,7 +562,8 @@ const Page: React.FC = () => {
 														htmlFor="porcentaje"
 														className={`mb-2 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 													>
-														Peso actividad en el parametro (0-100 en porcentaje%):
+														Peso actividad en el parametro (0-100 en
+														porcentaje%):
 													</Label>
 													<div>
 														<Input
