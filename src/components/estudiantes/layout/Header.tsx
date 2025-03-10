@@ -57,7 +57,7 @@ export function Header() {
 							<Link
 								key={item.href}
 								href={item.href}
-								className="text-shadow transition-colors hover:text-orange-500 active:scale-95"
+								className="transition-colors text-shadow hover:text-orange-500 active:scale-95"
 							>
 								{item.label}
 							</Link>
@@ -97,7 +97,6 @@ export function Header() {
 											href="/estudiantes/myaccount"
 										/>
 										<UserButton.Action label="manageAccount" />
-										<UserButton.Action label="signOut" />
 									</UserButton.MenuItems>
 								</UserButton>
 							</SignedIn>
@@ -181,7 +180,7 @@ export function Header() {
 						<SignedOut>
 							<SignInButton>
 								<Button
-									className="button-hover relative skew-x-[-15deg] cursor-pointer rounded-none border border-background bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+									className="relative skew-x-[-15deg] button-hover cursor-pointer rounded-none border border-background bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 									style={{
 										transition: '0.5s',
 										width: '175px',
@@ -209,8 +208,9 @@ export function Header() {
 									<UserButton.Link
 										label="Mis Cursos"
 										labelIcon={<UserCircleIcon className="size-4" />}
-										href="/estudiantes/mis-cursos"
+										href="/estudiantes/myaccount"
 									/>
+									<UserButton.Action label="manageAccount" />
 								</UserButton.MenuItems>
 							</UserButton>
 						</SignedIn>

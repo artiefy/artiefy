@@ -12,8 +12,6 @@ import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourse
 
 import type { Category, Course } from '~/types';
 
-export const revalidate = 3600; // 1 hora de caché
-
 interface SearchParams {
 	category?: string;
 	query?: string;

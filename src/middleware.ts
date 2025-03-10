@@ -1,66 +1,75 @@
 import { NextResponse } from 'next/server';
-
 import {
-	clerkMiddleware,
-	createRouteMatcher,
-	type ClerkMiddlewareOptions,
+    clerkMiddleware,
+    createRouteMatcher,
+    type ClerkMiddlewareOptions,
 } from '@clerk/nextjs/server';
 
-const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
-const isSuperAdminRoute = createRouteMatcher(['/dashboard/super-admin(.*)']);
-const isEducatorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
-const isStudentClassRoute = createRouteMatcher(['/estudiantes/clases/:id']);
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)']);
-const publicRoutes = createRouteMatcher(['/sign-in', '/sign-up']);
+// Protected route matchers with documentation
+const routeMatchers = {
+    admin: createRouteMatcher(['/dashboard/admin(.*)']) as (req: Request) => boolean,
+    superAdmin: createRouteMatcher(['/dashboard/super-admin(.*)']) as (req: Request) => boolean,
+    educador: createRouteMatcher(['/dashboard/educadores(.*)']) as (req: Request) => boolean,
+    student: createRouteMatcher(['/estudiantes/clases/:id']) as (req: Request) => boolean,
+    protected: createRouteMatcher(['/dashboard(.*)']) as (req: Request) => boolean,
+};
 
-// Configuración del middleware con tipos correctos
+// Middleware configuration
 const middlewareConfig: ClerkMiddlewareOptions = {
-	authorizedParties: [
-		'https://artiefy.com',
-		...(process.env.NODE_ENV === 'development'
-			? ['http://localhost:3000']
-			: []),
-	],
+    authorizedParties: [
+        'https://artiefy.com',
+        'https://accounts.artiefy.com',
+        ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
+    ],
+    debug: process.env.NODE_ENV === 'development',
 };
 
 export default clerkMiddleware(async (auth, req) => {
-	const { userId, sessionClaims } = await auth();
-	const role = sessionClaims?.metadata?.role;
+    try {
+        const { userId, sessionClaims } = await auth();
+        const role = sessionClaims?.metadata?.role;
 
-	// Si es una ruta pública, permitir acceso
-	if (publicRoutes(req)) {
-		return NextResponse.next();
-	}
+        // Check for protected routes
+        const isProtectedRoute = Object.values(routeMatchers).some(matcher => matcher(req));
 
-	// Redirigir a login si no está autenticado y la ruta es protegida
-	if (!userId && isProtectedRoute(req)) {
-		return NextResponse.redirect(new URL('/sign-in', req.url));
-	}
+        // If not a protected route, allow access
+        if (!isProtectedRoute) {
+            return NextResponse.next();
+        }
 
-	// Proteger rutas específicas por rol
-	if (isAdminRoute(req) && role !== 'admin') {
-		return NextResponse.redirect(new URL('/', req.url));
-	}
+        // Handle unauthenticated users for protected routes
+        if (!userId) {
+            return NextResponse.redirect(new URL('/sign-in', req.url));
+        }
 
-	if (isSuperAdminRoute(req) && role !== 'super-admin') {
-		return NextResponse.redirect(new URL('/', req.url));
-	}
+        // Role-based access control
+        if (routeMatchers.admin(req) && role !== 'admin') {
+            return NextResponse.redirect(new URL('/', req.url));
+        }
 
-	if (isEducatorRoute(req) && role !== 'educador') {
-		return NextResponse.redirect(new URL('/', req.url));
-	}
+        if (routeMatchers.superAdmin(req) && role !== 'super-admin') {
+            return NextResponse.redirect(new URL('/', req.url));
+        }
 
-	// Proteger rutas dinámicas de estudiantes
-	if (isStudentClassRoute(req) && !userId) {
-		return NextResponse.redirect(new URL('/sign-in', req.url));
-	}
+        if (routeMatchers.educador(req) && role !== 'educador') {
+            return NextResponse.redirect(new URL('/', req.url));
+        }
 
-	return NextResponse.next();
+        // Student route protection
+        if (routeMatchers.student(req) && !userId) {
+            return NextResponse.redirect(new URL('/sign-in', req.url));
+        }
+
+        return NextResponse.next();
+    } catch (error) {
+        console.error('Middleware error:', error);
+        return NextResponse.redirect(new URL('/error', req.url));
+    }
 }, middlewareConfig);
 
 export const config = {
-	matcher: [
-		'/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-		'/(api|trpc)(.*)',
-	],
+    matcher: [
+        '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+        '/(api|trpc)(.*)',
+    ],
 };
