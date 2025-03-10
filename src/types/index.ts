@@ -33,6 +33,7 @@ export interface Course {
 	dificultad?: Dificultad;
 	enrollments?: Enrollment[] | { length: number };
 	creator?: User;
+	isNew?: boolean; // Agregar propiedad isNew
 }
 
 export interface Category {
@@ -78,21 +79,23 @@ export interface Lesson {
 	isCompleted: boolean;
 	lastUpdated: Date;
 	course?: Course;
-	activities?: Activity[]; // Relación con actividades
+	activities?: Activity[];
 	isLocked: boolean | null;
-	resourceNames: string[]; // Añadir resourceName como un array de strings
+	resourceNames: string[];
+	isNew: boolean; // Agregar propiedad isNew
 }
 
 export interface LessonWithProgress extends Lesson {
 	porcentajecompletado: number;
 	isCompleted: boolean;
-	isLocked: boolean; // Cambiado de 'boolean | null' a 'boolean'
+	isLocked: boolean;
 	resourceNames: string[];
 	courseId: number;
 	createdAt: Date;
 	content?: {
 		questions?: Question[];
 	};
+	isNew: boolean;
 }
 
 export interface UserLessonsProgress {
@@ -101,6 +104,7 @@ export interface UserLessonsProgress {
 	progress: number;
 	isCompleted: boolean;
 	isLocked: boolean | null;
+	isNew: boolean;
 	lastUpdated: Date;
 }
 

@@ -108,8 +108,20 @@ export async function enrollInCourse(
 					progress: 0,
 					isCompleted: false,
 					isLocked: false,
+					isNew: true, // Marcar como nueva
 					lastUpdated: new Date(),
 				});
+			} else {
+				// Si ya existe, actualizar isNew a true
+				await db
+					.update(userLessonsProgress)
+					.set({ isNew: true })
+					.where(
+						and(
+							eq(userLessonsProgress.userId, userId),
+							eq(userLessonsProgress.lessonId, courseLesson.id)
+						)
+					);
 			}
 		}
 

@@ -27,6 +27,7 @@ export async function updateLessonProgress(
 			progress,
 			isCompleted: progress >= 100,
 			isLocked: false,
+			isNew: progress >= 1 ? false : true,
 			lastUpdated: new Date(),
 		})
 		.onConflictDoUpdate({
@@ -35,6 +36,7 @@ export async function updateLessonProgress(
 				progress,
 				isCompleted: progress >= 100,
 				isLocked: false,
+				isNew: progress >= 1 ? false : true,
 				lastUpdated: new Date(),
 			},
 		});

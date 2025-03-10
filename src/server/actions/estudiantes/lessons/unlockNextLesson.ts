@@ -57,6 +57,7 @@ export async function unlockNextLesson(
 				progress: 0,
 				isCompleted: false,
 				isLocked: false,
+				isNew: true, // Marcar como nueva
 				lastUpdated: new Date(),
 			})
 			.onConflictDoUpdate({
@@ -65,6 +66,7 @@ export async function unlockNextLesson(
 					isLocked: false,
 					progress: 0,
 					isCompleted: false,
+					isNew: true, // Marcar como nueva
 					lastUpdated: new Date(),
 				},
 			});

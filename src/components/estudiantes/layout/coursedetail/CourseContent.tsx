@@ -95,6 +95,13 @@ export function CourseContent({
 								</div>
 								<div className="flex items-center space-x-2">
 									{isUnlocked &&
+										lesson.isNew &&
+										lesson.porcentajecompletado === 0 && (
+											<span className="ml-2 rounded bg-green-500 px-2 py-1 text-xs text-white">
+												Nuevo
+											</span>
+										)}
+									{isUnlocked &&
 										(expandedLesson === lesson.id ? (
 											<FaChevronUp className="text-gray-400" />
 										) : (

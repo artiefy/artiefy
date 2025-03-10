@@ -83,6 +83,7 @@ export default function CourseDetails({
 									...lesson,
 									isLocked: lesson.isLocked,
 									porcentajecompletado: lesson.userProgress,
+									isNew: lesson.isNew, // Asegurarse de que la propiedad isNew se maneje correctamente
 								}))
 								.sort((a, b) => a.title.localeCompare(b.title)),
 						}));

@@ -4,7 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollments } from '~/server/db/schema';
+import { enrollments, userLessonsProgress } from '~/server/db/schema';
 
 export async function unenrollFromCourse(
 	courseId: number
@@ -40,6 +40,12 @@ export async function unenrollFromCourse(
 			.where(
 				and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId))
 			);
+
+		// Actualizar el progreso de las lecciones del curso
+		await db
+			.update(userLessonsProgress)
+			.set({ isNew: false })
+			.where(eq(userLessonsProgress.userId, userId));
 
 		return {
 			success: true,

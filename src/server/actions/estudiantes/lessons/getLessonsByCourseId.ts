@@ -53,6 +53,7 @@ export async function getLessonsByCourseId(
 				? lesson.resourceNames.split(',')
 				: [], // Convertir texto a array
 			isCompleted: lessonProgress?.isCompleted ?? false,
+			isNew: lessonProgress?.isNew ?? true, // Agregar propiedad isNew
 			activities:
 				lesson.activities?.map((activity) => {
 					const activityProgress = userActivitiesProgressData.find(

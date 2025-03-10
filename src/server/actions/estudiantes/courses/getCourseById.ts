@@ -56,6 +56,7 @@ export async function getCourseById(
 					resourceNames: lesson.resourceNames
 						? lesson.resourceNames.split(',')
 						: [], // Convertir texto a array
+					isNew: lessonProgress?.isNew ?? true, // Agregar propiedad isNew
 					activities:
 						lesson.activities?.map(
 							(activity): Activity => ({

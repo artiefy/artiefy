@@ -65,6 +65,13 @@ const LessonCards = ({
 					) : (
 						<FaClock className="text-gray-400" />
 					)}
+					{isAccessible &&
+						lessonItem.isNew &&
+						lessonItem.porcentajecompletado === 0 && (
+							<span className="ml-2 rounded bg-green-500 px-2 py-1 text-xs text-white">
+								Nuevo
+							</span>
+						)}
 				</div>
 				<p className="mb-2 text-sm text-gray-600">{lessonItem.description}</p>
 				<div className="relative h-2 rounded bg-gray-200">

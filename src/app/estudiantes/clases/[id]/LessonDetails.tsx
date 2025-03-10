@@ -94,6 +94,7 @@ export default function LessonDetails({
 						isLocked: false,
 						porcentajecompletado: progress?.progress ?? 0,
 						isCompleted: progress?.isCompleted ?? false,
+						isNew: progress?.isNew ?? true, // Agregar propiedad isNew
 					};
 				}
 
@@ -107,6 +108,7 @@ export default function LessonDetails({
 					isLocked: !(previousLesson?.isCompleted ?? false),
 					porcentajecompletado: progress?.progress ?? 0,
 					isCompleted: progress?.isCompleted ?? false,
+					isNew: progress?.isNew ?? true, // Agregar propiedad isNew
 				};
 			});
 
@@ -204,7 +206,11 @@ export default function LessonDetails({
 				setLessonsState((prevLessons) =>
 					prevLessons.map((l) =>
 						l.id === lesson.id
-							? { ...l, porcentajecompletado: roundedProgress }
+							? {
+									...l,
+									porcentajecompletado: roundedProgress,
+									isNew: roundedProgress > 1 ? false : l.isNew, // Cambiar isNew a false si el progreso es mayor al 1%
+								}
 							: l
 					)
 				);

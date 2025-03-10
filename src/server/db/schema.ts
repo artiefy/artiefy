@@ -213,6 +213,7 @@ export const userLessonsProgress = pgTable('user_lessons_progress', {
 	progress: real('progress').default(0).notNull(),
 	isCompleted: boolean('is_completed').default(false).notNull(),
 	isLocked: boolean('is_locked').default(true),
+	isNew: boolean('is_new').default(true).notNull(), // Agregar campo isNew
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
