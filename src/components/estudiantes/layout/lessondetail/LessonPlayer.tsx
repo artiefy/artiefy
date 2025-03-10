@@ -7,8 +7,8 @@ import { Progress } from '~/components/estudiantes/ui/progress';
 import { type LessonWithProgress } from '~/types';
 
 // Constants
-const VIDEO_TO_TEXT_API = 'http://3.145.183.203:8000/video2text';
-const DEFAULT_TIMEOUT = 60000; // 60 seconds
+const VIDEO_TO_TEXT_API = '/api/iatranscripcion'; // Cambia la URL para usar el nuevo endpoint
+const DEFAULT_TIMEOUT = 300000;
 
 interface LessonPlayerProps {
 	lesson: LessonWithProgress;
@@ -40,19 +40,14 @@ const LessonPlayer = ({
 	const [error, setError] = useState<string | null>(null);
 
 	const fetchTranscription = useCallback(async () => {
-		if (!lesson.coverVideoKey) {
-			console.info('No video key provided for transcription');
-			return;
-		}
-
 		setIsLoading(true);
 		setError(null);
 
 		try {
-			const videoUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverVideoKey}`;
+			const videoUrl =
+				'https://s3.us-east-2.amazonaws.com/artiefy-upload/uploads/ee9fb9aa-a3ad-4e4e-b952-eab0c5da84ed';
 
 			console.info('Fetching transcription for:', {
-				videoKey: lesson.coverVideoKey,
 				url: videoUrl,
 			});
 
@@ -63,7 +58,6 @@ const LessonPlayer = ({
 					headers: {
 						'Content-Type': 'application/json',
 						Accept: 'application/json',
-						Origin: process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000',
 					},
 					timeout: DEFAULT_TIMEOUT,
 				}
@@ -121,7 +115,7 @@ const LessonPlayer = ({
 		} finally {
 			setIsLoading(false);
 		}
-	}, [lesson]);
+	}, []);
 
 	useEffect(() => {
 		console.log('LessonPlayer mounted');
