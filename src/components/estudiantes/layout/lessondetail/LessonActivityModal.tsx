@@ -182,8 +182,8 @@ const LessonActivityModal = ({
 	const renderUnlockingState = () => (
 		<div className="flex flex-col items-center justify-center p-8">
 			<Icons.blocks className="size-22 fill-primary" />
-			<p className="mt-4 text-center text-sm text-gray-500">
-				Desbloqueando siguiente clase...
+			<p className="mt-6 text-center text-xl text-white">
+				Desbloqueando Siguiente Clase...
 			</p>
 		</div>
 	);
