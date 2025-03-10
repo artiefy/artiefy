@@ -1,7 +1,9 @@
+/* Imports */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 
+/* Hover Media Query */
 @media (hover: hover) {
   .hover\:underline:hover {
     text-decoration: underline;
@@ -85,59 +87,76 @@
   }
 }
 
-/* 🎨 Clases de utilidades */
-.text-shadow {
-  text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+/* Utilities */
+@utility text-shadow {
+  text-shadow: 0 0 1px rgb(255 255 255 / 0.3);
 }
 
-.button-hover:hover .button-hover-effect {
-  animation: sh02 0.5s 0s linear;
+@utility button-hover {
+  &:hover .button-hover-effect {
+    animation: sh02 0.5s linear;
+  }
 }
 
+/* Clerk Components */
 .cl-formButtonPrimary {
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px */
   text-transform: none;
-  background-color: #00bdd8;
-}
+  background-color: var(--color-primary);
+  transition: background-color 0.2s ease;
 
-.cl-formButtonPrimary:hover,
-.cl-formButtonPrimary:focus,
-.cl-formButtonPrimary:active {
-  background-color: #3af4ef;
+  &:is(:hover, :focus, :active) {
+    background-color: var(--color-secondary);
+  }
 }
 
 .cl-userButtonOuterIdentifier {
-  color: azure;
+  color: var(--color-foreground);
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--color-primary);
+  }
 }
 
-.cl-userButtonOuterIdentifier:hover {
-  color: aqua;
+.cl-internal-2z8hkq {
+  transition: all 0.2s ease;
+
+  &:is(:focus-within, :active, [aria-expanded="true"], [data-open="true"], [aria-selected="true"]) {
+    outline: 2px solid rgb(255 255 255 / 0.5);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgb(255 255 255 / 0.2);
+    border-radius: var(--radius-sm);
+  }
+
+  &:is(:focus-within, :active, [aria-expanded="true"]) {
+    background-color: rgb(255 255 255 / 0.05);
+  }
 }
 
-/* Estilos para el foco y click */
-.cl-internal-2z8hkq:focus-within,
-.cl-internal-2z8hkq:active,
-.cl-internal-2z8hkq[aria-expanded="true"] {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
-  border-radius: 0.375rem;
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-/* Estilo para mantener el efecto después del click */
-.cl-internal-2z8hkq[data-open="true"],
-.cl-internal-2z8hkq[aria-selected="true"] {
-  outline: 2px solid rgba(255, 255, 255, 0.5);
-  outline-offset: 2px ;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
-  border-radius: 0.375rem ;
-}
-
-.zoom-in {
+/* Animation Utilities */
+@utility zoom-in {
   animation: zoomIn 0.5s ease-in-out;
 }
 
+@utility animate-gradient {
+  animation: borderRotate 4s linear infinite;
+  background-size: 300% 300%;
+}
+
+@utility animate-bounce-right {
+  animation: bounce-left-right 1s infinite;
+}
+
+@utility animate-bounce-up-down {
+  animation: bounce-up-down 1s infinite;
+}
+
+@utility animate-pulse-text {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Animation Keyframes */
 @keyframes zoomIn {
   from {
     transform: scale(0.9);
@@ -149,51 +168,19 @@
   }
 }
 
-.animate-gradient {
-  animation: borderRotate 4s linear infinite;
-  background-size: 300% 300%;
-}
-
 @keyframes borderRotate {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-.animate-bounce-right {
-  animation: bounce-left-right 1s infinite;
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 @keyframes bounce-left-right {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(7px);
-  }
-}
-
-.animate-bounce-up-down {
-  animation: bounce-up-down 1s infinite;
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(7px); }
 }
 
 @keyframes bounce-up-down {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@utility animate-pulse-text {
-  animation: pulse 1.5s infinite ease-in-out;
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 @keyframes pulse {
@@ -210,4 +197,3 @@
     opacity: 1;
   }
 }
-
