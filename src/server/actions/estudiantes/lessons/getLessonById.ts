@@ -43,6 +43,7 @@ export async function getLessonById(
 			isLocked: lessonProgress?.isLocked ?? true,
 			userProgress: lessonProgress?.progress ?? 0,
 			isCompleted: lessonProgress?.isCompleted ?? false,
+			isNew: lessonProgress?.isNew ?? true, // Agregar propiedad isNew
 			resourceNames: lesson.resourceNames
 				? lesson.resourceNames.split(',')
 				: [], // Convertir texto a array
