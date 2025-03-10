@@ -402,24 +402,29 @@ const LessonActivityModal = ({
 			{finalScore >= 3 ? (
 				<Button
 					onClick={
-						hasNavigatedOnce || activity.isCompleted
-							? onClose
-							: handleFinishAndNavigate
+						!isResultsLoaded || isUnlocking
+							? undefined
+							: hasNavigatedOnce || activity.isCompleted
+								? onClose
+								: handleFinishAndNavigate
 					}
-					disabled={isUnlocking || !isResultsLoaded} // Añadir !isResultsLoaded
-					className={`mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 font-semibold text-white hover:from-blue-600 hover:to-blue-800 active:scale-95 ${
-						!isResultsLoaded ? 'cursor-not-allowed opacity-50' : ''
+					className={`mt-4 w-full font-semibold text-white active:scale-95 ${
+						!isResultsLoaded || isUnlocking
+							? 'cursor-not-allowed bg-gradient-to-r from-blue-400/70 to-blue-600/70 [&>*]:text-white [&>*]:opacity-100'
+							: 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800'
 					}`}
 				>
 					{isUnlocking ? (
 						<>
-							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-							Desbloqueando siguiente clase...
+							<Icons.spinner className="mr-2 h-5 w-5 animate-spin !text-white" />
+							<span className="text-xl font-semibold !text-white">
+								Desbloqueando siguiente clase...
+							</span>
 						</>
 					) : !isResultsLoaded ? (
 						<>
-							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-							Cargando resultados...
+							<Icons.spinner className="mr-2 h-4 w-4 animate-spin !text-white" />
+							<span className="!text-white">Cargando resultados...</span>
 						</>
 					) : hasNavigatedOnce || activity.isCompleted ? (
 						'Cerrar'
@@ -491,7 +496,7 @@ const LessonActivityModal = ({
 						ACTIVIDAD
 						<div className="absolute top-0 right-4">
 							{showResults ? (
-								<FileCheck2 className="size-12 text-green-500" />
+								<FileCheck2 className="size-8 text-green-500" />
 							) : (
 								<CogIcon className="-mt-2 size-12 animate-spin text-primary" />
 							)}

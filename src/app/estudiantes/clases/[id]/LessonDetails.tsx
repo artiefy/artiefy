@@ -200,6 +200,13 @@ export default function LessonDetails({
 	// Handle video end event
 	const handleVideoEnd = async () => {
 		try {
+			// Show the toast immediately when the video ends
+			toast.success('Clase completada', {
+				description: activity
+					? 'Ahora completa la actividad para continuar'
+					: '¡La siguiente clase ha sido desbloqueada!',
+			});
+
 			// Call handleLessonCompletion instead of duplicating logic
 			await handleLessonCompletion();
 
@@ -397,12 +404,6 @@ export default function LessonDetails({
 						: l
 				)
 			);
-
-			toast.success('Clase completada', {
-				description: activity
-					? 'Ahora completa la actividad para continuar'
-					: '¡La siguiente clase ha sido desbloqueada!',
-			});
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error al completar la lección');

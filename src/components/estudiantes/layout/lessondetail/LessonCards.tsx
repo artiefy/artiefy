@@ -40,15 +40,11 @@ const LessonCards = ({
 			<div
 				key={lessonItem.id}
 				onClick={() => handleClick(lessonItem)}
-				className={`mb-2 rounded-lg p-4 transition-all ${
-					isNavigating ? 'cursor-not-allowed opacity-50' : ''
-				} ${
+				className={`mb-2 rounded-lg p-4 transition-transform duration-200 ease-in-out ${isNavigating ? 'cursor-not-allowed opacity-50' : ''} ${
 					isAccessible
-						? 'cursor-pointer hover:bg-blue-50'
+						? 'cursor-pointer hover:scale-[1.01] hover:transform'
 						: 'cursor-not-allowed opacity-75'
-				} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${
-					isCompleted ? 'border-green-500' : ''
-				} `}
+				} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${isCompleted ? 'border-green-500' : ''} `}
 			>
 				<div className="mb-2 flex items-center justify-between">
 					<h3
