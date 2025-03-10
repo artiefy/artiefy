@@ -21,7 +21,6 @@ const middlewareConfig: ClerkMiddlewareOptions = {
         'https://accounts.artiefy.com',
         ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
     ],
-    debug: process.env.NODE_ENV === 'development',
 };
 
 export default clerkMiddleware(async (auth, req) => {

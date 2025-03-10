@@ -20,7 +20,7 @@ import { CourseContent } from './CourseContent';
 
 import type { Course } from '~/types';
 
-export const revalidate = 3600; // 1 hora de caché
+export const revalidate = 3600;
 
 interface CourseHeaderProps {
 	course: Course;
@@ -148,40 +148,30 @@ export function CourseHeader({
 				{/* Enrollment buttons - Simplificado sin skeleton */}
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
-						{/* Botones cuando está inscrito */}
-						<div
-							className={`absolute top-0 left-0 flex w-full flex-col space-y-4 transition-all duration-300 ${
-								isEnrolled ? 'visible opacity-100' : 'invisible opacity-0'
-							}`}
-						>
-							<Button
-								className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
-								disabled={true}
-							>
-								<FaCheck className="mr-2" /> Suscrito Al Curso
-							</Button>
-							<Button
-								className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-								onClick={onUnenroll}
-								disabled={isUnenrolling}
-							>
-								{isUnenrolling ? (
-									<Icons.spinner
-										className="animate-spin text-white"
-										style={{ width: '25px', height: '25px' }}
-									/>
-								) : (
-									'Cancelar Suscripción'
-								)}
-							</Button>
-						</div>
-
-						{/* Botón cuando no está inscrito */}
-						<div
-							className={`absolute top-0 left-0 transition-all duration-300 ${
-								!isEnrolled ? 'visible opacity-100' : 'invisible opacity-0'
-							}`}
-						>
+						{isEnrolled ? (
+							<div className="flex w-full flex-col space-y-4">
+								<Button
+									className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+									disabled={true}
+								>
+									<FaCheck className="mr-2" /> Suscrito Al Curso
+								</Button>
+								<Button
+									className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+									onClick={onUnenroll}
+									disabled={isUnenrolling}
+								>
+									{isUnenrolling ? (
+										<Icons.spinner
+											className="animate-spin text-white"
+											style={{ width: '25px', height: '25px' }}
+										/>
+									) : (
+										'Cancelar Suscripción'
+									)}
+								</Button>
+							</div>
+						) : (
 							<Button
 								onClick={onEnroll}
 								disabled={isEnrolling}
@@ -219,7 +209,7 @@ export function CourseHeader({
 									</div>
 								</span>
 							</Button>
-						</div>
+						)}
 					</div>
 				</div>
 			</CardContent>
