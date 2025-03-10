@@ -27,7 +27,7 @@ export async function enrollInCourse(
 		const userId = user.id;
 
 		// 1. Primero, asegurarse de que el usuario existe en nuestra base de datos
-		const dbUser = await db.query.users.findFirst({
+		let dbUser = await db.query.users.findFirst({
 			where: eq(users.id, userId),
 		});
 
@@ -56,6 +56,18 @@ export async function enrollInCourse(
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			});
+
+			// Reintentar obtener el usuario después de crearlo
+			dbUser = await db.query.users.findFirst({
+				where: eq(users.id, userId),
+			});
+
+			if (!dbUser) {
+				return {
+					success: false,
+					message: 'No se pudo crear el usuario en la base de datos',
+				};
+			}
 		}
 
 		// 2. Verificar si ya está inscrito
