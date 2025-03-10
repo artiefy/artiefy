@@ -10,6 +10,7 @@ import {
 	ChevronRightIcon,
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
+import { FileCheck2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -36,6 +37,7 @@ interface ActivityModalProps {
 		score: number;
 		answers: Record<string, SavedAnswer>;
 	} | null;
+	onLessonUnlocked: (lessonId: number) => void; // Add this new prop
 }
 
 interface UserAnswer {
@@ -58,6 +60,7 @@ const LessonActivityModal = ({
 	markActivityAsCompleted,
 	onActivityCompleted, // Add this new prop
 	savedResults,
+	onLessonUnlocked, // Add this new prop
 }: ActivityModalProps) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
@@ -70,6 +73,7 @@ const LessonActivityModal = ({
 	const [canClose, setCanClose] = useState(false);
 	const [isUnlocking, setIsUnlocking] = useState(false);
 	const [hasNavigatedOnce, setHasNavigatedOnce] = useState(false);
+	const [isResultsLoaded, setIsResultsLoaded] = useState(false);
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
@@ -135,6 +139,7 @@ const LessonActivityModal = ({
 	};
 
 	const handleFinish = async () => {
+		setIsResultsLoaded(false); // Reset el estado
 		const score = calculateScore();
 		setFinalScore(score);
 		setShowResults(true);
@@ -165,9 +170,12 @@ const LessonActivityModal = ({
 			if (!hasPassingScore) {
 				toast.error('Debes obtener al menos 3 puntos para aprobar');
 			}
+			// Marcar que los resultados están cargados
+			setIsResultsLoaded(true);
 		} catch (error) {
 			console.error('Error saving answers:', error);
 			toast.error('Error al guardar las respuestas');
+			setIsResultsLoaded(true); // También marcamos como cargado en caso de error
 		}
 	};
 
@@ -192,6 +200,9 @@ const LessonActivityModal = ({
 
 			// Marcar que ya se ha navegado una vez
 			setHasNavigatedOnce(true);
+
+			// Llamar a la función onLessonUnlocked con el ID de la siguiente lección
+			onLessonUnlocked(activity.lessonsId);
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error al completar la actividad');
@@ -395,13 +406,20 @@ const LessonActivityModal = ({
 							? onClose
 							: handleFinishAndNavigate
 					}
-					disabled={isUnlocking}
-					className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 font-semibold text-white hover:from-blue-600 hover:to-blue-800 active:scale-95"
+					disabled={isUnlocking || !isResultsLoaded} // Añadir !isResultsLoaded
+					className={`mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-700 font-semibold text-white hover:from-blue-600 hover:to-blue-800 active:scale-95 ${
+						!isResultsLoaded ? 'cursor-not-allowed opacity-50' : ''
+					}`}
 				>
 					{isUnlocking ? (
 						<>
 							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 							Desbloqueando siguiente clase...
+						</>
+					) : !isResultsLoaded ? (
+						<>
+							<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+							Cargando resultados...
 						</>
 					) : hasNavigatedOnce || activity.isCompleted ? (
 						'Cerrar'
@@ -472,7 +490,11 @@ const LessonActivityModal = ({
 					<DialogTitle className="text-center text-3xl font-bold">
 						ACTIVIDAD
 						<div className="absolute top-0 right-4">
-							<CogIcon className="-mt-2 size-12 animate-spin text-primary" />
+							{showResults ? (
+								<FileCheck2 className="size-12 text-green-500" />
+							) : (
+								<CogIcon className="-mt-2 size-12 animate-spin text-primary" />
+							)}
 						</div>
 					</DialogTitle>
 				</DialogHeader>

@@ -58,20 +58,22 @@ const LessonCards = ({
 					>
 						{lessonItem.title}
 					</h3>
-					{isCompleted ? (
-						<FaCheckCircle className="text-green-500" />
-					) : lessonItem.isLocked ? (
-						<FaLock className="text-gray-400" />
-					) : (
-						<FaClock className="text-gray-400" />
-					)}
-					{isAccessible &&
-						lessonItem.isNew &&
-						lessonItem.porcentajecompletado === 0 && (
-							<span className="ml-2 rounded bg-green-500 px-2 py-1 text-xs text-white">
-								Nuevo
-							</span>
+					<div className="flex items-center space-x-2">
+						{isAccessible &&
+							lessonItem.isNew &&
+							lessonItem.porcentajecompletado === 0 && (
+								<span className="rounded bg-green-500 px-2 py-1 text-xs text-white">
+									Nuevo
+								</span>
+							)}
+						{isCompleted ? (
+							<FaCheckCircle className="text-green-500" />
+						) : lessonItem.isLocked ? (
+							<FaLock className="text-gray-400" />
+						) : (
+							<FaClock className="text-gray-400" />
 						)}
+					</div>
 				</div>
 				<p className="mb-2 text-sm text-gray-600">{lessonItem.description}</p>
 				<div className="relative h-2 rounded bg-gray-200">

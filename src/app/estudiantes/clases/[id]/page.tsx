@@ -54,74 +54,79 @@ export default async function LessonPage({ params }: PageProps) {
 
 // Move LessonContent to a separate file for better organization
 async function LessonContent({ id, userId }: { id: string; userId: string }) {
-	try {
-		const lessonId = Number.parseInt(id, 10);
-		if (isNaN(lessonId)) {
-			return notFound();
-		}
+  try {
+    const lessonId = Number.parseInt(id, 10);
+    if (isNaN(lessonId)) {
+      return notFound();
+    }
 
-		const lessonData = await getLessonById(lessonId, userId);
-		if (!lessonData) {
-			console.log('Lección no encontrada');
-			return notFound();
-		}
+    const lessonData = await getLessonById(lessonId, userId);
+    if (!lessonData) {
+      console.log('Lección no encontrada');
+      return notFound();
+    }
 
-		const lesson: LessonWithProgress = {
-			...lessonData,
-			isLocked: lessonData.isLocked ?? false,
-		};
+    // Get course first before creating lesson object
+    const course = await getCourseById(lessonData.courseId, userId);
+    if (!course) {
+      console.log('Curso no encontrado');
+      return notFound();
+    }
 
-		const activityContent = await getActivityContent(lessonId, userId);
-		const activity: Activity | null =
-			activityContent.length > 0
-				? {
-						...activityContent[0],
-						isCompleted: activityContent[0].isCompleted ?? false,
-						userProgress: activityContent[0].userProgress ?? 0,
-					}
-				: null;
+    // Now create lesson with course title
+    const lesson: LessonWithProgress = {
+      ...lessonData,
+      isLocked: lessonData.isLocked ?? false,
+      courseTitle: course.title // Now course is defined
+    };
 
-		const course = await getCourseById(lesson.courseId, userId);
-		if (!course) {
-			console.log('Curso no encontrado');
-			return notFound();
-		}
+    const activityContent = await getActivityContent(lessonId, userId);
+    const activity: Activity | null =
+      activityContent.length > 0
+        ? {
+            ...activityContent[0],
+            isCompleted: activityContent[0].isCompleted ?? false,
+            userProgress: activityContent[0].userProgress ?? 0,
+          }
+        : null;
 
-		const [lessons, userProgress] = await Promise.all([
-			getLessonsByCourseId(lesson.courseId, userId),
-			getUserLessonsProgress(userId),
-		]);
+    const [lessons, userProgress] = await Promise.all([
+      getLessonsByCourseId(lesson.courseId, userId),
+      getUserLessonsProgress(userId),
+    ]);
 
-		const { lessonsProgress, activitiesProgress } = userProgress;
+    const { lessonsProgress, activitiesProgress } = userProgress;
 
-		const lessonsWithProgress = lessons.map((lesson) => {
-			const lessonProgress = lessonsProgress.find(
-				(progress) => progress.lessonId === lesson.id
-			);
+    // Add course title to all lessons
+    const lessonsWithProgress = lessons.map((lessonItem) => {
+      const lessonProgress = lessonsProgress.find(
+        (progress) => progress.lessonId === lessonItem.id
+      );
 
-			return {
-				...lesson,
-				porcentajecompletado: lessonProgress?.progress ?? 0,
-				isLocked: lessonProgress?.isLocked ?? true,
-				isCompleted: lessonProgress?.isCompleted ?? false,
-			};
-		});
+      return {
+        ...lessonItem,
+        courseTitle: course.title,
+        porcentajecompletado: lessonProgress?.progress ?? 0,
+        isLocked: lessonProgress?.isLocked ?? true,
+        isCompleted: lessonProgress?.isCompleted ?? false,
+      };
+    });
 
-		return (
-			<LessonDetails
-				lesson={lesson}
-				activity={activity}
-				lessons={lessonsWithProgress}
-				userLessonsProgress={lessonsProgress}
-				userActivitiesProgress={activitiesProgress}
-				userId={userId}
-			/>
-		);
-	} catch (error: unknown) {
-		console.error(
-			'Error al obtener los datos de la lección:',
-			error instanceof Error ? error.message : String(error)
-		);
-		return notFound();
-	}
+    return (
+      <LessonDetails
+        lesson={lesson}
+        activity={activity}
+        lessons={lessonsWithProgress}
+        userLessonsProgress={lessonsProgress}
+        userActivitiesProgress={activitiesProgress}
+        userId={userId}
+      />
+    );
+  } catch (error: unknown) {
+    console.error(
+      'Error al obtener los datos de la lección:',
+      error instanceof Error ? error.message : String(error)
+    );
+    return notFound();
+  }
 }

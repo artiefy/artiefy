@@ -10,12 +10,14 @@ import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
+import LessonBreadcrumbs from '~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
 import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
 import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
 import RecursosLesson from '~/components/estudiantes/layout/lessondetail/LessonResource';
+import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -95,6 +97,7 @@ export default function LessonDetails({
 						porcentajecompletado: progress?.progress ?? 0,
 						isCompleted: progress?.isCompleted ?? false,
 						isNew: progress?.isNew ?? true, // Agregar propiedad isNew
+						courseTitle: lesson.courseTitle, // Add courseTitle property
 					};
 				}
 
@@ -109,6 +112,7 @@ export default function LessonDetails({
 					porcentajecompletado: progress?.progress ?? 0,
 					isCompleted: progress?.isCompleted ?? false,
 					isNew: progress?.isNew ?? true, // Agregar propiedad isNew
+					courseTitle: lesson.courseTitle, // Add courseTitle property
 				};
 			});
 
@@ -116,7 +120,7 @@ export default function LessonDetails({
 		};
 
 		initializeLessonsState();
-	}, [lessons, userLessonsProgress]);
+	}, [lessons, userLessonsProgress, lesson.courseTitle]);
 
 	// Usar userActivitiesProgress para algo útil, por ejemplo, mostrar el progreso de las actividades
 	useEffect(() => {
@@ -131,7 +135,7 @@ export default function LessonDetails({
 			setProgress(0);
 			setIsVideoCompleted(false);
 			setIsActivityCompleted(false);
-			router.push(`/estudiantes/clases/${selectedLessonId}`);
+			void router.push(`/estudiantes/clases/${selectedLessonId}`);
 		}
 	}, [selectedLessonId, lesson?.id, router]);
 
@@ -167,7 +171,7 @@ export default function LessonDetails({
 
 				// Configurar la redirección con un nuevo timeout
 				redirectTimeout = setTimeout(() => {
-					router.replace('/estudiantes');
+					void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
 				}, 2000);
 			};
 
@@ -178,7 +182,20 @@ export default function LessonDetails({
 				if (redirectTimeout) clearTimeout(redirectTimeout);
 			};
 		}
-	}, [lesson?.isLocked, router]);
+	}, [lesson?.isLocked, lesson.courseId, router]);
+
+	// Verificar si el usuario está inscrito en el curso
+	useEffect(() => {
+		const checkEnrollment = async () => {
+			const isEnrolled = await isUserEnrolled(lesson.courseId, userId);
+			if (!isEnrolled) {
+				toast.error('Debes estar inscrito en el curso para ver esta lección.');
+				void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
+			}
+		};
+
+		void checkEnrollment();
+	}, [lesson.courseId, userId, router]);
 
 	// Handle video end event
 	const handleVideoEnd = async () => {
@@ -425,8 +442,22 @@ export default function LessonDetails({
 		return nextLesson && !nextLesson.isLocked ? nextLesson.id : undefined;
 	};
 
+	// Function to handle lesson unlock
+	const handleLessonUnlocked = (lessonId: number) => {
+		setLessonsState((prevLessons) =>
+			prevLessons.map((lesson) =>
+				lesson.id === lessonId ? { ...lesson, isNew: true } : lesson
+			)
+		);
+	};
+
 	return (
 		<div className="flex min-h-screen flex-col">
+			<LessonBreadcrumbs
+				courseTitle={lesson.courseTitle}
+				courseId={lesson.courseId}
+				lessonTitle={lesson.title}
+			/>
 			<div className="flex flex-1 px-4 py-6">
 				{/* Left Sidebar */}
 				<div className="w-80 bg-background p-4">
@@ -443,14 +474,14 @@ export default function LessonDetails({
 				{/* Main Content */}
 				<div className="flex-1 p-6">
 					<div className="navigation-buttons">
-						{' '}
-						{/* Add this wrapper div with class */}
-						<LessonNavigation
-							onNavigate={handleNavigationClick}
-							lessonsState={lessonsState}
-							lessonOrder={new Date(lesson.createdAt).getTime()}
-							isNavigating={isNavigating}
-						/>
+						<div className="mb-4">
+							<LessonNavigation
+								onNavigate={handleNavigationClick}
+								lessonsState={lessonsState}
+								lessonOrder={new Date(lesson.createdAt).getTime()}
+								isNavigating={isNavigating}
+							/>
+						</div>
 					</div>
 					<LessonPlayer
 						lesson={lesson}
@@ -490,6 +521,7 @@ export default function LessonDetails({
 						handleActivityCompletion={handleActivityCompletion}
 						userId={userId}
 						nextLessonId={getNextLessonId()} // Add this prop
+						onLessonUnlocked={handleLessonUnlocked} // Add this prop
 					/>
 					<RecursosLesson resourceNames={lesson.resourceNames} />
 				</div>

@@ -86,12 +86,12 @@ export async function enrollInCourse(
 		}
 
 		// 4. Configurar la primera lección como desbloqueada
-		const courseLesson = await db.query.lessons.findFirst({
+		const courseLessons = await db.query.lessons.findMany({
 			where: eq(lessons.courseId, courseId),
 			orderBy: (lessons, { asc }) => [asc(lessons.title)],
 		});
 
-		if (courseLesson) {
+		for (const courseLesson of courseLessons) {
 			// Verificar si ya existe un progreso para esta lección
 			const existingProgress = await db.query.userLessonsProgress.findFirst({
 				where: and(
@@ -107,19 +107,20 @@ export async function enrollInCourse(
 					lessonId: courseLesson.id,
 					progress: 0,
 					isCompleted: false,
-					isLocked: false,
-					isNew: true, // Marcar como nueva
+					isLocked: courseLesson.id !== courseLessons[0].id, // Desbloquear solo la primera lección
+					isNew: courseLesson.id === courseLessons[0].id, // Marcar como nueva solo la primera lección
 					lastUpdated: new Date(),
 				});
 			} else {
-				// Si ya existe, actualizar isNew a true
+				// Si ya existe, actualizar isNew a true solo para las lecciones desbloqueadas y con progreso menor al 1%
 				await db
 					.update(userLessonsProgress)
-					.set({ isNew: true })
+					.set({ isNew: existingProgress.progress < 1 })
 					.where(
 						and(
 							eq(userLessonsProgress.userId, userId),
-							eq(userLessonsProgress.lessonId, courseLesson.id)
+							eq(userLessonsProgress.lessonId, courseLesson.id),
+							eq(userLessonsProgress.isLocked, false)
 						)
 					);
 			}

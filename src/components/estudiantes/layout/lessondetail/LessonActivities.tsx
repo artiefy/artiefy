@@ -20,6 +20,7 @@ interface LessonActivitiesProps {
 	handleActivityCompletion: () => Promise<void>;
 	userId: string;
 	nextLessonId?: number;
+	onLessonUnlocked: (lessonId: number) => void; // Add this new prop
 }
 
 interface SavedResults {
@@ -34,6 +35,7 @@ const LessonActivities = ({
 	handleActivityCompletion,
 	userId,
 	nextLessonId,
+	onLessonUnlocked, // Add this new prop
 }: LessonActivitiesProps) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [activityCompleted, setActivityCompleted] =
@@ -119,7 +121,7 @@ const LessonActivities = ({
 					<p className="mt-2 text-sm text-gray-600">{activity.description}</p>
 					{isVideoCompleted && (
 						<div className="flex justify-center">
-							<FaArrowDown className="animate-bounce-up-down my-4 mb-1 text-green-500" />{' '}
+							<FaArrowDown className="my-4 mb-1 animate-bounce-up-down text-green-500" />{' '}
 						</div>
 					)}
 					<div className="space-y-2">
@@ -187,6 +189,7 @@ const LessonActivities = ({
 					markActivityAsCompleted={markActivityAsCompleted}
 					onActivityCompleted={handleActivityCompletion}
 					savedResults={savedResults}
+					onLessonUnlocked={onLessonUnlocked} // Pass the new prop
 				/>
 			)}
 		</div>

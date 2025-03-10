@@ -89,6 +89,7 @@ export interface LessonWithProgress extends Lesson {
 	porcentajecompletado: number;
 	isCompleted: boolean;
 	isLocked: boolean;
+  courseTitle: string;
 	resourceNames: string[];
 	courseId: number;
 	createdAt: Date;
