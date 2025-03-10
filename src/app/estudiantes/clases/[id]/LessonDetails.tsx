@@ -423,6 +423,7 @@ export default function LessonDetails({
 								...l,
 								isLocked: false,
 								porcentajecompletado: 0,
+								isNew: true, // Asegúrate de que la nueva lección tenga isNew en true
 							}
 						: l
 				)

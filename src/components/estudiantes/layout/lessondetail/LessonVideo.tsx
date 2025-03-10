@@ -31,6 +31,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 			try {
 				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
+				console.log('Fetching video from URL:', url);
 				const response = await fetch(url);
 
 				if (!response.ok) {
@@ -44,7 +45,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					setVideoUrl(url);
 					setError('');
 				}
-			} catch {
+			} catch (err) {
+				console.error('Error fetching video:', err);
 				setError('Error al cargar el video');
 				setVideoUrl('');
 			} finally {
