@@ -1,7 +1,11 @@
+// @ts-check
+
 import { FlatCompat } from '@eslint/eslintrc';
+import js from '@eslint/js';
 
 const compat = new FlatCompat({
 	baseDirectory: import.meta.dirname,
+	recommendedConfig: js.configs.recommended,
 });
 
 const eslintConfig = [
@@ -17,13 +21,19 @@ const eslintConfig = [
 			'src/components/educadores/ui/**',
 		],
 	},
+	{
+		files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+	},
 	...compat.config({
 		extends: [
+			'next/core-web-vitals',
+			'eslint:recommended',
+			'next',
+			'next/typescript',
 			'plugin:@next/next/recommended',
 			'plugin:@typescript-eslint/recommended',
 			'plugin:@typescript-eslint/recommended-type-checked',
 			'plugin:@typescript-eslint/stylistic-type-checked',
-			'plugin:tailwindcss/recommended',
 			'plugin:import/recommended',
 			'plugin:import/typescript',
 			'prettier',
@@ -33,29 +43,8 @@ const eslintConfig = [
 			project: './tsconfig.json',
 			tsconfigRootDir: import.meta.dirname,
 		},
-		plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
+		plugins: ['@typescript-eslint', 'drizzle', 'import'],
 		rules: {
-			'tailwindcss/no-custom-classname': [
-				'warn',
-				{
-					config: './tailwind.config.js',
-					cssFiles: [
-						'**/*.css',
-						'!**/node_modules',
-						'!**/.*',
-						'!**/dist',
-						'!**/build',
-					],
-					cssFilesRefreshRate: 5000,
-					callees: ['classnames', 'clsx', 'ctl'],
-					tags: ['tw'],
-				},
-			],
-			'tailwindcss/classnames-order': 'warn',
-			'tailwindcss/enforces-negative-arbitrary-values': 'warn',
-			'tailwindcss/enforces-shorthand': 'warn',
-			'tailwindcss/migration-from-tailwind-2': 'warn',
-			'tailwindcss/no-contradicting-classname': 'error',
 			'@typescript-eslint/consistent-type-definitions': 'warn',
 			'@typescript-eslint/consistent-type-imports': [
 				'warn',
@@ -75,10 +64,12 @@ const eslintConfig = [
 				'warn',
 				{
 					checksVoidReturn: {
+						arguments: false,
 						attributes: false,
 					},
 				},
 			],
+			'@typescript-eslint/no-floating-promises': 'warn',
 			'drizzle/enforce-delete-with-where': [
 				'warn',
 				{
@@ -91,9 +82,6 @@ const eslintConfig = [
 					drizzleObjectName: ['db', 'ctx.db'],
 				},
 			],
-			'@next/next/google-font-display': 'warn',
-			'@next/next/no-img-element': 'warn',
-			'@next/next/no-html-link-for-pages': 'warn',
 			'import/order': [
 				'warn',
 				{
@@ -118,7 +106,7 @@ const eslintConfig = [
 				},
 			],
 			'react/react-in-jsx-scope': 'off',
-			'import/no-unresolved': 'off',
+			'import/no-unresolved': 'warn',
 			'import/newline-after-import': 'off',
 		},
 		settings: {
@@ -135,30 +123,9 @@ const eslintConfig = [
 			react: {
 				version: 'detect',
 			},
-			tailwindcss: {
-				config: './tailwind.config.js',
-				cssFiles: [
-					'**/*.css',
-					'!**/node_modules',
-					'!**/.*',
-					'!**/dist',
-					'!**/build',
-				],
-				callees: ['classnames', 'clsx', 'ctl'],
-				tags: ['tw'],
-				classRegex: '^class(Name)?$',
-				cssFilesRefreshRate: 5000,
-				skipClassAttribute: false,
-				exposeConfiguration: true,
-				future: {
-					purgeLayersByDefault: true,
-				},
-				removeDeprecatedUtilities: true,
-			},
 			next: {
 				rootDir: './',
 			},
-			files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
 		},
 	}),
 ];

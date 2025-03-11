@@ -215,6 +215,22 @@ export const userLessonsProgress = pgTable('user_lessons_progress', {
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
+//Tabla de sistema de tickets
+export const tickets = pgTable('tickets', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	comments: varchar('comments', { length: 255 }).notNull(),
+	description: text('description').notNull(),
+	estado: boolean('estado').default(false).notNull(),
+	email: text('email').notNull(),
+	coverImageKey: text('cover_image_key'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+
 //tabla de foros
 export const forums = pgTable('forums', {
 	id: serial('id').primaryKey(),
@@ -243,6 +259,8 @@ export const posts = pgTable('posts', {
 	createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
 	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
 });
+
+
 
 // Tabla de progreso de actividades por usuario
 export const userActivitiesProgress = pgTable('user_activities_progress', {
@@ -443,3 +461,5 @@ export const postRelations = relations(posts, ({ one }) => ({
 		references: [users.id],
 	}), // Un post tiene un usuario creador
 }));
+
+

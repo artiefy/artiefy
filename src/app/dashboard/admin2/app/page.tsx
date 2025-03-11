@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
 	Users,
 	BookOpen,
@@ -15,12 +16,27 @@ import {
 	CardHeader,
 	CardTitle,
 } from '~/components/admin/ui/card';
+import StudentCounter from '~/components/admin/ui/StudentCounter'; // Importa el nuevo componente
 
 export default function Home() {
+	const [totalEstudiantes, setTotalEstudiantes] = useState('0');
+
+	useEffect(() => {
+		// Llamada a la API para obtener el número de estudiantes
+		fetch('/api/estudiantes')
+			.then((response) => response.json())
+			.then((data: { total: string }) => {
+				setTotalEstudiantes(data.total);
+			})
+			.catch((error) => {
+				console.error('Error al obtener el número de estudiantes:', error);
+			});
+	}, []);
+
 	const stats = [
 		{
 			title: 'Total Estudiantes',
-			value: '1,234',
+			value: totalEstudiantes,
 			icon: Users,
 			href: './app/estudiantes',
 		},
@@ -42,9 +58,7 @@ export default function Home() {
 			icon: HelpCircle,
 			href: './app/soporte',
 		},
-		
-		
-	
+
 		{
 			title: 'Tutores Activos',
 			value: '42',
@@ -74,7 +88,7 @@ export default function Home() {
 							<CardTitle className="text-sm font-medium">
 								{stat.title}
 							</CardTitle>
-							<stat.icon className="size-4 text-muted-foreground" />
+							<stat.icon className="text-muted-foreground size-4" />
 						</CardHeader>
 						<CardContent>
 							<div className="text-2xl font-bold">{stat.value}</div>
@@ -88,13 +102,13 @@ export default function Home() {
 				))}
 			</div>
 
-			<h3 className="mb-4 mt-8 text-xl font-semibold text-white">
+			<h3 className="mt-8 mb-4 text-xl font-semibold text-white">
 				Accesos Rápidos
 			</h3>
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 				{quickAccess.map((item) => (
 					<Link
-						className="rounded-lg border border-primary p-2 text-primary hover:bg-primary hover:text-black"
+						className="border-primary text-primary hover:bg-primary rounded-lg border p-2 hover:text-black"
 						key={item.title}
 						href={item.href}
 						passHref
@@ -102,6 +116,11 @@ export default function Home() {
 						{item.title}
 					</Link>
 				))}
+			</div>
+
+			{/* Añadir el componente StudentCounter */}
+			<div className="mt-8">
+				<StudentCounter />
 			</div>
 		</div>
 	);

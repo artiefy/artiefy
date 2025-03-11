@@ -1,19 +1,14 @@
 'use client';
 
-import { DropdownMenuSeparator } from '~/components/admin/ui/dropdown-menu';
-
-import { DropdownMenuLabel } from '~/components/admin/ui/dropdown-menu';
-
 import { useState } from 'react';
-import { Button } from '~/components/admin/ui/button';
-import { Input } from '~/components/admin/ui/input';
 import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from '~/components/admin/ui/card';
-import { Badge } from '~/components/admin/ui/badge';
+	Filter,
+	Plus,
+	FileOutputIcon as FileExport,
+	Settings2,
+	MoreHorizontal,
+	History,
+} from 'lucide-react';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -24,23 +19,35 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from '~/components/admin/ui/alert-dialog';
+import { Badge } from '~/components/admin/ui/badge';
+import { Button } from '~/components/admin/ui/button';
 import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from '~/components/admin/ui/card';
+import { Checkbox } from '~/components/admin/ui/checkbox';
+import { DropdownMenuSeparator , DropdownMenuLabel ,
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '~/components/admin/ui/dropdown-menu';
-import {
-	Filter,
-	Plus,
-	FileOutputIcon as FileExport,
-	Settings2,
-	MoreHorizontal,
-	History,
-} from 'lucide-react';
-import type { HistoryEntry } from '~/types/types';
+
+
+
+
 import { EducatorForm } from '~/components/admin/ui/educator-form';
 import { EducatorHistory } from '~/components/admin/ui/educator-history';
+import { Input } from '~/components/admin/ui/input';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '~/components/admin/ui/select';
 import {
 	Table,
 	TableBody,
@@ -49,14 +56,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '~/components/admin/ui/table';
-import { Checkbox } from '~/components/admin/ui/checkbox';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '~/components/admin/ui/select';
+import type { HistoryEntry , Course } from '~/types/types';
 
 // Añadir al principio del archivo, después de las importaciones:
 
@@ -75,17 +75,20 @@ const SPECIALIZATIONS = [
 
 // Modificar la interfaz Educator para reflejar que la especialización ahora es una de las predefinidas:
 
+
+
 interface Educator {
 	id: string;
 	name: string;
 	email: string;
 	phone: string;
 	specialization: (typeof SPECIALIZATIONS)[number];
-	courses: string[];
+	courses: Course[];
 	status: 'active' | 'inactive';
-	role: 'teacher' | 'admin';
+	role: 'admin' | 'educador' | 'assistant';
 	joinDate: string;
 	avatar: string;
+	username: string;
 }
 
 // Mock data...
@@ -96,11 +99,15 @@ const mockEducators: Educator[] = [
 		email: 'maria.g@example.com',
 		phone: '+34 600000001',
 		specialization: 'Matemáticas',
-		courses: ['Matemáticas Avanzadas', 'Cálculo I'],
+		courses: [
+			{ id: 'COURSE-001', name: 'Matemáticas Avanzadas', title: 'Matemáticas Avanzadas', students: [] },
+			{ id: 'COURSE-002', name: 'Cálculo I', title: 'Cálculo I', students: [] },
+		],
 		status: 'active',
-		role: 'teacher',
+		role: 'educador',
 		joinDate: '2024-01-15',
 		avatar: '/placeholder.svg?height=40&width=40',
+		username: ''
 	},
 	// ... más educadores
 ];
@@ -165,7 +172,7 @@ export default function EducatorsDashboard() {
 					? {
 							...educator,
 							specialization:
-								newSpecialization as (typeof SPECIALIZATIONS)[number],
+								newSpecialization,
 						}
 					: educator
 			)
@@ -306,11 +313,11 @@ export default function EducatorsDashboard() {
 										<div className="flex flex-wrap gap-1">
 											{educator.courses.map((course) => (
 												<Badge
-													key={course}
+													key={course.id}
 													variant="secondary"
 													className="bg-accent text-accent-foreground"
 												>
-													{course}
+													{course.name}
 												</Badge>
 											))}
 										</div>
