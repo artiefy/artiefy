@@ -475,4 +475,39 @@ export const anuncios = pgTable('anuncios', {
 	descripcion: text('descripcion').notNull(),
 	cover_image_key: text('cover_image_key').notNull(),
 	activo: boolean('activo').default(true),
+	tipo_destinatario: text('tipo_destinatario')
+		.notNull()
+		.default('todos'), // Puede ser 'todos', 'cursos', 'programas', 'custom'
 });
+
+
+export const anunciosCursos = pgTable('anuncios_cursos', {
+	id: serial('id').primaryKey(),
+	anuncioId: integer('anuncio_id')
+	  .references(() => anuncios.id)
+	  .notNull(),
+	courseId: integer('course_id')
+	  .references(() => courses.id)
+	  .notNull(),
+  });
+  
+
+  export const anunciosProgramas = pgTable('anuncios_programas', {
+	id: serial('id').primaryKey(),
+	anuncioId: integer('anuncio_id')
+		.references(() => anuncios.id)
+		.notNull(),
+	programaId: integer('programa_id') // Reemplaza esto con la clave de la tabla de programas
+		.notNull(),
+});
+
+export const anunciosUsuarios = pgTable('anuncios_usuarios', {
+	id: serial('id').primaryKey(),
+	anuncioId: integer('anuncio_id')
+		.references(() => anuncios.id)
+		.notNull(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+});
+

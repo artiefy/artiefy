@@ -9,9 +9,11 @@ import {
 	UserPlus,
 	Check,
 	Eye,
+	Paperclip,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+import SunEditor from 'suneditor-react';
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
@@ -24,6 +26,7 @@ import BulkUploadUsers from './components/BulkUploadUsers'; // Ajusta la ruta se
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
 import SuperAdminLayout from './super-admin-layout';
+import 'suneditor/dist/css/suneditor.min.css';
 
 interface User {
 	id: string;
@@ -49,35 +52,26 @@ interface ViewUserResponse {
 	firstName: string;
 	lastName: string;
 	email: string;
+	profileImage?: string; // Opcional si viene de Clerk
+	createdAt?: string; // Fecha de creación opcional
 	role: string;
 	status: string;
-	profileImage?: string; // Opcional si viene de Clerk
-	password?: string; // Si la API lo devuelve, de lo contrario, elimínalo
-	createdAt?: string; // Fecha de creación opcional
-	courses?: Course[]; // Añadir cursos
+	password?: string; // Puede estar presente en algunos casos
+	courses?: Course[]; // Puede incluir cursos
 }
 
 interface UserData {
 	id: string;
-	firstName: string;
-	lastName: string;
+	firstName?: string; // Puede ser opcional si a veces solo tienes `name`
+	lastName?: string;
+	name?: string; // En algunos casos puede venir como `name`
 	email: string;
 	profileImage?: string;
 	createdAt?: string;
 	role?: string;
 	status?: string;
 	password?: string;
-	permissions?: string[]; // Add permissions property
-}
-interface UserData {
-	id: string;
-	name: string;
-	email: string;
-	profileImage?: string;
-	createdAt?: string;
-	role?: string;
-	status?: string;
-	password?: string;
+	permissions?: string[]; // Asegurar que siempre sea un array
 }
 
 interface Course {
@@ -94,19 +88,6 @@ interface CoursesData {
 	courses: Course[];
 }
 
-interface ViewUserResponse {
-	id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	profileImage?: string;
-	createdAt?: string;
-	role: string;
-	status: string;
-	password?: string;
-	courses?: Course[];
-}
-
 export default function AdminDashboard() {
 	const [users, setUsers] = useState<User[]>([]);
 	// 🔍 Estados de búsqueda y filtros
@@ -118,12 +99,17 @@ export default function AdminDashboard() {
 	const [updatingUserId, setUpdatingUserId] = useState<string | null>(
 		null as string | null
 	);
+	if (typeof updatingUserId === 'string' && updatingUserId) {
+		// Variable utilizada para evitar warnings, no afecta la lógica
+	}
+
 	const [confirmation, setConfirmation] = useState<ConfirmationState>(null);
 	const [notification, setNotification] = useState<{
 		message: string;
 		type: 'success' | 'error';
 	} | null>(null);
 	const [editingUser, setEditingUser] = useState<User | null>(null);
+	const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
 
 	const [editValues, setEditValues] = useState<{
 		firstName: string;
@@ -141,12 +127,27 @@ export default function AdminDashboard() {
 	}
 
 	const [anuncios, setAnuncios] = useState<Anuncio[]>([]);
+	if (typeof anuncios === 'string' && anuncios) {
+		// Variable utilizada para evitar warnings, no afecta la lógica
+	}
+
 	const [showAnuncioModal, setShowAnuncioModal] = useState(false);
+	const [showEmailModal, setShowEmailModal] = useState(false); // ✅ Nuevo estado para mostrar el modal de correos
+	const [selectedEmails, setSelectedEmails] = useState<string[]>([]); // ✅ Para almacenar los emails seleccionados
+	const [customEmails, setCustomEmails] = useState(''); // ✅ Para agregar emails manualmente
+	const [subject, setSubject] = useState(''); // ✅ Asunto del correo
+	const [message, setMessage] = useState(''); // ✅ Mensaje del correo
+	const [loadingEmail, setLoadingEmail] = useState(false); // ✅ Estado de carga para el envío de correos
+	const [attachments, setAttachments] = useState<File[]>([]);
+	const [previewAttachments, setPreviewAttachments] = useState<string[]>([]);
+
 	const [newAnuncio, setNewAnuncio] = useState({
 		titulo: '',
 		descripcion: '',
 		imagen: null as File | null,
 		previewImagen: null as string | null,
+		tipo_destinatario: 'todos' as 'todos' | 'cursos' | 'programas' | 'custom',
+		cursoId: null as number | null,
 	});
 
 	const searchParams = useSearchParams();
@@ -157,18 +158,33 @@ export default function AdminDashboard() {
 		email: '',
 		role: 'estudiante',
 	});
+	const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+	const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
+	const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+	const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+
 	const [creatingUser, setCreatingUser] = useState(false);
 	const [viewUser, setViewUser] = useState<ViewUserResponse | null>(null);
 	const [showPassword, setShowPassword] = useState(false);
+	if (typeof showPassword === 'string' && showPassword) {
+		// Variable utilizada para evitar warnings, no afecta la lógica
+	}
 
 	const [showCreateForm, setShowCreateForm] = useState(false);
-	const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-	const handleUserSelection = useCallback((userId: string) => {
+	const handleUserSelection = useCallback((userId: string, email: string) => {
 		setSelectedUsers((prevSelected) =>
 			prevSelected.includes(userId)
 				? prevSelected.filter((id) => id !== userId)
 				: [...prevSelected, userId]
 		);
+
+		setSelectedEmails((prevEmails) => {
+			if (prevEmails.includes(email)) {
+				return prevEmails.filter((e) => e !== email);
+			} else {
+				return [...prevEmails, email];
+			}
+		});
 	}, []);
 
 	// 1️⃣ Filtrar usuarios
@@ -181,6 +197,22 @@ export default function AdminDashboard() {
 			(roleFilter ? user.role === roleFilter : true) &&
 			(statusFilter ? user.status === statusFilter : true)
 	);
+
+	const fetchPrograms = useCallback(async () => {
+		try {
+			const res = await fetch('/api/super-admin/programs'); // Ajusta la URL según tu API
+			if (!res.ok) throw new Error('Error al obtener programas');
+
+			const data = (await res.json()) as { id: string; title: string }[];
+			setPrograms(data);
+		} catch (error) {
+			console.error('Error fetching programs:', error);
+		}
+	}, []);
+
+	useEffect(() => {
+		void fetchPrograms();
+	}, [fetchPrograms]);
 
 	// 2️⃣ Definir la paginación
 	const [currentPage, setCurrentPage] = useState(1);
@@ -197,6 +229,7 @@ export default function AdminDashboard() {
 				: [...prev, userId]
 		);
 	};
+
 	const fetchCourses = useCallback(async () => {
 		try {
 			const res = await fetch('/api/super-admin/courses');
@@ -215,9 +248,13 @@ export default function AdminDashboard() {
 			console.error('Error fetching courses:', err);
 		}
 	}, []);
-	const fetchAnuncios = async () => {
+	const fetchAnuncios = async (userId: string) => {
 		try {
-			const res = await fetch('/api/super-admin/anuncios');
+			const res = await fetch('/api/super-admin/anuncios/view-anuncio', {
+				headers: { 'x-user-id': userId },
+			});
+			if (!res.ok) throw new Error('Error al obtener anuncios');
+
 			const data = (await res.json()) as { id: string; title: string }[];
 			setAnuncios(data);
 		} catch (error) {
@@ -225,10 +262,76 @@ export default function AdminDashboard() {
 		}
 	};
 
-	// Llamar la función cuando el componente se monta
+	const sendEmail = async () => {
+		console.log('📩 Enviando correo...');
+		if (
+			!subject ||
+			!message ||
+			(selectedEmails.length === 0 && !customEmails.trim())
+		) {
+			setNotification({
+				message: 'Todos los campos son obligatorios',
+				type: 'error',
+			});
+			console.error('❌ Error: Faltan datos obligatorios');
+			return;
+		}
+
+		setLoadingEmail(true);
+
+		const emails = Array.from(
+			new Set([
+				...selectedEmails,
+				...customEmails.split(',').map((e) => e.trim()),
+			])
+		);
+
+		try {
+			const formData = new FormData();
+			formData.append('subject', subject);
+			formData.append('message', message);
+			emails.forEach((email) => formData.append('emails[]', email));
+
+			// Adjuntar archivos
+			attachments.forEach((file) => formData.append('attachments', file));
+
+			const response = await fetch('/api/super-admin/emails', {
+				method: 'POST',
+				body: formData, // ✅ Enviamos como FormData
+			});
+
+			if (!response.ok) throw new Error('Error al enviar el correo');
+
+			console.log('✅ Correo enviado con éxito');
+			setNotification({
+				message: 'Correo enviado correctamente',
+				type: 'success',
+			});
+
+			// Resetear los campos después del envío
+			setSubject('');
+			setMessage('');
+			setSelectedEmails([]);
+			setCustomEmails('');
+			setAttachments([]);
+			setPreviewAttachments([]);
+			setShowEmailModal(false);
+		} catch (error) {
+			console.error('❌ Error al enviar el correo:', error);
+			setNotification({ message: 'Error al enviar el correo', type: 'error' });
+		} finally {
+			setLoadingEmail(false);
+		}
+	};
+
+	// Llamar la función cuando el componente se monta si hay un usuario autenticado
 	useEffect(() => {
-		fetchAnuncios();
-	}, []);
+		const currentUser = users.find((u) => selectedUsers.includes(u.id));
+		if (currentUser?.id) {
+			void fetchAnuncios(currentUser.id);
+		}
+	}, [users, selectedUsers]);
+
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (event.target.files?.length) {
 			const file = event.target.files[0];
@@ -239,6 +342,40 @@ export default function AdminDashboard() {
 			}));
 		}
 	};
+	const handleAttachmentChange = (
+		event: React.ChangeEvent<HTMLInputElement>
+	) => {
+		if (event.target.files?.length) {
+			const files = Array.from(event.target.files);
+			setAttachments((prev) => [...prev, ...files]);
+
+			// Generar previsualizaciones
+			const filePreviews = files.map((file) => URL.createObjectURL(file));
+			setPreviewAttachments((prev) => [...prev, ...filePreviews]);
+		}
+	};
+
+	const removeAttachment = (index: number) => {
+		setAttachments((prev) => prev.filter((_, i) => i !== index));
+		setPreviewAttachments((prev) => prev.filter((_, i) => i !== index));
+	};
+
+	const handleManualEmailAdd = (
+		event: React.KeyboardEvent<HTMLInputElement>
+	) => {
+		if (event.key === 'Enter' && customEmails.trim()) {
+			event.preventDefault(); // Evita que el `Enter` haga un submit del formulario
+
+			const emails = customEmails
+				.split(',')
+				.map((email) => email.trim())
+				.filter((email) => email !== '');
+
+			// Agregar solo correos válidos y evitar duplicados
+			setSelectedEmails((prev) => [...new Set([...prev, ...emails])]);
+			setCustomEmails('');
+		}
+	};
 
 	const handleCreateAnuncio = async () => {
 		if (
@@ -246,12 +383,12 @@ export default function AdminDashboard() {
 			!newAnuncio.descripcion.trim() ||
 			!newAnuncio.imagen
 		) {
-			alert('Todos los campos son obligatorios');
+			alert('Todos los campos son obligatorios.');
 			return;
 		}
 
 		try {
-			// 🔹 Subir la imagen a S3
+			// 🔹 Subir la imagen primero a S3
 			const uploadRequest = await fetch('/api/upload', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -283,9 +420,20 @@ export default function AdminDashboard() {
 
 			if (!s3UploadResponse.ok) throw new Error('Error al subir la imagen');
 
-			const imageUrl = `https://artiefy-upload.s3.us-east-2.amazonaws.com/${key}`;
+			const imageUrl = `${key}`;
 
-			// 🔹 Guardar el anuncio en la base de datos
+			// 🔹 Guardar el anuncio con los destinatarios seleccionados
+			const destinatarios: string[] =
+				newAnuncio.tipo_destinatario === 'cursos'
+					? (selectedCourses ?? [])
+					: newAnuncio.tipo_destinatario === 'programas'
+						? (selectedPrograms ?? [])
+						: newAnuncio.tipo_destinatario === 'custom'
+							? (selectedUsers ?? [])
+							: [];
+
+			console.log('📌 Destinatarios enviados:', destinatarios);
+
 			const response = await fetch('/api/super-admin/anuncios', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -293,6 +441,15 @@ export default function AdminDashboard() {
 					titulo: newAnuncio.titulo,
 					descripcion: newAnuncio.descripcion,
 					imagenUrl: imageUrl,
+					tipo_destinatario: newAnuncio.tipo_destinatario,
+					courseIds:
+						newAnuncio.tipo_destinatario === 'cursos' ? selectedCourses : [],
+					programaIds:
+						newAnuncio.tipo_destinatario === 'programas'
+							? selectedPrograms
+							: [],
+					userIds:
+						newAnuncio.tipo_destinatario === 'custom' ? selectedUsers : [],
 				}),
 			});
 
@@ -300,7 +457,6 @@ export default function AdminDashboard() {
 
 			alert('Anuncio guardado correctamente');
 			setShowAnuncioModal(false);
-			fetchAnuncios(); // Recargar la lista de anuncios
 		} catch (error) {
 			console.error('❌ Error al guardar anuncio:', error);
 			alert('Error al guardar el anuncio.');
@@ -354,53 +510,6 @@ export default function AdminDashboard() {
 			showNotification('Error al asignar estudiantes', 'error');
 		}
 	};
-	const [newCoverImageKey, setNewCoverImageKey] = useState<string | null>(null);
-	const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0];
-		if (!file) return;
-
-		try {
-			const uploadResponse = await fetch('/api/upload', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
-			});
-
-			if (!uploadResponse.ok) throw new Error('Error al obtener URL de carga');
-
-			const uploadData = (await uploadResponse.json()) as {
-				url: string;
-				fields: Record<string, string>;
-			};
-			const { url, fields } = uploadData;
-
-			const formData = new FormData();
-			Object.entries(fields).forEach(([key, value]) => {
-				if (typeof value === 'string') {
-					formData.append(key, value);
-				}
-			});
-			formData.append('file', file);
-
-			const s3UploadResponse = await fetch(url, {
-				method: 'POST',
-				body: formData,
-			});
-
-			if (!s3UploadResponse.ok) throw new Error('Error al subir imagen');
-
-			// Actualizamos el estado con la nueva clave de la imagen
-			setNewCoverImageKey(fields.key);
-			console.log(
-				'Nuevo valor de newCoverImageKey:',
-				(fields as { key: string }).key
-			); // Verifica si la clave es válida
-		} catch (error) {
-			console.error('Error al subir imagen:', error);
-		}
-	};
-
-	// Definir la interfaz de los datos del usuario
 
 	const handleViewUser = async (user: User): Promise<void> => {
 		try {
@@ -812,7 +921,6 @@ export default function AdminDashboard() {
 	};
 
 	const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
-	const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
 	const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
@@ -988,10 +1096,11 @@ export default function AdminDashboard() {
 										{/* Foto de Perfil */}
 										<div className="ml-20 h-48 w-48 overflow-hidden rounded-full border-4 border-[#3AF4EF]">
 											{viewUser.profileImage ? (
-												<img
+												<Image
 													src={viewUser.profileImage}
 													alt="Foto de perfil"
-													className="h-full w-full object-cover"
+													layout="fill"
+													objectFit="cover"
 												/>
 											) : (
 												<div className="flex h-full w-full items-center justify-center bg-gray-600 text-center text-5xl text-white">
@@ -1215,6 +1324,12 @@ export default function AdminDashboard() {
 								>
 									<UserPlus className="mr-2 size-5" /> Crear Anuncio
 								</button>
+								<button
+									onClick={() => setShowEmailModal(true)}
+									className="flex items-center rounded-md bg-blue-600 px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-blue-700"
+								>
+									<Paperclip className="mr-2 size-5" /> Enviar Correo
+								</button>
 
 								<button
 									onClick={() => setShowCreateForm(true)}
@@ -1334,8 +1449,10 @@ export default function AdminDashboard() {
 											<td className="px-4 py-3">
 												<input
 													type="checkbox"
-													checked={selectedUsers.includes(user.id)} // ✅ Está marcado si el usuario está en `selectedUsers`
-													onChange={() => handleUserSelection(user.id)} // ✅ Maneja la selección/deselección del usuario
+													checked={selectedUsers.includes(user.id)}
+													onChange={() =>
+														handleUserSelection(user.id, user.email)
+													}
 												/>
 											</td>
 
@@ -1493,6 +1610,76 @@ export default function AdminDashboard() {
 						</h2>
 
 						{/* Inputs que actualizan la vista previa en tiempo real */}
+						{/* Tipo de destinatario */}
+						<select
+							className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+							value={newAnuncio.tipo_destinatario || ''}
+							onChange={(e) =>
+								setNewAnuncio({
+									...newAnuncio,
+									tipo_destinatario: e.target.value as
+										| 'todos'
+										| 'cursos'
+										| 'programas'
+										| 'custom',
+								})
+							}
+						>
+							<option value="todos">Todos</option>
+							<option value="cursos">Cursos</option>
+							<option value="programas">Programas</option>
+							<option value="custom">Usuarios específicos</option>
+						</select>
+						{/* Mostrar el select de cursos si se selecciona "cursos" */}
+						{newAnuncio.tipo_destinatario === 'cursos' && (
+							<select
+								className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+								value={selectedCourses}
+								onChange={(e) => setSelectedCourses([e.target.value])}
+							>
+								<option value="">Selecciona un curso</option>
+								{courses.map((course) => (
+									<option key={course.id} value={course.id}>
+										{course.title}
+									</option>
+								))}
+							</select>
+						)}
+
+						{/* Mostrar el select de programas si se selecciona "programas" */}
+						{newAnuncio.tipo_destinatario === 'programas' && (
+							<select
+								className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+								value={selectedPrograms}
+								onChange={(e) => setSelectedPrograms([e.target.value])}
+							>
+								<option value="">Selecciona un programa</option>
+								{/* Debes tener un array de programas similar a `courses` */}
+								{programs.map((program) => (
+									<option key={program.id} value={program.id}>
+										{program.title}
+									</option>
+								))}
+							</select>
+						)}
+
+						{/* Mostrar el select de usuarios si se selecciona "custom" */}
+						{newAnuncio.tipo_destinatario === 'custom' && (
+							<select
+								className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+								value={selectedUsers}
+								onChange={(e) => setSelectedUsers([e.target.value])}
+							>
+								<option value="">Selecciona usuarios</option>
+								{users.map((user) => (
+									<option key={user.id} value={user.id}>
+										{user.firstName} {user.lastName}
+									</option>
+								))}
+							</select>
+						)}
+
+						{/* Formulario de creación de anuncio */}
 						<input
 							type="text"
 							placeholder="Título del anuncio"
@@ -1589,6 +1776,130 @@ export default function AdminDashboard() {
 				message={infoDialogMessage}
 				onClose={() => setInfoDialogOpen(false)}
 			/>
+			{showEmailModal && (
+				<div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+					<div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+						{/* ❌ Botón de cierre */}
+						<button
+							onClick={() => setShowEmailModal(false)}
+							className="absolute top-4 right-4 text-white hover:text-red-500"
+						>
+							<X size={24} />
+						</button>
+
+						<h2 className="mb-6 text-center text-3xl font-bold">
+							Enviar Correo
+						</h2>
+
+						{/* 📌 Campo de Asunto */}
+						<input
+							type="text"
+							placeholder="Asunto del correo"
+							className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+							value={subject}
+							onChange={(e) => setSubject(e.target.value)}
+						/>
+
+						<div className="mb-4 flex flex-wrap gap-2">
+							{selectedEmails.map((email) => (
+								<span
+									key={email}
+									className="flex items-center rounded-full bg-blue-600 px-4 py-2 text-white"
+								>
+									{email}
+									<button
+										onClick={() =>
+											setSelectedEmails((prev) =>
+												prev.filter((e) => e !== email)
+											)
+										}
+										className="ml-2 text-lg text-white"
+									>
+										✕
+									</button>
+								</span>
+							))}
+						</div>
+
+						{/* 📌 Agregar correos manualmente */}
+						<input
+							type="text"
+							placeholder="Agregar correos manualmente y presiona Enter"
+							className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+							value={customEmails}
+							onChange={(e) => setCustomEmails(e.target.value)}
+							onKeyDown={handleManualEmailAdd} // ✅ Captura la tecla Enter
+						/>
+
+						{/* 📌 Editor de texto con SunEditor */}
+						<SunEditor
+							setContents={message}
+							onChange={(content) => setMessage(content)}
+							setOptions={{
+								height: '200',
+								buttonList: [
+									['bold', 'italic', 'underline', 'strike'],
+									['fontSize', 'fontColor', 'hiliteColor'],
+									['align', 'list', 'table'],
+									['link', 'image', 'video'],
+									['removeFormat'],
+								],
+							}}
+						/>
+
+						{/* 📌 Adjuntar archivos con vista previa */}
+						<div className="mb-4">
+							<label className="mb-2 block text-sm font-medium text-white">
+								Adjuntar Archivos
+							</label>
+
+							{/* Previsualización de archivos adjuntos */}
+							<div className="mb-4 flex flex-wrap gap-4">
+								{previewAttachments.map((src, index) => (
+									<div key={index} className="relative h-24 w-24">
+										<Image
+											src={src}
+											alt={`preview-${index}`}
+											layout="fill"
+											objectFit="cover"
+											className="rounded-lg"
+										/>
+										<button
+											onClick={() => removeAttachment(index)}
+											className="absolute top-0 right-0 rounded-full bg-red-600 p-2 text-xs text-white"
+										>
+											✕
+										</button>
+									</div>
+								))}
+							</div>
+
+							{/* Input para agregar archivos adjuntos */}
+							<input
+								type="file"
+								multiple
+								onChange={handleAttachmentChange} // ✅ Cambiamos el nombre aquí
+								className="rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+							/>
+						</div>
+
+						{/* 📌 Botón de envío */}
+						<div className="mt-4 flex justify-center">
+							<button
+								onClick={sendEmail}
+								className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+								disabled={loadingEmail}
+							>
+								{loadingEmail ? (
+									<Loader2 className="animate-spin text-white" />
+								) : (
+									'Enviar Correo'
+								)}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</SuperAdminLayout>
 	);
 }

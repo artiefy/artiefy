@@ -1,26 +1,58 @@
-
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import AnuncioPreview from './AnuncioPreview';
-
 interface AnuncioModalProps {
 	onClose: () => void;
 	titulo: string;
 	descripcion: string;
 	imagenUrl: string;
+	tipo_destinatario?: string; // Nuevo campo opcional
 }
 
 const AnuncioModal: React.FC<AnuncioModalProps> = ({
 	onClose,
 	titulo,
 	descripcion,
-	imagenUrl,
 }) => {
 	const [tituloState, setTituloState] = useState(titulo);
 	const [descripcionState, setDescripcionState] = useState(descripcion);
+
 	const [imagen, setImagen] = useState<File | null>(null);
 	const [previewImagen, setPreviewImagen] = useState<string | null>(null);
+	// 🔹 Estado para checkboxes y cursos seleccionados
+	const [opcionesSeleccionadas, setOpcionesSeleccionadas] = useState<string[]>(
+		[]
+	);
+	const [cursoSeleccionado, setCursoSeleccionado] = useState<number | null>(
+		null
+	);
+	const [cursosDisponibles, setCursosDisponibles] = useState<
+		{ id: number; title: string }[]
+	>([]);
+
+	// 🔹 Cargar cursos disponibles desde la API al montar el componente
+	useEffect(() => {
+		const fetchCursos = async () => {
+			try {
+				const response = await fetch('/api/cursos'); // Ajusta la ruta según tu API
+				if (!response.ok) throw new Error('Error al obtener los cursos');
+				const data = (await response.json()) as { id: number; title: string }[];
+				setCursosDisponibles(data);
+			} catch (error) {
+				console.error('❌ Error al cargar cursos:', error);
+			}
+		};
+		void fetchCursos();
+	}, []);
+
+	const handleCheckboxChange = (opcion: string) => {
+		setOpcionesSeleccionadas((prev) =>
+			prev.includes(opcion)
+				? prev.filter((item) => item !== opcion)
+				: [...prev, opcion]
+		);
+	};
 
 	// 🔹 Manejar subida de imagen
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,8 +107,7 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
 			if (!s3UploadResponse.ok)
 				throw new Error('Error al subir la imagen a S3');
 
-			const imageUrl = `https://artiefy-upload.s3.us-east-2.amazonaws.com/${key}`;
-
+			const imageUrl = `/${key}`;
 
 			// 🔹 Guardar el anuncio en la base de datos
 			const response = await fetch('/api/super-admin/anuncios', {
@@ -125,7 +156,7 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
 				{/* Campos */}
 				<input
 					type="text"
-					placeholder="Título del anuncio"
+					placeholder="Título del anuno"
 					value={tituloState}
 					onChange={(e) => setTituloState(e.target.value)}
 					className="mb-3 w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500"
@@ -137,6 +168,34 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
 					onChange={(e) => setDescripcionState(e.target.value)}
 					className="mb-3 w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500"
 				/>
+				{/* 🔹 Opciones de checkboxes */}
+				<div className="mb-4 flex flex-col space-y-2">
+					<label className="flex items-center space-x-2 text-white">
+						<input
+							type="checkbox"
+							checked={opcionesSeleccionadas.includes('curso')}
+							onChange={() => handleCheckboxChange('curso')}
+							className="form-checkbox h-5 w-5 text-blue-500"
+						/>
+						<span>Asignar a un Curso</span>
+					</label>
+				</div>
+
+				{/* 🔹 Mostrar select de cursos si se activa el checkbox */}
+				{opcionesSeleccionadas.includes('curso') && (
+					<select
+						className="mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white"
+						value={cursoSeleccionado ?? ''}
+						onChange={(e) => setCursoSeleccionado(Number(e.target.value))}
+					>
+						<option value="">Selecciona un curso</option>
+						{cursosDisponibles.map((curso) => (
+							<option key={curso.id} value={curso.id}>
+								{curso.title}
+							</option>
+						))}
+					</select>
+				)}
 
 				{/* Adjuntar Imagen */}
 				<input
@@ -166,4 +225,3 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
 };
 
 export default AnuncioModal;
-

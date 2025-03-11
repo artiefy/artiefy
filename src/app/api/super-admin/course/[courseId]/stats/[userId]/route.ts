@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { db } from '~/server/db';
 import {
@@ -7,7 +7,6 @@ import {
 	userActivitiesProgress,
 	posts,
 	scores,
-	lessons,
 	users,
 	courses,
 	dificultad,

@@ -1,11 +1,12 @@
-
 'use client';
 import React from 'react';
+import Image from 'next/image';
 
 interface AnuncioPreviewProps {
 	titulo: string;
 	descripcion: string;
 	imagenUrl: string;
+	tipo_destinatario?: string; // Nuevo campo opcional
 }
 
 export default function AnuncioPreview({
@@ -15,16 +16,18 @@ export default function AnuncioPreview({
 }: AnuncioPreviewProps) {
 	return (
 		<div className="relative mt-6 rounded-lg border border-[#3AF4EF] bg-[#01142B] p-6 text-center text-white shadow-lg">
-			{/* 🔥 Nueva Etiqueta de Oferta Exclusiva */}
-			<div className="absolute top-2 right-2 rounded-full bg-red-600 px-3 py-1 text-xs font-bold text-white uppercase shadow-md">
-				🚀 Oferta Exclusiva
+			{/* 🎯 Promoción de Inscripción al Curso */}
+			<div className="bg-primary absolute top-2 left-1/2 -translate-x-1/2 rounded-md px-4 py-2 text-sm font-bold text-black uppercase shadow-md">
+				📢 ¡Inscríbete ahora y transforma tu futuro! 🚀
 			</div>
 
 			{/* 📸 Imagen del Anuncio */}
 			{imagenUrl ? (
-				<img
+				<Image
 					src={imagenUrl}
 					alt="Vista previa del anuncio"
+					width={500}
+					height={208}
 					className="mb-4 h-52 w-full rounded-md border-2 border-[#3AF4EF] object-cover shadow-md"
 				/>
 			) : (

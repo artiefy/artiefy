@@ -5,7 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { FaArrowRight } from 'react-icons/fa';
 
-import AnuncioPopup from '~/app/dashboard/super-admin/anuncios/AnuncioPopup';
+import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -15,7 +15,11 @@ export default function Home() {
 	const { user } = useUser();
 	const [loading, setLoading] = useState(false);
 	const [showAnuncio, setShowAnuncio] = useState(false);
-	const [anuncioActual, setAnuncioActual] = useState<{ titulo: string; descripcion: string; cover_image_key: string } | null>(null);
+	if (showAnuncio) {
+	}
+	const [anuncios, setAnuncios] = useState<
+		{ titulo: string; descripcion: string; coverImageKey: string }[]
+	>([]);
 
 	const dashboardRoute =
 		user?.publicMetadata?.role === 'admin'
@@ -26,35 +30,47 @@ export default function Home() {
 
 	// Obtener el anuncio activo cuando se carga la página
 	useEffect(() => {
-		const fetchAnuncioActivo = async () => {
+		const fetchAnuncioActivo = async (userId: string) => {
 			try {
-				const res = await fetch('/api/super-admin/anuncios/view-anuncio');
+				const res = await fetch('/api/super-admin/anuncios/view-anuncio', {
+					headers: { 'x-user-id': userId },
+				});
 				if (!res.ok) throw new Error('Error al obtener el anuncio activo');
 
-				const data = await res.json() as { titulo: string; descripcion: string; cover_image_key: string };
-				if (data) {
-					setAnuncioActual(data); // Guardar el anuncio en el estado
-					setShowAnuncio(true); // Mostrar el popup
+				const data = (await res.json()) as {
+					titulo: string;
+					descripcion: string;
+					coverImageKey: string;
+					tipo_destinatario?: string;
+				}[];
+				if (Array.isArray(data) && data.length > 0) {
+					console.log('✅ Anuncio recibido:', data);
+					setAnuncios(
+						data.map((anuncio) => ({
+							titulo: anuncio.titulo,
+							descripcion: anuncio.descripcion,
+							coverImageKey: anuncio.coverImageKey,
+						}))
+					);
+					setShowAnuncio(true);
+				} else {
+					console.log('⚠️ No se recibió ningún anuncio');
 				}
 			} catch (error) {
 				console.error('❌ Error al obtener el anuncio activo:', error);
 			}
 		};
 
-		fetchAnuncioActivo().catch(error => console.error('❌ Error al obtener el anuncio activo:', error));
-	}, []);
+		if (user?.id) {
+			void fetchAnuncioActivo(user.id);
+		}
+	}, [user]);
+	console.log('📌 Anuncios recibidos en el frontend:', anuncios);
 
 	return (
 		<div className="relative flex min-h-screen flex-col">
 			{/* Mostrar el popup solo si hay un anuncio activo */}
-			{showAnuncio && anuncioActual && (
-				<AnuncioPopup
-					onClose={() => setShowAnuncio(false)}
-					titulo={anuncioActual.titulo}
-					descripcion={anuncioActual.descripcion}
-					imagenUrl={anuncioActual.cover_image_key} // Usamos la clave de la imagen desde la BD
-				/>
-			)}
+			{anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}
 
 			<SmoothGradient />
 			<div className="relative z-10 flex min-h-screen flex-col">

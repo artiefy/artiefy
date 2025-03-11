@@ -1,6 +1,5 @@
 'use server';
 
-import crypto from 'crypto';
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
 import { eq, desc } from 'drizzle-orm';
 import { db } from '~/server/db';
@@ -18,10 +17,6 @@ export async function getAdminUsers(query: string | undefined) {
 	const usersResponse = await client.users.getUserList({ limit: 100 });
 	const users = usersResponse.data;
 
-	console.log(
-		'📌 DEBUG: Lista de nombres de usuarios obtenidos:',
-		usersResponse.data.map((user) => user.firstName)
-	);
 
 	const filteredUsers = query
 		? users.filter(
@@ -105,17 +100,6 @@ export async function updateUserInfo(
 		console.error('Error al actualizar usuario:', error);
 		throw new Error('No se pudo actualizar el usuario');
 	}
-}
-
-function generateRandomPassword(length = 12): string {
-	const randomBytes = crypto.randomBytes(length);
-	return randomBytes.toString('base64').slice(0, length);
-}
-
-function generateUsername(firstName: string, lastName: string): string {
-	const firstPart = firstName.slice(0, 3).toLowerCase();
-	const secondPart = lastName.slice(0, 3).toLowerCase();
-	return firstPart + secondPart;
 }
 
 export async function createUser(

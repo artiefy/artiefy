@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { updateUserInClerk } from '~/server/queries/queries'; // 🔹 Importa la función para actualizar en Clerk
 
 interface User {
 	id: string;

@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import SuperAdminLayout from '~/app/dashboard/super-admin/super-admin-layout';
-import CourseCarousel from '~/components/super-admin/CourseCarousel'; // Ajusta la ruta si es necesario
 
 interface Stats {
 	totalLessons: number;
@@ -122,10 +121,6 @@ export default function StudentCourseDashboard() {
 	};
 	
 
-	const closeModal = () => {
-		setSelectedDetail(null);
-		setIsModalOpen(false);
-	};
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -143,9 +138,6 @@ export default function StudentCourseDashboard() {
 						percentage: number;
 					}[];
 				};
-					const evaluationParams = data.evaluationParameters && Array.isArray(data.evaluationParameters)
-						? data.evaluationParameters
-						: [];
 	
 				// Corregir cómo se asigna `evaluationParameters`
 				setEvaluationParameters(

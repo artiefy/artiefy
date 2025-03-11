@@ -14,7 +14,6 @@ import {
 	FiX,
 	FiChevronDown,
 	FiChevronRight,
-	FiMail,
 } from 'react-icons/fi';
 import usePageTimeTracker from '~/hooks/usePageTimeTracker';
 
@@ -71,16 +70,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			id: 'roles',
 			link: '/dashboard/super-admin/roles',
 		},
-		{
-			icon: <FiMail size={24} />, // Agregar icono de email
-			title: 'Enviar Correo',
-			id: 'email',
-			link: '/dashboard/super-admin/emails',
-		},
 	];
-	
+
 	return (
-		
 		<div className="bg-background min-h-screen">
 			{/* 🔥 Overlay con desenfoque y transparencia para que el fondo siga visible */}
 			{isInactivePopupOpen && (

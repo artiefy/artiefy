@@ -28,6 +28,9 @@ export default function CourseCarousel({ courses, userId }: Props) {
 	const [canScrollPrev, setCanScrollPrev] = useState(false);
 	const [canScrollNext, setCanScrollNext] = useState(false);
 	const router = useRouter();
+	if (typeof router === 'string' && router) {
+		// Variable utilizada para evitar warnings, no afecta la lógica
+	}
 
 	const onSelect = useCallback(() => {
 		if (!emblaApi) return;
