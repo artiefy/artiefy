@@ -1,88 +1,91 @@
 import { NextResponse } from 'next/server';
-
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 
 const VIDEO_TO_TEXT_API = 'http://3.145.183.203:8000/video2text';
-const DEFAULT_TIMEOUT = 300000; // Aumentar el tiempo de espera a 300 segundos
+const DEFAULT_TIMEOUT = 300000;
 
-interface TranscriptionResponse {
-	transcription: string;
-	error?: string;
+interface TranscriptionItem {
+  start: number;
+  end: number;
+  text: string;
 }
 
 export async function POST(request: Request) {
-	try {
-		const { url }: { url: string } = await request.json() as { url: string };
+  try {
+    const body = await request.json();
+    let url = body.url;
 
-		if (!url) {
-			return NextResponse.json(
-				{ error: 'URL del video es requerida' },
-				{ status: 400 }
-			);
-		}
+    if (!url) {
+      return NextResponse.json(
+        { error: 'URL del video es requerida' },
+        { status: 400 }
+      );
+    }
 
-		const response = await axios.post<TranscriptionResponse>(
-			VIDEO_TO_TEXT_API,
-			{ url },
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Accept: 'application/json',
-				},
-				timeout: DEFAULT_TIMEOUT,
-			}
-		);
+    // Ensure URL is properly formatted
+    if (!url.startsWith('http')) {
+      url = `https://s3.us-east-2.amazonaws.com/artiefy-upload/${url}`;
+    }
 
-		const { transcription, error } = response.data;
+    console.log('Procesando solicitud para URL:', url);
 
-		if (error) {
-			return NextResponse.json(
-				{ error: `Error en la transcripción: ${error}` },
-				{ status: 500 }
-			);
-		}
+    // Make request to external API with JSON data
+    const response = await axios.post(
+      VIDEO_TO_TEXT_API,
+      { url }, // Send as JSON object
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        timeout: DEFAULT_TIMEOUT,
+        validateStatus: (status) => status === 200,
+      }
+    );
 
-		// Asegurarse de que la transcripción sea una cadena de texto
-		if (typeof transcription !== 'string') {
-			return NextResponse.json(
-				{ error: 'Invalid transcription format received' },
-				{ status: 500 }
-			);
-		}
+    // Log response for debugging
+    console.log('Respuesta del API:', {
+      status: response.status,
+      data: response.data,
+    });
 
-		return new Response(JSON.stringify({ transcription }), {
-			status: 200,
-			headers: {
-				'Access-Control-Allow-Origin': '*',
-				'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-				'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-			},
-		});
-	} catch (error) {
-		console.error('Error en la solicitud de transcripción:', error);
+    // Validate response data
+    if (!Array.isArray(response.data)) {
+      console.error('Formato de respuesta inválido:', response.data);
+      return NextResponse.json(
+        { error: 'Formato de respuesta inválido del servicio' },
+        { status: 502 }
+      );
+    }
 
-		let errorMessage = 'Error al procesar la solicitud de transcripción';
-		if (isAxiosError(error)) {
-			if (error.code === 'ECONNABORTED') {
-				errorMessage =
-					'La solicitud tardó demasiado tiempo. Por favor, intenta de nuevo.';
-			} else if (error.response) {
-				const responseError = (error.response.data as { error?: string })
-					?.error;
-				errorMessage = `Error del servidor (${error.response.status}): ${responseError ?? error.message}`;
-			} else if (error.request) {
-				errorMessage =
-					'No se pudo conectar con el servidor de transcripción. Por favor, verifica tu conexión a internet.';
-			}
-		}
+    // Return transcription data
+    return NextResponse.json({ transcription: response.data });
 
-		return new Response(JSON.stringify({ error: errorMessage }), {
-			status: 500,
-			headers: {
-				'Access-Control-Allow-Origin': '*',
-				'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-				'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-			},
-		});
-	}
+  } catch (error) {
+    console.error('Error detallado:', error);
+
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ECONNABORTED') {
+        return NextResponse.json(
+          { error: 'Tiempo de espera agotado' },
+          { status: 504 }
+        );
+      }
+
+      const statusCode = error.response?.status || 500;
+      const errorMessage = error.response?.data?.error || 
+        error.response?.data?.message || 
+        error.message;
+
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: statusCode }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
 }
