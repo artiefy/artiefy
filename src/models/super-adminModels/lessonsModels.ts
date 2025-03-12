@@ -1,5 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
-
+import { eq, inArray, and } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
 	categories,
@@ -7,6 +6,8 @@ import {
 	lessons,
 	modalidades,
 	users,
+	activities,
+	userLessonsProgress,
 } from '~/server/db/schema';
 
 export interface Lesson {
@@ -14,13 +15,13 @@ export interface Lesson {
 	title: string;
 	description: string | null;
 	duration: number;
-	coverImageKey: string;
-	coverVideoKey: string;
-	order: number;
+	coverImageKey?: string | null;
+	coverVideoKey?: string | null;
 	courseId: number;
 	createdAt: string | number | Date;
 	updatedAt: string | number | Date;
-	resourceKey: string;
+	resourceKey?: string;
+	resourceNames?: string;
 	_modalidadesId: {
 		id: number;
 		name: string;
@@ -45,29 +46,19 @@ export async function createLesson({
 	title: string;
 	description: string;
 	duration: number;
-	coverImageKey: string;
-	coverVideoKey: string;
+	coverImageKey?: string;
+	coverVideoKey?: string;
 	courseId: number;
-	resourceKey: string;
-	resourceNames: string;
+	resourceKey?: string;
+	resourceNames?: string;
 }) {
 	try {
-		// Obtener el valor máximo actual del campo `order` para el curso específico
-		const maxOrder = await db
-			.select({ maxOrder: sql`MAX(${lessons.order})` })
-			.from(lessons)
-			.where(eq(lessons.courseId, courseId))
-			.then((rows) => Number(rows[0]?.maxOrder) ?? 0);
-
-		const newOrder = maxOrder + 1;
-
 		const newLesson = await db.insert(lessons).values({
 			title,
 			description,
 			duration,
 			coverImageKey,
 			coverVideoKey,
-			order: newOrder, // Asignar el nuevo valor de `order`
 			courseId,
 			resourceKey,
 			resourceNames,
@@ -82,15 +73,15 @@ export async function createLesson({
 }
 
 // Contar el número de lecciones por curso y dificultad
-export const countLessonsByCourseAndDifficulty = async (courseId: number) => {
-	const count = await db
-		.select({ count: sql`COUNT(${lessons.id})` })
-		.from(lessons)
-		.where(eq(lessons.courseId, courseId))
-		.then((rows) => Number(rows[0]?.count) ?? 0);
+// export const countLessonsByCourseAndDifficulty = async (courseId: number) => {
+// 	const count = await db
+// 		.select({ count: sql`COUNT(${lessons.id})` })
+// 		.from(lessons)
+// 		.where(eq(lessons.courseId, courseId))
+// 		.then((rows) => Number(rows[0]?.count) ?? 0);
 
-	return count;
-};
+// 	return count;
+// };
 
 // Obtener la dificultad del curso
 export const getCourseDifficulty = async (courseId: number) => {
@@ -117,7 +108,8 @@ export async function getLessonsByCourseId(courseId: number) {
 				coverVideoKey: lessons.coverVideoKey,
 				resourceKey: lessons.resourceKey,
 				resourceNames: lessons.resourceNames,
-				lessonOrder: lessons.order,
+				createAt: lessons.createdAt,
+				updateAt: lessons.updatedAt,
 				courseId: lessons.courseId,
 				courseTitle: courses.title,
 				courseDescription: courses.description,
@@ -136,11 +128,12 @@ export async function getLessonsByCourseId(courseId: number) {
 				lessonTitle: string;
 				lessonDescription: string | null;
 				lessonDuration: number;
-				coverImageKey: string;
-				coverVideoKey: string;
-				resourceKey: string;
-				resourceNames: string;
-				lessonOrder: number;
+				coverImageKey: string | null;
+				coverVideoKey: string | null;
+				resourceKey: string | null;
+				resourceNames: string | null;
+				createAt: string | number | Date;
+				updateAt: string | number | Date;
 				courseId: number;
 				courseTitle: string;
 				courseDescription: string | null;
@@ -151,14 +144,14 @@ export async function getLessonsByCourseId(courseId: number) {
 			}) => ({
 				id: Lesson.lessonId,
 				title: Lesson.lessonTitle,
-				coverImageKey: Lesson.coverImageKey,
-				coverVideoKey: Lesson.coverVideoKey,
-				resourceKey: Lesson.resourceKey,
-				resourceNames: Lesson.resourceNames,
+				coverImageKey: Lesson.coverImageKey ?? '',
+				coverVideoKey: Lesson.coverVideoKey ?? '',
+				resourceKey: Lesson.resourceKey ?? '',
+				resourceNames: Lesson.resourceNames ?? '',
 				description: Lesson.lessonDescription ?? '',
-				createdAt: '', // Este dato puede ser proporcionado si lo tienes
+				createdAt: Lesson.createAt,
+				updatedAt: Lesson.updateAt,
 				duration: Lesson.lessonDuration,
-				order: Lesson.lessonOrder,
 				course: {
 					id: Lesson.courseId,
 					title: Lesson.courseTitle,
@@ -179,6 +172,27 @@ export async function getLessonsByCourseId(courseId: number) {
 	}
 }
 
+// Obtener el progreso de un usuario en una lección
+export const getUserProgressByLessonId = async (
+	lessonId: number,
+	userId: string
+) => {
+	const progress = await db
+		.select({
+			progress: userLessonsProgress.progress,
+		})
+		.from(userLessonsProgress)
+		.where(
+			and(
+				eq(userLessonsProgress.lessonId, lessonId),
+				eq(userLessonsProgress.userId, userId)
+			)
+		)
+		.then((rows) => rows[0]?.progress);
+
+	return progress;
+};
+
 // Obtener una lección por ID
 export const getLessonById = async (
 	lessonId: number
@@ -191,7 +205,6 @@ export const getLessonById = async (
 			duration: lessons.duration,
 			coverImageKey: lessons.coverImageKey,
 			coverVideoKey: lessons.coverVideoKey,
-			order: lessons.order,
 			courseId: lessons.courseId,
 			createdAt: lessons.createdAt,
 			updatedAt: lessons.updatedAt,
@@ -217,55 +230,105 @@ export const getLessonById = async (
 	return (lessonData as unknown as Lesson) || null;
 };
 
+// Agregar esta interfaz si no existe
+interface UpdateLessonData {
+	title?: string;
+	description?: string;
+	duration?: number;
+	coverImageKey?: string;
+	coverVideoKey?: string;
+	resourceKey?: string;
+	resourceNames?: string;
+	courseId?: number;
+}
+
 // Actualizar una lección
 export const updateLesson = async (
 	lessonId: number,
-	{
-		title,
-		description,
-		duration,
-		coverImageKey,
-		coverVideoKey,
-		order,
-		courseId,
-		porcentajecompletado,
-		resourceKey,
-		resourceNames,
-	}: {
-		title?: string;
-		description?: string;
-		duration?: number;
-		coverImageKey?: string;
-		coverVideoKey?: string;
-		order?: number;
-		courseId?: number;
-		porcentajecompletado?: number;
-		resourceKey?: string;
-		resourceNames?: string;
-	}
-): Promise<void> => {
-	const updateData: Record<string, unknown> = {};
+	data: UpdateLessonData
+) => {
+	const updateData: UpdateLessonData = {};
 
-	if (title) updateData.title = title;
-	if (description) updateData.description = description;
-	if (duration) updateData.duration = duration;
-	if (coverImageKey) updateData.coverImageKey = coverImageKey;
-	if (coverVideoKey) updateData.coverVideoKey = coverVideoKey;
-	if (order) updateData.order = order;
-	if (courseId) updateData.courseId = courseId;
-	if (porcentajecompletado !== undefined)
-		updateData.porcentajecompletado = porcentajecompletado;
-	if (resourceKey) updateData.resourceKey = resourceKey;
-	if (resourceNames) updateData.resourceNames = resourceNames;
+	if (data.title) updateData.title = data.title;
+	if (data.description) updateData.description = data.description;
+	if (typeof data.duration === 'number') updateData.duration = data.duration;
+	if (data.coverImageKey) updateData.coverImageKey = data.coverImageKey;
+	if (data.coverVideoKey) updateData.coverVideoKey = data.coverVideoKey;
+	if (data.resourceKey) updateData.resourceKey = data.resourceKey;
+	if (data.resourceNames) updateData.resourceNames = data.resourceNames;
+	if (typeof data.courseId === 'number') updateData.courseId = data.courseId;
 
-	await db.update(lessons).set(updateData).where(eq(lessons.id, lessonId));
+	return await db
+		.update(lessons)
+		.set(updateData)
+		.where(eq(lessons.id, lessonId))
+		.returning();
 };
 
-// Eliminar una lección
+// Eliminar una lección por su ID y datos asociados
 export const deleteLesson = async (lessonId: number): Promise<void> => {
+	//Elimina las actividades asociadas a la lección
+	await db.delete(activities).where(eq(activities.lessonsId, lessonId));
 	await db.delete(lessons).where(eq(lessons.id, lessonId));
 };
 
+// Eliminar todas las lecciones asociadas a un curso por su ID
 export const deleteLessonsByCourseId = async (courseId: number) => {
+	// Obtener todas las lecciones asociadas al curso
+	const lessonIds = await db
+		.select({ id: lessons.id })
+		.from(lessons)
+		.where(eq(lessons.courseId, courseId))
+		.then((rows) => rows.map((row) => row.id));
+
+	// Eliminar el progreso de los usuarios asociado a las lecciones del curso
+	await db
+		.delete(userLessonsProgress)
+		.where(inArray(userLessonsProgress.lessonId, lessonIds));
+
+	// Eliminar todas las actividades asociadas a las lecciones del curso
+	await db
+		.delete(activities)
+		.where(
+			inArray(
+				activities.lessonsId,
+				db
+					.select({ id: lessons.id })
+					.from(lessons)
+					.where(eq(lessons.courseId, courseId))
+			)
+		);
+	// Elimina todas las lecciones asociadas a un curso por su ID
 	await db.delete(lessons).where(eq(lessons.courseId, courseId));
+};
+
+// Obtener el progreso de los usuarios por lección
+export const getUserProgressByCourseId = async (courseId: number) => {
+	// Obtener todas las lecciones vinculadas al curso
+	const lessonsIds = await db
+		.select({ id: lessons.id })
+		.from(lessons)
+		.where(eq(lessons.courseId, courseId))
+		.then((rows) => rows.map((row) => row.id));
+
+	// Obtener el progreso de los usuarios para las lecciones obtenidas
+	const progress = await db
+		.select({
+			lessonId: userLessonsProgress.lessonId,
+			userId: userLessonsProgress.userId,
+			progress: userLessonsProgress.progress,
+		})
+		.from(userLessonsProgress)
+		.where(inArray(userLessonsProgress.lessonId, lessonsIds));
+
+	// Transformar los datos en un formato más conveniente
+	const progressByLesson: Record<number, Record<string, number>> = {};
+	progress.forEach(({ lessonId, userId, progress }) => {
+		if (!progressByLesson[lessonId]) {
+			progressByLesson[lessonId] = {};
+		}
+		progressByLesson[lessonId][userId] = progress;
+	});
+
+	return progressByLesson;
 };

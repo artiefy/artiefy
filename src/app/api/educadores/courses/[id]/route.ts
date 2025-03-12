@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-
 import {
   getAllCourses,
   createCourse,
@@ -10,85 +9,103 @@ import {
 } from '~/models/educatorsModels/courseModelsEducator';
 
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
+	request: Request,
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-    }
+	try {
+		const resolvedParams = await params;
+		const courseId = parseInt(resolvedParams.id);
+		if (isNaN(courseId)) {
+			return NextResponse.json(
+				{ error: 'ID de curso inválido' },
+				{ status: 400 }
+			);
+		}
 
-    const resolvedParams = await params;
-    const courseId = parseInt(resolvedParams.id);
-    if (isNaN(courseId)) {
-      return NextResponse.json(
-        { error: 'ID de curso inválido' },
-        { status: 400 }
-      );
-    }
-
-    const course = await getCourseById(courseId);
-    if (!course) {
-      return NextResponse.json(
-        { error: 'Curso no encontrado' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(course);
-  } catch (error) {
-    console.error('Error al obtener el curso:', error);
-    return NextResponse.json(
-      { error: 'Error al obtener el curso' },
-      { status: 500 }
-    );
-  }
+		const course = await getCourseById(courseId);
+		if (!course) {
+			return NextResponse.json(
+				{ error: 'Curso no encontrado' },
+				{ status: 404 }
+			);
+		}
+		return NextResponse.json(course);
+	} catch (error) {
+		console.error('Error al obtener el curso:', error);
+		return NextResponse.json(
+			{ error: 'Error al obtener el curso' },
+			{ status: 500 }
+		);
+	}
 }
 
 export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
+	request: Request,
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-    }
+	try {
+		const { userId } = await auth();
+		if (!userId) {
+			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+		}
+		const resolvedParams = await params;
+		const courseId = parseInt(resolvedParams.id);
 
-    const courseId = parseInt(params.id);
-    const data = (await request.json()) as {
-      title: string;
-      description: string;
-      coverImageKey: string;
-      categoryId: number;
-      instructor: string;
-      modalidadesid: number;
-      dificultadid: number;
-      requerimientos: string;
-    };
+		if (isNaN(courseId)) {
+			return NextResponse.json(
+				{ error: 'ID de curso inválido' },
+				{ status: 400 }
+			);
+		}
 
-    await updateCourse(courseId, {
-      title: data.title,
-      description: data.description,
-      coverImageKey: data.coverImageKey,
-      categoryid: data.categoryId,
-      instructor: data.instructor,
-      modalidadesid: data.modalidadesid,
-      dificultadid: data.dificultadid,
-      requerimientos: data.requerimientos,
-    });
+		const data = (await request.json()) as {
+			title?: string;
+			description?: string;
+			coverImageKey?: string;
+			categoryId?: number;
+			instructor?: string;
+			modalidadesid?: number;
+			dificultadid?: number;
+			requerimientos?: string;
+		};
 
-    // Obtener el curso actualizado
-    const updatedCourse = await getCourseById(courseId);
-    return NextResponse.json(updatedCourse);
-  } catch (error) {
-    console.error('Error al actualizar el curso:', error);
-    return NextResponse.json(
-      { error: 'Error al actualizar el curso' },
-      { status: 500 }
-    );
-  }
+		const updateData: {
+			title?: string;
+			description?: string;
+			coverImageKey?: string;
+			categoryid?: number;
+			instructor?: string;
+			modalidadesid?: number;
+			dificultadid?: number;
+			requerimientos?: string;
+		} = {};
+
+		if (data.title !== undefined) updateData.title = data.title;
+		if (data.description !== undefined)
+			updateData.description = data.description;
+		if (data.coverImageKey !== undefined)
+			updateData.coverImageKey = data.coverImageKey;
+		if (data.categoryId !== undefined) updateData.categoryid = data.categoryId;
+		if (data.instructor !== undefined) updateData.instructor = data.instructor;
+		if (data.modalidadesid !== undefined)
+			updateData.modalidadesid = data.modalidadesid;
+		if (data.dificultadid !== undefined)
+			updateData.dificultadid = data.dificultadid;
+		if (data.requerimientos !== undefined)
+			updateData.requerimientos = data.requerimientos;
+
+		await updateCourse(courseId, updateData);
+
+		// Obtener el curso actualizado
+		const updatedCourse = await getCourseById(courseId);
+		return NextResponse.json(updatedCourse);
+	} catch (error) {
+		console.error('Error al actualizar el curso:', error);
+		return NextResponse.json(
+			{ error: 'Error al actualizar el curso' },
+			{ status: 500 }
+		);
+	}
 }
 
 export async function GET_ALL() {
@@ -114,6 +131,7 @@ interface CourseData {
   instructor: string;
   requerimientos: string;
   creatorId: string;
+  rating: number;
 }
 
 export async function POST(request: Request) {

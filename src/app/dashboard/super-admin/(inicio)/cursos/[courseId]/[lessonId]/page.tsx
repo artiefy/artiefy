@@ -105,7 +105,7 @@ const Page: React.FC = () => {
 				setLoading(true);
 				setError(null);
 				const response = await fetch(
-					`/api/educadores/lessons/${lessonsIdNumber}`
+					`/api/super-admin/lessons/${lessonsIdNumber}`
 				);
 				if (response.ok) {
 					const data = (await response.json()) as Lessons;

@@ -142,7 +142,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	// Renderizamos las lecciones si todo es correcto
 	return (
 		<>
-			<h2 className="mt-10 mb-4 text-2xl font-bold">Lista de clases:</h2>
+			<h2 className="mt-10 mb-4 text-2xl font-bold">Lista de:</h2>
 			<div className="flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
 					{lessons.map((lesson) => (
@@ -213,7 +213,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 								<CardFooter className="-mt-6 flex flex-col items-start justify-between">
 									<Button asChild className="mx-auto">
 										<Link
-											href={`/dashboard/educadores/cursos/${courseId}/${lesson.id}`}
+											href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
 											className={`group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95`}
 										>
 											<p>Ver clase</p>

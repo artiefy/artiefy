@@ -19,6 +19,7 @@ export const users = pgTable('users', {
 	email: text('email').notNull(), // Email obligatorio
 	createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
 	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
+	programas: integer('programas'), // Lista de IDs de programas, puede ser null
 	// phone: text('phone'), // Teléfono opcional
 	// country: text('country'), // País opcional
 	// city: text('city'), // Ciudad opcional
@@ -116,17 +117,16 @@ export const lessons = pgTable('lessons', {
 	title: varchar('title', { length: 255 }).notNull(), // Título de la lección
 	description: text('description'), // Descripción de la lección
 	duration: integer('duration').notNull(),
-	coverImageKey: text('cover_image_key').notNull(), // Clave de la imagen en S3
-	coverVideoKey: text('cover_video_key').notNull(), // Clave del video en S3
-	order: serial('order').notNull(), // Orden autoincremental de la lección en el curso
+	coverImageKey: text('cover_image_key'), // Clave de la imagen en S3
+	coverVideoKey: text('cover_video_key'), // Clave del video en S3
 	courseId: integer('course_id')
 		.references(() => courses.id)
 		.notNull(), // Relación con la tabla cursos
 	createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
 	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(), // Fecha de última actualización
-	resourceKey: text('resource_key').notNull(), // Clave del recurso en S3
-	resourceNames: text('resource_names').notNull(), // Nombre del recurso
+	resourceKey: text('resource_key'), // Clave del recurso en S3
+	resourceNames: text('resource_names'), // Nombre del recurso
 });
 
 export const modalidades = pgTable('modalidades', {
@@ -475,24 +475,20 @@ export const anuncios = pgTable('anuncios', {
 	descripcion: text('descripcion').notNull(),
 	cover_image_key: text('cover_image_key').notNull(),
 	activo: boolean('activo').default(true),
-	tipo_destinatario: text('tipo_destinatario')
-		.notNull()
-		.default('todos'), // Puede ser 'todos', 'cursos', 'programas', 'custom'
+	tipo_destinatario: text('tipo_destinatario').notNull().default('todos'), // Puede ser 'todos', 'cursos', 'programas', 'custom'
 });
-
 
 export const anunciosCursos = pgTable('anuncios_cursos', {
 	id: serial('id').primaryKey(),
 	anuncioId: integer('anuncio_id')
-	  .references(() => anuncios.id)
-	  .notNull(),
+		.references(() => anuncios.id)
+		.notNull(),
 	courseId: integer('course_id')
-	  .references(() => courses.id)
-	  .notNull(),
-  });
-  
+		.references(() => courses.id)
+		.notNull(),
+});
 
-  export const anunciosProgramas = pgTable('anuncios_programas', {
+export const anunciosProgramas = pgTable('anuncios_programas', {
 	id: serial('id').primaryKey(),
 	anuncioId: integer('anuncio_id')
 		.references(() => anuncios.id)
@@ -511,3 +507,103 @@ export const anunciosUsuarios = pgTable('anuncios_usuarios', {
 		.notNull(),
 });
 
+export const programas = pgTable('programas', {
+	id: serial('id').primaryKey(),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description'),
+	coverImageKey: text('cover_image_key'),
+	instructor: text('instructor').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	creatorId: text('creator_id')
+		.references(() => users.id)
+		.notNull(),
+	rating: real('rating').default(0),
+});
+
+// Relaciones de programas
+export const programasRelations = relations(programas, ({ one, many }) => ({
+	creator: one(users, {
+		fields: [programas.creatorId],
+		references: [users.id],
+	}),
+	materias: many(materias),
+	enrollments: many(enrollmentPrograms),
+}));
+
+// Tabla de materias
+export const materias = pgTable('materias', {
+	id: serial('id').primaryKey(),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description'),
+	programaId: integer('programa_id')
+		.references(() => programas.id)
+		.notNull(),
+	courseId: integer('course_id') // Relación directa con curso
+		.references(() => courses.id),
+});
+
+// Relaciones de materias
+export const materiasRelations = relations(materias, ({ one, many }) => ({
+	programa: one(programas, {
+		fields: [materias.programaId],
+		references: [programas.id],
+	}),
+	curso: one(courses, {
+		fields: [materias.courseId],
+		references: [courses.id],
+	}),
+	notas: many(notas),
+}));
+
+// Tabla de notas
+export const notas = pgTable('notas', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	materiaId: integer('materia_id')
+		.references(() => materias.id)
+		.notNull(),
+	nota: real('nota').notNull(),
+});
+
+// Relaciones de notas
+export const notasRelations = relations(notas, ({ one }) => ({
+	user: one(users, {
+		fields: [notas.userId],
+		references: [users.id],
+	}),
+	materia: one(materias, {
+		fields: [notas.materiaId],
+		references: [materias.id],
+	}),
+}));
+
+// Tabla de inscripción a programas
+export const enrollmentPrograms = pgTable('enrollment_programs', {
+	id: serial('id').primaryKey(),
+	programaId: integer('programa_id')
+		.references(() => programas.id)
+		.notNull(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
+	completed: boolean('completed').default(false),
+});
+
+// Relaciones de enrollmentPrograms
+export const enrollmentProgramsRelations = relations(
+	enrollmentPrograms,
+	({ one }) => ({
+		programa: one(programas, {
+			fields: [enrollmentPrograms.programaId],
+			references: [programas.id],
+		}),
+		user: one(users, {
+			fields: [enrollmentPrograms.userId],
+			references: [users.id],
+		}),
+	})
+);
