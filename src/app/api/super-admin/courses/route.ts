@@ -42,48 +42,57 @@
 	// POST endpoint para crear cursos
 	export async function POST(request: NextRequest) {
 		try {
+			console.log('📩 Recibiendo solicitud POST para crear un curso');
+	
 			const { userId } = await auth();
 			if (!userId) {
+				console.error('❌ Error: Usuario no autorizado');
 				return respondWithError('No autorizado', 403);
 			}
-
+	
 			// Implement rate limiting
 			const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
 			const { success } = await ratelimit.limit(ip);
 			if (!success) {
+				console.error('❌ Error: Demasiadas solicitudes');
 				return respondWithError('Demasiadas solicitudes', 429);
 			}
-
+	
 			const clerkUser = await currentUser();
 			if (!clerkUser) {
-				return respondWithError(
-					'No se pudo obtener información del usuario',
-					500
-				);
+				console.error('❌ Error: No se pudo obtener información del usuario');
+				return respondWithError('No se pudo obtener información del usuario', 500);
 			}
-
-			const body = (await request.json()) as {
+	
+			const body = await request.json() as {
 				title: string;
 				description: string;
-				coverImageKey: string;
+				coverImageKey?: string;
 				categoryid: number;
 				modalidadesid: number;
 				dificultadid: number;
-				instructor: string;
-				requerimientos: string;
+				instructor?: string;
+				requerimientos?: string;
 			};
-
+			console.log('📩 Datos recibidos:', body);
+	
 			const {
 				title,
 				description,
-				coverImageKey,
+				coverImageKey = '',
 				categoryid,
 				modalidadesid,
 				dificultadid,
-				instructor,
-				requerimientos,
+				instructor = '',
+				requerimientos = '',
 			} = body;
-
+	
+			if (!title || !description || !categoryid || !modalidadesid || !dificultadid) {
+				console.error('❌ Error: Faltan datos obligatorios');
+				return respondWithError('Faltan datos obligatorios', 400);
+			}
+	
+			console.log('🛠️ Intentando crear el curso en la base de datos...');
 			await createCourse({
 				title,
 				description,
@@ -95,27 +104,17 @@
 				instructor,
 				requerimientos,
 			});
-
-			console.log('Datos enviados al servidor:', {
-				title,
-				description,
-				coverImageKey,
-				categoryid,
-				modalidadesid,
-				dificultadid,
-				instructor,
-				requerimientos,
-			});
-
+			console.log('✅ Curso creado con éxito');
+	
 			return NextResponse.json({ message: 'Curso creado exitosamente' });
+	
 		} catch (error: unknown) {
-			console.error('Error al crear el curso:', error);
-			const errorMessage =
-				error instanceof Error ? error.message : 'Error desconocido';
+			console.error('❌ Error al crear el curso:', error);
+			const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
 			return respondWithError(`Error al crear el curso: ${errorMessage}`, 500);
 		}
 	}
-
+	
 	// Actualizar un curso
 	export async function PUT(request: NextRequest) {
 		try {

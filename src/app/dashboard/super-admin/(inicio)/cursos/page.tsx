@@ -140,7 +140,7 @@ export default function Page() {
 					instructor,
 				} as CourseData);
 			} else {
-				await fetch('/api/courses', {
+				await fetch('/api/super-admin/courses', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
