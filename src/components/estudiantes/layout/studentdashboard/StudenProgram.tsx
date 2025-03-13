@@ -35,11 +35,8 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 	};
 
 	return (
-		<div className="group relative p-2">
-			{' '}
-			{/* Reduced from p-3 to p-2 */}
-			<div className="absolute -inset-1.5 animate-gradient rounded-xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[6px] transition duration-500 group-hover:opacity-100" />{' '}
-			{/* Changed -inset-2 to -inset-1.5 and adjusted blur */}
+		<div className="group relative">
+			<div className="absolute -inset-1.5 animate-gradient rounded-lg bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover:opacity-100" />
 			<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white">
 				<CardHeader className="px-6">
 					<div className="relative aspect-video overflow-hidden">
@@ -60,9 +57,9 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 					</div>
 				</CardHeader>
 
-				<CardContent className="flex grow flex-col justify-between space-y-2 px-6">
+				<CardContent className="flex grow flex-col justify-between space-y-4 px-6">
 					<div>
-						<h3 className="mb-2 line-clamp-2 text-lg font-bold text-primary">
+						<h3 className="mb-3 line-clamp-2 text-lg font-bold text-primary">
 							{program.title}
 						</h3>
 						<p className="line-clamp-2 text-sm text-gray-300">
@@ -86,8 +83,8 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 					</div>
 				</CardContent>
 
-				<CardFooter className="px-6">
-					<div className="flex w-full items-center justify-between">
+				<CardFooter className="px-6 pb-4">
+					<div className="flex w-full items-center justify-between space-x-4">
 						<div className="text-sm text-gray-400">
 							<EnrollmentCount programId={parseInt(program.id)} />
 						</div>

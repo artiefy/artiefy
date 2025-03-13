@@ -169,106 +169,96 @@ export default function StudentDashboard({
 						</div>
 
 						{/* Top Cursos section */}
-						<div className="xs:px-4 relative px-8">
+						<div className="relative px-24">
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Top Cursos
 							</h2>
-							<Carousel className="w-full">
-								<CarouselContent>
-									{latestTenCourses.map((course) => (
-										<CarouselItem
-											key={course.id}
-											className="pl-4 md:basis-1/2 lg:basis-1/3"
-										>
-											<div className="relative h-48 w-full md:h-64">
-												<Image
-													src={
-														course.coverImageKey &&
-														course.coverImageKey !== 'NULL'
-															? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-															: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-													}
-													alt={course.title}
-													fill
-													className="rounded-lg object-cover"
-													sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-													quality={85}
-													placeholder="blur"
-													blurDataURL={blurDataURL}
-												/>
-												<div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
-													<Link href={`/estudiantes/cursos/${course.id}`}>
-														<h3 className="text-lg font-bold text-white hover:underline active:scale-95">
-															{course.title}
-														</h3>
-													</Link>
-													<div className="mb-2 flex items-center justify-between">
-														<Badge
-															variant="outline"
-															className="mb-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
-														>
-															{course.category?.name}
-														</Badge>
-														<span className="text-sm font-bold text-red-500">
-															{course.modalidad?.name}
-														</span>
-													</div>
-													<div className="flex items-center justify-between">
-														<p className="text-sm text-primary italic">
-															Educador: <span>{course.instructor}</span>
-														</p>
-														<div className="flex items-center">
-															<StarIcon className="size-4 text-yellow-500" />
-															<span className="ml-1 text-sm font-bold text-yellow-500">
-																{(course.rating ?? 0).toFixed(1)}
+							<div className="py-2">
+								<Carousel className="w-full">
+									<CarouselContent>
+										{latestTenCourses.map((course) => (
+											<CarouselItem
+												key={course.id}
+												className="pl-4 md:basis-1/2 lg:basis-1/3"
+											>
+												<div className="relative h-48 w-full md:h-64">
+													<Image
+														src={
+															course.coverImageKey &&
+															course.coverImageKey !== 'NULL'
+																? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+																: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+														}
+														alt={course.title}
+														fill
+														className="rounded-lg object-cover"
+														sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+														quality={85}
+														placeholder="blur"
+														blurDataURL={blurDataURL}
+													/>
+													<div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
+														<Link href={`/estudiantes/cursos/${course.id}`}>
+															<h3 className="text-lg font-bold text-white hover:underline active:scale-95">
+																{course.title}
+															</h3>
+														</Link>
+														<div className="mb-2 flex items-center justify-between">
+															<Badge
+																variant="outline"
+																className="mb-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
+															>
+																{course.category?.name}
+															</Badge>
+															<span className="text-sm font-bold text-red-500">
+																{course.modalidad?.name}
 															</span>
+														</div>
+														<div className="flex items-center justify-between">
+															<p className="text-sm text-primary italic">
+																Educador: <span>{course.instructor}</span>
+															</p>
+															<div className="flex items-center">
+																<StarIcon className="size-4 text-yellow-500" />
+																<span className="ml-1 text-sm font-bold text-yellow-500">
+																	{(course.rating ?? 0).toFixed(1)}
+																</span>
+															</div>
 														</div>
 													</div>
 												</div>
-											</div>
-										</CarouselItem>
-									))}
-								</CarouselContent>
-								<CarouselPrevious className="-left-16 size-12 bg-black/50 text-white" />{' '}
-								{/* Fixed positioning */}
-								<CarouselNext className="-right-16 size-12 bg-black/50 text-white" />{' '}
-								{/* Fixed positioning */}
-							</Carousel>
+											</CarouselItem>
+										))}
+									</CarouselContent>
+									<CarouselPrevious className="-left-20 size-12 bg-black/50 text-white" />
+									<CarouselNext className="-right-20 size-12 bg-black/50 text-white" />
+								</Carousel>
+							</div>
 						</div>
 
 						{/* Programas section */}
-						<div className="xs:px-4 relative px-8">
+						<div className="relative px-24">
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Programas
 							</h2>
-							<div className="px-20">
-								{' '}
-								{/* Aumentado de px-16 a px-20 para dar más espacio a los lados */}
-								<div className="py-2">
-									{' '}
-									{/* Nuevo contenedor con padding vertical */}
-									<Carousel className="w-full">
-										<CarouselContent>
-											{sortedPrograms.map((program) => (
-												<CarouselItem
-													key={program.id}
-													className="pl-2 md:basis-1/2 lg:basis-1/3"
-												>
-													<div className="px-3">
-														{' '}
-														{/* Aumentado de px-2 a px-3 */}
-														<StudenProgram
-															program={program}
-															categories={categories}
-														/>
-													</div>
-												</CarouselItem>
-											))}
-										</CarouselContent>
-										<CarouselPrevious className="-left-16 size-12 bg-black/50 text-white" />
-										<CarouselNext className="-right-16 size-12 bg-black/50 text-white" />
-									</Carousel>
-								</div>
+							<div className="py-0">
+								<Carousel className="w-full">
+									<CarouselContent>
+										{sortedPrograms.map((program) => (
+											<CarouselItem
+												key={program.id}
+												className="pl-4 md:basis-1/2 lg:basis-1/3"
+											>
+												<StudenProgram
+													program={program}
+													categories={categories}
+												/>
+											</CarouselItem>
+										))}
+									</CarouselContent>
+									<CarouselPrevious className="-left-20 size-12 bg-black/50 text-white" />
+									<CarouselNext className="-right-20 size-12 bg-black/50 text-white" />
+								</Carousel>
 							</div>
 						</div>
 					</div>
