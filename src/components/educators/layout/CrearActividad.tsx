@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+
 import {
 	Timer,
 	Trophy,
@@ -10,9 +11,11 @@ import {
 	HelpCircle,
 	CheckCircle2,
 } from 'lucide-react';
-import type { WordSearchConfig, Word } from '~/app/typesActi';
+
 import WordSearch from '~/components/actividades/SopaDeLetras';
 import { generateWordSearch } from '~/utils/generadorSopaDeletras';
+
+import type { WordSearchConfig, Word } from '~/app/typesActi';
 
 function App() {
 	const [words, setWords] = useState<Word[]>([]);
@@ -244,7 +247,7 @@ function App() {
 													Las palabras pueden estar en cualquier dirección
 												</li>
 												<li>Las palabras encontradas se marcarán en verde</li>
-												<li>Presiona "Finalizar" cuando hayas terminado</li>
+												<li>Presiona &quot;Finalizar&quot; cuando hayas terminado</li>
 											</ul>
 											<button
 												onClick={() => setShowInstructions(false)}

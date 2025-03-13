@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import type { JSX } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 
-import { UserButton, useUser } from '@clerk/clerk-react';
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { UserButton, useUser } from '@clerk/clerk-react';
 import {
   FiHome,
   FiBook,

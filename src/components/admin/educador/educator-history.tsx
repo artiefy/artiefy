@@ -1,7 +1,9 @@
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import type { HistoryEntry } from "./types"
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/admin/ui/table"
+
+import type { HistoryEntry } from "~/types/types"
 
 interface EducatorHistoryProps {
   history: HistoryEntry[]

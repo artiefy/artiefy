@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+
 import {
 	Timer,
 	Trophy,
@@ -10,9 +11,11 @@ import {
 	// Edit2,
 	ArrowLeft,
 } from 'lucide-react';
-import type { Question, QuizConfig } from '~/app/typesActi';
+
 import QuestionForm from '~/components/actividades/PreguntasOM';
 import Quiz from '~/components/educators/layout/QuizPOM';
+
+import type { Question, QuizConfig } from '~/app/typesActi';
 
 function PreguntasOM() {
 	const [questions, setQuestions] = useState<Question[]>([]);
@@ -28,6 +31,13 @@ function PreguntasOM() {
 	const [remainingTime, setRemainingTime] = useState(config.timeLimit);
 	const [showInstructions, setShowInstructions] = useState(true);
 
+	const handleFinishQuiz = useCallback(() => {
+		setIsPlaying(false);
+		alert(
+			`¡Quiz terminado!\n\nPuntaje final: ${score} de ${questions.length * config.points}`
+		);
+	}, [score, questions.length, config.points]);
+
 	useEffect(() => {
 		let timer: number;
 		if (isPlaying && config.isTimerEnabled && remainingTime > 0) {
@@ -42,7 +52,7 @@ function PreguntasOM() {
 			}, 1000);
 		}
 		return () => clearInterval(timer);
-	}, [isPlaying, config.isTimerEnabled, remainingTime]);
+	}, [isPlaying, config.isTimerEnabled, remainingTime, handleFinishQuiz]);
 
 	const handleAddQuestion = (question: Question) => {
 		setQuestions([...questions, question]);
@@ -78,13 +88,6 @@ function PreguntasOM() {
 		} else {
 			handleFinishQuiz();
 		}
-	};
-
-	const handleFinishQuiz = () => {
-		setIsPlaying(false);
-		alert(
-			`¡Quiz terminado!\n\nPuntaje final: ${score} de ${questions.length * config.points}`
-		);
 	};
 
 	const formatTime = (seconds: number) => {
@@ -143,7 +146,7 @@ function PreguntasOM() {
 														points: Number(e.target.value),
 													})
 												}
-												className="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+												className="w-full rounded-lg border border-gray-300 px-4 py-2 font-semibold text-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
 												min="1"
 											/>
 										</div>
@@ -177,7 +180,7 @@ function PreguntasOM() {
 																timeLimit: Number(e.target.value),
 															})
 														}
-														className="w-32 rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+														className="w-32 rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
 														min="30"
 														step="30"
 													/>

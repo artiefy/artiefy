@@ -1,14 +1,14 @@
 "use client"
 
-import type React from "react"
+import React, { useState } from "react"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Educator } from "@/types"
+import { Button } from "~/components/admin/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/admin/ui/dialog"
+import { Input } from "~/components/admin/ui/input"
+import { Label } from "~/components/admin/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/admin/ui/select"
+
+import type { Educator } from "~/types/types"
 
 interface AddEducatorFormProps {
   open: boolean
@@ -33,6 +33,7 @@ export function AddEducatorForm({ open, onOpenChange, onAddEducator }: AddEducat
       specialization,
       role,
       status: "active",
+      username: email.split('@')[0], // Assuming username is derived from email
       joinDate: new Date().toISOString(),
       courses: [],
       avatar: "/placeholder.svg?height=40&width=40",

@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+
 import {
 	Filter,
 	Plus,
 	FileOutputIcon as FileExport,
-	Settings2,
 	MoreHorizontal,
 	History,
 } from 'lucide-react';
+
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -34,10 +35,6 @@ import { DropdownMenuSeparator , DropdownMenuLabel ,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '~/components/admin/ui/dropdown-menu';
-
-
-
-
 import { EducatorForm } from '~/components/admin/ui/educator-form';
 import { EducatorHistory } from '~/components/admin/ui/educator-history';
 import { Input } from '~/components/admin/ui/input';
@@ -56,6 +53,7 @@ import {
 	TableHeader,
 	TableRow,
 } from '~/components/admin/ui/table';
+
 import type { HistoryEntry , Course } from '~/types/types';
 
 // Añadir al principio del archivo, después de las importaciones:
@@ -100,8 +98,8 @@ const mockEducators: Educator[] = [
 		phone: '+34 600000001',
 		specialization: 'Matemáticas',
 		courses: [
-			{ id: 'COURSE-001', name: 'Matemáticas Avanzadas', title: 'Matemáticas Avanzadas', students: [] },
-			{ id: 'COURSE-002', name: 'Cálculo I', title: 'Cálculo I', students: [] },
+			{ id: 'COURSE-001', name: 'Matemáticas Avanzadas', title: 'Matemáticas Avanzadas', email: 'course1@example.com', status: 'active' },
+			{ id: 'COURSE-002', name: 'Cálculo I', title: 'Cálculo I', email: 'course2@example.com', status: 'inactive' },
 		],
 		status: 'active',
 		role: 'educador',
@@ -142,7 +140,7 @@ export default function EducatorsDashboard() {
 			educator.specialization.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
-	const handleCreateEducator = (data: any) => {
+	const handleCreateEducator = () => {
 		// Implementar lógica de creación
 		setFormOpen(false);
 	};
@@ -250,7 +248,7 @@ export default function EducatorsDashboard() {
 				<div className="flex space-x-2">
 					<Button
 						variant="default"
-						className="bg-primary text-black text-primary-foreground"
+						className="bg-primary text-primary-foreground"
 						onClick={() => {
 							setSelectedEducator(undefined);
 							setFormOpen(true);
@@ -261,7 +259,7 @@ export default function EducatorsDashboard() {
 					</Button>
 					<Button
 						variant="outline"
-						className="bg-secondary text-black text-foreground"
+						className="bg-secondary text-foreground"
 					>
 						<FileExport className="mr-2 h-4 w-4" />
 						Exportar

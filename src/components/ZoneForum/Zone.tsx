@@ -1,10 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-import { useUser } from '@clerk/nextjs';
-import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { useUser } from '@clerk/nextjs';
+import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 
 import {
   AlertDialog,
@@ -130,9 +131,7 @@ export const Zone = () => {
             <AspectRatio ratio={16 / 9}>
               <Image
                 src={
-                  `
-                  ${`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.courseId.coverImageKey}`} ` ||
-                  '/login-fondo.webp'
+                  `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.courseId.coverImageKey}`
                 }
                 alt={forum.title}
                 onError={(e) => {

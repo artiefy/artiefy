@@ -1,9 +1,12 @@
 'use server';
 
-import { eq, sql } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
+
+import { eq, sql } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { categories, courses } from '~/server/db/schema';
+
 import type { Category } from '~/types';
 
 // Obtener todas las categorías

@@ -1,54 +1,75 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-const isAdminRoute = createRouteMatcher(["/dashboard/admin(.*)"]);
-const isSuperAdminRoute = createRouteMatcher(["/dashboard/super-admin(.*)"]);
-const isEducatorRoute = createRouteMatcher(["/dashboard/educadores(.*)"]);
-const isStudentClassRoute = createRouteMatcher(["/estudiantes/clases/:id"]);
+import {
+    clerkMiddleware,
+    createRouteMatcher,
+    type ClerkMiddlewareOptions,
+} from '@clerk/nextjs/server';
+
+// Protected route matchers with documentation
+const routeMatchers = {
+    admin: createRouteMatcher(['/dashboard/admin(.*)']) as (req: Request) => boolean,
+    superAdmin: createRouteMatcher(['/dashboard/super-admin(.*)']) as (req: Request) => boolean,
+    educador: createRouteMatcher(['/dashboard/educadores(.*)']) as (req: Request) => boolean,
+    student: createRouteMatcher(['/estudiantes/clases/:id']) as (req: Request) => boolean,
+    protected: createRouteMatcher(['/dashboard(.*)']) as (req: Request) => boolean,
+};
+
+// Middleware configuration
+const middlewareConfig: ClerkMiddlewareOptions = {
+    authorizedParties: [
+        'https://artiefy.com',
+        'https://accounts.artiefy.com',
+        ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
+    ],
+};
 
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
-  const role = sessionClaims?.metadata?.role;
+    try {
+        const { userId, sessionClaims } = await auth();
+        const role = sessionClaims?.metadata?.role;
 
-  // Proteger todas las rutas que comienzan con el rol`/admin`
-  if (isAdminRoute(req) && role !== "admin") {
-    const url = new URL("/", req.url);
-    return NextResponse.redirect(url);
-  }
+        // Check for protected routes
+        const isProtectedRoute = Object.values(routeMatchers).some(matcher => matcher(req));
 
-  // Proteger todas las rutas que comienzan con el rol `/super-admin`
-  if (isSuperAdminRoute(req) && role !== "super-admin") {
-    const url = new URL("/", req.url);
-    return NextResponse.redirect(url);
-  }
+        // If not a protected route, allow access
+        if (!isProtectedRoute) {
+            return NextResponse.next();
+        }
 
-  // Proteger todas las rutas que comienzan con el rol `/educador`
-  if (isEducatorRoute(req) && role !== "educador") {
-    const url = new URL("/", req.url);
-    return NextResponse.redirect(url);
-  }
+        // Handle unauthenticated users for protected routes
+        if (!userId) {
+            return NextResponse.redirect(new URL('/sign-in', req.url));
+        }
 
-  // Proteger rutas dinámicas de estudiantes
-  if (isStudentClassRoute(req) && !userId) {
-    const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("redirect_url", req.url);
-    return NextResponse.redirect(signInUrl);
-  }
+        // Role-based access control
+        if (routeMatchers.admin(req) && role !== 'admin') {
+            return NextResponse.redirect(new URL('/', req.url));
+        }
 
-  // Manejar redirecciones de OAuth
-  if (req.nextUrl.pathname === "/sso-callback") {
-    const redirectUrl = req.nextUrl.searchParams.get("redirect_url");
-    if (redirectUrl) {
-      return NextResponse.redirect(redirectUrl);
+        if (routeMatchers.superAdmin(req) && role !== 'super-admin') {
+            return NextResponse.redirect(new URL('/', req.url));
+        }
+
+        if (routeMatchers.educador(req) && role !== 'educador') {
+            return NextResponse.redirect(new URL('/', req.url));
+        }
+
+        // Student route protection
+        if (routeMatchers.student(req) && !userId) {
+            return NextResponse.redirect(new URL('/sign-in', req.url));
+        }
+
+        return NextResponse.next();
+    } catch (error) {
+        console.error('Middleware error:', error);
+        return NextResponse.redirect(new URL('/error', req.url));
     }
-  }
-});
+}, middlewareConfig);
 
 export const config = {
-  matcher: [
-    // Omitir internos de Next.js y todos los archivos estáticos, a menos que se encuentren en los parámetros de búsqueda
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Siempre ejecutar para rutas de API
-    "/(api|trpc)(.*)",
-  ],
+    matcher: [
+        '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+        '/(api|trpc)(.*)',
+    ],
 };

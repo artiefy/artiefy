@@ -2,12 +2,15 @@
 'use client';
 
 import { useEffect, useState, type ChangeEvent } from 'react';
+
+import Image from 'next/image';
+
 import { useUser } from '@clerk/nextjs';
 import { Plus } from 'lucide-react';
-import Image from 'next/image';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import { toast } from 'sonner';
+
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
@@ -721,7 +724,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								>
 									<span
 										className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
-									></span>
+									 />
 								</span>
 							</label>
 							<span className="mt-1 text-sm text-gray-400">

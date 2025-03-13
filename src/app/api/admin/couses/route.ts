@@ -1,5 +1,6 @@
 // Esta función se encarga de obtener el total de cursos 
 import { NextResponse } from 'next/server';
+
 import { getTotalCourses } from '~/models/educatorsModels/courseModelsEducator';
 
 

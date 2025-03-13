@@ -1,22 +1,35 @@
+// 🔹 1. Estilos Globales (Siempre al inicio para evitar FOUC y asegurar estilos base de Tailwind CSS)
+import '~/styles/globals.css';
+
+// 🔹 2. Imports de Terceros
+
+// 🔹 3. Imports de Tipado
+
+// 🔹 4. Imports de Framework y Librerías de UI
+import { Montserrat } from 'next/font/google';
+import Script from 'next/script';
 
 import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
-import type { Metadata, Viewport } from 'next';
-import { Montserrat } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
-import Provider from '~/components/estudiantes/layout/ProgressBarProvider';
-import { Toaster } from '~/components/estudiantes/ui/toaster';
+// 🔹 5. Imports Internos del Proyecto
+import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { metadata as siteMetadata } from '~/lib/metadata';
 
+// 🔹 6. Imports de Componentes Locales
 import Loading from './loading';
-import '~/styles/globals.css';
+import Providers from './providers';
+
+import type { Metadata, Viewport } from 'next';
 
 const montserrat = Montserrat({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-montserrat',
-  preload: true,
-  weight: ['400', '500', '600', '700'],
+	subsets: ['latin'],
+	display: 'swap',
+	variable: '--font-montserrat',
+	preload: false,
+	weight: ['400', '500', '600', '700'],
 });
 
 export const viewport: Viewport = {
@@ -46,27 +59,31 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <ClerkProvider localization={esMX}>
-      <html lang="es" className={`${montserrat.variable}`}>
-        <head>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(jsonLd),
-            }}
-          />
-        </head>
-        <body className="bg-background font-sans text-primary">
-          <ClerkLoading>
-            <Loading />
-          </ClerkLoading>
-          <ClerkLoaded>
-            <Provider>{children}</Provider>
-            <Toaster />
-          </ClerkLoaded>
-        </body>
-      </html>
-    </ClerkProvider>
-  );
+	return (
+		<ClerkProvider localization={esMX} dynamic>
+			<html lang="es" className={`${montserrat.variable}`}>
+				<head>
+					<Script
+						id="json-ld"
+						type="application/ld+json"
+						dangerouslySetInnerHTML={{
+							__html: JSON.stringify(jsonLd),
+						}}
+						strategy="afterInteractive"
+					/>
+				</head>
+				<body className="bg-background font-sans text-primary">
+					<ClerkLoading>
+						<Loading />
+					</ClerkLoading>
+					<ClerkLoaded>
+						<Providers>{children}</Providers>
+					</ClerkLoaded>
+					<SpeedInsights />
+					<Analytics />
+					<Toaster />
+				</body>
+			</html>
+		</ClerkProvider>
+	);
 }

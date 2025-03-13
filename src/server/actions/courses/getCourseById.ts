@@ -1,62 +1,87 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
+import { unstable_cache } from 'next/cache';
+
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courses, userLessonsProgress } from '~/server/db/schema';
-import type { Course } from '~/types';
 
-// Obtener un curso específico por ID
-export async function getCourseById(courseId: number): Promise<Course | null> {
-  const course = await db.query.courses.findFirst({
-    where: eq(courses.id, courseId),
-    with: {
-      category: true,
-      modalidad: true,
-      dificultad: true,
-      lessons: {
-        orderBy: (lessons, { asc }) => [asc(lessons.order)],
-        with: {
-          activities: true,
-        },
-      },
-      enrollments: true,
-    },
-  });
+import type { Course, Activity } from '~/types';
 
-  if (!course) {
-    return null;
-  }
+const getCourseById = unstable_cache(
+	async (courseId: number, userId: string | null): Promise<Course | null> => {
+		const course = await db.query.courses.findFirst({
+			where: eq(courses.id, courseId),
+			with: {
+				category: true,
+				modalidad: true,
+				dificultad: true,
+				lessons: {
+					with: {
+						activities: true,
+					},
+				},
+				enrollments: true,
+			},
+		});
 
-  const user = await currentUser();
-  const userLessonsProgressData = user?.id
-    ? await db.query.userLessonsProgress.findMany({
-        where: eq(userLessonsProgress.userId, user.id),
-      })
-    : [];
+		if (!course) {
+			return null;
+		}
 
-    const transformedCourse: Course = {
-        ...course,
-        totalStudents: course.enrollments?.length ?? 0,
-        lessons: course.lessons?.map((lesson) => {
-            const lessonProgress = userLessonsProgressData.find(
-                (progress) => progress.lessonId === lesson.id
-            );
-            return {
-                ...lesson,
-                isLocked: lessonProgress ? lessonProgress.isLocked : true,
-                isCompleted: lessonProgress ? lessonProgress.isCompleted : false,
-                userProgress: lessonProgress ? lessonProgress.progress : 0,
-                porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
-                activities: lesson.activities?.map((activity) => ({
-                    ...activity,
-                    isCompleted: false,
-                    userProgress: 0,
-                })) ?? [],
-            };
-        }) ?? [],
-    };
+		const userLessonsProgressData = userId
+			? await db.query.userLessonsProgress.findMany({
+					where: eq(userLessonsProgress.userId, userId),
+				})
+			: [];
 
-  return transformedCourse;
-}
+		// Manually sort lessons in ascending order by title
+		course.lessons.sort((a, b) => a.title.localeCompare(b.title));
+
+		const transformedCourse: Course = {
+			...course,
+			totalStudents: course.enrollments?.length ?? 0,
+			lessons:
+				course.lessons?.map((lesson) => {
+					const lessonProgress = userLessonsProgressData.find(
+						(progress) => progress.lessonId === lesson.id
+					);
+					return {
+						...lesson,
+						isLocked: lessonProgress?.isLocked ?? true,
+						isCompleted: lessonProgress?.isCompleted ?? false,
+						userProgress: lessonProgress?.progress ?? 0,
+						porcentajecompletado: lessonProgress?.progress ?? 0,
+						isNew: false, // Add default value for isNew
+						resourceNames: lesson.resourceNames
+							? lesson.resourceNames.split(',')
+							: [], // Convertir texto a array
+						activities:
+							lesson.activities?.map(
+								(activity): Activity => ({
+									...activity,
+									isCompleted: false,
+									userProgress: 0,
+									revisada: activity.revisada ?? false, // Convertir null a false
+									porcentaje: activity.porcentaje ?? 0,
+									parametroId: activity.parametroId ?? null,
+									fechaMaximaEntrega: activity.fechaMaximaEntrega ?? null,
+									createdAt: activity.lastUpdated, // Use lastUpdated as createdAt
+									content: { questions: [] }, // Add default content if needed
+								})
+							) ?? [],
+					};
+				}) ?? [],
+		};
+
+		return transformedCourse;
+	},
+	['course-details'],
+	{
+		revalidate: 3600, // Cache por 1 hora
+		tags: ['course-details'],
+	}
+);
+
+export { getCourseById };

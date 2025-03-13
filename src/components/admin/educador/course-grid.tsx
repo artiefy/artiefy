@@ -1,7 +1,10 @@
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import type { Course } from "./types"
-import { cn } from "@/lib/utils"
+import Image from 'next/image'
+
+import { Button } from "~/components/admin/ui/button"
+import { Card } from "~/components/admin/ui/card"
+import { cn } from "~/lib/utils"
+
+import type { Course } from "~/types/types"
 
 interface CourseGridProps {
   courses: Course[] | undefined
@@ -25,15 +28,15 @@ export function CourseGrid({ courses, onViewCourse, onClose, className }: Course
               onClick={() => onViewCourse(course)}
             >
               <div className="aspect-[2/1] relative bg-[#e2e8f0] flex items-center justify-center">
-                {course.imageUrl ? (
-                  <img
-                    src={course.imageUrl || "/placeholder.svg"}
+                  <Image
+                    src={course.imageUrl ??  "/placeholder.svg"}
                     alt={course.title}
-                    className="object-cover w-full h-full"
+                    layout="fill"
+                    objectFit="cover"
                   />
-                ) : (
+                 : (
                   <span className="text-gray-500 text-center px-4">Imagen no disponible</span>
-                )}
+                )
               </div>
               <div className="p-4">
                 <h3 className="text-lg font-medium text-white line-clamp-2">{course.title}</h3>

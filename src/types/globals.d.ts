@@ -9,6 +9,7 @@ declare global {
 			role?: Roles;
 			isNewUser?: boolean;
 		};
+		fullName?: string;
+		primaryEmail?: string;
 	}
 }
-

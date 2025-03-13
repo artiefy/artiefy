@@ -1,6 +1,8 @@
-import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
+
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
 import { Badge } from '~/components/educators/ui/badge';
 import {
@@ -34,15 +36,14 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
 		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
 			{courses.map((course) => (
 				<div key={course.id} className="group relative">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 					<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
 						<CardHeader>
 							<AspectRatio ratio={16 / 9}>
 								<div className="relative size-full">
 									<Image
 										src={
-											`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}` ||
-											'/placeholder.svg'
+											course.coverImageKey ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}` : '/placeholder.svg'
 										}
 										alt={course.title || 'Imagen del curso'}
 										className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
@@ -90,7 +91,7 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
 										<p className="font-bold">Ver Curso</p>
 										<ArrowRightIcon className="animate-bounce-right size-5" />
 										<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
-											<div className="relative h-full w-10 bg-white/30"></div>
+											<div className="relative h-full w-10 bg-white/30" />
 										</div>
 									</Link>
 								</Button>

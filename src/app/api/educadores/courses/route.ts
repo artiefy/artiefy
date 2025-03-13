@@ -1,5 +1,6 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
+
+import { auth, currentUser } from '@clerk/nextjs/server';
 
 import {
 	createCourse,

@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { userLessonsProgress } from '~/server/db/schema';
+
 import type { UserLessonsProgress } from '~/types';
 
 // Obtener el progreso de las lecciones del usuario

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+
 import { Users, GraduationCap, TrendingUp } from 'lucide-react';
+
 import { AddStudentForm } from '~/components/admin/ui/AddStudentForm';
 import { Button } from '~/components/admin/ui/button';
 import { DashboardMetrics } from '~/components/admin/ui/DashboardMetrics';
@@ -15,6 +17,7 @@ import {
 import { EstudianteDetalle } from '~/components/admin/ui/EstudianteDetalle';
 import { GenericTable } from '~/components/admin/ui/GenericTable';
 import { Input } from '~/components/admin/ui/input';
+
 import type { Estudiante } from '~/types/user';
 
 // Ensure AddStudentForm is correctly imported

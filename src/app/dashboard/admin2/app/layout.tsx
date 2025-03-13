@@ -3,6 +3,7 @@
 import { Inter } from 'next/font/google';
 import '~/styles/globals.css';
 import { usePathname } from 'next/navigation';
+
 import ResponsiveSidebar from '~/components/admin/ui/Sidebar';
 import { ThemeEffect } from '~/components/admin/ui/theme-effect';
 import { ThemeProvider } from '~/components/admin/ui/theme-provider';

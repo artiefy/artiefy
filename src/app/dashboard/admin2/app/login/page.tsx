@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
 import { Button } from '~/components/admin/ui/button';
 import { Input } from '~/components/admin/ui/input';
 
@@ -27,8 +29,8 @@ export default function Login() {
         </div>
         {/* Geometric lines */}
         <div className="absolute inset-0">
-          <div className="absolute bottom-0 left-0 size-96 -translate-x-1/2 translate-y-1/2 rotate-45 border border-[#40E0D0]/20"></div>
-          <div className="absolute right-0 top-0 size-96 -translate-y-1/2 translate-x-1/2 rotate-45 border border-[#40E0D0]/20"></div>
+          <div className="absolute bottom-0 left-0 size-96 -translate-x-1/2 translate-y-1/2 rotate-45 border border-[#40E0D0]/20" />
+          <div className="absolute right-0 top-0 size-96 -translate-y-1/2 translate-x-1/2 rotate-45 border border-[#40E0D0]/20" />
         </div>
       </div>
 

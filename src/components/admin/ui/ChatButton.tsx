@@ -28,7 +28,7 @@ const ChatButton = () => {
 	} | null>(null);
 	const [mostrarSeleccionContactos, setMostrarSeleccionContactos] =
 		useState(false);
-	const chatContainerRef = useRef<HTMLDivElement>(null);
+	const chatContainerRef = useRef<HTMLElement>(null);
 	const { theme, setTheme } = useTheme();
 
 	// Simulación de contactos y conversaciones (mantenido del código original)

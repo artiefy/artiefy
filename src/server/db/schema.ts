@@ -8,22 +8,48 @@ import {
 	text,
 	timestamp,
 	varchar,
+	date,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable('users', {
-	id: text('id').primaryKey(), // ID del usuario proporcionado por Clerk
-	role: text('role').notNull(), // Rol del usuario (estudiante/profesor, etc.)
-	name: text('name'), // Nombre opcional del usuario
-	email: text('email').notNull(), // Email obligatorio
-	createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
-	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
-	// phone: text('phone'), // Teléfono opcional
-	// country: text('country'), // País opcional
-	// city: text('city'), // Ciudad opcional
-	// address: text('address'), // Dirección opcional
-	// age: integer('age'), // Edad opcional
-	// birthDate: date('birth_date'), // Fecha de nacimiento opcional
+	id: text('id').primaryKey(),
+	role: text('role').notNull(),
+	name: text('name'),
+	email: text('email').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	phone: text('phone'),
+	country: text('country'),
+	city: text('city'),
+	address: text('address'),
+	age: integer('age'),
+	birthDate: date('birth_date'),
+	subscriptionStatus: text('subscription_status').default('inactive').notNull(),
+	subscriptionEndDate: timestamp('subscription_end_date', {
+		withTimezone: true,
+		mode: 'date',
+	}),
+	planType: text('plan_type', { enum: ['Pro', 'Premium', 'Enterprise'] }),
+	purchaseDate: timestamp('purchase_date', {
+		withTimezone: true,
+		mode: 'date',
+	}),
+});
+
+// Tabla de categorías
+export const categories = pgTable('categories', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: text('description'),
+	is_featured: boolean('is_featured').default(false),
+});
+
+// Tabla de dificultad
+export const dificultad = pgTable('dificultad', {
+	id: serial('id').primaryKey(),
+	name: text('name').notNull(),
+	description: text('description').notNull(),
 });
 
 // Tabla de cursos
@@ -51,15 +77,6 @@ export const courses = pgTable('courses', {
 	requerimientos: text('requerimientos').notNull(),
 });
 
-// Tabla de categorías
-export const categories = pgTable('categories', {
-	id: serial('id').primaryKey(), // ID autoincremental de la categoría
-	name: varchar('name', { length: 255 }).notNull(), // Nombre de la categoría
-	description: text('description'), // Descripción de la categoría
-	is_featured: boolean('is_featured').default(false), // Nuevo campo para destacar categorías
-	// Tabla de lecciones
-});
-
 // Tabla de tipos de actividades
 export const typeActi = pgTable('type_acti', {
 	id: serial('id').primaryKey(),
@@ -79,30 +96,36 @@ export const activities = pgTable('activities', {
 		.references(() => lessons.id)
 		.notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+	revisada: boolean('revisada').default(false),
+	parametroId: integer('parametro_id').references(() => parametros.id),
+	porcentaje: integer('porcentaje'),
+	fechaMaximaEntrega: timestamp('fecha_maxima_entrega'),
+});
+
+// Tabla de inscripciones
+export const enrollments = pgTable('enrollments', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	courseId: integer('course_id')
+		.references(() => courses.id)
+		.notNull(),
+	enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
+	completed: boolean('completed').default(false),
 });
 
 // Tabla de preferencias
 export const preferences = pgTable('preferences', {
-	id: serial('id').primaryKey(), // ID autoincremental de la preferencia
-	name: varchar('name', { length: 255 }).notNull(), // Nombre de la preferencia
-	area_cono: text('area_cono'), // Área de conocimiento
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	area_cono: text('area_cono'),
 	userId: text('user_id')
 		.references(() => users.id)
-		.notNull(), // Relación con usuarios
-	categoryid: integer('categoryid') // Usar el nombre consistente
+		.notNull(),
+	categoryid: integer('categoryid')
 		.references(() => categories.id)
 		.notNull(),
-});
-
-//tabla de cursos tomados
-export const coursesTaken = pgTable('courses_taken', {
-	id: serial('id').primaryKey(), // ID autoincremental del curso tomado
-	userId: text('user_id')
-		.references(() => users.id)
-		.notNull(), // Relación con usuarios
-	courseId: integer('course_id')
-		.references(() => courses.id)
-		.notNull(), // Relación con cursos
 });
 
 // Tabla de lecciones
@@ -113,7 +136,6 @@ export const lessons = pgTable('lessons', {
 	duration: integer('duration').notNull(),
 	coverImageKey: text('cover_image_key').notNull(), // Clave de la imagen en S3
 	coverVideoKey: text('cover_video_key').notNull(), // Clave del video en S3
-	order: serial('order').notNull(), // Orden autoincremental de la lección en el curso
 	courseId: integer('course_id')
 		.references(() => courses.id)
 		.notNull(), // Relación con la tabla cursos
@@ -142,36 +164,15 @@ export const scores = pgTable('scores', {
 		.notNull(),
 });
 
-export const dificultad = pgTable('dificultad', {
-	id: serial('id').primaryKey(),
-	name: text('name').notNull(),
-	description: text('description').notNull(),
-});
-
-// Agregamos una nueva tabla para el progreso de las actividades
-export const activityProgress = pgTable('activity_progress', {
+// Tabla de cursos tomados
+export const coursesTaken = pgTable('courses_taken', {
 	id: serial('id').primaryKey(),
 	userId: text('user_id')
 		.references(() => users.id)
 		.notNull(),
-	activityId: integer('activity_id')
-		.references(() => activities.id)
-		.notNull(),
-	completed: boolean('completed').default(false),
-	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
-});
-
-// Tabla de inscripciones (relación muchos a muchos entre usuarios y inscripciones)
-export const enrollments = pgTable('enrollments', {
-	id: serial('id').primaryKey(), // ID autoincremental de la inscripción
-	userId: text('user_id')
-		.references(() => users.id)
-		.notNull(), // Relación con usuarios
 	courseId: integer('course_id')
 		.references(() => courses.id)
-		.notNull(), // Relación con cursos
-	enrolledAt: timestamp('enrolled_at').defaultNow().notNull(), // Fecha de inscripción
-	completed: boolean('completed').default(false), // Estado de completado
+		.notNull(),
 });
 
 // Tabla de proyectos
@@ -212,24 +213,9 @@ export const userLessonsProgress = pgTable('user_lessons_progress', {
 	progress: real('progress').default(0).notNull(),
 	isCompleted: boolean('is_completed').default(false).notNull(),
 	isLocked: boolean('is_locked').default(true),
+	isNew: boolean('is_new').default(true).notNull(), // Agregar campo isNew
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
-
-//Tabla de sistema de tickets
-export const tickets = pgTable('tickets', {
-	id: serial('id').primaryKey(),
-	userId: text('user_id')
-		.references(() => users.id)
-		.notNull(),
-	comments: varchar('comments', { length: 255 }).notNull(),
-	description: text('description').notNull(),
-	estado: boolean('estado').default(false).notNull(),
-	email: text('email').notNull(),
-	coverImageKey: text('cover_image_key'),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
 
 //tabla de foros
 export const forums = pgTable('forums', {
@@ -260,7 +246,21 @@ export const posts = pgTable('posts', {
 	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
 });
 
-
+export const postReplies = pgTable('post_replies', {
+	id: serial('id').primaryKey(),
+	postId: integer('post_id')
+		.references(() => posts.id)
+		.notNull(), // Relaciona la respuesta con el post original
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(), // El usuario que hace la respuesta
+	content: text('content').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.notNull()
+		.$onUpdateFn(() => new Date()),
+});
 
 // Tabla de progreso de actividades por usuario
 export const userActivitiesProgress = pgTable('user_activities_progress', {
@@ -273,6 +273,33 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 	progress: real('progress').default(0).notNull(),
 	isCompleted: boolean('is_completed').default(false).notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+	revisada: boolean('revisada').references(() => activities.revisada),
+});
+
+//Tabla de sistema de tickets
+export const tickets = pgTable('tickets', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	comments: varchar('comments', { length: 255 }).notNull(),
+	description: text('description').notNull(),
+	estado: boolean('estado').default(false).notNull(),
+	email: text('email').notNull(),
+	coverImageKey: text('cover_image_key'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+//Tabla de parametros
+export const parametros = pgTable('parametros', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: text('description').notNull(),
+	porcentaje: integer('porcentaje').notNull(),
+	courseId: integer('course_id')
+		.references(() => courses.id)
+		.notNull(),
 });
 
 // Relaciones
@@ -441,25 +468,3 @@ export const userActivitiesProgressRelations = relations(
 		}),
 	})
 );
-
-//relaciones de foros
-export const forumRelations = relations(forums, ({ one, many }) => ({
-	course: one(courses, {
-		fields: [forums.courseId],
-		references: [courses.id],
-	}), // Un foro está asociado a un solo curso (relación uno a uno)
-	posts: many(posts), // Un foro puede tener muchos posts (comentarios o temas de discusión)
-}));
-
-export const postRelations = relations(posts, ({ one }) => ({
-	forum: one(forums, {
-		fields: [posts.forumId],
-		references: [forums.id],
-	}), // Un post pertenece a un foro
-	user: one(users, {
-		fields: [posts.userId],
-		references: [users.id],
-	}), // Un post tiene un usuario creador
-}));
-
-

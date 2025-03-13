@@ -1,7 +1,9 @@
 'use client';
 import { useState, useCallback, useEffect } from 'react';
+
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
+
 import CrearActividad from '~/components/educators/layout/CrearActividad';
 import PreguntasOm from '~/components/educators/layout/CrearActividadOM';
 import {

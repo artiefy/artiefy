@@ -1,7 +1,8 @@
-// @ts-check
-
 import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
+import tseslintPlugin from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import globals from 'globals';
 
 const compat = new FlatCompat({
 	baseDirectory: import.meta.dirname,
@@ -9,94 +10,130 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+	// 🔹 Ignorar archivos innecesarios
 	{
 		ignores: [
 			'**/node_modules/**',
 			'.next/**',
 			'out/**',
 			'public/**',
+			'dist/**',
 			'**/*.d.ts',
+			'.vercel/**',
 			'src/components/estudiantes/ui/**',
-			'src/components/admin/ui/**',
 			'src/components/educadores/ui/**',
+			'src/components/admin/ui/**',
+			'src/components/super-admin/ui/**',
 		],
 	},
+
+	// 🔹 Configuración para archivos JS/TS
 	{
 		files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+		languageOptions: {
+			ecmaVersion: 2022,
+			sourceType: 'module',
+			parser: tsParser,
+			parserOptions: {
+				project: './tsconfig.json',
+				tsconfigRootDir: process.cwd(),
+				ecmaFeatures: { jsx: true },
+			},
+			globals: {
+				...globals.browser,
+				...globals.node,
+				...globals.es2022,
+			},
+		},
+		plugins: {
+			'@typescript-eslint': tseslintPlugin,
+		},
 	},
+
+	// 🔹 Configuración de Next.js, TypeScript e Importaciones
 	...compat.config({
 		extends: [
-			'next/core-web-vitals',
 			'eslint:recommended',
-			'next',
+			'next/core-web-vitals',
 			'next/typescript',
 			'plugin:@next/next/recommended',
 			'plugin:@typescript-eslint/recommended',
 			'plugin:@typescript-eslint/recommended-type-checked',
 			'plugin:@typescript-eslint/stylistic-type-checked',
 			'plugin:import/recommended',
-			'plugin:import/typescript',
+			'plugin:drizzle/recommended',
 			'prettier',
 		],
-		parser: '@typescript-eslint/parser',
-		parserOptions: {
-			project: './tsconfig.json',
-			tsconfigRootDir: import.meta.dirname,
-		},
-		plugins: ['@typescript-eslint', 'drizzle', 'import'],
 		rules: {
-			'@typescript-eslint/consistent-type-definitions': 'warn',
-			'@typescript-eslint/consistent-type-imports': [
-				'warn',
-				{
-					prefer: 'type-imports',
-					fixStyle: 'inline-type-imports',
-				},
-			],
+			// ⚠️ **Advertencias de Código**
+			'no-console': 'off',
+			'no-unused-vars': 'off',
 			'@typescript-eslint/no-unused-vars': [
 				'warn',
-				{
-					argsIgnorePattern: '^_',
-				},
+				{ argsIgnorePattern: '^_' },
+			],
+			'@typescript-eslint/consistent-type-definitions': ['warn', 'interface'],
+			'@typescript-eslint/consistent-type-imports': [
+				'warn',
+				{ prefer: 'type-imports', fixStyle: 'inline-type-imports' },
 			],
 			'@typescript-eslint/require-await': 'warn',
 			'@typescript-eslint/no-misused-promises': [
 				'warn',
-				{
-					checksVoidReturn: {
-						arguments: false,
-						attributes: false,
-					},
-				},
+				{ checksVoidReturn: { arguments: false, attributes: false } },
 			],
 			'@typescript-eslint/no-floating-promises': 'warn',
-			'drizzle/enforce-delete-with-where': [
+
+			// 🚨 **Errores Críticos**
+			'@typescript-eslint/no-unsafe-assignment': 'error',
+			'@typescript-eslint/no-unsafe-call': 'error',
+			'@typescript-eslint/no-unsafe-member-access': 'error',
+			'@typescript-eslint/no-unsafe-return': 'error',
+			'@typescript-eslint/no-explicit-any': 'error',
+			'no-unused-expressions': 'error',
+			'no-duplicate-imports': 'error',
+
+			// 🔹 **Next.js y React**
+			'react/react-in-jsx-scope': 'off',
+			'react/self-closing-comp': [
 				'warn',
 				{
-					drizzleObjectName: ['db', 'ctx.db'],
+					component: true,
+					html: true,
 				},
+			],
+
+			// 🔹 **Drizzle ORM**
+			'drizzle/enforce-delete-with-where': [
+				'warn',
+				{ drizzleObjectName: ['db', 'ctx.db'] },
 			],
 			'drizzle/enforce-update-with-where': [
 				'warn',
-				{
-					drizzleObjectName: ['db', 'ctx.db'],
-				},
+				{ drizzleObjectName: ['db', 'ctx.db'] },
 			],
+
+			// 🔹 **Orden de Imports**
 			'import/order': [
 				'warn',
 				{
-					groups: ['builtin', 'external', 'internal', ['parent', 'sibling']],
+					'newlines-between': 'always',
+					groups: [
+						['builtin', 'external'],
+						'internal',
+						['parent', 'sibling', 'index'],
+						'type',
+					],
 					pathGroups: [
-						{
-							pattern: 'react',
-							group: 'external',
-							position: 'before',
-						},
+						{ pattern: 'react', group: 'external', position: 'before' },
+						{ pattern: 'next/**', group: 'external', position: 'before' },
 						{
 							pattern: '@/components/**',
 							group: 'internal',
 							position: 'after',
 						},
+						{ pattern: '@/lib/**', group: 'internal', position: 'after' },
+						{ pattern: '@/styles/**', group: 'internal', position: 'after' },
 					],
 					pathGroupsExcludedImportTypes: ['react'],
 					alphabetize: {
@@ -105,14 +142,14 @@ const eslintConfig = [
 					},
 				},
 			],
-			'react/react-in-jsx-scope': 'off',
 			'import/no-unresolved': 'warn',
-			'import/newline-after-import': 'off',
+			'import/no-duplicates': 'warn',
+			'import/newline-after-import': 'warn',
 		},
 		settings: {
 			'import/resolver': {
 				alias: {
-					map: [['~', './src']],
+					map: [['@', './src']],
 					extensions: ['.js', '.jsx', '.ts', '.tsx'],
 				},
 				typescript: {
@@ -120,12 +157,8 @@ const eslintConfig = [
 					project: './tsconfig.json',
 				},
 			},
-			react: {
-				version: 'detect',
-			},
-			next: {
-				rootDir: './',
-			},
+			react: { version: 'detect' },
+			next: { rootDir: process.cwd() },
 		},
 	}),
 ];

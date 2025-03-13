@@ -53,7 +53,7 @@ export function TicketList({
             <TableCell>
               <Button
                 onClick={() => onSelectTicket(ticket)}
-                className="mr-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground/90 text-white font-semibold"
+                className="mr-2 bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground/90 font-semibold"
               >
                 Ver Detalles
               </Button>

@@ -1,6 +1,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { S3 } from 'aws-sdk';
 import { v4 as uuidv4 } from 'uuid';
+
 import { db } from '~/server/db';
 import { tickets, tickets as ticketsTable } from '~/server/db/schema';
 import { type Ticket } from '~/types/Tickets';

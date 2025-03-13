@@ -1,81 +1,77 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import NProgress from 'nprogress';
-import {
-	FaCheckCircle,
-	FaLock,
-	FaClock,
-	FaRobot,
-	FaArrowLeft,
-	FaArrowRight,
-} from 'react-icons/fa';
 
-import ChatBot from '~/components/estudiantes/layout/ChatBot';
+import { useProgress } from '@bprogress/next';
+import { useUser } from '@clerk/nextjs';
+import { formatInTimeZone } from 'date-fns-tz';
+import { FaRobot } from 'react-icons/fa';
+import { toast } from 'sonner';
+
+import RecursosLesson from '~/components/admin/ui/RecursosLesson';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import VideoPlayer from '~/components/estudiantes/layout/VideoPlayer';
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { Progress } from '~/components/estudiantes/ui/progress';
-import { useToast } from '~/hooks/use-toast';
-import { unlockNextLesson } from '~/server/actions/lessons/unlockNextLesson';
-import { completeActivity } from '~/server/actions/progress/completeActivity';
-import { updateLessonProgress } from '~/server/actions/progress/updateLessonProgress';
-import { type Activity, type UserLessonsProgress } from '~/types';
+import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
+import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
+import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
+import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
+import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
+import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
+import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
+import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
+import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
+import {
+	type Activity,
+	type UserLessonsProgress,
+	type Lesson,
+	type LessonWithProgress,
+	type UserActivitiesProgress,
+} from '~/types';
+import {
+	saveScrollPosition,
+	restoreScrollPosition,
+} from '~/utils/scrollPosition';
 
-interface Lesson {
-	id: number;
-	title: string;
-	coverVideoKey: string;
-	description: string | null;
-	resourceKey: string;
-	porcentajecompletado: number;
-	duration: number;
-	isCompleted: boolean;
-	order: number;
-}
+const TIME_ZONE = 'America/Bogota';
 
-interface Course {
-	id: number;
-	instructor: string;
-}
-
-interface LessonWithProgress extends Lesson {
-	isLocked: boolean;
-}
+// Removed unused LessonActivitiesProps interface
 
 export default function LessonDetails({
 	lesson,
 	activity,
-	course,
 	lessons,
 	userLessonsProgress,
+	userActivitiesProgress,
+	userId,
 }: {
 	lesson: LessonWithProgress;
 	activity: Activity | null;
 	lessons: Lesson[];
-	course: Course;
 	userLessonsProgress: UserLessonsProgress[];
+	userActivitiesProgress: UserActivitiesProgress[];
+	userId: string;
 }) {
+	// Add new state
+	const [isNavigating, setIsNavigating] = useState(false);
+	// State and hooks initialization
+	const { user } = useUser();
+	const router = useRouter();
 	const [isChatOpen, setIsChatOpen] = useState(false);
 	const [selectedLessonId, setSelectedLessonId] = useState<number | null>(
-		lesson.id
+		lesson?.id ?? null
 	);
-	const [progress, setProgress] = useState(lesson.porcentajecompletado);
+	const [progress, setProgress] = useState(lesson?.porcentajecompletado ?? 0);
 	const [isVideoCompleted, setIsVideoCompleted] = useState(
-		lesson.porcentajecompletado === 100
+		lesson?.porcentajecompletado === 100
 	);
 	const [isActivityCompleted, setIsActivityCompleted] = useState(
 		activity?.isCompleted ?? false
 	);
 	const [isCompletingActivity, setIsCompletingActivity] = useState(false);
 	const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
-	const router = useRouter();
 	const searchParams = useSearchParams();
-	const { toast } = useToast();
+	const { start, stop } = useProgress();
 
 	// Initialize lessons state with progress and locked status
 	useEffect(() => {
@@ -88,62 +84,52 @@ export default function LessonDetails({
 					return {
 						...lessonItem,
 						isLocked: progress ? (progress.isLocked ?? true) : true,
+						porcentajecompletado: progress ? progress.progress : 0,
+						courseTitle: lessonItem.courseTitle ?? '', // Ensure courseTitle is always a string
 					};
 				})
-				.sort((a, b) => a.order - b.order); // Ensure lessons are sorted by order
+				.sort((a, b) => a.title.localeCompare(b.title));
 			setLessonsState(lessonsWithProgress);
 		};
 
 		initializeLessonsState();
 	}, [lessons, userLessonsProgress]);
 
+	// Usar userActivitiesProgress para algo útil, por ejemplo, mostrar el progreso de las actividades
+	useEffect(() => {
+		console.log(userActivitiesProgress);
+		// Aquí puedes agregar lógica para usar userActivitiesProgress en la interfaz de usuario
+	}, [userActivitiesProgress]);
+
 	// Handle lesson navigation
 	useEffect(() => {
-		if (selectedLessonId !== null && selectedLessonId !== lesson.id) {
-			NProgress.start();
+		if (selectedLessonId !== null && selectedLessonId !== lesson?.id) {
+			saveScrollPosition();
 			setProgress(0);
 			setIsVideoCompleted(false);
 			setIsActivityCompleted(false);
 			router.push(`/estudiantes/clases/${selectedLessonId}`);
 		}
-	}, [selectedLessonId, lesson.id, router]);
+	}, [selectedLessonId, lesson?.id, router]);
 
-	// Ensure initial lesson loading is complete
+	// Restore scroll position on route change
 	useEffect(() => {
-		NProgress.done();
-	}, [searchParams]);
-
-	// Ensure the first lesson is always active and unlocked
-	useEffect(() => {
-		setLessonsState((prevLessons) =>
-			prevLessons.map((l) =>
-				l.order === 1
-					? {
-							...l,
-							isLocked: false,
-							porcentajecompletado: l.porcentajecompletado,
-							isCompleted: l.porcentajecompletado === 100, // Set completion status based on percentage
-						}
-					: l
-			)
-		);
-	}, []);
+		restoreScrollPosition();
+	}, [lesson?.id]);
 
 	// Set initial progress and video completion state based on lesson data
 	useEffect(() => {
-		setProgress(lesson.porcentajecompletado);
-		setIsVideoCompleted(lesson.porcentajecompletado === 100);
+		setProgress(lesson?.porcentajecompletado ?? 0);
+		setIsVideoCompleted(lesson?.porcentajecompletado === 100);
 		setIsActivityCompleted(activity?.isCompleted ?? false);
 	}, [lesson, activity]);
 
-	// Redirect if the lesson is locked and not the first lesson
+	// Redirect if the lesson is locked
 	useEffect(() => {
-		if (lesson.isLocked && lesson.order !== 1) {
-			toast({
-				title: 'Lección bloqueada',
+		if (lesson?.isLocked) {
+			toast.error('Lección bloqueada', {
 				description:
 					'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
-				variant: 'destructive',
 			});
 
 			const timeoutId = setTimeout(() => {
@@ -152,8 +138,9 @@ export default function LessonDetails({
 
 			return () => clearTimeout(timeoutId);
 		}
-	}, [lesson.isLocked, lesson.order, router, toast]);
+	}, [lesson?.isLocked, router]);
 
+	// Handle video end event
 	const handleVideoEnd = async () => {
 		setProgress(100);
 		setIsVideoCompleted(true);
@@ -171,42 +158,41 @@ export default function LessonDetails({
 						: l
 				)
 			);
-			toast({
-				title: 'Video Completado',
+			toast.success('Video Completado', {
 				description: activity
 					? 'Ahora completa la actividad para desbloquear la siguiente clase'
 					: 'Has completado la clase',
-				variant: 'default',
 			});
 
-			// Solo desbloqueamos la siguiente lección si no hay actividad
+			// Unlock next lesson if no activity
 			if (!activity) {
 				const result = await unlockNextLesson(lesson.id);
-				if (result.success && 'nextLessonId' in result) {
-					toast({
-						title: 'Clase Completada',
+				if (
+					result.success &&
+					'nextLessonId' in result &&
+					typeof result.nextLessonId === 'number'
+				) {
+					setLessonsState((prevLessons) =>
+						prevLessons.map((l) =>
+							l.id === result.nextLessonId ? { ...l, isLocked: false } : l
+						)
+					);
+					toast.success('Clase Completada', {
 						description: '¡Avanzando a la siguiente clase!',
-						variant: 'default',
 					});
 
-					// Navegación automática a la siguiente clase
-					setTimeout(() => {
-						setProgress(0);
-						setSelectedLessonId(result.nextLessonId ?? null); // Handle undefined case
-						router.push(`/estudiantes/clases/${result.nextLessonId}`);
-					}, 1500);
+					await handleAutoNavigation(result.nextLessonId);
 				}
 			}
 		} catch (error) {
 			console.error('Error al actualizar el progreso de la lección:', error);
-			toast({
-				title: 'Error',
+			toast.error('Error', {
 				description: 'No se pudo actualizar el progreso de la lección.',
-				variant: 'destructive',
 			});
 		}
 	};
 
+	// Handle progress update event
 	const handleProgressUpdate = async (videoProgress: number) => {
 		const roundedProgress = Math.round(videoProgress);
 		if (roundedProgress > progress && roundedProgress < 100) {
@@ -226,6 +212,7 @@ export default function LessonDetails({
 		}
 	};
 
+	// Handle activity completion event
 	const handleActivityCompletion = async () => {
 		if (!activity || !isVideoCompleted) return;
 
@@ -241,26 +228,26 @@ export default function LessonDetails({
 			);
 
 			const result = await unlockNextLesson(lesson.id);
-			if (result.success && 'nextLessonId' in result) {
-				toast({
-					title: 'Clase Completada',
+			if (
+				result.success &&
+				'nextLessonId' in result &&
+				typeof result.nextLessonId === 'number'
+			) {
+				setLessonsState((prevLessons) =>
+					prevLessons.map((l) =>
+						l.id === result.nextLessonId ? { ...l, isLocked: false } : l
+					)
+				);
+				toast.success('Clase Completada', {
 					description: '¡Avanzando a la siguiente clase!',
-					variant: 'default',
 				});
 
-				// Navegación automática a la siguiente clase
-				setTimeout(() => {
-					setProgress(0);
-					setSelectedLessonId(result.nextLessonId ?? null); // Handle undefined case
-					router.push(`/estudiantes/clases/${result.nextLessonId}`);
-				}, 1500);
+				await handleAutoNavigation(result.nextLessonId);
 			}
 		} catch (error) {
 			console.error('Error al completar la actividad:', error);
-			toast({
-				title: 'Error',
+			toast.error('Error', {
 				description: 'No se pudo completar la actividad.',
-				variant: 'destructive',
 			});
 		} finally {
 			setIsCompletingActivity(false);
@@ -273,238 +260,202 @@ export default function LessonDetails({
 			prevLessons.map((l) => ({
 				...l,
 				isLocked:
-					l.order === 1
-						? false // First lesson always unlocked
+					lessons[0].id === l.id
+						? false
 						: l.id === lesson.id
-							? false // Current lesson in URL unlocked
+							? false
 							: l.porcentajecompletado > 0
-								? false // Lessons with progress unlocked
+								? false
 								: l.isCompleted
-									? false // Completed lessons unlocked
-									: l.isLocked, // Keep original lock state for others
+									? false
+									: l.isLocked,
 			}))
 		);
-	}, [lesson.id]);
+	}, [lesson.id, lessons]);
 
-	// Actualizar la lógica de renderizado de tarjetas
-	const renderLessonCard = (lessonItem: LessonWithProgress) => {
-		const isCurrentLesson = lessonItem.id === lesson.id;
-		const isAccessible = !lessonItem.isLocked;
-		const isCompleted =
-			lessonItem.porcentajecompletado === 100 && lessonItem.isCompleted;
-
-		return (
-			<div
-				key={lessonItem.id}
-				onClick={() => {
-					if (isAccessible) {
-						setProgress(0);
-						setSelectedLessonId(lessonItem.id);
-						router.push(`/estudiantes/clases/${lessonItem.id}`);
-					} else {
-						toast({
-							title: 'Clase Bloqueada',
-							description: 'Debes completar las clases anteriores primero.',
-							variant: 'destructive',
-						});
-					}
-				}}
-				className={`mb-2 rounded-lg p-4 transition-all ${isAccessible ? 'cursor-pointer hover:bg-blue-50' : 'cursor-not-allowed opacity-75'} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${isCompleted ? 'border-green-500' : ''} `}
-			>
-				<div className="mb-2 flex items-center justify-between">
-					<h3
-						className={`font-semibold ${
-							isAccessible ? 'text-gray-900' : 'text-gray-500'
-						}`}
-					>
-						Clase {lessonItem.order}: {lessonItem.title}
-					</h3>
-					{isCompleted ? (
-						<FaCheckCircle className="text-green-500" />
-					) : lessonItem.isLocked ? (
-						<FaLock className="text-gray-400" />
-					) : (
-						<FaClock className="text-gray-400" />
-					)}
-				</div>
-				<p className="mb-2 text-sm text-gray-600">{course.instructor}</p>
-				<div className="relative h-2 rounded bg-gray-200">
-					<div
-						className="absolute h-2 rounded bg-blue-500"
-						style={{ width: `${lessonItem.porcentajecompletado}%` }}
-					/>
-				</div>
-				<div className="mt-2 flex justify-between text-xs text-gray-500">
-					<span>{lessonItem.duration} mins</span>
-					<span>{lessonItem.porcentajecompletado}%</span>
-				</div>
-			</div>
+	// Function to handle navigation
+	const handleNavigationClick = async (direction: 'prev' | 'next') => {
+		if (isNavigating) return;
+		const sortedLessons = [...lessonsState].sort((a, b) =>
+			a.title.localeCompare(b.title)
 		);
-	};
-
-	// Add this function to handle navigation
-	const handleNavigation = (direction: 'prev' | 'next') => {
-		const sortedLessons = [...lessonsState].sort((a, b) => a.order - b.order);
 		const currentIndex = sortedLessons.findIndex(
 			(l) => l.id === selectedLessonId
 		);
 
-		if (direction === 'prev') {
-			// Buscar la lección anterior más cercana que esté desbloqueada
-			for (let i = currentIndex - 1; i >= 0; i--) {
-				const prevLesson = sortedLessons[i];
-				if (prevLesson && !prevLesson.isLocked) {
-					setProgress(0);
-					setSelectedLessonId(prevLesson.id);
-					router.push(`/estudiantes/clases/${prevLesson.id}`);
-					break;
-				}
-			}
-		} else if (direction === 'next') {
-			// Buscar la siguiente lección que esté desbloqueada
-			for (let i = currentIndex + 1; i < sortedLessons.length; i++) {
-				const nextLesson = sortedLessons[i];
-				if (nextLesson && !nextLesson.isLocked) {
-					setProgress(0);
-					setSelectedLessonId(nextLesson.id);
-					router.push(`/estudiantes/clases/${nextLesson.id}`);
-					break;
-				}
-			}
+		const targetLesson =
+			direction === 'prev'
+				? sortedLessons
+						.slice(0, currentIndex)
+						.reverse()
+						.find((l) => !l.isLocked)
+				: sortedLessons.slice(currentIndex + 1).find((l) => !l.isLocked);
+
+		if (targetLesson) {
+			await navigateWithProgress(targetLesson.id);
 		}
 	};
+
+	// Handle progress bar on route changes
+	useEffect(() => {
+		stop();
+	}, [searchParams, stop]);
+
+	// Handle lesson card click
+	const handleCardClick = async (targetId: number) => {
+		if (!isNavigating && targetId !== selectedLessonId) {
+			await navigateWithProgress(targetId);
+		}
+	};
+
+	// Helper function for navigation with progress
+	const navigateWithProgress = async (targetId: number) => {
+		if (isNavigating) return;
+
+		setIsNavigating(true);
+		start();
+
+		try {
+			saveScrollPosition();
+			// Store the navigation button element position
+			const navigationElement = document.querySelector('.navigation-buttons');
+			const yOffset = navigationElement?.getBoundingClientRect().top ?? 0;
+			const scrollPosition = yOffset + window.scrollY + 40; // Add 200px to scroll further down
+
+			await Promise.all([
+				new Promise((resolve) => setTimeout(resolve, 300)),
+				router.push(`/estudiantes/clases/${targetId}`, { scroll: false }),
+			]);
+			restoreScrollPosition();
+			// Scroll to the navigation buttons after route change
+			window.scrollTo({
+				top: scrollPosition,
+				behavior: 'smooth',
+			});
+
+			await new Promise((resolve) => setTimeout(resolve, 200));
+
+			setSelectedLessonId(targetId);
+			setProgress(0);
+			setIsVideoCompleted(false);
+			setIsActivityCompleted(false);
+		} finally {
+			stop();
+			setIsNavigating(false);
+		}
+	};
+
+	// Handle automatic navigation after unlock
+	const handleAutoNavigation = async (nextLessonId: number) => {
+		start();
+		try {
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+			if (typeof nextLessonId === 'number') {
+				await navigateWithProgress(nextLessonId);
+			}
+		} finally {
+			stop();
+		}
+	};
+
+	// Add new effect to check subscription status
+	useEffect(() => {
+		const checkSubscriptionStatus = () => {
+			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+			const rawSubscriptionEndDate = user?.publicMetadata
+				?.subscriptionEndDate as string | null;
+
+			console.log('Subscription Status:', subscriptionStatus); // Debug log
+			console.log('Raw Subscription End Date:', rawSubscriptionEndDate); // Debug log
+
+			const formattedSubscriptionEndDate = rawSubscriptionEndDate
+				? formatInTimeZone(
+						new Date(rawSubscriptionEndDate),
+						TIME_ZONE,
+						'yyyy-MM-dd HH:mm:ss'
+					)
+				: null;
+
+			console.log(
+				'Formatted Subscription End Date (Bogotá):',
+				formattedSubscriptionEndDate
+			); // Debug log
+
+			const isSubscriptionActive =
+				subscriptionStatus === 'active' &&
+				(!formattedSubscriptionEndDate ||
+					new Date(formattedSubscriptionEndDate) > new Date());
+
+			if (!isSubscriptionActive) {
+				toast.error(
+					'Debes tener una suscripción activa para poder ver las clases.'
+				);
+				void router.push('/planes');
+			}
+		};
+
+		checkSubscriptionStatus();
+	}, [user, router]);
 
 	return (
 		<>
 			<Header />
-			<div className="flex min-h-screen flex-col bg-background">
+			<div className="bg-background flex min-h-screen flex-col">
 				<div className="flex flex-1 px-4 py-6">
 					{/* Left Sidebar */}
-					<div className="w-80 bg-background p-4 shadow-lg">
-						<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
-						{lessonsState
-							.sort((a, b) => a.order - b.order)
-							.map(renderLessonCard)}
+					<div className="bg-background w-80 p-4 shadow-lg">
+						<h2 className="text-primary mb-4 text-2xl font-bold">Cursos</h2>
+						<LessonCards
+							lessonsState={lessonsState}
+							selectedLessonId={selectedLessonId}
+							onLessonClick={handleCardClick}
+							progress={progress}
+							isNavigating={isNavigating}
+						/>
 					</div>
 
 					{/* Main Content */}
 					<div className="flex-1 p-6">
-						<div className="mx-auto max-w-4xl">
-							{/* Navigation Buttons */}
-							<div className="mb-4 flex justify-between">
-								<Button
-									onClick={() => handleNavigation('prev')}
-									disabled={
-										!lessonsState.some(
-											(l, i) => i < lesson.order - 1 && !l.isLocked
-										)
-									}
-									className="flex items-center gap-2 active:scale-95"
-									variant="outline"
-								>
-									<FaArrowLeft /> Lección Anterior
-								</Button>
-								<Button
-									onClick={() => handleNavigation('next')}
-									disabled={
-										!lessonsState.some(
-											(l, i) => i > lesson.order - 1 && !l.isLocked
-										)
-									}
-									className="flex items-center gap-2 active:scale-95"
-									variant="outline"
-								>
-									Siguiente Lección <FaArrowRight />
-								</Button>
-							</div>
-
-							{/* Video Player */}
-							<div className="relative mb-6 aspect-video overflow-hidden rounded-lg bg-black">
-								<VideoPlayer
-									videoKey={lesson.coverVideoKey}
-									onVideoEnd={handleVideoEnd}
-									onProgressUpdate={handleProgressUpdate}
-									isVideoCompleted={isVideoCompleted}
-								/>
-							</div>
-
-							{/* Class Info */}
-							<div className="rounded-lg bg-white p-6 shadow-sm">
-								<h1 className="mb-4 text-2xl font-bold text-gray-900">
-									{lesson.title}
-								</h1>
-								<p className="text-gray-600">{lesson.description}</p>
-								<div className="mt-4">
-									<div className="mb-2 flex items-center justify-between">
-										<span className="text-gray-700">Progreso de la clase</span>
-										<span className="text-gray-600">{progress}%</span>
-									</div>
-									<Progress value={progress} className="h-2" />
-								</div>
-							</div>
+						<div className="navigation-buttons">
+							{' '}
+							{/* Add this wrapper div with class */}
+							<LessonNavigation
+								onNavigate={handleNavigationClick}
+								lessonsState={lessonsState}
+								lessonOrder={new Date(lesson.createdAt).getTime()}
+								isNavigating={isNavigating}
+							/>
 						</div>
+						<LessonPlayer
+							lesson={lesson}
+							progress={progress}
+							handleVideoEnd={handleVideoEnd}
+							handleProgressUpdate={handleProgressUpdate}
+						/>
+						<ClassComments lessonId={lesson.id} />
 					</div>
-
-					{/* Right Sidebar - Activities */}
-					<div className="w-72 bg-background p-4 shadow-lg">
-						<h2 className="mb-4 text-2xl font-bold text-primary">
-							Actividades
-						</h2>
-						{activity ? (
-							<div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-								<div className="flex items-center justify-between">
-									<div>
-										<h3 className="font-semibold text-gray-900">
-											{activity.name}
-										</h3>
-									</div>
-									{isActivityCompleted ? (
-										<FaCheckCircle className="text-green-500" />
-									) : (
-										<FaLock className="text-gray-400" />
-									)}
-								</div>
-								<p className="mt-2 text-sm text-gray-600">
-									{activity.description}
-								</p>
-								<Button
-									onClick={handleActivityCompletion}
-									disabled={
-										!isVideoCompleted ||
-										isActivityCompleted ||
-										isCompletingActivity
-									}
-									className={`mt-4 w-full ${
-										isVideoCompleted
-											? 'bg-[#00BDD8] text-white hover:bg-[#00A5C0]'
-											: 'bg-gray-400 text-background'
-									}`}
-								>
-									{isCompletingActivity ? (
-										<Icons.spinner className="mr-2 text-background" />
-									) : isActivityCompleted ? (
-										'Actividad Completada'
-									) : isVideoCompleted ? (
-										'Completar Actividad'
-									) : (
-										'Ver video primero'
-									)}
-								</Button>
-							</div>
-						) : (
-							<p className="text-gray-600">No hay actividades disponibles</p>
-						)}
+					{/* Right Sidebar - Activities and Resources */}
+					<div className="flex flex-col">
+						<LessonActivities
+							activity={activity}
+							isVideoCompleted={isVideoCompleted}
+							isActivityCompleted={isActivityCompleted}
+							isCompletingActivity={isCompletingActivity}
+							handleActivityCompletion={handleActivityCompletion}
+							userId={userId}
+						/>
+						<RecursosLesson resourceNames={lesson.resourceNames} />
 					</div>
 
 					{/* Chatbot Button and Modal */}
 					<button
 						onClick={() => setIsChatOpen(!isChatOpen)}
-						className="fixed bottom-6 right-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
+						className="fixed right-6 bottom-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
 					>
 						<FaRobot className="text-xl" />
 					</button>
 
-					<ChatBot />
+					<LessonChatBot />
 				</div>
 				<Footer />
 			</div>

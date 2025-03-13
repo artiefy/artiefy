@@ -1,269 +1,329 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { useAuth } from '@clerk/nextjs';
-import { StarIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-import {
-	FaCalendar,
-	FaChevronDown,
-	FaChevronUp,
-	FaClock,
-	FaHome,
-	FaUserGraduate,
-	FaCheck,
-	FaLock,
-	FaCheckCircle,
-} from 'react-icons/fa';
+import { useParams } from 'next/navigation';
 
-import ChatbotModal from '~/components/estudiantes/layout/ChatbotModal';
-import Footer from '~/components/estudiantes/layout/Footer';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
+import { useUser } from '@clerk/nextjs';
+import { StarIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon } from 'lucide-react';
+import { FaCalendar, FaClock, FaUserGraduate } from 'react-icons/fa';
+import { toast } from 'sonner';
+
+import { Badge } from '~/components/educators/ui/badge';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
 	BreadcrumbLink,
 	BreadcrumbList,
-	BreadcrumbPage,
 	BreadcrumbSeparator,
-} from '~/components/estudiantes/ui/breadcrumb';
-import { Button } from '~/components/estudiantes/ui/button';
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-} from '~/components/estudiantes/ui/card';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { Progress } from '~/components/estudiantes/ui/progress';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
-import { useToast } from '~/hooks/use-toast';
-import { blurDataURL } from '~/lib/blurDataUrl';
-import { enrollInCourse } from '~/server/actions/courses/enrollInCourse';
-import { getCourseById } from '~/server/actions/courses/getCourseById';
-import { unenrollFromCourse } from '~/server/actions/courses/unenrollFromCourse';
-import { getLessonsByCourseId } from '~/server/actions/lessons/getLessonsByCourseId';
-import type { Course, Enrollment } from '~/types';
+	BreadcrumbPage,
+} from '~/components/educators/ui/breadcrumb';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 
-export default function Page({ course: initialCourse }: { course: Course }) {
-	const [course, setCourse] = useState<Course>(initialCourse);
-	const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [isEnrolling, setIsEnrolling] = useState(false);
-	const [isUnenrolling, setIsUnenrolling] = useState(false);
-	const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
-	const [totalStudents, setTotalStudents] = useState(course.totalStudents);
-	const [isEnrolled, setIsEnrolled] = useState(false);
-	const { isSignedIn, userId } = useAuth();
-	const { toast } = useToast();
+// Consideraciones de diseño: validar con los contratadores si al pulsar ver course se debe abrir directamente en la vista de estudiante o en la vista de educador
 
-	useEffect(() => {
-		const fetchUserProgress = async () => {
-			if (userId && isEnrolled) {
-				try {
-					const lessons = await getLessonsByCourseId(course.id);
-					setCourse((prevCourse) => ({
-						...prevCourse,
-						lessons: lessons.map((lesson) => ({
-							...lesson,
-							isLocked: lesson.userProgress === 0 && lesson.order !== 1,
-							porcentajecompletado: lesson.userProgress,
-						})),
-					}));
-				} catch (error) {
-					console.error('Error fetching user progress:', error);
-				}
-			}
-		};
+// Interfaces
+interface Course {
+	id: number;
+	title: string;
+	description: string;
+	categoryid: string;
+	dificultadid: string;
+	modalidadesid: string;
+	instructor: string;
+	rating: number;
+	coverImageKey: string;
+	creatorId: string;
+	createdAt: string;
+	updatedAt: string;
+	requerimientos: string;
+	totalStudents: number;
+}
 
-		if (Array.isArray(course.enrollments) && userId) {
-			const userEnrolled = course.enrollments.some(
-				(enrollment: Enrollment) => enrollment.userId === userId
-			);
-			setIsEnrolled(userEnrolled);
-			if (userEnrolled) {
-				void fetchUserProgress();
-			}
-		}
+// Props
+interface CourseDetailProps {
+	courseId: number;
+}
 
-		const timer = setTimeout(() => {
-			setLoading(false);
-		}, 1000);
-
-		return () => clearTimeout(timer);
-	}, [course.enrollments, userId, isEnrolled, course.id]);
-
-	const toggleLesson = (lessonId: number) => {
-		if (isEnrolled) {
-			setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
-		}
+// Interfaces de las lecciones
+interface LessonsModels {
+	id: number;
+	title: string;
+	coverImageKey: string | null;
+	coverVideoKey: string | null;
+	resourceKey: string | null;
+	description: string;
+	createdAt: string;
+	updatedAt: string;
+	duration: number;
+	order: number;
+	course: {
+		id: number;
+		title: string;
+		description: string;
+		instructor: string;
 	};
+}
 
-	const formatDate = (dateString: string | number | Date) =>
-		new Date(dateString).toISOString().split('T')[0];
+// Función para obtener el color de contraste
+const getContrastYIQ = (hexcolor: string) => {
+	if (!hexcolor) return 'black';
+	hexcolor = hexcolor.replace('#', '');
+	const r = parseInt(hexcolor.substr(0, 2), 16);
+	const g = parseInt(hexcolor.substr(2, 2), 16);
+	const b = parseInt(hexcolor.substr(4, 2), 16);
+	const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+	return yiq >= 128 ? 'black' : 'white';
+};
 
-	const handleEnroll = async () => {
-		if (!isSignedIn || isEnrolling) {
-			return;
-		}
+// Función para formatear la fecha
+const formatDate = (dateString: string | number | Date) => {
+	const date = new Date(dateString);
+	return isNaN(date.getTime())
+		? 'Fecha inválida'
+		: date.toISOString().split('T')[0];
+};
 
-		setIsEnrolling(true);
-		setEnrollmentError(null);
+const CourseDetail: React.FC<CourseDetailProps> = () => {
+	const { user } = useUser(); // Obtiene el usuario actual
+	const params = useParams(); // Obtiene los parámetros de la URL
+	const courseIdUrl = params?.courseId; // Obtiene el id del curso de la URL
+	const [course, setCourse] = useState<Course | null>(null); // Estado del curso
+	const [loading, setLoading] = useState(true); // Estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado de error
+	const [lessons, setLessons] = useState<LessonsModels[]>([]); // Estado de las lecciones
+	const [expandedLesson, setExpandedLesson] = useState<number | null>(null); // Estado de la lección expandida
+	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Estado del color seleccionado
 
-		try {
-			const result = await enrollInCourse(course.id);
-			if (result.success) {
-				setTotalStudents((prevTotal) => prevTotal + 1);
-				setIsEnrolled(true);
-				const updatedCourse = await getCourseById(course.id);
-				if (updatedCourse) {
-					setCourse({
-						...updatedCourse,
-						lessons: updatedCourse.lessons ?? [],
+	// Verifica que courseId no sea un array ni undefined, y lo convierte a número
+	const courseIdString = Array.isArray(courseIdUrl)
+		? courseIdUrl[0]
+		: courseIdUrl;
+	const courseIdString2 = courseIdString ?? '';
+	const courseIdNumber = parseInt(courseIdString2);
+
+	// Función para obtener el curso
+	const fetchCourse = useCallback(async () => {
+		if (!user) return;
+		if (courseIdNumber !== null) {
+			try {
+				setLoading(true);
+				setError(null);
+				const response = await fetch(
+					`/api/educadores/courses/${courseIdNumber}`
+				);
+
+				if (response.ok) {
+					const data = (await response.json()) as Course;
+					console.log(data);
+					setCourse(data);
+				} else {
+					const errorData = (await response.json()) as { error?: string };
+					const errorMessage = errorData.error ?? response.statusText;
+					setError(`Error al cargar el curso: ${errorMessage}`);
+					toast('Error', {
+						description: `No se pudo cargar el curso: ${errorMessage}`,
 					});
 				}
-				toast({
-					title: 'Suscripción exitosa',
-					description: '¡Te has Inscrito exitosamente en el curso!',
-					variant: 'default',
+			} catch (error: unknown) {
+				const errorMessage =
+					error instanceof Error ? error.message : 'Error desconocido';
+				setError(`Error al cargar el curso: ${errorMessage}`);
+				toast('Error', {
+					description: `No se pudo cargar el curso: ${errorMessage}`,
 				});
-			} else {
-				throw new Error(result.message);
+			} finally {
+				setLoading(false);
 			}
-		} catch (error: unknown) {
-			handleError(error, 'Error de Suscripción', 'Error al inscribirse');
-		} finally {
-			setIsEnrolling(false);
 		}
+	}, [user, courseIdNumber]);
+
+	// Fetch del curso al cargar el componente
+	useEffect(() => {
+		fetchCourse().catch((error) =>
+			console.error('Error fetching course:', error)
+		);
+	}, [fetchCourse]);
+
+	// Fetch de las lecciones cuando el courseId cambia
+	useEffect(() => {
+		if (course?.id) {
+			const fetchLessons = async () => {
+				setLoading(true);
+				setError(null);
+				try {
+					const response = await fetch(
+						`/api/educadores/lessons?courseId=${course.id}`
+					);
+
+					if (!response.ok) {
+						const errorData = (await response.json()) as { error?: string };
+						throw new Error(
+							errorData.error ?? 'Error al obtener las lecciones'
+						);
+					}
+
+					const data = (await response.json()) as LessonsModels[];
+					setLessons(data); // Setea las lecciones obtenidas
+				} catch (error) {
+					setError('Error al obtener las lecciones'); // Error general
+					console.error('Error al obtener las lecciones:', error);
+				} finally {
+					setLoading(false);
+				}
+			};
+
+			// Llama a la función fetchLessons
+			void fetchLessons();
+		}
+	}, [course?.id]); // Este efecto se ejecuta cada vez que el courseId cambia
+
+	// Función para expandir o contraer una lección
+	const toggleLesson = (lessonId: number) => {
+		setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
 	};
 
-	const handleUnenroll = async () => {
-		if (!isSignedIn || isUnenrolling) {
-			return;
+	// Guardar el color seleccionado en el localStorage
+	useEffect(() => {
+		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
+		if (savedColor) {
+			setSelectedColor(savedColor);
 		}
+		console.log(`Color guardado ${savedColor}`);
+	}, [courseIdNumber]);
 
-		setIsUnenrolling(true);
-		setEnrollmentError(null);
+	// Carga del spinner mientras se carga el course
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only" />
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
 
-		try {
-			await unenrollFromCourse(course.id);
-			setTotalStudents((prevTotal) => prevTotal - 1);
-			setIsEnrolled(false);
-			const updatedCourse = await getCourseById(course.id);
-			if (updatedCourse) {
-				setCourse({
-					...updatedCourse,
-					lessons: updatedCourse.lessons ?? [],
-				});
-			}
-			toast({
-				title: 'Cancelar Suscripción',
-				description: 'Se Canceló El Curso Correctamente',
-				variant: 'default',
-			});
-		} catch (error: unknown) {
-			handleError(error, 'Error de desuscripción', 'Error al desuscribirse');
-		} finally {
-			setIsUnenrolling(false);
-		}
-	};
+	// Si hay un error al cargar el curso
+	if (error) return <div>Error: {error}</div>;
+	// Si no hay curso
+	if (!course) return <div>No se encontró el curso.</div>;
 
-	const handleError = (
-		error: unknown,
-		toastTitle: string,
-		toastDescription: string
-	) => {
-		if (error instanceof Error) {
-			setEnrollmentError(error.message);
-			toast({
-				title: toastTitle,
-				description: `${toastDescription}: ${error.message}`,
-				variant: 'destructive',
-			});
-		} else {
-			setEnrollmentError('Error desconocido');
-			toast({
-				title: toastTitle,
-				description: 'Error desconocido',
-				variant: 'destructive',
-			});
-		}
-		console.error(toastDescription, error);
-	};
-
-	const sortedLessons = [...course.lessons].sort((a, b) => a.order - b.order);
-
+	// Render del componente
 	return (
-		<div className="min-h-screen bg-background">
-			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
-				<Breadcrumb className="pb-6">
-					<BreadcrumbList>
-						<BreadcrumbItem>
-							<BreadcrumbLink href="/">
-								<FaHome className="mr-1 inline-block" /> Inicio
-							</BreadcrumbLink>
-						</BreadcrumbItem>
-						<BreadcrumbSeparator />
-						<BreadcrumbItem>
-							<BreadcrumbLink href="/estudiantes/cursos">
-								<FaUserGraduate className="mr-1 inline-block" /> Cursos
-							</BreadcrumbLink>
-						</BreadcrumbItem>
-						<BreadcrumbSeparator />
-						<BreadcrumbItem>
-							<BreadcrumbPage>{course.title}</BreadcrumbPage>
-						</BreadcrumbItem>
-					</BreadcrumbList>
-				</Breadcrumb>
-				{loading ? (
-					<Skeleton className="h-[500px] w-full rounded-lg" />
-				) : (
-					<Card className="overflow-hidden">
-						<CardHeader className="p-0">
-							<AspectRatio ratio={16 / 6}>
-								<Image
-									src={
-										course.coverImageKey
-											? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()
-											: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-									}
-									alt={course.title}
-									fill
-									className="object-cover"
-									priority
-									sizes="100vw"
-									placeholder="blur"
-									blurDataURL={blurDataURL}
-									onError={(e) => {
-										e.currentTarget.src = '/fetch-error.jpg';
-									}}
-								/>
-								<div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6">
-									<h1 className="text-3xl font-bold text-white">
-										{course.title}
-									</h1>
-								</div>
-							</AspectRatio>
-						</CardHeader>
-						<CardContent className="space-y-6 p-6">
-							<div className="flex flex-wrap items-center justify-between gap-4">
-								<div>
-									<h3 className="text-lg font-semibold text-background">
-										{course.instructor}
-									</h3>
-									<p className="text-gray-600">Educador</p>
-								</div>
-								<div className="flex items-center space-x-6">
-									<div className="flex items-center">
-										<FaUserGraduate className="mr-2 text-blue-600" />
-										<span className="text-background">
-											{totalStudents} Estudiantes
-										</span>
+		<div className="h-auto w-full rounded-lg bg-background">
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="hover:text-gray-300"
+							href="/dashboard/educadores"
+						>
+							Inicio
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="hover:text-gray-300"
+							href="/dashboard/educadores/cursos"
+						>
+							Lista de cursos
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							href="#"
+							onClick={() => window.history.back()}
+							className="transition duration-300 hover:scale-105 hover:text-gray-300"
+						>
+							Detalles curso:
+							{course.title}
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>Vista estudiante</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage className="hover:text-gray-300">
+							Detalles curso:
+							{course.title}
+						</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+			<div className="group relative h-auto w-full">
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+				<Card
+					className={`relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out zoom-in`}
+					style={{
+						backgroundColor: selectedColor,
+						color: getContrastYIQ(selectedColor),
+					}}
+				>
+					<CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
+						<CardTitle
+							className={`text-2xl font-bold hover:underline ${
+								selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+							}`}
+						>
+							Curso: {course.title}
+						</CardTitle>
+					</CardHeader>
+					<div className={`flex flex-col`}>
+						{/* Columna izquierda - Imagen */}
+						<div className="h-96 w-full">
+							<Image
+								src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+								alt={course.title}
+								width={300}
+								height={100}
+								className="mx-auto rounded-lg object-cover"
+								priority
+								quality={75}
+							/>
+						</div>
+						{/* Columna derecha - Información */}
+						<div className="pb-6">
+							<div>
+								<div className="my-4 flex justify-between">
+									<div className="flex flex-col">
+										<h2
+											className={`font-semibold ${
+												selectedColor === '#FFFFFF'
+													? 'text-black'
+													: 'text-white'
+											}`}
+										>
+											Educador:
+										</h2>
+										<p
+											className={
+												selectedColor === '#FFFFFF'
+													? 'text-black'
+													: 'text-white'
+											}
+										>
+											{course.instructor}
+										</p>
 									</div>
-									<div className="flex items-center">
+									<div className="flex gap-4">
+										<p
+											className={`flex ${
+												selectedColor === '#FFFFFF'
+													? 'text-black'
+													: 'text-white'
+											}`}
+										>
+											<FaUserGraduate className="mr-2 text-blue-600" />
+											{course.totalStudents} Estudiantes
+										</p>
+										<p>Rating</p>
+
 										{Array.from({ length: 5 }).map((_, index) => (
 											<StarIcon
 												key={index}
@@ -275,221 +335,146 @@ export default function Page({ course: initialCourse }: { course: Course }) {
 										</span>
 									</div>
 								</div>
-							</div>
-							<div className="flex flex-wrap items-center justify-between gap-4">
-								<div className="flex items-center space-x-4">
-									<Badge
-										variant="outline"
-										className="border-primary bg-background text-primary hover:bg-black/70"
-									>
-										{course.category?.name}
-									</Badge>
+								<div className="flex space-x-3">
+									<div>
+										<Badge
+											variant="outline"
+											className="border-primary bg-background text-primary hover:bg-black/70"
+										>
+											{course.categoryid}
+										</Badge>
+									</div>
 									<div className="flex items-center">
 										<FaCalendar className="mr-2 text-gray-600" />
-										<span className="text-sm text-gray-600">
-											Creado: {formatDate(course.createdAt)}
-										</span>
+										<p>{formatDate(course.createdAt)}</p>
 									</div>
 									<div className="flex items-center">
 										<FaClock className="mr-2 text-gray-600" />
-										<span className="text-sm text-gray-600">
-											Última actualización: {formatDate(course.updatedAt)}
-										</span>
+										Última actualización: {formatDate(course.updatedAt)}
 									</div>
 								</div>
-								<Badge className="bg-red-500 text-white hover:bg-red-700">
-									{course.modalidad?.name}
-								</Badge>
 							</div>
-
-							<div className="prose max-w-none">
-								<p className="leading-relaxed text-gray-700">
-									{course.description ?? 'No hay descripción disponible.'}
+							<div className="my-4">
+								<h2
+									className={`text-lg font-semibold ${
+										selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+									}`}
+								>
+									Descripción:
+								</h2>
+								<p
+									className={`text-justify ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+								>
+									{course.description}
 								</p>
 							</div>
-
-							<div>
-								<h2 className="mb-4 text-2xl font-bold text-background">
-									Contenido del curso
-								</h2>
-								<div className="space-y-4">
-									{sortedLessons.map((lesson) => {
-										const isUnlocked = isEnrolled && !lesson.isLocked;
-
-										return (
-											<div
-												key={lesson.id}
-												className={`overflow-hidden rounded-lg border transition-colors ${
-													isUnlocked
-														? 'bg-gray-50 hover:bg-gray-100'
-														: 'bg-gray-100 opacity-75'
-												}`}
-											>
-												<button
-													className="flex w-full items-center justify-between px-6 py-4"
-													onClick={() => toggleLesson(lesson.id)}
-													disabled={!isUnlocked}
-												>
-													<div className="flex w-full items-center justify-between">
-														<div className="flex items-center space-x-2">
-															{isUnlocked ? (
-																<FaCheckCircle className="mr-2 size-5 text-green-500" />
-															) : (
-																<FaLock className="mr-2 size-5 text-gray-400" />
-															)}
-															<span className="font-medium text-background">
-																Clase {lesson.order}: {lesson.title}{' '}
-																<span className="ml-2 text-sm text-gray-500">
-																	({lesson.duration} mins)
-																</span>
-															</span>
-														</div>
-														<div className="flex items-center space-x-2">
-															{isUnlocked &&
-																(expandedLesson === lesson.id ? (
-																	<FaChevronUp className="text-gray-400" />
-																) : (
-																	<FaChevronDown className="text-gray-400" />
-																))}
-														</div>
-													</div>
-												</button>
-												{expandedLesson === lesson.id && isUnlocked && (
-													<div className="border-t bg-white px-6 py-4">
-														<p className="mb-4 text-gray-700">
-															{lesson.description ??
-																'No hay descripción disponible para esta clase.'}
-														</p>
-														<div className="mb-4">
-															<div className="mb-2 flex items-center justify-between">
-																<p className="text-sm font-semibold text-gray-700">
-																	Progreso De La Clase:
-																</p>
-																<span className="text-sm font-medium text-gray-600">
-																	{lesson.porcentajecompletado}%
-																</span>
-															</div>
-															<Progress
-																value={lesson.porcentajecompletado}
-																className="w-full bg-gray-200"
-																style={
-																	{
-																		'--progress-background': 'green',
-																	} as React.CSSProperties
-																}
-															/>
-														</div>
-														<Button
-															asChild
-															className="mt-4 text-background hover:underline active:scale-95"
-														>
-															<Link href={`./${course.id}/clases/${lesson.id}`}>
-																Ver Clase
-															</Link>
-														</Button>
-													</div>
-												)}
-											</div>
-										);
-									})}
+							<div className="grid grid-cols-2">
+								<div className="flex flex-col">
+									<h2
+										className={`text-lg font-semibold ${
+											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+										}`}
+									>
+										Dificultad:
+									</h2>
+									<p
+										className={
+											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+										}
+									>
+										{course.dificultadid}
+									</p>
+								</div>
+								<div className="flex flex-col">
+									<h2
+										className={`text-lg font-semibold ${
+											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+										}`}
+									>
+										Modalidad:
+									</h2>
+									<p
+										className={
+											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+										}
+									>
+										{course.modalidadesid}
+									</p>
 								</div>
 							</div>
-						</CardContent>
-						<CardFooter className="flex flex-col items-center justify-between space-y-4">
-							<div
-								className={`transition-opacity duration-500 ${isEnrolled ? 'opacity-0' : 'opacity-100'}`}
-							>
-								{!isEnrolled && (
-									<div className="group relative">
-										<Button
-											onClick={handleEnroll}
-											disabled={isEnrolling}
-											className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px font-semibold leading-6 text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
-										>
-											<span className="absolute inset-0 rounded-xl bg-gradient-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"></span>
-
-											<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
-												<div className="relative z-10 flex items-center justify-center space-x-2">
-													{isEnrolling ? (
-														<Icons.spinner
-															className="animate-spin text-white"
-															style={{ width: '25px', height: '25px' }}
-														/>
-													) : (
-														<>
-															<span className="transition-all duration-500 group-hover:translate-x-1">
-																Inscribirse al curso
-															</span>
-															<svg
-																className="size-6 transition-transform duration-500 group-hover:translate-x-1"
-																data-slot="icon"
-																aria-hidden="true"
-																fill="currentColor"
-																viewBox="0 0 20 20"
-																xmlns="http://www.w3.org/2000/svg"
+							<div className="mt-6 text-2xl font-bold">
+								Clases del curso
+								<div className="space-y-4">
+									{lessons
+										.sort((a, b) => a.order - b.order)
+										.map((lesson) => {
+											return (
+												<div
+													key={lesson.id}
+													className={`overflow-hidden rounded-lg border transition-colors`}
+												>
+													<button
+														className="flex w-full items-center justify-between px-6 py-4"
+														onClick={() => toggleLesson(lesson.id)}
+													>
+														<div className="flex w-full items-center justify-between">
+															<div
+																className={`flex items-center space-x-2 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 															>
-																<path
-																	clipRule="evenodd"
-																	d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
-																	fillRule="evenodd"
-																></path>
-															</svg>
-														</>
+																<span className="font-medium">
+																	Clase {lesson.order}: {lesson.title}{' '}
+																	<span className="ml-2 text-sm">
+																		({lesson.duration} mins)
+																	</span>
+																</span>
+															</div>
+															<div className="flex items-center space-x-2" />
+														</div>
+													</button>
+													{expandedLesson === lesson.id && (
+														<div
+															className={`px-6 py-4 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+														>
+															<p className="text-sm">
+																Del Educador: {lesson.course.instructor}
+															</p>
+															<p className="text-sm">
+																Descripción: {lesson.description}
+															</p>
+															<p className="mb-4 text-sm">
+																Fecha de creación:{' '}
+																{formatDate(lesson.createdAt)}
+															</p>
+															<Link
+																className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-700"
+																href={`/dashboard/educadores/cursos/${courseIdNumber}/${lesson.id}/verClase/${lesson.id}`}
+															>
+																Ir a la clase
+															</Link>
+														</div>
 													)}
 												</div>
-											</span>
-										</Button>
-									</div>
-								)}
-							</div>
-							<div
-								className={`transition-opacity duration-500 ${isEnrolled ? 'opacity-100' : 'opacity-0'}`}
-							>
-								{isEnrolled && (
-									<div className="flex w-full flex-col space-y-4 sm:w-auto">
-										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
-											disabled={true}
-										>
-											<FaCheck className="mr-2" /> Suscrito Al Curso
-										</Button>
-										<Button
-											className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-700"
-											onClick={handleUnenroll}
-											disabled={isUnenrolling}
-										>
-											{isUnenrolling ? (
-												<Icons.spinner
-													className="animate-spin text-white"
-													style={{ width: '25px', height: '25px' }}
-												/>
-											) : (
-												'Cancelar Suscripción'
-											)}
-										</Button>
-									</div>
-								)}
-							</div>
-							<ChatbotModal />
-						</CardFooter>
-					</Card>
-				)}
-				{enrollmentError && (
-					<div className="mt-4 rounded-md bg-red-50 p-4">
-						<div className="flex">
-							<div className="ml-3">
-								<h3 className="text-sm font-medium text-red-800">
-									Error de {isEnrolled ? 'desuscripción' : 'suscripción'}
-								</h3>
-								<div className="mt-2 text-sm text-red-700">
-									<p>{enrollmentError}</p>
+											);
+										})}
 								</div>
 							</div>
 						</div>
 					</div>
-				)}
-			</main>
-			<Footer />
+					<Link
+						href={'#'}
+						onClick={() => window.history.back()}
+						className="group/button relative inline-flex w-1/2 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-blue-500 p-2 px-4 text-white hover:bg-blue-700 active:scale-95"
+					>
+						<ArrowLeftIcon className="animate-bounce-right size-5" />
+						<p className="font-bold">Volver</p>
+						<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+							<div className="relative h-full w-10 bg-white/30" />
+						</div>
+					</Link>
+				</Card>
+			</div>
 		</div>
 	);
-}
+};
+
+export default CourseDetail;                           

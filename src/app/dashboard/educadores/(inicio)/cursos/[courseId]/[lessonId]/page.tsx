@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+
+import { useUser } from '@clerk/nextjs';
+
 import ListActividadesEducator from '~/components/educators/layout/ListActividades';
 import ViewFiles from '~/components/educators/layout/ViewFiles';
 import {
@@ -201,7 +203,7 @@ const Page: React.FC = () => {
 					</BreadcrumbList>
 				</Breadcrumb>
 				<div className="group relative h-auto w-full">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 					<Card
 						className={`relative z-20 mt-5 border-transparent bg-black p-5 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						style={{

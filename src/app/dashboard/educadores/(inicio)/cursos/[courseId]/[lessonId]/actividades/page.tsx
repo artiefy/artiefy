@@ -43,6 +43,40 @@ const Page: React.FC = () => {
 
   console.log(`LessonsId activity ${lessonsId}`);
 
+  useEffect(() => {
+    if (isUploading) {
+      setUploadProgress(0);
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 10; // Incrementar de 10 en 10
+        });
+      }, 500);
+
+      return () => clearInterval(interval);
+    }
+  }, [isUploading]);
+
+  useEffect(() => {
+    if (isUploading) {
+      setUploadProgress(0);
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            return 100;
+          }
+          return prev + 10; // Incrementar de 10 en 10
+        });
+      }, 500);
+
+      return () => clearInterval(interval);
+    }
+  }, [isUploading]);
+
   if (!lessonsId || !cursoIdNumber) {
     return <p>Cargando parametros...</p>;
   }
@@ -114,23 +148,6 @@ const Page: React.FC = () => {
       setIsUploading(false);
     }
   };
-
-  useEffect(() => {
-    if (isUploading) {
-      setUploadProgress(0);
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
-          return prev + 10; // Incrementar de 10 en 10
-        });
-      }, 500);
-
-      return () => clearInterval(interval);
-    }
-  }, [isUploading]);
 
   return (
     <>

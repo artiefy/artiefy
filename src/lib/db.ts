@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { drizzle, type MySql2Database } from 'drizzle-orm/mysql2';
-import { createPool } from 'mysql2/promise';
-import type { Pool } from 'mysql2/promise';
+import { createPool, type Pool } from 'mysql2/promise';
 
 // Configura tu conexión a la base de datos
 let pool: Pool | undefined;

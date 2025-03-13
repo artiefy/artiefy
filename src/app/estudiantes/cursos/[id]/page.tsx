@@ -1,9 +1,18 @@
 import { Suspense } from 'react';
-import type { Metadata, ResolvingMetadata } from 'next';
+
 import { notFound } from 'next/navigation';
-import { getCourseById } from '~/server/actions/courses/getCourseById';
-import type { Course } from '~/types';
+
+import { auth } from '@clerk/nextjs/server';
+
+import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+
 import CourseDetails from './CourseDetails';
+
+import type { Metadata, ResolvingMetadata } from 'next';
+import type { Course } from '~/types';
 
 interface Props {
 	params: Promise<{ id: string }>;
@@ -39,7 +48,7 @@ function generateJsonLd(course: Course): object {
 			: undefined,
 		image: course.coverImageKey
 			? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-			: `${process.env.NEXT_PUBLIC_BASE_URL}/placeholder-course.jpg`,
+			: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT',
 	};
 }
 
@@ -49,7 +58,8 @@ export async function generateMetadata(
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
 	const { id } = await params;
-	const course = await getCourseById(Number(id));
+	const { userId } = await auth();
+	const course = await getCourseById(Number(id), userId);
 
 	if (!course) {
 		return {
@@ -62,7 +72,9 @@ export async function generateMetadata(
 	const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}/opengraph-image`;
 
 	return {
-		metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? ''),
+		metadataBase: new URL(
+			process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
+		),
 		title: `${course.title} | Artiefy`,
 		description: `${course.description ?? 'No hay descripción disponible.'} ¡Subscríbete ya en este curso excelente!`,
 		openGraph: {
@@ -99,17 +111,28 @@ export async function generateMetadata(
 // Componente principal de la página del curso
 export default async function Page({ params }: Props) {
 	const { id } = await params;
+	const { userId } = await auth();
 
 	return (
-		<Suspense fallback={<div>Cargando...</div>}>
-			<CourseContent id={id} />
-		</Suspense>
+		<div>
+			<Header />
+			<Suspense fallback={<CourseDetailsSkeleton />}>
+				<CourseContent id={id} userId={userId} />
+			</Suspense>
+			<Footer />
+		</div>
 	);
 }
 
 // Componente para renderizar los detalles del curso
-async function CourseContent({ id }: { id: string }) {
-	const course = await getCourseById(Number(id));
+async function CourseContent({
+	id,
+	userId,
+}: {
+	id: string;
+	userId: string | null;
+}) {
+	const course = await getCourseById(Number(id), userId);
 
 	if (!course) {
 		notFound();
@@ -118,7 +141,8 @@ async function CourseContent({ id }: { id: string }) {
 	const courseForDetails: Course = {
 		...course,
 		totalStudents: course.enrollments?.length ?? 0,
-		lessons: course.lessons ?? [],
+		lessons:
+			course.lessons?.sort((a, b) => a.title.localeCompare(b.title)) ?? [], // Ordenar por título
 		category: course.category
 			? {
 					id: course.category.id,

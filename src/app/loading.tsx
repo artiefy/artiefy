@@ -1,52 +1,44 @@
-import '~/styles/rocket.css';
+'use client';
+import React, { useEffect, useState } from 'react';
 
-export default function Loading() {
+import Image from 'next/image';
+import '~/styles/loading.css';
+
+const Loading: React.FC = () => {
+	const [launch, setLaunch] = useState(false);
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setLaunch(true);
+		}, 0);
+		return () => clearTimeout(timer);
+	}, []);
+
 	return (
-		<div className="flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background">
-			<div className="relative">
-				<div className="rocket">
-					<div className="rocket-body">
-						<div className="body"></div>
-						<div className="window"></div>
-						<div className="fin fin-left"></div>
-						<div className="fin fin-right"></div>
-						<div className="exhaust-flame"></div>
-						<ul className="exhaust-fumes">
-							<li></li>
-							<li></li>
-							<li></li>
-							<li></li>
-							<li></li>
-							<li></li>
-							<li></li>
-							<li></li>
-							<li></li>
-						</ul>
+		<div className="loading-fullscreen-background">
+			<div className={`loading-card ${launch ? 'loading-launch' : ''}`}>
+				<div className="loading-card-info">
+					<div className="loading-wrapper">
+						<div className="loading-circle" />
+						<div className="loading-circle" />
+						<div className="loading-circle" />
+						<div className="loading-shadow" />
+						<div className="loading-shadow" />
+						<div className="loading-shadow" />
 					</div>
+					<span className="loading-animate-pulse">CARGANDO!</span>
 				</div>
+				<Image
+					src="/cursor.png"
+					alt="Logo"
+					className="loading-logo"
+					width={140}
+					height={140}
+					priority
+				/>
 			</div>
-			<ul className="star">
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-				<li></li>
-			</ul>
-			<p className="-mt-20 text-3xl font-bold text-primary">
-				{' '}
-				{/* Ajusta el margen superior aquí */}
-				Cargando... Artiefy
-			</p>
 		</div>
 	);
-}
+};
+
+export default Loading;

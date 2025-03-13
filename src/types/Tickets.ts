@@ -74,6 +74,4 @@ interface ExtendedLocalTicket extends Ticket {
 	// otras propiedades extendidas...
 }
 
-// Ensure ticket.id is a number
-
 

@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+import Link from 'next/link';
+
 import {
 	Users,
 	BookOpen,
@@ -8,7 +11,7 @@ import {
 	HelpCircle,
 	GraduationCap,
 } from 'lucide-react';
-import Link from 'next/link';
+
 import { Button } from '~/components/admin/ui/button';
 import {
 	Card,

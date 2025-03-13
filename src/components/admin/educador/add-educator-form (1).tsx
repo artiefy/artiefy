@@ -1,13 +1,12 @@
 "use client"
-
-import type React from "react"
-
 import { useState } from "react"
+
 import { Button } from "~/components/admin/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/admin/ui/dialog"
 import { Input } from "~/components/admin/ui/input"
 import { Label } from "~/components/admin/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/admin/ui/select"
+
 import type { Educator } from "~/types/types"
 
 interface AddEducatorFormProps {

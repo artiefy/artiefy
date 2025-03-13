@@ -1,184 +1,65 @@
-import { FlatCompat } from '@eslint/eslintrc';
+'use client';
 
-const compat = new FlatCompat({
-	baseDirectory: import.meta.dirname,
-});
+import React, { useState } from 'react';
 
-const eslintConfig = [
-	{
-		ignores: [
-			'**/node_modules/**',
-			'.next/**',
-			'out/**',
-			'public/**',
-			'**/*.d.ts',
-			'src/components/estudiantes/ui/**',
-			'src/components/admin/ui/**',
-			'src/components/educadores/ui/**',
-		],
-	},
-	...compat.config({
-		extends: [
-			'plugin:@next/next/recommended',
-			'plugin:@typescript-eslint/recommended',
-			'plugin:@typescript-eslint/recommended-type-checked',
-			'plugin:@typescript-eslint/stylistic-type-checked',
-			'plugin:tailwindcss/recommended',
-			'plugin:import/recommended',
-			'plugin:import/typescript',
-			'prettier',
-		],
-		parser: '@typescript-eslint/parser',
-		parserOptions: {
-			project: './tsconfig.json',
-			tsconfigRootDir: import.meta.dirname,
-		},
-		plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
-		rules: {
-			'tailwindcss/no-custom-classname': 'warn',
-			'tailwindcss/classnames-order': 'warn',
-			'tailwindcss/enforces-negative-arbitrary-values': 'warn',
-			'tailwindcss/enforces-shorthand': 'warn',
-			'tailwindcss/migration-from-tailwind-2': 'warn',
-			'tailwindcss/no-contradicting-classname': 'error',
-			'@typescript-eslint/consistent-type-definitions': 'warn',
-			'@typescript-eslint/consistent-type-imports': [
-				'warn',
-				{
-					prefer: 'type-imports',
-					fixStyle: 'inline-type-imports',
-				},
-			],
-			'@typescript-eslint/no-unused-vars': [
-				'warn',
-				{
-					argsIgnorePattern: '^_',
-				},
-			],
-			'@typescript-eslint/require-await': 'warn',
-			'@typescript-eslint/no-misused-promises': [
-				'warn',
-				{
-					checksVoidReturn: {
-						attributes: false,
-					},
-				},
-			],
-			'drizzle/enforce-delete-with-where': [
-				'warn',
-				{
-					drizzleObjectName: ['db', 'ctx.db'],
-				},
-			],
-			'drizzle/enforce-update-with-where': [
-				'warn',
-				{
-					drizzleObjectName: ['db', 'ctx.db'],
-				},
-			],
-			'@next/next/google-font-display': 'warn',
-			'@next/next/no-img-element': 'warn',
-			'@next/next/no-html-link-for-pages': 'warn',
-			'import/order': [
-				'warn',
-				{
-					groups: ['builtin', 'external', 'internal', ['parent', 'sibling']],
-					pathGroups: [
-						{
-							pattern: 'react',
-							group: 'external',
-							position: 'before',
-						},
-						{
-							pattern: '@/components/**',
-							group: 'internal',
-							position: 'after',
-						},
-					],
-					pathGroupsExcludedImportTypes: ['react'],
-					alphabetize: {
-						order: 'asc',
-						caseInsensitive: true,
-					},
-				},
-			],
-			'react/react-in-jsx-scope': 'off',
-			'import/no-unresolved': 'off',
-			'import/newline-after-import': 'off',
-		},
-		settings: {
-			'import/resolver': {
-				alias: {
-					map: [['~', './src']],
-					extensions: ['.js', '.jsx', '.ts', '.tsx'],
-				},
-				typescript: {
-					alwaysTryTypes: true,
-					project: './tsconfig.json',
-				},
-			},
-			react: {
-				version: 'detect',
-			},
-			tailwindcss: {
-				config: './tailwind.config.js',
-				cssFiles: [
-					'**/*.css',
-					'!**/node_modules',
-					'!**/.*',
-					'!**/dist',
-					'!**/build',
-				],
-				callees: ['classnames', 'clsx', 'ctl'],
-				tags: ['tw'],
-				classRegex: '^class(Name)?$',
-				cssFilesRefreshRate: 5000,
-				skipClassAttribute: false,
-				exposeConfiguration: true,
-				whitelist: [
-					// Clases existentes
-					'animate-gradient-x',
-					'animate-bounce-right',
-					'button-hover',
-					'button-hover-effect',
-					'cl-formButtonPrimary',
-					'cl-userButtonOuterIdentifier',
-					'custom-padding',
-					'text-shadow',
-					'animate-gradient',
-					'zoom-in',
+import { type NextPage } from 'next';
 
-					// Nuevas clases personalizadas basadas en tu configuración de Tailwind
-					'animate-bounce',
-					'animate-spin',
-					'animate-loading-dot',
-					'animate-accordion-down',
-					'animate-accordion-up',
+import Image from 'next/image';
 
-					// Regex para capturar clases de fuentes personalizadas
-					'font-sans',
+import { users } from '@/db/schema';
 
-					// Regex para capturar clases de colores personalizados
-					'/^(bg|text|border|ring)-(background|foreground|card|popover|primary|secondary|muted|accent|destructive)/',
+import { db } from '@/lib/db';
 
-					// Regex para capturar clases de chart
-					'/^chart-[1-5]/',
+import '@/styles/global.css';
+import Link from 'next/link';
 
-					// Captura cualquier clase personalizada que comience con 'custom-'
-					'/^custom-/',
-				],
-				future: {
-					purgeLayersByDefault: true,
-				},
-				removeDeprecatedUtilities: true,
-			},
-			next: {
-				rootDir: './',
-			},
-			files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
-		},
-	}),
-];
+import { drizzle } from 'drizzle-orm'; // ❌ Import externo después de internos (import/order)
+import fs from 'fs'; // ❌ Import de Node.js después de internos (import/order)
 
-export default eslintConfig;
+interface User {
+	id: number;
+	name: string;
+}
 
+// ❌ Uso incorrecto de una variable sin usar
+const unusedVariable = 'Esto no debería estar aquí';
+
+// ❌ Debería usar type-imports en lugar de imports normales
+
+const Page: NextPage = () => {
+	// ❌ No se recomienda asignar a una variable el resultado de una promesa sin manejar (no-floating-promises)
+	const data = db.select().from(users).execute();
+
+	// ❌ Uso incorrecto de <img> en lugar de <Image> de Next.js
+	return (
+		<div>
+			<h1>Hola mundo</h1>
+
+			{/* ❌ Uso de <img> en lugar de next/image */}
+			<img src="/logo.png" alt="Logo" width="200" height="100" />
+
+			{/* ✅ Uso correcto de next/image */}
+			<Image src="/logo.png" alt="Logo Next.js" width={200} height={100} />
+
+			{/* ❌ Uso incorrecto de <a> para navegación interna en lugar de <Link> */}
+			<a href="/about">Ir a About</a>
+
+			{/* ✅ Uso correcto de <Link> */}
+			<Link href="/about">Ir a About</Link>
+
+			{/* ❌ Intento de hacer un DELETE sin WHERE (violación de drizzle/enforce-delete-with-where) */}
+			<button onClick={() => db.delete(users).execute()}>
+				Eliminar usuarios
+			</button>
+		</div>
+	);
+};
+
+export default Page;
+---------------------------------------------------------
+ARCHIVO PAGE.TSX DE PRUEBA PARA ESLINT
+---------------------------------------------------------
+FORZAR EL CRON
+curl -X GET https://artiefy.com/api/cron/check-subscriptions \
+-H "Authorization: Bearer 6a8cfb161629e387044a10761c6503639bec96a8e7c7dc7922b4982633fd5c4e"
+---------------------------------------------------------

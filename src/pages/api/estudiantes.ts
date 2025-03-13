@@ -1,4 +1,5 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
+
 import { getTotalEstudiantes } from '~/lib/db'; // Asegúrate de que esta ruta sea correcta
 
 export default async function handler(

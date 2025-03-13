@@ -54,7 +54,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 	console.log(`lessonIdNumer: ${lessonIdNumber}`);
 	useEffect(() => {
 		localStorage.getItem(`selectedColor_${lessonId}`);
-	}, [lessonId]);
+	}, [lessonId, lessonIdNumber]);
 
 	useEffect(() => {
 		const fetchFiles = async () => {
@@ -83,7 +83,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 		};
 
 		fetchFiles().catch((err) => console.error('Error fetching files:', err));
-	}, [lessonId]);
+	}, [lessonId, lessonIdNumber]);
 
 	useEffect(() => {
 		const fetchFilesName = async () => {
@@ -116,7 +116,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 		fetchFilesName().catch((err) =>
 			console.error('Error fetching files:', err)
 		);
-	}, [lessonId]);
+	}, [lessonId, lessonIdNumber]);
 
 	if (loading) {
 		return <div>Cargando archivos...</div>;
@@ -148,9 +148,10 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 					if (!file) return null; // Manejar caso de clave vacía
 					const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3
 					const icon = getIconForFileType(file.fileName); // Icono basado en la extensión del archivo
-					if (!lessonFileName === null) {
+					if (lessonFileName === null) {
 						return null; // Manejar caso de nombre de archivo vacío
 					} else {
+						console.log('lessonFileName:', lessonFileName);
 					}
 					const resourceNames = lessonFileName?.resourceNames.split(',') ?? []; // Separar resourceNames por comas}
 

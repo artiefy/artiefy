@@ -1,12 +1,15 @@
-import React from 'react';
+import { Suspense } from 'react';
+
 import StudentDashboard from '~/app/estudiantes/StudentDashboard';
-import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
-import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
+import CategoriesCourse from '~/components/admin/ui/CourseCategories';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import { getAllCategories } from '~/server/actions/categories/getAllCategories';
-import { getFeaturedCategories } from '~/server/actions/categories/getFeaturedCategories';
-import { getAllCourses } from '~/server/actions/courses/getAllCourses';
+import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
+import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
+import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
+
 import type { Category, Course } from '~/types';
 
 interface SearchParams {
@@ -53,8 +56,8 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 		const lowercasedQuery = params.query.toLowerCase();
 		filteredCourses = filteredCourses.filter(
 			(course) =>
-				course.title.toLowerCase().includes(lowercasedQuery) ||
-				course.description?.toLowerCase().includes(lowercasedQuery) ||
+				course.title.toLowerCase().includes(lowercasedQuery) ??
+				course.description?.toLowerCase().includes(lowercasedQuery) ??
 				course.category?.name.toLowerCase().includes(lowercasedQuery)
 		);
 	}
@@ -80,27 +83,51 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 	};
 }
 
+async function fetchAllCourses(): Promise<Course[]> {
+	return await getAllCourses();
+}
+
 export default async function CoursesPage({ searchParams }: Props) {
 	try {
 		const params = await searchParams;
 		const data = await fetchCourseData(params);
+		const allCourses = await fetchAllCourses();
 
 		return (
 			<>
 				<Header />
-				<StudentDashboard initialCourses={data.courses} />
-				<CourseCategories
+				<StudentDashboard initialCourses={allCourses} />
+				<CategoriesCourse
 					allCategories={data.categories}
 					featuredCategories={data.featuredCategories}
 				/>
-				<CourseListStudent
-					courses={data.courses}
-					currentPage={data.page}
-					totalPages={data.totalPages}
-					totalCourses={data.total}
-					category={data.categoryId?.toString()}
-					searchTerm={data.searchTerm}
-				/>
+				<Suspense
+					fallback={
+						<div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
+							{Array.from({ length: 9 }).map((_, i) => (
+								<div key={i} className="group relative p-4">
+									<Skeleton className="relative h-40 w-full md:h-56" />
+									<div className="mt-3 flex flex-col space-y-2">
+										<Skeleton className="h-6 w-3/4" />
+										<Skeleton className="h-4 w-1/2" />
+										<Skeleton className="h-4 w-full" />
+										<Skeleton className="h-4 w-full" />
+										<Skeleton className="h-4 w-1/2" />
+									</div>
+								</div>
+							))}
+						</div>
+					}
+				>
+					<CourseListStudent
+						courses={data.courses}
+						currentPage={data.page}
+						totalPages={data.totalPages}
+						totalCourses={data.total}
+						category={data.categoryId?.toString()}
+						searchTerm={data.searchTerm}
+					/>
+				</Suspense>
 				<Footer />
 			</>
 		);
@@ -116,6 +143,3 @@ export default async function CoursesPage({ searchParams }: Props) {
 		);
 	}
 }
-
-export const revalidate = 60;
-export const dynamic = 'force-dynamic';

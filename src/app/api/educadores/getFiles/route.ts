@@ -1,6 +1,7 @@
 // src/app/api/getFiles/route.ts
-import { S3 } from 'aws-sdk';
 import { NextResponse } from 'next/server';
+
+import { S3 } from 'aws-sdk';
 import { Pool } from 'pg';
 
 // Configura tu conexión a la base de datos
