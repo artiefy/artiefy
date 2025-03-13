@@ -15,7 +15,7 @@ import '~/styles/chatmodal.css';
 const StudentChatbot: React.FC = () => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [messages, setMessages] = useState([
-		{ id: 1, text: '¡Hola! ¿En qué puedo ayudarte hoy?', sender: 'bot' },
+		{ id: 1, text: 'Hola ¿En qué puedo ayudarte hoy?', sender: 'bot' },
 	]);
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
