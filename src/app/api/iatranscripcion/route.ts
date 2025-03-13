@@ -1,9 +1,11 @@
+import { unstable_cache } from 'next/cache';
 import { NextResponse } from 'next/server';
 
 import axios, { isAxiosError } from 'axios';
 
 const VIDEO_TO_TEXT_API = 'http://3.145.183.203:8000/video2text';
 const DEFAULT_TIMEOUT = 300000;
+const CACHE_DURATION = 3600; // 1 hora
 
 export async function POST(request: Request) {
 	try {
@@ -17,17 +19,32 @@ export async function POST(request: Request) {
 			);
 		}
 
-		// Ensure URL is properly formatted
+		// Asegurar que la URL está bien formada
 		if (!url.startsWith('http')) {
 			url = `https://s3.us-east-2.amazonaws.com/artiefy-upload/${url}`;
 		}
 
 		console.log('Procesando solicitud para URL:', url);
 
-		// Make request to external API with JSON data
+		const cacheKey = `transcription-${url}`;
+
+		// Obtener caché si existe
+		const getCachedTranscription = unstable_cache(
+			() => Promise.resolve(null), // Si no hay caché, devuelve null
+			[cacheKey]
+		);
+
+		const cachedResponse = await getCachedTranscription();
+
+		if (cachedResponse) {
+			console.log('Transcripción obtenida de la caché');
+			return NextResponse.json({ transcription: cachedResponse });
+		}
+
+		// Petición al API externo
 		const response = await axios.post(
 			VIDEO_TO_TEXT_API,
-			{ url }, // Send as JSON object
+			{ url },
 			{
 				headers: {
 					'Content-Type': 'application/json',
@@ -38,13 +55,12 @@ export async function POST(request: Request) {
 			}
 		);
 
-		// Log response for debugging
 		console.log('Respuesta del API:', {
 			status: response.status,
-			data: response.data as unknown[],
+			data: response.data as TranscriptionItem[],
 		});
 
-		// Validate response data
+		// Validar el formato de la respuesta
 		if (!Array.isArray(response.data)) {
 			console.error('Formato de respuesta inválido:', response.data);
 			return NextResponse.json(
@@ -53,7 +69,16 @@ export async function POST(request: Request) {
 			);
 		}
 
-		// Return transcription data
+		// Guardar en caché la transcripción
+		const cacheTranscription = unstable_cache(
+			(): Promise<TranscriptionItem[]> => Promise.resolve(response.data),
+			[cacheKey],
+			{ revalidate: CACHE_DURATION }
+		);
+
+		await cacheTranscription();
+
+		// Devolver la transcripción
 		return NextResponse.json({ transcription: response.data });
 	} catch (error: unknown) {
 		console.error('Error detallado:', error);
@@ -80,4 +105,10 @@ export async function POST(request: Request) {
 			{ status: 500 }
 		);
 	}
+}
+
+interface TranscriptionItem {
+	start: number;
+	end: number;
+	text: string;
 }

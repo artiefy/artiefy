@@ -7,6 +7,8 @@ import Link from 'next/link';
 
 import { RocketLaunchIcon, StarIcon } from '@heroicons/react/24/solid';
 
+import { StudenProgram } from '~/components/estudiantes/layout/studentdashboard/StudenProgram';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
 	Carousel,
@@ -16,19 +18,35 @@ import {
 	CarouselPrevious,
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
-import { type Course } from '~/types';
+import { type Course, type Program, type Category } from '~/types';
 import '~/styles/searchBar.css';
 
 interface StudentDashboardProps {
 	initialCourses: Course[];
+	initialPrograms: Program[];
+	categories: Category[];
 }
 
 export default function StudentDashboard({
 	initialCourses,
+	initialPrograms,
+	categories,
 }: StudentDashboardProps) {
 	const [courses] = useState<Course[]>(initialCourses);
+	const [sortedPrograms] = useState(() => {
+		if (!Array.isArray(initialPrograms)) {
+			console.warn('initialPrograms is not an array:', initialPrograms);
+			return [];
+		}
+		return [...initialPrograms].sort(
+			(a, b) =>
+				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+		);
+	});
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [searchQuery, setSearchQuery] = useState('');
+
+	console.log('Programs received:', initialPrograms); // Añadir este log para debug
 
 	const truncateDescription = (description: string, maxLength: number) => {
 		if (description.length <= maxLength) return description;
@@ -214,9 +232,33 @@ export default function StudentDashboard({
 								<CarouselNext className="ml-4 size-12 bg-black/50 text-white" />
 							</Carousel>
 						</div>
+
+						<div className="xs:px-4 relative px-8">
+							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
+								Programas
+							</h2>
+							<Carousel className="w-full p-4">
+								<CarouselContent>
+									{sortedPrograms.map((program) => (
+										<CarouselItem
+											key={program.id}
+											className="pl-4 md:basis-1/2 lg:basis-1/3"
+										>
+											<StudenProgram
+												program={program}
+												categories={categories}
+											/>
+										</CarouselItem>
+									))}
+								</CarouselContent>
+								<CarouselPrevious className="mr-7 size-12 bg-black/50 text-white" />
+								<CarouselNext className="ml-4 size-12 bg-black/50 text-white" />
+							</Carousel>
+						</div>
 					</div>
 				</div>
 			</main>
+			<StudentChatbot />
 		</div>
 	);
 }

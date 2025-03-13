@@ -302,6 +302,115 @@ export const parametros = pgTable('parametros', {
 		.notNull(),
 });
 
+// Tabla de programas (debe ir antes de materias)
+export const programas = pgTable('programas', {
+	id: serial('id').primaryKey(),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description'),
+	coverImageKey: text('cover_image_key'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	creatorId: text('creator_id')
+		.references(() => users.id)
+		.notNull(),
+	rating: real('rating').default(0),
+	requerimientos: text('requerimientos').notNull(),
+	categoryid: integer('categoryid')
+		.references(() => categories.id)
+		.notNull(),
+	dificultadid: integer('dificultadid')
+		.references(() => dificultad.id)
+		.notNull(),
+});
+
+// Tabla de materias
+export const materias = pgTable('materias', {
+	id: serial('id').primaryKey(),
+	title: varchar('title', { length: 255 }).notNull(),
+	description: text('description'),
+	programaId: integer('programa_id')
+		.references(() => programas.id)
+		.notNull(),
+	courseid: integer('courseid').references(() => courses.id), // Changed from courseId to courseid
+});
+
+// Relaciones de programas
+export const programasRelations = relations(programas, ({ one, many }) => ({
+	creator: one(users, {
+		fields: [programas.creatorId],
+		references: [users.id],
+	}),
+	category: one(categories, {
+		fields: [programas.categoryid],
+		references: [categories.id],
+	}),
+	materias: many(materias),
+}));
+
+// Relaciones de materias
+export const materiasRelations = relations(materias, ({ one }) => ({
+	programa: one(programas, {
+		fields: [materias.programaId],
+		references: [programas.id],
+	}),
+	curso: one(courses, {
+		fields: [materias.courseid], // Changed from courseId to courseid
+		references: [courses.id],
+	}),
+}));
+
+// Tabla de notas
+export const notas = pgTable('notas', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	materiaId: integer('materia_id')
+		.references(() => materias.id)
+		.notNull(),
+	nota: real('nota').notNull(),
+});
+
+// Relaciones de notas
+export const notasRelations = relations(notas, ({ one }) => ({
+	user: one(users, {
+		fields: [notas.userId],
+		references: [users.id],
+	}),
+	materia: one(materias, {
+		fields: [notas.materiaId],
+		references: [materias.id],
+	}),
+}));
+
+// Tabla de inscripción a programas
+export const enrollmentPrograms = pgTable('enrollment_programs', {
+	id: serial('id').primaryKey(),
+	programaId: integer('programa_id')
+		.references(() => programas.id)
+		.notNull(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
+	completed: boolean('completed').default(false),
+});
+
+// Relaciones de enrollmentPrograms
+export const enrollmentProgramsRelations = relations(
+	enrollmentPrograms,
+	({ one }) => ({
+		programa: one(programas, {
+			fields: [enrollmentPrograms.programaId],
+			references: [programas.id],
+		}),
+		user: one(users, {
+			fields: [enrollmentPrograms.userId],
+			references: [users.id],
+		}),
+	})
+);
+
 // Relaciones
 export const usersRelations = relations(users, ({ many }) => ({
 	enrollments: many(enrollments),

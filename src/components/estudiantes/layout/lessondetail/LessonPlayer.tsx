@@ -88,7 +88,10 @@ const LessonPlayer = ({
 			if (isAxiosError(err)) {
 				if (err.code === 'ECONNABORTED') {
 					errorMessage = 'La solicitud tomó demasiado tiempo';
-				} else if (err.response?.data && typeof (err.response.data as { error?: string }).error === 'string') {
+				} else if (
+					err.response?.data &&
+					typeof (err.response.data as { error?: string }).error === 'string'
+				) {
 					errorMessage = (err.response.data as { error: string }).error;
 				} else {
 					errorMessage = err.message;
@@ -109,7 +112,6 @@ const LessonPlayer = ({
 		}
 	}, [fetchTranscription, isLocked, lesson.coverVideoKey]);
 
-	// Rest of the component remains the same...
 	if (isLocked) {
 		return (
 			<div className="flex h-[400px] items-center justify-center rounded-lg bg-gray-100">

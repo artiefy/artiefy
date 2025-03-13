@@ -9,8 +9,9 @@ import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
+import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
-import type { Category, Course } from '~/types';
+import type { Category, Course, Program } from '~/types';
 
 interface SearchParams {
 	category?: string;
@@ -24,6 +25,7 @@ interface Props {
 
 interface APIResponse {
 	courses: Course[];
+	programs: Program[];
 	categories: Category[];
 	featuredCategories: Category[];
 	total: number;
@@ -36,12 +38,14 @@ interface APIResponse {
 
 const ITEMS_PER_PAGE = 9;
 
-async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
-	const [allCourses, allCategories, featuredCategories] = await Promise.all([
-		getAllCourses(),
-		getAllCategories(),
-		getFeaturedCategories(6),
-	]);
+async function fetchData(params: SearchParams): Promise<APIResponse> {
+	const [allCourses, allCategories, featuredCategories, allPrograms] =
+		await Promise.all([
+			getAllCourses(),
+			getAllCategories(),
+			getFeaturedCategories(6),
+			getAllPrograms(),
+		]);
 
 	let filteredCourses = allCourses;
 
@@ -72,6 +76,7 @@ async function fetchCourseData(params: SearchParams): Promise<APIResponse> {
 
 	return {
 		courses: paginatedCourses,
+		programs: allPrograms, // Ensure programs are included
 		categories: allCategories,
 		featuredCategories,
 		total: totalFilteredCourses,
@@ -90,13 +95,17 @@ async function fetchAllCourses(): Promise<Course[]> {
 export default async function CoursesPage({ searchParams }: Props) {
 	try {
 		const params = await searchParams;
-		const data = await fetchCourseData(params);
+		const data = await fetchData(params);
 		const allCourses = await fetchAllCourses();
 
 		return (
 			<>
 				<Header />
-				<StudentDashboard initialCourses={allCourses} />
+				<StudentDashboard
+					initialCourses={allCourses}
+					initialPrograms={data.programs}
+					categories={data.categories} // Add categories prop
+				/>
 				<CategoriesCourse
 					allCategories={data.categories}
 					featuredCategories={data.featuredCategories}

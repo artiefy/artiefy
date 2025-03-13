@@ -27,13 +27,14 @@ export interface Course {
 	modalidadesid: number;
 	dificultadid: number;
 	totalStudents: number;
-	lessons: Lesson[];
+	lessons: Lesson[]; // Asegurarse de que la propiedad lessons esté presente
 	category?: Category;
 	modalidad?: Modalidad;
 	dificultad?: Dificultad;
 	enrollments?: Enrollment[] | { length: number };
 	creator?: User;
 	isNew?: boolean; // Agregar propiedad isNew
+	requerimientos: string[];
 }
 
 export interface Category {
@@ -89,7 +90,7 @@ export interface LessonWithProgress extends Lesson {
 	porcentajecompletado: number;
 	isCompleted: boolean;
 	isLocked: boolean;
-  courseTitle: string;
+	courseTitle: string;
 	resourceNames: string[];
 	courseId: number;
 	createdAt: Date;
@@ -250,4 +251,28 @@ export interface ActivityResults {
 	answers: Record<string, SavedAnswer>;
 	passed: boolean;
 	submittedAt: string;
+}
+
+export interface Program {
+	id: string;
+	title: string;
+	description: string | null;
+	coverImageKey: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	creatorId: string;
+	rating: number | null;
+	courses: Course[];
+	materias: Materia[];
+	requerimientos: string[]; // Add this field
+	categoryid: number; // Add this field
+	dificultadid: number; // Add this field
+}
+
+export interface Materia {
+	id: number;
+	title: string;
+	description: string | null;
+	programaId: number;
+	courseId: number | null;
 }

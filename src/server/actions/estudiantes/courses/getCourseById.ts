@@ -41,6 +41,7 @@ export async function getCourseById(
 
 	const transformedCourse: Course = {
 		...course,
+		requerimientos: course.requerimientos ? course.requerimientos.split(',') : [],
 		totalStudents: course.enrollments?.length ?? 0,
 		lessons:
 			course.lessons?.map((lesson) => {

@@ -82,6 +82,7 @@ const transformCourseData = (coursesData: CourseQueryResult[]): Course[] => {
 		modalidad: { name: course.modalidadName ?? '' },
 		dificultad: { name: course.dificultadName ?? '' },
 		isFeatured: course.isFeatured ?? false,
+		requerimientos: [] as string[],
 	}));
 };
 
