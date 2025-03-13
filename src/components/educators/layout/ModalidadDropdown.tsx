@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
+// Interfaz para las modalidades
 interface Modalidad {
 	id: number;
 	name: string;
 	description: string;
 }
 
+// Propiedades del componente para la creacion de un curso en componente padre
 interface ModalidadDropdownProps {
 	modalidad: number;
 	setModalidad: (modalidadId: number) => void;
@@ -19,9 +21,10 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
 	setModalidad,
 	errors,
 }) => {
-	const [modalidades, setModalidades] = useState<Modalidad[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [modalidades, setModalidades] = useState<Modalidad[]>([]); // Estado para las modalidades
+	const [isLoading, setIsLoading] = useState(true); // Estado para el estado de carga
 
+	// Efecto para obtener las modalidades
 	useEffect(() => {
 		const fetchCategories = async () => {
 			setIsLoading(true);
@@ -47,14 +50,16 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
 			}
 		};
 
+		// Llamada a la función para obtener las modalidades
 		void fetchCategories();
 	}, []);
 
+	// Retorno la vista del componente
 	return (
 		<div className="flex flex-col gap-2">
 			<label
 				htmlFor="category-select"
-				className="text-primary text-lg font-medium"
+				className="text-lg font-medium text-primary"
 			>
 				Selecciona una Modalidad:
 			</label>
@@ -68,7 +73,7 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
 						const selectedId = Number(e.target.value);
 						setModalidad(selectedId);
 					}}
-					className={`mb-5 w-60 rounded border p-2 outline-hidden ${
+					className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
 						errors.modalidad ? 'border-red-500' : 'border-primary'
 					}`}
 				>

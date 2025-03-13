@@ -49,7 +49,7 @@ export async function GET(req: Request) {
 				? resourceKeys.split(',').filter((key) => key)
 				: [];
 
-			const bucketName = process.env.AWS_S3_BUCKET_NAME;
+			const bucketName = process.env.AWS_BUCKET_NAME;
 			if (!bucketName) {
 				throw new Error('AWS_S3_BUCKET_NAME is not defined');
 			}

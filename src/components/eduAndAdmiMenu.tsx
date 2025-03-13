@@ -44,14 +44,14 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 	const navItemsEducator = [
 		{
 			icon: <FiHome size={24} />,
-			title: 'Home',
+			title: 'Inicio',
 			id: 'home',
 			link: '/dashboard/educadores',
 		},
 		{
 			icon: <FiBook size={24} />,
 			title: 'Cursos',
-			id: 'courses',
+			id: 'coursesd',
 			link: '/dashboard/educadores/cursos',
 		},
 		{
@@ -62,21 +62,20 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 		},
 		{
 			icon: <FiMessageSquare size={24} />,
-			title: 'Forum',
+			title: 'Foros',
 			id: 'forum',
 			link: '/dashboard/educadores/foro',
 		},
-		{ icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: '/' },
+		{ icon: <FiUser size={24} />, title: 'Perfil', id: 'profile', link: '/' },
 		{
 			icon: <FiShieldOff size={24} />,
-			title: 'Reporta errores',
+			title: 'Reportar errores',
 			id: 'errores',
 			onClick: () => setIsModalOpen(true),
 		},
-
 		{
 			icon: <FiSettings size={24} />,
-			title: 'Settings',
+			title: 'Configuraciones',
 			id: 'settings',
 			link: '/',
 		},
@@ -108,12 +107,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			id: 'settings',
 			link: '/',
 		},
-		{
-			icon: <FiSettings size={24} />,
-			title: 'Foro',
-			id: 'foro',
-			link: '/dashboard/admin/foro',
-		},
 	];
 
 	// Determina el rol del usuario y selecciona los elementos de navegación correspondientes
@@ -132,9 +125,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 	const [activeItem, setActiveItem] = useState('home');
 
 	return (
-		<div className="bg-background min-h-screen">
+		<div className="min-h-screen bg-background">
 			{/* Navbar */}
-			<nav className="bg-background fixed top-0 z-50 w-full border-b border-gray-200 shadow-xs">
+			<nav className="fixed top-0 z-20 w-full border-b border-gray-200 bg-background shadow-xs">
 				<div className="p-3 lg:px-5 lg:pl-3">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center">
@@ -176,12 +169,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			{/* Sidebar */}
 			<aside
 				className={cn(
-					'bg-background fixed top-0 left-0 z-40 h-screen w-64 border-r border-gray-200 pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
+					'fixed top-0 left-0 z-10 h-screen w-64 border-r border-gray-200 bg-background pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
 					!isOpen && '-translate-x-full'
 				)}
 				aria-label="Sidebar"
 			>
-				<div className="bg-background h-full overflow-y-auto px-3 pb-4">
+				<div className="h-full overflow-y-auto bg-background px-3 pb-4">
 					<ul className="space-y-5 font-medium">
 						{navItems.map((item) => (
 							<li key={item.id} onClick={item.onClick}>
@@ -189,7 +182,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 									href={item.link ?? '#'}
 									onClick={() => setActiveItem(item.id)}
 									className={cn(
-										'group hover:bg-primary flex w-full items-center rounded-lg p-2 text-white',
+										'group flex w-full items-center rounded-lg p-2 text-white hover:bg-primary',
 										activeItem === item.id ? 'bg-primary text-black' : ''
 									)}
 								>

@@ -69,7 +69,6 @@ export interface Lesson {
 	duration: number;
 	coverImageKey: string;
 	coverVideoKey: string;
-	order: number;
 	courseId: number;
 	createdAt: Date;
 	updatedAt: Date;
@@ -79,12 +78,15 @@ export interface Lesson {
 	isCompleted: boolean;
 	lastUpdated: Date;
 	course?: Course;
-	activities?: Activity[];
+	activities?: Activity[]; // Relación con actividades
 	isLocked: boolean | null;
+	resourceNames: string[]; // Añadir resourceName como un array de strings
 }
 
 export interface LessonWithProgress extends Lesson {
+	porcentajecompletado: number;
 	isLocked: boolean;
+	isCompleted: boolean;
 }
 
 export interface UserLessonsProgress {
@@ -138,6 +140,25 @@ export interface Activity {
 	lesson?: Lesson;
 	typeActi?: TypeActi;
 	userActivitiesProgress?: UserActivitiesProgress[];
+	content?: {
+		questions: Question[];
+	};
+	revisada: boolean;
+	parametroId: number;
+	porcentaje: number;
+	fechaMaximaEntrega: Date;
+}
+
+export interface Question {
+	id: string;
+	text: string;
+	options: Option[];
+	correctOptionId: string;
+}
+
+export interface Option {
+	id: string;
+	text: string;
 }
 
 export interface TypeActi {

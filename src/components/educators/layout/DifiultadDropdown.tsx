@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
+// Interfaz para las dificultades
 interface Dificultad {
 	id: number;
 	name: string;
 	description: string;
 }
 
+// Propiedades del componente para la creacion de un curso en componente padre
 interface DificultadDropdownProps {
 	dificultad: number;
 	setDificultad: (dificultadId: number) => void;
@@ -14,14 +16,16 @@ interface DificultadDropdownProps {
 	};
 }
 
+
 const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
 	dificultad,
 	setDificultad,
 	errors,
 }) => {
-	const [dificultades, setDificultades] = useState<Dificultad[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [dificultades, setDificultades] = useState<Dificultad[]>([]); // Estado para las dificultades
+	const [isLoading, setIsLoading] = useState(true); // Estado para el estado de carga
 
+	// Efecto para obtener las dificultades
 	useEffect(() => {
 		const fetchCategories = async () => {
 			setIsLoading(true);
@@ -47,14 +51,16 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
 			}
 		};
 
+		// Llamada a la función para obtener las dificultades
 		void fetchCategories();
 	}, []);
 
+	// Retorno la vista del componente
 	return (
 		<div className="flex flex-col gap-2">
 			<label
 				htmlFor="category-select"
-				className="text-primary text-lg font-medium"
+				className="text-lg font-medium text-primary"
 			>
 				Selecciona una Dificultad:
 			</label>
@@ -68,7 +74,7 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
 						const selectedId = Number(e.target.value);
 						setDificultad(selectedId);
 					}}
-					className={`mb-5 w-60 rounded border p-2 outline-hidden ${
+					className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
 						errors.dificultad ? 'border-red-500' : 'border-primary'
 					}`}
 				>

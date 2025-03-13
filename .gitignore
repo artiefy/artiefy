@@ -4,14 +4,11 @@
 /node_modules
 /.pnp
 .pnp.js
+/backend/node_modules
 
 # testing
 /coverage
 
-# database
-/prisma/db.sqlite
-/prisma/db.sqlite-journal
-db.sqlite
 
 # next.js
 /.next/
@@ -44,3 +41,9 @@ yarn-error.log*
 
 # idea files
 .idea
+src/config/credenciales-gmail.json
+
+# Credenciales
+src/config/credenciales-gmail.json
+!src/config/credenciales-gmail.example.json
+

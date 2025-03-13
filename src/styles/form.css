@@ -1,0 +1,182 @@
+/* From Uiverse.io by 3bdel3ziz-T */
+.form {
+	background: white;
+	box-shadow:
+		0px 187px 75px rgba(0, 0, 0, 0.01),
+		0px 105px 63px rgba(0, 0, 0, 0.05),
+		0px 47px 47px rgba(0, 0, 0, 0.09),
+		0px 12px 26px rgba(0, 0, 0, 0.1),
+		0px 0px 0px rgba(0, 0, 0, 0.1);
+	width: 100%;
+	max-width: 600px;
+	display: flex;
+	flex-direction: column;
+	padding: 20px;
+	position: relative;
+	border-radius: 25px;
+}
+
+.form .payer-info-title {
+	font-size: 18px;
+	padding-bottom: 20px;
+	font-weight: bold;
+	color: #21262e;
+	text-align: left;
+}
+
+.form .label {
+	position: relative;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center; /* Alinea verticalmente los elementos dentro del label */
+}
+
+.form .label .title {
+	padding: 0 10px;
+	font-size: 12px;
+	color: #00bdd8; /* Cambia el color a azul oscuro */
+	font-weight: bold; /* Aplica negrita */
+	position: absolute;
+	top: -10px; /* Ajusta la posición del título */
+	left: 15px;
+	background: white;
+	z-index: 1;
+}
+
+.form .input-field {
+	font-size: 12px;
+	width: 100%;
+	height: 50px;
+	text-indent: 15px;
+	border-radius: 15px;
+	outline: none;
+	background-color: white;
+	border: 1px solid #21262e;
+	transition: all 0.3s;
+	caret-color: #00bdd8;
+	color: #0c0f14;
+	position: relative; /* Asegura que el input sea relativo */
+	padding-right: 40px; /* Add padding to make space for the icon */
+}
+
+.form .input-field:hover {
+	border-color: #00a5c0;
+}
+
+.form .input-field:focus,
+.form .input-field:not(:placeholder-shown) {
+	border-color: #00bdd8;
+	background-color: white; /* Asegura que el fondo se mantenga blanco */
+}
+
+.form .input-field:-webkit-autofill {
+	-webkit-box-shadow: 0 0 0 30px white inset !important;
+	-webkit-text-fill-color: #0c0f14 !important;
+}
+
+/* Update the error message styles */
+.form .error-message {
+  color: red;
+  font-size: 12px;
+  font-weight: bold;
+  display: block;
+  width: 100%;
+  margin-top: 2px; /* Reduced top margin */
+}
+
+/* Add text alignment for the checkbox error message */
+.form .error-message.text-center {
+  text-align: center;
+}
+
+/* Remove the previous positioning styles for error message */
+.form .input-error + .error-message {
+  display: block;
+  width: 100%;
+}
+
+/* Add margin left for checkbox error messages */
+.form .error-message.ml-6 {
+  margin-left: 1.5rem;
+}
+
+.form .input-error + .error-message {
+	display: block;
+	position: relative;
+	margin-top: 5px;
+	left: 0;
+	width: 100%; /* Ensure the error message takes the full width */
+}
+
+.form .error {
+	color: red;
+	font-size: 14px;
+	font-weight: bold;
+	text-align: center;
+}
+
+.form .security-message {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #28a745;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.form .security-message .lock-icon {
+	margin-right: 10px;
+	font-size: 20px;
+}
+
+.form .split {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 100%;
+	gap: 15px;
+}
+.form .split label {
+	width: 100%;
+}
+
+.form .checkout-btn {
+	padding: 5px 0;
+	border-radius: 25px;
+	font-weight: 700;
+	transition: all 0.3s cubic-bezier(0.15, 0.83, 0.66, 1);
+	cursor: pointer;
+	font-size: 20px;
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+	border: none;
+	justify-content: center;
+	fill: #fff;
+	color: #fff;
+	border: 2px solid transparent;
+	background: #00bdd8;
+	transition: all 200ms;
+}
+
+.form .checkout-btn:active {
+	scale: 0.95;
+}
+
+.form .checkout-btn:hover {
+	color: #00bdd8;
+	border: 2px solid #00bdd8;
+	background: transparent;
+}
+
+.form .checkbox-title {
+	margin-left: 10px; /* Añade espacio entre el checkbox y el texto */
+	font-size: 12px;
+	color: #00bdd8; /* Cambia el color a azul oscuro */
+	font-weight: bold; /* Aplica negrita */
+}
+
+.form .label-checkbox {
+	display: flex;
+	align-items: center; /* Alinea verticalmente los elementos dentro del label */
+}

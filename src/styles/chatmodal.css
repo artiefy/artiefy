@@ -63,7 +63,7 @@
 .button:hover {
   background: #000;
   transform: scale(1.05);
-  border: 2px solid #fff; /* Add this line to set the border color to white on hover */
+  border: 2px solid #fff;
 }
 
 .button:hover .button__icon {
@@ -131,6 +131,8 @@
   border-top: 1px solid #e5e7eb;
   padding: 1rem;
 }
+
+
 
 @keyframes bounce {
   0%,

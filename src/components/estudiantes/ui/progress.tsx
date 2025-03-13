@@ -2,27 +2,38 @@
 
 import * as React from 'react';
 import * as ProgressPrimitive from '@radix-ui/react-progress';
-
+import '~/styles/progress.css';
 import { cn } from '~/lib/utils';
 
-const Progress = React.forwardRef<
-	React.ElementRef<typeof ProgressPrimitive.Root>,
-	React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root>
->(({ className, value, ...props }, ref) => (
-	<ProgressPrimitive.Root
-		ref={ref}
-		className={cn(
-			'relative h-2 w-full overflow-hidden rounded-full bg-gray-300',
-			className
-		)}
-		{...props}
-	>
-		<ProgressPrimitive.Indicator
-			className="size-full flex-1 bg-secondary transition-all"
-			style={{ transform: `translateX(-${100 - (value ?? 0)}%)` }}
-		/>
-	</ProgressPrimitive.Root>
-));
-Progress.displayName = ProgressPrimitive.Root.displayName;
+interface ProgressProps extends React.ComponentProps<typeof ProgressPrimitive.Root> {
+  showPercentage?: boolean;
+  value?: number;
+}
+
+const Progress = ({
+  className,
+  value,
+  showPercentage = true,
+  ...props
+}: ProgressProps) => {
+  return (
+    <div className="relative progress-container">
+      <ProgressPrimitive.Root
+        data-slot="progress"
+        className={cn(
+          className
+        )}
+        {...props}
+      >
+        <ProgressPrimitive.Indicator
+          data-slot="progress-indicator"
+          className="progress-bar"
+          style={{ '--progress-width': `${value || 0}%` } as React.CSSProperties}
+          data-percentage={showPercentage ? `${value || 0}%` : undefined}
+        />
+      </ProgressPrimitive.Root>
+    </div>
+  );
+};
 
 export { Progress };

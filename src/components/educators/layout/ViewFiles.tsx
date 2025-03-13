@@ -51,7 +51,6 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 	const [errorNames, setErrorNames] = useState<string | null>(null);
 
 	const lessonIdNumber = Number(lessonId);
-	console.log(`lessonIdNumer: ${lessonIdNumber}`);
 	useEffect(() => {
 		localStorage.getItem(`selectedColor_${lessonId}`);
 	}, [lessonId, lessonIdNumber]);
@@ -70,11 +69,10 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 				if (Array.isArray(data)) {
 					const files = data.filter((file: { key: string }) => file.key); // Filtrar claves vacías y nombres vacíos
 					setFiles(files); // Extraer claves y nombres de los archivos
-					console.log('Archivos:', files); // Verificar los archivos
 				} else {
 					setError('Datos incorrectos recibidos de la API');
 				}
-			} catch (err) {
+			} catch (err: unknown) {
 				console.error('Error en la solicitud de archivos:', err);
 				setError('Hubo un problema al cargar los archivos');
 			} finally {
@@ -82,7 +80,9 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 			}
 		};
 
-		fetchFiles().catch((err) => console.error('Error fetching files:', err));
+		fetchFiles().catch((err: unknown) =>
+			console.error('Error fetching files:', err)
+		);
 	}, [lessonId, lessonIdNumber]);
 
 	useEffect(() => {
@@ -97,7 +97,6 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 
 				const dataName: LessonsModels =
 					(await respuestaName.json()) as LessonsModels;
-				console.log('Datos recibidos de los name source:', dataName); // Verificar los datos recibidos
 				if (dataName) {
 					setLessonFileName(dataName); // Extraer claves y nombres de los archivos
 				} else {
@@ -105,7 +104,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 						'Datos incorrectos recibidos de la API name Files sources'
 					);
 				}
-			} catch (err) {
+			} catch (err: unknown) {
 				console.error('Error en la solicitud del nombre de los archivos:', err);
 				setErrorNames('Hubo un problema al cargar el nombre de los archivos');
 			} finally {
@@ -113,20 +112,30 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 			}
 		};
 
-		fetchFilesName().catch((err) =>
+		fetchFilesName().catch((err: unknown) =>
 			console.error('Error fetching files:', err)
 		);
 	}, [lessonId, lessonIdNumber]);
 
 	if (loading) {
-		return <div>Cargando archivos...</div>;
+		return (
+			<div className="font-semibold text-primary">Cargando archivos...</div>
+		);
 	}
 	if (loadingNames) {
-		return <div>Cargando nombre de archivos...</div>;
+		return (
+			<div className="font-semibold text-primary">
+				Cargando nombre de archivos...
+			</div>
+		);
 	}
 
 	if (files.length === 0) {
-		return <div>No hay archivos disponibles</div>;
+		return (
+			<div className="font-semibold text-primary">
+				No hay archivos subidos actualmente!.
+			</div>
+		);
 	}
 
 	if (error) {
@@ -148,11 +157,10 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 					if (!file) return null; // Manejar caso de clave vacía
 					const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3
 					const icon = getIconForFileType(file.fileName); // Icono basado en la extensión del archivo
-					if (!lessonFileName === null) {
+					if (lessonFileName === null) {
 						return null; // Manejar caso de nombre de archivo vacío
-					} else {
 					}
-					const resourceNames = lessonFileName?.resourceNames.split(',') ?? []; // Separar resourceNames por comas}
+					const resourceNames = lessonFileName.resourceNames.split(','); // Separar resourceNames por comas
 
 					return (
 						<Link
@@ -160,15 +168,14 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 							href={fileUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="relative mb-3 grid h-24 w-full grid-cols-2 items-center rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40"
+							className="relative mb-3 flex h-24 w-full items-center space-x-2 rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40"
 						>
 							{icon}
 
 							<p
-								className={`absolute right-4 no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+								className={`no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 							>
 								{resourceNames[index] ?? file.fileName}
-								{/* Nombre del archivo */}
 							</p>
 						</Link>
 					);

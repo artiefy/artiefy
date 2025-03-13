@@ -8,19 +8,23 @@ import {
 import ForumHome from '~/components/ZoneForum/Forum';
 
 export default function page() {
+	// Vista sencilla que muestra el componente and la lista de foros con detalles basicos y botones para ver el forto mas especifico
 	return (
 		<>
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
-						<BreadcrumbLink className="hover:text-gray-300" href="/">
+						<BreadcrumbLink
+							className="text-primary hover:text-gray-300"
+							href="/"
+						>
 							Inicio
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href="/dashboard/educadores/foro"
 						>
 							Foros

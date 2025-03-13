@@ -1,6 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
-
 import {
 	createLesson,
 	deleteLesson,
@@ -59,11 +58,11 @@ export async function POST(req: NextRequest) {
 			title: string;
 			description: string;
 			duration: number;
-			coverImageKey: string;
-			coverVideoKey: string;
+			coverImageKey?: string;
+			coverVideoKey?: string;
 			courseId: number;
-			resourceKey: string;
-			resourceNames: string;
+			resourceKey?: string;
+			resourceNames?: string;
 			modalidadesId: {
 				id: number;
 				name: string;

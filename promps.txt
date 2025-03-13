@@ -1,184 +1,61 @@
-import { FlatCompat } from '@eslint/eslintrc';
+'use client'
 
-const compat = new FlatCompat({
-	baseDirectory: import.meta.dirname,
-});
+// Unused import to trigger import/order
+import axios from 'axios'
+import React from 'react'
+// Wrong import order
+import { Button } from '~/components/estudiantes/ui/button'
 
-const eslintConfig = [
-	{
-		ignores: [
-			'**/node_modules/**',
-			'.next/**',
-			'out/**',
-			'public/**',
-			'**/*.d.ts',
-			'src/components/estudiantes/ui/**',
-			'src/components/admin/ui/**',
-			'src/components/educadores/ui/**',
-		],
-	},
-	...compat.config({
-		extends: [
-			'plugin:@next/next/recommended',
-			'plugin:@typescript-eslint/recommended',
-			'plugin:@typescript-eslint/recommended-type-checked',
-			'plugin:@typescript-eslint/stylistic-type-checked',
-			'plugin:tailwindcss/recommended',
-			'plugin:import/recommended',
-			'plugin:import/typescript',
-			'prettier',
-		],
-		parser: '@typescript-eslint/parser',
-		parserOptions: {
-			project: './tsconfig.json',
-			tsconfigRootDir: import.meta.dirname,
-		},
-		plugins: ['@typescript-eslint', 'drizzle', 'tailwindcss', 'import'],
-		rules: {
-			'tailwindcss/no-custom-classname': 'warn',
-			'tailwindcss/classnames-order': 'warn',
-			'tailwindcss/enforces-negative-arbitrary-values': 'warn',
-			'tailwindcss/enforces-shorthand': 'warn',
-			'tailwindcss/migration-from-tailwind-2': 'warn',
-			'tailwindcss/no-contradicting-classname': 'error',
-			'@typescript-eslint/consistent-type-definitions': 'warn',
-			'@typescript-eslint/consistent-type-imports': [
-				'warn',
-				{
-					prefer: 'type-imports',
-					fixStyle: 'inline-type-imports',
-				},
-			],
-			'@typescript-eslint/no-unused-vars': [
-				'warn',
-				{
-					argsIgnorePattern: '^_',
-				},
-			],
-			'@typescript-eslint/require-await': 'warn',
-			'@typescript-eslint/no-misused-promises': [
-				'warn',
-				{
-					checksVoidReturn: {
-						attributes: false,
-					},
-				},
-			],
-			'drizzle/enforce-delete-with-where': [
-				'warn',
-				{
-					drizzleObjectName: ['db', 'ctx.db'],
-				},
-			],
-			'drizzle/enforce-update-with-where': [
-				'warn',
-				{
-					drizzleObjectName: ['db', 'ctx.db'],
-				},
-			],
-			'@next/next/google-font-display': 'warn',
-			'@next/next/no-img-element': 'warn',
-			'@next/next/no-html-link-for-pages': 'warn',
-			'import/order': [
-				'warn',
-				{
-					groups: ['builtin', 'external', 'internal', ['parent', 'sibling']],
-					pathGroups: [
-						{
-							pattern: 'react',
-							group: 'external',
-							position: 'before',
-						},
-						{
-							pattern: '@/components/**',
-							group: 'internal',
-							position: 'after',
-						},
-					],
-					pathGroupsExcludedImportTypes: ['react'],
-					alphabetize: {
-						order: 'asc',
-						caseInsensitive: true,
-					},
-				},
-			],
-			'react/react-in-jsx-scope': 'off',
-			'import/no-unresolved': 'off',
-			'import/newline-after-import': 'off',
-		},
-		settings: {
-			'import/resolver': {
-				alias: {
-					map: [['~', './src']],
-					extensions: ['.js', '.jsx', '.ts', '.tsx'],
-				},
-				typescript: {
-					alwaysTryTypes: true,
-					project: './tsconfig.json',
-				},
-			},
-			react: {
-				version: 'detect',
-			},
-			tailwindcss: {
-				config: './tailwind.config.js',
-				cssFiles: [
-					'**/*.css',
-					'!**/node_modules',
-					'!**/.*',
-					'!**/dist',
-					'!**/build',
-				],
-				callees: ['classnames', 'clsx', 'ctl'],
-				tags: ['tw'],
-				classRegex: '^class(Name)?$',
-				cssFilesRefreshRate: 5000,
-				skipClassAttribute: false,
-				exposeConfiguration: true,
-				whitelist: [
-					// Clases existentes
-					'animate-gradient-x',
-					'animate-bounce-right',
-					'button-hover',
-					'button-hover-effect',
-					'cl-formButtonPrimary',
-					'cl-userButtonOuterIdentifier',
-					'custom-padding',
-					'text-shadow',
-					'animate-gradient',
-					'zoom-in',
+// Missing type import to trigger consistent-type-imports
+import { FormEvent } from 'react'
 
-					// Nuevas clases personalizadas basadas en tu configuración de Tailwind
-					'animate-bounce',
-					'animate-spin',
-					'animate-loading-dot',
-					'animate-accordion-down',
-					'animate-accordion-up',
+// Regular promise without await to trigger no-floating-promises
+const testPromise = new Promise(() => {})
 
-					// Regex para capturar clases de fuentes personalizadas
-					'font-sans',
+// Unused variable to trigger no-unused-vars
+const unusedVar = "this will trigger a warning"
 
-					// Regex para capturar clases de colores personalizados
-					'/^(bg|text|border|ring)-(background|foreground|card|popover|primary|secondary|muted|accent|destructive)/',
+const TestPage = () => {
+  // Unused state to trigger no-unused-vars
+  const [state, setState] = React.useState('')
 
-					// Regex para capturar clases de chart
-					'/^chart-[1-5]/',
+  // Promise without await to trigger require-await and no-floating-promises
+  async function handleClick() {
+    testPromise
+    fetch('/api/test')
+  }
 
-					// Captura cualquier clase personalizada que comience con 'custom-'
-					'/^custom-/',
-				],
-				future: {
-					purgeLayersByDefault: true,
-				},
-				removeDeprecatedUtilities: true,
-			},
-			next: {
-				rootDir: './',
-			},
-			files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
-		},
-	}),
-];
+  // Unused parameter to trigger no-unused-vars
+  const handleSubmit = (event: FormEvent) => {
+    console.log('submitted')
+  }
 
-export default eslintConfig;
+  // Missing alt in img to trigger next/no-img-element
+  return (
+    <div>
+      <h1>Test ESLint Page</h1>
+      <img src="test.jpg" />
+      
+      {/* Missing href to trigger accessibility warnings */}
+      <a onClick={handleClick}>Click me</a>
+      
+      {/* Wrong HTML nesting to trigger warnings */}
+      <p>
+        <div>Invalid HTML nesting</div>
+      </p>
+      
+      {/* Form without proper handlers */}
+      <form>
+        <input type="text" />
+        <Button onClick={() => Promise.resolve()}>
+          Submit
+        </Button>
+      </form>
+    </div>
+  )
+}
 
+// Wrong export to trigger warnings
+module.exports = TestPage
+---------------------------------------------------------
+page.tsx de testing para eslint

@@ -1,5 +1,6 @@
 import { Skeleton } from '~/components/educators/ui/skeleton';
 
+// Componente para mostrar un esqueleto de una tarjeta
 export function SkeletonCard() {
 	return (
 		<div className="flex flex-col space-y-3">

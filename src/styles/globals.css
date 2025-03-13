@@ -1,18 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+@plugin 'tailwindcss-animate';
+
 @import 'tailwindcss';
 
 @config "../../tailwind.config.js";
 
+@custom-variant hover (&:hover);
+
+@media (hover: hover) {
+  .hover\:underline:hover {
+    text-decoration: underline;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
-/* 🔹 Variables de tema */
 @theme {
-  /* Tamaños de pantalla */
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
-
   /* Colores */
   --color-background: hsl(212.9, 95.5%, 8.6%);
   --color-foreground: hsl(178.4, 89.4%, 59.2%);
@@ -32,66 +36,39 @@
   --color-destructive-foreground: hsl(0, 0%, 98%);
   --color-border: hsl(178.4, 89.4%, 59.2%);
   --color-input: hsl(240, 5.9%, 90%);
-  --color-ring: hsl(240, 5.9%, 10%);
 
-  /* Colores para gráficos */
-  --color-chart-1: hsl(12, 76%, 61%);
-  --color-chart-2: hsl(173, 58%, 39%);
-  --color-chart-3: hsl(197, 37%, 24%);
-  --color-chart-4: hsl(43, 74%, 66%);
-  --color-chart-5: hsl(27, 87%, 67%);
+	/* Colores para gráficos */
+	--color-chart-1: hsl(12, 76%, 61%);
+	--color-chart-2: hsl(173, 58%, 39%);
+	--color-chart-3: hsl(197, 37%, 24%);
+	--color-chart-4: hsl(43, 74%, 66%);
+	--color-chart-5: hsl(27, 87%, 67%);
 
-  /* Fuentes */
-  --font-sans: var(--font-montserrat);
+	/* Fuentes */
+	--font-sans: var(--font-montserrat);
 }
-
-
-/* 🟠 Keyframes */
-@keyframes accordion-down {
-  from { height: 0; }
-  to { height: var(--radix-accordion-content-height); }
-}
-
-@keyframes accordion-up {
-  from { height: var(--radix-accordion-content-height); }
-  to { height: 0; }
-}
-
-@keyframes borderRotate {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-@keyframes zoomIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 
 /* 🌐 Estilos base */
 @layer base {
-  * {
-    @apply border-border;
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
   }
   body {
     @apply bg-background;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
 /* 🎨 Clases de utilidades */
 .text-shadow {
   text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
-}
-
-.animate-gradient {
-  animation: borderRotate 4s linear infinite;
-  background-size: 300% 300%;
 }
 
 .button-hover:hover .button-hover-effect {
@@ -111,9 +88,83 @@
 }
 
 .cl-userButtonOuterIdentifier {
-  color: #ff6347;
+  color: azure;
 }
 
 .zoom-in {
   animation: zoomIn 0.5s ease-in-out;
 }
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-gradient {
+  animation: borderRotate 4s linear infinite;
+  background-size: 300% 300%;
+}
+
+@keyframes borderRotate {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-bounce-right {
+  animation: bounce-left-right 1s infinite;
+}
+
+@keyframes bounce-left-right {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(7px);
+  }
+}
+
+.animate-bounce-up-down {
+  animation: bounce-up-down 1s infinite;
+}
+
+@keyframes bounce-up-down {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@utility animate-pulse-text {
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+

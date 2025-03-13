@@ -1,7 +1,12 @@
-import { eq } from 'drizzle-orm';
-
+import { eq, desc } from 'drizzle-orm';
 import { db } from '../../server/db/index';
-import { forums, posts, users, courses } from '../../server/db/schema';
+import {
+	forums,
+	posts,
+	users,
+	courses,
+	postReplies,
+} from '../../server/db/schema';
 
 interface Post {
 	id: number;
@@ -9,6 +14,7 @@ interface Post {
 	userId: {
 		id: string;
 		name: string | null;
+		email: string | null;
 	};
 	content: string;
 	createdAt: string | number | Date;
@@ -29,6 +35,7 @@ interface Foru {
 	userId: {
 		id: string;
 		name: string;
+		email: string | null;
 	};
 }
 
@@ -62,6 +69,7 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
 				courseDescription: courses.description,
 				courseInstructor: courses.instructor,
 				userName: users.name,
+				userEmail: users.email,
 				courseCoverImageKey: courses.coverImageKey,
 			})
 			.from(forums)
@@ -88,6 +96,7 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
 			userId: {
 				id: forum.userId,
 				name: forum.userName ?? '',
+				email: forum.userEmail ?? '',
 			},
 			title: forum.title,
 			description: forum.description ?? '',
@@ -197,6 +206,48 @@ export async function getForumByUserId(userId: string) {
 	}
 }
 
+// Obtener todos los foros
+export async function getAllForums() {
+	try {
+		const forumsRecords = await db
+			.select({
+				id: forums.id,
+				courseId: forums.courseId,
+				title: forums.title,
+				description: forums.description,
+				userId: forums.userId,
+				courseTitle: courses.title,
+				courseDescription: courses.description,
+				courseInstructor: courses.instructor,
+				courseCoverImageKey: courses.coverImageKey,
+				userName: users.name,
+			})
+			.from(forums)
+			.leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
+			.leftJoin(users, eq(forums.userId, users.id)); // Unir con la tabla de usuarios
+
+		return forumsRecords.map((forum) => ({
+			id: forum.id,
+			courseId: {
+				id: forum.courseId,
+				title: forum.courseTitle,
+				descripcion: forum.courseDescription,
+				instructor: forum.courseInstructor,
+				coverImageKey: forum.courseCoverImageKey,
+			},
+			userId: {
+				id: forum.userId,
+				name: forum.userName ?? '',
+			},
+			title: forum.title,
+			description: forum.description ?? '',
+		}));
+	} catch (error: unknown) {
+		console.error(error);
+		return [];
+	}
+}
+
 //delete forum by id
 export async function deleteForumById(forumId: number) {
 	// Primero elimina los registros relacionados en la tabla 'posts'
@@ -207,7 +258,29 @@ export async function deleteForumById(forumId: number) {
 
 //delete forum by course id
 export async function deleteForumByCourseId(courseId: number) {
-	await db.delete(posts).where(eq(posts.forumId, courseId));
+	// Obtener todos los foros relacionados con el courseId
+	const forumsToDelete = await db
+		.select({ id: forums.id })
+		.from(forums)
+		.where(eq(forums.courseId, courseId));
+
+	for (const forum of forumsToDelete) {
+		// Obtener todos los posts relacionados con el forumId
+		const postsToDelete = await db
+			.select({ id: posts.id })
+			.from(posts)
+			.where(eq(posts.forumId, forum.id));
+
+		// Eliminar primero las entradas en la tabla postReplies que hacen referencia a los posts
+		for (const post of postsToDelete) {
+			await db.delete(postReplies).where(eq(postReplies.postId, post.id));
+		}
+
+		// Luego eliminar las entradas en la tabla posts que hacen referencia al forumId
+		await db.delete(posts).where(eq(posts.forumId, forum.id));
+	}
+
+	// Finalmente, eliminar las entradas en la tabla forums
 	await db.delete(forums).where(eq(forums.courseId, courseId));
 }
 
@@ -249,11 +322,13 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
 				content: posts.content,
 				createdAt: posts.createdAt,
 				updatedAt: posts.updatedAt,
-				userName: users.name, // Seleccionar el nombre del usuario
+				userName: users.name,
+				userEmail: users.email,
 			})
 			.from(posts)
-			.leftJoin(users, eq(posts.userId, users.id)) // Unir con la tabla de usuarios
-			.where(eq(posts.forumId, forumId));
+			.leftJoin(users, eq(posts.userId, users.id))
+			.where(eq(posts.forumId, forumId))
+			.orderBy(desc(posts.createdAt));
 
 		const typedPosts: Post[] = postRecords.map((post) => ({
 			id: post.id,
@@ -261,6 +336,7 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
 			userId: {
 				id: post.userId,
 				name: post.userName,
+				email: post.userEmail,
 			},
 			content: post.content,
 			createdAt: post.createdAt,
@@ -272,4 +348,111 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
 		console.error(error);
 		return [];
 	}
+}
+
+//delete post by id
+export async function deletePostById(postId: number) {
+	await db.delete(postReplies).where(eq(postReplies.postId, postId));
+	await db.delete(posts).where(eq(posts.id, postId));
+}
+
+//update post by id
+export async function updatePostById(postId: number, content: string) {
+	await db.update(posts).set({ content }).where(eq(posts.id, postId));
+}
+
+//get post by id
+export async function getPostById(postId: number) {
+	const post = await db
+		.select({
+			id: posts.id,
+			forumId: posts.forumId,
+			userId: posts.userId,
+			content: posts.content,
+			createdAt: posts.createdAt,
+			updatedAt: posts.updatedAt,
+		})
+		.from(posts)
+		.where(eq(posts.id, postId));
+
+	return post[0];
+}
+
+//create post reply
+export async function createPostReply(
+	postId: number,
+	userId: string,
+	content: string
+) {
+	const newPostReply = await db.insert(postReplies).values({
+		postId,
+		userId,
+		content,
+	});
+
+	return newPostReply;
+}
+
+// Obtener las respuestas de un post específico
+export async function getPostRepliesByPostId(postId: number) {
+	const postRepliesRecords = await db
+		.select({
+			id: postReplies.id,
+			postId: postReplies.postId,
+			userId: postReplies.userId,
+			content: postReplies.content,
+			createdAt: postReplies.createdAt,
+			updatedAt: postReplies.updatedAt,
+			userName: users.name,
+			userEmail: users.email,
+		})
+		.from(postReplies)
+		.leftJoin(users, eq(postReplies.userId, users.id))
+		.where(eq(postReplies.postId, postId))
+		.orderBy(desc(postReplies.createdAt));
+
+	const postRepliesData = postRepliesRecords.map((reply) => ({
+		id: reply.id,
+		postId: reply.postId,
+		userId: {
+			id: reply.userId,
+			name: reply.userName,
+			email: reply.userEmail,
+		},
+		content: reply.content,
+		createdAt: reply.createdAt,
+		updatedAt: reply.updatedAt,
+	}));
+
+	return postRepliesData;
+}
+
+//delete post reply by id
+export async function deletePostReplyById(replyId: number) {
+	await db.delete(postReplies).where(eq(postReplies.id, replyId));
+}
+
+//update post reply by id
+export async function updatePostReplyById(replyId: number, content: string) {
+	await db
+		.update(postReplies)
+		.set({ content })
+		.where(eq(postReplies.id, replyId));
+}
+
+//get post reply by id
+export async function getPostReplyById(replyId: number) {
+	const reply = await db
+		.select({
+			id: postReplies.id,
+			postId: postReplies.postId,
+			userId: postReplies.userId,
+			content: postReplies.content,
+			createdAt: postReplies.createdAt,
+			updatedAt: postReplies.updatedAt,
+		})
+		.from(postReplies)
+		.where(eq(postReplies.id, replyId));
+
+	return reply[0];
 }

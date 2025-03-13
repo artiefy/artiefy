@@ -1,7 +1,13 @@
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
-import { activities, lessons, courses, typeActi } from '~/server/db/schema';
+import {
+	activities,
+	lessons,
+	courses,
+	typeActi,
+	userActivitiesProgress,
+} from '~/server/db/schema';
 
 // Interfaces
 export interface Activity {
@@ -10,9 +16,14 @@ export interface Activity {
 	description: string | null;
 	typeid: number;
 	lessonsId: number;
+	pesoNota: number;
+	revisada: boolean;
+	parametroId?: number | null;
+	porcentaje: number;
+	fechaMaximaEntrega: Date | null;
 }
 
-// Interface with details
+// Actualizar la interfaz ActivityDetails
 export interface ActivityDetails {
 	id: number;
 	name: string;
@@ -22,55 +33,63 @@ export interface ActivityDetails {
 		name: string;
 		description: string;
 	};
+	revisada: boolean;
 	lessonsId: {
 		id: number;
 		title: string;
 		coverImageKey: string;
 		courseId: {
-			id: number;
-			title: string;
-			description: string;
-			instructor: string;
+			id: number | null;
+			title: string | null;
+			description: string | null;
+			instructor: string | null;
 		};
 	};
+	fechaMaximaEntrega: Date | null;
+}
+
+interface CreateActivityParams {
+	name: string;
+	description: string;
+	typeid: number;
+	lessonsId: number;
+	revisada: boolean;
+	parametroId?: number | null;
+	porcentaje: number;
+	fechaMaximaEntrega: Date | null;
 }
 
 // CRUD Operations
 // Crear una nueva actividad
-export const createActivity = async ({
-	name,
-	description,
-	typeid,
-	lessonsId,
-}: Omit<Activity, 'id'>): Promise<Activity> => {
-	// Cambiar el tipo de retorno a Promise<Activity>
+export async function createActivity(params: CreateActivityParams) {
 	try {
-		const [newActivity] = await db
+		const newActivity = await db
 			.insert(activities)
 			.values({
-				name,
-				description,
-				typeid,
-				lessonsId,
+				name: params.name,
+				description: params.description,
+				typeid: params.typeid,
+				lessonsId: params.lessonsId,
+				revisada: params.revisada,
+				parametroId: params.parametroId ?? null,
+				porcentaje: params.porcentaje ?? 0,
+				lastUpdated: new Date(),
+				fechaMaximaEntrega: params.fechaMaximaEntrega ?? null,
 			})
-			.returning({
-				id: activities.id,
-				name: activities.name,
-				description: activities.description,
-				typeid: activities.typeid,
-				lessonsId: activities.lessonsId,
-			}); // Retornar todos los campos, incluyendo el ID
+			.returning();
 
-		if (!newActivity) {
-			throw new Error('Error al crear la actividad: actividad no creada');
+		if (!newActivity[0]) {
+			throw new Error('No se pudo crear la actividad');
 		}
-		return newActivity; // Retornar la nueva actividad creada
+
+		return newActivity[0];
 	} catch (error) {
+		console.error('Error detallado:', error);
 		throw new Error(
 			`Error al crear la actividad: ${error instanceof Error ? error.message : 'Error desconocido'}`
 		);
 	}
-};
+}
 
 // Obtener una actividad por ID
 export const getActivityById = async (activityId: number) => {
@@ -85,6 +104,7 @@ export const getActivityById = async (activityId: number) => {
 					name: typeActi.name,
 					description: typeActi.description,
 				},
+				revisada: activities.revisada,
 				lesson: {
 					id: lessons.id,
 					title: lessons.title,
@@ -94,6 +114,7 @@ export const getActivityById = async (activityId: number) => {
 					courseDescription: courses.description,
 					courseInstructor: courses.instructor,
 				},
+				fechaMaximaEntrega: activities.fechaMaximaEntrega,
 			})
 			.from(activities)
 			.leftJoin(typeActi, eq(activities.typeid, typeActi.id))
@@ -119,33 +140,66 @@ export const getActivityById = async (activityId: number) => {
 // Obtener todas las actividades de una lección
 export const getActivitiesByLessonId = async (
 	lessonId: number
-): Promise<Activity[]> => {
+): Promise<ActivityDetails[]> => {
 	try {
-		//const actividades =
-		return await db
-			.select
-			//   {
-			//   id: activities.id,
-			//   name: activities.name,
-			//   description: activities.description,
-			//   typeid:{
-			//     id: typeActi.id,
-			//     name: typeActi.name,
-			//     description: typeActi.description
-			//   },
-			//   lessonsId:{
-			//     id: lessons.id,
-			//     title: lessons.title
-			//   },
-			// }
-			()
+		const actividades = await db
+			.select({
+				id: activities.id,
+				name: activities.name,
+				description: activities.description,
+				type: {
+					id: typeActi.id,
+					name: typeActi.name,
+					description: typeActi.description,
+				},
+				revisada: activities.revisada,
+				porcentaje: activities.porcentaje,
+				parametroId: activities.parametroId,
+				lesson: {
+					id: lessons.id,
+					title: lessons.title,
+					coverImageKey: lessons.coverImageKey,
+					courseId: courses.id,
+					courseTitle: courses.title,
+					courseDescription: courses.description,
+					courseInstructor: courses.instructor,
+				},
+				fechaMaximaEntrega: activities.fechaMaximaEntrega,
+			})
 			.from(activities)
+			.leftJoin(typeActi, eq(activities.typeid, typeActi.id))
+			.leftJoin(lessons, eq(activities.lessonsId, lessons.id))
+			.leftJoin(courses, eq(lessons.courseId, courses.id))
 			.where(eq(activities.lessonsId, lessonId));
-		//return actividades;
+
+		return actividades.map((actividad) => ({
+			id: actividad.id,
+			name: actividad.name,
+			description: actividad.description,
+			type: {
+				id: actividad.type?.id ?? 0,
+				name: actividad.type?.name ?? '',
+				description: actividad.type?.description ?? '',
+			},
+			revisada: actividad.revisada ?? false,
+			porcentaje: actividad.porcentaje ?? 0,
+			parametroId: actividad.parametroId ?? 0,
+			lessonsId: {
+				id: actividad.lesson.id ?? 0,
+				title: actividad.lesson.title ?? '',
+				coverImageKey: actividad.lesson.coverImageKey ?? '',
+				courseId: {
+					id: actividad.lesson.courseId,
+					title: actividad.lesson.courseTitle,
+					description: actividad.lesson.courseDescription,
+					instructor: actividad.lesson.courseInstructor,
+				},
+			},
+			fechaMaximaEntrega: actividad.fechaMaximaEntrega ?? null,
+		}));
 	} catch (error) {
-		throw new Error(
-			`Error al obtener las actividades de la lección: ${error instanceof Error ? error.message : 'Error desconocido'}`
-		);
+		console.error('Error fetching activities by lesson ID:', error);
+		throw error;
 	}
 };
 
@@ -171,9 +225,15 @@ export const updateActivity = async (
 	}
 };
 
-// Eliminar una actividad
+// Eliminar una actividad y todos los datos asociados
 export const deleteActivity = async (activityId: number): Promise<void> => {
 	try {
+		// Eliminar los datos asociados en userActivitiesProgress
+		await db
+			.delete(userActivitiesProgress)
+			.where(eq(userActivitiesProgress.activityId, activityId));
+
+		// Eliminar la actividad
 		await db.delete(activities).where(eq(activities.id, activityId));
 	} catch (error) {
 		throw new Error(
@@ -181,3 +241,44 @@ export const deleteActivity = async (activityId: number): Promise<void> => {
 		);
 	}
 };
+
+//Delete all activities by lesson id
+export const deleteActivitiesByLessonId = async (lessonId: number) => {
+	// Elimina las actividades asociadas a la lección
+	await db.delete(activities).where(eq(activities.lessonsId, lessonId));
+};
+
+// Modificar la función getTotalPorcentajeByParametro para incluir más detalles
+export async function getTotalPorcentajeByParametro(
+	parametroId: number
+): Promise<{
+	total: number;
+	actividades: { id: number; name: string; porcentaje: number }[];
+}> {
+	try {
+		const actividades = await db
+			.select({
+				id: activities.id,
+				name: activities.name,
+				porcentaje: activities.porcentaje,
+			})
+			.from(activities)
+			.where(eq(activities.parametroId, parametroId));
+
+		const total = actividades.reduce(
+			(sum, act) => sum + (act.porcentaje ?? 0),
+			0
+		);
+
+		return {
+			total,
+			actividades: actividades.map((act) => ({
+				...act,
+				porcentaje: act.porcentaje ?? 0,
+			})),
+		};
+	} catch (error) {
+		console.error('Error al obtener el total de porcentajes:', error);
+		throw new Error('Error al calcular el total de porcentajes');
+	}
+}

@@ -1,26 +1,25 @@
 import { NextResponse } from 'next/server';
-
 import {
 	createForum,
 	updateForumById,
 	deleteForumById,
-	getForumByUserId,
+	//getForumByUserId,
+	getAllForums,
 } from '~/models/educatorsModels/forumAndPosts';
-import { db } from '~/server/db';
-import { forums } from '~/server/db/schema';
 
-export async function GET(req: Request) {
-	const { searchParams } = new URL(req.url);
-	const userId = searchParams.get('userId');
+export async function GET() {
+// req: Request
+	//const { searchParams } = new URL(req.url);
+	//const userId = searchParams.get('userId');
 
 	try {
-		if (userId) {
-			const forum = await getForumByUserId(userId);
-			return NextResponse.json(forum);
-		} else {
-			const allForums = await db.select().from(forums);
-			return NextResponse.json(allForums);
-		}
+		// if (userId) {
+		// 	const forum = await getForumByUserId(userId);
+		// 	return NextResponse.json(forum);
+		// } else {
+		const allForums = await getAllForums();
+		return NextResponse.json(allForums);
+		//}
 	} catch (error) {
 		console.error('Error al obtener los foros:', error);
 		return NextResponse.json(

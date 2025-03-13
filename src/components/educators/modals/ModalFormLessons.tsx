@@ -1,7 +1,6 @@
 'use client';
-
-import { useState, type ChangeEvent } from 'react';
-
+import { useState, type ChangeEvent, useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import FileUpload from '~/components/educators/layout/FilesUpload';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -13,13 +12,24 @@ import {
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Progress } from '~/components/educators/ui/progress';
-import { toast } from '~/hooks/use-toast';
 
+// Interfaz para los props del formulario de lecciones
 interface LessonsFormProps {
 	uploading: boolean;
 	isOpen: boolean;
 	onCloseAction: () => void;
-	courseId: number; // ID del curso relacionado
+	courseId: number;
+	isEditing?: boolean;
+	editingLesson?: {
+		id?: number;
+		title?: string;
+		description?: string;
+		duration?: number;
+		coverImageKey?: string;
+		coverVideoKey?: string;
+		resourceKey?: string;
+		resourceName?: string;
+	};
 }
 
 const ModalFormLessons = ({
@@ -27,10 +37,10 @@ const ModalFormLessons = ({
 	isOpen,
 	onCloseAction,
 	courseId,
+	isEditing = false,
+	editingLesson,
 }: LessonsFormProps) => {
-	console.log('ModalFormLessons isOpen:', isOpen);
-
-	const [uploadProgress, setUploadProgress] = useState(0);
+	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
 	const [formData, setFormData] = useState({
 		title: '',
 		description: '',
@@ -41,8 +51,8 @@ const ModalFormLessons = ({
 		cover_image_key: '',
 		cover_video_key: '',
 		resource_keys: [] as string[],
-	});
-	const [isUploading, setIsUploading] = useState(false);
+	}); // Estado para los datos del formulario
+	const [isUploading, setIsUploading] = useState(false); // Estado para la subida de archivos
 	const [errors, setErrors] = useState({
 		title: false,
 		description: false,
@@ -50,9 +60,31 @@ const ModalFormLessons = ({
 		cover_image_key: false,
 		cover_video_key: false,
 		resource_keys: false,
-	});
+	}); // Estado para los errores del formulario
 	const [uploadController, setUploadController] =
-		useState<AbortController | null>(null);
+		useState<AbortController | null>(null); // Estado para el controlador de subida
+
+	const videoRef = useRef<HTMLVideoElement | null>(null); // Referencia al video para capturar un frame
+	const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referencia al canvas para capturar un frame
+
+	// Modificar el useEffect para inicializar con datos de edición
+	useEffect(() => {
+		if (isEditing && editingLesson) {
+			setFormData({
+				title: editingLesson.title ?? '',
+				description: editingLesson.description ?? '',
+				duration: editingLesson.duration ?? 0,
+				coverimage: undefined,
+				covervideo: undefined,
+				resourcefiles: [],
+				cover_image_key: editingLesson.coverImageKey ?? '',
+				cover_video_key: editingLesson.coverVideoKey ?? '',
+				resource_keys: editingLesson.resourceKey
+					? editingLesson.resourceKey.split(',')
+					: [],
+			});
+		}
+	}, [isEditing, editingLesson]);
 
 	// Manejador de cambio para inputs
 	const handleInputChange = (
@@ -64,8 +96,53 @@ const ModalFormLessons = ({
 		setFormData((prev) => ({ ...prev, [field]: value }));
 	};
 
+	// Función para obtener la duración de un video
+	const getVideoDuration = (file: File): Promise<number> => {
+		return new Promise((resolve, reject) => {
+			const video = document.createElement('video');
+			video.preload = 'metadata';
+
+			video.onloadedmetadata = () => {
+				window.URL.revokeObjectURL(video.src);
+				resolve(video.duration / 60); // Convertir a minutos
+			};
+
+			video.onerror = () => {
+				reject(new Error('Error al cargar el video'));
+			};
+
+			video.src = URL.createObjectURL(file);
+		});
+	};
+
+	// Función para capturar un frame del video y convertirlo en imagen, pasandola a la portada
+	const captureFrame = () => {
+		if (videoRef.current && canvasRef.current) {
+			const video = videoRef.current;
+			const canvas = canvasRef.current;
+			const context = canvas.getContext('2d');
+			if (context) {
+				canvas.width = video.videoWidth;
+				canvas.height = video.videoHeight;
+				context.drawImage(video, 0, 0, canvas.width, canvas.height);
+				canvas.toBlob((blob) => {
+					if (blob) {
+						const file = new File([blob], 'coverimage.png', {
+							type: 'image/png',
+						});
+						setFormData((prev) => ({
+							...prev,
+							coverimage: file,
+							cover_image_key: 'coverimage.png', // Establecer la clave de la imagen de portada
+						}));
+					}
+				}, 'image/png');
+			}
+		}
+	};
+
 	// Manejador de archivos
-	const handleFileChange = (
+	const handleFileChange = async (
 		field: keyof typeof formData,
 		file: File | File[] | null
 	) => {
@@ -78,12 +155,28 @@ const ModalFormLessons = ({
 					resource_keys: resourceKeys,
 				}));
 			} else {
-				setFormData((prev) => ({ ...prev, [field]: file }));
+				if (field === 'covervideo') {
+					try {
+						const duration = await getVideoDuration(file);
+						setFormData((prev) => ({
+							...prev,
+							duration: Math.round(duration),
+							[field]: file,
+						}));
+						if (videoRef.current) {
+							videoRef.current.src = URL.createObjectURL(file);
+						}
+					} catch (error) {
+						console.error('Error al obtener la duración del video:', error);
+					}
+				} else {
+					setFormData((prev) => ({ ...prev, [field]: file }));
+				}
 			}
 		}
 	};
 
-	// Subida de archivos
+	// Subida de archivos a la API de S3
 	const uploadFile = async (file: File, index: number, totalFiles: number) => {
 		const controller = new AbortController();
 		setUploadController(controller);
@@ -120,6 +213,7 @@ const ModalFormLessons = ({
 			fileName: string;
 		};
 
+		// Crear un FormData con los campos requeridos
 		const formData = new FormData();
 		Object.entries(fields).forEach(([key, value]) => {
 			if (typeof value === 'string') {
@@ -133,7 +227,6 @@ const ModalFormLessons = ({
 			body: formData,
 			signal: controller.signal,
 		});
-		console.log('Form Data:', formData);
 		if (!uploadResult.ok) {
 			throw new Error(`Error al cargar el archivo: ${uploadResult.statusText}`);
 		}
@@ -142,7 +235,7 @@ const ModalFormLessons = ({
 		return { key, fileName };
 	};
 
-	// Manejador del submit
+	// Manejador del submit 'cabe recalcar que este un formulario autonomo que solo depende de la props del ID del curso'
 	const handleSubmit = async () => {
 		const controller = new AbortController();
 		setUploadController(controller);
@@ -152,7 +245,7 @@ const ModalFormLessons = ({
 			const resourceKeys: string[] = [];
 			const fileNames: string[] = [];
 
-			let coverImageKey = '';
+			let coverImageKey = formData.cover_image_key;
 			let coverVideoKey = '';
 			let coverImageName = '';
 			let coverVideoName = '';
@@ -207,19 +300,12 @@ const ModalFormLessons = ({
 				title: !formData.title,
 				description: !formData.description,
 				duration: !formData.duration,
-				cover_image_key: !coverImageKey,
-				cover_video_key: !coverVideoKey,
-				resource_keys: resourceKeys.length === 0,
 			};
 
-			console.log('Validando campos: ', formData);
-
 			if (Object.values(newErrors).some((error) => error)) {
-				setErrors(newErrors);
-				toast({
-					title: 'Error',
+				setErrors((prevErrors) => ({ ...prevErrors, ...newErrors }));
+				toast('Error', {
 					description: 'Por favor completa los campos obligatorios.',
-					variant: 'destructive',
 				});
 				return;
 			}
@@ -229,38 +315,45 @@ const ModalFormLessons = ({
 				return; // Salir de la función si se cancela la carga
 			}
 
+			// Concatenar las claves de los archivos para solo guardarlas en 1 campo
 			const concatenatedResourceKeys = resourceKeys.join(',');
+			// Concatenar los nombres de los archivos para solo guardarlo en 1 campo
 			const concatenatedFileNames = fileNames.join(',');
 
-			const response = await fetch('/api/educadores/lessons', {
-				method: 'POST',
+			const endpoint = isEditing
+				? `/api/educadores/lessons/${editingLesson?.id}`
+				: '/api/educadores/lessons';
+
+			// Método para la solicitud
+			const method = isEditing ? 'PUT' : 'POST';
+
+			const response = await fetch(endpoint, {
+				method: method,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					title: formData.title,
 					description: formData.description,
-					duration: formData.duration,
-					coverImageKey: coverImageKey,
-					coverVideoKey: coverVideoKey,
-					resourceKey: concatenatedResourceKeys,
-					resourceNames: concatenatedFileNames,
-					porcentajecompletado: 0,
-					courseId,
+					duration: Number(formData.duration),
+					coverImageKey: coverImageKey || formData.cover_image_key || undefined,
+					coverVideoKey: coverVideoKey || formData.cover_video_key || undefined,
+					resourceKey: concatenatedResourceKeys || undefined,
+					resourceNames: concatenatedFileNames || undefined,
+					courseId: Number(courseId),
 				}),
 			});
 
 			if (response.ok) {
-				toast({
-					title: 'Lección creada',
-					description: 'La lección se creó con éxito.',
+				toast(isEditing ? 'Lección actualizada' : 'Lección creada', {
+					description: isEditing
+						? 'La lección se actualizó con éxito.'
+						: 'La lección se creó con éxito.',
 				});
-				onCloseAction(); // Cierra el modal
-				window.location.reload(); // Refrescar la página
+				onCloseAction();
+				window.location.reload();
 			} else {
 				const errorData = (await response.json()) as { error?: string };
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: errorData.error ?? 'Error al crear la lección.',
-					variant: 'destructive',
 				});
 			}
 		} catch (error) {
@@ -268,10 +361,8 @@ const ModalFormLessons = ({
 				console.log('Upload cancelled');
 				return; // Salir de la función si se cancela la carga
 			} else {
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `Error al procesar la solicitud: ${String(error)}`,
-					variant: 'destructive',
 				});
 			}
 		} finally {
@@ -279,6 +370,7 @@ const ModalFormLessons = ({
 		}
 	};
 
+	// Manejador para cancelar la carga de archivos
 	const handleCancel = () => {
 		if (uploadController) {
 			uploadController.abort();
@@ -286,17 +378,21 @@ const ModalFormLessons = ({
 		onCloseAction();
 	};
 
+	// Renderizar el formulario
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
 			<DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
 				<DialogHeader className="mt-4">
-					<DialogTitle className="text-4xl">Crear Clase</DialogTitle>
+					<DialogTitle className="text-4xl">
+						{isEditing ? 'Actualizar' : 'Crear'} clase
+					</DialogTitle>
 					<DialogDescription className="text-xl text-white">
-						Llena los detalles para crear la nuevo clase
+						Llena los detalles para crear la nuevo clase, la cual puede ser solo
+						lectura.
 					</DialogDescription>
 				</DialogHeader>
-				<div className="bg-background rounded-lg px-6 text-black shadow-md">
-					<label htmlFor="title" className="text-primary text-lg font-medium">
+				<div className="rounded-lg bg-background px-6 shadow-md">
+					<label htmlFor="title" className="text-lg font-medium text-primary">
 						Título
 					</label>
 					<input
@@ -304,7 +400,7 @@ const ModalFormLessons = ({
 						placeholder="Título"
 						value={formData.title}
 						onChange={(e) => handleInputChange(e, 'title')}
-						className={`mb-4 w-full rounded border p-2 text-black outline-hidden ${
+						className={`mb-4 w-full rounded border p-2 text-white outline-none ${
 							errors.title ? 'border-red-500' : 'border-primary'
 						}`}
 					/>
@@ -314,7 +410,7 @@ const ModalFormLessons = ({
 
 					<label
 						htmlFor="description"
-						className="text-primary text-lg font-medium"
+						className="text-lg font-medium text-primary"
 					>
 						Descripción
 					</label>
@@ -322,7 +418,7 @@ const ModalFormLessons = ({
 						placeholder="Descripción"
 						value={formData.description}
 						onChange={(e) => handleInputChange(e, 'description')}
-						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-hidden ${
+						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${
 							errors.description ? 'border-red-500' : 'border-primary'
 						}`}
 					/>
@@ -331,16 +427,17 @@ const ModalFormLessons = ({
 					)}
 					<label
 						htmlFor="duration"
-						className="text-primary text-lg font-medium"
+						className="text-lg font-medium text-primary"
 					>
 						Duración (minutos)
 					</label>
 					<input
 						type="number"
+						min="0"
 						placeholder="Duración"
 						value={formData.duration}
 						onChange={(e) => handleInputChange(e, 'duration')}
-						className={`mb-4 w-full rounded border p-2 text-black outline-hidden ${
+						className={`mb-4 w-full rounded border p-2 text-white outline-none ${
 							errors.duration ? 'border-red-500' : 'border-primary'
 						}`}
 					/>
@@ -358,6 +455,7 @@ const ModalFormLessons = ({
 							onFileChange={(file) =>
 								handleFileChange('coverimage', file ?? null)
 							}
+							file={formData.coverimage} // Mostrar la imagen capturada
 						/>
 						<FileUpload
 							key="covervideo"
@@ -383,6 +481,26 @@ const ModalFormLessons = ({
 							}
 						/>
 					</div>
+					{formData.covervideo && (
+						<div className="mt-4 space-y-5">
+							<video
+								ref={videoRef}
+								controls
+								className="mx-auto rounded-lg md:w-1/2 lg:w-1/2"
+							>
+								<source
+									src={URL.createObjectURL(formData.covervideo)}
+									type="video/mp4"
+								/>
+							</video>
+							<div className="mx-auto mt-2 w-fit">
+								<Button onClick={captureFrame}>
+									Capturar frame como imagen de portada
+								</Button>
+								<canvas ref={canvasRef} className="hidden"></canvas>
+							</div>
+						</div>
+					)}
 					{(uploading || isUploading) && (
 						<div className="mt-4">
 							<Progress value={uploadProgress} className="w-full" />
@@ -399,8 +517,9 @@ const ModalFormLessons = ({
 					>
 						Cancelar
 					</Button>
-					<Button onClick={handleSubmit} variant="save" disabled={uploading}>
-						{uploading ? 'Subiendo...' : 'Crear Clase'}
+					<Button onClick={handleSubmit} variant="default" disabled={uploading}>
+						{isEditing ? 'Actualizar' : isUploading ? 'Subiendo' : 'Crear'}{' '}
+						Clase
 					</Button>
 				</DialogFooter>
 			</DialogContent>

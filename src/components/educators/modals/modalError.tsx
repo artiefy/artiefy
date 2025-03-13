@@ -1,7 +1,8 @@
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { IoMdClose } from 'react-icons/io';
 
+// Interfaz para los errores del formulario
 type FormErrors = Record<string, string>;
 
 export const ModalError = ({
@@ -11,13 +12,16 @@ export const ModalError = ({
 	isOpen: boolean;
 	onClose: () => void;
 }) => {
+	const { user } = useUser(); // Obtiene el usuario actual
 	const [formData, setFormData] = useState({
 		description: '',
 		comments: '',
 		email: '',
-	});
-	const [errors, setErrors] = useState<FormErrors>({});
+		userId: user?.id ?? '',
+	}); // Estado para los datos del formulario
+	const [errors, setErrors] = useState<FormErrors>({}); // Estado para los errores del formulario
 
+	// Maneja el cambio en los campos del formulario
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 	) => {
@@ -34,6 +38,15 @@ export const ModalError = ({
 		}
 	};
 
+	// Efecto para actualizar el ID del usuario
+	useEffect(() => {
+		setFormData((prev) => ({
+			...prev,
+			userId: user?.id ?? '',
+		}));
+	}, [user]);
+
+	// Función para validar el formulario
 	const validateForm = () => {
 		const newErrors: FormErrors = {};
 		if (!formData.description.trim()) {
@@ -44,21 +57,56 @@ export const ModalError = ({
 		} else if (!/\S+@\S+\.\S+/.test(formData.email)) {
 			newErrors.email = 'Please enter a valid email';
 		}
+		if (!formData.userId.trim()) {
+			newErrors.userId = 'User ID is required';
+		}
+		if (!formData.comments.trim()) {
+			newErrors.comments = 'Comments are required';
+		}
+
 		setErrors(newErrors);
 		return Object.keys(newErrors).length === 0;
 	};
 
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+	// Función para manejar el envío del formulario
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (validateForm()) {
 			console.log('Form submitted:', formData);
+			try {
+				const response = await fetch('/api/tickets', {
+					method: 'POST',
+					body: JSON.stringify(formData),
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				});
+				const data: { message?: string } = (await response.json()) as {
+					message?: string;
+				};
+				console.log(`Datos enviados al servidor: ${JSON.stringify(data)}`);
+				if (response.ok) {
+					alert('Ticket creado exitosamente');
+				} else {
+					alert('Error al crear el ticket');
+				}
+			} catch (error) {
+				console.error('Error al crear el ticket:', error);
+			}
 			onClose();
-			setFormData({ description: '', comments: '', email: '' });
+			setFormData({
+				description: '',
+				comments: '',
+				email: '',
+				userId: user?.id ?? '',
+			});
 		}
 	};
 
+	// Renderiza el modal
 	if (!isOpen) return null;
 
+	// Vistas del modal
 	return (
 		<div className="fixed inset-0 z-50 overflow-y-auto">
 			<div className="flex min-h-screen items-center justify-center px-4">
@@ -73,7 +121,7 @@ export const ModalError = ({
 						</h2>
 						<button
 							onClick={onClose}
-							className="text-gray-600 hover:text-gray-400 focus:outline-hidden"
+							className="text-gray-600 hover:text-gray-400 focus:outline-none"
 						>
 							<IoMdClose className="text-4xl" />
 						</button>
@@ -93,7 +141,7 @@ export const ModalError = ({
 								rows={4}
 								value={formData.description}
 								onChange={handleInputChange}
-								className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-hidden focus:border-red-500 focus:ring-red-500 ${
+								className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500 ${
 									errors.description ? 'border-red-500' : ''
 								}`}
 							/>
@@ -117,7 +165,7 @@ export const ModalError = ({
 								rows={3}
 								value={formData.comments}
 								onChange={handleInputChange}
-								className="mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-xs outline-hidden focus:border-red-500 focus:ring-red-500"
+								className="mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500"
 							/>
 						</div>
 
@@ -134,7 +182,7 @@ export const ModalError = ({
 								name="email"
 								value={formData.email}
 								onChange={handleInputChange}
-								className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-hidden focus:border-red-500 focus:ring-red-500 ${
+								className={`mt-1 block w-full rounded-md border border-gray-400 p-2 text-black shadow-sm outline-none focus:border-red-500 focus:ring-red-500 ${
 									errors.email ? 'border-red-500' : ''
 								}`}
 							/>
@@ -147,13 +195,13 @@ export const ModalError = ({
 							<button
 								type="button"
 								onClick={onClose}
-								className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:ring-gray-500 focus:ring-offset-2 focus:outline-hidden"
+								className="rounded-md bg-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
 							>
 								Cancelar
 							</button>
 							<button
 								type="submit"
-								className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden"
+								className="rounded-md bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
 							>
 								Enviar
 							</button>

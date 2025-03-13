@@ -1,9 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-
 import { useUser } from '@clerk/nextjs'; // Importa el hook de Clerk
 import { FaSearch, FaPlus } from 'react-icons/fa';
-
+import { toast } from 'sonner';
 import { Button } from '~/components/educators/ui/button'; // Importa el botón de ShadCN
 import {
 	Dialog,
@@ -14,11 +13,11 @@ import {
 	DialogDescription,
 	DialogFooter,
 } from '~/components/educators/ui/dialog'; // Componente de modal
-import { Input } from '~/components/educators/ui/input'; // Assuming you have ShadCN's Input component
+import { Input } from '~/components/educators/ui/input'; // Componente Input de ShadCN
 import { Progress } from '~/components/educators/ui/progress';
-import { Zone } from '~/components/ZoneForum/Zone'; // Assuming you have a Zone component
-import { toast } from '~/hooks/use-toast';
+import { Zone } from '~/components/ZoneForum/Zone'; // Componente Zone
 
+// Interfaz para los modelos de cursos
 interface CoursesModels {
 	id: number;
 	title: string;
@@ -27,27 +26,24 @@ interface CoursesModels {
 }
 
 const ForumHome = () => {
-	const { user } = useUser();
-	const [searchQuery, setSearchQuery] = useState('');
-	const [courseId, setCourseId] = useState<number | ''>('');
-	const [title, setTitle] = useState('');
-	const [description, setDescription] = useState('');
-	const [courses, setCourses] = useState<CoursesModels[]>([]);
-	const [loadingCourses, setLoadingCourses] = useState(false);
-	const [isUploading, setIsUploading] = useState(false);
-	const [uploadProgress, setUploadProgress] = useState(0);
-	const [isDialogOpen, setIsDialogOpen] = useState(false);
-	//fetching de cursos si hay un usuario logueado
+	const { user } = useUser(); // Obtiene el usuario actual
+	const [searchQuery, setSearchQuery] = useState(''); // Estado para la consulta de búsqueda
+	const [courseId, setCourseId] = useState<number | ''>(''); // Estado para el ID del curso
+	const [title, setTitle] = useState(''); // Estado para el título del foro
+	const [description, setDescription] = useState(''); // Estado para la descripción del foro
+	const [courses, setCourses] = useState<CoursesModels[]>([]); // Estado para la lista de cursos
+	const [loadingCourses, setLoadingCourses] = useState(false); // Estado para la carga de cursos
+	const [isUploading, setIsUploading] = useState(false); // Estado para la subida de datos
+	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
+	const [isDialogOpen, setIsDialogOpen] = useState(false); // Estado para el diálogo modal
 
+	// Maneja la creación del foro
 	const handleCreateForum = async () => {
-		// Aquí manejas la creación del foro
 		if (!user) return null;
 		setIsUploading(true);
-		console.log('user:', user.id);
 		const userId = user.id;
-		console.log({ courseId, title, description, userId });
 		try {
-			// Aquí haces la petición POST al servidor
+			// Petición POST al servidor para crear el foro
 			const response = await fetch('/api/forums', {
 				method: 'POST',
 				headers: {
@@ -61,10 +57,8 @@ const ForumHome = () => {
 			}
 			setUploadProgress(100); // Actualizamos el progreso al 100%
 			const data: ResponseData = (await response.json()) as ResponseData;
-			toast({
-				title: 'Foro creado exitosamente!.',
+			toast.success('Foro creado exitosamente!.', {
 				description: `El foro se ha creado satisfactoriamente:`,
-				variant: 'default',
 			});
 			console.log(data);
 			setIsDialogOpen(false); // Cerrar el Dialog
@@ -78,6 +72,7 @@ const ForumHome = () => {
 		setDescription('');
 	};
 
+	// Efecto para obtener los cursos del usuario
 	useEffect(() => {
 		const fetchCourses = async () => {
 			try {
@@ -102,19 +97,20 @@ const ForumHome = () => {
 		void fetchCourses();
 	}, [user]);
 
+	// Renderiza la vista
 	return (
-		<div className="bg-background min-h-screen p-4 sm:px-6 lg:px-8">
+		<div className="min-h-screen bg-background p-4 sm:px-6 lg:px-4">
 			<div className="mx-auto max-w-7xl">
 				<div className="mb-8">
 					<div className="mb-4 flex items-center justify-between">
-						<h1 className="text-primary text-3xl font-bold">
+						<h1 className="text-3xl font-bold text-primary">
 							Zona de foros Artiefy
 						</h1>
 						{/* Botón para abrir el modal de creación de foro */}
 						<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 							<DialogTrigger asChild>
 								<Button
-									className="bg-primary hover:bg-primary/50 flex items-center gap-2 text-black"
+									className="flex items-center gap-2 bg-primary text-black hover:bg-primary/90"
 									onClick={() => setIsDialogOpen(true)}
 								>
 									<FaPlus />
@@ -131,10 +127,10 @@ const ForumHome = () => {
 								</DialogHeader>
 
 								{/* Formulario para crear un foro */}
-								<div className="space-y-4">
+								<div className="flex flex-col space-y-4">
 									<label
 										htmlFor="category-select"
-										className="text-primary text-lg font-medium"
+										className="text-lg font-medium text-primary"
 									>
 										Selecciona un curso para crear el foro:
 									</label>
@@ -150,7 +146,7 @@ const ForumHome = () => {
 												const selectedId = Number(e.target.value);
 												setCourseId(selectedId);
 											}}
-											className={`mb-5 w-80 rounded border border-white bg-transparent p-2 text-gray-500 outline-hidden`}
+											className={`mb-5 w-80 rounded border border-white bg-transparent p-2 text-gray-500 outline-none`}
 										>
 											<option className="bg-background" value="">
 												Selecciona un curso para el foro
@@ -181,8 +177,8 @@ const ForumHome = () => {
 										className="w-full text-gray-500"
 									/>
 
-									<div className="border-primary mb-4 w-full rounded border p-1">
-										<h3 className="text-primary text-lg font-medium">
+									<div className="mb-4 w-full rounded border border-primary p-1">
+										<h3 className="text-lg font-medium text-primary">
 											Instructor: {user?.fullName}
 										</h3>
 									</div>
@@ -197,16 +193,20 @@ const ForumHome = () => {
 								)}
 								<DialogFooter>
 									<Button
-										variant="outline"
+										className="border border-primary-foreground bg-transparent hover:bg-gray-700/10"
 										onClick={() => {
 											setCourseId('');
 											setTitle('');
 											setDescription('');
+											setIsDialogOpen(false); // Cerrar el diálogo
 										}}
 									>
 										Cancelar
 									</Button>
-									<Button variant="save" onClick={handleCreateForum}>
+									<Button
+										onClick={handleCreateForum}
+										className="border-none bg-green-500 text-white hover:bg-green-500/80"
+									>
 										Crear Foro
 									</Button>
 								</DialogFooter>
@@ -219,7 +219,7 @@ const ForumHome = () => {
 							placeholder="Buscar una discusion..."
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
-							className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-white focus:ring-2 focus:ring-white focus:outline-hidden"
+							className="w-full rounded-lg border border-gray-300 py-2 pr-4 pl-10 text-white focus:ring-2 focus:ring-white focus:outline-none"
 						/>
 						<FaSearch className="absolute top-3 left-3 text-gray-400" />
 					</div>

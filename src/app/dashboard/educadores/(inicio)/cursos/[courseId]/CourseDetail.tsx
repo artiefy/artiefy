@@ -1,13 +1,11 @@
 'use client';
-
 import { useCallback, useEffect, useState } from 'react';
-
-import { useUser } from '@clerk/nextjs';
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
 import {
@@ -21,6 +19,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
+import { Badge } from '~/components/educators/ui/badge';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -31,8 +30,8 @@ import {
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
-import { toast } from '~/hooks/use-toast';
 
+// Definir la interfaz del curso
 interface Course {
 	id: number;
 	title: string;
@@ -46,11 +45,24 @@ interface Course {
 	createdAt: string;
 	updatedAt: string;
 	requerimientos: string;
+	rating: number; // Añadir esta línea
 }
+
+// Definir la interfaz de las propiedades del componente
 interface CourseDetailProps {
 	courseId: number;
 }
 
+// Definir la interfaz de los parámetros
+export interface Parametros {
+	id: number;
+	name: string;
+	description: string;
+	porcentaje: number;
+	courseId: number;
+}
+
+// Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
 	if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
 	hexcolor = hexcolor.replace('#', '');
@@ -62,33 +74,41 @@ const getContrastYIQ = (hexcolor: string) => {
 };
 
 const CourseDetail: React.FC<CourseDetailProps> = () => {
-	const { user } = useUser();
-	const router = useRouter();
-	const params = useParams();
-	const courseIdUrl = params?.courseId;
-	const [course, setCourse] = useState<Course | null>(null);
-	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [editTitle, setEditTitle] = useState('');
-	const [editDescription, setEditDescription] = useState('');
-	const [editRequerimientos, setEditRequerimientos] = useState('');
-	const [editCategory, setEditCategory] = useState(0);
-	const [editModalidad, setEditModalidad] = useState(0);
-	const [editDificultad, setEditDificultad] = useState(0);
-	const [editCoverImageKey, setEditCoverImageKey] = useState('');
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-	const [selectedColor, setSelectedColor] = useState<string>('');
+	const router = useRouter(); // Obtener el router
+	const params = useParams(); // Obtener los parámetros
+	const courseIdUrl = params?.courseId; // Obtener el id del curso desde params
+	const [course, setCourse] = useState<Course | null>(null); // Nuevo estado para el curso
+	const [parametros, setParametros] = useState<Parametros[]>([]); // Nuevo estado para los parámetros
+	const [isModalOpen, setIsModalOpen] = useState(false); // Nuevo estado para el modal de edición
+	const [editTitle, setEditTitle] = useState(''); // Nuevo estado para el título del curso a editar
+	const [editDescription, setEditDescription] = useState(''); // Nuevo estado para la descripción del curso
+	const [editRequerimientos, setEditRequerimientos] = useState(''); // Nuevo estado para los requerimientos del curso
+	const [editCategory, setEditCategory] = useState(0); // Nuevo estado para la categoría del curso
+	const [editModalidad, setEditModalidad] = useState(0); // Nuevo estado para la modalidad del curso
+	const [editDificultad, setEditDificultad] = useState(0); // Nuevo estado para la dificultad del curso
+	const [editCoverImageKey, setEditCoverImageKey] = useState(''); // Nuevo estado para la imagen del curso
+	const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
+	const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
+	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
+	const [editParametros, setEditParametros] = useState<
+		{
+			id: number;
+			name: string;
+			description: string;
+			porcentaje: number;
+		}[]
+	>([]); // Nuevo estado para los parámetros
+	const [editRating, setEditRating] = useState(0); // Añadir esta línea
 
-	// Verifica que courseId no sea un array ni undefined, y lo convierte a número
 	const courseIdString = Array.isArray(courseIdUrl)
 		? courseIdUrl[0]
-		: courseIdUrl;
-	const courseIdString2 = courseIdString ?? '';
-	const courseIdNumber = parseInt(courseIdString2);
+		: courseIdUrl; // Obtener el id del curso como string
+	const courseIdString2 = courseIdString ?? ''; // Verificar si el id del curso es nulo
+	const courseIdNumber = parseInt(courseIdString2); // Convertir el id del curso a número
 
+	// Función para obtener el curso y los parámetros
 	const fetchCourse = useCallback(async () => {
-		if (!user) return;
 		if (courseIdNumber !== null) {
 			try {
 				setLoading(true);
@@ -96,42 +116,48 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				const response = await fetch(
 					`/api/educadores/courses/${courseIdNumber}`
 				);
+				const responseParametros = await fetch(
+					`/api/educadores/parametros?courseId=${courseIdNumber}`
+				); // Obtener los parámetros
 
-				if (response.ok) {
+				if (!response.ok || !responseParametros.ok) {
+					throw new Error(response.statusText);
+				}
+				if (response.ok && responseParametros.ok) {
 					const data = (await response.json()) as Course;
-					console.log(data);
 					setCourse(data);
+					const dataParametros =
+						(await responseParametros.json()) as Parametros[]; // Obtener los parámetros
+					setParametros(dataParametros); // Inicializar los parámetros
 				} else {
 					const errorData = (await response.json()) as { error?: string };
 					const errorMessage = errorData.error ?? response.statusText;
 					setError(`Error al cargar el curso: ${errorMessage}`);
-					toast({
-						title: 'Error',
+					toast('Error', {
 						description: `No se pudo cargar el curso: ${errorMessage}`,
-						variant: 'destructive',
 					});
 				}
 			} catch (error: unknown) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Error desconocido';
 				setError(`Error al cargar el curso: ${errorMessage}`);
-				toast({
-					title: 'Error',
+				toast('Error', {
 					description: `No se pudo cargar el curso: ${errorMessage}`,
-					variant: 'destructive',
 				});
 			} finally {
 				setLoading(false);
 			}
 		}
-	}, [user, courseIdNumber]);
+	}, [courseIdNumber]);
 
+	// Obtener el curso y los parámetros al cargar la página
 	useEffect(() => {
 		fetchCourse().catch((error) =>
 			console.error('Error fetching course:', error)
 		);
 	}, [fetchCourse]);
 
+	// Obtener el color seleccionado al cargar la página
 	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
 		if (savedColor) {
@@ -139,6 +165,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}
 	}, [courseIdNumber]);
 
+	// Manejo de actualizar
 	const handleUpdateCourse = async (
 		id: string,
 		title: string,
@@ -147,16 +174,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		categoryid: number,
 		modalidadesid: number,
 		dificultadid: number,
-		requerimientos: string
+		requerimientos: string,
+		addParametros: boolean,
+		coverImageKey: string,
+		fileName: string,
+		rating: number
 	) => {
 		try {
 			let coverImageKey = course?.coverImageKey ?? '';
+			let uploadedFileName = fileName ?? '';
 
 			if (file) {
+				// Subir la imagen a S3
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ contentType: file.type }),
+					body: JSON.stringify({
+						contentType: file.type,
+						fileSize: file.size,
+						fileName: file.name, // Asegúrate de pasar el fileName correcto
+					}),
 				});
 
 				if (!uploadResponse.ok) {
@@ -166,13 +203,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				const uploadData = (await uploadResponse.json()) as {
 					url: string;
 					fields: Record<string, string>;
+					key: string;
+					fileName: string;
 				};
 
-				const { url, fields } = uploadData;
+				const { url, fields, key, fileName: responseFileName } = uploadData;
+				coverImageKey = key;
+				uploadedFileName = responseFileName;
+
 				const formData = new FormData();
-				Object.entries(fields).forEach(([key, value]) =>
-					formData.append(key, value)
-				);
+				Object.entries(fields).forEach(([key, value]) => {
+					if (typeof value === 'string') {
+						formData.append(key, value);
+					}
+				});
 				formData.append('file', file);
 
 				const uploadResult = await fetch(url, {
@@ -182,10 +226,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				if (!uploadResult.ok) {
 					throw new Error('Error al subir la imagen al servidor');
 				}
-
-				coverImageKey = fields.key ?? '';
 			}
 
+			// Actualizar el curso
 			const response = await fetch(
 				`/api/educadores/courses/${courseIdNumber}`,
 				{
@@ -195,73 +238,198 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						title,
 						description,
 						coverImageKey,
+						fileName: uploadedFileName, // Agregar fileName al cuerpo de la solicitud
 						categoryid,
 						modalidadesid,
 						dificultadid,
 						instructor: course?.instructor,
 						requerimientos,
+						rating, // Añadir esta línea
 					}),
 				}
 			);
 
+			// añadir parametros a la actualización si es true
+			if (addParametros) {
+				const parametrosPromises = editParametros.map((p) => {
+					const existingParametro = parametros.find(
+						(param) => param.id === p.id
+					);
+					const method = existingParametro ? 'PUT' : 'POST';
+					const url = existingParametro
+						? `/api/educadores/parametros/${existingParametro.id}`
+						: '/api/educadores/parametros';
+
+					return fetch(url, {
+						method,
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							name: p.name,
+							description: p.description,
+							porcentaje: p.porcentaje,
+							courseId: courseIdNumber,
+						}),
+					});
+				});
+
+				const parametrosResponses = await Promise.all(parametrosPromises);
+
+				for (const responseParametros of parametrosResponses) {
+					if (!responseParametros.ok) {
+						const errorData = (await responseParametros.json()) as {
+							error?: string;
+						};
+						toast('Error', {
+							description:
+								errorData.error ?? 'Error al actualizar los parámetros',
+						});
+						throw new Error(
+							errorData.error ?? 'Error al actualizar los parámetros'
+						);
+					}
+				}
+			}
+
 			if (!response.ok) {
 				const errorData = (await response.json()) as { error?: string };
+				toast('Error', {
+					description: errorData.error ?? 'Error al actualizar el curso',
+				});
 				throw new Error(errorData.error ?? 'Error al actualizar el curso');
 			}
 
 			const updatedCourse = (await response.json()) as Course;
 			setCourse(updatedCourse);
+
 			setIsModalOpen(false);
-			toast({
-				title: 'Curso actualizado',
+			toast('Curso actualizado', {
 				description: 'El curso se ha actualizado con éxito.',
-				variant: 'destructive',
 			});
+			if (addParametros) {
+				toast('Parámetros actualizados', {
+					description: 'Los parámetros se han actualizado con éxito.',
+				});
+			}
 		} catch (error) {
 			console.error('Error:', error);
-			toast({
-				title: 'Error',
+			toast('Error', {
 				description:
 					error instanceof Error ? error.message : 'Error desconocido',
-				variant: 'destructive',
 			});
 		}
 	};
 
-	if (loading) return <div>Cargando curso...</div>;
-	if (error) return <div>Error: {error}</div>;
-	if (!course) return <div>No se encontró el curso.</div>;
-
-	const handlePredefinedColorChange = (color: string) => {
-		setSelectedColor(color);
-		localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
+	// Función para manejar la edición del curso
+	const handleEditCourse = () => {
+		if (!course) return; // Verificación adicional
+		setEditTitle(course.title);
+		setEditDescription(course.description);
+		setEditRequerimientos(course.requerimientos);
+		setEditCategory(parseInt(course.categoryid));
+		setEditModalidad(parseInt(course.modalidadesid));
+		setEditDificultad(parseInt(course.dificultadid));
+		setEditCoverImageKey(course.coverImageKey);
+		setEditParametros(
+			parametros.map((parametro) => ({
+				id: parametro.id,
+				name: parametro.name,
+				description: parametro.description,
+				porcentaje: parametro.porcentaje,
+			}))
+		);
+		setEditRating(course.rating); // Añadir esta línea
+		setIsModalOpen(true);
 	};
 
-	const handleDelete = async (id: string) => {
+	// Verificar si se está cargando
+	if (loading) {
+		return (
+			<main className="flex h-screen flex-col items-center justify-center">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only"></span>
+				</div>
+				<span className="text-primary">Cargando...</span>
+			</main>
+		);
+	}
+
+	// Verificar si hay un error o hay curso
+	if (!course) return <div>No se encontró el curso.</div>;
+
+	// Función para manejar la eliminación del curso
+	const handleDelete = async (id: number) => {
 		try {
+			// Primero intentamos eliminar la imagen de S3
+			if (course.coverImageKey) {
+				const responseAws = await fetch('/api/upload', {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						key: course.coverImageKey,
+					}),
+				});
+
+				if (!responseAws.ok) {
+					console.error('Error al eliminar la imagen de S3');
+				}
+			}
+
+			// Luego eliminamos el curso
 			const response = await fetch(`/api/educadores/courses?courseId=${id}`, {
 				method: 'DELETE',
 			});
 
-			if (!response.ok)
-				throw new Error(`Error al eliminar el curso, id: ${id}`);
-			toast({
-				title: 'Curso eliminado',
+			if (!response.ok) {
+				throw new Error(`Error al eliminar el curso, con id: ${id}`);
+			}
+
+			toast('Curso eliminado', {
 				description: 'El curso se ha eliminado con éxito.',
 			});
 			router.push('/dashboard/educadores/cursos');
 		} catch (error) {
 			console.error('Error:', error);
+			toast('Error', {
+				description: 'No se pudo eliminar el curso completamente',
+			});
 		}
 	};
 
+	// Verificar si hay un error
+	if (error) {
+		return (
+			<main className="flex h-screen items-center justify-center">
+				<div className="text-center">
+					<p className="text-lg font-semibold text-red-500">
+						Error tipo: {error}
+					</p>
+					<button
+						onClick={fetchCourse}
+						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+					>
+						Reintentar
+					</button>
+				</div>
+			</main>
+		);
+	}
+
+	// Función para manejar el cambio de color predefinido
+	const handlePredefinedColorChange = (color: string) => {
+		setSelectedColor(color);
+		localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
+	};
+
+	// Renderizar el componente
 	return (
-		<div className="bg-background container h-auto w-full rounded-lg p-6">
+		<div className="h-auto w-full rounded-lg bg-background">
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href="/dashboard/educadores"
 						>
 							Inicio
@@ -270,7 +438,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							className="hover:text-gray-300"
+							className="text-primary hover:text-gray-300"
 							href="/dashboard/educadores/cursos"
 						>
 							Lista de cursos
@@ -278,8 +446,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
-						<BreadcrumbLink className="hover:text-gray-300">
-							Detalles curso {course.title}
+						<BreadcrumbLink className="text-primary hover:text-gray-300">
+							Detalles del curso
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 				</BreadcrumbList>
@@ -287,18 +455,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			<div className="group relative h-auto w-full">
 				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
 				<Card
-					className={`zoom-in relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
+					className={`relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out zoom-in`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
 					}}
 				>
 					<CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
-						<CardTitle
-							className={`text-2xl font-bold ${
-								selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-							}`}
-						>
+						<CardTitle className={`text-2xl font-bold text-primary`}>
 							Curso: {course.title}
 						</CardTitle>
 						<div className="ml-9 flex flex-col">
@@ -314,7 +478,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									<Button
 										key={color}
 										style={{ backgroundColor: color }}
-										className={`size-8 ${selectedColor === '#FFFFFF' ? 'border-black' : 'border-white'}`}
+										className={`size-8 border ${selectedColor === '#FFFFFF' ? 'border-black' : 'border-white'} `}
 										onClick={() => handlePredefinedColorChange(color)}
 									/>
 								))}
@@ -335,7 +499,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									quality={75}
 								/>
 							</div>
-							<div className="mt-8 grid grid-cols-3 gap-5">
+							<div className="mt-8 grid grid-cols-4 gap-5">
 								<Button
 									className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
 								>
@@ -344,10 +508,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</Link>
 								</Button>
 								<Button
-									onClick={() => setIsModalOpen(true)}
+									onClick={handleEditCourse}
 									className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
 								>
 									Editar curso
+								</Button>
+								<Button className="border-primary bg-primary text-white hover:bg-primary/90">
+									<Link
+										href={`/dashboard/educadores/detailsDashboard/${course.id}`}
+									>
+										Estadisticas
+									</Link>
 								</Button>
 								<AlertDialog>
 									<AlertDialogTrigger asChild>
@@ -366,7 +537,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										<AlertDialogFooter>
 											<AlertDialogCancel>Cancelar</AlertDialogCancel>
 											<AlertDialogAction
-												onClick={() => handleDelete(course.id.toString())}
+												onClick={() => handleDelete(course.id)}
 												className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
 											>
 												Eliminar
@@ -378,11 +549,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						</div>
 						{/* Columna derecha - Información */}
 						<div className="pb-6">
-							<h2
-								className={`text-2xl font-bold ${
-									selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-								}`}
-							>
+							<h2 className={`text-2xl font-bold text-primary`}>
 								Información del curso
 							</h2>
 							<br />
@@ -395,11 +562,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Curso:
 									</h2>
-									<h1
-										className={`mb-4 text-2xl font-bold ${
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}`}
-									>
+									<h1 className={`mb-4 text-2xl font-bold text-primary`}>
 										{course.title}
 									</h1>
 								</div>
@@ -411,13 +574,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Categoría:
 									</h2>
-									<p
-										className={
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.categoryid}
-									</p>
+									</Badge>
 								</div>
 							</div>
 							<div className="mb-4">
@@ -443,13 +605,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Educador:
 									</h2>
-									<p
-										className={
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.instructor}
-									</p>
+									</Badge>
 								</div>
 								<div className="flex flex-col">
 									<h2
@@ -459,13 +620,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Dificultad:
 									</h2>
-									<p
-										className={
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.dificultadid}
-									</p>
+									</Badge>
 								</div>
 								<div className="flex flex-col">
 									<h2
@@ -475,13 +635,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Modalidad:
 									</h2>
-									<p
-										className={
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.modalidadesid}
-									</p>
+									</Badge>
 								</div>
 							</div>
 						</div>
@@ -490,16 +649,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			</div>
 			{loading ? (
 				<LoadingCourses />
-			) : courseIdNumber !== null && courseIdNumber > 0 ? (
-				<>
-					<LessonsListEducator
-						courseId={courseIdNumber}
-						selectedColor={selectedColor}
-					/>
-				</>
 			) : (
-				<></>
+				courseIdNumber !== null && (
+					<>
+						<LessonsListEducator
+							courseId={courseIdNumber}
+							selectedColor={selectedColor}
+						/>
+					</>
+				)
 			)}
+			<DashboardEstudiantes
+				courseId={courseIdNumber}
+				selectedColor={selectedColor}
+			/>
 			<ModalFormCourse
 				isOpen={isModalOpen}
 				onSubmitAction={(
@@ -510,7 +673,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					categoryid: number,
 					modalidadesid: number,
 					dificultadid: number,
-					requerimientos: string
+					rating: number, // Añadir esta línea
+					requerimientos: string,
+					addParametros: boolean, // Nuevo parámetro
+					coverImageKey: string,
+					fileName: string // Nuevo parámetro
 				) =>
 					handleUpdateCourse(
 						id,
@@ -520,7 +687,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						categoryid,
 						modalidadesid,
 						dificultadid,
-						requerimientos
+						requerimientos,
+						addParametros, // Pasar el nuevo parámetro
+						coverImageKey,
+						fileName, // Pasar el nuevo parámetro
+						rating // Añadir esta línea
 					)
 				}
 				editingCourseId={course.id}
@@ -531,7 +702,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				modalidadesid={editModalidad}
 				dificultadid={editDificultad}
 				coverImageKey={editCoverImageKey}
-				uploading={false}
+				parametros={editParametros}
+				rating={editRating} // Añadir esta línea
 				setTitle={setEditTitle}
 				setDescription={setEditDescription}
 				setRequerimientos={setEditRequerimientos}
@@ -539,7 +711,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setCategoryid={setEditCategory}
 				setDificultadid={setEditDificultad}
 				setCoverImageKey={setEditCoverImageKey}
+				setParametrosAction={(
+					parametros: {
+						id: number;
+						name: string;
+						description: string;
+						porcentaje: number;
+					}[]
+				) => setEditParametros(parametros)}
+				setRating={setEditRating} // Añadir esta línea
 				onCloseAction={() => setIsModalOpen(false)}
+				uploading={false} // Añadir esta línea
 			/>
 		</div>
 	);

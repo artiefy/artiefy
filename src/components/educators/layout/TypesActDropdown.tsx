@@ -1,27 +1,38 @@
 import React, { useEffect, useState } from 'react';
 
+// Interfaz para los tipos de actividades
 interface TypeAct {
 	id: number;
 	name: string;
 	description: string;
 }
 
+// Propiedades del componente para la creacion de un curso en componente padre
 interface TypeActDropdownProps {
 	typeActi: number;
 	setTypeActividad: (categoryId: number) => void;
-	errors: {
-		type: boolean;
-	};
+	selectedColor: string;
 }
 
 const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
 	typeActi,
 	setTypeActividad,
-	errors,
+	selectedColor,
 }) => {
-	const [allTypeAct, setTypeAct] = useState<TypeAct[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [allTypeAct, setTypeAct] = useState<TypeAct[]>([]); // Estado para los tipos de actividades
+	const [isLoading, setIsLoading] = useState(true); // Estado para el estado de carga
 
+	// Función para obtener el contraste de un color
+	const getContrastYIQ = (hexcolor: string) => {
+		hexcolor = hexcolor.replace('#', '');
+		const r = parseInt(hexcolor.substr(0, 2), 16);
+		const g = parseInt(hexcolor.substr(2, 2), 16);
+		const b = parseInt(hexcolor.substr(4, 2), 16);
+		const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+		return yiq >= 128 ? 'black' : 'white';
+	};
+
+	// Fetch de los tipos de actividades
 	useEffect(() => {
 		const fetchTypeAct = async () => {
 			setIsLoading(true);
@@ -47,21 +58,31 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
 			}
 		};
 
+		// Llamamos a la función para obtener las categorías
 		fetchTypeAct().catch((error) =>
 			console.error('Error fetching categories:', error)
 		);
 	}, []);
 
+	// Retornamos el componente
 	return (
 		<div className="flex flex-col gap-2">
 			<label
 				htmlFor="category-select"
-				className="text-lg font-medium text-black"
+				className={`text-lg font-medium`}
+				style={{
+					backgroundColor: selectedColor,
+					color: getContrastYIQ(selectedColor),
+				}}
 			>
 				Selecciona un tipo de actividad:
 			</label>
 			{isLoading ? (
-				<p className="text-black">Cargando los tipos de actividades...</p>
+				<p
+					className={`my-3 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'} `}
+				>
+					Cargando los tipos de actividades...
+				</p>
 			) : (
 				<select
 					id="typesAct-select"
@@ -70,9 +91,7 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
 						const selectedId = Number(e.target.value);
 						setTypeActividad(selectedId);
 					}}
-					className={`mb-5 w-80 rounded border p-2 text-black outline-hidden ${
-						errors.type ? 'border-red-500' : 'border-slate-200'
-					}`}
+					className={`mb-5 w-8/12 rounded border border-none bg-white p-2 text-black outline-none`}
 				>
 					<option value="">Selecciona un tipo de actividad</option>
 					{allTypeAct.map((type) => (

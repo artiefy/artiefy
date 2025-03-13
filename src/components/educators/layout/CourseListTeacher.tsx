@@ -12,6 +12,7 @@ import {
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
 
+// Interfaz para los cursos
 interface Course {
 	id: number;
 	title: string;
@@ -25,24 +26,27 @@ interface Course {
 	createdAt: string;
 }
 
+// Propiedades del componente para la lista de cursos
 interface CourseListTeacherProps {
 	courses: Course[];
 }
 
 export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
+	// Retorno la vista del componente que muestra la lista de cursos para los educadores en el dashboard
 	return (
-		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
+		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-2">
 			{courses.map((course) => (
 				<div key={course.id} className="group relative">
 					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
-					<Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+					<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
 						<CardHeader>
 							<AspectRatio ratio={16 / 9}>
 								<div className="relative size-full">
 									<Image
 										src={
-											`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}` ||
-											'/placeholder.svg'
+											course.coverImageKey
+												? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+												: '/placeholder.svg'
 										}
 										alt={course.title || 'Imagen del curso'}
 										className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
@@ -55,11 +59,13 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
 						</CardHeader>
 
 						<CardContent className="flex grow flex-col justify-between space-y-2 px-2">
-							<CardTitle className="text-background rounded-lg text-lg">
-								<div className="text-primary font-bold">{course.title}</div>
+							<CardTitle className="rounded-lg text-lg text-background">
+								<div className="w-full font-bold text-primary">
+									{course.title}
+								</div>
 							</CardTitle>
 							<div className="flex items-center">
-								Categoria id:
+								Categoria:{' '}
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"
@@ -85,7 +91,7 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
 								<Button asChild>
 									<Link
 										href={`/dashboard/educadores/cursos/${course.id}`}
-										className="group/button bg-background text-primary relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
+										className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
 									>
 										<p className="font-bold">Ver Curso</p>
 										<ArrowRightIcon className="animate-bounce-right size-5" />
