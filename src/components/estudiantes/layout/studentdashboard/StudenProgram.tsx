@@ -35,8 +35,11 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 	};
 
 	return (
-		<div className="group relative">
-			<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+		<div className="group relative p-2">
+			{' '}
+			{/* Reduced from p-3 to p-2 */}
+			<div className="absolute -inset-1.5 animate-gradient rounded-xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[6px] transition duration-500 group-hover:opacity-100" />{' '}
+			{/* Changed -inset-2 to -inset-1.5 and adjusted blur */}
 			<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white">
 				<CardHeader className="px-6">
 					<div className="relative aspect-video overflow-hidden">

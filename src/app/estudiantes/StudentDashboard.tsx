@@ -168,11 +168,12 @@ export default function StudentDashboard({
 							</div>
 						</div>
 
+						{/* Top Cursos section */}
 						<div className="xs:px-4 relative px-8">
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Top Cursos
 							</h2>
-							<Carousel className="w-full p-4">
+							<Carousel className="w-full">
 								<CarouselContent>
 									{latestTenCourses.map((course) => (
 										<CarouselItem
@@ -228,32 +229,47 @@ export default function StudentDashboard({
 										</CarouselItem>
 									))}
 								</CarouselContent>
-								<CarouselPrevious className="mr-7 size-12 bg-black/50 text-white" />
-								<CarouselNext className="ml-4 size-12 bg-black/50 text-white" />
+								<CarouselPrevious className="-left-16 size-12 bg-black/50 text-white" />{' '}
+								{/* Fixed positioning */}
+								<CarouselNext className="-right-16 size-12 bg-black/50 text-white" />{' '}
+								{/* Fixed positioning */}
 							</Carousel>
 						</div>
 
+						{/* Programas section */}
 						<div className="xs:px-4 relative px-8">
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Programas
 							</h2>
-							<Carousel className="w-full p-4">
-								<CarouselContent>
-									{sortedPrograms.map((program) => (
-										<CarouselItem
-											key={program.id}
-											className="pl-4 md:basis-1/2 lg:basis-1/3"
-										>
-											<StudenProgram
-												program={program}
-												categories={categories}
-											/>
-										</CarouselItem>
-									))}
-								</CarouselContent>
-								<CarouselPrevious className="mr-7 size-12 bg-black/50 text-white" />
-								<CarouselNext className="ml-4 size-12 bg-black/50 text-white" />
-							</Carousel>
+							<div className="px-20">
+								{' '}
+								{/* Aumentado de px-16 a px-20 para dar más espacio a los lados */}
+								<div className="py-2">
+									{' '}
+									{/* Nuevo contenedor con padding vertical */}
+									<Carousel className="w-full">
+										<CarouselContent>
+											{sortedPrograms.map((program) => (
+												<CarouselItem
+													key={program.id}
+													className="pl-2 md:basis-1/2 lg:basis-1/3"
+												>
+													<div className="px-3">
+														{' '}
+														{/* Aumentado de px-2 a px-3 */}
+														<StudenProgram
+															program={program}
+															categories={categories}
+														/>
+													</div>
+												</CarouselItem>
+											))}
+										</CarouselContent>
+										<CarouselPrevious className="-left-16 size-12 bg-black/50 text-white" />
+										<CarouselNext className="-right-16 size-12 bg-black/50 text-white" />
+									</Carousel>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

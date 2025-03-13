@@ -1,14 +1,12 @@
 'use client';
 
 import * as React from 'react';
-
 import useEmblaCarousel, {
 	type UseEmblaCarouselType,
 } from 'embla-carousel-react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 import { cn } from '~/lib/utils';
-
 import { Button } from './button';
 
 type CarouselApi = UseEmblaCarouselType[1];
@@ -16,12 +14,12 @@ type UseCarouselParameters = Parameters<typeof useEmblaCarousel>;
 type CarouselOptions = UseCarouselParameters[0];
 type CarouselPlugin = UseCarouselParameters[1];
 
-interface CarouselProps {
+type CarouselProps = {
 	opts?: CarouselOptions;
 	plugins?: CarouselPlugin;
 	orientation?: 'horizontal' | 'vertical';
 	setApi?: (api: CarouselApi) => void;
-}
+};
 
 type CarouselContextProps = {
 	carouselRef: ReturnType<typeof useEmblaCarousel>[0];
@@ -140,13 +138,13 @@ function CarouselContent({ className, ...props }: React.ComponentProps<'div'>) {
 	return (
 		<div
 			ref={carouselRef}
-			className="overflow-hidden"
+			className="overflow-hidden py-6" // Cambiado de p-4 a py-6 para más espacio vertical
 			data-slot="carousel-content"
 		>
 			<div
 				className={cn(
 					'flex',
-					orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col',
+					orientation === 'horizontal' ? '-ml-1' : '-mt-1 flex-col', // Reducido de -ml-2 a -ml-1
 					className
 				)}
 				{...props}
@@ -165,7 +163,7 @@ function CarouselItem({ className, ...props }: React.ComponentProps<'div'>) {
 			data-slot="carousel-item"
 			className={cn(
 				'min-w-0 shrink-0 grow-0 basis-full',
-				orientation === 'horizontal' ? 'pl-4' : 'pt-4',
+				orientation === 'horizontal' ? 'pl-1' : 'pt-1', // Reducido de pl-2 a pl-1
 				className
 			)}
 			{...props}
