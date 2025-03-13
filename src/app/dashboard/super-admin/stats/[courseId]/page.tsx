@@ -206,7 +206,7 @@ export default function StudentCourseDashboard() {
 							Instructor: {courseInfo?.instructor}
 						</p>
 						<p className="text-sm text-gray-400">
-							Dificultad: {courseInfo?.difficulty}
+							Nivel: {courseInfo?.difficulty}
 						</p>
 						<div className="flex items-center gap-2 text-gray-400">
 							<Calendar className="size-4" />

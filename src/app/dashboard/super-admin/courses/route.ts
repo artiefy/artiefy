@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			instructor: string;
 			requerimientos: string;
 		};
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
 			requerimientos,
 		} = body;
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
 			requerimientos,
 		});
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
 			requerimientos,
 		});
@@ -129,7 +129,7 @@ export async function PUT(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			instructor: string;
 			requerimientos: string;
 		};
@@ -139,7 +139,7 @@ export async function PUT(request: NextRequest) {
 			description,
 			coverImageKey,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			categoryid,
 			instructor,
 			requerimientos,
@@ -161,8 +161,7 @@ export async function PUT(request: NextRequest) {
 			categoryid,
 			modalidadesid,
 			instructor,
-			dificultadid,
-			requerimientos,
+			nivelid
 		});
 
 		return NextResponse.json({ message: 'Curso actualizado exitosamente' });

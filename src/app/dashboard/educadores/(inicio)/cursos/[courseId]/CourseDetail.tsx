@@ -38,7 +38,7 @@ interface Course {
 	title: string;
 	description: string;
 	categoryid: string;
-	dificultadid: string;
+	nivelid: string;
 	modalidadesid: string;
 	instructor: string;
 	coverImageKey: string;
@@ -73,7 +73,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [editRequerimientos, setEditRequerimientos] = useState('');
 	const [editCategory, setEditCategory] = useState(0);
 	const [editModalidad, setEditModalidad] = useState(0);
-	const [editDificultad, setEditDificultad] = useState(0);
+	const [editNivel, setEditNivel] = useState(0);
 	const [editCoverImageKey, setEditCoverImageKey] = useState('');
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -146,7 +146,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadid: number,
+		nivelid: number,
 		requerimientos: string
 	) => {
 		try {
@@ -197,7 +197,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						coverImageKey,
 						categoryid,
 						modalidadesid,
-						dificultadid,
+						nivelid,
 						instructor: course?.instructor,
 						requerimientos,
 					}),
@@ -457,14 +457,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
-										Dificultad:
+										Nivel:
 									</h2>
 									<p
 										className={
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}
 									>
-										{course.dificultadid}
+										{course.nivelid}
 									</p>
 								</div>
 								<div className="flex flex-col">
@@ -509,7 +509,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					file: File | null,
 					categoryid: number,
 					modalidadesid: number,
-					dificultadid: number,
+					nivelid: number,
 					requerimientos: string
 				) =>
 					handleUpdateCourse(
@@ -519,7 +519,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						file,
 						categoryid,
 						modalidadesid,
-						dificultadid,
+						nivelid,
 						requerimientos
 					)
 				}
@@ -529,7 +529,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				requerimientos={editRequerimientos}
 				categoryid={editCategory}
 				modalidadesid={editModalidad}
-				dificultadid={editDificultad}
+				nivelid={editNivel}
 				coverImageKey={editCoverImageKey}
 				uploading={false}
 				setTitle={setEditTitle}
@@ -537,7 +537,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setRequerimientos={setEditRequerimientos}
 				setModalidadesid={setEditModalidad}
 				setCategoryid={setEditCategory}
-				setDificultadid={setEditDificultad}
+				setNivelid={setEditNivel}
 				setCoverImageKey={setEditCoverImageKey}
 				onCloseAction={() => setIsModalOpen(false)}
 			/>

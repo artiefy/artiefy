@@ -65,7 +65,7 @@ export async function PUT(
 			categoryId?: number;
 			instructor?: string;
 			modalidadesid?: number;
-			dificultadid?: number;
+			nivelid?: number;
 			requerimientos?: string;
 		};
 
@@ -76,7 +76,7 @@ export async function PUT(
 			categoryid?: number;
 			instructor?: string;
 			modalidadesid?: number;
-			dificultadid?: number;
+			nivelid?: number;
 			requerimientos?: string;
 		} = {};
 
@@ -89,8 +89,8 @@ export async function PUT(
 		if (data.instructor !== undefined) updateData.instructor = data.instructor;
 		if (data.modalidadesid !== undefined)
 			updateData.modalidadesid = data.modalidadesid;
-		if (data.dificultadid !== undefined)
-			updateData.dificultadid = data.dificultadid;
+		if (data.nivelid !== undefined)
+			updateData.nivelid = data.nivelid;
 		if (data.requerimientos !== undefined)
 			updateData.requerimientos = data.requerimientos;
 
@@ -127,7 +127,7 @@ interface CourseData {
   coverImageKey: string;
   categoryid: number;
   modalidadesid: number;
-  dificultadid: number;
+  nivelid: number;
   instructor: string;
   requerimientos: string;
   creatorId: string;

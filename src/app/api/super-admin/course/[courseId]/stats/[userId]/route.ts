@@ -9,7 +9,7 @@ import {
 	scores,
 	users,
 	courses,
-	dificultad,
+	nivel,
 	activities,
 	userTimeTracking,
 	parametros,
@@ -87,11 +87,11 @@ export async function GET(
 				title: courses.title,
 				instructor: courses.instructor,
 				createdAt: courses.createdAt,
-				difficulty: dificultad.name,
+				difficulty: nivel.name,
 			})
 			.from(courses)
 			.where(eq(courses.id, Number(courseId)))
-			.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
+			.leftJoin(nivel, eq(courses.nivelid, nivel.id))
 			.limit(1);
 
 		// 🔹 Obtener progreso en lecciones

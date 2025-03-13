@@ -24,7 +24,7 @@ interface Course {
 	creatorId: string;
 	rating: number | null;
 	modalidadesid: number;
-	dificultadid: number;
+	nivelid: number;
 	requerimientos: string;
 }
 

@@ -70,7 +70,7 @@
 				coverImageKey?: string;
 				categoryid: number;
 				modalidadesid: number;
-				dificultadid: number;
+				nivelid: number;
 				instructor?: string;
 				requerimientos?: string;
 			};
@@ -82,12 +82,12 @@
 				coverImageKey = '',
 				categoryid,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				instructor = '',
 				requerimientos = '',
 			} = body;
 	
-			if (!title || !description || !categoryid || !modalidadesid || !dificultadid) {
+			if (!title || !description || !categoryid || !modalidadesid || !nivelid) {
 				console.error('❌ Error: Faltan datos obligatorios');
 				return respondWithError('Faltan datos obligatorios', 400);
 			}
@@ -100,7 +100,7 @@
 				coverImageKey,
 				categoryid,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				instructor,
 				requerimientos,
 			});
@@ -130,7 +130,7 @@
 				coverImageKey: string;
 				categoryid: number;
 				modalidadesid: number;
-				dificultadid: number;
+				nivelid: number;
 				instructor: string;
 				requerimientos: string;
 			};
@@ -140,7 +140,7 @@
 				description,
 				coverImageKey,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				categoryid,
 				instructor,
 				requerimientos,
@@ -162,8 +162,7 @@
 				categoryid,
 				modalidadesid,
 				instructor,
-				dificultadid,
-				requerimientos,
+				nivelid,
 			});
 
 			return NextResponse.json({ message: 'Curso actualizado exitosamente' });

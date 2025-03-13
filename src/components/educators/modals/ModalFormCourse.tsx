@@ -8,8 +8,8 @@ import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
-import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
+import NivelDropdown from '~/components/educators/layout/NivelDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
 	Dialog,
@@ -29,7 +29,7 @@ interface CourseFormProps {
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadesid: number,
+		nivelid: number,
 		requerimientos: string,
 		options?: { signal: AbortSignal }
 	) => Promise<void>;
@@ -45,8 +45,8 @@ interface CourseFormProps {
 	setCategoryid: (categoryid: number) => void;
 	modalidadesid: number;
 	setModalidadesid: (modalidadesid: number) => void;
-	dificultadid: number;
-	setDificultadid: (dificultadid: number) => void;
+	nivelid: number;
+	setNivelid: (nivelid: number) => void;
 	coverImageKey: string;
 	setCoverImageKey: (coverImageKey: string) => void;
 	isOpen: boolean;
@@ -67,7 +67,7 @@ export default function ModalFormCourse({
 	const [requerimientos, setRequerimientos] = useState('');
 	const [categoryid, setCategoryid] = useState(0);
 	const [modalidadesid, setModalidadesid] = useState(0);
-	const [dificultadid, setDificultadid] = useState(0);
+	const [nivelid, setNivelid] = useState(0);
 	const [file, setFile] = useState<File | null>(null);
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [fileSize, setFileSize] = useState<number | null>(null);
@@ -80,9 +80,9 @@ export default function ModalFormCourse({
 		categoryid: false,
 		category: false,
 		modalidadesid: false,
-		dificultadid: false,
+		nivelid: false,
 		file: false,
-		dificultad: false,
+		nivel: false,
 		modalidad: false,
 		requerimientos: false,
 	});
@@ -144,8 +144,8 @@ export default function ModalFormCourse({
 			categoryid: !editingCourseId && !categoryid,
 			category: false,
 			modalidadesid: !editingCourseId && !modalidadesid,
-			dificultadid: !editingCourseId && !dificultadid,
-			dificultad: false,
+			nivelid: !editingCourseId && !nivelid,
+			nivel: false,
 			file: !editingCourseId && !file && !currentCoverImageKey,
 			modalidad: false,
 			requerimientos: !editingCourseId && !requerimientos,
@@ -154,8 +154,7 @@ export default function ModalFormCourse({
 		if (editingCourseId) {
 			newErrors.title = modifiedFields.has('title') && !title;
 			newErrors.description = modifiedFields.has('description') && !description;
-			newErrors.dificultadid =
-				modifiedFields.has('dificultadid') && !dificultadid;
+			newErrors.nivelid = modifiedFields.has('nivelid') && !nivelid;
 			newErrors.file = modifiedFields.has('file') && !file;
 			newErrors.modalidadesid =
 				modifiedFields.has('modalidadesid') && !modalidadesid;
@@ -179,7 +178,7 @@ export default function ModalFormCourse({
 				file,
 				categoryid,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				requerimientos,
 				{ signal: controller.signal } // Pasar el signal al onSubmitAction
 			);
@@ -194,7 +193,7 @@ export default function ModalFormCourse({
 				file,
 				categoryid,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				requerimientos,
 			});
 		} catch (error) {
@@ -236,8 +235,8 @@ export default function ModalFormCourse({
 			case 'modalidadesid':
 				setModalidadesid(value as number);
 				break;
-			case 'dificultadesid':
-				setDificultadid(value as number);
+			case 'nivelid':
+				setNivelid(value as number);
 				break;
 			case 'file':
 				setFile(value as File);
@@ -317,7 +316,7 @@ export default function ModalFormCourse({
 						placeholder="Título"
 						value={title}
 						onChange={(e) => handleFieldChange('title', e.target.value)}
-						className={`mb-4 w-full rounded border p-2 text-se outline-hidden ${errors.title ? 'border-red-500' : 'border-primary'}`}
+						className={`text-se mb-4 w-full rounded border p-2 outline-hidden ${errors.title ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.title && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -357,17 +356,17 @@ export default function ModalFormCourse({
 					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 						<div className="mx-auto flex flex-col justify-center">
 							<label
-								htmlFor="dificultadid"
+								htmlFor="nivelid"
 								className="text-primary justify-center text-center text-lg font-medium"
 							>
-								Dificultad
+								Nivel
 							</label>
-							<DificultadDropdown
-								dificultad={dificultadid}
-								setDificultad={setDificultadid}
+							<NivelDropdown
+								nivel={nivelid}
+								setNivel={setNivelid}
 								errors={errors}
 							/>
-							{errors.dificultadid && (
+							{errors.nivelid && (
 								<p className="text-sm text-red-500">
 									Este campo es obligatorio.
 								</p>

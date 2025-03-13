@@ -9,8 +9,8 @@ import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import { toast } from 'sonner';
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
-import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
+import NivelDropdown from '~/components/educators/layout/NivelDropdown'; // Fixed import statement
 import { Button } from '~/components/educators/ui/button';
 import {
 	Dialog,
@@ -32,9 +32,9 @@ interface CourseFormProps {
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadid: number,
+		nivelid: number,
 		rating: number,
-		requerimientos: string,
+		
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string
@@ -45,14 +45,12 @@ interface CourseFormProps {
 	setTitle: (title: string) => void;
 	description: string;
 	setDescription: (description: string) => void;
-	requerimientos: string;
-	setRequerimientos: (requerimientos: string) => void;
 	categoryid: number;
 	setCategoryid: (categoryid: number) => void;
 	modalidadesid: number;
 	setModalidadesid: (modalidadesid: number) => void;
-	dificultadid: number;
-	setDificultadid: (dificultadid: number) => void;
+	nivelid: number;
+	setNivelid: (nivelid: number) => void;
 	coverImageKey: string;
 	setCoverImageKey: (coverImageKey: string) => void;
 	parametros: {
@@ -84,16 +82,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	setTitle,
 	description,
 	setDescription,
-	requerimientos,
-	setRequerimientos,
 	rating,
 	setRating,
 	categoryid,
 	setCategoryid,
 	modalidadesid,
 	setModalidadesid,
-	dificultadid,
-	setDificultadid,
+	nivelid,
+	setNivelid,
 	coverImageKey,
 	parametros = [],
 	setParametrosAction,
@@ -114,12 +110,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		category: false,
 		modalidadesid: false,
 		rating: false, // Añadir esta línea
-		dificultadid: false,
+		nivelid: false,
 		file: false,
-		dificultad: false,
+		nivel: false,
 		modalidad: false,
-		requerimientos: false,
-	}); // Estado para los errores
+	}); // Estado para los erroresnivel
 	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
 	const [isUploading, setIsUploading] = useState(false); // Estado para la subida
 	const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set()); // Estado para los campos modificados
@@ -247,25 +242,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			categoryid: !editingCourseId && !categoryid,
 			category: false,
 			modalidadesid: !editingCourseId && !modalidadesid,
-			dificultadid: !editingCourseId && !dificultadid,
-			dificultad: false,
+			nivelid: !editingCourseId && !nivelid,
+			nivel: false,
 			rating: !editingCourseId && !rating, // Añadir esta línea
 			file: !editingCourseId && !file && !currentCoverImageKey,
 			modalidad: false,
-			requerimientos: !editingCourseId && !requerimientos,
 		};
 
 		if (editingCourseId) {
 			newErrors.title = modifiedFields.has('title') && !title;
 			newErrors.description = modifiedFields.has('description') && !description;
-			newErrors.dificultadid = modifiedFields.has('dificultadid')
-				? !dificultadid
-				: !!newErrors.dificultadid;
+			newErrors.nivelid = modifiedFields.has('nivelid')
+				? !nivelid
+				: !!newErrors.nivelid;
 			newErrors.file = modifiedFields.has('file') && !file;
 			newErrors.modalidadesid =
 				modifiedFields.has('modalidadesid') && !modalidadesid;
-			newErrors.requerimientos =
-				modifiedFields.has('requerimientos') && !requerimientos;
 			newErrors.rating = modifiedFields.has('rating') && !rating; // Añadir esta línea
 		}
 
@@ -345,9 +337,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				file,
 				categoryid,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				rating,
-				requerimientos,
 				addParametros,
 				coverImageKey,
 				uploadedFileName
@@ -390,9 +381,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			case 'description':
 				setDescription(value as string);
 				break;
-			case 'requerimientos':
-				setRequerimientos(value as string);
-				break;
 			case 'categoryid':
 				setCategoryid(value as number);
 				break;
@@ -402,8 +390,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			case 'rating':
 				setRating(value as number);
 				break;
-			case 'dificultadid':
-				setDificultadid(value as number);
+			case 'nivelid':
+				setNivelid(value as number);
 				break;
 			case 'file':
 				setFile(value as File);
@@ -469,11 +457,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		if (editingCourseId) {
 			setTitle(title);
 			setDescription(description);
-			setRequerimientos(requerimientos);
 			setCategoryid(categoryid);
 			setRating(rating); // Añadir esta línea
 			setModalidadesid(modalidadesid);
-			setDificultadid(dificultadid);
+			setNivelid(nivelid);
 			setCoverImage(coverImageKey);
 		}
 	}, [editingCourseId]);
@@ -488,10 +475,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		if (isOpen && !editingCourseId) {
 			setTitle('');
 			setDescription('');
-			setRequerimientos('');
 			setCategoryid(0);
 			setModalidadesid(0);
-			setDificultadid(0);
+			setNivelid(0);
 			setCoverImage('');
 			setRating(0);
 			setParametrosAction([]);
@@ -541,37 +527,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					{errors.description && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
 					)}
-					<label
-						htmlFor="requerimientos"
-						className="text-primary text-lg font-medium"
-					>
-						Requerimientos previos
-					</label>
-					<textarea
-						placeholder="Escriba en esta zona los requerimientos o conocimientos previos para el curso"
-						value={requerimientos}
-						onChange={(e) =>
-							handleFieldChange('requerimientos', e.target.value)
-						}
-						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
-					/>
-					{errors.requerimientos && (
-						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
-					)}
+					
 					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 						<div className="mx-auto flex flex-col justify-center">
 							<label
-								htmlFor="dificultadid"
+								htmlFor="nivelid"
 								className="text-primary justify-center text-center text-lg font-medium"
 							>
-								Dificultad
+								Nivel
 							</label>
-							<DificultadDropdown
-								dificultad={dificultadid}
-								setDificultad={setDificultadid}
+							<NivelDropdown
+								nivel={nivelid}
+								setNivel={setNivelid}
 								errors={errors}
 							/>
-							{errors.dificultadid && (
+							{errors.nivelid && (
 								<p className="text-sm text-red-500">
 									Este campo es obligatorio.
 								</p>

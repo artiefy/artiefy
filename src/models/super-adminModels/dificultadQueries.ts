@@ -1,23 +1,23 @@
 import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { dificultad } from '~/server/db/schema';
+import { nivel } from '~/server/db/schema';
 
-// Obtener todas las dificultades
-export async function getDificultades() {
-  return await db.select().from(dificultad);
+// Obtener todas las 
+export async function getNivel() {
+  return await db.select().from(nivel);
 }
 
-// Crear una dificultad
-export async function createDificultad(name: string, description: string) {
-  return await db.insert(dificultad).values({ name, description }).returning();
+// Crear una 
+export async function createNivel(name: string, description: string) {
+  return await db.insert(nivel).values({ name, description }).returning();
 }
 
-// Actualizar una dificultad
-export async function updateDificultad(id: number, name: string, description: string) {
-  return await db.update(dificultad).set({ name, description }).where(eq(dificultad.id, id)).returning();
+// Actualizar una 
+export async function updateNivel(id: number, name: string, description: string) {
+  return await db.update(nivel).set({ name, description }).where(eq(nivel.id, id)).returning();
 }
 
-// Eliminar una dificultad
-export async function deleteDificultad(id: number) {
-  return await db.delete(dificultad).where(eq(dificultad.id, id));
+// Eliminar una 
+export async function deleteNivel(id: number) {
+  return await db.delete(nivel).where(eq(nivel.id, id));
 }

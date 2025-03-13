@@ -7,9 +7,8 @@ interface CourseData {
 	coverImageKey: string;
 	categoryid: number;
 	modalidadesid: number;
-	dificultadid: number;
+	nivelid: number;
 	instructor: string;
-	requerimientos: string;
 	creatorId: string;
 }
 
@@ -75,7 +74,7 @@ export async function PUT(
 			categoryId: number;
 			instructor: string;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			requerimientos: string;
 		};
 
@@ -86,7 +85,7 @@ export async function PUT(
 			categoryid: data.categoryId,
 			instructor: data.instructor,
 			modalidadesid: data.modalidadesid,
-			dificultadid: data.dificultadid,
+			nivelid: data.nivelid,
 			requerimientos: data.requerimientos,
 		});
 
@@ -115,7 +114,7 @@ export async function POST(request: Request) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			instructor: string;
 			requerimientos: string;
 			creatorId: string;
@@ -132,9 +131,8 @@ export async function POST(request: Request) {
 		coverImageKey: String(jsonData.coverImageKey),
 		categoryid: Number(jsonData.categoryid),
 		modalidadesid: Number(jsonData.modalidadesid),
-		dificultadid: Number(jsonData.dificultadid),
+		nivelid: Number(jsonData.nivelid),
 		instructor: String(jsonData.instructor),
-		requerimientos: String(jsonData.requerimientos),
 		creatorId: String(jsonData.creatorId),
 		};
 

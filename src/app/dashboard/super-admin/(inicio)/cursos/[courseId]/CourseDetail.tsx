@@ -37,7 +37,7 @@ interface Course {
 	title: string;
 	description: string;
 	categoryid: string;
-	dificultadid: string;
+	nivelid: string;
 	modalidadesid: string;
 	instructor: string;
 	coverImageKey: string;
@@ -85,24 +85,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [editRequerimientos, setEditRequerimientos] = useState(''); // Nuevo estado para los requerimientos del curso
 	const [editCategory, setEditCategory] = useState(0); // Nuevo estado para la categoría del curso
 	const [editModalidad, setEditModalidad] = useState(0); // Nuevo estado para la modalidad del curso
-	const [editDificultad, setEditDificultad] = useState(0); // Nuevo estado para la dificultad del curso
+	const [editNivel, setEditNivel] = useState(0); // Nuevo estado para la  del curso
 	const [editCoverImageKey, setEditCoverImageKey] = useState(''); // Nuevo estado para la imagen del curso
 	const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
 	const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
 	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
-	const [isEditing, setIsEditing] = useState(false); // Para activar modo edición
-	const [editedTitle, setEditedTitle] = useState('');
-	const [editedDescription, setEditedDescription] = useState('');
-	const [editedCategory, setEditedCategory] = useState<number | null>(null);
-	const [editedModalidad, setEditedModalidad] = useState<number | null>(null);
-	const [editedDificultad, setEditedDificultad] = useState<number | null>(null);
-	const [editedInstructor, setEditedInstructor] = useState<string | null>(null);
-	const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Para manejar el menú desplegable de educadores
-	const [categorias, setCategorias] = useState<{ id: number; name: string }[]>([]);
-const [modalidades, setModalidades] = useState<{ id: number; name: string }[]>([]);
-const [dificultades, setDificultades] = useState<{ id: number; name: string }[]>([]);
-const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 
 	const [editParametros, setEditParametros] = useState<
 		{
@@ -186,8 +174,7 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadid: number,
-		requerimientos: string,
+		nivelid: number,
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
@@ -254,9 +241,8 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 						fileName: uploadedFileName, // Agregar fileName al cuerpo de la solicitud
 						categoryid,
 						modalidadesid,
-						dificultadid,
+						nivelid,
 						instructor: course?.instructor,
-						requerimientos,
 						rating, // Añadir esta línea
 					}),
 				}
@@ -340,7 +326,7 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 		setEditRequerimientos(course.requerimientos);
 		setEditCategory(parseInt(course.categoryid));
 		setEditModalidad(parseInt(course.modalidadesid));
-		setEditDificultad(parseInt(course.dificultadid));
+		setEditNivel(parseInt(course.nivelid));
 		setEditCoverImageKey(course.coverImageKey);
 		setEditParametros(
 			parametros.map((parametro) => ({
@@ -631,13 +617,13 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
-										Dificultad:
+										nivel:
 									</h2>
 									<Badge
 										variant="outline"
 										className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
 									>
-										{course.dificultadid}
+										{course.nivelid}
 									</Badge>
 								</div>
 								<div className="flex flex-col">
@@ -685,9 +671,8 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 					file: File | null,
 					categoryid: number,
 					modalidadesid: number,
-					dificultadid: number,
-					rating: number, // Añadir esta línea
-					requerimientos: string,
+					nivelid: number,
+					rating: number,
 					addParametros: boolean, // Nuevo parámetro
 					coverImageKey: string,
 					fileName: string // Nuevo parámetro
@@ -699,8 +684,7 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 						file,
 						categoryid,
 						modalidadesid,
-						dificultadid,
-						requerimientos,
+						nivelid,
 						addParametros, // Pasar el nuevo parámetro
 						coverImageKey,
 						fileName, // Pasar el nuevo parámetro
@@ -710,19 +694,17 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 				editingCourseId={course.id}
 				title={editTitle}
 				description={editDescription}
-				requerimientos={editRequerimientos}
 				categoryid={editCategory}
 				modalidadesid={editModalidad}
-				dificultadid={editDificultad}
+				nivelid={editNivel}
 				coverImageKey={editCoverImageKey}
 				parametros={editParametros}
 				rating={editRating} // Añadir esta línea
 				setTitle={setEditTitle}
 				setDescription={setEditDescription}
-				setRequerimientos={setEditRequerimientos}
 				setModalidadesid={setEditModalidad}
 				setCategoryid={setEditCategory}
-				setDificultadid={setEditDificultad}
+				setNivelid={setEditNivel}
 				setCoverImageKey={setEditCoverImageKey}
 				setParametrosAction={(
 					parametros: {

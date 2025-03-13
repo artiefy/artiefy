@@ -26,6 +26,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 	const [isOpen, setIsOpen] = useState(true);
 	const [isMobile, setIsMobile] = useState(false);
 	const [isCoursesOpen, setIsCoursesOpen] = useState(false); // Estado para manejar el submenú de Cursos
+	const [IsProgramsOpen, setIsProgramsOpen] = useState(false); // Estado para manejar el submenú de Cursos
 	const pathname = usePathname();
 
 	// ✅ Usar el tracker de tiempo con el popup de inactividad
@@ -179,16 +180,53 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 								</li>
 								<li>
 									<Link
-										href="/dashboard/super-admin/difficulties"
+										href="/dashboard/super-admin/niveles"
 										className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/difficulties' ? 'bg-primary text-[#01142B]' : ''}`}
 									>
-										Dificultades
+										Niveles
 									</Link>
 								</li>
 							</ul>
 						)}
 					</li>
+					<li>
+						<button
+							onClick={() => setIsProgramsOpen(!IsProgramsOpen)}
+							className="hover:bg-secondary flex w-full items-center justify-between rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white"
+						>
+							<div className="flex items-center space-x-2">
+								<FiBook size={24} />
+								<span>Programas</span>
+							</div>
+							{IsProgramsOpen ? (
+								<FiChevronDown size={20} />
+							) : (
+								<FiChevronRight size={20} />
+							)}
+						</button>
 
+						{/* Submenú de Cursos */}
+						{IsProgramsOpen && (
+							<ul className="mt-2 ml-6 space-y-2">
+								<li>
+									<Link
+										href="/dashboard/super-admin/programs"
+										className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/programs' ? 'bg-primary text-[#01142B]' : ''}`}
+									>
+										Todos los programas
+									</Link>
+								</li>
+								<li>
+									<Link
+										href="/dashboard/super-admin/categories"
+										className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/categories' ? 'bg-primary text-[#01142B]' : ''}`}
+									>
+										Materias
+									</Link>
+								</li>
+							</ul>
+						)}
+					</li>
 					{/* Otros elementos del menú */}
 					{navItems.map((item) => {
 						const isActive = pathname === item.link;

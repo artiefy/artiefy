@@ -22,7 +22,7 @@ export async function getLessonsByCourseId(
 
 	const lessonsData = await db.query.lessons.findMany({
 		where: eq(lessons.courseId, courseId),
-		orderBy: [asc(lessons.order)],
+		orderBy: [asc(lessons.title)],
 		with: {
 			activities: true,
 		},
@@ -51,10 +51,12 @@ export async function getLessonsByCourseId(
 
 		return {
 			...lesson,
+			coverImageKey: lesson.coverImageKey ?? '',
 			porcentajecompletado: lessonProgress?.progress ?? 0,
 			isLocked: isLocked,
 			userProgress: lessonProgress?.progress ?? 0,
 			isCompleted: isCompleted,
+			resourceKey: lesson.resourceKey ?? '',
 			activities:
 				lesson.activities?.map((activity) => {
 					const activityProgress = userActivitiesProgressData.find(

@@ -14,9 +14,9 @@ export async function getCourseById(courseId: number): Promise<Course | null> {
 		with: {
 			category: true,
 			modalidad: true,
-			dificultad: true,
+			nivel: true,
 			lessons: {
-				orderBy: (lessons, { asc }) => [asc(lessons.order)],
+				orderBy: (lessons, { asc }) => [asc(lessons.title)],
 				with: {
 					activities: true,
 				},

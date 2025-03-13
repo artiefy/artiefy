@@ -6,7 +6,7 @@ import {
 	categories,
 	modalidades,
 	enrollments,
-	dificultad,
+	nivel,
 	lessons,
 } from '~/server/db/schema';
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
@@ -18,7 +18,6 @@ export interface Lesson {
 	title: string;
 	duration: number;
 	description: string | null;
-	order: number;
 	courseId: number;
 	createdAt: string | number | Date;
 	updatedAt: string | number | Date;
@@ -29,7 +28,7 @@ export interface Category {
 	name: string;
 	description: string | null;
 }
-export interface dificultad {
+export interface nivel {
 	id: number;
 	name: string;
 	description: string | null;
@@ -48,7 +47,7 @@ export interface Course {
 	coverImageKey: string;
 	categoryid: number | null;
 	modalidadesid: number | null;
-	dificultadid: number | null;
+	nivelid: number | null;
 	rating: number;
 	instructor: string;
 	creatorId: string;
@@ -65,18 +64,17 @@ export const createCourse = async ({
 	coverImageKey,
 	categoryid,
 	modalidadesid,
-	dificultadid,
+	nivelid,
 	instructor,
 	creatorId,
 	rating,
-	requerimientos,
 }: {
 	title: string;
 	description: string;
 	coverImageKey: string;
 	categoryid: number;
 	modalidadesid: number;
-	dificultadid: number;
+	nivelid: number;
 	instructor: string;
 	creatorId: string;
 	rating: number;
@@ -90,11 +88,10 @@ export const createCourse = async ({
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
 			rating,
 			creatorId,
-			requerimientos,
 		})
 		.returning({ id: courses.id });
 	return { ...insertedCourse };
@@ -110,19 +107,18 @@ export const getCoursesByUserId = async (userId: string) => {
 			coverImageKey: courses.coverImageKey,
 			categoryid: categories.name,
 			modalidadesid: modalidades.name,
-			dificultadid: dificultad.name,
+			nivelid: nivel.name,
 			instructor: courses.instructor,
 			rating: courses.rating,
 			creatorId: courses.creatorId,
 			createdAt: courses.createdAt,
-			updatedAt: courses.updatedAt,
-			requerimientos: courses.requerimientos,
+			updatedAt: courses.updatedAt
 		})
 		.from(courses)
 		.leftJoin(users, eq(courses.instructor, users.id))
 		.leftJoin(categories, eq(courses.categoryid, categories.id))
 		.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-		.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
+		.leftJoin(nivel, eq(courses.nivelid, nivel.id))
 		.where(eq(courses.creatorId, userId));
 };
 
@@ -171,13 +167,12 @@ export const getCourseById = async (courseId: number) => {
 				coverImageKey: courses.coverImageKey,
 				categoryid: courses.categoryid,
 				modalidadesid: courses.modalidadesid,
-				dificultadid: courses.dificultadid,
+				nivelid: courses.nivelid,
 				rating: courses.rating,
 				instructor: courses.instructor,
 				creatorId: courses.creatorId,
 				createdAt: courses.createdAt,
-				updatedAt: courses.updatedAt,
-				requerimientos: courses.requerimientos,
+				updatedAt: courses.updatedAt
 			})
 			.from(courses)
 			.where(eq(courses.id, courseId))
@@ -204,11 +199,11 @@ export const getCourseById = async (courseId: number) => {
 					.then((rows) => rows[0])
 			: null;
 
-		const dificultadNivel = course.dificultadid
+		const nivelNivel = course.nivelid
 			? await db
-					.select({ name: dificultad.name })
-					.from(dificultad)
-					.where(eq(dificultad.id, course.dificultadid))
+					.select({ name: nivel.name })
+					.from(nivel)
+					.where(eq(nivel.id, course.nivelid))
 					.then((rows) => rows[0])
 			: null;
 
@@ -218,7 +213,7 @@ export const getCourseById = async (courseId: number) => {
 			...course,
 			categoryid: category?.name ?? course.categoryid,
 			modalidadesid: modalidad?.name ?? course.modalidadesid,
-			dificultadid: dificultadNivel?.name ?? course.dificultadid,
+			nivelid: nivelNivel?.name ?? course.nivelid,
 			totalStudents,
 		};
 	} catch (error) {
@@ -237,16 +232,15 @@ export const getAllCourses = async () => {
 			coverImageKey: courses.coverImageKey,
 			categoryid: categories.name,
 			modalidadesid: modalidades.name,
-			dificultadid: dificultad.name,
+			nivelid: nivel.name,
 			instructor: courses.instructor,
 			creatorId: courses.creatorId,
 			createdAt: courses.createdAt,
 			updatedAt: courses.updatedAt,
-			requerimientos: courses.requerimientos,
 		})
 		.from(courses)
 		.leftJoin(categories, eq(courses.categoryid, categories.id))
-		.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
+		.leftJoin(nivel, eq(courses.nivelid, nivel.id))
 		.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id));
 };
 
@@ -259,7 +253,7 @@ export const updateCourse = async (
 		coverImageKey,
 		categoryid,
 		modalidadesid,
-		dificultadid,
+		nivelid,
 		instructor,
 		requerimientos,
 	}: {
@@ -268,7 +262,7 @@ export const updateCourse = async (
 		coverImageKey?: string | null;
 		categoryid?: number | null;
 		modalidadesid?: number | null;
-		dificultadid?: number | null;
+		nivelid?: number | null;
 		instructor?: string;
 		requerimientos?: string;
 	}
@@ -282,7 +276,7 @@ export const updateCourse = async (
 		coverImageKey?: string | null;
 		categoryid?: number | undefined;
 		modalidadesid?: number | undefined;
-		dificultadid?: number | undefined;
+		nivelid?: number | undefined;
 		instructor?: string;
 		requerimientos?: string;
 	} = {
@@ -301,14 +295,13 @@ export const updateCourse = async (
 				: typeof currentCourse.modalidadesid === 'number'
 					? currentCourse.modalidadesid
 					: undefined,
-		dificultadid:
-			typeof dificultadid === 'number'
-				? dificultadid
-				: typeof currentCourse.dificultadid === 'number'
-					? currentCourse.dificultadid
+		nivelid:
+			typeof nivelid === 'number'
+				? nivelid
+				: typeof currentCourse.nivelid === 'number'
+					? currentCourse.nivelid
 					: undefined,
 		instructor: instructor ?? currentCourse.instructor,
-		requerimientos: requerimientos ?? currentCourse.requerimientos,
 	};
 
 	return db.update(courses).set(updateData).where(eq(courses.id, courseId));

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 
 import { db } from '~/server/db';
-import { dificultad } from '~/server/db/schema';
+import { nivel } from '~/server/db/schema';
 
 export async function GET() {
 	try {
 		// Usando Drizzle para obtener las categorías
-		const allDificultad = await db.select().from(dificultad);
+		const allnivel = await db.select().from(nivel);
 
-		return NextResponse.json(allDificultad);
+		return NextResponse.json(allnivel);
 	} catch (error) {
 		console.error('Error al obtener las categorías:', error);
 		return NextResponse.json(

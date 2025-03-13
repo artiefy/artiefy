@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			rating: number;
 			creatorId: string;
 			instructor: string;
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
 			categoryid,
 			modalidadesid,
 			rating,
-			dificultadid,
+			nivelid,
 			creatorId,
 			instructor,
 			requerimientos,
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 			categoryid,
 			rating,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
 			requerimientos,
 		});
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
 			creatorId,
 			rating,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
 			requerimientos,
 		});
@@ -173,7 +173,7 @@ export async function PUT(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			instructor: string;
 			requerimientos: string;
 		};
@@ -183,7 +183,7 @@ export async function PUT(request: NextRequest) {
 			description,
 			coverImageKey,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			categoryid,
 			instructor,
 			requerimientos,
@@ -205,7 +205,7 @@ export async function PUT(request: NextRequest) {
 			categoryid,
 			modalidadesid,
 			instructor,
-			dificultadid,
+			nivelid,
 			requerimientos,
 		});
 

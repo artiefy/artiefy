@@ -1,32 +1,32 @@
 import React, { useEffect, useState } from 'react';
 
-interface Dificultad {
+interface Nivel {
 	id: number;
 	name: string;
 	description: string;
 }
 
-interface DificultadDropdownProps {
-	dificultad: number;
-	setDificultad: (dificultadId: number) => void;
+interface NivelDropdownProps {
+	nivel: number;
+	setNivel: (nivelId: number) => void;
 	errors: {
-		dificultad: boolean;
+		nivel: boolean;
 	};
 }
 
-const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
-	dificultad,
-	setDificultad,
+const NivelDropdown: React.FC<NivelDropdownProps> = ({
+	nivel,
+	setNivel,
 	errors,
 }) => {
-	const [dificultades, setDificultades] = useState<Dificultad[]>([]);
+	const [niveles, setNiveles] = useState<Nivel[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
 		const fetchCategories = async () => {
 			setIsLoading(true);
 			try {
-				const response = await fetch('/api/educadores/dificultad', {
+				const response = await fetch('/api/educadores/nivel', {
 					method: 'GET',
 					headers: {
 						'Content-Type': 'application/json',
@@ -38,8 +38,8 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
 					throw new Error(`Error al obtener las categorías: ${errorData}`);
 				}
 
-				const data: Dificultad[] = (await response.json()) as Dificultad[];
-				setDificultades(data);
+				const data: Nivel[] = (await response.json()) as Nivel[];
+				setNiveles(data);
 			} catch (error) {
 				console.error('Error detallado:', error);
 			} finally {
@@ -56,26 +56,26 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
 				htmlFor="category-select"
 				className="text-primary text-lg font-medium"
 			>
-				Selecciona una Dificultad:
+				Selecciona un Nivel:
 			</label>
 			{isLoading ? (
 				<p className="text-primary">Cargando categorías...</p>
 			) : (
 				<select
 					id="category-select"
-					value={dificultad || ''}
+					value={nivel || ''}
 					onChange={(e) => {
 						const selectedId = Number(e.target.value);
-						setDificultad(selectedId);
+						setNivel(selectedId);
 					}}
 					className={`mb-5 w-60 rounded border p-2 outline-hidden ${
-						errors.dificultad ? 'border-red-500' : 'border-primary'
+						errors.nivel ? 'border-red-500' : 'border-primary'
 					}`}
 				>
-					<option value="">Selecciona una dificultad</option>
-					{dificultades.map((dificultad) => (
-						<option key={dificultad.id} value={dificultad.id}>
-							{dificultad.name}
+					<option value="">Selecciona un nivel</option>
+					{niveles.map((nivel) => (
+						<option key={nivel.id} value={nivel.id}>
+							{nivel.name}
 						</option>
 					))}
 				</select>
@@ -84,4 +84,4 @@ const DificultadDropdown: React.FC<DificultadDropdownProps> = ({
 	);
 };
 
-export default DificultadDropdown;
+export default NivelDropdown;

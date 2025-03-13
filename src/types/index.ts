@@ -25,12 +25,12 @@ export interface Course {
 	creatorId: string;
 	rating: number | null;
 	modalidadesid: number;
-	dificultadid: number;
+	nivelid: number;
 	totalStudents: number;
 	lessons: Lesson[];
 	category?: Category;
 	modalidad?: Modalidad;
-	dificultad?: Dificultad;
+	nivel?: Nivel;
 	enrollments?: Enrollment[] | { length: number };
 	creator?: User;
 }
@@ -68,8 +68,7 @@ export interface Lesson {
 	description: string | null;
 	duration: number;
 	coverImageKey: string;
-	coverVideoKey: string;
-	order: number;
+	coverVideoKey: string | null;
 	courseId: number;
 	createdAt: Date;
 	updatedAt: Date;
@@ -120,7 +119,7 @@ export interface Score {
 	category?: Category;
 }
 
-export interface Dificultad {
+export interface Nivel {
 	id?: number;
 	name: string;
 	description?: string;

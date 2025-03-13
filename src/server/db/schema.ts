@@ -47,10 +47,9 @@ export const courses = pgTable('courses', {
 	modalidadesid: integer('modalidadesid')
 		.references(() => modalidades.id)
 		.notNull(),
-	dificultadid: integer('dificultadid')
-		.references(() => dificultad.id)
+	nivelid: integer('nivelid')
+		.references(() => nivel.id)
 		.notNull(),
-	requerimientos: text('requerimientos').notNull(),
 });
 
 // Tabla de categorías
@@ -147,7 +146,7 @@ export const scores = pgTable('scores', {
 		.notNull(),
 });
 
-export const dificultad = pgTable('dificultad', {
+export const nivel = pgTable('nivel', {
 	id: serial('id').primaryKey(),
 	name: text('name').notNull(),
 	description: text('description').notNull(),
@@ -286,7 +285,7 @@ export const modalidadesRelations = relations(modalidades, ({ many }) => ({
 	courses: many(courses),
 }));
 
-export const dificultadRelations = relations(dificultad, ({ many }) => ({
+export const nivelRelations = relations(nivel, ({ many }) => ({
 	courses: many(courses),
 }));
 
@@ -302,9 +301,9 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
 		fields: [courses.modalidadesid],
 		references: [modalidades.id],
 	}),
-	dificultad: one(dificultad, {
-		fields: [courses.dificultadid],
-		references: [dificultad.id],
+	nivel: one(nivel, {
+		fields: [courses.nivelid],
+		references: [nivel.id],
 	}),
 	category: one(categories, {
 		fields: [courses.categoryid],
@@ -507,29 +506,22 @@ export const anunciosUsuarios = pgTable('anuncios_usuarios', {
 		.notNull(),
 });
 
+// Tabla de programas (debe ir antes de materias)
 export const programas = pgTable('programas', {
 	id: serial('id').primaryKey(),
 	title: varchar('title', { length: 255 }).notNull(),
 	description: text('description'),
 	coverImageKey: text('cover_image_key'),
-	instructor: text('instructor').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 	creatorId: text('creator_id')
 		.references(() => users.id)
 		.notNull(),
 	rating: real('rating').default(0),
+	categoryid: integer('categoryid')
+		.references(() => categories.id)
+		.notNull(),
 });
-
-// Relaciones de programas
-export const programasRelations = relations(programas, ({ one, many }) => ({
-	creator: one(users, {
-		fields: [programas.creatorId],
-		references: [users.id],
-	}),
-	materias: many(materias),
-	enrollments: many(enrollmentPrograms),
-}));
 
 // Tabla de materias
 export const materias = pgTable('materias', {
@@ -539,21 +531,32 @@ export const materias = pgTable('materias', {
 	programaId: integer('programa_id')
 		.references(() => programas.id)
 		.notNull(),
-	courseId: integer('course_id') // Relación directa con curso
-		.references(() => courses.id),
+	courseid: integer('courseid').references(() => courses.id), // Changed from courseId to courseid
 });
 
+// Relaciones de programas
+export const programasRelations = relations(programas, ({ one, many }) => ({
+	creator: one(users, {
+		fields: [programas.creatorId],
+		references: [users.id],
+	}),
+	category: one(categories, {
+		fields: [programas.categoryid],
+		references: [categories.id],
+	}),
+	materias: many(materias),
+}));
+
 // Relaciones de materias
-export const materiasRelations = relations(materias, ({ one, many }) => ({
+export const materiasRelations = relations(materias, ({ one }) => ({
 	programa: one(programas, {
 		fields: [materias.programaId],
 		references: [programas.id],
 	}),
 	curso: one(courses, {
-		fields: [materias.courseId],
+		fields: [materias.courseid], // Changed from courseId to courseid
 		references: [courses.id],
 	}),
-	notas: many(notas),
 }));
 
 // Tabla de notas

@@ -28,7 +28,7 @@ export interface CourseModel {
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
-	dificultadid: string; // Add this line
+	nivelid: string; // Add this line
 	requerimientos: string;
 }
 
@@ -62,7 +62,7 @@ export default function Page() {
 				setCourses(
 					data.map((course) => ({
 						...course,
-						dificultadid: course.dificultadid ?? '', // Map it properly
+						nivelid: course.nivelid ?? '', // Map it properly
 						categoryid: course.categoryid, // Map categoryid properly
 						modalidadesid: course.modalidadesid, // Map modalidadesid properly
 					})) as CourseModel[]
@@ -104,7 +104,7 @@ export default function Page() {
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadid: number,
+		nivelid: number,
 		requerimientos: string
 	) => {
 		if (!user) return;
@@ -164,7 +164,7 @@ export default function Page() {
 				modalidadesid,
 				instructor: user.fullName,
 				userId: user.id,
-				dificultadid,
+				nivelid,
 				requerimientos,
 			}),
 		});
@@ -304,10 +304,10 @@ export default function Page() {
 										: null
 								)
 							}
-							dificultadid={Number(editingCourse?.dificultadid) ?? 0}
-							setDificultadid={(dificultadid: number) =>
+							nivelid={Number(editingCourse?.nivelid) ?? 0}
+							setNivelid={(nivelid: number) =>
 								setEditingCourse((prev) =>
-									prev ? { ...prev, dificultadid: String(dificultadid) } : null
+									prev ? { ...prev, nivelid: String(nivelid) } : null
 								)
 							}
 							coverImageKey={editingCourse?.coverImageKey ?? ''}

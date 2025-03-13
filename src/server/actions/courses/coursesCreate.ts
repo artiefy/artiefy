@@ -66,7 +66,7 @@ async function createCourse(course: {
 	coverImageKey: string;
 	categoryid: number;
 	modalidadesid: number;
-	dificultadid: number;
+	nivelid: number;
 	instructor: string;
 	requerimientos: string;
 }): Promise<void> {
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			creatorId: string;
 			instructor: string;
 			requerimientos: string;
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			creatorId,
 			instructor,
 			requerimientos,
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
 			requerimientos,
 		});
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
 			categoryid,
 			creatorId,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
 			requerimientos,
 		});
