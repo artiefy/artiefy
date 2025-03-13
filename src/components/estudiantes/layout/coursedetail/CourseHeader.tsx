@@ -18,7 +18,7 @@ import { blurDataURL } from '~/lib/blurDataUrl';
 
 import { CourseContent } from './CourseContent';
 
-import type { Course } from '~/types';
+import type { Course, CourseMateria } from '~/types';
 
 export const revalidate = 3600;
 
@@ -135,6 +135,24 @@ export function CourseHeader({
 					<p className="leading-relaxed text-gray-700">
 						{course.description ?? 'No hay descripción disponible.'}
 					</p>
+				</div>
+
+				{/* Add Materias section below description */}
+				<div className="space-y-2">
+					<h3 className="text-sm font-semibold text-gray-600">
+						Materias asociadas:
+					</h3>
+					<div className="flex flex-wrap gap-2">
+						{course.materias?.map((materia: CourseMateria) => (
+							<Badge
+								key={materia.id}
+								variant="secondary"
+								className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600"
+							>
+								{materia.title}
+							</Badge>
+						))}
+					</div>
 				</div>
 
 				{/* Course lessons */}

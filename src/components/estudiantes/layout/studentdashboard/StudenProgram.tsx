@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { StarIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
@@ -23,15 +23,9 @@ interface StudenProgramProps {
 }
 
 export function StudenProgram({ program, categories }: StudenProgramProps) {
-	const router = useRouter();
-
 	const getCategoryName = (categoryId: number) => {
 		const category = categories.find((cat) => cat.id === categoryId);
 		return category?.name ?? 'Sin categoría';
-	};
-
-	const handleProgramClick = (programId: string) => {
-		void router.push(`/estudiantes/programas/${programId}`);
 	};
 
 	return (
@@ -89,8 +83,8 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 							<EnrollmentCount programId={parseInt(program.id)} />
 						</div>
 						<Button asChild>
-							<div
-								onClick={() => handleProgramClick(program.id)}
+							<Link
+								href={`/estudiantes/programas/${program.id}`}
 								className="group/button relative inline-flex h-10 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95"
 							>
 								<p className="font-bold">Ver Programa</p>
@@ -98,7 +92,7 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 								<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 									<div className="relative h-full w-10 bg-white/30" />
 								</div>
-							</div>
+							</Link>
 						</Button>
 					</div>
 				</CardFooter>

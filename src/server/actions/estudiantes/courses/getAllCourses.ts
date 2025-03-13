@@ -5,12 +5,7 @@ import { unstable_cache } from 'next/cache';
 import { eq, desc } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import {
-	courses,
-	categories,
-	modalidades,
-	dificultad,
-} from '~/server/db/schema';
+import { courses, categories, modalidades, nivel } from '~/server/db/schema';
 
 import type { Course } from '~/types';
 
@@ -27,11 +22,11 @@ interface CourseQueryResult {
 	creatorId: string;
 	rating: number | null;
 	modalidadesid: number;
-	dificultadid: number;
+	nivelid: number;
 	categoryName: string | null;
 	categoryDescription: string | null;
 	modalidadName: string | null;
-	dificultadName: string | null;
+	nivelName: string | null;
 	isFeatured: boolean | null;
 }
 
@@ -48,11 +43,11 @@ const baseCoursesQuery = {
 	creatorId: courses.creatorId,
 	rating: courses.rating,
 	modalidadesid: courses.modalidadesid,
-	dificultadid: courses.dificultadid,
+	nivelid: courses.nivelid,
 	categoryName: categories.name,
 	categoryDescription: categories.description,
 	modalidadName: modalidades.name,
-	dificultadName: dificultad.name,
+	nivelName: nivel.name,
 	isFeatured: categories.is_featured,
 };
 
@@ -70,7 +65,7 @@ const transformCourseData = (coursesData: CourseQueryResult[]): Course[] => {
 		creatorId: course.creatorId,
 		rating: Number(course.rating ?? 0),
 		modalidadesid: course.modalidadesid,
-		dificultadid: course.dificultadid,
+		nivelid: course.nivelid,
 		totalStudents: 0,
 		lessons: [],
 		category: {
@@ -80,7 +75,7 @@ const transformCourseData = (coursesData: CourseQueryResult[]): Course[] => {
 			is_featured: course.isFeatured ?? false,
 		},
 		modalidad: { name: course.modalidadName ?? '' },
-		dificultad: { name: course.dificultadName ?? '' },
+		nivel: { name: course.nivelName ?? '' },
 		isFeatured: course.isFeatured ?? false,
 		requerimientos: [] as string[],
 	}));
@@ -94,7 +89,7 @@ export const getAllCourses = unstable_cache(
 				.from(courses)
 				.leftJoin(categories, eq(courses.categoryid, categories.id))
 				.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-				.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
+				.leftJoin(nivel, eq(courses.nivelid, nivel.id))
 				.orderBy(desc(courses.createdAt))
 				.limit(100);
 

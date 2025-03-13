@@ -25,16 +25,26 @@ export interface Course {
 	creatorId: string;
 	rating: number | null;
 	modalidadesid: number;
-	dificultadid: number;
+	nivelid: number; // Changed from dificultadid
 	totalStudents: number;
 	lessons: Lesson[]; // Asegurarse de que la propiedad lessons esté presente
 	category?: Category;
 	modalidad?: Modalidad;
-	dificultad?: Dificultad;
+	nivel?: Nivel; // Changed from dificultad
 	enrollments?: Enrollment[] | { length: number };
 	creator?: User;
 	isNew?: boolean; // Agregar propiedad isNew
-	requerimientos: string[];
+	requerimientos?: string[]; // Make requerimientos optional
+	materias?: CourseMateria[]; // Add this property
+}
+
+// Add new interface for course materias
+export interface CourseMateria {
+	id: number;
+	title: string;
+	description: string | null;
+	programaId: number;
+	courseid: number | null; // Changed from number to number | null to match DB schema
 }
 
 export interface Category {
@@ -135,7 +145,8 @@ export interface Score {
 	category?: Category;
 }
 
-export interface Dificultad {
+// Changed from Dificultad to Nivel
+export interface Nivel {
 	id?: number;
 	name: string;
 	description?: string;
@@ -258,21 +269,43 @@ export interface Program {
 	title: string;
 	description: string | null;
 	coverImageKey: string | null;
-	createdAt: Date;
-	updatedAt: Date;
+	createdAt: Date | null; // Allow null
+	updatedAt: Date | null; // Allow null
 	creatorId: string;
-	rating: number | null;
-	courses: Course[];
-	materias: Materia[];
-	requerimientos: string[]; // Add this field
-	categoryid: number; // Add this field
-	dificultadid: number; // Add this field
+	rating: number | null; // Allow null
+	categoryid: number;
+	creator?: User;
+	category?: Category;
+	materias?: MateriaWithCourse[];
+	enrollmentPrograms?: EnrollmentProgram[];
 }
 
+// Original Materia interface
 export interface Materia {
 	id: number;
 	title: string;
 	description: string | null;
 	programaId: number;
-	courseId: number | null;
+	courseid: number | null;
+	curso: Course; // Make curso required instead of optional
+}
+
+// New interface for Materia with optional course
+export interface MateriaWithCourse {
+	id: number;
+	title: string;
+	description: string | null;
+	programaId: number;
+	courseid: number | null;
+	curso?: Course;
+}
+
+export interface EnrollmentProgram {
+	id: number;
+	programaId: number;
+	userId: string;
+	enrolledAt: Date;
+	completed: boolean;
+	user?: User;
+	programa?: Program;
 }

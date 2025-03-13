@@ -45,8 +45,8 @@ export const categories = pgTable('categories', {
 	is_featured: boolean('is_featured').default(false),
 });
 
-// Tabla de dificultad
-export const dificultad = pgTable('dificultad', {
+// Tabla de nivel
+export const nivel = pgTable('nivel', {
 	id: serial('id').primaryKey(),
 	name: text('name').notNull(),
 	description: text('description').notNull(),
@@ -71,10 +71,9 @@ export const courses = pgTable('courses', {
 	modalidadesid: integer('modalidadesid')
 		.references(() => modalidades.id)
 		.notNull(),
-	dificultadid: integer('dificultadid')
-		.references(() => dificultad.id)
+	nivelid: integer('nivelid')
+		.references(() => nivel.id)
 		.notNull(),
-	requerimientos: text('requerimientos').notNull(),
 });
 
 // Tabla de tipos de actividades
@@ -314,12 +313,8 @@ export const programas = pgTable('programas', {
 		.references(() => users.id)
 		.notNull(),
 	rating: real('rating').default(0),
-	requerimientos: text('requerimientos').notNull(),
 	categoryid: integer('categoryid')
 		.references(() => categories.id)
-		.notNull(),
-	dificultadid: integer('dificultadid')
-		.references(() => dificultad.id)
 		.notNull(),
 });
 
@@ -357,6 +352,31 @@ export const materiasRelations = relations(materias, ({ one }) => ({
 		fields: [materias.courseid], // Changed from courseId to courseid
 		references: [courses.id],
 	}),
+}));
+
+// Add courses relations for materias
+export const coursesRelations = relations(courses, ({ many, one }) => ({
+	lessons: many(lessons),
+	enrollments: many(enrollments),
+	creator: one(users, {
+		fields: [courses.creatorId],
+		references: [users.id],
+		relationName: 'createdCourses',
+	}),
+	modalidad: one(modalidades, {
+		fields: [courses.modalidadesid],
+		references: [modalidades.id],
+	}),
+	nivel: one(nivel, {
+		fields: [courses.nivelid],
+		references: [nivel.id],
+	}),
+	category: one(categories, {
+		fields: [courses.categoryid],
+		references: [categories.id],
+	}),
+	coursesTaken: many(coursesTaken),
+	materias: many(materias), // Asegurarnos que esta relación está presente
 }));
 
 // Tabla de notas
@@ -435,31 +455,8 @@ export const modalidadesRelations = relations(modalidades, ({ many }) => ({
 	courses: many(courses),
 }));
 
-export const dificultadRelations = relations(dificultad, ({ many }) => ({
+export const nivelRelations = relations(nivel, ({ many }) => ({
 	courses: many(courses),
-}));
-
-export const coursesRelations = relations(courses, ({ many, one }) => ({
-	lessons: many(lessons),
-	enrollments: many(enrollments),
-	creator: one(users, {
-		fields: [courses.creatorId],
-		references: [users.id],
-		relationName: 'createdCourses',
-	}),
-	modalidad: one(modalidades, {
-		fields: [courses.modalidadesid],
-		references: [modalidades.id],
-	}),
-	dificultad: one(dificultad, {
-		fields: [courses.dificultadid],
-		references: [dificultad.id],
-	}),
-	category: one(categories, {
-		fields: [courses.categoryid],
-		references: [categories.id],
-	}),
-	coursesTaken: many(coursesTaken),
 }));
 
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({

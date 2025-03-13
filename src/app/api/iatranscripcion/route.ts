@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 import axios, { isAxiosError } from 'axios';
 
-const VIDEO_TO_TEXT_API = 'http://3.145.183.203:8000/video2text';
+const VIDEO_TO_TEXT_API = 'http://18.191.54.210:8000/video2text';
 const DEFAULT_TIMEOUT = 300000;
 const CACHE_DURATION = 3600; // 1 hora
 
