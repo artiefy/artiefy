@@ -16,7 +16,7 @@ export async function getAdminUsers(query: string | undefined) {
 		email: user.emailAddresses.find(
 			(email) => email.id === user.primaryEmailAddressId
 		)?.emailAddress,
-		role: user.publicMetadata.role || 'estudiante', // Si role no existe, asignar 'estudiante'
+		role: user.publicMetadata.role ?? 'estudiante', // Si role no existe, asignar 'estudiante'
 	}));
 
 	return simplifiedUsers;
