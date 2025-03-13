@@ -170,10 +170,10 @@ export default function StudentDashboard({
 
 						{/* Top Cursos section */}
 						<div className="relative px-24">
-							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
+							<h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">
 								Top Cursos
 							</h2>
-							<div className="py-2">
+							<div>
 								<Carousel className="w-full">
 									<CarouselContent>
 										{latestTenCourses.map((course) => (
@@ -241,13 +241,13 @@ export default function StudentDashboard({
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Programas
 							</h2>
-							<div className="py-0">
+							<div>
 								<Carousel className="w-full">
-									<CarouselContent>
+									<CarouselContent className="p-4">
 										{sortedPrograms.map((program) => (
 											<CarouselItem
 												key={program.id}
-												className="pl-4 md:basis-1/2 lg:basis-1/3"
+												className="md:basis-2/3 lg:basis-1/3"
 											>
 												<StudenProgram
 													program={program}

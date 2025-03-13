@@ -83,7 +83,7 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 					</div>
 				</CardContent>
 
-				<CardFooter className="px-6 pb-4">
+				<CardFooter className="px-6 pt-4">
 					<div className="flex w-full items-center justify-between space-x-4">
 						<div className="text-sm text-gray-400">
 							<EnrollmentCount programId={parseInt(program.id)} />
