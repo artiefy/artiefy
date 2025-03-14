@@ -198,10 +198,6 @@ export async function PUT(request: NextRequest) {
 			modalidadesid,
 			instructor,
 			nivelid,
-<<<<<<< HEAD
-=======
-			requerimientos,
->>>>>>> acc7a47ff9460f8ed37a38843c60aa2484cb066c
 		});
 
 		return NextResponse.json({ message: 'Curso actualizado exitosamente' });

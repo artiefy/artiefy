@@ -9,7 +9,6 @@ import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import { toast } from 'sonner';
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
-import NivelDropdown from '~/components/educators/layout/NivelDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
 import NivelDropdown from '~/components/educators/layout/NivelDropdown'; // Fixed import statement
 import { Button } from '~/components/educators/ui/button';

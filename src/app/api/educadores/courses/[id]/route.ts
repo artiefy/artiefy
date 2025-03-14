@@ -6,7 +6,7 @@ import {
 	deleteCourse,
 	getCourseById,
 	updateCourse,
-} from '~/models/educatorsModels/courseModelsEducators';
+} from '~/models/educatorsModels/courseModelsEducator';
 
 export async function GET(
 	request: Request,

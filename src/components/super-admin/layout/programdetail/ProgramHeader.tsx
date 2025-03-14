@@ -172,7 +172,9 @@ export function ProgramHeader({
 										) : (
 											<>
 												<span className="transition-all duration-500 group-hover:translate-x-1">
-													{!canEnroll ? 'Requiere Plan Premium' : 'Inscribirse al programa'}
+													{!canEnroll
+														? 'Requiere Plan Premium'
+														: 'Inscribirse al programa'}
 												</span>
 												<svg
 													className="size-6 transition-transform duration-500 group-hover:translate-x-1"

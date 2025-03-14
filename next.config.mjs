@@ -1,4 +1,3 @@
-// @ts-check
 
 import './src/env.js'; // Importa variables de entorno
 import withPlaiceholder from '@plaiceholder/next'; // Importa la configuración de @plaiceholder/next
@@ -31,23 +30,11 @@ const nextConfig = {
 			},
 			{
 				protocol: 'https',
-				hostname: 'images.unsplash.com',
+				hostname: 'img.clerk.com',
 				port: '',
 				pathname: '/**',
 			},
-			{
-				protocol: 'https',
-				hostname: 'images.clerk.dev',
-				port: '',
-				pathname: '/**',
-			},
-			{
-				protocol: 'https',
-				hostname: 'www.gravatar.com',
-				port: '',
-				pathname: '/**',
-			},
-		],
+		], // Define patrones remotos para permitir la carga de imágenes desde dominios específicos
 	},
 	experimental: {
 		turbo: {

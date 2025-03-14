@@ -34,26 +34,7 @@ export async function PUT(request: Request) {
 			nivelid: body.nivelid ? Number(body.nivelid) : 0,
 			instructor: body.instructor ?? '',
 		});
-		// Intentamos actualizar el curso en la base de datos
-		await updateCourse(Number(body.id), {
-			title: body.title,
-			description: body.description,
-			coverImageKey: body.coverImageKey ?? '',
-			categoryid: body.categoryid ? Number(body.categoryid) : 0,
-			modalidadesid: body.modalidadesid ? Number(body.modalidadesid) : 0,
-			nivelid: body.nivelid ? Number(body.nivelid) : 0,
-			instructor: body.instructor ?? '',
-		});
 
-		console.log(`✅ Curso ${body.id} actualizado correctamente`);
-		return NextResponse.json({ message: 'Curso actualizado correctamente' });
-	} catch (error) {
-		console.error('❌ Error en la API de actualización:', error);
-		return NextResponse.json(
-			{ error: 'Error interno del servidor' },
-			{ status: 500 }
-		);
-	}
 		console.log(`✅ Curso ${body.id} actualizado correctamente`);
 		return NextResponse.json({ message: 'Curso actualizado correctamente' });
 	} catch (error) {

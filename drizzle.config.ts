@@ -1,4 +1,3 @@
-'use server';
 import { type Config } from 'drizzle-kit';
 
 import { env } from '~/env';

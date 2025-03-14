@@ -46,7 +46,7 @@ interface ModalFormProgramProps {
 }
 const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 	onSubmit,
-	uploading,
+uploading,
 	editingProgramId,
 	title,
 	setTitle,
@@ -60,7 +60,7 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 	isOpen,
 	onClose,
 }) => {
-	const [file, setFile] = useState<File | null>(null);
+		const [file, setFile] = useState<File | null>(null);
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [fileSize, setFileSize] = useState<number | null>(null);
 	const [progress, setProgress] = useState(0);
@@ -70,17 +70,17 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 		title: false,
 		description: false,
 		categoryid: false,
-		category: false,
+category: false,
 		rating: false,
 		file: false,
 	});
-	const [uploadProgress, setUploadProgress] = useState(0);
+const [uploadProgress, setUploadProgress] = useState(0);
 	const [isUploading, setIsUploading] = useState(false);
 	const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set());
 	const [currentCoverImageKey] = useState(coverImageKey);
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
-	const [coverImage, setCoverImage] = useState<string | null>(null);
+const [coverImage, setCoverImage] = useState<string | null>(null);
 
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -95,7 +95,7 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 			setFileSize(null);
 			setErrors((prev) => ({ ...prev, file: true }));
 		}
-		console.log('coverImageKey', coverImage);
+console.log('coverImageKey', coverImage);
 	};
 
 	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -126,7 +126,7 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 	};
 
 	const handleSubmit = async () => {
-		const controller = new AbortController();
+const controller = new AbortController();
 		setUploadController(controller);
 		const newErrors = {
 			title: !editingProgramId && !title,
@@ -152,7 +152,7 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 			return;
 		}
 
-		setIsEditing(true);
+setIsEditing(true);
 		setIsUploading(true);
 		try {
 			let coverImageKey = currentCoverImageKey ?? '';
@@ -201,7 +201,7 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 			}
 
 			await onSubmit(
-				editingProgramId ? editingProgramId.toString() : '',
+editingProgramId ? editingProgramId.toString() : '',
 				title,
 				description,
 				file,
@@ -212,27 +212,27 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
-				return;
+return;
 			}
 
-			setIsUploading(false);
-		} catch (error) {
-			if ((error as Error).name === 'AbortError') {
+				setIsUploading(false);
+					} catch (error) {
+if ((error as Error).name === 'AbortError') {
 				console.log('Upload cancelled');
 				return;
 			} else {
-				console.error('Error al enviar:', error);
-			}
+			console.error('Error al enviar:', error);
+}
 			setIsUploading(false);
 		}
-	};
+			};
 
 	const handleCancel = () => {
 		if (uploadController) {
 			uploadController.abort();
 		}
 		onClose();
-	};
+};
 
 	const handleFieldChange = (
 		field: string,
@@ -259,7 +259,7 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 	};
 
 	useEffect(() => {
-		if (uploading) {
+if (uploading) {
 			setProgress(0);
 			const interval = setInterval(() => {
 				setProgress((prev) => {
@@ -329,7 +329,7 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
-			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
+<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
 				<DialogHeader className="mt-4">
 					<DialogTitle className="text-4xl">
 						{editingProgramId ? 'Editar Programa' : 'Crear Programa'}
@@ -412,13 +412,13 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 					</label>
 					<div
 						className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${
-							isDragging
+isDragging
 								? 'border-blue-500 bg-blue-50'
 								: errors.file
-									? 'border-red-500 bg-red-50'
-									: 'border-gray-300 bg-gray-50'
+? 'border-red-500 bg-red-50'
+: 'border-gray-300 bg-gray-50'
 						} transition-all duration-300 ease-in-out`}
-						onDragOver={handleDragOver}
+onDragOver={handleDragOver}
 						onDragLeave={handleDragLeave}
 						onDrop={handleDrop}
 					>
@@ -489,9 +489,9 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 					{(uploading || isUploading) && (
 						<div className="mt-4">
 							<Progress
-								value={uploading ? progress : uploadProgress}
-								className="w-full"
-							/>
+value={uploading ? progress : uploadProgress}
+className="w-full"
+/>
 							<p className="mt-2 text-center text-sm text-gray-500">
 								{uploading ? progress : uploadProgress}% Completado
 							</p>
@@ -504,24 +504,24 @@ const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
 						className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
 					>
 						Cancelar
-					</Button>
-					<Button
+						</Button>
+										<Button
 						onClick={handleSubmit}
 						className="bg-green-400 text-white hover:bg-green-400/70"
 						disabled={uploading}
 					>
 						{uploading
-							? 'Subiendo...'
+? 'Subiendo...'
 							: editingProgramId
 								? isEditing
 									? 'Editando...'
 									: 'Editar'
-								: 'Crear Programa'}
+: 'Crear Programa'}
 					</Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
-	);
+			);
 };
 
 export default ModalFormProgram;
