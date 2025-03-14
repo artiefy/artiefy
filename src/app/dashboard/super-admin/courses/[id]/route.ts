@@ -66,6 +66,7 @@
 // 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 // 		}
 
+<<<<<<< HEAD
 // 		const courseId = parseInt(params.id);
 // 		const data = (await request.json()) as {
 // 			title: string;
@@ -86,6 +87,30 @@
 // 			modalidadesid: data.modalidadesid,
 // 			nivelid: data.nivelid, // Replaced nivelid with nivelid
 // 		});
+=======
+		const courseId = parseInt(params.id);
+		const data = (await request.json()) as {
+			title: string;
+			description: string;
+			coverImageKey: string;
+			categoryId: number;
+			instructor: string;
+			modalidadesid: number;
+			nivelid: number;
+			requerimientos: string;
+		};
+
+		await updateCourse(courseId, {
+			title: data.title,
+			description: data.description,
+			coverImageKey: data.coverImageKey,
+			categoryid: data.categoryId,
+			instructor: data.instructor,
+			modalidadesid: data.modalidadesid,
+			nivelid: data.nivelid,
+			requerimientos: data.requerimientos,
+		});
+>>>>>>> acc7a47ff9460f8ed37a38843c60aa2484cb066c
 
 // 		// Obtener el curso actualizado
 // 		const updatedCourse = await getCourseById(courseId);
@@ -106,6 +131,7 @@
 // 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 // 		}
 
+<<<<<<< HEAD
 // 		const jsonData = await request.json() as {
 // 			title: string;
 // 			description: string;
@@ -116,11 +142,25 @@
 // 			instructor: string;
 // 			creatorId: string;
 // 		};
+=======
+		const jsonData = await request.json() as {
+			title: string;
+			description: string;
+			coverImageKey: string;
+			categoryid: number;
+			modalidadesid: number;
+			nivelid: number;
+			instructor: string;
+			requerimientos: string;
+			creatorId: string;
+		};
+>>>>>>> acc7a47ff9460f8ed37a38843c60aa2484cb066c
 
 // 		if (typeof jsonData !== 'object' || jsonData === null) {
 // 		throw new Error('Invalid data received');
 // 		}
 
+<<<<<<< HEAD
 // 		// Validar manualmente que todas las propiedades existen antes de asignarlas
 // 		const data: CourseData = {
 // 		title: String(jsonData.title),
@@ -132,6 +172,19 @@
 // 		instructor: String(jsonData.instructor),
 // 		creatorId: String(jsonData.creatorId),
 // 		};
+=======
+		// Validar manualmente que todas las propiedades existen antes de asignarlas
+		const data: CourseData = {
+		title: String(jsonData.title),
+		description: String(jsonData.description),
+		coverImageKey: String(jsonData.coverImageKey),
+		categoryid: Number(jsonData.categoryid),
+		modalidadesid: Number(jsonData.modalidadesid),
+		nivelid: Number(jsonData.nivelid),
+		instructor: String(jsonData.instructor),
+		creatorId: String(jsonData.creatorId),
+		};
+>>>>>>> acc7a47ff9460f8ed37a38843c60aa2484cb066c
 
 // 		const newCourse = await createCourse(data);
 

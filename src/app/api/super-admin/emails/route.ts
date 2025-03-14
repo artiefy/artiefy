@@ -65,7 +65,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     // 📌 Convertir emails a un array de strings
     const emails: string[] = emailsRaw.map(email =>
-      typeof email === 'string' ? email.trim() : (email && typeof email.toString === 'function' ? email.toString().trim() : String(email).trim())
+      typeof email === 'string' ? email.trim() : ''
     );
 
     console.log('📧 Correos a enviar:', emails);
@@ -96,9 +96,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Error en API de correo:', error);
-    return NextResponse.json({ error: `Error interno del servidor: ${error.message}` }, { status: 500 });
+    return NextResponse.json({ error: `Error interno del servidor: ${(error as Error).message}` }, { status: 500 });
   }
 }
 

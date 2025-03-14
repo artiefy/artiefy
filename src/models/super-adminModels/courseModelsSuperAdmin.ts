@@ -19,7 +19,6 @@ export interface Lesson {
 	title: string;
 	duration: number;
 	description: string | null;
-	order: number;
 	courseId: number;
 	createdAt: string | number | Date;
 	updatedAt: string | number | Date;
