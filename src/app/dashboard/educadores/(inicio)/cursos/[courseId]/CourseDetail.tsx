@@ -273,7 +273,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	};
 
 	return (
-		<div className="container h-auto w-full rounded-lg bg-background p-6">
+		<div className="bg-background container h-auto w-full rounded-lg p-6">
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
@@ -302,9 +302,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative h-auto w-full">
-				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
-					className={`relative z-20 mt-3 h-auto zoom-in overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
+					className={`zoom-in relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
@@ -327,7 +327,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 								Seleccione el color deseado
 							</Label>
 							<div className="mt-2 flex space-x-2">
-								{predefinedColors.map((color) => (
+								{predefinedColors.map((color: string) => (
 									<Button
 										key={color}
 										style={{ backgroundColor: color }}
@@ -565,12 +565,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setDificultadid={setEditDificultad}
 				setCoverImageKey={setEditCoverImageKey}
 				parametros={[]}
-				setParametrosAction={(parametros) => {
+				setParametrosAction={(parametros: { id: number; name: string; description: string; porcentaje: number }[]) => {
 					// Implement the function logic here
 					console.log('Parametros updated:', parametros);
 				}}
 				rating={0}
-				setRating={(newRating) => setEditRating(newRating)}
+				setRating={(newRating: number) => setEditRating(newRating)}
 				onCloseAction={() => setIsModalOpen(false)}
 			/>
 		</div>

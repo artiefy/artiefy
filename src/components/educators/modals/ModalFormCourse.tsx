@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useState, type ChangeEvent } from 'react';
@@ -6,10 +5,8 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
-import { Plus } from 'lucide-react';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
-import { toast } from 'sonner';
 
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import DificultadDropdown from '~/components/educators/layout/DifiultadDropdown';
@@ -23,10 +20,11 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
-import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 
 interface CourseFormProps {
+	isOpen: boolean;
+	onCloseAction: () => void;
 	onSubmitAction: (
 		id: string,
 		title: string,
@@ -35,13 +33,12 @@ interface CourseFormProps {
 		categoryid: number,
 		modalidadesid: number,
 		dificultadid: number,
-		rating: number, // Añadir esta línea
+		rating: number,
 		requerimientos: string,
 		addParametros: boolean,
-		coverImageKey: string, // Agregar coverImageKey
-		fileName: string // Agregar fileName
+		coverImageKey: string,
+		fileName: string
 	) => Promise<void>;
-	uploading: boolean;
 	editingCourseId: number | null;
 	title: string;
 	setTitle: (title: string) => void;
@@ -71,15 +68,15 @@ interface CourseFormProps {
 			porcentaje: number;
 		}[]
 	) => void;
-	isOpen: boolean;
-	onCloseAction: () => void;
-	rating: number; // Añadir esta línea
-	setRating: (rating: number) => void; // Añadir esta línea
+	uploading: boolean;
+	rating: number;
+	setRating: (rating: number) => void;
 }
 
 const ModalFormCourse: React.FC<CourseFormProps> = ({
+	isOpen,
+	onCloseAction,
 	onSubmitAction,
-	uploading,
 	editingCourseId,
 	title,
 	setTitle,
@@ -87,8 +84,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	setDescription,
 	requerimientos,
 	setRequerimientos,
-	rating, // Añadir esta línea
-	setRating, // Añadir esta línea
 	categoryid,
 	setCategoryid,
 	modalidadesid,
@@ -96,13 +91,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	dificultadid,
 	setDificultadid,
 	coverImageKey,
-	parametros = [], // Asegúrate de que no sea undefined
-	setParametrosAction,
-	isOpen,
-	onCloseAction,
+
+
+	uploading,
+	rating,
+
 }) => {
 	const { user } = useUser();
 	const [file, setFile] = useState<File | null>(null);
+	const [addParametros,] = useState(false);
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [fileSize, setFileSize] = useState<number | null>(null);
 	const [progress, setProgress] = useState(0);
@@ -114,7 +111,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		categoryid: false,
 		category: false,
 		modalidadesid: false,
-		rating: false, // Añadir esta línea
 		dificultadid: false,
 		file: false,
 		dificultad: false,
@@ -127,8 +123,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [currentCoverImageKey] = useState(coverImageKey);
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
-	const [coverImage, setCoverImage] = useState<string | null>(null);
-	const [addParametros, setAddParametros] = useState(false);
 
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
@@ -143,7 +137,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setFileSize(null);
 			setErrors((prev) => ({ ...prev, file: true }));
 		}
-		console.log('coverImageKey', coverImage);
 	};
 
 	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -173,64 +166,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	};
 
-	const handleAddParametro = () => {
-		if (parametros.length < 10) {
-			setParametrosAction([
-				...parametros,
-				{
-					id: parametros.length + 1,
-					name: '',
-					description: '',
-					porcentaje: 0,
-				},
-			]);
-		}
-	};
-
-	const handleParametroChange = (
-		index: number,
-		field: 'name' | 'description' | 'porcentaje',
-		value: string | number
-	) => {
-		const updatedParametros = [...parametros];
-		updatedParametros[index] = {
-			...updatedParametros[index],
-			[field]: value,
-		};
-
-		// Validar que la suma de los porcentajes no supere el 100%
-		const sumaPorcentajes = updatedParametros.reduce(
-			(acc, parametro) => acc + parametro.porcentaje,
-			0
-		);
-		if (sumaPorcentajes > 100) {
-			toast('Error', {
-				description: 'La suma de los porcentajes no puede superar el 100%',
-			});
-			return;
-		}
-
-		setParametrosAction(
-			updatedParametros.map((parametro, index) => ({
-				...parametro,
-				id: index + 1,
-			}))
-		);
-	};
-
-	const handleRemoveParametro = (index: number) => {
-		const updatedParametros = parametros.filter((_, i) => i !== index);
-		// Reasignar los valores de entrega
-		const reassignedParametros = updatedParametros.map((parametro) => ({
-			id: parametro.id,
-			name: parametro.name,
-			description: parametro.description,
-			porcentaje: parametro.porcentaje,
-		}));
-		setParametrosAction(reassignedParametros);
-	};
-
-	const handleSubmit = async () => {
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
 		const controller = new AbortController();
 		setUploadController(controller);
 		const newErrors = {
@@ -241,7 +178,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			modalidadesid: !editingCourseId && !modalidadesid,
 			dificultadid: !editingCourseId && !dificultadid,
 			dificultad: false,
-			rating: !editingCourseId && !rating, // Añadir esta línea
 			file: !editingCourseId && !file && !currentCoverImageKey,
 			modalidad: false,
 			requerimientos: !editingCourseId && !requerimientos,
@@ -250,84 +186,24 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		if (editingCourseId) {
 			newErrors.title = modifiedFields.has('title') && !title;
 			newErrors.description = modifiedFields.has('description') && !description;
-			newErrors.dificultadid = modifiedFields.has('dificultadid')
-				? !dificultadid
-				: !!newErrors.dificultadid;
+			newErrors.dificultadid =
+				modifiedFields.has('dificultadid') && !dificultadid;
 			newErrors.file = modifiedFields.has('file') && !file;
 			newErrors.modalidadesid =
 				modifiedFields.has('modalidadesid') && !modalidadesid;
 			newErrors.requerimientos =
 				modifiedFields.has('requerimientos') && !requerimientos;
-			newErrors.rating = modifiedFields.has('rating') && !rating; // Añadir esta línea
-		}
-
-		// Validar que la suma de los porcentajes sea igual a 100
-		const sumaPorcentajes = parametros.reduce(
-			(acc, parametro) => acc + parametro.porcentaje,
-			0
-		);
-		if (addParametros && sumaPorcentajes !== 100) {
-			toast('Error', {
-				description: 'La suma de los porcentajes debe ser igual a 100%',
-			});
-			return;
 		}
 
 		setErrors(newErrors);
 
 		if (Object.values(newErrors).some((error) => error)) {
-			console.log('Validation errors:', newErrors); // Registro de depuración
 			return;
 		}
 
 		setIsEditing(true);
 		setIsUploading(true);
 		try {
-			let coverImageKey = currentCoverImageKey ?? '';
-			let uploadedFileName = fileName ?? '';
-
-			if (file) {
-				const uploadResponse = await fetch('/api/upload', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						contentType: file.type,
-						fileSize: file.size,
-						fileName: file.name, // Asegúrate de pasar el fileName correcto
-					}),
-				});
-
-				if (!uploadResponse.ok) {
-					throw new Error(
-						`Error: al iniciar la carga: ${uploadResponse.statusText}`
-					);
-				}
-
-				const uploadData = (await uploadResponse.json()) as {
-					url: string;
-					fields: Record<string, string>;
-					key: string;
-					fileName: string;
-				};
-
-				const { url, fields, key, fileName: responseFileName } = uploadData;
-				coverImageKey = key;
-				uploadedFileName = responseFileName;
-
-				const formData = new FormData();
-				Object.entries(fields).forEach(([key, value]) => {
-					if (typeof value === 'string') {
-						formData.append(key, value);
-					}
-				});
-				formData.append('file', file);
-
-				await fetch(url, {
-					method: 'POST',
-					body: formData,
-				});
-			}
-
 			await onSubmitAction(
 				editingCourseId ? editingCourseId.toString() : '',
 				title,
@@ -336,18 +212,26 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				categoryid,
 				modalidadesid,
 				dificultadid,
-				rating, // Añadir esta línea
+				rating,
 				requerimientos,
 				addParametros,
 				coverImageKey,
-				uploadedFileName // Pasar el fileName obtenido
+				file?.name ?? ''
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
-				return;
+				return; // Salir de la función si se cancela la carga
 			}
-
 			setIsUploading(false);
+			console.log('Datos enviados:', {
+				title,
+				description,
+				file,
+				categoryid,
+				modalidadesid,
+				dificultadid,
+				requerimientos,
+			});
 		} catch (error) {
 			if ((error as Error).name === 'AbortError') {
 				console.log('Upload cancelled');
@@ -387,10 +271,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			case 'modalidadesid':
 				setModalidadesid(value as number);
 				break;
-			case 'rating':
-				setRating(value as number);
-				break;
-			case 'dificultadid':
+			case 'dificultadesid':
 				setDificultadid(value as number);
 				break;
 			case 'file':
@@ -411,6 +292,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					return prev + 1;
 				});
 			}, 50); // Ajusta el intervalo según sea necesario
+
 			return () => clearInterval(interval);
 		}
 	}, [uploading]);
@@ -448,40 +330,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [isUploading]);
 
-	useEffect(() => {
-		if (editingCourseId) {
-			setTitle(title);
-			setDescription(description);
-			setRequerimientos(requerimientos);
-			setCategoryid(categoryid);
-			setRating(rating); // Añadir esta línea
-			setModalidadesid(modalidadesid);
-			setDificultadid(dificultadid);
-			setCoverImage(coverImageKey);
-		}
-	}, [editingCourseId]);
-
-	const handleToggleParametro = () => {
-		setAddParametros((prevAddParametro) => !prevAddParametro);
-	};
-
-	useEffect(() => {
-		if (isOpen && !editingCourseId) {
-			setTitle('');
-			setDescription('');
-			setRequerimientos('');
-			setCategoryid(0);
-			setModalidadesid(0);
-			setDificultadid(0);
-			setCoverImage('');
-			setRating(0);
-			setParametrosAction([]);
-		}
-	}, [isOpen, editingCourseId]);
-
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
-			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
+			<DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
 				<DialogHeader className="mt-4">
 					<DialogTitle className="text-4xl">
 						{editingCourseId ? 'Editar Curso' : 'Crear Curso'}
@@ -501,7 +352,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						placeholder="Título"
 						value={title}
 						onChange={(e) => handleFieldChange('title', e.target.value)}
-						className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
+						className={`text-se mb-4 w-full rounded border p-2 outline-hidden ${errors.title ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.title && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -516,7 +367,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						placeholder="Descripción"
 						value={description}
 						onChange={(e) => handleFieldChange('description', e.target.value)}
-						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-hidden ${errors.description ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.description && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -533,7 +384,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						onChange={(e) =>
 							handleFieldChange('requerimientos', e.target.value)
 						}
-						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-hidden ${errors.requerimientos ? 'border-red-500' : 'border-primary'}`}
 					/>
 					{errors.requerimientos && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -594,24 +445,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							)}
 						</div>
 					</div>
-					<div>
-						<label
-							htmlFor="rating"
-							className="text-lg font-medium text-primary"
-						>
-							Rating
-						</label>
-						<Input
-							type="number"
-							min="0"
-							max="5"
-							step="0.1"
-							placeholder="0-5"
-							className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
-							value={rating}
-							onChange={(e) => setRating(Number(e.target.value))}
-						/>
-					</div>
 					<label
 						htmlFor="instructor"
 						className="text-lg font-medium text-primary"
@@ -662,7 +495,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 									/>
 									<label
 										htmlFor="file-upload"
-										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
+										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
 									>
 										Seleccionar Archivo
 									</label>
@@ -695,117 +528,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 									</div>
 								</div>
 							)}
-							{errors.file && (
-								<p className="text-sm text-red-500">
-									Este campo es obligatorio.
-								</p>
-							)}
 						</div>
 					</div>
-					<div className="mt-6 flex flex-col text-white">
-						<p>
-							¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
-							parametros
-						</p>
-						<div className="flex space-x-2">
-							<label
-								htmlFor="toggle"
-								className="relative inline-block h-8 w-16"
-							>
-								<input
-									type="checkbox"
-									id="toggle"
-									checked={addParametros}
-									onChange={handleToggleParametro}
-									className="absolute size-0"
-								/>
-								<span
-									className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
-								>
-									<span
-										className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
-									 />
-								</span>
-							</label>
-							<span className="mt-1 text-sm text-gray-400">
-								{addParametros ? 'Si' : 'No'}
-							</span>
-						</div>
-					</div>
-					{addParametros && (
-						<div className="my-4 flex flex-col">
-							<label
-								htmlFor="totalParametros"
-								className="text-lg font-medium text-primary"
-							>
-								Parametros de evaluación
-							</label>
-							<Button
-								onClick={handleAddParametro}
-								disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
-								className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
-							>
-								{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
-								parametro
-								<Plus />
-							</Button>
-							{parametros.map((parametro, index) => (
-								<div key={index} className="mt-4 rounded-lg border p-4">
-									<div className="flex items-center justify-between">
-										<h3 className="text-lg font-medium text-primary">
-											Parámetro {index + 1}
-										</h3>
-										<Button
-											variant="destructive"
-											onClick={() => handleRemoveParametro(index)}
-										>
-											Eliminar
-										</Button>
-									</div>
-									<label className="mt-2 text-lg font-medium text-primary">
-										Nombre
-									</label>
-									<input
-										type="text"
-										value={parametro.name}
-										onChange={(e) =>
-											handleParametroChange(index, 'name', e.target.value)
-										}
-										className="mt-1 w-full rounded border p-2 text-white outline-none"
-									/>
-									<label className="mt-2 text-lg font-medium text-primary">
-										Descripción
-									</label>
-									<textarea
-										value={parametro.description}
-										onChange={(e) =>
-											handleParametroChange(
-												index,
-												'description',
-												e.target.value
-											)
-										}
-										className="mt-1 w-full rounded border p-2 text-white outline-none"
-									/>
-									<label className="mt-2 text-lg font-medium text-primary">
-										Porcentaje %
-									</label>
-									<input
-										type="number"
-										value={parametro.porcentaje}
-										onChange={(e) =>
-											handleParametroChange(
-												index,
-												'porcentaje',
-												Math.max(1, Math.min(100, parseFloat(e.target.value)))
-											)
-										}
-										className="mt-1 w-full rounded border p-2 text-white outline-none"
-									/>
-								</div>
-							))}
-						</div>
-					)}
 					{(uploading || isUploading) && (
 						<div className="mt-4">
 							<Progress
@@ -818,6 +542,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						</div>
 					)}
 				</div>
+				{errors.file && (
+					<p className="text-sm text-red-500">Este campo es obligatorio.</p>
+				)}
 				<DialogFooter className="mt-4 grid grid-cols-2 gap-4">
 					<Button
 						onClick={handleCancel}
@@ -825,11 +552,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					>
 						Cancelar
 					</Button>
-					<Button
-						onClick={handleSubmit}
-						className="bg-green-400 text-white hover:bg-green-400/70"
-						disabled={uploading}
-					>
+					<Button onClick={handleSubmit} variant="save" disabled={uploading}>
 						{uploading
 							? 'Subiendo...'
 							: editingCourseId

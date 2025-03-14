@@ -158,76 +158,14 @@
 
 /* Animation Keyframes */
 @keyframes zoomIn {
-	from {
-		transform: scale(0.9);
-		opacity: 0;
-	}
-	to {
-		transform: scale(1);
-		opacity: 1;
-	}
-}
-
-.animate-gradient {
-	animation: borderRotate 4s linear infinite;
-	background-size: 300% 300%;
-}
-
-@keyframes borderRotate {
-	0%,
-	100% {
-		background-position: 0% 50%;
-	}
-	50% {
-		background-position: 100% 50%;
-	}
-}
-
-.animate-bounce-right {
-	animation: bounce-left-right 1s infinite;
-}
-
-@keyframes bounce-left-right {
-	0%,
-	100% {
-		transform: translateX(0);
-	}
-	50% {
-		transform: translateX(7px);
-	}
-}
-
-.animate-bounce-up-down {
-	animation: bounce-up-down 1s infinite;
-}
-
-@keyframes bounce-up-down {
-	0%,
-	100% {
-		transform: translateY(0);
-	}
-	50% {
-		transform: translateY(-10px);
-	}
-}
-
-@utility animate-pulse-text {
-	animation: pulse 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse {
-	0% {
-		transform: scale(1);
-		opacity: 1;
-	}
-	50% {
-		transform: scale(1.1);
-		opacity: 0.8;
-	}
-	100% {
-		transform: scale(1);
-		opacity: 1;
-	}
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes borderRotate {

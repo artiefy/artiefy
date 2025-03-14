@@ -1,4 +1,4 @@
-import { eq, inArray, and } from 'drizzle-orm';
+import { eq, inArray, and, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
@@ -18,6 +18,7 @@ export interface Lesson {
 	duration: number;
 	coverImageKey?: string | null;
 	coverVideoKey?: string | null;
+	order: number;
 	courseId: number;
 	createdAt: string | number | Date;
 	updatedAt: string | number | Date;
@@ -34,55 +35,52 @@ export interface Lesson {
 }
 
 // Crear una nueva lección
-export async function createLesson({
-	title,
-	description,
-	duration,
-	coverImageKey,
-	coverVideoKey,
-	courseId,
-	resourceKey,
-	resourceNames,
-}: {
-	title: string;
-	description: string;
+export async function createLesson(data: {
 	duration: number;
-	coverImageKey?: string;
-	coverVideoKey?: string;
+	title: string;
+	coverImageKey: string;
+	description: string;
 	courseId: number;
-	resourceKey?: string;
-	resourceNames?: string;
+	isLocked: boolean;
+	isCompleted: boolean;
+	userProgress: number;
+	porcentajecompletado: number;
+	isNew: boolean;
+	resourceNames: string[];
+	lastUpdated?: Date;
 }) {
 	try {
 		const newLesson = await db.insert(lessons).values({
-			title,
-			description,
-			duration,
-			coverImageKey,
-			coverVideoKey,
-			courseId,
-			resourceKey,
-			resourceNames,
+			duration: data.duration,
+			title: data.title,
+			coverImageKey: data.coverImageKey,
+			description: data.description,
+			courseId: data.courseId,
+			isLocked: data.isLocked,
+			isCompleted: data.isCompleted,
+			userProgress: data.userProgress,
+			porcentajecompletado: data.porcentajecompletado,
+			isNew: data.isNew,
+			resourceNames: data.resourceNames.join(','),
+			lastUpdated: data.lastUpdated,
 		});
-
-		console.log('Lección creada:', newLesson);
 		return newLesson;
 	} catch (error) {
 		console.error('Error al crear la lección:', error);
-		throw error;
+		throw new Error('Error al crear la lección');
 	}
 }
 
 // Contar el número de lecciones por curso y dificultad
-// export const countLessonsByCourseAndDifficulty = async (courseId: number) => {
-// 	const count = await db
-// 		.select({ count: sql`COUNT(${lessons.id})` })
-// 		.from(lessons)
-// 		.where(eq(lessons.courseId, courseId))
-// 		.then((rows) => Number(rows[0]?.count) ?? 0);
+export const countLessonsByCourseAndDifficulty = async (courseId: number) => {
+	const count = await db
+		.select({ count: sql`COUNT(${lessons.id})` })
+		.from(lessons)
+		.where(eq(lessons.courseId, courseId))
+		.then((rows) => Number(rows[0]?.count) || 0);
 
-// 	return count;
-// };
+	return count;
+};
 
 // Obtener la dificultad del curso
 export const getCourseDifficulty = async (courseId: number) => {

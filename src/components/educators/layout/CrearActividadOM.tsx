@@ -36,7 +36,7 @@ function PreguntasOM() {
 		alert(
 			`¡Quiz terminado!\n\nPuntaje final: ${score} de ${questions.length * config.points}`
 		);
-	}, [score, questions.length, config.points]);
+	}, [setIsPlaying, score, questions.length, config.points]);
 
 	useEffect(() => {
 		let timer: number;
@@ -97,7 +97,7 @@ function PreguntasOM() {
 	};
 
 	return (
-		<div className="min-h-screen rounded-lg bg-gradient-to-br from-primary to-indigo-500 p-8">
+		<div className="from-primary min-h-screen rounded-lg bg-linear-to-br to-indigo-500 p-8">
 			<div className="mx-auto mt-16 max-w-4xl">
 				<div className="mb-8 rounded-2xl bg-white p-8 shadow-xl">
 					<h1 className="mb-6 text-center text-3xl font-bold text-indigo-800">

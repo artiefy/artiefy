@@ -17,6 +17,7 @@ import {
 
 const SearchForm: React.FC = () => {
 	const searchParams = useSearchParams();
+<<<<<<< HEAD
 	const pathname = usePathname();
 	const router = useRouter();
 	const [isSearching, setIsSearching] = useState(false);
@@ -57,6 +58,36 @@ const SearchForm: React.FC = () => {
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value)}
 					onKeyDown={handleKeyDown}
+=======
+	const { start, stop } = useProgress();
+	const [isSearching, setIsSearching] = useState(false);
+	const defaultQuery = searchParams.get('query') ?? '';
+
+	React.useEffect(() => {
+		setIsSearching(false);
+		stop();
+		restoreScrollPosition();
+	}, [searchParams, stop]);
+
+	const handleSubmit = () => {
+		saveScrollPosition();
+		start();
+		setIsSearching(true);
+	};
+
+	return (
+		<Form
+			action=""
+			className="flex w-full justify-center p-4 sm:p-8 lg:justify-end lg:px-20"
+			onSubmit={handleSubmit}
+		>
+			<div className="relative w-full max-w-lg">
+				<Input
+					type="search"
+					name="query"
+					placeholder="Buscar cursos..."
+					defaultValue={defaultQuery}
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 					className="w-full bg-white pr-10 text-background"
 					aria-label="Buscar cursos"
 				/>
@@ -75,14 +106,22 @@ const SearchForm: React.FC = () => {
 				</div>
 			</div>
 			<Button
+<<<<<<< HEAD
 				onClick={handleSearch}
+=======
+				type="submit"
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 				disabled={isSearching}
 				className="ml-2 border border-primary bg-primary text-background hover:bg-background hover:text-primary"
 				aria-label="Realizar búsqueda"
 			>
 				Buscar
 			</Button>
+<<<<<<< HEAD
 		</div>
+=======
+		</Form>
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 	);
 };
 

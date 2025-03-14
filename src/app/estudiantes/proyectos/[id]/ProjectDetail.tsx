@@ -1,9 +1,13 @@
 import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
+<<<<<<< HEAD
 
 import { getProjectById } from '~/server/actions/estudiantes/project/getProjectById';
 
+=======
+import { getProjectById } from '~/server/actions/estudiantes/project/getProjectById';
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 import type { Project } from '~/types';
 
 const ProjectDetail = () => {

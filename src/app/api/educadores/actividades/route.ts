@@ -53,12 +53,6 @@ export async function POST(request: NextRequest) {
 			lessonsId,
 		});
 
-		console.log('Datos enviados al servidor:', {
-			name,
-			description,
-			lessonsId,
-			typeid,
-		});
 
 		return NextResponse.json({
 			id: newActivity.id,
@@ -93,7 +87,7 @@ export async function GET(request: NextRequest) {
 		if (!activities) {
 			return respondWithError('Actividad no encontrada', 404);
 		}
-		
+
 		console.log('Actividades:', activities);
 		return NextResponse.json(activities);
 	} catch (error: unknown) {

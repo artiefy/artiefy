@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import { useEffect, useState } from 'react';
 
@@ -145,15 +145,15 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	// Renderizamos las lecciones si todo es correcto
 	return (
 		<>
-			<h2 className="mb-4 mt-10 text-2xl font-bold">Lista de clases:</h2>
+			<h2 className="mt-10 mb-4 text-2xl font-bold">Lista de clases:</h2>
 			<div className="flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
 					{lessons.map((lesson) => (
 						<div key={lesson.id} className="group relative">
-							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 							<Card
 								key={lesson.id}
-								className="relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]"
+								className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]"
 								style={{
 									backgroundColor: selectedColor,
 									color: getContrastYIQ(selectedColor),
@@ -187,7 +187,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
 											<Badge
 												variant="outline"
-												className="ml-1 border-primary bg-background text-primary hover:bg-black/70"
+												className="border-primary bg-background text-primary ml-1 hover:bg-black/70"
 											>
 												{lesson.course.title}
 											</Badge>
@@ -221,7 +221,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 										>
 											<p>Ver clase</p>
 											<ArrowRightIcon className="animate-bounce-right size-5" />
-											<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+											<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 												<div className="relative h-full w-10 bg-white/30" />
 											</div>
 										</Link>
@@ -233,7 +233,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 				</div>
 				<div className="mx-auto my-4">
 					<Button
-						className={`mx-auto mt-6 cursor-pointer justify-center border-transparent bg-primary font-semibold ${
+						className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${
 							selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 						}`}
 						style={{ backgroundColor: selectedColor }}

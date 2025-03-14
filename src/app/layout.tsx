@@ -33,31 +33,31 @@ const montserrat = Montserrat({
 });
 
 export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+	width: 'device-width',
+	initialScale: 1,
+	maximumScale: 1,
+	userScalable: false,
 };
 
 export const metadata: Metadata = siteMetadata;
 
 const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  url: 'https://artiefy.vercel.app',
-  name: 'Artiefy',
-  description:
-    'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
-  logo: {
-    '@type': 'ImageObject',
-    url: 'https://artiefy.vercel.app/artiefy-icon.png',
-  },
+	'@context': 'https://schema.org',
+	'@type': 'WebSite',
+	url: 'https://artiefy.com/',
+	name: 'Artiefy',
+	description:
+		'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
+	logo: {
+		'@type': 'ImageObject',
+		url: 'https://artiefy.com/artiefy-icon.png',
+	},
 };
 
 export default function RootLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
 	return (
 		<ClerkProvider localization={esMX} dynamic>

@@ -8,15 +8,15 @@ import { useUser } from '@clerk/nextjs';
 import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { toast } from '~/hooks/use-toast';
 
@@ -24,101 +24,101 @@ import { toast } from '~/hooks/use-toast';
 import { Button } from '../educators/ui/button';
 
 interface ForumsModels {
-  id: number;
-  courseId: {
-    id: number;
-    title: string;
-    descripcion: string;
-    instructor: string;
-    coverImageKey: string;
-  };
-  title: string;
-  description: string;
-  userId: {
-    id: string;
-    name: string;
-  };
-  // change: {
-  //   image: string;
-  // };
+	id: number;
+	courseId: {
+		id: number;
+		title: string;
+		descripcion: string;
+		instructor: string;
+		coverImageKey: string;
+	};
+	title: string;
+	description: string;
+	userId: {
+		id: string;
+		name: string;
+	};
+	// change: {
+	//   image: string;
+	// };
 }
 
 export const Zone = () => {
-  const { user } = useUser();
-  const [forums, setForums] = useState<ForumsModels[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // const [change, setChange] = useState<{ image: string }>({ image: '' });
-  // const [localImageUrl, setLocalImageUrl] = useState(change.image);
-  const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
+	const { user } = useUser();
+	const [forums, setForums] = useState<ForumsModels[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	// const [change, setChange] = useState<{ image: string }>({ image: '' });
+	// const [localImageUrl, setLocalImageUrl] = useState(change.image);
+	const [loadedImages, setLoadedImages] = useState<Record<number, boolean>>({});
 
-  const handleImageLoad = (courseId: number) => {
-    setLoadedImages((prev) => ({ ...prev, [courseId]: true }));
-  };
+	const handleImageLoad = (courseId: number) => {
+		setLoadedImages((prev) => ({ ...prev, [courseId]: true }));
+	};
 
-  // useEffect(() => {
-  //   setLocalImageUrl(change.image);
-  // }, [change]);
+	// useEffect(() => {
+	//   setLocalImageUrl(change.image);
+	// }, [change]);
 
-  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const files = e.target.files;
-  //   if (files?.[0]) {
-  //     const file = files[0];
-  //     const imageUrl = URL.createObjectURL(file);
-  //     setLocalImageUrl(imageUrl);
-  //     setChange({ image: imageUrl });
-  //   }
-  // };
+	// const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	//   const files = e.target.files;
+	//   if (files?.[0]) {
+	//     const file = files[0];
+	//     const imageUrl = URL.createObjectURL(file);
+	//     setLocalImageUrl(imageUrl);
+	//     setChange({ image: imageUrl });
+	//   }
+	// };
 
-  useEffect(() => {
-    const fetchLessons = async () => {
-      if (!user) return null; // Si no hay usuario logueado, no se hace nada
-      try {
-        const response = await fetch(`/api/forums?userId=${user.id}`);
-        if (!response.ok) {
-          const errorData = (await response.json()) as { error?: string };
-          throw new Error(errorData.error ?? 'Error al obtener las lecciones');
-        }
-        const data = (await response.json()) as ForumsModels[];
-        setForums(data); // Setea las lecciones obtenidas
-      } catch (error) {
-        setError('Error al obtener los foros'); // Error general
-        console.error('Error al obtener los foros:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+	useEffect(() => {
+		const fetchLessons = async () => {
+			if (!user) return null; // Si no hay usuario logueado, no se hace nada
+			try {
+				const response = await fetch(`/api/forums?userId=${user.id}`);
+				if (!response.ok) {
+					const errorData = (await response.json()) as { error?: string };
+					throw new Error(errorData.error ?? 'Error al obtener las lecciones');
+				}
+				const data = (await response.json()) as ForumsModels[];
+				setForums(data); // Setea las lecciones obtenidas
+			} catch (error) {
+				setError('Error al obtener los foros'); // Error general
+				console.error('Error al obtener los foros:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
 
-    void fetchLessons();
-  }, [user]); // Este efecto se ejecuta cada vez que el userId cambia
+		void fetchLessons();
+	}, [user]); // Este efecto se ejecuta cada vez que el userId cambia
 
-  if (loading) return <p>Cargando...</p>;
-  if (forums.length === 0) {
-    return (
-      <div className="mt-10 flex h-auto items-center justify-center">
-        <p className="text-2xl text-gray-600">
-          No hay foros disponibles actualmente
-        </p>
-      </div>
-    );
-  } else if (error) return <p>{error}</p>;
+	if (loading) return <p>Cargando...</p>;
+	if (forums.length === 0) {
+		return (
+			<div className="mt-10 flex h-auto items-center justify-center">
+				<p className="text-2xl text-gray-600">
+					No hay foros disponibles actualmente
+				</p>
+			</div>
+		);
+	} else if (error) return <p>{error}</p>;
 
-  const handleDelete = async (id: number) => {
-    try {
-      const response = await fetch(`/api/forums?id=${id}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Error al eliminar el foro');
-      toast({
-        title: 'Foro eliminado',
-        description: 'El foro ha sido eliminado correctamente',
-        variant: 'destructive',
-      });
-      window.location.reload(); // Refrescar la página
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
+	const handleDelete = async (id: number) => {
+		try {
+			const response = await fetch(`/api/forums?id=${id}`, {
+				method: 'DELETE',
+			});
+			if (!response.ok) throw new Error('Error al eliminar el foro');
+			toast({
+				title: 'Foro eliminado',
+				description: 'El foro ha sido eliminado correctamente',
+				variant: 'destructive',
+			});
+			window.location.reload(); // Refrescar la página
+		} catch (error) {
+			console.error('Error:', error);
+		}
+	};
 
   return (
     <ul className="grid grid-cols-1 gap-7 rounded-l shadow-md sm:grid-cols-2 lg:grid-cols-3">
@@ -161,57 +161,57 @@ export const Zone = () => {
               />
               <FaImage className="text-gray-600" />
             </label> */}
-          </div>
-          <div className="grid grid-cols-2 p-5">
-            <div className="flex flex-col justify-center text-center">
-              <p>Del curso:</p>
-              <p className="mt-2 text-white"> {forum.courseId.title}</p>
-            </div>
-            <div className="flex flex-col justify-center text-center">
-              <p>Del docente:</p>
-              <p className="mt-2 text-white"> {forum.courseId.instructor}</p>
-            </div>
-          </div>
-          <div className="h-auto bg-white p-6">
-            <p className="mb-4 text-gray-600">{forum.description}</p>
-            <div className="flex justify-between">
-              <Link
-                className="rounded-md bg-primary px-4 py-2 text-white"
-                href={`/dashboard/educadores/foro/${forum.id}`}
-              >
-                Ingrear al foro
-              </Link>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
-                    Eliminar
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta acción no se puede deshacer. Se eliminará
-                      permanentemente el curso
-                      <span className="font-bold"> {forum.title}</span> y todos
-                      los datos asociados a este.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDelete(forum.id)}
-                      className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
-                    >
-                      Eliminar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
+					</div>
+					<div className="grid grid-cols-2 p-5">
+						<div className="flex flex-col justify-center text-center">
+							<p>Del curso:</p>
+							<p className="mt-2 text-white"> {forum.courseId.title}</p>
+						</div>
+						<div className="flex flex-col justify-center text-center">
+							<p>Del docente:</p>
+							<p className="mt-2 text-white"> {forum.courseId.instructor}</p>
+						</div>
+					</div>
+					<div className="h-auto bg-white p-6">
+						<p className="mb-4 text-gray-600">{forum.description}</p>
+						<div className="flex justify-between">
+							<Link
+								className="bg-primary rounded-md px-4 py-2 text-white"
+								href={`/dashboard/educadores/foro/${forum.id}`}
+							>
+								Ingrear al foro
+							</Link>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
+										Eliminar
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+										<AlertDialogDescription>
+											Esta acción no se puede deshacer. Se eliminará
+											permanentemente el curso
+											<span className="font-bold"> {forum.title}</span> y todos
+											los datos asociados a este.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>Cancelar</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={() => handleDelete(forum.id)}
+											className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+										>
+											Eliminar
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
+						</div>
+					</div>
+				</li>
+			))}
+		</ul>
+	);
 };

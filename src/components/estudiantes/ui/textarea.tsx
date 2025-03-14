@@ -15,4 +15,8 @@ function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
 	);
 }
 
+<<<<<<< HEAD
 export { Textarea };
+=======
+export { Textarea }
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a

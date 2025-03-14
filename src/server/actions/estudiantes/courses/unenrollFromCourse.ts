@@ -1,8 +1,12 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
+<<<<<<< HEAD
 import { eq, and, or, gt } from 'drizzle-orm';
 
+=======
+import { eq, and } from 'drizzle-orm';
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 import { db } from '~/server/db';
 import { enrollments, userLessonsProgress } from '~/server/db/schema';
 

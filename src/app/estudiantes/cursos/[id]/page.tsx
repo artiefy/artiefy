@@ -1,14 +1,21 @@
 import { Suspense } from 'react';
+<<<<<<< HEAD
 
 import { notFound } from 'next/navigation';
 
+=======
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 import { auth } from '@clerk/nextjs/server';
 
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+<<<<<<< HEAD
 
+=======
+import type { Course } from '~/types';
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 import CourseDetails from './CourseDetails';
 
 import type { Metadata, ResolvingMetadata } from 'next';

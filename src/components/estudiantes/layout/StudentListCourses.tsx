@@ -52,7 +52,7 @@ export default async function CourseListStudent({
 
 	return (
 		<>
-			<h2 className="my-6 ml-8 text-3xl font-bold text-primary lg:ml-20">
+			<h2 className="text-primary my-6 ml-8 text-3xl font-bold lg:ml-20">
 				Cursos Artie
 			</h2>
 			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
@@ -175,6 +175,7 @@ export default async function CourseListStudent({
 				route="/estudiantes"
 				category={category}
 				searchTerm={searchTerm}
+				userId={userId} // 👈 Asegúrate de pasar userId
 			/>
 		</>
 	);

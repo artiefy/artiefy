@@ -334,7 +334,9 @@ export default function Page() {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary" />
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+					<span className="sr-only" />
+				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
 		);

@@ -84,7 +84,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 
 			void fetchLessons();
 		}
-	}, [lessonId, lessonIdString]); // Este efecto se ejecuta cada vez que el courseId cambia
+	}, [lessonId, lessonIdString]); // Este efecto se ejecuta cada vez que el lessonId o lessonIdString cambia
 
 	// Condicionales de renderizado: carga, error, lecciones vacías
 	if (loading) {
@@ -92,7 +92,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 	}
 	if (actividades.length === 0 || actividades === null) {
 		return (
-			<div className="mt-4 flex flex-col items-center justify-center rounded-lg bg-background py-10 text-center">
+			<div className="bg-background mt-4 flex flex-col items-center justify-center rounded-lg py-10 text-center">
 				<h2 className="mb-4 text-2xl font-bold">
 					Lista de actividades creadas
 				</h2>
@@ -109,12 +109,12 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 	// Renderizamos las lecciones si todo es correcto
 	return (
 		<>
-			<h2 className="mb-4 mt-10 text-2xl font-bold">Lista de actividades:</h2>
+			<h2 className="mt-10 mb-4 text-2xl font-bold">Lista de actividades:</h2>
 			<div className="flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{actividades.map((actividad, index) => (
 						<div key={index} className="group relative h-auto w-full">
-							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 							<Card
 								className="relative z-20 flex flex-col border-transparent bg-black hover:scale-100"
 								style={{
@@ -126,7 +126,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 									<Image
 										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`}
 										alt={actividad.name || 'Imagen del curso'}
-										className={`relative mx-auto h-auto w-40 rounded-lg object-cover transition-opacity duration-500`}
+										className="relative mx-auto h-auto w-40 rounded-lg object-cover transition-opacity duration-500"
 										height={150}
 										width={150}
 										quality={75}
@@ -157,7 +157,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 									>
 										<p>Ver actividad</p>
 										<ArrowRightIcon className="animate-bounce-right size-5" />
-										<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+										<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 											<div className="relative h-full w-10 bg-white/30" />
 										</div>
 									</Link>

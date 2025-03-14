@@ -8,7 +8,10 @@ import { useAuth } from '@clerk/nextjs';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimesCircle, FaTimes } from 'react-icons/fa';
 import { toast } from 'sonner';
+<<<<<<< HEAD
 
+=======
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
@@ -62,7 +65,7 @@ const PlansPage: React.FC = () => {
 	const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="bg-background min-h-screen">
 			<Header />
 			<div className="mb-12 px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-7xl">
@@ -70,7 +73,7 @@ const PlansPage: React.FC = () => {
 						<h2 className="text-3xl font-extrabold text-white sm:text-4xl">
 							Planes Artiefy
 						</h2>
-						<p className="mt-4 text-xl text-primary">
+						<p className="text-primary mt-4 text-xl">
 							Elige el plan perfecto para tu viaje de aprendizaje
 						</p>
 					</div>

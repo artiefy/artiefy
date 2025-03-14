@@ -20,6 +20,7 @@ const getLessonById = unstable_cache(
 				where: eq(lessons.id, lessonId),
 				with: {
 					activities: true,
+					course: true,
 				},
 			});
 			if (!lesson) return null;
@@ -42,7 +43,6 @@ const getLessonById = unstable_cache(
 				isLocked: lessonProgress?.isLocked ?? true,
 				userProgress: lessonProgress?.progress ?? 0,
 				isCompleted: lessonProgress?.isCompleted ?? false,
-				isNew: lessonProgress?.isNew ?? true, // Agregar la propiedad isNew
 				resourceNames: lesson.resourceNames
 					? lesson.resourceNames.split(',')
 					: [], // Convertir texto a array
@@ -57,11 +57,15 @@ const getLessonById = unstable_cache(
 							userProgress: activityProgress?.progress ?? 0,
 						};
 					}) ?? [],
+				isNew: lesson.isNew ?? false, // Asegurar que isNew esté presente
 			};
 
 			return transformedLesson;
 		} catch (error) {
-			console.error('Error al obtener la lección por ID:', error);
+			console.error(
+				'Error al obtener la lección por ID:',
+				error instanceof Error ? error.message : 'Error desconocido'
+			);
 			throw new Error('Error al obtener la lección por ID');
 		}
 	},

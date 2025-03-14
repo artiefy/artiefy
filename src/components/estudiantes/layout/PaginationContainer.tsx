@@ -1,4 +1,4 @@
-'use client';
+'use client'; // Esto asegura que el código se ejecute en el cliente
 
 import { useEffect } from 'react';
 

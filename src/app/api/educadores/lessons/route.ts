@@ -86,7 +86,16 @@ export async function POST(req: NextRequest) {
 			courseId,
 		} = body;
 
-		await createLesson(body);
+		const lessonData = {
+			...body,
+			isLocked: false,
+			isCompleted: false,
+			userProgress: 0,
+			porcentajecompletado: 0,
+			isNew: true,
+			resourceNames: body.resourceNames.split(','),
+		};
+		await createLesson(lessonData);
 
 		console.log('Datos recibidos en el backend:', {
 			title,

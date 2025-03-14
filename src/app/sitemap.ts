@@ -1,5 +1,8 @@
 import { type MetadataRoute } from 'next';
+<<<<<<< HEAD
 
+=======
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

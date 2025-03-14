@@ -1,7 +1,10 @@
 import { ImageResponse } from 'next/og';
+<<<<<<< HEAD
 
 import { auth } from '@clerk/nextjs/server';
 
+=======
+>>>>>>> 106ed634249738e068cde72c88c34ba752c1728a
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 export const alt = 'Course Image';
