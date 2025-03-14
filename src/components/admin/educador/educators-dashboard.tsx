@@ -59,9 +59,7 @@ import { CourseDetails } from './course-details';
 import { EducatorForm } from './educator-form';
 import { EducatorHistory } from './educator-history';
 
-import type { HistoryEntry, Course } from '~/types/types';
-
-// Añadir al principio del archivo, después de las importaciones:
+import type { HistoryEntry, Course, } from '~/types/types';
 
 const SPECIALIZATIONS = [
 	'Matemáticas',
@@ -75,8 +73,6 @@ const SPECIALIZATIONS = [
 	'Tecnología',
 	'Filosofía',
 ];
-
-// Modificar la interfaz Educator para reflejar que la especialización ahora es una de las predefinidas:
 
 interface Educator {
 	id: string;
@@ -108,21 +104,21 @@ const mockEducators: Educator[] = [
 				id: 'COURSE-001',
 				title: 'Matemáticas Avanzadas',
 				imageUrl: '/placeholder.svg?height=200&width=400',
-				students: ['STU-001', 'STU-002'],
-				name: 'Curso de Matemáticas', // Agregar propiedad name
-				email: 'curso@ejemplo.com', // Agregar propiedad email
-				status: 'active', // Agregar propiedad status
-				lessons: [], // Agregar propiedad lessons
+				students: [], // Actualizar a tipo Student[]
+				name: 'Curso de Matemáticas',
+				email: 'curso@ejemplo.com',
+				status: 'active',
+				lessons: [],
 			},
 			{
 				id: 'COURSE-002',
 				title: 'Cálculo I',
 				imageUrl: '/placeholder.svg?height=200&width=400',
-				students: ['STU-003'],
-				name: 'Curso de Matemáticas', // Agregar propiedad name
-				email: 'curso@ejemplo.com', // Agregar propiedad email
-				status: 'active', // Agregar propiedad status
-				lessons: [], // Agregar propiedad lessons
+				students: [], // Actualizar a tipo Student[]
+				name: 'Curso de Matemáticas',
+				email: 'curso@ejemplo.com',
+				status: 'active',
+				lessons: [],
 			},
 		],
 		status: 'active',

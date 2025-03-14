@@ -8,9 +8,10 @@ export interface Course {
 	endDate?: string;
 	email: string;
 	status: 'active' | 'inactive';
-	students: string[];
 	lessons: Lesson[];
+	students: Student[]; // Aseguramos que students es un array de Student[]
 }
+
 
 export interface Activity {
 	id: string;
@@ -48,6 +49,10 @@ export interface Student {
 	role: 'student';
 	joinDate: string;
 	avatar: string;
+	username: string;
+	password?: string;
+	courses: Course[];
+
 }
 
 export interface User {

@@ -29,7 +29,9 @@ import {
 	CardTitle,
 } from '~/components/admin/ui/card';
 import { Checkbox } from '~/components/admin/ui/checkbox';
-import { DropdownMenuSeparator , DropdownMenuLabel ,
+import {
+	DropdownMenuSeparator,
+	DropdownMenuLabel,
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
@@ -54,9 +56,7 @@ import {
 	TableRow,
 } from '~/components/admin/ui/table';
 
-import type { HistoryEntry , Course } from '~/types/types';
-
-// Añadir al principio del archivo, después de las importaciones:
+import type { HistoryEntry, Educator } from '~/types/types';
 
 const SPECIALIZATIONS = [
 	'Matemáticas',
@@ -71,25 +71,6 @@ const SPECIALIZATIONS = [
 	'Filosofía',
 ];
 
-// Modificar la interfaz Educator para reflejar que la especialización ahora es una de las predefinidas:
-
-
-
-interface Educator {
-	id: string;
-	name: string;
-	email: string;
-	phone: string;
-	specialization: (typeof SPECIALIZATIONS)[number];
-	courses: Course[];
-	status: 'active' | 'inactive';
-	role: 'admin' | 'educador' | 'assistant';
-	joinDate: string;
-	avatar: string;
-	username: string;
-}
-
-// Mock data...
 const mockEducators: Educator[] = [
 	{
 		id: 'EDU-001',
@@ -98,14 +79,31 @@ const mockEducators: Educator[] = [
 		phone: '+34 600000001',
 		specialization: 'Matemáticas',
 		courses: [
-			{ id: 'COURSE-001', name: 'Matemáticas Avanzadas', title: 'Matemáticas Avanzadas', email: 'course1@example.com', status: 'active' },
-			{ id: 'COURSE-002', name: 'Cálculo I', title: 'Cálculo I', email: 'course2@example.com', status: 'inactive' },
+			{
+				id: 'COURSE-001',
+				name: 'Matemáticas Avanzadas',
+				title: 'Matemáticas Avanzadas',
+				email: 'course1@example.com',
+				status: 'active',
+				students: [],
+				lessons: [],
+			},
+			{
+				id: 'COURSE-002',
+				name: 'Cálculo I',
+				title: 'Cálculo I',
+				email: 'course2@example.com',
+				status: 'inactive',
+				students: [],
+				lessons: [],
+			},
 		],
 		status: 'active',
 		role: 'educador',
 		joinDate: '2024-01-15',
 		avatar: '/placeholder.svg?height=40&width=40',
-		username: ''
+		username: '',
+		coursesTaught: 2, // Agregar propiedad coursesTaught
 	},
 	// ... más educadores
 ];
@@ -118,6 +116,9 @@ const mockHistory: HistoryEntry[] = [
 		changes: { status: 'active', role: 'teacher' },
 		timestamp: '2024-01-15T10:00:00Z',
 		performedBy: 'Admin',
+		userId: 'USR-001',
+		content: 'Created educator',
+		createdAt: '2024-01-15T10:00:00Z',
 	},
 	// ... más entradas de historial
 ];
@@ -169,8 +170,7 @@ export default function EducatorsDashboard() {
 				educator.id === educatorId
 					? {
 							...educator,
-							specialization:
-								newSpecialization,
+							specialization: newSpecialization,
 						}
 					: educator
 			)
@@ -257,10 +257,7 @@ export default function EducatorsDashboard() {
 						<Plus className="mr-2 h-4 w-4 text-black" />
 						Nuevo Educador
 					</Button>
-					<Button
-						variant="outline"
-						className="bg-secondary text-foreground"
-					>
+					<Button variant="outline" className="bg-secondary text-foreground">
 						<FileExport className="mr-2 h-4 w-4" />
 						Exportar
 					</Button>

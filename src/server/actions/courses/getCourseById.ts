@@ -40,40 +40,45 @@ const getCourseById = unstable_cache(
 		course.lessons.sort((a, b) => a.title.localeCompare(b.title));
 
 		const transformedCourse: Course = {
-			...course,
-			totalStudents: course.enrollments?.length ?? 0,
-			lessons:
-				course.lessons?.map((lesson) => {
-					const lessonProgress = userLessonsProgressData.find(
-						(progress) => progress.lessonId === lesson.id
-					);
-					return {
-						...lesson,
-						isLocked: lessonProgress?.isLocked ?? true,
-						isCompleted: lessonProgress?.isCompleted ?? false,
-						userProgress: lessonProgress?.progress ?? 0,
-						porcentajecompletado: lessonProgress?.progress ?? 0,
-						isNew: false, // Add default value for isNew
-						resourceNames: lesson.resourceNames
-							? lesson.resourceNames.split(',')
-							: [], // Convertir texto a array
-						activities:
-							lesson.activities?.map(
-								(activity): Activity => ({
-									...activity,
-									isCompleted: false,
-									userProgress: 0,
-									revisada: activity.revisada ?? false, // Convertir null a false
-									porcentaje: activity.porcentaje ?? 0,
-									parametroId: activity.parametroId ?? null,
-									fechaMaximaEntrega: activity.fechaMaximaEntrega ?? null,
-									createdAt: activity.lastUpdated, // Use lastUpdated as createdAt
-									content: { questions: [] }, // Add default content if needed
-								})
-							) ?? [],
-					};
-				}) ?? [],
-		};
+      ...course,
+      totalStudents: course.enrollments?.length ?? 0,
+      lessons: course.lessons?.map((lesson) => {
+        const lessonProgress = userLessonsProgressData.find(
+          (progress) => progress.lessonId === lesson.id
+        );
+        return {
+          ...lesson,
+          isLocked: lessonProgress?.isLocked ?? true,
+          isCompleted: lessonProgress?.isCompleted ?? false,
+          userProgress: lessonProgress?.progress ?? 0,
+          porcentajecompletado: lessonProgress?.progress ?? 0,
+          isNew: false, // Add default value for isNew
+          resourceNames: lesson.resourceNames
+            ? lesson.resourceNames.split(',')
+            : [], // Convertir texto a array
+          activities: lesson.activities?.map(
+            (activity): Activity => ({
+              ...activity,
+              isCompleted: false,
+              userProgress: 0,
+              revisada: activity.revisada ?? false, // Convertir null a false
+              porcentaje: activity.porcentaje ?? 0,
+              parametroId: activity.parametroId ?? null,
+              fechaMaximaEntrega: activity.fechaMaximaEntrega ?? null,
+              createdAt: activity.lastUpdated, // Use lastUpdated as createdAt
+              content: { questions: [] }, // Add default content if needed
+            })
+          ) ?? [],
+        };
+      }) ?? [],
+      imageUrl: null,
+      isLocked: null,
+      resourceNames: [],
+      isFeatured: null,
+      averageRating: null,
+      students: 0,
+      creatorName: ''
+    };
 
 		return transformedCourse;
 	},

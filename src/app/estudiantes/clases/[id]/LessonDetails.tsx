@@ -68,7 +68,6 @@ export default function LessonDetails({
 	const [isActivityCompleted, setIsActivityCompleted] = useState(
 		activity?.isCompleted ?? false
 	);
-	const [isCompletingActivity, setIsCompletingActivity] = useState(false);
 	const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
 	const searchParams = useSearchParams();
 	const { start, stop } = useProgress();
@@ -216,7 +215,7 @@ export default function LessonDetails({
 	const handleActivityCompletion = async () => {
 		if (!activity || !isVideoCompleted) return;
 
-		setIsCompletingActivity(true);
+		// No need to call completeActivity with a boolean value
 
 		try {
 			await completeActivity(activity.id);
@@ -250,7 +249,7 @@ export default function LessonDetails({
 				description: 'No se pudo completar la actividad.',
 			});
 		} finally {
-			setIsCompletingActivity(false);
+			// No need to call completeActivity with a boolean value
 		}
 	};
 
@@ -400,11 +399,11 @@ export default function LessonDetails({
 	return (
 		<>
 			<Header />
-			<div className="bg-background flex min-h-screen flex-col">
+			<div className="flex min-h-screen flex-col bg-background">
 				<div className="flex flex-1 px-4 py-6">
 					{/* Left Sidebar */}
-					<div className="bg-background w-80 p-4 shadow-lg">
-						<h2 className="text-primary mb-4 text-2xl font-bold">Cursos</h2>
+					<div className="w-80 bg-background p-4 shadow-lg">
+						<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
 						<LessonCards
 							lessonsState={lessonsState}
 							selectedLessonId={selectedLessonId}
@@ -440,10 +439,10 @@ export default function LessonDetails({
 							activity={activity}
 							isVideoCompleted={isVideoCompleted}
 							isActivityCompleted={isActivityCompleted}
-							isCompletingActivity={isCompletingActivity}
 							handleActivityCompletion={handleActivityCompletion}
-							userId={userId}
-						/>
+							userId={userId} onLessonUnlocked={function (_lessonId: number): void {
+								throw new Error('Function not implemented.');
+							} }						/>
 						<RecursosLesson resourceNames={lesson.resourceNames} />
 					</div>
 

@@ -51,7 +51,7 @@ const formSchema = z.object({
 	name: z.string().min(2, 'El nombre es requerido'),
 	email: z.string().email('Email inválido'),
 	phone: z.string().min(10, 'Teléfono inválido'),
-	specialization: z.enum(SPECIALIZATIONS),
+	specialization: z.enum([...SPECIALIZATIONS] as [string, ...string[]]),
 	role: roleEnum,
 	status: z.enum(['active', 'inactive']),
 	username: z
@@ -76,18 +76,21 @@ export function EducatorForm({
 	educator,
 	onSubmit,
 }: EducatorFormProps) {
-	const form = useForm<z.infer<typeof formSchema>>({
-		resolver: zodResolver(formSchema),
-		defaultValues: educator ?? {
-			name: '',
-			email: '',
-			phone: '',
-			specialization: '',
-			role: 'teacher',
-			status: 'active',
-			username: '',
-		},
-	});
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+	defaultValues: educator ? {
+		...educator,
+		role: educator.role === 'educador' ? 'teacher' : educator.role ?? 'teacher',
+	} : {
+        name: '',
+        email: '',
+        phone: '',
+        specialization: '',
+        role: 'teacher',
+        status: 'active',
+        username: '',
+    },
+});
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
