@@ -29,7 +29,7 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 	};
 
 	return (
-		<div className="group relative mx-2">
+		<div className="group relative mx-3">
 			<div className="absolute -inset-1.5 animate-gradient rounded-lg bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover:opacity-100" />
 			<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white">
 				<CardHeader className="px-6">
