@@ -42,7 +42,7 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 							}
 							alt={program.title}
 							fill
-							className="rounded-t-lg object-cover transition-transform duration-300 hover:scale-105"
+							className="rounded-lg object-cover transition-transform duration-300 hover:scale-105"
 							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 							quality={85}
 							placeholder="blur"

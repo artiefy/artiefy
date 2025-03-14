@@ -10,11 +10,11 @@ import { getProgramById } from '~/server/actions/estudiantes/programs/getProgram
 import ProgramDetails from './ProgramDetails';
 
 interface Props {
-	params: { id: string };
+	params: Promise<{ id: string }>;
 }
 
-export default function Page({ params }: Props) {
-	const { id } = params;
+export default async function Page({ params }: Props) {
+	const { id } = await params;
 
 	return (
 		<div>

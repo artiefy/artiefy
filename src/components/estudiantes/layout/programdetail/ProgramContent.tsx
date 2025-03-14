@@ -20,9 +20,10 @@ import type { Program, MateriaWithCourse, Course } from '~/types';
 
 interface ProgramContentProps {
 	program: Program;
+	isEnrolled: boolean;
 }
 
-export function ProgramContent({ program }: ProgramContentProps) {
+export function ProgramContent({ program, isEnrolled }: ProgramContentProps) {
 	const safeMateriasWithCursos =
 		program.materias?.filter(
 			(materia): materia is MateriaWithCourse & { curso: Course } =>
@@ -40,7 +41,7 @@ export function ProgramContent({ program }: ProgramContentProps) {
 			<div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{courses.map((course, index) => (
 					<div key={`${course.id}-${index}`} className="group relative">
-						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+						<div className="absolute -inset-2 animate-gradient rounded-xl bg-linear-to-r from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px] transition-all duration-500 group-hover:opacity-100" />
 						<Card className="relative flex h-full zoom-in flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
 							<CardHeader className="px-6">
 								<AspectRatio ratio={16 / 9}>
@@ -91,12 +92,23 @@ export function ProgramContent({ program }: ProgramContentProps) {
 									</p>
 								</div>
 								<div className="flex w-full items-center justify-between">
-									<Button asChild>
+									<Button
+										asChild
+										disabled={!isEnrolled}
+										className={
+											!isEnrolled ? 'cursor-not-allowed opacity-50' : ''
+										}
+									>
 										<Link
-											href={`/estudiantes/cursos/${course.id}`}
+											href={
+												isEnrolled ? `/estudiantes/cursos/${course.id}` : '#'
+											}
 											className="group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
+											onClick={(e) => !isEnrolled && e.preventDefault()}
 										>
-											<p className="font-bold">Ver Curso</p>
+											<p className="font-bold">
+												{isEnrolled ? 'Ver Curso' : 'Requiere Inscripción'}
+											</p>
 											<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
 											<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 												<div className="relative h-full w-10 bg-white/30" />

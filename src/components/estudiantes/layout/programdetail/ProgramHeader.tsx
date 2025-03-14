@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 
+import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
 
@@ -43,6 +44,12 @@ export function ProgramHeader({
 	onEnroll,
 	onUnenroll,
 }: ProgramHeaderProps) {
+	const { user } = useUser();
+
+	// Verificar plan Premium
+	const isPremium = user?.publicMetadata?.planType === 'Premium';
+	const canEnroll = isSubscriptionActive && isPremium;
+
 	const formatDate = (
 		dateString: string | number | Date | null | undefined
 	) => {
@@ -124,7 +131,7 @@ export function ProgramHeader({
 				</div>
 
 				{/* Program courses */}
-				<ProgramContent program={program} />
+				<ProgramContent program={program} isEnrolled={isEnrolled} />
 
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
@@ -151,16 +158,40 @@ export function ProgramHeader({
 						) : (
 							<Button
 								onClick={onEnroll}
-								disabled={isEnrolling || !isSubscriptionActive}
-								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px font-semibold text-white shadow-2xl"
+								disabled={isEnrolling || !canEnroll}
+								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
-								{!isSubscriptionActive ? (
-									'Requiere Plan Premium'
-								) : isEnrolling ? (
-									<Icons.spinner className="animate-spin text-white" />
-								) : (
-									'Inscribirse al Programa'
-								)}
+								<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
+									<div className="relative z-10 flex items-center justify-center space-x-2">
+										{isEnrolling ? (
+											<Icons.spinner
+												className="animate-spin text-white"
+												style={{ width: '25px', height: '25px' }}
+											/>
+										) : (
+											<>
+												<span className="transition-all duration-500 group-hover:translate-x-1">
+													{!canEnroll ? 'Requiere Plan Premium' : 'Inscribirse al programa'}
+												</span>
+												<svg
+													className="size-6 transition-transform duration-500 group-hover:translate-x-1"
+													data-slot="icon"
+													aria-hidden="true"
+													fill="currentColor"
+													viewBox="0 0 20 20"
+													xmlns="http://www.w3.org/2000/svg"
+												>
+													<path
+														clipRule="evenodd"
+														d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
+														fillRule="evenodd"
+													/>
+												</svg>
+											</>
+										)}
+									</div>
+								</span>
 							</Button>
 						)}
 					</div>

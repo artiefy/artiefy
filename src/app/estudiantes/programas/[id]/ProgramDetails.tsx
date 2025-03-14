@@ -7,7 +7,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
-import { ProgramHeader } from '~/components/estudiantes/layout/programs/ProgramHeader';
+import { ProgramHeader } from '~/components/estudiantes/layout/programdetail/ProgramHeader';
+// Remove ProgramContent import since it's used in ProgramHeader
 import {
 	enrollInProgram,
 	isUserEnrolledInProgram,
@@ -44,8 +45,24 @@ export default function ProgramDetails({
 				);
 				setIsEnrolled(enrolled);
 
+				// Verificar tanto el estado de la suscripción como el tipo de plan
 				const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-				setIsSubscriptionActive(subscriptionStatus === 'active');
+				const planType = user?.publicMetadata?.planType;
+				const subscriptionEndDate = user?.publicMetadata
+					?.subscriptionEndDate as string | null;
+
+				const isSubscriptionActive =
+					subscriptionStatus === 'active' &&
+					planType === 'Premium' &&
+					(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+
+				setIsSubscriptionActive(isSubscriptionActive);
+
+				// Debug logs
+				console.log('Subscription Status:', subscriptionStatus);
+				console.log('Plan Type:', planType);
+				console.log('Subscription End Date:', subscriptionEndDate);
+				console.log('Is Subscription Active:', isSubscriptionActive);
 			}
 		};
 
@@ -56,6 +73,27 @@ export default function ProgramDetails({
 		if (!isSignedIn) {
 			toast.error('Debes iniciar sesión');
 			void router.push(`/sign-in?redirect_url=${pathname}`);
+			return;
+		}
+
+		// Verificar suscripción antes de intentar inscribirse
+		const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+		const planType = user?.publicMetadata?.planType;
+		const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
+			| string
+			| null;
+
+		const isSubscriptionValid =
+			subscriptionStatus === 'active' &&
+			planType === 'Premium' &&
+			(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+
+		if (!isSubscriptionValid) {
+			toast.error('Se requiere plan Premium activo', {
+				description:
+					'Necesitas una suscripción Premium activa para inscribirte.',
+			});
+			void router.push('/planes');
 			return;
 		}
 
@@ -110,6 +148,7 @@ export default function ProgramDetails({
 						(user?.publicMetadata?.subscriptionEndDate as string) ?? null
 					}
 				/>
+				{/* Remove ProgramContent since it's already in ProgramHeader */}
 			</main>
 		</div>
 	);
