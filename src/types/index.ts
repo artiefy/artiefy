@@ -13,7 +13,8 @@ export interface User {
 	birthDate?: Date | null;
 }
 
-export interface Course {
+// Create a new type for basic course data
+export interface BaseCourse {
 	id: number;
 	title: string;
 	description: string | null;
@@ -25,17 +26,21 @@ export interface Course {
 	creatorId: string;
 	rating: number | null;
 	modalidadesid: number;
-	nivelid: number; // Changed from dificultadid
-	totalStudents: number;
-	lessons: Lesson[]; // Asegurarse de que la propiedad lessons esté presente
+	nivelid: number;
 	category?: Category;
 	modalidad?: Modalidad;
-	nivel?: Nivel; // Changed from dificultad
+}
+
+// Keep the full Course interface for other uses
+export interface Course extends BaseCourse {
+	totalStudents: number;
+	lessons: Lesson[];
+	nivel?: Nivel;
 	enrollments?: Enrollment[] | { length: number };
 	creator?: User;
-	isNew?: boolean; // Agregar propiedad isNew
-	requerimientos?: string[]; // Make requerimientos optional
-	materias?: CourseMateria[]; // Add this property
+	isNew?: boolean;
+	requerimientos?: string[];
+	materias?: CourseMateria[];
 }
 
 // Add new interface for course materias
@@ -297,7 +302,7 @@ export interface MateriaWithCourse {
 	description: string | null;
 	programaId: number;
 	courseid: number | null;
-	curso?: Course;
+	curso?: BaseCourse; // Changed from Course to BaseCourse
 }
 
 export interface EnrollmentProgram {

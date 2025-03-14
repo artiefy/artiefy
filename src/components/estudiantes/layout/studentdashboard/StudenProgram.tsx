@@ -77,7 +77,7 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 					</div>
 				</CardContent>
 
-				<CardFooter className="px-6 pt-4">
+				<CardFooter className="px-6 pt-2">
 					<div className="flex w-full items-center justify-between space-x-4">
 						<div className="text-sm text-gray-400">
 							<EnrollmentCount programId={parseInt(program.id)} />
@@ -88,7 +88,7 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 								className="group/button relative inline-flex h-10 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95"
 							>
 								<p className="font-bold">Ver Programa</p>
-								<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
+								<ArrowRightCircleIcon className="size-5 animate-bounce-right" />
 								<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 									<div className="relative h-full w-10 bg-white/30" />
 								</div>
