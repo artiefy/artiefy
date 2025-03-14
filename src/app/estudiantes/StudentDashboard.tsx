@@ -38,10 +38,11 @@ export default function StudentDashboard({
 			console.warn('initialPrograms is not an array:', initialPrograms);
 			return [];
 		}
-		return [...initialPrograms].sort(
-			(a, b) =>
-				new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-		);
+		return [...initialPrograms].sort((a, b) => {
+			const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+			const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+			return dateB - dateA;
+		});
 	});
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [searchQuery, setSearchQuery] = useState('');
@@ -243,7 +244,7 @@ export default function StudentDashboard({
 							</h2>
 							<div>
 								<Carousel className="w-full">
-									<CarouselContent className="p-4">
+									<CarouselContent className="my-6">
 										{sortedPrograms.map((program) => (
 											<CarouselItem
 												key={program.id}

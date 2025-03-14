@@ -35,6 +35,20 @@ interface CourseHeaderProps {
 	isCheckingEnrollment?: boolean;
 }
 
+const BADGE_GRADIENTS = [
+	'from-pink-500 via-red-500 to-yellow-500',
+	'from-green-300 via-blue-500 to-purple-600',
+	'from-pink-300 via-purple-300 to-indigo-400',
+	'from-yellow-400 via-pink-500 to-red-500',
+	'from-blue-400 via-indigo-500 to-purple-600',
+	'from-green-400 via-cyan-500 to-blue-500',
+	'from-orange-400 via-pink-500 to-red-500',
+];
+
+const getBadgeGradient = (index: number) => {
+	return BADGE_GRADIENTS[index % BADGE_GRADIENTS.length];
+};
+
 export function CourseHeader({
 	course,
 	totalStudents,
@@ -143,11 +157,11 @@ export function CourseHeader({
 						Materias asociadas:
 					</h3>
 					<div className="flex flex-wrap gap-2">
-						{course.materias?.map((materia: CourseMateria) => (
+						{course.materias?.map((materia: CourseMateria, index: number) => (
 							<Badge
 								key={materia.id}
 								variant="secondary"
-								className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600"
+								className={`bg-gradient-to-r ${getBadgeGradient(index)} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
 							>
 								{materia.title}
 							</Badge>

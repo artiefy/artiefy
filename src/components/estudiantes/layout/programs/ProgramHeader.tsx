@@ -3,15 +3,17 @@
 import Image from 'next/image';
 
 import { StarIcon } from '@heroicons/react/24/solid';
-import { FaUserGraduate, FaCalendar } from 'react-icons/fa';
+import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 } from '~/components/estudiantes/ui/card';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 
 import { ProgramContent } from './ProgramContent';
@@ -21,9 +23,26 @@ import type { Program } from '~/types';
 interface ProgramHeaderProps {
 	program: Program;
 	totalStudents: number;
+	isEnrolled: boolean;
+	isEnrolling: boolean;
+	isUnenrolling: boolean;
+	isSubscriptionActive: boolean;
+	subscriptionEndDate: string | null;
+	onEnroll: () => Promise<void>;
+	onUnenroll: () => Promise<void>;
 }
 
-export function ProgramHeader({ program, totalStudents }: ProgramHeaderProps) {
+export function ProgramHeader({
+	program,
+	totalStudents,
+	isEnrolled,
+	isEnrolling,
+	isUnenrolling,
+	isSubscriptionActive,
+	subscriptionEndDate: _subscriptionEndDate, // Change here: rename in destructuring
+	onEnroll,
+	onUnenroll,
+}: ProgramHeaderProps) {
 	const formatDate = (
 		dateString: string | number | Date | null | undefined
 	) => {
@@ -106,6 +125,46 @@ export function ProgramHeader({ program, totalStudents }: ProgramHeaderProps) {
 
 				{/* Program courses */}
 				<ProgramContent program={program} />
+
+				<div className="flex justify-center pt-4">
+					<div className="relative h-32 w-64">
+						{isEnrolled ? (
+							<div className="flex w-full flex-col space-y-4">
+								<Button
+									className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+									disabled={true}
+								>
+									<FaCheck className="mr-2" /> Suscrito Al Programa
+								</Button>
+								<Button
+									className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+									onClick={onUnenroll}
+									disabled={isUnenrolling}
+								>
+									{isUnenrolling ? (
+										<Icons.spinner className="animate-spin text-white" />
+									) : (
+										'Cancelar Suscripción'
+									)}
+								</Button>
+							</div>
+						) : (
+							<Button
+								onClick={onEnroll}
+								disabled={isEnrolling || !isSubscriptionActive}
+								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px font-semibold text-white shadow-2xl"
+							>
+								{!isSubscriptionActive ? (
+									'Requiere Plan Premium'
+								) : isEnrolling ? (
+									<Icons.spinner className="animate-spin text-white" />
+								) : (
+									'Inscribirse al Programa'
+								)}
+							</Button>
+						)}
+					</div>
+				</div>
 			</CardContent>
 		</Card>
 	);
