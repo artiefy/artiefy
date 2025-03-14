@@ -1,4 +1,3 @@
-import ResponsiveSidebar from '~/app/dashboard/super-admin/components/ResponsiveSidebar'; // El componente ResponsiveSidebar
 import CourseDetail from './CourseDetail'; // El componente CourseDetail
 
 export default async function Page({
@@ -10,8 +9,8 @@ export default async function Page({
   const resolvedParams = await params;
 
   return (
-    <ResponsiveSidebar>
+    <>
       <CourseDetail courseId={resolvedParams.courseId} />
-    </ResponsiveSidebar>
+    </>
   );
 }

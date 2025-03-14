@@ -28,7 +28,7 @@ interface Course {
 	title: string;
 	description: string;
 	categoryid: string;
-	dificultadid: string;
+	nivelid: string;
 	modalidadesid: string;
 	instructor: string;
 	rating: number;
@@ -36,7 +36,6 @@ interface Course {
 	creatorId: string;
 	createdAt: string;
 	updatedAt: string;
-	requerimientos: string;
 	totalStudents: number;
 }
 
@@ -372,14 +371,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
-										Dificultad:
+										Nivel:
 									</h2>
 									<p
 										className={
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}
 									>
-										{course.dificultadid}
+										{course.nivelid}
 									</p>
 								</div>
 								<div className="flex flex-col">

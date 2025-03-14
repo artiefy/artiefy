@@ -37,6 +37,7 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
+import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 import type {
 	QuestionFilesSubida,
 	Completado,
@@ -257,7 +258,7 @@ const Page: React.FC = () => {
 
 	// Renderizar la pagina
 	return (
-		<>
+		<ResponsiveSidebar>
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
@@ -524,7 +525,7 @@ const Page: React.FC = () => {
 					)}
 				</div>
 			</div>
-		</>
+		</ResponsiveSidebar>
 	);
 };
 

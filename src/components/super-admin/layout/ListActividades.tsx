@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import Link from 'next/link';
-import { LoadingCourses } from '~/app/dashboard/super-admin/(inicio)/cursos/page';
+import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import { Badge } from '~/components/educators/ui/badge';
 import {
 	Card,
 	CardContent,
@@ -12,17 +13,22 @@ import {
 	CardTitle,
 } from '~/components/educators/ui/card';
 
+// Interfaz para las actividades
 interface ActividadModels {
 	id: number;
 	name: string;
 	description: string;
-	typeid: number;
+	type: {
+		id: number;
+		name: string;
+	};
 	lessonsId: {
 		id: number;
 		title: string;
 	};
 }
 
+// Propiedades del componente para la lista de actividades
 interface ActividadListProps {
 	lessonId: number;
 	selectedColor: string;
@@ -36,12 +42,13 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 	courseId,
 	coverImageKey,
 }) => {
-	const [actividades, setActividades] = useState<ActividadModels[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
+	const [actividades, setActividades] = useState<ActividadModels[]>([]); // Estado para las actividades
+	const [loading, setLoading] = useState(true); // Estado para el estado de carga
+	const [error, setError] = useState<string | null>(null); // Estado para el error
 
-	const lessonIdString = lessonId.toString();
+	const lessonIdString = lessonId ? lessonId.toString() : ''; // Convertimos el lessonId a string
 
+	// Función para obtener el contraste de un color
 	const getContrastYIQ = (hexcolor: string) => {
 		hexcolor = hexcolor.replace('#', '');
 		const r = parseInt(hexcolor.substr(0, 2), 16);
@@ -53,13 +60,13 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 
 	// Fetch de las lecciones cuando el courseId cambia
 	useEffect(() => {
-		if (lessonId) {
+		if (lessonIdString) {
 			const fetchLessons = async () => {
 				setLoading(true);
 				setError(null);
 				try {
 					const response = await fetch(
-						`/api/educadores/actividades?lessonId=${lessonIdString}`
+						`/api/educadores/actividades/actividadesByLesson?lessonId=${lessonIdString}`
 					);
 
 					if (!response.ok) {
@@ -81,7 +88,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 
 			void fetchLessons();
 		}
-	}, [lessonId, lessonIdString]); // Este efecto se ejecuta cada vez que el courseId cambia
+	}, [lessonIdString]); // Este efecto se ejecuta cada vez que el courseId cambia
 
 	// Condicionales de renderizado: carga, error, lecciones vacías
 	if (loading) {
@@ -89,7 +96,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 	}
 	if (actividades.length === 0 || actividades === null) {
 		return (
-			<div className="bg-background mt-4 flex flex-col items-center justify-center rounded-lg py-10 text-center">
+			<div className="mt-4 flex flex-col items-center justify-center rounded-lg bg-background py-10 text-center">
 				<h2 className="mb-4 text-2xl font-bold">
 					Lista de actividades creadas
 				</h2>
@@ -110,10 +117,10 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 			<div className="flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{actividades.map((actividad, index) => (
-						<div key={index} className="group relative h-auto w-full">
-							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
+						<div key={index} className="group relative size-full">
+							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
 							<Card
-								className="relative z-20 flex flex-col border-transparent bg-black hover:scale-100"
+								className="relative z-20 flex h-auto flex-col border-transparent bg-black hover:scale-100" // Añadir h-80 para altura fija
 								style={{
 									backgroundColor: selectedColor,
 									color: getContrastYIQ(selectedColor),
@@ -121,9 +128,13 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 							>
 								<CardHeader>
 									<Image
-										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`}
+										src={
+											coverImageKey
+												? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`
+												: `/favicon.ico`
+										}
 										alt={actividad.name || 'Imagen del curso'}
-										className={`relative mx-auto h-auto w-40 rounded-lg object-cover transition-opacity duration-500`}
+										className={`relative mx-auto w-40 rounded-lg object-cover transition-opacity duration-500`}
 										height={150}
 										width={150}
 										quality={75}
@@ -135,21 +146,32 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 									}`}
 								>
 									<CardTitle className="text-lg">
-										<div className="font-bold">Actividad: {actividad.name}</div>
+										<div className="font-bold">
+											Actividad: <p>{actividad.name}</p>
+										</div>
 									</CardTitle>
 									<div className="my-2 flex flex-col space-y-2">
-										<p className="text-sm font-bold">
-											Clase: {actividad.lessonsId.title}
+										<p className="flex flex-col text-sm font-bold">
+											Clase:
+											<Badge
+												variant="outline"
+												className="w-fit border-primary bg-background text-primary hover:bg-black/70"
+											>
+												{actividad.lessonsId.title}
+											</Badge>
 										</p>
-										<p className="text-sm font-bold">
-											Descripcion: {actividad.description}
+										<p className="flex flex-col text-sm font-bold">
+											Descripcion: <span>{actividad.description}</span>
+										</p>
+										<p className="flex flex-col text-sm font-bold">
+											Tipo de actividad: <span> {actividad.type.name}</span>
 										</p>
 									</div>
 								</CardContent>
 
 								<CardFooter className="-mt-4 flex flex-col items-start justify-between">
 									<Link
-										href={`/dashboard/educadores/cursos/${courseId}/${lessonIdString}/actividades/${actividad.id}`}
+										href={`/dashboard/super-admin/cursos/${courseId}/${lessonIdString}/actividades/${actividad.id}`}
 										className={`group/button relative mx-auto inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95`}
 									>
 										<p>Ver actividad</p>

@@ -97,11 +97,10 @@ export async function POST(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			rating: number;
 			creatorId: string;
 			instructor: string;
-			requerimientos: string;
 		};
 
 		const {
@@ -111,13 +110,10 @@ export async function POST(request: NextRequest) {
 			categoryid,
 			modalidadesid,
 			rating,
-			dificultadid,
+			nivelid,
 			creatorId,
 			instructor,
-			requerimientos,
 		} = body;
-
-		console.log(`CreatorID en api route ${creatorId}`);
 		const courseId = await createCourse({
 			title,
 			description,
@@ -126,9 +122,8 @@ export async function POST(request: NextRequest) {
 			categoryid,
 			rating,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
-			requerimientos,
 		});
 
 		console.log('Datos enviados al servidor:', {
@@ -139,9 +134,8 @@ export async function POST(request: NextRequest) {
 			creatorId,
 			rating,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
-			requerimientos,
 		});
 
 		const id = courseId.id;
@@ -173,9 +167,8 @@ export async function PUT(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			instructor: string;
-			requerimientos: string;
 		};
 		const {
 			id,
@@ -183,10 +176,9 @@ export async function PUT(request: NextRequest) {
 			description,
 			coverImageKey,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			categoryid,
 			instructor,
-			requerimientos,
 		} = body;
 
 		const course = await getCourseById(id);
@@ -205,8 +197,7 @@ export async function PUT(request: NextRequest) {
 			categoryid,
 			modalidadesid,
 			instructor,
-			dificultadid,
-			requerimientos,
+			nivelid,
 		});
 
 		return NextResponse.json({ message: 'Curso actualizado exitosamente' });

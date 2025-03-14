@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { db } from '~/server/db';
-import { courses, dificultad } from '~/server/db/schema';
+import { courses, nivel } from '~/server/db/schema';
 
 // Definir esquema de validación con Zod
 const updateSchema = z.object({
@@ -19,28 +19,28 @@ export async function PUT(req: Request) {
       newValue: Number(body.newValue),
     });
 
-    // Actualizar dificultad en la BD
+    // Actualizar nivel en la BD
     await db
       .update(courses)
-      .set({ dificultadid: newValue })
+      .set({ nivelid: newValue })
       .where(eq(courses.id, courseId))
       .execute();
 
-    return NextResponse.json({ message: 'Dificultad actualizada con éxito' }, { status: 200 });
+    return NextResponse.json({ message: 'nivel actualizada con éxito' }, { status: 200 });
   } catch (error) {
-    console.error('❌ Error al actualizar la dificultad:', error);
-    return NextResponse.json({ error: 'Error al actualizar la dificultad' }, { status: 400 });
+    console.error('❌ Error al actualizar la nivel:', error);
+    return NextResponse.json({ error: 'Error al actualizar la nivel' }, { status: 400 });
   }
 }
 
 export async function GET() {
   try {
-    debugger
-    const dificultades = await db.select().from(dificultad).execute();
+    
+    const niveles = await db.select().from(nivel).execute();
 
-    return NextResponse.json(dificultades, { status: 200 });
+    return NextResponse.json(niveles, { status: 200 });
   } catch (error) {
-    console.error('❌ Error al obtener dificultades:', error);
-    return NextResponse.json({ error: 'Error al obtener dificultades' }, { status: 500 });
+    console.error('❌ Error al obtener niveles:', error);
+    return NextResponse.json({ error: 'Error al obtener niveles' }, { status: 500 });
   }
 }

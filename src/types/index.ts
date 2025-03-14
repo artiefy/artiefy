@@ -13,6 +13,24 @@ export interface User {
 	birthDate?: Date | null;
 }
 
+// Create a new type for basic course data
+export interface BaseCourse {
+	id: number;
+	title: string;
+	description: string | null;
+	coverImageKey: string | null;
+	categoryid: number;
+	instructor: string;
+	createdAt: string | number | Date;
+	updatedAt: string | number | Date;
+	creatorId: string;
+	rating: number | null;
+	modalidadesid: number;
+	nivelid: number;
+	category?: Category;
+	modalidad?: Modalidad;
+}
+
 export interface Course {
 	id: number;
 	title: string;
@@ -25,12 +43,12 @@ export interface Course {
 	creatorId: string;
 	rating: number | null;
 	modalidadesid: number;
-	dificultadid: number;
+	Nivelid: number;
 	totalStudents: number;
 	lessons: Lesson[];
 	category?: Category;
 	modalidad?: Modalidad;
-	dificultad?: Dificultad;
+	Nivel?: Nivel;
 	enrollments?: Enrollment[] | { length: number };
 	creator?: User;
 }
@@ -122,7 +140,7 @@ export interface Score {
 	category?: Category;
 }
 
-export interface Dificultad {
+export interface Nivel {
 	id?: number;
 	name: string;
 	description?: string;
@@ -217,6 +235,53 @@ export interface GetCoursesParams {
 	pageSize?: number;
 	categoryId?: number;
 	searchTerm?: string;
+}
+
+export interface Program {
+	id: string;
+	title: string;
+	description: string | null;
+	coverImageKey: string | null;
+	createdAt: Date | null; // Allow null
+	updatedAt: Date | null; // Allow null
+	creatorId: string;
+	rating: number | null; // Allow null
+	categoryid: number;
+	creator?: User;
+	category?: Category;
+	materias?: MateriaWithCourse[];
+	enrollmentPrograms?: EnrollmentProgram[];
+}
+
+// Original Materia interface
+export interface Materia {
+    id: number;
+    title: string;
+    description: string;
+    programaId: number;
+    courseId: number;
+    courseid: number;
+    curso: BaseCourse | undefined;
+}
+
+// New interface for Materia with optional course
+export interface MateriaWithCourse {
+	id: number;
+	title: string;
+	description: string | null;
+	programaId: number;
+	courseid: number | null;
+	curso?: BaseCourse; // Changed from Course to BaseCourse
+}
+
+export interface EnrollmentProgram {
+	id: number;
+	programaId: number;
+	userId: string;
+	enrolledAt: Date;
+	completed: boolean;
+	user?: User;
+	programa?: Program;
 }
 
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };

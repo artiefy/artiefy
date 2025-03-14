@@ -25,7 +25,6 @@ import {
 import BulkUploadUsers from './components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
-import SuperAdminLayout from './super-admin-layout';
 import 'suneditor/dist/css/suneditor.min.css';
 
 interface User {
@@ -232,7 +231,7 @@ export default function AdminDashboard() {
 
 	const fetchCourses = useCallback(async () => {
 		try {
-			const res = await fetch('/api/super-admin/courses');
+			const res = await fetch('/api/educadores/courses');
 			if (!res.ok) throw new Error('Error al cargar cursos');
 			const rawData: unknown = await res.json();
 			if (!Array.isArray(rawData)) throw new Error('Invalid data received');
@@ -991,7 +990,7 @@ export default function AdminDashboard() {
 	};
 
 	return (
-		<SuperAdminLayout>
+		<>
 			{/* 🔎 Barra de Búsqueda y Filtro */}
 
 			<header className="flex items-center justify-between rounded-lg bg-[#00BDD8] p-6 text-3xl font-bold text-[#01142B] shadow-md">
@@ -1900,6 +1899,6 @@ export default function AdminDashboard() {
 					</div>
 				</div>
 			)}
-		</SuperAdminLayout>
+		</>
 	);
 }

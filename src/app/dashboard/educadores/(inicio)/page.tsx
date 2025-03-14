@@ -29,8 +29,7 @@ export interface CourseModel {
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
-	dificultadid: string; // Add this line
-	requerimientos: string;
+	nivelid: string; 
 	totalParametros: number; // Add this line
 }
 
@@ -106,7 +105,7 @@ export default function Home() {
 				setCourses(
 					data.map((course) => ({
 						...course,
-						dificultadid: course.dificultadid ?? '', // Map it properly
+						nivelid: course.nivelid ?? '', // Map it properly
 						categoryid: course.categoryid, // Map categoryid properly
 						modalidadesid: course.modalidadesid, // Map modalidadesid properly
 					})) as CourseModel[]

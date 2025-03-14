@@ -80,7 +80,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		if (!(await validateTotalPercentage(formData.pesoPregunta))) {
 			toast('Error', {
 				description:
-					'El porcentaje total de las preguntas no puede ser mayor a 100%',
+					'El porcentaje total de las preguntas no puede ser mayor a 10%',
 			});
 			return;
 		}

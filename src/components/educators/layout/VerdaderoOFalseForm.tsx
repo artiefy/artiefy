@@ -70,12 +70,21 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 			data.totalPercentage +
 			newPesoPregunta -
 			(editingQuestion?.pesoPregunta ?? 0);
+
+		console.log('Data Total Percentage:', data.totalPercentage);
+		console.log('New Peso Pregunta:', newPesoPregunta);
+		console.log(
+			'Editing Question Peso Pregunta:',
+			editingQuestion?.pesoPregunta ?? 0
+		);
+		console.log('Total Percentage:', totalPercentage);
 		return totalPercentage <= 100;
 	};
 
 	// Función para manejar el envio del formulario
 	const handleSubmit = async (question: VerdaderoOFlaso) => {
-		if (await validateTotalPercentage(pesoPregunta)) {
+		const totalPercentage = await validateTotalPercentage(pesoPregunta);
+		if (!totalPercentage) {
 			toast('Error', {
 				description:
 					'El porcentaje total de las preguntas no puede exceder el 100%',

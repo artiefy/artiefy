@@ -7,9 +7,8 @@
 // 	coverImageKey: string;
 // 	categoryid: number;
 // 	modalidadesid: number;
-// 	dificultadid: number;
+// 	nivelid: number; // Replaced nivelid with nivelid
 // 	instructor: string;
-// 	requerimientos: string;
 // 	creatorId: string;
 // }
 
@@ -75,8 +74,7 @@
 // 			categoryId: number;
 // 			instructor: string;
 // 			modalidadesid: number;
-// 			dificultadid: number;
-// 			requerimientos: string;
+// 			nivelid: number; // Replaced nivelid with nivelid
 // 		};
 
 // 		await updateCourse(courseId, {
@@ -86,8 +84,7 @@
 // 			categoryid: data.categoryId,
 // 			instructor: data.instructor,
 // 			modalidadesid: data.modalidadesid,
-// 			dificultadid: data.dificultadid,
-// 			requerimientos: data.requerimientos,
+// 			nivelid: data.nivelid, // Replaced nivelid with nivelid
 // 		});
 
 // 		// Obtener el curso actualizado
@@ -115,9 +112,8 @@
 // 			coverImageKey: string;
 // 			categoryid: number;
 // 			modalidadesid: number;
-// 			dificultadid: number;
+// 			nivelid: number; // Replaced nivelid with nivelid
 // 			instructor: string;
-// 			requerimientos: string;
 // 			creatorId: string;
 // 		};
 
@@ -132,14 +128,12 @@
 // 		coverImageKey: String(jsonData.coverImageKey),
 // 		categoryid: Number(jsonData.categoryid),
 // 		modalidadesid: Number(jsonData.modalidadesid),
-// 		dificultadid: Number(jsonData.dificultadid),
+// 		nivelid: Number(jsonData.nivelid), // Replaced nivelid with nivelid
 // 		instructor: String(jsonData.instructor),
-// 		requerimientos: String(jsonData.requerimientos),
 // 		creatorId: String(jsonData.creatorId),
 // 		};
 
 // 		const newCourse = await createCourse(data);
-
 
 // 		return NextResponse.json(newCourse, { status: 201 });
 // 	} catch (error) {

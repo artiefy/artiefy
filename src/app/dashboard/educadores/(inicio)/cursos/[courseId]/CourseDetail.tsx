@@ -37,14 +37,13 @@ interface Course {
 	title: string;
 	description: string;
 	categoryid: string;
-	dificultadid: string;
+	nivelid: string;
 	modalidadesid: string;
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
 	createdAt: string;
 	updatedAt: string;
-	requerimientos: string;
 	rating: number; // Añadir esta línea
 }
 
@@ -82,10 +81,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [isModalOpen, setIsModalOpen] = useState(false); // Nuevo estado para el modal de edición
 	const [editTitle, setEditTitle] = useState(''); // Nuevo estado para el título del curso a editar
 	const [editDescription, setEditDescription] = useState(''); // Nuevo estado para la descripción del curso
-	const [editRequerimientos, setEditRequerimientos] = useState(''); // Nuevo estado para los requerimientos del curso
 	const [editCategory, setEditCategory] = useState(0); // Nuevo estado para la categoría del curso
 	const [editModalidad, setEditModalidad] = useState(0); // Nuevo estado para la modalidad del curso
-	const [editDificultad, setEditDificultad] = useState(0); // Nuevo estado para la dificultad del curso
+	const [editNivel, setEditNivel] = useState(0); // Nuevo estado para la nivel del curso
 	const [editCoverImageKey, setEditCoverImageKey] = useState(''); // Nuevo estado para la imagen del curso
 	const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
 	const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
@@ -173,8 +171,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadid: number,
-		requerimientos: string,
+		nivelid: number,
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
@@ -241,9 +238,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						fileName: uploadedFileName, // Agregar fileName al cuerpo de la solicitud
 						categoryid,
 						modalidadesid,
-						dificultadid,
+						nivelid,
 						instructor: course?.instructor,
-						requerimientos,
 						rating, // Añadir esta línea
 					}),
 				}
@@ -324,10 +320,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		if (!course) return; // Verificación adicional
 		setEditTitle(course.title);
 		setEditDescription(course.description);
-		setEditRequerimientos(course.requerimientos);
 		setEditCategory(parseInt(course.categoryid));
 		setEditModalidad(parseInt(course.modalidadesid));
-		setEditDificultad(parseInt(course.dificultadid));
+		setEditNivel(parseInt(course.nivelid));
 		setEditCoverImageKey(course.coverImageKey);
 		setEditParametros(
 			parametros.map((parametro) => ({
@@ -618,13 +613,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
-										Dificultad:
+										Nivel:
 									</h2>
 									<Badge
 										variant="outline"
 										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
-										{course.dificultadid}
+										{course.nivelid}
 									</Badge>
 								</div>
 								<div className="flex flex-col">
@@ -672,9 +667,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					file: File | null,
 					categoryid: number,
 					modalidadesid: number,
-					dificultadid: number,
+					nivelid: number,
 					rating: number, // Añadir esta línea
-					requerimientos: string,
 					addParametros: boolean, // Nuevo parámetro
 					coverImageKey: string,
 					fileName: string // Nuevo parámetro
@@ -686,30 +680,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						file,
 						categoryid,
 						modalidadesid,
-						dificultadid,
-						requerimientos,
+						nivelid,
 						addParametros, // Pasar el nuevo parámetro
 						coverImageKey,
 						fileName, // Pasar el nuevo parámetro
-						rating // Añadir esta línea
+						rating,
 					)
 				}
 				editingCourseId={course.id}
 				title={editTitle}
 				description={editDescription}
-				requerimientos={editRequerimientos}
 				categoryid={editCategory}
 				modalidadesid={editModalidad}
-				dificultadid={editDificultad}
+				nivelid={editNivel}
 				coverImageKey={editCoverImageKey}
 				parametros={editParametros}
 				rating={editRating} // Añadir esta línea
 				setTitle={setEditTitle}
 				setDescription={setEditDescription}
-				setRequerimientos={setEditRequerimientos}
 				setModalidadesid={setEditModalidad}
 				setCategoryid={setEditCategory}
-				setDificultadid={setEditDificultad}
+				setNivelid={setEditNivel}
 				setCoverImageKey={setEditCoverImageKey}
 				setParametrosAction={(
 					parametros: {

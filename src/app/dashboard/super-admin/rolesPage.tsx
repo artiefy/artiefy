@@ -4,7 +4,6 @@ import { Button } from '~/components/estudiantes/ui/button';
 import {
 	setRoleWrapper,
 } from '~/server/wrappers/serverWrappers';
-import SuperAdminLayout from './super-admin-layout';
 
 interface User {
 	id: string;
@@ -52,7 +51,7 @@ export default function RolesPage() {
 	};
 
 	return (
-		<SuperAdminLayout>
+		<>
 			<h1 className="mb-4 text-2xl font-bold">Gestión de Roles</h1>
 
 			{error && <p className="text-red-500">{error}</p>}
@@ -100,6 +99,6 @@ export default function RolesPage() {
 					</tbody>
 				</table>
 			)}
-		</SuperAdminLayout>
+		</>
 	);
 }

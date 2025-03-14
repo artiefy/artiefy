@@ -72,24 +72,13 @@ export async function createLesson({
 	}
 }
 
-// Contar el número de lecciones por curso y dificultad
-// export const countLessonsByCourseAndDifficulty = async (courseId: number) => {
-// 	const count = await db
-// 		.select({ count: sql`COUNT(${lessons.id})` })
-// 		.from(lessons)
-// 		.where(eq(lessons.courseId, courseId))
-// 		.then((rows) => Number(rows[0]?.count) ?? 0);
-
-// 	return count;
-// };
-
-// Obtener la dificultad del curso
+// Obtener el nivel del curso
 export const getCourseDifficulty = async (courseId: number) => {
 	const course = await db
-		.select({ dificultad: courses.dificultadid })
+		.select({ nivel: courses.nivelid })
 		.from(courses)
 		.where(eq(courses.id, courseId))
-		.then((rows) => rows[0]?.dificultad);
+		.then((rows) => rows[0]?.nivel);
 
 	return course;
 };
@@ -116,7 +105,7 @@ export async function getLessonsByCourseId(courseId: number) {
 				courseInstructor: courses.instructor,
 				courseCategories: courses.categoryid,
 				courseModalidad: courses.modalidadesid,
-				courseDificultad: courses.dificultadid,
+				courseNivel: courses.nivelid,
 			})
 			.from(lessons)
 			.innerJoin(courses, eq(courses.id, lessons.courseId)) // Hace el JOIN con la tabla courses
@@ -140,7 +129,7 @@ export async function getLessonsByCourseId(courseId: number) {
 				courseInstructor: string;
 				courseCategories: number;
 				courseModalidad: number;
-				courseDificultad: number;
+				courseNivel: number;
 			}) => ({
 				id: Lesson.lessonId,
 				title: Lesson.lessonTitle,
@@ -160,7 +149,7 @@ export async function getLessonsByCourseId(courseId: number) {
 					courseCategories: Lesson.courseCategories,
 					categories: Lesson.courseCategories,
 					modalidad: Lesson.courseModalidad,
-					dificultad: Lesson.courseDificultad,
+					nivel: Lesson.courseNivel,
 				},
 			})
 		);

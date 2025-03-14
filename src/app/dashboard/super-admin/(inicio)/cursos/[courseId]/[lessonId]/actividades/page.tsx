@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import { useRouter, useSearchParams, useParams } from 'next/navigation'; // Cambiar la importación de useRouter
@@ -29,6 +29,9 @@ import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 
+// Crear actividad
+
+// Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
 	hexcolor = hexcolor.replace('#', '');
@@ -39,22 +42,23 @@ const getContrastYIQ = (hexcolor: string) => {
 	return yiq >= 128 ? 'black' : 'white';
 };
 
+// Definir las interfaces de los datos
 interface Course {
 	id: number;
 	title: string;
 	description: string;
 	categoryid: string;
-	dificultadid: string;
+	nivelid: string;
 	modalidadesid: string;
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
 	createdAt: string;
 	updatedAt: string;
-	requerimientos: string;
 	totalParametros: number;
 }
 
+// Definir la interfaz de los parámetros
 interface Parametros {
 	id: number;
 	name: string;
@@ -67,14 +71,14 @@ interface Parametros {
 }
 
 const Page: React.FC = () => {
-	const { user } = useUser();
-	const params = useParams();
-	const cursoIdUrl = params?.courseId;
-	const searchParams = useSearchParams();
-	const lessonsId = searchParams?.get('lessonId');
-	const [isUploading, setIsUploading] = useState(false);
-	const [uploadProgress, setUploadProgress] = useState(0);
-	const [course, setCourse] = useState<Course | null>(null);
+	const { user } = useUser(); // Usar useUser de Clerk
+	const params = useParams(); // Usar useParams de next/navigation
+	const cursoIdUrl = params?.courseId; // Obtener el ID del curso de los parámetros
+	const searchParams = useSearchParams(); // Usar useSearchParams de next/navigation
+	const lessonsId = searchParams?.get('lessonId'); // Obtener el ID de la lección de los parámetros
+	const [isUploading, setIsUploading] = useState(false); // Definir isUploading
+	const [uploadProgress, setUploadProgress] = useState(0); // Definir uploadProgress
+	const [course, setCourse] = useState<Course | null>(null); // Definir course
 	const [formData, setFormData] = useState({
 		id: 0,
 		name: '',
@@ -84,17 +88,18 @@ const Page: React.FC = () => {
 		revisada: false,
 		parametro: 0,
 		fechaMaximaEntrega: null as string | null,
-	});
-	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl;
-	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
-	const cursoIdNumber = cursoIdString ? parseInt(cursoIdString) : null;
+	}); // Definir formData
+	const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl; // Obtener el ID del curso como string
+	const courseIdNumber = cursoIdString ? parseInt(cursoIdString) : null; // Convertir el ID del curso a número
 	const router = useRouter(); // Usar useRouter de next/navigation
-	const [color, setColor] = useState<string>('#FFFFFF');
-	const [isActive, setIsActive] = useState(false);
-	const [fechaMaxima, setFechaMaxima] = useState(false);
-	const [showLongevidadForm, setShowLongevidadForm] = useState(false);
+	const [color, setColor] = useState<string>('#FFFFFF'); // Definir color
+	const [isActive, setIsActive] = useState(false); // Definir isActive
+	const [fechaMaxima, setFechaMaxima] = useState(false); // Definir fechaMaxima
+	const [showLongevidadForm, setShowLongevidadForm] = useState(false); // Definir showLongevidadForm
 	const [parametros, setParametros] = useState<Parametros[]>([]); // Definir setParametros
+	console.log(parametros);
 
+	// Obtener los parámetros
 	useEffect(() => {
 		const fetchParametros = async () => {
 			try {
@@ -145,8 +150,46 @@ const Page: React.FC = () => {
 		if (courseIdNumber) {
 			void fetchParametros();
 		}
-	}, [courseIdNumber, lessonsId, parametros]);
+	}, [courseIdNumber]);
 
+	// Obtener el color guardado
+	useEffect(() => {
+		if (!lessonsId || !courseIdNumber) {
+			return;
+		}
+		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
+		if (savedColor) {
+			setColor(savedColor);
+		}
+	}, [lessonsId, courseIdNumber]);
+
+	// Guardar el color seleccionado y actualizar el color
+	useEffect(() => {
+		const fetchCourse = async () => {
+			if (!user) return;
+			if (courseIdNumber !== null) {
+				try {
+					const response = await fetch(
+						`/api/educadores/courses/${courseIdNumber}`
+					);
+
+					if (response.ok) {
+						const data = (await response.json()) as Course;
+						setCourse(data);
+					}
+				} catch (error: unknown) {
+					const errorMessage =
+						error instanceof Error ? error.message : 'Error desconocido';
+					toast('Error', {
+						description: `No se pudo cargar el curso: ${errorMessage}`,
+					});
+				}
+			}
+		};
+		void fetchCourse();
+	}, [user, courseIdNumber]);
+
+	// Función para manejar el cambio de color y guardarlo
 	const handleToggle = () => {
 		setIsActive((prevIsActive) => {
 			const newIsActive = !prevIsActive;
@@ -168,6 +211,7 @@ const Page: React.FC = () => {
 		});
 	};
 
+	// Función para manejar el cambio de la fecha máxima de entrega
 	const handleToggleFechaMaxima = () => {
 		setFechaMaxima((prevFechaMaxima) => !prevFechaMaxima);
 		setFormData((prevFormData) => ({
@@ -176,55 +220,12 @@ const Page: React.FC = () => {
 		}));
 	};
 
+	// Función para manejar el click en el botón de asignar parámetro
 	const handleLongevidadClick = () => {
 		setShowLongevidadForm(true);
 	};
 
-	useEffect(() => {
-		if (!lessonsId || !cursoIdNumber) {
-			return;
-		}
-		console.log(parametros);
-		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
-		if (savedColor) {
-			setColor(savedColor);
-		}
-	}, [lessonsId, parametros, courseIdNumber, cursoIdNumber]);
-
-	const fetchCourse = useCallback(async () => {
-		if (!user) return;
-		if (courseIdNumber !== null) {
-			try {
-				const response = await fetch(
-					`/api/educadores/courses/${courseIdNumber}`
-				);
-
-				if (response.ok) {
-					const data = (await response.json()) as Course;
-					setCourse(data);
-				} else {
-					const errorData = (await response.json()) as { error?: string };
-					const errorMessage = errorData.error ?? response.statusText;
-					toast('Error', {
-						description: `No se pudo cargar el curso: ${errorMessage}`,
-					});
-				}
-			} catch (error: unknown) {
-				const errorMessage =
-					error instanceof Error ? error.message : 'Error desconocido';
-				toast('Error', {
-					description: `No se pudo cargar el curso: ${errorMessage}`,
-				});
-			}
-		}
-	}, [user, courseIdNumber]);
-
-	useEffect(() => {
-		fetchCourse().catch((error) =>
-			console.error('Error fetching course:', error)
-		);
-	}, [fetchCourse]);
-
+	// Función para validar el porcentaje de la actividad
 	const validarPorcentaje = async (
 		parametroId: number,
 		nuevoPorcentaje: number
@@ -246,7 +247,7 @@ const Page: React.FC = () => {
 			};
 
 			if (!response.ok) {
-				toast('Error de porcentaje', {
+				toast.error('Error de porcentaje', {
 					description: 'Error desconocido',
 				});
 				return false;
@@ -272,6 +273,7 @@ const Page: React.FC = () => {
 		}
 	};
 
+	// Función para manejar el cambio del porcentaje
 	const handlePorcentajeChange = (value: string) => {
 		const nuevoPorcentaje = parseFloat(value) || 0;
 
@@ -282,6 +284,7 @@ const Page: React.FC = () => {
 		});
 	};
 
+	// Función para manejar el cambio del parámetro y seleccionar el porcentaje para la actividad
 	const handleParametroChange = (parametroId: number) => {
 		setFormData({
 			...formData,
@@ -290,6 +293,7 @@ const Page: React.FC = () => {
 		});
 	};
 
+	// Función para manejar el envío del formulario
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
@@ -329,6 +333,7 @@ const Page: React.FC = () => {
 			}
 		}
 
+		// Validaciones finales
 		const newErrors = {
 			name: !formData.name,
 			description: !formData.description,
@@ -399,7 +404,7 @@ const Page: React.FC = () => {
 			});
 
 			router.push(
-				`/dashboard/educadores/cursos/${cursoIdNumber}/${lessonsId}/actividades/${actividadId}`
+				`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonsId}/actividades/${actividadId}`
 			);
 		} catch (error) {
 			console.error('Error detallado:', error);
@@ -412,6 +417,7 @@ const Page: React.FC = () => {
 		}
 	};
 
+	// Barra de carga al crear la actividad
 	useEffect(() => {
 		if (isUploading) {
 			setUploadProgress(0);
@@ -429,6 +435,7 @@ const Page: React.FC = () => {
 		}
 	}, [isUploading]);
 
+	// Renderizar el formulario
 	return (
 		<>
 			<Breadcrumb>
@@ -480,7 +487,7 @@ const Page: React.FC = () => {
 			</Breadcrumb>
 			<div className="group relative mx-auto h-auto w-full md:w-3/5 lg:w-3/5">
 				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
-				<div className="relative z-20 mt-5 h-auto w-full justify-center">
+				<div className="relative mt-5 h-auto w-full justify-center">
 					<form
 						className="mx-auto w-full justify-center rounded-lg bg-white p-4"
 						onSubmit={handleSubmit}
@@ -498,132 +505,135 @@ const Page: React.FC = () => {
 								<p className="text-sm">Del curso: {course?.title}</p>
 							</h2>
 						</div>
-						<div className="flex flex-col">
-							<p>¿La actividad es calificable?:</p>
-							<div className="flex space-x-2">
-								<label
-									htmlFor="toggle"
-									className="relative inline-block h-8 w-16"
-								>
-									<input
-										type="checkbox"
-										id="toggle"
-										checked={isActive}
-										onChange={handleToggle}
-										className="absolute size-0"
-									/>
-									<span
-										className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${isActive ? 'bg-gray-300' : 'bg-red-500'}`}
-									>
-										<span
-											className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
-										></span>
-									</span>
-								</label>
-								<span className="mt-1 text-sm text-gray-400">
-									{isActive ? 'Si' : 'No'}
-								</span>
-							</div>
-						</div>
-						{isActive && (
-							<>
-								<div className="my-4">
-									<Button
-										type="button"
-										onClick={(e) => {
-											e.preventDefault();
-											handleLongevidadClick();
-										}}
-										className="border-none bg-blue-500 text-white hover:bg-blue-500/90"
-									>
-										Asignar un parametro de evaluacion
-									</Button>
-								</div>
-								{showLongevidadForm && (
-									<div className="my-4">
-										<div className="flex flex-col">
-											<SelectParametro
-												courseId={cursoIdNumber}
-												parametro={formData.parametro ?? 0}
-												onParametroChange={handleParametroChange}
-												selectedColor={color}
-											/>
-											<Label
-												htmlFor="porcentaje"
-												className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-											>
-												Peso de la nota en el parametro (0-100 en porcentaje %):
-											</Label>
-											<div>
-												<Input
-													value={formData.porcentaje || ''}
-													className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-													type="number"
-													id="percentage"
-													name="porcentaje"
-													min="0"
-													max="100"
-													step="1"
-													placeholder="0-100"
-													onChange={(e) =>
-														handlePorcentajeChange(e.target.value)
-													}
-												/>
-											</div>
-										</div>
-									</div>
-								)}
-							</>
-						)}
-						<div className="my-4 flex flex-col">
+						<div className="grid grid-cols-1 lg:grid-cols-2">
 							<div className="flex flex-col">
-								<p className="font-bold">
-									¿La actividad tiene fecha de entrega?
-								</p>
-								<div className="flex space-x-2">
-									<label
-										htmlFor="toggleFechaMaxima"
-										className="relative inline-block h-8 w-16"
-									>
-										<input
-											type="checkbox"
-											id="toggleFechaMaxima"
-											checked={fechaMaxima}
-											onChange={handleToggleFechaMaxima}
-											className="absolute size-0"
-										/>
-										<span
-											className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
+								<div className="flex flex-col">
+									<p>¿La actividad es calificable?:</p>
+									<div className="flex">
+										<label
+											htmlFor="toggle"
+											className="relative inline-block h-8 w-16"
 										>
+											<input
+												type="checkbox"
+												id="toggle"
+												checked={isActive}
+												onChange={handleToggle}
+												className="absolute size-0"
+											/>
 											<span
-												className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
-											></span>
+												className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${isActive ? 'bg-gray-300' : 'bg-red-500'}`}
+											>
+												<span
+													className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
+												></span>
+											</span>
+										</label>
+										<span className="mt-1 text-sm text-gray-400">
+											{isActive ? 'Si' : 'No'}
 										</span>
-									</label>
-									<span className="mt-1 text-sm text-gray-400">
-										{fechaMaxima ? 'Si' : 'No'}
-									</span>
+									</div>
 								</div>
+								{isActive && (
+									<>
+										<div className="my-1">
+											<Button
+												type="button"
+												onClick={(e) => {
+													e.preventDefault();
+													handleLongevidadClick();
+												}}
+												className="border-none bg-blue-500 text-white hover:bg-blue-500/90"
+											>
+												Asignar un parametro de evaluacion
+											</Button>
+										</div>
+										{showLongevidadForm && (
+											<div className="my-4">
+												<div>
+													<SelectParametro
+														courseId={courseIdNumber}
+														parametro={formData.parametro ?? 0}
+														onParametroChange={handleParametroChange}
+														selectedColor={color}
+													/>
+													<Label
+														htmlFor="porcentaje"
+														className={`mb-2 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+													>
+														Peso actividad en el parametro (0-100 en
+														porcentaje%):
+													</Label>
+													<div>
+														<Input
+															value={formData.porcentaje || ''}
+															className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+															type="number"
+															id="percentage"
+															name="porcentaje"
+															min="0"
+															max="100"
+															step="1"
+															placeholder="0-100"
+															onChange={(e) =>
+																handlePorcentajeChange(e.target.value)
+															}
+														/>
+													</div>
+												</div>
+											</div>
+										)}
+									</>
+								)}
 							</div>
-							{fechaMaxima && (
-								<>
-									<span
-										className={`text-xl font-medium ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-									>
-										Fecha maxima de entrega:
-									</span>
-									<input
-										type="datetime-local"
-										className={`w-1/2 rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												fechaMaximaEntrega: e.target.value,
-											})
-										}
-									/>
-								</>
-							)}
+							<div className="flex flex-col">
+								<div className="flex flex-col">
+									<p>¿La actividad tiene fecha de entrega?</p>
+									<div className="flex space-x-2">
+										<label
+											htmlFor="toggleFechaMaxima"
+											className="relative inline-block h-8 w-16"
+										>
+											<input
+												type="checkbox"
+												id="toggleFechaMaxima"
+												checked={fechaMaxima}
+												onChange={handleToggleFechaMaxima}
+												className="absolute size-0"
+											/>
+											<span
+												className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
+											>
+												<span
+													className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
+												></span>
+											</span>
+										</label>
+										<span className="mt-1 text-sm text-gray-400">
+											{fechaMaxima ? 'Si' : 'No'}
+										</span>
+									</div>
+								</div>
+								{fechaMaxima && (
+									<>
+										<span
+											className={`text-xl font-medium ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+										>
+											Fecha maxima de entrega:
+										</span>
+										<input
+											type="datetime-local"
+											className={`w-full rounded-lg border border-slate-200 bg-white p-2 text-black outline-none`}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													fechaMaximaEntrega: e.target.value,
+												})
+											}
+										/>
+									</>
+								)}
+							</div>
 						</div>
 						<Label
 							className={`mb-2 text-xl ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
@@ -667,7 +677,6 @@ const Page: React.FC = () => {
 							}
 							selectedColor={color}
 						/>
-
 						{isUploading && (
 							<div className="my-1">
 								<Progress value={uploadProgress} className="w-full" />

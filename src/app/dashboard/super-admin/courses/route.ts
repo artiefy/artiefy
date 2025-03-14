@@ -66,9 +66,9 @@ export async function POST(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			instructor: string;
-			requerimientos: string;
+			
 		};
 
 		const {
@@ -77,9 +77,8 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
-			requerimientos,
 		} = body;
 
 		await createCourse({
@@ -89,9 +88,8 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
-			requerimientos,
 		});
 
 		console.log('Datos enviados al servidor:', {
@@ -100,9 +98,8 @@ export async function POST(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			instructor,
-			requerimientos,
 		});
 
 		return NextResponse.json({ message: 'Curso creado exitosamente' });
@@ -129,9 +126,9 @@ export async function PUT(request: NextRequest) {
 			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number;
-			dificultadid: number;
+			nivelid: number;
 			instructor: string;
-			requerimientos: string;
+			
 		};
 		const {
 			id,
@@ -139,10 +136,9 @@ export async function PUT(request: NextRequest) {
 			description,
 			coverImageKey,
 			modalidadesid,
-			dificultadid,
+			nivelid,
 			categoryid,
 			instructor,
-			requerimientos,
 		} = body;
 
 		const course = await getCourseById(id);
@@ -161,8 +157,7 @@ export async function PUT(request: NextRequest) {
 			categoryid,
 			modalidadesid,
 			instructor,
-			dificultadid,
-			requerimientos,
+			nivelid,
 		});
 
 		return NextResponse.json({ message: 'Curso actualizado exitosamente' });

@@ -29,13 +29,12 @@ interface Course {
 	title: string;
 	description: string;
 	categoryid: string;
-	dificultadid: string;
+	nivelid: string;
 	modalidadesid: string;
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
 	totalDuration: number;
-	requerimientos: string;
 	rating: number;
 	upcomingSessions: {
 		title: string;

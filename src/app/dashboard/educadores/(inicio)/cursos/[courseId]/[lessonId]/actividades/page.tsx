@@ -48,14 +48,13 @@ interface Course {
 	title: string;
 	description: string;
 	categoryid: string;
-	dificultadid: string;
+	nivelid: string;
 	modalidadesid: string;
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
 	createdAt: string;
 	updatedAt: string;
-	requerimientos: string;
 	totalParametros: number;
 }
 
@@ -405,7 +404,7 @@ const Page: React.FC = () => {
 			});
 
 			router.push(
-				`/dashboard/educadores/cursos/${courseIdNumber}/${lessonsId}/actividades/${actividadId}`
+				`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonsId}/actividades/${actividadId}`
 			);
 		} catch (error) {
 			console.error('Error detallado:', error);

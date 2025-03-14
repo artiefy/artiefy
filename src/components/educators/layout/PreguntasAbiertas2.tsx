@@ -61,27 +61,36 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 		}));
 	};
 
-	// Valida el porcentaje total de las preguntas
 	const validateTotalPercentage = async (newPesoPregunta: number) => {
+		console.log('newPesoPregunta:', newPesoPregunta);
 		const response = await fetch(
 			`/api/educadores/question/totalPercentage2?activityId=${activityId}`
 		);
+		console.log('Response:', response);
 		const data = (await response.json()) as { totalPercentage: number };
+		console.log('Data:', data);
 		const totalPercentage =
 			data.totalPercentage +
 			newPesoPregunta -
 			(editingQuestion?.pesoPregunta ?? 0);
+		console.log('Total Percentage:', totalPercentage);
 		const comprobacion = totalPercentage <= 100 ? false : true;
+		console.log('Comprobacion:', comprobacion);
 		return comprobacion;
 	};
 
 	// Maneja el envio del formulario para guardar la pregunta
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (!(await validateTotalPercentage(formData.pesoPregunta))) {
+		console.log('Form Data:', formData);
+		const isTotalPercentageValid = await validateTotalPercentage(
+			formData.pesoPregunta
+		);
+		console.log('isTotalPercentageValid:', isTotalPercentageValid);
+		if (isTotalPercentageValid) {
 			toast('Error', {
 				description:
-					'El porcentaje total de las preguntas no puede ser mayor a 100%',
+					'El porcentaje total de las preguntas no puede ser mayor a 1%',
 			});
 			return;
 		}
@@ -90,6 +99,8 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 		const questionId = editingQuestion
 			? editingQuestion.id
 			: crypto.randomUUID();
+		console.log('Method:', method);
+		console.log('Question ID:', questionId);
 		setUploadProgress(0);
 		const interval = setInterval(() => {
 			setUploadProgress((prev) => {
@@ -102,14 +113,17 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 		}, 500);
 
 		try {
+			const requestBody = {
+				activityId,
+				questionsACompletar2: { ...formData, id: questionId },
+			};
+			console.log('Request Body:', requestBody);
 			const response = await fetch('/api/educadores/question/completar2', {
 				method,
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					activityId,
-					questionsACompletar2: { ...formData, id: questionId },
-				}),
+				body: JSON.stringify(requestBody),
 			});
+			console.log('Response:', response);
 			if (!response.ok) {
 				const errorText = await response.text();
 				throw new Error(`Error en la solicitud: ${errorText}`);
@@ -118,6 +132,7 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 				success: boolean;
 				questions: Completado2[];
 			};
+			console.log('Data:', data);
 			if (data.success) {
 				toast('Pregunta guardada', {
 					description: 'La pregunta se guardó correctamente',

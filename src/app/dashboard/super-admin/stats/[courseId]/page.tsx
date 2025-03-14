@@ -14,7 +14,6 @@ import {
 	ArrowLeft,
 } from 'lucide-react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import SuperAdminLayout from '~/app/dashboard/super-admin/super-admin-layout';
 
 interface Stats {
 	totalLessons: number;
@@ -55,7 +54,7 @@ interface CourseInfo {
 	title: string;
 	instructor: string;
 	createdAt: string;
-	difficulty: string;
+	nivel: string; // Replaced difficulty with nivel
 }
 interface LessonDetail {
 	lessonId: number;
@@ -98,11 +97,11 @@ export default function StudentCourseDashboard() {
 
 	const openModal = (detail: SelectedDetail) => {
 		console.log('🟢 Mostrando detalle:', detail);
-	
+
 		if (detail.title === 'Parámetros de Evaluación') {
 			console.log('📊 Parámetros enviados al modal:', evaluationParameters);
 		}
-	
+
 		setSelectedDetail({
 			...detail,
 			details: detail.details ?? `Información adicional sobre ${detail.title}`,
@@ -115,17 +114,16 @@ export default function StudentCourseDashboard() {
 						}))
 					: [],
 		});
-		
-	
+
 		setIsModalOpen(true);
 	};
-	
-
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const res = await fetch(`/api/super-admin/course/${courseId}/stats/${user}`);
+				const res = await fetch(
+					`/api/educators/course/${courseId}/stats/${user}`
+				);
 				const data = (await res.json()) as {
 					statistics: Stats;
 					user: UserInfo;
@@ -138,22 +136,23 @@ export default function StudentCourseDashboard() {
 						percentage: number;
 					}[];
 				};
-	
+
 				// Corregir cómo se asigna `evaluationParameters`
 				setEvaluationParameters(
-					data.statistics.evaluationParameters && Array.isArray(data.statistics.evaluationParameters)
+					data.statistics.evaluationParameters &&
+						Array.isArray(data.statistics.evaluationParameters)
 						? data.statistics.evaluationParameters
 						: []
 				);
-					
+
 				setStats({
 					...data.statistics,
 					averageLessonProgress: data.statistics.averageLessonProgress,
 					activities: data.statistics.activities ?? [],
 				});
-	
+
 				setLessonDetails(data.lessonDetails ?? []);
-	
+
 				setUserInfo(data.user);
 				setCourseInfo(data.course);
 			} catch (error) {
@@ -162,13 +161,12 @@ export default function StudentCourseDashboard() {
 				setLoading(false);
 			}
 		};
-	
+
 		void fetchData();
 	}, [courseId, user]);
-	
 
 	return (
-		<SuperAdminLayout>
+		<>
 			<div className="p-6">
 				{/* Botón de Volver */}
 				<button
@@ -181,11 +179,11 @@ export default function StudentCourseDashboard() {
 				<h2 className="text-2xl font-bold text-white">Dashboard del Curso</h2>
 
 				{/* Información del Usuario y Curso */}
-				<div className="bg-background mt-6 flex justify-between rounded-xl p-6 shadow-[0_4px_10px_rgba(58,244,239,0.3)]">
+				<div className="mt-6 flex justify-between rounded-xl bg-background p-6 shadow-[0_4px_10px_rgba(58,244,239,0.3)]">
 					{/* Info del Usuario */}
 					<div className="flex flex-col">
 						<div className="flex items-center gap-3">
-							<User className="text-primary size-6" />
+							<User className="size-6 text-primary" />
 							<p className="text-lg font-semibold text-white">
 								{userInfo?.firstName}
 							</p>
@@ -197,7 +195,7 @@ export default function StudentCourseDashboard() {
 					{/* Info del Curso */}
 					<div className="flex flex-col text-left">
 						<div className="flex items-center gap-3">
-							<GraduationCap className="text-primary size-6" />
+							<GraduationCap className="size-6 text-primary" />
 							<p className="text-lg font-semibold text-white">
 								{courseInfo?.title}
 							</p>
@@ -205,9 +203,7 @@ export default function StudentCourseDashboard() {
 						<p className="text-sm text-gray-400">
 							Instructor: {courseInfo?.instructor}
 						</p>
-						<p className="text-sm text-gray-400">
-							Dificultad: {courseInfo?.difficulty}
-						</p>
+						<p className="text-sm text-gray-400">Nivel: {courseInfo?.nivel}</p>
 						<div className="flex items-center gap-2 text-gray-400">
 							<Calendar className="size-4" />
 							<p className="text-sm">
@@ -363,7 +359,7 @@ export default function StudentCourseDashboard() {
 								onClick={() => openModal(stat)}
 								className="cursor-pointer rounded-xl bg-gray-800 p-6 transition-all duration-300 hover:shadow-[0_6px_15px_rgba(0,189,216,0.4)]"
 							>
-								<stat.icon className="text-primary mb-3 size-6 transition-all duration-300" />
+								<stat.icon className="mb-3 size-6 text-primary transition-all duration-300" />
 								<h4 className="text-lg font-bold text-white">{stat.value}</h4>
 								<p className="text-sm text-gray-400">{stat.title}</p>
 							</div>
@@ -402,23 +398,31 @@ export default function StudentCourseDashboard() {
 													</tr>
 												</thead>
 												<tbody>
-	{selectedDetail?.extraInfo?.length > 0 ? (
-		selectedDetail.extraInfo.map((param, index) => (
-			<tr key={index} className="text-gray-300">
-				<td className="border border-gray-700 p-2">{param.label}</td>
-				<td className="border border-gray-700 p-2 text-center">{param.value}</td>
-				<td className="border border-gray-700 p-2">{param.description}</td>
-			</tr>
-		))
-	) : (
-		<tr>
-			<td colSpan={3} className="p-2 text-center text-gray-400">
-				⚠ No hay parámetros de evaluación registrados.
-			</td>
-		</tr>
-	)}
-</tbody>
-
+													{selectedDetail?.extraInfo?.length > 0 ? (
+														selectedDetail.extraInfo.map((param, index) => (
+															<tr key={index} className="text-gray-300">
+																<td className="border border-gray-700 p-2">
+																	{param.label}
+																</td>
+																<td className="border border-gray-700 p-2 text-center">
+																	{param.value}
+																</td>
+																<td className="border border-gray-700 p-2">
+																	{param.description}
+																</td>
+															</tr>
+														))
+													) : (
+														<tr>
+															<td
+																colSpan={3}
+																className="p-2 text-center text-gray-400"
+															>
+																⚠ No hay parámetros de evaluación registrados.
+															</td>
+														</tr>
+													)}
+												</tbody>
 											</table>
 										</div>
 									</div>
@@ -642,6 +646,6 @@ export default function StudentCourseDashboard() {
 					</div>
 				</div>
 			)}
-		</SuperAdminLayout>
+		</>
 	);
 }

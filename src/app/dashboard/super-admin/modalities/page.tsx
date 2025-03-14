@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, X, Edit, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
-import SuperAdminLayout from './../../super-admin/super-admin-layout';
 
 export default function ModalitiesPage() {
   const [modalities, setModalities] = useState<{ id: number; name: string; description: string }[]>([]);
@@ -90,7 +89,7 @@ export default function ModalitiesPage() {
   const paginatedModalities = modalities.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <SuperAdminLayout>
+    <>
       <div className="p-6">
         <header className="flex items-center justify-between rounded-lg bg-[#00BDD8] p-6 text-3xl font-bold text-[#01142B] shadow-md">
           <h1>Gestión de Modalidades</h1>
@@ -156,7 +155,7 @@ export default function ModalitiesPage() {
           </>
         )}
       </div>
-    </SuperAdminLayout>
+    </>
   );
 }
 

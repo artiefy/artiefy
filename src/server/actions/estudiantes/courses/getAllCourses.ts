@@ -7,7 +7,7 @@ import {
 	courses,
 	categories,
 	modalidades,
-	dificultad,
+	nivel,
 } from '~/server/db/schema';
 
 const getAllCourses = unstable_cache(
@@ -29,17 +29,16 @@ const getAllCourses = unstable_cache(
 						creatorId: courses.creatorId,
 						rating: courses.rating,
 						modalidadesid: courses.modalidadesid,
-						dificultadid: courses.dificultadid,
+						nivelid: courses.nivelid,
 						categoryName: categories.name,
 						categoryDescription: categories.description,
 						modalidadName: modalidades.name,
-						dificultadName: dificultad.name,
 						isFeatured: categories.is_featured,
 					})
 					.from(courses)
 					.leftJoin(categories, eq(courses.categoryid, categories.id))
 					.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-					.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
+					.leftJoin(nivel, eq(courses.nivelid, nivel.id))
 					.orderBy(desc(courses.createdAt))
 					.limit(100);
 			} else {
@@ -57,17 +56,16 @@ const getAllCourses = unstable_cache(
 						creatorId: courses.creatorId,
 						rating: courses.rating,
 						modalidadesid: courses.modalidadesid,
-						dificultadid: courses.dificultadid,
+						nivelid: courses.nivelid,
 						categoryName: categories.name,
 						categoryDescription: categories.description,
 						modalidadName: modalidades.name,
-						dificultadName: dificultad.name,
 						isFeatured: categories.is_featured,
 					})
 					.from(courses)
 					.leftJoin(categories, eq(courses.categoryid, categories.id))
 					.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-					.leftJoin(dificultad, eq(courses.dificultadid, dificultad.id))
+					.leftJoin(nivel, eq(courses.nivelid, nivel.id))
 					.orderBy(desc(courses.createdAt))
 					.limit(100);
 			}
@@ -84,7 +82,7 @@ const getAllCourses = unstable_cache(
 				creatorId: course.creatorId,
 				rating: Number(course.rating ?? 0),
 				modalidadesid: course.modalidadesid,
-				dificultadid: course.dificultadid,
+				nivelid: course.nivelid,
 				totalStudents: 0,
 				lessons: [],
 				category: {
@@ -94,7 +92,6 @@ const getAllCourses = unstable_cache(
 					is_featured: course.isFeatured ?? false,
 				},
 				modalidad: { name: course.modalidadName ?? '' },
-				dificultad: { name: course.dificultadName ?? '' },
 				isFeatured: course.isFeatured ?? false,
 			}));
 		} catch (error) {

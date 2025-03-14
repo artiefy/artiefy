@@ -7,7 +7,7 @@ import {
 	courses,
 	categories,
 	modalidades,
-	dificultad,
+	nivel as nivel,
 } from '~/server/db/schema';
 
 // Función para verificar el rol de admin y obtener usuarios
@@ -16,7 +16,6 @@ export async function getAdminUsers(query: string | undefined) {
 	const client = await clerkClient();
 	const usersResponse = await client.users.getUserList({ limit: 100 });
 	const users = usersResponse.data;
-
 
 	const filteredUsers = query
 		? users.filter(
@@ -36,8 +35,8 @@ export async function getAdminUsers(query: string | undefined) {
 		email: user.emailAddresses.find(
 			(email) => email.id === user.primaryEmailAddressId
 		)?.emailAddress,
-		role: user.publicMetadata.role || 'estudiante',
-		status: user.publicMetadata.status || 'activo', // ✅ Agregar estado con valor por defecto
+		role: user.publicMetadata.role ?? 'estudiante',
+		status: user.publicMetadata.status ?? 'activo', // ✅ Agregar estado con valor por defecto
 	}));
 
 	return simplifiedUsers;
@@ -103,51 +102,57 @@ export async function updateUserInfo(
 }
 
 export async function createUser(
-    firstName: string,
-    lastName: string,
-    email: string,
-    role: string
+	firstName: string,
+	lastName: string,
+	email: string,
+	role: string
 ) {
-    try {
-        // 🔹 Obtener la primera letra del primer nombre y primer apellido
-        const firstInitial = firstName.charAt(0).toLowerCase();
-        const lastInitial = lastName?.split(' ')[0]?.charAt(0).toLowerCase() || 'x'; // 'x' si no hay apellido
+	try {
+		// 🔹 Obtener la primera letra del primer nombre y primer apellido
+		const firstInitial = firstName.charAt(0).toLowerCase();
+		const lastInitial = lastName?.split(' ')[0]?.charAt(0).toLowerCase() || 'x'; // 'x' si no hay apellido
 
-        // 🔹 Generar la contraseña base (iniciales del nombre y apellido)
-        let generatedPassword = `${firstInitial}${lastInitial}`;
+		// 🔹 Generar la contraseña base (iniciales del nombre y apellido)
+		let generatedPassword = `${firstInitial}${lastInitial}`;
 
-        // 🔹 Si la contraseña es menor a 8 caracteres, agregar "12345678" hasta completar
-        if (generatedPassword.length < 8) {
-            generatedPassword += "12345678".slice(0, 8 - generatedPassword.length);
-        }
+		// 🔹 Si la contraseña es menor a 8 caracteres, agregar "12345678" hasta completar
+		if (generatedPassword.length < 8) {
+			generatedPassword += '12345678'.slice(0, 8 - generatedPassword.length);
+		}
 
-        // 🔹 Agregar un número aleatorio para evitar que la contraseña sea "pwned"
-        const randomDigits = Math.floor(10 + Math.random() * 90); // Número entre 10 y 99
-        generatedPassword += randomDigits;
+		// 🔹 Agregar un número aleatorio para evitar que la contraseña sea "pwned"
+		const randomDigits = Math.floor(10 + Math.random() * 90); // Número entre 10 y 99
+		generatedPassword += randomDigits;
 
-        // 🔹 Generar un nombre de usuario válido (mínimo 4 caracteres, máximo 64)
-        let username = `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
-        if (username.length < 4) username += "user";
-        username = username.slice(0, 64);
+		// 🔹 Generar un nombre de usuario válido (mínimo 4 caracteres, máximo 64)
+		let username = `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
+		if (username.length < 4) username += 'user';
+		username = username.slice(0, 64);
 
-        const client = await clerkClient();
-        const newUser = await client.users.createUser({
-            firstName,
-            lastName,
-            username,
-            password: generatedPassword,
-            emailAddress: [email],
-            publicMetadata: { role, mustChangePassword: true },
-        });
+		const client = await clerkClient();
+		const newUser = await client.users.createUser({
+			firstName,
+			lastName,
+			username,
+			password: generatedPassword,
+			emailAddress: [email],
+			publicMetadata: { role, mustChangePassword: true },
+		});
 
-        console.log(`DEBUG: Usuario ${newUser.id} creado con contraseña: ${generatedPassword}`);
-        return { user: newUser, generatedPassword };
-    } catch (error: unknown) {
-        console.error('DEBUG: Error al crear usuario en Clerk:', JSON.stringify(error, null, 2));
-        throw new Error((error as { message: string }).message || 'No se pudo crear el usuario');
-    }
+		console.log(
+			`DEBUG: Usuario ${newUser.id} creado con contraseña: ${generatedPassword}`
+		);
+		return { user: newUser, generatedPassword };
+	} catch (error: unknown) {
+		console.error(
+			'DEBUG: Error al crear usuario en Clerk:',
+			JSON.stringify(error, null, 2)
+		);
+		throw new Error(
+			(error as { message: string }).message || 'No se pudo crear el usuario'
+		);
+	}
 }
-
 
 export async function updateUserStatus(id: string, status: string) {
 	try {
@@ -191,13 +196,12 @@ export interface CourseData {
 	coverImageKey: string | null; // 🔹 Permitir `null` y hacerla opcional
 	categoryid: number;
 	modalidadesid: number;
-	dificultadid: number;
-	requerimientos?: string; // 🔹 Permitir `null` y hacerla opcional
+	nivelid: number;
 	instructor: string;
 	creatorId: string;
 	createdAt: Date | string; // 🔹 Permitir `string` porque en errores previos llegaba como `string`
 	updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
-	rating?: number | null; // 🔹 Hacer opcional porque algunos cursos no lo tenían
+	rating?: number | null;
 }
 
 export async function getCourses() {
@@ -237,7 +241,6 @@ export async function createCourse(courseData: CourseData) {
 				...courseData,
 				instructor: courseData.instructor ?? 'Desconocido', // ✅ Evitar errores si instructor es null
 				creatorId: courseData.creatorId || 'defaultCreatorId', // ✅ Manejo de creatorId
-				requerimientos: courseData.requerimientos ?? '', // ✅ Asegurar que requerimientos sea siempre una cadena
 				createdAt: new Date(courseData.createdAt), // Convertir a Date
 				updatedAt: courseData.updatedAt
 					? new Date(courseData.updatedAt)
@@ -257,7 +260,6 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
 			.update(courses)
 			.set({
 				...courseData,
-				requerimientos: courseData.requerimientos ?? '',
 				createdAt: new Date(courseData.createdAt),
 				updatedAt: courseData.updatedAt
 					? new Date(courseData.updatedAt)
@@ -281,12 +283,12 @@ export async function getCategories() {
 	}
 }
 
-// ✅ Obtener todas las dificultades
-export async function getDificultades() {
+// ✅ Obtener todas las
+export async function getNivel() {
 	try {
-		return (await db.select().from(dificultad)) || [];
+		return (await db.select().from(nivel)) || [];
 	} catch (error) {
-		console.error('❌ Error al obtener dificultades:', error);
+		console.error('❌ Error al obtener niveles:', error);
 		return [];
 	}
 }

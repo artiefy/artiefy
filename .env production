@@ -1,0 +1,8 @@
+# Clerk Production Keys
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuYXJ0aWVmeS5jb20k
+CLERK_SECRET_KEY=sk_live_eiWoKzDDBA4oLdcJcEGjYjVIZRUhgedTNwAp3Wosjt
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+
+# Resto de variables de producción
+NODE_ENV=production

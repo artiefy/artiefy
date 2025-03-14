@@ -26,8 +26,7 @@ export interface CourseModel {
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
-	dificultadid: string;
-	requerimientos: string;
+	nivelid: string;
 	totalParametros: number;
 	rating: number;
 }
@@ -72,7 +71,7 @@ export default function Page() {
 				setCourses(
 					data.map((course) => ({
 						...course,
-						dificultadid: course.dificultadid ?? '', // Map it properly
+						nivelid: course.nivelid ?? '', // Map it properly
 						categoryid: course.categoryid, // Map categoryid properly
 						modalidadesid: course.modalidadesid, // Map modalidadesid properly
 					})) as CourseModel[]
@@ -114,9 +113,8 @@ export default function Page() {
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadid: number,
+		nivelid: number,
 		rating: number, // Añadir esta línea
-		requerimientos: string,
 		addParametros: boolean, // Cambiar options por addParametros
 		coverImageKey: string,
 		fileName: string // Nuevo parámetro
@@ -192,8 +190,7 @@ export default function Page() {
 				modalidadesid,
 				instructor: user.fullName,
 				creatorId: user.id,
-				dificultadid,
-				requerimientos,
+				nivelid,
 				rating, // Añadir esta línea
 			}),
 		});
@@ -266,8 +263,7 @@ export default function Page() {
 			instructor: '',
 			coverImageKey: '',
 			creatorId: '',
-			dificultadid: '',
-			requerimientos: '',
+			nivelid: '',
 			totalParametros: 0,
 			rating: 0, // Añadir esta línea
 		});
@@ -292,10 +288,6 @@ export default function Page() {
 		setEditingCourse((prev) => (prev ? { ...prev, description } : prev));
 	};
 
-	// Manejo de los requerimientos del curso en el modal si no es null
-	const setRequerimientos = (requerimientos: string) => {
-		setEditingCourse((prev) => (prev ? { ...prev, requerimientos } : prev));
-	};
 
 	// Manejo de la categoría del curso en el modal si no es null
 	const setCategoryid = (categoryid: number) => {
@@ -311,10 +303,10 @@ export default function Page() {
 		);
 	};
 
-	// Manejo de la dificultad del curso en el modal si no es null
-	const setDificultidid = (dificultadid: number) => {
+	// Manejo de la nivel del curso en el modal si no es null
+	const setNivelid = (nivelid: number) => {
 		setEditingCourse((prev) =>
-			prev ? { ...prev, dificultadid: String(dificultadid) } : prev
+			prev ? { ...prev, nivelid: String(nivelid) } : prev
 		);
 	};
 
@@ -427,14 +419,12 @@ export default function Page() {
 							setTitle={setTitle}
 							description={editingCourse?.description ?? ''}
 							setDescription={setDescription}
-							requerimientos={editingCourse?.requerimientos ?? ''}
-							setRequerimientos={setRequerimientos}
 							categoryid={editingCourse ? Number(editingCourse.categoryid) : 0}
 							setCategoryid={setCategoryid}
 							modalidadesid={Number(editingCourse?.modalidadesid) || 0}
 							setModalidadesid={setModalidadesid}
-							dificultadid={Number(editingCourse?.dificultadid) || 0}
-							setDificultadid={setDificultidid}
+							nivelid={Number(editingCourse?.nivelid) || 0}
+							setNivelid={setNivelid}
 							coverImageKey={editingCourse?.coverImageKey ?? ''}
 							setCoverImageKey={setCoverImageKey}
 							parametros={parametrosList.map((parametro, index) => ({

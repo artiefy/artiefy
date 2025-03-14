@@ -1,53 +1,88 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import {
+	clerkMiddleware,
+	createRouteMatcher,
+	type ClerkMiddlewareOptions,
+} from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-const isAdminRoute = createRouteMatcher(['/dashboard/admin(.*)']);
-const isSuperAdminRoute = createRouteMatcher(['/dashboard/super-admin(.*)']);
-const isEducatorRoute = createRouteMatcher(['/dashboard/educadores(.*)']);
-const isStudentClassRoute = createRouteMatcher(['/estudiantes/clases/:id']);
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)']);
-const publicRoutes = createRouteMatcher(['/sign-in', '/sign-up']);
+// Protected route matchers with documentation
+const routeMatchers = {
+	admin: createRouteMatcher(['/dashboard/admin(.*)']) as (
+		req: Request
+	) => boolean,
+	superAdmin: createRouteMatcher(['/dashboard/super-admin(.*)']) as (
+		req: Request
+	) => boolean,
+	educador: createRouteMatcher(['/dashboard/educadores(.*)']) as (
+		req: Request
+	) => boolean,
+	student: createRouteMatcher(['/estudiantes/clases/:id']) as (
+		req: Request
+	) => boolean,
+	protected: createRouteMatcher(['/dashboard(.*)']) as (
+		req: Request
+	) => boolean,
+};
+
+// Middleware configuration
+const middlewareConfig: ClerkMiddlewareOptions = {
+	authorizedParties: [
+		'https://artiefy.com',
+		'https://accounts.artiefy.com',
+		...(process.env.NODE_ENV === 'development'
+			? ['http://localhost:3000']
+			: []),
+	],
+};
 
 export default clerkMiddleware(async (auth, req) => {
-	const { userId, sessionClaims } = await auth();
-	const role = sessionClaims?.metadata?.role;
+	try {
+		const { userId, sessionClaims } = await auth();
+		const role = sessionClaims?.metadata?.role;
 
-	// Si es una ruta pública, permitir acceso
-	if (publicRoutes(req)) {
+		// Check for protected routes
+		const isProtectedRoute = Object.values(routeMatchers).some((matcher) =>
+			matcher(req)
+		);
+
+		// If not a protected route, allow access
+		if (!isProtectedRoute) {
+			return NextResponse.next();
+		}
+
+		// Handle unauthenticated users for protected routes
+		if (!userId) {
+			return NextResponse.redirect(new URL('/sign-in', req.url));
+		}
+
+		// Role-based access control
+		if (routeMatchers.admin(req) && role !== 'admin') {
+			return NextResponse.redirect(new URL('/', req.url));
+		}
+
+		if (routeMatchers.superAdmin(req) && role !== 'super-admin') {
+			return NextResponse.redirect(new URL('/', req.url));
+		}
+
+		if (routeMatchers.educador(req) && role !== 'educador') {
+			return NextResponse.redirect(new URL('/', req.url));
+		}
+
+		// Student route protection
+		if (routeMatchers.student(req) && !userId) {
+			return NextResponse.redirect(new URL('/sign-in', req.url));
+		}
+
 		return NextResponse.next();
+	} catch (error) {
+		console.error('Middleware error:', error);
+		return NextResponse.redirect(new URL('/error', req.url));
 	}
-
-	// Redirigir a login si no está autenticado y la ruta es protegida
-	if (!userId && isProtectedRoute(req)) {
-		return NextResponse.redirect(new URL('/sign-in', req.url));
-	}
-
-	// Proteger rutas específicas por rol
-	if (isAdminRoute(req) && role !== 'admin') {
-		return NextResponse.redirect(new URL('/', req.url));
-	}
-
-	if (isSuperAdminRoute(req) && role !== 'super-admin') {
-		return NextResponse.redirect(new URL('/', req.url));
-	}
-
-	if (isEducatorRoute(req) && role !== 'educador') {
-		return NextResponse.redirect(new URL('/', req.url));
-	}
-
-	// Proteger rutas dinámicas de estudiantes
-	if (isStudentClassRoute(req) && !userId) {
-		return NextResponse.redirect(new URL('/sign-in', req.url));
-	}
-
-	return NextResponse.next();
-});
+}, middlewareConfig);
 
 export const config = {
 	matcher: [
-		// Skip Next.js internals and all static files, unless found in search params
 		'/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-		// Always run for API routes
 		'/(api|trpc)(.*)',
 	],
 };

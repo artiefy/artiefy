@@ -13,7 +13,7 @@ const getCourseById = unstable_cache(
 			with: {
 				category: true,
 				modalidad: true,
-				dificultad: true,
+				nivel: true,
 				lessons: {
 					with: {
 						activities: true,

@@ -5,7 +5,6 @@ import '~/styles/globals.css';
 import { usePathname } from 'next/navigation';
 import { ThemeEffect } from '~/app/dashboard/super-admin/components/admin/ui/theme-effect';
 import { ThemeProvider } from '~/app/dashboard/super-admin/components/admin/ui/theme-provider';
-import ResponsiveSidebar from '~/app/dashboard/super-admin/components/ResponsiveSidebar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -30,13 +29,13 @@ export default function RootLayout({
 				>
 					<ThemeEffect />
 					{!isPublicRoute ? (
-						<ResponsiveSidebar>
+						<>
 							<div className="flex flex-1 flex-col overflow-hidden">
 								<main className="bg-background flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6">
 									{children}
 								</main>
 							</div>
-						</ResponsiveSidebar>
+						</>
 					) : (
 						children
 					)}

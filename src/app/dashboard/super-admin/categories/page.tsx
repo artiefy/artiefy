@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, X, Edit, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
-import SuperAdminLayout from './../../super-admin/super-admin-layout';
 
 interface Category {
   id: number;
@@ -99,7 +98,7 @@ export default function CategoriesPage() {
   const paginatedCategories = categories.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
-    <SuperAdminLayout>
+    <>
       <div className="p-6">
         <header className="flex items-center justify-between rounded-lg bg-[#00BDD8] p-6 text-3xl font-bold text-[#01142B] shadow-md">
           <h1>Gestión de Categorías</h1>
@@ -165,7 +164,7 @@ export default function CategoriesPage() {
             </>
         )}
       </div>
-    </SuperAdminLayout>
+    </>
   );
 }
 

@@ -94,8 +94,7 @@ export async function PUT(
 			categoryid: data.categoryid,
 			instructor: data.instructor,
 			modalidadesid: data.modalidadesid,
-			dificultadid: data.dificultadid,
-			requerimientos: data.requerimientos,
+			nivelid: data.nivelid,
 		});
 
 		console.log('✅ Curso actualizado correctamente en la BD');
@@ -130,9 +129,8 @@ interface CourseData {
 	coverImageKey: string;
 	categoryid: number;
 	modalidadesid: number;
-	dificultadid: number;
+	nivelid: number;
 	instructor: string;
-	requerimientos: string;
 	creatorId: string;
 }
 

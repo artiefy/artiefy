@@ -37,14 +37,13 @@ interface Course {
 	title: string;
 	description: string;
 	categoryid: string;
-	dificultadid: string;
+	nivelid: string; // Replaced  with nivelid
 	modalidadesid: string;
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
 	createdAt: string;
 	updatedAt: string;
-	requerimientos: string;
 	rating: number; // Añadir esta línea
 }
 
@@ -82,10 +81,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [isModalOpen, setIsModalOpen] = useState(false); // Nuevo estado para el modal de edición
 	const [editTitle, setEditTitle] = useState(''); // Nuevo estado para el título del curso a editar
 	const [editDescription, setEditDescription] = useState(''); // Nuevo estado para la descripción del curso
-	const [editRequerimientos, setEditRequerimientos] = useState(''); // Nuevo estado para los requerimientos del curso
 	const [editCategory, setEditCategory] = useState(0); // Nuevo estado para la categoría del curso
 	const [editModalidad, setEditModalidad] = useState(0); // Nuevo estado para la modalidad del curso
-	const [editDificultad, setEditDificultad] = useState(0); // Nuevo estado para la dificultad del curso
+	const [editNivel, setEditNivel] = useState(0); // Replaced  with editNivel
 	const [editCoverImageKey, setEditCoverImageKey] = useState(''); // Nuevo estado para la imagen del curso
 	const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
 	const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
@@ -96,12 +94,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [editedDescription, setEditedDescription] = useState('');
 	const [editedCategory, setEditedCategory] = useState<number | null>(null);
 	const [editedModalidad, setEditedModalidad] = useState<number | null>(null);
-	const [editedDificultad, setEditedDificultad] = useState<number | null>(null);
+	const [editedNivel, setEditedNivel] = useState<number | null>(null); // Replaced edited with editedNivel
 	const [editedInstructor, setEditedInstructor] = useState<string | null>(null);
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Para manejar el menú desplegable de educadores
 	const [categorias, setCategorias] = useState<{ id: number; name: string }[]>([]);
 const [modalidades, setModalidades] = useState<{ id: number; name: string }[]>([]);
-const [dificultades, setDificultades] = useState<{ id: number; name: string }[]>([]);
+const [nivel, setNivel] = useState<{ id: number; name: string }[]>([]); // Replaced es with niveles
 const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 
 	const [editParametros, setEditParametros] = useState<
@@ -186,8 +184,7 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
-		dificultadid: number,
-		requerimientos: string,
+		nivelid: number,
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
@@ -254,9 +251,8 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 						fileName: uploadedFileName, // Agregar fileName al cuerpo de la solicitud
 						categoryid,
 						modalidadesid,
-						dificultadid,
+						nivelid,
 						instructor: course?.instructor,
-						requerimientos,
 						rating, // Añadir esta línea
 					}),
 				}
@@ -337,10 +333,9 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 		if (!course) return; // Verificación adicional
 		setEditTitle(course.title);
 		setEditDescription(course.description);
-		setEditRequerimientos(course.requerimientos);
 		setEditCategory(parseInt(course.categoryid));
 		setEditModalidad(parseInt(course.modalidadesid));
-		setEditDificultad(parseInt(course.dificultadid));
+		setEditNivel(parseInt(course.nivelid));
 		setEditCoverImageKey(course.coverImageKey);
 		setEditParametros(
 			parametros.map((parametro) => ({
@@ -503,7 +498,7 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 						<div className="flex w-full flex-col">
 							<div className="relative aspect-video w-full">
 								<Image
-									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
 									alt={course.title}
 									width={300}
 									height={100}
@@ -631,13 +626,13 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
-										Dificultad:
+										Nivel:
 									</h2>
 									<Badge
 										variant="outline"
 										className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
 									>
-										{course.dificultadid}
+										{course.nivelid}
 									</Badge>
 								</div>
 								<div className="flex flex-col">
@@ -685,9 +680,8 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 					file: File | null,
 					categoryid: number,
 					modalidadesid: number,
-					dificultadid: number,
+					nivelid: number, // Replaced id with nivelid
 					rating: number, // Añadir esta línea
-					requerimientos: string,
 					addParametros: boolean, // Nuevo parámetro
 					coverImageKey: string,
 					fileName: string // Nuevo parámetro
@@ -699,8 +693,7 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 						file,
 						categoryid,
 						modalidadesid,
-						dificultadid,
-						requerimientos,
+						nivelid,
 						addParametros, // Pasar el nuevo parámetro
 						coverImageKey,
 						fileName, // Pasar el nuevo parámetro
@@ -710,19 +703,17 @@ const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
 				editingCourseId={course.id}
 				title={editTitle}
 				description={editDescription}
-				requerimientos={editRequerimientos}
 				categoryid={editCategory}
 				modalidadesid={editModalidad}
-				dificultadid={editDificultad}
+				nivelid={editNivel} // Replaced id with nivelid
 				coverImageKey={editCoverImageKey}
 				parametros={editParametros}
 				rating={editRating} // Añadir esta línea
 				setTitle={setEditTitle}
 				setDescription={setEditDescription}
-				setRequerimientos={setEditRequerimientos}
 				setModalidadesid={setEditModalidad}
 				setCategoryid={setEditCategory}
-				setDificultadid={setEditDificultad}
+				setNivelid={setEditNivel} // Replaced setid with setNivelid
 				setCoverImageKey={setEditCoverImageKey}
 				setParametrosAction={(
 					parametros: {

@@ -70,9 +70,8 @@
 				coverImageKey?: string;
 				categoryid: number;
 				modalidadesid: number;
-				dificultadid: number;
+				nivelid: number;
 				instructor?: string;
-				requerimientos?: string;
 			};
 			console.log('📩 Datos recibidos:', body);
 	
@@ -82,12 +81,11 @@
 				coverImageKey = '',
 				categoryid,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				instructor = '',
-				requerimientos = '',
 			} = body;
 	
-			if (!title || !description || !categoryid || !modalidadesid || !dificultadid) {
+			if (!title || !description || !categoryid || !modalidadesid || !nivelid) {
 				console.error('❌ Error: Faltan datos obligatorios');
 				return respondWithError('Faltan datos obligatorios', 400);
 			}
@@ -100,9 +98,8 @@
 				coverImageKey,
 				categoryid,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				instructor,
-				requerimientos,
 			});
 			console.log('✅ Curso creado con éxito');
 	
@@ -130,9 +127,8 @@
 				coverImageKey: string;
 				categoryid: number;
 				modalidadesid: number;
-				dificultadid: number;
+				nivelid: number;
 				instructor: string;
-				requerimientos: string;
 			};
 			const {
 				id,
@@ -140,10 +136,9 @@
 				description,
 				coverImageKey,
 				modalidadesid,
-				dificultadid,
+				nivelid,
 				categoryid,
 				instructor,
-				requerimientos,
 			} = body;
 
 			const course = await getCourseById(id);
@@ -162,8 +157,7 @@
 				categoryid,
 				modalidadesid,
 				instructor,
-				dificultadid,
-				requerimientos,
+				nivelid,
 			});
 
 			return NextResponse.json({ message: 'Curso actualizado exitosamente' });
