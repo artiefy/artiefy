@@ -1,157 +1,138 @@
 import { type NextRequest, NextResponse } from 'next/server';
-
-import { Redis } from '@upstash/redis';
-import { eq } from 'drizzle-orm';
-
+import { eq, and } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { materiaGrades, parameterGrades } from '~/server/db/schema';
+import {
+  userActivitiesProgress,
+  materiaGrades,
+  parameterGrades,
+  materias,
+} from '~/server/db/schema';
 
-import type { ActivityResults } from '~/types';
-
-interface UpdateGradesRequest {
-	courseId: number;
-	userId: string;
+interface RequestData {
+  courseId: number;
+  userId: string;
+  activityId: number;
+  finalGrade: number;
 }
 
-const redis = new Redis({
-	url: process.env.UPSTASH_REDIS_REST_URL!,
-	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+interface ParameterData {
+  sum: number;
+  count: number;
+  weight: number;
+}
 
 export async function POST(request: NextRequest) {
-	try {
-		const { courseId, userId } = (await request.json()) as UpdateGradesRequest;
+  try {
+    const data = await request.json() as RequestData;
+    const { courseId, userId, activityId, finalGrade } = data;
 
-		// Get all activities and their parameters for the course
-		const courseActivities = await db.query.activities.findMany({
-			where: (activities, { eq }) => eq(activities.lessonsId, courseId),
-			with: {
-				parametro: true,
-				lesson: {
-					with: {
-						course: true,
-					},
-				},
-			},
-		});
+    // 1. Update activity progress in database
+    await db
+      .insert(userActivitiesProgress)
+      .values({
+        userId,
+        activityId,
+        progress: 100,
+        isCompleted: true,
+        finalGrade,
+        lastUpdated: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [
+          userActivitiesProgress.userId,
+          userActivitiesProgress.activityId,
+        ],
+        set: {
+          finalGrade,
+          lastUpdated: new Date(),
+        },
+      });
 
-		// Group activities by parameter
-		const parameterActivities = new Map<
-			number,
-			{ total: number; completed: number; sum: number }
-		>();
+    // 2. Calculate parameter grades
+    const courseActivities = await db.query.activities.findMany({
+      where: (activities) => and(eq(activities.lessonsId, courseId)),
+      with: {
+        parametro: true,
+      },
+    });
 
-		// Calculate parameter completion and grades
-		for (const activity of courseActivities) {
-			if (!activity.parametroId) continue;
+    const parameterGradesMap = new Map<number, ParameterData>();
+    for (const activity of courseActivities) {
+      if (!activity.parametroId) continue;
 
-			const resultsKey = `activity:${activity.id}:user:${userId}:results`;
-			const results = await redis.get<ActivityResults>(resultsKey);
+      const progress = await db.query.userActivitiesProgress.findFirst({
+        where: (uap) =>
+          and(eq(uap.activityId, activity.id), eq(uap.userId, userId)),
+      });
 
-			if (results?.finalGrade !== undefined) {
-				const paramStats = parameterActivities.get(activity.parametroId) ?? {
-					total: 0,
-					completed: 0,
-					sum: 0,
-				};
+      if (progress?.finalGrade) {
+        const current = parameterGradesMap.get(activity.parametroId) ?? {
+          sum: 0,
+          count: 0,
+          weight: activity.parametro?.porcentaje ?? 0,
+        };
+        current.sum += progress.finalGrade;
+        current.count++;
+        parameterGradesMap.set(activity.parametroId, current);
+      }
+    }
 
-				paramStats.total++;
-				paramStats.completed++;
-				paramStats.sum += results.finalGrade;
-				parameterActivities.set(activity.parametroId, paramStats);
-			}
-		}
+    // 3. Calculate and save final course grade
+    let totalWeightedGrade = 0;
+    let totalWeight = 0;
 
-		// Update parameter grades
-		for (const [parameterId, stats] of parameterActivities.entries()) {
-			if (stats.completed === stats.total) {
-				// Only update if all activities are completed
-				const parameterGrade = stats.sum / stats.total;
+    for (const [parameterId, data] of parameterGradesMap.entries()) {
+      const parameterGrade = data.sum / data.count;
+      totalWeightedGrade += parameterGrade * data.weight;
+      totalWeight += data.weight;
 
-				await db
-					.insert(parameterGrades)
-					.values({
-						parameterId,
-						userId,
-						grade: parameterGrade,
-						updatedAt: new Date(),
-					})
-					.onConflictDoUpdate({
-						target: [parameterGrades.parameterId, parameterGrades.userId],
-						set: { grade: parameterGrade, updatedAt: new Date() },
-					});
-			}
-		}
+      // Save parameter grade
+      await db
+        .insert(parameterGrades)
+        .values({
+          parameterId,
+          userId,
+          grade: parameterGrade,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [parameterGrades.parameterId, parameterGrades.userId],
+          set: { grade: parameterGrade, updatedAt: new Date() },
+        });
+    }
 
-		// Check if all parameters are completed before calculating final grade
-		const allParametersCompleted = Array.from(
-			parameterActivities.values()
-		).every((stats) => stats.completed === stats.total);
+    const finalCourseGrade = totalWeightedGrade / totalWeight;
 
-		if (allParametersCompleted) {
-			// Calculate final course grade
-			const parameterGradesList = await db.query.parameterGrades.findMany({
-				where: (pg) => eq(pg.userId, userId),
-				with: {
-					parameter: true,
-				},
-			});
+    // 4. Update grades for all materias associated with this course
+    const courseMaterias = await db.query.materias.findMany({
+      where: eq(materias.courseid, courseId),
+    });
 
-			let weightedSum = 0;
-			let totalWeight = 0;
+    for (const materia of courseMaterias) {
+      await db
+        .insert(materiaGrades)
+        .values({
+          materiaId: materia.id,
+          userId,
+          grade: finalCourseGrade,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [materiaGrades.materiaId, materiaGrades.userId],
+          set: { grade: finalCourseGrade, updatedAt: new Date() },
+        });
+    }
 
-			// Get parameter details and weights directly from the database
-			for (const pg of parameterGradesList) {
-				const parameter = await db.query.parametros.findFirst({
-					where: (param) => eq(param.id, pg.parameterId),
-				});
-
-				if (parameter) {
-					weightedSum += pg.grade * parameter.porcentaje;
-					totalWeight += parameter.porcentaje;
-				}
-			}
-
-			const finalGrade = totalWeight > 0 ? weightedSum / totalWeight : 0;
-
-			// Update materia grades only when course is fully completed
-			const materias = await db.query.materias.findMany({
-				where: (materias, { eq }) => eq(materias.courseid, courseId),
-			});
-
-			for (const materia of materias) {
-				await db
-					.insert(materiaGrades)
-					.values({
-						materiaId: materia.id,
-						userId,
-						grade: finalGrade,
-						updatedAt: new Date(),
-					})
-					.onConflictDoUpdate({
-						target: [materiaGrades.materiaId, materiaGrades.userId],
-						set: { grade: finalGrade, updatedAt: new Date() },
-					});
-			}
-
-			return NextResponse.json({
-				success: true,
-				finalGrade,
-				courseCompleted: true,
-			});
-		}
-
-		return NextResponse.json({
-			success: true,
-			courseCompleted: false,
-		});
-	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-		console.error('Error updating grades:', errorMessage);
-		return NextResponse.json(
-			{ success: false, error: 'Error al actualizar calificaciones' },
-			{ status: 500 }
-		);
-	}
+    return NextResponse.json({
+      success: true,
+      finalGrade: finalCourseGrade,
+      parameterGrades: Object.fromEntries(parameterGradesMap),
+    });
+  } catch (error) {
+    console.error('Error updating grades:', error);
+    return NextResponse.json(
+      { success: false, error: 'Error updating grades' },
+      { status: 500 }
+    );
+  }
 }

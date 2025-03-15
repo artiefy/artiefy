@@ -9,7 +9,9 @@ import { toast } from 'sonner';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
+import { GradeHistory } from './GradeHistory';
 import LessonActivityModal from './LessonActivityModal';
+import RecursosLesson from './LessonResource'; // Add this import
 
 import type { Activity, SavedAnswer } from '~/types';
 
@@ -21,8 +23,10 @@ interface LessonActivitiesProps {
 	userId: string;
 	nextLessonId?: number;
 	onLessonUnlocked: (lessonId: number) => void;
-	courseId: number; // Add this new prop
+	courseId: number;
 	isLastLesson: boolean; // Add this prop
+	isLastActivity: boolean; // Add this prop
+	resourceNames: string[]; // Add this prop
 }
 
 interface SavedResults {
@@ -67,8 +71,10 @@ const LessonActivities = ({
 	userId,
 	nextLessonId,
 	onLessonUnlocked,
-	courseId, // Add this new prop
-	isLastLesson, // Add this prop
+	courseId,
+	isLastLesson,
+	isLastActivity,
+	resourceNames,
 }: LessonActivitiesProps) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [activityCompleted, setActivityCompleted] =
@@ -82,6 +88,9 @@ const LessonActivities = ({
 
 	// Add new state for activity loading
 	const [isLoadingActivity, setIsLoadingActivity] = useState(false);
+
+	// Add new state for grade history modal
+	const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
 
 	const openModal = () => setIsModalOpen(true);
 	const closeModal = () => setIsModalOpen(false);
@@ -157,48 +166,10 @@ const LessonActivities = ({
 		}
 	};
 
-	const renderGradeSummary = () => {
-		if (!gradeSummary?.isCompleted) return null;
-
-		return (
-			<div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-				<div className="mb-4 flex items-center justify-between">
-					<h3 className="text-lg font-semibold text-gray-900">
-						Resumen de Calificaciones
-					</h3>
-					<FaTrophy className="text-2xl text-yellow-500" />
-				</div>
-
-				<div className="space-y-3">
-					{gradeSummary.parameters.map((param, index) => (
-						<div key={index} className="flex justify-between text-sm">
-							<span className="text-gray-600">
-								{param.name} ({param.weight}%)
-							</span>
-							<span className="font-medium text-gray-900">
-								{param.grade.toFixed(1)}
-							</span>
-						</div>
-					))}
-
-					<div className="mt-4 border-t border-gray-100 pt-3">
-						<div className="flex justify-between">
-							<span className="font-semibold text-gray-900">
-								Nota Final del Curso
-							</span>
-							<span className="text-lg font-bold text-primary">
-								{gradeSummary.finalGrade.toFixed(1)}
-							</span>
-						</div>
-					</div>
-				</div>
-			</div>
-		);
-	};
-
 	return (
 		<div className="w-72 p-4">
 			<h2 className="mb-4 text-2xl font-bold text-primary">Actividades</h2>
+			{/* Activity section */}
 			{activity ? (
 				<div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
 					<div className="flex items-center justify-between">
@@ -278,6 +249,8 @@ const LessonActivities = ({
 			) : (
 				<p className="text-gray-600">No hay actividades disponibles</p>
 			)}
+
+			{/* Modal */}
 			{activity && (
 				<LessonActivityModal
 					isOpen={isModalOpen}
@@ -293,9 +266,66 @@ const LessonActivities = ({
 					savedResults={savedResults}
 					onLessonUnlocked={onLessonUnlocked}
 					isLastLesson={isLastLesson}
+					isLastActivity={isLastActivity}
+					courseId={courseId}
 				/>
 			)}
-			{renderGradeSummary()}
+
+			{/* Grade Summary */}
+			{gradeSummary && (
+				<div className="my-4 space-y-4">
+					<div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+						<div className="mb-3 flex items-center justify-between">
+							<h3 className="text-lg font-semibold text-gray-900">
+								Calificaciones
+							</h3>
+							<FaTrophy className="text-2xl text-yellow-500" />
+						</div>
+
+						<div className="space-y-2">
+							{gradeSummary.parameters.map((param, index) => (
+								<div key={index} className="flex justify-between text-sm">
+									<span className="text-gray-600">
+										{param.name} ({param.weight}%)
+									</span>
+									<span className="font-medium text-gray-900">
+										{param.grade.toFixed(1)}
+									</span>
+								</div>
+							))}
+
+							<div className="mt-3 border-t border-gray-100 pt-2">
+								<div className="flex justify-between">
+									<span className="font-semibold text-gray-900">
+										Nota Actual
+									</span>
+									<span className="text-lg font-bold text-primary">
+										{gradeSummary.finalGrade.toFixed(1)}
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<Button
+						onClick={() => setIsGradeHistoryOpen(true)}
+						className="w-full bg-blue-500 text-white hover:bg-blue-600"
+					>
+						<FaTrophy className="mr-2" />
+						Ver Historial de Notas
+					</Button>
+				</div>
+			)}
+
+			{/* Resources section */}
+			<RecursosLesson resourceNames={resourceNames} />
+
+			{/* Grade History Modal */}
+			<GradeHistory
+				isOpen={isGradeHistoryOpen}
+				onClose={() => setIsGradeHistoryOpen(false)}
+				gradeSummary={gradeSummary}
+			/>
 		</div>
 	);
 };

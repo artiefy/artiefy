@@ -427,6 +427,16 @@ export default function LessonDetails({
 		return currentIndex === sortedLessons.length - 1;
 	}, [lessonsState, lesson.id]);
 
+	const isLastActivity = useCallback(() => {
+		const lastLesson = lessons[lessons.length - 1];
+		const isLastLesson = lesson.id === lastLesson.id;
+
+		if (!isLastLesson) return false;
+
+		const lastActivity = lesson.activities?.[lesson.activities.length - 1];
+		return activity?.id === lastActivity?.id;
+	}, [lesson, activity, lessons]);
+
 	return (
 		<div className="flex min-h-screen flex-col">
 			<LessonBreadcrumbs
@@ -437,7 +447,7 @@ export default function LessonDetails({
 			<div className="flex flex-1 px-4 py-6">
 				{/* Left Sidebar */}
 				<div className="w-80 bg-background p-4">
-					<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
+					<h2 className="mb-4 text-2xl font-bold text-primary">Clases</h2>
 					<LessonCards
 						lessonsState={lessonsState}
 						selectedLessonId={selectedLessonId}
@@ -471,37 +481,17 @@ export default function LessonDetails({
 				{/* Right Sidebar */}
 				<div className="flex flex-col">
 					<LessonActivities
-						activity={
-							activity ?? {
-								id: 0, // Use 0 instead of null
-								name: '',
-								description: '',
-								lessonsId: lesson.id,
-								content: {
-									// Match the expected type
-									questions: [],
-								},
-								isCompleted: false,
-								userProgress: 0,
-								lastUpdated: new Date(),
-								revisada: false,
-								porcentaje: 0,
-								parametroId: null,
-								createdAt: new Date(),
-								fechaMaximaEntrega: null,
-								typeid: 0,
-								attemptLimit: 3, // Add missing properties
-								currentAttempts: 0,
-							}
-						}
+						activity={activity ?? null}
 						isVideoCompleted={isVideoCompleted}
 						isActivityCompleted={isActivityCompleted}
 						handleActivityCompletion={handleActivityCompletion}
 						userId={userId}
-						nextLessonId={getNextLessonId()} // Add this prop
-						onLessonUnlocked={handleLessonUnlocked} // Add this prop
-						courseId={lesson.courseId} // Add this prop
+						nextLessonId={getNextLessonId()}
+						onLessonUnlocked={handleLessonUnlocked}
+						courseId={lesson.courseId}
 						isLastLesson={isLastLesson()}
+						isLastActivity={isLastActivity()}
+						resourceNames={lesson.resourceNames} // Add this prop
 					/>
 					<RecursosLesson resourceNames={lesson.resourceNames} />
 				</div>

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
@@ -11,7 +11,7 @@ import {
 	ChevronRightIcon,
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
-import { FileCheck2, Lock, Unlock } from 'lucide-react';
+import { FileCheck2, Lock, Unlock, ShieldQuestion } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -42,6 +42,8 @@ interface ActivityModalProps {
 	} | null;
 	onLessonUnlocked: (lessonId: number) => void; // Add this new prop
 	isLastLesson: boolean; // Add this new prop
+	courseId: number; // Add courseId prop
+	isLastActivity: boolean; // Add this prop
 }
 
 interface UserAnswer {
@@ -70,7 +72,10 @@ const LessonActivityModal = ({
 	savedResults,
 	onLessonUnlocked, // Add this new prop
 	isLastLesson, // Add this new prop
+	courseId,
+	isLastActivity,
 }: ActivityModalProps) => {
+	const router = useRouter();
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
 		{}
@@ -221,6 +226,26 @@ const LessonActivityModal = ({
 
 			// Marcar que los resultados están cargados
 			setIsResultsLoaded(true);
+
+			if (isLastActivity) {
+				// Update grades in database
+				const response = await fetch('/api/grades/updateGrades', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						courseId,
+						userId,
+						activityId: activity.id,
+						finalGrade: score,
+					}),
+				});
+
+				if (response.ok) {
+					toast.success(
+						'¡Curso completado! Puedes ver tus calificaciones en el panel de notas.'
+					);
+				}
+			}
 		} catch (error) {
 			console.error('Error saving answers:', error);
 			toast.error('Error al guardar las respuestas');
@@ -489,6 +514,23 @@ const LessonActivityModal = ({
 			);
 		}
 
+		// Add new button for completed course with last activity
+		if (finalScore >= 3 && isLastActivity) {
+			return (
+				<>
+					<Button
+						onClick={() => router.push(`/estudiantes/notas/${courseId}`)}
+						className="mt-4 w-full bg-blue-500"
+					>
+						Ver Mis Calificaciones
+					</Button>
+					<Button onClick={onClose} className="mt-2 w-full bg-gray-500">
+						Cerrar
+					</Button>
+				</>
+			);
+		}
+
 		// Por defecto, mostrar botón de cerrar
 		return (
 			<Button
@@ -618,14 +660,7 @@ const LessonActivityModal = ({
 							{showResults ? (
 								<FileCheck2 className="size-8 text-green-500" />
 							) : (
-								<Image
-									src="/question-and-answer-svgrepo-com.svg"
-									alt="Question and Answer Icon"
-									width={48}
-									height={48}
-									className="-mt-2"
-									unoptimized // Add this prop for SVGs
-								/>
+								<ShieldQuestion className="-mt-2 size-12 text-primary" />
 							)}
 						</div>
 					</DialogTitle>

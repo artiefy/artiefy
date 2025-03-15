@@ -2,14 +2,10 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import {
-	userActivitiesProgress,
-	materiaGrades,
-	parameterGrades,
-} from '~/server/db/schema';
+import { userActivitiesProgress } from '~/server/db/schema';
 
 import type { ActivityResults } from '~/types';
 
@@ -87,53 +83,26 @@ export const completeActivity = async (activityId: number, userId: string) => {
 
 		// 4. Si hay parámetro asociado, actualizar notas
 		if (activity.parametroId) {
-			const parameterGrade = {
-				parameterId: activity.parametroId,
-				userId,
-				grade: rawData.finalGrade,
-				updatedAt: new Date(),
-			};
+			// Update parameter grades using raw SQL
+			await db.execute(sql`
+				INSERT INTO parameter_grades (parameter_id, user_id, grade, updated_at)
+				VALUES (${activity.parametroId}, ${userId}, ${rawData.finalGrade}, NOW())
+				ON CONFLICT (parameter_id, user_id) 
+				DO UPDATE SET grade = ${rawData.finalGrade}, updated_at = NOW()
+			`);
 
-			await db
-				.insert(parameterGrades)
-				.values(parameterGrade)
-				.onConflictDoUpdate({
-					target: [parameterGrades.parameterId, parameterGrades.userId],
-					set: parameterGrade,
-				});
-
-			// 5. Si hay curso asociado, calcular y actualizar nota de materias
-			if (activity.lesson?.course) {
-				const courseId = activity.lesson.course.id;
-				const materias = await db.query.materias.findMany({
-					where: (materias, { eq }) => eq(materias.courseid, courseId),
-				});
-
-				// Calcular promedio de parámetros para el curso
-				const parameters = await db.query.parameterGrades.findMany({
-					where: (pg) =>
-						eq(pg.userId, userId) &&
-						eq(pg.parameterId, activity.parametroId ?? 0), // Use || 0 to handle null case
-				});
-
-				const avgGrade =
-					parameters.reduce((sum, p) => sum + p.grade, 0) / parameters.length;
-
-				// Actualizar notas de materias
-				for (const materia of materias) {
-					await db
-						.insert(materiaGrades)
-						.values({
-							materiaId: materia.id,
-							userId,
-							grade: avgGrade,
-							updatedAt: new Date(),
-						})
-						.onConflictDoUpdate({
-							target: [materiaGrades.materiaId, materiaGrades.userId],
-							set: { grade: avgGrade, updatedAt: new Date() },
-						});
-				}
+			// Handle materia grades if there's a course
+			if (activity.lesson?.course?.id) {
+				await db.execute(sql`
+					WITH course_materias AS (
+						SELECT id FROM materias WHERE courseid = ${activity.lesson.course.id}
+					)
+					INSERT INTO materia_grades (materia_id, user_id, grade, updated_at)
+					SELECT id, ${userId}, ${rawData.finalGrade}, NOW()
+					FROM course_materias
+					ON CONFLICT (materia_id, user_id) 
+					DO UPDATE SET grade = EXCLUDED.grade, updated_at = EXCLUDED.updated_at
+				`);
 			}
 		}
 

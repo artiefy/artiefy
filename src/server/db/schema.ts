@@ -9,6 +9,7 @@ import {
 	timestamp,
 	varchar,
 	date,
+	unique,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -333,29 +334,40 @@ export const materias = pgTable('materias', {
 });
 
 // Add new table for grades
-export const materiaGrades = pgTable('materia_grades', {
-	id: serial('id').primaryKey(),
-	materiaId: integer('materia_id')
-		.references(() => materias.id)
-		.notNull(),
-	userId: text('user_id')
-		.references(() => users.id)
-		.notNull(),
-	grade: real('grade').notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const materiaGrades = pgTable(
+	'materia_grades',
+	{
+		id: serial('id').primaryKey(),
+		materiaId: integer('materia_id')
+			.references(() => materias.id)
+			.notNull(),
+		userId: text('user_id')
+			.references(() => users.id)
+			.notNull(),
+		grade: real('grade').notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	},
+	(table) => [
+		// Convert object to array for the new API
+		unique('uniq_materia_user').on(table.materiaId, table.userId),
+	]
+);
 
-export const parameterGrades = pgTable('parameter_grades', {
-	id: serial('id').primaryKey(),
-	parameterId: integer('parametro_id')
-		.references(() => parametros.id)
-		.notNull(),
-	userId: text('user_id')
-		.references(() => users.id)
-		.notNull(),
-	grade: real('grade').notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const parameterGrades = pgTable(
+	'parameter_grades',
+	{
+		id: serial('id').primaryKey(),
+		parameterId: integer('parametro_id')
+			.references(() => parametros.id)
+			.notNull(),
+		userId: text('user_id')
+			.references(() => users.id)
+			.notNull(),
+		grade: real('grade').notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	},
+	(table) => [unique('uniq_parameter_user').on(table.parameterId, table.userId)]
+);
 
 // Relaciones de programas
 export const programasRelations = relations(programas, ({ one, many }) => ({
