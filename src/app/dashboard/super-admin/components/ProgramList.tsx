@@ -3,13 +3,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
 import { Badge } from '~/components/educators/ui/badge';
+
 import {
     Card,
     CardContent,
     CardFooter,
     CardHeader,
     CardTitle,
-} from '~/components/educators/ui/card';
+} from  '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
 
 interface Program {
@@ -33,7 +34,7 @@ interface ProgramListAdminProps {
     onDeleteProgram: (programId: number) => void;
 }
 
-export default function ProgramListAdmin({ programs }: ProgramListAdminProps) {
+export default function ProgramListAdmin({ programs, onEditProgram, onDeleteProgram }: ProgramListAdminProps) {
     return (
         <div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
             {programs.map((program) => (

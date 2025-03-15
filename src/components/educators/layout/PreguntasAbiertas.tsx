@@ -1,10 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import { toast } from 'sonner';
+
 import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
+
 import type { Completado } from '~/types/typesActi';
 
 //La validacion del porcentaje no se encuentra implementada
@@ -77,13 +80,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 	// Maneja el envio del formulario para guardar la pregunta
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (!(await validateTotalPercentage(formData.pesoPregunta))) {
-			toast('Error', {
-				description:
-					'El porcentaje total de las preguntas no puede ser mayor a 10%',
-			});
-			return;
-		}
+
 		setIsVisible(false);
 		const method = editingQuestion ? 'PUT' : 'POST';
 		const questionId = editingQuestion

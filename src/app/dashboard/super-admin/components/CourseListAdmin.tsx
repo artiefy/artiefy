@@ -88,7 +88,7 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
 							<div className="flex w-full items-center justify-between">
 								<Button asChild>
 									<Link
-										href={`/dashboard/educadores/cursos/${course.id}`}
+										href={`/dashboard/super-admin/cursos/${course.id}`}
 										className="group/button bg-background text-primary relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
 									>
 										<p className="font-bold">Ver Curso</p>

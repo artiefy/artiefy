@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
@@ -8,8 +9,10 @@ import { toast } from 'sonner';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import { getCourses, updateCourse } from '~/server/queries/queries';
-import type { CourseData } from '~/server/queries/queries';
+
 import CourseListAdmin from './../../components/CourseListAdmin';
+
+import type { CourseData } from '~/server/queries/queries';
 
 
 // Define el modelo de datos del curso
@@ -318,7 +321,7 @@ export default function Page() {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
