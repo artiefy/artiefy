@@ -11,7 +11,7 @@ import {
 	updateCourse,
 	getTotalStudents,
 	getLessonsByCourseId,
-	getTotalDuration,
+	getTotalDuration, updateMateria
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
@@ -112,7 +112,9 @@ export async function POST(request: NextRequest) {
 			rating: number;
 			creatorId: string;
 			instructor: string;
+			subjects: { id: number }[]; // ✅ Solo IDs de materias
 		};
+		
 
 		const {
 			title,
@@ -124,8 +126,9 @@ export async function POST(request: NextRequest) {
 			nivelid,
 			creatorId,
 			instructor,
+			subjects, // ✅ Aquí se recibe el array de materias
 		} = body;
-		const courseId = await createCourse({
+		const { id: courseId } = await createCourse({
 			title,
 			description,
 			creatorId: userId,
@@ -149,11 +152,21 @@ export async function POST(request: NextRequest) {
 			instructor,
 		});
 
-		const id = courseId.id;
+		// Guardar materias asociadas
+		if (subjects.length > 0) {
+			await Promise.all(
+				subjects.map(async (subject) => {
+					await updateMateria(subject.id, {
+						courseid: courseId, // ✅ Asignar `courseid` a la materia
+					});
+				})
+			);
+		}
+
 
 		return NextResponse.json({
 			message: 'Curso creado exitosamente',
-			id,
+			courseId: courseId,
 		});
 	} catch (error: unknown) {
 		console.error('Error al crear el curso:', error);
@@ -180,6 +193,7 @@ export async function PUT(request: NextRequest) {
 			modalidadesid: number;
 			nivelid: number;
 			instructor: string;
+			subjects: { id: number; courseId: number | null }[]; // ✅ Solo actualizar `courseId`
 		};
 		const {
 			id,
@@ -210,6 +224,18 @@ export async function PUT(request: NextRequest) {
 			instructor,
 			nivelid,
 		});
+
+// ✅ Actualizar las materias asignadas a este curso
+await Promise.all(
+    body.subjects.map(async (subject) => {
+        await updateMateria(subject.id, {
+            courseid: id, // ✅ Asigna el nuevo ID del curso a la materia
+        });
+    })
+);
+
+
+
 
 		return NextResponse.json({ message: 'Curso actualizado exitosamente' });
 	} catch (error) {

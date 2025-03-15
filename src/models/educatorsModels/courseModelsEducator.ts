@@ -1,4 +1,5 @@
 import { eq, count, sum } from 'drizzle-orm';
+
 import { db } from '~/server/db/index';
 import {
 	courses,
@@ -7,8 +8,9 @@ import {
 	modalidades,
 	enrollments,
 	nivel,
-	lessons,
+	lessons, materias
 } from '~/server/db/schema';
+
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
 import { deleteLessonsByCourseId } from './lessonsModels'; // Importar la función para eliminar lecciones
 import { deleteParametroByCourseId } from './parametrosModels'; // Importar la función para eliminar parámetros
@@ -301,6 +303,17 @@ export const updateCourse = async (
 
 	return db.update(courses).set(updateData).where(eq(courses.id, courseId));
 };
+
+export async function updateMateria(id: number, data: { courseid: number }) {
+    try {
+        await db.update(materias)
+            .set({ courseid: data.courseid }) // ✅ Solo actualiza `courseid`
+            .where(eq(materias.id, id));
+    } catch (error) {
+        console.error('Error al actualizar materia:', error);
+        throw new Error('Error al actualizar la materia');
+    }
+}
 
 // Eliminar un curso y sus datos asociado
 export const deleteCourse = async (courseId: number) => {

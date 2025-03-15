@@ -44,31 +44,37 @@ export async function GET(request: NextRequest) {
 // POST endpoint para crear parámetros
 export async function POST(request: NextRequest) {
 	try {
-		interface RequestBody {
-			name: string;
-			description: string;
-			porcentaje: number;
-			courseId: number;
-		}
-		const body: RequestBody = (await request.json()) as RequestBody;
-		const { name, description, porcentaje, courseId } = body;
+		const body = await request.json() as { name: string; description: string; porcentaje: number; courseId: number };
+		console.log('📌 Datos recibidos en la API de parámetros:', body);
 
+		// ✅ Verificar si courseId está presente
+		if (!body.courseId || isNaN(body.courseId)) {
+			console.error('❌ Error: courseId no recibido o inválido:', body);
+			return NextResponse.json(
+				{ error: 'courseId es obligatorio' },
+				{ status: 400 }
+			);
+		}
+
+		// ✅ Crear el parámetro en la base de datos
 		const parametroCreado = await createParametros({
-			name,
-			description,
-			porcentaje,
-			courseId,
+			name: body.name,
+			description: body.description,
+			porcentaje: body.porcentaje,
+			courseId: Number(body.courseId), // ✅ Asegurar que es un número
 		});
 
+		console.log('✅ Parámetro guardado en la base de datos:', parametroCreado);
 		return NextResponse.json(parametroCreado);
 	} catch (error) {
-		console.error('Error al crear el parámetro:', error);
+		console.error('❌ Error en API de parámetros:', error);
 		return NextResponse.json(
 			{ error: 'Error al crear el parámetro' },
 			{ status: 500 }
 		);
 	}
 }
+
 
 // DELETE endpoint para eliminar parámetros
 export async function DELETE(request: NextRequest) {

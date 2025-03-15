@@ -27,6 +27,18 @@ import {
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 
+interface Subject {
+	id: number;
+	title: string;
+  }
+
+  // Define the interface for the props
+interface CustomSelectProps {
+	options: Subject[];
+	onChange: (selected: MultiValue<{ value: string; label: string }>) => void;
+	selectedSubjects: MultiValue<{ value: string; label: string }>;
+  }
+  
 // Interfaz para los parámetros del formulario del course
 interface CourseFormProps {
 	onSubmitAction: (
@@ -40,7 +52,8 @@ interface CourseFormProps {
 		rating: number,
 		addParametros: boolean,
 		coverImageKey: string,
-		fileName: string
+		fileName: string,
+		subjects: { id: number; courseId: number }[] // ✅ Solo `id` y `courseId`
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -74,8 +87,8 @@ interface CourseFormProps {
 	onCloseAction: () => void;
 	rating: number;
 	setRating: (rating: number) => void;
-	subjects: string[];
-	setSubjects: (subjects: string[]) => void;
+	subjects: { id: number; courseId: number }[];
+	setSubjects: (subjects: { id: number; courseId: number }[]) => void;
 }
 
 // Componente ModalFormCourse
@@ -130,6 +143,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		useState<AbortController | null>(null); // Estado para el controlador de subida
 	const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
 	const [addParametros, setAddParametros] = useState(false); // Estado para los parámetros
+	// const responseData = await response.json();
+	// const newCourseId = responseData.id;
 	const [allSubjects, setAllSubjects] = useState<
 		{ id: number; title: string }[]
 	>([]); // Estado para todas las materias
@@ -244,6 +259,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	// Función para obtener los archivos de subida y enviarselo al componente padre donde se hace el metodo POST
 	const handleSubmit = async () => {
 		const controller = new AbortController();
+
 		setUploadController(controller);
 		// Validar los campos del formulario
 		const newErrors = {
@@ -351,7 +367,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				rating,
 				addParametros,
 				coverImageKey,
-				uploadedFileName
+				uploadedFileName,
+				subjects.map((subject) => ({
+					id: subject.id, // ✅ ID de la materia
+					courseId: editingCourseId ? Number(editingCourseId) : 0, // ✅ Asegurar que siempre sea un número
+				}))
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
@@ -494,24 +514,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [isOpen, editingCourseId]);
 
-	// Function to handle adding a subject
-	const handleAddSubject = () => {
-		setSubjects([...subjects, '']);
-	};
-
-	// Function to handle changing a subject
-	const handleSubjectChange = (index: number, value: string) => {
-		const updatedSubjects = [...subjects];
-		updatedSubjects[index] = value;
-		setSubjects(updatedSubjects);
-	};
-
-	// Function to handle removing a subject
-	const handleRemoveSubject = (index: number) => {
-		const updatedSubjects = subjects.filter((_, i) => i !== index);
-		setSubjects(updatedSubjects);
-	};
-
 	// Fetch all subjects when the component mounts
 	useEffect(() => {
 		const fetchSubjects = async () => {
@@ -531,8 +533,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const handleSelectSubjects = (
 		newValue: MultiValue<{ value: string; label: string }>
 	) => {
-		console.log('Selected subjects:', newValue); // Add console log to debug
-		const selectedSubjects = newValue.map((option) => option.value);
+		const selectedSubjects = newValue.map((option) => ({
+			id: Number(option.value), // ✅ Solo el ID de la materia
+			courseId: editingCourseId ? Number(editingCourseId) : 0, // ✅ Solo el ID del curso
+		}));
 		setSubjects(selectedSubjects);
 	};
 
@@ -857,14 +861,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								Asignar Materias
 							</label>
 							<Select
-								isMulti
-								options={allSubjects.map((subject) => ({
-									value: subject.id.toString(),
-									label: subject.title,
-								}))}
-								onChange={handleSelectSubjects}
-								className="mt-2 w-10/12 lg:w-1/2"
-							/>
+  isMulti
+  options={allSubjects.map((subject) => ({
+    value: subject.id.toString(),
+    label: subject.title,
+  }))}
+  onChange={handleSelectSubjects}
+  classNamePrefix="react-select"
+  className="mt-2 w-10/12 lg:w-1/2"
+/>
 						</div>
 					)}
 					{(uploading || isUploading) && (

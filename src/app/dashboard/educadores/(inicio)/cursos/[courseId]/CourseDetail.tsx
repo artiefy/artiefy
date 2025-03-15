@@ -1,10 +1,14 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+
 import { toast } from 'sonner';
+
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
+import CourseMateriasList from '~/components/educators/layout/CourseMateriasList';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
@@ -61,6 +65,15 @@ export interface Parametros {
 	courseId: number;
 }
 
+// Definir la interfaz de las materias
+interface Materia {
+	id: number;
+	title: string;
+	description: string;
+	courseid: number;
+	programaId: number;
+}
+
 // Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
 	if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
@@ -78,6 +91,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const courseIdUrl = params?.courseId; // Obtener el id del curso desde params
 	const [course, setCourse] = useState<Course | null>(null); // Nuevo estado para el curso
 	const [parametros, setParametros] = useState<Parametros[]>([]); // Nuevo estado para los parámetros
+	const [materias, setMaterias] = useState<Materia[]>([]); // Nuevo estado para las materias
 	const [isModalOpen, setIsModalOpen] = useState(false); // Nuevo estado para el modal de edición
 	const [editTitle, setEditTitle] = useState(''); // Nuevo estado para el título del curso a editar
 	const [editDescription, setEditDescription] = useState(''); // Nuevo estado para la descripción del curso
@@ -117,6 +131,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				const responseParametros = await fetch(
 					`/api/educadores/parametros?courseId=${courseIdNumber}`
 				); // Obtener los parámetros
+				const materiasResponse = await fetch(
+					`/api/educadores/courses/${courseIdNumber}/materias`
+				);
+				if (!materiasResponse.ok) {
+					throw new Error('Error fetching materias');
+				}
+				const materiasData = (await materiasResponse.json()) as Materia[];
+				setMaterias(materiasData);
 
 				if (!response.ok || !responseParametros.ok) {
 					throw new Error(response.statusText);
@@ -341,7 +363,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
@@ -448,7 +470,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
 					className={`relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out zoom-in`}
 					style={{
@@ -658,6 +680,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				courseId={courseIdNumber}
 				selectedColor={selectedColor}
 			/>
+			{materias.length > 0 && <CourseMateriasList materias={materias} />}
 			<ModalFormCourse
 				isOpen={isModalOpen}
 				onSubmitAction={(
@@ -684,7 +707,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						addParametros, // Pasar el nuevo parámetro
 						coverImageKey,
 						fileName, // Pasar el nuevo parámetro
-						rating,
+						rating
 					)
 				}
 				editingCourseId={course.id}

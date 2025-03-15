@@ -325,7 +325,7 @@ export const materias = pgTable('materias', {
 	programaId: integer('programa_id')
 		.references(() => programas.id)
 		.notNull(),
-	courseid: integer('courseid').references(() => courses.id), // Changed from courseId to courseid
+    courseid: integer('courseid').references(() => courses.id), // courseid can be null
 });
 
 // Relaciones de programas

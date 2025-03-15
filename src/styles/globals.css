@@ -168,3 +168,31 @@
   }
 }
 
+.react-select__control {
+  background-color: #01142B !important;
+  border-color: #00BDD8 !important;
+  color: white !important;
+}
+
+.react-select__option {
+  background-color: #01142B !important;
+  color: white !important;
+}
+
+.react-select__option--is-selected {
+  border-color: #00A5C0 !important;
+}
+
+.react-select__multi-value {
+  background-color: #01142B !important;
+  border: 1px solid #00A5C0 !important;
+  color: white !important;
+}
+
+.react-select__multi-value__label {
+  color: white !important;
+}
+
+.react-select__multi-value__remove {
+  color: white !important;
+}

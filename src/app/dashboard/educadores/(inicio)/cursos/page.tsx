@@ -1,8 +1,10 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
+
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
 import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
@@ -58,6 +60,7 @@ export default function Page() {
 			porcentaje: number;
 		}[]
 	>([]); // interfaz de cursos
+	const [subjects, setSubjects] = useState<string[]>([]); // Change subjects state to string[]
 
 	// Función para cargar los cursos by userId
 	const fetchCourses = useCallback(async () => {
@@ -96,14 +99,47 @@ export default function Page() {
 		}
 	}, [user]);
 
+	// Function to fetch subjects
+	const fetchSubjects = useCallback(async () => {
+		try {
+			const response = await fetch(
+				'/api/educadores/courses?fetchSubjects=true'
+			);
+			if (response.ok) {
+				const data = (await response.json()) as {
+					id: number;
+					title: string;
+					description: string;
+				}[];
+				console.log('Fetched subjects:', data); // Add console log to debug
+				setSubjects(data.map((subject) => subject.title)); // Map subjects to strings
+			} else {
+				const errorData = (await response.json()) as { error?: string };
+				const errorMessage = errorData.error ?? response.statusText;
+				toast.error('Error', {
+					description: `No se pudieron cargar las materias: ${errorMessage}`,
+				});
+			}
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'Error desconocido';
+			toast.error('Error', {
+				description: `No se pudieron cargar las materias: ${errorMessage}`,
+			});
+		}
+	}, []);
+
 	// Cargar los cursos al montar el componente
 	useEffect(() => {
 		if (user) {
 			fetchCourses().catch((error) =>
 				console.error('Error fetching courses:', error)
 			);
+			fetchSubjects().catch((error) =>
+				console.error('Error fetching subjects:', error)
+			);
 		}
-	}, [user, fetchCourses]);
+	}, [user, fetchCourses, fetchSubjects]);
 
 	// Función para crear o editar un curso "los datos vienen del modal"
 	const handleCreateOrEditCourse = async (
@@ -288,7 +324,6 @@ export default function Page() {
 		setEditingCourse((prev) => (prev ? { ...prev, description } : prev));
 	};
 
-
 	// Manejo de la categoría del curso en el modal si no es null
 	const setCategoryid = (categoryid: number) => {
 		setEditingCourse((prev) =>
@@ -325,7 +360,7 @@ export default function Page() {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
@@ -436,6 +471,8 @@ export default function Page() {
 							onCloseAction={handleCloseModal}
 							rating={editingCourse?.rating ?? 0} // Añadir esta línea
 							setRating={setRating}
+							subjects={subjects} // Pass subjects state
+							setSubjects={setSubjects} // Pass setSubjects function
 						/>
 					)}
 				</div>

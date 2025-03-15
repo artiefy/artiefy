@@ -8,11 +8,11 @@ export async function GET(
 ) {
 	try {
 		const programId = params.id;
-		const programData = await getProgramById(programId); // Rename variable to avoid conflict
-		if (!programData) {
+		const program = await getProgramById(programId);
+		if (!program) {
 			return NextResponse.json({ error: 'Program not found' }, { status: 404 });
 		}
-		return NextResponse.json(programData);
+		return NextResponse.json(program);
 	} catch (error) {
 		console.error('Error fetching program:', error);
 		return NextResponse.json(

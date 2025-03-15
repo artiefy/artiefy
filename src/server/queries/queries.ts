@@ -2,12 +2,14 @@
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
 import { eq, desc } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import {
 	courses,
 	categories,
 	modalidades,
 	nivel as nivel,
+	materias,
 } from '~/server/db/schema';
 
 // Función para verificar el rol de admin y obtener usuarios
@@ -204,6 +206,14 @@ export interface CourseData {
 	rating?: number | null;
 }
 
+export interface Materia {
+	id: number;
+	title: string;
+	description: string;
+	programaId: number;
+	courseid: number;
+}
+
 export async function getCourses() {
 	try {
 		return await db.select().from(courses).orderBy(desc(courses.createdAt));
@@ -332,5 +342,19 @@ export async function updateUserInClerk({
 		return false;
 	}
 }
+export async function getMateriasByCourseId(
+	courseId: string
+): Promise<Materia[]> {
+	try {
+		const result = await db
+			.select()
+			.from(materias)
+			.where(eq(materias.courseid, parseInt(courseId)));
+		return result as Materia[];
+	} catch (error) {
+		console.error('Error fetching materias:', error);
+		return [];
+	}
+};
 
 export {};

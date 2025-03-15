@@ -9,11 +9,9 @@ import { toast } from 'sonner';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import { getCourses, updateCourse } from '~/server/queries/queries';
-
-import CourseListAdmin from './../../components/CourseListAdmin';
-
 import type { CourseData } from '~/server/queries/queries';
 
+import CourseListAdmin from './../../components/CourseListAdmin';
 
 // Define el modelo de datos del curso
 export interface CourseModel {
