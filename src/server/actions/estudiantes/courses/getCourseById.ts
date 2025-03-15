@@ -46,19 +46,28 @@ export async function getCourseById(
 					(progress) => progress.lessonId === lesson.id
 				);
 
+				// Fix activity transformation with proper typing
 				const activities: Activity[] =
-					lesson.activities?.map((activity) => ({
-						...activity,
-						lessonsId: lesson.id,
-						isCompleted: false,
-						userProgress: 0,
-						revisada: activity.revisada ?? false,
-						porcentaje: activity.porcentaje ?? 0,
-						parametroId: activity.parametroId,
-						fechaMaximaEntrega: activity.fechaMaximaEntrega,
-						createdAt: activity.lastUpdated,
-						content: { questions: [] },
-					})) ?? [];
+					lesson.activities?.map((activity) => {
+						const now = new Date();
+						return {
+							id: activity.id,
+							name: activity.name,
+							description: activity.description,
+							lessonsId: lesson.id,
+							isCompleted: false,
+							userProgress: 0,
+							revisada: activity.revisada ?? false,
+							porcentaje: activity.porcentaje ?? 0,
+							parametroId: activity.parametroId,
+							fechaMaximaEntrega: activity.fechaMaximaEntrega,
+							createdAt: now,
+							typeid: activity.typeid,
+							lastUpdated: activity.lastUpdated,
+							attemptLimit: 3,
+							currentAttempts: 0,
+						} satisfies Activity;
+					}) ?? [];
 
 				return {
 					...lesson,
@@ -95,7 +104,10 @@ export async function getCourseById(
 
 		return transformedCourse;
 	} catch (error) {
-		console.error('Error fetching course:', error);
+		console.error(
+			'Error fetching course:',
+			error instanceof Error ? error.message : 'Unknown error'
+		);
 		return null;
 	}
 }
