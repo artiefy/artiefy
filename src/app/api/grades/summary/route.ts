@@ -111,8 +111,8 @@ export async function GET(request: NextRequest) {
 			})) as Materia[];
 
 			// Update grades for each materia
-			await Promise.all(
-				courseMateriasResult.map(async (materia) => {
+			const updatePromises = courseMateriasResult.map(async (materia) => {
+				try {
 					await db
 						.insert(materiaGrades)
 						.values({
@@ -128,8 +128,15 @@ export async function GET(request: NextRequest) {
 								updatedAt: new Date(),
 							},
 						});
-				})
-			);
+				} catch (error) {
+					console.error(
+						`Error updating grade for materia ${materia.id}:`,
+						error
+					);
+				}
+			});
+
+			await Promise.allSettled(updatePromises);
 		}
 
 		return NextResponse.json({

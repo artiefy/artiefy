@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
 
-import { FaCheckCircle, FaLock, FaArrowDown, FaTrophy } from 'react-icons/fa';
+import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa';
 import { PiArrowFatLinesLeft } from 'react-icons/pi';
 import { toast } from 'sonner';
 
@@ -11,6 +11,7 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 
 import { GradeHistory } from './GradeHistory';
 import LessonActivityModal from './LessonActivityModal';
+import { LessonGrades } from './LessonGrades';
 import RecursosLesson from './LessonResource'; // Add this import
 
 import type { Activity, SavedAnswer } from '~/types';
@@ -273,47 +274,11 @@ const LessonActivities = ({
 
 			{/* Grade Summary */}
 			{gradeSummary && (
-				<div className="my-4 space-y-4">
-					<div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-						<div className="mb-3 flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-gray-900">
-								Calificaciones
-							</h3>
-							<FaTrophy className="text-2xl text-yellow-500" />
-						</div>
-
-						<div className="space-y-2">
-							{gradeSummary.parameters.map((param, index) => (
-								<div key={index} className="flex justify-between text-sm">
-									<span className="text-gray-600">
-										{param.name} ({param.weight}%)
-									</span>
-									<span className="font-medium text-gray-900">
-										{param.grade.toFixed(1)}
-									</span>
-								</div>
-							))}
-
-							<div className="mt-3 border-t border-gray-100 pt-2">
-								<div className="flex justify-between">
-									<span className="font-semibold text-gray-900">
-										Nota Actual
-									</span>
-									<span className="text-lg font-bold text-primary">
-										{gradeSummary.finalGrade.toFixed(1)}
-									</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<Button
-						onClick={() => setIsGradeHistoryOpen(true)}
-						className="w-full bg-blue-500 text-white hover:bg-blue-600"
-					>
-						<FaTrophy className="mr-2" />
-						Ver Historial de Notas
-					</Button>
+				<div className="my-4">
+					<LessonGrades
+						finalGrade={gradeSummary.finalGrade}
+						onViewHistory={() => setIsGradeHistoryOpen(true)}
+					/>
 				</div>
 			)}
 

@@ -1,8 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-import { useRouter } from 'next/navigation';
-
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
 	CheckCircleIcon,
@@ -75,7 +73,6 @@ const LessonActivityModal = ({
 	courseId,
 	isLastActivity,
 }: ActivityModalProps) => {
-	const router = useRouter();
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
 		{}
@@ -514,20 +511,25 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Add new button for completed course with last activity
+		// Modify the last activity condition
 		if (finalScore >= 3 && isLastActivity) {
 			return (
-				<>
-					<Button
-						onClick={() => router.push(`/estudiantes/notas/${courseId}`)}
-						className="mt-4 w-full bg-blue-500"
-					>
-						Ver Mis Calificaciones
-					</Button>
-					<Button onClick={onClose} className="mt-2 w-full bg-gray-500">
+				<div className="space-y-4">
+					<div className="rounded-lg bg-gray-50 p-4">
+						<h3 className="mb-2 text-center text-lg font-bold text-primary">
+							¡Actividad completada exitosamente!
+						</h3>
+						<div className="mb-4 text-center">
+							<p className="text-sm text-gray-600">Tu nota de la actividad:</p>
+							<p className="text-2xl font-bold text-primary">
+								{finalScore.toFixed(1)}
+							</p>
+						</div>
+					</div>
+					<Button onClick={onClose} className="w-full bg-blue-500">
 						Cerrar
 					</Button>
-				</>
+				</div>
 			);
 		}
 

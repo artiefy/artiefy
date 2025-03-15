@@ -10,6 +10,7 @@ import {
 	varchar,
 	date,
 	unique,
+	primaryKey,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -347,10 +348,13 @@ export const materiaGrades = pgTable(
 		grade: real('grade').notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull(),
 	},
-	(table) => [
-		// Convert object to array for the new API
-		unique('uniq_materia_user').on(table.materiaId, table.userId),
-	]
+	(table) => ({
+		pk: primaryKey(table.materiaId, table.userId),
+		uniq_materia_user: unique('uniq_materia_user').on(
+			table.materiaId,
+			table.userId
+		),
+	})
 );
 
 export const parameterGrades = pgTable(
@@ -613,6 +617,31 @@ export const userActivitiesProgressRelations = relations(
 		activity: one(activities, {
 			fields: [userActivitiesProgress.activityId],
 			references: [activities.id],
+		}),
+	})
+);
+
+export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
+	materia: one(materias, {
+		fields: [materiaGrades.materiaId],
+		references: [materias.id],
+	}),
+	user: one(users, {
+		fields: [materiaGrades.userId],
+		references: [users.id],
+	}),
+}));
+
+export const parameterGradesRelations = relations(
+	parameterGrades,
+	({ one }) => ({
+		parameter: one(parametros, {
+			fields: [parameterGrades.parameterId],
+			references: [parametros.id],
+		}),
+		user: one(users, {
+			fields: [parameterGrades.userId],
+			references: [users.id],
 		}),
 	})
 );
