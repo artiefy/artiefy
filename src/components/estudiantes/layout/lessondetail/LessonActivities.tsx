@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
 
-import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa';
+import { FaCheckCircle, FaLock, FaArrowDown, FaTrophy } from 'react-icons/fa';
 import { PiArrowFatLinesLeft } from 'react-icons/pi';
 import { toast } from 'sonner';
 
@@ -11,7 +11,7 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 
 import LessonActivityModal from './LessonActivityModal';
 
-import type { Activity, ActivityResults, SavedAnswer } from '~/types';
+import type { Activity, SavedAnswer } from '~/types';
 
 interface LessonActivitiesProps {
 	activity: Activity | null;
@@ -20,12 +20,43 @@ interface LessonActivitiesProps {
 	handleActivityCompletion: () => Promise<void>;
 	userId: string;
 	nextLessonId?: number;
-	onLessonUnlocked: (lessonId: number) => void; // Add this new prop
+	onLessonUnlocked: (lessonId: number) => void;
+	courseId: number; // Add this new prop
+	isLastLesson: boolean; // Add this prop
 }
 
 interface SavedResults {
 	score: number;
 	answers: Record<string, SavedAnswer>;
+	isAlreadyCompleted?: boolean;
+}
+
+interface CourseGradeSummary {
+	finalGrade: number;
+	parameters: {
+		name: string;
+		grade: number;
+		weight: number;
+	}[];
+	isCompleted: boolean;
+}
+
+// Add type for API response
+interface GradeSummaryResponse {
+	finalGrade: number;
+	parameters: {
+		name: string;
+		grade: number;
+		weight: number;
+	}[];
+	isCompleted: boolean;
+}
+
+// Add interface for API response
+interface GetAnswersResponse {
+	score: number;
+	answers: Record<string, SavedAnswer>;
+	isAlreadyCompleted: boolean;
 }
 
 const LessonActivities = ({
@@ -35,7 +66,9 @@ const LessonActivities = ({
 	handleActivityCompletion,
 	userId,
 	nextLessonId,
-	onLessonUnlocked, // Add this new prop
+	onLessonUnlocked,
+	courseId, // Add this new prop
+	isLastLesson, // Add this prop
 }: LessonActivitiesProps) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [activityCompleted, setActivityCompleted] =
@@ -43,6 +76,9 @@ const LessonActivities = ({
 
 	const [savedResults, setSavedResults] = useState<SavedResults | null>(null);
 	const [isLoadingResults, setIsLoadingResults] = useState(false);
+	const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
+		null
+	);
 
 	const openModal = () => setIsModalOpen(true);
 	const closeModal = () => setIsModalOpen(false);
@@ -57,50 +93,94 @@ const LessonActivities = ({
 		return Promise.resolve();
 	};
 
-	const fetchSavedResults = async () => {
-		if (!activity?.id) return;
-
+	const fetchGradeSummary = useCallback(async () => {
 		try {
-			console.log(
-				'Fetching results for activity:',
-				activity.id,
-				'user:',
-				userId
-			);
 			const response = await fetch(
-				`/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+				`/api/grades/summary?courseId=${courseId}&userId=${userId}`
+			);
+			if (response.ok) {
+				const data = (await response.json()) as GradeSummaryResponse;
+				setGradeSummary({
+					finalGrade: data.finalGrade,
+					parameters: data.parameters,
+					isCompleted: data.isCompleted,
+				});
+			}
+		} catch (error) {
+			console.error('Error fetching grade summary:', error);
+		}
+	}, [courseId, userId]);
+
+	useEffect(() => {
+		void fetchGradeSummary();
+	}, [fetchGradeSummary]);
+
+	const handleCompletedActivityClick = async () => {
+		setIsLoadingResults(true);
+		try {
+			// Check if activity exists and get its ID safely
+			const activityId = activity?.id;
+			if (!activityId) return;
+
+			const response = await fetch(
+				`/api/activities/getAnswers?activityId=${activityId}&userId=${userId}`
 			);
 
-			if (!response.ok) {
-				if (response.status === 404) {
-					console.log('No saved results found');
-					return;
-				}
-				throw new Error(`HTTP error! status: ${response.status}`);
+			if (response.ok) {
+				const data = (await response.json()) as GetAnswersResponse;
+				setSavedResults({
+					score: data.score,
+					answers: data.answers,
+					isAlreadyCompleted: true,
+				});
+				setActivityCompleted(true); // Set activity as completed
 			}
-
-			const data = (await response.json()) as ActivityResults;
-			console.log('Fetched results:', data);
-
-			setSavedResults({
-				score: data.score,
-				answers: data.answers,
-			});
 		} catch (error) {
 			console.error('Error fetching saved results:', error);
 			toast.error('Error al cargar los resultados guardados');
+		} finally {
+			setIsLoadingResults(false);
+			openModal();
 		}
 	};
 
-	const handleCompletedActivityClick = async () => {
-		if (activityCompleted) {
-			setIsLoadingResults(true);
-			await fetchSavedResults();
-			setIsLoadingResults(false);
-			openModal();
-		} else {
-			openModal();
-		}
+	const renderGradeSummary = () => {
+		if (!gradeSummary?.isCompleted) return null;
+
+		return (
+			<div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+				<div className="mb-4 flex items-center justify-between">
+					<h3 className="text-lg font-semibold text-gray-900">
+						Resumen de Calificaciones
+					</h3>
+					<FaTrophy className="text-2xl text-yellow-500" />
+				</div>
+
+				<div className="space-y-3">
+					{gradeSummary.parameters.map((param, index) => (
+						<div key={index} className="flex justify-between text-sm">
+							<span className="text-gray-600">
+								{param.name} ({param.weight}%)
+							</span>
+							<span className="font-medium text-gray-900">
+								{param.grade.toFixed(1)}
+							</span>
+						</div>
+					))}
+
+					<div className="mt-4 border-t border-gray-100 pt-3">
+						<div className="flex justify-between">
+							<span className="font-semibold text-gray-900">
+								Nota Final del Curso
+							</span>
+							<span className="text-lg font-bold text-primary">
+								{gradeSummary.finalGrade.toFixed(1)}
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
 	};
 
 	return (
@@ -189,9 +269,11 @@ const LessonActivities = ({
 					markActivityAsCompleted={markActivityAsCompleted}
 					onActivityCompleted={handleActivityCompletion}
 					savedResults={savedResults}
-					onLessonUnlocked={onLessonUnlocked} // Pass the new prop
+					onLessonUnlocked={onLessonUnlocked}
+					isLastLesson={isLastLesson}
 				/>
 			)}
+			{renderGradeSummary()}
 		</div>
 	);
 };

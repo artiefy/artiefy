@@ -21,6 +21,7 @@ import {
 	DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 
 import type { Activity, Question, SavedAnswer } from '~/types';
 import '~/styles/arrowactivity.css';
@@ -36,8 +37,10 @@ interface ActivityModalProps {
 	savedResults?: {
 		score: number;
 		answers: Record<string, SavedAnswer>;
+		isAlreadyCompleted?: boolean;
 	} | null;
 	onLessonUnlocked: (lessonId: number) => void; // Add this new prop
+	isLastLesson: boolean; // Add this new prop
 }
 
 interface UserAnswer {
@@ -51,6 +54,10 @@ interface SaveAnswersResponse {
 	canClose: boolean; // Add canClose to the interface
 }
 
+interface AttemptsResponse {
+	attempts: number;
+}
+
 const LessonActivityModal = ({
 	isOpen,
 	onClose,
@@ -61,6 +68,7 @@ const LessonActivityModal = ({
 	onActivityCompleted, // Add this new prop
 	savedResults,
 	onLessonUnlocked, // Add this new prop
+	isLastLesson, // Add this new prop
 }: ActivityModalProps) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
@@ -72,14 +80,15 @@ const LessonActivityModal = ({
 	const [finalScore, setFinalScore] = useState(0);
 	const [canClose, setCanClose] = useState(false);
 	const [isUnlocking, setIsUnlocking] = useState(false);
-	const [hasNavigatedOnce, setHasNavigatedOnce] = useState(false);
 	const [isResultsLoaded, setIsResultsLoaded] = useState(false);
+	const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
+	const [isSavingResults, setIsSavingResults] = useState(false);
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
 			setQuestions(activity.content.questions);
+			setIsLoading(false);
 		}
-		setIsLoading(false);
 	}, [activity]);
 
 	useEffect(() => {
@@ -87,6 +96,28 @@ const LessonActivityModal = ({
 			setFinalScore(savedResults.score ?? 0);
 			setUserAnswers(savedResults.answers ?? {});
 			setShowResults(true);
+		}
+	}, [savedResults]);
+
+	useEffect(() => {
+		const checkAttempts = async () => {
+			if (activity.revisada) {
+				const response = await fetch(
+					`/api/activities/attempts?activityId=${activity.id}&userId=${userId}`
+				);
+				const data = (await response.json()) as AttemptsResponse;
+				setAttemptsLeft(3 - (data.attempts ?? 0)); // Using nullish coalescing
+			}
+		};
+		void checkAttempts();
+	}, [activity.id, activity.revisada, userId]);
+
+	useEffect(() => {
+		if (savedResults?.isAlreadyCompleted) {
+			setShowResults(true);
+			setFinalScore(savedResults.score);
+			setUserAnswers(savedResults.answers);
+			setIsResultsLoaded(true);
 		}
 	}, [savedResults]);
 
@@ -139,12 +170,13 @@ const LessonActivityModal = ({
 	};
 
 	const handleFinish = async () => {
-		setIsResultsLoaded(false); // Reset el estado
-		const score = calculateScore();
-		setFinalScore(score);
-		setShowResults(true);
-
 		try {
+			setIsSavingResults(true);
+			setIsResultsLoaded(false);
+			const score = calculateScore();
+			setFinalScore(score);
+			setShowResults(true);
+
 			const allQuestionsAnswered =
 				Object.keys(userAnswers).length === questions.length;
 			const hasPassingScore = score >= 3;
@@ -170,42 +202,66 @@ const LessonActivityModal = ({
 			if (!hasPassingScore) {
 				toast.error('Debes obtener al menos 3 puntos para aprobar');
 			}
+
+			// Check attempts for revisada activities
+			if (activity.revisada) {
+				try {
+					const attemptsResponse = await fetch(
+						`/api/activities/attempts?activityId=${activity.id}&userId=${userId}`
+					);
+					const attemptsData =
+						(await attemptsResponse.json()) as AttemptsResponse;
+					setAttemptsLeft(3 - (attemptsData.attempts ?? 0));
+				} catch (attemptError) {
+					console.error('Error checking attempts:', attemptError);
+				}
+			}
+
 			// Marcar que los resultados están cargados
 			setIsResultsLoaded(true);
 		} catch (error) {
 			console.error('Error saving answers:', error);
 			toast.error('Error al guardar las respuestas');
-			setIsResultsLoaded(true); // También marcamos como cargado en caso de error
+		} finally {
+			setIsSavingResults(false);
+			setIsResultsLoaded(true);
 		}
 	};
 
-	const renderUnlockingState = () => (
+	const renderLoadingState = (message: string) => (
 		<div className="flex flex-col items-center justify-center p-8">
-			<Icons.blocks className="size-22 fill-primary" />
-			<p className="mt-6 text-center text-xl text-white">
-				Desbloqueando Siguiente Clase...
-			</p>
+			<Icons.blocks className="size-22 animate-pulse fill-primary" />
+			<p className="mt-6 text-center text-xl text-white">{message}</p>
 		</div>
 	);
 
 	const handleFinishAndNavigate = async () => {
-		if (!canClose) return;
+		if (!canClose) {
+			toast.error('Debes aprobar la actividad primero');
+			return;
+		}
 
 		try {
 			setIsUnlocking(true);
 			await markActivityAsCompleted();
 			await onActivityCompleted();
 			onQuestionsAnswered(true);
-			setIsUnlocking(false);
 
-			// Marcar que ya se ha navegado una vez
-			setHasNavigatedOnce(true);
-
-			// Llamar a la función onLessonUnlocked con el ID de la siguiente lección
-			onLessonUnlocked(activity.lessonsId);
+			const result = await unlockNextLesson(activity.lessonsId);
+			if (result.success && result.nextLessonId) {
+				onLessonUnlocked(result.nextLessonId);
+				toast.success('¡Siguiente clase desbloqueada!');
+				onClose();
+			} else {
+				toast.error(
+					'Completa la actividad para desbloquear la siguiente clase'
+				);
+			}
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error al completar la actividad');
+		} finally {
+			setIsUnlocking(false);
 		}
 	};
 
@@ -332,126 +388,183 @@ const LessonActivityModal = ({
 		);
 	};
 
-	const renderResults = () => (
-		// Reducido el padding vertical de 4 a 2
-		<div className="-mt-14 space-y-3 px-4">
-			<div className="text-center">
-				{/* Reducido el tamaño del texto y el espacio superior */}
-				<h3 className="text-xl font-bold text-background">Resultados</h3>
-				<div className="mt-1">
-					{renderStars(finalScore)}
-					<p className="mt-1 text-lg font-medium text-gray-600">
-						Calificación: <span className="text-primary">{finalScore}/5</span>
-					</p>
-				</div>
-			</div>
-
-			<div className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-				{questions.map((question, idx) => {
-					const userAnswer = userAnswers[question.id];
-					const isCorrect = userAnswer?.isCorrect;
-					const displayAnswer = userAnswer
-						? getDisplayAnswer(userAnswer, question)
-						: '';
-					const displayCorrectAnswer = getDisplayCorrectAnswer(question);
-
-					return (
-						<div
-							key={question.id}
-							className="space-y-3 p-4 transition-all hover:bg-gray-50"
-						>
-							<div className="flex items-start justify-between">
-								<div className="flex-1">
-									<p className="font-medium text-gray-900">
-										<span className="mr-2 text-gray-500">
-											Pregunta {idx + 1}:
-										</span>
-										{question.text}
-									</p>
-								</div>
-								{isCorrect ? (
-									<CheckCircleIcon className="h-6 w-6 text-green-600" />
-								) : (
-									<XCircleIcon className="h-6 w-6 text-red-600" />
-								)}
-							</div>
-
-							<div className="ml-6 space-y-2">
-								<div
-									className={`rounded-md p-2 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}
-								>
-									<p className="text-sm">
-										<span className="font-bold">Tu respuesta:</span>{' '}
-										<span className="font-bold">{displayAnswer}</span>
-									</p>
-								</div>
-
-								{!isCorrect && (
-									<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
-										<span className="font-bold">Respuesta correcta:</span>{' '}
-										<span className="font-bold">{displayCorrectAnswer}</span>
-									</div>
-								)}
-							</div>
-						</div>
-					);
-				})}
-			</div>
-
-			{/* Mostrar el botón si la puntuación es suficiente */}
-			{finalScore >= 3 ? (
+	const renderActionButton = () => {
+		// Si está cargando resultados o desbloqueando
+		if (!isResultsLoaded || isUnlocking) {
+			return (
 				<Button
-					onClick={
-						!isResultsLoaded || isUnlocking
-							? undefined
-							: hasNavigatedOnce || activity.isCompleted
-								? onClose
-								: handleFinishAndNavigate
-					}
-					className={`mt-4 w-full font-semibold text-white active:scale-95 ${
-						!isResultsLoaded || isUnlocking
-							? 'cursor-not-allowed bg-gradient-to-r from-blue-400/70 to-blue-600/70 [&>*]:text-white [&>*]:opacity-100'
-							: 'bg-gradient-to-r from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800'
-					}`}
+					disabled
+					className="mt-4 w-full cursor-not-allowed bg-gradient-to-r from-blue-400/70 to-blue-600/70"
 				>
-					{isUnlocking ? (
-						<>
-							<Icons.spinner className="mr-2 h-5 w-5 animate-spin !text-white" />
-							<span className="text-xl font-semibold !text-white">
-								Desbloqueando siguiente clase...
-							</span>
-						</>
-					) : !isResultsLoaded ? (
-						<>
-							<Icons.spinner className="mr-2 h-4 w-4 animate-spin !text-white" />
-							<span className="!text-white">Cargando resultados...</span>
-						</>
-					) : hasNavigatedOnce || activity.isCompleted ? (
-						'Cerrar'
-					) : (
-						'Desbloquear siguiente clase'
-					)}
+					<Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
+					<span>Cargando resultados...</span>
 				</Button>
-			) : (
-				<div className="mt-4 space-y-4">
-					<p className="text-center text-red-600">
-						No has alcanzado la puntuación mínima necesaria (3/5)
+			);
+		}
+
+		// Si la actividad ya fue completada anteriormente, solo mostrar botón cerrar
+		if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
+			return (
+				<Button
+					onClick={onClose}
+					className="mt-4 w-full bg-blue-500 transition-all duration-200 hover:scale-[0.98] hover:bg-blue-600"
+				>
+					Cerrar
+				</Button>
+			);
+		}
+
+		// Si no aprobó y es una actividad revisada (calificable)
+		if (finalScore < 3 && activity.revisada) {
+			if (attemptsLeft && attemptsLeft > 0) {
+				return (
+					<>
+						<p className="text-center text-sm text-gray-600">
+							Te quedan {attemptsLeft} intento{attemptsLeft !== 1 ? 's' : ''}
+						</p>
+						<Button
+							onClick={() => {
+								setCurrentQuestionIndex(0);
+								setUserAnswers({});
+								setShowResults(false);
+							}}
+							className="mt-2 w-full bg-yellow-500 hover:bg-yellow-600"
+						>
+							Intentar nuevamente
+						</Button>
+					</>
+				);
+			}
+			return (
+				<div className="rounded-lg bg-red-50 p-4 text-center">
+					<p className="font-semibold text-red-800">
+						Has agotado todos tus intentos
 					</p>
+					<p className="mt-1 text-sm text-red-600">
+						Calificación final: {finalScore}/5
+					</p>
+					<Button onClick={onClose} className="mt-3 w-full bg-gray-500">
+						Cerrar
+					</Button>
+				</div>
+			);
+		}
+
+		// Si no aprobó pero la actividad no es revisada (práctica)
+		if (finalScore < 3 && !activity.revisada) {
+			return (
+				<>
 					<Button
 						onClick={() => {
 							setCurrentQuestionIndex(0);
 							setUserAnswers({});
 							setShowResults(false);
-							setCanClose(false);
 						}}
-						className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
+						className="mt-2 w-full bg-yellow-500 hover:bg-yellow-600"
 					>
 						Intentar nuevamente
 					</Button>
+					<Button onClick={onClose} className="mt-2 w-full bg-gray-500">
+						Cerrar
+					</Button>
+				</>
+			);
+		}
+
+		// Si aprobó y puede desbloquear siguiente clase
+		if (finalScore >= 3 && !activity.isCompleted && !isLastLesson) {
+			return (
+				<Button
+					onClick={handleFinishAndNavigate}
+					className="mt-4 w-full bg-green-500 transition-all duration-200 hover:scale-[0.98] hover:bg-green-600"
+				>
+					Desbloquear siguiente clase
+				</Button>
+			);
+		}
+
+		// Por defecto, mostrar botón de cerrar
+		return (
+			<Button
+				onClick={onClose}
+				className="mt-4 w-full bg-blue-500 transition-all duration-200 hover:scale-[0.98] hover:bg-blue-600"
+			>
+				Cerrar
+			</Button>
+		);
+	};
+
+	const renderResults = () => {
+		if (!isResultsLoaded || isSavingResults) {
+			return renderLoadingState('Cargando Resultados...');
+		}
+
+		return (
+			<div className="-mt-14 space-y-3 px-4">
+				<div className="text-center">
+					<h3 className="text-xl font-bold text-background">Resultados</h3>
+					<div className="mt-1">
+						{renderStars(finalScore)}
+						<p className="mt-1 text-lg font-medium text-gray-600">
+							Calificación: <span className="text-primary">{finalScore}/5</span>
+						</p>
+					</div>
 				</div>
-			)}
-		</div>
-	);
+
+				<div className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+					{questions.map((question, idx) => {
+						const userAnswer = userAnswers[question.id];
+						const isCorrect = userAnswer?.isCorrect;
+						const displayAnswer = userAnswer
+							? getDisplayAnswer(userAnswer, question)
+							: '';
+						const displayCorrectAnswer = getDisplayCorrectAnswer(question);
+
+						return (
+							<div
+								key={question.id}
+								className="space-y-3 p-4 transition-all hover:bg-gray-50"
+							>
+								<div className="flex items-start justify-between">
+									<div className="flex-1">
+										<p className="font-medium text-gray-900">
+											<span className="mr-2 text-gray-500">
+												Pregunta {idx + 1}:
+											</span>
+											{question.text}
+										</p>
+									</div>
+									{isCorrect ? (
+										<CheckCircleIcon className="h-6 w-6 text-green-600" />
+									) : (
+										<XCircleIcon className="h-6 w-6 text-red-600" />
+									)}
+								</div>
+
+								<div className="ml-6 space-y-2">
+									<div
+										className={`rounded-md p-2 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}
+									>
+										<p className="text-sm">
+											<span className="font-bold">Tu respuesta:</span>{' '}
+											<span className="font-bold">{displayAnswer}</span>
+										</p>
+									</div>
+									{!isCorrect && (
+										<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
+											<span className="font-bold">Respuesta correcta:</span>{' '}
+											<span className="font-bold">{displayCorrectAnswer}</span>
+										</div>
+									)}
+								</div>
+							</div>
+						);
+					})}
+				</div>
+				{renderActionButton()}
+			</div>
+		);
+	};
 
 	const getQuestionTypeLabel = (type: string) => {
 		switch (type) {
@@ -504,7 +617,9 @@ const LessonActivityModal = ({
 					</DialogTitle>
 				</DialogHeader>
 				{isUnlocking ? (
-					renderUnlockingState()
+					renderLoadingState('Desbloqueando Siguiente Clase...')
+				) : isSavingResults ? (
+					renderLoadingState('Cargando Resultados...')
 				) : showResults ? (
 					renderResults()
 				) : (
@@ -520,18 +635,17 @@ const LessonActivityModal = ({
 						{renderQuestion()}
 						<div className="flex justify-between">
 							<button
-								onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
-								disabled={currentQuestionIndex === 0}
 								className="btn-arrow btn-arrow-prev"
+								disabled={currentQuestionIndex === 0}
+								onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
 							>
 								<ChevronRightIcon />
 								<span>Anterior</span>
 							</button>
-
 							<button
-								onClick={isLastQuestion ? handleFinish : handleNext}
-								disabled={!canProceedToNext}
 								className={`btn-arrow ${isLastQuestion ? 'btn-arrow-success' : ''}`}
+								disabled={!canProceedToNext}
+								onClick={isLastQuestion ? handleFinish : handleNext}
 							>
 								<span>{isLastQuestion ? 'Ver resultados' : 'Siguiente'}</span>
 								<ChevronRightIcon />

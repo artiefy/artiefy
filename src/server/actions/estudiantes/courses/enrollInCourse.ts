@@ -132,7 +132,7 @@ export async function enrollInCourse(
 						and(
 							eq(userLessonsProgress.userId, userId),
 							eq(userLessonsProgress.lessonId, courseLesson.id),
-							eq(userLessonsProgress.isLocked, false)
+							eq(userLessonsProgress.isLocked, true)
 						)
 					);
 			}

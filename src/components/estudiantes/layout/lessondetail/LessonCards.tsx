@@ -25,7 +25,7 @@ const LessonCards = ({
 			onLessonClick(lessonItem.id);
 		} else {
 			toast.error('Clase Bloqueada', {
-				description: 'Debes completar las clases anteriores primero.',
+				description: 'Completa la actividad anterior y desbloquea esta clase.',
 			});
 		}
 	};
@@ -33,8 +33,7 @@ const LessonCards = ({
 	const renderLessonCard = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
 		const isAccessible = !lessonItem.isLocked;
-		const isCompleted =
-			lessonItem.porcentajecompletado === 100 && lessonItem.isCompleted;
+		const isCompleted = lessonItem.porcentajecompletado === 100;
 
 		return (
 			<div

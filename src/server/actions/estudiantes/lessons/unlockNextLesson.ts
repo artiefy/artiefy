@@ -7,73 +7,73 @@ import { db } from '~/server/db';
 import { userLessonsProgress, lessons } from '~/server/db/schema';
 
 export async function unlockNextLesson(
-	currentLessonId: number
+  currentLessonId: number
 ): Promise<{ success: boolean; nextLessonId?: number }> {
-	try {
-		const user = await currentUser();
-		if (!user?.id) throw new Error('Usuario no autenticado');
+  try {
+    const user = await currentUser();
+    if (!user?.id) throw new Error('Usuario no autenticado');
 
-		// 1. Marcar lección actual como completada
-		await db
-			.update(userLessonsProgress)
-			.set({
-				isCompleted: true,
-				progress: 100,
-				isLocked: false,
-				lastUpdated: new Date(),
-			})
-			.where(
-				and(
-					eq(userLessonsProgress.userId, user.id),
-					eq(userLessonsProgress.lessonId, currentLessonId)
-				)
-			);
+    // Get current lesson and its activity status
+    const currentLesson = await db.query.lessons.findFirst({
+      where: eq(lessons.id, currentLessonId),
+      with: {
+        activities: true,
+      },
+    });
 
-		// 2. Obtener la siguiente lección
-		const currentLesson = await db.query.lessons.findFirst({
-			where: eq(lessons.id, currentLessonId),
-		});
+    if (!currentLesson) throw new Error('Lección actual no encontrada');
 
-		if (!currentLesson) throw new Error('Lección actual no encontrada');
+    // Check if lesson has activities and they are completed
+    const hasActivities = currentLesson.activities && currentLesson.activities.length > 0;
+    if (hasActivities) {
+      const activityProgress = await db.query.userActivitiesProgress.findFirst({
+        where: (progress, { and, eq }) => and(
+          eq(progress.userId, user.id),
+          eq(progress.activityId, currentLesson.activities[0].id)
+        ),
+      });
 
-		const nextLesson = await db.query.lessons.findFirst({
-			where: and(
-				eq(lessons.courseId, currentLesson.courseId),
-				gt(lessons.title, currentLesson.title)
-			),
-			orderBy: asc(lessons.title),
-		});
+      if (!activityProgress?.isCompleted) {
+        return { success: false, nextLessonId: undefined };
+      }
+    }
 
-		if (!nextLesson) {
-			return { success: false };
-		}
+    // Find next lesson
+    const nextLesson = await db.query.lessons.findFirst({
+      where: and(
+        eq(lessons.courseId, currentLesson.courseId),
+        gt(lessons.title, currentLesson.title)
+      ),
+      orderBy: asc(lessons.title),
+    });
 
-		// 3. Crear o actualizar el progreso de la siguiente lección
-		await db
-			.insert(userLessonsProgress)
-			.values({
-				userId: user.id,
-				lessonId: nextLesson.id,
-				progress: 0,
-				isCompleted: false,
-				isLocked: false,
-				isNew: true, // Marcar como nueva
-				lastUpdated: new Date(),
-			})
-			.onConflictDoUpdate({
-				target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
-				set: {
-					isLocked: false,
-					progress: 0,
-					isCompleted: false,
-					isNew: true, // Marcar como nueva
-					lastUpdated: new Date(),
-				},
-			});
+    if (!nextLesson) {
+      return { success: false };
+    }
 
-		return { success: true, nextLessonId: nextLesson.id };
-	} catch (error) {
-		console.error('Error unlocking next lesson:', error);
-		return { success: false };
-	}
+    // Only unlock next lesson if activity is completed
+    await db.insert(userLessonsProgress)
+      .values({
+        userId: user.id,
+        lessonId: nextLesson.id,
+        progress: 0,
+        isCompleted: false,
+        isLocked: false,
+        isNew: true,
+        lastUpdated: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+        set: {
+          isLocked: false,
+          isNew: true,
+          lastUpdated: new Date(),
+        },
+      });
+
+    return { success: true, nextLessonId: nextLesson.id };
+  } catch (error) {
+    console.error('Error unlocking next lesson:', error);
+    return { success: false };
+  }
 }

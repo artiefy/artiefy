@@ -176,6 +176,11 @@ export interface Activity {
 	isCompleted: boolean;
 	userProgress: number;
 	createdAt?: Date; // Make createdAt optional
+	attemptLimit: number;
+	currentAttempts: number;
+	finalGrade?: number;
+	lastAttemptAt?: Date;
+	pesoPregunta?: number;
 }
 
 export interface Question {
@@ -186,6 +191,7 @@ export interface Question {
 	options?: Option[];
 	correctAnswer?: string;
 	answer?: string;
+	pesoPregunta: number; // Add weight for question
 }
 
 export interface Option {
@@ -260,6 +266,7 @@ export interface SavedAnswer {
 	questionId: string;
 	answer: string;
 	isCorrect: boolean;
+	pesoPregunta: number;
 }
 
 export interface ActivityResults {
@@ -267,6 +274,11 @@ export interface ActivityResults {
 	answers: Record<string, SavedAnswer>;
 	passed: boolean;
 	submittedAt: string;
+	attemptCount?: number; // Add attempt counter
+	finalGrade: number;
+	parameterId?: number;
+	revisada?: boolean;
+	courseId?: number;
 }
 
 export interface Program {
@@ -313,4 +325,49 @@ export interface EnrollmentProgram {
 	completed: boolean;
 	user?: User;
 	programa?: Program;
+}
+
+// Add new interface for grades
+export interface GradeReport {
+	materiaId: number;
+	materiaName: string;
+	grade: number;
+	activities: {
+		activityId: number;
+		name: string;
+		grade: number;
+		weight: number;
+	}[];
+	parameters: ParameterGrade[];
+}
+
+export interface MateriaGrade {
+	id: number;
+	materiaId: number;
+	userId: string;
+	grade: number;
+	updatedAt: Date;
+	materia?: Materia;
+	user?: User;
+}
+
+export interface ParameterGrade {
+	id: number;
+	parameterId: number;
+	userId: string;
+	grade: number;
+	updatedAt: Date;
+	parameterName: string;
+	weight: number;
+	parameter?: Parameter;
+	user?: User;
+}
+
+export interface Parameter {
+	id: number;
+	name: string;
+	description: string;
+	porcentaje: number;
+	courseId: number;
+	course?: Course;
 }

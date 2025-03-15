@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -18,7 +18,6 @@ import LessonNavigation from '~/components/estudiantes/layout/lessondetail/Lesso
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
 import RecursosLesson from '~/components/estudiantes/layout/lessondetail/LessonResource';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
-import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
 import {
@@ -79,7 +78,6 @@ export default function LessonDetails({
 	// Initialize lessons state with progress and locked status
 	useEffect(() => {
 		const initializeLessonsState = () => {
-			// Ordenar lecciones por título primero
 			const sortedLessons = [...lessons].sort((a, b) =>
 				a.title.localeCompare(b.title, undefined, { numeric: true })
 			);
@@ -89,7 +87,7 @@ export default function LessonDetails({
 					(p) => p.lessonId === lessonItem.id
 				);
 
-				// La primera lección (por título) siempre está desbloqueada
+				// Only first lesson is unlocked by default
 				if (index === 0) {
 					return {
 						...lessonItem,
@@ -101,14 +99,10 @@ export default function LessonDetails({
 					};
 				}
 
-				// Para las demás lecciones, verificar si la anterior está completada
-				const previousLesson = userLessonsProgress.find(
-					(p) => p.lessonId === sortedLessons[index - 1].id
-				);
-
+				// Other lessons remain locked until explicitly unlocked via activity completion
 				return {
 					...lessonItem,
-					isLocked: !(previousLesson?.isCompleted ?? false),
+					isLocked: progress?.isLocked ?? true, // Use stored lock state or default to locked
 					porcentajecompletado: progress?.progress ?? 0,
 					isCompleted: progress?.isCompleted ?? false,
 					isNew: progress?.isNew ?? true, // Agregar propiedad isNew
@@ -200,20 +194,17 @@ export default function LessonDetails({
 	// Handle video end event
 	const handleVideoEnd = async () => {
 		try {
-			// Show the toast immediately when the video ends
 			toast.success('Clase completada', {
 				description: activity
 					? 'Ahora completa la actividad para continuar'
-					: '¡La siguiente clase ha sido desbloqueada!',
+					: 'Video completado exitosamente',
 			});
 
-			// Call handleLessonCompletion instead of duplicating logic
 			await handleLessonCompletion();
 
-			// Only handle activity-specific logic here
-			if (!activity) {
-				await unlockNextClass();
-			}
+			// Remove automatic unlocking - only mark video as complete
+			setProgress(100);
+			setIsVideoCompleted(true);
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error al actualizar el progreso');
@@ -249,15 +240,11 @@ export default function LessonDetails({
 		if (!activity || !isVideoCompleted) return;
 
 		try {
-			await completeActivity(activity.id);
+			await completeActivity(activity.id, userId); // Add userId parameter
 			setIsActivityCompleted(true);
-			await unlockNextClass();
 
-			// Solo mostrar un único toast aquí
-			toast.success('¡Actividad completada!', {
-				description:
-					'La siguiente clase ha sido desbloqueada. Puedes acceder a ella desde el menú de lecciones.',
-			});
+			// Remove automatic unlocking - let modal handle it
+			toast.success('¡Actividad completada!');
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error al completar la actividad');
@@ -399,7 +386,7 @@ export default function LessonDetails({
 								...l, // Mantener todas las propiedades existentes
 								porcentajecompletado: 100,
 								isCompleted: !activity,
-								isLocked: false,
+								// Don't modify isLocked status here
 							}
 						: l
 				)
@@ -408,29 +395,6 @@ export default function LessonDetails({
 			console.error('Error:', error);
 			toast.error('Error al completar la lección');
 			throw error;
-		}
-	};
-
-	// Actualizar el manejador para desbloquear siguiente clase
-	const unlockNextClass = async () => {
-		const result = await unlockNextLesson(lesson.id);
-
-		if (result.success && result.nextLessonId) {
-			setLessonsState((prevLessons) =>
-				prevLessons.map((l) =>
-					l.id === result.nextLessonId
-						? {
-								...l,
-								isLocked: false,
-								porcentajecompletado: 0,
-								isNew: true, // Asegúrate de que la nueva lección tenga isNew en true
-							}
-						: l
-				)
-			);
-
-			// Remover la navegación automática
-			// await handleAutoNavigation(result.nextLessonId);
 		}
 	};
 
@@ -448,10 +412,20 @@ export default function LessonDetails({
 	const handleLessonUnlocked = (lessonId: number) => {
 		setLessonsState((prevLessons) =>
 			prevLessons.map((lesson) =>
-				lesson.id === lessonId ? { ...lesson, isNew: true } : lesson
+				lesson.id === lessonId
+					? { ...lesson, isLocked: false, isNew: true }
+					: lesson
 			)
 		);
 	};
+
+	const isLastLesson = useCallback(() => {
+		const sortedLessons = [...lessonsState].sort((a, b) =>
+			a.title.localeCompare(b.title)
+		);
+		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
+		return currentIndex === sortedLessons.length - 1;
+	}, [lessonsState, lesson.id]);
 
 	return (
 		<div className="flex min-h-screen flex-col">
@@ -516,6 +490,8 @@ export default function LessonDetails({
 								createdAt: new Date(),
 								fechaMaximaEntrega: null,
 								typeid: 0,
+								attemptLimit: 3, // Add missing properties
+								currentAttempts: 0,
 							}
 						}
 						isVideoCompleted={isVideoCompleted}
@@ -524,6 +500,8 @@ export default function LessonDetails({
 						userId={userId}
 						nextLessonId={getNextLessonId()} // Add this prop
 						onLessonUnlocked={handleLessonUnlocked} // Add this prop
+						courseId={lesson.courseId} // Add this prop
+						isLastLesson={isLastLesson()}
 					/>
 					<RecursosLesson resourceNames={lesson.resourceNames} />
 				</div>

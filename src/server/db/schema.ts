@@ -273,6 +273,9 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 	isCompleted: boolean('is_completed').default(false).notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 	revisada: boolean('revisada').references(() => activities.revisada),
+	attemptCount: integer('attempt_count').default(0),
+	finalGrade: real('final_grade'),
+	lastAttemptAt: timestamp('last_attempt_at'),
 });
 
 //Tabla de sistema de tickets
@@ -327,6 +330,31 @@ export const materias = pgTable('materias', {
 		.references(() => programas.id)
 		.notNull(),
 	courseid: integer('courseid').references(() => courses.id), // Changed from courseId to courseid
+});
+
+// Add new table for grades
+export const materiaGrades = pgTable('materia_grades', {
+	id: serial('id').primaryKey(),
+	materiaId: integer('materia_id')
+		.references(() => materias.id)
+		.notNull(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	grade: real('grade').notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const parameterGrades = pgTable('parameter_grades', {
+	id: serial('id').primaryKey(),
+	parameterId: integer('parametro_id')
+		.references(() => parametros.id)
+		.notNull(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	grade: real('grade').notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Relaciones de programas
@@ -459,6 +487,7 @@ export const nivelRelations = relations(nivel, ({ many }) => ({
 	courses: many(courses),
 }));
 
+// Asegurar que lessons tenga relación con course
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
 	course: one(courses, {
 		fields: [lessons.courseId],
@@ -468,14 +497,15 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
 	userLessonsProgress: many(userLessonsProgress),
 }));
 
+// Actualizar las relaciones de activities para incluir lesson y course
 export const activitiesRelations = relations(activities, ({ one, many }) => ({
 	lesson: one(lessons, {
 		fields: [activities.lessonsId],
 		references: [lessons.id],
 	}),
-	typeActi: one(typeActi, {
-		fields: [activities.typeid],
-		references: [typeActi.id],
+	parametro: one(parametros, {
+		fields: [activities.parametroId],
+		references: [parametros.id],
 	}),
 	userActivitiesProgress: many(userActivitiesProgress),
 }));
