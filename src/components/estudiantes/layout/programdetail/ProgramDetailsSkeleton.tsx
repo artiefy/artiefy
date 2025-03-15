@@ -18,6 +18,7 @@ export function ProgramDetailsSkeleton() {
 					</CardHeader>
 
 					<CardContent className="mx-6 space-y-4">
+						{/* Program metadata */}
 						<div className="flex flex-wrap items-center justify-between gap-4">
 							<div className="flex items-center space-x-4">
 								<Skeleton className="h-6 w-24" />
@@ -33,11 +34,13 @@ export function ProgramDetailsSkeleton() {
 							</div>
 						</div>
 
+						{/* Description skeleton */}
 						<div className="space-y-2">
 							<Skeleton className="h-4 w-full" />
 							<Skeleton className="h-4 w-3/4" />
 						</div>
 
+						{/* Materias skeleton */}
 						<div className="space-y-4">
 							<Skeleton className="h-8 w-48" />
 							<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

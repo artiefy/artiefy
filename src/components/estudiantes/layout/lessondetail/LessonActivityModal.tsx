@@ -623,7 +623,8 @@ const LessonActivityModal = ({
 									alt="Question and Answer Icon"
 									width={48}
 									height={48}
-									className="-mt-2 animate-spin text-primary"
+									className="-mt-2"
+									unoptimized // Add this prop for SVGs
 								/>
 							)}
 						</div>
