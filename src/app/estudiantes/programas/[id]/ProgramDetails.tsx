@@ -25,7 +25,7 @@ export default function ProgramDetails({
 	program: initialProgram,
 }: ProgramDetailsProps) {
 	const [program] = useState(initialProgram);
-	const totalStudents = program.enrollmentPrograms?.length ?? 0;
+	// Remove totalStudents since we're using EnrollmentCount now
 	const [isEnrolled, setIsEnrolled] = useState(false);
 	const [isEnrolling, setIsEnrolling] = useState(false);
 	const [isUnenrolling, setIsUnenrolling] = useState(false);
@@ -143,13 +143,12 @@ export default function ProgramDetails({
 					isSubscriptionActive={isSubscriptionActive}
 					onEnroll={handleEnroll}
 					onUnenroll={handleUnenroll}
-					totalStudents={totalStudents}
 					subscriptionEndDate={
 						(user?.publicMetadata?.subscriptionEndDate as string) ?? null
 					}
 				/>
 				{/* Remove ProgramContent since it's already in ProgramHeader */}
 			</main>
-		</div>
+		</div> 
 	);
 }

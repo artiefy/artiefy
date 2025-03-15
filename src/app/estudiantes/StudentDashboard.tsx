@@ -18,19 +18,17 @@ import {
 	CarouselPrevious,
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
-import { type Course, type Program, type Category } from '~/types';
+import { type Course, type Program } from '~/types';
 import '~/styles/searchBar.css';
 
 interface StudentDashboardProps {
 	initialCourses: Course[];
 	initialPrograms: Program[];
-	categories: Category[];
 }
 
 export default function StudentDashboard({
 	initialCourses,
 	initialPrograms,
-	categories,
 }: StudentDashboardProps) {
 	const [courses] = useState<Course[]>(initialCourses);
 	const [sortedPrograms] = useState(() => {
@@ -250,10 +248,7 @@ export default function StudentDashboard({
 												key={program.id}
 												className="md:basis-2/3 lg:basis-1/3"
 											>
-												<StudenProgram
-													program={program}
-													categories={categories}
-												/>
+												<StudenProgram program={program} />
 											</CarouselItem>
 										))}
 									</CarouselContent>

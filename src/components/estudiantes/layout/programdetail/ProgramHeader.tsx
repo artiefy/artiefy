@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
 
+import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -23,7 +24,6 @@ import type { Program } from '~/types';
 
 interface ProgramHeaderProps {
 	program: Program;
-	totalStudents: number;
 	isEnrolled: boolean;
 	isEnrolling: boolean;
 	isUnenrolling: boolean;
@@ -35,7 +35,6 @@ interface ProgramHeaderProps {
 
 export function ProgramHeader({
 	program,
-	totalStudents,
 	isEnrolled,
 	isEnrolling,
 	isUnenrolling,
@@ -59,6 +58,10 @@ export function ProgramHeader({
 			month: 'long',
 			day: 'numeric',
 		});
+	};
+
+	const getCategoryName = (program: Program) => {
+		return program.category?.name ?? 'Sin categoría';
 	};
 
 	return (
@@ -93,7 +96,7 @@ export function ProgramHeader({
 							variant="outline"
 							className="border-primary bg-background text-primary hover:bg-black/70"
 						>
-							{program.category?.name ?? 'Sin categoría'}
+							{getCategoryName(program)}
 						</Badge>
 						<div className="flex items-center">
 							<FaCalendar className="mr-2 text-gray-600" />
@@ -105,19 +108,21 @@ export function ProgramHeader({
 					<div className="flex items-center space-x-6">
 						<div className="flex items-center">
 							<FaUserGraduate className="mr-2 text-blue-600" />
-							<span className="text-background">
-								{totalStudents} Estudiantes
-							</span>
+							<EnrollmentCount programId={parseInt(program.id)} />
 						</div>
 						<div className="flex items-center">
 							{Array.from({ length: 5 }).map((_, index) => (
 								<StarIcon
 									key={index}
-									className={`h-5 w-5 ${index < Math.floor(program.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
+									className={`h-5 w-5 ${
+										index < Math.floor(program.rating ?? 0)
+											? 'text-yellow-400'
+											: 'text-gray-300'
+									}`}
 								/>
 							))}
 							<span className="ml-2 text-lg font-semibold text-yellow-400">
-								{program.rating?.toFixed(1)}
+								{program.rating?.toFixed(1) ?? '0.0'}
 							</span>
 						</div>
 					</div>
@@ -172,7 +177,9 @@ export function ProgramHeader({
 										) : (
 											<>
 												<span className="transition-all duration-500 group-hover:translate-x-1">
-													{!canEnroll ? 'Requiere Plan Premium' : 'Inscribirse al programa'}
+													{!canEnroll
+														? 'Requiere Plan Premium'
+														: 'Inscribirse al programa'}
 												</span>
 												<svg
 													className="size-6 transition-transform duration-500 group-hover:translate-x-1"

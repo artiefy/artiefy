@@ -50,9 +50,8 @@ export const completeActivity = async (activityId: number, userId: string) => {
 		if (!rawData) {
 			// Verificar si ya está completada en la base de datos
 			const existingProgress = await db.query.userActivitiesProgress.findFirst({
-				where: (progress) => 
-					eq(progress.activityId, activityId) && 
-					eq(progress.userId, userId),
+				where: (progress) =>
+					eq(progress.activityId, activityId) && eq(progress.userId, userId),
 			});
 
 			if (existingProgress?.isCompleted) {
@@ -112,8 +111,8 @@ export const completeActivity = async (activityId: number, userId: string) => {
 
 				// Calcular promedio de parámetros para el curso
 				const parameters = await db.query.parameterGrades.findMany({
-					where: (pg) => 
-						eq(pg.userId, userId) && 
+					where: (pg) =>
+						eq(pg.userId, userId) &&
 						eq(pg.parameterId, activity.parametroId ?? 0), // Use || 0 to handle null case
 				});
 

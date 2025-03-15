@@ -1,93 +1,76 @@
+'use server';
+
 import { unstable_cache } from 'next/cache';
 
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import {
-	programas,
-	enrollmentPrograms,
-	materias,
-	courses,
-	categories,
-} from '~/server/db/schema';
-
-import type { Program } from '~/types';
+import { programas } from '~/server/db/schema';
+import { type Program, type MateriaWithCourse, type BaseCourse } from '~/types';
 
 export const getProgramById = unstable_cache(
 	async (id: string): Promise<Program | null> => {
 		try {
-			// Get program basic data
 			const program = await db.query.programas.findFirst({
 				where: eq(programas.id, parseInt(id, 10)),
+				with: {
+					category: true,
+					materias: {
+						with: {
+							curso: {
+								with: {
+									category: true,
+								},
+							},
+						},
+					},
+				},
 			});
 
-			if (!program) {
-				return null;
-			}
+			if (!program) return null;
 
-			// Get materias with their courses and categories in a single query
-			const materiasWithCourses = await db
-				.select()
-				.from(materias)
-				.leftJoin(courses, eq(materias.courseid, courses.id))
-				.leftJoin(categories, eq(courses.categoryid, categories.id))
-				.where(eq(materias.programaId, program.id));
-
-			// Get enrollment count
-			const enrollmentCount = await db
-				.select({ count: sql<number>`count(*)` })
-				.from(enrollmentPrograms)
-				.where(eq(enrollmentPrograms.programaId, parseInt(id, 10)))
-				.then((result) => Number(result[0]?.count ?? 0));
-
-			// Transform the results including category information
-			const transformedMaterias = materiasWithCourses
-				.map(({ materias, courses, categories }) => ({
-					id: materias.id,
-					title: materias.title,
-					description: materias.description,
-					programaId: materias.programaId,
-					courseid: materias.courseid,
-					curso: courses
-						? {
-								...courses,
-								totalStudents: enrollmentCount,
-								lessons: [],
-								requerimientos: [],
-								category: categories
-									? {
-											id: categories.id,
-											name: categories.name,
-											description: categories.description,
-											is_featured: categories.is_featured,
-										}
-									: undefined,
-							}
+			// Transform materias to match MateriaWithCourse type
+			const transformedMaterias: MateriaWithCourse[] = program.materias.map(
+				(materia) => ({
+					...materia,
+					curso: materia.curso
+						? ({
+								id: materia.curso.id,
+								title: materia.curso.title,
+								description: materia.curso.description,
+								coverImageKey: materia.curso.coverImageKey,
+								categoryid: materia.curso.categoryid,
+								instructor: materia.curso.instructor,
+								createdAt: materia.curso.createdAt,
+								updatedAt: materia.curso.updatedAt,
+								creatorId: materia.curso.creatorId,
+								rating: materia.curso.rating,
+								modalidadesid: materia.curso.modalidadesid,
+								nivelid: materia.curso.nivelid,
+								category: materia.curso.category,
+							} as BaseCourse)
 						: undefined,
-				}))
-				.filter((materia) => materia.curso);
+				})
+			);
 
-			// Build final program object
 			return {
+				...program,
 				id: program.id.toString(),
-				title: program.title,
-				description: program.description,
-				coverImageKey: program.coverImageKey,
-				createdAt: program.createdAt ? new Date(program.createdAt) : null,
-				updatedAt: program.updatedAt ? new Date(program.updatedAt) : null,
-				creatorId: program.creatorId,
-				rating: program.rating,
-				categoryid: program.categoryid,
+				rating: program.rating ?? 0,
+				category: program.category ?? undefined,
 				materias: transformedMaterias,
 			};
 		} catch (error) {
-			console.error('Error fetching program:', error);
+			console.error(
+				'Error fetching program:',
+				error instanceof Error ? error.message : 'Unknown error'
+			);
 			return null;
 		}
 	},
 	['program-by-id'],
 	{
 		revalidate: 3600,
-		tags: ['programs'],
+		tags: ['program'],
 	}
 );

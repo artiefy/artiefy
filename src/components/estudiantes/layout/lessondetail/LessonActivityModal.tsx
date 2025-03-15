@@ -1,16 +1,17 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+import Image from 'next/image';
+
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
-	CogIcon,
 	CheckCircleIcon,
 	XCircleIcon,
 	LightBulbIcon,
 	ChevronRightIcon,
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
-import { FileCheck2 } from 'lucide-react';
+import { FileCheck2, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -128,7 +129,8 @@ const LessonActivityModal = ({
 	const calculateScore = () => {
 		const answers = Object.values(userAnswers);
 		const correctAnswers = answers.filter((a) => a.isCorrect).length;
-		return Math.round((correctAnswers / answers.length) * 5);
+		// Convert to 1 decimal place
+		return Number(((correctAnswers / answers.length) * 5).toFixed(1));
 	};
 
 	const checkAnswer = (questionId: string, answer: string) => {
@@ -407,9 +409,9 @@ const LessonActivityModal = ({
 			return (
 				<Button
 					onClick={onClose}
-					className="mt-4 w-full bg-blue-500 transition-all duration-200 hover:scale-[0.98] hover:bg-blue-600"
+					className="mt-4 w-full bg-blue-500 font-bold transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 				>
-					Cerrar
+					CERRAR
 				</Button>
 			);
 		}
@@ -476,9 +478,13 @@ const LessonActivityModal = ({
 			return (
 				<Button
 					onClick={handleFinishAndNavigate}
-					className="mt-4 w-full bg-green-500 transition-all duration-200 hover:scale-[0.98] hover:bg-green-600"
+					className="group mt-4 w-full bg-green-500 transition-all duration-200 hover:scale-[0.98] hover:bg-green-600"
 				>
-					Desbloquear siguiente clase
+					<span className="flex items-center justify-center gap-2 font-bold text-green-900">
+						Desbloquear Siguiente CLASE
+						<Lock className="h-4 w-4 transition-all duration-200 group-hover:hidden" />
+						<Unlock className="hidden h-4 w-4 transition-all duration-200 group-hover:block" />
+					</span>
 				</Button>
 			);
 		}
@@ -487,7 +493,7 @@ const LessonActivityModal = ({
 		return (
 			<Button
 				onClick={onClose}
-				className="mt-4 w-full bg-blue-500 transition-all duration-200 hover:scale-[0.98] hover:bg-blue-600"
+				className="mt-4 w-full bg-blue-500 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 			>
 				Cerrar
 			</Button>
@@ -506,7 +512,8 @@ const LessonActivityModal = ({
 					<div className="mt-1">
 						{renderStars(finalScore)}
 						<p className="mt-1 text-lg font-medium text-gray-600">
-							Calificación: <span className="text-primary">{finalScore}/5</span>
+							Calificación:{' '}
+							<span className="text-primary">{finalScore.toFixed(1)}</span>/5
 						</p>
 					</div>
 				</div>
@@ -611,7 +618,13 @@ const LessonActivityModal = ({
 							{showResults ? (
 								<FileCheck2 className="size-8 text-green-500" />
 							) : (
-								<CogIcon className="-mt-2 size-12 animate-spin text-primary" />
+								<Image
+									src="/question-and-answer-svgrepo-com.svg"
+									alt="Question and Answer Icon"
+									width={48}
+									height={48}
+									className="-mt-2 animate-spin text-primary"
+								/>
 							)}
 						</div>
 					</DialogTitle>

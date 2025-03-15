@@ -22,7 +22,7 @@ export function EnrollmentCount({ programId }: { programId: number }) {
 		<div className="flex items-center gap-2 rounded-md bg-violet-500/10 px-2 py-1">
 			<span className="font-semibold text-violet-500">{count}</span>
 			<Users className="size-4 text-violet-500" />
-			<span className="text-sm font-medium text-violet-500">estudiantes</span>
+			<span className="text-sm font-medium text-violet-500">Estudiantes</span>
 		</div>
 	);
 }

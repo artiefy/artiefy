@@ -19,10 +19,6 @@ interface SearchParams {
 	page?: string;
 }
 
-interface Props {
-	searchParams: Promise<SearchParams>;
-}
-
 interface APIResponse {
 	courses: Course[];
 	programs: Program[];
@@ -38,7 +34,9 @@ interface APIResponse {
 
 const ITEMS_PER_PAGE = 9;
 
-async function fetchData(params: SearchParams): Promise<APIResponse> {
+async function fetchData(
+	params: SearchParams | undefined
+): Promise<APIResponse> {
 	const [allCourses, allCategories, featuredCategories, allPrograms] =
 		await Promise.all([
 			getAllCourses(),
@@ -49,14 +47,14 @@ async function fetchData(params: SearchParams): Promise<APIResponse> {
 
 	let filteredCourses = allCourses;
 
-	if (params.category) {
+	if (params?.category) {
 		const categoryId = Number(params.category);
 		filteredCourses = filteredCourses.filter(
 			(course) => course.categoryid === categoryId
 		);
 	}
 
-	if (params.query) {
+	if (params?.query) {
 		const lowercasedQuery = params.query.toLowerCase();
 		filteredCourses = filteredCourses.filter(
 			(course) =>
@@ -68,7 +66,7 @@ async function fetchData(params: SearchParams): Promise<APIResponse> {
 
 	const totalFilteredCourses = filteredCourses.length;
 	const totalPages = Math.ceil(totalFilteredCourses / ITEMS_PER_PAGE);
-	const page = Number(params.page ?? '1');
+	const page = Number(params?.page ?? '1');
 	const paginatedCourses = filteredCourses.slice(
 		(page - 1) * ITEMS_PER_PAGE,
 		page * ITEMS_PER_PAGE
@@ -83,8 +81,8 @@ async function fetchData(params: SearchParams): Promise<APIResponse> {
 		page,
 		pageSize: ITEMS_PER_PAGE,
 		totalPages,
-		categoryId: params.category ? Number(params.category) : undefined,
-		searchTerm: params.query,
+		categoryId: params?.category ? Number(params.category) : undefined,
+		searchTerm: params?.query,
 	};
 }
 
@@ -92,19 +90,27 @@ async function fetchAllCourses(): Promise<Course[]> {
 	return await getAllCourses();
 }
 
-export default async function CoursesPage({ searchParams }: Props) {
+export default async function Page({
+	searchParams,
+}: {
+	searchParams?: Record<string, string | string[] | undefined>;
+}) {
 	try {
-		const params = await searchParams;
-		const data = await fetchData(params);
+		const parsedParams: SearchParams = {
+			category: searchParams?.category as string | undefined,
+			query: searchParams?.query as string | undefined,
+			page: searchParams?.page as string | undefined,
+		};
+
+		const data = await fetchData(parsedParams);
 		const allCourses = await fetchAllCourses();
 
 		return (
-			<>
+			<div className="flex min-h-screen flex-col">
 				<Header />
 				<StudentDashboard
 					initialCourses={allCourses}
 					initialPrograms={data.programs}
-					categories={data.categories} // Add categories prop
 				/>
 				<CategoriesCourse
 					allCategories={data.categories}
@@ -138,7 +144,7 @@ export default async function CoursesPage({ searchParams }: Props) {
 					/>
 				</Suspense>
 				<Footer />
-			</>
+			</div>
 		);
 	} catch (error) {
 		console.error('Error al cargar los cursos:', error);

@@ -80,6 +80,9 @@ const LessonActivities = ({
 		null
 	);
 
+	// Add new state for activity loading
+	const [isLoadingActivity, setIsLoadingActivity] = useState(false);
+
 	const openModal = () => setIsModalOpen(true);
 	const closeModal = () => setIsModalOpen(false);
 
@@ -141,6 +144,16 @@ const LessonActivities = ({
 		} finally {
 			setIsLoadingResults(false);
 			openModal();
+		}
+	};
+
+	// Add new handler for opening activity
+	const handleOpenActivity = () => {
+		setIsLoadingActivity(true);
+		try {
+			openModal();
+		} finally {
+			setIsLoadingActivity(false);
 		}
 	};
 
@@ -206,7 +219,11 @@ const LessonActivities = ({
 					)}
 					<div className="space-y-2">
 						<Button
-							onClick={handleCompletedActivityClick}
+							onClick={
+								activityCompleted
+									? handleCompletedActivityClick
+									: handleOpenActivity
+							}
 							disabled={!isVideoCompleted}
 							className={`group relative w-full overflow-hidden ${
 								activityCompleted
@@ -232,7 +249,12 @@ const LessonActivities = ({
 										<FaCheckCircle className="ml-2 inline text-white" />
 									</>
 								) : (
-									'Ver Actividad'
+									<>
+										{isLoadingActivity && (
+											<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
+										)}
+										<span>Ver Actividad</span>
+									</>
 								)}
 							</span>
 						</Button>

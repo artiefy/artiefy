@@ -15,19 +15,13 @@ import {
 	CardFooter,
 } from '~/components/estudiantes/ui/card';
 import { blurDataURL } from '~/lib/blurDataUrl';
-import { type Program, type Category } from '~/types';
+import { type Program } from '~/types';
 
 interface StudenProgramProps {
 	program: Program;
-	categories: Category[];
 }
 
-export function StudenProgram({ program, categories }: StudenProgramProps) {
-	const getCategoryName = (categoryId: number) => {
-		const category = categories.find((cat) => cat.id === categoryId);
-		return category?.name ?? 'Sin categoría';
-	};
-
+export function StudenProgram({ program }: StudenProgramProps) {
 	return (
 		<div className="group relative mx-3">
 			<div className="absolute -inset-1.5 animate-gradient rounded-lg bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover:opacity-100" />
@@ -62,16 +56,27 @@ export function StudenProgram({ program, categories }: StudenProgramProps) {
 					</div>
 
 					<div className="flex items-center justify-between">
-						<Badge
-							variant="outline"
-							className="border-primary bg-background text-[9px] text-primary lg:text-sm"
-						>
-							{getCategoryName(program.categoryid)}
-						</Badge>
+						<div className="flex items-center space-x-4">
+							<Badge
+								variant="outline"
+								className="border-primary bg-background text-[9px] text-primary lg:text-sm"
+							>
+								{program.category?.name ?? 'Sin categoría'}
+							</Badge>
+						</div>
 						<div className="flex items-center">
-							<StarIcon className="size-4 text-yellow-500" />
+							{Array.from({ length: 5 }).map((_, index) => (
+								<StarIcon
+									key={index}
+									className={`h-4 w-4 ${
+										index < Math.floor(program.rating ?? 0)
+											? 'text-yellow-400'
+											: 'text-gray-300'
+									}`}
+								/>
+							))}
 							<span className="ml-1 text-sm font-bold text-yellow-500">
-								{(program.rating ?? 0).toFixed(1)}
+								{program.rating?.toFixed(1) ?? '0.0'}
 							</span>
 						</div>
 					</div>
