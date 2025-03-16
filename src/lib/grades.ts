@@ -2,21 +2,27 @@ import { db } from '~/server/db';
 
 import type { GradeReport, ParameterGrade, Activity } from '~/types';
 
+export function calculateWeightedGrade(
+	grades: { grade: number; weight: number }[]
+): number {
+	const weightedSum = grades.reduce(
+		(sum, g) => sum + (g.grade * g.weight) / 100,
+		0
+	);
+	return Number(weightedSum.toFixed(1));
+}
+
 export async function calculateMateriaGrades(
 	userId: string,
 	materiaId: number
 ): Promise<number> {
 	const activities = await fetchActivitiesForMateria(materiaId);
-	let totalWeight = 0;
-	let weightedSum = 0;
+	const grades = activities.map((activity) => ({
+		grade: activity.finalGrade ?? 0,
+		weight: activity.porcentaje ?? 0,
+	}));
 
-	activities.forEach((activity) => {
-		const weight = activity.porcentaje ?? 0;
-		totalWeight += weight;
-		weightedSum += (activity.finalGrade ?? 0) * weight;
-	});
-
-	return totalWeight > 0 ? weightedSum / totalWeight : 0;
+	return calculateWeightedGrade(grades);
 }
 
 export async function calculateParameterGrades(

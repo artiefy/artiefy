@@ -1,16 +1,41 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { eq, and, inArray } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import {
-	lessons,
-	materias,
-	userActivitiesProgress,
-	materiaGrades,
-} from '~/server/db/schema';
 
-import type { Materia } from '~/types';
+// Define strict types for query results
+interface DBRow {
+	[key: string]: unknown;
+	name: string;
+	weight: number;
+	grade: number | null;
+	activities: string | null;
+	final_grade: number | null;
+}
+
+interface DBQueryResult extends Record<string, unknown> {
+	rows: DBRow[];
+}
+
+interface ActivityResult {
+	id: number;
+	name: string;
+	grade: number;
+}
+
+interface GradeParameter {
+	name: string;
+	grade: number;
+	weight: number;
+	activities: ActivityResult[];
+}
+
+interface GradeResponse {
+	finalGrade: number;
+	parameters: GradeParameter[];
+	isCompleted: boolean;
+}
 
 export async function GET(request: NextRequest) {
 	try {
@@ -25,127 +50,66 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		// Get lessons and activities
-		const courseLessons = await db.query.lessons.findFirst({
-			where: eq(lessons.courseId, parseInt(courseId)),
-			with: {
-				activities: {
-					with: {
-						parametro: true,
-					},
-				},
-			},
-		});
+		// Execute query with proper type casting
+		const queryResult = (await db.execute(sql`
+      WITH parameter_grades AS (
+        SELECT 
+          p.id,
+          p.name,
+          p.porcentaje as weight,
+          ROUND(CAST(AVG(uap.final_grade) AS NUMERIC), 1) as grade,
+          json_agg(
+            json_build_object(
+              'id', a.id,
+              'name', a.name,
+              'grade', uap.final_grade
+            )
+          ) as activities
+        FROM parametros p
+        LEFT JOIN activities a ON a.parametro_id = p.id
+        LEFT JOIN user_activities_progress uap ON uap.activity_id = a.id 
+          AND uap.user_id = ${userId}
+        WHERE p.course_id = ${courseId}
+        GROUP BY p.id, p.name, p.porcentaje
+      )
+      SELECT 
+        name,
+        weight,
+        grade,
+        activities::text,
+        ROUND(CAST(SUM(grade * weight / 100) OVER () AS NUMERIC), 1) as final_grade
+      FROM parameter_grades
+      ORDER BY id
+    `)) as unknown as DBQueryResult;
 
-		if (!courseLessons?.activities) {
-			return NextResponse.json(
-				{ error: 'No activities found' },
-				{ status: 404 }
-			);
-		}
+		// Safely transform results
+		const rows = queryResult?.rows ?? [];
 
-		// Get activity progress
-		const activityIds = courseLessons.activities.map((a) => a.id);
-		const progress = await db.query.userActivitiesProgress.findMany({
-			where: and(
-				eq(userActivitiesProgress.userId, userId),
-				inArray(userActivitiesProgress.activityId, activityIds)
-			),
-		});
+		const parameters: GradeParameter[] = rows.map((row) => {
+			const activities = JSON.parse(row.activities ?? '[]') as ActivityResult[];
 
-		// Calculate grades by parameter
-		const parameterGrades = new Map<
-			number,
-			{ sum: number; count: number; weight: number }
-		>();
-
-		courseLessons.activities.forEach((activity) => {
-			if (!activity.parametroId) return;
-
-			const activityProgress = progress.find(
-				(p) => p.activityId === activity.id
-			);
-			if (!activityProgress?.isCompleted || !activityProgress.finalGrade)
-				return;
-
-			const current = parameterGrades.get(activity.parametroId) ?? {
-				sum: 0,
-				count: 0,
-				weight: activity.parametro?.porcentaje ?? 0,
+			return {
+				name: String(row.name),
+				grade: Number(row.grade ?? 0),
+				weight: Number(row.weight),
+				activities: activities.map((act) => ({
+					id: Number(act.id),
+					name: String(act.name),
+					grade: Number(act.grade),
+				})),
 			};
-			current.sum += activityProgress.finalGrade;
-			current.count++;
-			parameterGrades.set(activity.parametroId, current);
 		});
 
-		// Format parameters for response with 1 decimal place
-		const parameters = Array.from(parameterGrades.entries()).map(
-			([id, data]) => {
-				const param = courseLessons.activities.find(
-					(a) => a.parametroId === id
-				)?.parametro;
-				return {
-					name: param?.name ?? 'Unknown',
-					grade: Number(
-						(data.count > 0 ? data.sum / data.count : 0).toFixed(1)
-					),
-					weight: data.weight,
-				};
-			}
-		);
+		// Get final grade with proper type casting
+		const finalGrade = Number(rows[0]?.final_grade ?? 0);
 
-		// Calculate final grade with 1 decimal place
-		const totalWeight = parameters.reduce((sum, p) => sum + p.weight, 0);
-		const weightedSum = parameters.reduce(
-			(sum, p) => sum + p.grade * p.weight,
-			0
-		);
-		const finalGrade = Number(
-			(totalWeight > 0 ? weightedSum / totalWeight : 0).toFixed(1)
-		);
-
-		// Update materias grades if there's a final grade
-		if (finalGrade > 0) {
-			const courseMateriasResult = (await db.query.materias.findMany({
-				where: eq(materias.courseid, parseInt(courseId)),
-			})) as Materia[];
-
-			// Update grades for each materia
-			const updatePromises = courseMateriasResult.map(async (materia) => {
-				try {
-					await db
-						.insert(materiaGrades)
-						.values({
-							materiaId: materia.id,
-							userId,
-							grade: finalGrade,
-							updatedAt: new Date(),
-						})
-						.onConflictDoUpdate({
-							target: [materiaGrades.materiaId, materiaGrades.userId],
-							set: {
-								grade: finalGrade,
-								updatedAt: new Date(),
-							},
-						});
-				} catch (error) {
-					console.error(
-						`Error updating grade for materia ${materia.id}:`,
-						error
-					);
-				}
-			});
-
-			await Promise.allSettled(updatePromises);
-		}
-
-		return NextResponse.json({
+		const response: GradeResponse = {
 			finalGrade,
 			parameters,
-			isCompleted:
-				progress.length === activityIds.length &&
-				progress.every((p) => p.isCompleted),
-		});
+			isCompleted: true,
+		};
+
+		return NextResponse.json(response);
 	} catch (error) {
 		console.error('Error calculating grades:', error);
 		return NextResponse.json(
