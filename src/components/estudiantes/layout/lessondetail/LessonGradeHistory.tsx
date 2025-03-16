@@ -1,5 +1,7 @@
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaTrophy } from 'react-icons/fa';
+import { ImHappy } from 'react-icons/im';
+import { PiSmileySad } from 'react-icons/pi';
 
 import {
 	Dialog,
@@ -38,19 +40,26 @@ export function GradeHistory({
 		return Number(((grade * weight) / 100).toFixed(2));
 	};
 
+	// Ordenar los parámetros por nombre (asumiendo que los nombres son "Parámetro 1", "Parámetro 2", etc.)
+	const sortedParameters = [...gradeSummary.parameters].sort((a, b) => {
+		const aNum = parseInt(a.name.split(' ')[1]);
+		const bNum = parseInt(b.name.split(' ')[1]);
+		return aNum - bNum;
+	});
+
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
 			<DialogContent className="max-h-[80vh] overflow-y-auto">
 				<DialogHeader>
-					<DialogTitle className="flex items-center justify-between">
+					<DialogTitle className="flex items-center justify-between pr-8">
 						Historial de Calificaciones
-						<FaTrophy className="text-2xl text-yellow-500" />
+						<FaTrophy className="mr-6 text-2xl text-yellow-500" />
 					</DialogTitle>
 				</DialogHeader>
 
 				<div className="mt-4 space-y-6">
 					{/* Parameters and their activities */}
-					{gradeSummary.parameters?.map((param, index) => (
+					{sortedParameters.map((param, index) => (
 						<div key={index} className="rounded-lg border p-4">
 							<div className="mb-2 flex items-center justify-between">
 								<h3 className="text-lg font-bold">
@@ -71,7 +80,7 @@ export function GradeHistory({
 								{param.activities.map((activity, actIndex) => (
 									<div
 										key={actIndex}
-										className="flex justify-between rounded bg-gray-50 p-2"
+										className="flex justify-between rounded bg-gray-50 p-2 text-background"
 									>
 										<span>{activity.name}</span>
 										<span className="font-bold">
@@ -83,18 +92,37 @@ export function GradeHistory({
 						</div>
 					))}
 
-					{/* Final grade with calculation explanation */}
-					<div className="rounded-lg bg-blue-50 p-4">
-						<h3 className="mb-2 text-center text-lg font-bold">
+					{/* Final grade with dynamic background and emoji */}
+					<div
+						className={`rounded-lg p-4 ${
+							gradeSummary.finalGrade >= 3 ? 'bg-green-50' : 'bg-red-50'
+						}`}
+					>
+						<h3 className="mb-2 text-center text-lg font-bold text-background">
 							Nota Final del Curso
 						</h3>
 						<div className="flex items-center justify-center space-x-2">
+							{gradeSummary.finalGrade >= 3 ? (
+								<ImHappy className="h-6 w-6 text-green-500" />
+							) : (
+								<PiSmileySad className="h-6 w-6 text-red-500" />
+							)}
 							<StarIcon className="h-6 w-6 text-yellow-500" />
-							<span className="text-2xl font-bold text-primary">
+							<span
+								className={`text-2xl font-bold ${
+									gradeSummary.finalGrade >= 3
+										? 'text-green-600'
+										: 'text-red-600'
+								}`}
+							>
 								{gradeSummary.finalGrade.toFixed(1)}
 							</span>
 						</div>
-						<div className="mt-2 text-center text-sm text-gray-600">
+						<div
+							className={`mt-2 text-center text-sm ${
+								gradeSummary.finalGrade >= 3 ? 'text-green-700' : 'text-red-700'
+							}`}
+						>
 							Calculado como suma de (nota × peso/100) para cada parámetro
 						</div>
 					</div>

@@ -1,20 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa';
-import { PiArrowFatLinesLeft } from 'react-icons/pi';
+import { FaCheckCircle, FaLock } from 'react-icons/fa';
+import { MdKeyboardDoubleArrowDown } from 'react-icons/md';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
-import { GradeHistory } from './GradeHistory';
 import LessonActivityModal from './LessonActivityModal';
+import { GradeHistory } from './LessonGradeHistory';
 import { LessonGrades } from './LessonGrades';
-import RecursosLesson from './LessonResource'; // Add this import
 
 import type { Activity, SavedAnswer } from '~/types';
+
+import '~/styles/arrowclass.css';
 
 interface LessonActivitiesProps {
 	activity: Activity | null;
@@ -38,23 +40,34 @@ interface SavedResults {
 
 interface CourseGradeSummary {
 	finalGrade: number;
+	courseCompleted?: boolean;
 	parameters: {
 		name: string;
 		grade: number;
 		weight: number;
+		activities: {
+			id: number;
+			name: string;
+			grade: number;
+		}[];
 	}[];
-	isCompleted: boolean;
 }
 
 // Add type for API response
 interface GradeSummaryResponse {
 	finalGrade: number;
+	courseCompleted?: boolean;
+	isCompleted: boolean;
 	parameters: {
 		name: string;
 		grade: number;
 		weight: number;
+		activities: {
+			id: number;
+			name: string;
+			grade: number;
+		}[];
 	}[];
-	isCompleted: boolean;
 }
 
 // Add interface for API response
@@ -63,6 +76,46 @@ interface GetAnswersResponse {
 	answers: Record<string, SavedAnswer>;
 	isAlreadyCompleted: boolean;
 }
+
+// Add validation function
+const isValidGradeSummaryResponse = (
+	data: unknown
+): data is GradeSummaryResponse => {
+	if (!data || typeof data !== 'object') return false;
+
+	const response = data as Partial<GradeSummaryResponse>;
+
+	return (
+		typeof response.finalGrade === 'number' &&
+		Array.isArray(response.parameters) &&
+		response.parameters.every(
+			(param) =>
+				typeof param.name === 'string' &&
+				typeof param.grade === 'number' &&
+				typeof param.weight === 'number' &&
+				Array.isArray(param.activities) &&
+				param.activities.every(
+					(act) =>
+						typeof act.id === 'number' &&
+						typeof act.name === 'string' &&
+						typeof act.grade === 'number'
+				)
+		)
+	);
+};
+
+const fetchGradeData = async (url: string): Promise<GradeSummaryResponse> => {
+	const response = await fetch(url);
+	if (!response.ok) throw new Error('Failed to fetch grades');
+
+	const rawData: unknown = await response.json();
+
+	if (!isValidGradeSummaryResponse(rawData)) {
+		throw new Error('Invalid grade summary response format');
+	}
+
+	return rawData;
+};
 
 const LessonActivities = ({
 	activity,
@@ -75,7 +128,7 @@ const LessonActivities = ({
 	courseId,
 	isLastLesson,
 	isLastActivity,
-	resourceNames,
+	resourceNames: _resourceNames, // Rename to indicate it's not used here
 }: LessonActivitiesProps) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [activityCompleted, setActivityCompleted] =
@@ -106,27 +159,28 @@ const LessonActivities = ({
 		return Promise.resolve();
 	};
 
-	const fetchGradeSummary = useCallback(async () => {
-		try {
-			const response = await fetch(
-				`/api/grades/summary?courseId=${courseId}&userId=${userId}`
-			);
-			if (response.ok) {
-				const data = (await response.json()) as GradeSummaryResponse;
-				setGradeSummary({
-					finalGrade: data.finalGrade,
-					parameters: data.parameters,
-					isCompleted: data.isCompleted,
-				});
-			}
-		} catch (error) {
-			console.error('Error fetching grade summary:', error);
+	// Modify fetchGradeSummary to use SWR correctly with proper types
+	const { data: gradeData } = useSWR<GradeSummaryResponse>(
+		courseId && userId
+			? `/api/grades/summary?courseId=${courseId}&userId=${userId}`
+			: null,
+		fetchGradeData,
+		{
+			refreshInterval: 5000,
+			revalidateOnFocus: false,
 		}
-	}, [courseId, userId]);
+	);
 
+	// Update gradeSummary when data changes
 	useEffect(() => {
-		void fetchGradeSummary();
-	}, [fetchGradeSummary]);
+		if (gradeData) {
+			setGradeSummary({
+				finalGrade: gradeData.finalGrade,
+				courseCompleted: gradeData.isCompleted,
+				parameters: gradeData.parameters,
+			});
+		}
+	}, [gradeData]);
 
 	const handleCompletedActivityClick = async () => {
 		setIsLoadingResults(true);
@@ -186,7 +240,7 @@ const LessonActivities = ({
 					<p className="mt-2 text-sm text-gray-600">{activity.description}</p>
 					{isVideoCompleted && (
 						<div className="flex justify-center">
-							<FaArrowDown className="my-4 mb-1 animate-bounce-up-down text-green-500" />{' '}
+							<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
 						</div>
 					)}
 					<div className="space-y-2">
@@ -236,10 +290,26 @@ const LessonActivities = ({
 								<div className="h-px w-full bg-gray-200" />
 								<Link
 									href={`/estudiantes/clases/${nextLessonId}`}
-									className="group flex flex-col items-center text-center"
+									className="next-lesson-link group flex flex-col items-center text-center"
 								>
-									<PiArrowFatLinesLeft className="h-8 w-8 -rotate-90 text-background transition-transform group-hover:-translate-y-1" />
-									<span className="mt-1 text-sm text-gray-600 group-hover:text-blue-500 hover:underline">
+									<button className="arrow-button">
+										<div className="arrow-button-box">
+											<span className="arrow-button-elem">
+												<svg
+													viewBox="0 0 46 40"
+													xmlns="http://www.w3.org/2000/svg"
+												>
+													<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+												</svg>
+											</span>
+											<span className="arrow-button-elem">
+												<svg viewBox="0 0 46 40">
+													<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+												</svg>
+											</span>
+										</div>
+									</button>
+									<span className="mt-1 text-sm text-[#01142B] group-hover:text-blue-500 hover:underline">
 										Ir a la siguiente clase
 									</span>
 								</Link>
@@ -250,6 +320,25 @@ const LessonActivities = ({
 			) : (
 				<p className="text-gray-600">No hay actividades disponibles</p>
 			)}
+
+			{/* Grades Section with Title */}
+			<div className="mt-8">
+				<h2 className="mb-4 text-2xl font-bold text-primary">Calificaciones</h2>
+				{gradeSummary ? (
+					<div className="transition-all duration-200 ease-in-out">
+						<LessonGrades
+							finalGrade={gradeSummary.finalGrade}
+							onViewHistory={() => setIsGradeHistoryOpen(true)}
+						/>
+					</div>
+				) : (
+					<div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+						<div className="flex items-center justify-center">
+							<Icons.spinner className="h-6 w-6 animate-spin text-gray-400" />
+						</div>
+					</div>
+				)}
+			</div>
 
 			{/* Modal */}
 			{activity && (
@@ -271,19 +360,6 @@ const LessonActivities = ({
 					courseId={courseId}
 				/>
 			)}
-
-			{/* Grade Summary */}
-			{gradeSummary && (
-				<div className="my-4">
-					<LessonGrades
-						finalGrade={gradeSummary.finalGrade}
-						onViewHistory={() => setIsGradeHistoryOpen(true)}
-					/>
-				</div>
-			)}
-
-			{/* Resources section */}
-			<RecursosLesson resourceNames={resourceNames} />
 
 			{/* Grade History Modal */}
 			<GradeHistory

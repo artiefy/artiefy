@@ -6,7 +6,7 @@ import { auth } from '@clerk/nextjs/server';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonSkeleton';
+import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonDetailsSkeleton';
 import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';

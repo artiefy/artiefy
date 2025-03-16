@@ -57,7 +57,7 @@ const LessonCards = ({
 						{isAccessible &&
 							lessonItem.isNew &&
 							lessonItem.porcentajecompletado === 0 && (
-								<span className="relative animate-pulse rounded bg-green-500 px-2 py-1 text-xs text-white">
+								<span className="relative [animation:nuevo-badge-pulse_1.5s_infinite_ease-in-out] rounded bg-green-500 px-2 py-1 text-xs text-white">
 									Nuevo
 								</span>
 							)}

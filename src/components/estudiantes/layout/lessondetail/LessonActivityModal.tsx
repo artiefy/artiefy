@@ -9,7 +9,7 @@ import {
 	ChevronRightIcon,
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
-import { FileCheck2, Lock, Unlock, ShieldQuestion } from 'lucide-react';
+import { FileCheck2, FileX2, Lock, Unlock, ShieldQuestion } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -500,13 +500,23 @@ const LessonActivityModal = ({
 			return (
 				<Button
 					onClick={handleFinishAndNavigate}
-					className="group mt-4 w-full bg-green-500 transition-all duration-200 hover:scale-[0.98] hover:bg-green-600"
+					className="group relative mt-4 w-full overflow-hidden bg-green-500 transition-all duration-200 active:scale-[0.98] hover:bg-green-600"
+					disabled={isUnlocking}
 				>
-					<span className="flex items-center justify-center gap-2 font-bold text-green-900">
-						Desbloquear Siguiente CLASE
-						<Lock className="h-4 w-4 transition-all duration-200 group-hover:hidden" />
-						<Unlock className="hidden h-4 w-4 transition-all duration-200 group-hover:block" />
-					</span>
+					{isUnlocking ? (
+						<div className="flex items-center justify-center gap-2">
+							<Icons.blocks className="size-5 animate-spin text-white" />
+							<span className="font-bold text-white">
+								Desbloqueando siguiente clase...
+							</span>
+						</div>
+					) : (
+						<span className="flex items-center justify-center gap-2 font-bold text-green-900">
+							Desbloquear Siguiente CLASE
+							<Lock className="h-4 w-4 transition-all duration-200 group-hover:hidden" />
+							<Unlock className="hidden h-4 w-4 transition-all duration-200 group-hover:block" />
+						</span>
+					)}
 				</Button>
 			);
 		}
@@ -555,9 +565,17 @@ const LessonActivityModal = ({
 					<h3 className="text-xl font-bold text-background">Resultados</h3>
 					<div className="mt-1">
 						{renderStars(finalScore)}
-						<p className="mt-1 text-lg font-medium text-gray-600">
+						<p className="mt-1 text-lg font-medium text-gray-400">
 							Calificación:{' '}
-							<span className="text-primary">{finalScore.toFixed(1)}</span>/5
+							<span
+								className={`text-2xl font-bold ${
+									finalScore >= 3
+										? 'animate-pulse text-green-500 shadow-lg'
+										: 'animate-pulse text-red-500 shadow-lg shadow-red-500/50'
+								}`}
+							>
+								{finalScore.toFixed(1)}
+							</span>
 						</p>
 					</div>
 				</div>
@@ -649,9 +667,12 @@ const LessonActivityModal = ({
 		<Dialog
 			open={isOpen}
 			onOpenChange={(open) => {
-				if (!open && canClose) {
-					void handleFinishAndNavigate();
+				// Only allow closing through the unlock button if conditions are met
+				if (!open && canClose && !isUnlocking && finalScore >= 3) {
+					// Prevent default closing behavior
+					return;
 				}
+				onClose();
 			}}
 		>
 			<DialogContent className="sm:max-w-[500px] [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background">
@@ -660,7 +681,13 @@ const LessonActivityModal = ({
 						ACTIVIDAD
 						<div className="absolute top-0 right-4">
 							{showResults ? (
-								<FileCheck2 className="size-8 text-green-500" />
+								isUnlocking ? (
+									<Unlock className="size-8 animate-pulse text-green-500" />
+								) : finalScore >= 3 ? (
+									<FileCheck2 className="size-8 text-green-500" />
+								) : (
+									<FileX2 className="size-8 text-red-500" />
+								)
 							) : (
 								<ShieldQuestion className="-mt-2 size-12 text-primary" />
 							)}
