@@ -221,6 +221,10 @@ const LessonActivities = ({
 		}
 	};
 
+	const handleActivityComplete = () => {
+		setActivityCompleted(true); // Solo actualiza el estado del botón
+	};
+
 	return (
 		<div className="w-72 p-4">
 			<h2 className="mb-4 text-2xl font-bold text-primary">Actividades</h2>
@@ -358,6 +362,8 @@ const LessonActivities = ({
 					isLastLesson={isLastLesson}
 					isLastActivity={isLastActivity}
 					courseId={courseId}
+					onViewHistory={() => setIsGradeHistoryOpen(true)} // Add this prop
+					onActivityComplete={handleActivityComplete} // Add this prop
 				/>
 			)}
 

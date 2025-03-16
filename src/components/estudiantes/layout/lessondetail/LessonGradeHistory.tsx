@@ -126,6 +126,16 @@ export function GradeHistory({
 							Calculado como suma de (nota × peso/100) para cada parámetro
 						</div>
 					</div>
+
+					{/* Add close button */}
+					<div className="mt-6 flex justify-end">
+						<button
+							onClick={onClose}
+							className="rounded-lg bg-[#00BDD8] px-6 py-2.5 font-semibold text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-95"
+						>
+							Cerrar
+						</button>
+					</div>
 				</div>
 			</DialogContent>
 		</Dialog>

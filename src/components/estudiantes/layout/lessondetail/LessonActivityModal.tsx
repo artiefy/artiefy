@@ -10,6 +10,7 @@ import {
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
 import { FileCheck2, FileX2, Lock, Unlock, ShieldQuestion } from 'lucide-react';
+import { FaTrophy } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -42,6 +43,8 @@ interface ActivityModalProps {
 	isLastLesson: boolean; // Add this new prop
 	courseId: number; // Add courseId prop
 	isLastActivity: boolean; // Add this prop
+	onViewHistory: () => void; // Add this new prop
+	onActivityComplete: () => void; // Add this new prop
 }
 
 interface UserAnswer {
@@ -72,6 +75,8 @@ const LessonActivityModal = ({
 	isLastLesson, // Add this new prop
 	courseId,
 	isLastActivity,
+	onViewHistory,
+	onActivityComplete,
 }: ActivityModalProps) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
@@ -500,7 +505,7 @@ const LessonActivityModal = ({
 			return (
 				<Button
 					onClick={handleFinishAndNavigate}
-					className="group relative mt-4 w-full overflow-hidden bg-green-500 transition-all duration-200 active:scale-[0.98] hover:bg-green-600"
+					className="group relative mt-4 w-full overflow-hidden bg-green-500 transition-all duration-200 hover:bg-green-600 active:scale-[0.98]"
 					disabled={isUnlocking}
 				>
 					{isUnlocking ? (
@@ -524,19 +529,21 @@ const LessonActivityModal = ({
 		// Modify the last activity condition
 		if (finalScore >= 3 && isLastActivity) {
 			return (
-				<div className="space-y-4">
-					<div className="rounded-lg bg-gray-50 p-4">
-						<h3 className="mb-2 text-center text-lg font-bold text-primary">
-							¡Actividad completada exitosamente!
-						</h3>
-						<div className="mb-4 text-center">
-							<p className="text-sm text-gray-600">Tu nota de la actividad:</p>
-							<p className="text-2xl font-bold text-primary">
-								{finalScore.toFixed(1)}
-							</p>
-						</div>
-					</div>
-					<Button onClick={onClose} className="w-full bg-blue-500">
+				<div className="space-y-3">
+					<Button
+						onClick={onViewHistory}
+						className="w-full bg-blue-500 text-white hover:bg-blue-600"
+					>
+						<FaTrophy className="mr-2" />
+						Ver Reporte de Calificaciones
+					</Button>
+					<Button
+						onClick={() => {
+							onActivityComplete(); // Add this callback
+							onClose();
+						}}
+						className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-95"
+					>
 						Cerrar
 					</Button>
 				</div>
@@ -667,12 +674,12 @@ const LessonActivityModal = ({
 		<Dialog
 			open={isOpen}
 			onOpenChange={(open) => {
-				// Only allow closing through the unlock button if conditions are met
-				if (!open && canClose && !isUnlocking && finalScore >= 3) {
-					// Prevent default closing behavior
-					return;
+				if (!open) {
+					if (finalScore >= 3 && isLastActivity) {
+						onActivityComplete(); // Actualiza el estado del botón al cerrar
+					}
+					onClose();
 				}
-				onClose();
 			}}
 		>
 			<DialogContent className="sm:max-w-[500px] [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background">
