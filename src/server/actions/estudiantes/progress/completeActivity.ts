@@ -9,6 +9,14 @@ import { userActivitiesProgress } from '~/server/db/schema';
 
 import type { ActivityResults } from '~/types';
 
+// Update DbQueryResult interface to extend Record<string, unknown>
+interface DbQueryResult extends Record<string, unknown> {
+	rows: {
+		[key: string]: unknown;
+		final_grade: number | null;
+	}[];
+}
+
 const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,
 	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
@@ -99,6 +107,45 @@ export const completeActivity = async (activityId: number, userId: string) => {
 					)
 					INSERT INTO materia_grades (materia_id, user_id, grade, updated_at)
 					SELECT id, ${userId}, ${rawData.finalGrade}, NOW()
+					FROM course_materias
+					ON CONFLICT (materia_id, user_id) 
+					DO UPDATE SET grade = EXCLUDED.grade, updated_at = EXCLUDED.updated_at
+				`);
+			}
+		}
+
+		// Update parameter grades and materia grades
+		if (activity.parametroId && rawData?.finalGrade) {
+			// Get current course final grade with proper typing
+			const gradeSummary = await db.execute<DbQueryResult>(sql`
+				WITH parameter_grades AS (
+					SELECT 
+						p.id,
+						p.porcentaje as weight,
+						ROUND(CAST(AVG(uap.final_grade) AS NUMERIC), 1) as grade
+					FROM parametros p
+					LEFT JOIN activities a ON a.parametro_id = p.id
+					LEFT JOIN user_activities_progress uap ON uap.activity_id = a.id 
+						AND uap.user_id = ${userId}
+					WHERE p.course_id = ${activity.lesson.courseId}
+					GROUP BY p.id, p.porcentaje
+				)
+				SELECT ROUND(CAST(SUM(grade * weight / 100) AS NUMERIC), 1) as final_grade
+				FROM parameter_grades
+			`);
+
+			const finalGrade =
+				gradeSummary.rows[0]?.final_grade ?? rawData.finalGrade;
+			console.log('Course final grade:', finalGrade);
+
+			// Update materia grades with course final grade
+			if (activity.lesson?.course?.id) {
+				await db.execute(sql`
+					WITH course_materias AS (
+						SELECT id FROM materias WHERE courseid = ${activity.lesson.course.id}
+					)
+					INSERT INTO materia_grades (materia_id, user_id, grade, updated_at)
+					SELECT id, ${userId}, ${finalGrade}, NOW()
 					FROM course_materias
 					ON CONFLICT (materia_id, user_id) 
 					DO UPDATE SET grade = EXCLUDED.grade, updated_at = EXCLUDED.updated_at

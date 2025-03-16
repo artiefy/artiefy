@@ -82,10 +82,24 @@ export async function GET(request: NextRequest) {
       ORDER BY id
     `)) as unknown as DBQueryResult;
 
-		// Safely transform results
-		const rows = queryResult?.rows ?? [];
+		// Debug logs for grade calculation
+		console.log('Grade Calculation Debug:');
+		console.log('Raw Query Result:', queryResult);
 
-		const parameters: GradeParameter[] = rows.map((row) => {
+		// Single declaration of rows
+		const dbRows = queryResult?.rows ?? [];
+		console.log(
+			'Parameter Rows:',
+			dbRows.map((row) => ({
+				name: row.name,
+				weight: row.weight,
+				grade: row.grade,
+				contribution: (((row.grade ?? 0) * (row.weight ?? 0)) / 100).toFixed(2),
+			}))
+		);
+
+		// Transform results with proper type safety
+		const parameters: GradeParameter[] = dbRows.map((row) => {
 			const activities = JSON.parse(row.activities ?? '[]') as ActivityResult[];
 
 			return {
@@ -101,7 +115,40 @@ export async function GET(request: NextRequest) {
 		});
 
 		// Get final grade with proper type casting
-		const finalGrade = Number(rows[0]?.final_grade ?? 0);
+		const finalGrade = Number(dbRows[0]?.final_grade ?? 0);
+
+		// Update materias grades with the correct final grade
+		if (finalGrade > 0) {
+			console.log('Updating materia grades with final grade:', finalGrade);
+
+			await db.execute(sql`
+			  WITH course_materias AS (
+				SELECT m.id as materia_id
+				FROM materias m
+				WHERE m.courseid = ${courseId}
+			  )
+			  INSERT INTO materia_grades (materia_id, user_id, grade, updated_at)
+			  SELECT 
+				cm.materia_id,
+				${userId},
+				${finalGrade},
+				NOW()
+			  FROM course_materias cm
+			  ON CONFLICT (materia_id, user_id)
+			  DO UPDATE SET 
+				grade = EXCLUDED.grade,
+				updated_at = EXCLUDED.updated_at
+			`);
+
+			// Verify the update
+			const updatedGrades = await db.execute(sql`
+			  SELECT m.title, mg.grade
+			  FROM materia_grades mg
+			  JOIN materias m ON m.id = mg.materia_id
+			  WHERE m.courseid = ${courseId} AND mg.user_id = ${userId}
+			`);
+			console.log('Updated materia grades:', updatedGrades);
+		}
 
 		const response: GradeResponse = {
 			finalGrade,
