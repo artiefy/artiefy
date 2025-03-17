@@ -463,31 +463,55 @@ const LessonActivityModal = ({
 					</>
 				);
 			}
-
-			// New UI for exhausted attempts - always enable unlock button
+			// New UI for exhausted attempts
 			return (
 				<div className="space-y-4">
 					<div className="rounded-lg bg-red-50 p-4 text-center">
 						<p className="font-semibold text-red-800">
 							Has agotado todos tus intentos
 						</p>
+						<p className="mt-1 text-sm text-red-600">
+							Calificación final: {formatScore(finalScore)}/5
+						</p>
 					</div>
-					{!isLastLesson && (
-						<Button
-							onClick={handleFinishAndNavigate}
-							className="w-full bg-green-500 transition-all duration-200 hover:bg-green-600 active:scale-95"
-						>
-							<span className="flex items-center justify-center gap-2 font-semibold text-white">
-								Desbloquear Siguiente CLASE
-								<Unlock className="h-4 w-4" />
-							</span>
-						</Button>
+					{isLastActivity ? (
+						// Show both buttons for last activity when attempts are exhausted
+						<div className="space-y-3">
+							<Button
+								onClick={onViewHistory}
+								className="w-full bg-blue-500 text-white hover:bg-blue-600"
+							>
+								<FaTrophy className="mr-2" />
+								Ver Reporte de Calificaciones
+							</Button>
+							<Button
+								onClick={() => {
+									onActivityComplete();
+									onClose();
+								}}
+								className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-95"
+							>
+								Cerrar
+							</Button>
+						</div>
+					) : (
+						!isLastLesson && (
+							<Button
+								onClick={handleFinishAndNavigate}
+								className="w-full bg-green-500 transition-all duration-200 hover:bg-green-600 active:scale-95"
+							>
+								<span className="flex items-center justify-center gap-2 font-semibold text-white">
+									Desbloquear Siguiente CLASE
+									<Unlock className="h-4 w-4" />
+								</span>
+							</Button>
+						)
 					)}
 				</div>
 			);
 		}
 
-		// Si no aprobó pero la actividad no es revisada (práctica)
+		// Rest of the renderActionButton code remains the same...
 		if (finalScore < 3 && !activity.revisada) {
 			return (
 				<>

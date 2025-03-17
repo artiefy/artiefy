@@ -26,7 +26,7 @@ const MainContentSkeleton = () => (
 );
 
 const RightSidebarSkeleton = () => (
-	<div className="w-72 space-y-6 px-4">
+	<div className="w-72 space-y-6 p-4">
 		{/* Activities Section */}
 		<div className="rounded-lg bg-background px-4 shadow-lg">
 			<Skeleton className="mb-4 h-8 w-32" />

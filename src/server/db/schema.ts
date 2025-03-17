@@ -334,7 +334,7 @@ export const materias = pgTable('materias', {
 	courseid: integer('courseid').references(() => courses.id), // Changed from courseId to courseid
 });
 
-// Add new table for grades
+// Update materiaGrades table definition
 export const materiaGrades = pgTable(
 	'materia_grades',
 	{
@@ -348,15 +348,13 @@ export const materiaGrades = pgTable(
 		grade: real('grade').notNull(),
 		updatedAt: timestamp('updated_at').defaultNow().notNull(),
 	},
-	(table) => ({
-		pk: primaryKey(table.materiaId, table.userId),
-		uniq_materia_user: unique('uniq_materia_user').on(
-			table.materiaId,
-			table.userId
-		),
-	})
+	(table) => [
+		primaryKey({ columns: [table.materiaId, table.userId] }),
+		unique('uniq_materia_user').on(table.materiaId, table.userId),
+	]
 );
 
+// Update parameterGrades table definition
 export const parameterGrades = pgTable(
 	'parameter_grades',
 	{
@@ -372,56 +370,6 @@ export const parameterGrades = pgTable(
 	},
 	(table) => [unique('uniq_parameter_user').on(table.parameterId, table.userId)]
 );
-
-// Relaciones de programas
-export const programasRelations = relations(programas, ({ one, many }) => ({
-	creator: one(users, {
-		fields: [programas.creatorId],
-		references: [users.id],
-	}),
-	category: one(categories, {
-		fields: [programas.categoryid],
-		references: [categories.id],
-	}),
-	materias: many(materias),
-}));
-
-// Relaciones de materias
-export const materiasRelations = relations(materias, ({ one }) => ({
-	programa: one(programas, {
-		fields: [materias.programaId],
-		references: [programas.id],
-	}),
-	curso: one(courses, {
-		fields: [materias.courseid], // Changed from courseId to courseid
-		references: [courses.id],
-	}),
-}));
-
-// Add courses relations for materias
-export const coursesRelations = relations(courses, ({ many, one }) => ({
-	lessons: many(lessons),
-	enrollments: many(enrollments),
-	creator: one(users, {
-		fields: [courses.creatorId],
-		references: [users.id],
-		relationName: 'createdCourses',
-	}),
-	modalidad: one(modalidades, {
-		fields: [courses.modalidadesid],
-		references: [modalidades.id],
-	}),
-	nivel: one(nivel, {
-		fields: [courses.nivelid],
-		references: [nivel.id],
-	}),
-	category: one(categories, {
-		fields: [courses.categoryid],
-		references: [categories.id],
-	}),
-	coursesTaken: many(coursesTaken),
-	materias: many(materias), // Asegurarnos que esta relación está presente
-}));
 
 // Tabla de notas
 export const notas = pgTable('notas', {
