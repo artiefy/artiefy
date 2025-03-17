@@ -22,9 +22,19 @@ const getUserLessonsProgress = async (
 			where: eq(userLessonsProgress.userId, userId),
 		});
 
-		const activitiesProgress = await db.query.userActivitiesProgress.findMany({
-			where: eq(userActivitiesProgress.userId, userId),
-		});
+		const rawActivitiesProgress =
+			await db.query.userActivitiesProgress.findMany({
+				where: eq(userActivitiesProgress.userId, userId),
+			});
+
+		// Transform activities progress to ensure all fields match UserActivitiesProgress type
+		const activitiesProgress = rawActivitiesProgress.map((progress) => ({
+			...progress,
+			revisada: progress.revisada ?? false,
+			attemptCount: progress.attemptCount ?? 0,
+			finalGrade: progress.finalGrade ?? 0,
+			lastAttemptAt: progress.lastAttemptAt ?? new Date(),
+		})) as UserActivitiesProgress[];
 
 		return {
 			lessonsProgress,
