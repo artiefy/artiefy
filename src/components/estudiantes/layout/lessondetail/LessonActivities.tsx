@@ -71,13 +71,6 @@ interface GradeSummaryResponse {
 	}[];
 }
 
-// Add interface for API response
-interface GetAnswersResponse {
-	score: number;
-	answers: Record<string, SavedAnswer>;
-	isAlreadyCompleted: boolean;
-}
-
 // Add validation function
 const isValidGradeSummaryResponse = (
 	data: unknown
@@ -118,6 +111,13 @@ const fetchGradeData = async (url: string): Promise<GradeSummaryResponse> => {
 	return rawData;
 };
 
+// Add interface for GET /api/activities/getAnswers response
+interface ActivityAnswersResponse {
+	score: number;
+	answers: Record<string, SavedAnswer>;
+	isAlreadyCompleted: boolean;
+}
+
 const LessonActivities = ({
 	activity,
 	isVideoCompleted,
@@ -146,6 +146,9 @@ const LessonActivities = ({
 
 	// Add new state for grade history modal
 	const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
+
+	// Add new state for button loading
+	const [isButtonLoading, setIsButtonLoading] = useState(true);
 
 	const openModal = () => setIsModalOpen(true);
 	const closeModal = () => setIsModalOpen(false);
@@ -183,6 +186,61 @@ const LessonActivities = ({
 		}
 	}, [gradeData]);
 
+	// Add type guard
+	const isActivityAnswersResponse = (
+		data: unknown
+	): data is ActivityAnswersResponse => {
+		if (!data || typeof data !== 'object') return false;
+		const response = data as Partial<ActivityAnswersResponse>;
+		return (
+			typeof response.score === 'number' &&
+			typeof response.answers === 'object' &&
+			response.answers !== null &&
+			typeof response.isAlreadyCompleted === 'boolean'
+		);
+	};
+
+	// Add useEffect to check activity completion on mount
+	useEffect(() => {
+		const checkActivityStatus = async () => {
+			if (!activity?.id) {
+				setIsButtonLoading(false);
+				return;
+			}
+
+			setIsButtonLoading(true);
+			try {
+				const response = await fetch(
+					`/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+				);
+
+				if (response.ok) {
+					const rawData: unknown = await response.json();
+
+					// Set activity as completed if there are any answers, regardless of score
+					if (
+						isActivityAnswersResponse(rawData) &&
+						rawData.answers &&
+						Object.keys(rawData.answers).length > 0
+					) {
+						setActivityCompleted(true);
+						setSavedResults({
+							score: rawData.score,
+							answers: rawData.answers,
+							isAlreadyCompleted: true,
+						});
+					}
+				}
+			} catch (error) {
+				console.error('Error checking activity status:', error);
+			} finally {
+				setIsButtonLoading(false);
+			}
+		};
+
+		void checkActivityStatus();
+	}, [activity?.id, userId]);
+
 	const handleCompletedActivityClick = async () => {
 		setIsLoadingResults(true);
 		try {
@@ -195,13 +253,19 @@ const LessonActivities = ({
 			);
 
 			if (response.ok) {
-				const data = (await response.json()) as GetAnswersResponse;
-				setSavedResults({
-					score: data.score,
-					answers: data.answers,
-					isAlreadyCompleted: true,
-				});
-				setActivityCompleted(true); // Set activity as completed
+				const rawData: unknown = await response.json();
+
+				if (isActivityAnswersResponse(rawData)) {
+					setSavedResults({
+						score: rawData.score,
+						answers: rawData.answers,
+						isAlreadyCompleted: true,
+					});
+					// For last activity, always set as completed
+					if (isLastActivity) {
+						setActivityCompleted(true);
+					}
+				}
 			}
 		} catch (error) {
 			console.error('Error fetching saved results:', error);
@@ -259,9 +323,9 @@ const LessonActivities = ({
 									? handleCompletedActivityClick
 									: handleOpenActivity
 							}
-							disabled={!isVideoCompleted}
+							disabled={!isVideoCompleted || isButtonLoading}
 							className={`group relative w-full overflow-hidden ${
-								activityCompleted
+								activityCompleted || (isLastActivity && savedResults)
 									? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
 									: isVideoCompleted
 										? 'font-semibold text-black'
@@ -275,12 +339,17 @@ const LessonActivities = ({
 
 							{/* Texto siempre por encima del gradiente */}
 							<span className="relative z-10 flex items-center justify-center">
-								{activityCompleted ? (
+								{isButtonLoading ? (
+									<div className="flex items-center gap-2">
+										<Icons.spinner className="h-4 w-4 animate-spin text-background" />
+										<span className="text-background">Cargando...</span>
+									</div>
+								) : activityCompleted || (isLastActivity && savedResults) ? (
 									<>
 										{isLoadingResults && (
 											<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
 										)}
-										<span className="">Ver Resultados</span>
+										<span>Ver Resultados</span>
 										<FaCheckCircle className="ml-2 inline text-white" />
 									</>
 								) : (
@@ -296,7 +365,7 @@ const LessonActivities = ({
 
 						{activityCompleted && nextLessonId && (
 							<div className="mt-4 flex flex-col items-center space-y-2">
-								<div className="border border-b-gray-500 w-50" />
+								<div className="w-50 border border-b-gray-500" />
 								<Link
 									href={`/estudiantes/clases/${nextLessonId}`}
 									className="next-lesson-link group flex flex-col items-center text-center"

@@ -31,36 +31,23 @@ export async function GET(request: NextRequest) {
 				and(eq(uap.activityId, parseInt(activityId)), eq(uap.userId, userId)),
 		});
 
-		// Get saved results from Redis
-		const resultsKey = `activity:${activityId}:user:${userId}:results`;
-		const savedResults = await redis.get<ActivityResults>(resultsKey);
+		// If we have progress record, return it even if not completed
+		if (progress) {
+			// Get saved results from Redis
+			const resultsKey = `activity:${activityId}:user:${userId}:results`;
+			const savedResults = await redis.get<ActivityResults>(resultsKey);
 
-		// If activity is completed in DB and we have Redis results, return them
-		if (progress?.isCompleted && savedResults) {
-			return NextResponse.json({
-				score: progress.finalGrade ?? savedResults.score,
-				answers: savedResults.answers,
-				isAlreadyCompleted: true,
-				attemptCount: progress.attemptCount ?? 0,
-			});
-		}
-
-		// If we have progress but no Redis results, check answers key
-		const answersKey = `activity:${activityId}:user:${userId}:answers`;
-		const savedAnswers = await redis.get(answersKey);
-
-		if (progress?.isCompleted && savedAnswers) {
 			return NextResponse.json({
 				score: progress.finalGrade ?? 0,
-				answers: savedAnswers,
-				isAlreadyCompleted: true,
+				answers: savedResults?.answers ?? {},
+				isAlreadyCompleted: progress.isCompleted,
 				attemptCount: progress.attemptCount ?? 0,
 			});
 		}
 
-		// If no completion record found
+		// If no record found at all
 		return NextResponse.json(
-			{ error: 'No saved answers found' },
+			{ error: 'No activity progress found' },
 			{ status: 404 }
 		);
 	} catch (error) {
