@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
 		// 2. Get course materias
 		const courseMaterias = await db.query.materias.findMany({
-			where: eq(materias.courseid, courseId),
+			where: eq(materias.courseid, courseId), // Changed back to courseid
 		});
 
 		// 3. Update grades for each materia using SQL
