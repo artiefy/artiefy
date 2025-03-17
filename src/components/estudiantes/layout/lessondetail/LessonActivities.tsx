@@ -150,6 +150,9 @@ const LessonActivities = ({
 	// Add new state for button loading
 	const [isButtonLoading, setIsButtonLoading] = useState(true);
 
+	// Add loading state for grades
+	const [isGradesLoading, setIsGradesLoading] = useState(true);
+
 	const openModal = () => setIsModalOpen(true);
 	const closeModal = () => setIsModalOpen(false);
 
@@ -183,6 +186,7 @@ const LessonActivities = ({
 				courseCompleted: gradeData.isCompleted,
 				parameters: gradeData.parameters,
 			});
+			setIsGradesLoading(false);
 		}
 	}, [gradeData]);
 
@@ -402,20 +406,11 @@ const LessonActivities = ({
 			{/* Grades Section with Title */}
 			<div className="mt-4">
 				<h2 className="mb-4 text-2xl font-bold text-primary">Calificaciones</h2>
-				{gradeSummary ? (
-					<div className="transition-all duration-200 ease-in-out">
-						<LessonGrades
-							finalGrade={gradeSummary.finalGrade}
-							onViewHistory={() => setIsGradeHistoryOpen(true)}
-						/>
-					</div>
-				) : (
-					<div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-						<div className="flex items-center justify-center">
-							<Icons.spinner className="h-6 w-6 animate-spin text-background" />
-						</div>
-					</div>
-				)}
+				<LessonGrades
+					finalGrade={gradeSummary?.finalGrade ?? null}
+					onViewHistory={() => setIsGradeHistoryOpen(true)}
+					isLoading={isGradesLoading}
+				/>
 			</div>
 
 			{/* Modal */}
