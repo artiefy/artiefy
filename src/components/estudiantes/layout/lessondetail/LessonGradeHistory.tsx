@@ -9,6 +9,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
+import { formatScore } from '~/utils/formatScore';
 
 interface GradeHistoryProps {
 	isOpen: boolean;
@@ -69,8 +70,10 @@ export function GradeHistory({
 								<div className="flex items-center">
 									<StarIcon className="h-5 w-5 text-yellow-500" />
 									<span className="ml-1 font-bold">
-										{param.grade.toFixed(1)} →{' '}
-										{calculateContribution(param.grade, param.weight)}
+										{formatScore(param.grade)} →{' '}
+										{formatScore(
+											calculateContribution(param.grade, param.weight)
+										)}
 									</span>
 								</div>
 							</div>
@@ -84,7 +87,7 @@ export function GradeHistory({
 									>
 										<span>{activity.name}</span>
 										<span className="font-bold">
-											{activity.grade.toFixed(1)}
+											{formatScore(activity.grade)}
 										</span>
 									</div>
 								))}
@@ -109,13 +112,9 @@ export function GradeHistory({
 							)}
 							<StarIcon className="h-6 w-6 text-yellow-500" />
 							<span
-								className={`text-2xl font-bold ${
-									gradeSummary.finalGrade >= 3
-										? 'text-green-600'
-										: 'text-red-600'
-								}`}
+								className={`text-2xl font-bold ${gradeSummary.finalGrade >= 3 ? 'text-green-600' : 'text-red-600'}`}
 							>
-								{gradeSummary.finalGrade.toFixed(1)}
+								{formatScore(gradeSummary.finalGrade)}
 							</span>
 						</div>
 						<div

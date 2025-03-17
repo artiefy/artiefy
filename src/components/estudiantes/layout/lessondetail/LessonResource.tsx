@@ -23,7 +23,7 @@ const RecursosLesson = ({ resourceNames }: RecursosLessonProps) => {
 	};
 
 	return (
-		<div className="mt-4 w-72 bg-background p-4 shadow-lg">
+		<div className="w-72 bg-background px-4 shadow-lg">
 			<h2 className="mb-4 text-2xl font-bold text-primary">Recursos</h2>
 			{resourceNames.length > 0 ? (
 				<ul>

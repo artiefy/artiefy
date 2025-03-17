@@ -50,19 +50,19 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		// Execute query with proper type casting
+		// Execute query with proper type casting and DECIMAL precision
 		const queryResult = (await db.execute(sql`
       WITH parameter_grades AS (
         SELECT 
           p.id,
           p.name,
           p.porcentaje as weight,
-          ROUND(CAST(AVG(uap.final_grade) AS NUMERIC), 1) as grade,
+          CAST(AVG(uap.final_grade) AS DECIMAL(10,2)) as grade,
           json_agg(
             json_build_object(
               'id', a.id,
               'name', a.name,
-              'grade', uap.final_grade
+              'grade', CAST(uap.final_grade AS DECIMAL(10,2))
             )
           ) as activities
         FROM parametros p
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         weight,
         grade,
         activities::text,
-        ROUND(CAST(SUM(grade * weight / 100) OVER () AS NUMERIC), 1) as final_grade
+        CAST(SUM(grade * weight / 100) OVER () AS DECIMAL(10,2)) as final_grade
       FROM parameter_grades
       ORDER BY id
     `)) as unknown as DBQueryResult;

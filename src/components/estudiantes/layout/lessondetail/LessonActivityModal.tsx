@@ -24,7 +24,9 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 
 import type { Activity, Question, SavedAnswer } from '~/types';
+
 import '~/styles/arrowactivity.css';
+import { formatScore, formatScoreNumber } from '~/utils/formatScore';
 
 interface ActivityModalProps {
 	isOpen: boolean;
@@ -51,11 +53,6 @@ interface UserAnswer {
 	questionId: string;
 	answer: string;
 	isCorrect: boolean;
-}
-
-interface SaveAnswersResponse {
-	success: boolean;
-	canClose: boolean; // Add canClose to the interface
 }
 
 interface AttemptsResponse {
@@ -86,11 +83,11 @@ const LessonActivityModal = ({
 	const [isLoading, setIsLoading] = useState(true);
 	const [showResults, setShowResults] = useState(false);
 	const [finalScore, setFinalScore] = useState(0);
-	const [canClose, setCanClose] = useState(false);
 	const [isUnlocking, setIsUnlocking] = useState(false);
 	const [isResultsLoaded, setIsResultsLoaded] = useState(false);
 	const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
 	const [isSavingResults, setIsSavingResults] = useState(false);
+	const [canCloseModal, setCanCloseModal] = useState(false); // Add new state to track if user can close modal
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
@@ -136,8 +133,7 @@ const LessonActivityModal = ({
 	const calculateScore = () => {
 		const answers = Object.values(userAnswers);
 		const correctAnswers = answers.filter((a) => a.isCorrect).length;
-		// Convert to 1 decimal place
-		return Number(((correctAnswers / answers.length) * 5).toFixed(1));
+		return formatScoreNumber((correctAnswers / answers.length) * 5);
 	};
 
 	const checkAnswer = (questionId: string, answer: string) => {
@@ -188,9 +184,23 @@ const LessonActivityModal = ({
 
 			const allQuestionsAnswered =
 				Object.keys(userAnswers).length === questions.length;
+
+			if (!allQuestionsAnswered) {
+				toast.error('Debes responder todas las preguntas');
+				return;
+			}
+
+			// Only allow closing if all questions are answered and either:
+			// 1. Score >= 3
+			// 2. They've exhausted their attempts
+			// 3. It's the last activity
+			setCanCloseModal(
+				score >= 3 || attemptsLeft === 0 || (isLastActivity && isLastLesson)
+			);
+
 			const hasPassingScore = score >= 3;
 
-			const response = await fetch('/api/activities/saveAnswers', {
+			await fetch('/api/activities/saveAnswers', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -202,11 +212,6 @@ const LessonActivityModal = ({
 					passed: hasPassingScore,
 				}),
 			});
-
-			const data = (await response.json()) as SaveAnswersResponse;
-
-			// Solo permitir cerrar si aprobó y respondió todo
-			setCanClose(data.success && hasPassingScore);
 
 			if (!hasPassingScore) {
 				toast.error('Debes obtener al menos 3 puntos para aprobar');
@@ -265,11 +270,7 @@ const LessonActivityModal = ({
 	);
 
 	const handleFinishAndNavigate = async () => {
-		if (!canClose) {
-			toast.error('Debes aprobar la actividad primero');
-			return;
-		}
-
+		// Remove the canClose validation
 		try {
 			setIsUnlocking(true);
 			await markActivityAsCompleted();
@@ -282,9 +283,7 @@ const LessonActivityModal = ({
 				toast.success('¡Siguiente clase desbloqueada!');
 				onClose();
 			} else {
-				toast.error(
-					'Completa la actividad para desbloquear la siguiente clase'
-				);
+				toast.error('Error al desbloquear la siguiente clase');
 			}
 		} catch (error) {
 			console.error('Error:', error);
@@ -418,7 +417,7 @@ const LessonActivityModal = ({
 	};
 
 	const renderActionButton = () => {
-		// Si está cargando resultados o desbloqueando
+		// Loading states remain the same
 		if (!isResultsLoaded || isUnlocking) {
 			return (
 				<Button
@@ -431,7 +430,7 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Si la actividad ya fue completada anteriormente, solo mostrar botón cerrar
+		// Already completed states remain the same
 		if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
 			return (
 				<Button
@@ -443,7 +442,7 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Si no aprobó y es una actividad revisada (calificable)
+		// Modified logic for attempts exhausted
 		if (finalScore < 3 && activity.revisada) {
 			if (attemptsLeft && attemptsLeft > 0) {
 				return (
@@ -464,17 +463,26 @@ const LessonActivityModal = ({
 					</>
 				);
 			}
+
+			// New UI for exhausted attempts - always enable unlock button
 			return (
-				<div className="rounded-lg bg-red-50 p-4 text-center">
-					<p className="font-semibold text-red-800">
-						Has agotado todos tus intentos
-					</p>
-					<p className="mt-1 text-sm text-red-600">
-						Calificación final: {finalScore}/5
-					</p>
-					<Button onClick={onClose} className="mt-3 w-full bg-gray-500">
-						Cerrar
-					</Button>
+				<div className="space-y-4">
+					<div className="rounded-lg bg-red-50 p-4 text-center">
+						<p className="font-semibold text-red-800">
+							Has agotado todos tus intentos
+						</p>
+					</div>
+					{!isLastLesson && (
+						<Button
+							onClick={handleFinishAndNavigate}
+							className="w-full bg-green-500 transition-all duration-200 hover:bg-green-600 active:scale-95"
+						>
+							<span className="flex items-center justify-center gap-2 font-semibold text-white">
+								Desbloquear Siguiente CLASE
+								<Unlock className="h-4 w-4" />
+							</span>
+						</Button>
+					)}
 				</div>
 			);
 		}
@@ -578,10 +586,10 @@ const LessonActivityModal = ({
 								className={`text-2xl font-bold ${
 									finalScore >= 3
 										? 'animate-pulse text-green-500 shadow-lg'
-										: 'animate-pulse text-red-500 shadow-lg shadow-red-500/50'
+										: 'animate-pulse text-red-500 shadow-lg'
 								}`}
 							>
-								{finalScore.toFixed(1)}
+								{formatScore(finalScore)}
 							</span>
 						</p>
 					</div>
@@ -674,12 +682,14 @@ const LessonActivityModal = ({
 		<Dialog
 			open={isOpen}
 			onOpenChange={(open) => {
-				if (!open) {
-					if (finalScore >= 3 && isLastActivity) {
-						onActivityComplete(); // Actualiza el estado del botón al cerrar
-					}
-					onClose();
+				if (!open && !canCloseModal) {
+					toast.error('Debes completar la actividad primero');
+					return;
 				}
+				if (!open && finalScore >= 3 && isLastActivity) {
+					onActivityComplete(); // Actualiza el estado del botón al cerrar
+				}
+				onClose();
 			}}
 		>
 			<DialogContent className="sm:max-w-[500px] [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background">

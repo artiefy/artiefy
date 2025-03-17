@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { FaCheckCircle, FaLock } from 'react-icons/fa';
 import { MdKeyboardDoubleArrowDown } from 'react-icons/md';
+import { TbReportAnalytics } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
@@ -230,7 +231,7 @@ const LessonActivities = ({
 			<h2 className="mb-4 text-2xl font-bold text-primary">Actividades</h2>
 			{/* Activity section */}
 			{activity ? (
-				<div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+				<div className="rounded-lg border bg-gray-50 p-4">
 					<div className="flex items-center justify-between">
 						<div>
 							<h3 className="font-semibold text-gray-900">{activity.name}</h3>
@@ -244,7 +245,11 @@ const LessonActivities = ({
 					<p className="mt-2 text-sm text-gray-600">{activity.description}</p>
 					{isVideoCompleted && (
 						<div className="flex justify-center">
-							<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
+							{activityCompleted ? (
+								<TbReportAnalytics className="mb-2 size-12 text-2xl text-background" />
+							) : (
+								<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
+							)}
 						</div>
 					)}
 					<div className="space-y-2">
@@ -291,7 +296,7 @@ const LessonActivities = ({
 
 						{activityCompleted && nextLessonId && (
 							<div className="mt-4 flex flex-col items-center space-y-2">
-								<div className="h-px w-full bg-gray-200" />
+								<div className="border border-b-gray-500 w-50" />
 								<Link
 									href={`/estudiantes/clases/${nextLessonId}`}
 									className="next-lesson-link group flex flex-col items-center text-center"
@@ -313,9 +318,9 @@ const LessonActivities = ({
 											</span>
 										</div>
 									</button>
-									<span className="mt-1 text-sm text-[#01142B] group-hover:text-blue-500 hover:underline">
+									<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
 										Ir a la siguiente clase
-									</span>
+									</em>
 								</Link>
 							</div>
 						)}
@@ -326,7 +331,7 @@ const LessonActivities = ({
 			)}
 
 			{/* Grades Section with Title */}
-			<div className="mt-8">
+			<div className="mt-4">
 				<h2 className="mb-4 text-2xl font-bold text-primary">Calificaciones</h2>
 				{gradeSummary ? (
 					<div className="transition-all duration-200 ease-in-out">
@@ -338,7 +343,7 @@ const LessonActivities = ({
 				) : (
 					<div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
 						<div className="flex items-center justify-center">
-							<Icons.spinner className="h-6 w-6 animate-spin text-gray-400" />
+							<Icons.spinner className="h-6 w-6 animate-spin text-background" />
 						</div>
 					</div>
 				)}
