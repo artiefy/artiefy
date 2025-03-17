@@ -5,7 +5,7 @@ export default function SkeletonTestPage() {
 	return (
 		<>
 			<Header />
-			<div className="mt-11">
+			<div className="mt-7">
 				<main>
 					<LessonSkeleton />
 				</main>

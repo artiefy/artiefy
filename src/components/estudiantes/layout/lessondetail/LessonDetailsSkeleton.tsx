@@ -13,7 +13,7 @@ const SidebarContentSkeleton = () => (
 );
 
 const MainContentSkeleton = () => (
-	<div className="flex-1 px-6">
+	<div className="flex-1 px-6 mt-4">
 		<div className="mb-4 flex justify-between">
 			<Skeleton className="h-10 w-24" />
 			<Skeleton className="h-10 w-24" />
@@ -26,7 +26,7 @@ const MainContentSkeleton = () => (
 );
 
 const RightSidebarSkeleton = () => (
-	<div className="w-72 space-y-6 p-4">
+	<div className="w-72 space-y-6 mt-2">
 		{/* Activities Section */}
 		<div className="rounded-lg bg-background px-4 shadow-lg">
 			<Skeleton className="mb-4 h-8 w-32" />

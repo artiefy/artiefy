@@ -304,20 +304,22 @@ const LessonActivities = ({
 						<div>
 							<h3 className="font-semibold text-gray-900">{activity.name}</h3>
 						</div>
-						{activityCompleted ? (
-							<FaCheckCircle className="text-green-500" />
-						) : (
-							<FaLock className="text-gray-400" />
-						)}
+						{!isButtonLoading &&
+							(activityCompleted ? (
+								<FaCheckCircle className="text-green-500" />
+							) : (
+								<FaLock className="text-gray-400" />
+							))}
 					</div>
 					<p className="mt-2 text-sm text-gray-600">{activity.description}</p>
 					{isVideoCompleted && (
 						<div className="flex justify-center">
-							{activityCompleted ? (
-								<TbReportAnalytics className="mb-2 size-12 text-2xl text-background" />
-							) : (
-								<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
-							)}
+							{!isButtonLoading &&
+								(activityCompleted ? (
+									<TbReportAnalytics className="mb-2 size-12 text-2xl text-background" />
+								) : (
+									<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
+								))}
 						</div>
 					)}
 					<div className="space-y-2">
