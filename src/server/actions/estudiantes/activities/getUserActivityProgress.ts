@@ -12,9 +12,14 @@ export async function getUserActivityProgress(
 ): Promise<UserActivitiesProgress[]> {
 	try {
 		const activitiesProgress = await db.query.userActivitiesProgress.findMany({
-			where: eq(userActivitiesProgress.userId, userId), // Corrección de la propiedad conocida
+			where: eq(userActivitiesProgress.userId, userId),
 		});
-		return activitiesProgress;
+
+		// Transform the results to ensure revisada is always a boolean
+		return activitiesProgress.map((progress) => ({
+			...progress,
+			revisada: progress.revisada ?? false, // Convert null to false
+		})) as UserActivitiesProgress[];
 	} catch (error) {
 		console.error(
 			'Error al obtener el progreso de las actividades del usuario:',

@@ -131,7 +131,7 @@ export interface UserActivitiesProgress {
 	progress: number;
 	isCompleted: boolean;
 	lastUpdated: Date;
-	revisada: boolean; // Changed from boolean | null to boolean
+	revisada: boolean; // Changed to non-nullable boolean
 	attemptCount: number;
 	finalGrade: number | null;
 	lastAttemptAt: Date | null;
