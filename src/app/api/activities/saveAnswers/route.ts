@@ -104,6 +104,7 @@ export async function POST(request: NextRequest) {
 					progress: 100,
 					isCompleted: passed,
 					lastUpdated: new Date(),
+          revisada: activity?.revisada,
 					attemptCount: currentAttempts + 1,
 					finalGrade: Number(weightedScore.toFixed(2)), // Format to 2 decimals
 					lastAttemptAt: new Date(),

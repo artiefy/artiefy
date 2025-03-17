@@ -90,16 +90,19 @@ async function fetchAllCourses(): Promise<Course[]> {
 	return await getAllCourses();
 }
 
-export default async function Page({
-	searchParams,
-}: {
-	searchParams?: Record<string, string | string[] | undefined>;
-}) {
+interface PageProps {
+	searchParams: Promise<SearchParams>;
+}
+
+export default async function Page({ searchParams }: PageProps) {
 	try {
+		// Await searchParams before using its properties
+		const params = await searchParams;
+
 		const parsedParams: SearchParams = {
-			category: searchParams?.category as string | undefined,
-			query: searchParams?.query as string | undefined,
-			page: searchParams?.page as string | undefined,
+			category: params?.category,
+			query: params?.query,
+			page: params?.page,
 		};
 
 		const data = await fetchData(parsedParams);

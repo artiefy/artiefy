@@ -11,6 +11,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { FileCheck2, FileX2, Lock, Unlock, ShieldQuestion } from 'lucide-react';
 import { FaTrophy } from 'react-icons/fa';
+import { BiSolidReport } from "react-icons/bi";
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -447,7 +448,7 @@ const LessonActivityModal = ({
 			if (attemptsLeft && attemptsLeft > 0) {
 				return (
 					<>
-						<p className="text-center text-sm text-gray-600">
+						<p className="text-center text-sm text-gray-400">
 							Te quedan {attemptsLeft} intento{attemptsLeft !== 1 ? 's' : ''}
 						</p>
 						<Button
@@ -456,22 +457,19 @@ const LessonActivityModal = ({
 								setUserAnswers({});
 								setShowResults(false);
 							}}
-							className="mt-2 w-full bg-yellow-500 hover:bg-yellow-600"
+							className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
 						>
-							Intentar nuevamente
+							Intentar Nuevamente
 						</Button>
 					</>
 				);
 			}
 			// New UI for exhausted attempts
 			return (
-				<div className="space-y-4">
+				<div className="space-y-3">
 					<div className="rounded-lg bg-red-50 p-4 text-center">
 						<p className="font-semibold text-red-800">
 							Has agotado todos tus intentos
-						</p>
-						<p className="mt-1 text-sm text-red-600">
-							Calificación final: {formatScore(finalScore)}/5
 						</p>
 					</div>
 					{isLastActivity ? (
@@ -481,15 +479,18 @@ const LessonActivityModal = ({
 								onClick={onViewHistory}
 								className="w-full bg-blue-500 text-white hover:bg-blue-600"
 							>
-								<FaTrophy className="mr-2" />
-								Ver Reporte de Calificaciones
+								<span className="flex items-center justify-center gap-2">
+									<FaTrophy className="mr-1" />
+									Ver Reporte de Calificaciones
+									<BiSolidReport className="ml-1" />
+								</span>
 							</Button>
 							<Button
 								onClick={() => {
 									onActivityComplete();
 									onClose();
 								}}
-								className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-95"
+								className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-[0.98]"
 							>
 								Cerrar
 							</Button>
@@ -564,17 +565,20 @@ const LessonActivityModal = ({
 				<div className="space-y-3">
 					<Button
 						onClick={onViewHistory}
-						className="w-full bg-blue-500 text-white hover:bg-blue-600"
+						className="w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]"
 					>
-						<FaTrophy className="mr-2" />
-						Ver Reporte de Calificaciones
+						<span className="flex items-center justify-center gap-2">
+							<FaTrophy className="mr-1" />
+							Ver Reporte de Calificaciones
+							<BiSolidReport className="ml-1 h-8" />
+						</span>
 					</Button>
 					<Button
 						onClick={() => {
 							onActivityComplete(); // Add this callback
 							onClose();
 						}}
-						className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-95"
+						className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-[0.98]"
 					>
 						Cerrar
 					</Button>
@@ -626,7 +630,6 @@ const LessonActivityModal = ({
 						const displayAnswer = userAnswer
 							? getDisplayAnswer(userAnswer, question)
 							: '';
-						const displayCorrectAnswer = getDisplayCorrectAnswer(question);
 
 						return (
 							<div
@@ -658,10 +661,13 @@ const LessonActivityModal = ({
 											<span className="font-bold">{displayAnswer}</span>
 										</p>
 									</div>
-									{!isCorrect && (
+									{/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
+									{!isCorrect && finalScore >= 3 && (
 										<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
 											<span className="font-bold">Respuesta correcta:</span>{' '}
-											<span className="font-bold">{displayCorrectAnswer}</span>
+											<span className="font-bold">
+												{getDisplayCorrectAnswer(question)}
+											</span>
 										</div>
 									)}
 								</div>
