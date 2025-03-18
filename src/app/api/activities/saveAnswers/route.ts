@@ -4,7 +4,7 @@ import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { userActivitiesProgress } from '~/server/db/schema';
+import { userActivitiesProgress, activities } from '~/server/db/schema';
 import { formatScoreNumber } from '~/utils/formatScore';
 
 import type { SavedAnswer, ActivityResults } from '~/types';
@@ -60,6 +60,18 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+		// Get activity to ensure we have the correct revisada value
+		const dbActivity = await db.query.activities.findFirst({
+			where: eq(activities.id, activityId),
+		});
+
+		if (!dbActivity) {
+			return NextResponse.json(
+				{ error: 'Activity not found' },
+				{ status: 404 }
+			);
+		}
+
 		// Calculate score
 		const weightedScore = calculateWeightedScore(answers);
 		const passed = weightedScore >= 3;
@@ -80,22 +92,26 @@ export async function POST(request: NextRequest) {
 		const resultsKey = `activity:${activityId}:user:${userId}:results`;
 		await redis.set(resultsKey, results);
 
-		// For non-revisada activities, only check if passed
-		if (!activity?.revisada) {
-			// Allow infinite attempts
+		// Common values for all database operations
+		const baseValues = {
+			userId,
+			activityId,
+			progress: 100,
+			isCompleted: true, // Always set to true when activity is completed
+			lastUpdated: new Date(),
+			finalGrade: weightedScore,
+			lastAttemptAt: new Date(),
+			revisada: dbActivity.revisada, // Use the actual value from the activities table
+		};
+
+		// For non-revisada activities
+		if (!dbActivity.revisada) {
 			const newAttemptCount = currentAttempts + 1;
 			await db
 				.insert(userActivitiesProgress)
 				.values({
-					userId,
-					activityId,
-					progress: 100,
-					isCompleted: passed, // Set isCompleted based on passing score
-					lastUpdated: new Date(),
-					revisada: false,
+					...baseValues,
 					attemptCount: newAttemptCount,
-					finalGrade: weightedScore,
-					lastAttemptAt: new Date(),
 				})
 				.onConflictDoUpdate({
 					target: [
@@ -103,76 +119,29 @@ export async function POST(request: NextRequest) {
 						userActivitiesProgress.activityId,
 					],
 					set: {
-						finalGrade: weightedScore,
+						...baseValues,
 						attemptCount: newAttemptCount,
-						lastAttemptAt: new Date(),
-						isCompleted: passed, // Update isCompleted status
-						revisada: false,
-					},
-				});
-
-			return NextResponse.json({
-				success: false,
-				canClose: false,
-				message: 'Puedes seguir intentando hasta aprobar',
-				score: weightedScore,
-				attemptCount: newAttemptCount,
-			});
-		}
-
-		// For revisada activities with exhausted attempts
-		if (activity.revisada && currentAttempts >= 2) {
-			// Check for last attempt (3rd attempt)
-			await db
-				.insert(userActivitiesProgress)
-				.values({
-					userId,
-					activityId,
-					progress: 100,
-					isCompleted: true, // Mark as completed on last attempt
-					lastUpdated: new Date(),
-					revisada: true,
-					attemptCount: currentAttempts + 1,
-					finalGrade: weightedScore,
-					lastAttemptAt: new Date(),
-				})
-				.onConflictDoUpdate({
-					target: [
-						userActivitiesProgress.userId,
-						userActivitiesProgress.activityId,
-					],
-					set: {
-						finalGrade: weightedScore,
-						attemptCount: currentAttempts + 1,
-						lastAttemptAt: new Date(),
-						isCompleted: true, // Force completed on last attempt
-						revisada: true,
 					},
 				});
 
 			return NextResponse.json({
 				success: true,
 				canClose: true,
-				message: 'Último intento completado',
+				message: passed
+					? 'Actividad completada correctamente'
+					: 'Actividad guardada',
 				score: weightedScore,
-				attemptsRemaining: 0,
-				attemptCount: currentAttempts + 1,
+				attemptCount: newAttemptCount,
 			});
 		}
 
-		// Regular revisada activity attempt
+		// For revisada activities (with attempt limit)
+		const newAttemptCount = currentAttempts + 1;
 		await db
 			.insert(userActivitiesProgress)
 			.values({
-				userId,
-				activityId,
-				progress: 100,
-				isCompleted: passed,
-				lastUpdated: new Date(),
-				revisada: true,
-				attemptCount: currentAttempts + 1,
-				finalGrade: weightedScore,
-				lastAttemptAt: new Date(),
+				...baseValues,
+				attemptCount: newAttemptCount,
 			})
 			.onConflictDoUpdate({
 				target: [
@@ -180,28 +149,26 @@ export async function POST(request: NextRequest) {
 					userActivitiesProgress.activityId,
 				],
 				set: {
-					finalGrade: weightedScore,
-					attemptCount: currentAttempts + 1,
-					lastAttemptAt: new Date(),
-					isCompleted: passed,
-					revisada: true,
+					...baseValues,
+					attemptCount: newAttemptCount,
 				},
 			});
 
 		return NextResponse.json({
-			success: passed || !activity?.revisada,
-			canClose: passed || !activity?.revisada,
+			success: passed,
+			canClose: passed || newAttemptCount >= 3,
 			message: passed
 				? 'Actividad completada correctamente'
-				: activity?.revisada
-					? `Intento ${currentAttempts + 1}/3 completado`
-					: 'Actividad guardada',
+				: `Intento ${newAttemptCount}/3 completado`,
 			score: weightedScore,
-			attemptsRemaining: activity?.revisada ? 3 - (currentAttempts + 1) : null,
-			attemptCount: currentAttempts + 1,
+			attemptsRemaining: Math.max(0, 3 - newAttemptCount),
+			attemptCount: newAttemptCount,
 		});
 	} catch (error) {
-		console.error('Error saving answers:', error);
+		console.error(
+			'Error saving answers:',
+			error instanceof Error ? error.message : 'Unknown error'
+		);
 		return NextResponse.json(
 			{ success: false, error: 'Error al guardar las respuestas' },
 			{ status: 500 }

@@ -458,7 +458,11 @@ const LessonActivityModal = ({
 				return (
 					<>
 						<p className="text-center text-sm text-gray-400">
-							Te quedan {attemptsLeft} intento{attemptsLeft !== 1 ? 's' : ''}
+							Te quedan{' '}
+							<span className="text-2xl font-bold text-white">
+								{attemptsLeft}
+							</span>{' '}
+							intento{attemptsLeft !== 1 ? 's' : ''}
 						</p>
 						<Button
 							onClick={() => {
@@ -525,8 +529,8 @@ const LessonActivityModal = ({
 		if (finalScore < 3 && !activity.revisada) {
 			return (
 				<>
-					<p className="text-center text-sm text-gray-500">
-						Intentos ilimitados hasta aprobar
+					<p className="text-center font-extralight text-gray-400">
+						! Intentos ilimitados hasta aprobar !
 					</p>
 					<Button
 						onClick={() => {
@@ -534,9 +538,9 @@ const LessonActivityModal = ({
 							setUserAnswers({});
 							setShowResults(false);
 						}}
-						className="mt-2 w-full bg-yellow-500 hover:bg-yellow-600"
+						className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
 					>
-						Intentar nuevamente
+						Intentar Nuevamente
 					</Button>
 					<Button onClick={onClose} className="mt-2 w-full bg-gray-500">
 						Cerrar
