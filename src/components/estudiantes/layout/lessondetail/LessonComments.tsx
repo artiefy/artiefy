@@ -37,7 +37,7 @@ interface ClassComment {
 	userLiked: boolean; // Add this property to track if the user liked the comment
 }
 
-const ClassComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
+const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 	const [content, setContent] = useState('');
 	const [rating, setRating] = useState(0);
 	const [message, setMessage] = useState('');
@@ -307,4 +307,4 @@ const ClassComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 	);
 };
 
-export default ClassComments;
+export default LessonComments;

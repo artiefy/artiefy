@@ -13,10 +13,10 @@ import LessonActivities from '~/components/estudiantes/layout/lessondetail/Lesso
 import LessonBreadcrumbs from '~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
 import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
-import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
+import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
-import RecursosLesson from '~/components/estudiantes/layout/lessondetail/LessonResource';
+import LessonResource from '~/components/estudiantes/layout/lessondetail/LessonResource';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -475,7 +475,7 @@ export default function LessonDetails({
 						handleVideoEnd={handleVideoEnd}
 						handleProgressUpdate={handleProgressUpdate}
 					/>
-					<ClassComments lessonId={lesson.id} />
+					<LessonComments lessonId={lesson.id} />
 				</div>
 
 				{/* Right Sidebar */}
@@ -493,7 +493,7 @@ export default function LessonDetails({
 						isLastActivity={isLastActivity()}
 						resourceNames={lesson.resourceNames} // Add this prop
 					/>
-					<RecursosLesson resourceNames={lesson.resourceNames} />
+					<LessonResource resourceNames={lesson.resourceNames} />
 				</div>
 
 				{/* Chatbot Button and Modal */}

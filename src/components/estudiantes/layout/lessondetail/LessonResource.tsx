@@ -4,7 +4,7 @@ interface RecursosLessonProps {
 	resourceNames: string[];
 }
 
-const RecursosLesson = ({ resourceNames }: RecursosLessonProps) => {
+const LessonResource = ({ resourceNames }: RecursosLessonProps) => {
 	const getIcon = (fileName: string) => {
 		const extension = fileName.split('.').pop();
 		switch (extension) {
@@ -50,4 +50,4 @@ const RecursosLesson = ({ resourceNames }: RecursosLessonProps) => {
 	);
 };
 
-export default RecursosLesson;
+export default LessonResource;
