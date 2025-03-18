@@ -2,22 +2,16 @@ import { Suspense } from 'react';
 
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/nextjs';
 
+import { CourseCardSkeleton } from '~/components/estudiantes/layout/CourseCardSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import MyCoursesStudent, {
-	CourseCardSkeleton,
-} from '~/components/estudiantes/layout/MyCoursesStudent';
+import MyCoursesStudent from '~/components/estudiantes/layout/MyCoursesStudent';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
-import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function MisCoursesPage() {
-	const courses = await getEnrolledCourses();
-	const completedCourses = courses.filter((course) => course.progress === 100);
-	const inProgressCourses = courses.filter((course) => course.progress < 100);
-
+export default function MisCoursesPage() {
 	return (
 		<>
 			<SignedIn>
@@ -41,22 +35,22 @@ export default async function MisCoursesPage() {
 										</div>
 									</div>
 
-									{/* My Learning Progress Section Skeleton */}
+									{/* Programs Section Skeleton */}
 									<section className="mb-12">
 										<Skeleton className="mb-6 h-8 w-64" />
 										<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-											{inProgressCourses.map((_, i) => (
-												<CourseCardSkeleton key={`progress-${i}`} />
+											{[1, 2].map((i) => (
+												<CourseCardSkeleton key={`program-${i}`} />
 											))}
 										</div>
 									</section>
 
-									{/* Completed Courses Section Skeleton */}
-									<section>
+									{/* Courses Section Skeleton */}
+									<section className="mb-12">
 										<Skeleton className="mb-6 h-8 w-64" />
 										<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-											{completedCourses.map((_, i) => (
-												<CourseCardSkeleton key={`completed-${i}`} />
+											{[1, 2].map((i) => (
+												<CourseCardSkeleton key={`course-${i}`} />
 											))}
 										</div>
 									</section>

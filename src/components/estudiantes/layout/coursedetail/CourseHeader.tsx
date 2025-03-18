@@ -1,9 +1,18 @@
 'use client';
 
+import { useState } from 'react';
+
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
-import { FaCalendar, FaClock, FaUserGraduate, FaCheck } from 'react-icons/fa';
+import {
+	FaCalendar,
+	FaClock,
+	FaUserGraduate,
+	FaCheck,
+	FaTrophy,
+} from 'react-icons/fa';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -17,13 +26,19 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 
 import { CourseContent } from './CourseContent';
+import { GradeModal } from './GradeModal';
 
 import type { Course, CourseMateria } from '~/types';
 
 export const revalidate = 3600;
 
+interface ExtendedCourse extends Course {
+	progress?: number;
+	finalGrade?: number;
+}
+
 interface CourseHeaderProps {
-	course: Course;
+	course: ExtendedCourse;
 	totalStudents: number;
 	isEnrolled: boolean;
 	isEnrolling: boolean;
@@ -60,6 +75,8 @@ export function CourseHeader({
 	onEnroll,
 	onUnenroll,
 }: CourseHeaderProps) {
+	const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
+
 	const formatDate = (dateString: string | number | Date) =>
 		new Date(dateString).toISOString().split('T')[0];
 
@@ -144,6 +161,17 @@ export function CourseHeader({
 					</Badge>
 				</div>
 
+				{/* Add grade modal button next to materias */}
+				<div className="flex items-center gap-4">
+					<Button
+						onClick={() => setIsGradeModalOpen(true)}
+						className="bg-blue-500 text-white hover:bg-blue-600"
+					>
+						<FaTrophy className="mr-2" />
+						Ver Nota Final
+					</Button>
+				</div>
+
 				{/* Course description */}
 				<div className="prose max-w-none">
 					<p className="leading-relaxed text-gray-700">
@@ -168,6 +196,24 @@ export function CourseHeader({
 						))}
 					</div>
 				</div>
+
+				{/* Add certificate button for completed courses */}
+				{course.progress === 100 && (
+					<div className="my-4">
+						<Button
+							asChild
+							className="relative w-full animate-pulse bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 text-white transition-all hover:animate-none hover:from-green-500 hover:via-blue-600 hover:to-purple-700"
+						>
+							<Link href={`/estudiantes/certificados/${course.id}`}>
+								<span className="relative z-10 flex items-center justify-center py-2">
+									<FaTrophy className="mr-2" />
+									Ver Tu Certificado
+								</span>
+								<div className="absolute inset-0 bg-white/20 blur-sm" />
+							</Link>
+						</Button>
+					</div>
+				)}
 
 				{/* Course lessons */}
 				<CourseContent
@@ -244,6 +290,15 @@ export function CourseHeader({
 						)}
 					</div>
 				</div>
+
+				{/* Add GradeModal */}
+				<GradeModal
+					isOpen={isGradeModalOpen}
+					onClose={() => setIsGradeModalOpen(false)}
+					courseTitle={course.title}
+					courseId={course.id}
+					userId="user_2tNiV1LlLNv387Gz8ZlZ3SWPm7K"
+				/>
 			</CardContent>
 		</Card>
 	);
