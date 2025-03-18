@@ -45,7 +45,7 @@ export function LessonGrades({
 
 			<Button
 				onClick={onViewHistory}
-				className="w-full bg-blue-500 text-white hover:bg-blue-600"
+				className="active:scale-[0.98] w-full bg-blue-500 text-white hover:bg-blue-600"
 			>
 				<FaTrophy className="mr-2" />
 				Ver Historial Completo

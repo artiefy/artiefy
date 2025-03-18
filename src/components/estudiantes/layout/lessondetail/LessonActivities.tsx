@@ -361,7 +361,7 @@ const LessonActivities = ({
 								) : (
 									<>
 										{isLoadingActivity && (
-											<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
+											<Icons.spinner className="active:scale-[0.98] absolute -left-5 h-4 w-4 animate-spin" />
 										)}
 										<span>Ver Actividad</span>
 									</>

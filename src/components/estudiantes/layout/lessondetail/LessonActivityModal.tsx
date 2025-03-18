@@ -134,6 +134,38 @@ const LessonActivityModal = ({
 		}
 	}, [savedResults]);
 
+	useEffect(() => {
+		const canClose = () => {
+			if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
+				return true;
+			}
+
+			if (!showResults) {
+				return false;
+			}
+
+			if (activity.revisada) {
+				// Para actividades revisadas, solo permitir cerrar si:
+				// 1. Obtuvo calificación >= 3
+				// 2. Agotó todos los intentos (attemptsLeft === 0)
+				return finalScore >= 3 || attemptsLeft === 0;
+			} else {
+				// Para actividades no revisadas, solo permitir cerrar si:
+				// 1. Obtuvo calificación >= 3
+				return finalScore >= 3;
+			}
+		};
+
+		setCanCloseModal(canClose());
+	}, [
+		showResults,
+		finalScore,
+		attemptsLeft,
+		activity.revisada,
+		activity.isCompleted,
+		savedResults?.isAlreadyCompleted,
+	]);
+
 	const currentQuestion = questions[currentQuestionIndex];
 	const isLastQuestion = currentQuestionIndex === questions.length - 1;
 	const canProceedToNext = currentQuestion && userAnswers[currentQuestion.id];
@@ -445,7 +477,7 @@ const LessonActivityModal = ({
 			return (
 				<Button
 					onClick={onClose}
-					className="mt-4 w-full bg-blue-500 font-bold transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+					className="mt-3 w-full bg-blue-500 font-bold text-background transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 				>
 					CERRAR
 				</Button>
@@ -470,7 +502,7 @@ const LessonActivityModal = ({
 								setUserAnswers({});
 								setShowResults(false);
 							}}
-							className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
+							className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600 active:scale-[0.98]"
 						>
 							Intentar Nuevamente
 						</Button>
@@ -728,12 +760,21 @@ const LessonActivityModal = ({
 		<Dialog
 			open={isOpen}
 			onOpenChange={(open) => {
-				if (!open && !canCloseModal) {
-					toast.error('Debes completar la actividad primero');
-					return;
-				}
-				if (!open && finalScore >= 3 && isLastActivity) {
-					onActivityComplete(); // Actualiza el estado del botón al cerrar
+				if (!open) {
+					if (!canCloseModal) {
+						if (activity.revisada && attemptsLeft && attemptsLeft > 0) {
+							toast.error(
+								`Debes completar los ${attemptsLeft} intentos restantes o aprobar la actividad`
+							);
+						} else {
+							toast.error('Debes aprobar la actividad para continuar');
+						}
+						return;
+					}
+
+					if (!open && finalScore >= 3 && isLastActivity) {
+						onActivityComplete();
+					}
 				}
 				onClose();
 			}}
