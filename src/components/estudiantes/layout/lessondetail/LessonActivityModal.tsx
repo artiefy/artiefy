@@ -10,8 +10,8 @@ import {
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
 import { FileCheck2, FileX2, Lock, Unlock, ShieldQuestion } from 'lucide-react';
+import { BiSolidReport } from 'react-icons/bi';
 import { FaTrophy } from 'react-icons/fa';
-import { BiSolidReport } from "react-icons/bi";
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -58,6 +58,9 @@ interface UserAnswer {
 
 interface AttemptsResponse {
 	attempts: number;
+	isRevisada: boolean;
+	attemptsLeft: number | null; // null means infinite attempts
+	lastGrade: number | null;
 }
 
 const LessonActivityModal = ({
@@ -107,12 +110,16 @@ const LessonActivityModal = ({
 
 	useEffect(() => {
 		const checkAttempts = async () => {
+			const response = await fetch(
+				`/api/activities/attempts?activityId=${activity.id}&userId=${userId}`
+			);
+			const data = (await response.json()) as AttemptsResponse;
+
+			// Only set attempts limit for revisada activities
 			if (activity.revisada) {
-				const response = await fetch(
-					`/api/activities/attempts?activityId=${activity.id}&userId=${userId}`
-				);
-				const data = (await response.json()) as AttemptsResponse;
-				setAttemptsLeft(3 - (data.attempts ?? 0)); // Using nullish coalescing
+				setAttemptsLeft(data.attemptsLeft ?? 3);
+			} else {
+				setAttemptsLeft(null); // null indicates infinite attempts
 			}
 		};
 		void checkAttempts();
@@ -191,12 +198,14 @@ const LessonActivityModal = ({
 				return;
 			}
 
-			// Only allow closing if all questions are answered and either:
-			// 1. Score >= 3
-			// 2. They've exhausted their attempts
-			// 3. It's the last activity
+			// For non-revisada activities, only need passing score
+			// For revisada activities, need passing score or exhausted attempts
 			setCanCloseModal(
-				score >= 3 || attemptsLeft === 0 || (isLastActivity && isLastLesson)
+				score >= 3 ||
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+					(activity.revisada && attemptsLeft === 0) ||
+					(!activity.revisada && score < 3) || // Allow closing for non-revisada even if failed
+					(isLastActivity && isLastLesson)
 			);
 
 			const hasPassingScore = score >= 3;
@@ -368,7 +377,7 @@ const LessonActivityModal = ({
 					{currentQuestion.type === 'COMPLETAR' ? (
 						<input
 							type="text"
-							value={userAnswers[currentQuestion.id]?.answer || ''}
+							value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
 							onChange={(e) => handleAnswer(e.target.value)}
 							className="w-full rounded-md border border-gray-300 p-3 text-background shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
 							placeholder="Escribe tu respuesta..."
@@ -516,6 +525,9 @@ const LessonActivityModal = ({
 		if (finalScore < 3 && !activity.revisada) {
 			return (
 				<>
+					<p className="text-center text-sm text-gray-500">
+						Intentos ilimitados hasta aprobar
+					</p>
 					<Button
 						onClick={() => {
 							setCurrentQuestionIndex(0);

@@ -25,6 +25,10 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
+		// First check activity details to get revisada status
+		const activityKey = `activity:${activityId}`;
+		const activity = await redis.get<{ revisada: boolean }>(activityKey);
+
 		// First check activity completion in database
 		const progress = await db.query.userActivitiesProgress.findFirst({
 			where: (uap) =>
@@ -42,6 +46,8 @@ export async function GET(request: NextRequest) {
 				answers: savedResults?.answers ?? {},
 				isAlreadyCompleted: progress.isCompleted,
 				attemptCount: progress.attemptCount ?? 0,
+				isRevisada: activity?.revisada ?? false,
+				attemptsLimit: activity?.revisada ? 3 : null, // null indicates infinite attempts
 			});
 		}
 
