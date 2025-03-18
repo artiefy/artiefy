@@ -41,8 +41,9 @@ export const getProgramById = unstable_cache(
 				.then((result) => Number(result[0]?.count ?? 0));
 
 			// Transform the results including category information
-			const transformedMaterias = materiasWithCourses
-				.map(({ materias, courses, categories }) => ({
+			// Transform the results including category information
+			const transformedMaterias = materiasWithCourses.map(
+				({ materias, courses, categories }) => ({
 					id: materias.id,
 					title: materias.title,
 					description: materias.description,
@@ -63,9 +64,9 @@ export const getProgramById = unstable_cache(
 										}
 									: undefined,
 							}
-						: undefined,
-				}))
-				.filter((materia) => materia.curso);
+						: undefined, // Keep the structure, but allow 'undefined' if no course is associated
+				})
+			);
 
 			// Build final program object
 			return {

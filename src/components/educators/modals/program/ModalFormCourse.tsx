@@ -13,7 +13,6 @@ import Select, { type MultiValue } from 'react-select';
 import { toast } from 'sonner';
 
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
-import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
 import NivelDropdown from '~/components/educators/layout/NivelDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -26,19 +25,20 @@ import {
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
+import ModalidadDropdown from '~/components/super-admin/layout/ModalidadDropdown';
 
 interface Subject {
 	id: number;
 	title: string;
-  }
+}
 
-  // Define the interface for the props
+// Define the interface for the props
 interface CustomSelectProps {
 	options: Subject[];
 	onChange: (selected: MultiValue<{ value: string; label: string }>) => void;
 	selectedSubjects: MultiValue<{ value: string; label: string }>;
-  }
-  
+}
+
 // Interfaz para los parámetros del formulario del course
 interface CourseFormProps {
 	onSubmitAction: (
@@ -47,13 +47,13 @@ interface CourseFormProps {
 		description: string,
 		file: File | null,
 		categoryid: number,
-		modalidadesid: number,
+		modalidadesid: number[],
 		nivelid: number,
 		rating: number,
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
-		subjects: { id: number; courseId: number }[] // ✅ Solo `id` y `courseId`
+		subjects: { id: number;}[] // ✅ Solo `id` y `courseId`
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -63,8 +63,8 @@ interface CourseFormProps {
 	setDescription: (description: string) => void;
 	categoryid: number;
 	setCategoryid: (categoryid: number) => void;
-	modalidadesid: number;
-	setModalidadesid: (modalidadesid: number) => void;
+	modalidadesid: number[];
+	setModalidadesid: (modalidadesid: number[]) => void;
 	nivelid: number;
 	setNivelid: (nivelid: number) => void;
 	coverImageKey: string;
@@ -87,8 +87,8 @@ interface CourseFormProps {
 	onCloseAction: () => void;
 	rating: number;
 	setRating: (rating: number) => void;
-	subjects: { id: number; courseId: number }[];
-	setSubjects: (subjects: { id: number; courseId: number }[]) => void;
+	subjects: { id: number;}[];
+	setSubjects: (subjects: { id: number}[]) => void;
 }
 
 // Componente ModalFormCourse
@@ -104,8 +104,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	setRating,
 	categoryid,
 	setCategoryid,
-	modalidadesid,
-	setModalidadesid,
 	nivelid,
 	setNivelid,
 	coverImageKey,
@@ -143,7 +141,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		useState<AbortController | null>(null); // Estado para el controlador de subida
 	const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
 	const [addParametros, setAddParametros] = useState(false); // Estado para los parámetros
-	// const responseData = await response.json();
+	const [modalidadesid, setModalidadesid] = useState<number[]>([]); // ✅ Ensure it's an array
 	// const newCourseId = responseData.id;
 	const [allSubjects, setAllSubjects] = useState<
 		{ id: number; title: string }[]
@@ -259,60 +257,33 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	// Función para obtener los archivos de subida y enviarselo al componente padre donde se hace el metodo POST
 	const handleSubmit = async () => {
 		const controller = new AbortController();
-
+		
 		setUploadController(controller);
-		// Validar los campos del formulario
+
 		const newErrors = {
 			title: !editingCourseId && !title,
 			description: !editingCourseId && !description,
 			categoryid: !editingCourseId && !categoryid,
-			category: false,
 			modalidadesid: !editingCourseId && !modalidadesid,
 			nivelid: !editingCourseId && !nivelid,
-			nivel: false,
-			rating: !editingCourseId && !rating, // Añadir esta línea
+			rating: !editingCourseId && !rating,
 			file: !editingCourseId && !file && !currentCoverImageKey,
-			modalidad: false,
 		};
 
-		if (editingCourseId) {
-			newErrors.title = modifiedFields.has('title') && !title;
-			newErrors.description = modifiedFields.has('description') && !description;
-			newErrors.nivelid = modifiedFields.has('nivelid')
-				? !nivelid
-				: !!newErrors.nivelid;
-			newErrors.file = modifiedFields.has('file') && !file;
-			newErrors.modalidadesid =
-				modifiedFields.has('modalidadesid') && !modalidadesid;
-			newErrors.rating = modifiedFields.has('rating') && !rating; // Añadir esta línea
-		}
 
-		// Validar que la suma de los porcentajes sea igual a 100
-		const sumaPorcentajes = parametros.reduce(
-			(acc, parametro) => acc + parametro.porcentaje,
-			0
-		);
-		if (addParametros && sumaPorcentajes !== 100) {
-			toast('Error', {
-				description: 'La suma de los porcentajes debe ser igual a 100%',
-			});
-			return;
-		}
 
-		setErrors(newErrors);
-
-		if (Object.values(newErrors).some((error) => error)) {
-			console.log('Validation errors:', newErrors); // Registro de depuración
+		if (Object.values(newErrors).some((value) => value)) {
+			console.log('Validation errors:', newErrors);
 			return;
 		}
 
 		setIsEditing(true);
 		setIsUploading(true);
+
 		try {
 			let coverImageKey = currentCoverImageKey ?? '';
 			let uploadedFileName = fileName ?? '';
 
-			// Subir la imagen de portada a S3
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
@@ -320,42 +291,75 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					body: JSON.stringify({
 						contentType: file.type,
 						fileSize: file.size,
-						fileName: file.name, // Asegúrate de pasar el fileName correcto
+						fileName: file.name,
 					}),
 				});
 
 				if (!uploadResponse.ok) {
 					throw new Error(
-						`Error: al iniciar la carga: ${uploadResponse.statusText}`
+						`Error during file upload: ${uploadResponse.statusText}`
 					);
 				}
 
 				const uploadData = (await uploadResponse.json()) as {
-					url: string;
-					fields: Record<string, string>;
 					key: string;
 					fileName: string;
+					fields: Record<string, string>;
+					url: string;
 				};
-
-				const { url, fields, key, fileName: responseFileName } = uploadData;
-				coverImageKey = key;
-				uploadedFileName = responseFileName;
+				coverImageKey = uploadData.key;
+				uploadedFileName = uploadData.fileName;
 
 				const formData = new FormData();
-				Object.entries(fields).forEach(([key, value]) => {
-					if (typeof value === 'string') {
-						formData.append(key, value);
-					}
+				Object.entries(uploadData.fields).forEach(([key, value]) => {
+					formData.append(key, value);
 				});
 				formData.append('file', file);
 
-				await fetch(url, {
+				const uploadFileResponse = await fetch(uploadData.url, {
 					method: 'POST',
 					body: formData,
 				});
+
+				if (!uploadFileResponse.ok) {
+					throw new Error('Failed to upload file.');
+				}
 			}
 
-			// Enviar los datos a post
+			const selectedSubjects = subjects.map((subject) => ({
+				id: subject.id, // Solo enviamos el ID de la materia
+			}));
+			
+			console.log('Selected subjects before sending:', selectedSubjects);
+			console.log('Selected subjects before sending:', selectedSubjects);
+			console.log('Current subjects state:', subjects);
+			console.log('Editing course ID:', editingCourseId);
+	
+	
+		
+			// Validar que haya al menos una materia seleccionada
+			if (!selectedSubjects || selectedSubjects.length === 0) {
+				toast('Error', { description: 'Debe seleccionar al menos una materia.' });
+				return;
+			}
+		
+			const payload = {
+				title,
+				description,
+				coverImageKey,
+				categoryid,
+				modalidadesid: Array.isArray(modalidadesid) ? modalidadesid : [modalidadesid],
+				nivelid,
+				rating,
+				subjects: selectedSubjects, // Enviamos solo los IDs de las materias
+				fileName: uploadedFileName,
+			};
+		
+			console.log('Payload to send:', payload);
+		
+			
+			
+
 			await onSubmitAction(
 				editingCourseId ? editingCourseId.toString() : '',
 				title,
@@ -368,24 +372,16 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				addParametros,
 				coverImageKey,
 				uploadedFileName,
-				subjects.map((subject) => ({
-					id: subject.id, // ✅ ID de la materia
-					courseId: editingCourseId ? Number(editingCourseId) : 0, // ✅ Asegurar que siempre sea un número
-				}))
+				selectedSubjects
 			);
+
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
-				return;
 			}
 
 			setIsUploading(false);
 		} catch (error) {
-			if ((error as Error).name === 'AbortError') {
-				console.log('Upload cancelled');
-				return; // Salir de la función si se cancela la carga
-			} else {
-				console.error('Error al enviar:', error);
-			}
+			console.error('Error during the submission process:', error);
 			setIsUploading(false);
 		}
 	};
@@ -415,8 +411,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				setCategoryid(value as number);
 				break;
 			case 'modalidadesid':
-				setModalidadesid(value as number);
+				if (Array.isArray(value)) {
+					// Asumiendo que el value es del tipo { value: string; label: string }[]
+					const ids = (value as { value: string }[]).map((item) =>
+						parseInt(item.value)
+					);
+					setModalidadesid(ids);
+				} else {
+					// En caso de que se reciba un solo valor y no un array
+					setModalidadesid([parseInt(value as string)]);
+				}
 				break;
+
 			case 'rating':
 				setRating(value as number);
 				break;
@@ -489,7 +495,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setDescription(description);
 			setCategoryid(categoryid);
 			setRating(rating); // Añadir esta línea
-			setModalidadesid(modalidadesid);
+			setModalidadesid([...modalidadesid]);
 			setNivelid(nivelid);
 			setCoverImage(coverImageKey);
 		}
@@ -506,7 +512,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setTitle('');
 			setDescription('');
 			setCategoryid(0);
-			setModalidadesid(0);
+			setModalidadesid([]);
 			setNivelid(0);
 			setCoverImage('');
 			setRating(0);
@@ -514,15 +520,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [isOpen, editingCourseId]);
 
-	// Fetch all subjects when the component mounts
 	useEffect(() => {
 		const fetchSubjects = async () => {
 			try {
 				const response = await fetch('/api/super-admin/programs');
 				const data = (await response.json()) as { id: number; title: string }[];
-				setAllSubjects(data);
+				if (Array.isArray(data)) {
+					// Verifica que la respuesta sea un arreglo
+					setAllSubjects(data as { id: number; title: string }[]);
+				} else {
+					console.error('La respuesta no es un arreglo:', data);
+					setAllSubjects([]); // Establece allSubjects como un arreglo vacío si la respuesta no es correcta
+				}
 			} catch (error) {
 				console.error('Error fetching subjects:', error);
+				setAllSubjects([]); // Establece allSubjects como un arreglo vacío en caso de error
 			}
 		};
 
@@ -534,10 +546,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		newValue: MultiValue<{ value: string; label: string }>
 	) => {
 		const selectedSubjects = newValue.map((option) => ({
-			id: Number(option.value), // ✅ Solo el ID de la materia
-			courseId: editingCourseId ? Number(editingCourseId) : 0, // ✅ Solo el ID del curso
+			id: Number(option.value), // Solo necesitamos el ID de la materia
 		}));
 		setSubjects(selectedSubjects);
+		console.log('Subjects after selection:', selectedSubjects);
 	};
 
 	// Render la vista
@@ -590,7 +602,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								htmlFor="nivelid"
 								className="justify-center text-center text-lg font-medium text-primary"
 							>
-								Nivel
+								level
 							</label>
 							<NivelDropdown
 								nivel={nivelid}
@@ -615,6 +627,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								setModalidad={setModalidadesid}
 								errors={errors}
 							/>
+
 							{errors.modalidadesid && (
 								<p className="text-sm text-red-500">
 									Este campo es obligatorio.
@@ -861,15 +874,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								Asignar Materias
 							</label>
 							<Select
-  isMulti
-  options={allSubjects.map((subject) => ({
-    value: subject.id.toString(),
-    label: subject.title,
-  }))}
-  onChange={handleSelectSubjects}
-  classNamePrefix="react-select"
-  className="mt-2 w-10/12 lg:w-1/2"
-/>
+								isMulti
+								options={allSubjects.map((subject) => ({
+									value: subject.id.toString(),
+									label: subject.title,
+								}))}
+								onChange={handleSelectSubjects}
+								classNamePrefix="react-select"
+								className="mt-2 w-10/12 lg:w-1/2"
+							/>
 						</div>
 					)}
 					{(uploading || isUploading) && (

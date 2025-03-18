@@ -11,10 +11,12 @@ import {
 	updateCourse,
 	getTotalStudents,
 	getLessonsByCourseId,
-	getTotalDuration, updateMateria
+	getTotalDuration,
+	updateMateria,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
+import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAdmin';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 export const dynamic = 'force-dynamic';
@@ -85,96 +87,102 @@ export async function GET(req: NextRequest) {
 	}
 }
 
-export async function POST(request: NextRequest) {
+interface CourseData {
+	title: string;
+	description: string;
+	coverImageKey: string;
+	categoryid: number;
+	modalidadesid: number;
+	nivelid: number;
+	instructor: string;
+	creatorId: string;
+	rating: number;
+}
+
+export async function POST(request: Request) {
 	try {
 		const { userId } = await auth();
 		if (!userId) {
-			return respondWithError('No autorizado', 403);
+			console.log('Usuario no autorizado');
+			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
-
-		// Verificar si el usuario es nuevo y agregarlo a la tabla users
-		await ensureUserExists(userId);
-
-		// Implement rate limiting
-		const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
-		const { success } = await ratelimit.limit(ip);
-		if (!success) {
-			return respondWithError('Demasiadas solicitudes', 429);
-		}
-
-		const body = (await request.json()) as {
+		
+		// Parsear los datos del cuerpo de la solicitud
+		const data = (await request.json()) as {
 			title: string;
 			description: string;
 			coverImageKey: string;
 			categoryid: number;
-			modalidadesid: number;
+			modalidadesid: number[];
 			nivelid: number;
 			rating: number;
-			creatorId: string;
 			instructor: string;
-			subjects: { id: number }[]; // ✅ Solo IDs de materias
+			subjects?: { id: number }[];
 		};
-		
-
-		const {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			rating,
-			nivelid,
-			creatorId,
-			instructor,
-			subjects, // ✅ Aquí se recibe el array de materias
-		} = body;
-		const { id: courseId } = await createCourse({
-			title,
-			description,
-			creatorId: userId,
-			coverImageKey,
-			categoryid,
-			rating,
-			modalidadesid,
-			nivelid,
-			instructor,
-		});
-
-		console.log('Datos enviados al servidor:', {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			creatorId,
-			rating,
-			modalidadesid,
-			nivelid,
-			instructor,
-		});
-
-		// Guardar materias asociadas
-		if (subjects.length > 0) {
-			await Promise.all(
-				subjects.map(async (subject) => {
-					await updateMateria(subject.id, {
-						courseid: courseId, // ✅ Asignar `courseid` a la materia
-					});
-				})
-			);
-		}
+		console.log('Received data:', data);
 
 
-		return NextResponse.json({
-			message: 'Curso creado exitosamente',
-			courseId: courseId,
-		});
-	} catch (error: unknown) {
+		console.log('Datos recibidos en el backend:', data);
+
+
+		const createdCourses = [];
+
+		// Iterar sobre cada modalidadId y crear un curso
+		for (const modalidadId of data.modalidadesid) {
+			const modalidad = await getModalidadById(modalidadId);
+
+        console.log(`Procesando modalidadId: ${modalidadId}`);
+
+        // Construir el título del curso con el nombre de la modalidad
+        const newTitle = modalidad
+            ? `${data.title} - ${modalidad.name}`
+            : data.title;
+            const newCourse = await createCourse({
+                title: newTitle,
+                description: data.description,
+                creatorId: userId,
+                coverImageKey: data.coverImageKey,
+                categoryid: data.categoryid,
+                rating: data.rating,
+                modalidadesid: modalidadId,
+                nivelid: data.nivelid,
+                instructor: data.instructor,
+            });
+
+            console.log('Curso creado:', newCourse);
+
+            // Actualizar las materias con el ID del curso recién creado
+            // Actualizar las materias con el ID del curso recién creado
+			if (data.subjects && Array.isArray(data.subjects) && data.subjects.length > 0) {
+				console.log('Actualizando materias:', data.subjects);
+				await Promise.all(
+					data.subjects.map(async (subject) => {
+						await updateMateria(subject.id, {
+							courseid: newCourse.id,
+						});
+						console.log(`Materia actualizada: ${subject.id} -> courseId: ${newCourse.id}`);
+					})
+				);
+			} else {
+				console.log('No se proporcionaron materias para actualizar.');
+			}
+
+            createdCourses.push(newCourse);
+        }
+
+		console.log('Cursos creados:', createdCourses);
+
+		return NextResponse.json(createdCourses, { status: 201 });
+	} catch (error) {
 		console.error('Error al crear el curso:', error);
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-		return respondWithError(`Error al crear el curso: ${errorMessage}`, 500);
+		const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+		return NextResponse.json(
+			{ error: `Error al crear el curso: ${errorMessage}` },
+			{ status: 500 }
+		);
 	}
 }
+
 
 // Actualizar un curso
 export async function PUT(request: NextRequest) {
@@ -225,17 +233,14 @@ export async function PUT(request: NextRequest) {
 			nivelid,
 		});
 
-// ✅ Actualizar las materias asignadas a este curso
-await Promise.all(
-    body.subjects.map(async (subject) => {
-        await updateMateria(subject.id, {
-            courseid: id, // ✅ Asigna el nuevo ID del curso a la materia
-        });
-    })
-);
-
-
-
+		// ✅ Actualizar las materias asignadas a este curso
+		await Promise.all(
+			body.subjects.map(async (subject) => {
+				await updateMateria(subject.id, {
+					courseid: id, // ✅ Asigna el nuevo ID del curso a la materia
+				});
+			})
+		);
 
 		return NextResponse.json({ message: 'Curso actualizado exitosamente' });
 	} catch (error) {

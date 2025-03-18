@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
-import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 import CalificarPreguntas from '~/components/educators/dashboard/CalificarPreguntas';
 import FormActCompletado from '~/components/educators/layout/FormActCompletado';
 import QuestionSubidaList from '~/components/educators/layout/ListActSubidaFile';
@@ -38,6 +37,7 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
+import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 import type {
 	QuestionFilesSubida,
 	Completado,
@@ -258,7 +258,7 @@ const Page: React.FC = () => {
 
 	// Renderizar la pagina
 	return (
-		<ResponsiveSidebar>
+		<>
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
@@ -525,7 +525,7 @@ const Page: React.FC = () => {
 					)}
 				</div>
 			</div>
-		</ResponsiveSidebar>
+		</>
 	);
 };
 

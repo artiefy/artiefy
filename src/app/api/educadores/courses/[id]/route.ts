@@ -8,6 +8,7 @@ import {
 	deleteCourse,
 	getCourseById,
 	updateCourse,
+	getModalidadById,
 } from '~/models/educatorsModels/courseModelsEducator';
 
 export async function GET(
@@ -134,18 +135,64 @@ export async function POST(request: Request) {
 	try {
 		const { userId } = await auth();
 		if (!userId) {
+			console.log('Usuario no autorizado');
 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
 
-		const data = (await request.json()) as CourseData;
+		// Parsear los datos del cuerpo de la solicitud
+		const data = (await request.json()) as CourseData & {
+			modalidadesid: number[];
+		};
+		console.log('Datos recibidos:', data);
 
-		// Opcional: Validar que los datos tienen la forma esperada
-		if (!data.title || !data.description) {
+		// Validar los datos recibidos
+		if (
+			!data.title ||
+			!data.description ||
+			!data.modalidadesid ||
+			data.modalidadesid.length === 0
+		) {
+			console.log('Datos inválidos:', data);
 			return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
 		}
 
-		const newCourse = await createCourse(data);
-		return NextResponse.json(newCourse, { status: 201 });
+		const createdCourses = [];
+
+		// Iterar sobre cada modalidadId y crear un curso
+		for (const modalidadId of data.modalidadesid) {
+			console.log(`Procesando modalidadId: ${modalidadId}`);
+
+			// Obtener la modalidad por ID
+			const modalidad = await getModalidadById(modalidadId);
+			console.log(
+				`Modalidad obtenida para modalidadId ${modalidadId}:`,
+				modalidad
+			);
+
+			// Concatenar el nombre de la modalidad al título
+			const newTitle = modalidad
+				? `${data.title} - ${modalidad.name}`
+				: data.title;
+			console.log(
+				`Título modificado para modalidadId ${modalidadId}: ${newTitle}`
+			);
+
+			// Crear el curso con el título modificado
+			const newCourse = await createCourse({
+				...data,
+				title: newTitle, // Usar el título modificado
+				modalidadesid: modalidadId, // Asignar el ID de la modalidad actual
+			});
+			console.log(`Curso creado para modalidadId ${modalidadId}:`, newCourse);
+
+			// Agregar el curso creado a la lista
+			createdCourses.push(newCourse);
+		}
+
+		console.log('Cursos creados:', createdCourses);
+
+		// Devolver todos los cursos creados
+		return NextResponse.json(createdCourses, { status: 201 });
 	} catch (error) {
 		console.error('Error al crear el curso:', error);
 		return NextResponse.json(

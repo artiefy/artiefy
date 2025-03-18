@@ -49,6 +49,10 @@ interface Course {
 	updatedAt: string;
 	rating: number; // Añadir esta línea
 }
+interface Materia {
+	id: number;
+	title: string;
+}
 
 // Definir la interfaz de las propiedades del componente
 interface CourseDetailProps {
@@ -92,6 +96,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
 	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
+	const [materias, setMaterias] = useState<Materia[]>([]);
 	const [isEditing, setIsEditing] = useState(false); // Para activar modo edición
 	const [editedTitle, setEditedTitle] = useState('');
 	const [editedDescription, setEditedDescription] = useState('');
@@ -103,6 +108,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [categorias, setCategorias] = useState<{ id: number; name: string }[]>(
 		[]
 	);
+	const BADGE_GRADIENTS = [
+		'from-pink-500 via-red-500 to-yellow-500',
+		'from-green-300 via-blue-500 to-purple-600',
+		'from-pink-300 via-purple-300 to-indigo-400',
+		'from-yellow-400 via-pink-500 to-red-500',
+		'from-blue-400 via-indigo-500 to-purple-600',
+		'from-green-400 via-cyan-500 to-blue-500',
+		'from-orange-400 via-pink-500 to-red-500',
+	];
+
+	type BadgeGradientFunction = (index: number) => string;
+
+	const getBadgeGradient: BadgeGradientFunction = (index) => {
+		return BADGE_GRADIENTS[index % BADGE_GRADIENTS.length];
+	};
+
 	const [modalidades, setModalidades] = useState<
 		{ id: number; name: string }[]
 	>([]);
@@ -139,6 +160,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				const responseParametros = await fetch(
 					`/api/educadores/parametros?courseId=${courseIdNumber}`
 				); // Obtener los parámetros
+				const materiasResponse = await fetch(
+					`/api/educadores/courses/${courseIdNumber}/materiasOne`
+				);
+				if (materiasResponse.ok) {
+					const materiasData = (await materiasResponse.json()) as Materia[];
+					setMaterias(materiasData);
+				} else {
+					console.log(
+						'No se encontraron materias o no se pudo cargar la información de las materias.'
+					);
+				}
 
 				if (!response.ok || !responseParametros.ok) {
 					throw new Error(response.statusText);
@@ -281,12 +313,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 								courseId: Number(courseIdNumber) || 0, // ✅ Asegurar que `courseIdNumber` sea válido
 							}),
 						});
-			
+
 						if (!response.ok) {
 							const errorData = (await response.json()) as { error?: string };
 							throw new Error(errorData.error);
 						}
-			
+
 						toast.success('Parámetro creado exitosamente', {
 							description: 'El parámetro se ha creado exitosamente',
 						});
@@ -297,7 +329,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					}
 				}
 			}
-			
 
 			if (!response.ok) {
 				const errorData = (await response.json()) as { error?: string };
@@ -649,6 +680,24 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										{course.modalidadesid}
 									</Badge>
+								</div>
+								<div className="materias-container">
+									<h3 className="text-lg font-semibold">Materias:</h3>
+									{materias.length > 0 ? (
+										<div className="flex flex-wrap gap-2">
+											{materias.map((materia, index) => (
+												<Badge
+													key={materia.id}
+													variant="secondary"
+													className={`bg-gradient-to-r ${getBadgeGradient(index)} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+												>
+													{materia.title}
+												</Badge>
+											))}
+										</div>
+									) : (
+										<p>No hay materias asociadas a este curso.</p>
+									)}
 								</div>
 							</div>
 						</div>

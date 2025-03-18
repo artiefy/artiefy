@@ -356,27 +356,19 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		description: string,
 		file: File | null,
 		categoryid: number,
-		modalidadesid: number,
+		modalidadesid: number[],
 		nivelid: number,
 		rating: number,
 		addParametros: boolean,
 		coverImageKey: string,
-		fileName: string
+		fileName: string,
+		subjects: { id: number }[]
 	) => {
 		if (!user) return;
-
-		// Validar que haya al menos un parámetro si addParametros es true
-		if (addParametros && editParametros.length === 0) {
-			// 🔥 Usa editParametros en lugar de parametros
-			toast.error('Error', {
-				description: 'Debe agregar al menos un parámetro de evaluación',
-			});
-			return;
-		}
-
+	
 		try {
 			setUploading(true);
-
+	
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
@@ -387,140 +379,105 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 						fileName: file.name,
 					}),
 				});
-
+	
 				if (!uploadResponse.ok) {
-					throw new Error(
-						`Error: al iniciar la carga: ${uploadResponse.statusText}`
-					);
+					throw new Error(`Error: al iniciar la carga: ${uploadResponse.statusText}`);
 				}
-
+	
 				const uploadData = (await uploadResponse.json()) as {
 					url: string;
 					fields: Record<string, string>;
 					key: string;
 					fileName: string;
 				};
-
+	
 				coverImageKey = uploadData.key;
 				fileName = uploadData.fileName;
-
+	
 				const formData = new FormData();
 				Object.entries(uploadData.fields).forEach(([key, value]) => {
 					formData.append(key, value);
 				});
 				formData.append('file', file);
-
+	
 				await fetch(uploadData.url, { method: 'POST', body: formData });
 			}
-
-			setUploading(false);
-		} catch (e: unknown) {
-			const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-			throw new Error(`Error uploading the file: ${errorMessage}`);
-		}
-
-		const response = await fetch('/api/educadores/courses/cursoMateria', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				id,
-				title,
-				description,
-				coverImageKey,
-				fileName,
-				categoryid,
-				modalidadesid,
-				instructor: user.fullName,
-				creatorId: user.id,
-				nivelid,
-				rating,
-				subjects: subjects.map((subject) => ({
-					id: subject.id, // ✅ Convertir a número antes de enviarlo
-					courseId: Number(id), // ✅ Asegurar que `courseId` sea un número
-				})),
-			}),
-		});
-
-		if (response.ok) {
-			const responseData = (await response.json()) as { courseId: number };
-			console.log('📌 Respuesta de la API al crear curso:', responseData);
-			
-			// ✅ Extraemos el `courseId` correctamente
-			const courseId = Number(responseData.courseId);
-			
-			if (!courseId || isNaN(courseId)) {
-				console.error('❌ Error: El courseId no es válido:', courseId);
-				toast.error('Error al crear curso', {
-					description: 'El courseId no es válido',
-				});
-				return;
-			}
-			
-
-			toast.success(editingCourse ? 'Curso actualizado' : 'Curso creado', {
-				description: editingCourse
-					? 'El curso se actualizó con éxito'
-					: 'El curso se creó con éxito',
+	
+			const response = await fetch('/api/educadores/courses/cursoMateria', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					title,
+					description,
+					coverImageKey,
+					fileName,
+					categoryid,
+					modalidadesid,
+					instructor: user.fullName,
+					creatorId: user.id,
+					nivelid,
+					rating,
+					subjects,
+				}),
 			});
-
-			// Guardar parámetros si se activó addParametros
-			if (addParametros) {
-				for (const parametro of editParametros) {
-					try {
-						const response = await fetch('/api/educadores/parametros', {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({
-								name: parametro.name,
-								description: parametro.description,
-								porcentaje: parametro.porcentaje,
-								courseId:responseData.courseId || 0, // ✅ Asegurar que `courseIdNumber` sea válido
-							}),
-						});
-
-						if (response.ok) {
-							toast.success('Parámetro creado exitosamente', {
-								description: 'El parámetro se ha creado exitosamente',
-							});
-						} else {
-							const errorData = (await response.json()) as { error: string };
-							throw new Error(errorData.error);
+	
+			if (response.ok) {
+				const responseData = (await response.json()) as { id: number }[];
+				console.log('📌 Respuesta de la API al crear curso:', responseData);
+	
+				responseData.forEach(async (data) => {
+					console.log(`Curso creado con ID: ${data.id}`);  // Log each created course ID
+	
+					// If addParametros is true, assign parameters for each course
+					if (addParametros) {
+						for (const parametro of editParametros) {
+							try {
+								const paramResponse = await fetch('/api/educadores/parametros', {
+									method: 'POST',
+									headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify({
+										name: parametro.name,
+										description: parametro.description,
+										porcentaje: parametro.porcentaje,
+										courseId: data.id,
+									}),
+								});
+	
+								if (!paramResponse.ok) {
+									const errorData = (await paramResponse.json()) as { error: string };
+									throw new Error(errorData.error);
+								}
+	
+								toast.success('Parámetro creado exitosamente', {
+									description: `El parámetro se ha creado exitosamente para el curso ID ${data.id}`,
+								});
+							} catch (error) {
+								toast.error('Error al crear el parámetro', {
+									description: `Error al crear el parámetro para el curso ID ${data.id}: ${(error as Error).message}`,
+								});
+							}
 						}
-					} catch (error) {
-						toast.error('Error al crear el parámetro', {
-							description: `Error al crear el parámetro: ${(error as Error).message}`,
-						});
 					}
-				}
+	
+					
+				});
+	
+				toast.success('Curso(s) creado(s) con éxito', {
+					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData.map(r => r.id).join(', ')}`,
+				});
+			} else {
+				const errorData = (await response.json()) as { error?: string };
+				toast.error('Error', {
+					description: errorData.error ?? 'Ocurrió un error al procesar la solicitud',
+				});
 			}
-
-			// Recargar cursos
-			const fetchCourses = async () => {
-				try {
-					const response = await fetch(
-						`/api/super-admin/programs/${programIdNumber}/courses`
-					);
-					if (!response.ok) {
-						throw new Error('Error fetching courses');
-					}
-					const coursesData = (await response.json()) as CourseData[];
-					setCourses(coursesData);
-				} catch (error) {
-					console.error('Error fetching courses:', error);
-				}
-			};
-
-			fetchCourses().catch((error: unknown) =>
-				console.error('Error fetching courses:', error)
-			);
-			setEditingCourse(null);
-			setIsModalOpen(false);
-		} else {
-			const errorData = (await response.json()) as { error?: string };
+		} catch (error) {
+			console.error('Error during course creation:', error);
 			toast.error('Error', {
-				description:
-					errorData.error ?? 'Ocurrió un error al procesar la solicitud',
+				description: `Error during course creation: ${error instanceof Error ? error.message : 'Unknown error'}`,
 			});
+		} finally {
+			setUploading(false);
 		}
 	};
 
@@ -637,6 +594,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					</div>
 				</Card>
 			</div>
+			<br />
+			<br />
 			<ProgramCoursesList courses={courses} />
 			<Button
 				onClick={handleCreateCourse}
@@ -666,7 +625,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				setNivelid={(nivelId) =>
 					setNewCourse((prev) => ({ ...prev, nivelid: Number(nivelId) }))
 				}
-				modalidadesid={Number(newCourse.modalidadesid) || 0}
+				modalidadesid={[Number(newCourse.modalidadesid)]}
 				nivelid={Number(newCourse.nivelid) || 0}
 				coverImageKey={newCourse.coverImageKey ?? ''}
 				setCoverImageKey={(cover) =>

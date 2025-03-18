@@ -10,6 +10,15 @@ export interface OptionVOF {
 	text: string; // Texto de la opción
 }
 
+// filepath: src/types/api.ts
+export interface Materia {
+	id: number;
+	title: string;
+	description: string;
+	courseId?: number;
+	programaId?: number;
+  }
+
 // Representa una pregunta de opción múltiple
 export interface Question {
 	id: string; // Identificador único de la pregunta

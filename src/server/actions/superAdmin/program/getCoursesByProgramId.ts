@@ -6,7 +6,7 @@ import { courses, materias } from '~/server/db/schema';
 export async function getCoursesByProgramId(programId: string) {
 	try {
 		const result = await db
-			.select({
+			.selectDistinct({
 				id: courses.id,
 				title: courses.title,
 				description: courses.description,

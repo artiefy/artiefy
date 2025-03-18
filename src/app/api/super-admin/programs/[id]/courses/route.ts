@@ -7,10 +7,11 @@ export async function GET(
 	{ params }: { params: { id: string } }
 ) {
 	try {
-		const { id } = params;
+		const id = params.id; // Correctly accessing 'id'
 		const courses = await getCoursesByProgramId(id);
+		// Change here: Return empty array instead of 404 when no courses found
 		if (!courses || courses.length === 0) {
-			return NextResponse.json({ error: 'Courses not found' }, { status: 404 });
+			return NextResponse.json([]); // Returning an empty array
 		}
 		return NextResponse.json(courses);
 	} catch (error) {

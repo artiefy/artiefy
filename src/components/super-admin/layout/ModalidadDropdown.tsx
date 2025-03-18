@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
 
+import Select from 'react-select';
+
+// Interfaz para las modalidades
 interface Modalidad {
 	id: number;
 	name: string;
 	description: string;
 }
 
+// Propiedades del componente para la creacion de un curso en componente padre
 interface ModalidadDropdownProps {
-	modalidad: number;
-	setModalidad: (modalidadId: number) => void;
+	modalidad: number[];
+	setModalidad: (modalidadIds: number[]) => void;
 	errors: {
 		modalidad: boolean;
 	};
@@ -19,9 +23,10 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
 	setModalidad,
 	errors,
 }) => {
-	const [modalidades, setModalidades] = useState<Modalidad[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [modalidades, setModalidades] = useState<Modalidad[]>([]); // Estado para las modalidades
+	const [isLoading, setIsLoading] = useState(true); // Estado para el estado de carga
 
+	// Efecto para obtener las modalidades
 	useEffect(() => {
 		const fetchCategories = async () => {
 			setIsLoading(true);
@@ -47,41 +52,46 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
 			}
 		};
 
+		// Llamada a la función para obtener las modalidades
 		void fetchCategories();
 	}, []);
 
+	// Retorno la vista del componente
+	
 	return (
 		<div className="flex flex-col gap-2">
-			<label
-				htmlFor="category-select"
-				className="text-primary text-lg font-medium"
-			>
-				Selecciona una Modalidad:
-			</label>
-			{isLoading ? (
-				<p className="text-primary">Cargando categorías...</p>
-			) : (
-				<select
-					id="category-select"
-					value={modalidad || ''}
-					onChange={(e) => {
-						const selectedId = Number(e.target.value);
-						setModalidad(selectedId);
-					}}
-					className={`mb-5 w-60 rounded border p-2 outline-hidden text-[#3AF4EF] bg-background ${
-						errors.modalidad ? 'border-red-500' : 'border-primary'
-					}`}
-				>
-					<option value="">Selecciona una modalidad</option>
-					{modalidades.map((modalidad) => (
-						<option key={modalidad.id} value={modalidad.id}>
-							{modalidad.name}
-						</option>
-					))}
-				</select>
-			)}
+		  <label htmlFor="category-select" className="text-lg font-medium text-primary">
+			Selecciona una Modalidad:
+		  </label>
+		  {isLoading ? (
+			<p className="text-primary">Cargando categorías...</p>
+		  ) : (
+			<Select
+			  isMulti
+			  options={modalidades.map((modalidad) => ({
+				value: modalidad.id,
+				label: modalidad.name,
+			  }))}
+			  value={modalidad
+				.map((id) => {
+				  const modalidad = modalidades.find((m) => m.id === id);
+				  return modalidad
+					? { value: modalidad.id, label: modalidad.name }
+					: null;
+				})
+				.filter(Boolean)}
+				onChange={(selectedOptions) => {
+					const selectedIds = selectedOptions
+						.filter((option) => option !== null)
+						.map((option) => option.value);
+					setModalidad(selectedIds);
+				}}
+			  classNamePrefix="react-select"
+			  className="mt-2 w-full"
+			/>
+		  )}
 		</div>
-	);
+	  );
 };
 
 export default ModalidadDropdown;

@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import type { JSX } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 
 import { UserButton, useUser } from '@clerk/clerk-react';
 import Image from 'next/image';
@@ -317,7 +316,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                                             </li>
                                             <li>
                                                 <Link
-                                                    href="/dashboard/super-admin/modalities"
+                                                    href="/dashboard/super-admin/materias"
                                                     className={`block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
                                                 >
                                                     Materias

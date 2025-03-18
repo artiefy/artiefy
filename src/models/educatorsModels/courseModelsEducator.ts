@@ -8,7 +8,8 @@ import {
 	modalidades,
 	enrollments,
 	nivel,
-	lessons, materias
+	lessons,
+	materias,
 } from '~/server/db/schema';
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
@@ -76,7 +77,7 @@ export const createCourse = async ({
 	categoryid: number;
 	modalidadesid: number;
 	nivelid: number;
-	instructor: string ;
+	instructor: string;
 	creatorId: string;
 	rating: number;
 }) => {
@@ -304,15 +305,48 @@ export const updateCourse = async (
 	return db.update(courses).set(updateData).where(eq(courses.id, courseId));
 };
 
-export async function updateMateria(id: number, data: { courseid: number }) {
-    try {
-        await db.update(materias)
-            .set({ courseid: data.courseid }) // ✅ Solo actualiza `courseid`
-            .where(eq(materias.id, id));
-    } catch (error) {
-        console.error('Error al actualizar materia:', error);
-        throw new Error('Error al actualizar la materia');
-    }
+export async function updateMateria(
+	id: number,
+	data: { courseid: number; title?: string; description?: string }
+) {
+	try {
+		// Buscar la materia por su ID
+		const existingMateria = await db
+			.select()
+			.from(materias)
+			.where(eq(materias.id, id))
+			.limit(1);
+	
+		if (existingMateria.length > 0) {
+			const materia = existingMateria[0];
+	
+			if (materia.courseid) {
+				// Si la materia ya tiene un `courseid`, crear una nueva materia con los mismos datos
+				await db.insert(materias).values({
+					title: materia.title, // Copiar el título de la materia existente
+					description: materia.description ?? '', // Copiar la descripción si existe
+					courseid: data.courseid, // Asociar al nuevo curso
+					programaId: materia.programaId || 0, // Asegurar que programaId esté presente
+				});
+				console.log(
+					`Materia duplicada creada: ${materia.title} -> courseId: ${data.courseid}`
+				);
+			} else {
+				// Si la materia no tiene un `courseid`, actualizarla
+				await db
+					.update(materias)
+					.set({ courseid: data.courseid })
+					.where(eq(materias.id, id));
+				console.log(
+					`Materia actualizada: ${materia.title} -> courseId: ${data.courseid}`
+				);
+			}
+			
+		}
+	} catch (error) {
+		console.error('Error al procesar materia:', error);
+		throw new Error('Error al procesar la materia');
+	}
 }
 
 // Eliminar un curso y sus datos asociado
@@ -362,3 +396,40 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 		throw new Error('Error al obtener los cursos');
 	}
 };
+
+// Función para obtener materias por el ID del curso
+export const getMateriasByCourseId = async (courseId: number) => {
+	try {
+		// Realiza la consulta para obtener las materias relacionadas con el curso
+		const materiasList = await db
+			.select({
+				id: materias.id,
+				title: materias.title,
+				description: materias.description,
+				programaId: materias.programaId,
+				courseid: materias.courseid,
+			})
+			.from(materias)
+			.where(eq(materias.courseid, courseId))
+			.execute();
+
+		return materiasList;
+	} catch (error) {
+		console.error('Error fetching materias for courseId:', courseId, error);
+		throw new Error('Failed to fetch materias');
+	}
+};
+
+
+export const getModalidadById = async (modalidadId: number) => {
+    return db
+        .select({
+            id: modalidades.id,
+            name: modalidades.name,
+            description: modalidades.description,
+        })
+        .from(modalidades)
+        .where(eq(modalidades.id, modalidadId))
+        .then((rows) => rows[0]);
+};
+

@@ -323,3 +323,17 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 		throw new Error('Error al obtener los cursos');
 	}
 };
+
+
+export const getModalidadById = async (modalidadId: number) => {
+	return db
+		.select({
+			id: modalidades.id,
+			name: modalidades.name,
+			description: modalidades.description,
+		})
+		.from(modalidades)
+		.where(eq(modalidades.id, modalidadId))
+		.then((rows) => rows[0]);
+};
+

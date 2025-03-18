@@ -258,7 +258,7 @@ const Page: React.FC = () => {
 
 	// Renderizar la pagina
 	return (
-		<ResponsiveSidebar>
+		<>
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
@@ -525,7 +525,7 @@ const Page: React.FC = () => {
 					)}
 				</div>
 			</div>
-		</ResponsiveSidebar>
+		</>
 	);
 };
 

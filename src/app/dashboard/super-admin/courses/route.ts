@@ -7,7 +7,7 @@ import {
 	getAllCourses,
 	getCourseById,
 	getCoursesByUserId,
-	updateCourse,
+	updateCourse, getModalidadById
 } from '~/models/super-adminModels/courseModelsSuperAdmin';
 import { ratelimit } from '../../../../server/ratelimit/ratelimit'; // Adjust the import path as necessary
 export const dynamic = 'force-dynamic';
@@ -37,77 +37,88 @@ export async function GET(req: Request) {
 	}
 }
 
+interface CourseData {
+	title: string;
+	description: string;
+	coverImageKey: string;
+	categoryid: number;
+	modalidadesid: number;
+	nivelid: number;
+	instructor: string;
+	creatorId: string;
+	rating: number;
+}
+
+
 // POST endpoint para crear cursos
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
 	try {
 		const { userId } = await auth();
 		if (!userId) {
-			return respondWithError('No autorizado', 403);
+			console.log('Usuario no autorizado');
+			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
 
-		// Implement rate limiting
-		const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
-		const { success } = await ratelimit.limit(ip);
-		if (!success) {
-			return respondWithError('Demasiadas solicitudes', 429);
-		}
-
-		const clerkUser = await currentUser();
-		if (!clerkUser) {
-			return respondWithError(
-				'No se pudo obtener información del usuario',
-				500
-			);
-		}
-
-		const body = (await request.json()) as {
-			title: string;
-			description: string;
-			coverImageKey: string;
-			categoryid: number;
-			modalidadesid: number;
-			nivelid: number;
-			instructor: string;
-			
+		// Parsear los datos del cuerpo de la solicitud
+		const data = (await request.json()) as CourseData & {
+			modalidadesid: number[];
 		};
+		console.log('Datos recibidos:', data);
 
-		const {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			nivelid,
-			instructor,
-		} = body;
+		// Validar los datos recibidos
+		if (
+			!data.title ||
+			!data.description ||
+			!data.modalidadesid ||
+			data.modalidadesid.length === 0
+		) {
+			console.log('Datos inválidos:', data);
+			return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+		}
 
-		await createCourse({
-			title,
-			description,
-			creatorId: userId,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			nivelid,
-			instructor,
-		});
+		const createdCourses = [];
 
-		console.log('Datos enviados al servidor:', {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			nivelid,
-			instructor,
-		});
+		// Iterar sobre cada modalidadId y crear un curso
+		for (const modalidadId of data.modalidadesid) {
+			console.log(`Procesando modalidadId: ${modalidadId}`);
 
-		return NextResponse.json({ message: 'Curso creado exitosamente' });
-	} catch (error: unknown) {
+			// Obtener la modalidad por ID
+			const modalidad = await getModalidadById(modalidadId);
+			console.log(
+				`Modalidad obtenida para modalidadId ${modalidadId}:`,
+				modalidad
+			);
+
+			// Concatenar el nombre de la modalidad al título
+			const newTitle = modalidad
+				? `${data.title} - ${modalidad.name}`
+				: data.title;
+			console.log(
+				`Título modificado para modalidadId ${modalidadId}: ${newTitle}`
+			);
+
+			// Crear el curso con el título modificado
+			const newCourse = await createCourse({
+				...data,
+				title: newTitle, // Usar el título modificado
+				modalidadesid: modalidadId, // Asignar el ID de la modalidad actual
+			});
+			console.log(`Curso creado para modalidadId ${modalidadId}:`, newCourse);
+
+			// Agregar el curso creado a la lista
+			createdCourses.push(newCourse);
+		}
+
+		console.log('Cursos creados:', createdCourses);
+
+		// Devolver todos los cursos creados
+		return NextResponse.json(createdCourses, { status: 201 });
+	} catch (error) {
 		console.error('Error al crear el curso:', error);
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-		return respondWithError(`Error al crear el curso: ${errorMessage}`, 500);
+		return NextResponse.json(
+			{ error: 'Error al crear el curso' },
+			{ status: 500 }
+		);
 	}
 }
 

@@ -86,7 +86,7 @@ const ProgramCoursesList: React.FC<ProgramCoursesListProps> = ({ courses }) => {
 							<div className="flex w-full items-center justify-between">
 								<Button asChild>
 									<Link
-										href={`/dashboard/super-admin/cursos/programs/${course.id}`}
+										href={`/dashboard/super-admin/cursos/${course.id}`}
 										className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
 									>
 										<p className="font-bold">Ver Curso</p>
