@@ -44,7 +44,6 @@
   "eslint.run": "onType",
   "eslint.nodePath": "./node_modules",
   "eslint.debug": true,
-  "eslint.execArgv": ["--max-old-space-size=2048"],
   "eslint.rules.customizations": [
     { "rule": "import/order", "severity": "off" },
     { "rule": "no-unused-vars", "severity": "warn" }

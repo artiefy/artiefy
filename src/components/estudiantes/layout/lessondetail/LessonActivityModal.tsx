@@ -23,11 +23,11 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
+import { formatScore, formatScoreNumber } from '~/utils/formatScore';
 
 import type { Activity, Question, SavedAnswer } from '~/types';
 
 import '~/styles/arrowactivity.css';
-import { formatScore, formatScoreNumber } from '~/utils/formatScore';
 
 interface ActivityModalProps {
 	isOpen: boolean;

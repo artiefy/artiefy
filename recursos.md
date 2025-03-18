@@ -154,4 +154,12 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 7. `npm audit fix`: Repara algunas fallas del servicio de paquetes de npm
 
 ---
+
+Tutorial Para analisar tus dependecias :
+
+1. `npm install -g depcheck`
+2. `depcheck --ignores="@types/*,next,react,react-dom,typescript,@clerk/nextjs,react-icons" --parsers="*.ts:typescript,*.tsx:typescript"`
+
+---
+
 -Pasareladepago18*
