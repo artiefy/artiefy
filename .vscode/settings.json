@@ -11,11 +11,18 @@
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "never"
   },
+  "editor.linkedEditing": true,
+  "editor.stickyScroll.enabled": true,
 
   // File Configuration
   "files.autoSave": "afterDelay",
   "files.associations": {
     "*.css": "tailwindcss"
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/.git/**": true
   },
 
   // Language-specific Formatters
@@ -32,6 +39,20 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
+    // TypeScript Configuration
+    "typescript.tsdk": "./node_modules/typescript/lib",
+    "typescript.tsserver.maxTsServerMemory": 4096,
+    "typescript.tsserver.nodePath": "C:\\Program Files\\nodejs\\node.exe",
+    "typescript.tsserver.watchOptions": {
+      "watchFile": "useFsEvents",
+      "watchDirectory": "useFsEvents",
+      "fallbackPolling": "dynamicPriorityPolling"
+    },
+    "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.suggest.completeFunctionCalls": true,
+  
   // ESLint Configuration
   "eslint.validate": [
     "javascript",
@@ -70,12 +91,30 @@
   "tailwindCSS.validate": true,
   "tailwindCSS.showPixelEquivalents": true,
   "tailwindCSS.colorDecorators": true,
+  "tailwindCSS.lint.recommendedVariantOrder": "warning",
 
   // CSS Validation
   "css.validate": false,
   "scss.validate": false,
   "less.validate": false,
 
-  // TypeScript Configuration
-  "typescript.tsdk": "./node_modules/typescript/lib"
+  // Search and Performance
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.git": true
+  },
+
+  // Spell Checker
+  "cSpell.words": ["clases", "estudiantes", "Verificar"],
+  "cSpell.language": "en,es-ES",
+  
+  // JavaScript/TypeScript Import Organization
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "javascript.suggest.completeFunctionCalls": true,
+
+  // Git Integration
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true
 }

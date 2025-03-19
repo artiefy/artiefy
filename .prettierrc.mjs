@@ -2,11 +2,12 @@
  * @see https://prettier.io/docs/configuration
  * @type {import("prettier").Config}
  */
+
 const config = {
   plugins: ['prettier-plugin-tailwindcss'],
 
   // 🔹 Tailwind CSS 4 usa `tailwindStylesheet`
-  tailwindStylesheet: './src/styles/globals.css', 
+  tailwindStylesheet: './src/styles/globals.css',
 
   // 🔹 Formato General
   trailingComma: 'es5',

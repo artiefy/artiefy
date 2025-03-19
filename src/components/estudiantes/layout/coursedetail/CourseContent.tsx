@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useCallback } from 'react';
 
+import '~/styles/buttonclass.css';
+import '~/styles/check.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -23,7 +25,6 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Progress } from '~/components/estudiantes/ui/progress';
 
 import type { Course } from '~/types';
-import '~/styles/buttonclass.css';
 
 interface CourseContentProps {
 	course: Course;
@@ -255,11 +256,27 @@ export function CourseContent({
 		toggleLesson,
 	]);
 
+	const isFullyCompleted = useMemo(() => {
+		return course.lessons?.every(
+			(lesson) => lesson.porcentajecompletado === 100
+		);
+	}, [course.lessons]);
+
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
 			<h2 className="mb-4 text-2xl font-bold text-background">
 				Contenido del curso
 			</h2>
+
+			{isEnrolled && isFullyCompleted && (
+				<div className="artiefy-check-container mb-6">
+					<h2 className="animate-pulse bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-3xl font-extrabold text-transparent drop-shadow-[0_2px_2px_rgba(0,200,0,0.4)]">
+						¡Curso Completado!
+					</h2>
+					<div className="artiefy-static-checkmark" />
+				</div>
+			)}
+
 			<PencilRuler
 				className={`absolute top-4 right-7 transition-colors ${
 					expandedLesson !== null ? 'text-orange-500' : 'text-gray-400'

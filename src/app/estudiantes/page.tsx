@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import StudentDashboard from '~/app/estudiantes/StudentDashboard';
+import StudentDetails from '~/app/estudiantes/StudenDetails';
 import CategoriesCourse from '~/components/estudiantes/layout/CategoriesCourse';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -111,7 +111,7 @@ export default async function Page({ searchParams }: PageProps) {
 		return (
 			<div className="flex min-h-screen flex-col">
 				<Header />
-				<StudentDashboard
+				<StudentDetails
 					initialCourses={allCourses}
 					initialPrograms={data.programs}
 				/>

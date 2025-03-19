@@ -15,7 +15,7 @@ interface StudentCertificationProps {
 	userId: string | null;
 }
 
-export function StudentCertification({
+export function CertificationStudent({
 	course,
 	userId,
 }: StudentCertificationProps) {

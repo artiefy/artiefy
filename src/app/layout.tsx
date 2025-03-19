@@ -1,12 +1,5 @@
-// 🔹 1. Estilos Globales (Siempre al inicio para evitar FOUC y asegurar estilos base de Tailwind CSS)
+import { Montserrat, Merriweather } from 'next/font/google';
 import '~/styles/globals.css';
-
-// 🔹 2. Imports de Terceros
-
-// 🔹 3. Imports de Tipado
-
-// 🔹 4. Imports de Framework y Librerías de UI
-import { Montserrat } from 'next/font/google';
 import Script from 'next/script';
 
 import { esMX } from '@clerk/localizations';
@@ -14,11 +7,9 @@ import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-// 🔹 5. Imports Internos del Proyecto
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { metadata as siteMetadata } from '~/lib/metadata';
 
-// 🔹 6. Imports de Componentes Locales
 import Loading from './loading';
 import Providers from './providers';
 
@@ -28,8 +19,18 @@ const montserrat = Montserrat({
 	subsets: ['latin'],
 	display: 'swap',
 	variable: '--font-montserrat',
-	preload: false,
-	weight: ['400', '500', '600', '700'],
+	weight: ['100', '200', '300', '400', '500', '600', '700'],
+	preload: true, // Change to true because it's used in root layout
+	adjustFontFallback: true, // Add this to optimize font loading
+});
+
+const merriweather = Merriweather({
+	subsets: ['latin'],
+	display: 'swap',
+	variable: '--font-merriweather',
+	weight: ['300', '400', '700', '900'],
+	preload: true, // Change to true because it's used in root layout
+	adjustFontFallback: true, // Add this to optimize font loading
 });
 
 export const viewport: Viewport = {
@@ -61,7 +62,10 @@ export default function RootLayout({
 }) {
 	return (
 		<ClerkProvider localization={esMX} dynamic>
-			<html lang="es" className={`${montserrat.variable}`}>
+			<html
+				lang="es"
+				className={`${montserrat.variable} ${merriweather.variable}`}
+			>
 				<head>
 					<Script
 						id="json-ld"

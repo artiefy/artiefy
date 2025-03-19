@@ -26,6 +26,7 @@ import {
 } from '~/components/estudiantes/ui/card';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
+import { cn } from '~/lib/utils';
 import { formatDate, type GradesApiResponse } from '~/lib/utils2';
 
 import { CourseContent } from './CourseContent';
@@ -183,6 +184,16 @@ export function CourseHeader({
 		return formatDate(new Date(date));
 	};
 
+	const areAllLessonsCompleted = useMemo(() => {
+		return (
+			course.lessons?.every((lesson) => lesson.porcentajecompletado === 100) ??
+			false
+		);
+	}, [course.lessons]);
+
+	const canAccessGrades = isEnrolled && areAllLessonsCompleted;
+	const canAccessCertificate = canAccessGrades && currentFinalGrade >= 3;
+
 	return (
 		<Card className="overflow-hidden p-0">
 			<CardHeader className="px-0">
@@ -264,56 +275,65 @@ export function CourseHeader({
 					</Badge>
 				</div>
 
-				{/* Certificate Button with updated styling */}
-				{isEnrolled && currentFinalGrade >= 3 && (
-					<div className="mt-4 space-y-4 text-center">
+				{/* Course description - Moved up */}
+				<div className="prose max-w-none">
+					<p className="leading-relaxed text-gray-700">
+						{course.description ?? 'No hay descripción disponible.'}
+					</p>
+				</div>
+
+				{/* Add description and grade button section */}
+				<div className="space-y-4">
+					<Button
+						onClick={() => setIsGradeModalOpen(true)}
+						disabled={!canAccessGrades}
+						className={cn(
+							'h-9 px-4 font-semibold',
+							canAccessGrades
+								? 'bg-blue-500 text-white hover:bg-blue-600'
+								: 'bg-gray-400/50 text-gray-700'
+						)}
+						aria-label={
+							!isEnrolled
+								? 'Debes inscribirte al curso'
+								: 'Completa todas las clases para ver tus calificaciones'
+						}
+					>
+						<FaTrophy className="mr-2 h-4 w-4" />
+						<span className="text-sm font-semibold">Mis Calificaciones</span>
+					</Button>
+				</div>
+
+				{/* Botón de certificado con texto descriptivo */}
+				{canAccessCertificate && (
+					<div className="mt-6 space-y-4">
+						<p className="text-center font-serif text-lg text-gray-600 italic">
+							¡Felicitaciones! Has completado exitosamente el curso con una
+							calificación sobresaliente. Tu certificado está listo para ser
+							visualizado y compartido.
+						</p>
 						<Button
 							asChild
 							className="group relative w-full bg-green-500 p-0 text-white shadow-lg transition-all hover:bg-green-600"
 						>
 							<Link
 								href={`/estudiantes/certificados/${course.id}`}
-								className="relative flex h-full w-full items-center justify-center overflow-hidden py-3"
+								className="relative flex h-full w-full items-center justify-center gap-2 overflow-hidden py-3"
 							>
 								{/* Fondo animado con opacidad ajustada */}
 								<div className="absolute inset-0 animate-pulse bg-gradient-to-r from-green-600/40 to-green-400/40" />
 
-								{/* Contenido del botón sin icono */}
+								{/* Contenido del botón con icono */}
 								<div className="relative z-10 flex items-center justify-center">
-									<span className="text-lg font-bold">Ver Tu Certificado</span>
+									<CertificateIcon />
+									<span className="ml-2 text-lg font-bold">
+										Ver Tu Certificado
+									</span>
 								</div>
 							</Link>
 						</Button>
-
-						{/* Icono debajo del botón */}
-						<div className="flex flex-col items-center space-y-3">
-							<CertificateIcon />
-							<p className="font-serif text-lg text-gray-600 italic">
-								&ldquo;¡Felicitaciones! Has completado exitosamente el curso. Tu
-								certificado está listo para ser visualizado y compartido. Este
-								logro es testimonio de tu dedicación y esfuerzo.&rdquo;
-							</p>
-						</div>
 					</div>
 				)}
-
-				{/* Add grade modal button next to materias */}
-				<div className="flex items-center gap-4">
-					<Button
-						onClick={() => setIsGradeModalOpen(true)}
-						className="bg-blue-500 text-white hover:bg-blue-600"
-					>
-						<FaTrophy className="mr-2" />
-						Mis Calificaciones
-					</Button>
-				</div>
-
-				{/* Course description */}
-				<div className="prose max-w-none">
-					<p className="leading-relaxed text-gray-700">
-						{course.description ?? 'No hay descripción disponible.'}
-					</p>
-				</div>
 
 				{/* Add Materias section below description */}
 				<div className="space-y-2">

@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
+import { type Metadata, type ResolvingMetadata } from 'next';
 
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -11,12 +12,10 @@ import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseByI
 
 import CourseDetails from './CourseDetails';
 
-import type { Metadata, ResolvingMetadata } from 'next';
 import type { Course } from '~/types';
 
-interface Props {
-	params: Promise<{ id: string }>;
-	searchParams: Record<string, string | string[] | undefined>;
+interface PageParams {
+	id: string;
 }
 
 // Función para generar el JSON-LD para SEO
@@ -54,12 +53,16 @@ function generateJsonLd(course: Course): object {
 
 // Función para generar metadata dinámica
 export async function generateMetadata(
-	{ params }: Props,
+	{ params }: { params: { id: string } },
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
-	const { id } = await params;
 	const { userId } = await auth();
-	const course = await getCourseById(Number(id), userId);
+
+	// Fetch data in parallel
+	const [course, parentMetadata] = await Promise.all([
+		getCourseById(Number(params.id), userId),
+		parent,
+	]);
 
 	if (!course) {
 		return {
@@ -68,22 +71,23 @@ export async function generateMetadata(
 		};
 	}
 
-	const previousImages = (await parent).openGraph?.images ?? [];
-	const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}/opengraph-image`;
+	// Fix: parentMetadata is already resolved from Promise.all
+	const previousImages = parentMetadata.openGraph?.images ?? [];
+	const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}/opengraph-image`;
 
 	return {
 		metadataBase: new URL(
 			process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
 		),
 		title: `${course.title} | Artiefy`,
-		description: `${course.description ?? 'No hay descripción disponible.'} ¡Subscríbete ya en este curso excelente!`,
+		description: course.description ?? 'No hay descripción disponible.',
 		openGraph: {
 			type: 'website',
 			locale: 'es_ES',
-			url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
+			url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}`,
 			siteName: 'Artiefy',
 			title: `${course.title} | Artiefy`,
-			description: `${course.description ?? 'No hay descripción disponible.'} ¡Subscríbete ya en este curso excelente!`,
+			description: course.description ?? 'No hay descripción disponible.',
 			images: [
 				{
 					url: ogImage,
@@ -97,27 +101,24 @@ export async function generateMetadata(
 		twitter: {
 			card: 'summary_large_image',
 			title: `${course.title} | Artiefy`,
-			description: `${course.description ?? 'No hay descripción disponible.'} ¡Subscríbete ya en este curso excelente!`,
+			description: course.description ?? 'No hay descripción disponible.',
 			images: [ogImage],
 			creator: '@artiefy',
 			site: '@artiefy',
 		},
 		alternates: {
-			canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
+			canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}`,
 		},
 	};
 }
 
 // Componente principal de la página del curso
-export default async function Page({ params }: Props) {
-	const { id } = await params;
-	const { userId } = await auth();
-
+export default function Page({ params }: { params: PageParams }) {
 	return (
 		<div>
 			<Header />
 			<Suspense fallback={<CourseDetailsSkeleton />}>
-				<CourseContent id={id} userId={userId} />
+				<CourseContent id={params.id} />
 			</Suspense>
 			<Footer />
 		</div>
@@ -125,13 +126,8 @@ export default async function Page({ params }: Props) {
 }
 
 // Componente para renderizar los detalles del curso
-async function CourseContent({
-	id,
-	userId,
-}: {
-	id: string;
-	userId: string | null;
-}) {
+async function CourseContent({ id }: { id: string }) {
+	const { userId } = await auth();
 	const course = await getCourseById(Number(id), userId);
 
 	if (!course) {

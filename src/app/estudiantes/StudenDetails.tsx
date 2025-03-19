@@ -26,7 +26,7 @@ interface StudentDashboardProps {
 	initialPrograms: Program[];
 }
 
-export default function StudentDashboard({
+export default function StudentDetails({
 	initialCourses,
 	initialPrograms,
 }: StudentDashboardProps) {

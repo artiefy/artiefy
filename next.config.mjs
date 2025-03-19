@@ -61,6 +61,8 @@ const nextConfig = {
 		},
 	},
 	expireTime: 3600, // Define un tiempo de expiración personalizado para el encabezado Cache-Control (1 hora)
+	htmlLimitedBots:
+		/Twitterbot|LinkedInBot|WhatsApp|facebookexternalhit|SimpleCrawler/, // Changed to RegExp
 };
 
 export default withPlaiceholder(nextConfig);
