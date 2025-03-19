@@ -376,7 +376,7 @@ export default function Page() {
 				{isModalOpen && (
 					<ModalFormProgram
 						isOpen={isModalOpen}
-						onClose={handleCloseModal}
+						onCloseAction={handleCloseModal}
 						onSubmitAction={handleCreateOrUpdateProgram}
 						uploading={uploading}
 						editingProgramId={editingProgram?.id ?? null}
