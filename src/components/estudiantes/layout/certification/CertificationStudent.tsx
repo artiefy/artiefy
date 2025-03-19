@@ -31,7 +31,7 @@ export function CertificationStudent({
 				<h1 className="mb-2 text-4xl font-bold text-primary">
 					Certificado de Finalización
 				</h1>
-				<p className="text-lg text-gray-600">
+				<p className="text-lg text-gray-400">
 					¡Felicitaciones por completar el curso exitosamente!
 				</p>
 			</div>
@@ -40,23 +40,31 @@ export function CertificationStudent({
 				{/* Certificate Content */}
 				<div className="relative z-10 text-center">
 					<FaTrophy className="mx-auto mb-4 text-6xl text-yellow-500" />
-					<h2 className="mb-6 text-3xl font-bold">Certificado de Logro</h2>
-					<p className="mb-4 text-xl">Este certificado es otorgado a</p>
-					<p className="mb-8 text-2xl font-bold text-primary">
+					<h2 className="mb-6 text-3xl font-bold text-background">
+						Certificado de Logro
+					</h2>
+					<p className="mb-4 text-xl text-background">
+						Este certificado es otorgado a
+					</p>
+					<p className="mb-8 text-2xl font-bold text-background">
 						{user.firstName} {user.lastName}
 					</p>
-					<p className="mb-4 text-xl">Por completar exitosamente el curso</p>
-					<p className="mb-8 text-2xl font-bold text-primary">
+					<p className="mb-4 text-xl text-background">
+						Por completar exitosamente el curso
+					</p>
+					<p className="mb-8 text-2xl font-bold text-background">
 						{course?.title || 'Curso no encontrado'}
 					</p>
-					<p className="mb-4 text-lg">Finalizado el {formatDate(today)}</p>
+					<p className="mb-4 text-lg text-background">
+						Finalizado el {formatDate(today)}
+					</p>
 					<div className="mt-8 flex justify-center gap-4">
 						<Image
-							src="/logo.png"
+							src="/artiefy-logo2.png" // Changed from /logo.png to /artiefy-logo2.png
 							alt="Artiefy Logo"
 							width={100}
 							height={100}
-							className="rounded-full"
+							className="rounded-full text-background"
 						/>
 					</div>
 				</div>
@@ -69,8 +77,16 @@ export function CertificationStudent({
 
 			{/* Download Button */}
 			<div className="text-center">
+				<div className="relative mx-auto mb-4 size-12">
+					<Image
+						src="/file-download-svgrepo-com.svg"
+						alt="Download Icon"
+						fill
+						className="text-primary"
+					/>
+				</div>
 				<Button
-					className="bg-primary text-white hover:bg-primary/90"
+					className="bg-primary text-background hover:bg-primary/90"
 					onClick={() => window.print()}
 				>
 					<FaDownload className="mr-2" />
