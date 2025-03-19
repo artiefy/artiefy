@@ -77,7 +77,7 @@ export default function StudentDashboard({
 			<main className="grow">
 				<div className="container mx-auto px-8 sm:px-12 lg:px-16">
 					<div className="flex flex-col space-y-12 sm:space-y-16">
-						<div className="mt-8 flex flex-col items-center space-y-4">
+						<div className="mt-8 flex animate-zoom-in flex-col items-center space-y-4">
 							<div className="flex items-center">
 								<RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
 								<span className="ml-2 text-2xl font-bold whitespace-nowrap text-primary sm:text-3xl">
@@ -99,7 +99,7 @@ export default function StudentDashboard({
 							</form>
 						</div>
 
-						<div className="relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
+						<div className="animation-delay-100 relative h-[300px] animate-zoom-in overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
 							{latestFiveCourses.map((course, index) => (
 								<div
 									key={course.id}
@@ -168,7 +168,7 @@ export default function StudentDashboard({
 						</div>
 
 						{/* Top Cursos section */}
-						<div className="relative px-24">
+						<div className="animation-delay-200 relative animate-zoom-in px-24">
 							<h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">
 								Top Cursos
 							</h2>
@@ -236,7 +236,7 @@ export default function StudentDashboard({
 						</div>
 
 						{/* Programas section */}
-						<div className="relative px-24">
+						<div className="animation-delay-300 relative animate-zoom-in px-24">
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Programas
 							</h2>
@@ -260,7 +260,7 @@ export default function StudentDashboard({
 					</div>
 				</div>
 			</main>
-			<StudentChatbot />
+			<StudentChatbot className="animation-delay-400 animate-zoom-in" />
 		</div>
 	);
 }

@@ -105,7 +105,7 @@ export function GradeModal({
 
 					<div className="mb-6 rounded-lg bg-gray-100 p-4 text-center">
 						{isLoading ? (
-							<Icons.spinner className="mx-auto h-6 w-6 animate-spin text-primary" />
+							<Icons.spinner className="mx-auto h-6 w-6 animate-spin text-background" />
 						) : (
 							<span
 								className={`text-3xl font-bold ${
@@ -129,7 +129,7 @@ export function GradeModal({
 								>
 									<span className="font-mediumt font-bold text-background">{materia.title}</span>
 									{isLoading ? (
-										<Icons.spinner className="h-4 w-4 animate-spin text-primary" />
+										<Icons.spinner className="h-4 w-4 animate-spin text-background" />
 									) : (
 										<span
 											className={`font-semibold ${

@@ -95,12 +95,9 @@ export default async function MyCoursesStudent() {
 									</div>
 									<CardContent className="flex w-full flex-col justify-between px-4 py-3">
 										<div>
-											<Link
-												href={`/estudiantes/programa/${program.id}`}
-												className="text-lg font-bold text-primary hover:text-primary/80"
-											>
+											<h3 className="text-lg font-bold text-primary">
 												{program.title}
-											</Link>
+											</h3>
 										</div>
 										<Button asChild className="mt-4 w-fit shrink-0">
 											<Link
@@ -149,12 +146,9 @@ export default async function MyCoursesStudent() {
 									</div>
 									<CardContent className="flex w-full flex-col justify-between px-4 py-3">
 										<div>
-											<Link
-												href={`/estudiantes/curso/${course.id}`}
-												className="text-lg font-bold text-primary hover:text-primary/80"
-											>
+											<h3 className="text-lg font-bold text-primary">
 												{course.title}
-											</Link>
+											</h3>
 											<div className="flex items-center gap-2">
 												<em className="text-sm font-bold text-gray-400">
 													Educador:
@@ -227,12 +221,9 @@ export default async function MyCoursesStudent() {
 									</div>
 									<CardContent className="flex w-full flex-col justify-between px-4 py-3">
 										<div>
-											<Link
-												href={`/estudiantes/curso/${course.id}`}
-												className="text-lg font-bold text-primary hover:text-primary/80"
-											>
+											<h3 className="text-lg font-bold text-primary">
 												{course.title}
-											</Link>
+											</h3>
 											<div className="flex items-center gap-2">
 												<em className="text-sm font-bold text-gray-400">
 													Educador:
@@ -280,7 +271,6 @@ export default async function MyCoursesStudent() {
 					</div>
 				</section>
 			)}
-
 			{courses.length === 0 && programs.length === 0 && (
 				<>
 					<div className="my-8 border-b border-gray-700/50" />

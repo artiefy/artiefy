@@ -347,8 +347,12 @@ const LessonActivities = ({
 							<span className="relative z-10 flex items-center justify-center">
 								{isButtonLoading ? (
 									<div className="flex items-center gap-2">
-										<Icons.spinner className="h-4 w-4 animate-spin text-background" />
-										<span className="text-background">Cargando...</span>
+										<Icons.spinner className="h-4 w-4 animate-spin text-primary" />{' '}
+										{/* Changed from text-background */}
+										<span className="font-semibold text-primary">
+											Cargando...
+										</span>{' '}
+										{/* Added font-semibold and changed from text-background */}
 									</div>
 								) : activityCompleted || (isLastActivity && savedResults) ? (
 									<>
@@ -361,7 +365,7 @@ const LessonActivities = ({
 								) : (
 									<>
 										{isLoadingActivity && (
-											<Icons.spinner className="active:scale-[0.98] absolute -left-5 h-4 w-4 animate-spin" />
+											<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin active:scale-[0.98]" />
 										)}
 										<span>Ver Actividad</span>
 									</>
