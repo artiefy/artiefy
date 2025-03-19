@@ -41,6 +41,7 @@ interface CustomSelectProps {
 
 // Interfaz para los parámetros del formulario del course
 interface CourseFormProps {
+
 	onSubmitAction: (
 		id: string,
 		title: string,
@@ -53,7 +54,8 @@ interface CourseFormProps {
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
-		subjects: { id: number;}[] // ✅ Solo `id` y `courseId`
+		subjects: { id: number;}[],// ✅ Solo `id` y `courseId`
+		programId: number // ✅ También asegurarnos de enviarlo en la función
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -66,6 +68,7 @@ interface CourseFormProps {
 	modalidadesid: number[];
 	setModalidadesid: (modalidadesid: number[]) => void;
 	nivelid: number;
+	programId: number; // ✅ Agregar programId aquí
 	setNivelid: (nivelid: number) => void;
 	coverImageKey: string;
 	setCoverImageKey: (coverImageKey: string) => void;
@@ -93,6 +96,7 @@ interface CourseFormProps {
 
 // Componente ModalFormCourse
 const ModalFormCourse: React.FC<CourseFormProps> = ({
+	programId,
 	onSubmitAction,
 	uploading,
 	editingCourseId,
@@ -371,9 +375,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				rating,
 				addParametros,
 				coverImageKey,
-				uploadedFileName,
-				selectedSubjects
-			);
+				fileName ?? '', // Ensure fileName is a string
+				selectedSubjects,
+				programId);
 
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
@@ -523,11 +527,19 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	useEffect(() => {
 		const fetchSubjects = async () => {
 			try {
-				const response = await fetch('/api/super-admin/programs');
+				// Ensure programId is available from props or state
+				if (typeof programId !== 'number') {
+					console.error('programId is not defined');
+					return;
+				}
+				
+				// Llama al endpoint con el programId
+				const response = await fetch(`/api/super-admin/programs?programId=${programId}`);
 				const data = (await response.json()) as { id: number; title: string }[];
+	
 				if (Array.isArray(data)) {
 					// Verifica que la respuesta sea un arreglo
-					setAllSubjects(data as { id: number; title: string }[]);
+					setAllSubjects(data);
 				} else {
 					console.error('La respuesta no es un arreglo:', data);
 					setAllSubjects([]); // Establece allSubjects como un arreglo vacío si la respuesta no es correcta
@@ -537,7 +549,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				setAllSubjects([]); // Establece allSubjects como un arreglo vacío en caso de error
 			}
 		};
-
+	
 		void fetchSubjects();
 	}, []);
 

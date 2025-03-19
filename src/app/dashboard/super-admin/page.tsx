@@ -1,5 +1,9 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
+
+import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+
 import {
 	Loader2,
 	X,
@@ -11,9 +15,8 @@ import {
 	Eye,
 	Paperclip,
 } from 'lucide-react';
-import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
 import SunEditor from 'suneditor-react';
+
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
@@ -22,6 +25,7 @@ import {
 	deleteUser,
 	updateUserInfo,
 } from '~/server/queries/queries';
+
 import BulkUploadUsers from './components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
@@ -1011,13 +1015,13 @@ export default function AdminDashboard() {
 
 				{loading ? (
 					<div className="flex items-center justify-center p-8">
-						<Loader2 className="text-primary size-6 animate-spin" />
+						<Loader2 className="size-6 animate-spin text-primary" />
 						<span className="ml-2">Cargando usuarios...</span>
 					</div>
 				) : (
 					<>
 						{showCreateForm && (
-							<div className="bg-opacity-30 fixed inset-0 z-[9999] flex items-center justify-center bg-black p-4 backdrop-blur-md">
+							<div className="bg-opacity-30 fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-md">
 								<div className="relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-2xl">
 									{/* Header del formulario con botón de cierre */}
 									<div className="mb-4 flex items-center justify-between">
@@ -1075,7 +1079,7 @@ export default function AdminDashboard() {
 									{/* Botón para crear usuario */}
 									<button
 										onClick={handleCreateUser}
-										className="bg-primary hover:bg-secondary mt-4 flex w-full justify-center rounded-md px-4 py-2 font-bold text-white"
+										className="mt-4 flex w-full justify-center rounded-md bg-primary px-4 py-2 font-bold text-white hover:bg-secondary"
 										disabled={creatingUser}
 									>
 										{creatingUser ? (
@@ -1313,13 +1317,13 @@ export default function AdminDashboard() {
 								</button>
 								<button
 									onClick={() => setShowAssignModal(true)}
-									className="bg-secondary hover:bg-primary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105"
+									className="flex items-center rounded-md bg-secondary px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-primary"
 								>
 									Asignar Curso a Estudiantes
 								</button>
 								<button
 									onClick={() => setShowAnuncioModal(true)}
-									className="bg-secondary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-[#00A5C0]"
+									className="flex items-center rounded-md bg-secondary px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-[#00A5C0]"
 								>
 									<UserPlus className="mr-2 size-5" /> Crear Anuncio
 								</button>
@@ -1332,7 +1336,7 @@ export default function AdminDashboard() {
 
 								<button
 									onClick={() => setShowCreateForm(true)}
-									className="bg-secondary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-[#00A5C0]"
+									className="flex items-center rounded-md bg-secondary px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-[#00A5C0]"
 								>
 									<UserPlus className="mr-2 size-5" /> Crear Usuario
 								</button>
@@ -1383,8 +1387,8 @@ export default function AdminDashboard() {
 						</div>
 
 						<div className="mt-6 overflow-x-auto">
-							<table className="bg-opacity-70 from-background w-full border-collapse rounded-lg bg-gradient-to-br to-gray-800 text-white shadow-lg backdrop-blur-lg">
-								<thead className="from-primary to-secondary rounded-t-lg bg-[#00BDD8] text-[#01142B]">
+							<table className="bg-opacity-70 w-full border-collapse rounded-lg bg-gradient-to-br from-background to-gray-800 text-white shadow-lg backdrop-blur-lg">
+								<thead className="rounded-t-lg bg-[#00BDD8] from-primary to-secondary text-[#01142B]">
 									<tr>
 										<th className="px-4 py-3">
 											<input

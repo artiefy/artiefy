@@ -15,7 +15,11 @@ import { Card, CardHeader, CardTitle } from '~/components/estudiantes/ui/card';
 import { Label } from '~/components/estudiantes/ui/label';
 import ProgramCoursesList from '~/components/super-admin/layout/programdetail/ProgramCoursesList';
 import ModalFormProgram from '~/components/super-admin/ModalFormProgram';
-import { type CourseData } from '~/server/queries/queries';
+import { type CourseData as BaseCourseData } from '~/server/queries/queries';
+
+interface CourseData extends BaseCourseData {
+	programId?: number; // Add programId as an optional property
+}
 
 // Definir la interfaz del programa
 interface Program {
@@ -323,15 +327,17 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			modalidadesid: 0,
 			nivelid: 0,
 			instructor: '',
-			coverImageKey: '',
+			programId: programIdNumber, // programId is now part of CourseData
 			creatorId: '',
 			rating: 0,
+			coverImageKey: '', // Add the missing coverImageKey property
 			createdAt: new Date().toISOString(),
 		});
-
+	
 		setEditParametros([]); // 🔥 Resetear los parámetros antes de abrir el modal
 		setIsCourseModalOpen(true);
 	};
+	
 
 	const handleCloseCourseModal = () => {
 		setIsCourseModalOpen(false);
@@ -641,6 +647,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				setSubjects={setSubjects}
 				onCloseAction={handleCloseCourseModal}
 				uploading={false}
+				programId={programIdNumber} // 🔥 Asegurar que pase el programId aquí
 			/>
 
 			<ModalFormProgram
