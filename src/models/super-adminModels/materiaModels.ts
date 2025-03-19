@@ -1,5 +1,5 @@
 
-import { eq } from 'drizzle-orm';
+import { isNull, eq } from 'drizzle-orm'; // ✅ Importar inArray
 
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';
@@ -11,9 +11,13 @@ export interface Materia {
   description: string;
 }
 
-// Asumiendo que `materias` tiene las columnas definidas en su esquema
+
 export const getAllMaterias = async () => {
-  return db.select().from(materias).execute();
+  return db
+    .select()
+    .from(materias)
+    .where(isNull(materias.programaId)) // ✅ Filtrar materias donde programaId es NULL
+    .execute();
 };
 
 

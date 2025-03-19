@@ -57,7 +57,7 @@ export async function PUT(req: NextRequest) {
     }
 
     try {
-        const body = await req.json();
+        const body: MateriaBody = await req.json() as MateriaBody;
         console.log('PUT body:', body); // Muestra los datos recibidos
 
         const updatedMateria = await updateMateria(Number(id), body);
@@ -65,8 +65,13 @@ export async function PUT(req: NextRequest) {
 
         return NextResponse.json(updatedMateria);
     } catch (error) {
-        console.error('PUT error:', error.message); // Muestra el mensaje de error
-        return NextResponse.json({ error: 'Failed to update materia', details: error.message }, { status: 500 });
+        if (error instanceof Error) {
+            console.error('PUT error:', error.message); // Muestra el mensaje de error
+        } else {
+            console.error('PUT error:', error); // Muestra el error si no es una instancia de Error
+        }
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        return NextResponse.json({ error: 'Failed to update materia', details: errorMessage }, { status: 500 });
     }
 }
 

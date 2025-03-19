@@ -334,11 +334,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				id: subject.id, // Solo enviamos el ID de la materia
 			}));
 			
-			console.log('Selected subjects before sending:', selectedSubjects);
-			console.log('Selected subjects before sending:', selectedSubjects);
-			console.log('Current subjects state:', subjects);
-			console.log('Editing course ID:', editingCourseId);
-	
 	
 		
 			// Validar que haya al menos una materia seleccionada
@@ -614,7 +609,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								htmlFor="nivelid"
 								className="justify-center text-center text-lg font-medium text-primary"
 							>
-								level
+								Nivel
 							</label>
 							<NivelDropdown
 								nivel={nivelid}
