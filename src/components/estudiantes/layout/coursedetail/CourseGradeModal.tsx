@@ -44,6 +44,7 @@ export function GradeModal({
 	const [calculatedFinalGrade, setCalculatedFinalGrade] = useState<
 		number | null
 	>(null);
+	const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
 	useEffect(() => {
 		const fetchGrades = async () => {
@@ -88,8 +89,11 @@ export function GradeModal({
 			}
 		};
 
-		void fetchGrades();
-	}, [isOpen, userId, courseId]);
+		if (isOpen) {
+			void fetchGrades();
+			if (!hasLoadedOnce) setHasLoadedOnce(true);
+		}
+	}, [isOpen, userId, courseId, hasLoadedOnce]);
 
 	return (
 		<Dialog open={isOpen} onOpenChange={onClose}>
@@ -122,15 +126,38 @@ export function GradeModal({
 					<div className="space-y-3">
 						<h4 className="font-semibold">Materias del curso:</h4>
 						<div className="space-y-2">
-							{materias.map((materia) => (
-								<div
-									key={materia.id}
-									className="flex items-center justify-between rounded-md bg-gray-50 p-3"
-								>
-									<span className="font-mediumt font-bold text-background">{materia.title}</span>
-									{isLoading ? (
-										<Icons.spinner className="h-4 w-4 animate-spin text-background" />
+							{isLoading ? (
+								<>
+									{!hasLoadedOnce ? (
+										<div className="flex items-center justify-between rounded-md bg-gray-50 p-3">
+											<span className="font-medium text-gray-600">
+												Cargando materias...
+											</span>
+											<Icons.spinner className="h-4 w-4 animate-spin text-background" />
+										</div>
 									) : (
+										materias.map((materia) => (
+											<div
+												key={materia.id}
+												className="flex items-center justify-between rounded-md bg-gray-50 p-3"
+											>
+												<span className="font-mediumt font-bold text-background">
+													{materia.title}
+												</span>
+												<Icons.spinner className="h-4 w-4 animate-spin text-background" />
+											</div>
+										))
+									)}
+								</>
+							) : (
+								materias.map((materia) => (
+									<div
+										key={materia.id}
+										className="flex items-center justify-between rounded-md bg-gray-50 p-3"
+									>
+										<span className="font-mediumt font-bold text-background">
+											{materia.title}
+										</span>
 										<span
 											className={`font-semibold ${
 												materia.grade >= 3 ? 'text-green-600' : 'text-red-600'
@@ -138,9 +165,9 @@ export function GradeModal({
 										>
 											{materia.grade.toFixed(2)}
 										</span>
-									)}
-								</div>
-							))}
+									</div>
+								))
+							)}
 						</div>
 					</div>
 				</div>

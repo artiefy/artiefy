@@ -8,7 +8,6 @@ import { TbReportAnalytics } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
-import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
 import LessonActivityModal from './LessonActivityModal';
@@ -323,43 +322,41 @@ const LessonActivities = ({
 						</div>
 					)}
 					<div className="space-y-2">
-						<Button
+						<button
 							onClick={
 								activityCompleted
 									? handleCompletedActivityClick
 									: handleOpenActivity
 							}
 							disabled={!isVideoCompleted || isButtonLoading}
-							className={`group relative w-full overflow-hidden ${
+							className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${
 								activityCompleted || (isLastActivity && savedResults)
 									? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
 									: isVideoCompleted
 										? 'font-semibold text-black'
 										: 'bg-gray-400 text-background'
-							}`}
+							} [&:disabled]:bg-opacity-50 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
 						>
-							{/* Fondo animado solo para el estado activo no completado */}
+							{/* Fondo animado solo cuando está habilitado */}
 							{isVideoCompleted && !activityCompleted && (
 								<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
 							)}
 
-							{/* Texto siempre por encima del gradiente */}
+							{/* Contenido que siempre mantiene su opacidad */}
 							<span className="relative z-10 flex items-center justify-center">
 								{isButtonLoading ? (
 									<div className="flex items-center gap-2">
-										<Icons.spinner className="h-4 w-4 animate-spin text-primary" />{' '}
-										{/* Changed from text-background */}
-										<span className="font-semibold text-primary">
+										<Icons.spinner className="h-4 w-4 animate-spin text-background" />
+										<span className="font-semibold text-background">
 											Cargando...
-										</span>{' '}
-										{/* Added font-semibold and changed from text-background */}
+										</span>
 									</div>
 								) : activityCompleted || (isLastActivity && savedResults) ? (
 									<>
 										{isLoadingResults && (
 											<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
 										)}
-										<span>Ver Resultados</span>
+										<span className='font-semibold'>Ver Resultados</span>
 										<FaCheckCircle className="ml-2 inline text-white" />
 									</>
 								) : (
@@ -371,7 +368,7 @@ const LessonActivities = ({
 									</>
 								)}
 							</span>
-						</Button>
+						</button>
 
 						{activityCompleted && nextLessonId && (
 							<div className="mt-4 flex flex-col items-center space-y-2">

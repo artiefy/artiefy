@@ -264,18 +264,18 @@ export function CourseContent({
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
-			<h2 className="mb-4 text-2xl font-bold text-background">
-				Contenido del curso
-			</h2>
-
 			{isEnrolled && isFullyCompleted && (
-				<div className="artiefy-check-container mb-6">
+				<div className="artiefy-check-container mb-4">
 					<h2 className="animate-pulse bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-3xl font-extrabold text-transparent drop-shadow-[0_2px_2px_rgba(0,200,0,0.4)]">
 						¡Curso Completado!
 					</h2>
 					<div className="artiefy-static-checkmark" />
 				</div>
 			)}
+
+			<h2 className="mb-4 text-2xl font-bold text-background">
+				Contenido del curso
+			</h2>
 
 			<PencilRuler
 				className={`absolute top-4 right-7 transition-colors ${
