@@ -51,7 +51,7 @@ max-2xl @media (width < 96rem) { ... }
 
 Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, puedes seguir estos pasos:
 
-- `rm -rf node_modules package-lock.json .next` // Remover carpetas cache
+- `rm -rf node_modules package-lock.json .next o next/cache` // Remover carpetas cache
 - `npm cache clean --force` // Limpiar la caché de npm
 - `npm i` // Reinstalar las dependencias:
 

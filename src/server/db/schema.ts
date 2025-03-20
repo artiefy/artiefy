@@ -96,8 +96,9 @@ export const courses = pgTable('courses', {
 	courseTypeId: integer('course_type_id')
 		.references(() => courseTypes.id)
 		.notNull(),
-	individualPrice: integer('individual_price'), // Precio individual si es curso de pago
+	individualPrice: integer('individual_price'), // Solo se usa cuando courseTypeId es 4
 	requiresProgram: boolean('requires_program').default(false),
+	isActive: boolean('is_active').default(true),
 });
 
 // Tabla de tipos de actividades

@@ -39,10 +39,6 @@
     "build",
     "coverage",
     ".vercel",
-    ".git",
-    "**/*.test.ts",
-    "**/*.spec.ts",
-    "**/*.test.tsx",
-    "**/*.spec.tsx"
+    ".git"
   ]
 }

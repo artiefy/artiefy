@@ -7,6 +7,8 @@ import {
 	StarIcon,
 	CheckCircleIcon,
 } from '@heroicons/react/24/solid';
+import { FaCrown, FaStar } from 'react-icons/fa';
+import { IoGiftOutline } from 'react-icons/io5';
 
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -81,10 +83,57 @@ export default async function CourseListStudent({
 							console.error('Error checking enrollment status:', error);
 						}
 
+						const getCourseTypeLabel = () => {
+							const courseType = course.courseType;
+							if (!courseType) {
+								return null;
+							}
+
+							const { requiredSubscriptionLevel } = courseType;
+
+							// Mostrar el precio individual cuando el curso es tipo 4
+							if (course.courseTypeId === 4 && course.individualPrice) {
+								return (
+									<div className="mt-2 flex items-center gap-1">
+										<FaStar className="text-lg text-blue-500" />
+										<span className="text-sm font-bold text-blue-500">
+											${course.individualPrice.toLocaleString()}
+										</span>
+									</div>
+								);
+							}
+
+							if (requiredSubscriptionLevel === 'none') {
+								return (
+									<div className="mt-2 flex items-center gap-1">
+										<IoGiftOutline className="text-lg text-green-500" />
+										<span className="text-sm font-bold text-green-500">
+											GRATUITO
+										</span>
+									</div>
+								);
+							}
+
+							const color =
+								requiredSubscriptionLevel === 'premium'
+									? 'text-purple-500'
+									: 'text-orange-500';
+							return (
+								<div className={`mt-2 flex items-center gap-1 ${color}`}>
+									<FaCrown className="text-lg" />
+									<span className="text-sm font-bold">
+										{requiredSubscriptionLevel.toUpperCase()}
+									</span>
+								</div>
+							);
+						};
+
 						return (
 							<div key={course.id} className="group relative">
-								<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
-								<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
+								<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+								<Card
+									className={`zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02] ${!course.isActive && 'opacity-60'}`}
+								>
 									<CardHeader className="">
 										<AspectRatio ratio={16 / 9}>
 											<div className="relative size-full">
@@ -128,6 +177,12 @@ export default async function CourseListStudent({
 										<p className="line-clamp-2 text-sm text-gray-300">
 											{course.description}
 										</p>
+										<div className="flex items-center justify-between">
+											<p className="text-sm font-bold text-red-500">
+												{course.modalidad?.name}
+											</p>
+											{getCourseTypeLabel()}
+										</div>
 									</CardContent>
 									<CardFooter className="flex flex-col items-start justify-between space-y-2">
 										<div className="flex w-full justify-between">
@@ -137,23 +192,6 @@ export default async function CourseListStudent({
 													{course.instructor}
 												</span>
 											</p>
-											<p className="text-sm font-bold text-red-500">
-												{course.modalidad?.name}
-											</p>
-										</div>
-										<div className="flex w-full items-center justify-between">
-											<Button asChild>
-												<Link
-													href={`/estudiantes/cursos/${course.id}`}
-													className="group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
-												>
-													<p className="font-bold">Ver Curso</p>
-													<ArrowRightCircleIcon className="animate-bounce-right mr-2 ml-1 size-5" />
-													<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-														<div className="relative h-full w-10 bg-white/30" />
-													</div>
-												</Link>
-											</Button>
 											<div className="flex items-center">
 												<StarIcon className="size-5 text-yellow-500" />
 												<span className="ml-1 text-sm font-bold text-yellow-500">
@@ -161,6 +199,32 @@ export default async function CourseListStudent({
 												</span>
 											</div>
 										</div>
+										<Button
+											asChild
+											disabled={!course.isActive}
+											className={`mt-4 w-full ${!course.isActive ? 'cursor-not-allowed opacity-50 hover:bg-primary' : ''}`}
+										>
+											<Link
+												href={
+													course.isActive
+														? `/estudiantes/cursos/${course.id}`
+														: '#'
+												}
+												className={`group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary ${!course.isActive ? 'pointer-events-none' : 'active:scale-95'}`}
+											>
+												<p className="font-bold">
+													{course.isActive ? 'Ver Curso' : 'No Disponible'}
+												</p>
+												{course.isActive && (
+													<>
+														<ArrowRightCircleIcon className="mr-2 ml-1 size-5 animate-bounce-right" />
+														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+															<div className="relative h-full w-10 bg-white/30" />
+														</div>
+													</>
+												)}
+											</Link>
+										</Button>
 									</CardFooter>
 								</Card>
 							</div>

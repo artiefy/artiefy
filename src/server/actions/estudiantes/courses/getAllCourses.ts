@@ -1,13 +1,17 @@
 'use server';
 
-import { unstable_cache } from 'next/cache';
-
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { courses, categories, modalidades, nivel } from '~/server/db/schema';
+import {
+	courses,
+	categories,
+	modalidades,
+	nivel,
+	courseTypes,
+} from '~/server/db/schema';
 
-import type { Course } from '~/types';
+import type { Course, SubscriptionLevel } from '~/types';
 
 // Interfaces separadas
 interface CourseQueryResult {
@@ -28,6 +32,14 @@ interface CourseQueryResult {
 	modalidadName: string | null;
 	nivelName: string | null;
 	isFeatured: boolean | null;
+	courseTypeId: number | null;
+	courseTypeName: string | null;
+	requiredSubscriptionLevel: string | null;
+	isPurchasableIndividually: boolean | null;
+	price: number | null;
+	requiresProgram: boolean | null;
+	isActive: boolean | null;
+	individualPrice: number | null;
 }
 
 // Consulta base separada
@@ -49,6 +61,14 @@ const baseCoursesQuery = {
 	modalidadName: modalidades.name,
 	nivelName: nivel.name,
 	isFeatured: categories.is_featured,
+	courseTypeId: courses.courseTypeId,
+	courseTypeName: courseTypes.name,
+	requiredSubscriptionLevel: courseTypes.requiredSubscriptionLevel,
+	isPurchasableIndividually: courseTypes.isPurchasableIndividually,
+	price: courseTypes.price,
+	requiresProgram: courses.requiresProgram,
+	isActive: courses.isActive,
+	individualPrice: courses.individualPrice,
 };
 
 // Función de transformación separada
@@ -78,38 +98,44 @@ const transformCourseData = (coursesData: CourseQueryResult[]): Course[] => {
 		nivel: { name: course.nivelName ?? '' },
 		isFeatured: course.isFeatured ?? false,
 		requerimientos: [] as string[],
+		courseTypeId: course.courseTypeId ?? 0, // Add this line
+		courseType: course.courseTypeId
+			? {
+					requiredSubscriptionLevel:
+						(course.requiredSubscriptionLevel as SubscriptionLevel) ?? 'none',
+					isPurchasableIndividually: Boolean(course.isPurchasableIndividually),
+					price: course.courseTypeId === 4 ? course.individualPrice : null,
+				}
+			: undefined,
+		individualPrice: course.individualPrice ?? null, // Add this line if needed
+		isActive: Boolean(course.isActive),
+		requiresProgram: Boolean(course.requiresProgram),
 	}));
 };
 
-export const getAllCourses = unstable_cache(
-	async () => {
-		try {
-			const coursesData = await db
-				.select(baseCoursesQuery)
-				.from(courses)
-				.leftJoin(categories, eq(courses.categoryid, categories.id))
-				.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-				.leftJoin(nivel, eq(courses.nivelid, nivel.id))
-				.orderBy(desc(courses.createdAt))
-				.limit(100);
+export async function getAllCourses(): Promise<Course[]> {
+	try {
+		const coursesData = await db
+			.select(baseCoursesQuery)
+			.from(courses)
+			.leftJoin(categories, eq(courses.categoryid, categories.id))
+			.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+			.leftJoin(nivel, eq(courses.nivelid, nivel.id))
+			.leftJoin(courseTypes, eq(courses.courseTypeId, courseTypes.id))
+			.where(
+				and(eq(courses.isActive, true), eq(courses.requiresProgram, false))
+			)
+			.orderBy(desc(courses.createdAt))
+			.limit(100);
 
-			return transformCourseData(coursesData);
-		} catch (error) {
-			console.error('Error al obtener todos los cursos:', error);
-			throw new Error(
-				'Error al obtener todos los cursos: ' +
-					(error instanceof Error ? error.message : String(error))
-			);
-		}
-	},
-	['all-courses'],
-	{
-		revalidate: 3600,
-		tags: ['courses'], // Define el tag para este cachéltiples tags
+		return transformCourseData(coursesData);
+	} catch (err) {
+		const error = err as Error;
+		throw new Error(`Error al obtener todos los cursos: ${error.message}`);
 	}
-);
+}
 
-// Precargar datos
-export const preloadAllCourses = async () => {
+// Precargar datos - opcional, puedes removerlo si no lo necesitas
+export async function preloadAllCourses(): Promise<void> {
 	await getAllCourses();
-};
+}

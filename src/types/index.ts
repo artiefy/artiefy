@@ -29,6 +29,7 @@ export interface BaseCourse {
 	nivelid: number;
 	category?: Category;
 	modalidad?: Modalidad;
+	isActive: boolean;
 }
 
 // Add this type
@@ -46,10 +47,15 @@ export interface Course extends BaseCourse {
 	materias?: CourseMateria[];
 	isFree?: boolean;
 	requiresSubscription?: boolean;
+	courseTypeId: number; // Add this field
 	courseType?: {
 		requiredSubscriptionLevel: SubscriptionLevel;
 		isPurchasableIndividually: boolean | null; // Updated to allow null
+		price?: number | null; // Add price property
 	};
+	individualPrice?: number | null;
+	requiresProgram: boolean;
+	isActive: boolean;
 }
 
 // Add new interface for course materias
