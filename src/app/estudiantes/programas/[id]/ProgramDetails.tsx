@@ -30,6 +30,7 @@ export default function ProgramDetails({
 	const [isEnrolling, setIsEnrolling] = useState(false);
 	const [isUnenrolling, setIsUnenrolling] = useState(false);
 	const [isSubscriptionActive, setIsSubscriptionActive] = useState(false);
+	const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
 
 	const { isSignedIn, userId } = useAuth();
 	const { user } = useUser();
@@ -38,31 +39,33 @@ export default function ProgramDetails({
 
 	useEffect(() => {
 		const checkEnrollmentAndSubscription = async () => {
-			if (userId) {
-				const enrolled = await isUserEnrolledInProgram(
-					parseInt(program.id),
-					userId
-				);
-				setIsEnrolled(enrolled);
+			setIsCheckingEnrollment(true);
+			try {
+				if (userId) {
+					const enrolled = await isUserEnrolledInProgram(
+						parseInt(program.id),
+						userId
+					);
+					setIsEnrolled(enrolled);
 
-				// Verificar tanto el estado de la suscripción como el tipo de plan
-				const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-				const planType = user?.publicMetadata?.planType;
-				const subscriptionEndDate = user?.publicMetadata
-					?.subscriptionEndDate as string | null;
+					// Verificar específicamente el plan Premium y su estado
+					const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+					const planType = user?.publicMetadata?.planType;
+					const subscriptionEndDate = user?.publicMetadata
+						?.subscriptionEndDate as string | null;
 
-				const isSubscriptionActive =
-					subscriptionStatus === 'active' &&
-					planType === 'Premium' &&
-					(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+					const isSubscriptionValid =
+						subscriptionStatus === 'active' &&
+						planType === 'Premium' &&
+						(!subscriptionEndDate ||
+							new Date(subscriptionEndDate) > new Date());
 
-				setIsSubscriptionActive(isSubscriptionActive);
-
-				// Debug logs
-				console.log('Subscription Status:', subscriptionStatus);
-				console.log('Plan Type:', planType);
-				console.log('Subscription End Date:', subscriptionEndDate);
-				console.log('Is Subscription Active:', isSubscriptionActive);
+					setIsSubscriptionActive(isSubscriptionValid);
+				}
+			} catch (error) {
+				console.error('Error checking enrollment:', error);
+			} finally {
+				setIsCheckingEnrollment(false);
 			}
 		};
 
@@ -146,9 +149,10 @@ export default function ProgramDetails({
 					subscriptionEndDate={
 						(user?.publicMetadata?.subscriptionEndDate as string) ?? null
 					}
+					isCheckingEnrollment={isCheckingEnrollment}
 				/>
 				{/* Remove ProgramContent since it's already in ProgramHeader */}
 			</main>
-		</div> 
+		</div>
 	);
 }

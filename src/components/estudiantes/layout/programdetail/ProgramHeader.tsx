@@ -31,6 +31,7 @@ interface ProgramHeaderProps {
 	subscriptionEndDate: string | null;
 	onEnroll: () => Promise<void>;
 	onUnenroll: () => Promise<void>;
+	isCheckingEnrollment: boolean; // Add this prop
 }
 
 export function ProgramHeader({
@@ -42,12 +43,19 @@ export function ProgramHeader({
 	subscriptionEndDate: _subscriptionEndDate, // Change here: rename in destructuring
 	onEnroll,
 	onUnenroll,
+	isCheckingEnrollment, // Add this to destructuring
 }: ProgramHeaderProps) {
 	const { user } = useUser();
 
-	// Verificar plan Premium
+	// Verificar plan Premium y fecha de vencimiento
 	const isPremium = user?.publicMetadata?.planType === 'Premium';
-	const canEnroll = isSubscriptionActive && isPremium;
+	const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
+		| string
+		| null;
+	const isSubscriptionValid =
+		isPremium &&
+		(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+	const canEnroll = isSubscriptionActive && isSubscriptionValid;
 
 	const formatDate = (
 		dateString: string | number | Date | null | undefined
@@ -136,11 +144,24 @@ export function ProgramHeader({
 				</div>
 
 				{/* Program courses */}
-				<ProgramContent program={program} isEnrolled={isEnrolled} />
+				<ProgramContent
+					program={program}
+					isEnrolled={isEnrolled}
+					isSubscriptionActive={isSubscriptionActive}
+					subscriptionEndDate={_subscriptionEndDate}
+				/>
 
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
-						{isEnrolled ? (
+						{isCheckingEnrollment ? (
+							<Button
+								className="h-12 w-64 justify-center border-white/20 bg-gray-500 text-lg font-semibold text-white"
+								disabled={true}
+							>
+								<Icons.spinner className="mr-2 animate-spin" />
+								Cargando...
+							</Button>
+						) : isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
 								<Button
 									className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"

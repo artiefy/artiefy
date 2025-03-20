@@ -58,9 +58,11 @@ export function CourseContent({
 		return course.lessons
 			.sort((a, b) => a.title.localeCompare(b.title))
 			.map((lesson, index) => {
-				const isUnlocked = isEnrolled && 
-					((course.courseType?.requiredSubscriptionLevel === 'none' && !lesson.isLocked) || 
-					(isSubscriptionActive && !lesson.isLocked));
+				const isUnlocked =
+					isEnrolled &&
+					((course.courseType?.requiredSubscriptionLevel === 'none' &&
+						!lesson.isLocked) ||
+						(isSubscriptionActive && !lesson.isLocked));
 
 				const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 					e.preventDefault();
@@ -346,11 +348,7 @@ export function CourseContent({
 			)}
 
 			<div
-				className={
-					!canAccessContent
-						? 'pointer-events-none opacity-50 blur-[1px] filter'
-						: ''
-				}
+				className={!canAccessContent ? 'pointer-events-none opacity-75' : ''}
 			>
 				<div className="space-y-4">{memoizedLessons}</div>
 			</div>

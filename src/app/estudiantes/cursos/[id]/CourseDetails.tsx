@@ -27,7 +27,6 @@ export default function CourseDetails({
 	const [course, setCourse] = useState<Course>(initialCourse);
 	const [isEnrolling, setIsEnrolling] = useState(false);
 	const [isUnenrolling, setIsUnenrolling] = useState(false);
-	const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
 	const [totalStudents, setTotalStudents] = useState(course.totalStudents);
 	const [isEnrolled, setIsEnrolled] = useState(false);
 	const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
@@ -38,17 +37,6 @@ export default function CourseDetails({
 	const { user } = useUser();
 	const router = useRouter();
 	const pathname = usePathname();
-
-	const errorMessages = {
-		enrollment: {
-			title: 'Error de inscripción',
-			description: 'No se pudo completar la inscripción',
-		},
-		unenrollment: {
-			title: 'Error al cancelar inscripción',
-			description: 'No se pudo cancelar la inscripción',
-		},
-	} as const;
 
 	useEffect(() => {
 		if (!initialCourse.isActive) {
@@ -121,14 +109,11 @@ export default function CourseDetails({
 		}
 
 		if (isEnrolling) return;
-
 		setIsEnrolling(true);
-		setEnrollmentError(null);
 
 		try {
 			// Verificar si el curso es gratuito
 			if (initialCourse.courseType?.requiredSubscriptionLevel === 'none') {
-				// Inscripción directa para cursos gratuitos
 				const result = await enrollInCourse(course.id);
 				if (result.success) {
 					setTotalStudents((prev) => prev + 1);
@@ -143,8 +128,16 @@ export default function CourseDetails({
 							lessons: updatedCourse.lessons ?? [],
 						});
 					}
-				} else {
-					throw new Error(result.message);
+				} else if (result.message === 'Ya estás inscrito en este curso') {
+					// Si ya está inscrito, actualizar el estado local
+					setIsEnrolled(true);
+					const updatedCourse = await getCourseById(course.id, userId);
+					if (updatedCourse) {
+						setCourse({
+							...updatedCourse,
+							lessons: updatedCourse.lessons ?? [],
+						});
+					}
 				}
 				return;
 			}
@@ -162,19 +155,19 @@ export default function CourseDetails({
 				toast.error('Suscripción requerida', {
 					description: 'Necesitas una suscripción activa para inscribirte.',
 				});
-				// Abrir planes en una nueva pestaña
 				window.open('/planes', '_blank');
 				return;
 			}
 
 			const result = await enrollInCourse(course.id);
-
-			if (result.success) {
+			if (
+				result.success ||
+				result.message === 'Ya estás inscrito en este curso'
+			) {
 				setTotalStudents((prev) => prev + 1);
 				setIsEnrolled(true);
 				toast.success('¡Te has inscrito exitosamente!');
 
-				// Actualizar curso
 				const updatedCourse = await getCourseById(course.id, userId);
 				if (updatedCourse) {
 					setCourse({
@@ -182,11 +175,9 @@ export default function CourseDetails({
 						lessons: updatedCourse.lessons ?? [],
 					});
 				}
-			} else {
-				throw new Error(result.message);
 			}
 		} catch (error) {
-			handleError(error, 'enrollment');
+			console.error('Error en la inscripción:', error);
 		} finally {
 			setIsEnrolling(false);
 		}
@@ -194,13 +185,10 @@ export default function CourseDetails({
 
 	const handleUnenroll = async () => {
 		if (!isSignedIn || isUnenrolling) return;
-
 		setIsUnenrolling(true);
-		setEnrollmentError(null);
 
 		try {
 			const result = await unenrollFromCourse(course.id);
-
 			if (result.success) {
 				setIsEnrolled(false);
 				setTotalStudents((prev) => prev - 1);
@@ -217,33 +205,13 @@ export default function CourseDetails({
 						isLocked: true,
 					})),
 				}));
-
 				toast.success('Has cancelado tu inscripción al curso correctamente');
-			} else {
-				throw new Error(result.message);
 			}
 		} catch (error) {
-			if (error instanceof Error) {
-				handleError(error, 'unenrollment');
-			} else {
-				handleError(new Error('Error desconocido'), 'unenrollment');
-			}
+			console.error('Error al cancelar la inscripción:', error);
 		} finally {
 			setIsUnenrolling(false);
 		}
-	};
-
-	const handleError = (
-		error: unknown,
-		errorType: keyof typeof errorMessages
-	) => {
-		const message = errorMessages[errorType];
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-
-		setEnrollmentError(errorMessage);
-		toast.error(`${message.description}: ${errorMessage}`);
-		console.error(`${message.title}:`, error);
 	};
 
 	const handleEnrollmentChange = (enrolled: boolean) => {
@@ -269,14 +237,6 @@ export default function CourseDetails({
 					isCheckingEnrollment={isCheckingEnrollment}
 				/>
 
-				{/* Mostrar mensajes de error si existen */}
-				{enrollmentError && (
-					<div className="mt-4 rounded-md bg-red-50 p-4">
-						{/* ...error message content... */}
-					</div>
-				)}
-
-				{/* Siempre mostrar comentarios y chatbot */}
 				<div className="mt-8 space-y-8">
 					<CourseComments
 						courseId={course.id}
