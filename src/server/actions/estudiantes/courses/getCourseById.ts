@@ -112,6 +112,8 @@ export async function getCourseById(
 							course.courseType.isPurchasableIndividually ?? false,
 					}
 				: undefined,
+			requiresProgram: Boolean(course.requiresProgram), // Ensure it's always boolean
+			isActive: Boolean(course.isActive), // Also ensure isActive is always boolean
 		};
 
 		return transformedCourse;

@@ -132,7 +132,7 @@ export default async function CourseListStudent({
 							<div key={course.id} className="group relative">
 								<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 								<Card
-									className={`zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02] ${!course.isActive && 'opacity-60'}`}
+									className={`zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02] ${!course.isActive ? 'opacity-50' : ''}`}
 								>
 									<CardHeader className="">
 										<AspectRatio ratio={16 / 9}>
@@ -202,26 +202,21 @@ export default async function CourseListStudent({
 										<Button
 											asChild
 											disabled={!course.isActive}
-											className={`mt-4 w-full ${!course.isActive ? 'cursor-not-allowed opacity-50 hover:bg-primary' : ''}`}
+											className={`mt-4 w-full ${!course.isActive ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''}`}
 										>
 											<Link
-												href={
-													course.isActive
-														? `/estudiantes/cursos/${course.id}`
-														: '#'
-												}
-												className={`group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary ${!course.isActive ? 'pointer-events-none' : 'active:scale-95'}`}
+												href="#"
+												className={`relative inline-flex h-10 w-full items-center justify-center rounded-md border border-white/20 p-2 ${
+													!course.isActive
+														? 'pointer-events-none bg-gray-600 text-gray-400'
+														: 'bg-background text-primary active:scale-95'
+												}`}
 											>
-												<p className="font-bold">
-													{course.isActive ? 'Ver Curso' : 'No Disponible'}
-												</p>
+												<span className="font-bold">
+													{!course.isActive ? 'No Disponible' : 'Ver Curso'}
+												</span>
 												{course.isActive && (
-													<>
-														<ArrowRightCircleIcon className="mr-2 ml-1 size-5 animate-bounce-right" />
-														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-															<div className="relative h-full w-10 bg-white/30" />
-														</div>
-													</>
+													<ArrowRightCircleIcon className="ml-2 size-5 animate-bounce-right" />
 												)}
 											</Link>
 										</Button>

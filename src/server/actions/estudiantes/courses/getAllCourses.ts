@@ -1,6 +1,6 @@
 'use server';
 
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -122,9 +122,7 @@ export async function getAllCourses(): Promise<Course[]> {
 			.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
 			.leftJoin(nivel, eq(courses.nivelid, nivel.id))
 			.leftJoin(courseTypes, eq(courses.courseTypeId, courseTypes.id))
-			.where(
-				and(eq(courses.isActive, true), eq(courses.requiresProgram, false))
-			)
+			 .where(eq(courses.requiresProgram, false)) // Removido el filtro de isActive
 			.orderBy(desc(courses.createdAt))
 			.limit(100);
 
