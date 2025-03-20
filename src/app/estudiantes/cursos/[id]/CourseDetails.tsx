@@ -51,6 +51,15 @@ export default function CourseDetails({
 	} as const;
 
 	useEffect(() => {
+		if (!initialCourse.isActive) {
+			toast.error('Curso no disponible', {
+				description: 'Este curso no está disponible actualmente.',
+			});
+			router.push('/estudiantes');
+		}
+	}, [initialCourse.isActive, router]);
+
+	useEffect(() => {
 		const checkEnrollmentAndProgress = async () => {
 			setIsCheckingEnrollment(true);
 			try {
@@ -153,7 +162,8 @@ export default function CourseDetails({
 				toast.error('Suscripción requerida', {
 					description: 'Necesitas una suscripción activa para inscribirte.',
 				});
-				void router.push('/planes');
+				// Abrir planes en una nueva pestaña
+				window.open('/planes', '_blank');
 				return;
 			}
 

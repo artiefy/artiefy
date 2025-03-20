@@ -442,6 +442,15 @@ export default function LessonDetails({
 		return activity?.id === lastActivity?.id;
 	}, [lesson, activity, lessons]);
 
+	useEffect(() => {
+		if (!course.isActive) {
+			toast.error('Curso no disponible', {
+				description: 'Este curso no está disponible actualmente.',
+			});
+			router.push('/estudiantes');
+		}
+	}, [course.isActive, router]);
+
 	return (
 		<div className="flex min-h-screen flex-col">
 			<LessonBreadcrumbs

@@ -13,7 +13,10 @@ import {
 	FaUserGraduate,
 	FaCheck,
 	FaTrophy,
+	FaCrown,
+	FaStar,
 } from 'react-icons/fa';
+import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -191,6 +194,49 @@ export function CourseHeader({
 	const canAccessGrades = isEnrolled && areAllLessonsCompleted;
 	const canAccessCertificate = canAccessGrades && currentFinalGrade >= 3;
 
+	const getCourseTypeLabel = () => {
+		const courseType = course.courseType;
+		if (!courseType) {
+			return null;
+		}
+
+		const { requiredSubscriptionLevel } = courseType;
+
+		// Mostrar el precio individual cuando el curso es tipo 4
+		if (course.courseTypeId === 4 && course.individualPrice) {
+			return (
+				<div className="flex items-center gap-1">
+					<FaStar className="text-lg text-blue-500" />
+					<span className="text-base font-bold text-blue-500">
+						${course.individualPrice.toLocaleString()}
+					</span>
+				</div>
+			);
+		}
+
+		if (requiredSubscriptionLevel === 'none') {
+			return (
+				<div className="flex items-center gap-1">
+					<IoGiftOutline className="text-lg text-green-500" />
+					<span className="text-base font-bold text-green-500">GRATUITO</span>
+				</div>
+			);
+		}
+
+		const color =
+			requiredSubscriptionLevel === 'premium'
+				? 'text-purple-500'
+				: 'text-orange-500';
+		return (
+			<div className={`flex items-center gap-1 ${color}`}>
+				<FaCrown className="text-lg" />
+				<span className="text-base font-bold">
+					{requiredSubscriptionLevel.toUpperCase()}
+				</span>
+			</div>
+		);
+	};
+
 	return (
 		<Card className="overflow-hidden p-0">
 			<CardHeader className="px-0">
@@ -254,6 +300,7 @@ export function CourseHeader({
 						>
 							{course.category?.name}
 						</Badge>
+						{getCourseTypeLabel()} {/* Add the course type label here */}
 						<div className="flex items-center">
 							<FaCalendar className="mr-2 text-gray-600" />
 							<span className="text-sm text-gray-600">
