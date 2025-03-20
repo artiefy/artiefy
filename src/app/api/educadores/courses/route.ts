@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
 			modalidadesid,
 			nivelid,
 			instructor,
+			courseTypeId: 1, // Replace with the appropriate value for courseTypeId
 		});
 
 		console.log('Datos enviados al servidor:', {

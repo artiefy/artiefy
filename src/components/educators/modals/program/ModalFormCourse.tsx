@@ -28,12 +28,6 @@ import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 import ModalidadDropdown from '~/components/super-admin/layout/ModalidadDropdown';
 
-interface Subject {
-	id: number;
-	title: string;
-}
-
-
 
 // Interfaz para los parámetros del formulario del course
 interface CourseFormProps {

@@ -45,8 +45,9 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
 								<div className="relative size-full">
 									<Image
 										src={
-											`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}` ||
-											'/placeholder.svg'
+											course.coverImageKey
+												? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+												: '/placeholder.svg'
 										}
 										alt={course.title || 'Imagen del curso'}
 										className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"

@@ -100,7 +100,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	setParametrosAction,
 	isOpen,
 	onCloseAction,
-	subjects,
 	setSubjects,
 }) => {
 	const { user } = useUser(); // Obtiene el usuario actual
