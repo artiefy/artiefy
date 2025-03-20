@@ -26,6 +26,7 @@ import {
 	type Lesson,
 	type LessonWithProgress,
 	type UserActivitiesProgress,
+	type Course,
 } from '~/types';
 import {
 	saveScrollPosition,
@@ -41,6 +42,7 @@ export default function LessonDetails({
 	userLessonsProgress,
 	userActivitiesProgress,
 	userId,
+	course, // Add course prop
 }: {
 	lesson: LessonWithProgress;
 	activity: Activity | null;
@@ -48,6 +50,7 @@ export default function LessonDetails({
 	userLessonsProgress: UserLessonsProgress[];
 	userActivitiesProgress: UserActivitiesProgress[];
 	userId: string;
+	course: Course; // Add course type
 }) {
 	// Add new state
 	const [isNavigating, setIsNavigating] = useState(false);
@@ -331,15 +334,17 @@ export default function LessonDetails({
 		}
 	};
 
-	// Add new effect to check subscription status
+	// Add new effect to check subscription status with free course handling
 	useEffect(() => {
 		const checkSubscriptionStatus = () => {
+			// If it's a free course, skip subscription check
+			if (course.courseType?.requiredSubscriptionLevel === 'none') {
+				return;
+			}
+
 			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
 			const rawSubscriptionEndDate = user?.publicMetadata
 				?.subscriptionEndDate as string | null;
-
-			console.log('Subscription Status:', subscriptionStatus); // Debug log
-			console.log('Raw Subscription End Date:', rawSubscriptionEndDate); // Debug log
 
 			const formattedSubscriptionEndDate = rawSubscriptionEndDate
 				? formatInTimeZone(
@@ -349,26 +354,26 @@ export default function LessonDetails({
 					)
 				: null;
 
-			console.log(
-				'Formatted Subscription End Date (Bogotá):',
-				formattedSubscriptionEndDate
-			); // Debug log
-
 			const isSubscriptionActive =
 				subscriptionStatus === 'active' &&
 				(!formattedSubscriptionEndDate ||
 					new Date(formattedSubscriptionEndDate) > new Date());
 
 			if (!isSubscriptionActive) {
+				// Usar un ID único para el toast para evitar duplicados
 				toast.error(
-					'Debes tener una suscripción activa para poder ver las clases.'
+					'Debes tener una suscripción activa para poder ver las clases.',
+					{
+						id: 'subscription-required',
+					}
 				);
 				void router.push('/planes');
 			}
 		};
 
+		// Solo verificar una vez al cargar el componente
 		checkSubscriptionStatus();
-	}, [user, router]);
+	}, [course.courseType?.requiredSubscriptionLevel, router, user]);
 
 	// Nuevo manejador para completar lecciones
 	const handleLessonCompletion = async () => {
