@@ -8,7 +8,7 @@
 
 	import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 	import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
-	import { getCourses, updateCourse, CourseData } from '~/server/queries/queries';
+	import { getCourses, updateCourse, type CourseData } from '~/server/queries/queries';
 
 	import CourseListAdmin from './../../components/CourseListAdmin';
 
@@ -160,6 +160,10 @@
 					const { url, fields, key, fileName: responseFileName } = uploadData;
 					coverImageKey = key;
 					fileName = responseFileName;
+					void fileName;
+
+
+
 
 					const formData = new FormData();
 					Object.entries(fields).forEach(([key, value]) => {

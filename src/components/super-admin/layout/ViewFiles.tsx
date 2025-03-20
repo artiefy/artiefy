@@ -148,10 +148,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 					if (!file) return null; // Manejar caso de clave vacía
 					const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3
 					const icon = getIconForFileType(file.fileName); // Icono basado en la extensión del archivo
-					if (!lessonFileName === null) {
-						return null; // Manejar caso de nombre de archivo vacío
-					} else {
-					}
+					
 					const resourceNames = lessonFileName?.resourceNames.split(',') ?? []; // Separar resourceNames por comas}
 
 					return (

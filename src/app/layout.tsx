@@ -13,6 +13,7 @@ import { metadata as siteMetadata } from '~/lib/metadata';
 import '~/styles/globals.css';
 import Loading from './loading';
 import Providers from './providers';
+
 import type { Metadata, Viewport } from 'next';
 
 

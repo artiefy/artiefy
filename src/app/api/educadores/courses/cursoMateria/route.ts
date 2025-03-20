@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 
 import {
 	createCourse,
@@ -15,7 +15,6 @@ import {
 	updateMateria,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
-import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 export const dynamic = 'force-dynamic';

@@ -9,7 +9,8 @@ import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
-import Select, { type MultiValue, type ActionMeta } from 'react-select';
+import Select, { type MultiValue } from 'react-select';
+
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
