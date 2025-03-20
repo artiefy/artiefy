@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-
 import '~/styles/buttonclass.css';
 import '~/styles/check.css';
+import { useState, useMemo, useCallback } from 'react';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -23,6 +23,7 @@ import {
 } from '~/components/estudiantes/ui/alert';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Progress } from '~/components/estudiantes/ui/progress';
+import { cn } from '~/lib/utils';
 
 import type { Course } from '~/types';
 
@@ -47,11 +48,11 @@ export function CourseContent({
 
 	const toggleLesson = useCallback(
 		(lessonId: number) => {
-			if (isEnrolled && isSubscriptionActive) {
+			if (isEnrolled) {
 				setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
 			}
 		},
-		[expandedLesson, isEnrolled, isSubscriptionActive]
+		[expandedLesson, isEnrolled]
 	);
 
 	const memoizedLessons = useMemo(() => {
@@ -60,9 +61,9 @@ export function CourseContent({
 			.map((lesson, index) => {
 				const isUnlocked =
 					isEnrolled &&
-					((course.courseType?.requiredSubscriptionLevel === 'none' &&
-						!lesson.isLocked) ||
-						(isSubscriptionActive && !lesson.isLocked));
+					(course.courseType?.requiredSubscriptionLevel === 'none' ||
+						isSubscriptionActive) &&
+					!lesson.isLocked;
 
 				const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 					e.preventDefault();
@@ -278,13 +279,12 @@ export function CourseContent({
 		course.courseType?.requiredSubscriptionLevel,
 	]);
 
-	const canAccessContent = useMemo(() => {
-		// For free courses, still need enrollment but no subscription
-		if (course.courseType?.requiredSubscriptionLevel === 'none') {
-			return isEnrolled;
-		}
-		// For paid courses, need both enrollment and active subscription
-		return isEnrolled && isSubscriptionActive;
+	const shouldBlurContent = useMemo(() => {
+		return (
+			isEnrolled &&
+			!isSubscriptionActive &&
+			course.courseType?.requiredSubscriptionLevel !== 'none'
+		);
 	}, [
 		isEnrolled,
 		isSubscriptionActive,
@@ -348,7 +348,11 @@ export function CourseContent({
 			)}
 
 			<div
-				className={!canAccessContent ? 'pointer-events-none opacity-75' : ''}
+				className={cn(
+					'transition-all duration-300',
+					shouldBlurContent && 'pointer-events-none opacity-75 blur-[2px]',
+					!isEnrolled && 'pointer-events-none opacity-75'
+				)}
 			>
 				<div className="space-y-4">{memoizedLessons}</div>
 			</div>
