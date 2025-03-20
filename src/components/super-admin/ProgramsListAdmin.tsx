@@ -14,20 +14,20 @@ import {
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
 
-interface Program {
-    id?: number;
-    title: string;
-    description?: string | null;
-    coverImageKey: string | null;
-    categoryid: number;
-    instructor: string;
-    createdAt?: string | Date;
-    updatedAt?: string | Date;
-    creatorId: string;
-    rating?: number | null;
-    modalidadesid: number;
-    nivelid: number;
+export interface Program {
+	id: number;
+	title: string;
+	description: string;
+	categoryid: number;
+	createdAt: string;
+	coverImageKey: string;
+	creatorId: string;
+	rating: number;
+	instructor?: string;
+	modalidadesid?: number;
+	nivelid?: number;
 }
+
 
 interface ProgramListAdminProps {
     programs: Program[];
