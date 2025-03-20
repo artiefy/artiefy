@@ -119,6 +119,7 @@ export async function POST(request: Request) {
 			instructor: string;
 			subjects?: { id: number }[];
 			courseTypeId: number; // 👉 agregar este campo
+			isActive: boolean;
 		};
 		console.log('Received data:', data);
 
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
 				modalidadesid: modalidadId,
 				nivelid: data.nivelid,
 				instructor: data.instructor,
-				courseTypeId: data.courseTypeId, // 👉 pasar el courseTypeId
+				courseTypeId: data.courseTypeId,isActive: data.isActive 
 			});
 
 			console.log('Curso creado:', newCourse);

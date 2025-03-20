@@ -48,9 +48,9 @@ interface Course {
 	createdAt: string;
 	updatedAt: string;
 	rating: number;
-	courseTypeId?: number | null;   // ✅ Agrega esto
+	courseTypeId?: number | null; // ✅ Agrega esto
 	courseTypeName?: string;
-	isActive: boolean; 
+	isActive: boolean;
 }
 interface Materia {
 	id: number;
@@ -119,7 +119,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	};
 
 	const [isActive, setIsActive] = useState<boolean>(true);
-
 
 	const [editParametros, setEditParametros] = useState<
 		{
@@ -220,7 +219,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
-		rating: number, courseTypeId: number | null
+		rating: number,
+		courseTypeId: number | null
 	) => {
 		try {
 			let coverImageKey = course?.coverImageKey ?? '';
@@ -285,7 +285,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						modalidadesid,
 						nivelid,
 						instructor: course?.instructor,
-						rating,  courseTypeId, isActive,
+						rating,
+						courseTypeId,
+						isActive,
 					}),
 				}
 			);
@@ -368,7 +370,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			}))
 		);
 		setEditRating(course.rating); // Añadir esta línea
-		setCourseTypeId(course.courseTypeId ?? null);  // <-- ¡Agrega esto!
+		setCourseTypeId(course.courseTypeId ?? null); // <-- ¡Agrega esto!
 		setIsModalOpen(true);
 		setIsActive(course.isActive ?? true);
 	};
@@ -675,7 +677,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</Badge>
 								</div>
 								<div className="flex flex-col">
-									<h2 className={`text-lg font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}>
+									<h2
+										className={`text-lg font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+									>
 										Tipo de curso:
 									</h2>
 									<Badge
@@ -683,6 +687,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.courseTypeName ?? 'No especificado'}
+									</Badge>
+								</div>
+							</div>
+							<br>
+							</br>
+							<div className="grid grid-cols-4">
+								<div className="flex flex-col">
+									<h2
+										className={`text-lg font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+									>
+										Estado:
+									</h2>
+									<Badge
+										variant="outline"
+										className={`ml-1 w-fit border ${
+											course.isActive
+												? 'border-green-500 text-green-500'
+												: 'border-red-500 text-red-500'
+										} bg-background hover:bg-black/70`}
+									>
+										{course.isActive ? 'Activo' : 'Inactivo'}
 									</Badge>
 								</div>
 
@@ -727,9 +752,35 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			/>
 			<ModalFormCourse
 				isOpen={isModalOpen}
-				onSubmitAction={(id, title, description, file, categoryid, modalidadesid, nivelid, rating, addParametros, coverImageKey, fileName, courseTypeId) =>
-					handleUpdateCourse(id, title, description, file, categoryid, modalidadesid, nivelid, addParametros, coverImageKey, fileName, rating, courseTypeId)
-				  }
+				onSubmitAction={(
+					id,
+					title,
+					description,
+					file,
+					categoryid,
+					modalidadesid,
+					nivelid,
+					rating,
+					addParametros,
+					coverImageKey,
+					fileName,
+					courseTypeId
+				) =>
+					handleUpdateCourse(
+						id,
+						title,
+						description,
+						file,
+						categoryid,
+						modalidadesid,
+						nivelid,
+						addParametros,
+						coverImageKey,
+						fileName,
+						rating,
+						courseTypeId
+					)
+				}
 				editingCourseId={course.id}
 				title={editTitle}
 				description={editDescription}
@@ -756,10 +807,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setRating={setEditRating} // Añadir esta línea
 				onCloseAction={() => setIsModalOpen(false)}
 				uploading={false} // Añadir esta línea
-				courseTypeId={courseTypeId}   // usa el estado que ya tienes
+				courseTypeId={courseTypeId} // usa el estado que ya tienes
 				setCourseTypeId={setCourseTypeId}
 				isActive={isActive}
-     			setIsActive={setIsActive}
+				setIsActive={setIsActive}
 			/>
 		</div>
 	);

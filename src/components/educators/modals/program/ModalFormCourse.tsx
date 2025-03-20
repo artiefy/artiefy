@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import NivelDropdown from '~/components/educators/layout/NivelDropdown';
+import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
+
 import { Button } from '~/components/educators/ui/button';
 import {
 	Dialog,
@@ -721,6 +723,16 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			className="mt-1 w-full"
 		/>
 	</div>
+	<div className="mx-auto flex w-10/12 flex-col gap-2">
+		<label
+			htmlFor="courseTypes"
+			className="text-left text-lg font-medium text-primary"
+		>
+			Esta activo?
+		</label>
+		<ActiveDropdown isActive={isActive} setIsActive={setIsActive} />
+	</div>
+
 </div>
 
 					<div>
