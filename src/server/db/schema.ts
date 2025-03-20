@@ -54,6 +54,23 @@ export const nivel = pgTable('nivel', {
 	description: text('description').notNull(),
 });
 
+// Modificar la tabla courseTypes
+export const courseTypes = pgTable('course_types', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: text('description'),
+	requiredSubscriptionLevel: varchar('required_subscription_level', {
+		length: 255,
+		enum: ['none', 'pro', 'premium'],
+	}).notNull(),
+	isPurchasableIndividually: boolean('is_purchasable_individually').default(
+		false
+	),
+	price: integer('price'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 // Tabla de cursos
 export const courses = pgTable('courses', {
 	id: serial('id').primaryKey(),
@@ -76,6 +93,11 @@ export const courses = pgTable('courses', {
 	nivelid: integer('nivelid')
 		.references(() => nivel.id)
 		.notNull(),
+	courseTypeId: integer('course_type_id')
+		.references(() => courseTypes.id)
+		.notNull(),
+	individualPrice: integer('individual_price'), // Precio individual si es curso de pago
+	requiresProgram: boolean('requires_program').default(false),
 });
 
 // Tabla de tipos de actividades
@@ -395,7 +417,11 @@ export const materiasRelations = relations(materias, ({ one }) => ({
 	}),
 }));
 
-// Add courses relations for materias
+// Actualizar las relaciones
+export const courseTypesRelations = relations(courseTypes, ({ many }) => ({
+	courses: many(courses),
+}));
+
 export const coursesRelations = relations(courses, ({ many, one }) => ({
 	lessons: many(lessons),
 	enrollments: many(enrollments),
@@ -418,6 +444,10 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
 	}),
 	coursesTaken: many(coursesTaken),
 	materias: many(materias), // Asegurarnos que esta relación está presente
+	courseType: one(courseTypes, {
+		fields: [courses.courseTypeId],
+		references: [courseTypes.id],
+	}),
 }));
 
 // Tabla de notas

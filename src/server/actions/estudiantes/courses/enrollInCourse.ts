@@ -9,11 +9,14 @@ import {
 	enrollments,
 	lessons,
 	userLessonsProgress,
+	courses,
 } from '~/server/db/schema';
+
+import type { EnrollmentResponse, SubscriptionLevel } from '~/types';
 
 export async function enrollInCourse(
 	courseId: number
-): Promise<{ success: boolean; message: string }> {
+): Promise<EnrollmentResponse> {
 	try {
 		const user = await currentUser();
 
@@ -25,6 +28,73 @@ export async function enrollInCourse(
 		}
 
 		const userId = user.id;
+
+		// Get course with type
+		const course = await db.query.courses.findFirst({
+			where: eq(courses.id, courseId),
+			with: {
+				courseType: true,
+			},
+		});
+
+		if (!course) {
+			return { success: false, message: 'Curso no encontrado' };
+		}
+
+		 // Add type assertion for requiredSubscriptionLevel
+		const subscriptionLevel = course.courseType?.requiredSubscriptionLevel as SubscriptionLevel;
+
+		// Allow enrollment for free courses without subscription check
+		if (subscriptionLevel === 'none') {
+			// Process enrollment but maintain progressive unlocking
+			await db.insert(enrollments).values({
+				userId: user.id,
+				courseId: courseId,
+				enrolledAt: new Date(),
+				completed: false,
+			});
+
+			// Configure lesson progress with progressive unlocking
+			const courseLessons = await db.query.lessons.findMany({
+				where: eq(lessons.courseId, courseId),
+				orderBy: (lessons, { asc }) => [asc(lessons.title)],
+			});
+
+			for (const courseLesson of courseLessons) {
+				const isFirstLesson = courseLesson.id === courseLessons[0].id;
+
+				await db.insert(userLessonsProgress).values({
+					userId: userId,
+					lessonId: courseLesson.id,
+					progress: 0,
+					isCompleted: false,
+					isLocked: !isFirstLesson, // Only first lesson unlocked
+					isNew: isFirstLesson,
+					lastUpdated: new Date(),
+				});
+			}
+
+			return { success: true, message: 'Inscripción exitosa' };
+		}
+
+		// For subscription-based courses, check subscription level
+		const requiredLevel = course.courseType?.requiredSubscriptionLevel;
+		if (requiredLevel && requiredLevel !== 'none' as SubscriptionLevel) {
+			const dbUser = await db.query.users.findFirst({
+				where: eq(users.id, userId),
+			});
+
+			if (
+				!dbUser?.subscriptionStatus ||
+				dbUser.subscriptionStatus !== 'active'
+			) {
+				return {
+					success: false,
+					message: 'Se requiere una suscripción activa',
+					requiresSubscription: true,
+				};
+			}
+		}
 
 		// 1. Primero, asegurarse de que el usuario existe en nuestra base de datos
 		let dbUser = await db.query.users.findFirst({
@@ -103,39 +173,19 @@ export async function enrollInCourse(
 			orderBy: (lessons, { asc }) => [asc(lessons.title)],
 		});
 
+		 // Initialize lessons progress - mismo comportamiento para todos los tipos de curso
 		for (const courseLesson of courseLessons) {
-			// Verificar si ya existe un progreso para esta lección
-			const existingProgress = await db.query.userLessonsProgress.findFirst({
-				where: and(
-					eq(userLessonsProgress.userId, userId),
-					eq(userLessonsProgress.lessonId, courseLesson.id)
-				),
-			});
+			const isFirstLesson = courseLesson.id === courseLessons[0].id;
 
-			// Solo crear el progreso si no existe
-			if (!existingProgress) {
-				await db.insert(userLessonsProgress).values({
-					userId: userId,
-					lessonId: courseLesson.id,
-					progress: 0,
-					isCompleted: false,
-					isLocked: courseLesson.id !== courseLessons[0].id, // Desbloquear solo la primera lección
-					isNew: courseLesson.id === courseLessons[0].id, // Marcar como nueva solo la primera lección
-					lastUpdated: new Date(),
-				});
-			} else {
-				// Si ya existe, actualizar isNew a true solo para las lecciones desbloqueadas y con progreso menor al 1%
-				await db
-					.update(userLessonsProgress)
-					.set({ isNew: existingProgress.progress < 1 })
-					.where(
-						and(
-							eq(userLessonsProgress.userId, userId),
-							eq(userLessonsProgress.lessonId, courseLesson.id),
-							eq(userLessonsProgress.isLocked, true)
-						)
-					);
-			}
+			await db.insert(userLessonsProgress).values({
+				userId: userId,
+				lessonId: courseLesson.id,
+				progress: 0,
+				isCompleted: false,
+				isLocked: !isFirstLesson, // Solo la primera lección desbloqueada, independiente del tipo de curso
+				isNew: isFirstLesson,
+				lastUpdated: new Date(),
+			});
 		}
 
 		return {

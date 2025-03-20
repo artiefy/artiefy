@@ -58,8 +58,9 @@ export function CourseContent({
 		return course.lessons
 			.sort((a, b) => a.title.localeCompare(b.title))
 			.map((lesson, index) => {
-				const isUnlocked =
-					isEnrolled && !lesson.isLocked && isSubscriptionActive;
+				const isUnlocked = isEnrolled && 
+					((course.courseType?.requiredSubscriptionLevel === 'none' && !lesson.isLocked) || 
+					(isSubscriptionActive && !lesson.isLocked));
 
 				const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
 					e.preventDefault();
@@ -254,6 +255,7 @@ export function CourseContent({
 		isSubscriptionActive,
 		router,
 		toggleLesson,
+		course.courseType?.requiredSubscriptionLevel,
 	]);
 
 	const isFullyCompleted = useMemo(() => {
@@ -261,6 +263,31 @@ export function CourseContent({
 			(lesson) => lesson.porcentajecompletado === 100
 		);
 	}, [course.lessons]);
+
+	const shouldShowSubscriptionAlert = useMemo(() => {
+		return (
+			isEnrolled &&
+			!isSubscriptionActive &&
+			course.courseType?.requiredSubscriptionLevel !== 'none'
+		);
+	}, [
+		isEnrolled,
+		isSubscriptionActive,
+		course.courseType?.requiredSubscriptionLevel,
+	]);
+
+	const canAccessContent = useMemo(() => {
+		// For free courses, still need enrollment but no subscription
+		if (course.courseType?.requiredSubscriptionLevel === 'none') {
+			return isEnrolled;
+		}
+		// For paid courses, need both enrollment and active subscription
+		return isEnrolled && isSubscriptionActive;
+	}, [
+		isEnrolled,
+		isSubscriptionActive,
+		course.courseType?.requiredSubscriptionLevel,
+	]);
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
@@ -282,7 +309,7 @@ export function CourseContent({
 					expandedLesson !== null ? 'text-orange-500' : 'text-gray-400'
 				}`}
 			/>
-			{isEnrolled && !isSubscriptionActive && (
+			{shouldShowSubscriptionAlert && (
 				<Alert
 					variant="destructive"
 					className="mb-6 border-2 border-red-500 bg-red-50"
@@ -320,7 +347,7 @@ export function CourseContent({
 
 			<div
 				className={
-					isEnrolled && !isSubscriptionActive
+					!canAccessContent
 						? 'pointer-events-none opacity-50 blur-[1px] filter'
 						: ''
 				}

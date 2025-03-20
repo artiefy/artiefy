@@ -56,11 +56,13 @@ export async function generateMetadata(
 	{ params }: { params: { id: string } },
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
+	// Await params before using
+	const { id } = await Promise.resolve(params);
 	const { userId } = await auth();
 
 	// Fetch data in parallel
 	const [course, parentMetadata] = await Promise.all([
-		getCourseById(Number(params.id), userId),
+		getCourseById(Number(id), userId),
 		parent,
 	]);
 
@@ -73,7 +75,7 @@ export async function generateMetadata(
 
 	// Fix: parentMetadata is already resolved from Promise.all
 	const previousImages = parentMetadata.openGraph?.images ?? [];
-	const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}/opengraph-image`;
+	const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}/opengraph-image`;
 
 	return {
 		metadataBase: new URL(
@@ -84,7 +86,7 @@ export async function generateMetadata(
 		openGraph: {
 			type: 'website',
 			locale: 'es_ES',
-			url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}`,
+			url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
 			siteName: 'Artiefy',
 			title: `${course.title} | Artiefy`,
 			description: course.description ?? 'No hay descripción disponible.',
@@ -107,18 +109,21 @@ export async function generateMetadata(
 			site: '@artiefy',
 		},
 		alternates: {
-			canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${params.id}`,
+			canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
 		},
 	};
 }
 
 // Componente principal de la página del curso
-export default function Page({ params }: { params: PageParams }) {
+export default async function Page({ params }: { params: PageParams }) {
+	// Await params
+	const { id } = await Promise.resolve(params);
+
 	return (
 		<div>
 			<Header />
 			<Suspense fallback={<CourseDetailsSkeleton />}>
-				<CourseContent id={params.id} />
+				<CourseContent id={id} />
 			</Suspense>
 			<Footer />
 		</div>

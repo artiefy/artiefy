@@ -76,6 +76,12 @@ const fetcher = async (url: string): Promise<GradesApiResponse> => {
 	return data;
 };
 
+// Add error type
+interface FetchError {
+	error?: string;
+	message?: string;
+}
+
 export function CourseHeader({
 	course,
 	totalStudents,
@@ -86,13 +92,17 @@ export function CourseHeader({
 	subscriptionEndDate,
 	onEnroll,
 	onUnenroll,
-}: CourseHeaderProps) {
+}: Omit<CourseHeaderProps, 'props'>) {
 	const { user } = useUser();
 	const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
 	const [isLoadingGrade, setIsLoadingGrade] = useState(true);
 
 	// Replace useEffect with useSWR
-	const { data: gradesData, error } = useSWR<GradesApiResponse, Error>(
+	// Improve error handling with proper types
+	const { data: gradesData, error: gradesError } = useSWR<
+		GradesApiResponse,
+		FetchError
+	>(
 		user?.id
 			? `/api/grades/materias?userId=${user.id}&courseId=${course.id}`
 			: null,
@@ -121,17 +131,19 @@ export function CourseHeader({
 	}, [gradesData]);
 
 	// Update loading state based on SWR
+	// Update loading state with proper error handling
 	useEffect(() => {
-		setIsLoadingGrade(!gradesData && !error);
-	}, [gradesData, error]);
+		setIsLoadingGrade(!gradesData && !gradesError);
+	}, [gradesData, gradesError]);
 
 	// Debug logs
+	// Debug logs with proper error handling
 	useEffect(() => {
 		console.log('SWR State:', {
 			gradesData,
 			currentFinalGrade,
 			isLoadingGrade,
-			error,
+			error: gradesError?.message ?? 'No error',
 			shouldShowCertificate:
 				isEnrolled &&
 				course.progress === 100 &&
@@ -142,12 +154,13 @@ export function CourseHeader({
 		gradesData,
 		currentFinalGrade,
 		isLoadingGrade,
-		error,
+		gradesError,
 		isEnrolled,
 		course.progress,
 	]);
 
 	// Add debug log for all conditions
+	// Add debug log with safer type checking
 	useEffect(() => {
 		console.log('Debug Certificate Button Conditions:', {
 			isEnrolled,
@@ -376,11 +389,10 @@ export function CourseHeader({
 							</div>
 						) : (
 							<Button
-								onClick={onEnroll}
+								onClick={onEnroll} // Use onEnroll directly from props
 								disabled={isEnrolling}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
-								<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 									<div className="relative z-10 flex items-center justify-center space-x-2">
 										{isEnrolling ? (
@@ -390,8 +402,11 @@ export function CourseHeader({
 											/>
 										) : (
 											<>
-												<span className="transition-all duration-500 group-hover:translate-x-1">
-													Inscribirse al curso
+												<span>
+													{course.courseType?.requiredSubscriptionLevel ===
+													'none'
+														? 'Inscribirse Gratis'
+														: 'Inscribirse al Curso'}
 												</span>
 												<svg
 													className="size-6 transition-transform duration-500 group-hover:translate-x-1"

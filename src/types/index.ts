@@ -31,6 +31,9 @@ export interface BaseCourse {
 	modalidad?: Modalidad;
 }
 
+// Add this type
+export type SubscriptionLevel = 'none' | 'pro' | 'premium';
+
 // Keep the full Course interface for other uses
 export interface Course extends BaseCourse {
 	totalStudents: number;
@@ -41,6 +44,12 @@ export interface Course extends BaseCourse {
 	isNew?: boolean;
 	requerimientos?: string[];
 	materias?: CourseMateria[];
+	isFree?: boolean;
+	requiresSubscription?: boolean;
+	courseType?: {
+		requiredSubscriptionLevel: SubscriptionLevel;
+		isPurchasableIndividually: boolean | null; // Updated to allow null
+	};
 }
 
 // Add new interface for course materias
@@ -373,4 +382,11 @@ export interface Parameter {
 	porcentaje: number;
 	courseId: number;
 	course?: Course;
+}
+
+// Add new type for enrollment response
+export interface EnrollmentResponse {
+	success: boolean;
+	message: string;
+	requiresSubscription?: boolean;
 }

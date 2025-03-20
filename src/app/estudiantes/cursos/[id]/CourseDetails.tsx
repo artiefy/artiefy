@@ -117,21 +117,37 @@ export default function CourseDetails({
 		setEnrollmentError(null);
 
 		try {
-			// Verificar suscripción activa
+			// Verificar si el curso es gratuito
+			if (initialCourse.courseType?.requiredSubscriptionLevel === 'none') {
+				// Inscripción directa para cursos gratuitos
+				const result = await enrollInCourse(course.id);
+				if (result.success) {
+					setTotalStudents((prev) => prev + 1);
+					setIsEnrolled(true);
+					toast.success('¡Te has inscrito exitosamente!');
+
+					// Actualizar curso
+					const updatedCourse = await getCourseById(course.id, userId);
+					if (updatedCourse) {
+						setCourse({
+							...updatedCourse,
+							lessons: updatedCourse.lessons ?? [],
+						});
+					}
+				} else {
+					throw new Error(result.message);
+				}
+				return;
+			}
+
+			// Para cursos no gratuitos, verificar suscripción
 			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
 			const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
 				| string
 				| null;
-
-			// Debug logs
-			console.log('Current subscription status:', subscriptionStatus);
-			console.log('Subscription End Date:', subscriptionEndDate);
-
 			const isSubscriptionActive =
 				subscriptionStatus === 'active' &&
 				(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
-
-			console.log('Is subscription active:', isSubscriptionActive);
 
 			if (!isSubscriptionActive) {
 				toast.error('Suscripción requerida', {

@@ -42,7 +42,7 @@
     // TypeScript Configuration
     "typescript.tsdk": "./node_modules/typescript/lib",
     "typescript.tsserver.maxTsServerMemory": 4096,
-    "typescript.tsserver.nodePath": "C:\\Program Files\\nodejs\\node.exe",
+    "typescript.tsserver.nodePath": "C:\\Users\\ADMIN\\AppData\\Local\\fnm_multishells\\9168_1742401119834\\node.exe",
     "typescript.tsserver.watchOptions": {
       "watchFile": "useFsEvents",
       "watchDirectory": "useFsEvents",

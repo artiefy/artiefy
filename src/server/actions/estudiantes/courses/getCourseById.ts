@@ -25,6 +25,7 @@ export async function getCourseById(
 				},
 				enrollments: true,
 				materias: true, // Añadir esta línea para incluir las materias
+				courseType: true, // Add this relation
 			},
 		});
 
@@ -98,6 +99,17 @@ export async function getCourseById(
 				? {
 						...course.category,
 						is_featured: course.category.is_featured ?? null,
+					}
+				: undefined,
+			isFree: course.courseType?.requiredSubscriptionLevel === 'none',
+			requiresSubscription:
+				course.courseType?.requiredSubscriptionLevel !== 'none',
+			courseType: course.courseType
+				? {
+						requiredSubscriptionLevel:
+							course.courseType.requiredSubscriptionLevel,
+						isPurchasableIndividually:
+							course.courseType.isPurchasableIndividually ?? false,
 					}
 				: undefined,
 		};
