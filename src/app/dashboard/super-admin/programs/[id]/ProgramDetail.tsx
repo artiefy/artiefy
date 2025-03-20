@@ -95,6 +95,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicosconst { user } = useUser(); // 🔥 Agrega esta línea en el componente
 	const { user } = useUser(); // 🔥 Agrega esta línea en el componente
 	const [uploading, setUploading] = useState(false); // Nuevo estado para la carga
+	const [isActive, setIsActive] = useState(true);
+
 
 	const [editParametros, setEditParametros] = useState<
 		{
@@ -117,6 +119,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	const programIdString2 = programIdString ?? ''; // Verificar si el id del programa es nulo
 	const programIdNumber = parseInt(programIdString2); // Convertir el id del programa a número
 	const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null); // interfaz de cursos
+	const [selectedCourseType, setSelectedCourseType] = useState<number | null>(null);
 
 	const [newCourse, setNewCourse] = useState<CourseData>({
 		id: 0,
@@ -367,7 +370,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
-		subjects: { id: number }[]
+		subjects: { id: number }[],
+		programId: number,
+		isActive: boolean
 	) => {
 		if (!user) return;
 	
@@ -423,6 +428,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					nivelid,
 					rating,
 					subjects,
+					courseTypeId: selectedCourseType, programId,
+					isActive
 				}),
 			});
 	
@@ -650,7 +657,11 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				setSubjects={setSubjects}
 				onCloseAction={handleCloseCourseModal}
 				uploading={false}
-				programId={programIdNumber} // 🔥 Asegurar que pase el programId aquí
+				programId={programIdNumber}
+				selectedCourseType={selectedCourseType}
+    			setSelectedCourseType={setSelectedCourseType} 
+				isActive={isActive}                    // ✅ Agrega esto
+				setIsActive={setIsActive}
 			/>
 
 			

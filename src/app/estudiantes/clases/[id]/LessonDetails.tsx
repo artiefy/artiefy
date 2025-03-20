@@ -1,11 +1,14 @@
 'use client';
 import { useState, useEffect } from 'react';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
 import { formatInTimeZone } from 'date-fns-tz';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
+
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';

@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+
 import Image from 'next/image';
 import { useRouter, useSearchParams, useParams } from 'next/navigation'; // Cambiar la importación de useRouter
+
+import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
+
 import SelectParametro from '~/components/educators/layout/SelectParametro';
 import TypeActDropdown from '~/components/educators/layout/TypesActDropdown';
 import {
@@ -486,7 +489,7 @@ const Page: React.FC = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative mx-auto h-auto w-full md:w-3/5 lg:w-3/5">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 				<div className="relative mt-5 h-auto w-full justify-center">
 					<form
 						className="mx-auto w-full justify-center rounded-lg bg-white p-4"
@@ -526,7 +529,7 @@ const Page: React.FC = () => {
 											>
 												<span
 													className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
-												></span>
+												 />
 											</span>
 										</label>
 										<span className="mt-1 text-sm text-gray-400">
@@ -606,7 +609,7 @@ const Page: React.FC = () => {
 											>
 												<span
 													className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
-												></span>
+												 />
 											</span>
 										</label>
 										<span className="mt-1 text-sm text-gray-400">

@@ -11,7 +11,6 @@ import {
 } from '~/server/db/schema';
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
-
 import { deleteLessonsByCourseId } from './lessonsModels';
 
 export interface Lesson {

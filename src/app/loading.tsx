@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+
 import Image from 'next/image';
 import '~/styles/loading.css';
 
@@ -18,12 +19,12 @@ const Loading: React.FC = () => {
 			<div className={`loading-card ${launch ? 'loading-launch' : ''}`}>
 				<div className="loading-card-info">
 					<div className="loading-wrapper">
-						<div className="loading-circle"></div>
-						<div className="loading-circle"></div>
-						<div className="loading-circle"></div>
-						<div className="loading-shadow"></div>
-						<div className="loading-shadow"></div>
-						<div className="loading-shadow"></div>
+						<div className="loading-circle" />
+						<div className="loading-circle" />
+						<div className="loading-circle" />
+						<div className="loading-shadow" />
+						<div className="loading-shadow" />
+						<div className="loading-shadow" />
 					</div>
 					<span className="loading-animate-pulse">CARGANDO!</span>
 				</div>

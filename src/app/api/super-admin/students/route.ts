@@ -1,5 +1,7 @@
-import { eq, count } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
+import { eq, count } from "drizzle-orm";
+
 import { db } from "~/server/db/index";
 import { userTimeTracking, enrollments, users, userLessonsProgress, lessons } from "~/server/db/schema";
 

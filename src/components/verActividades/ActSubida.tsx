@@ -1,11 +1,14 @@
 'use client';
 import type React from 'react';
 import { useState, useEffect } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
+
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 import { Input } from '~/components/educators/ui/input';
+
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
 interface QuestionListProps {

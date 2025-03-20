@@ -1,10 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import { toast } from 'sonner';
+
 import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
+
 import type { Completado2 } from '~/types/typesActi';
 
 //Componente de preguntas abiertas para la actividad de completado2 'No completada'

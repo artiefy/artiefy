@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
+
 import nodemailer from 'nodemailer';
+
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 

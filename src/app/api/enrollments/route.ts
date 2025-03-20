@@ -1,5 +1,7 @@
-import { eq, inArray, and } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+
+import { eq, inArray, and } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { enrollments, users } from '~/server/db/schema';
 

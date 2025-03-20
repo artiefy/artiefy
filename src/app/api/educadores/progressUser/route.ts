@@ -1,4 +1,5 @@
 import { type NextRequest } from 'next/server';
+
 import { getUserProgressByCourseId } from '~/models/educatorsModels/lessonsModels';
 
 export async function GET(req: NextRequest) {

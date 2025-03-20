@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getAllCourses } from '~/models/super-adminModels/courseModelsSuperAdmin';
 import { getTotalStudents } from '~/models/super-adminModels/studentModelSuperAdmin';
 

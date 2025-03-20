@@ -1,10 +1,11 @@
+import { NextResponse } from 'next/server';
+
 import {
 	CreateMultipartUploadCommand,
 	DeleteObjectCommand,
 	S3Client,
 } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
-import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
 const MAX_SIMPLE_UPLOAD_SIZE = 100 * 1024 * 1024; // 100 MB

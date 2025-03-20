@@ -1,5 +1,6 @@
 'use client'; // ✅ Es necesario porque usa React Hooks
 import { useUser } from '@clerk/nextjs';
+
 import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 import usePageTimeTracker from '~/hooks/usePageTimeTracker';
 

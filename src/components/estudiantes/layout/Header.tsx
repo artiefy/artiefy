@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+
+import Image from 'next/image';
+import Link from 'next/link';
+
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
-import Image from 'next/image';
-import Link from 'next/link';
+
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
@@ -222,7 +225,7 @@ export function Header() {
 										) : (
 											<>
 												Iniciar Sesión
-												<span className="button-hover-effect absolute top-0 left-0 h-full w-0 skew-x-[-20deg] bg-white opacity-0 shadow-[0_0_50px_30px_white] transition-all duration-500"></span>
+												<span className="button-hover-effect absolute top-0 left-0 h-full w-0 skew-x-[-20deg] bg-white opacity-0 shadow-[0_0_50px_30px_white] transition-all duration-500" />
 											</>
 										)}
 									</span>

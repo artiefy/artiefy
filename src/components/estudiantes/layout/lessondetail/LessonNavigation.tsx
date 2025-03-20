@@ -1,5 +1,6 @@
 'use client';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+
 import { Button } from '~/components/estudiantes/ui/button';
 
 interface LessonWithProgress {

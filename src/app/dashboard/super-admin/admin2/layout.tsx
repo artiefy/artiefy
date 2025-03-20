@@ -3,6 +3,7 @@
 import { Inter } from 'next/font/google';
 import '~/styles/globals.css';
 import { usePathname } from 'next/navigation';
+
 import { ThemeEffect } from '~/app/dashboard/super-admin/components/admin/ui/theme-effect';
 import { ThemeProvider } from '~/app/dashboard/super-admin/components/admin/ui/theme-provider';
 

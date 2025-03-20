@@ -1,10 +1,14 @@
 'use server';
 
-import { Redis } from '@upstash/redis';
 import { unstable_cache } from 'next/cache';
+
+import { Redis } from '@upstash/redis';
+
 import { getRelatedActivities } from '~/server/actions/estudiantes/activities/getRelatedActivities';
-import type { Activity, Question } from '~/types';
+
 import { getUserActivityProgress } from './getUserActivityProgress';
+
+import type { Activity, Question } from '~/types';
 
 const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,

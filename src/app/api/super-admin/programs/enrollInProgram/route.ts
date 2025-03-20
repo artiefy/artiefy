@@ -1,116 +1,99 @@
-'use server';
-
-import { currentUser } from '@clerk/nextjs/server';
-import { eq, and } from 'drizzle-orm';
-import { type NextApiRequest, type NextApiResponse } from 'next';
-
+import { NextResponse } from 'next/server';
+import { eq, inArray, and } from 'drizzle-orm';
 import { db } from '~/server/db';
-import { users, enrollmentPrograms } from '~/server/db/schema';
+import { enrollmentPrograms, users, programas } from '~/server/db/schema';
 
-export async function enrollInProgram(
-	programId: number
-): Promise<{ success: boolean; message: string }> {
+const BATCH_SIZE = 100;
+
+
+export async function GET() {
 	try {
-		const user = await currentUser();
-		console.log('Current user:', user); // Debugging log
-
-		if (!user?.id) {
-			return {
-				success: false,
-				message: 'Usuario no autenticado',
-			};
-		}
-
-		const userId = user.id;
-
-		// Verificar si el usuario tiene un plan premium
-		const dbUser = await db.query.users.findFirst({
-			where: eq(users.id, userId),
-		});
-		console.log('Database user:', dbUser); // Debugging log
-
-		if (!dbUser?.subscriptionStatus || dbUser.subscriptionStatus !== 'active') {
-			return {
-				success: false,
-				message: 'Se requiere una suscripción premium activa',
-			};
-		}
-
-		// Verificar si ya está inscrito
-		const existingEnrollment = await db.query.enrollmentPrograms.findFirst({
-			where: and(
-				eq(enrollmentPrograms.userId, userId),
-				eq(enrollmentPrograms.programaId, programId)
-			),
-		});
-		console.log('Existing enrollment:', existingEnrollment); // Debugging log
-
-		if (existingEnrollment) {
-			return {
-				success: false,
-				message: 'Ya estás inscrito en este programa',
-			};
-		}
-
-		// Crear la inscripción
-		await db.insert(enrollmentPrograms).values({
-			userId: userId,
-			programaId: programId,
-			enrolledAt: new Date(),
-			completed: false,
-		});
-		console.log('Enrollment created'); // Debugging log
-
-		return {
-			success: true,
-			message: 'Inscripción exitosa al programa',
-		};
+		const allPrograms = await db.select().from(programas);
+		return NextResponse.json(allPrograms);
 	} catch (error) {
-		console.error('Error en enrollInProgram:', error);
-		return {
-			success: false,
-			message: error instanceof Error ? error.message : 'Error desconocido',
-		};
+		console.error('Error al obtener programas:', error);
+		return NextResponse.json(
+			{ error: 'Error al obtener programas' },
+			{ status: 500 }
+		);
 	}
 }
 
-export async function isUserEnrolledInProgram(
-	programId: number,
-	userId: string
-): Promise<boolean> {
+export async function POST(request: Request) {
 	try {
-		console.log('Querying enrollment for user:', { programId, userId }); // Debugging log
-		const existingEnrollment = await db.query.enrollmentPrograms.findFirst({
-			where: and(
-				eq(enrollmentPrograms.userId, userId),
-				eq(enrollmentPrograms.programaId, programId)
-			),
+		const body = (await request.json()) as {
+			programId: string;
+			userIds: string[];
+		};
+
+		const { programId, userIds } = body;
+		const parsedProgramId = Number(programId);
+
+		if (isNaN(parsedProgramId)) {
+			return NextResponse.json({ error: 'programId inválido' }, { status: 400 });
+		}
+
+		if (!Array.isArray(userIds) || userIds.some((id) => !id.trim())) {
+			return NextResponse.json({ error: 'userIds inválidos' }, { status: 400 });
+		}
+
+		const existingUsers = await db
+			.select({ id: users.id })
+			.from(users)
+			.where(inArray(users.id, userIds))
+			.execute();
+
+		const validUserIds = new Set(existingUsers.map((u) => u.id));
+		const filteredUserIds = userIds.filter((id) => validUserIds.has(id));
+
+		if (filteredUserIds.length === 0) {
+			return NextResponse.json(
+				{ error: 'Ninguno de los usuarios existe.' },
+				{ status: 400 }
+			);
+		}
+
+		const existingEnrollments = await db
+			.select({ userId: enrollmentPrograms.userId })
+			.from(enrollmentPrograms)
+			.where(
+				and(
+					eq(enrollmentPrograms.programaId, parsedProgramId),
+					inArray(enrollmentPrograms.userId, filteredUserIds)
+				)
+			)
+			.execute();
+
+		const existingUserIds = new Set(existingEnrollments.map((e) => e.userId));
+		const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
+
+		if (newUsers.length > 0) {
+			for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
+				const batch = newUsers.slice(i, i + BATCH_SIZE);
+				await db.insert(enrollmentPrograms).values(
+					batch.map((userId) => ({
+						userId,
+						programaId: parsedProgramId,
+						enrolledAt: new Date(),
+						completed: false,
+					}))
+				);
+			}
+		}
+
+		const message = `Se asignaron ${newUsers.length} estudiantes al programa. ${existingUserIds.size} ya estaban inscritos.`;
+
+		return NextResponse.json({
+			added: newUsers.length,
+			alreadyEnrolled: existingUserIds.size,
+			message,
 		});
-		return !!existingEnrollment;
 	} catch (error) {
-		console.error('Error checking program enrollment:', error);
-		throw new Error('Failed to check program enrollment status');
+		console.error('Error al asignar estudiantes a programa:', error);
+		return NextResponse.json(
+			{ error: error instanceof Error ? error.message : 'Error desconocido' },
+			{ status: 500 }
+		);
 	}
 }
 
-export default async function handler(
-	req: NextApiRequest,
-	res: NextApiResponse
-) {
-	console.log('Request method:', req.method); // Debugging log
-	if (req.method !== 'POST') {
-		res.setHeader('Allow', ['POST']);
-		return res
-			.status(405)
-			.json({ message: `Method ${req.method} not allowed` });
-	}
-
-	const { programId } = req.body as { programId: number };
-	console.log('Enrolling in program:', programId); // Debugging log
-	const result = await enrollInProgram(programId);
-	if (result.success) {
-		res.status(200).json(result);
-	} else {
-		res.status(400).json(result);
-	}
-}

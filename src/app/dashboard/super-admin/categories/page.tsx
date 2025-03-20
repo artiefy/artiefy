@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { Loader2, X, Edit, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Category {
@@ -186,7 +187,7 @@ const ModalForm = ({
   setDescription: (description: string) => void;
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center">
-    <div className="absolute inset-0 bg-gradient-to-b from-[#01142B] to-[#01142B] opacity-80"></div>
+    <div className="absolute inset-0 bg-gradient-to-b from-[#01142B] to-[#01142B] opacity-80" />
     <div className="relative z-10 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-white">{title}</h2>
@@ -252,7 +253,7 @@ const TableComponent = ({ data, onEdit, onDelete }: { data: Category[]; onEdit: 
 // ✅ Modal Confirmación de Eliminación
 const ConfirmDeleteModal = ({ item, onClose, onConfirm }: { item: { id: number; name: string }; onClose: () => void; onConfirm: () => void }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black opacity-80"></div>
+      <div className="absolute inset-0 bg-black opacity-80" />
       <div className="relative z-10 w-full max-w-sm rounded-lg bg-gray-800 p-6 shadow-lg">
         <h2 className="text-lg font-bold text-white">¿Eliminar &quot;{item.name}&quot;?</h2>
         <p className="mt-2 text-gray-300">Esta acción no se puede deshacer.</p>

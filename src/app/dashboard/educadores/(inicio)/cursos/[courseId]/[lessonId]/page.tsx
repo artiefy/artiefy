@@ -1,10 +1,13 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
-import { useUser } from '@clerk/nextjs';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+
+import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
+
 import ListActividadesEducator from '~/components/educators/layout/ListActividades';
 import ViewFiles from '~/components/educators/layout/ViewFiles';
 import ModalFormLessons from '~/components/educators/modals/ModalFormLessons';
@@ -243,7 +246,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
@@ -322,7 +325,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					</BreadcrumbList>
 				</Breadcrumb>
 				<div className="group relative h-auto w-full">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 					<Card
 						className={`relative mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						style={{

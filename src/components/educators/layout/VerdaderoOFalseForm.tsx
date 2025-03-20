@@ -2,10 +2,13 @@
 
 import type React from 'react';
 import { useState, useEffect } from 'react';
+
 import { toast } from 'sonner';
+
 import { Button } from '~/components/educators/ui/button';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
+
 import type { VerdaderoOFlaso, OptionVOF } from '~/types/typesActi';
 
 //La validacion del porcentaje no se encuentra implementada

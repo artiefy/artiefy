@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courses, userLessonsProgress } from '~/server/db/schema';
+
 import type { Course } from '~/types';
 
 // Obtener un curso específico por ID

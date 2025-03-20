@@ -2,11 +2,14 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+
 import { useUser } from "@clerk/nextjs"
+
 import "~/styles/form.css"
 import BuyerInfoForm from "~/components/estudiantes/layout/BuyerInfoForm"
-import type { FormData, Product } from "~/types/payu"
 import { validateFormData } from "~/utils/paygateway/validation"
+
+import type { FormData, Product } from "~/types/payu"
 
 const PaymentForm: React.FC<{ selectedProduct: Product }> = ({ selectedProduct }) => {
   const { user } = useUser()

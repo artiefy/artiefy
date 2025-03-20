@@ -1,14 +1,15 @@
+import { type NextRequest, NextResponse } from 'next/server';
+
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
-import { type NextRequest, NextResponse } from 'next/server';
+
 import {
 	createActivity,
 	updateActivity,
 } from '~/models/educatorsModels/activitiesModels';
 import { db } from '~/server/db';
 import { activities, lessons } from '~/server/db/schema';
-
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 function respondWithError(message: string, status: number) {

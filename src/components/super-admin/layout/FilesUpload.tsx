@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 
-import { FilePlus2, FileVideo, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+
+import { FilePlus2, FileVideo, Image as ImageIcon } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
 
 interface FileUploadProps {

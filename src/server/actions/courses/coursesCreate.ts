@@ -1,9 +1,12 @@
+import { type NextRequest, NextResponse } from 'next/server';
+
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { type NextRequest, NextResponse } from 'next/server';
+
 import { db } from '~/server/db';
 import { courses, users } from '~/server/db/schema';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
+
 export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>

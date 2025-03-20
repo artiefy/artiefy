@@ -1,11 +1,14 @@
 'use client';
 import type React from 'react';
 import { useEffect, useState, useCallback } from 'react';
+
 import { Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
+
 import QuestionVOFForm from '~/components/educators/layout/VerdaderoOFalseForm';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
+
 import type { VerdaderoOFlaso } from '~/types/typesActi';
 
 // Propiedades del componente para la lista de preguntas

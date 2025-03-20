@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { updateCourse } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 export async function PUT(request: Request) {

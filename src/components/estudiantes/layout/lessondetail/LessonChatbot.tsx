@@ -98,9 +98,9 @@ const LessonChatBot: React.FC = () => {
 							<div className="flex justify-start">
 								<div className="rounded-lg bg-gray-100 p-3">
 									<div className="flex space-x-2">
-										<div className="loading-dot"></div>
-										<div className="loading-dot"></div>
-										<div className="loading-dot"></div>
+										<div className="loading-dot" />
+										<div className="loading-dot" />
+										<div className="loading-dot" />
 									</div>
 								</div>
 							</div>

@@ -1,10 +1,14 @@
 import { useState } from 'react';
+
 import { FaCheckCircle, FaLock, FaArrowDown } from 'react-icons/fa'; // Import FaCheckCircle and FaArrowDown
 import { PiArrowFatLineLeftFill } from "react-icons/pi"; // Import PiArrowFatLineLeftFill
+
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import type { Activity } from '~/types';
+
 import LessonActivityModal from './LessonActivityModal';
+
+import type { Activity } from '~/types';
 
 interface LessonActivitiesProps {
   activity: Activity | null;

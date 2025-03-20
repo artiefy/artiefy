@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { RocketLaunchIcon, StarIcon } from '@heroicons/react/24/solid';
+
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { RocketLaunchIcon, StarIcon } from '@heroicons/react/24/solid';
+
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
 	Carousel,

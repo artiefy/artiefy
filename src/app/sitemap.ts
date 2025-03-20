@@ -1,6 +1,6 @@
 import { type MetadataRoute } from 'next';
-import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 
+import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import { type Course as ImportedCourse } from '~/types';
 
 interface Course extends ImportedCourse {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+
 import { Button } from '~/components/educators/ui/button';
 import {
 	Dialog,
@@ -175,7 +176,7 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
 													<div
 														className="absolute top-0 left-0 h-6 rounded-full bg-green-500"
 														style={{ width: `${student.progress}%` }}
-													></div>
+													 />
 													<p className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
 														{student.progress}%
 													</p>

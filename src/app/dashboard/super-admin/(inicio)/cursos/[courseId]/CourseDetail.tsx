@@ -47,7 +47,10 @@ interface Course {
 	creatorId: string;
 	createdAt: string;
 	updatedAt: string;
-	rating: number; // Añadir esta línea
+	rating: number;
+	courseTypeId?: number | null;   // ✅ Agrega esto
+	courseTypeName?: string;
+	isActive: boolean; 
 }
 interface Materia {
 	id: number;
@@ -97,17 +100,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
 	const [materias, setMaterias] = useState<Materia[]>([]);
-	const [isEditing, setIsEditing] = useState(false); // Para activar modo edición
-	const [editedTitle, setEditedTitle] = useState('');
-	const [editedDescription, setEditedDescription] = useState('');
-	const [editedCategory, setEditedCategory] = useState<number | null>(null);
-	const [editedModalidad, setEditedModalidad] = useState<number | null>(null);
-	const [editedNivel, setEditedNivel] = useState<number | null>(null); // Replaced edited with editedNivel
-	const [editedInstructor, setEditedInstructor] = useState<string | null>(null);
-	const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Para manejar el menú desplegable de educadores
-	const [categorias, setCategorias] = useState<{ id: number; name: string }[]>(
-		[]
-	);
+	const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
+
 	const BADGE_GRADIENTS = [
 		'from-pink-500 via-red-500 to-yellow-500',
 		'from-green-300 via-blue-500 to-purple-600',
@@ -124,13 +118,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		return BADGE_GRADIENTS[index % BADGE_GRADIENTS.length];
 	};
 
-	const [modalidades, setModalidades] = useState<
-		{ id: number; name: string }[]
-	>([]);
-	const [nivel, setNivel] = useState<{ id: number; name: string }[]>([]); // Replaced es with niveles
-	const [educators, setEducators] = useState<{ id: string; name: string }[]>(
-		[]
-	);
+	const [isActive, setIsActive] = useState<boolean>(true);
+
 
 	const [editParametros, setEditParametros] = useState<
 		{
@@ -178,6 +167,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				if (response.ok && responseParametros.ok) {
 					const data = (await response.json()) as Course;
 					setCourse(data);
+					setCourseTypeId(data.courseTypeId ?? null);
+
 					const dataParametros =
 						(await responseParametros.json()) as Parametros[]; // Obtener los parámetros
 					setParametros(dataParametros); // Inicializar los parámetros
@@ -229,7 +220,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
-		rating: number
+		rating: number, courseTypeId: number | null
 	) => {
 		try {
 			let coverImageKey = course?.coverImageKey ?? '';
@@ -294,7 +285,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						modalidadesid,
 						nivelid,
 						instructor: course?.instructor,
-						rating, // Añadir esta línea
+						rating,  courseTypeId, isActive,
 					}),
 				}
 			);
@@ -377,7 +368,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			}))
 		);
 		setEditRating(course.rating); // Añadir esta línea
+		setCourseTypeId(course.courseTypeId ?? null);  // <-- ¡Agrega esto!
 		setIsModalOpen(true);
+		setIsActive(course.isActive ?? true);
 	};
 
 	// Verificar si se está cargando
@@ -550,7 +543,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									onClick={handleEditCourse}
 									className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
 								>
-									Editar curso
+									Editar cursos
 								</Button>
 								<Button className="border-primary bg-primary text-white hover:bg-primary/90">
 									<Link
@@ -635,7 +628,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									{course.description}
 								</p>
 							</div>
-							<div className="grid grid-cols-3">
+							<div className="grid grid-cols-4">
 								<div className="flex flex-col">
 									<h2
 										className={`text-lg font-semibold ${
@@ -681,6 +674,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										{course.modalidadesid}
 									</Badge>
 								</div>
+								<div className="flex flex-col">
+									<h2 className={`text-lg font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}>
+										Tipo de curso:
+									</h2>
+									<Badge
+										variant="outline"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+									>
+										{course.courseTypeName ?? 'No especificado'}
+									</Badge>
+								</div>
+
 								<div className="materias-container">
 									<h3 className="text-lg font-semibold">Materias:</h3>
 									{materias.length > 0 ? (
@@ -722,33 +727,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			/>
 			<ModalFormCourse
 				isOpen={isModalOpen}
-				onSubmitAction={(
-					id: string,
-					title: string,
-					description: string,
-					file: File | null,
-					categoryid: number,
-					modalidadesid: number,
-					nivelid: number, // Replaced id with nivelid
-					rating: number, // Añadir esta línea
-					addParametros: boolean, // Nuevo parámetro
-					coverImageKey: string,
-					fileName: string // Nuevo parámetro
-				) =>
-					handleUpdateCourse(
-						id,
-						title,
-						description,
-						file,
-						categoryid,
-						modalidadesid,
-						nivelid,
-						addParametros, // Pasar el nuevo parámetro
-						coverImageKey,
-						fileName, // Pasar el nuevo parámetro
-						rating // Añadir esta línea
-					)
-				}
+				onSubmitAction={(id, title, description, file, categoryid, modalidadesid, nivelid, rating, addParametros, coverImageKey, fileName, courseTypeId) =>
+					handleUpdateCourse(id, title, description, file, categoryid, modalidadesid, nivelid, addParametros, coverImageKey, fileName, rating, courseTypeId)
+				  }
 				editingCourseId={course.id}
 				title={editTitle}
 				description={editDescription}
@@ -775,6 +756,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setRating={setEditRating} // Añadir esta línea
 				onCloseAction={() => setIsModalOpen(false)}
 				uploading={false} // Añadir esta línea
+				courseTypeId={courseTypeId}   // usa el estado que ya tienes
+				setCourseTypeId={setCourseTypeId}
+				isActive={isActive}
+     			setIsActive={setIsActive}
 			/>
 		</div>
 	);

@@ -1,8 +1,10 @@
 'use server';
 
 import { eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { userActivitiesProgress } from '~/server/db/schema';
+
 import type { UserActivitiesProgress } from '~/types';
 
 export async function getUserActivityProgress(userId: string): Promise<UserActivitiesProgress[]> {

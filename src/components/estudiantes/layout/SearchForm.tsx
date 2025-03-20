@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
+
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+
 import { useProgress } from '@bprogress/next';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Input } from '~/components/estudiantes/ui/input';

@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { GraduationCap } from 'lucide-react';
 import {
@@ -9,6 +10,7 @@ import {
 	FaChalkboardTeacher,
 } from 'react-icons/fa';
 import { toast } from 'sonner';
+
 import CourseListDetails from '~/components/educators/layout/CourseListDetails';
 import {
 	Breadcrumb,
@@ -144,7 +146,7 @@ export default function Home() {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
@@ -184,7 +186,7 @@ export default function Home() {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 				<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 py-4 text-white transition-transform duration-300 ease-in-out zoom-in">
 					<div className="flex w-full rounded-lg px-4 sm:px-6 lg:px-8">
 						<GraduationCap className="h-14 w-12 text-primary" />
@@ -203,7 +205,7 @@ export default function Home() {
 				<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 					{/* Average Grade Card */}
 					<div className="group relative">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
 							<div className="p-5">
 								<div className="flex items-center">
@@ -228,7 +230,7 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
 							<div className="p-5">
 								<div className="flex items-center">
@@ -253,7 +255,7 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
 							<div className="p-5">
 								<div className="flex items-center">
@@ -278,7 +280,7 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
 							<div className="p-5">
 								<div className="flex items-center">

@@ -1,5 +1,7 @@
-import { and, eq, desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+
+import { and, eq, desc } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { enrollments, anunciosCursos, anuncios } from '~/server/db/schema';
 

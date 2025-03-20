@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getMateriasByCourseId } from '~/models/educatorsModels/courseModelsEducator';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

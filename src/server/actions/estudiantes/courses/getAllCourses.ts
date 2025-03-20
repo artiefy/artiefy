@@ -1,7 +1,9 @@
 'use server';
 
-import { eq, desc } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
+
+import { eq, desc } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import {
 	courses,

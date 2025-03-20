@@ -1,5 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
 import { ImageResponse } from 'next/og';
+
+import { auth } from '@clerk/nextjs/server';
+
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 export const alt = 'Course Image';

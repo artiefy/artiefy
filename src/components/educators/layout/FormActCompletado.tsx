@@ -1,8 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import { toast } from 'sonner';
+
 import { Button } from '~/components/educators/ui/button';
 import { Progress } from '~/components/educators/ui/progress';
+
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
 // Interfaz para la subida de preguntas tipo completado

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getAllEducators, updateCourseInstructor } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 

@@ -1,8 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ArrowRightIcon } from '@heroicons/react/24/solid';
+
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { ArrowRightIcon } from '@heroicons/react/24/solid';
+
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardTitle } from '~/components/educators/ui/card';
@@ -147,7 +150,7 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
 										<p className="font-bold">Ver actividad</p>
 										<ArrowRightIcon className="animate-bounce-right size-5" />
 										<div className="absolute inset-0 flex w-full justify-center [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
-											<div className="relative h-full w-10 bg-white/30"></div>
+											<div className="relative h-full w-10 bg-white/30" />
 										</div>
 									</Link>
 								</Button>

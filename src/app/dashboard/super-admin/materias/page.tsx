@@ -29,7 +29,7 @@ const MateriasPage: React.FC = () => {
 	useEffect(() => {
 		const fetchMaterias = async () => {
 			try {
-				const response = await fetch('/api/super-admin/materias');
+				const response = await fetch('/api/super-admin/materias/materiasFull');
 				if (!response.ok) {
 					throw new Error('Error al obtener las materias');
 				}

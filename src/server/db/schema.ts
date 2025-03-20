@@ -9,7 +9,10 @@ import {
 	timestamp,
 	varchar,
 	date,
+	unique,
+	primaryKey,
 } from 'drizzle-orm/pg-core';
+
 
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable('users', {
@@ -74,7 +77,15 @@ export const courses = pgTable('courses', {
 	nivelid: integer('nivelid')
 		.references(() => nivel.id)
 		.notNull(),
+	courseTypeId: integer('course_type_id')
+		.references(() => courseTypes.id)
+		.notNull(),
+	individualPrice: integer('individual_price'),
+	requiresProgram: boolean('requires_program').default(false),
+	isActive: boolean('is_active').default(true), 
+
 });
+
 
 // Tabla de tipos de actividades
 export const typeActi = pgTable('type_acti', {
@@ -273,7 +284,11 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 	isCompleted: boolean('is_completed').default(false).notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 	revisada: boolean('revisada').references(() => activities.revisada),
+	attemptCount: integer('attempt_count').default(0),
+	finalGrade: real('final_grade'),
+	lastAttemptAt: timestamp('last_attempt_at'),
 });
+
 
 //Tabla de sistema de tickets
 export const tickets = pgTable('tickets', {
@@ -323,10 +338,62 @@ export const materias = pgTable('materias', {
 	title: varchar('title', { length: 255 }).notNull(),
 	description: text('description'),
 	programaId: integer('programa_id')
-		.references(() => programas.id)
-		.notNull(),
+		.references(() => programas.id),
 	courseid: integer('courseid').references(() => courses.id), // courseid can be null
 });
+
+export const courseTypes = pgTable('course_types', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: text('description'),
+	requiredSubscriptionLevel: varchar('required_subscription_level', {
+		length: 255,
+		enum: ['none', 'pro', 'premium'],
+	}).notNull(),
+	isPurchasableIndividually: boolean('is_purchasable_individually').default(false),
+	price: integer('price'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+
+export const materiaGrades = pgTable(
+	'materia_grades',
+	{
+		id: serial('id').primaryKey(),
+		materiaId: integer('materia_id')
+			.references(() => materias.id)
+			.notNull(),
+		userId: text('user_id')
+			.references(() => users.id)
+			.notNull(),
+		grade: real('grade').notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	},
+	(table) => [
+		primaryKey({ columns: [table.materiaId, table.userId] }),
+		unique('uniq_materia_user').on(table.materiaId, table.userId),
+	]
+);
+
+export const parameterGrades = pgTable(
+	'parameter_grades',
+	{
+		id: serial('id').primaryKey(),
+		parameterId: integer('parametro_id')
+			.references(() => parametros.id)
+			.notNull(),
+		userId: text('user_id')
+			.references(() => users.id)
+			.notNull(),
+		grade: real('grade').notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	},
+	(table) => [unique('uniq_parameter_user').on(table.parameterId, table.userId)]
+);
+
+
+
 
 // Relaciones de programas
 export const programasRelations = relations(programas, ({ one, many }) => ({
@@ -376,6 +443,10 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
 	}),
 	coursesTaken: many(coursesTaken),
 	materias: many(materias), // Asegurarnos que esta relación está presente
+	courseType: one(courseTypes, {
+		fields: [courses.courseTypeId],
+		references: [courseTypes.id],
+	}),
 }));
 
 // Tabla de notas
@@ -472,12 +543,17 @@ export const activitiesRelations = relations(activities, ({ one, many }) => ({
 		fields: [activities.lessonsId],
 		references: [lessons.id],
 	}),
+	parametro: one(parametros, {
+		fields: [activities.parametroId],
+		references: [parametros.id],
+	}),
 	typeActi: one(typeActi, {
 		fields: [activities.typeid],
 		references: [typeActi.id],
 	}),
 	userActivitiesProgress: many(userActivitiesProgress),
 }));
+
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
 	user: one(users, {
@@ -640,3 +716,20 @@ export const anunciosUsuarios = pgTable('anuncios_usuarios', {
 		.references(() => users.id)
 		.notNull(),
 });
+
+
+export const courseTypesRelations = relations(courseTypes, ({ many }) => ({
+	courses: many(courses),
+}));
+
+
+export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
+	materia: one(materias, {
+		fields: [materiaGrades.materiaId],
+		references: [materias.id],
+	}),
+	user: one(users, {
+		fields: [materiaGrades.userId],
+		references: [users.id],
+	}),
+}));

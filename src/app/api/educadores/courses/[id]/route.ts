@@ -47,13 +47,15 @@ export async function PUT(
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		// Autenticación con Clerk
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
+
+		// Obtener el parámetro ID desde la URL
 		const resolvedParams = await params;
 		const courseId = parseInt(resolvedParams.id);
-
 		if (isNaN(courseId)) {
 			return NextResponse.json(
 				{ error: 'ID de curso inválido' },
@@ -61,16 +63,22 @@ export async function PUT(
 			);
 		}
 
+		// Obtener los datos enviados en el body
 		const data = (await request.json()) as {
 			title?: string;
 			description?: string;
 			coverImageKey?: string;
-			categoryId?: number;
+			categoryid?: number;
 			instructor?: string;
 			modalidadesid?: number;
 			nivelid?: number;
+			fileName?: string;
+			rating?: number;
+			courseTypeId?: number | null; // ✅ Incluido el courseTypeId
+			isActive?: boolean;
 		};
 
+		// Crear el objeto updateData solo con los campos que llegaron
 		const updateData: {
 			title?: string;
 			description?: string;
@@ -79,22 +87,31 @@ export async function PUT(
 			instructor?: string;
 			modalidadesid?: number;
 			nivelid?: number;
+			fileName?: string;
+			rating?: number;
+			courseTypeId?: number | null;
+			isActive?: boolean;
 		} = {};
 
-		if (data.title !== undefined) updateData.title = data.title;
-		if (data.description !== undefined)
-			updateData.description = data.description;
-		if (data.coverImageKey !== undefined)
-			updateData.coverImageKey = data.coverImageKey;
-		if (data.categoryId !== undefined) updateData.categoryid = data.categoryId;
-		if (data.instructor !== undefined) updateData.instructor = data.instructor;
-		if (data.modalidadesid !== undefined)
-			updateData.modalidadesid = data.modalidadesid;
-		if (data.nivelid !== undefined) updateData.nivelid = data.nivelid;
+		if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
+
+		// Asignar los valores si vienen definidos
+		if (data.title !== undefined) updateData.title = data.title;
+		if (data.description !== undefined) updateData.description = data.description;
+		if (data.coverImageKey !== undefined) updateData.coverImageKey = data.coverImageKey;
+		if (data.categoryid !== undefined) updateData.categoryid = data.categoryid;
+		if (data.instructor !== undefined) updateData.instructor = data.instructor;
+		if (data.modalidadesid !== undefined) updateData.modalidadesid = data.modalidadesid;
+		if (data.nivelid !== undefined) updateData.nivelid = data.nivelid;
+		if (data.fileName !== undefined) updateData.fileName = data.fileName;
+		if (data.rating !== undefined) updateData.rating = data.rating;
+		if (data.courseTypeId !== undefined) updateData.courseTypeId = data.courseTypeId;
+
+		// Actualizar el curso en la base de datos
 		await updateCourse(courseId, updateData);
 
-		// Obtener el curso actualizado
+		// Obtener y retornar el curso actualizado
 		const updatedCourse = await getCourseById(courseId);
 		return NextResponse.json(updatedCourse);
 	} catch (error) {
@@ -105,6 +122,8 @@ export async function PUT(
 		);
 	}
 }
+
+
 
 export async function GET_ALL() {
 	try {
@@ -140,9 +159,13 @@ export async function POST(request: Request) {
 		}
 
 		// Parsear los datos del cuerpo de la solicitud
+		
 		const data = (await request.json()) as CourseData & {
 			modalidadesid: number[];
-		};
+			courseTypeId: number; // ✅ Agrega esto
+			isActive?: boolean;  // ✅ Opcional
+		  };
+		  
 		console.log('Datos recibidos:', data);
 
 		// Validar los datos recibidos
@@ -176,7 +199,7 @@ export async function POST(request: Request) {
 			console.log(
 				`Título modificado para modalidadId ${modalidadId}: ${newTitle}`
 			);
-
+			
 			// Crear el curso con el título modificado
 			const newCourse = await createCourse({
 				...data,

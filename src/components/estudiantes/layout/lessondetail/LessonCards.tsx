@@ -1,6 +1,7 @@
 'use client';
 import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import { toast } from 'sonner';
+
 import { type LessonWithProgress } from '~/types';
 
 interface LessonCardsProps {

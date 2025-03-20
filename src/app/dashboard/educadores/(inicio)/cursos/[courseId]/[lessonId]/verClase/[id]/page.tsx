@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
-import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
+
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+
+import { useUser } from '@clerk/nextjs';
+import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
 import { toast } from 'sonner';
+
 import ListActividadesLookStudent from '~/components/educators/layout/ListActividadesByStudent';
 import VerFileByStudent from '~/components/educators/layout/verFileBystudent';
 import {
@@ -139,7 +142,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		return (
 			<main className="flex h-screen items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
@@ -245,7 +248,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					<Button onClick={() => handleNavigation('prev', [lessons])}>
 						<ArrowLeftIcon className="animate-bounce-right size-5" />
 						<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-							<div className="relative h-full w-10 bg-white/30"></div>
+							<div className="relative h-full w-10 bg-white/30" />
 						</div>
 						Clase Anterior
 					</Button>
@@ -253,12 +256,12 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						Siguiente Clase
 						<ArrowRightIcon className="animate-bounce-right size-5" />
 						<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-							<div className="relative h-full w-10 bg-white/30"></div>
+							<div className="relative h-full w-10 bg-white/30" />
 						</div>
 					</Button>
 				</div>
 				<div className="group relative h-auto w-full">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 					<div
 						className="relative z-20 container mt-4 grid grid-cols-1 gap-5 rounded-lg bg-black p-5 md:grid-cols-2 lg:grid-cols-2"
 						style={{ backgroundColor: color }}
@@ -320,7 +323,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 							<ArrowLeftIcon className="animate-bounce-right size-5" />
 							<p className="font-bold">Volver</p>
 							<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-								<div className="relative h-full w-10 bg-white/30"></div>
+								<div className="relative h-full w-10 bg-white/30" />
 							</div>
 						</Link>
 					</div>

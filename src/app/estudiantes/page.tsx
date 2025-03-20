@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+
 import StudentDashboard from '~/app/estudiantes/StudentDashboard';
 //import CourseCategories from '~/components/estudiantes/layout/CourseCategories';
 //import CourseListStudent from '~/components/estudiantes/layout/CourseListStudent';
@@ -8,6 +9,7 @@ import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 // import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 // import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
+
 import type { 
 	//Category,
 	 Course } from '~/types';

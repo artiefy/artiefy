@@ -1,8 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { ArrowRightIcon } from '@heroicons/react/24/solid';
+
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { ArrowRightIcon } from '@heroicons/react/24/solid';
+
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import { Badge } from '~/components/educators/ui/badge';
 import {
@@ -118,7 +121,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{actividades.map((actividad, index) => (
 						<div key={index} className="group relative size-full">
-							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 							<Card
 								className="relative z-20 flex h-auto flex-col border-transparent bg-black hover:scale-100" // Añadir h-80 para altura fija
 								style={{
@@ -177,7 +180,7 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
 										<p>Ver actividad</p>
 										<ArrowRightIcon className="animate-bounce-right size-5" />
 										<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-											<div className="relative h-full w-10 bg-white/30"></div>
+											<div className="relative h-full w-10 bg-white/30" />
 										</div>
 									</Link>
 								</CardFooter>

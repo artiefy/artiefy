@@ -213,6 +213,23 @@ export default function AdminDashboard() {
 		}
 	}, []);
 
+	const fetchProgramsForAssign = useCallback(async () => {
+		try {
+			const res = await fetch('/api/super-admin/programs/enrollInProgram');
+			if (!res.ok) throw new Error('Error al obtener programas');
+
+			const data = (await res.json()) as { id: string; title: string }[];
+			console.log('✅ Programas para asignación cargados:', data);
+			setPrograms(data);
+		} catch (error) {
+			console.error('Error al cargar programas:', error);
+		}
+	}, []);
+
+	useEffect(() => {
+		void fetchProgramsForAssign();
+	}, [fetchProgramsForAssign]);
+
 	useEffect(() => {
 		void fetchPrograms();
 	}, [fetchPrograms]);
@@ -467,50 +484,59 @@ export default function AdminDashboard() {
 	};
 
 	const handleAssignStudents = async () => {
-		if (!selectedCourse || selectedStudents.length === 0) return;
+		if (selectedStudents.length === 0) return;
 
 		try {
-			const res = await fetch('/api/enrollments', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					courseId: selectedCourse,
-					userIds: selectedStudents,
-				}),
-			});
+			let response;
+			// Si hay un curso seleccionado:
+			if (selectedCourse) {
+				response = await fetch('/api/enrollments', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						courseId: selectedCourse,
+						userIds: selectedStudents,
+					}),
+				});
+			}
+			// Si hay un programa seleccionado:
+			else if (selectedProgram) {
+				response = await fetch('/api/super-admin/programs/enrollInProgram', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						programId: selectedProgram,
+						userIds: selectedStudents,
+					}),
+				});
+			} else {
+				showNotification('Debes seleccionar un curso o un programa.', 'error');
+				return;
+			}
 
-			if (!res.ok) throw new Error('Error al asignar estudiantes');
+			if (!response.ok) throw new Error('Error al asignar');
 
-			const result = (await res.json()) as {
-				added: number;
-				alreadyEnrolled: number;
-				message: string;
-			};
+			const result = (await response.json()) as { message: string };
 			const { message } = result;
 
-			// 🔹 Cierra el modal antes de mostrar la confirmación
 			setShowAssignModal(false);
 
-			// 🔹 Espera un pequeño tiempo para evitar superposición de animaciones
 			setTimeout(() => {
 				setConfirmation({
 					isOpen: true,
-					title: 'Asignación de Estudiantes',
-					message: `${message} \n\n ¿Quieres seguir asignando más estudiantes?`,
+					title: 'Asignación completada',
+					message: `${message}\n¿Quieres seguir asignando más estudiantes?`,
 					onConfirm: () => {
-						//  Si el usuario quiere seguir, vuelve a abrir el modal
 						setSelectedStudents([]);
 						setSelectedCourse(null);
+						setSelectedProgram(null);
 						setShowAssignModal(true);
 					},
-					onCancel: () => {
-						//  Si el usuario no quiere seguir, cierra la confirmación
-						setConfirmation(null);
-					},
+					onCancel: () => setConfirmation(null),
 				});
-			}, 300); // 🔹 Esperamos 300ms para evitar superposición de animaciones
+			}, 300);
 		} catch {
-			showNotification('Error al asignar estudiantes', 'error');
+			showNotification('Error al asignar estudiantes.', 'error');
 		}
 	};
 
@@ -925,6 +951,11 @@ export default function AdminDashboard() {
 
 	const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
 	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+	const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+	const [programsCollapsed, setProgramsCollapsed] = useState(true);
+	const [coursesCollapsed, setCoursesCollapsed] = useState(true);
+	const [studentSearch, setStudentSearch] = useState('');
+
 	const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
 	const handleMassUserUpload = useCallback(
@@ -1170,26 +1201,26 @@ export default function AdminDashboard() {
 						{showAssignModal && (
 							<div className="bg-opacity-30 fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
 								<div className="w-full max-w-3xl rounded-lg bg-gray-800 p-6 shadow-2xl">
-									{/* Header del Modal */}
 									<div className="mb-4 flex items-center justify-between">
 										<h2 className="text-lg font-bold text-white">
-											Asignar Curso a Estudiantes
+											Asignar a Curso o Programa
 										</h2>
 										<button onClick={() => setShowAssignModal(false)}>
 											<X className="size-6 text-gray-300 hover:text-white" />
 										</button>
 									</div>
-
-									{/* Contenido Principal */}
 									<div className="grid grid-cols-2 gap-4">
-										{/* Lista de Estudiantes */}
-										{/* Lista de Estudiantes */}
 										<div className="rounded-lg bg-gray-700 p-4">
 											<h3 className="mb-2 font-semibold text-white">
 												Seleccionar Estudiantes
 											</h3>
-
-											{/* Checkbox "Seleccionar Todos" */}
+											<input
+												type="text"
+												placeholder="Buscar estudiante..."
+												className="mb-2 w-full rounded border bg-gray-600 p-2 text-white"
+												value={studentSearch}
+												onChange={(e) => setStudentSearch(e.target.value)}
+											/>
 											<div className="mb-2 flex items-center justify-between rounded bg-gray-600 px-3 py-2">
 												<span className="font-semibold text-white">
 													Seleccionar Todos
@@ -1200,69 +1231,130 @@ export default function AdminDashboard() {
 														selectedStudents.length === users.length &&
 														users.length > 0
 													}
-													onChange={(e) => {
-														if (e.target.checked) {
-															setSelectedStudents(users.map((user) => user.id)); // Selecciona todos
-														} else {
-															setSelectedStudents([]); // Deselecciona todos
-														}
-													}}
+													onChange={(e) =>
+														setSelectedStudents(
+															e.target.checked ? users.map((u) => u.id) : []
+														)
+													}
 													className="form-checkbox h-5 w-5 text-blue-500"
 												/>
 											</div>
-
 											<div className="h-64 overflow-y-auto rounded border border-gray-600">
-												{users.map((user) => (
-													<label
-														key={user.id}
-														className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
-													>
-														<span className="text-white">
-															{user.firstName} {user.lastName}
-														</span>
-														<input
-															type="checkbox"
-															checked={selectedStudents.includes(user.id)}
-															onChange={() => handleSelectStudent(user.id)}
-															className="form-checkbox h-5 w-5 text-blue-500"
-														/>
-													</label>
-												))}
+												{users
+													.filter(
+														(user) =>
+															user.firstName
+																.toLowerCase()
+																.includes(studentSearch.toLowerCase()) ||
+															user.lastName
+																.toLowerCase()
+																.includes(studentSearch.toLowerCase()) ||
+															user.email
+																.toLowerCase()
+																.includes(studentSearch.toLowerCase())
+													)
+													.map((user) => (
+														<label
+															key={user.id}
+															className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
+														>
+															<span className="text-white">
+																{user.firstName} {user.lastName}
+															</span>
+															<input
+																type="checkbox"
+																checked={selectedStudents.includes(user.id)}
+																onChange={() => handleSelectStudent(user.id)}
+																className="form-checkbox h-5 w-5 text-blue-500"
+															/>
+														</label>
+													))}
 											</div>
 										</div>
 
-										{/* Lista de Cursos */}
-										<div className="rounded-lg bg-gray-700 p-4">
-											<h3 className="mb-2 font-semibold text-white">
-												Seleccionar Curso
-											</h3>
-											<div className="h-64 overflow-y-auto rounded border border-gray-600">
-												{courses.map((course) => (
-													<label
-														key={course.id}
-														className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
-													>
-														<span className="text-white">{course.title}</span>
-														<input
-															type="radio"
-															name="selectedCourse"
-															checked={selectedCourse === course.id}
-															onChange={() => setSelectedCourse(course.id)}
-															className="form-radio h-5 w-5 text-blue-500"
-														/>
-													</label>
-												))}
+										{/* Colapsable Cursos y Programas */}
+										<div className="space-y-4 rounded-lg bg-gray-700 p-4">
+											<div>
+												<button
+													onClick={() => setCoursesCollapsed(!coursesCollapsed)}
+													className="w-full rounded bg-secondary py-2 text-white"
+												>
+													{coursesCollapsed
+														? 'Mostrar Cursos'
+														: 'Ocultar Cursos'}
+												</button>
+												{!coursesCollapsed && (
+													<div className="mt-2 h-48 overflow-y-auto rounded border border-gray-600">
+														{courses.map((course) => (
+															<label
+																key={course.id}
+																className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
+															>
+																<span className="text-white">
+																	{course.title}
+																</span>
+																<input
+																	type="radio"
+																	name="selectCourseOrProgram"
+																	checked={selectedCourse === course.id}
+																	onChange={() => {
+																		setSelectedCourse(course.id);
+																		setSelectedProgram(null);
+																	}}
+																	className="form-radio h-5 w-5 text-blue-500"
+																/>
+															</label>
+														))}
+													</div>
+												)}
+											</div>
+
+											<div>
+												<button
+													onClick={() =>
+														setProgramsCollapsed(!programsCollapsed)
+													}
+													className="w-full rounded bg-primary py-2 text-white"
+												>
+													{programsCollapsed
+														? 'Mostrar Programas'
+														: 'Ocultar Programas'}
+												</button>
+												{!programsCollapsed && (
+													<div className="mt-2 h-48 overflow-y-auto rounded border border-gray-600">
+														{programs.map((program) => (
+															<label
+																key={program.id}
+																className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
+															>
+																<span className="text-white">
+																	{program.title}
+																</span>
+																<input
+																	type="radio"
+																	name="selectCourseOrProgram"
+																	checked={selectedProgram === program.id}
+																	onChange={() => {
+																		setSelectedProgram(program.id);
+																		setSelectedCourse(null);
+																	}}
+																	className="form-radio h-5 w-5 text-green-500"
+																/>
+															</label>
+														))}
+													</div>
+												)}
 											</div>
 										</div>
 									</div>
 
-									{/* Botones de Acción */}
 									<div className="mt-6 flex justify-between">
 										<button
 											onClick={handleAssignStudents}
 											className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
 											disabled={
-												selectedStudents.length === 0 || !selectedCourse
+												selectedStudents.length === 0 ||
+												(!selectedCourse && !selectedProgram)
 											}
 										>
 											Asignar Estudiantes
@@ -1319,7 +1411,7 @@ export default function AdminDashboard() {
 									onClick={() => setShowAssignModal(true)}
 									className="flex items-center rounded-md bg-secondary px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-primary"
 								>
-									Asignar Curso a Estudiantes
+									Asignar Curso o Programa a Estudiantes
 								</button>
 								<button
 									onClick={() => setShowAnuncioModal(true)}

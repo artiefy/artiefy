@@ -1,8 +1,10 @@
 import { useState, useEffect, type JSX } from 'react';
 
-import { UserButton, useUser } from '@clerk/clerk-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { UserButton, useUser } from '@clerk/clerk-react';
 import {
     FiHome,
     FiBook,
@@ -17,7 +19,6 @@ import {
     FiChevronDown,
     FiChevronRight,
 } from 'react-icons/fi';
-import { usePathname } from 'next/navigation';
 
 import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
 

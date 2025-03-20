@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
-import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
+import useEmblaCarousel from 'embla-carousel-react';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
 interface Course {
 	id: string;
@@ -94,7 +96,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
 										<p className="font-bold">Ver Curso</p>
 										<ArrowRight className="animate-bounce-right ml-2 size-4" />
 										<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-											<div className="relative h-full w-10 bg-white/30"></div>
+											<div className="relative h-full w-10 bg-white/30" />
 										</div>
 									</Link>
 

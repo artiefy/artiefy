@@ -1,9 +1,13 @@
 'use client';
 import { useState, useCallback, useEffect } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+
 import { toast } from 'sonner';
+
+import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 import CalificarPreguntas from '~/components/educators/dashboard/CalificarPreguntas';
 import FormActCompletado from '~/components/educators/layout/FormActCompletado';
 import QuestionSubidaList from '~/components/educators/layout/ListActSubidaFile';
@@ -37,7 +41,7 @@ import {
 } from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
-import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
+
 import type {
 	QuestionFilesSubida,
 	Completado,
@@ -224,7 +228,7 @@ const Page: React.FC = () => {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
@@ -309,7 +313,7 @@ const Page: React.FC = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 				<div
 					className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-8 shadow-lg"
 					style={{ backgroundColor: color, color: getContrastYIQ(color) }}

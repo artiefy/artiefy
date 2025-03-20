@@ -118,6 +118,7 @@ export async function POST(request: Request) {
 			rating: number;
 			instructor: string;
 			subjects?: { id: number }[];
+			courseTypeId: number; // 👉 agregar este campo
 		};
 		console.log('Received data:', data);
 
@@ -132,9 +133,10 @@ export async function POST(request: Request) {
 			console.log(`Procesando modalidadId: ${modalidadId}`);
 
 			// Construir el título del curso con el nombre de la modalidad
-			const newTitle = modalidad && isMultipleModalities
-				? `${data.title} - ${modalidad.name}`
-				: data.title;
+			const newTitle =
+				modalidad && isMultipleModalities
+					? `${data.title} - ${modalidad.name}`
+					: data.title;
 			const newCourse = await createCourse({
 				title: newTitle,
 				description: data.description,
@@ -145,6 +147,7 @@ export async function POST(request: Request) {
 				modalidadesid: modalidadId,
 				nivelid: data.nivelid,
 				instructor: data.instructor,
+				courseTypeId: data.courseTypeId, // 👉 pasar el courseTypeId
 			});
 
 			console.log('Curso creado:', newCourse);

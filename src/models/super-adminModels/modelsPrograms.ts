@@ -1,4 +1,5 @@
 import { eq, count } from 'drizzle-orm';
+
 import { db } from '~/server/db/index';
 import {
     programas,
@@ -68,12 +69,12 @@ export const getProgramById = async (programaId: number) => {
             id: materias.id,
             title: materias.title,
             description: materias.description,
-            courseId: materias.courseId,
+            courseId: materias.courseid,
             courseTitle: courses.title,
             category: categories.name
         })
         .from(materias)
-        .leftJoin(courses, eq(materias.courseId, courses.id))
+        .leftJoin(courses, eq(materias.courseid, courses.id))
         .leftJoin(categories, eq(courses.categoryid, categories.id))
         .where(eq(materias.programaId, programaId));
 
@@ -86,12 +87,14 @@ export const createProgram = async ({
     description,
     coverImageKey,
     creatorId,
+    categoryid,
     rating = 0,
 }: {
     title: string;
     description: string;
     coverImageKey: string;
     creatorId: string;
+    categoryid: number;
     rating?: number;
 }) => {
     return db.insert(programas).values({
@@ -99,6 +102,7 @@ export const createProgram = async ({
         description,
         coverImageKey,
         creatorId,
+        categoryid,
         rating,
     });
 };
@@ -172,11 +176,11 @@ export const getSubjectsByProgramId = async (programaId: number) => {
             id: materias.id,
             title: materias.title,
             description: materias.description,
-            courseId: materias.courseId,
+            courseId: materias.courseid,
             courseTitle: courses.title,
         })
         .from(materias)
-        .leftJoin(courses, eq(materias.courseId, courses.id))
+        .leftJoin(courses, eq(materias.courseid, courses.id))
         .where(eq(materias.programaId, programaId));
 };
 

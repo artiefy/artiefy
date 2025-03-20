@@ -20,6 +20,24 @@ export const getAllMaterias = async () => {
     .execute();
 };
 
+export const getAllMateriasFull = async () => {
+  const allMaterias = await db
+    .select()
+    .from(materias)
+    .execute();
+
+  const uniqueMateriasMap = new Map<string, typeof allMaterias[number]>();
+
+  for (const materia of allMaterias) {
+    if (!uniqueMateriasMap.has(materia.title)) {
+      uniqueMateriasMap.set(materia.title, materia);
+    }
+  }
+
+  return Array.from(uniqueMateriasMap.values());
+};
+
+
 
 export const getMateriaById = async (id: number) => {
     if (typeof id !== 'number') {

@@ -1,6 +1,8 @@
 // pages/viewFiles.tsx
 import { useEffect, useState } from 'react';
+
 import Link from 'next/link';
+
 import { Icons } from '~/components/educators/ui/icons';
 
 // Función para obtener el icono de un archivo basado en su extensión

@@ -1,4 +1,5 @@
 import { count } from 'drizzle-orm';
+
 import { db } from '~/server/db/index';
 import { enrollments } from '~/server/db/schema';
 

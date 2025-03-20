@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRightIcon } from '@heroicons/react/24/solid';
-import { ArrowUpFromLine } from 'lucide-react';
+
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { ArrowRightIcon } from '@heroicons/react/24/solid';
+import { ArrowUpFromLine } from 'lucide-react';
+
 import { LoadingCourses } from '~/app/dashboard/super-admin/(inicio)/cursos/page';
 import { Badge } from '~/components/educators/ui/badge';
 import {
@@ -150,7 +153,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 				<div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
 					{lessons.map((lesson) => (
 						<div key={lesson.id} className="group relative">
-							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100"></div>
+							<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 							<Card
 								key={lesson.id}
 								className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]"
@@ -222,7 +225,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 											<p>Ver clase</p>
 											<ArrowRightIcon className="animate-bounce-right size-5" />
 											<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-												<div className="relative h-full w-10 bg-white/30"></div>
+												<div className="relative h-full w-10 bg-white/30" />
 											</div>
 										</Link>
 									</Button>

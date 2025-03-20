@@ -1,6 +1,7 @@
 'use server';
 
 import { Redis } from '@upstash/redis';
+
 import type { Question, VerdaderoOFlaso } from '~/types/typesActi';
 
 const redis = new Redis({

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+
 import {
 	Timer,
 	Trophy,
@@ -10,7 +11,9 @@ import {
 	// Edit2,
 	ArrowLeft,
 } from 'lucide-react';
+
 import type { Question, QuizConfig } from '~/app/typesActi';
+
 import QuestionForm from '~/components/actividades/PreguntasOM';
 import Quiz from '~/components/educators/layout/QuizPOM';
 

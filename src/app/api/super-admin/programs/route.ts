@@ -1,10 +1,13 @@
+import { type NextRequest, NextResponse } from 'next/server';
+
+import { auth } from '@clerk/nextjs/server';
 import { isNull, eq, and, inArray } from 'drizzle-orm'; // ✅ Importar inArray
 import { z } from 'zod';
+
+import { createProgram } from '~/models/super-adminModels/programModelsSuperAdmin';
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';
-import { type NextRequest, NextResponse } from 'next/server';
-import { createProgram } from '~/models/super-adminModels/programModelsSuperAdmin';
-import { auth } from '@clerk/nextjs/server';
+
 
 export async function POST(req: NextRequest) {
     try {

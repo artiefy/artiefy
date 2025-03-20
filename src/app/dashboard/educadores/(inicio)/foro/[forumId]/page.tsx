@@ -1,8 +1,11 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+
+import { useParams } from 'next/navigation';
+
 import { useUser } from '@clerk/nextjs';
 import { EllipsisVertical } from 'lucide-react';
-import { useParams } from 'next/navigation';
+
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -537,7 +540,7 @@ const ForumPage = () => {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>

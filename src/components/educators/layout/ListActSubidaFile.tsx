@@ -1,11 +1,14 @@
 'use client';
 import type React from 'react';
 import { useState, useEffect, useCallback } from 'react';
+
 import { Edit, Trash } from 'lucide-react';
+import { toast } from 'sonner';
+
 import FormActCompletado from '~/components/educators/layout/FormActCompletado';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
-import { toast } from 'sonner';
+
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
 // Propiedades del componente para la lista de preguntas

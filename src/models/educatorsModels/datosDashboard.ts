@@ -1,4 +1,5 @@
 import { eq, count, sum } from 'drizzle-orm';
+
 import { db } from '~/server/db/index';
 import { courses, lessons, users, enrollments } from '~/server/db/schema';
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import {
 	Loader2,
 	X,
@@ -206,7 +207,7 @@ const ModalForm = ({
 	setDescription,
 }: ModalFormProps) => (
 	<div className="fixed inset-0 z-50 flex items-center justify-center">
-		<div className="absolute inset-0 bg-gradient-to-b from-[#01142B] to-[#01142B] opacity-80"></div>
+		<div className="absolute inset-0 bg-gradient-to-b from-[#01142B] to-[#01142B] opacity-80" />
 		<div className="relative z-10 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg">
 			<div className="flex items-center justify-between">
 				<h2 className="text-lg font-bold text-white">{title}</h2>
@@ -248,7 +249,7 @@ const ConfirmDeleteModal = ({
 	onConfirm: () => void;
 }) => (
 	<div className="fixed inset-0 z-50 flex items-center justify-center">
-		<div className="absolute inset-0 bg-black opacity-80"></div>
+		<div className="absolute inset-0 bg-black opacity-80" />
 		<div className="relative z-10 w-full max-w-sm rounded-lg bg-gray-800 p-6 shadow-lg">
 			<h2 className="text-lg font-bold text-white">
 				¿Eliminar &quot;{item.name}&quot;?

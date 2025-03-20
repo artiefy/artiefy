@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { updateUserInClerk } from '~/server/queries/queries';
 
 // ✅ API Route para actualizar usuario en Clerk

@@ -1,6 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
+
 import { db } from '~/server/db';
 import { userActivitiesProgress } from '~/server/db/schema';
 

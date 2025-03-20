@@ -2,6 +2,8 @@
 
 import { NextResponse } from 'next/server';
 
+import nodemailer from 'nodemailer';
+
 import { db } from '~/server/db'; // Asegúrate de importar correctamente la conexión de Drizzle
 import { users } from '~/server/db/schema';
 import {
@@ -14,7 +16,6 @@ import {
 	updateUserStatus,
 	updateMultipleUserStatus,
 } from '~/server/queries/queries';
-import nodemailer from 'nodemailer';
 
 // 📌 Configuración de Nodemailer
 const transporter = nodemailer.createTransport({

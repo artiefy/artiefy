@@ -4,12 +4,13 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 
 import Image from 'next/image';
-import Select, { type MultiValue, type ActionMeta } from 'react-select';
+
 
 import { useUser } from '@clerk/nextjs';
 import { Plus } from 'lucide-react';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
+import Select, { type MultiValue, type ActionMeta } from 'react-select';
 import { toast } from 'sonner';
 
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';

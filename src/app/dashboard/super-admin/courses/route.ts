@@ -1,5 +1,6 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
 import { type NextRequest, NextResponse } from 'next/server';
+
+import { auth, currentUser } from '@clerk/nextjs/server';
 
 import {
 	createCourse,
@@ -9,7 +10,9 @@ import {
 	getCoursesByUserId,
 	updateCourse, getModalidadById
 } from '~/models/super-adminModels/courseModelsSuperAdmin';
-import { ratelimit } from '../../../../server/ratelimit/ratelimit'; // Adjust the import path as necessary
+
+import { ratelimit } from '../../../../server/ratelimit/ratelimit';
+ // Adjust the import path as necessary
 export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>

@@ -1,5 +1,7 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+
+import { auth } from '@clerk/nextjs/server';
+
 import { updateParametro } from '~/models/educatorsModels/parametrosModels';
 
 export async function PUT(

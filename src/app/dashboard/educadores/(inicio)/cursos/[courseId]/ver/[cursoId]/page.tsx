@@ -1,14 +1,17 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
-import { StarIcon } from '@heroicons/react/24/solid';
-import { ArrowLeftIcon } from 'lucide-react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+
+import { useUser } from '@clerk/nextjs';
+import { StarIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon } from 'lucide-react';
 import { FaCalendar, FaClock, FaUserGraduate } from 'react-icons/fa';
 import { toast } from 'sonner';
+
 import { Badge } from '~/components/educators/ui/badge';
 import {
 	Breadcrumb,
@@ -196,7 +199,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
 				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
-					<span className="sr-only"></span>
+					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
 			</main>
@@ -253,7 +256,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 				<Card
 					className={`relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out zoom-in`}
 					style={{
@@ -424,7 +427,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 																	</span>
 																</span>
 															</div>
-															<div className="flex items-center space-x-2"></div>
+															<div className="flex items-center space-x-2" />
 														</div>
 													</button>
 													{expandedLesson === lesson.id && (
@@ -464,7 +467,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						<ArrowLeftIcon className="animate-bounce-right size-5" />
 						<p className="font-bold">Volver</p>
 						<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-							<div className="relative h-full w-10 bg-white/30"></div>
+							<div className="relative h-full w-10 bg-white/30" />
 						</div>
 					</Link>
 				</Card>

@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import { useUser } from '@clerk/nextjs'; // Importa el hook de Clerk
 import { FaSearch, FaPlus } from 'react-icons/fa';
 import { toast } from 'sonner';
+
 import { Button } from '~/components/educators/ui/button'; // Importa el botón de ShadCN
 import {
 	Dialog,

@@ -31,7 +31,7 @@ const LessonPlayer = ({
         <div className="mt-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-gray-700 font-bold">Progreso de la clase :</span>
-            <span className="text-gray-600"></span>
+            <span className="text-gray-600" />
           </div>
           <Progress value={progress} showPercentage={true} />
         </div>

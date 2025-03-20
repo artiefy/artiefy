@@ -9,7 +9,7 @@ import {
 	enrollments,
 	nivel,
 	lessons,
-	materias,
+	materias, courseTypes
 } from '~/server/db/schema';
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
@@ -70,6 +70,8 @@ export const createCourse = async ({
 	instructor,
 	creatorId,
 	rating,
+	courseTypeId,
+	isActive,
 }: {
 	title: string;
 	description: string;
@@ -80,6 +82,8 @@ export const createCourse = async ({
 	instructor: string;
 	creatorId: string;
 	rating: number;
+	courseTypeId: number; 
+	isActive?: boolean; 
 }) => {
 	const [insertedCourse] = await db
 		.insert(courses)
@@ -93,6 +97,7 @@ export const createCourse = async ({
 			instructor,
 			rating,
 			creatorId,
+			courseTypeId, isActive
 		})
 		.returning({ id: courses.id });
 	return { ...insertedCourse };
@@ -174,6 +179,8 @@ export const getCourseById = async (courseId: number) => {
 				creatorId: courses.creatorId,
 				createdAt: courses.createdAt,
 				updatedAt: courses.updatedAt,
+				courseTypeId: courses.courseTypeId,
+				isActive: courses.isActive,
 			})
 			.from(courses)
 			.where(eq(courses.id, courseId))
@@ -207,7 +214,14 @@ export const getCourseById = async (courseId: number) => {
 					.where(eq(nivel.id, course.nivelid))
 					.then((rows) => rows[0]?.name ?? null)
 			: null;
-
+		const courseTypeName = course.courseTypeId
+			? await db
+					.select({ name: courseTypes.name })
+					.from(courseTypes)
+					.where(eq(courseTypes.id, course.courseTypeId))
+					.then((rows) => rows[0]?.name ?? null)
+			: null;
+		
 		const totalStudents = await getTotalStudents(courseId);
 
 		return {
@@ -215,6 +229,7 @@ export const getCourseById = async (courseId: number) => {
 			categoryid: category?.name ?? course.categoryid,
 			modalidadesid: modalidad?.name ?? course.modalidadesid,
 			nivelid: nivelName ?? course.nivelid,
+			courseTypeName, 
 			totalStudents,
 		};
 	} catch (error) {
@@ -238,6 +253,7 @@ export const getAllCourses = async () => {
 			creatorId: courses.creatorId,
 			createdAt: courses.createdAt,
 			updatedAt: courses.updatedAt,
+			isActive: courses.isActive,
 		})
 		.from(courses)
 		.leftJoin(categories, eq(courses.categoryid, categories.id))
@@ -255,7 +271,10 @@ export const updateCourse = async (
 		categoryid,
 		modalidadesid,
 		nivelid,
-		instructor,
+		instructor,	
+		fileName,
+		rating,
+		courseTypeId, isActive
 	}: {
 		title?: string;
 		description?: string | null;
@@ -264,6 +283,10 @@ export const updateCourse = async (
 		modalidadesid?: number | null;
 		nivelid?: number | null;
 		instructor?: string;
+		fileName?: string;
+		rating?: number;
+		courseTypeId?: number | null;
+		isActive?: boolean| null;
 	}
 ) => {
 	// Obtener los datos actuales del curso
@@ -277,6 +300,10 @@ export const updateCourse = async (
 		modalidadesid?: number | undefined;
 		nivelid?: number | undefined;
 		instructor?: string;
+		fileName?: string;
+		rating?: number;
+		courseTypeId?: number | null;
+		isActive?: boolean | null;
 	} = {
 		title: title ?? currentCourse.title,
 		description: description ?? currentCourse.description,
@@ -300,9 +327,17 @@ export const updateCourse = async (
 					? currentCourse.nivelid
 					: undefined,
 		instructor: instructor ?? currentCourse.instructor,
+		// fileName is not part of currentCourse, so it is removed
+		rating: rating ?? currentCourse.rating ?? undefined,
+		courseTypeId:
+			typeof courseTypeId === 'number' ? courseTypeId : currentCourse.courseTypeId,
+			isActive: typeof isActive === 'boolean' ? isActive : currentCourse.isActive, 
 	};
 
-	return db.update(courses).set(updateData).where(eq(courses.id, courseId));
+	return db.update(courses).set({
+		...updateData,
+		courseTypeId: updateData.courseTypeId ?? undefined, // Ensure compatibility
+	}).where(eq(courses.id, courseId));
 };
 
 export async function updateMateria(
@@ -326,7 +361,7 @@ export async function updateMateria(
 					title: materia.title, // Copiar el título de la materia existente
 					description: materia.description ?? '', // Copiar la descripción si existe
 					courseid: data.courseid, // Asociar al nuevo curso
-					programaId: materia.programaId || 0, // Asegurar que programaId esté presente
+					programaId: materia.programaId ?? 0, // Asegurar que programaId esté presente
 				});
 				console.log(
 					`Materia duplicada creada: ${materia.title} -> courseId: ${data.courseid}`

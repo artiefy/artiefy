@@ -9,6 +9,7 @@ import {
 	userLessonsProgress,
 	userActivitiesProgress,
 } from '~/server/db/schema';
+
 import type { Lesson } from '~/types';
 
 // Obtener todas las lecciones de un curso

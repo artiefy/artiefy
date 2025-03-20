@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { getTicketsByUserId } from '~/models/educatorsModels/ticketsModels';
 
 export async function GET(request: Request) {

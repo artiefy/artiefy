@@ -1,6 +1,8 @@
 'use client';
 import { useState, type ChangeEvent, useEffect, useRef } from 'react';
+
 import { toast } from 'sonner';
+
 import FileUpload from '~/components/educators/layout/FilesUpload';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -497,7 +499,7 @@ const ModalFormLessons = ({
 								<Button onClick={captureFrame}>
 									Capturar frame como imagen de portada
 								</Button>
-								<canvas ref={canvasRef} className="hidden"></canvas>
+								<canvas ref={canvasRef} className="hidden" />
 							</div>
 						</div>
 					)}

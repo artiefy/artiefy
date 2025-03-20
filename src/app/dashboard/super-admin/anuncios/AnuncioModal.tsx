@@ -1,7 +1,10 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+
 import { X } from 'lucide-react';
+
 import AnuncioPreview from './AnuncioPreview';
+
 interface AnuncioModalProps {
 	onClose: () => void;
 	titulo: string;

@@ -1,12 +1,16 @@
-import { auth } from '@clerk/nextjs/server';
 import { notFound } from 'next/navigation';
+
+import { auth } from '@clerk/nextjs/server';
+
 import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
-import type { Activity, LessonWithProgress } from '~/types';
+
 import LessonDetails from './LessonDetails';
+
+import type { Activity, LessonWithProgress } from '~/types';
 
 interface PageProps {
 	params: Promise<{

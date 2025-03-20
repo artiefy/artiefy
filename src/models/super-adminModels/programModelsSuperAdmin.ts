@@ -1,7 +1,10 @@
-import { eq, sql } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
+
+import { eq, sql } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { programas, enrollmentPrograms } from '~/server/db/schema';
+
 import type { Course, Program, Materia } from '~/types';
 
 export interface ProgramDetails {

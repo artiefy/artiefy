@@ -1,5 +1,6 @@
-import axios, { AxiosError } from 'axios';
 import { type NextRequest, NextResponse } from 'next/server';
+
+import axios, { AxiosError } from 'axios';
 
 // Configure route behavior
 export const dynamic = 'force-dynamic';

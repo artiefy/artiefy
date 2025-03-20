@@ -1,10 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
-import { AspectRatio } from '@radix-ui/react-aspect-ratio';
+
 import Image from 'next/image';
 import Link from 'next/link';
+
+import { useUser } from '@clerk/nextjs';
+import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 import { toast } from 'sonner';
+
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -16,6 +19,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
+
 import { Button } from '../educators/ui/button';
 
 // Interfaz para los modelos de foros
@@ -106,7 +110,7 @@ export const Zone = () => {
 		<ul className="grid grid-cols-1 gap-7 rounded-l shadow-md sm:grid-cols-2 lg:grid-cols-3">
 			{forums.map((forum, index) => (
 				<div key={index} className="group relative">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 					<li className="relative z-20 mx-auto flex h-auto w-96 flex-col rounded-lg border border-slate-800 md:w-full lg:w-full">
 						<div className="relative">
 							<AspectRatio ratio={16 / 9}>

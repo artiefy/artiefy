@@ -56,6 +56,7 @@ interface CourseFormProps {
 		fileName: string,
 		subjects: { id: number;}[],// ✅ Solo `id` y `courseId`
 		programId: number // ✅ También asegurarnos de enviarlo en la función
+		isActive: boolean
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -92,6 +93,10 @@ interface CourseFormProps {
 	setRating: (rating: number) => void;
 	subjects: { id: number;}[];
 	setSubjects: (subjects: { id: number}[]) => void;
+	selectedCourseType: number | null;
+	setSelectedCourseType: (typeId: number | null) => void;
+	isActive: boolean;
+    setIsActive: (isActive: boolean) => void;
 }
 
 // Componente ModalFormCourse
@@ -117,6 +122,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	onCloseAction,
 	subjects,
 	setSubjects,
+	selectedCourseType,  // 👈 Agregado
+    setSelectedCourseType,  // 👈 Agregado
+	isActive,
+    setIsActive
 }) => {
 	const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null); // Estado para el archivo
@@ -212,6 +221,25 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			]);
 		}
 	};
+
+	const [courseTypes, setCourseTypes] = useState<{ id: number; name: string }[]>([]);
+
+	useEffect(() => {
+		const fetchCourseTypes = async () => {
+			try {
+				const response = await fetch('/api/educadores/courses/courseTypes');
+				const data = (await response.json()) as { id: number; name: string }[];
+				setCourseTypes(data);
+			} catch (error) {
+				console.error('Error fetching course types:', error);
+			}
+		};
+
+		if (isOpen) {
+			void fetchCourseTypes();
+		}
+	}, [isOpen]);
+
 
 	// Función para manejar el cambio de parámetros
 	const handleParametroChange = (
@@ -352,6 +380,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				rating,
 				subjects: selectedSubjects, // Enviamos solo los IDs de las materias
 				fileName: uploadedFileName,
+				courseTypeId: selectedCourseType, // 👉 aquí lo mandamos
+				isActive,
 			};
 		
 			console.log('Payload to send:', payload);
@@ -359,24 +389,24 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			
 			
 
-			await onSubmitAction(
-				editingCourseId ? editingCourseId.toString() : '',
-				title,
-				description,
-				file,
-				categoryid,
-				modalidadesid,
-				nivelid,
-				rating,
-				addParametros,
-				coverImageKey,
-				fileName ?? '', // Ensure fileName is a string
-				selectedSubjects,
-				programId);
+				await onSubmitAction(
+					editingCourseId ? editingCourseId.toString() : '',
+					title,
+					description,
+					file,
+					categoryid,
+					modalidadesid,
+					nivelid,
+					rating,
+					addParametros,
+					coverImageKey,
+					fileName ?? '', // Ensure fileName is a string
+					selectedSubjects,
+					programId, isActive );
 
-			if (controller.signal.aborted) {
-				console.log('Upload cancelled');
-			}
+				if (controller.signal.aborted) {
+					console.log('Upload cancelled');
+				}
 
 			setIsUploading(false);
 		} catch (error) {
@@ -604,63 +634,95 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
 					)}
 
-					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-						<div className="mx-auto flex flex-col justify-center">
-							<label
-								htmlFor="nivelid"
-								className="justify-center text-center text-lg font-medium text-primary"
-							>
-								Nivel
-							</label>
-							<NivelDropdown
-								nivel={nivelid}
-								setNivel={setNivelid}
-								errors={errors}
-							/>
-							{errors.nivelid && (
-								<p className="text-sm text-red-500">
-									Este campo es obligatorio.
-								</p>
-							)}
-						</div>
-						<div className="mx-auto flex flex-col justify-center">
-							<label
-								htmlFor="modalidadesid"
-								className="justify-center text-center text-lg font-medium text-primary"
-							>
-								Modalidad
-							</label>
-							<ModalidadDropdown
-								modalidad={modalidadesid}
-								setModalidad={setModalidadesid}
-								errors={errors}
-							/>
+<div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
+	{/* Nivel */}
+	<div className="mx-auto flex w-10/12 flex-col gap-2">
+		<label
+			htmlFor="nivelid"
+			className="text-left text-lg font-medium text-primary"
+		>
+			Nivel
+		</label>
+		<NivelDropdown
+			nivel={nivelid}
+			setNivel={setNivelid}
+			errors={errors}
+		/>
+		{errors.nivelid && (
+			<p className="text-left text-sm text-red-500">
+				Este campo es obligatorio.
+			</p>
+		)}
+	</div>
 
-							{errors.modalidadesid && (
-								<p className="text-sm text-red-500">
-									Este campo es obligatorio.
-								</p>
-							)}
-						</div>
-						<div className="mx-auto flex flex-col justify-center">
-							<label
-								htmlFor="categoryid"
-								className="justify-center text-center text-lg font-medium text-primary"
-							>
-								Categoría
-							</label>
-							<CategoryDropdown
-								category={categoryid}
-								setCategory={setCategoryid}
-								errors={errors}
-							/>
-							{errors.categoryid && (
-								<p className="text-sm text-red-500">
-									Este campo es obligatorio.
-								</p>
-							)}
-						</div>
-					</div>
+	{/* Categoría */}
+	<div className="mx-auto flex w-10/12 flex-col gap-2">
+		<label
+			htmlFor="categoryid"
+			className="text-left text-lg font-medium text-primary"
+		>
+			Categoría
+		</label>
+		<CategoryDropdown
+			category={categoryid}
+			setCategory={setCategoryid}
+			errors={errors}
+		/>
+		{errors.categoryid && (
+			<p className="text-left text-sm text-red-500">
+				Este campo es obligatorio.
+			</p>
+		)}
+	</div>
+
+	{/* Modalidad */}
+	<div className="mx-auto flex w-10/12 flex-col gap-2">
+		<label
+			htmlFor="modalidadesid"
+			className="text-left text-lg font-medium text-primary"
+		>
+			Modalidad
+		</label>
+		<ModalidadDropdown
+			modalidad={modalidadesid}
+			setModalidad={setModalidadesid}
+			errors={errors}
+		/>
+		{errors.modalidadesid && (
+			<p className="text-left text-sm text-red-500">
+				Este campo es obligatorio.
+			</p>
+		)}
+	</div>
+
+	{/* Course type */}
+	<div className="mx-auto flex w-10/12 flex-col gap-2">
+		<label
+			htmlFor="courseTypes"
+			className="text-left text-lg font-medium text-primary"
+		>
+			Tipo de curso
+		</label>
+		<label
+			htmlFor="courseTypes"
+			className="text-left text-lg font-medium text-primary"
+		>
+			Selecciona el tipo del curso
+		</label>
+		<Select
+			options={courseTypes.map((type) => ({
+				value: type.id.toString(),
+				label: type.name,
+			}))}
+			onChange={(selectedOption) =>
+				setSelectedCourseType(Number(selectedOption?.value))
+			}
+			classNamePrefix="react-select"
+			className="mt-1 w-full"
+		/>
+	</div>
+</div>
+
 					<div>
 						<label
 							htmlFor="rating"

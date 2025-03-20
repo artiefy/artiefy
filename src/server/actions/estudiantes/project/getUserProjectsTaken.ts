@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { projectsTaken } from '~/server/db/schema';
+
 import type { ProjectTaken } from '~/types';
 
 // Obtener proyectos tomados por el usuario

@@ -1,6 +1,7 @@
+import { NextResponse } from 'next/server';
+
 import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
-import { NextResponse } from 'next/server';
 
 const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,

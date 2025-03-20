@@ -1,13 +1,16 @@
 'use server';
 
-import { eq, asc } from 'drizzle-orm';
 import { unstable_cache } from 'next/cache';
+
+import { eq, asc } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import {
 	lessons,
 	userLessonsProgress,
 	userActivitiesProgress,
 } from '~/server/db/schema';
+
 import type { Lesson } from '~/types';
 
 const getLessonsByCourseId = unstable_cache(

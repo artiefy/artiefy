@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
+
 import {
 	BookOpen,
 	Award,
@@ -13,7 +16,6 @@ import {
 	Calendar,
 	ArrowLeft,
 } from 'lucide-react';
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
 
 interface Stats {
 	totalLessons: number;

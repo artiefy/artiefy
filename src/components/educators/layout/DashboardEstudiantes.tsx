@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
+
 import { Dialog } from '@headlessui/react';
 import {
 	Chart as ChartJS,
@@ -12,6 +13,7 @@ import {
 } from 'chart.js';
 import { Loader2, Eye } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
 
 // Registro de los plugins de ChartJS que son para las estadísticas de los estudiantes 'No terminado' 
@@ -223,7 +225,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 			</Dialog>
 			{/* Fin del modal */}
 			<div className="group relative">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div>
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 				<header className="relative z-20 flex justify-between rounded-lg bg-primary p-6 text-3xl font-bold text-[#01142B] shadow-md">
 					<h1>Estadisticas de estudiantes</h1>
 				</header>
@@ -301,7 +303,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 																<div
 																	className="h-2.5 w-10/12 rounded-full bg-blue-600"
 																	style={{ width: `${user.averageProgress}%` }}
-																></div>
+																 />
 															</div>
 															<p>{user.averageProgress.toFixed(1)}%</p>
 														</td>

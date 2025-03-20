@@ -1,6 +1,7 @@
 'use client';
 
 import { FaHome, FaUserGraduate } from 'react-icons/fa';
+
 import {
   Breadcrumb,
   BreadcrumbItem,

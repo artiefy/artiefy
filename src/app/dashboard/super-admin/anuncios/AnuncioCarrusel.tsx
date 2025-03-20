@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import AnuncioPopup from '~/app/dashboard/super-admin/anuncios/AnuncioPopup';
 
 interface Anuncio {

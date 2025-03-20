@@ -2,6 +2,7 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
+
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { db } from '~/server/db';
 import { userLessonsProgress } from '~/server/db/schema';

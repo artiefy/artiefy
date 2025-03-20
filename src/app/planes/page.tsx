@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
+
 import { useRouter, usePathname } from 'next/navigation';
+
+import { useAuth } from '@clerk/nextjs';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimesCircle, FaTimes } from 'react-icons/fa';
 import { toast } from 'sonner';
+
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
@@ -78,7 +81,7 @@ const PlansPage: React.FC = () => {
 						>
 							Personas
 							<div className="hoverEffect">
-								<div></div>
+								<div />
 							</div>
 						</button>
 						<button
@@ -87,7 +90,7 @@ const PlansPage: React.FC = () => {
 						>
 							Empresas
 							<div className="hoverEffect">
-								<div></div>
+								<div />
 							</div>
 						</button>
 					</div>
@@ -164,7 +167,7 @@ const PlansPage: React.FC = () => {
 												onClick={() => handlePlanSelect(plan)} // Activa el modal y selecciona el plan
 												className="group relative h-full overflow-hidden rounded-md border border-b-4 border-white bg-background px-4 py-3 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b hover:bg-background hover:brightness-150 active:scale-95 active:opacity-75"
 											>
-												<span className="absolute top-[-150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]"></span>
+												<span className="absolute top-[-150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]" />
 												Seleccionar Plan {plan.name}
 											</Button>
 										</div>

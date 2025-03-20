@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+
 import { getUserData } from '~/models/educatorsModels/datosDashboard';
 
 export async function GET(req: NextRequest) {

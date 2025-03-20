@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
-import { FilePlus2, FileVideo, Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
+
+import { FilePlus2, FileVideo, Image as ImageIcon } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
 
 // Propiedades del componente para subir archivos

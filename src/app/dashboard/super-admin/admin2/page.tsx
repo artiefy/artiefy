@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import {
 	Users,
 	BookOpen,
@@ -10,7 +12,7 @@ import {
 	FileText,
 	GraduationCap,
 } from 'lucide-react';
-import Link from 'next/link';
+
 import { Button } from '~/app/dashboard/super-admin/components/button';
 import {
 	Card,
