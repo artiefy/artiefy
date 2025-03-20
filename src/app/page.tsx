@@ -22,8 +22,8 @@ export default function Home() {
 	>([]);
 
 	const dashboardRoute =
-		user?.publicMetadata?.role === 'admin'
-			? '/dashboard/admin'
+		user?.publicMetadata?.role === 'super-admin'
+			? '/dashboard/super-admin'
 			: user?.publicMetadata?.role === 'educador'
 				? '/dashboard/educadores'
 				: '/estudiantes';
