@@ -27,10 +27,6 @@ interface ProgramCoursesListProps {
 const ProgramCoursesList: React.FC<ProgramCoursesListProps> = ({ courses }) => {
 	const router = useRouter();
 
-	const handleViewCourse = (courseId: number) => {
-		router.push(`/dashboard/educadores/(inicio)/cursos/${courseId}`);
-	};
-
 	return (
 		<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 			{courses.map((course) => (

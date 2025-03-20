@@ -291,7 +291,8 @@ export const updateCourse = async (
 ) => {
 	// Obtener los datos actuales del curso
 	const currentCourse = await getCourseById(courseId);
-
+	void fileName;
+	
 	const updateData: {
 		title?: string;
 		description?: string | null;

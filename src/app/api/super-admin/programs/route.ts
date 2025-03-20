@@ -23,15 +23,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Leer el cuerpo de la solicitud
-        interface RequestBody {
-            title: string;
-            description: string;
-            coverImageKey?: string;
-            categoryid: number;
-            rating?: number;
-            subjectIds?: number[]; // ✅ Agregamos subjectIds como un array de números opcional
-        }
+        
 
         const schema = z.object({
             title: z.string(),

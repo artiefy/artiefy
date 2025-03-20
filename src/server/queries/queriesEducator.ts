@@ -47,8 +47,8 @@ export async function getUsersEnrolledInCourse(courseId: number) {
 					(email) => email.id === user.primaryEmailAddressId
 				)?.emailAddress,
 				createdAt: user.createdAt,
-				role: user.publicMetadata.role || 'estudiante',
-				status: user.publicMetadata.status || 'activo',
+				role: user.publicMetadata.role ?? 'estudiante',
+				status: user.publicMetadata.status ?? 'activo',
 				lastConnection: user.lastActiveAt, // Añadir última fecha de conexión
 				lessonsProgress: lessonsProgress.map((lesson) => ({
 					lessonId: lesson.lessonId,

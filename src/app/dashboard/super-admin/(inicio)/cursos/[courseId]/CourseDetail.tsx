@@ -690,8 +690,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</Badge>
 								</div>
 							</div>
-							<br>
-							</br>
+							<br />
 							<div className="grid grid-cols-4">
 								<div className="flex flex-col">
 									<h2

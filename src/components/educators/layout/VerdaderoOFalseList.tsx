@@ -1,5 +1,4 @@
 'use client';
-import type React from 'react';
 import { useEffect, useState, useCallback } from 'react';
 
 import { Edit, Trash } from 'lucide-react';

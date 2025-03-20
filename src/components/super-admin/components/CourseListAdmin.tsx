@@ -37,8 +37,6 @@ interface CourseListAdminProps {
 
 export default function CourseListAdmin({
 	courses,
-	onEditCourse,
-	onDeleteCourse,
 }: CourseListAdminProps) {
 	return (
 		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">

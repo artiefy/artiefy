@@ -7,7 +7,6 @@ import { useParams } from 'next/navigation';
 
 import { toast } from 'sonner';
 
-import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 import CalificarPreguntas from '~/components/educators/dashboard/CalificarPreguntas';
 import FormActCompletado from '~/components/educators/layout/FormActCompletado';
 import QuestionSubidaList from '~/components/educators/layout/ListActSubidaFile';

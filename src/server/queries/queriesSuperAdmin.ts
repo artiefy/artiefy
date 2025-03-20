@@ -15,7 +15,18 @@ import {
 	enrollmentPrograms,
 } from '~/server/db/schema';
 
-import type { Course, Program, Materia } from '~/types';
+import type {  Program, BaseCourse } from '~/types';
+
+
+export interface Materia {
+	id: number;
+	title: string;
+	description: string;
+	programaId: number;
+	courseId: number;
+	courseid: number;
+	curso: BaseCourse | undefined;
+}
 
 
 // Función para verificar el rol de admin y obtener usuarios
@@ -210,6 +221,8 @@ export interface CourseData {
 	createdAt: Date | string; // 🔹 Permitir `string` porque en errores previos llegaba como `string`
 	updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
 	rating?: number | null;
+	courseTypeId?: number | null; // 🔹 Add courseTypeId as optional and nullable
+	isActive?: boolean; // 🔹 Add isActive as optional
 }
 
 export async function getCourses() {
@@ -246,14 +259,17 @@ export async function createCourse(courseData: CourseData) {
 		return await db
 			.insert(courses)
 			.values({
-				...courseData,
-				instructor: courseData.instructor ?? 'Desconocido', // ✅ Evitar errores si instructor es null
-				creatorId: courseData.creatorId || 'defaultCreatorId', // ✅ Manejo de creatorId
-				createdAt: new Date(courseData.createdAt), // Convertir a Date
-				updatedAt: courseData.updatedAt
-					? new Date(courseData.updatedAt)
-					: undefined, // Convertir a Date si existe
-			})
+				title: courseData.title,
+				categoryid: courseData.categoryid,
+				instructor: courseData.instructor,
+				modalidadesid: courseData.modalidadesid,
+				nivelid: courseData.nivelid,
+				creatorId: courseData.creatorId || 'defaultCreatorId',
+				createdAt: new Date(courseData.createdAt),
+				updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : new Date(),
+				courseTypeId: courseData.courseTypeId ?? 1, // <-- Aquí colocas un valor seguro por defecto
+				isActive: courseData.isActive ?? true,
+			})					
 			.returning();
 	} catch (error) {
 		console.error('❌ Error al crear curso:', error);
@@ -264,15 +280,19 @@ export async function createCourse(courseData: CourseData) {
 // ✅ Función corregida con `courseId: number`
 export async function updateCourse(courseId: number, courseData: CourseData) {
 	try {
+		const cleanedData = {
+			...courseData,
+			createdAt: new Date(courseData.createdAt),
+			updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : new Date(),
+			courseTypeId:
+				typeof courseData.courseTypeId === 'number'
+					? courseData.courseTypeId
+					: undefined, // Si no es número, no lo envíes
+		};
+
 		return await db
 			.update(courses)
-			.set({
-				...courseData,
-				createdAt: new Date(courseData.createdAt),
-				updatedAt: courseData.updatedAt
-					? new Date(courseData.updatedAt)
-					: undefined,
-			})
+			.set(cleanedData)
 			.where(eq(courses.id, courseId))
 			.returning();
 	} catch (error) {
@@ -280,6 +300,7 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
 		throw new Error('No se pudo actualizar el curso');
 	}
 }
+
 
 // ✅ Obtener todas las categorías
 export async function getCategories() {
@@ -361,6 +382,7 @@ export async function getPrograms(): Promise<ProgramData[]> {
 // Obtener un programa por ID
 export const getProgramById = unstable_cache(
 	async (id: string) => {
+		// Buscar el programa
 		const program = await db.query.programas.findFirst({
 			where: eq(programas.id, parseInt(id, 10)),
 			with: {
@@ -376,26 +398,19 @@ export const getProgramById = unstable_cache(
 			throw new Error('Program not found');
 		}
 
+		// Obtener la cantidad de inscripciones
 		const enrollmentCount = await db
 			.select({ count: sql<number>`count(*)` })
 			.from(enrollmentPrograms)
 			.where(eq(enrollmentPrograms.programaId, parseInt(id, 10)))
 			.then((result) => Number(result[0]?.count ?? 0));
 
-			const transformedCourses: Course[] = program.materias
-			.filter((materia) => materia.curso)
-			.map((materia) => ({
-				...materia.curso!,
-				totalStudents: enrollmentCount,
-				lessons: [],
-				Nivelid: materia.curso!.nivelid,
-			}));
-
+		// Transformar materias con sus cursos
 		const transformedMaterias: Materia[] = program.materias.map((materia) => ({
 			id: materia.id,
 			title: materia.title,
 			description: materia.description ?? '',
-			programaId: materia.programaId,
+			programaId: materia.programaId ?? 0,
 			courseId: materia.curso?.id ?? 0,
 			courseid: materia.curso?.id ?? 0,
 			curso: materia.curso
@@ -405,9 +420,11 @@ export const getProgramById = unstable_cache(
 						totalStudents: enrollmentCount,
 						lessons: [],
 				  }
-				: null,
+				: undefined, // Ahora sí encaja con curso: BaseCourse | undefined
 		}));
+		
 
+		// Armar el objeto final del programa
 		const programData: Program = {
 			id: program.id.toString(),
 			title: program.title,
@@ -430,6 +447,7 @@ export const getProgramById = unstable_cache(
 	}
 );
 
+
 // Crear un nuevo programa
 export async function createProgram(
 	programData: Partial<ProgramData>
@@ -437,13 +455,13 @@ export async function createProgram(
 	const result = await db
 		.insert(programas)
 		.values({
-			title: programData.title,
+			title: programData.title ?? '',
 			categoryid: programData.categoryid!,
 			creatorId: programData.creatorId!,
 			description: programData.description ?? null,
 			coverImageKey: programData.coverImageKey ?? null,
-			createdAt: programData.createdAt ?? new Date(),
-			updatedAt: programData.updatedAt ?? new Date(),
+			createdAt: programData.createdAt ? new Date(programData.createdAt) : new Date(),
+			updatedAt: programData.updatedAt ? new Date(programData.updatedAt) : new Date(),
 			rating: programData.rating ?? null,
 		})
 		.returning({
@@ -458,8 +476,10 @@ export async function createProgram(
 			rating: programas.rating,
 		})
 		.execute();
+
 	return result[0];
 }
+
 
 // Actualizar un programa
 export async function updateProgram(

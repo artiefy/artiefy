@@ -42,7 +42,7 @@ const MateriasPage: React.FC = () => {
 			}
 		};
 
-		fetchMaterias();
+		void fetchMaterias();
 	}, []);
 
 	const handleOpenModal = (materia: Materia | null = null) => {

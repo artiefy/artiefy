@@ -494,23 +494,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [isOpen, editingCourseId]);
 
-	// Function to handle adding a subject
-	const handleAddSubject = () => {
-		setSubjects([...subjects, '']);
-	};
 
-	// Function to handle changing a subject
-	const handleSubjectChange = (index: number, value: string) => {
-		const updatedSubjects = [...subjects];
-		updatedSubjects[index] = value;
-		setSubjects(updatedSubjects);
-	};
-
-	// Function to handle removing a subject
-	const handleRemoveSubject = (index: number) => {
-		const updatedSubjects = subjects.filter((_, i) => i !== index);
-		setSubjects(updatedSubjects);
-	};
 
 	// Fetch all subjects when the component mounts
 	useEffect(() => {

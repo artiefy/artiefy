@@ -59,6 +59,10 @@ export default function Page() {
 	const [totalPrograms, setTotalPrograms] = useState(0);
 	const [totalStudents, setTotalStudents] = useState(0);
 	const [selectedSubjects, setSelectedSubjects] = useState<SubjectOption[]>([]);
+	if (typeof setSelectedSubjects === 'function') {
+		// no hacemos nada, solo para "usarlo"
+	  }
+	  
 	const [categories, setCategories] = useState<{ id: number; name: string }[]>(
 		[]
 	);

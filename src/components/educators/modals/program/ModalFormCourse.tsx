@@ -12,10 +12,9 @@ import { MdClose } from 'react-icons/md';
 import Select, { type MultiValue } from 'react-select';
 import { toast } from 'sonner';
 
+import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import NivelDropdown from '~/components/educators/layout/NivelDropdown';
-import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
-
 import { Button } from '~/components/educators/ui/button';
 import {
 	Dialog,
@@ -34,12 +33,7 @@ interface Subject {
 	title: string;
 }
 
-// Define the interface for the props
-interface CustomSelectProps {
-	options: Subject[];
-	onChange: (selected: MultiValue<{ value: string; label: string }>) => void;
-	selectedSubjects: MultiValue<{ value: string; label: string }>;
-}
+
 
 // Interfaz para los parámetros del formulario del course
 interface CourseFormProps {
@@ -151,6 +145,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
 	const [isUploading, setIsUploading] = useState(false); // Estado para la subida
 	const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set()); // Estado para los campos modificados
+	void modifiedFields;
 	const [currentCoverImageKey] = useState(coverImageKey); // Estado para la imagen de portada
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null); // Estado para el controlador de subida

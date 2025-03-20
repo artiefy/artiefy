@@ -17,8 +17,7 @@ export default function Home() {
 	const { user } = useUser();
 	const [loading, setLoading] = useState(false);
 	const [showAnuncio, setShowAnuncio] = useState(false);
-	if (showAnuncio) {
-	}
+	void showAnuncio;
 	const [anuncios, setAnuncios] = useState<
 		{ titulo: string; descripcion: string; coverImageKey: string }[]
 	>([]);

@@ -1,4 +1,3 @@
-import type { Metadata, Viewport } from 'next';
 
 import { Montserrat } from 'next/font/google';
 import Script from 'next/script';
@@ -14,6 +13,8 @@ import { metadata as siteMetadata } from '~/lib/metadata';
 import '~/styles/globals.css';
 import Loading from './loading';
 import Providers from './providers';
+import type { Metadata, Viewport } from 'next';
+
 
 const montserrat = Montserrat({
 	subsets: ['latin'],

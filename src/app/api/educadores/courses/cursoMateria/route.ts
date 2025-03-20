@@ -17,28 +17,12 @@ import {
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAdmin';
-import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>
 	NextResponse.json({ error: message }, { status });
 
-// Función para verificar si el usuario es nuevo y agregarlo a la tabla users
-async function ensureUserExists(userId: string) {
-	const user = await getUserById(userId);
-	if (!user) {
-		const clerkUser = await currentUser();
-		if (clerkUser) {
-			await createUser(
-				userId,
-				'educador', // Asigna un rol por defecto, ajusta según sea necesario
-				`${clerkUser.firstName} ${clerkUser.lastName}`,
-				clerkUser.emailAddresses[0].emailAddress
-			);
-		}
-	}
-}
 
 // GET endpoint para obtener un curso por su ID
 export async function GET(req: NextRequest) {
@@ -87,17 +71,6 @@ export async function GET(req: NextRequest) {
 	}
 }
 
-interface CourseData {
-	title: string;
-	description: string;
-	coverImageKey: string;
-	categoryid: number;
-	modalidadesid: number;
-	nivelid: number;
-	instructor: string;
-	creatorId: string;
-	rating: number;
-}
 
 export async function POST(request: Request) {
 	try {

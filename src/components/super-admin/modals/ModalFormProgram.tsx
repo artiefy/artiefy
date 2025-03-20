@@ -7,12 +7,9 @@ import Image from 'next/image';
 
 
 import { useUser } from '@clerk/nextjs';
-import { Plus } from 'lucide-react';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import Select, { type MultiValue, type ActionMeta } from 'react-select';
-import { toast } from 'sonner';
-
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -73,8 +70,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 	setCategoryid,
 	coverImageKey,
 	isOpen,
-	onCloseAction,
-	subjectIds,
+	onCloseAction
 }) => {
 	const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null);
@@ -100,6 +96,8 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
 	const [coverImage, setCoverImage] = useState<string | null>(null);
+	void modifiedFields;
+	void coverImage;
 
 	// Manejo de cambios en el archivo
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -149,9 +147,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 	const handleSubmit = async () => {
 		const controller = new AbortController();
 		setUploadController(controller);
-		const preparedSubjects = selectedSubjects.map((subject) => ({
-			id: parseInt(subject.value),
-		}));
+		
 		const subjectIds = selectedSubjects
 			.map((subject) => Number(subject.value)) // Convertimos `value` a número
 			.filter((id) => !isNaN(id)); // Filtramos valores inválidos
@@ -320,7 +316,6 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 
 	const handleSelectSubjects = (
 		newValue: MultiValue<SubjectOption>,
-		actionMeta: ActionMeta<SubjectOption>
 	) => {
 		console.log(
 			'📌 Materias seleccionadas (antes de actualizar estado):',

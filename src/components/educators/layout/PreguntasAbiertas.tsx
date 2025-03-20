@@ -64,19 +64,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
 		}));
 	};
 
-	// Valida que el porcentaje total de las preguntas no sea mayor a 100% 'No finalizado'
-	const validateTotalPercentage = async (newPesoPregunta: number) => {
-		const response = await fetch(
-			`/api/educadores/question/totalPercentage?activityId=${activityId}`
-		);
-		const data = (await response.json()) as { totalPercentage: number };
-		const totalPercentage =
-			data.totalPercentage +
-			newPesoPregunta -
-			(editingQuestion?.pesoPregunta ?? 0);
-		return totalPercentage <= 100;
-	};
-
+	
 	// Maneja el envio del formulario para guardar la pregunta
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();

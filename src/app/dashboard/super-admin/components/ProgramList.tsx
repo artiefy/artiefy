@@ -35,7 +35,7 @@ interface ProgramListAdminProps {
     onDeleteProgram: (programId: number) => void;
 }
 
-export default function ProgramListAdmin({ programs, onEditProgram, onDeleteProgram }: ProgramListAdminProps) {
+export default function ProgramListAdmin({ programs }: ProgramListAdminProps) {
     return (
         <div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
             {programs.map((program) => (

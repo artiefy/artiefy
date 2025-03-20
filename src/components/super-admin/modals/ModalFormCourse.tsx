@@ -11,13 +11,12 @@ import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import { toast } from 'sonner';
 
+import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
 import NivelDropdown from '~/components/educators/layout/NivelDropdown'; // Fixed import statement
 import CourseTypeDropdown from '~/components/educators/layout/TypesCourseDropdown';
 import { Button } from '~/components/educators/ui/button';
-import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
-
 import {
 	Dialog,
 	DialogContent,

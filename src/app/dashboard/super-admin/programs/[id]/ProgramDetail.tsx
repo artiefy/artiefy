@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs'; // 🔥 Agrega esta línea al inicio del archivo
 import { toast } from 'sonner';
@@ -77,18 +77,9 @@ const getContrastYIQ = (hexcolor: string) => {
 };
 
 const ProgramDetail: React.FC<ProgramDetailProps> = () => {
-	const router = useRouter(); // Obtener el router
 	const params = useParams(); // Obtener los parámetros
 	const programIdUrl = params?.id; // Obtener el id del programa desde params
 	const [program, setProgram] = useState<Program | null>(null); // Nuevo estado para el programa
-	const [parametros, setParametros] = useState<Parametros[]>([]); // Nuevo estado para los parámetros
-	const [isModalOpen, setIsModalOpen] = useState(false); // Nuevo estado para el modal de edición
-	const [editTitle, setEditTitle] = useState(''); // Nuevo estado para el título del programa a editar
-	const [editDescription, setEditDescription] = useState(''); // Nuevo estado para la descripción del programa
-	const [editCategory, setEditCategory] = useState(0); // Nuevo estado para la categoría del programa
-	const [editModalidad, setEditModalidad] = useState(0); // Nuevo estado para la modalidad del programa
-	const [editNivel, setEditNivel] = useState(0); // Nuevo estado para la nivel del programa
-	const [editCoverImageKey, setEditCoverImageKey] = useState(''); // Nuevo estado para la imagen del programa
 	const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
 	const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
 	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
@@ -106,7 +97,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			porcentaje: number;
 		}[]
 	>([]); // Nuevo estado para los parámetros
-	const [editRating, setEditRating] = useState(0); // Añadir esta línea
 	const [courses, setCourses] = useState<CourseData[]>([]); // Nuevo estado para los cursos
 	const [isCourseModalOpen, setIsCourseModalOpen] = useState(false); // State for course modal
 	const [subjects, setSubjects] = useState<
@@ -120,6 +110,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	const programIdNumber = parseInt(programIdString2); // Convertir el id del programa a número
 	const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null); // interfaz de cursos
 	const [selectedCourseType, setSelectedCourseType] = useState<number | null>(null);
+	void setEditingCourse;
+	void uploading;
+
 
 	const [newCourse, setNewCourse] = useState<CourseData>({
 		id: 0,
@@ -179,97 +172,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		}
 	}, [programIdNumber]);
 
-	// Manejo de actualizar
-	const handleUpdateProgram = async (
-		id: string,
-		title: string,
-		description: string,
-		file: File | null,
-		categoryid: number,
-		modalidadesid: number,
-		nivelid: number,
-		addParametros: boolean,
-		coverImageKey: string,
-		fileName: string,
-		rating: number
-	) => {
-		try {
-			const coverImageKey = program?.coverImageKey ?? '';
-			const uploadedFileName = fileName ?? '';
-
-			if (file) {
-				// Handle file upload
-			}
-
-			// Actualizar el programa
-			const response = await fetch(
-				`/api/super-admin/programs/${programIdNumber}`,
-				{
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						title,
-						description,
-						coverImageKey,
-						fileName: uploadedFileName,
-						categoryid,
-						modalidadesid,
-						nivelid,
-						instructor: program?.instructor,
-						rating,
-					}),
-				}
-			);
-
-			// añadir parametros a la actualización si es true
-			if (addParametros) {
-				// Handle adding parameters
-			}
-
-			if (!response.ok) {
-				throw new Error('Error updating program');
-			}
-
-			const updatedProgram = (await response.json()) as Program;
-			setProgram(updatedProgram);
-
-			setIsModalOpen(false);
-			toast('Programa Actualizado', {
-				description: 'El Programa Se Ha Actualizado Con Éxito.',
-			});
-			if (addParametros) {
-				// Handle adding parameters
-			}
-		} catch (error) {
-			console.error('Error:', error);
-			toast('Error', {
-				description:
-					error instanceof Error ? error.message : 'Error Desconocido',
-			});
-		}
-	};
-
-	// Función para manejar la edición del programa
-	const handleEditProgram = () => {
-		if (!program) return; // Verificación adicional
-		setEditTitle(program.title);
-		setEditDescription(program.description);
-		setEditCategory(parseInt(program.categoryid));
-		setEditModalidad(parseInt(program.modalidadesid));
-		setEditNivel(parseInt(program.nivelid));
-		setEditCoverImageKey(program.coverImageKey);
-		setEditParametros(
-			parametros.map((parametro) => ({
-				id: parametro.id,
-				name: parametro.name,
-				description: parametro.description,
-				porcentaje: parametro.porcentaje,
-			}))
-		);
-		setEditRating(program.rating); // Añadir esta línea
-		setIsModalOpen(true);
-	};
-
 	// Verificar si se está cargando
 	if (loading) {
 		return (
@@ -285,24 +187,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	// Verificar si hay un error o hay programa
 	if (!program) return <div>No Se Encontró El Programa.</div>;
 
-	// Función para manejar la eliminación del programa
-	const handleDelete = async (id: number) => {
-		try {
-			const response = await fetch(`/api/super-admin/programs/${id}`, {
-				method: 'DELETE',
-			});
-			if (!response.ok) {
-				throw new Error('Error Deleting Program');
-			}
-			router.push('/dashboard/super-admin/programs');
-		} catch (error) {
-			console.error('Error Deleting Program:', error);
-			toast('Error', {
-				description:
-					error instanceof Error ? error.message : 'Error Desconocido',
-			});
-		}
-	};
+	
 
 	// Verificar si hay un error
 	if (error) {

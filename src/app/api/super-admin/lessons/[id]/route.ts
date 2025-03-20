@@ -1,8 +1,7 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import {
 	getLessonById,
-	updateLesson,
 } from '~/models/educatorsModels/lessonsModels';
 
 export async function GET(

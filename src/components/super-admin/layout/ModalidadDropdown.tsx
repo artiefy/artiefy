@@ -21,7 +21,6 @@ interface ModalidadDropdownProps {
 const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
 	modalidad,
 	setModalidad,
-	errors,
 }) => {
 	const [modalidades, setModalidades] = useState<Modalidad[]>([]); // Estado para las modalidades
 	const [isLoading, setIsLoading] = useState(true); // Estado para el estado de carga
