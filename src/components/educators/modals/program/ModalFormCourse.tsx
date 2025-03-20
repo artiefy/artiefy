@@ -334,11 +334,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				id: subject.id, // Solo enviamos el ID de la materia
 			}));
 			
-			console.log('Selected subjects before sending:', selectedSubjects);
-			console.log('Selected subjects before sending:', selectedSubjects);
-			console.log('Current subjects state:', subjects);
-			console.log('Editing course ID:', editingCourseId);
-	
 	
 		
 			// Validar que haya al menos una materia seleccionada
@@ -527,31 +522,32 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	useEffect(() => {
 		const fetchSubjects = async () => {
 			try {
-				// Ensure programId is available from props or state
 				if (typeof programId !== 'number') {
 					console.error('programId is not defined');
 					return;
 				}
 				
-				// Llama al endpoint con el programId
 				const response = await fetch(`/api/super-admin/programs?programId=${programId}`);
 				const data = (await response.json()) as { id: number; title: string }[];
 	
 				if (Array.isArray(data)) {
-					// Verifica que la respuesta sea un arreglo
 					setAllSubjects(data);
 				} else {
 					console.error('La respuesta no es un arreglo:', data);
-					setAllSubjects([]); // Establece allSubjects como un arreglo vacío si la respuesta no es correcta
+					setAllSubjects([]);
 				}
 			} catch (error) {
 				console.error('Error fetching subjects:', error);
-				setAllSubjects([]); // Establece allSubjects como un arreglo vacío en caso de error
+				setAllSubjects([]);
 			}
 		};
 	
-		void fetchSubjects();
-	}, []);
+		// 👇 Solo cuando el modal se abre o el programId cambia
+		if (isOpen) {
+			void fetchSubjects();
+		}
+	}, [isOpen, programId]);
+	
 
 	// Function to handle selecting subjects
 	const handleSelectSubjects = (
@@ -614,7 +610,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								htmlFor="nivelid"
 								className="justify-center text-center text-lg font-medium text-primary"
 							>
-								level
+								Nivel
 							</label>
 							<NivelDropdown
 								nivel={nivelid}

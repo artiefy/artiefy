@@ -106,41 +106,7 @@ export const getProgramById = unstable_cache(
 	}
 );
 
-// Crear un nuevo programa
-export const createProgram = async (
-	programData: Partial<ProgramDetails>
-): Promise<ProgramDetails> => {
-	const result = await db
-		.insert(programas)
-		.values({
-			title: programData.title!,
-			categoryid: programData.categoryid!,
-			creatorId: programData.creatorId!,
-			description: programData.description ?? null,
-			coverImageKey: programData.coverImageKey ?? null,
-			createdAt: programData.createdAt ?? new Date(),
-			updatedAt: programData.updatedAt ?? new Date(),
-			rating: programData.rating ?? null,
-		})
-		.returning({
-			id: programas.id,
-			title: programas.title,
-			description: programas.description,
-			coverImageKey: programas.coverImageKey,
-			categoryid: programas.categoryid,
-			creatorId: programas.creatorId,
-			createdAt: programas.createdAt,
-			updatedAt: programas.updatedAt,
-			rating: programas.rating,
-		})
-		.execute();
-	return {
-		...result[0],
-		materias: [],
-		courses: [],
-	};
-};
-
+// Crear un nuevo program
 // Actualizar un programa
 export const updateProgram = async (
 	programId: number,
@@ -180,3 +146,35 @@ export const updateProgram = async (
 export const deleteProgram = async (programId: number): Promise<void> => {
 	await db.delete(programas).where(eq(programas.id, programId)).execute();
 };
+
+
+interface CreateProgramInput {
+    title: string;
+    description: string;
+    coverImageKey: string | null;
+    categoryid: number;
+    rating: number | null;
+    creatorId: string;
+}
+
+export async function createProgram(data: CreateProgramInput) {
+    try {
+        const [newProgram] = await db
+            .insert(programas)
+            .values({
+                title: data.title,
+                description: data.description,
+                coverImageKey: data.coverImageKey,
+                categoryid: data.categoryid,
+                rating: data.rating,
+                creatorId: data.creatorId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            })
+            .returning();
+        return newProgram;
+    } catch (error) {
+        console.error('❌ Error al insertar el programa en la base de datos:', error);
+        throw error;
+    }
+}

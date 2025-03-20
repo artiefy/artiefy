@@ -1,9 +1,17 @@
-import React, { useState, useEffect, type ChangeEvent } from 'react';
-import { Plus } from 'lucide-react';
+/* eslint-disable react-hooks/exhaustive-deps */
+'use client';
+
+import { useEffect, useState, type ChangeEvent } from 'react';
+
 import Image from 'next/image';
+import Select, { type MultiValue, type ActionMeta } from 'react-select';
+
+import { useUser } from '@clerk/nextjs';
+import { Plus } from 'lucide-react';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import { toast } from 'sonner';
+
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -16,37 +24,43 @@ import {
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
-import { type ProgramDetails as Program } from '~/models/super-adminModels/programModelsSuperAdmin';
 
-interface ModalFormProgramProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSubmit: (
-        id: string,
-        title: string,
-        description: string,
-        file: File | null,
-        categoryid: number,
-        rating: number,
-        coverImageKey: string,
-        fileName: string
-    ) => Promise<void>;
-    uploading: boolean;
-    editingProgramId: number | null;
-    title: string;
-    setTitle: (title: string) => void;
-    description: string;
-    setDescription: (description: string) => void;
-    categoryid: number;
-    setCategoryid: (categoryid: number) => void;
-    coverImageKey: string;
-    setCoverImageKey: (coverImageKey: string) => void;
-    rating: number;
-    setRating: (rating: number) => void;
+interface SubjectOption {
+	value: string;
+	label: string;
 }
-const ModalFormProgram: React.FC<ModalFormProgramProps> = ({
-	onSubmit,
-uploading,
+interface ProgramFormProps {
+	onSubmitAction: (
+		id: string,
+		title: string,
+		description: string,
+		file: File | null,
+		categoryid: number,
+		rating: number,
+		coverImageKey: string,
+		fileName: string,
+		subjectIds: number[]
+	) => Promise<void>;
+	uploading: boolean;
+	editingProgramId: number | null;
+	title: string;
+	setTitle: (title: string) => void;
+	description: string;
+	setDescription: (description: string) => void;
+	categoryid: number;
+	setCategoryid: (categoryid: number) => void;
+	coverImageKey: string;
+	setCoverImageKey: (coverImageKey: string) => void;
+	isOpen: boolean;
+	onCloseAction: () => void;
+	rating: number;
+	setRating: (rating: number) => void;
+	subjectIds: number[];
+}
+
+const ModalFormProgram: React.FC<ProgramFormProps> = ({
+	onSubmitAction,
+	uploading,
 	editingProgramId,
 	title,
 	setTitle,
@@ -58,9 +72,11 @@ uploading,
 	setCategoryid,
 	coverImageKey,
 	isOpen,
-	onClose,
+	onCloseAction,
+	subjectIds,
 }) => {
-		const [file, setFile] = useState<File | null>(null);
+	const { user } = useUser(); // Obtiene el usuario actual
+	const [file, setFile] = useState<File | null>(null);
 	const [fileName, setFileName] = useState<string | null>(null);
 	const [fileSize, setFileSize] = useState<number | null>(null);
 	const [progress, setProgress] = useState(0);
@@ -70,18 +86,21 @@ uploading,
 		title: false,
 		description: false,
 		categoryid: false,
-category: false,
 		rating: false,
 		file: false,
 	});
-const [uploadProgress, setUploadProgress] = useState(0);
+	const [uploadProgress, setUploadProgress] = useState(0);
 	const [isUploading, setIsUploading] = useState(false);
+
+	const [allSubjects, setAllSubjects] = useState<SubjectOption[]>([]);
+	const [selectedSubjects, setSelectedSubjects] = useState<SubjectOption[]>([]);
 	const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set());
 	const [currentCoverImageKey] = useState(coverImageKey);
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null);
-const [coverImage, setCoverImage] = useState<string | null>(null);
+	const [coverImage, setCoverImage] = useState<string | null>(null);
 
+	// Manejo de cambios en el archivo
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const files = e.target.files;
 		if (files?.[0]) {
@@ -95,9 +114,9 @@ const [coverImage, setCoverImage] = useState<string | null>(null);
 			setFileSize(null);
 			setErrors((prev) => ({ ...prev, file: true }));
 		}
-console.log('coverImageKey', coverImage);
 	};
 
+	// Manejo de arrastre de archivos
 	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		setIsDragging(true);
@@ -125,25 +144,30 @@ console.log('coverImageKey', coverImage);
 		}
 	};
 
+	// Manejo del envío del formulario
 	const handleSubmit = async () => {
-const controller = new AbortController();
+		const controller = new AbortController();
 		setUploadController(controller);
-		const newErrors = {
-			title: !editingProgramId && !title,
-			description: !editingProgramId && !description,
-			categoryid: !editingProgramId && !categoryid,
-			category: false,
-			rating: !editingProgramId && !rating,
-			file: !editingProgramId && !file && !currentCoverImageKey,
-		};
+		const preparedSubjects = selectedSubjects.map((subject) => ({
+			id: parseInt(subject.value),
+		}));
+		const subjectIds = selectedSubjects
+			.map((subject) => Number(subject.value)) // Convertimos `value` a número
+			.filter((id) => !isNaN(id)); // Filtramos valores inválidos
+		console.log('📤 Enviando programa con subjectIds:', subjectIds); // ✅ LOG IMPORTANTE
 
-		if (editingProgramId) {
-			newErrors.title = modifiedFields.has('title') && !title;
-			newErrors.description = modifiedFields.has('description') && !description;
-			newErrors.categoryid = modifiedFields.has('categoryid') && !categoryid;
-			newErrors.rating = modifiedFields.has('rating') && !rating;
-			newErrors.file = modifiedFields.has('file') && !file;
-		}
+		const newErrors = {
+			title: !title,
+			description: !description,
+			categoryid: !categoryid,
+			rating:
+				rating === null ||
+				rating === undefined ||
+				isNaN(rating) ||
+				rating < 0 ||
+				rating > 500,
+			file: !file && !currentCoverImageKey,
+		};
 
 		setErrors(newErrors);
 
@@ -152,8 +176,9 @@ const controller = new AbortController();
 			return;
 		}
 
-setIsEditing(true);
+		setIsEditing(true);
 		setIsUploading(true);
+
 		try {
 			let coverImageKey = currentCoverImageKey ?? '';
 			let uploadedFileName = fileName ?? '';
@@ -171,69 +196,63 @@ setIsEditing(true);
 
 				if (!uploadResponse.ok) {
 					throw new Error(
-						`Error: al iniciar la carga: ${uploadResponse.statusText}`
+						`Error during file upload: ${uploadResponse.statusText}`
 					);
 				}
 
 				const uploadData = (await uploadResponse.json()) as {
-					url: string;
-					fields: Record<string, string>;
 					key: string;
 					fileName: string;
+					fields: Record<string, string>;
+					url: string;
 				};
-
-				const { url, fields, key, fileName: responseFileName } = uploadData;
-				coverImageKey = key;
-				uploadedFileName = responseFileName;
+				coverImageKey = uploadData.key;
+				uploadedFileName = uploadData.fileName;
 
 				const formData = new FormData();
-				Object.entries(fields).forEach(([key, value]) => {
-					if (typeof value === 'string') {
-						formData.append(key, value);
-					}
+				Object.entries(uploadData.fields).forEach(([key, value]) => {
+					formData.append(key, value);
 				});
 				formData.append('file', file);
 
-				await fetch(url, {
+				await fetch(uploadData.url, {
 					method: 'POST',
 					body: formData,
 				});
 			}
 
-			await onSubmit(
-editingProgramId ? editingProgramId.toString() : '',
+			await onSubmitAction(
+				editingProgramId ? editingProgramId.toString() : '',
 				title,
 				description,
 				file,
 				categoryid,
 				rating,
 				coverImageKey,
-				uploadedFileName
+				uploadedFileName,
+				selectedSubjects.map((subject) => Number(subject.value))
 			);
+
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
-return;
 			}
 
-				setIsUploading(false);
-					} catch (error) {
-if ((error as Error).name === 'AbortError') {
-				console.log('Upload cancelled');
-				return;
-			} else {
-			console.error('Error al enviar:', error);
-}
+			setIsUploading(false);
+		} catch (error) {
+			console.error('Error during the submission process:', error);
 			setIsUploading(false);
 		}
-			};
+	};
 
+	// Manejo de cancelación
 	const handleCancel = () => {
 		if (uploadController) {
 			uploadController.abort();
 		}
-		onClose();
-};
+		onCloseAction();
+	};
 
+	// Manejo de cambios en los campos
 	const handleFieldChange = (
 		field: string,
 		value: string | number | File | null
@@ -258,8 +277,9 @@ if ((error as Error).name === 'AbortError') {
 		}
 	};
 
+	// Efectos para manejar el progreso de carga
 	useEffect(() => {
-if (uploading) {
+		if (uploading) {
 			setProgress(0);
 			const interval = setInterval(() => {
 				setProgress((prev) => {
@@ -273,6 +293,49 @@ if (uploading) {
 			return () => clearInterval(interval);
 		}
 	}, [uploading]);
+
+	useEffect(() => {
+		const fetchSubjects = async () => {
+			try {
+				const response = await fetch('/api/super-admin/materias'); // Ajusta la URL según necesidad
+				const data = (await response.json()) as { id: number; title: string }[];
+				setAllSubjects(
+					data.map((subject) => ({
+						value: subject.id.toString(),
+						label: subject.title,
+					}))
+				);
+			} catch (error) {
+				console.error('Error fetching subjects:', error);
+			}
+		};
+
+		if (isOpen) {
+			void fetchSubjects();
+		}
+	}, [isOpen]);
+
+	// Utilizamos este tipo en el estado para mantener las opciones seleccionadas
+
+	const handleSelectSubjects = (
+		newValue: MultiValue<SubjectOption>,
+		actionMeta: ActionMeta<SubjectOption>
+	) => {
+		console.log(
+			'📌 Materias seleccionadas (antes de actualizar estado):',
+			newValue
+		);
+
+		// Asegurar que `selectedSubjects` almacena correctamente los valores
+		const updatedSubjects = newValue.map((subject) => ({
+			value: subject.value, // 🔹 Guardamos el ID tal cual (string)
+			label: subject.label, // 🔹 Guardamos el label
+		}));
+
+		console.log('✅ Materias guardadas en el estado:', updatedSubjects);
+
+		setSelectedSubjects(updatedSubjects);
+	};
 
 	useEffect(() => {
 		if (progress === 100) {
@@ -327,9 +390,10 @@ if (uploading) {
 		}
 	}, [isOpen, editingProgramId]);
 
+	// Renderizado del modal
 	return (
-		<Dialog open={isOpen} onOpenChange={onClose}>
-<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
+		<Dialog open={isOpen} onOpenChange={onCloseAction}>
+			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
 				<DialogHeader className="mt-4">
 					<DialogTitle className="text-4xl">
 						{editingProgramId ? 'Editar Programa' : 'Crear Programa'}
@@ -340,8 +404,9 @@ if (uploading) {
 							: 'Llena los detalles para crear un nuevo programa'}
 					</DialogDescription>
 				</DialogHeader>
-				<div className="bg-background rounded-lg px-6 text-black shadow-md">
-					<label htmlFor="title" className="text-primary text-lg font-medium">
+				<div className="rounded-lg bg-background px-6 text-black shadow-md">
+					{/* Título */}
+					<label htmlFor="title" className="text-lg font-medium text-primary">
 						Título
 					</label>
 					<input
@@ -349,14 +414,18 @@ if (uploading) {
 						placeholder="Título"
 						value={title}
 						onChange={(e) => handleFieldChange('title', e.target.value)}
-						className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-4 w-full rounded border p-2 text-white outline-none ${
+							errors.title ? 'border-red-500' : 'border-primary'
+						}`}
 					/>
 					{errors.title && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
 					)}
+
+					{/* Descripción */}
 					<label
 						htmlFor="description"
-						className="text-primary text-lg font-medium"
+						className="text-lg font-medium text-primary"
 					>
 						Descripción
 					</label>
@@ -364,23 +433,27 @@ if (uploading) {
 						placeholder="Descripción"
 						value={description}
 						onChange={(e) => handleFieldChange('description', e.target.value)}
-						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
+						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${
+							errors.description ? 'border-red-500' : 'border-primary'
+						}`}
 					/>
 					{errors.description && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
 					)}
-					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-						<div className="mx-auto flex flex-col justify-center">
+
+					{/* Categoría */}
+					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+						<div className="flex w-full flex-col gap-2">
 							<label
 								htmlFor="categoryid"
-								className="text-primary justify-center text-center text-lg font-medium"
+								className="text-lg font-medium text-primary"
 							>
 								Categoría
 							</label>
 							<CategoryDropdown
 								category={categoryid}
 								setCategory={setCategoryid}
-								errors={errors}
+								errors={{ category: errors.categoryid }}
 							/>
 							{errors.categoryid && (
 								<p className="text-sm text-red-500">
@@ -388,11 +461,43 @@ if (uploading) {
 								</p>
 							)}
 						</div>
+						{isOpen && (
+							<div className="flex w-full flex-col gap-2">
+                                <label
+									htmlFor="subjects"
+									className="text-lg font-medium text-primary"
+								>
+									Materias
+								</label>
+								<label
+									htmlFor="subjects"
+									className="text-lg font-medium text-primary"
+								>
+									Asignar Materias
+								</label>
+								<Select
+									isMulti
+									options={allSubjects}
+									value={selectedSubjects}
+									onChange={handleSelectSubjects}
+									classNamePrefix="react-select"
+									className="w-full"
+								/>
+							</div>
+						)}
 					</div>
+
+					<div className="mb-4 w-full rounded border border-primary p-2">
+						<h3 className="text-lg font-medium text-primary">
+							Instructor: {user?.fullName}
+						</h3>
+					</div>
+
+					{/* Rating */}
 					<div>
 						<label
 							htmlFor="rating"
-							className="text-primary text-lg font-medium"
+							className="text-lg font-medium text-primary"
 						>
 							Rating
 						</label>
@@ -402,23 +507,25 @@ if (uploading) {
 							max="5"
 							step="0.1"
 							placeholder="0-5"
-							className="border-primary mt-1 w-full rounded border p-2 text-white outline-none focus:no-underline"
+							className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
 							value={rating}
 							onChange={(e) => setRating(Number(e.target.value))}
 						/>
 					</div>
-					<label htmlFor="file" className="text-primary text-lg font-medium">
+
+					{/* Imagen de portada */}
+					<label htmlFor="file" className="text-lg font-medium text-primary">
 						Imagen de portada
 					</label>
 					<div
-						className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${
-isDragging
+						className={`mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary p-8 lg:w-1/2 ${
+							isDragging
 								? 'border-blue-500 bg-blue-50'
 								: errors.file
-? 'border-red-500 bg-red-50'
-: 'border-gray-300 bg-gray-50'
+									? 'border-red-500 bg-red-50'
+									: 'border-gray-300 bg-gray-50'
 						} transition-all duration-300 ease-in-out`}
-onDragOver={handleDragOver}
+						onDragOver={handleDragOver}
 						onDragLeave={handleDragLeave}
 						onDrop={handleDrop}
 					>
@@ -426,7 +533,9 @@ onDragOver={handleDragOver}
 							{!file ? (
 								<>
 									<FiUploadCloud
-										className={`mx-auto size-12 ${errors.file ? 'text-red-500' : 'text-primary'} `}
+										className={`mx-auto size-12 ${
+											errors.file ? 'text-red-500' : 'text-primary'
+										} `}
 									/>
 									<h2 className="mt-4 text-xl font-medium text-gray-700">
 										Arrastra y suelta tu imagen aquí
@@ -440,13 +549,17 @@ onDragOver={handleDragOver}
 									<input
 										type="file"
 										accept="image/*"
-										className={`hidden ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
+										className={`hidden ${
+											errors.file ? 'bg-red-500' : 'bg-primary'
+										}`}
 										onChange={handleFileChange}
 										id="file-upload"
 									/>
 									<label
 										htmlFor="file-upload"
-										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
+										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${
+											errors.file ? 'bg-red-500' : 'bg-primary'
+										}`}
 									>
 										Seleccionar Archivo
 									</label>
@@ -486,43 +599,46 @@ onDragOver={handleDragOver}
 							)}
 						</div>
 					</div>
+
+					{/* Progreso de carga */}
 					{(uploading || isUploading) && (
 						<div className="mt-4">
 							<Progress
-value={uploading ? progress : uploadProgress}
-className="w-full"
-/>
+								value={uploading ? progress : uploadProgress}
+								className="w-full"
+							/>
 							<p className="mt-2 text-center text-sm text-gray-500">
 								{uploading ? progress : uploadProgress}% Completado
 							</p>
 						</div>
 					)}
 				</div>
+
+				{/* Botones de acción */}
 				<DialogFooter className="mt-4 grid grid-cols-2 gap-4">
 					<Button
 						onClick={handleCancel}
 						className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
 					>
 						Cancelar
-						</Button>
-										<Button
+					</Button>
+					<Button
 						onClick={handleSubmit}
 						className="bg-green-400 text-white hover:bg-green-400/70"
 						disabled={uploading}
 					>
 						{uploading
-? 'Subiendo...'
+							? 'Subiendo...'
 							: editingProgramId
 								? isEditing
 									? 'Editando...'
 									: 'Editar'
-: 'Crear Programa'}
+								: 'Crear Programa'}
 					</Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
-			);
+	);
 };
 
 export default ModalFormProgram;
-

@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 			console.log('Usuario no autorizado');
 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
-		
+
 		// Parsear los datos del cuerpo de la solicitud
 		const data = (await request.json()) as {
 			title: string;
@@ -121,68 +121,72 @@ export async function POST(request: Request) {
 		};
 		console.log('Received data:', data);
 
-
 		console.log('Datos recibidos en el backend:', data);
 
-
 		const createdCourses = [];
-
+		const isMultipleModalities = data.modalidadesid.length > 1;
 		// Iterar sobre cada modalidadId y crear un curso
 		for (const modalidadId of data.modalidadesid) {
 			const modalidad = await getModalidadById(modalidadId);
 
-        console.log(`Procesando modalidadId: ${modalidadId}`);
+			console.log(`Procesando modalidadId: ${modalidadId}`);
 
-        // Construir el título del curso con el nombre de la modalidad
-        const newTitle = modalidad
-            ? `${data.title} - ${modalidad.name}`
-            : data.title;
-            const newCourse = await createCourse({
-                title: newTitle,
-                description: data.description,
-                creatorId: userId,
-                coverImageKey: data.coverImageKey,
-                categoryid: data.categoryid,
-                rating: data.rating,
-                modalidadesid: modalidadId,
-                nivelid: data.nivelid,
-                instructor: data.instructor,
-            });
+			// Construir el título del curso con el nombre de la modalidad
+			const newTitle = modalidad && isMultipleModalities
+				? `${data.title} - ${modalidad.name}`
+				: data.title;
+			const newCourse = await createCourse({
+				title: newTitle,
+				description: data.description,
+				creatorId: userId,
+				coverImageKey: data.coverImageKey,
+				categoryid: data.categoryid,
+				rating: data.rating,
+				modalidadesid: modalidadId,
+				nivelid: data.nivelid,
+				instructor: data.instructor,
+			});
 
-            console.log('Curso creado:', newCourse);
+			console.log('Curso creado:', newCourse);
 
-            // Actualizar las materias con el ID del curso recién creado
-            // Actualizar las materias con el ID del curso recién creado
-			if (data.subjects && Array.isArray(data.subjects) && data.subjects.length > 0) {
+			// Actualizar las materias con el ID del curso recién creado
+			// Actualizar las materias con el ID del curso recién creado
+			if (
+				data.subjects &&
+				Array.isArray(data.subjects) &&
+				data.subjects.length > 0
+			) {
 				console.log('Actualizando materias:', data.subjects);
 				await Promise.all(
 					data.subjects.map(async (subject) => {
 						await updateMateria(subject.id, {
 							courseid: newCourse.id,
 						});
-						console.log(`Materia actualizada: ${subject.id} -> courseId: ${newCourse.id}`);
+						console.log(
+							`Materia actualizada: ${subject.id} -> courseId: ${newCourse.id}`
+						);
 					})
 				);
 			} else {
 				console.log('No se proporcionaron materias para actualizar.');
 			}
 
-            createdCourses.push(newCourse);
-        }
+			createdCourses.push(newCourse);
+		}
 
 		console.log('Cursos creados:', createdCourses);
 
 		return NextResponse.json(createdCourses, { status: 201 });
 	} catch (error) {
 		console.error('Error al crear el curso:', error);
-		const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+		const errorMessage =
+			error instanceof Error ? error.message : 'Error desconocido';
 		return NextResponse.json(
 			{ error: `Error al crear el curso: ${errorMessage}` },
 			{ status: 500 }
 		);
 	}
 }
-
 
 // Actualizar un curso
 export async function PUT(request: NextRequest) {

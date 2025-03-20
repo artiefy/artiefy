@@ -14,7 +14,6 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/estudiantes/ui/card';
 import { Label } from '~/components/estudiantes/ui/label';
 import ProgramCoursesList from '~/components/super-admin/layout/programdetail/ProgramCoursesList';
-import ModalFormProgram from '~/components/super-admin/ModalFormProgram';
 import { type CourseData as BaseCourseData } from '~/server/queries/queries';
 
 interface CourseData extends BaseCourseData {
@@ -471,6 +470,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				toast.success('Curso(s) creado(s) con éxito', {
 					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData.map(r => r.id).join(', ')}`,
 				});
+				await fetchProgram(); // 🔥 refresca los cursos
+				setSubjects([]); // limpiar las materias en el estado
+				setIsCourseModalOpen(false); // cierra el modal
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				toast.error('Error', {
@@ -596,6 +598,12 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 									{program.description}
 								</p>
 							</div>
+							<Button
+				onClick={handleCreateCourse}
+				className="mt-4 bg-secondary text-white"
+			>
+				Crear Curso
+			</Button>
 						</div>
 					</div>
 				</Card>
@@ -603,12 +611,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			<br />
 			<br />
 			<ProgramCoursesList courses={courses} />
-			<Button
-				onClick={handleCreateCourse}
-				className="mt-4 bg-primary text-white"
-			>
-				Crear Curso
-			</Button>
+			
 
 			<ModalFormCourse
 				isOpen={isCourseModalOpen}
@@ -650,62 +653,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				programId={programIdNumber} // 🔥 Asegurar que pase el programId aquí
 			/>
 
-			<ModalFormProgram
-				isOpen={isModalOpen}
-				onSubmitAction={(
-					id: string,
-					title: string,
-					description: string,
-					file: File | null,
-					categoryid: number,
-					modalidadesid: number,
-					nivelid: number,
-					rating: number,
-					addParametros: boolean,
-					coverImageKey: string,
-					fileName: string
-				) =>
-					handleUpdateProgram(
-						id,
-						title,
-						description,
-						file,
-						categoryid,
-						modalidadesid,
-						nivelid,
-						addParametros,
-						coverImageKey,
-						fileName,
-						rating
-					)
-				}
-				editingProgramId={program.id}
-				title={editTitle}
-				description={editDescription}
-				categoryid={editCategory}
-				modalidadesid={editModalidad}
-				nivelid={editNivel}
-				coverImageKey={editCoverImageKey}
-				parametros={editParametros}
-				rating={editRating}
-				setTitle={setEditTitle}
-				setDescription={setEditDescription}
-				setModalidadesid={setEditModalidad}
-				setCategoryid={setEditCategory}
-				setNivelid={setEditNivel}
-				setCoverImageKey={setEditCoverImageKey}
-				setParametrosAction={(
-					parametros: {
-						id: number;
-						name: string;
-						description: string;
-						porcentaje: number;
-					}[]
-				) => setEditParametros(parametros)}
-				setRating={setEditRating}
-				onCloseAction={() => setIsModalOpen(false)}
-				uploading={false}
-			/>
+			
 		</div>
 	);
 };

@@ -14,6 +14,11 @@ import {
 } from '~/server/queries/queriesSuperAdmin';
 
 
+interface SubjectOption {
+	value: string; // El ID de la materia en formato string
+	label: string; // El nombre de la materia
+  }
+  
 // Define el modelo de datos del programa
 export interface ProgramModel {
 	id: number;
@@ -52,6 +57,7 @@ export default function Page() {
 	const [categoryFilter, setCategoryFilter] = useState('');
 	const [totalPrograms, setTotalPrograms] = useState(0);
 	const [totalStudents, setTotalStudents] = useState(0);
+	const [selectedSubjects, setSelectedSubjects] = useState<SubjectOption[]>([]);
 	const [categories, setCategories] = useState<{ id: number; name: string }[]>(
 		[]
 	);
@@ -119,9 +125,11 @@ export default function Page() {
 		categoryid: number,
 		rating: number,
 		coverImageKey: string,
-		fileName: string
+		fileName: string,
+		subjectIds: number[]
 	) => {
 		if (!user) return;
+		console.log('📤 Enviando programa con subjectIds:', subjectIds); 
 
 		try {
 			setUploading(true);
@@ -178,6 +186,7 @@ export default function Page() {
 		try {
 			let response;
 			let responseData: { id: number } | null = null;
+			// 🔹 Convertir `selectedSubjects` a un array de números antes de enviar
 
 			if (id) {
 				response = await updateProgram(Number(id), {
@@ -187,6 +196,7 @@ export default function Page() {
 					categoryid: Number(categoryid),
 					rating,
 					creatorId,
+					subjectIds, // ✅ Enviar materias
 				} as Program);
 
 				responseData = { id: Number(id) }; // Como es una actualización, el ID ya es conocido
@@ -201,13 +211,17 @@ export default function Page() {
 						categoryid,
 						rating,
 						creatorId,
+						subjectIds,
 					}),
 				});
 
 				if (response.ok) {
 					responseData = (await response.json()) as { id: number };
 				}
+				
 			}
+
+
 
 			if (response instanceof Response && response.ok && responseData) {
 				toast.success(id ? 'Programa actualizado' : 'Programa creado', {
@@ -362,8 +376,8 @@ export default function Page() {
 				{isModalOpen && (
 					<ModalFormProgram
 						isOpen={isModalOpen}
-						onClose={handleCloseModal}
-						onSubmit={handleCreateOrUpdateProgram}
+						onCloseAction={handleCloseModal}
+						onSubmitAction={handleCreateOrUpdateProgram}
 						uploading={uploading}
 						editingProgramId={editingProgram?.id ?? null}
 						title={editingProgram?.title ?? ''}
@@ -384,6 +398,7 @@ export default function Page() {
 						}
 						rating={editingProgram?.rating ?? 0}
 						setRating={setRating}
+						subjectIds={selectedSubjects.map(subject => Number(subject.value))}
 					/>
 				)}
 			</div>
