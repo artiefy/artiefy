@@ -55,7 +55,7 @@ interface CourseFormProps {
 		coverImageKey: string,
 		fileName: string,
 		subjects: { id: number;}[],// ✅ Solo `id` y `courseId`
-		programId: number // ✅ También asegurarnos de enviarlo en la función
+		programId: number,// ✅ También asegurarnos de enviarlo en la función
 		isActive: boolean
 	) => Promise<void>;
 	uploading: boolean;
