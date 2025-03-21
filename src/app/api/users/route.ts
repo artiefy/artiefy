@@ -22,29 +22,33 @@ const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
 		user: 'direcciongeneral@artiefy.com',
-		pass: process.env.PASS// ⚠️ Usa variables de entorno en producción
+		pass: 'hszz cilc otvj dlpb', // ⚠️ Usa variables de entorno en producción
 	},
 });
 
 // 📌 Función para enviar correo de bienvenida
-async function sendWelcomeEmail(to: string, username: string, password: string) {
+async function sendWelcomeEmail(
+	to: string,
+	username: string,
+	password: string
+) {
 	try {
 		const mailOptions = {
-			from: `"Artify" <${process.env.EMAIL_USER}>`,
+			from: `"Artiefy" <${process.env.EMAIL_USER}>`,
 			to,
-			subject: '🎨 Bienvenido a Artify - Tus Credenciales de Acceso',
+			subject: '🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso',
 			html: `
-				<h2>¡Bienvenido a Artify, ${username}!</h2>
+				<h2>¡Bienvenido a Artiefy, ${username}!</h2>
 				<p>Estamos emocionados de tenerte con nosotros. A continuación, encontrarás tus credenciales de acceso:</p>
 				<ul>
 					<li><strong>Usuario:</strong> ${username}</li>
 					<li><strong>Email:</strong> ${to}</li>
 					<li><strong>Contraseña:</strong> ${password}</li>
 				</ul>
-				<p>Por favor, inicia sesión en <a href="https://artify.com/" target="_blank">Artify</a> y cambia tu contraseña lo antes posible.</p>
+				<p>Por favor, inicia sesión en <a href="https://artiefy.com/" target="_blank">Artiefy</a> y cambia tu contraseña lo antes posible.</p>
 				<p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
 				<hr>
-				<p>Equipo de Artify 🎨</p>
+				<p>Equipo de Artiefy 🎨</p>
 			`,
 		};
 
@@ -56,7 +60,6 @@ async function sendWelcomeEmail(to: string, username: string, password: string) 
 		return { success: false, message: 'Error al enviar el correo' };
 	}
 }
-
 
 export async function GET(request: Request) {
 	try {
@@ -115,21 +118,18 @@ export async function POST(request: Request) {
 		console.log('✅ Usuario guardado en la BD correctamente');
 		// 🔹 Enviar correo con credenciales
 
-
 		// 4. Preparar usuario seguro para la respuesta
 		const safeUser = {
 			id: user.id,
 			firstName: user.firstName,
 			lastName: user.lastName,
-			username: user.username ?? "usuario", 
+			username: user.username ?? 'usuario',
 			email: user.emailAddresses.find(
 				(addr) => addr.id === user.primaryEmailAddressId
 			)?.emailAddress,
 			role: user.publicMetadata?.role ?? 'estudiante',
 		};
 		await sendWelcomeEmail(email, safeUser.username, generatedPassword);
-
-
 
 		return NextResponse.json({
 			user: safeUser,
@@ -216,7 +216,6 @@ export async function PATCH(request: Request) {
 					{ status: 400 }
 				);
 			}
-			return NextResponse.json({ success: true });
 		}
 
 		if (action === 'updateStatus') {
@@ -229,7 +228,6 @@ export async function PATCH(request: Request) {
 					{ status: 400 }
 				);
 			}
-			return NextResponse.json({ success: true });
 		}
 
 		if (action === 'updateMultipleStatus') {

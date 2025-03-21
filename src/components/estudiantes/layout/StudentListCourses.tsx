@@ -94,7 +94,7 @@ export default async function CourseListStudent({
 							// Mostrar el precio individual cuando el curso es tipo 4
 							if (course.courseTypeId === 4 && course.individualPrice) {
 								return (
-									<div className="mt-2 flex items-center gap-1">
+									<div className="mt-1 flex items-center gap-1">
 										<FaStar className="text-lg text-blue-500" />
 										<span className="text-sm font-bold text-blue-500">
 											${course.individualPrice.toLocaleString()}
@@ -105,7 +105,7 @@ export default async function CourseListStudent({
 
 							if (requiredSubscriptionLevel === 'none') {
 								return (
-									<div className="mt-2 flex items-center gap-1">
+									<div className="mt-1 flex items-center gap-1">
 										<IoGiftOutline className="text-lg text-green-500" />
 										<span className="text-sm font-bold text-green-500">
 											GRATUITO
@@ -119,7 +119,7 @@ export default async function CourseListStudent({
 									? 'text-purple-500'
 									: 'text-orange-500';
 							return (
-								<div className={`mt-2 flex items-center gap-1 ${color}`}>
+								<div className={`mt-1 flex items-center gap-1 ${color}`}>
 									<FaCrown className="text-lg" />
 									<span className="text-sm font-bold">
 										{requiredSubscriptionLevel.toUpperCase()}
