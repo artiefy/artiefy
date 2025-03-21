@@ -1,10 +1,5 @@
 'use server';
 
-<<<<<<< HEAD
-=======
-import { unstable_cache } from 'next/cache';
-
->>>>>>> dev/miguel
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';

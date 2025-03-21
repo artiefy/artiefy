@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { eq } from 'drizzle-orm';
-=======
-import { eq } from "drizzle-orm";
->>>>>>> dev/miguel
 
 import { db } from '~/server/db';
 import { activities } from '~/server/db/schema';

@@ -1,11 +1,8 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-<<<<<<< HEAD
 import { Redis } from '@upstash/redis';
 import { eq, sql } from 'drizzle-orm';
-=======
->>>>>>> dev/miguel
 
 import { db } from '~/server/db';
 import { userActivitiesProgress } from '~/server/db/schema';

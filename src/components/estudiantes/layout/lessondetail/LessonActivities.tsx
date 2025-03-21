@@ -18,8 +18,6 @@ import type { Activity, SavedAnswer } from '~/types';
 
 import '~/styles/arrowclass.css';
 
-import type { Activity } from '~/types';
-
 interface LessonActivitiesProps {
 	activity: Activity | null;
 	isVideoCompleted: boolean;
