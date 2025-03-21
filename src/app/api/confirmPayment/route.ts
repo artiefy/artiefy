@@ -1,9 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-<<<<<<< HEAD
 import { updateUserSubscription } from '~/server/actions/estudiantes/confirmation/updateUserSubscription';
-=======
->>>>>>> dev/miguel
 import { verifySignature } from '~/utils/paygateway/verifySignature';
 
 export const dynamic = 'force-dynamic';

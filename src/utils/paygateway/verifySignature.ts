@@ -1,12 +1,6 @@
-<<<<<<< HEAD
 import crypto from 'crypto';
 
 import { env } from '~/env'; // Importar correctamente las variables de entorno
-=======
-import crypto from "crypto";
-
-import { env } from "~/env"; // Importar correctamente las variables de entorno
->>>>>>> dev/miguel
 
 interface PaymentData {
 	merchant_id: string;

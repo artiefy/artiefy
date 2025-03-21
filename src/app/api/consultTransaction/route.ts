@@ -1,12 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import axios, { AxiosError } from 'axios';
-<<<<<<< HEAD
-=======
-
-// Configure route behavior
-export const dynamic = 'force-dynamic';
->>>>>>> dev/miguel
 
 // Constants
 const PAYU_API_URL =
