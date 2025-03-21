@@ -30,21 +30,21 @@ const transporter = nodemailer.createTransport({
 async function sendWelcomeEmail(to: string, username: string, password: string) {
 	try {
 		const mailOptions = {
-			from: `"Artify" <${process.env.EMAIL_USER}>`,
+			from: `"Artiefy" <${process.env.EMAIL_USER}>`,
 			to,
-			subject: '🎨 Bienvenido a Artify - Tus Credenciales de Acceso',
+			subject: '🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso',
 			html: `
-				<h2>¡Bienvenido a Artify, ${username}!</h2>
+				<h2>¡Bienvenido a Artiefy, ${username}!</h2>
 				<p>Estamos emocionados de tenerte con nosotros. A continuación, encontrarás tus credenciales de acceso:</p>
 				<ul>
 					<li><strong>Usuario:</strong> ${username}</li>
 					<li><strong>Email:</strong> ${to}</li>
 					<li><strong>Contraseña:</strong> ${password}</li>
 				</ul>
-				<p>Por favor, inicia sesión en <a href="https://artify.com/" target="_blank">Artify</a> y cambia tu contraseña lo antes posible.</p>
+				<p>Por favor, inicia sesión en <a href="https://artiefy.com/" target="_blank">Artiefy</a> y cambia tu contraseña lo antes posible.</p>
 				<p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
 				<hr>
-				<p>Equipo de Artify 🎨</p>
+				<p>Equipo de Artiefy 🎨</p>
 			`,
 		};
 
