@@ -55,6 +55,7 @@
     "@radix-ui/react-slot": "^1.1.2",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@types/jquery": "^3.5.32",
+    "@types/pg": "^8.11.11",
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.5",
     "@vercel/analytics": "^1.5.0",
@@ -85,6 +86,7 @@
     "node-emoji": "^2.2.0",
     "node-fetch": "^3.3.2",
     "nodemailer": "^6.10.0",
+    "pg": "^8.14.1",
     "plaiceholder": "^3.0.0",
     "postgres": "^3.4.5",
     "puppeteer": "^24.4.0",
@@ -109,6 +111,7 @@
     "tailwindcss-animate": "^1.0.7",
     "use-debounce": "^10.0.4",
     "uuid": "^11.1.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.2"
   },
   "devDependencies": {

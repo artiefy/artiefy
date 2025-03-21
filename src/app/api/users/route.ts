@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
 		user: 'direcciongeneral@artiefy.com',
-		pass: 'hszz cilc otvj dlpb' // ⚠️ Usa variables de entorno en producción
+		pass: process.env.PASS// ⚠️ Usa variables de entorno en producción
 	},
 });
 

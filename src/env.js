@@ -13,6 +13,10 @@ export const env = createEnv({
 		API_KEY: z.string().nonempty(),
 		RESPONSE_URL: z.string().url(),
 		CONFIRMATION_URL: z.string().url(),
+		AWS_ACCESS_KEY_ID: z.string().min(1),
+		AWS_SECRET_ACCESS_KEY: z.string().min(1),
+		AWS_REGION: z.string().min(1),
+		AWS_BUCKET_NAME: z.string().min(1),
 	},
 
 	client: {},
@@ -26,6 +30,10 @@ export const env = createEnv({
 		API_KEY: process.env.API_KEY,
 		RESPONSE_URL: process.env.RESPONSE_URL,
 		CONFIRMATION_URL: process.env.CONFIRMATION_URL,
+		AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+		AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+		AWS_REGION: process.env.AWS_REGION,
+		AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
 	},
 
 	skipValidation: !!process.env.SKIP_ENV_VALIDATION,

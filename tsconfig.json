@@ -26,7 +26,6 @@
     "**/*.js",
     "**/*.jsx",
     "**/*.json",
-    "**/*.mjs",
     "**/*.cjs",
     "next-env.d.ts",
     ".next/types/**/*.ts",
