@@ -13,8 +13,21 @@ interface PageProps {
 	params: Promise<{ id: string }>;
 }
 
-export default async function Page({ params }: PageProps) {
-	// Await the params object
+// Remove async since this function doesn't use await directly
+export default function Page({ params }: PageProps) {
+	return (
+		<div className="flex min-h-screen flex-col">
+			<Header />
+			<Suspense fallback={<ProgramDetailsSkeleton />}>
+				<ProgramContent params={params} />
+			</Suspense>
+			<Footer />
+		</div>
+	);
+}
+
+// Separate the async content into its own component
+async function ProgramContent({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const program = await getProgramById(id);
 
@@ -22,13 +35,5 @@ export default async function Page({ params }: PageProps) {
 		notFound();
 	}
 
-	return (
-		<div className="flex min-h-screen flex-col">
-			<Header />
-			<Suspense fallback={<ProgramDetailsSkeleton />}>
-				<ProgramDetails program={program} />
-			</Suspense>
-			<Footer />
-		</div>
-	);
+	return <ProgramDetails program={program} />;
 }

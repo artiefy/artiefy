@@ -42,8 +42,10 @@ export default function CourseDetails({
 		if (!initialCourse.isActive) {
 			toast.error('Curso no disponible', {
 				description: 'Este curso no está disponible actualmente.',
+				duration: 2000,
+				id: 'course-unavailable', // Previene toasts duplicados
 			});
-			router.push('/estudiantes');
+			router.replace('/estudiantes');
 		}
 	}, [initialCourse.isActive, router]);
 
@@ -238,12 +240,16 @@ export default function CourseDetails({
 				/>
 
 				<div className="mt-8 space-y-8">
-					<CourseComments
-						courseId={course.id}
-						isEnrolled={isEnrolled}
-						onEnrollmentChange={handleEnrollmentChange}
-					/>
-					<CourseChatbot isEnrolled={isEnrolled} />
+					{isEnrolled && (
+						<>
+							<CourseComments
+								courseId={course.id}
+								isEnrolled={isEnrolled}
+								onEnrollmentChange={handleEnrollmentChange}
+							/>
+							<CourseChatbot isEnrolled={isEnrolled} />
+						</>
+					)}
 				</div>
 			</main>
 		</div>

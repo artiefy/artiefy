@@ -14,6 +14,7 @@ import {
 	FaLock,
 	FaCheckCircle,
 	FaCrown,
+	FaCheck,
 } from 'react-icons/fa';
 
 import {
@@ -291,8 +292,36 @@ export function CourseContent({
 		course.courseType?.requiredSubscriptionLevel,
 	]);
 
+	const formatDate = (dateString: string | null) => {
+		if (!dateString) return '';
+		return new Date(dateString).toLocaleDateString('es-ES', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+		});
+	};
+
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
+			<div className="mb-6 flex items-center justify-between">
+				<h2 className="text-2xl font-bold text-background">
+					Contenido del curso
+				</h2>
+				<div className="mt-6 flex flex-col items-end gap-2">
+					{isSubscriptionActive && (
+						<div className="flex items-center gap-2 text-green-500">
+							<FaCheck className="size-4" />
+							<span className="font-medium">Suscripción Activa</span>
+						</div>
+					)}
+					{isSubscriptionActive && subscriptionEndDate && (
+						<p className="text-sm text-red-500">
+							Finaliza: {formatDate(subscriptionEndDate)}
+						</p>
+					)}
+				</div>
+			</div>
+
 			{isEnrolled && isFullyCompleted && (
 				<div className="artiefy-check-container mb-4">
 					<h2 className="animate-pulse bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-3xl font-extrabold text-transparent drop-shadow-[0_2px_2px_rgba(0,200,0,0.4)]">
@@ -301,10 +330,6 @@ export function CourseContent({
 					<div className="artiefy-static-checkmark" />
 				</div>
 			)}
-
-			<h2 className="mb-4 text-2xl font-bold text-background">
-				Contenido del curso
-			</h2>
 
 			<PencilRuler
 				className={`absolute top-4 right-7 transition-colors ${
@@ -338,13 +363,6 @@ export function CourseContent({
 						</div>
 					</div>
 				</Alert>
-			)}
-
-			{isEnrolled && isSubscriptionActive && subscriptionEndDate && (
-				<p className="mb-4 text-sm text-red-500">
-					Tu suscripción es válida hasta:{' '}
-					{new Date(subscriptionEndDate).toLocaleDateString()}
-				</p>
 			)}
 
 			<div
