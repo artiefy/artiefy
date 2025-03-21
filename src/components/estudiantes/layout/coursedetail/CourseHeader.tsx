@@ -52,8 +52,8 @@ interface CourseHeaderProps {
 	isUnenrolling: boolean;
 	isSubscriptionActive: boolean;
 	subscriptionEndDate: string | null;
-	onEnrollAction: () => Promise<void>; // Renamed to indicate Server Action
-	onUnenrollAction: () => Promise<void>; // Renamed to indicate Server Action
+	onEnrollAction: () => Promise<void>;
+	onUnenrollAction: () => Promise<void>;
 	isCheckingEnrollment?: boolean;
 }
 

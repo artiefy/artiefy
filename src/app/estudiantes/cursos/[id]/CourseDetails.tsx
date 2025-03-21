@@ -234,8 +234,8 @@ export default function CourseDetails({
 					subscriptionEndDate={
 						user?.publicMetadata?.subscriptionEndDate as string | null
 					}
-					onEnroll={handleEnroll}
-					onUnenroll={handleUnenroll}
+					onEnrollAction={handleEnroll}
+					onUnenrollAction={handleUnenroll}
 					isCheckingEnrollment={isCheckingEnrollment}
 				/>
 

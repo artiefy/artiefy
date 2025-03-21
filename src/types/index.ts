@@ -29,6 +29,7 @@ export interface BaseCourse {
 	nivelid: number;
 	category?: Category;
 	modalidad?: Modalidad;
+	isActive: boolean | null; // Changed from optional boolean to nullable boolean
 }
 
 // Add this type
@@ -297,17 +298,15 @@ export interface Program {
 	enrollmentPrograms?: EnrollmentProgram[];
 }
 
-
 // New interface for Materia with optional course
 export interface MateriaWithCourse {
 	id: number;
 	title: string;
 	description: string | null;
-	programaId: number;
+	programaId: number | null; // Allow null here
 	courseid: number | null;
-	curso?: BaseCourse; // Changed from Course to BaseCourse
+	curso?: BaseCourse; // Simplified this type
 }
-
 
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };
 export type UserWithCreatedCourses = User & { createdCourses: Course[] };
@@ -342,7 +341,6 @@ export interface Materia {
 	courseid: number | null;
 	curso: Course; // Make curso required instead of optional
 }
-
 
 export interface EnrollmentProgram {
 	id: number;
