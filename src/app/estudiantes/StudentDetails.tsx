@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import '~/styles/ia.css';
 
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { RocketLaunchIcon, StarIcon } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/solid';
 
+import { LoaderArtieia } from '~/components/estudiantes/layout/LoaderArtieia';
 import { StudenProgram } from '~/components/estudiantes/layout/studentdashboard/StudenProgram';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -79,10 +81,17 @@ export default function StudentDetails({
 					<div className="flex flex-col space-y-12 sm:space-y-16">
 						<div className="mt-8 flex animate-zoom-in flex-col items-center space-y-4">
 							<div className="flex items-center">
-								<RocketLaunchIcon className="size-6 text-orange-500 sm:size-7" />
-								<span className="ml-2 text-2xl font-bold whitespace-nowrap text-primary sm:text-3xl">
-									Artie IA
-								</span>
+								<Image
+									src="/artiefy-icon.png"
+									alt="Artiefy Icon"
+									width={62} // increased from 42
+									height={62} // increased from 42
+									className="sm:size-14" // increased from sm:size-9
+									priority
+								/>
+								<div className="ml-2">
+									<LoaderArtieia />
+								</div>
 							</div>
 							<form className="flex w-full flex-col items-center space-y-2">
 								<div className="input-container w-full">
