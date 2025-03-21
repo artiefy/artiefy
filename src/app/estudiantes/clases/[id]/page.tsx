@@ -1,7 +1,12 @@
+import { Suspense } from 'react';
+
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
 
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonDetailsSkeleton';
 import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';
@@ -11,6 +16,9 @@ import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/ge
 import LessonDetails from './LessonDetails';
 
 import type { Activity, LessonWithProgress } from '~/types';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface PageProps {
 	params: Promise<{
@@ -31,9 +39,20 @@ export default async function LessonPage({ params }: PageProps) {
 		return redirectToSignIn();
 	}
 
-	return LessonContent({ id, userId });
+	return (
+		<>
+			<Header />
+			<main>
+				<Suspense fallback={<LessonSkeleton />}>
+					<LessonContent id={id} userId={userId} />
+				</Suspense>
+			</main>
+			<Footer />
+		</>
+	);
 }
 
+// Move LessonContent to a separate file for better organization
 async function LessonContent({ id, userId }: { id: string; userId: string }) {
 	try {
 		const lessonId = Number.parseInt(id, 10);
@@ -47,9 +66,18 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 			return notFound();
 		}
 
+		// Get course first to check if it's free
+		const course = await getCourseById(lessonData.courseId, userId);
+		if (!course) {
+			console.log('Curso no encontrado');
+			return notFound();
+		}
+
+		// Now create lesson with course data
 		const lesson: LessonWithProgress = {
 			...lessonData,
 			isLocked: lessonData.isLocked ?? false,
+			courseTitle: course.title,
 		};
 
 		const activityContent = await getActivityContent(lessonId, userId);
@@ -62,12 +90,6 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 					}
 				: null;
 
-		const course = await getCourseById(lesson.courseId, userId);
-		if (!course) {
-			console.log('Curso no encontrado');
-			return notFound();
-		}
-
 		const [lessons, userProgress] = await Promise.all([
 			getLessonsByCourseId(lesson.courseId, userId),
 			getUserLessonsProgress(userId),
@@ -75,13 +97,15 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 
 		const { lessonsProgress, activitiesProgress } = userProgress;
 
-		const lessonsWithProgress = lessons.map((lesson) => {
+		// Add course title to all lessons
+		const lessonsWithProgress = lessons.map((lessonItem) => {
 			const lessonProgress = lessonsProgress.find(
-				(progress) => progress.lessonId === lesson.id
+				(progress) => progress.lessonId === lessonItem.id
 			);
 
 			return {
-				...lesson,
+				...lessonItem,
+				courseTitle: course.title,
 				porcentajecompletado: lessonProgress?.progress ?? 0,
 				isLocked: lessonProgress?.isLocked ?? true,
 				isCompleted: lessonProgress?.isCompleted ?? false,
@@ -96,6 +120,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 				userLessonsProgress={lessonsProgress}
 				userActivitiesProgress={activitiesProgress}
 				userId={userId}
+				course={course} // Pass course object
 			/>
 		);
 	} catch (error: unknown) {
@@ -106,6 +131,3 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 		return notFound();
 	}
 }
-
-export const revalidate = 60;
-export const dynamic = 'force-dynamic';

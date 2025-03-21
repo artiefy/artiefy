@@ -1,16 +1,17 @@
 'use server';
 
-import { unstable_cache } from 'next/cache';
-
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courses, userLessonsProgress } from '~/server/db/schema';
 
-import type { Course } from '~/types';
+import type { Course, Activity, Lesson } from '~/types';
 
-const getCourseById = unstable_cache(
-	async (courseId: number, userId: string | null): Promise<Course | null> => {
+export async function getCourseById(
+	courseId: number,
+	userId: string | null
+): Promise<Course | null> {
+	try {
 		const course = await db.query.courses.findFirst({
 			where: eq(courses.id, courseId),
 			with: {
@@ -23,6 +24,8 @@ const getCourseById = unstable_cache(
 					},
 				},
 				enrollments: true,
+				materias: true, // Añadir esta línea para incluir las materias
+				courseType: true, // Add this relation
 			},
 		});
 
@@ -36,45 +39,91 @@ const getCourseById = unstable_cache(
 				})
 			: [];
 
-		// Manually sort lessons in ascending order by title
-		course.lessons.sort((a, b) => a.title.localeCompare(b.title));
+		// Transform lessons with proper typing
+		const transformedLessons: Lesson[] = course.lessons
+			.sort((a, b) => a.title.localeCompare(b.title))
+			.map((lesson) => {
+				const lessonProgress = userLessonsProgressData.find(
+					(progress) => progress.lessonId === lesson.id
+				);
 
+				// Fix activity transformation with proper typing
+				const activities: Activity[] =
+					lesson.activities?.map((activity) => {
+						const now = new Date();
+						return {
+							id: activity.id,
+							name: activity.name,
+							description: activity.description,
+							lessonsId: lesson.id,
+							isCompleted: false,
+							userProgress: 0,
+							revisada: activity.revisada ?? false,
+							porcentaje: activity.porcentaje ?? 0,
+							parametroId: activity.parametroId,
+							fechaMaximaEntrega: activity.fechaMaximaEntrega,
+							createdAt: now,
+							typeid: activity.typeid,
+							lastUpdated: activity.lastUpdated,
+							attemptLimit: 3,
+							currentAttempts: 0,
+						} satisfies Activity;
+					}) ?? [];
+
+				return {
+					...lesson,
+					isLocked: lessonProgress?.isLocked ?? true,
+					isCompleted: lessonProgress?.isCompleted ?? false,
+					userProgress: lessonProgress?.progress ?? 0,
+					porcentajecompletado: lessonProgress?.progress ?? 0,
+					resourceNames: lesson.resourceNames.split(','),
+					isNew: lessonProgress?.isNew ?? true,
+					activities,
+				};
+			});
+
+		// Build final course object
 		const transformedCourse: Course = {
 			...course,
 			totalStudents: course.enrollments?.length ?? 0,
-			lessons:
-				course.lessons?.map((lesson) => {
-					const lessonProgress = userLessonsProgressData.find(
-						(progress) => progress.lessonId === lesson.id
-					);
-					return {
-						...lesson,
-						isLocked: lessonProgress ? lessonProgress.isLocked : true,
-						isCompleted: lessonProgress ? lessonProgress.isCompleted : false,
-						userProgress: lessonProgress ? lessonProgress.progress : 0,
-						porcentajecompletado: lessonProgress ? lessonProgress.progress : 0,
-						resourceNames: lesson.resourceNames
-							? lesson.resourceNames.split(',')
-							: [], // Convertir texto a array
-							activities:
-							lesson.activities?.map((activity) => ({
-								...activity,
-								isCompleted: false,
-								userProgress: 0,
-								typeid: activity.typeid,
-								revisada: activity.revisada ?? false,
-								parametroId: activity.parametroId ?? 0, // Default to 0 if null
-								fechaMaximaEntrega: activity.fechaMaximaEntrega ?? null,
-							})) ?? [],
-						
-					};
-				}) ?? [],
+			lessons: transformedLessons,
+			requerimientos: [],
+			materias: course.materias?.map((materia) => ({
+				id: materia.id,
+				title: materia.title,
+				description: materia.description,
+				programaId: materia.programaId ?? null,
+				courseid: materia.courseid,
+				totalStudents: 0, // Default value
+				lessons: [], // Default empty array
+			})),
+			category: course.category
+				? {
+						...course.category,
+						is_featured: course.category.is_featured ?? null,
+					}
+				: undefined,
+			isFree: course.courseType?.requiredSubscriptionLevel === 'none',
+			requiresSubscription:
+				course.courseType?.requiredSubscriptionLevel !== 'none',
+			courseType: course.courseType
+				? {
+						requiredSubscriptionLevel:
+							course.courseType.requiredSubscriptionLevel,
+						isPurchasableIndividually:
+							course.courseType.isPurchasableIndividually ?? false,
+					}
+				: undefined,
+			requiresProgram: Boolean(course.requiresProgram), // Ensure it's always boolean
+			isActive: Boolean(course.isActive), // Also ensure isActive is always boolean
 		};
 
 		return transformedCourse;
-	},
-	['course-content'],
-	{ revalidate: 3600 }
-);
-
-export { getCourseById };
+	} catch (error) {
+		console.error(
+			'Error fetching course:',
+			error instanceof Error ? error.message : 'Unknown error'
+		);
+		return null;
+	}
+}

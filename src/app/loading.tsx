@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import '~/styles/loading.css';
 
+export const dynamic = 'force-static';
+
 const Loading: React.FC = () => {
 	const [launch, setLaunch] = useState(false);
 

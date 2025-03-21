@@ -1,0 +1,11 @@
+-- Revertir cambios
+DROP VIEW IF EXISTS course_access_view;
+DROP FUNCTION IF EXISTS can_access_course;
+ALTER TABLE courses DROP CONSTRAINT IF EXISTS check_individual_price;
+DROP INDEX IF EXISTS idx_courses_type;
+DROP INDEX IF EXISTS idx_courses_program;
+ALTER TABLE courses 
+    DROP COLUMN IF EXISTS course_type_id,
+    DROP COLUMN IF EXISTS individual_price,
+    DROP COLUMN IF EXISTS requires_program;
+DROP TABLE IF EXISTS course_types CASCADE;

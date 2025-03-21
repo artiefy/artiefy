@@ -9,47 +9,49 @@ import { userLessonsProgress } from '~/server/db/schema';
 
 // Actualizar el progreso de una lección
 export async function updateLessonProgress(
-  lessonId: number,
-  progress: number
+	lessonId: number,
+	progress: number
 ): Promise<void> {
-  const user = await currentUser();
-  if (!user?.id) {
-    throw new Error('Usuario no autenticado');
-  }
+	const user = await currentUser();
+	if (!user?.id) {
+		throw new Error('Usuario no autenticado');
+	}
 
-  const userId = user.id;
+	const userId = user.id;
 
-  await db
-    .insert(userLessonsProgress)
-    .values({
-      userId,
-      lessonId,
-      progress,
-      isCompleted: progress >= 100,
-      isLocked: false,
-      lastUpdated: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
-      set: {
-        progress,
-        isCompleted: progress >= 100,
-        isLocked: false,
-        lastUpdated: new Date(),
-      },
-    });
+	await db
+		.insert(userLessonsProgress)
+		.values({
+			userId,
+			lessonId,
+			progress,
+			isCompleted: progress >= 100,
+			isLocked: false,
+			isNew: progress >= 1 ? false : true,
+			lastUpdated: new Date(),
+		})
+		.onConflictDoUpdate({
+			target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
+			set: {
+				progress,
+				isCompleted: progress >= 100,
+				isLocked: false,
+				isNew: progress >= 1 ? false : true,
+				lastUpdated: new Date(),
+			},
+		});
 
-  await db
-    .update(userLessonsProgress)
-    .set({ isLocked: progress === 0 })
-    .where(
-      and(
-        eq(userLessonsProgress.userId, userId),
-        eq(userLessonsProgress.lessonId, lessonId)
-      )
-    );
+	await db
+		.update(userLessonsProgress)
+		.set({ isLocked: progress === 0 })
+		.where(
+			and(
+				eq(userLessonsProgress.userId, userId),
+				eq(userLessonsProgress.lessonId, lessonId)
+			)
+		);
 
-  if (progress >= 100) {
-    await unlockNextLesson(lessonId);
-  }
+	if (progress >= 100) {
+		await unlockNextLesson(lessonId);
+	}
 }

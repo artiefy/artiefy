@@ -5,7 +5,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { programas, enrollmentPrograms } from '~/server/db/schema';
 
-import type { Course, Program, Materia } from '~/types';
+import type { Course, Program, Materia } from '~/types/super-admin';
 
 export interface ProgramDetails {
 	id: number;
@@ -65,26 +65,45 @@ export const getProgramById = unstable_cache(
 				totalStudents: enrollmentCount,
 				lessons: [],
 				Nivelid: materia.curso!.nivelid,
+				courseTypeId: materia.curso!.courseTypeId ?? 0,
+				requiresProgram: false, // Set a default value
+				isActive: materia.curso!.isActive ?? false, // Ensure it's not null
+				requiresSubscription: false, // Add missing required field
+				isFree: true, // Add missing required field with default value
+				courseType: {
+					requiredSubscriptionLevel: 'none',
+					isPurchasableIndividually: null,
+					price: null,
+				},
 			}));
 
 		// Transform materias to match the Materia type
-		const transformedMaterias: Materia[] = program.materias.map((materia) => ({
-			id: materia.id,
-			title: materia.title,
-			description: materia.description ?? '',
-			programaId: materia.programaId ?? 0,
-			courseId: materia.courseid ?? null,  // solo un campo
-			courseid: materia.courseid ?? null,  // si realmente lo necesitas
-			curso: materia.curso
-				? {
-						...materia.curso,
-						Nivelid: materia.curso.nivelid,
-						totalStudents: enrollmentCount,
-						lessons: [],
-				  }
-				: null,
-		}));
-		
+		const transformedMaterias: Materia[] = program.materias
+			.filter((materia) => materia.curso !== null) // Filter out materias without curso
+			.map((materia) => ({
+				id: materia.id,
+				title: materia.title,
+				description: materia.description ?? '',
+				programaId: materia.programaId ?? 0,
+				courseId: materia.courseid ?? null,
+				courseid: materia.courseid ?? null,
+				curso: {
+					...materia.curso!,
+					totalStudents: enrollmentCount,
+					lessons: [],
+					Nivelid: materia.curso!.nivelid,
+					courseTypeId: materia.curso!.courseTypeId ?? 0,
+					requiresProgram: false,
+					isActive: materia.curso!.isActive ?? false,
+					requiresSubscription: false,
+					isFree: true,
+					courseType: {
+						requiredSubscriptionLevel: 'none',
+						isPurchasableIndividually: null,
+						price: null,
+					},
+				},
+			}));
 
 		// Build the final program object with proper typing
 		const programData: ProgramDetails = {
@@ -151,34 +170,36 @@ export const deleteProgram = async (programId: number): Promise<void> => {
 	await db.delete(programas).where(eq(programas.id, programId)).execute();
 };
 
-
 interface CreateProgramInput {
-    title: string;
-    description: string;
-    coverImageKey: string | null;
-    categoryid: number;
-    rating: number | null;
-    creatorId: string;
+	title: string;
+	description: string;
+	coverImageKey: string | null;
+	categoryid: number;
+	rating: number | null;
+	creatorId: string;
 }
 
 export async function createProgram(data: CreateProgramInput) {
-    try {
-        const [newProgram] = await db
-            .insert(programas)
-            .values({
-                title: data.title,
-                description: data.description,
-                coverImageKey: data.coverImageKey,
-                categoryid: data.categoryid,
-                rating: data.rating,
-                creatorId: data.creatorId,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            })
-            .returning();
-        return newProgram;
-    } catch (error) {
-        console.error('❌ Error al insertar el programa en la base de datos:', error);
-        throw error;
-    }
+	try {
+		const [newProgram] = await db
+			.insert(programas)
+			.values({
+				title: data.title,
+				description: data.description,
+				coverImageKey: data.coverImageKey,
+				categoryid: data.categoryid,
+				rating: data.rating,
+				creatorId: data.creatorId,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			.returning();
+		return newProgram;
+	} catch (error) {
+		console.error(
+			'❌ Error al insertar el programa en la base de datos:',
+			error
+		);
+		throw error;
+	}
 }

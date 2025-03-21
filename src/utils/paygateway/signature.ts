@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 
-// Función para calcular el hash MD5
-export function calculateMD5(
+export function calculateSignature(
 	apiKey: string,
 	merchantId: string,
 	referenceCode: string,

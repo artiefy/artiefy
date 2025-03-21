@@ -33,5 +33,7 @@ declare global {
 			permissions?: AppPermissions[]; // ✅ Agregar permisos a la sesión
 			isNewUser?: boolean;
 		};
+		fullName?: string;
+		primaryEmail?: string;
 	}
 }

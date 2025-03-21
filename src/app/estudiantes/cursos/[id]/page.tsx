@@ -1,19 +1,21 @@
+import { Suspense } from 'react';
+
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
+import { type Metadata, type ResolvingMetadata } from 'next';
 
+import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 import CourseDetails from './CourseDetails';
 
-import type { Metadata, ResolvingMetadata } from 'next';
 import type { Course } from '~/types';
 
-interface Props {
-	params: Promise<{ id: string }>;
-	searchParams: Record<string, string | string[] | undefined>;
+interface PageParams {
+	id: string;
 }
 
 // Función para generar el JSON-LD para SEO
@@ -51,12 +53,18 @@ function generateJsonLd(course: Course): object {
 
 // Función para generar metadata dinámica
 export async function generateMetadata(
-	{ params }: Props,
+	{ params }: { params: { id: string } },
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
-	const { id } = await params;
+	// Await params before using
+	const { id } = await Promise.resolve(params);
 	const { userId } = await auth();
-	const course = await getCourseById(Number(id), userId);
+
+	// Fetch data in parallel
+	const [course, parentMetadata] = await Promise.all([
+		getCourseById(Number(id), userId),
+		parent,
+	]);
 
 	if (!course) {
 		return {
@@ -65,7 +73,8 @@ export async function generateMetadata(
 		};
 	}
 
-	const previousImages = (await parent).openGraph?.images ?? [];
+	// Fix: parentMetadata is already resolved from Promise.all
+	const previousImages = parentMetadata.openGraph?.images ?? [];
 	const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}/opengraph-image`;
 
 	return {
@@ -73,14 +82,14 @@ export async function generateMetadata(
 			process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
 		),
 		title: `${course.title} | Artiefy`,
-		description: `${course.description ?? 'No hay descripción disponible.'} ¡Subscríbete ya en este curso excelente!`,
+		description: course.description ?? 'No hay descripción disponible.',
 		openGraph: {
 			type: 'website',
 			locale: 'es_ES',
 			url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
 			siteName: 'Artiefy',
 			title: `${course.title} | Artiefy`,
-			description: `${course.description ?? 'No hay descripción disponible.'} ¡Subscríbete ya en este curso excelente!`,
+			description: course.description ?? 'No hay descripción disponible.',
 			images: [
 				{
 					url: ogImage,
@@ -94,7 +103,7 @@ export async function generateMetadata(
 		twitter: {
 			card: 'summary_large_image',
 			title: `${course.title} | Artiefy`,
-			description: `${course.description ?? 'No hay descripción disponible.'} ¡Subscríbete ya en este curso excelente!`,
+			description: course.description ?? 'No hay descripción disponible.',
 			images: [ogImage],
 			creator: '@artiefy',
 			site: '@artiefy',
@@ -106,27 +115,24 @@ export async function generateMetadata(
 }
 
 // Componente principal de la página del curso
-export default async function Page({ params }: Props) {
-	const { id } = await params;
-	const { userId } = await auth();
+export default async function Page({ params }: { params: PageParams }) {
+	// Await params
+	const { id } = await Promise.resolve(params);
 
 	return (
 		<div>
 			<Header />
-			<CourseContent id={id} userId={userId} />
+			<Suspense fallback={<CourseDetailsSkeleton />}>
+				<CourseContent id={id} />
+			</Suspense>
 			<Footer />
 		</div>
 	);
 }
 
 // Componente para renderizar los detalles del curso
-async function CourseContent({
-	id,
-	userId,
-}: {
-	id: string;
-	userId: string | null;
-}) {
+async function CourseContent({ id }: { id: string }) {
+	const { userId } = await auth();
 	const course = await getCourseById(Number(id), userId);
 
 	if (!course) {
@@ -168,6 +174,3 @@ async function CourseContent({
 		</section>
 	);
 }
-
-export const revalidate = 3600;
-export const dynamic = 'force-dynamic';

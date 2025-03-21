@@ -1,6 +1,11 @@
 import { getPlaiceholder } from 'plaiceholder';
 
-const supportedFormats = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+const supportedFormats = [
+	'image/jpeg',
+	'image/png',
+	'image/webp',
+	'image/avif',
+];
 
 export async function getImagePlaceholder(src: string) {
 	try {

@@ -21,16 +21,17 @@
     "plugins": [{ "name": "next" }]
   },
   "include": [
-  "**/*.ts",
-  "**/*.tsx",
-  "**/*.js",
-  "**/*.jsx",
-  "**/*.json",
-  "**/*.mjs",
-  "**/*.cjs",
-  "next-env.d.ts",
-  ".next/types/**/*.ts",
-  ".prettierrc.mjs"
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.json",
+    "**/*.cjs",
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "eslint.config.mjs",
+    ".prettierrc.mjs",
+    "drizzle.config.ts"
   ],
   "exclude": [
     "node_modules",

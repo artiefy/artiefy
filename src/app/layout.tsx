@@ -1,28 +1,36 @@
-
-import { Montserrat } from 'next/font/google';
+import { Montserrat, Merriweather } from 'next/font/google';
+import '~/styles/globals.css';
 import Script from 'next/script';
 
 import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { Toaster } from 'sonner';
 
+import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { metadata as siteMetadata } from '~/lib/metadata';
 
-import '~/styles/globals.css';
 import Loading from './loading';
 import Providers from './providers';
 
 import type { Metadata, Viewport } from 'next';
 
-
 const montserrat = Montserrat({
 	subsets: ['latin'],
 	display: 'swap',
 	variable: '--font-montserrat',
-	preload: false,
-	weight: ['400', '500', '600', '700'],
+	weight: ['100', '200', '300', '400', '500', '600', '700'],
+	preload: true, // Change to true because it's used in root layout
+	adjustFontFallback: true, // Add this to optimize font loading
+});
+
+const merriweather = Merriweather({
+	subsets: ['latin'],
+	display: 'swap',
+	variable: '--font-merriweather',
+	weight: ['300', '400', '700', '900'],
+	preload: true, // Change to true because it's used in root layout
+	adjustFontFallback: true, // Add this to optimize font loading
 });
 
 export const viewport: Viewport = {
@@ -54,7 +62,10 @@ export default function RootLayout({
 }) {
 	return (
 		<ClerkProvider localization={esMX} dynamic>
-			<html lang="es" className={`${montserrat.variable}`}>
+			<html
+				lang="es"
+				className={`${montserrat.variable} ${merriweather.variable}`}
+			>
 				<head>
 					<Script
 						id="json-ld"

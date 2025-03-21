@@ -1,198 +1,214 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-
-@plugin 'tailwindcss-animate';
-
 @import 'tailwindcss';
-
 @config "../../tailwind.config.js";
 
-@custom-variant hover (&:hover);
-
+/* Hover Media Query */
 @media (hover: hover) {
-  .hover\:underline:hover {
-    text-decoration: underline;
-  }
+	.hover\:underline:hover {
+		text-decoration: underline;
+	}
 }
 
-@custom-variant dark (&:is(.dark *));
-
+/* Core Theme */
 @theme {
-  /* Colores */
-  --color-background: hsl(212.9, 95.5%, 8.6%);
-  --color-foreground: hsl(178.4, 89.4%, 59.2%);
-  --color-card: hsl(0, 0%, 100%);
-  --color-card-foreground: hsl(240, 10%, 3.9%);
-  --color-popover: hsl(0, 0%, 100%);
-  --color-popover-foreground: hsl(240, 10%, 3.9%);
-  --color-primary: hsl(178.4, 89.4%, 59.2%);
-  --color-primary-foreground: hsl(178.4, 89.4%, 59.2%);
-  --color-secondary: hsl(187.5, 100%, 42.4%);
-  --color-secondary-foreground: hsl(240, 5.9%, 10%);
-  --color-muted: hsl(240, 4.8%, 95.9%);
-  --color-muted-foreground: hsl(240, 3.8%, 46.1%);
-  --color-accent: hsl(240, 4.8%, 95.9%);
-  --color-accent-foreground: hsl(240, 5.9%, 10%);
-  --color-destructive: hsl(0, 84.2%, 60.2%);
-  --color-destructive-foreground: hsl(0, 0%, 98%);
-  --color-border: hsl(178.4, 89.4%, 59.2%);
-  --color-input: hsl(240, 5.9%, 90%);
+	/* Colors */
+	--color-background: oklch(19% 0.0542 252.35);
+	--color-foreground: oklch(87.88% 0.1409 192.09);
+	--color-primary: oklch(87.88% 0.1409 192.09);
+	--color-primary-foreground: oklch(0.985 0 0);
+	--color-secondary: oklch(73.32% 0.128083 212.6259);
+	--color-secondary-foreground: oklch(0.205 0 0);
 
-	/* Colores para gráficos */
-	--color-chart-1: hsl(12, 76%, 61%);
-	--color-chart-2: hsl(173, 58%, 39%);
-	--color-chart-3: hsl(197, 37%, 24%);
-	--color-chart-4: hsl(43, 74%, 66%);
-	--color-chart-5: hsl(27, 87%, 67%);
+	/* UI Colors */
+	--color-card: oklch(1 0 0);
+	--color-card-foreground: oklch(0.145 0 0);
+	--color-popover: oklch(1 0 0);
+	--color-popover-foreground: oklch(0.145 0 0);
+	--color-muted: oklch(0.97 0 0);
+	--color-muted-foreground: oklch(0.556 0 0);
+	--color-accent: oklch(0.97 0 0);
+	--color-accent-foreground: oklch(0.205 0 0);
+	--color-destructive: oklch(0.577 0.245 27.325);
+	--color-destructive-foreground: oklch(0.577 0.245 27.325);
 
-	/* Fuentes */
+	/* Chart Colors */
+	--color-chart-1: oklch(0.646 0.222 41.116);
+	--color-chart-2: oklch(0.6 0.118 184.704);
+	--color-chart-3: oklch(0.398 0.07 227.392);
+	--color-chart-4: oklch(0.828 0.189 84.429);
+	--color-chart-5: oklch(0.769 0.188 70.08);
+
+	/* Border & Input */
+	--color-border: oklch(0.922 0 0);
+	--color-input: oklch(0.922 0 0);
+	--color-ring: oklch(0.708 0 0);
+
+	/* Sidebar Theme */
+	--color-sidebar: oklch(0.985 0 0);
+	--color-sidebar-foreground: oklch(0.145 0 0);
+	--color-sidebar-primary: oklch(0.205 0 0);
+	--color-sidebar-primary-foreground: oklch(0.985 0 0);
+	--color-sidebar-accent: oklch(0.97 0 0);
+	--color-sidebar-accent-foreground: oklch(0.205 0 0);
+	--color-sidebar-border: oklch(0.922 0 0);
+	--color-sidebar-ring: oklch(0.708 0 0);
+
+	/* Radius */
+	--radius: 0.625rem;
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	/* Font - Modified to use CSS variables properly */
 	--font-sans: var(--font-montserrat);
+	--font-serif: var(--font-merriweather);
+
+	/* Animations */
+	--animate-gradient: borderRotate 4s linear infinite;
+	--animate-bounce-right: bounce-left-right 1s infinite;
+	--animate-bounce-up-down: bounce-up-down 1s infinite;
+	--animate-zoom-in: zoomIn 0.5s ease-in-out;
+
+	/* Animation Keyframes */
+	@keyframes nuevo-badge-pulse {
+		0% {
+			opacity: 1;
+			transform: scale(1);
+		}
+		50% {
+			opacity: 0.8;
+			transform: scale(1.1);
+		}
+		100% {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes zoomIn {
+		from {
+			transform: scale(0.9);
+			opacity: 0;
+		}
+		to {
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
+
+	@keyframes borderRotate {
+		0%,
+		100% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+	}
+
+	@keyframes bounce-left-right {
+		0%,
+		100% {
+			transform: translateX(0);
+		}
+		50% {
+			transform: translateX(7px);
+		}
+	}
+
+	@keyframes bounce-up-down {
+		0%,
+		100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-10px);
+		}
+	}
 }
 
-/* 🌐 Estilos base */
+/* Base Styles */
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
-  }
-  body {
-    @apply bg-background;
-  }
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
-  }
+	body {
+		background-color: var(--color-background) !important;
+		color: var(--color-primary) !important;
+	}
+
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-border);
+		outline-color: var(--color-ring);
+	}
+
+	button:not(:disabled),
+	[role='button']:not(:disabled) {
+		cursor: pointer;
+	}
 }
 
-/* 🎨 Clases de utilidades */
-.text-shadow {
-  text-shadow: 0 0 1px rgba(255, 255, 255, 0.3);
+/* Utilities */
+@utility text-shadow {
+	text-shadow: 0 0 1px rgb(255 255 255 / 0.3);
 }
 
-.button-hover:hover .button-hover-effect {
-  animation: sh02 0.5s 0s linear;
+@utility button-hover {
+	&:hover .button-hover-effect {
+		animation: sh02 0.5s linear;
+	}
 }
 
+@utility animate-gradient {
+	background: linear-gradient(
+		to right,
+		var(--color-from),
+		var(--color-via),
+		var(--color-to)
+	);
+	background-size: 300% 100%;
+	animation: var(--animate-gradient);
+}
+
+/* Clerk Components */
 .cl-formButtonPrimary {
-  font-size: 14px;
-  text-transform: none;
-  background-color: #00bdd8;
-}
+	font-size: 0.875rem; /* 14px */
+	text-transform: none;
+	background-color: var(--color-primary);
+	transition: background-color 0.2s ease;
 
-.cl-formButtonPrimary:hover,
-.cl-formButtonPrimary:focus,
-.cl-formButtonPrimary:active {
-  background-color: #3af4ef;
+	&:is(:hover, :focus, :active) {
+		background-color: var(--color-secondary);
+	}
 }
 
 .cl-userButtonOuterIdentifier {
-  color: azure;
+	color: var(--color-foreground);
+	transition: color 0.2s ease;
+
+	&:hover {
+		color: var(--color-primary);
+	}
 }
 
-.zoom-in {
-  animation: zoomIn 0.5s ease-in-out;
-}
+.cl-internal-2z8hkq {
+	transition: all 0.2s ease;
 
-@keyframes zoomIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
+	&:is(
+			:focus-within,
+			:active,
+			[aria-expanded='true'],
+			[data-open='true'],
+			[aria-selected='true']
+		) {
+		outline: 2px solid rgb(255 255 255 / 0.5);
+		outline-offset: 2px;
+		box-shadow: 0 0 0 4px rgb(255 255 255 / 0.2);
+		border-radius: var(--radius-sm);
+	}
 
-.animate-gradient {
-  animation: borderRotate 4s linear infinite;
-  background-size: 300% 300%;
-}
-
-@keyframes borderRotate {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-.animate-bounce-right {
-  animation: bounce-left-right 1s infinite;
-}
-
-@keyframes bounce-left-right {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(7px);
-  }
-}
-
-.animate-bounce-up-down {
-  animation: bounce-up-down 1s infinite;
-}
-
-@keyframes bounce-up-down {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@utility animate-pulse-text {
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.react-select__control {
-  background-color: #01142B !important;
-  border-color: #00BDD8 !important;
-  color: white !important;
-}
-
-.react-select__option {
-  background-color: #01142B !important;
-  color: white !important;
-}
-
-.react-select__option--is-selected {
-  border-color: #00A5C0 !important;
-}
-
-.react-select__multi-value {
-  background-color: #01142B !important;
-  border: 1px solid #00A5C0 !important;
-  color: white !important;
-}
-
-.react-select__multi-value__label {
-  color: white !important;
-}
-
-.react-select__multi-value__remove {
-  color: white !important;
+	&:is(:focus-within, :active, [aria-expanded='true']) {
+		background-color: rgb(255 255 255 / 0.05);
+	}
 }

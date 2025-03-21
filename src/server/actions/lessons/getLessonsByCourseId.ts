@@ -1,77 +1,73 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
 import { eq, asc } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	lessons,
-	userLessonsProgress,
-	userActivitiesProgress,
+  lessons,
+  userLessonsProgress,
+  userActivitiesProgress,
 } from '~/server/db/schema';
 
 import type { Lesson } from '~/types';
 
-// Obtener todas las lecciones de un curso
 export async function getLessonsByCourseId(
-	courseId: number
+  courseId: number,
+  userId: string
 ): Promise<Lesson[]> {
-	const user = await currentUser();
-	if (!user?.id) {
-		throw new Error('Usuario no autenticado');
-	}
+  const lessonsData = await db.query.lessons.findMany({
+    where: eq(lessons.courseId, courseId),
+    orderBy: [asc(lessons.title)],
+    with: {
+      activities: true,
+    },
+  });
 
-	const lessonsData = await db.query.lessons.findMany({
-		where: eq(lessons.courseId, courseId),
-		orderBy: [asc(lessons.title)],
-		with: {
-			activities: true,
-		},
-	});
+  const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
+    where: eq(userLessonsProgress.userId, userId),
+  });
 
-	const userLessonsProgressData = await db.query.userLessonsProgress.findMany({
-		where: eq(userLessonsProgress.userId, user.id),
-	});
+  const userActivitiesProgressData =
+    await db.query.userActivitiesProgress.findMany({
+      where: eq(userActivitiesProgress.userId, userId),
+    });
 
-	const userActivitiesProgressData =
-		await db.query.userActivitiesProgress.findMany({
-			where: eq(userActivitiesProgress.userId, user.id),
-		});
+  // 🔥 Extra: Normalizar los títulos antes de ordenarlos
+  const sortedLessons = lessonsData.sort((a, b) => {
+    return a.title.trim().localeCompare(b.title.trim(), 'es', {
+      numeric: true,
+    });
+  });
 
-	let previousLessonCompleted = true; // Assume the first lesson is always unlocked
+  const transformedLessons = sortedLessons.map((lesson) => {
+    const lessonProgress = userLessonsProgressData.find(
+      (progress) => progress.lessonId === lesson.id
+    );
 
-	return lessonsData.map((lesson, index) => {
-		const lessonProgress = userLessonsProgressData.find(
-			(progress) => progress.lessonId === lesson.id
-		);
+    return {
+      ...lesson,
+      porcentajecompletado: lessonProgress?.progress ?? 0,
+      isLocked: lessonProgress?.isLocked ?? true,
+      userProgress: lessonProgress?.progress ?? 0,
+      resourceNames: lesson.resourceNames
+        ? lesson.resourceNames.split(',')
+        : [], // Convertir texto a array
+      isCompleted: lessonProgress?.isCompleted ?? false,
+      isNew: lessonProgress?.isNew ?? true, // Agregar propiedad isNew
+      activities:
+        lesson.activities?.map((activity) => {
+          const activityProgress = userActivitiesProgressData.find(
+            (progress) => progress.activityId === activity.id
+          );
+          return {
+            ...activity,
+            isCompleted: activityProgress?.isCompleted ?? false,
+            userProgress: activityProgress?.progress ?? 0,
+            createdAt: activity.lastUpdated, // Use lastUpdated as createdAt if not present
+          };
+        }) ?? [],
+    } as Lesson; // Add type assertion here
+  });
 
-		const isLocked = index === 0 ? false : !previousLessonCompleted;
-
-		const isCompleted = lessonProgress?.isCompleted ?? false;
-		previousLessonCompleted = isCompleted;
-
-		return {
-			...lesson,
-			coverImageKey: lesson.coverImageKey ?? '',
-			porcentajecompletado: lessonProgress?.progress ?? 0,
-			isLocked: isLocked,
-			userProgress: lessonProgress?.progress ?? 0,
-			isCompleted: isCompleted,
-			resourceKey: lesson.resourceKey ?? '',
-			resourceNames: Array.isArray(lesson.resourceNames) ? lesson.resourceNames : [], // Ensure resourceNames is an array
-			activities:
-			lesson.activities?.map((activity) => {
-				const activityProgress = userActivitiesProgressData.find(
-					(progress) => progress.activityId === activity.id
-				);
-				return {
-					...activity,
-					isCompleted: activityProgress?.isCompleted ?? false,
-					userProgress: activityProgress?.progress ?? 0,
-					revisada: activity.revisada ?? false, // <== ¡Siempre asigna false si es null!
-				};
-			}) ?? [],
-
-		};
-	});
+  return transformedLessons;
 }

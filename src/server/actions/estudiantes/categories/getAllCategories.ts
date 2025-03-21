@@ -9,8 +9,8 @@ import { categories, courses } from '~/server/db/schema';
 
 import type { Category } from '~/types';
 
-// Obtener todas las categorías
-const getAllCategories = unstable_cache(
+// Mantener el caché para categorías ya que cambian poco
+export const getAllCategories = unstable_cache(
 	async (): Promise<Category[]> => {
 		try {
 			const allCategories = await db
@@ -38,7 +38,5 @@ const getAllCategories = unstable_cache(
 		}
 	},
 	['all-categories'],
-	{ revalidate: 3600 }
+	{ revalidate: 3600 } // 1 hora
 );
-
-export { getAllCategories };

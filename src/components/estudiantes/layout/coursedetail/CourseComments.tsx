@@ -40,17 +40,17 @@ interface Comment {
 	hasLiked: boolean; // Añadir esta propiedad
 }
 
-const CourseComments: React.FC<CommentProps> = ({
+export default function CourseComments({
 	courseId,
-	isEnrolled: initialIsEnrolled,
+	isEnrolled,
 	onEnrollmentChange,
-}) => {
+}: CommentProps) {
 	const [content, setContent] = useState('');
 	const [rating, setRating] = useState(0);
 	const [message, setMessage] = useState('');
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [localIsEnrolled, setLocalIsEnrolled] = useState(initialIsEnrolled);
+	const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
 	const [isSubmitting, setIsSubmitting] = useState(false); // Estado para manejar el envío
 	const [editMode, setEditMode] = useState<null | string>(null); // Estado para manejar el modo de edición
 	const [deletingComment, setDeletingComment] = useState<null | string>(null); // Estado para manejar la eliminación
@@ -74,8 +74,8 @@ const CourseComments: React.FC<CommentProps> = ({
 	}, [courseId]);
 
 	useEffect(() => {
-		setLocalIsEnrolled(initialIsEnrolled);
-	}, [initialIsEnrolled]);
+		setLocalIsEnrolled(isEnrolled);
+	}, [isEnrolled]);
 
 	const checkEnrollment = useCallback(async () => {
 		if (userId) {
@@ -208,6 +208,26 @@ const CourseComments: React.FC<CommentProps> = ({
 		return date.toLocaleDateString('es-ES', options);
 	};
 
+	// Solo mostrar el skeleton si está inscrito y cargando
+	if (loading && isEnrolled) {
+		return (
+			<div className="rounded-lg border bg-white p-6">
+				<div className="flex items-center justify-between">
+					<h2 className="text-2xl font-bold text-background">Comentarios</h2>
+				</div>
+				<div className="mt-4 space-y-4">
+					<Icons.spinner className="mx-auto animate-spin" />
+					<p className="text-center text-gray-500">Cargando Comentarios...</p>
+				</div>
+			</div>
+		);
+	}
+
+	// No renderizar nada si no está inscrito
+	if (!isEnrolled) {
+		return null;
+	}
+
 	return (
 		<div className="mt-8">
 			<h2 className="mb-4 text-2xl font-bold">Deja un comentario</h2>
@@ -263,7 +283,7 @@ const CourseComments: React.FC<CommentProps> = ({
 							))}
 						</div>
 					</div>
-					<div className="flex items-center mt-2">
+					<div className="mt-2 flex items-center">
 						<Button
 							type="submit"
 							className="inline-flex items-center justify-center rounded-md border border-transparent bg-secondary text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:outline-hidden active:scale-95"
@@ -384,6 +404,4 @@ const CourseComments: React.FC<CommentProps> = ({
 			</div>
 		</div>
 	);
-};
-
-export default CourseComments;
+}

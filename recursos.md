@@ -51,7 +51,7 @@ max-2xl @media (width < 96rem) { ... }
 
 Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, puedes seguir estos pasos:
 
-- `rm -rf node_modules package-lock.json .next` // Remover carpetas cache
+- `rm -rf node_modules package-lock.json .next o next/cache` // Remover carpetas cache
 - `npm cache clean --force` // Limpiar la caché de npm
 - `npm i` // Reinstalar las dependencias:
 
@@ -67,9 +67,8 @@ Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, pued
 6. `npm install typescript --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
 7. `npx tsc`: Ejecuta el compilador TypeScript localmente.
 8. `tsc`: Ejecuta el compilador TypeScript globalmente.
-9. `npm install -D eslint-config-next@latest`: Actualizar ESLint en Next
-10. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
-11. `npm install --save-dev eslint @eslint/eslintrc @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y eslint-plugin-simple-import-sort eslint-config-next` : Dependencias para que funcione el archivo eslint.config.mjs
+9. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
+10. `npm install --save-dev eslint @eslint/eslintrc @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y eslint-plugin-simple-import-sort eslint-config-next` : Dependencias para que funcione el archivo eslint.config.mjs
 
 ---
 
@@ -155,6 +154,14 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 7. `npm audit fix`: Repara algunas fallas del servicio de paquetes de npm
 
 ---
+
+Tutorial Para analisar tus dependecias :
+
+1. `npm install -g depcheck`
+2. `depcheck --ignores="@types/*,next,react,react-dom,typescript,@clerk/nextjs,react-icons" --parsers="*.ts:typescript,*.tsx:typescript"`
+
+---
+
 -Pasareladepago18*
 
 

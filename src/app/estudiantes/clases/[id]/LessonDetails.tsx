@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -9,16 +9,15 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
 
-import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
+import LessonBreadcrumbs from '~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
 import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
-import ClassComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
+import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
-import RecursosLesson from '~/components/estudiantes/layout/lessondetail/RecursosLesson';
-import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
+import LessonResource from '~/components/estudiantes/layout/lessondetail/LessonResource';
+import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
 import {
@@ -27,6 +26,7 @@ import {
 	type Lesson,
 	type LessonWithProgress,
 	type UserActivitiesProgress,
+	type Course,
 } from '~/types';
 import {
 	saveScrollPosition,
@@ -42,6 +42,7 @@ export default function LessonDetails({
 	userLessonsProgress,
 	userActivitiesProgress,
 	userId,
+	course, // Add course prop
 }: {
 	lesson: LessonWithProgress;
 	activity: Activity | null;
@@ -49,6 +50,7 @@ export default function LessonDetails({
 	userLessonsProgress: UserLessonsProgress[];
 	userActivitiesProgress: UserActivitiesProgress[];
 	userId: string;
+	course: Course; // Add course type
 }) {
 	// Add new state
 	const [isNavigating, setIsNavigating] = useState(false);
@@ -66,31 +68,56 @@ export default function LessonDetails({
 	const [isActivityCompleted, setIsActivityCompleted] = useState(
 		activity?.isCompleted ?? false
 	);
-	const [isCompletingActivity, setIsCompletingActivity] = useState(false);
 	const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
 	const searchParams = useSearchParams();
 	const { start, stop } = useProgress();
 
+	// Show loading progress on initial render
+	useEffect(() => {
+		start();
+		return () => stop();
+	}, [start, stop]);
+
 	// Initialize lessons state with progress and locked status
 	useEffect(() => {
 		const initializeLessonsState = () => {
-			const lessonsWithProgress = lessons
-				.map((lessonItem) => {
-					const progress = userLessonsProgress.find(
-						(progress) => progress.lessonId === lessonItem.id
-					);
+			const sortedLessons = [...lessons].sort((a, b) =>
+				a.title.localeCompare(b.title, undefined, { numeric: true })
+			);
+
+			const lessonsWithProgress = sortedLessons.map((lessonItem, index) => {
+				const progress = userLessonsProgress.find(
+					(p) => p.lessonId === lessonItem.id
+				);
+
+				// Only first lesson is unlocked by default
+				if (index === 0) {
 					return {
 						...lessonItem,
-						isLocked: progress ? (progress.isLocked ?? true) : true,
-						porcentajecompletado: progress ? progress.progress : 0,
+						isLocked: false,
+						porcentajecompletado: progress?.progress ?? 0,
+						isCompleted: progress?.isCompleted ?? false,
+						isNew: progress?.isNew ?? true, // Agregar propiedad isNew
+						courseTitle: lesson.courseTitle, // Add courseTitle property
 					};
-				})
-				.sort((a, b) => a.title.localeCompare(b.title));
+				}
+
+				// Other lessons remain locked until explicitly unlocked via activity completion
+				return {
+					...lessonItem,
+					isLocked: progress?.isLocked ?? true, // Use stored lock state or default to locked
+					porcentajecompletado: progress?.progress ?? 0,
+					isCompleted: progress?.isCompleted ?? false,
+					isNew: progress?.isNew ?? true, // Agregar propiedad isNew
+					courseTitle: lesson.courseTitle, // Add courseTitle property
+				};
+			});
+
 			setLessonsState(lessonsWithProgress);
 		};
 
 		initializeLessonsState();
-	}, [lessons, userLessonsProgress]);
+	}, [lessons, userLessonsProgress, lesson.courseTitle]);
 
 	// Usar userActivitiesProgress para algo útil, por ejemplo, mostrar el progreso de las actividades
 	useEffect(() => {
@@ -105,7 +132,7 @@ export default function LessonDetails({
 			setProgress(0);
 			setIsVideoCompleted(false);
 			setIsActivityCompleted(false);
-			router.push(`/estudiantes/clases/${selectedLessonId}`);
+			void router.push(`/estudiantes/clases/${selectedLessonId}`);
 		}
 	}, [selectedLessonId, lesson?.id, router]);
 
@@ -123,69 +150,67 @@ export default function LessonDetails({
 
 	// Redirect if the lesson is locked
 	useEffect(() => {
+		let redirectTimeout: NodeJS.Timeout;
+
 		if (lesson?.isLocked) {
-			toast.error('Lección bloqueada', {
-				description:
-					'Esta lección está bloqueada. Completa las lecciones anteriores para desbloquearla.',
-			});
+			// Usar una única función para manejar el toast y la redirección
+			const handleLockedLesson = () => {
+				// Limpiar cualquier timeout existente
+				if (redirectTimeout) clearTimeout(redirectTimeout);
 
-			const timeoutId = setTimeout(() => {
-				router.push('/estudiantes');
-			}, 3000);
+				// Mostrar un único toast
+				toast.error('Lección bloqueada', {
+					description:
+						'Completa las lecciones anteriores para desbloquear esta clase.',
+					// Evitar que el toast se muestre múltiples veces
+					id: 'lesson-locked',
+				});
 
-			return () => clearTimeout(timeoutId);
+				// Configurar la redirección con un nuevo timeout
+				redirectTimeout = setTimeout(() => {
+					void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
+				}, 2000);
+			};
+
+			handleLockedLesson();
+
+			// Limpiar el timeout si el componente se desmonta
+			return () => {
+				if (redirectTimeout) clearTimeout(redirectTimeout);
+			};
 		}
-	}, [lesson?.isLocked, router]);
+	}, [lesson?.isLocked, lesson.courseId, router]);
+
+	// Verificar si el usuario está inscrito en el curso
+	useEffect(() => {
+		const checkEnrollment = async () => {
+			const isEnrolled = await isUserEnrolled(lesson.courseId, userId);
+			if (!isEnrolled) {
+				toast.error('Debes estar inscrito en el curso para ver esta lección.');
+				void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
+			}
+		};
+
+		void checkEnrollment();
+	}, [lesson.courseId, userId, router]);
 
 	// Handle video end event
 	const handleVideoEnd = async () => {
-		setProgress(100);
-		setIsVideoCompleted(true);
 		try {
-			await updateLessonProgress(lesson.id, 100);
-			setLessonsState((prevLessons) =>
-				prevLessons.map((l) =>
-					l.id === lesson.id
-						? {
-								...l,
-								porcentajecompletado: 100,
-								isCompleted: activity ? false : true,
-								isLocked: false,
-							}
-						: l
-				)
-			);
-			toast.success('Video Completado', {
+			toast.success('Clase completada', {
 				description: activity
-					? 'Ahora completa la actividad para desbloquear la siguiente clase'
-					: 'Has completado la clase',
+					? 'Ahora completa la actividad para continuar'
+					: 'Video completado exitosamente',
 			});
 
-			// Unlock next lesson if no activity
-			if (!activity) {
-				const result = await unlockNextLesson(lesson.id);
-				if (
-					result.success &&
-					'nextLessonId' in result &&
-					typeof result.nextLessonId === 'number'
-				) {
-					setLessonsState((prevLessons) =>
-						prevLessons.map((l) =>
-							l.id === result.nextLessonId ? { ...l, isLocked: false } : l
-						)
-					);
-					toast.success('Clase Completada', {
-						description: '¡Avanzando a la siguiente clase!',
-					});
+			await handleLessonCompletion();
 
-					await handleAutoNavigation(result.nextLessonId);
-				}
-			}
+			// Remove automatic unlocking - only mark video as complete
+			setProgress(100);
+			setIsVideoCompleted(true);
 		} catch (error) {
-			console.error('Error al actualizar el progreso de la lección:', error);
-			toast.error('Error', {
-				description: 'No se pudo actualizar el progreso de la lección.',
-			});
+			console.error('Error:', error);
+			toast.error('Error al actualizar el progreso');
 		}
 	};
 
@@ -199,7 +224,11 @@ export default function LessonDetails({
 				setLessonsState((prevLessons) =>
 					prevLessons.map((l) =>
 						l.id === lesson.id
-							? { ...l, porcentajecompletado: roundedProgress }
+							? {
+									...l,
+									porcentajecompletado: roundedProgress,
+									isNew: roundedProgress > 1 ? false : l.isNew, // Cambiar isNew a false si el progreso es mayor al 1%
+								}
 							: l
 					)
 				);
@@ -213,62 +242,25 @@ export default function LessonDetails({
 	const handleActivityCompletion = async () => {
 		if (!activity || !isVideoCompleted) return;
 
-		setIsCompletingActivity(true);
-
 		try {
-			await completeActivity(activity.id);
+			await completeActivity(activity.id, userId); // Add userId parameter
 			setIsActivityCompleted(true);
-			setLessonsState((prevLessons) =>
-				prevLessons.map((l) =>
-					l.id === lesson.id ? { ...l, isCompleted: true } : l
-				)
-			);
 
-			const result = await unlockNextLesson(lesson.id);
-			if (
-				result.success &&
-				'nextLessonId' in result &&
-				typeof result.nextLessonId === 'number'
-			) {
-				setLessonsState((prevLessons) =>
-					prevLessons.map((l) =>
-						l.id === result.nextLessonId ? { ...l, isLocked: false } : l
-					)
-				);
-				toast.success('Clase Completada', {
-					description: '¡Avanzando a la siguiente clase!',
-				});
-
-				await handleAutoNavigation(result.nextLessonId);
-			}
+			// Remove automatic unlocking - let modal handle it
+			toast.success('¡Actividad completada!');
 		} catch (error) {
-			console.error('Error al completar la actividad:', error);
-			toast.error('Error', {
-				description: 'No se pudo completar la actividad.',
-			});
-		} finally {
-			setIsCompletingActivity(false);
+			console.error('Error:', error);
+			toast.error('Error al completar la actividad');
 		}
 	};
 
 	// Add new effect to handle URL-based lesson unlocking
 	useEffect(() => {
-		setLessonsState((prevLessons) =>
-			prevLessons.map((l) => ({
-				...l,
-				isLocked:
-					lessons[0].id === l.id
-						? false
-						: l.id === lesson.id
-							? false
-							: l.porcentajecompletado > 0
-								? false
-								: l.isCompleted
-									? false
-									: l.isLocked,
-			}))
-		);
-	}, [lesson.id, lessons]);
+		if (!lesson?.isLocked && !isVideoCompleted) {
+			setProgress(lesson?.porcentajecompletado ?? 0);
+			setIsVideoCompleted(lesson?.porcentajecompletado === 100);
+		}
+	}, [lesson, isVideoCompleted]);
 
 	// Function to handle navigation
 	const handleNavigationClick = async (direction: 'prev' | 'next') => {
@@ -342,28 +334,17 @@ export default function LessonDetails({
 		}
 	};
 
-	// Handle automatic navigation after unlock
-	const handleAutoNavigation = async (nextLessonId: number) => {
-		start();
-		try {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
-			if (typeof nextLessonId === 'number') {
-				await navigateWithProgress(nextLessonId);
-			}
-		} finally {
-			stop();
-		}
-	};
-
-	// Add new effect to check subscription status
+	// Add new effect to check subscription status with free course handling
 	useEffect(() => {
 		const checkSubscriptionStatus = () => {
+			// If it's a free course, skip subscription check
+			if (course.courseType?.requiredSubscriptionLevel === 'none') {
+				return;
+			}
+
 			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
 			const rawSubscriptionEndDate = user?.publicMetadata
 				?.subscriptionEndDate as string | null;
-
-			console.log('Subscription Status:', subscriptionStatus); // Debug log
-			console.log('Raw Subscription End Date:', rawSubscriptionEndDate); // Debug log
 
 			const formattedSubscriptionEndDate = rawSubscriptionEndDate
 				? formatInTimeZone(
@@ -373,49 +354,127 @@ export default function LessonDetails({
 					)
 				: null;
 
-			console.log(
-				'Formatted Subscription End Date (Bogotá):',
-				formattedSubscriptionEndDate
-			); // Debug log
-
 			const isSubscriptionActive =
 				subscriptionStatus === 'active' &&
 				(!formattedSubscriptionEndDate ||
 					new Date(formattedSubscriptionEndDate) > new Date());
 
 			if (!isSubscriptionActive) {
+				// Usar un ID único para el toast para evitar duplicados
 				toast.error(
-					'Debes tener una suscripción activa para poder ver las clases.'
+					'Debes tener una suscripción activa para poder ver las clases.',
+					{
+						id: 'subscription-required',
+					}
 				);
 				void router.push('/planes');
 			}
 		};
 
+		// Solo verificar una vez al cargar el componente
 		checkSubscriptionStatus();
-	}, [user, router]);
+	}, [course.courseType?.requiredSubscriptionLevel, router, user]);
+
+	// Nuevo manejador para completar lecciones
+	const handleLessonCompletion = async () => {
+		try {
+			setProgress(100);
+			setIsVideoCompleted(true);
+
+			await updateLessonProgress(lesson.id, 100);
+
+			// Corregir el tipo manteniendo todas las propiedades requeridas
+			setLessonsState((prevLessons) =>
+				prevLessons.map((l) =>
+					l.id === lesson.id
+						? {
+								...l, // Mantener todas las propiedades existentes
+								porcentajecompletado: 100,
+								isCompleted: !activity,
+								// Don't modify isLocked status here
+							}
+						: l
+				)
+			);
+		} catch (error) {
+			console.error('Error:', error);
+			toast.error('Error al completar la lección');
+			throw error;
+		}
+	};
+
+	// Add function to get next lesson ID
+	const getNextLessonId = () => {
+		const sortedLessons = [...lessonsState].sort((a, b) =>
+			a.title.localeCompare(b.title)
+		);
+		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
+		const nextLesson = sortedLessons[currentIndex + 1];
+		return nextLesson && !nextLesson.isLocked ? nextLesson.id : undefined;
+	};
+
+	// Function to handle lesson unlock
+	const handleLessonUnlocked = (lessonId: number) => {
+		setLessonsState((prevLessons) =>
+			prevLessons.map((lesson) =>
+				lesson.id === lessonId
+					? { ...lesson, isLocked: false, isNew: true }
+					: lesson
+			)
+		);
+	};
+
+	const isLastLesson = useCallback(() => {
+		const sortedLessons = [...lessonsState].sort((a, b) =>
+			a.title.localeCompare(b.title)
+		);
+		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
+		return currentIndex === sortedLessons.length - 1;
+	}, [lessonsState, lesson.id]);
+
+	const isLastActivity = useCallback(() => {
+		const lastLesson = lessons[lessons.length - 1];
+		const isLastLesson = lesson.id === lastLesson.id;
+
+		if (!isLastLesson) return false;
+
+		const lastActivity = lesson.activities?.[lesson.activities.length - 1];
+		return activity?.id === lastActivity?.id;
+	}, [lesson, activity, lessons]);
+
+	useEffect(() => {
+		if (!course.isActive) {
+			toast.error('Curso no disponible', {
+				description: 'Este curso no está disponible actualmente.',
+			});
+			router.push('/estudiantes');
+		}
+	}, [course.isActive, router]);
 
 	return (
-		<>
-			<Header />
-			<div className="bg-background flex min-h-screen flex-col">
-				<div className="flex flex-1 px-4 py-6">
-					{/* Left Sidebar */}
-					<div className="w-80 bg-background p-4 shadow-lg">
-						<h2 className="mb-4 text-2xl font-bold text-primary">Cursos</h2>
-						<LessonCards
-							lessonsState={lessonsState}
-							selectedLessonId={selectedLessonId}
-							onLessonClick={handleCardClick}
-							progress={progress}
-							isNavigating={isNavigating}
-						/>
-					</div>
+		<div className="flex min-h-screen flex-col">
+			<LessonBreadcrumbs
+				courseTitle={lesson.courseTitle}
+				courseId={lesson.courseId}
+				lessonTitle={lesson.title}
+			/>
+			<div className="flex flex-1 px-4 py-6">
+				{/* Left Sidebar */}
+				<div className="w-80 bg-background p-4">
+					<h2 className="mb-4 text-2xl font-bold text-primary">Clases</h2>
+					<LessonCards
+						lessonsState={lessonsState}
+						selectedLessonId={selectedLessonId}
+						onLessonClick={handleCardClick}
+						progress={progress}
+						isNavigating={isNavigating}
+					/>
+				</div>
 
-					{/* Main Content */}
-					<div className="flex-1 p-6">
-						<div className="navigation-buttons">
-							{' '}
-							{/* Add this wrapper div with class */}
+				{/* Main Content */}
+				<div className="flex-1 p-6">
+					<div className="navigation-buttons">
+						<div className="mb-4">
 							<LessonNavigation
 								onNavigate={handleNavigationClick}
 								lessonsState={lessonsState}
@@ -423,39 +482,44 @@ export default function LessonDetails({
 								isNavigating={isNavigating}
 							/>
 						</div>
-						<LessonPlayer
-							lesson={lesson}
-							progress={progress}
-							handleVideoEnd={handleVideoEnd}
-							handleProgressUpdate={handleProgressUpdate}
-						/>
-						<ClassComments lessonId={lesson.id} />
 					</div>
-					{/* Right Sidebar - Activities and Resources */}
-					<div className="flex flex-col">
-						<LessonActivities
-							activity={activity}
-							isVideoCompleted={isVideoCompleted}
-							isActivityCompleted={isActivityCompleted}
-							isCompletingActivity={isCompletingActivity}
-							handleActivityCompletion={handleActivityCompletion}
-							userId={userId}
-						/>
-						<RecursosLesson resourceNames={lesson.resourceNames} />
-					</div>
-
-					{/* Chatbot Button and Modal */}
-					<button
-						onClick={() => setIsChatOpen(!isChatOpen)}
-						className="fixed right-6 bottom-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
-					>
-						<FaRobot className="text-xl" />
-					</button>
-
-					<LessonChatBot />
+					<LessonPlayer
+						lesson={lesson}
+						progress={progress}
+						handleVideoEnd={handleVideoEnd}
+						handleProgressUpdate={handleProgressUpdate}
+					/>
+					<LessonComments lessonId={lesson.id} />
 				</div>
-				<Footer />
+
+				{/* Right Sidebar */}
+				<div className="flex flex-col">
+					<LessonActivities
+						activity={activity ?? null}
+						isVideoCompleted={isVideoCompleted}
+						isActivityCompleted={isActivityCompleted}
+						handleActivityCompletion={handleActivityCompletion}
+						userId={userId}
+						nextLessonId={getNextLessonId()}
+						onLessonUnlocked={handleLessonUnlocked}
+						courseId={lesson.courseId}
+						isLastLesson={isLastLesson()}
+						isLastActivity={isLastActivity()}
+						resourceNames={lesson.resourceNames} // Add this prop
+					/>
+					<LessonResource resourceNames={lesson.resourceNames} />
+				</div>
+
+				{/* Chatbot Button and Modal */}
+				<button
+					onClick={() => setIsChatOpen(!isChatOpen)}
+					className="fixed right-6 bottom-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
+				>
+					<FaRobot className="text-xl" />
+				</button>
+
+				<LessonChatBot />
 			</div>
-		</>
+		</div>
 	);
 }

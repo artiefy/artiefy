@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import React, { useState } from 'react';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -33,7 +33,7 @@ const ConsultForm: React.FC = () => {
 				throw new Error('Failed to fetch transaction data');
 			}
 
-			const data: Result = await response.json() as Result;
+			const data: Result = (await response.json()) as Result;
 			setResult(data);
 		} catch (error) {
 			setError((error as Error).message);

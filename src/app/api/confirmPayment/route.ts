@@ -1,11 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { updateUserSubscription } from '~/server/actions/estudiantes/confirmation/updateUserSubscription';
 import { verifySignature } from '~/utils/paygateway/verifySignature';
 
-// Configure route behavior
 export const dynamic = 'force-dynamic';
 
-// Types
 interface PaymentData {
 	email_buyer: string;
 	state_pol: string;
@@ -13,42 +12,10 @@ interface PaymentData {
 	reference_sale: string;
 	value: string;
 	currency: string;
-	sign: string;
+	sign: string; // ✅ Ahora siempre es un string
 }
 
-// Validation function
-const validateFormData = (formData: FormData): PaymentData | null => {
-	const requiredFields = [
-		'email_buyer',
-		'state_pol',
-		'merchant_id',
-		'reference_sale',
-		'value',
-		'currency',
-		'sign',
-	];
-
-	for (const field of requiredFields) {
-		const value = formData.get(field);
-		if (!value || typeof value !== 'string') {
-			console.error(`❌ Missing or invalid field: ${field}`);
-			return null;
-		}
-	}
-
-	return {
-		email_buyer: formData.get('email_buyer') as string,
-		state_pol: formData.get('state_pol') as string,
-		merchant_id: formData.get('merchant_id') as string,
-		reference_sale: formData.get('reference_sale') as string,
-		value: formData.get('value') as string,
-		currency: formData.get('currency') as string,
-		sign: formData.get('sign') as string,
-	};
-};
-
 export async function POST(req: NextRequest) {
-	// Method validation
 	if (req.method !== 'POST') {
 		return NextResponse.json(
 			{ message: 'Method not allowed' },
@@ -57,20 +24,31 @@ export async function POST(req: NextRequest) {
 	}
 
 	try {
-		// Get and validate form data
 		const formData = await req.formData();
-		const paymentData = validateFormData(formData);
 
-		if (!paymentData) {
+		// ✅ Verificar que `sign` existe antes de asignarlo
+		const sign = formData.get('sign');
+		if (!sign || typeof sign !== 'string') {
+			console.error('❌ Error: No se recibió la firma.');
 			return NextResponse.json(
-				{ message: 'Missing required fields' },
+				{ message: 'Missing signature' },
 				{ status: 400 }
 			);
 		}
 
+		// ✅ Ahora `sign` nunca será undefined
+		const paymentData: PaymentData = {
+			email_buyer: formData.get('email_buyer') as string,
+			state_pol: formData.get('state_pol') as string,
+			merchant_id: formData.get('merchant_id') as string,
+			reference_sale: formData.get('reference_sale') as string,
+			value: formData.get('value') as string,
+			currency: formData.get('currency') as string,
+			sign: sign, // ✅ Garantizamos que sign es `string`
+		};
+
 		console.log('✅ Datos recibidos de PayU:', paymentData);
 
-		// Verify signature
 		if (!verifySignature(paymentData)) {
 			console.error('❌ Firma inválida.');
 			return NextResponse.json(
@@ -79,30 +57,16 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		// Process payment status
 		if (paymentData.state_pol === '4') {
 			console.log('✅ Pago aprobado. Actualizando suscripción...');
-			// await updateUserSubscription(paymentData);
-
-			return NextResponse.json(
-				{
-					message: 'Payment confirmed',
-					status: 'success',
-				},
-				{ status: 200 }
-			);
+			await updateUserSubscription(paymentData);
 		} else {
 			console.warn(
 				`⚠️ Pago con estado ${paymentData.state_pol}, no se actualiza suscripción.`
 			);
-			return NextResponse.json(
-				{
-					message: 'Payment not approved',
-					status: paymentData.state_pol,
-				},
-				{ status: 200 }
-			);
 		}
+
+		return NextResponse.json({ message: 'Payment confirmed' });
 	} catch (error) {
 		console.error('❌ Error en el endpoint de confirmación:', error);
 		return NextResponse.json(

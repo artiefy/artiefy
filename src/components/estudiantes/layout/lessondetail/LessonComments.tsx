@@ -37,7 +37,7 @@ interface ClassComment {
 	userLiked: boolean; // Add this property to track if the user liked the comment
 }
 
-const ClassComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
+const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 	const [content, setContent] = useState('');
 	const [rating, setRating] = useState(0);
 	const [message, setMessage] = useState('');
@@ -228,7 +228,10 @@ const ClassComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 					Comentarios ({comments.length})
 				</h3>
 				{loading ? (
-					<p>Cargando comentarios...</p>
+					<div className="flex items-center space-x-2">
+						<p>Cargando comentarios</p>
+						<Icons.spinner className="h-4 w-4 animate-spin text-primary" />
+					</div>
 				) : (
 					<ul className="space-y-4">
 						{comments.map((comment) => (
@@ -304,4 +307,4 @@ const ClassComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 	);
 };
 
-export default ClassComments;
+export default LessonComments;

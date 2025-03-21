@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { CourseBreadcrumb } from '~/components/estudiantes/layout/coursedetail/CourseBreadcrumb';
 import CourseChatbot from '~/components/estudiantes/layout/coursedetail/CourseChatbot';
 import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
+import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import { CourseHeader } from '~/components/estudiantes/layout/coursedetail/CourseHeader';
 import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
@@ -26,75 +27,81 @@ export default function CourseDetails({
 	const [course, setCourse] = useState<Course>(initialCourse);
 	const [isEnrolling, setIsEnrolling] = useState(false);
 	const [isUnenrolling, setIsUnenrolling] = useState(false);
-	const [enrollmentError, setEnrollmentError] = useState<string | null>(null);
 	const [totalStudents, setTotalStudents] = useState(course.totalStudents);
 	const [isEnrolled, setIsEnrolled] = useState(false);
 	const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
 
 	const { isSignedIn, userId } = useAuth();
 	const { user } = useUser();
 	const router = useRouter();
 	const pathname = usePathname();
 
-	const errorMessages = {
-		enrollment: {
-			title: 'Error de inscripción',
-			description: 'No se pudo completar la inscripción',
-		},
-		unenrollment: {
-			title: 'Error al cancelar inscripción',
-			description: 'No se pudo cancelar la inscripción',
-		},
-	} as const;
+	useEffect(() => {
+		if (!initialCourse.isActive) {
+			toast.error('Curso no disponible', {
+				description: 'Este curso no está disponible actualmente.',
+				duration: 2000,
+				id: 'course-unavailable', // Previene toasts duplicados
+			});
+			router.replace('/estudiantes');
+		}
+	}, [initialCourse.isActive, router]);
 
 	useEffect(() => {
 		const checkEnrollmentAndProgress = async () => {
-			if (userId) {
-				// Verificar estado de suscripción primero
-				const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-				const subscriptionEndDate = user?.publicMetadata
-					?.subscriptionEndDate as string | null;
+			setIsCheckingEnrollment(true);
+			try {
+				if (userId) {
+					// Verificar inscripción primero para actualización rápida
+					const isUserEnrolled =
+						Array.isArray(course.enrollments) &&
+						course.enrollments.some(
+							(enrollment: Enrollment) => enrollment.userId === userId
+						);
+					setIsEnrolled(isUserEnrolled);
 
-				console.log('Subscription Status:', subscriptionStatus); // Debug log
-				console.log('Subscription End Date:', subscriptionEndDate); // Debug log
+					// Verificar suscripción en paralelo
+					const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+					const subscriptionEndDate = user?.publicMetadata
+						?.subscriptionEndDate as string | null;
+					const isSubscriptionActive =
+						subscriptionStatus === 'active' &&
+						(!subscriptionEndDate ||
+							new Date(subscriptionEndDate) > new Date());
+					setIsSubscriptionActive(isSubscriptionActive);
 
-				const isSubscriptionActive =
-					subscriptionStatus === 'active' &&
-					(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
-				setIsSubscriptionActive(isSubscriptionActive);
-
-				// Verificar inscripción
-				const isUserEnrolled =
-					Array.isArray(course.enrollments) &&
-					course.enrollments.some(
-						(enrollment: Enrollment) => enrollment.userId === userId
-					);
-
-				setIsEnrolled(isUserEnrolled);
-
-				// Si está inscrito, cargar progreso
-				if (isUserEnrolled) {
-					try {
+					// Si está inscrito, cargar progreso
+					if (isUserEnrolled) {
 						const lessons = await getLessonsByCourseId(course.id, userId);
 						setCourse((prev) => ({
 							...prev,
 							lessons: lessons
-								.map((lesson, index) => ({
+								.map((lesson) => ({
 									...lesson,
-									isLocked: lesson.userProgress === 0 && index !== 0,
+									isLocked: lesson.isLocked,
 									porcentajecompletado: lesson.userProgress,
+									isNew: lesson.isNew, // Asegurarse de que la propiedad isNew se maneje correctamente
 								}))
 								.sort((a, b) => a.title.localeCompare(b.title)),
 						}));
-					} catch (error) {
-						console.error('Error cargando progreso:', error);
 					}
 				}
+			} catch (error) {
+				console.error('Error checking enrollment:', error);
+			} finally {
+				setIsCheckingEnrollment(false);
+				setIsLoading(false);
 			}
 		};
 
 		void checkEnrollmentAndProgress();
 	}, [course.enrollments, course.id, userId, user]);
+
+	if (isLoading) {
+		return <CourseDetailsSkeleton />;
+	}
 
 	const handleEnroll = async () => {
 		if (!isSignedIn) {
@@ -104,43 +111,65 @@ export default function CourseDetails({
 		}
 
 		if (isEnrolling) return;
-
 		setIsEnrolling(true);
-		setEnrollmentError(null);
 
 		try {
-			// Verificar suscripción activa
+			// Verificar si el curso es gratuito
+			if (initialCourse.courseType?.requiredSubscriptionLevel === 'none') {
+				const result = await enrollInCourse(course.id);
+				if (result.success) {
+					setTotalStudents((prev) => prev + 1);
+					setIsEnrolled(true);
+					toast.success('¡Te has inscrito exitosamente!');
+
+					// Actualizar curso
+					const updatedCourse = await getCourseById(course.id, userId);
+					if (updatedCourse) {
+						setCourse({
+							...updatedCourse,
+							lessons: updatedCourse.lessons ?? [],
+						});
+					}
+				} else if (result.message === 'Ya estás inscrito en este curso') {
+					// Si ya está inscrito, actualizar el estado local
+					setIsEnrolled(true);
+					const updatedCourse = await getCourseById(course.id, userId);
+					if (updatedCourse) {
+						setCourse({
+							...updatedCourse,
+							lessons: updatedCourse.lessons ?? [],
+						});
+					}
+				}
+				return;
+			}
+
+			// Para cursos no gratuitos, verificar suscripción
 			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
 			const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
 				| string
 				| null;
-
-			// Debug logs
-			console.log('Current subscription status:', subscriptionStatus);
-			console.log('Subscription End Date:', subscriptionEndDate);
-
 			const isSubscriptionActive =
 				subscriptionStatus === 'active' &&
 				(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
-
-			console.log('Is subscription active:', isSubscriptionActive);
 
 			if (!isSubscriptionActive) {
 				toast.error('Suscripción requerida', {
 					description: 'Necesitas una suscripción activa para inscribirte.',
 				});
-				void router.push('/planes');
+				window.open('/planes', '_blank');
 				return;
 			}
 
 			const result = await enrollInCourse(course.id);
-
-			if (result.success) {
+			if (
+				result.success ||
+				result.message === 'Ya estás inscrito en este curso'
+			) {
 				setTotalStudents((prev) => prev + 1);
 				setIsEnrolled(true);
 				toast.success('¡Te has inscrito exitosamente!');
 
-				// Actualizar curso
 				const updatedCourse = await getCourseById(course.id, userId);
 				if (updatedCourse) {
 					setCourse({
@@ -148,11 +177,9 @@ export default function CourseDetails({
 						lessons: updatedCourse.lessons ?? [],
 					});
 				}
-			} else {
-				throw new Error(result.message);
 			}
 		} catch (error) {
-			handleError(error, 'enrollment');
+			console.error('Error en la inscripción:', error);
 		} finally {
 			setIsEnrolling(false);
 		}
@@ -160,40 +187,33 @@ export default function CourseDetails({
 
 	const handleUnenroll = async () => {
 		if (!isSignedIn || isUnenrolling) return;
-
 		setIsUnenrolling(true);
-		setEnrollmentError(null);
 
 		try {
-			await unenrollFromCourse(course.id);
-			setTotalStudents((prev) => prev - 1);
-			setIsEnrolled(false);
-			toast.success('Has cancelado tu inscripción al curso correctamente'); // Move this line here
-			const updatedCourse = await getCourseById(course.id, userId);
-			if (updatedCourse) {
-				setCourse({
-					...updatedCourse,
-					lessons: updatedCourse.lessons ?? [],
-				});
+			const result = await unenrollFromCourse(course.id);
+			if (result.success) {
+				setIsEnrolled(false);
+				setTotalStudents((prev) => prev - 1);
+				setCourse((prev) => ({
+					...prev,
+					enrollments: Array.isArray(prev.enrollments)
+						? prev.enrollments.filter(
+								(enrollment: Enrollment) => enrollment.userId !== userId
+							)
+						: [],
+					lessons: prev.lessons?.map((lesson) => ({
+						...lesson,
+						userProgress: 0,
+						isLocked: true,
+					})),
+				}));
+				toast.success('Has cancelado tu inscripción al curso correctamente');
 			}
-		} catch (error: unknown) {
-			handleError(error, 'unenrollment');
+		} catch (error) {
+			console.error('Error al cancelar la inscripción:', error);
 		} finally {
 			setIsUnenrolling(false);
 		}
-	};
-
-	const handleError = (
-		error: unknown,
-		errorType: keyof typeof errorMessages
-	) => {
-		const message = errorMessages[errorType];
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-
-		setEnrollmentError(errorMessage);
-		toast.error(`${message.description}: ${errorMessage}`);
-		console.error(`${message.title}:`, error);
 	};
 
 	const handleEnrollmentChange = (enrolled: boolean) => {
@@ -214,25 +234,22 @@ export default function CourseDetails({
 					subscriptionEndDate={
 						user?.publicMetadata?.subscriptionEndDate as string | null
 					}
-					onEnroll={handleEnroll}
-					onUnenroll={handleUnenroll}
+					onEnrollAction={handleEnroll}
+					onUnenrollAction={handleUnenroll}
+					isCheckingEnrollment={isCheckingEnrollment}
 				/>
 
-				{/* Mostrar mensajes de error si existen */}
-				{enrollmentError && (
-					<div className="mt-4 rounded-md bg-red-50 p-4">
-						{/* ...error message content... */}
-					</div>
-				)}
-
-				{/* Siempre mostrar comentarios y chatbot */}
 				<div className="mt-8 space-y-8">
-					<CourseComments
-						courseId={course.id}
-						isEnrolled={isEnrolled}
-						onEnrollmentChange={handleEnrollmentChange}
-					/>
-					<CourseChatbot isEnrolled={isEnrolled} />
+					{isEnrolled && (
+						<>
+							<CourseComments
+								courseId={course.id}
+								isEnrolled={isEnrolled}
+								onEnrollmentChange={handleEnrollmentChange}
+							/>
+							<CourseChatbot isEnrolled={isEnrolled} />
+						</>
+					)}
 				</div>
 			</main>
 		</div>

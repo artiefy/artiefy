@@ -1,61 +1,65 @@
-'use client'
+'use client';
 
-// Unused import to trigger import/order
-import axios from 'axios'
-import React from 'react'
-// Wrong import order
-import { Button } from '~/components/estudiantes/ui/button'
+import React, { useState } from 'react';
 
-// Missing type import to trigger consistent-type-imports
-import { FormEvent } from 'react'
+import { type NextPage } from 'next';
 
-// Regular promise without await to trigger no-floating-promises
-const testPromise = new Promise(() => {})
+import Image from 'next/image';
 
-// Unused variable to trigger no-unused-vars
-const unusedVar = "this will trigger a warning"
+import { users } from '@/db/schema';
 
-const TestPage = () => {
-  // Unused state to trigger no-unused-vars
-  const [state, setState] = React.useState('')
+import { db } from '@/lib/db';
 
-  // Promise without await to trigger require-await and no-floating-promises
-  async function handleClick() {
-    testPromise
-    fetch('/api/test')
-  }
+import '@/styles/global.css';
+import Link from 'next/link';
 
-  // Unused parameter to trigger no-unused-vars
-  const handleSubmit = (event: FormEvent) => {
-    console.log('submitted')
-  }
+import { drizzle } from 'drizzle-orm'; // ❌ Import externo después de internos (import/order)
+import fs from 'fs'; // ❌ Import de Node.js después de internos (import/order)
 
-  // Missing alt in img to trigger next/no-img-element
-  return (
-    <div>
-      <h1>Test ESLint Page</h1>
-      <img src="test.jpg" />
-      
-      {/* Missing href to trigger accessibility warnings */}
-      <a onClick={handleClick}>Click me</a>
-      
-      {/* Wrong HTML nesting to trigger warnings */}
-      <p>
-        <div>Invalid HTML nesting</div>
-      </p>
-      
-      {/* Form without proper handlers */}
-      <form>
-        <input type="text" />
-        <Button onClick={() => Promise.resolve()}>
-          Submit
-        </Button>
-      </form>
-    </div>
-  )
+interface User {
+	id: number;
+	name: string;
 }
 
-// Wrong export to trigger warnings
-module.exports = TestPage
+// ❌ Uso incorrecto de una variable sin usar
+const unusedVariable = 'Esto no debería estar aquí';
+
+// ❌ Debería usar type-imports en lugar de imports normales
+
+const Page: NextPage = () => {
+	// ❌ No se recomienda asignar a una variable el resultado de una promesa sin manejar (no-floating-promises)
+	const data = db.select().from(users).execute();
+
+	// ❌ Uso incorrecto de <img> en lugar de <Image> de Next.js
+	return (
+		<div>
+			<h1>Hola mundo</h1>
+
+			{/* ❌ Uso de <img> en lugar de next/image */}
+			<img src="/logo.png" alt="Logo" width="200" height="100" />
+
+			{/* ✅ Uso correcto de next/image */}
+			<Image src="/logo.png" alt="Logo Next.js" width={200} height={100} />
+
+			{/* ❌ Uso incorrecto de <a> para navegación interna en lugar de <Link> */}
+			<a href="/about">Ir a About</a>
+
+			{/* ✅ Uso correcto de <Link> */}
+			<Link href="/about">Ir a About</Link>
+
+			{/* ❌ Intento de hacer un DELETE sin WHERE (violación de drizzle/enforce-delete-with-where) */}
+			<button onClick={() => db.delete(users).execute()}>
+				Eliminar usuarios
+			</button>
+		</div>
+	);
+};
+
+export default Page;
 ---------------------------------------------------------
-page.tsx de testing para eslint
+ARCHIVO PAGE.TSX DE PRUEBA PARA ESLINT
+---------------------------------------------------------
+FORZAR EL CRON
+curl -X GET https://artiefy.com/api/cron/check-subscriptions \
+-H "Authorization: Bearer 6a8cfb161629e387044a10761c6503639bec96a8e7c7dc7922b4982633fd5c4e"
+---------------------------------------------------------

@@ -8,34 +8,10 @@ import Link from 'next/link';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon } from '@heroicons/react/24/solid';
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
-
-const DotIcon = () => {
-	return (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			viewBox="0 0 512 512"
-			fill="currentColor"
-		>
-			<path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512z" />
-		</svg>
-	);
-};
-
-const CustomPage = () => {
-	return (
-		<div>
-			<h1>Custom page</h1>
-			<p>This is the content of the custom page.</p>
-			<p>
-				Welcome to the custom page! Here you can find personalized content and
-				settings.
-			</p>
-		</div>
-	);
-};
 
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -81,7 +57,7 @@ export function Header() {
 							<Link
 								key={item.href}
 								href={item.href}
-								className="text-shadow transition-colors hover:text-orange-500 active:scale-95"
+								className="transition-colors text-shadow hover:text-orange-500 active:scale-95"
 							>
 								{item.label}
 							</Link>
@@ -114,20 +90,14 @@ export function Header() {
 							</SignedOut>
 							<SignedIn>
 								<UserButton showName>
-									<UserButton.UserProfilePage
-										label="Custom Page"
-										url="custom"
-										labelIcon={<DotIcon />}
-									>
-										<CustomPage />
-									</UserButton.UserProfilePage>
-									<UserButton.UserProfileLink
-										label="Homepage"
-										url="/"
-										labelIcon={<DotIcon />}
-									/>
-									<UserButton.UserProfilePage label="account" />
-									<UserButton.UserProfilePage label="security" />
+									<UserButton.MenuItems>
+										<UserButton.Link
+											label="Mis Cursos"
+											labelIcon={<UserCircleIcon className="size-4" />}
+											href="/estudiantes/myaccount"
+										/>
+										<UserButton.Action label="manageAccount" />
+									</UserButton.MenuItems>
 								</UserButton>
 							</SignedIn>
 						</div>
@@ -210,7 +180,7 @@ export function Header() {
 						<SignedOut>
 							<SignInButton>
 								<Button
-									className="button-hover relative skew-x-[-15deg] cursor-pointer rounded-none border border-background bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+									className="relative skew-x-[-15deg] button-hover cursor-pointer rounded-none border border-background bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 									style={{
 										transition: '0.5s',
 										width: '175px',
@@ -234,20 +204,14 @@ export function Header() {
 						</SignedOut>
 						<SignedIn>
 							<UserButton>
-								<UserButton.UserProfilePage
-									label="Custom Page"
-									url="custom"
-									labelIcon={<DotIcon />}
-								>
-									<CustomPage />
-								</UserButton.UserProfilePage>
-								<UserButton.UserProfileLink
-									label="Homepage"
-									url="/"
-									labelIcon={<DotIcon />}
-								/>
-								<UserButton.UserProfilePage label="account" />
-								<UserButton.UserProfilePage label="security" />
+								<UserButton.MenuItems>
+									<UserButton.Link
+										label="Mis Cursos"
+										labelIcon={<UserCircleIcon className="size-4" />}
+										href="/estudiantes/myaccount"
+									/>
+									<UserButton.Action label="manageAccount" />
+								</UserButton.MenuItems>
 							</UserButton>
 						</SignedIn>
 					</div>
