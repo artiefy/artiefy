@@ -92,8 +92,10 @@ export async function getCourseById(
 				id: materia.id,
 				title: materia.title,
 				description: materia.description,
-				programaId: materia.programaId,
+				programaId: materia.programaId ?? null,
 				courseid: materia.courseid,
+				totalStudents: 0, // Default value
+				lessons: [], // Default empty array
 			})),
 			category: course.category
 				? {
