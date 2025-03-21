@@ -119,7 +119,7 @@
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.22.0",
     "@next/eslint-plugin-next": "^15.2.3",
-    "@tailwindcss/postcss": "^4.0.14",
+    "@tailwindcss/postcss": "^4.0.15",
     "@tsconfig/next": "^2.0.3",
     "@types/chart.js": "^2.9.41",
     "@types/crypto-js": "^4.2.2",
@@ -157,7 +157,7 @@
     "prettier": "^3.5.3",
     "prettier-eslint": "^16.3.0",
     "prettier-plugin-tailwindcss": "^0.6.11",
-    "tailwindcss": "^4.0.14",
+    "tailwindcss": "^4.0.15",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0"
