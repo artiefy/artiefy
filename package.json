@@ -120,6 +120,7 @@
     "@eslint/eslintrc": "^3.3.0",
     "@eslint/js": "^9.22.0",
     "@next/eslint-plugin-next": "^15.2.3",
+    "@next/swc-win32-x64-msvc": "^15.2.3",
     "@tsconfig/next": "^2.0.3",
     "@types/chart.js": "^2.9.41",
     "@types/crypto-js": "^4.2.2",

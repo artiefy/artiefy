@@ -177,7 +177,7 @@ export default async function CourseListStudent({
 										<p className="line-clamp-2 text-sm text-gray-300">
 											{course.description}
 										</p>
-										<div className="flex items-center justify-between">
+										<div className="-mb-4 flex items-center justify-between">
 											<p className="text-sm font-bold text-red-500">
 												{course.modalidad?.name}
 											</p>
@@ -202,7 +202,7 @@ export default async function CourseListStudent({
 										<Button
 											asChild
 											disabled={!course.isActive}
-											className={`mt-4 w-full ${!course.isActive ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''}`}
+											className={`mt-2 w-full ${!course.isActive ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''}`}
 										>
 											<Link
 												href={`/estudiantes/cursos/${course.id}`}
