@@ -205,7 +205,7 @@ export default async function CourseListStudent({
 											className={`mt-4 w-full ${!course.isActive ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''}`}
 										>
 											<Link
-												href="#"
+												href={`/estudiantes/cursos/${course.id}`}
 												className={`relative inline-flex h-10 w-full items-center justify-center rounded-md border border-white/20 p-2 ${
 													!course.isActive
 														? 'pointer-events-none bg-gray-600 text-gray-400'

@@ -149,6 +149,7 @@ export function ProgramHeader({
 					isEnrolled={isEnrolled}
 					isSubscriptionActive={isSubscriptionActive}
 					subscriptionEndDate={_subscriptionEndDate}
+					isCheckingEnrollment={isCheckingEnrollment}
 				/>
 
 				<div className="flex justify-center pt-4">

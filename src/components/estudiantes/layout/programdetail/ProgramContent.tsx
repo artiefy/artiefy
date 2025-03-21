@@ -19,33 +19,55 @@ import {
 	Card,
 	CardContent,
 	CardHeader,
-	CardFooter,
 	CardTitle,
 } from '~/components/estudiantes/ui/card';
+import { Icons } from '~/components/estudiantes/ui/icons';
 
 import type { Program, MateriaWithCourse, Course } from '~/types';
 
 interface ProgramContentProps {
 	program: Program;
 	isEnrolled: boolean;
-	isSubscriptionActive: boolean; // Añadir esta prop
-	subscriptionEndDate: string | null; // Añadir esta prop
+	isSubscriptionActive: boolean;
+	subscriptionEndDate: string | null;
+	isCheckingEnrollment: boolean; // Add this prop
 }
 
 export function ProgramContent({
 	program,
 	isEnrolled,
 	isSubscriptionActive,
-	subscriptionEndDate: _subscriptionEndDate, // renamed to mark as unused
+	subscriptionEndDate: _subscriptionEndDate,
+	isCheckingEnrollment, // Add this to destructuring
 }: ProgramContentProps) {
 	const router = useRouter();
+
+	// Modificar para filtrar cursos duplicados por ID
 	const safeMateriasWithCursos =
 		program.materias?.filter(
 			(materia): materia is MateriaWithCourse & { curso: Course } =>
 				materia.curso !== undefined && 'id' in materia.curso
 		) ?? [];
 
-	const courses = safeMateriasWithCursos.map((materia) => materia.curso);
+	// Filtrar cursos únicos basados en el ID del curso
+	const uniqueCourses = safeMateriasWithCursos.reduce(
+		(acc, materia) => {
+			if (!acc.some((item) => item.curso.id === materia.curso.id)) {
+				acc.push(materia);
+			}
+			return acc;
+		},
+		[] as (MateriaWithCourse & { curso: Course })[]
+	);
+
+	const courses = uniqueCourses.map((materia) => materia.curso);
+
+	// Añadir console.log para debugging
+	console.log('Course data:', courses[0]);
+	console.log(
+		'Courses isActive status:',
+		courses.map((c) => ({ id: c.id, isActive: c.isActive }))
+	);
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
@@ -94,7 +116,11 @@ export function ProgramContent({
 					{courses.map((course, index) => (
 						<div key={`${course.id}-${index}`} className="group relative">
 							<div className="absolute -inset-2 animate-gradient rounded-xl bg-linear-to-r from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px] transition-all duration-500 group-hover:opacity-100" />
-							<Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+							<Card
+								className={`zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02] ${
+									!course.isActive ? 'opacity-50' : ''
+								}`}
+							>
 								<CardHeader className="px-6">
 									<AspectRatio ratio={16 / 9}>
 										<div className="relative size-full">
@@ -125,13 +151,13 @@ export function ProgramContent({
 										>
 											{course.category?.name}
 										</Badge>
+										<p className="text-sm font-bold text-red-500">
+											{course.modalidad?.name}
+										</p>
 									</div>
 									<p className="line-clamp-2 text-sm text-gray-300">
 										{course.description}
 									</p>
-								</CardContent>
-
-								<CardFooter className="flex flex-col items-start justify-between space-y-2">
 									<div className="flex w-full justify-between">
 										<p className="text-sm font-bold text-gray-300 italic">
 											Educador:{' '}
@@ -139,34 +165,6 @@ export function ProgramContent({
 												{course.instructor}
 											</span>
 										</p>
-										<p className="text-sm font-bold text-red-500">
-											{course.modalidad?.name}
-										</p>
-									</div>
-									<div className="flex w-full items-center justify-between">
-										<Button
-											asChild
-											disabled={!isEnrolled}
-											className={
-												!isEnrolled ? 'cursor-not-allowed opacity-50' : ''
-											}
-										>
-											<Link
-												href={
-													isEnrolled ? `/estudiantes/cursos/${course.id}` : '#'
-												}
-												className="group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
-												onClick={(e) => !isEnrolled && e.preventDefault()}
-											>
-												<p className="font-bold">
-													{isEnrolled ? 'Ver Curso' : 'Requiere Inscripción'}
-												</p>
-												<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
-												<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-													<div className="relative h-full w-10 bg-white/30" />
-												</div>
-											</Link>
-										</Button>
 										<div className="flex items-center">
 											<StarIcon className="size-5 text-yellow-500" />
 											<span className="ml-1 text-sm font-bold text-yellow-500">
@@ -174,7 +172,62 @@ export function ProgramContent({
 											</span>
 										</div>
 									</div>
-								</CardFooter>
+									<div className="mt-2 w-full">
+										{isCheckingEnrollment ? (
+											<Button
+												asChild
+												disabled
+												className="group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary"
+											>
+												<Link href="#" className="flex items-center">
+													<Icons.spinner className="mr-2 size-4 animate-spin" />
+													<span className="font-bold">Cargando...</span>
+												</Link>
+											</Button>
+										) : (
+											<Button
+												asChild
+												disabled={!isEnrolled || !course.isActive}
+												className={`w-full ${
+													!isEnrolled || !course.isActive
+														? 'cursor-not-allowed opacity-50'
+														: ''
+												}`}
+											>
+												<Link
+													href={
+														isEnrolled && course.isActive
+															? `/estudiantes/cursos/${course.id}`
+															: '#'
+													}
+													className={`group/button relative inline-flex h-10 w-full items-center justify-center rounded-md border border-white/20 ${
+														!course.isActive
+															? 'bg-gray-600 text-gray-400'
+															: 'bg-background text-primary active:scale-95'
+													}`}
+													onClick={(e) =>
+														(!isEnrolled || !course.isActive) &&
+														e.preventDefault()
+													}
+												>
+													<span className="font-bold">
+														{!course.isActive
+															? 'No Disponible'
+															: !isEnrolled
+																? 'Requiere Inscripción'
+																: 'Ver Curso'}
+													</span>
+													{course.isActive && isEnrolled && (
+														<ArrowRightCircleIcon className="ml-2 size-5 animate-bounce-right" />
+													)}
+													<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+														<div className="relative h-full w-10 bg-white/30" />
+													</div>
+												</Link>
+											</Button>
+										)}
+									</div>
+								</CardContent>
 							</Card>
 						</div>
 					))}

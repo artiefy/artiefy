@@ -341,7 +341,7 @@ export function CourseContent({
 			)}
 
 			{isEnrolled && isSubscriptionActive && subscriptionEndDate && (
-				<p className="mb-4 text-sm text-gray-600">
+				<p className="mb-4 text-sm text-red-500">
 					Tu suscripción es válida hasta:{' '}
 					{new Date(subscriptionEndDate).toLocaleDateString()}
 				</p>
