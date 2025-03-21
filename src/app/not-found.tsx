@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function NotFound() {
 	return (
-		<div className="flex h-screen flex-col items-center justify-center bg-background p-5 text-center text-gray-800">
+		<div className="bg-background flex h-screen flex-col items-center justify-center p-5 text-center text-gray-800">
 			<img
 				src="/error-404.png"
 				alt="Not Found"
@@ -12,7 +12,7 @@ export default function NotFound() {
 			<h1 className="mb-4 text-4xl font-bold text-orange-500">
 				404 - Página no encontrada
 			</h1>
-			<p className="mb-8 text-lg text-primary">
+			<p className="text-primary mb-8 text-lg">
 				Lo sentimos, pero la página que buscas no está disponible. Puede que el
 				enlace esté roto o que la página haya sido movida.
 			</p>

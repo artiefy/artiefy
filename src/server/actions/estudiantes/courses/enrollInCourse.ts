@@ -3,6 +3,10 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 
+<<<<<<< HEAD
+=======
+import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
+>>>>>>> dev/miguel
 import { db } from '~/server/db';
 import {
 	users,

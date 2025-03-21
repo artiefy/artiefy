@@ -22,12 +22,20 @@ import {
 	DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
+<<<<<<< HEAD
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { formatScore, formatScoreNumber } from '~/utils/formatScore';
 
 import type { Activity, Question, SavedAnswer } from '~/types';
 
 import '~/styles/arrowactivity.css';
+=======
+import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
+import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity'; // Import completeActivity action
+import { saveActivityScore } from '~/server/actions/estudiantes/progress/saveActivityScore'; // Import saveActivityScore action
+
+import type { Activity, Question } from '~/types';
+>>>>>>> dev/miguel
 
 interface ActivityModalProps {
 	isOpen: boolean;

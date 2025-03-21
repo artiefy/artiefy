@@ -62,7 +62,7 @@ const PlansPage: React.FC = () => {
 	const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="bg-background min-h-screen">
 			<Header />
 			<div className="mb-12 px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-7xl">
@@ -70,7 +70,7 @@ const PlansPage: React.FC = () => {
 						<h2 className="text-3xl font-extrabold text-white sm:text-4xl">
 							Planes Artiefy
 						</h2>
-						<p className="mt-4 text-xl text-primary">
+						<p className="text-primary mt-4 text-xl">
 							Elige el plan perfecto para tu viaje de aprendizaje
 						</p>
 					</div>

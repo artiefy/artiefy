@@ -49,6 +49,7 @@
 		"typescript",
 		"typescriptreact"
 	],
+<<<<<<< HEAD
 	"eslint.workingDirectories": ["./"],
 	"eslint.useFlatConfig": true,
 	"eslint.run": "onType",
@@ -60,6 +61,9 @@
 	],
 
 	// Tailwind CSS Configuration
+=======
+	"eslint.debug": true,
+>>>>>>> dev/miguel
 	"tailwindCSS.includeLanguages": {
 		"typescript": "javascript",
 		"typescriptreact": "javascript",

@@ -30,7 +30,9 @@
     "**/*.cjs",
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    ".prettierrc.mjs"
+    "eslint.config.mjs",
+    ".prettierrc.mjs",
+    "drizzle.config.ts"
   ],
   "exclude": [
     "node_modules",

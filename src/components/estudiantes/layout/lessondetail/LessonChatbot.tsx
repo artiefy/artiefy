@@ -119,7 +119,7 @@ const LessonChatBot: React.FC = () => {
 							<button
 								type="submit"
 								disabled={isLoading}
-								className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+								className="bg-secondary rounded-lg px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
 							>
 								Enviar
 							</button>

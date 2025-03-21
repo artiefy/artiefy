@@ -42,5 +42,10 @@ yarn-error.log*
 
 # idea files
 .idea
+src/config/credenciales-gmail.json
+
+# Credenciales
+src/config/credenciales-gmail.json
+!src/config/credenciales-gmail.example.json
 
 .env.production

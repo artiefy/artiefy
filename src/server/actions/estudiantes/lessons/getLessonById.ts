@@ -1,5 +1,10 @@
 'use server';
 
+<<<<<<< HEAD
+=======
+import { unstable_cache } from 'next/cache';
+
+>>>>>>> dev/miguel
 import { eq, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -60,9 +65,45 @@ export async function getLessonById(
 				}) ?? [],
 		};
 
+<<<<<<< HEAD
 		return transformedLesson;
 	} catch (error) {
 		console.error('Error al obtener la lección por ID:', error);
 		throw new Error('Error al obtener la lección por ID');
 	}
 }
+=======
+			const transformedLesson: Lesson = {
+				...lesson,
+				porcentajecompletado: lessonProgress?.progress ?? 0,
+				isLocked: lessonProgress?.isLocked ?? true,
+				userProgress: lessonProgress?.progress ?? 0,
+				isCompleted: lessonProgress?.isCompleted ?? false,
+				resourceNames: lesson.resourceNames
+					? lesson.resourceNames.split(',')
+					: [], // Convertir texto a array
+				activities:
+					(lesson.activities as Activity[] | undefined)?.map((activity) => {
+						const activityProgress = userActivitiesProgressData.find(
+							(progress) => progress.activityId === activity.id
+						);
+						return {
+							...activity,
+							isCompleted: activityProgress?.isCompleted ?? false,
+							userProgress: activityProgress?.progress ?? 0,
+						};
+					}) ?? [],
+			};
+
+			return transformedLesson;
+		} catch (error) {
+			console.error('Error al obtener la lección por ID:', error);
+			throw new Error('Error al obtener la lección por ID');
+		}
+	},
+	['lesson-content'],
+	{ revalidate: 3600 }
+);
+
+export { getLessonById };
+>>>>>>> dev/miguel

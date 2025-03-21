@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
 import { useUser } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
 
+import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -15,6 +16,11 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 export default function Home() {
 	const { user } = useUser();
 	const [loading, setLoading] = useState(false);
+	const [showAnuncio, setShowAnuncio] = useState(false);
+	void showAnuncio;
+	const [anuncios, setAnuncios] = useState<
+		{ titulo: string; descripcion: string; coverImageKey: string }[]
+	>([]);
 
 	const dashboardRoute =
 		user?.publicMetadata?.role === 'super-admin'
@@ -23,12 +29,50 @@ export default function Home() {
 				? '/dashboard/educadores'
 				: '/estudiantes';
 
-	const handleButtonClick = () => {
-		setLoading(true);
-	};
+	// Obtener el anuncio activo cuando se carga la página
+	useEffect(() => {
+		const fetchAnuncioActivo = async (userId: string) => {
+			try {
+				const res = await fetch('/api/super-admin/anuncios/view-anuncio', {
+					headers: { 'x-user-id': userId },
+				});
+				if (!res.ok) throw new Error('Error al obtener el anuncio activo');
+
+				const data = (await res.json()) as {
+					titulo: string;
+					descripcion: string;
+					coverImageKey: string;
+					tipo_destinatario?: string;
+				}[];
+				if (Array.isArray(data) && data.length > 0) {
+					console.log('✅ Anuncio recibido:', data);
+					setAnuncios(
+						data.map((anuncio) => ({
+							titulo: anuncio.titulo,
+							descripcion: anuncio.descripcion,
+							coverImageKey: anuncio.coverImageKey,
+						}))
+					);
+					setShowAnuncio(true);
+				} else {
+					console.log('⚠️ No se recibió ningún anuncio');
+				}
+			} catch (error) {
+				console.error('❌ Error al obtener el anuncio activo:', error);
+			}
+		};
+
+		if (user?.id) {
+			void fetchAnuncioActivo(user.id);
+		}
+	}, [user]);
+	console.log('📌 Anuncios recibidos en el frontend:', anuncios);
 
 	return (
 		<div className="relative flex min-h-screen flex-col">
+			{/* Mostrar el popup solo si hay un anuncio activo */}
+			{anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}
+
 			<SmoothGradient />
 			<div className="relative z-10 flex min-h-screen flex-col">
 				<Header />
@@ -52,7 +96,7 @@ export default function Home() {
 									transition: '0.5s',
 									width: '250px',
 								}}
-								onClick={handleButtonClick}
+								onClick={() => setLoading(true)}
 							>
 								<Link href={dashboardRoute}>
 									<div className="flex w-full items-center justify-center">

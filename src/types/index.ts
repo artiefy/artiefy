@@ -29,7 +29,6 @@ export interface BaseCourse {
 	nivelid: number;
 	category?: Category;
 	modalidad?: Modalidad;
-	isActive: boolean;
 }
 
 // Add this type
@@ -65,6 +64,14 @@ export interface CourseMateria {
 	description: string | null;
 	programaId: number;
 	courseid: number | null; // Changed from number to number | null to match DB schema
+	totalStudents: number;
+	lessons: Lesson[];
+	category?: Category;
+	modalidad?: Modalidad;
+	Nivel?: Nivel;
+	enrollments?: Enrollment[] | { length: number };
+	creator?: User;
+	Nivelid?: number; // Made optional
 }
 
 export interface Category {
@@ -174,7 +181,6 @@ export interface Nivel {
 	name: string;
 	description?: string;
 }
-
 export interface Activity {
 	id: number;
 	name: string;
@@ -189,7 +195,6 @@ export interface Activity {
 	content?: {
 		questions: Question[];
 	};
-	fechaMaximaEntrega: Date | null;
 	typeid: number;
 	isCompleted: boolean;
 	userProgress: number;
@@ -199,6 +204,7 @@ export interface Activity {
 	finalGrade?: number;
 	lastAttemptAt?: Date;
 	pesoPregunta?: number;
+	fechaMaximaEntrega: Date | null;
 }
 
 export interface Question {
@@ -275,6 +281,34 @@ export interface GetCoursesParams {
 	searchTerm?: string;
 }
 
+export interface Program {
+	id: string;
+	title: string;
+	description: string | null;
+	coverImageKey: string | null;
+	createdAt: Date | null; // Allow null
+	updatedAt: Date | null; // Allow null
+	creatorId: string;
+	rating: number | null; // Allow null
+	categoryid: number;
+	creator?: User;
+	category?: Category;
+	materias?: MateriaWithCourse[];
+	enrollmentPrograms?: EnrollmentProgram[];
+}
+
+
+// New interface for Materia with optional course
+export interface MateriaWithCourse {
+	id: number;
+	title: string;
+	description: string | null;
+	programaId: number;
+	courseid: number | null;
+	curso?: BaseCourse; // Changed from Course to BaseCourse
+}
+
+
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };
 export type UserWithCreatedCourses = User & { createdCourses: Course[] };
 export type CourseWithEnrollments = Course & { enrollments: Enrollment[] };
@@ -299,22 +333,6 @@ export interface ActivityResults {
 	courseId?: number;
 }
 
-export interface Program {
-	id: string;
-	title: string;
-	description: string | null;
-	coverImageKey: string | null;
-	createdAt: Date | null; // Allow null
-	updatedAt: Date | null; // Allow null
-	creatorId: string;
-	rating: number | null; // Allow null
-	categoryid: number;
-	creator?: User;
-	category?: Category;
-	materias?: MateriaWithCourse[];
-	enrollmentPrograms?: EnrollmentProgram[];
-}
-
 // Original Materia interface
 export interface Materia {
 	id: number;
@@ -325,15 +343,6 @@ export interface Materia {
 	curso: Course; // Make curso required instead of optional
 }
 
-// New interface for Materia with optional course
-export interface MateriaWithCourse {
-	id: number;
-	title: string;
-	description: string | null;
-	programaId: number;
-	courseid: number | null;
-	curso?: BaseCourse; // Changed from Course to BaseCourse
-}
 
 export interface EnrollmentProgram {
 	id: number;

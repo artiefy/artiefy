@@ -49,7 +49,7 @@ export default function CategoriesCourse({
 	const [loadingCategory, setLoadingCategory] = useState<string | null>(null);
 	const [isSearching, setIsSearching] = useState(false);
 	const [searchQuery, setSearchQuery] = useState(
-		searchParams.get('query') ?? ''
+		searchParams?.get('query') ?? ''
 	);
 
 	const handleCategorySelect = (category: string | null) => {
@@ -95,9 +95,9 @@ export default function CategoriesCourse({
 					<div className="relative mb-4 w-full sm:w-3/4 md:w-1/3 lg:mb-0 lg:w-1/3">
 						<FunnelIcon className="absolute top-1/2 left-3 size-5 -translate-y-1/2 fill-gray-500" />
 						<select
-							className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
+							className="focus:border-primary focus:ring-primary block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900"
 							onChange={(e) => handleCategorySelect(e.target.value || null)}
-							value={searchParams.get('category') ?? ''}
+							value={searchParams?.get('category') ?? ''}
 							aria-label="Seleccionar categoría"
 						>
 							<option value="">Todas las categorías</option>
@@ -118,13 +118,13 @@ export default function CategoriesCourse({
 									setSearchQuery(e.target.value)
 								}
 								onKeyDown={handleKeyDown}
-								className="w-full bg-white pr-10 text-background"
+								className="text-background w-full bg-white pr-10"
 								aria-label="Buscar cursos"
 							/>
 							<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
 								{isSearching ? (
 									<Icons.spinner
-										className="size-4 text-background"
+										className="text-background size-4"
 										aria-hidden="true"
 									/>
 								) : (
@@ -183,10 +183,10 @@ export default function CategoriesCourse({
 								{loadingCategory === category.id.toString() ? (
 									<>
 										<Icons.spinner
-											className="size-10 text-background"
+											className="text-background size-10"
 											aria-hidden="true"
 										/>
-										<p className="mt-2 text-sm text-background">
+										<p className="text-background mt-2 text-sm">
 											Buscando Cursos...
 										</p>
 									</>
