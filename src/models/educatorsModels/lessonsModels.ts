@@ -56,15 +56,14 @@ export async function createLesson({
 	try {
 		const newLesson = await db.insert(lessons).values({
 			title,
-			description,
+			description: description ?? '',
 			duration,
-			coverImageKey,
-			coverVideoKey,
+			coverImageKey: coverImageKey ?? '',
+			coverVideoKey: coverVideoKey ?? '',
 			courseId,
-			resourceKey,
-			resourceNames,
+			resourceKey: resourceKey ?? '',
+			resourceNames: resourceNames ?? '',
 		});
-
 		console.log('Lección creada:', newLesson);
 		return newLesson;
 	} catch (error) {

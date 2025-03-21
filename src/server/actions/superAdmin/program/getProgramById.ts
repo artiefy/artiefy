@@ -47,7 +47,7 @@ export const getProgramById = unstable_cache(
 					id: materias.id,
 					title: materias.title,
 					description: materias.description,
-					programaId: materias.programaId,
+					programaId: materias.programaId ?? 0, // Default to 0 if null
 					courseid: materias.courseid,
 					curso: courses
 						? {

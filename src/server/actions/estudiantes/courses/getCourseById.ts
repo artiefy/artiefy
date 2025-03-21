@@ -56,13 +56,17 @@ const getCourseById = unstable_cache(
 						resourceNames: lesson.resourceNames
 							? lesson.resourceNames.split(',')
 							: [], // Convertir texto a array
-						activities:
+							activities:
 							lesson.activities?.map((activity) => ({
 								...activity,
 								isCompleted: false,
 								userProgress: 0,
 								typeid: activity.typeid,
+								revisada: activity.revisada ?? false,
+								parametroId: activity.parametroId ?? 0, // Default to 0 if null
+								fechaMaximaEntrega: activity.fechaMaximaEntrega ?? null,
 							})) ?? [],
+						
 					};
 				}) ?? [],
 		};

@@ -204,6 +204,8 @@ export interface CourseData {
 	createdAt: Date | string; // 🔹 Permitir `string` porque en errores previos llegaba como `string`
 	updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
 	rating?: number | null;
+	courseTypeId?: number; // 🔹 Add courseTypeId as an optional property
+	isActive?: boolean; // 🔹 Add isActive as an optional property
 }
 
 export interface Materia {
@@ -248,14 +250,17 @@ export async function createCourse(courseData: CourseData) {
 		return await db
 			.insert(courses)
 			.values({
-				...courseData,
-				instructor: courseData.instructor ?? 'Desconocido', // ✅ Evitar errores si instructor es null
-				creatorId: courseData.creatorId || 'defaultCreatorId', // ✅ Manejo de creatorId
-				createdAt: new Date(courseData.createdAt), // Convertir a Date
-				updatedAt: courseData.updatedAt
-					? new Date(courseData.updatedAt)
-					: undefined, // Convertir a Date si existe
-			})
+				title: courseData.title,
+				categoryid: courseData.categoryid,
+				instructor: courseData.instructor,
+				modalidadesid: courseData.modalidadesid,
+				nivelid: courseData.nivelid,
+				creatorId: courseData.creatorId || 'defaultCreatorId',
+				createdAt: new Date(courseData.createdAt),
+				updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : new Date(),
+				courseTypeId: courseData.courseTypeId ?? 1, // <-- Aquí colocas un valor seguro por defecto
+				isActive: courseData.isActive ?? true,
+			})	
 			.returning();
 	} catch (error) {
 		console.error('❌ Error al crear curso:', error);

@@ -58,17 +58,20 @@ export async function getLessonsByCourseId(
 			userProgress: lessonProgress?.progress ?? 0,
 			isCompleted: isCompleted,
 			resourceKey: lesson.resourceKey ?? '',
+			resourceNames: Array.isArray(lesson.resourceNames) ? lesson.resourceNames : [], // Ensure resourceNames is an array
 			activities:
-				lesson.activities?.map((activity) => {
-					const activityProgress = userActivitiesProgressData.find(
-						(progress) => progress.activityId === activity.id
-					);
-					return {
-						...activity,
-						isCompleted: activityProgress?.isCompleted ?? false,
-						userProgress: activityProgress?.progress ?? 0,
-					};
-				}) ?? [],
+			lesson.activities?.map((activity) => {
+				const activityProgress = userActivitiesProgressData.find(
+					(progress) => progress.activityId === activity.id
+				);
+				return {
+					...activity,
+					isCompleted: activityProgress?.isCompleted ?? false,
+					userProgress: activityProgress?.progress ?? 0,
+					revisada: activity.revisada ?? false, // <== ¡Siempre asigna false si es null!
+				};
+			}) ?? [],
+
 		};
 	});
 }

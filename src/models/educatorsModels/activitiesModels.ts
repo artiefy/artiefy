@@ -14,14 +14,17 @@ export interface Activity {
 	id: number;
 	name: string;
 	description: string | null;
-	typeid: number;
+	lastUpdated: Date;
 	lessonsId: number;
-	pesoNota: number;
-	revisada: boolean;
-	parametroId?: number | null;
-	porcentaje: number;
+	porcentaje: number | null;
+	parametroId: number | null;  // <-- Ajusta esto
 	fechaMaximaEntrega: Date | null;
+	typeid: number;
+	revisada: boolean;
+	isCompleted: boolean;
+	userProgress: number;
 }
+
 
 // Actualizar la interfaz ActivityDetails
 export interface ActivityDetails {

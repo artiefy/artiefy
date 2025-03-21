@@ -40,16 +40,16 @@ export const getAllPrograms = unstable_cache(
 			);
 
 			return programsWithEnrollments.map((program) => {
-				const transformedMaterias: MateriaWithCourse[] = program.materias.map(
-					(materia) => ({
+				const transformedMaterias: MateriaWithCourse[] = program.materias
+					.filter((materia) => materia.programaId !== null)
+					.map((materia) => ({
 						id: materia.id,
 						title: materia.title,
 						description: materia.description,
-						programaId: materia.programaId,
+						programaId: materia.programaId!,
 						courseid: materia.courseid,
 						curso: materia.curso ?? undefined,
-					})
-				);
+					}));
 
 				return {
 					id: program.id.toString(),

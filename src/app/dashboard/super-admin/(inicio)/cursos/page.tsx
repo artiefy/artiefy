@@ -66,6 +66,7 @@
 						coursesData.map((course) => ({
 							...course,
 							id: course.id ?? 0, // ✅ Asegurar que `id` sea un número válido
+							isActive: course.isActive ?? undefined, // ✅ Asegurar que `isActive` sea boolean o undefined
 						}))
 					);
 
@@ -274,7 +275,12 @@
 
 			setIsModalOpen(false);
 			setUploading(false);
-			setCourses(await getCourses());
+			setCourses(
+				(await getCourses()).map((course) => ({
+					...course,
+					isActive: course.isActive ?? undefined, // Ensure isActive is boolean or undefined
+				}))
+			);
 		};
 
 		// Función para abrir el modal de creación de cursos

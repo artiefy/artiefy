@@ -64,6 +64,7 @@ const getLessonsByCourseId = unstable_cache(
 							...activity,
 							isCompleted: activityProgress?.isCompleted ?? false,
 							userProgress: activityProgress?.progress ?? 0,
+							revisada: activity.revisada ?? false, // Ensure revisada is always a boolean
 						};
 					}) ?? [],
 			};

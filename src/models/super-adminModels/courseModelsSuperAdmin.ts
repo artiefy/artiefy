@@ -83,6 +83,7 @@ export const createCourse = async ({
 		nivelid,
 		instructor,
 		creatorId,
+		courseTypeId: 1, // Replace '1' with the appropriate value for courseTypeId
 	});
 };
 

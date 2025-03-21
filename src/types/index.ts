@@ -43,7 +43,6 @@ export interface Course {
 	creatorId: string;
 	rating: number | null;
 	modalidadesid: number;
-	Nivelid: number;
 	totalStudents: number;
 	lessons: Lesson[];
 	category?: Category;
@@ -51,6 +50,7 @@ export interface Course {
 	Nivel?: Nivel;
 	enrollments?: Enrollment[] | { length: number };
 	creator?: User;
+	Nivelid?: number; // Made optional
 }
 
 export interface Category {
@@ -145,7 +145,6 @@ export interface Nivel {
 	name: string;
 	description?: string;
 }
-
 export interface Activity {
 	id: number;
 	name: string;
@@ -161,10 +160,10 @@ export interface Activity {
 	content?: {
 		questions: Question[];
 	};
-	revisada: boolean;
-	parametroId: number;
-	porcentaje: number;
-	fechaMaximaEntrega: Date;
+	revisada: boolean | null;  // <== Aquí el cambio importante
+	parametroId: number | null;
+	porcentaje: number | null;
+	fechaMaximaEntrega: Date | null;
 }
 
 export interface Question {
@@ -259,9 +258,9 @@ export interface Materia {
     title: string;
     description: string;
     programaId: number;
-    courseId: number;
-    courseid: number;
-    curso: BaseCourse | undefined;
+    courseId: number | null;
+    courseid: number | null;
+    curso: BaseCourse | null;
 }
 
 // New interface for Materia with optional course

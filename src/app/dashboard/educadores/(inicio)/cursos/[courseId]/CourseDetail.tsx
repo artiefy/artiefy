@@ -101,6 +101,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
 	const [materias, setMaterias] = useState<Materia[]>([]);
 	const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
+	void materias;
 
 	const BADGE_GRADIENTS = [
 		'from-pink-500 via-red-500 to-yellow-500',
@@ -117,6 +118,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const getBadgeGradient: BadgeGradientFunction = (index) => {
 		return BADGE_GRADIENTS[index % BADGE_GRADIENTS.length];
 	};
+
+	void getBadgeGradient;
 
 	const [isActive, setIsActive] = useState<boolean>(true);
 

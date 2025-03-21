@@ -72,9 +72,9 @@ export const getProgramById = unstable_cache(
 			id: materia.id,
 			title: materia.title,
 			description: materia.description ?? '',
-			programaId: materia.programaId,
-			courseId: materia.courseid,
-			courseid: materia.courseid,
+			programaId: materia.programaId ?? 0,
+			courseId: materia.courseid ?? null,  // solo un campo
+			courseid: materia.courseid ?? null,  // si realmente lo necesitas
 			curso: materia.curso
 				? {
 						...materia.curso,
@@ -84,6 +84,7 @@ export const getProgramById = unstable_cache(
 				  }
 				: null,
 		}));
+		
 
 		// Build the final program object with proper typing
 		const programData: ProgramDetails = {

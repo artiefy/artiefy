@@ -55,15 +55,15 @@ export async function createLesson({
 }) {
 	try {
 		const newLesson = await db.insert(lessons).values({
-			title,
-			description,
-			duration,
-			coverImageKey,
-			coverVideoKey,
-			courseId,
-			resourceKey,
-			resourceNames,
-		});
+					title,
+					description: description ?? '',
+					duration,
+					coverImageKey: coverImageKey ?? '',
+					coverVideoKey: coverVideoKey ?? '',
+					courseId,
+					resourceKey: resourceKey ?? '',
+					resourceNames: resourceNames ?? '',
+				});
 
 		console.log('Lección creada:', newLesson);
 		return newLesson;

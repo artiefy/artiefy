@@ -86,7 +86,11 @@ import type {
 // }
 
 async function fetchAllCourses(): Promise<Course[]> {
-	return await getAllCourses();
+	const courses = await getAllCourses();
+	return courses.map(course => ({
+		...course,
+		Nivelid: course.nivelid ?? 0, // Ensure Nivelid matches the Course type
+	})) as Course[];
 }
 
 export default async function CoursesPage(
