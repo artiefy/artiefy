@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "ESNext"],
+    "strict": true,
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -21,12 +21,24 @@
     "plugins": [{ "name": "next" }]
   },
   "include": [
-    "src",
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    "eslint.config.mjs",
-    ".prettierrc.mjs",
-    "drizzle.config.ts"
+  "**/*.ts",
+  "**/*.tsx",
+  "**/*.js",
+  "**/*.jsx",
+  "**/*.json",
+  "**/*.mjs",
+  "**/*.cjs",
+  "next-env.d.ts",
+  ".next/types/**/*.ts",
+  ".prettierrc.mjs"
   ],
-  "exclude": ["node_modules", ".next", "dist"]
+  "exclude": [
+    "node_modules",
+    ".next",
+    "dist",
+    "build",
+    "coverage",
+    ".vercel",
+    ".git"
+  ]
 }

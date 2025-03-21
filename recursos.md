@@ -156,3 +156,12 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 
 ---
 -Pasareladepago18*
+
+
+------
+PR Local
+
+ir a la rama main
+1. `git pull origin main`: Se trae los ultimos cambios de main,
+2. se vuelve a la rama propia
+3. `git merge main`: Se hace merge con main y luego se solucionan los conflictos
