@@ -206,7 +206,7 @@ export default async function CourseListStudent({
 										>
 											<Link
 												href={`/estudiantes/cursos/${course.id}`}
-												className={`relative inline-flex h-10 w-full items-center justify-center rounded-md border border-white/20 p-2 ${
+												className={`group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 ${
 													!course.isActive
 														? 'pointer-events-none bg-gray-600 text-gray-400'
 														: 'bg-background text-primary active:scale-95'
@@ -216,7 +216,12 @@ export default async function CourseListStudent({
 													{!course.isActive ? 'No Disponible' : 'Ver Curso'}
 												</span>
 												{course.isActive && (
-													<ArrowRightCircleIcon className="ml-2 size-5 animate-bounce-right" />
+													<>
+														<ArrowRightCircleIcon className="ml-2 size-5 animate-bounce-right" />
+														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+															<div className="relative h-full w-10 bg-white/30" />
+														</div>
+													</>
 												)}
 											</Link>
 										</Button>

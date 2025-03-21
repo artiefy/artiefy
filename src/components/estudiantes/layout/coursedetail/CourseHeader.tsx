@@ -427,7 +427,7 @@ export function CourseHeader({
 									{isUnenrolling ? (
 										<Icons.spinner
 											className="animate-spin text-white"
-											style={{ width: '25px', height: '25px' }}
+											style={{ width: '35px', height: '35px' }}
 										/>
 									) : (
 										'Cancelar Suscripción'

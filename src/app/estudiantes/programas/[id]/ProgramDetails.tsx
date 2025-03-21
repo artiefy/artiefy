@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -37,40 +37,64 @@ export default function ProgramDetails({
 	const router = useRouter();
 	const pathname = usePathname();
 
+	// Memoize the subscription check function
+	const checkSubscriptionStatus = useCallback(() => {
+		const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+		const planType = user?.publicMetadata?.planType;
+		const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
+			| string
+			| null;
+
+		const isValid =
+			subscriptionStatus === 'active' &&
+			planType === 'Premium' &&
+			(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+
+		setIsSubscriptionActive(isValid);
+	}, [user?.publicMetadata]);
+
+	// Initial load effect
 	useEffect(() => {
-		const checkEnrollmentAndSubscription = async () => {
-			setIsCheckingEnrollment(true);
+		const initializeProgram = async () => {
+			if (!userId) return;
+
 			try {
-				if (userId) {
-					const enrolled = await isUserEnrolledInProgram(
-						parseInt(program.id),
-						userId
-					);
-					setIsEnrolled(enrolled);
-
-					// Verificar específicamente el plan Premium y su estado
-					const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-					const planType = user?.publicMetadata?.planType;
-					const subscriptionEndDate = user?.publicMetadata
-						?.subscriptionEndDate as string | null;
-
-					const isSubscriptionValid =
-						subscriptionStatus === 'active' &&
-						planType === 'Premium' &&
-						(!subscriptionEndDate ||
-							new Date(subscriptionEndDate) > new Date());
-
-					setIsSubscriptionActive(isSubscriptionValid);
-				}
+				const enrolled = await isUserEnrolledInProgram(
+					parseInt(program.id),
+					userId
+				);
+				setIsEnrolled(enrolled);
+				checkSubscriptionStatus();
 			} catch (error) {
-				console.error('Error checking enrollment:', error);
+				console.error('Error initializing program:', error);
 			} finally {
 				setIsCheckingEnrollment(false);
 			}
 		};
 
-		void checkEnrollmentAndSubscription();
-	}, [userId, program.id, user]);
+		void initializeProgram();
+	}, [userId, program.id, checkSubscriptionStatus]); // Added checkSubscriptionStatus to dependencies
+
+	// Subscription change effect
+	useEffect(() => {
+		if (user?.publicMetadata) {
+			checkSubscriptionStatus();
+		}
+	}, [user?.publicMetadata, checkSubscriptionStatus]);
+
+	// Visibility change handler - modified to only reload user data
+	useEffect(() => {
+		const handleVisibilityChange = () => {
+			if (!document.hidden && user) {
+				void user.reload();
+			}
+		};
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+		};
+	}, [user]);
 
 	const handleEnroll = async () => {
 		if (!isSignedIn) {

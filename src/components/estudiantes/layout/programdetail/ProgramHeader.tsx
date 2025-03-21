@@ -176,7 +176,7 @@ export function ProgramHeader({
 									disabled={isUnenrolling}
 								>
 									{isUnenrolling ? (
-										<Icons.spinner className="animate-spin text-white" />
+										<Icons.spinner className="animate-spin size-9 text-white" />
 									) : (
 										'Cancelar Suscripción'
 									)}

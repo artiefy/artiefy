@@ -1,11 +1,18 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { StarIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
-import { FaCrown } from 'react-icons/fa';
+import { useAuth } from '@clerk/nextjs';
+import {
+	StarIcon,
+	ArrowRightCircleIcon,
+	CheckCircleIcon,
+} from '@heroicons/react/24/solid';
+import { FaCrown, FaCheck } from 'react-icons/fa';
 
 import {
 	Alert,
@@ -22,6 +29,7 @@ import {
 	CardTitle,
 } from '~/components/estudiantes/ui/card';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
 import type { Program, MateriaWithCourse, Course } from '~/types';
 
@@ -37,10 +45,14 @@ export function ProgramContent({
 	program,
 	isEnrolled,
 	isSubscriptionActive,
-	subscriptionEndDate: _subscriptionEndDate,
+	subscriptionEndDate,
 	isCheckingEnrollment, // Add this to destructuring
 }: ProgramContentProps) {
 	const router = useRouter();
+	const { userId } = useAuth();
+	const [courseEnrollments, setCourseEnrollments] = useState<
+		Record<number, boolean>
+	>({});
 
 	// Modificar para filtrar cursos duplicados por ID
 	const safeMateriasWithCursos =
@@ -68,6 +80,51 @@ export function ProgramContent({
 		'Courses isActive status:',
 		courses.map((c) => ({ id: c.id, isActive: c.isActive }))
 	);
+
+	const formatDate = (dateString: string | null) => {
+		if (!dateString) return '';
+		return new Date(dateString).toLocaleDateString('es-ES', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+		});
+	};
+
+	// Move course enrollment checks to useEffect
+	useEffect(() => {
+		const checkCourseEnrollments = async () => {
+			if (!userId) {
+				return;
+			}
+
+			try {
+				const enrollmentChecks = await Promise.all(
+					courses.map(async (course) => {
+						try {
+							const isEnrolled = await isUserEnrolled(course.id, userId);
+							return [course.id, isEnrolled] as [number, boolean];
+						} catch (error) {
+							console.error(
+								`Error checking enrollment for course ${course.id}:`,
+								error
+							);
+							return [course.id, false] as [number, boolean];
+						}
+					})
+				);
+
+				const enrollmentMap = Object.fromEntries(enrollmentChecks) as Record<
+					number,
+					boolean
+				>;
+				setCourseEnrollments(enrollmentMap);
+			} catch (error) {
+				console.error('Error checking course enrollments:', error);
+			}
+		};
+
+		void checkCourseEnrollments();
+	}, [userId, courses]);
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
@@ -101,9 +158,24 @@ export function ProgramContent({
 				</Alert>
 			)}
 
-			<h2 className="mb-6 text-2xl font-bold text-background">
-				Cursos del programa
-			</h2>
+			<div className="mb-6 flex items-center justify-between">
+				<h2 className="text-2xl font-bold text-background">
+					Cursos Del Programa
+				</h2>
+				<div className="flex flex-col items-end gap-2">
+					{isSubscriptionActive && (
+						<div className="flex items-center gap-2 text-green-500">
+							<FaCheck className="size-4" />
+							<span className="font-medium">Suscripción Activa</span>
+						</div>
+					)}
+					{isSubscriptionActive && subscriptionEndDate && (
+						<p className="text-sm text-red-500">
+							Finaliza: {formatDate(subscriptionEndDate)}
+						</p>
+					)}
+				</div>
+			</div>
 
 			<div
 				className={
@@ -141,9 +213,19 @@ export function ProgramContent({
 								</CardHeader>
 
 								<CardContent className="-mt-3 flex grow flex-col justify-between space-y-2">
-									<CardTitle className="rounded text-lg text-background">
-										<div className="font-bold text-primary">{course.title}</div>
-									</CardTitle>
+									<div className="flex items-center justify-between">
+										<CardTitle className="rounded text-lg text-background">
+											<div className="font-bold text-primary">
+												{course.title}
+											</div>
+										</CardTitle>
+										{courseEnrollments[course.id] && (
+											<div className="flex items-center text-green-500">
+												<CheckCircleIcon className="size-5" />
+												<span className="ml-1 text-sm font-bold">Inscrito</span>
+											</div>
+										)}
+									</div>
 									<div className="flex items-center justify-between">
 										<Badge
 											variant="outline"
@@ -190,7 +272,7 @@ export function ProgramContent({
 												disabled={!isEnrolled || !course.isActive}
 												className={`w-full ${
 													!isEnrolled || !course.isActive
-														? 'cursor-not-allowed opacity-50'
+														? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
 														: ''
 												}`}
 											>
@@ -200,29 +282,30 @@ export function ProgramContent({
 															? `/estudiantes/cursos/${course.id}`
 															: '#'
 													}
-													className={`group/button relative inline-flex h-10 w-full items-center justify-center rounded-md border border-white/20 ${
-														!course.isActive
-															? 'bg-gray-600 text-gray-400'
+													className={`group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 ${
+														!course.isActive || !isEnrolled
+															? 'pointer-events-none bg-gray-600 text-gray-400'
 															: 'bg-background text-primary active:scale-95'
 													}`}
-													onClick={(e) =>
-														(!isEnrolled || !course.isActive) &&
-														e.preventDefault()
-													}
+													onClick={(e) => !isEnrolled && e.preventDefault()}
 												>
 													<span className="font-bold">
 														{!course.isActive
 															? 'No Disponible'
 															: !isEnrolled
 																? 'Requiere Inscripción'
-																: 'Ver Curso'}
+																: courseEnrollments[course.id]
+																	? 'Continuar Curso'
+																	: 'Ver Curso'}
 													</span>
 													{course.isActive && isEnrolled && (
-														<ArrowRightCircleIcon className="ml-2 size-5 animate-bounce-right" />
+														<>
+															<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
+															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+																<div className="relative h-full w-10 bg-white/30" />
+															</div>
+														</>
 													)}
-													<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-														<div className="relative h-full w-10 bg-white/30" />
-													</div>
 												</Link>
 											</Button>
 										)}
