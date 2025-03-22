@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getMateriasByCourseId } from '~/server/actions/educadores/getMateriasByCourseId';
 
 export async function GET(
-	request: Request,
+	_request: Request,
 	{ params }: { params: { id: string } }
 ) {
 	try {
