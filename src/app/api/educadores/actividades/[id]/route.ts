@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getActivityById } from '~/models/educatorsModels/activitiesModels';
 
 export async function GET(
-	request: Request,
+	_request: Request, // Agregado underscore para indicar que es un parámetro no utilizado
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
