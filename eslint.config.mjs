@@ -25,6 +25,10 @@ const eslintConfig = [
 			'src/components/admin/ui/**',
 			'src/components/super-admin/ui/**',
 		],
+		// Agregar configuración de caché
+		cache: true,
+		cacheLocation: '.eslintcache',
+		cacheStrategy: 'content',
 	},
 
 	// 🔹 Configuración para archivos JS/TS

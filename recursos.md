@@ -51,9 +51,34 @@ max-2xl @media (width < 96rem) { ... }
 
 Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, puedes seguir estos pasos:
 
-- `rm -rf node_modules package-lock.json .next o next/cache` // Remover carpetas cache
-- `npm cache clean --force` // Limpiar la caché de npm
-- `npm i` // Reinstalar las dependencias:
+chmod +x clean.sh //Dale permisos de ejecución (solo la primera vez)
+./clean.sh //Ejecutar el archivo de limpieza automatica
+
+- `rm -rf node_modules package-lock.json .next`
+- `npm cache clean --force`
+- `rm -rf .turbo`
+- `rm -rf next-env.d.ts`
+- `next clean`
+- `rm -rf tsconfig.tsbuildinfo`
+- `rm -rf .tsbuildinfo`
+- `rm -rf .eslintcache`
+
+---
+
+Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
+
+- `npm dedupe` //Reducir la duplicación en el árbol de paquetes
+- `npm doctor` //Comprueba el estado de tu entorno npm
+- `npm prune` //Eliminar paquetes extraños
+- `npm undeprecate` //Retirar la depreciación de una versión de un paquete
+- `npm rebuild` //Recontruir paquetes
+- `npm ci` //# Para CI/CD y despliegues
+- `npm cache verify` //
+- `npm cache npx ls` //
+
+---
+
+## Limpiar caché de Next.js
 
 ---
 
@@ -162,4 +187,11 @@ Tutorial Para analisar tus dependecias :
 
 ---
 
--Pasareladepago18*
+Limpia la caché de VS Code:
+
+Borra los datos en:
+Windows: `C:\Users\TU_USUARIO\AppData\Roaming\Code`
+
+---
+
+-DevExpert45*

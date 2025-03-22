@@ -40,7 +40,14 @@
 	},
 
 	// TypeScript Configuration
-	"typescript.tsdk": "./node_modules/typescript/lib",
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"typescript.tsserver.maxTsServerMemory": 4096,
+	"typescript.tsserver.watchOptions": {
+		"watchFile": "useFsEvents",
+		"watchDirectory": "useFsEvents",
+		"fallbackPolling": "dynamicPriorityPolling"
+	},
 
 	// ESLint Configuration
 	"eslint.validate": [
@@ -49,21 +56,17 @@
 		"typescript",
 		"typescriptreact"
 	],
-<<<<<<< HEAD
 	"eslint.workingDirectories": ["./"],
 	"eslint.useFlatConfig": true,
 	"eslint.run": "onType",
 	"eslint.nodePath": "./node_modules",
-	"eslint.debug": true,
+	"eslint.debug": false,
 	"eslint.rules.customizations": [
 		{ "rule": "import/order", "severity": "off" },
 		{ "rule": "no-unused-vars", "severity": "warn" }
 	],
 
 	// Tailwind CSS Configuration
-=======
-	"eslint.debug": true,
->>>>>>> dev/miguel
 	"tailwindCSS.includeLanguages": {
 		"typescript": "javascript",
 		"typescriptreact": "javascript",
