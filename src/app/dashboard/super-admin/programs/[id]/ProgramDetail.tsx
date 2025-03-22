@@ -9,15 +9,31 @@ import { useUser } from '@clerk/nextjs'; // 🔥 Agrega esta línea al inicio de
 import { toast } from 'sonner';
 
 import ModalFormCourse from '~/components/educators/modals/program/ModalFormCourse'; // Import ModalFormCourse
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/estudiantes/ui/card';
 import { Label } from '~/components/estudiantes/ui/label';
 import ProgramCoursesList from '~/components/super-admin/layout/programdetail/ProgramCoursesList';
-import { type CourseData as BaseCourseData } from '~/server/queries/queries';
+import {
+	type CourseData as BaseCourseData,
+	getCategoryNameById,
+	getInstructorNameById,
+} from '~/server/queries/queries';
 
 interface CourseData extends BaseCourseData {
 	programId?: number; // Add programId as an optional property
+	categoryName?: string; // Add categoryName as an optional property
+	instructorName?: string; // Add instructorName as an optional property
 }
 
 // Definir la interfaz del programa
@@ -88,7 +104,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	const [uploading, setUploading] = useState(false); // Nuevo estado para la carga
 	const [isActive, setIsActive] = useState(true);
 
-
 	const [editParametros, setEditParametros] = useState<
 		{
 			id: number;
@@ -109,10 +124,34 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	const programIdString2 = programIdString ?? ''; // Verificar si el id del programa es nulo
 	const programIdNumber = parseInt(programIdString2); // Convertir el id del programa a número
 	const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null); // interfaz de cursos
-	const [selectedCourseType, setSelectedCourseType] = useState<number | null>(null);
+	const [selectedCourseType, setSelectedCourseType] = useState<number | null>(
+		null
+	);
 	void setEditingCourse;
 	void uploading;
+	const [educators, setEducators] = useState<{ id: string; name: string }[]>(
+		[]
+	);
+	const [instructor, setInstructor] = useState('');
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+	useEffect(() => {
+		const loadEducators = async () => {
+			try {
+				const response = await fetch('/api/super-admin/changeEducators');
+				if (response.ok) {
+					const data = (await response.json()) as {
+						id: string;
+						name: string;
+					}[];
+					setEducators(data);
+				}
+			} catch (error) {
+				console.error('Error al cargar educadores:', error);
+			}
+		};
+		void loadEducators();
+	}, []);
 
 	const [newCourse, setNewCourse] = useState<CourseData>({
 		id: 0,
@@ -145,8 +184,33 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					throw new Error('Error fetching courses');
 				}
 				const coursesData = (await coursesResponse.json()) as CourseData[];
-				setCourses(coursesData);
 
+				// Fetch category names and instructor names for each course
+				const coursesWithNames = await Promise.all(
+					coursesData.map(async (course) => {
+						try {
+							const [categoryName, instructorName] = await Promise.all([
+								getCategoryNameById(course.categoryid),
+								getInstructorNameById(course.instructor),
+							]);
+
+							return {
+								...course,
+								categoryName: categoryName,
+								instructorName: instructorName,
+							};
+						} catch (error) {
+							console.error('Error fetching names:', error);
+							return {
+								...course,
+								categoryName: 'Unknown Category',
+								instructorName: 'Unknown Instructor',
+							};
+						}
+					})
+				);
+
+				setCourses(coursesWithNames);
 				setProgram(data);
 				setLoading(false);
 			} catch (error) {
@@ -187,8 +251,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	// Verificar si hay un error o hay programa
 	if (!program) return <div>No Se Encontró El Programa.</div>;
 
-	
-
 	// Verificar si hay un error
 	if (error) {
 		return (
@@ -220,11 +282,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			coverImageKey: '', // Add the missing coverImageKey property
 			createdAt: new Date().toISOString(),
 		});
-	
+
 		setEditParametros([]); // 🔥 Resetear los parámetros antes de abrir el modal
 		setIsCourseModalOpen(true);
 	};
-	
 
 	const handleCloseCourseModal = () => {
 		setIsCourseModalOpen(false);
@@ -260,10 +321,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		isActive: boolean
 	) => {
 		if (!user) return;
-	
+
 		try {
 			setUploading(true);
-	
+
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
@@ -274,30 +335,32 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 						fileName: file.name,
 					}),
 				});
-	
+
 				if (!uploadResponse.ok) {
-					throw new Error(`Error: al iniciar la carga: ${uploadResponse.statusText}`);
+					throw new Error(
+						`Error: al iniciar la carga: ${uploadResponse.statusText}`
+					);
 				}
-	
+
 				const uploadData = (await uploadResponse.json()) as {
 					url: string;
 					fields: Record<string, string>;
 					key: string;
 					fileName: string;
 				};
-	
+
 				coverImageKey = uploadData.key;
 				fileName = uploadData.fileName;
-	
+
 				const formData = new FormData();
 				Object.entries(uploadData.fields).forEach(([key, value]) => {
 					formData.append(key, value);
 				});
 				formData.append('file', file);
-	
+
 				await fetch(uploadData.url, { method: 'POST', body: formData });
 			}
-	
+
 			const response = await fetch('/api/educadores/courses/cursoMateria', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -308,43 +371,49 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					fileName,
 					categoryid,
 					modalidadesid,
-					instructor: user.fullName,
+					instructor,
 					creatorId: user.id,
 					nivelid,
 					rating,
 					subjects,
-					courseTypeId: selectedCourseType, programId,
-					isActive
+					courseTypeId: selectedCourseType,
+					programId,
+					isActive,
 				}),
 			});
-	
+
 			if (response.ok) {
 				const responseData = (await response.json()) as { id: number }[];
 				console.log('📌 Respuesta de la API al crear curso:', responseData);
-	
+
 				responseData.forEach(async (data) => {
-					console.log(`Curso creado con ID: ${data.id}`);  // Log each created course ID
-	
+					console.log(`Curso creado con ID: ${data.id}`); // Log each created course ID
+
 					// If addParametros is true, assign parameters for each course
 					if (addParametros) {
 						for (const parametro of editParametros) {
 							try {
-								const paramResponse = await fetch('/api/educadores/parametros', {
-									method: 'POST',
-									headers: { 'Content-Type': 'application/json' },
-									body: JSON.stringify({
-										name: parametro.name,
-										description: parametro.description,
-										porcentaje: parametro.porcentaje,
-										courseId: data.id,
-									}),
-								});
-	
+								const paramResponse = await fetch(
+									'/api/educadores/parametros',
+									{
+										method: 'POST',
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify({
+											name: parametro.name,
+											description: parametro.description,
+											porcentaje: parametro.porcentaje,
+											courseId: data.id,
+										}),
+									}
+								);
+
 								if (!paramResponse.ok) {
-									const errorData = (await paramResponse.json()) as { error: string };
+									const errorData = (await paramResponse.json()) as {
+										error: string;
+									};
 									throw new Error(errorData.error);
 								}
-	
+
 								toast.success('Parámetro creado exitosamente', {
 									description: `El parámetro se ha creado exitosamente para el curso ID ${data.id}`,
 								});
@@ -355,12 +424,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 							}
 						}
 					}
-	
-					
 				});
-	
+
 				toast.success('Curso(s) creado(s) con éxito', {
-					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData.map(r => r.id).join(', ')}`,
+					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData.map((r) => r.id).join(', ')}`,
 				});
 				await fetchProgram(); // 🔥 refresca los cursos
 				setSubjects([]); // limpiar las materias en el estado
@@ -368,7 +435,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				toast.error('Error', {
-					description: errorData.error ?? 'Ocurrió un error al procesar la solicitud',
+					description:
+						errorData.error ?? 'Ocurrió un error al procesar la solicitud',
 				});
 			}
 		} catch (error) {
@@ -381,13 +449,41 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		}
 	};
 
+	const handleDeleteProgram = async () => {
+		if (!program) return;
+
+		try {
+			const response = await fetch('/api/super-admin/programs/deleteProgram', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					programIds: [program.id],
+				}),
+			});
+
+			if (!response.ok) {
+				const error = (await response.json()) as { message?: string };
+				throw new Error(error.message ?? 'Error al eliminar el programa');
+			}
+
+			toast.success('Programa eliminado exitosamente');
+			// Redirect to programs list
+			window.location.href = '/dashboard/super-admin/programs';
+		} catch (error) {
+			toast.error('Error al eliminar el programa');
+			console.error('Error:', error);
+		}
+	};
+
 	// Renderizar el componente
 	return (
 		<div className="h-auto w-full rounded-lg bg-background">
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
-					className={`relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out zoom-in`}
+					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
@@ -490,12 +586,20 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 									{program.description}
 								</p>
 							</div>
-							<Button
-				onClick={handleCreateCourse}
-				className="mt-4 bg-secondary text-white"
-			>
-				Crear Curso
-			</Button>
+							<div className="flex gap-2">
+								<Button
+									onClick={handleCreateCourse}
+									className="mt-4 bg-secondary text-white"
+								>
+									Crear Curso
+								</Button>
+								<Button
+									onClick={() => setShowDeleteConfirm(true)}
+									className="mt-4 bg-red-600 text-white hover:bg-red-700"
+								>
+									Eliminar Programa
+								</Button>
+							</div>
 						</div>
 					</div>
 				</Card>
@@ -503,7 +607,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			<br />
 			<br />
 			<ProgramCoursesList courses={courses} />
-			
 
 			<ModalFormCourse
 				isOpen={isCourseModalOpen}
@@ -544,12 +647,33 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				uploading={false}
 				programId={programIdNumber}
 				selectedCourseType={selectedCourseType}
-    			setSelectedCourseType={setSelectedCourseType} 
-				isActive={isActive}                    // ✅ Agrega esto
+				setSelectedCourseType={setSelectedCourseType}
+				isActive={isActive} // ✅ Agrega esto
 				setIsActive={setIsActive}
+				instructor={instructor}
+				setInstructor={setInstructor}
+				educators={educators}
 			/>
-
-			
+			<AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Esta acción no se puede deshacer. Se eliminará el programa &quot;
+							{program?.title}&quot; y todos sus datos relacionados.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDeleteProgram}
+							className="bg-red-600 text-white hover:bg-red-700"
+						>
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	);
 };

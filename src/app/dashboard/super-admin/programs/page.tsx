@@ -3,23 +3,32 @@
 import { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
+
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '~/components/educators/ui/alert-dialog';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Checkbox } from '~/components/estudiantes/ui/checkbox';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
 import ProgramListAdmin from '~/components/super-admin/ProgramsListAdmin';
-import {
-	getPrograms,
-	updateProgram,
-} from '~/server/queries/queriesSuperAdmin';
-
+import { getPrograms, updateProgram } from '~/server/queries/queriesSuperAdmin';
 
 interface SubjectOption {
 	value: string; // El ID de la materia en formato string
 	label: string; // El nombre de la materia
-  }
-  
+}
+
 // Define el modelo de datos del programa
 export interface ProgramModel {
 	id: number;
@@ -32,6 +41,10 @@ export interface ProgramModel {
 	rating: number;
 }
 
+interface ProgramData extends ProgramModel {
+	id: number; // Make id required
+	// Add any other required fields from the API response
+}
 
 export type Program = Partial<ProgramModel>;
 
@@ -61,11 +74,13 @@ export default function Page() {
 	const [selectedSubjects, setSelectedSubjects] = useState<SubjectOption[]>([]);
 	if (typeof setSelectedSubjects === 'function') {
 		// no hacemos nada, solo para "usarlo"
-	  }
-	  
+	}
+
 	const [categories, setCategories] = useState<{ id: number; name: string }[]>(
 		[]
 	);
+	const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 	// ✅ Obtener programas, totales y categorías
 	useEffect(() => {
@@ -73,14 +88,22 @@ export default function Page() {
 			try {
 				const programsData = await getPrograms();
 				setPrograms(
-					programsData.map((program) => ({
-						...program,
-						id: program.id ?? 0, // ✅ Asegurar que `id` sea un número válido
-						description: program.description ?? '', // Ensure description is a string
-						coverImageKey: program.coverImageKey ?? '', // Ensure coverImageKey is a string
-						rating: program.rating ?? 0, // Ensure rating is a number
-						createdAt: typeof program.createdAt === 'string' ? program.createdAt : program.createdAt.toISOString(), // Ensure createdAt is a string
-					}))
+					programsData.map(
+						(program): ProgramModel => ({
+							id: program.id ?? 0,
+							title: program.title ?? '',
+							description: program.description ?? '',
+							categoryid: program.categoryid ?? 0,
+							createdAt:
+								typeof program.createdAt === 'string'
+									? program.createdAt
+									: (program.createdAt?.toISOString() ??
+										new Date().toISOString()),
+							coverImageKey: program.coverImageKey ?? '',
+							creatorId: program.creatorId ?? '',
+							rating: program.rating ?? 0,
+						})
+					)
 				);
 
 				// Obtener métricas
@@ -134,7 +157,7 @@ export default function Page() {
 		subjectIds: number[]
 	) => {
 		if (!user) return;
-		console.log('📤 Enviando programa con subjectIds:', subjectIds); 
+		console.log('📤 Enviando programa con subjectIds:', subjectIds);
 
 		try {
 			setUploading(true);
@@ -223,10 +246,7 @@ export default function Page() {
 				if (response.ok) {
 					responseData = (await response.json()) as { id: number };
 				}
-				
 			}
-
-
 
 			if (response instanceof Response && response.ok && responseData) {
 				toast.success(id ? 'Programa actualizado' : 'Programa creado', {
@@ -253,7 +273,10 @@ export default function Page() {
 				description: program.description ?? '', // Ensure description is a string
 				coverImageKey: program.coverImageKey ?? '', // Ensure coverImageKey is a string
 				rating: program.rating ?? 0, // Ensure rating is a number
-				createdAt: typeof program.createdAt === 'string' ? program.createdAt : program.createdAt.toISOString(), // Ensure createdAt is a string
+				createdAt:
+					typeof program.createdAt === 'string'
+						? program.createdAt
+						: program.createdAt.toISOString(), // Ensure createdAt is a string
 			}))
 		);
 	};
@@ -292,6 +315,53 @@ export default function Page() {
 	// Manejo de la calificación del programa en el modal si no es null
 	const setRating = (rating: number) => {
 		setEditingProgram((prev) => (prev ? { ...prev, rating } : prev));
+	};
+
+	const handleDeleteSelected = async () => {
+		try {
+			const response = await fetch('/api/super-admin/programs/deleteProgram', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ programIds: selectedPrograms }),
+			});
+
+			if (!response.ok) {
+				throw new Error('Error al eliminar los programas');
+			}
+
+			toast.success(
+				`${selectedPrograms.length} programa(s) eliminado(s) exitosamente`
+			);
+			setSelectedPrograms([]);
+			// Refresh programs list
+			const programsData = await getPrograms();
+			setPrograms(
+				programsData.map((program): ProgramModel => ({
+					id: program.id ?? 0,
+					title: program.title ?? '',
+					description: program.description ?? '',
+					categoryid: program.categoryid ?? 0,
+					createdAt: typeof program.createdAt === 'string'
+						? program.createdAt
+						: program.createdAt?.toISOString() ?? new Date().toISOString(),
+					coverImageKey: program.coverImageKey ?? '',
+					creatorId: program.creatorId ?? '',
+					rating: program.rating ?? 0,
+				}))
+			);
+		} catch (error) {
+			toast.error('Error al eliminar los programas');
+			console.error('Error:', error);
+		}
+		setShowDeleteConfirm(false);
+	};
+
+	const toggleProgramSelection = (programId: number) => {
+		setSelectedPrograms((prev) =>
+			prev.includes(programId)
+				? prev.filter((id) => id !== programId)
+				: [...prev, programId]
+		);
 	};
 
 	// spinner de carga
@@ -352,27 +422,67 @@ export default function Page() {
 						className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 					/>
 
-					<button
-						onClick={handleCreateProgram}
-						className="font-primary flex items-center gap-2 rounded-md bg-primary px-6 py-2 text-white shadow-lg hover:bg-[#0097A7]"
-					>
-						<FiPlus className="size-5" /> Agregar
-					</button>
+					<div className="flex gap-2">
+						{selectedPrograms.length > 0 && (
+							<Button
+								onClick={() => setShowDeleteConfirm(true)}
+								className="bg-red-600 text-white hover:bg-red-700"
+							>
+								Eliminar Seleccionados ({selectedPrograms.length})
+							</Button>
+						)}
+						<button
+							onClick={handleCreateProgram}
+							className="font-primary flex items-center gap-2 rounded-md bg-primary px-6 py-2 text-white shadow-lg hover:bg-[#0097A7]"
+						>
+							<FiPlus className="size-5" /> Agregar
+						</button>
+					</div>
 				</div>
+
+				<AlertDialog
+					open={showDeleteConfirm}
+					onOpenChange={setShowDeleteConfirm}
+				>
+					<AlertDialogContent>
+						<AlertDialogHeader>
+							<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+							<AlertDialogDescription>
+								Esta acción eliminará {selectedPrograms.length} programa(s) y
+								todos sus datos relacionados. Esta acción no se puede deshacer.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel>Cancelar</AlertDialogCancel>
+							<AlertDialogAction
+								onClick={handleDeleteSelected}
+								className="bg-red-600 text-white hover:bg-red-700"
+							>
+								Eliminar
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 
 				<ProgramListAdmin
 					programs={filteredPrograms}
+					selectedPrograms={selectedPrograms}
+					onToggleSelection={toggleProgramSelection}
 					onEditProgram={(program: Program | null) =>
-						setEditingProgram(program ? {
-							id: program.id ?? 0,
-							title: program.title ?? '',
-							description: program.description ?? '',
-							categoryid: program.categoryid ?? 0,
-							createdAt: program.createdAt ?? '',
-							coverImageKey: program.coverImageKey ?? '',
-							creatorId: program.creatorId ?? '',
-							rating: program.rating ?? 0,
-						} : null)
+						setEditingProgram(
+							program
+								? {
+										id: program.id ?? 0,
+										title: program.title ?? '',
+										description: program.description ?? '',
+										categoryid: program.categoryid ?? 0,
+										createdAt: program.createdAt ?? '',
+										coverImageKey: program.coverImageKey ?? '',
+										creatorId: program.creatorId ?? '',
+										rating: program.rating ?? 0,
+									}
+								: null
+						)
 					}
 					onDeleteProgram={(programId) => {
 						console.log(`Program with id ${programId} deleted`);
@@ -404,7 +514,9 @@ export default function Page() {
 						}
 						rating={editingProgram?.rating ?? 0}
 						setRating={setRating}
-						subjectIds={selectedSubjects.map(subject => Number(subject.value))}
+						subjectIds={selectedSubjects.map((subject) =>
+							Number(subject.value)
+						)}
 					/>
 				)}
 			</div>

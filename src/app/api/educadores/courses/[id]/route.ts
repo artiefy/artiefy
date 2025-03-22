@@ -10,6 +10,7 @@ import {
 	updateCourse,
 	getModalidadById,
 } from '~/models/educatorsModels/courseModelsEducator';
+import { getInstructorNameById } from '~/server/queries/queries';
 
 export async function GET(
 	request: Request,
@@ -32,7 +33,15 @@ export async function GET(
 				{ status: 404 }
 			);
 		}
-		return NextResponse.json(course);
+
+		// Fetch instructor name
+		const instructorName = await getInstructorNameById(course.instructor);
+
+		// Return course with instructor name
+		return NextResponse.json({
+			...course,
+			instructorName,
+		});
 	} catch (error) {
 		console.error('Error al obtener el curso:', error);
 		return NextResponse.json(
@@ -95,18 +104,21 @@ export async function PUT(
 
 		if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-
 		// Asignar los valores si vienen definidos
 		if (data.title !== undefined) updateData.title = data.title;
-		if (data.description !== undefined) updateData.description = data.description;
-		if (data.coverImageKey !== undefined) updateData.coverImageKey = data.coverImageKey;
+		if (data.description !== undefined)
+			updateData.description = data.description;
+		if (data.coverImageKey !== undefined)
+			updateData.coverImageKey = data.coverImageKey;
 		if (data.categoryid !== undefined) updateData.categoryid = data.categoryid;
 		if (data.instructor !== undefined) updateData.instructor = data.instructor;
-		if (data.modalidadesid !== undefined) updateData.modalidadesid = data.modalidadesid;
+		if (data.modalidadesid !== undefined)
+			updateData.modalidadesid = data.modalidadesid;
 		if (data.nivelid !== undefined) updateData.nivelid = data.nivelid;
 		if (data.fileName !== undefined) updateData.fileName = data.fileName;
 		if (data.rating !== undefined) updateData.rating = data.rating;
-		if (data.courseTypeId !== undefined) updateData.courseTypeId = data.courseTypeId;
+		if (data.courseTypeId !== undefined)
+			updateData.courseTypeId = data.courseTypeId;
 
 		// Actualizar el curso en la base de datos
 		await updateCourse(courseId, updateData);
@@ -122,8 +134,6 @@ export async function PUT(
 		);
 	}
 }
-
-
 
 export async function GET_ALL() {
 	try {
@@ -159,13 +169,13 @@ export async function POST(request: Request) {
 		}
 
 		// Parsear los datos del cuerpo de la solicitud
-		
+
 		const data = (await request.json()) as CourseData & {
 			modalidadesid: number[];
 			courseTypeId: number; // ✅ Agrega esto
-			isActive?: boolean;  // ✅ Opcional
-		  };
-		  
+			isActive?: boolean; // ✅ Opcional
+		};
+
 		console.log('Datos recibidos:', data);
 
 		// Validar los datos recibidos
@@ -199,7 +209,7 @@ export async function POST(request: Request) {
 			console.log(
 				`Título modificado para modalidadId ${modalidadId}: ${newTitle}`
 			);
-			
+
 			// Crear el curso con el título modificado
 			const newCourse = await createCourse({
 				...data,

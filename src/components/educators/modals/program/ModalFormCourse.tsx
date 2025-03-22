@@ -28,10 +28,8 @@ import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 import ModalidadDropdown from '~/components/super-admin/layout/ModalidadDropdown';
 
-
 // Interfaz para los parámetros del formulario del course
 interface CourseFormProps {
-
 	onSubmitAction: (
 		id: string,
 		title: string,
@@ -44,8 +42,8 @@ interface CourseFormProps {
 		addParametros: boolean,
 		coverImageKey: string,
 		fileName: string,
-		subjects: { id: number;}[],// ✅ Solo `id` y `courseId`
-		programId: number,// ✅ También asegurarnos de enviarlo en la función
+		subjects: { id: number }[], // ✅ Solo `id` y `courseId`
+		programId: number, // ✅ También asegurarnos de enviarlo en la función
 		isActive: boolean
 	) => Promise<void>;
 	uploading: boolean;
@@ -81,12 +79,15 @@ interface CourseFormProps {
 	onCloseAction: () => void;
 	rating: number;
 	setRating: (rating: number) => void;
-	subjects: { id: number;}[];
-	setSubjects: (subjects: { id: number}[]) => void;
+	subjects: { id: number }[];
+	setSubjects: (subjects: { id: number }[]) => void;
 	selectedCourseType: number | null;
 	setSelectedCourseType: (typeId: number | null) => void;
 	isActive: boolean;
-    setIsActive: (isActive: boolean) => void;
+	setIsActive: (isActive: boolean) => void;
+	instructor: string;
+	setInstructor: (instructor: string) => void;
+	educators?: { id: string; name: string }[];
 }
 
 // Componente ModalFormCourse
@@ -112,12 +113,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	onCloseAction,
 	subjects,
 	setSubjects,
-	selectedCourseType,  // 👈 Agregado
-    setSelectedCourseType,  // 👈 Agregado
+	selectedCourseType, // 👈 Agregado
+	setSelectedCourseType, // 👈 Agregado
 	isActive,
-    setIsActive
+	setIsActive,
+	setInstructor,
+	educators = [],
+	instructor,
 }) => {
-	const { user } = useUser(); // Obtiene el usuario actual
+	// const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null); // Estado para el archivo
 	const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
 	const [fileSize, setFileSize] = useState<number | null>(null); // Estado para el tamaño del archivo
@@ -213,7 +217,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	};
 
-	const [courseTypes, setCourseTypes] = useState<{ id: number; name: string }[]>([]);
+	const [courseTypes, setCourseTypes] = useState<
+		{ id: number; name: string }[]
+	>([]);
 
 	useEffect(() => {
 		const fetchCourseTypes = async () => {
@@ -230,7 +236,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			void fetchCourseTypes();
 		}
 	}, [isOpen]);
-
 
 	// Función para manejar el cambio de parámetros
 	const handleParametroChange = (
@@ -280,7 +285,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	// Función para obtener los archivos de subida y enviarselo al componente padre donde se hace el metodo POST
 	const handleSubmit = async () => {
 		const controller = new AbortController();
-		
+
 		setUploadController(controller);
 
 		const newErrors = {
@@ -292,8 +297,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			rating: !editingCourseId && !rating,
 			file: !editingCourseId && !file && !currentCoverImageKey,
 		};
-
-
 
 		if (Object.values(newErrors).some((value) => value)) {
 			console.log('Validation errors:', newErrors);
@@ -352,52 +355,54 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			const selectedSubjects = subjects.map((subject) => ({
 				id: subject.id, // Solo enviamos el ID de la materia
 			}));
-			
-	
-		
+
 			// Validar que haya al menos una materia seleccionada
 			if (!selectedSubjects || selectedSubjects.length === 0) {
-				toast('Error', { description: 'Debe seleccionar al menos una materia.' });
+				toast('Error', {
+					description: 'Debe seleccionar al menos una materia.',
+				});
 				return;
 			}
-		
+
 			const payload = {
 				title,
 				description,
 				coverImageKey,
 				categoryid,
-				modalidadesid: Array.isArray(modalidadesid) ? modalidadesid : [modalidadesid],
+				modalidadesid: Array.isArray(modalidadesid)
+					? modalidadesid
+					: [modalidadesid],
 				nivelid,
 				rating,
-				subjects: selectedSubjects, // Enviamos solo los IDs de las materias
+				instructor, // Make sure instructor is included here
+				subjects: selectedSubjects,
 				fileName: uploadedFileName,
-				courseTypeId: selectedCourseType, // 👉 aquí lo mandamos
+				courseTypeId: selectedCourseType,
 				isActive,
 			};
-		
+
 			console.log('Payload to send:', payload);
-		
-			
-			
 
-				await onSubmitAction(
-					editingCourseId ? editingCourseId.toString() : '',
-					title,
-					description,
-					file,
-					categoryid,
-					modalidadesid,
-					nivelid,
-					rating,
-					addParametros,
-					coverImageKey,
-					fileName ?? '', // Ensure fileName is a string
-					selectedSubjects,
-					programId, isActive );
+			await onSubmitAction(
+				editingCourseId ? editingCourseId.toString() : '',
+				title,
+				description,
+				file,
+				categoryid,
+				modalidadesid,
+				nivelid,
+				rating,
+				addParametros,
+				coverImageKey,
+				fileName ?? '', // Ensure fileName is a string
+				selectedSubjects,
+				programId,
+				isActive
+			);
 
-				if (controller.signal.aborted) {
-					console.log('Upload cancelled');
-				}
+			if (controller.signal.aborted) {
+				console.log('Upload cancelled');
+			}
 
 			setIsUploading(false);
 		} catch (error) {
@@ -547,10 +552,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					console.error('programId is not defined');
 					return;
 				}
-				
-				const response = await fetch(`/api/super-admin/programs?programId=${programId}`);
+
+				const response = await fetch(
+					`/api/super-admin/programs?programId=${programId}`
+				);
 				const data = (await response.json()) as { id: number; title: string }[];
-	
+
 				if (Array.isArray(data)) {
 					setAllSubjects(data);
 				} else {
@@ -562,13 +569,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				setAllSubjects([]);
 			}
 		};
-	
+
 		// 👇 Solo cuando el modal se abre o el programId cambia
 		if (isOpen) {
 			void fetchSubjects();
 		}
 	}, [isOpen, programId]);
-	
 
 	// Function to handle selecting subjects
 	const handleSelectSubjects = (
@@ -625,104 +631,103 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
 					)}
 
-<div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
-	{/* Nivel */}
-	<div className="mx-auto flex w-10/12 flex-col gap-2">
-		<label
-			htmlFor="nivelid"
-			className="text-left text-lg font-medium text-primary"
-		>
-			Nivel
-		</label>
-		<NivelDropdown
-			nivel={nivelid}
-			setNivel={setNivelid}
-			errors={errors}
-		/>
-		{errors.nivelid && (
-			<p className="text-left text-sm text-red-500">
-				Este campo es obligatorio.
-			</p>
-		)}
-	</div>
+					<div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
+						{/* Nivel */}
+						<div className="mx-auto flex w-10/12 flex-col gap-2">
+							<label
+								htmlFor="nivelid"
+								className="text-left text-lg font-medium text-primary"
+							>
+								Nivel
+							</label>
+							<NivelDropdown
+								nivel={nivelid}
+								setNivel={setNivelid}
+								errors={errors}
+							/>
+							{errors.nivelid && (
+								<p className="text-left text-sm text-red-500">
+									Este campo es obligatorio.
+								</p>
+							)}
+						</div>
 
-	{/* Categoría */}
-	<div className="mx-auto flex w-10/12 flex-col gap-2">
-		<label
-			htmlFor="categoryid"
-			className="text-left text-lg font-medium text-primary"
-		>
-			Categoría
-		</label>
-		<CategoryDropdown
-			category={categoryid}
-			setCategory={setCategoryid}
-			errors={errors}
-		/>
-		{errors.categoryid && (
-			<p className="text-left text-sm text-red-500">
-				Este campo es obligatorio.
-			</p>
-		)}
-	</div>
+						{/* Categoría */}
+						<div className="mx-auto flex w-10/12 flex-col gap-2">
+							<label
+								htmlFor="categoryid"
+								className="text-left text-lg font-medium text-primary"
+							>
+								Categoría
+							</label>
+							<CategoryDropdown
+								category={categoryid}
+								setCategory={setCategoryid}
+								errors={errors}
+							/>
+							{errors.categoryid && (
+								<p className="text-left text-sm text-red-500">
+									Este campo es obligatorio.
+								</p>
+							)}
+						</div>
 
-	{/* Modalidad */}
-	<div className="mx-auto flex w-10/12 flex-col gap-2">
-		<label
-			htmlFor="modalidadesid"
-			className="text-left text-lg font-medium text-primary"
-		>
-			Modalidad
-		</label>
-		<ModalidadDropdown
-			modalidad={modalidadesid}
-			setModalidad={setModalidadesid}
-			errors={errors}
-		/>
-		{errors.modalidadesid && (
-			<p className="text-left text-sm text-red-500">
-				Este campo es obligatorio.
-			</p>
-		)}
-	</div>
+						{/* Modalidad */}
+						<div className="mx-auto flex w-10/12 flex-col gap-2">
+							<label
+								htmlFor="modalidadesid"
+								className="text-left text-lg font-medium text-primary"
+							>
+								Modalidad
+							</label>
+							<ModalidadDropdown
+								modalidad={modalidadesid}
+								setModalidad={setModalidadesid}
+								errors={errors}
+							/>
+							{errors.modalidadesid && (
+								<p className="text-left text-sm text-red-500">
+									Este campo es obligatorio.
+								</p>
+							)}
+						</div>
 
-	{/* Course type */}
-	<div className="mx-auto flex w-10/12 flex-col gap-2">
-		<label
-			htmlFor="courseTypes"
-			className="text-left text-lg font-medium text-primary"
-		>
-			Tipo de curso
-		</label>
-		<label
-			htmlFor="courseTypes"
-			className="text-left text-lg font-medium text-primary"
-		>
-			Selecciona el tipo del curso
-		</label>
-		<Select
-			options={courseTypes.map((type) => ({
-				value: type.id.toString(),
-				label: type.name,
-			}))}
-			onChange={(selectedOption) =>
-				setSelectedCourseType(Number(selectedOption?.value))
-			}
-			classNamePrefix="react-select"
-			className="mt-1 w-full"
-		/>
-	</div>
-	<div className="mx-auto flex w-10/12 flex-col gap-2">
-		<label
-			htmlFor="courseTypes"
-			className="text-left text-lg font-medium text-primary"
-		>
-			Esta activo?
-		</label>
-		<ActiveDropdown isActive={isActive} setIsActive={setIsActive} />
-	</div>
-
-</div>
+						{/* Course type */}
+						<div className="mx-auto flex w-10/12 flex-col gap-2">
+							<label
+								htmlFor="courseTypes"
+								className="text-left text-lg font-medium text-primary"
+							>
+								Tipo de curso
+							</label>
+							<label
+								htmlFor="courseTypes"
+								className="text-left text-lg font-medium text-primary"
+							>
+								Selecciona el tipo del curso
+							</label>
+							<Select
+								options={courseTypes.map((type) => ({
+									value: type.id.toString(),
+									label: type.name,
+								}))}
+								onChange={(selectedOption) =>
+									setSelectedCourseType(Number(selectedOption?.value))
+								}
+								classNamePrefix="react-select"
+								className="mt-1 w-full"
+							/>
+						</div>
+						<div className="mx-auto flex w-10/12 flex-col gap-2">
+							<label
+								htmlFor="courseTypes"
+								className="text-left text-lg font-medium text-primary"
+							>
+								Esta activo?
+							</label>
+							<ActiveDropdown isActive={isActive} setIsActive={setIsActive} />
+						</div>
+					</div>
 
 					<div>
 						<label
@@ -748,10 +753,26 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					>
 						Instructor
 					</label>
-					<div className="mb-4 w-full rounded border border-primary p-2">
-						<h3 className="text-lg font-medium text-primary">
-							Instructor: {user?.fullName}
-						</h3>
+					<div className="mb-4">
+						<label
+							htmlFor="instructor"
+							className="text-lg font-medium text-primary"
+						>
+							Instructor
+						</label>
+						<select
+							id="instructor"
+							value={instructor}
+							onChange={(e) => setInstructor(e.target.value)}
+							className="w-full rounded border border-primary p-2 text-white outline-none bg-background"
+						>
+							<option value="">Seleccionar instructor</option>
+							{educators.map((educator) => (
+								<option key={educator.id} value={educator.id}>
+									{educator.name}
+								</option>
+							))}
+						</select>
 					</div>
 					<label htmlFor="file" className="text-lg font-medium text-primary">
 						Imagen de portada

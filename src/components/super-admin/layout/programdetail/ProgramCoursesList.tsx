@@ -19,8 +19,13 @@ import {
 import { Button } from '~/components/estudiantes/ui/button';
 import { type CourseData } from '~/server/queries/queries';
 
+interface CourseDataWithNames extends CourseData {
+  categoryName?: string;
+  instructorName?: string;
+}
+
 interface ProgramCoursesListProps {
-	courses: CourseData[];
+  courses: CourseDataWithNames[];
 }
 
 const ProgramCoursesList: React.FC<ProgramCoursesListProps> = ({ courses }) => {
@@ -55,12 +60,12 @@ const ProgramCoursesList: React.FC<ProgramCoursesListProps> = ({ courses }) => {
 								<div className="font-bold text-primary">{course.title}</div>
 							</CardTitle>
 							<div className="flex items-center">
-								Categoria id:
+								Categoria:
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"
 								>
-									{course.categoryid}
+									{course.categoryName ?? 'Unknown Category'}
 								</Badge>
 							</div>
 							<p className="line-clamp-2 text-sm text-gray-300">
@@ -71,7 +76,8 @@ const ProgramCoursesList: React.FC<ProgramCoursesListProps> = ({ courses }) => {
 							<div className="flex w-full justify-between">
 								<p className="text-sm font-bold text-gray-300 italic">
 									Educador:{' '}
-									<span className="font-bold italic">{course.instructor}</span>
+									<span className="font-bold italic">{course.instructorName 
+									?? 'Unknown Instructor'}</span>
 								</p>
 								<p className="text-sm font-bold text-red-500">
 									{course.modalidadesid}

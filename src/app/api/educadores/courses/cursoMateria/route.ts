@@ -16,12 +16,13 @@ import {
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAdmin';
+import { db } from '~/server/db';
+import { courses } from '~/server/db/schema';
 
 export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>
 	NextResponse.json({ error: message }, { status });
-
 
 // GET endpoint para obtener un curso por su ID
 export async function GET(req: NextRequest) {
@@ -70,7 +71,6 @@ export async function GET(req: NextRequest) {
 	}
 }
 
-
 export async function POST(request: Request) {
 	try {
 		const { userId } = await auth();
@@ -110,18 +110,22 @@ export async function POST(request: Request) {
 				modalidad && isMultipleModalities
 					? `${data.title} - ${modalidad.name}`
 					: data.title;
-			const newCourse = await createCourse({
-				title: newTitle,
-				description: data.description,
-				creatorId: userId,
-				coverImageKey: data.coverImageKey,
-				categoryid: data.categoryid,
-				rating: data.rating,
-				modalidadesid: modalidadId,
-				nivelid: data.nivelid,
-				instructor: data.instructor,
-				courseTypeId: data.courseTypeId,isActive: data.isActive 
-			});
+			const [newCourse] = await db
+				.insert(courses)
+				.values({
+					title: newTitle,
+					description: data.description,
+					creatorId: userId,
+					coverImageKey: data.coverImageKey,
+					categoryid: data.categoryid,
+					rating: data.rating,
+					modalidadesid: modalidadId,
+					nivelid: data.nivelid,
+					instructor: data.instructor,
+					courseTypeId: data.courseTypeId,
+					isActive: data.isActive,
+				})
+				.returning();
 
 			console.log('Curso creado:', newCourse);
 

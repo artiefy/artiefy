@@ -10,6 +10,7 @@ import {
 	modalidades,
 	nivel as nivel,
 	materias,
+	users,
 } from '~/server/db/schema';
 
 // Función para verificar el rol de admin y obtener usuarios
@@ -257,10 +258,12 @@ export async function createCourse(courseData: CourseData) {
 				nivelid: courseData.nivelid,
 				creatorId: courseData.creatorId || 'defaultCreatorId',
 				createdAt: new Date(courseData.createdAt),
-				updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : new Date(),
+				updatedAt: courseData.updatedAt
+					? new Date(courseData.updatedAt)
+					: new Date(),
 				courseTypeId: courseData.courseTypeId ?? 1, // <-- Aquí colocas un valor seguro por defecto
 				isActive: courseData.isActive ?? true,
-			})	
+			})
 			.returning();
 	} catch (error) {
 		console.error('❌ Error al crear curso:', error);
@@ -360,6 +363,46 @@ export async function getMateriasByCourseId(
 		console.error('Error fetching materias:', error);
 		return [];
 	}
-};
+}
+
+// Add this new function to get category name by ID
+export async function getCategoryNameById(id: number): Promise<string> {
+	try {
+		const category = await db
+			.select()
+			.from(categories)
+			.where(eq(categories.id, id));
+		return category[0]?.name ?? 'Unknown Category';
+	} catch (error) {
+		console.error('Error getting category name:', error);
+		return 'Unknown Category';
+	}
+}
+
+// Update this function to get instructor name from users table
+export async function getInstructorNameById(id: string): Promise<string> {
+	try {
+		const user = await db
+			.select()
+			.from(users)
+			.where(eq(users.id, id))
+			.limit(1);
+
+		if (user?.[0]?.name) {
+			return user[0].name;
+		}
+
+		// Fallback to Clerk if not found in local DB
+		const client = await clerkClient();
+		const clerkUser = await client.users.getUser(id);
+		return (
+			`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
+			'Unknown Instructor'
+		);
+	} catch (error) {
+		console.error('Error getting instructor name:', error);
+		return 'Unknown Instructor';
+	}
+}
 
 export {};

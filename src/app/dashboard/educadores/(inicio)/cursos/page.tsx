@@ -396,13 +396,6 @@ export default function Page() {
 				<div className="container">
 					<div className="mt-2 flex justify-between">
 						<h1 className="text-3xl font-bold">Panel de cursos</h1>
-						<Button
-							onClick={handleCreateCourse}
-							className="bg-primary text-black transition-transform active:scale-95"
-						>
-							<FiPlus className="mr-2" />
-							Crear Curso
-						</Button>
 					</div>
 					{loading ? (
 						<LoadingCourses />
@@ -419,28 +412,21 @@ export default function Page() {
 					) : courses.length === 0 ? (
 						<div className="mt-10 flex flex-col items-center justify-center py-10 text-center">
 							<h2 className="mb-4 text-2xl font-bold">
-								Lista de cursos creados
+								Listado de Cursos Asociados
 							</h2>
 							<p className="text-xl text-gray-600">
-								No hay cursos creados todavía
+								No hay cursos asociados todavía
 							</p>
 							<p className="my-2 text-gray-500">
-								Comienza creando tu primer curso haciendo clic en el botón
-								&quot;Crear Curso&quot;
+								Todavía no tienes cursos asociados. Cuando los tengas,
+								aparecerán aquí. &quot;Crear Curso&quot;
 							</p>
 							<span>&#128071;&#128071;&#128071;</span>
-							<Button
-								onClick={handleCreateCourse}
-								className="mt-5 bg-primary text-background transition-transform hover:text-primary active:scale-95"
-							>
-								<FiPlus className="mr-2" />
-								Crear Curso
-							</Button>
 						</div>
 					) : (
 						<>
 							<h2 className="mt-5 mb-4 text-2xl font-bold">
-								Lista de cursos creados
+									Listado de Cursos Asociados
 							</h2>
 							<CourseListTeacher courses={courses} />
 						</>
