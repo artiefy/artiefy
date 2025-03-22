@@ -41,9 +41,8 @@ export async function enrollInCourse(
 			return { success: false, message: 'Curso no encontrado' };
 		}
 
-		// Add type assertion for requiredSubscriptionLevel
-		const subscriptionLevel = course.courseType
-			?.requiredSubscriptionLevel as SubscriptionLevel;
+		 // Add type assertion for requiredSubscriptionLevel
+		const subscriptionLevel = course.courseType?.requiredSubscriptionLevel as SubscriptionLevel;
 
 		// Allow enrollment for free courses without subscription check
 		if (subscriptionLevel === 'none') {
@@ -80,7 +79,7 @@ export async function enrollInCourse(
 
 		// For subscription-based courses, check subscription level
 		const requiredLevel = course.courseType?.requiredSubscriptionLevel;
-		if (requiredLevel && requiredLevel !== ('none' as SubscriptionLevel)) {
+		if (requiredLevel && requiredLevel !== 'none' as SubscriptionLevel) {
 			const dbUser = await db.query.users.findFirst({
 				where: eq(users.id, userId),
 			});
@@ -117,7 +116,10 @@ export async function enrollInCourse(
 
 			await db.insert(users).values({
 				id: userId,
-				name: `${user.firstName ?? ''} ${user.lastName ?? ''}`?.trim(),
+				name:
+					user.firstName && user.lastName
+						? `${user.firstName} ${user.lastName}`
+						: 'Usuario',
 				email: primaryEmail.emailAddress,
 				role: 'student',
 				subscriptionStatus: 'active',
@@ -171,7 +173,7 @@ export async function enrollInCourse(
 			orderBy: (lessons, { asc }) => [asc(lessons.title)],
 		});
 
-		// Initialize lessons progress - mismo comportamiento para todos los tipos de curso
+		 // Initialize lessons progress - mismo comportamiento para todos los tipos de curso
 		for (const courseLesson of courseLessons) {
 			const isFirstLesson = courseLesson.id === courseLessons[0].id;
 
