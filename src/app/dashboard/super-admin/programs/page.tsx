@@ -9,17 +9,13 @@ import { toast } from 'sonner';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
 import ProgramListAdmin from '~/components/super-admin/ProgramsListAdmin';
-import {
-	getPrograms,
-	updateProgram,
-} from '~/server/queries/queriesSuperAdmin';
-
+import { getPrograms, updateProgram } from '~/server/queries/queriesSuperAdmin';
 
 interface SubjectOption {
 	value: string; // El ID de la materia en formato string
 	label: string; // El nombre de la materia
-  }
-  
+}
+
 // Define el modelo de datos del programa
 export interface ProgramModel {
 	id: number;
@@ -31,7 +27,6 @@ export interface ProgramModel {
 	creatorId: string;
 	rating: number;
 }
-
 
 export type Program = Partial<ProgramModel>;
 
@@ -61,8 +56,8 @@ export default function Page() {
 	const [selectedSubjects, setSelectedSubjects] = useState<SubjectOption[]>([]);
 	if (typeof setSelectedSubjects === 'function') {
 		// no hacemos nada, solo para "usarlo"
-	  }
-	  
+	}
+
 	const [categories, setCategories] = useState<{ id: number; name: string }[]>(
 		[]
 	);
@@ -79,7 +74,10 @@ export default function Page() {
 						description: program.description ?? '', // Ensure description is a string
 						coverImageKey: program.coverImageKey ?? '', // Ensure coverImageKey is a string
 						rating: program.rating ?? 0, // Ensure rating is a number
-						createdAt: typeof program.createdAt === 'string' ? program.createdAt : program.createdAt.toISOString(), // Ensure createdAt is a string
+						createdAt:
+							typeof program.createdAt === 'string'
+								? program.createdAt
+								: program.createdAt.toISOString(), // Ensure createdAt is a string
 					}))
 				);
 
@@ -130,11 +128,11 @@ export default function Page() {
 		categoryid: number,
 		rating: number,
 		coverImageKey: string,
-		fileName: string,
+		_fileName: string,
 		subjectIds: number[]
 	) => {
 		if (!user) return;
-		console.log('📤 Enviando programa con subjectIds:', subjectIds); 
+		console.log('📤 Enviando programa con subjectIds:', subjectIds);
 
 		try {
 			setUploading(true);
@@ -162,9 +160,9 @@ export default function Page() {
 					fileName: string;
 				};
 
-				const { url, fields, key, fileName: responseFileName } = uploadData;
+				const { url, fields, key } = uploadData;
 				coverImageKey = key;
-				fileName = responseFileName;
+				// We can use the fileName parameter here if needed
 
 				const formData = new FormData();
 				Object.entries(fields).forEach(([key, value]) => {
@@ -223,10 +221,7 @@ export default function Page() {
 				if (response.ok) {
 					responseData = (await response.json()) as { id: number };
 				}
-				
 			}
-
-
 
 			if (response instanceof Response && response.ok && responseData) {
 				toast.success(id ? 'Programa actualizado' : 'Programa creado', {
@@ -253,7 +248,10 @@ export default function Page() {
 				description: program.description ?? '', // Ensure description is a string
 				coverImageKey: program.coverImageKey ?? '', // Ensure coverImageKey is a string
 				rating: program.rating ?? 0, // Ensure rating is a number
-				createdAt: typeof program.createdAt === 'string' ? program.createdAt : program.createdAt.toISOString(), // Ensure createdAt is a string
+				createdAt:
+					typeof program.createdAt === 'string'
+						? program.createdAt
+						: program.createdAt.toISOString(), // Ensure createdAt is a string
 			}))
 		);
 	};
@@ -363,16 +361,20 @@ export default function Page() {
 				<ProgramListAdmin
 					programs={filteredPrograms}
 					onEditProgram={(program: Program | null) =>
-						setEditingProgram(program ? {
-							id: program.id ?? 0,
-							title: program.title ?? '',
-							description: program.description ?? '',
-							categoryid: program.categoryid ?? 0,
-							createdAt: program.createdAt ?? '',
-							coverImageKey: program.coverImageKey ?? '',
-							creatorId: program.creatorId ?? '',
-							rating: program.rating ?? 0,
-						} : null)
+						setEditingProgram(
+							program
+								? {
+										id: program.id ?? 0,
+										title: program.title ?? '',
+										description: program.description ?? '',
+										categoryid: program.categoryid ?? 0,
+										createdAt: program.createdAt ?? '',
+										coverImageKey: program.coverImageKey ?? '',
+										creatorId: program.creatorId ?? '',
+										rating: program.rating ?? 0,
+									}
+								: null
+						)
 					}
 					onDeleteProgram={(programId) => {
 						console.log(`Program with id ${programId} deleted`);
@@ -404,7 +406,9 @@ export default function Page() {
 						}
 						rating={editingProgram?.rating ?? 0}
 						setRating={setRating}
-						subjectIds={selectedSubjects.map(subject => Number(subject.value))}
+						subjectIds={selectedSubjects.map((subject) =>
+							Number(subject.value)
+						)}
 					/>
 				)}
 			</div>
