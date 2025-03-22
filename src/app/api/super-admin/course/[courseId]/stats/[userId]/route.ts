@@ -18,7 +18,7 @@ import {
 } from '~/server/db/schema';
 
 export async function GET(
-	req: Request,
+	_req: Request,
 	context: { params: { courseId?: string; userId?: string } }
 ) {
 	const courseId = context?.params?.courseId;
