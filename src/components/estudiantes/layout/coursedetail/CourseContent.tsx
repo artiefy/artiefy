@@ -301,6 +301,11 @@ export function CourseContent({
 		});
 	};
 
+	// Add this function for subscription redirect
+	const handleSubscriptionRedirect = () => {
+		window.open('/planes', '_blank', 'noopener,noreferrer');
+	};
+
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
 			<div className="mb-6 flex items-center justify-between">
@@ -353,7 +358,7 @@ export function CourseContent({
 									continuar tu aprendizaje, necesitas renovar tu suscripción.
 								</p>
 								<Button
-									onClick={() => router.push('/planes')}
+									onClick={handleSubscriptionRedirect}
 									className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
 								>
 									<FaCrown className="mr-2" />

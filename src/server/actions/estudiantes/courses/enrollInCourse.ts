@@ -29,13 +29,29 @@ export async function enrollInCourse(
 
 		const userId = user.id;
 
-		// 1. Primero, asegurarse de que el usuario existe en nuestra base de datos
+		// Get course information first to determine subscription status
+		const course = await db.query.courses.findFirst({
+			where: eq(courses.id, courseId),
+			with: {
+				courseType: true,
+			},
+		});
+
+		if (!course) {
+			return { success: false, message: 'Curso no encontrado' };
+		}
+
+		// Determine subscription status based on course type
+		const subscriptionLevel = course.courseType
+			?.requiredSubscriptionLevel as SubscriptionLevel;
+		const shouldBeActive = subscriptionLevel !== 'none';
+
+		// Check if user exists
 		let dbUser = await db.query.users.findFirst({
 			where: eq(users.id, userId),
 		});
 
 		if (!dbUser) {
-			// Si el usuario no existe, crearlo primero
 			const primaryEmail = user.emailAddresses.find(
 				(email) => email.id === user.primaryEmailAddressId
 			);
@@ -56,7 +72,7 @@ export async function enrollInCourse(
 							: (user.firstName ?? 'Usuario'),
 					email: primaryEmail.emailAddress,
 					role: 'student',
-					subscriptionStatus: 'inactive',
+					subscriptionStatus: shouldBeActive ? 'active' : 'inactive', // Set based on course type
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				});
@@ -78,18 +94,6 @@ export async function enrollInCourse(
 			}
 		}
 
-		// 2. Obtener información del curso
-		const course = await db.query.courses.findFirst({
-			where: eq(courses.id, courseId),
-			with: {
-				courseType: true,
-			},
-		});
-
-		if (!course) {
-			return { success: false, message: 'Curso no encontrado' };
-		}
-
 		// 3. Verificar si ya está inscrito
 		const existingEnrollment = await db.query.enrollments.findFirst({
 			where: and(
@@ -104,10 +108,6 @@ export async function enrollInCourse(
 				message: 'Ya estás inscrito en este curso',
 			};
 		}
-
-		// Add type assertion for requiredSubscriptionLevel
-		const subscriptionLevel = course.courseType
-			?.requiredSubscriptionLevel as SubscriptionLevel;
 
 		// Allow enrollment for free courses without subscription check
 		if (subscriptionLevel === 'none') {
@@ -145,13 +145,13 @@ export async function enrollInCourse(
 		// For subscription-based courses, check subscription level
 		const requiredLevel = course.courseType?.requiredSubscriptionLevel;
 		if (requiredLevel && requiredLevel !== ('none' as SubscriptionLevel)) {
-			const dbUser = await db.query.users.findFirst({
+			const currentUser = await db.query.users.findFirst({
 				where: eq(users.id, userId),
 			});
 
 			if (
-				!dbUser?.subscriptionStatus ||
-				dbUser.subscriptionStatus !== 'active'
+				!currentUser?.subscriptionStatus ||
+				currentUser.subscriptionStatus !== 'active'
 			) {
 				return {
 					success: false,
