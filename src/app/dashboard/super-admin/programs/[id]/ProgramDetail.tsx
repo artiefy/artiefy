@@ -244,7 +244,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	};
 
 	const handleCreateOrEditCourse = async (
-		id: string,
+		_id: string,
 		title: string,
 		description: string,
 		file: File | null,
