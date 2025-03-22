@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getForumById } from '~/models/educatorsModels/forumAndPosts';
 
 export async function GET(
-	request: Request,
+	_request: Request,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { getProgramById } from '~/server/actions/superAdmin/program/getProgramById';
 
 export async function GET(
-	request: Request,
+	_request: Request,
 	{ params }: { params: { id: string } }
 ) {
 	try {
