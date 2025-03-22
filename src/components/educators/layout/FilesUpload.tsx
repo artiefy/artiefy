@@ -13,7 +13,6 @@ interface FileUploadProps {
 	label: string;
 	accept: string;
 	maxSize: number; // en MB
-	_required?: boolean;
 	multiple?: boolean;
 	onFileChange: (file: File | File[] | null | undefined) => void;
 	tipo: string;
@@ -25,11 +24,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
 	label,
 	accept,
 	maxSize,
-	_required = false,
 	multiple = false,
 	onFileChange,
 	tipo,
-	file, 
+	file,
 }) => {
 	const [files, setFiles] = useState<File[]>([]); // Cambiar el estado de files a un array de archivos
 	const [fileNames, setFileNames] = useState<string[]>([]); // Cambiar el estado de fileNames a un array de strings
@@ -258,7 +256,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 						)}
 						{type === 'file' && (
 							<div className="space-y-2">
-								{files.map((file, index) => (
+								{files.map((_, index) => (
 									<div
 										key={index}
 										className="relative flex items-center justify-between rounded-lg bg-gray-100 p-2"
