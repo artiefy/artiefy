@@ -212,7 +212,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Manejo de actualizar
 	const handleUpdateCourse = async (
-		id: string,
+		_id: string,
 		title: string,
 		description: string,
 		file: File | null,
@@ -220,7 +220,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		modalidadesid: number,
 		nivelid: number,
 		addParametros: boolean,
-		coverImageKey: string,
+		_coverImageKey: string,
 		fileName: string,
 		rating: number,
 		courseTypeId: number | null
