@@ -29,7 +29,56 @@ export async function enrollInCourse(
 
 		const userId = user.id;
 
-		// Get course with type
+		// 1. Primero, asegurarse de que el usuario existe en nuestra base de datos
+		let dbUser = await db.query.users.findFirst({
+			where: eq(users.id, userId),
+		});
+
+		if (!dbUser) {
+			// Si el usuario no existe, crearlo primero
+			const primaryEmail = user.emailAddresses.find(
+				(email) => email.id === user.primaryEmailAddressId
+			);
+
+			if (!primaryEmail?.emailAddress) {
+				return {
+					success: false,
+					message: 'No se pudo obtener el email del usuario',
+				};
+			}
+
+			try {
+				await db.insert(users).values({
+					id: userId,
+					name:
+						user.firstName && user.lastName
+							? `${user.firstName} ${user.lastName}`
+							: (user.firstName ?? 'Usuario'),
+					email: primaryEmail.emailAddress,
+					role: 'student',
+					subscriptionStatus: 'inactive',
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				});
+
+				// Verificar que el usuario se creó correctamente
+				dbUser = await db.query.users.findFirst({
+					where: eq(users.id, userId),
+				});
+
+				if (!dbUser) {
+					throw new Error('Error al crear el usuario en la base de datos');
+				}
+			} catch (error) {
+				console.error('Error creating user:', error);
+				return {
+					success: false,
+					message: 'Error al crear el usuario en la base de datos',
+				};
+			}
+		}
+
+		// 2. Obtener información del curso
 		const course = await db.query.courses.findFirst({
 			where: eq(courses.id, courseId),
 			with: {
@@ -41,8 +90,24 @@ export async function enrollInCourse(
 			return { success: false, message: 'Curso no encontrado' };
 		}
 
-		 // Add type assertion for requiredSubscriptionLevel
-		const subscriptionLevel = course.courseType?.requiredSubscriptionLevel as SubscriptionLevel;
+		// 3. Verificar si ya está inscrito
+		const existingEnrollment = await db.query.enrollments.findFirst({
+			where: and(
+				eq(enrollments.userId, userId),
+				eq(enrollments.courseId, courseId)
+			),
+		});
+
+		if (existingEnrollment) {
+			return {
+				success: false,
+				message: 'Ya estás inscrito en este curso',
+			};
+		}
+
+		// Add type assertion for requiredSubscriptionLevel
+		const subscriptionLevel = course.courseType
+			?.requiredSubscriptionLevel as SubscriptionLevel;
 
 		// Allow enrollment for free courses without subscription check
 		if (subscriptionLevel === 'none') {
@@ -79,7 +144,7 @@ export async function enrollInCourse(
 
 		// For subscription-based courses, check subscription level
 		const requiredLevel = course.courseType?.requiredSubscriptionLevel;
-		if (requiredLevel && requiredLevel !== 'none' as SubscriptionLevel) {
+		if (requiredLevel && requiredLevel !== ('none' as SubscriptionLevel)) {
 			const dbUser = await db.query.users.findFirst({
 				where: eq(users.id, userId),
 			});
@@ -96,96 +161,44 @@ export async function enrollInCourse(
 			}
 		}
 
-		// 1. Primero, asegurarse de que el usuario existe en nuestra base de datos
-		let dbUser = await db.query.users.findFirst({
-			where: eq(users.id, userId),
-		});
-
-		if (!dbUser) {
-			// Si el usuario no existe, crearlo primero
-			const primaryEmail = user.emailAddresses.find(
-				(email) => email.id === user.primaryEmailAddressId
-			);
-
-			if (!primaryEmail?.emailAddress) {
-				return {
-					success: false,
-					message: 'No se pudo obtener el email del usuario',
-				};
-			}
-
-			await db.insert(users).values({
-				id: userId,
-				name:
-					user.firstName && user.lastName
-						? `${user.firstName} ${user.lastName}`
-						: 'Usuario',
-				email: primaryEmail.emailAddress,
-				role: 'student',
-				subscriptionStatus: 'active',
-				createdAt: new Date(),
-				updatedAt: new Date(),
+		// 4. Crear la inscripción
+		try {
+			await db.insert(enrollments).values({
+				userId: userId,
+				courseId: courseId,
+				enrolledAt: new Date(),
+				completed: false,
 			});
-
-			// Reintentar obtener el usuario después de crearlo
-			dbUser = await db.query.users.findFirst({
-				where: eq(users.id, userId),
-			});
-
-			if (!dbUser) {
-				return {
-					success: false,
-					message: 'No se pudo crear el usuario en la base de datos',
-				};
-			}
-		}
-
-		// 2. Verificar si ya está inscrito
-		const existingEnrollment = await db.query.enrollments.findFirst({
-			where: and(
-				eq(enrollments.userId, userId),
-				eq(enrollments.courseId, courseId)
-			),
-		});
-
-		if (existingEnrollment) {
+		} catch (error) {
+			console.error('Error creating enrollment:', error);
 			return {
 				success: false,
-				message: 'Ya estás inscrito en este curso',
+				message: 'Error al crear la inscripción',
 			};
 		}
 
-		// 3. Crear la inscripción
-		const newEnrollment = await db.insert(enrollments).values({
-			userId: userId,
-			courseId: courseId,
-			enrolledAt: new Date(),
-			completed: false,
-		});
-
-		if (!newEnrollment) {
-			throw new Error('No se pudo crear la inscripción');
-		}
-
-		// 4. Configurar la primera lección como desbloqueada
+		// 5. Configurar el progreso de las lecciones
 		const courseLessons = await db.query.lessons.findMany({
 			where: eq(lessons.courseId, courseId),
 			orderBy: (lessons, { asc }) => [asc(lessons.title)],
 		});
 
-		 // Initialize lessons progress - mismo comportamiento para todos los tipos de curso
 		for (const courseLesson of courseLessons) {
 			const isFirstLesson = courseLesson.id === courseLessons[0].id;
-
-			await db.insert(userLessonsProgress).values({
-				userId: userId,
-				lessonId: courseLesson.id,
-				progress: 0,
-				isCompleted: false,
-				isLocked: !isFirstLesson, // Solo la primera lección desbloqueada, independiente del tipo de curso
-				isNew: isFirstLesson,
-				lastUpdated: new Date(),
-			});
+			try {
+				await db.insert(userLessonsProgress).values({
+					userId: userId,
+					lessonId: courseLesson.id,
+					progress: 0,
+					isCompleted: false,
+					isLocked: !isFirstLesson,
+					isNew: isFirstLesson,
+					lastUpdated: new Date(),
+				});
+			} catch (error) {
+				console.error('Error setting lesson progress:', error);
+				// Continuar con las demás lecciones incluso si una falla
+			}
 		}
 
 		return {
@@ -194,15 +207,6 @@ export async function enrollInCourse(
 		};
 	} catch (error) {
 		console.error('Error en enrollInCourse:', error);
-
-		// Si el error es de duplicado de enrollment
-		if (error instanceof Error && error.message.includes('duplicate key')) {
-			return {
-				success: false,
-				message: 'Ya estás inscrito en este curso',
-			};
-		}
-
 		return {
 			success: false,
 			message:
