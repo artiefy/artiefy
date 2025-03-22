@@ -94,7 +94,7 @@
 }
 
 .btn-shine {
-	color: #4b5563; /* Changed to gray-600 */
+	color: #4b5563;
 	background: linear-gradient(to right, #4b5563 0, #3af4ef 10%, #4b5563 20%);
 	background-position: 0;
 	-webkit-background-clip: text;
@@ -103,7 +103,7 @@
 	animation-fill-mode: forwards;
 	-webkit-text-size-adjust: none;
 	font-weight: 800;
-	font-size: 52px; /* increased from 42px */
+	font-size: 52px;
 	text-decoration: none;
 	white-space: nowrap;
 	letter-spacing: 1px;
