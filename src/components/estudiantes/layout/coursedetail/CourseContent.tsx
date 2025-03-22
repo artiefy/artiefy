@@ -268,6 +268,10 @@ export function CourseContent({
 		);
 	}, [course.lessons]);
 
+	const handleSubscriptionRedirect = useCallback(() => {
+		window.open('/planes', '_blank', 'noopener,noreferrer');
+	}, []);
+
 	const shouldShowSubscriptionAlert = useMemo(() => {
 		return (
 			isEnrolled &&
@@ -281,11 +285,9 @@ export function CourseContent({
 	]);
 
 	const shouldBlurContent = useMemo(() => {
-		return (
-			isEnrolled &&
-			!isSubscriptionActive &&
-			course.courseType?.requiredSubscriptionLevel !== 'none'
-		);
+		const isPremiumOrPro =
+			course.courseType?.requiredSubscriptionLevel !== 'none';
+		return isEnrolled && !isSubscriptionActive && isPremiumOrPro;
 	}, [
 		isEnrolled,
 		isSubscriptionActive,
@@ -299,11 +301,6 @@ export function CourseContent({
 			month: 'long',
 			day: 'numeric',
 		});
-	};
-
-	// Add this function for subscription redirect
-	const handleSubscriptionRedirect = () => {
-		window.open('/planes', '_blank', 'noopener,noreferrer');
 	};
 
 	return (
