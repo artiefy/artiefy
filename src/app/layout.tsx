@@ -44,48 +44,63 @@ export const metadata: Metadata = siteMetadata;
 
 const organizationJsonLd = {
 	'@context': 'https://schema.org',
-	'@type': 'Organization',
+	'@type': 'EducationalOrganization',
 	'@id': 'https://artiefy.com/#organization',
 	name: 'Artiefy',
 	url: 'https://artiefy.com',
 	logo: {
 		'@type': 'ImageObject',
-		url: 'https://artiefy.com/artiefy-icon.png',
+		url: '/artiefy-icon.png',
 		width: '512',
 		height: '512',
+	},
+	description:
+		'Plataforma educativa colombiana especializada en programas y cursos de tecnología y ciencias.',
+	address: {
+		'@type': 'PostalAddress',
+		addressCountry: 'CO',
+		addressLocality: 'Cali, Valle Del Cauca',
 	},
 	sameAs: [
 		'https://facebook.com/artiefy',
 		'https://twitter.com/artiefy',
 		'https://instagram.com/artiefy',
 	],
+	hasOfferCatalog: {
+		'@type': 'OfferCatalog',
+		name: 'Planes Artiefy',
+		itemListElement: [
+			{
+				'@type': 'Offer',
+				name: 'Plan Pro',
+				description: 'Acceso a cursos y programas seleccionados',
+			},
+			{
+				'@type': 'Offer',
+				name: 'Plan Premium',
+				description: 'Acceso completo a todos los cursos y programas',
+			},
+		],
+	},
 };
 
-const educationalOrgJsonLd = {
+const websiteJsonLd = {
 	'@context': 'https://schema.org',
-	'@type': 'EducationalOrganization',
-	'@id': 'https://artiefy.com/#educational',
-	name: 'Artiefy Learning Platform',
-	parentOrganization: {
+	'@type': 'WebSite',
+	'@id': 'https://artiefy.com/#website',
+	url: 'https://artiefy.com',
+	name: 'Artiefy',
+	description:
+		'Plataforma educativa colombiana especializada en programas y cursos de tecnología y ciencias.',
+	publisher: {
 		'@id': 'https://artiefy.com/#organization',
 	},
-	description:
-		'Plataforma de aprendizaje innovadora para estudiantes y profesores, especializada en ciencia y tecnología.',
-	offers: {
-		'@type': 'Offer',
-		'@id': 'https://artiefy.com/#membership',
-		name: 'Membresía Artiefy',
-		category: 'Subscription',
-		availability: 'https://schema.org/InStock',
-		priceCurrency: 'COP',
-		aggregateOffer: {
-			'@type': 'AggregateOffer',
-			priceCurrency: 'COP',
-			offerCount: '3',
-			highPrice: '99900',
-			lowPrice: '29900',
+	potentialAction: [
+		{
+			'@type': 'ViewAction',
+			target: ['https://artiefy.com/planes', 'https://artiefy.com/estudiantes'],
 		},
-	},
+	],
 };
 
 export default function RootLayout({
@@ -111,10 +126,10 @@ export default function RootLayout({
 						strategy="afterInteractive"
 					/>
 					<Script
-						id="educational-jsonld"
+						id="website-jsonld"
 						type="application/ld+json"
 						dangerouslySetInnerHTML={{
-							__html: JSON.stringify(educationalOrgJsonLd),
+							__html: JSON.stringify(websiteJsonLd),
 						}}
 						strategy="afterInteractive"
 					/>

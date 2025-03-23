@@ -9,6 +9,12 @@
 }
 
 /* Core Theme */
+@theme inline {
+	/* Fonts */
+	--font-sans: var(--font-montserrat);
+	--font-serif: var(--font-merriweather);
+}
+
 @theme {
 	/* Colors */
 	--color-background: oklch(19% 0.0542 252.35);
@@ -58,10 +64,6 @@
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
 	--radius-xl: calc(var(--radius) + 4px);
-
-	/* Font - Modified to use CSS variables properly */
-	--font-sans: var(--font-montserrat);
-	--font-serif: var(--font-merriweather);
 
 	/* Animations */
 	--animate-gradient: borderRotate 4s linear infinite;
