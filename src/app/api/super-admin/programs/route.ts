@@ -91,11 +91,31 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        await db
-            .update(materias)
-            .set({ programaId: newProgram.id })
-            .where(inArray(materias.id, existingIds))
-            .execute();
+        for (const materiaId of existingIds) {
+            const materia = await db
+                .select()
+                .from(materias)
+                .where(eq(materias.id, materiaId))
+                .then((res) => res[0]);
+        
+            if (materia.courseid) {
+                // Si ya tiene courseid, crear una nueva materia duplicando, con courseid en null:
+                await db.insert(materias).values({
+                    title: materia.title,
+                    description: materia.description,
+                    programaId: newProgram.id,
+                    courseid: null // aquí lo dejas null
+                }).execute();
+            } else {
+                // Si no tiene courseId, solo actualizamos:
+                await db.update(materias)
+                    .set({ programaId: newProgram.id, courseid: null }) // courseid null también aquí
+                    .where(eq(materias.id, materiaId))
+                    .execute();
+            }
+        }
+        
+        
     }
 
         console.log('✅ Materias asignadas al programa:', subjectIds);
@@ -127,14 +147,10 @@ export async function GET(req: Request) {
 
 		// Filtrar materias donde courseid sea null y pertenezcan al programa
 		const filteredMaterias = await db
-			.select()
-			.from(materias)
-			.where(
-				and(
-					isNull(materias.courseid),
-					eq(materias.programaId, Number(programId))
-				)
-			); // Filtrar por programa y courseid === null
+                .select()
+                .from(materias)
+                .where(eq(materias.programaId, Number(programId)));
+
 
 		return NextResponse.json(filteredMaterias);
 	} catch (error) {
