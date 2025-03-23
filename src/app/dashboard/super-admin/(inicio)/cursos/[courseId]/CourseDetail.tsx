@@ -981,6 +981,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setCourseTypeId={setCourseTypeId}
 				isActive={isActive}
 				setIsActive={setIsActive}
+				instructor={course?.instructor ?? ''}
+				setInstructor={() => undefined}
+				subjects={[]}            // Si no estás usando subjects en edición, puedes pasar array vacío o mapear si los tienes.
+				setSubjects={() => undefined} 
 			/>
 		</div>
 	);

@@ -734,67 +734,54 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				selectedColor={selectedColor}
 			/>
 			<ModalFormCourse
-				isOpen={isModalOpen}
-				onSubmitAction={(
-					id,
-					title,
-					description,
-					file,
-					categoryid,
-					modalidadesid,
-					nivelid,
-					rating,
-					addParametros,
-					coverImageKey,
-					fileName,
-					courseTypeId
-				) =>
-					handleUpdateCourse(
-						id,
-						title,
-						description,
-						file,
-						categoryid,
-						modalidadesid,
-						nivelid,
-						addParametros,
-						coverImageKey,
-						fileName,
-						rating,
-						courseTypeId
-					)
-				}
-				editingCourseId={course.id}
-				title={editTitle}
-				description={editDescription}
-				categoryid={editCategory}
-				modalidadesid={editModalidad}
-				nivelid={editNivel} // Replaced id with nivelid
-				coverImageKey={editCoverImageKey}
-				parametros={editParametros}
-				rating={editRating} // Añadir esta línea
-				setTitle={setEditTitle}
-				setDescription={setEditDescription}
-				setModalidadesid={setEditModalidad}
-				setCategoryid={setEditCategory}
-				setNivelid={setEditNivel} // Replaced setid with setNivelid
-				setCoverImageKey={setEditCoverImageKey}
-				setParametrosAction={(
-					parametros: {
-						id: number;
-						name: string;
-						description: string;
-						porcentaje: number;
-					}[]
-				) => setEditParametros(parametros)}
-				setRating={setEditRating} // Añadir esta línea
-				onCloseAction={() => setIsModalOpen(false)}
-				uploading={false} // Añadir esta línea
-				courseTypeId={courseTypeId} // usa el estado que ya tienes
-				setCourseTypeId={setCourseTypeId}
-				isActive={isActive}
-				setIsActive={setIsActive}
-			/>
+	isOpen={isModalOpen}
+	onSubmitAction={(id, title, description, file, categoryid, modalidadesid, nivelid, rating, addParametros, coverImageKey, fileName, courseTypeId) =>
+		handleUpdateCourse(
+			id,
+			title,
+			description,
+			file,
+			categoryid,
+			modalidadesid,
+			nivelid,
+			addParametros,
+			coverImageKey,
+			fileName,
+			rating,
+			courseTypeId
+		)
+	}
+	editingCourseId={course.id}
+	title={editTitle}
+	description={editDescription}
+	categoryid={editCategory}
+	modalidadesid={editModalidad}
+	nivelid={editNivel}
+	coverImageKey={editCoverImageKey}
+	parametros={editParametros}
+	rating={editRating}
+	setTitle={setEditTitle}
+	setDescription={setEditDescription}
+	setModalidadesid={setEditModalidad}
+	setCategoryid={setEditCategory}
+	setNivelid={setEditNivel}
+	setCoverImageKey={setEditCoverImageKey}
+	setParametrosAction={(parametros) => setEditParametros(parametros)}
+	setRating={setEditRating}
+	onCloseAction={() => setIsModalOpen(false)}
+	uploading={false}
+	courseTypeId={courseTypeId}
+	setCourseTypeId={setCourseTypeId}
+	isActive={isActive}
+	setIsActive={setIsActive}
+
+	// 👉 AGREGAR ESTAS LÍNEAS:
+	instructor={course?.instructor ?? ''}
+	setInstructor={() => undefined}
+	subjects={[]}            // Si no estás usando subjects en edición, puedes pasar array vacío o mapear si los tienes.
+	setSubjects={() => undefined}   // Mismo caso, una función vacía si no editas materias desde ahí.
+/>
+
 		</div>
 	);
 };
