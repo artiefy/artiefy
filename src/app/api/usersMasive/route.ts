@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-import * as XLSX from 'xlsx';
 import nodemailer from 'nodemailer';
+import * as XLSX from 'xlsx';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
@@ -12,12 +12,16 @@ const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
 		user: 'direcciongeneral@artiefy.com',
-		pass: process.env.PASS
+		pass: process.env.PASS,
 	},
 });
 
 // Función para enviar correo de bienvenida
-async function sendWelcomeEmail(to: string, username: string, password: string) {
+async function sendWelcomeEmail(
+	to: string,
+	username: string,
+	password: string
+) {
 	try {
 		const mailOptions = {
 			from: `"Artiefy" <${process.env.EMAIL_USER}>`,
@@ -84,7 +88,10 @@ export async function POST(request: Request) {
 			// Validación de campos
 			if (!firstName || !lastName || !email) {
 				console.error('Faltan campos obligatorios', user);
-				creationErrors.push({ email: email || 'Sin email', error: 'Campos incompletos' });
+				creationErrors.push({
+					email: email || 'Sin email',
+					error: 'Campos incompletos',
+				});
 				continue;
 			}
 
@@ -130,9 +137,9 @@ export async function POST(request: Request) {
 				});
 			} catch (error) {
 				console.error(`Error al crear usuario ${email}:`, error);
-				creationErrors.push({ 
-					email, 
-					error: error instanceof Error ? error.message : 'Error desconocido' 
+				creationErrors.push({
+					email,
+					error: error instanceof Error ? error.message : 'Error desconocido',
 				});
 				continue; // Continuar con el siguiente usuario
 			}
@@ -147,8 +154,8 @@ export async function POST(request: Request) {
 				total: usersData.length,
 				created: createdUsers.length,
 				failed: creationErrors.length,
-				emailErrors: emailErrors.length
-			}
+				emailErrors: emailErrors.length,
+			},
 		});
 	} catch (error) {
 		console.error('Error al procesar el archivo:', error);

@@ -56,6 +56,8 @@
 		const [parametrosList, setParametrosList] = useState<
 			{ id: number; name: string; description: string; porcentaje: number }[]
 		>([]);
+		const [educators, setEducators] = useState<{ id: string; name: string }[]>([]);
+
 
 		// ✅ Obtener cursos, totales y categorías
 		useEffect(() => {
@@ -100,6 +102,21 @@
 			}
 			void fetchData();
 		}, []);
+		useEffect(() => {
+			const loadEducators = async () => {
+			  try {
+				const response = await fetch('/api/super-admin/changeEducators');
+				if (response.ok) {
+				  const data = (await response.json()) as { id: string; name: string }[];
+				  setEducators(data);
+				}
+			  } catch (error) {
+				console.error('Error al cargar educadores:', error);
+			  }
+			};
+			void loadEducators();
+		  }, []);
+		  
 
 		// ✅ Filtrar cursos por búsqueda y categoría
 		const filteredCourses = courses.filter(
@@ -164,8 +181,6 @@
 					void fileName;
 
 
-
-
 					const formData = new FormData();
 					Object.entries(fields).forEach(([key, value]) => {
 						if (typeof value === 'string') {
@@ -185,9 +200,6 @@
 				throw new Error(`Error to upload the file type ${errorMessage}`);
 			}
 
-			const instructor =
-				user?.fullName ?? user?.emailAddresses[0]?.emailAddress ?? 'Desconocido';
-
 				try {
 					let response;
 					let responseData: { id: number } | null = null;
@@ -201,7 +213,7 @@
 							modalidadesid: Number(modalidadesid),
 							nivelid: Number(nivelid),
 							rating,
-							instructor,
+							instructor: editingCourse?.instructor ?? '',
 						} as CourseData);
 				
 						responseData = { id: Number(id) }; // Como es una actualización, el ID ya es conocido
@@ -217,7 +229,7 @@
 								modalidadesid,
 								nivelid,
 								rating,
-								instructor,
+								instructor: editingCourse?.instructor ?? '',
 							}),
 						});
 				
@@ -445,6 +457,11 @@
 							setIsActive={(isActive: boolean) =>
 								console.log('Is Active set to:', isActive)
 							}
+							instructor={editingCourse?.instructor ?? ''}
+							setInstructor={(instructor: string) =>
+							  setEditingCourse((prev) => (prev ? { ...prev, instructor } : null))
+							}
+							educators={educators}
 						/>
 					)}
 				</div>

@@ -747,12 +747,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							onChange={(e) => setRating(Number(e.target.value))}
 						/>
 					</div>
-					<label
-						htmlFor="instructor"
-						className="text-lg font-medium text-primary"
-					>
-						Instructor
-					</label>
 					<div className="mb-4">
 						<label
 							htmlFor="instructor"

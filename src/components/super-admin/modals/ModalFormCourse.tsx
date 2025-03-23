@@ -81,6 +81,9 @@ interface CourseFormProps {
 	setCourseTypeId: (val: number | null) => void;
 	isActive: boolean;
 	setIsActive: (val: boolean) => void;
+ 	instructor: string;
+ 	setInstructor: (instructor: string) => void;
+ 	educators?: { id: string; name: string }[];
 }
 
 // Componente ModalFormCourse
@@ -109,6 +112,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	setCourseTypeId,
 	isActive, // <-- agrega esto
 	setIsActive,
+	setInstructor,
+ 	educators = [],
+ 	instructor,
 }) => {
 	const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null); // Estado para el archivo
@@ -652,17 +658,25 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							onChange={(e) => setRating(Number(e.target.value))}
 						/>
 					</div>
-					<label
-						htmlFor="instructor"
-						className="text-lg font-medium text-primary"
-					>
-						Instructor
-					</label>
-					<div className="mb-4 w-full rounded border border-primary p-2">
-						<h3 className="text-lg font-medium text-primary">
-							Instructor: {user?.fullName}
-						</h3>
-					</div>
+					<div className="mb-4">
+  <label htmlFor="instructor" className="text-lg font-medium text-primary">
+    Instructor
+  </label>
+  <select
+    id="instructor"
+    value={instructor}
+    onChange={(e) => setInstructor(e.target.value)}
+    className="w-full rounded border border-primary p-2 text-white outline-none bg-background"
+  >
+    <option value="">Seleccionar instructor</option>
+    {educators?.map((educator) => (
+      <option key={educator.id} value={educator.id}>
+        {educator.name}
+      </option>
+    ))}
+  </select>
+</div>
+
 					<label htmlFor="file" className="text-lg font-medium text-primary">
 						Imagen de portada
 					</label>
