@@ -44,14 +44,36 @@ export const metadata: Metadata = siteMetadata;
 
 const jsonLd = {
 	'@context': 'https://schema.org',
-	'@type': 'WebSite',
-	url: 'https://artiefy.com/',
+	'@type': 'Organization',
+	'@id': 'https://artiefy.com/#organization',
 	name: 'Artiefy',
-	description:
-		'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
+	url: 'https://artiefy.com',
 	logo: {
 		'@type': 'ImageObject',
 		url: 'https://artiefy.com/artiefy-icon.png',
+		width: '512',
+		height: '512',
+	},
+	sameAs: [
+		'https://facebook.com/artiefy',
+		'https://twitter.com/artiefy',
+		'https://instagram.com/artiefy',
+	],
+	subOrganization: {
+		'@type': 'EducationalOrganization',
+		name: 'Artiefy Learning Platform',
+		description:
+			'Plataforma de aprendizaje innovadora para estudiantes y profesores, especializada en ciencia y tecnología.',
+	},
+	offers: {
+		'@type': 'AggregateOffer',
+		priceCurrency: 'COP',
+		availability: 'https://schema.org/InStock',
+		offerCount: '3',
+		priceSpecification: {
+			'@type': 'PriceSpecification',
+			valueAddedTaxIncluded: true,
+		},
 	},
 };
 
@@ -67,6 +89,8 @@ export default function RootLayout({
 				className={`${montserrat.variable} ${merriweather.variable}`}
 			>
 				<head>
+					<meta name="robots" content="index, follow" />
+					<link rel="canonical" href="https://artiefy.com" />
 					<Script
 						id="json-ld"
 						type="application/ld+json"
