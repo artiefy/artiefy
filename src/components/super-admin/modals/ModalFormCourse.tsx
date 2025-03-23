@@ -10,7 +10,7 @@ import { Plus } from 'lucide-react';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import { toast } from 'sonner';
-
+import Select, { type MultiValue } from 'react-select';
 import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
@@ -43,7 +43,8 @@ interface CourseFormProps {
 		coverImageKey: string,
 		fileName: string,
 		courseTypeId: number | null,
-		isActive: boolean
+		isActive: boolean,
+		subjects: { id: number }[]
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -84,6 +85,9 @@ interface CourseFormProps {
  	instructor: string;
  	setInstructor: (instructor: string) => void;
  	educators?: { id: string; name: string }[];
+	 subjects: { id: number }[];
+	 setSubjects: (subjects: { id: number }[]) => void;
+ 
 }
 
 // Componente ModalFormCourse
@@ -115,6 +119,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	setInstructor,
  	educators = [],
  	instructor,
+	 subjects,
+	 setSubjects,
 }) => {
 	const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null); // Estado para el archivo
@@ -123,6 +129,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [progress, setProgress] = useState(0); // Estado para el progreso
 	const [isEditing, setIsEditing] = useState(false); // Estado para la edición
 	const [isDragging, setIsDragging] = useState(false); // Estado para el arrastre
+	const [allSubjects, setAllSubjects] = useState<{ id: number; title: string }[]>([]);
+
+
 	const [errors, setErrors] = useState({
 		title: false,
 		description: false,
@@ -205,6 +214,27 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			]);
 		}
 	};
+
+	useEffect(() => {
+		const fetchSubjects = async () => {
+			try {
+				const response = await fetch('/api/super-admin/programs/materiasCourses');
+				if (response.ok) {
+					const subjects = (await response.json()) as { id: number; title: string }[];
+					setAllSubjects(subjects);
+				} else {
+					throw new Error('Error al obtener materias');
+				}
+			} catch (error) {
+				console.error('Error al obtener materias:', error);
+			}
+		};
+	
+		if (isOpen) {
+			void fetchSubjects();
+		}
+	}, [isOpen]);
+	
 
 	// Función para manejar el cambio de parámetros
 	const handleParametroChange = (
@@ -363,7 +393,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				coverImageKey,
 				uploadedFileName,
 				courseTypeId,
-				isActive
+				isActive,
+				subjects
 			);
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
@@ -857,9 +888,36 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										className="mt-1 w-full rounded border p-2 text-white outline-none"
 									/>
 								</div>
+								
 							))}
 						</div>
+						
+						
 					)}
+					{isOpen && (
+  <div className="my-4 flex flex-col">
+    <label htmlFor="subjects" className="text-lg font-medium text-primary">
+      Asignar Materias
+    </label>
+    <Select
+      isMulti
+      options={allSubjects.map((subject) => ({
+        value: subject.id.toString(),
+        label: subject.title,
+      }))}
+	  onChange={(newValue: MultiValue<{ value: string; label: string }>) => {
+		const selectedSubjects = newValue.map((option) => ({
+			id: Number(option.value),
+		}));
+		setSubjects(selectedSubjects);
+	}}	
+      classNamePrefix="react-select"
+      className="mt-2 w-10/12 lg:w-1/2"
+    />
+  </div>
+)}
+
+
 					{(uploading || isUploading) && (
 						<div className="mt-4">
 							<Progress

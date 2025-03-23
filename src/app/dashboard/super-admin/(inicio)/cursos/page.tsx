@@ -8,8 +8,7 @@
 
 	import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 	import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
-	import { getCourses, updateCourse, type CourseData } from '~/server/queries/queries';
-
+	import {  getCategoryNameById, getInstructorNameById, getCourses, updateCourse, type CourseData } from '~/server/queries/queries';
 	import CourseListAdmin from './../../components/CourseListAdmin';
 
 
@@ -50,6 +49,7 @@
 		const [categoryFilter, setCategoryFilter] = useState('');
 		const [totalCourses, setTotalCourses] = useState(0);
 		const [totalStudents, setTotalStudents] = useState(0);
+		const [subjects, setSubjects] = useState<{ id: number }[]>([]);
 		const [categories, setCategories] = useState<{ id: number; name: string }[]>(
 			[]
 		);
@@ -64,13 +64,38 @@
 			async function fetchData() {
 				try {
 					const coursesData = await getCourses();
-					setCourses(
-						coursesData.map((course) => ({
-							...course,
-							id: course.id ?? 0, // ✅ Asegurar que `id` sea un número válido
-							isActive: course.isActive ?? undefined, // ✅ Asegurar que `isActive` sea boolean o undefined
-						}))
-					);
+
+// Ahora obtener los nombres de categoría e instructor:
+const coursesWithNames = await Promise.all(
+  coursesData.map(async (course) => {
+    try {
+      const [categoryName, instructorName] = await Promise.all([
+        getCategoryNameById(course.categoryid),
+        getInstructorNameById(course.instructor),
+      ]);
+
+      return {
+        ...course,
+        id: course.id ?? 0,
+        isActive: course.isActive ?? undefined,
+        categoryName: categoryName ?? 'Sin categoría',
+        instructorName: instructorName ?? 'Sin instructor',
+      };
+    } catch (error) {
+      console.error('Error fetching names:', error);
+      return {
+        ...course,
+        id: course.id ?? 0,
+        isActive: course.isActive ?? undefined,
+        categoryName: 'Sin categoría',
+        instructorName: 'Sin instructor',
+      };
+    }
+  })
+);
+
+setCourses(coursesWithNames);
+
 
 					// Obtener métricas
 					const totalsResponse = await fetch('/api/super-admin/courses/totals');
@@ -230,6 +255,7 @@
 								nivelid,
 								rating,
 								instructor: editingCourse?.instructor ?? '',
+								subjects,
 							}),
 						});
 				
@@ -462,6 +488,9 @@
 							  setEditingCourse((prev) => (prev ? { ...prev, instructor } : null))
 							}
 							educators={educators}
+							subjects={subjects}
+   							setSubjects={setSubjects}
+
 						/>
 					)}
 				</div>
