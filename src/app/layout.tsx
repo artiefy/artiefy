@@ -42,7 +42,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = siteMetadata;
 
-const jsonLd = {
+const organizationJsonLd = {
 	'@context': 'https://schema.org',
 	'@type': 'Organization',
 	'@id': 'https://artiefy.com/#organization',
@@ -59,20 +59,31 @@ const jsonLd = {
 		'https://twitter.com/artiefy',
 		'https://instagram.com/artiefy',
 	],
-	subOrganization: {
-		'@type': 'EducationalOrganization',
-		name: 'Artiefy Learning Platform',
-		description:
-			'Plataforma de aprendizaje innovadora para estudiantes y profesores, especializada en ciencia y tecnología.',
+};
+
+const educationalOrgJsonLd = {
+	'@context': 'https://schema.org',
+	'@type': 'EducationalOrganization',
+	'@id': 'https://artiefy.com/#educational',
+	name: 'Artiefy Learning Platform',
+	parentOrganization: {
+		'@id': 'https://artiefy.com/#organization',
 	},
+	description:
+		'Plataforma de aprendizaje innovadora para estudiantes y profesores, especializada en ciencia y tecnología.',
 	offers: {
-		'@type': 'AggregateOffer',
-		priceCurrency: 'COP',
+		'@type': 'Offer',
+		'@id': 'https://artiefy.com/#membership',
+		name: 'Membresía Artiefy',
+		category: 'Subscription',
 		availability: 'https://schema.org/InStock',
-		offerCount: '3',
-		priceSpecification: {
-			'@type': 'PriceSpecification',
-			valueAddedTaxIncluded: true,
+		priceCurrency: 'COP',
+		aggregateOffer: {
+			'@type': 'AggregateOffer',
+			priceCurrency: 'COP',
+			offerCount: '3',
+			highPrice: '99900',
+			lowPrice: '29900',
 		},
 	},
 };
@@ -92,10 +103,18 @@ export default function RootLayout({
 					<meta name="robots" content="index, follow" />
 					<link rel="canonical" href="https://artiefy.com" />
 					<Script
-						id="json-ld"
+						id="organization-jsonld"
 						type="application/ld+json"
 						dangerouslySetInnerHTML={{
-							__html: JSON.stringify(jsonLd),
+							__html: JSON.stringify(organizationJsonLd),
+						}}
+						strategy="afterInteractive"
+					/>
+					<Script
+						id="educational-jsonld"
+						type="application/ld+json"
+						dangerouslySetInnerHTML={{
+							__html: JSON.stringify(educationalOrgJsonLd),
 						}}
 						strategy="afterInteractive"
 					/>
