@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 
 import { FiUpload, FiDownload, FiX } from 'react-icons/fi';
 

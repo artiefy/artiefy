@@ -123,9 +123,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 				</button>
 
 				{isOpen && isSignedIn && (
-					<div className="chat-modal">
+					<div className="chat-modal animate-in slide-in-from-bottom-5 fixed right-4 bottom-24 duration-300">
 						<div
-							className="chat-container"
+							className="chat-container w-80 rounded-lg border border-gray-200 bg-white shadow-lg"
 							role="dialog"
 							aria-modal="true"
 							aria-labelledby="modal-title"

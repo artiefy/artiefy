@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, createElement } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -114,7 +114,7 @@ const PlansPage: React.FC = () => {
 												<h3 className="text-2xl font-bold text-background">
 													{plan.name}
 												</h3>
-												{React.createElement(
+												{createElement(
 													plan.icon as React.ComponentType<{
 														className: string;
 													}>,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Interfaz para los parámetros
 export interface Parametros {
@@ -19,12 +19,12 @@ interface SelectParametroProps {
 	selectedColor: string;
 }
 
-const SelectParametro: React.FC<SelectParametroProps> = ({
+const SelectParametro = ({
 	courseId,
 	parametro,
 	onParametroChange,
 	selectedColor,
-}) => {
+}: SelectParametroProps) => {
 	const [parametros, setParametros] = useState<Parametros[]>([]); // Estado para los parámetros
 	const [isLoading, setIsLoading] = useState(true); // Estado para el estado de carga
 

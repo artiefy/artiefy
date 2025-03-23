@@ -2,8 +2,6 @@
 
 'use client';
 
-import React from 'react';
-
 import { Button } from '~/components/estudiantes/ui/button'; // Asegúrate de tener el componente de Button
 import {
 	removeRoleWrapper,

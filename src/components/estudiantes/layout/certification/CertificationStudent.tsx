@@ -1,9 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import '~/styles/confetti.css';
-
 import Link from 'next/link';
+import '~/styles/confetti.css';
 
 import { useUser } from '@clerk/nextjs';
 import { FaDownload } from 'react-icons/fa';
@@ -56,7 +55,7 @@ export function CertificationStudent({
 					{/* Certificate Content */}
 					<div className="relative z-10">
 						{/* Logo Artiefy en esquina superior izquierda */}
-						<div className="absolute -mt-3 left-8">
+						<div className="absolute left-8 -mt-3">
 							<Image
 								src="/artiefy-logo2.png"
 								alt="Artiefy Logo"
@@ -128,8 +127,8 @@ export function CertificationStudent({
 											<p className="text-sm text-gray-600">Verificado en:</p>
 											<Link
 												href={certificateUrl}
-                        className="text-sm text-blue-500 hover:underline inline-block max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
-                        >
+												className="inline-block max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-blue-500 hover:underline"
+											>
 												{certificateUrl}
 											</Link>
 										</div>

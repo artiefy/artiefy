@@ -78,10 +78,6 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 
 ---
 
-## Limpiar caché de Next.js
-
----
-
 ### **Comandos Generales de TypeScript y ESlint**
 
 1. `Eslint: Restart ESlint Server`: Reinicia el servidor de ESlint.
@@ -183,7 +179,8 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 Tutorial Para analisar tus dependecias :
 
 1. `npm install -g depcheck`
-2. `depcheck --ignores="@types/*,next,react,react-dom,typescript,@clerk/nextjs,react-icons" --parsers="*.ts:typescript,*.tsx:typescript"`
+2. `npm install -g depcheck typescript`
+3. `depcheck --ignores="@types/*,next,react,react-dom,typescript,@clerk/nextjs,react-icons" --parsers="*.ts:typescript,*.tsx:typescript"`
 
 ---
 
@@ -193,5 +190,3 @@ Borra los datos en:
 Windows: `C:\Users\TU_USUARIO\AppData\Roaming\Code`
 
 ---
-
--DevExpert45*

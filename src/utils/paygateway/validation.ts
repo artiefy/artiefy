@@ -11,8 +11,8 @@ export function validateFormData(
 ): ValidationErrors {
 	const errors: ValidationErrors = {};
 
-	// Ensure the telephone number follows the structure +00 0000000000
-	const phonePattern = /^\+57\s3\d{9}$/;
+	// Validar número telefónico: +XX XXXXXXXXXX (donde X son dígitos y el código de país puede ser 1-3 dígitos)
+	const phonePattern = /^\+\d{1,3}\s\d{10}$/;
 
 	if (!phonePattern.test(telephone)) {
 		errors.telephone = 'Formato de teléfono inválido. Debe ser +00 0000000000.';

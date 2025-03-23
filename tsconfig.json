@@ -40,7 +40,13 @@
         "name": "next"
       }
     ],
-    "types": ["@types/jquery"]  // Cambiado a @types/jquery
+    // Actualizar types para incluir todas las dependencias necesarias
+    "types": [
+      "node",
+      "react",
+      "react-dom",
+      "next"
+    ]
   },
   "include": [
     "src/**/*.ts",
