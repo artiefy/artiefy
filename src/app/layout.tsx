@@ -63,6 +63,8 @@ const organizationJsonLd: WithContext<EducationalOrganization> = {
 		'@type': 'PostalAddress',
 		addressLocality: 'Cali',
 		addressRegion: 'Valle Del Cauca',
+		postalCode: '760001',
+		streetAddress: 'Calle 44 Norte #2E-120',
 		addressCountry: {
 			'@type': 'Country',
 			name: 'CO',
