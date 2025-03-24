@@ -118,6 +118,15 @@ const websiteJsonLd: WithContext<WebSite> = {
 	},
 	potentialAction: [
 		{
+			'@type': 'SearchAction',
+			target: {
+				'@type': 'EntryPoint',
+				urlTemplate:
+					'https://artiefy.com/estudiantes?query={search_term_string}',
+			},
+			query: 'search_term_string',
+		},
+		{
 			'@type': 'ViewAction',
 			target: [
 				{
