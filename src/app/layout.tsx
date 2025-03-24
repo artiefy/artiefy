@@ -6,6 +6,11 @@ import { esMX } from '@clerk/localizations';
 import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import {
+	type EducationalOrganization,
+	type WebSite,
+	type WithContext,
+} from 'schema-dts';
 
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { metadata as siteMetadata } from '~/lib/metadata';
@@ -42,7 +47,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = siteMetadata;
 
-const organizationJsonLd = {
+const organizationJsonLd: WithContext<EducationalOrganization> = {
 	'@context': 'https://schema.org',
 	'@type': 'EducationalOrganization',
 	'@id': 'https://artiefy.com/#organization',
@@ -50,17 +55,20 @@ const organizationJsonLd = {
 	url: 'https://artiefy.com',
 	logo: {
 		'@type': 'ImageObject',
-		url: '/artiefy-icon.png',
-		width: '512',
-		height: '512',
+		url: 'https://artiefy.com/artiefy-icon.png',
 	},
 	description:
 		'Plataforma educativa colombiana especializada en programas y cursos de tecnología y ciencias.',
 	address: {
 		'@type': 'PostalAddress',
-		addressCountry: 'CO',
-		addressLocality: 'Cali, Valle Del Cauca',
+		addressLocality: 'Cali',
+		addressRegion: 'Valle Del Cauca',
+		addressCountry: {
+			'@type': 'Country',
+			name: 'CO',
+		},
 	},
+	email: 'contacto@artiefy.com',
 	sameAs: [
 		'https://facebook.com/artiefy',
 		'https://twitter.com/artiefy',
@@ -74,22 +82,33 @@ const organizationJsonLd = {
 				'@type': 'Offer',
 				name: 'Plan Pro',
 				description: 'Acceso a cursos y programas seleccionados',
+				price: '100000',
+				priceCurrency: 'COP',
 			},
 			{
 				'@type': 'Offer',
 				name: 'Plan Premium',
 				description: 'Acceso completo a todos los cursos y programas',
+				price: '150000',
+				priceCurrency: 'COP',
+			},
+			{
+				'@type': 'Offer',
+				name: 'Plan Enterprise',
+				description: 'Solución completa para empresas',
+				price: '200000',
+				priceCurrency: 'COP',
 			},
 		],
 	},
 };
 
-const websiteJsonLd = {
+const websiteJsonLd: WithContext<WebSite> = {
 	'@context': 'https://schema.org',
 	'@type': 'WebSite',
 	'@id': 'https://artiefy.com/#website',
 	url: 'https://artiefy.com',
-	name: 'Artiefy',
+	name: 'Artiefy - Plataforma Educativa',
 	description:
 		'Plataforma educativa colombiana especializada en programas y cursos de tecnología y ciencias.',
 	publisher: {
@@ -98,7 +117,16 @@ const websiteJsonLd = {
 	potentialAction: [
 		{
 			'@type': 'ViewAction',
-			target: ['https://artiefy.com/planes', 'https://artiefy.com/estudiantes'],
+			target: [
+				{
+					'@type': 'EntryPoint',
+					urlTemplate: 'https://artiefy.com/planes',
+				},
+				{
+					'@type': 'EntryPoint',
+					urlTemplate: 'https://artiefy.com/estudiantes',
+				},
+			],
 		},
 	],
 };
