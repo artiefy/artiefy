@@ -145,6 +145,14 @@ export default function RootLayout({
 				className={`${montserrat.variable} ${merriweather.variable}`}
 			>
 				<head>
+					<meta
+						name="robots"
+						content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+					/>
+					<meta
+						name="keywords"
+						content="cursos online, educación tecnología, programación, ciencias, Colombia, plataforma educativa"
+					/>
 					<meta name="robots" content="index, follow" />
 					<meta
 						name="google-site-verification"
