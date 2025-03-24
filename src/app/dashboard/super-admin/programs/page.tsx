@@ -4,6 +4,31 @@ import { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
+import {
+	PiCodeBold,
+	PiDatabaseBold,
+	PiGameControllerBold,
+	PiShieldCheckBold,
+	PiWindBold,
+	PiComputerTowerBold,
+	PiCalculatorBold,
+	PiAtomBold,
+	PiPaintBrushBold,
+	PiMegaphoneBold,
+	PiBrainBold,
+	PiCloudBold,
+	PiGlobeBold,
+	PiBrowserBold,
+	PiCodeSimpleBold,
+	PiDeviceMobileBold,
+	PiRobotBold,
+	PiAppWindowBold,
+	PiSunBold,
+	PiBooksBold,
+	PiScissorsBold,
+	PiChartLineUpBold,
+	PiGraduationCapBold,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 
 import {
@@ -379,6 +404,35 @@ export default function Page() {
 		);
 	}
 
+	// Add this helper function to get icon by category
+	const getCategoryIcon = (categoryName: string) => {
+		const icons: Record<string, React.ReactNode> = {
+			Redes: <PiCloudBold className="size-5" />,
+			APIs: <PiGlobeBold className="size-5" />,
+			'Análisis de Datos': <PiChartLineUpBold className="size-5" />,
+			Videojuegos: <PiGameControllerBold className="size-5" />,
+			Seguridad: <PiShieldCheckBold className="size-5" />,
+			'Frameworks Web': <PiWindBold className="size-5" />,
+			Tecnología: <PiComputerTowerBold className="size-5" />,
+			Matemáticas: <PiCalculatorBold className="size-5" />,
+			Ciencias: <PiAtomBold className="size-5" />,
+			Diseño: <PiPaintBrushBold className="size-5" />,
+			Marketing: <PiMegaphoneBold className="size-5" />,
+			'Machine Learning': <PiBrainBold className="size-5" />,
+			'Bases de Datos': <PiDatabaseBold className="size-5" />,
+			'Desarrollo Web': <PiBrowserBold className="size-5" />,
+			Programación: <PiCodeBold className="size-5" />,
+			'Desarrollo Móvil': <PiDeviceMobileBold className="size-5" />,
+			'Inteligencia Artificial': <PiRobotBold className="size-5" />,
+			'Desarrollo de Software': <PiAppWindowBold className="size-5" />,
+			'Energía Solar': <PiSunBold className="size-5" />,
+			Humanidades: <PiBooksBold className="size-5" />,
+			Cosmetología: <PiScissorsBold className="size-5" />,
+			Emprendimiento: <PiChartLineUpBold className="size-5" />,
+		};
+		return icons[categoryName] ?? <PiCodeBold className="size-5" />;
+	};
+
 	// Renderizado de la vista
 	return (
 		<>
@@ -443,44 +497,56 @@ export default function Page() {
 					</div>
 				</div>
 
-				{/* Featured Categories - New Design */}
-				<div className="mb-6">
+				{/* Featured Categories - New Design with Icons */}
+				<div className="mb-8 overflow-hidden rounded-lg p-4 shadow-md">
 					<div className="flex flex-wrap gap-3">
 						<button
 							onClick={() => setCategoryFilter('')}
-							className={`rounded-full px-6 py-2 text-sm font-medium transition-all duration-300 ${
+							className={`group flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
 								!categoryFilter
-									? 'scale-105 bg-primary text-white shadow-lg'
-									: 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
+									? 'scale-105 bg-gradient-to-r from-[#3AF4EF] to-[#01142B] text-white shadow-lg'
+									: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
 							}`}
 						>
-							Todas
+							<PiGraduationCapBold className="size-5" />
+							<span>Todas</span>
 						</button>
+
 						{categories
 							.filter((category) =>
 								programs.some((p) => p.categoryid === category.id)
 							)
-							.map((category) => (
-								<button
-									key={category.id}
-									onClick={() => setCategoryFilter(category.id.toString())}
-									className={`rounded-full px-6 py-2 text-sm font-medium transition-all duration-300 ${
-										categoryFilter === category.id.toString()
-											? 'scale-105 bg-primary text-white shadow-lg'
-											: 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
-									}`}
-								>
-									{category.name}
-									<span className="ml-2 text-xs opacity-75">
-										(
-										{
-											programs.filter((p) => p.categoryid === category.id)
-												.length
-										}
-										)
-									</span>
-								</button>
-							))}
+							.map((category) => {
+								const isSelected = categoryFilter === category.id.toString();
+								const programCount = programs.filter(
+									(p) => p.categoryid === category.id
+								).length;
+
+								return (
+									<button
+										key={category.id}
+										onClick={() => setCategoryFilter(category.id.toString())}
+										className={`group relative flex items-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
+											isSelected
+												? 'scale-105 bg-gradient-to-r from-[#3AF4EF] to-[#01142B] text-white shadow-lg'
+												: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
+										}`}
+									>
+										{getCategoryIcon(category.name)}
+										<span className="relative z-10">
+											{category.name}
+											<span
+												className={`ml-2 text-xs ${isSelected ? 'text-white' : 'text-gray-500'}`}
+											>
+												({programCount})
+											</span>
+										</span>
+										{isSelected && (
+											<span className="absolute inset-0 animate-pulse bg-white/10" />
+										)}
+									</button>
+								);
+							})}
 					</div>
 				</div>
 
