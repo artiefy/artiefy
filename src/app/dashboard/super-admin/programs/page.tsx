@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
-
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
 
@@ -336,18 +335,22 @@ export default function Page() {
 			// Refresh programs list
 			const programsData = await getPrograms();
 			setPrograms(
-				programsData.map((program): ProgramModel => ({
-					id: program.id ?? 0,
-					title: program.title ?? '',
-					description: program.description ?? '',
-					categoryid: program.categoryid ?? 0,
-					createdAt: typeof program.createdAt === 'string'
-						? program.createdAt
-						: program.createdAt?.toISOString() ?? new Date().toISOString(),
-					coverImageKey: program.coverImageKey ?? '',
-					creatorId: program.creatorId ?? '',
-					rating: program.rating ?? 0,
-				}))
+				programsData.map(
+					(program): ProgramModel => ({
+						id: program.id ?? 0,
+						title: program.title ?? '',
+						description: program.description ?? '',
+						categoryid: program.categoryid ?? 0,
+						createdAt:
+							typeof program.createdAt === 'string'
+								? program.createdAt
+								: (program.createdAt?.toISOString() ??
+									new Date().toISOString()),
+						coverImageKey: program.coverImageKey ?? '',
+						creatorId: program.creatorId ?? '',
+						rating: program.rating ?? 0,
+					})
+				)
 			);
 		} catch (error) {
 			toast.error('Error al eliminar los programas');
@@ -487,6 +490,7 @@ export default function Page() {
 					onDeleteProgram={(programId) => {
 						console.log(`Program with id ${programId} deleted`);
 					}}
+					categories={categories} // Add this line
 				/>
 
 				{isModalOpen && (

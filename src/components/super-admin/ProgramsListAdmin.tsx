@@ -13,7 +13,6 @@ import {
 	CardTitle,
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
-
 import { Checkbox } from '~/components/estudiantes/ui/checkbox';
 
 export interface Program {
@@ -36,6 +35,7 @@ interface ProgramListAdminProps {
 	onDeleteProgram: (id: number) => void;
 	selectedPrograms: number[];
 	onToggleSelection: (id: number) => void;
+	categories: { id: number; name: string }[]; // Add this line
 }
 
 export default function ProgramListAdmin({
@@ -43,7 +43,14 @@ export default function ProgramListAdmin({
 	onEditProgram,
 	selectedPrograms,
 	onToggleSelection,
+	categories, // Add this line
 }: ProgramListAdminProps) {
+	// Add this helper function
+	const getCategoryName = (categoryId: number) => {
+		const category = categories.find(c => c.id === categoryId);
+		return category?.name ?? 'Sin categoría';
+	};
+
 	return (
 		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
 			{programs.map((program) => (
@@ -79,12 +86,12 @@ export default function ProgramListAdmin({
 								<div className="font-bold text-primary">{program.title}</div>
 							</CardTitle>
 							<div className="flex items-center">
-								Categoria id:
+								Categoría:
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"
 								>
-									{program.categoryid}
+									{getCategoryName(program.categoryid)}
 								</Badge>
 							</div>
 							<p className="line-clamp-2 text-sm text-gray-300">
