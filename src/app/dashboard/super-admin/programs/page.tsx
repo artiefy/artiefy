@@ -443,6 +443,47 @@ export default function Page() {
 					</div>
 				</div>
 
+				{/* Featured Categories - New Design */}
+				<div className="mb-6">
+					<div className="flex flex-wrap gap-3">
+						<button
+							onClick={() => setCategoryFilter('')}
+							className={`rounded-full px-6 py-2 text-sm font-medium transition-all duration-300 ${
+								!categoryFilter
+									? 'scale-105 bg-primary text-white shadow-lg'
+									: 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
+							}`}
+						>
+							Todas
+						</button>
+						{categories
+							.filter((category) =>
+								programs.some((p) => p.categoryid === category.id)
+							)
+							.map((category) => (
+								<button
+									key={category.id}
+									onClick={() => setCategoryFilter(category.id.toString())}
+									className={`rounded-full px-6 py-2 text-sm font-medium transition-all duration-300 ${
+										categoryFilter === category.id.toString()
+											? 'scale-105 bg-primary text-white shadow-lg'
+											: 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-100'
+									}`}
+								>
+									{category.name}
+									<span className="ml-2 text-xs opacity-75">
+										(
+										{
+											programs.filter((p) => p.categoryid === category.id)
+												.length
+										}
+										)
+									</span>
+								</button>
+							))}
+					</div>
+				</div>
+
 				<AlertDialog
 					open={showDeleteConfirm}
 					onOpenChange={setShowDeleteConfirm}
