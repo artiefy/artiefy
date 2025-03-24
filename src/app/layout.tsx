@@ -144,7 +144,13 @@ export default function RootLayout({
 			>
 				<head>
 					<meta name="robots" content="index, follow" />
+					<meta
+						name="google-site-verification"
+						content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
+					/>
 					<link rel="canonical" href="https://artiefy.com" />
+					<meta property="og:type" content="website" />
+					<meta property="og:site_name" content="Artiefy" />
 					<Script
 						id="organization-jsonld"
 						type="application/ld+json"
