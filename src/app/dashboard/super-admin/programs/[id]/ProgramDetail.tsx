@@ -361,6 +361,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				await fetch(uploadData.url, { method: 'POST', body: formData });
 			}
 
+			const selectedEducator = educators.find((ed) => ed.id === instructor);
+			const instructorName = selectedEducator ? selectedEducator.name : '';
+
 			const response = await fetch('/api/educadores/courses/cursoMateria', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -371,7 +374,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					fileName,
 					categoryid,
 					modalidadesid,
-					instructor,
+					instructor: instructorName, // Aquí enviamos el nombre en lugar del ID
 					creatorId: user.id,
 					nivelid,
 					rating,
@@ -427,7 +430,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				});
 
 				toast.success('Curso(s) creado(s) con éxito', {
-					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData.map((r) => r.id).join(', ')}`,
+					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData
+						.map((r) => r.id)
+						.join(', ')}`,
 				});
 				await fetchProgram(); // 🔥 refresca los cursos
 				setSubjects([]); // limpiar las materias en el estado
@@ -442,7 +447,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		} catch (error) {
 			console.error('Error during course creation:', error);
 			toast.error('Error', {
-				description: `Error during course creation: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				description: `Error during course creation: ${
+					error instanceof Error ? error.message : 'Unknown error'
+				}`,
 			});
 		} finally {
 			setUploading(false);

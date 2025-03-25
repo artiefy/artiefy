@@ -10,7 +10,6 @@ import {
 	updateCourse,
 	getModalidadById,
 } from '~/models/educatorsModels/courseModelsEducator';
-import { getInstructorNameById } from '~/server/queries/queries';
 
 export async function GET(
 	request: Request,
@@ -34,14 +33,8 @@ export async function GET(
 			);
 		}
 
-		// Fetch instructor name
-		const instructorName = await getInstructorNameById(course.instructor);
-
-		// Return course with instructor name
-		return NextResponse.json({
-			...course,
-			instructorName,
-		});
+		// Return course directly without modifying the instructor name
+		return NextResponse.json(course);
 	} catch (error) {
 		console.error('Error al obtener el curso:', error);
 		return NextResponse.json(
