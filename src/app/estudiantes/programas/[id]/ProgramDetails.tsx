@@ -168,8 +168,8 @@ export default function ProgramDetails({
 					isEnrolling={isEnrolling}
 					isUnenrolling={isUnenrolling}
 					isSubscriptionActive={isSubscriptionActive}
-					onEnroll={handleEnroll}
-					onUnenroll={handleUnenroll}
+					onEnrollAction={handleEnroll}
+					onUnenrollAction={handleUnenroll}
 					subscriptionEndDate={
 						(user?.publicMetadata?.subscriptionEndDate as string) ?? null
 					}

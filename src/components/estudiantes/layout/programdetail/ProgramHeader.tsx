@@ -29,8 +29,8 @@ interface ProgramHeaderProps {
 	isUnenrolling: boolean;
 	isSubscriptionActive: boolean;
 	subscriptionEndDate: string | null;
-	onEnroll: () => Promise<void>;
-	onUnenroll: () => Promise<void>;
+	onEnrollAction: () => Promise<void>;
+	onUnenrollAction: () => Promise<void>;
 	isCheckingEnrollment: boolean; // Add this prop
 }
 
@@ -41,8 +41,8 @@ export function ProgramHeader({
 	isUnenrolling,
 	isSubscriptionActive,
 	subscriptionEndDate: _subscriptionEndDate, // Change here: rename in destructuring
-	onEnroll,
-	onUnenroll,
+	onEnrollAction,
+	onUnenrollAction,
 	isCheckingEnrollment, // Add this to destructuring
 }: ProgramHeaderProps) {
 	const { user, isSignedIn } = useUser(); // Add isSignedIn
@@ -156,7 +156,7 @@ export function ProgramHeader({
 					<div className="relative h-32 w-64">
 						{!isSignedIn ? (
 							<Button
-								onClick={onEnroll}
+								onClick={onEnrollAction}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95"
 							>
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
@@ -175,7 +175,7 @@ export function ProgramHeader({
 								</Button>
 								<Button
 									className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-									onClick={onUnenroll}
+									onClick={onUnenrollAction}
 									disabled={isUnenrolling}
 								>
 									{isUnenrolling ? (
@@ -187,7 +187,7 @@ export function ProgramHeader({
 							</div>
 						) : (
 							<Button
-								onClick={onEnroll}
+								onClick={onEnrollAction}
 								disabled={isEnrolling || !canEnroll}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
