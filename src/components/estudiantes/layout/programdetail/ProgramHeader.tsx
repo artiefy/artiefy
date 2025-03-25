@@ -188,23 +188,34 @@ export function ProgramHeader({
 						) : (
 							<Button
 								onClick={onEnrollAction}
-								disabled={isEnrolling || !canEnroll}
+								disabled={isEnrolling || !canEnroll || isCheckingEnrollment}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
 								<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 									<div className="relative z-10 flex items-center justify-center space-x-2">
-										{isEnrolling ? (
-											<Icons.spinner
-												className="animate-spin text-white"
-												style={{ width: '25px', height: '25px' }}
-											/>
+										{isCheckingEnrollment ? (
+											<>
+												<Icons.spinner
+													className="animate-spin text-white"
+													style={{ width: '20px', height: '20px' }}
+												/>
+												<span>Cargando...</span>
+											</>
+										) : isEnrolling ? (
+											<>
+												<Icons.spinner
+													className="animate-spin text-white"
+													style={{ width: '25px', height: '25px' }}
+												/>
+												<span>Inscribiendo al programa...</span>
+											</>
 										) : (
 											<>
 												<span className="transition-all duration-500 group-hover:translate-x-1">
 													{!canEnroll
 														? 'Requiere Plan Premium'
-														: 'Inscribirse al programa'}
+														: 'Inscribirse al Programa'}
 												</span>
 												<svg
 													className="size-6 transition-transform duration-500 group-hover:translate-x-1"

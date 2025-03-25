@@ -103,19 +103,8 @@ export default function ProgramDetails({
 			return;
 		}
 
-		// Verificar suscripción antes de intentar inscribirse
-		const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-		const planType = user?.publicMetadata?.planType;
-		const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-			| string
-			| null;
-
-		const isSubscriptionValid =
-			subscriptionStatus === 'active' &&
-			planType === 'Premium' &&
-			(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
-
-		if (!isSubscriptionValid) {
+		// Simplificar la verificación usando isSubscriptionActive
+		if (!isSubscriptionActive) {
 			toast.error('Se requiere plan Premium activo', {
 				description:
 					'Necesitas una suscripción Premium activa para inscribirte.',

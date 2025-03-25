@@ -4,7 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { users, enrollmentPrograms } from '~/server/db/schema';
+import { enrollmentPrograms } from '~/server/db/schema';
 
 export async function enrollInProgram(
 	programId: number
@@ -19,19 +19,26 @@ export async function enrollInProgram(
 			};
 		}
 
-		const userId = user.id;
+		// Verificar el estado de la suscripción directamente desde los metadatos de Clerk
+		const subscriptionStatus = user.publicMetadata?.subscriptionStatus;
+		const planType = user.publicMetadata?.planType;
+		const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as
+			| string
+			| null;
 
-		// Verificar si el usuario tiene un plan premium
-		const dbUser = await db.query.users.findFirst({
-			where: eq(users.id, userId),
-		});
+		const isSubscriptionValid =
+			subscriptionStatus === 'active' &&
+			planType === 'Premium' &&
+			(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
 
-		if (!dbUser?.subscriptionStatus || dbUser.subscriptionStatus !== 'active') {
+		if (!isSubscriptionValid) {
 			return {
 				success: false,
 				message: 'Se requiere una suscripción premium activa',
 			};
 		}
+
+		const userId = user.id;
 
 		// Verificar si ya está inscrito
 		const existingEnrollment = await db.query.enrollmentPrograms.findFirst({
