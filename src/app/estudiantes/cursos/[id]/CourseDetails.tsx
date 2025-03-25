@@ -220,10 +220,24 @@ export default function CourseDetails({
 		setIsEnrolled(enrolled);
 	};
 
+	// Modificar cómo obtenemos la información del programa
+	const programInfo =
+		course.materias?.find((m) => m.programa)?.programa ?? null;
+
 	return (
 		<div className="min-h-screen bg-background">
 			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
-				<CourseBreadcrumb title={course.title} />
+				<CourseBreadcrumb
+					title={course.title}
+					programInfo={
+						programInfo
+							? {
+									id: programInfo.id.toString(),
+									title: programInfo.title,
+								}
+							: null
+					}
+				/>
 				<CourseHeader
 					course={course}
 					totalStudents={totalStudents}

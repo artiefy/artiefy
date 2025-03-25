@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 import { ProgramHeader } from '~/components/estudiantes/layout/programdetail/ProgramHeader';
 // Remove ProgramContent import since it's used in ProgramHeader
+import { ProgramsBreadcrumbs } from '~/components/estudiantes/layout/programdetail/ProgramsBreadcrumbs';
 import {
 	enrollInProgram,
 	isUserEnrolledInProgram,
@@ -151,6 +152,7 @@ export default function ProgramDetails({
 	return (
 		<div className="min-h-screen bg-background">
 			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
+				<ProgramsBreadcrumbs title={program.title} />
 				<ProgramHeader
 					program={program}
 					isEnrolled={isEnrolled}

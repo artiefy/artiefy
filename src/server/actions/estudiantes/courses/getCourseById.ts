@@ -24,7 +24,12 @@ export async function getCourseById(
 					},
 				},
 				enrollments: true,
-				materias: true, // Añadir esta línea para incluir las materias
+				materias: {
+					with: {
+						programa: true, // Asegurarse de incluir la información del programa
+						curso: true,
+					},
+				},
 				courseType: true, // Add this relation
 			},
 		});
@@ -93,6 +98,12 @@ export async function getCourseById(
 				title: materia.title,
 				description: materia.description,
 				programaId: materia.programaId ?? null,
+				programa: materia.programa
+					? {
+							id: materia.programa.id.toString(),
+							title: materia.programa.title,
+						}
+					: undefined,
 				courseid: materia.courseid,
 				totalStudents: 0, // Default value
 				lessons: [], // Default empty array

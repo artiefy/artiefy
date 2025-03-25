@@ -64,6 +64,10 @@ export interface CourseMateria {
 	title: string;
 	description: string | null;
 	programaId: number | null; // Changed to allow null
+	programa?: {
+		id: number | string;
+		title: string;
+	};
 	courseid: number | null; // Changed from number to number | null to match DB schema
 	totalStudents?: number; // Made optional
 	lessons?: Lesson[]; // Made optional

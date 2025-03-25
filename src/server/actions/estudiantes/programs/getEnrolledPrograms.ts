@@ -10,6 +10,10 @@ interface Program {
 	id: number;
 	title: string;
 	coverImageKey: string | null;
+	category: {
+		name: string;
+	} | null;
+	rating: number;
 }
 
 export async function getEnrolledPrograms(): Promise<Program[]> {
@@ -22,7 +26,11 @@ export async function getEnrolledPrograms(): Promise<Program[]> {
 	const enrollments = await db.query.enrollmentPrograms.findMany({
 		where: eq(enrollmentPrograms.userId, user.id),
 		with: {
-			programa: true,
+			programa: {
+				with: {
+					category: true,
+				},
+			},
 		},
 	});
 
@@ -30,5 +38,11 @@ export async function getEnrolledPrograms(): Promise<Program[]> {
 		id: enrollment.programa.id,
 		title: enrollment.programa.title,
 		coverImageKey: enrollment.programa.coverImageKey,
+		category: enrollment.programa.category
+			? {
+					name: enrollment.programa.category.name,
+				}
+			: null,
+		rating: enrollment.programa.rating ?? 0,
 	}));
 }

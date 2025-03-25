@@ -2,9 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { BookOpenIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, StarIcon } from '@heroicons/react/24/outline';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
+import { Badge } from '~/components/estudiantes/ui/badge';
 import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 import { getEnrolledPrograms } from '~/server/actions/estudiantes/programs/getEnrolledPrograms';
 
@@ -19,10 +20,15 @@ const getImageUrl = (coverImageKey: string | null): string => {
 	return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd();
 };
 
+// Update the Program interface
 interface Program {
 	id: number;
 	title: string;
 	coverImageKey: string | null;
+	category: {
+		name: string;
+	} | null;
+	rating: number;
 }
 
 export default async function MyCoursesStudent() {
@@ -95,9 +101,34 @@ export default async function MyCoursesStudent() {
 									</div>
 									<CardContent className="flex w-full flex-col justify-between px-4 py-3">
 										<div>
-											<h3 className="text-lg font-bold text-primary">
-												{program.title}
-											</h3>
+											<div className="flex items-center justify-between">
+												<h3 className="text-lg font-bold text-primary">
+													{program.title}
+												</h3>
+												<div className="flex items-center">
+													{Array.from({ length: 5 }).map((_, index) => (
+														<StarIcon
+															key={index}
+															className={`h-4 w-4 ${
+																index < Math.floor(program.rating ?? 0)
+																	? 'text-yellow-400'
+																	: 'text-gray-300'
+															}`}
+														/>
+													))}
+													<span className="ml-2 text-sm font-semibold text-yellow-400">
+														{program.rating?.toFixed(1) ?? '0.0'}
+													</span>
+												</div>
+											</div>
+											{program.category && (
+												<Badge
+													variant="outline"
+													className="mt-2 w-fit border-primary bg-background text-primary hover:bg-black/70"
+												>
+													{program.category.name}
+												</Badge>
+											)}
 										</div>
 										<Button asChild className="mt-4 w-fit shrink-0">
 											<Link
