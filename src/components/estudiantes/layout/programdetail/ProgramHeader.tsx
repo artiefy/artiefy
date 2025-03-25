@@ -208,7 +208,6 @@ export function ProgramHeader({
 													className="animate-spin text-white"
 													style={{ width: '25px', height: '25px' }}
 												/>
-												<span>Inscribiendo al programa...</span>
 											</>
 										) : (
 											<>
