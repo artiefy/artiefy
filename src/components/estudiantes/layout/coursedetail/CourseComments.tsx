@@ -223,11 +223,6 @@ export default function CourseComments({
 		);
 	}
 
-	// No renderizar nada si no está inscrito
-	if (!isEnrolled) {
-		return null;
-	}
-
 	return (
 		<div className="mt-8">
 			<h2 className="mb-4 text-2xl font-bold">Deja un comentario</h2>

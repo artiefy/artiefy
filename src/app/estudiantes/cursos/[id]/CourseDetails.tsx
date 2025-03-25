@@ -254,16 +254,12 @@ export default function CourseDetails({
 				/>
 
 				<div className="mt-8 space-y-8">
-					{isEnrolled && (
-						<>
-							<CourseComments
-								courseId={course.id}
-								isEnrolled={isEnrolled}
-								onEnrollmentChange={handleEnrollmentChange}
-							/>
-							<CourseChatbot isEnrolled={isEnrolled} />
-						</>
-					)}
+					<CourseComments
+						courseId={course.id}
+						isEnrolled={isEnrolled}
+						onEnrollmentChange={handleEnrollmentChange}
+					/>
+					{isEnrolled && <CourseChatbot isEnrolled={isEnrolled} />}
 				</div>
 			</main>
 		</div>
