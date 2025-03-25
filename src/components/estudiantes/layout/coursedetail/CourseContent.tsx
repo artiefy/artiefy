@@ -310,13 +310,13 @@ export function CourseContent({
 					Contenido del curso
 				</h2>
 				<div className="mt-6 flex flex-col items-end gap-2">
-					{isSubscriptionActive && (
+					{isSubscriptionActive && isEnrolled && (
 						<div className="flex items-center gap-2 text-green-500">
 							<FaCheck className="size-4" />
 							<span className="font-medium">Suscripción Activa</span>
 						</div>
 					)}
-					{isSubscriptionActive && subscriptionEndDate && (
+					{isSubscriptionActive && subscriptionEndDate && isEnrolled && (
 						<p className="text-sm text-red-500">
 							Finaliza: {formatDate(subscriptionEndDate)}
 						</p>
