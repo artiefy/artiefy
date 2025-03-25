@@ -72,6 +72,13 @@ interface ProgramData extends ProgramModel {
 
 export type Program = Partial<ProgramModel>;
 
+// Add this interface near the top with other interfaces
+interface Category {
+	id: number;
+	name: string;
+	is_featured: boolean;
+}
+
 // Define el modelo de datos de los parámetros de evaluación
 export function LoadingPrograms() {
 	return (
@@ -100,9 +107,8 @@ export default function Page() {
 		// no hacemos nada, solo para "usarlo"
 	}
 
-	const [categories, setCategories] = useState<{ id: number; name: string }[]>(
-		[]
-	);
+	// Update the state definition to use the new interface
+	const [categories, setCategories] = useState<Category[]>([]);
 	const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -146,10 +152,8 @@ export default function Page() {
 				const categoriesResponse = await fetch('/api/super-admin/categories');
 				if (!categoriesResponse.ok)
 					throw new Error('Error obteniendo categorías');
-				const categoriesData = (await categoriesResponse.json()) as {
-					id: number;
-					name: string;
-				}[];
+				// Update the type assertion for categoriesData
+				const categoriesData = (await categoriesResponse.json()) as Category[];
 				setCategories(categoriesData);
 			} catch (error) {
 				console.error('❌ Error cargando datos:', error);
@@ -513,8 +517,9 @@ export default function Page() {
 						</button>
 
 						{categories
-							.filter((category) =>
-								programs.some((p) => p.categoryid === category.id)
+							.filter(
+								(category) =>
+									category.is_featured 
 							)
 							.map((category) => {
 								const isSelected = categoryFilter === category.id.toString();

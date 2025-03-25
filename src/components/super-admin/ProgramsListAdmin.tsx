@@ -86,7 +86,6 @@ export default function ProgramListAdmin({
 								<div className="font-bold text-primary">{program.title}</div>
 							</CardTitle>
 							<div className="flex items-center">
-								Categoría:
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"

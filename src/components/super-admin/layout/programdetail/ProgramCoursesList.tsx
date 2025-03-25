@@ -60,7 +60,6 @@ const ProgramCoursesList: React.FC<ProgramCoursesListProps> = ({ courses }) => {
 								<div className="font-bold text-primary">{course.title}</div>
 							</CardTitle>
 							<div className="flex items-center">
-								Categoria:
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"
