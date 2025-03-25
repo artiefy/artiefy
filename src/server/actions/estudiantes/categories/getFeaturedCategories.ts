@@ -23,7 +23,7 @@ export const getFeaturedCategories = unstable_cache(
 				})
 				.from(categories)
 				.leftJoin(courses, eq(categories.id, courses.categoryid))
-				.where(eq(categories.is_featured, true))
+				.where(eq(categories.is_featured, true)) // Asegurarse de que solo se obtengan categorías destacadas
 				.groupBy(categories.id)
 				.limit(Number(limit));
 
