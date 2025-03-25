@@ -72,7 +72,6 @@
 	--animate-bounce-up-down: bounce-up-down 1s infinite;
 	--animate-zoom-in: zoomIn 0.5s ease-in-out;
 
-	/* Animation Keyframes */
 	@keyframes nuevo-badge-pulse {
 		0% {
 			opacity: 1;
@@ -183,6 +182,12 @@
 .animate-text-gradient {
 	animation: var(--animate-text-gradient);
 	background-size: 300% 100%;
+}
+
+@layer utilities {
+	.animate-pulse {
+		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+	}
 }
 
 /* Clerk Components */

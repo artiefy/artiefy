@@ -177,17 +177,17 @@ export default function StudentDetails({
 						</div>
 
 						{/* Top Cursos section */}
-						<div className="animation-delay-200 relative animate-zoom-in px-4 sm:px-12 lg:px-24">
+						<div className="animation-delay-200 relative animate-zoom-in px-24">
 							<h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">
 								Top Cursos
 							</h2>
-							<div className="px-8 sm:px-16">
+							<div>
 								<Carousel className="w-full">
 									<CarouselContent>
 										{latestTenCourses.map((course) => (
 											<CarouselItem
 												key={course.id}
-												className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3"
+												className="pl-4 md:basis-1/2 lg:basis-1/3"
 											>
 												<div className="relative h-48 w-full md:h-64">
 													<Image
@@ -214,16 +214,16 @@ export default function StudentDetails({
 														<div className="mb-2 flex items-center justify-between">
 															<Badge
 																variant="outline"
-																className="mt-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
+																className="mb-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
 															>
 																{course.category?.name}
 															</Badge>
-															<span className="mt-2 text-sm font-bold text-red-500">
+															<span className="text-sm font-bold text-red-500">
 																{course.modalidad?.name}
 															</span>
 														</div>
 														<div className="flex items-center justify-between">
-															<p className="text-sm font-semibold text-primary italic">
+															<p className="text-sm text-primary italic">
 																Educador: <span>{course.instructor}</span>
 															</p>
 															<div className="flex items-center">
@@ -238,31 +238,31 @@ export default function StudentDetails({
 											</CarouselItem>
 										))}
 									</CarouselContent>
-									<CarouselPrevious className="-left-12 size-10 bg-black/50 text-white sm:-left-20 sm:size-12" />
-									<CarouselNext className="-right-12 size-10 bg-black/50 text-white sm:-right-20 sm:size-12" />
+									<CarouselPrevious className="-left-20 size-12 bg-black/50 text-white" />
+									<CarouselNext className="-right-20 size-12 bg-black/50 text-white" />
 								</Carousel>
 							</div>
 						</div>
 
 						{/* Programas section */}
-						<div className="animation-delay-300 relative animate-zoom-in px-4 sm:px-12 lg:px-24">
+						<div className="animation-delay-300 relative animate-zoom-in px-24">
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Programas
 							</h2>
-							<div className="px-8 sm:px-16">
+							<div>
 								<Carousel className="w-full">
 									<CarouselContent className="my-6">
 										{sortedPrograms.map((program) => (
 											<CarouselItem
 												key={program.id}
-												className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3"
+												className="md:basis-2/3 lg:basis-1/3"
 											>
 												<StudentProgram program={program} />
 											</CarouselItem>
 										))}
 									</CarouselContent>
-									<CarouselPrevious className="-left-12 size-10 bg-black/50 text-white sm:-left-20 sm:size-12" />
-									<CarouselNext className="-right-12 size-10 bg-black/50 text-white sm:-right-20 sm:size-12" />
+									<CarouselPrevious className="-left-20 size-12 bg-black/50 text-white" />
+									<CarouselNext className="-right-20 size-12 bg-black/50 text-white" />
 								</Carousel>
 							</div>
 						</div>

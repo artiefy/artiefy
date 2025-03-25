@@ -21,7 +21,7 @@ const Loading: React.FC = () => {
 		<div className="loading-fullscreen-background">
 			<div className={`loading-card ${launch ? 'loading-launch' : ''}`}>
 				<div className="loading-card-info flex flex-col items-center">
-					<span className="loading-animate-pulse mb-4 text-xl sm:text-2xl md:text-3xl lg:text-4xl">
+					<span className="mb-4 animate-pulse text-xl sm:text-2xl md:text-3xl lg:text-4xl">
 						CARGANDO!
 					</span>
 					<div className="loading-wrapper">
