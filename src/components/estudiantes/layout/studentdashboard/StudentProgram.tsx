@@ -65,16 +65,19 @@ export function StudentProgram({ program }: StudenProgramProps) {
 							</Badge>
 						</div>
 						<div className="flex items-center">
-							{Array.from({ length: 5 }).map((_, index) => (
-								<StarIcon
-									key={index}
-									className={`h-4 w-4 ${
-										index < Math.floor(program.rating ?? 0)
-											? 'text-yellow-400'
-											: 'text-gray-300'
-									}`}
-								/>
-							))}
+							<StarIcon className="h-4 w-4 text-yellow-400 sm:hidden" />
+							<div className="hidden sm:flex">
+								{Array.from({ length: 5 }).map((_, index) => (
+									<StarIcon
+										key={index}
+										className={`h-4 w-4 ${
+											index < Math.floor(program.rating ?? 0)
+												? 'text-yellow-400'
+												: 'text-gray-300'
+										}`}
+									/>
+								))}
+							</div>
 							<span className="ml-1 text-sm font-bold text-yellow-500">
 								{program.rating?.toFixed(1) ?? '0.0'}
 							</span>
@@ -82,24 +85,22 @@ export function StudentProgram({ program }: StudenProgramProps) {
 					</div>
 				</CardContent>
 
-				<CardFooter className="px-6 pt-2">
-					<div className="flex w-full items-center justify-between space-x-4">
-						<div className="text-sm text-gray-400">
-							<EnrollmentCount programId={parseInt(program.id)} />
-						</div>
-						<Button asChild>
-							<Link
-								href={`/estudiantes/programas/${program.id}`}
-								className="group/button relative inline-flex h-10 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95"
-							>
-								<p className="font-bold">Ver Programa</p>
-								<ArrowRightCircleIcon className="size-5 animate-bounce-right" />
-								<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-									<div className="relative h-full w-10 bg-white/30" />
-								</div>
-							</Link>
-						</Button>
+				<CardFooter className="flex flex-col px-6 pt-2 sm:flex-row sm:items-center sm:justify-between sm:space-x-4">
+					<div className="mb-2 w-full text-sm text-gray-400 sm:mb-0 sm:w-auto">
+						<EnrollmentCount programId={parseInt(program.id)} />
 					</div>
+					<Button asChild className="w-full sm:w-auto">
+						<Link
+							href={`/estudiantes/programas/${program.id}`}
+							className="group/button relative inline-flex h-10 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95 sm:h-12 sm:px-6 lg:text-lg"
+						>
+							<p className="font-bold">Ver Programa</p>
+							<ArrowRightCircleIcon className="ml-2 size-5 animate-bounce-right sm:size-6" />
+							<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+								<div className="relative h-full w-10 bg-white/30" />
+							</div>
+						</Link>
+					</Button>
 				</CardFooter>
 			</Card>
 		</div>
