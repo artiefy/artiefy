@@ -473,7 +473,6 @@ export function CourseHeader({
 															? 'Obtener Suscripción'
 															: 'Inscribirse al Curso'}
 												</span>
-												{/* ...rest of button content... */}
 											</>
 										)}
 									</div>

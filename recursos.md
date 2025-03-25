@@ -108,7 +108,7 @@ CORREO SOPORTE:
 Colores del manual de marca:
 
 ```css
-#3AF4EF #00BDD8 #01142B
+#3AF4EF #00BDD8 #01142B #2ecc71
 
 #01142B -background //variable de tailwindcss
 #3AF4EF -primary //variable de tailwindcss

@@ -45,7 +45,7 @@ export function ProgramHeader({
 	onUnenroll,
 	isCheckingEnrollment, // Add this to destructuring
 }: ProgramHeaderProps) {
-	const { user } = useUser();
+	const { user, isSignedIn } = useUser(); // Add isSignedIn
 
 	// Verificar plan Premium y fecha de vencimiento
 	const isPremium = user?.publicMetadata?.planType === 'Premium';
@@ -154,13 +154,16 @@ export function ProgramHeader({
 
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
-						{isCheckingEnrollment ? (
+						{!isSignedIn ? (
 							<Button
-								className="h-12 w-64 justify-center border-white/20 bg-gray-500 text-lg font-semibold text-white"
-								disabled={true}
+								onClick={onEnroll}
+								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95"
 							>
-								<Icons.spinner className="mr-2 animate-spin" />
-								Cargando...
+								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
+									<div className="relative z-10 flex items-center justify-center space-x-2">
+										<span>Iniciar sesión para inscribirse</span>
+									</div>
+								</span>
 							</Button>
 						) : isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
@@ -176,7 +179,7 @@ export function ProgramHeader({
 									disabled={isUnenrolling}
 								>
 									{isUnenrolling ? (
-										<Icons.spinner className="animate-spin size-9 text-white" />
+										<Icons.spinner className="size-9 animate-spin text-white" />
 									) : (
 										'Cancelar Suscripción'
 									)}

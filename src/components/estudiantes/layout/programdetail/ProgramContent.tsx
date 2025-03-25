@@ -49,7 +49,7 @@ export function ProgramContent({
 	isCheckingEnrollment, // Add this to destructuring
 }: ProgramContentProps) {
 	const router = useRouter();
-	const { userId } = useAuth();
+	const { userId, isSignedIn } = useAuth(); // Add isSignedIn
 	const [courseEnrollments, setCourseEnrollments] = useState<
 		Record<number, boolean>
 	>({});
@@ -125,6 +125,19 @@ export function ProgramContent({
 
 		void checkCourseEnrollments();
 	}, [userId, courses]);
+
+	// Modify the component to handle link click when not signed in
+	const handleCourseClick = (e: React.MouseEvent) => {
+		if (!isSignedIn) {
+			e.preventDefault();
+			const currentPath = window.location.pathname;
+			void router.push(`/sign-in?redirect_url=${currentPath}`);
+			return;
+		}
+		if (!isEnrolled) {
+			e.preventDefault();
+		}
+	};
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
@@ -255,7 +268,7 @@ export function ProgramContent({
 										</div>
 									</div>
 									<div className="mt-2 w-full">
-										{isCheckingEnrollment ? (
+										{isCheckingEnrollment && isSignedIn ? ( // Modificar esta condición
 											<Button
 												asChild
 												disabled
@@ -269,36 +282,40 @@ export function ProgramContent({
 										) : (
 											<Button
 												asChild
-												disabled={!isEnrolled || !course.isActive}
+												disabled={
+													!course.isActive || (!isEnrolled && isSignedIn)
+												} // Modificar esta línea
 												className={`w-full ${
-													!isEnrolled || !course.isActive
+													!course.isActive || (!isEnrolled && isSignedIn)
 														? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
 														: ''
 												}`}
 											>
 												<Link
 													href={
-														isEnrolled && course.isActive
+														course.isActive
 															? `/estudiantes/cursos/${course.id}`
 															: '#'
 													}
 													className={`group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 ${
-														!course.isActive || !isEnrolled
+														!course.isActive || (!isEnrolled && isSignedIn)
 															? 'pointer-events-none bg-gray-600 text-gray-400'
 															: 'bg-background text-primary active:scale-95'
 													}`}
-													onClick={(e) => !isEnrolled && e.preventDefault()}
+													onClick={(e) => handleCourseClick(e)}
 												>
 													<span className="font-bold">
 														{!course.isActive
 															? 'No Disponible'
-															: !isEnrolled
-																? 'Requiere Inscripción'
-																: courseEnrollments[course.id]
-																	? 'Continuar Curso'
-																	: 'Ver Curso'}
+															: !isSignedIn
+																? 'Iniciar Sesión'
+																: !isEnrolled
+																	? 'Requiere Inscripción'
+																	: courseEnrollments[course.id]
+																		? 'Continuar Curso'
+																		: 'Ver Curso'}
 													</span>
-													{course.isActive && isEnrolled && (
+													{course.isActive && (isEnrolled || !isSignedIn) && (
 														<>
 															<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
 															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
