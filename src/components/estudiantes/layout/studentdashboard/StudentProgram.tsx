@@ -59,7 +59,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
 						<div className="flex items-center space-x-4">
 							<Badge
 								variant="outline"
-								className="border-primary bg-background text-[9px] text-primary lg:text-sm"
+								className="border-primary bg-background text-sm sm:text-[9px] lg:text-sm"
 							>
 								{program.category?.name ?? 'Sin categoría'}
 							</Badge>
@@ -83,14 +83,14 @@ export function StudentProgram({ program }: StudenProgramProps) {
 				</CardContent>
 
 				<CardFooter className="px-6 pt-2">
-					<div className="flex w-full items-center justify-between space-x-4">
+					<div className="flex w-full flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:space-x-4">
 						<div className="text-sm text-gray-400">
 							<EnrollmentCount programId={parseInt(program.id)} />
 						</div>
 						<Button asChild>
 							<Link
 								href={`/estudiantes/programas/${program.id}`}
-								className="group/button relative inline-flex h-10 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95"
+								className="group/button relative inline-flex h-10 w-full cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95 sm:w-auto"
 							>
 								<p className="font-bold">Ver Programa</p>
 								<ArrowRightCircleIcon className="size-5 animate-bounce-right" />

@@ -49,7 +49,16 @@ export function CourseBreadcrumb({
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 					</>
-				) : null}
+				) : (
+					<>
+						<BreadcrumbItem>
+							<BreadcrumbLink href="/estudiantes">
+								<FaUserGraduate className="mr-1 inline-block" /> Cursos
+							</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+					</>
+				)}
 				<BreadcrumbItem>
 					<BreadcrumbPage>{title}</BreadcrumbPage>
 				</BreadcrumbItem>
