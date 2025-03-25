@@ -8,7 +8,7 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-} from '~/components/estudiantes/ui/dialog';
+} from '~/components/estudiantes/layout/ui/dialog';
 import { formatScore } from '~/utils/formatScore';
 
 interface GradeHistoryProps {

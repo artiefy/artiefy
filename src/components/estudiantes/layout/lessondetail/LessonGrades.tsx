@@ -2,8 +2,8 @@
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaTrophy } from 'react-icons/fa';
 
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Button } from '~/components/estudiantes/layout/ui/button';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 import { formatScore } from '~/utils/formatScore';
 
 interface LessonGradesProps {
@@ -45,7 +45,7 @@ export function LessonGrades({
 
 			<Button
 				onClick={onViewHistory}
-				className="active:scale-[0.98] w-full bg-blue-500 text-white hover:bg-blue-600"
+				className="w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]"
 			>
 				<FaTrophy className="mr-2" />
 				Ver Historial Completo

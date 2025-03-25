@@ -10,8 +10,8 @@ import {
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-} from '~/components/estudiantes/ui/dialog';
-import { Icons } from '~/components/estudiantes/ui/icons';
+} from '~/components/estudiantes/layout/ui/dialog';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 
 interface Materia {
 	id: number;

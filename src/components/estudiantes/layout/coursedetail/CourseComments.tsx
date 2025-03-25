@@ -11,9 +11,9 @@ import {
 	XMarkIcon,
 } from '@heroicons/react/24/solid';
 
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { Textarea } from '~/components/estudiantes/ui/textarea';
+import { Button } from '~/components/estudiantes/layout/ui/button';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
+import { Textarea } from '~/components/estudiantes/layout/ui/textarea';
 import {
 	addComment,
 	getCommentsByCourseId,

@@ -10,8 +10,8 @@ import { useAuth, useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
 
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 
 import Loading from '../../loading';
 

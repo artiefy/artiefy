@@ -9,10 +9,14 @@ import { useUser } from '@clerk/nextjs'; // 🔥 Agrega esta línea al inicio de
 import { toast } from 'sonner';
 
 import ModalFormCourse from '~/components/educators/modals/program/ModalFormCourse'; // Import ModalFormCourse
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/estudiantes/ui/card';
-import { Label } from '~/components/estudiantes/ui/label';
+import { Badge } from '~/components/estudiantes/layout/ui/badge';
+import { Button } from '~/components/estudiantes/layout/ui/button';
+import {
+	Card,
+	CardHeader,
+	CardTitle,
+} from '~/components/estudiantes/layout/ui/card';
+import { Label } from '~/components/estudiantes/layout/ui/label';
 import ProgramCoursesList from '~/components/super-admin/layout/programdetail/ProgramCoursesList';
 import { type CourseData as BaseCourseData } from '~/server/queries/queries';
 
@@ -88,7 +92,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	const [uploading, setUploading] = useState(false); // Nuevo estado para la carga
 	const [isActive, setIsActive] = useState(true);
 
-
 	const [editParametros, setEditParametros] = useState<
 		{
 			id: number;
@@ -109,10 +112,11 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	const programIdString2 = programIdString ?? ''; // Verificar si el id del programa es nulo
 	const programIdNumber = parseInt(programIdString2); // Convertir el id del programa a número
 	const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null); // interfaz de cursos
-	const [selectedCourseType, setSelectedCourseType] = useState<number | null>(null);
+	const [selectedCourseType, setSelectedCourseType] = useState<number | null>(
+		null
+	);
 	void setEditingCourse;
 	void uploading;
-
 
 	const [newCourse, setNewCourse] = useState<CourseData>({
 		id: 0,
@@ -187,8 +191,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	// Verificar si hay un error o hay programa
 	if (!program) return <div>No Se Encontró El Programa.</div>;
 
-	
-
 	// Verificar si hay un error
 	if (error) {
 		return (
@@ -220,11 +222,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			coverImageKey: '', // Add the missing coverImageKey property
 			createdAt: new Date().toISOString(),
 		});
-	
+
 		setEditParametros([]); // 🔥 Resetear los parámetros antes de abrir el modal
 		setIsCourseModalOpen(true);
 	};
-	
 
 	const handleCloseCourseModal = () => {
 		setIsCourseModalOpen(false);
@@ -260,10 +261,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		isActive: boolean
 	) => {
 		if (!user) return;
-	
+
 		try {
 			setUploading(true);
-	
+
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
@@ -274,30 +275,32 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 						fileName: file.name,
 					}),
 				});
-	
+
 				if (!uploadResponse.ok) {
-					throw new Error(`Error: al iniciar la carga: ${uploadResponse.statusText}`);
+					throw new Error(
+						`Error: al iniciar la carga: ${uploadResponse.statusText}`
+					);
 				}
-	
+
 				const uploadData = (await uploadResponse.json()) as {
 					url: string;
 					fields: Record<string, string>;
 					key: string;
 					fileName: string;
 				};
-	
+
 				coverImageKey = uploadData.key;
 				fileName = uploadData.fileName;
-	
+
 				const formData = new FormData();
 				Object.entries(uploadData.fields).forEach(([key, value]) => {
 					formData.append(key, value);
 				});
 				formData.append('file', file);
-	
+
 				await fetch(uploadData.url, { method: 'POST', body: formData });
 			}
-	
+
 			const response = await fetch('/api/educadores/courses/cursoMateria', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -313,38 +316,44 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					nivelid,
 					rating,
 					subjects,
-					courseTypeId: selectedCourseType, programId,
-					isActive
+					courseTypeId: selectedCourseType,
+					programId,
+					isActive,
 				}),
 			});
-	
+
 			if (response.ok) {
 				const responseData = (await response.json()) as { id: number }[];
 				console.log('📌 Respuesta de la API al crear curso:', responseData);
-	
+
 				responseData.forEach(async (data) => {
-					console.log(`Curso creado con ID: ${data.id}`);  // Log each created course ID
-	
+					console.log(`Curso creado con ID: ${data.id}`); // Log each created course ID
+
 					// If addParametros is true, assign parameters for each course
 					if (addParametros) {
 						for (const parametro of editParametros) {
 							try {
-								const paramResponse = await fetch('/api/educadores/parametros', {
-									method: 'POST',
-									headers: { 'Content-Type': 'application/json' },
-									body: JSON.stringify({
-										name: parametro.name,
-										description: parametro.description,
-										porcentaje: parametro.porcentaje,
-										courseId: data.id,
-									}),
-								});
-	
+								const paramResponse = await fetch(
+									'/api/educadores/parametros',
+									{
+										method: 'POST',
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify({
+											name: parametro.name,
+											description: parametro.description,
+											porcentaje: parametro.porcentaje,
+											courseId: data.id,
+										}),
+									}
+								);
+
 								if (!paramResponse.ok) {
-									const errorData = (await paramResponse.json()) as { error: string };
+									const errorData = (await paramResponse.json()) as {
+										error: string;
+									};
 									throw new Error(errorData.error);
 								}
-	
+
 								toast.success('Parámetro creado exitosamente', {
 									description: `El parámetro se ha creado exitosamente para el curso ID ${data.id}`,
 								});
@@ -355,12 +364,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 							}
 						}
 					}
-	
-					
 				});
-	
+
 				toast.success('Curso(s) creado(s) con éxito', {
-					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData.map(r => r.id).join(', ')}`,
+					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData.map((r) => r.id).join(', ')}`,
 				});
 				await fetchProgram(); // 🔥 refresca los cursos
 				setSubjects([]); // limpiar las materias en el estado
@@ -368,7 +375,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				toast.error('Error', {
-					description: errorData.error ?? 'Ocurrió un error al procesar la solicitud',
+					description:
+						errorData.error ?? 'Ocurrió un error al procesar la solicitud',
 				});
 			}
 		} catch (error) {
@@ -385,9 +393,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	return (
 		<div className="h-auto w-full rounded-lg bg-background">
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
-					className={`relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out zoom-in`}
+					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
@@ -491,11 +499,11 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 								</p>
 							</div>
 							<Button
-				onClick={handleCreateCourse}
-				className="mt-4 bg-secondary text-white"
-			>
-				Crear Curso
-			</Button>
+								onClick={handleCreateCourse}
+								className="mt-4 bg-secondary text-white"
+							>
+								Crear Curso
+							</Button>
 						</div>
 					</div>
 				</Card>
@@ -503,7 +511,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			<br />
 			<br />
 			<ProgramCoursesList courses={courses} />
-			
 
 			<ModalFormCourse
 				isOpen={isCourseModalOpen}
@@ -544,12 +551,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				uploading={false}
 				programId={programIdNumber}
 				selectedCourseType={selectedCourseType}
-    			setSelectedCourseType={setSelectedCourseType} 
-				isActive={isActive}                    // ✅ Agrega esto
+				setSelectedCourseType={setSelectedCourseType}
+				isActive={isActive} // ✅ Agrega esto
 				setIsActive={setIsActive}
 			/>
-
-			
 		</div>
 	);
 };

@@ -6,15 +6,15 @@ import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
 
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
+import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/layout/ui/badge';
+import { Button } from '~/components/estudiantes/layout/ui/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
-} from '~/components/estudiantes/ui/card';
-import { Icons } from '~/components/estudiantes/ui/icons';
+} from '~/components/estudiantes/layout/ui/card';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 
 import { ProgramContent } from './ProgramContent';

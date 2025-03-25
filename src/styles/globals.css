@@ -67,6 +67,7 @@
 
 	/* Animations */
 	--animate-gradient: borderRotate 4s linear infinite;
+	--animate-text-gradient: gradient 8s linear infinite;
 	--animate-bounce-right: bounce-left-right 1s infinite;
 	--animate-bounce-up-down: bounce-up-down 1s infinite;
 	--animate-zoom-in: zoomIn 0.5s ease-in-out;
@@ -127,6 +128,18 @@
 			transform: translateY(-10px);
 		}
 	}
+
+	@keyframes gradient {
+		0% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0% 50%;
+		}
+	}
 }
 
 /* Base Styles */
@@ -162,15 +175,14 @@
 	}
 }
 
-@utility animate-gradient {
-	background: linear-gradient(
-		to right,
-		var(--color-from),
-		var(--color-via),
-		var(--color-to)
-	);
-	background-size: 300% 100%;
+.animate-gradient {
 	animation: var(--animate-gradient);
+	background-size: 300% 100%;
+}
+
+.animate-text-gradient {
+	animation: var(--animate-text-gradient);
+	background-size: 300% 100%;
 }
 
 /* Clerk Components */

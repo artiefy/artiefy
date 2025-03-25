@@ -4,7 +4,7 @@ import type * as React from 'react';
 
 import { FaLock, FaPhone, FaEnvelope, FaUser } from 'react-icons/fa';
 
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 
 import type { FormData } from '~/types/payu';
 

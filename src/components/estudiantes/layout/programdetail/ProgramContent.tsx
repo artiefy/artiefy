@@ -18,17 +18,17 @@ import {
 	Alert,
 	AlertTitle,
 	AlertDescription,
-} from '~/components/estudiantes/ui/alert';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
+} from '~/components/estudiantes/layout/ui/alert';
+import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/layout/ui/badge';
+import { Button } from '~/components/estudiantes/layout/ui/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardTitle,
-} from '~/components/estudiantes/ui/card';
-import { Icons } from '~/components/estudiantes/ui/icons';
+} from '~/components/estudiantes/layout/ui/card';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
 import type { Program, MateriaWithCourse, Course } from '~/types';

@@ -10,8 +10,8 @@ import { FaArrowRight } from 'react-icons/fa';
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Button } from '~/components/estudiantes/layout/ui/button';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 
 export default function Home() {
 	const { user } = useUser();
@@ -110,7 +110,7 @@ export default function Home() {
 												<span className="inline-block skew-x-[15deg]">
 													COMIENZA YA
 												</span>
-												<FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
+												<FaArrowRight className="ml-2 inline-block skew-x-[15deg] animate-bounce-right transition-transform duration-500" />
 											</>
 										)}
 									</div>

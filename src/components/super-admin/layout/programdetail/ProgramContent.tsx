@@ -5,16 +5,16 @@ import Link from 'next/link';
 
 import { StarIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
+import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/layout/ui/badge';
+import { Button } from '~/components/estudiantes/layout/ui/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardFooter,
 	CardTitle,
-} from '~/components/estudiantes/ui/card';
+} from '~/components/estudiantes/layout/ui/card';
 
 import type { Program, MateriaWithCourse, Course } from '~/types';
 
@@ -42,7 +42,7 @@ export function ProgramContent({ program, isEnrolled }: ProgramContentProps) {
 				{courses.map((course, index) => (
 					<div key={`${course.id}-${index}`} className="group relative">
 						<div className="absolute -inset-2 animate-gradient rounded-xl bg-linear-to-r from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px] transition-all duration-500 group-hover:opacity-100" />
-						<Card className="relative flex h-full zoom-in flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+						<Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
 							<CardHeader className="px-6">
 								<AspectRatio ratio={16 / 9}>
 									<div className="relative size-full">

@@ -6,7 +6,7 @@ import { CourseCardSkeleton } from '~/components/estudiantes/layout/CourseCardSk
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import MyCoursesStudent from '~/components/estudiantes/layout/MyCoursesStudent';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import { Skeleton } from '~/components/estudiantes/layout/ui/skeleton';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

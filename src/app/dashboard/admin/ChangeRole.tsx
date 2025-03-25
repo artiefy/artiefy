@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '~/components/estudiantes/ui/button'; // Asegúrate de tener el componente de Button
+import { Button } from '~/components/estudiantes/layout/ui/button'; // Asegúrate de tener el componente de Button
 import {
 	removeRoleWrapper,
 	setRoleWrapper,

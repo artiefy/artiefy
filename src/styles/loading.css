@@ -64,8 +64,11 @@
 }
 
 .loading-card-info {
+	text-align: center;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
+	margin-bottom: 1rem;
 }
 
 .loading-fullscreen-background {
@@ -104,9 +107,17 @@
 	margin-left: 10px;
 }
 
+.loading-animate-pulse {
+	font-weight: bold;
+	color: #3af4ef;
+	text-shadow: 0 0 10px rgba(58, 244, 239, 0.5);
+}
+
 .loading-wrapper {
-	width: 200px;
-	height: 60px;
+	margin-top: 1rem;
+	width: 100%;
+	height: 50px;
+	text-align: center;
 	position: relative;
 	z-index: 1;
 }
@@ -191,4 +202,16 @@
 	left: auto;
 	right: 15%;
 	animation-delay: 0.3s;
+}
+
+@media (max-width: 640px) {
+	.loading-card {
+		padding: 1rem;
+		max-width: 90%;
+	}
+
+	.loading-logo {
+		width: 100px;
+		height: 100px;
+	}
 }

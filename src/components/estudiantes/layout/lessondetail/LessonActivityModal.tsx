@@ -14,14 +14,14 @@ import { BiSolidReport } from 'react-icons/bi';
 import { FaTrophy } from 'react-icons/fa';
 import { toast } from 'sonner';
 
-import { Button } from '~/components/estudiantes/ui/button';
+import { Button } from '~/components/estudiantes/layout/ui/button';
 import {
 	Dialog,
 	DialogContent,
 	DialogHeader,
 	DialogTitle,
-} from '~/components/estudiantes/ui/dialog';
-import { Icons } from '~/components/estudiantes/ui/icons';
+} from '~/components/estudiantes/layout/ui/dialog';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { formatScore, formatScoreNumber } from '~/utils/formatScore';
 

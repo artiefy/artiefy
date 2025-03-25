@@ -8,7 +8,7 @@ import { TbReportAnalytics } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 
 import LessonActivityModal from './LessonActivityModal';
 import { GradeHistory } from './LessonGradeHistory';
@@ -356,7 +356,7 @@ const LessonActivities = ({
 										{isLoadingResults && (
 											<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
 										)}
-										<span className='font-semibold'>Ver Resultados</span>
+										<span className="font-semibold">Ver Resultados</span>
 										<FaCheckCircle className="ml-2 inline text-white" />
 									</>
 								) : (

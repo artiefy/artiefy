@@ -1,4 +1,4 @@
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import { Skeleton } from '~/components/estudiantes/layout/ui/skeleton';
 
 // Componentes internos reutilizables
 const CardSkeleton = () => <Skeleton className="h-32 w-full rounded-lg" />;
@@ -13,7 +13,7 @@ const SidebarContentSkeleton = () => (
 );
 
 const MainContentSkeleton = () => (
-	<div className="flex-1 px-6 mt-4">
+	<div className="mt-4 flex-1 px-6">
 		<div className="mb-4 flex justify-between">
 			<Skeleton className="h-10 w-24" />
 			<Skeleton className="h-10 w-24" />
@@ -26,7 +26,7 @@ const MainContentSkeleton = () => (
 );
 
 const RightSidebarSkeleton = () => (
-	<div className="w-72 space-y-6 mt-2">
+	<div className="mt-2 w-72 space-y-6">
 		{/* Activities Section */}
 		<div className="rounded-lg bg-background px-4 shadow-lg">
 			<Skeleton className="mb-4 h-8 w-32" />

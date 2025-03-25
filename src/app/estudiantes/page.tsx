@@ -5,7 +5,7 @@ import CategoriesCourse from '~/components/estudiantes/layout/CategoriesCourse';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import { Skeleton } from '~/components/estudiantes/layout/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';

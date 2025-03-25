@@ -14,7 +14,7 @@ import {
 	PaginationLink,
 	PaginationNext,
 	PaginationPrevious,
-} from '~/components/estudiantes/ui/pagination';
+} from '~/components/estudiantes/layout/ui/pagination';
 
 interface Props {
 	totalPages: number;

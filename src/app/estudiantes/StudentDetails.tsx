@@ -9,16 +9,16 @@ import Link from 'next/link';
 import { StarIcon } from '@heroicons/react/24/solid';
 
 import { LoaderArtieia } from '~/components/estudiantes/layout/LoaderArtieia';
-import { StudenProgram } from '~/components/estudiantes/layout/studentdashboard/StudenProgram';
+import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
-import { Badge } from '~/components/estudiantes/ui/badge';
+import { Badge } from '~/components/estudiantes/layout/ui/badge';
 import {
 	Carousel,
 	CarouselContent,
 	CarouselItem,
 	CarouselNext,
 	CarouselPrevious,
-} from '~/components/estudiantes/ui/carousel';
+} from '~/components/estudiantes/layout/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course, type Program } from '~/types';
 import '~/styles/searchBar.css';
@@ -177,17 +177,17 @@ export default function StudentDetails({
 						</div>
 
 						{/* Top Cursos section */}
-						<div className="animation-delay-200 relative animate-zoom-in px-24">
+						<div className="animation-delay-200 relative animate-zoom-in px-4 sm:px-12 lg:px-24">
 							<h2 className="mb-4 text-xl font-bold text-primary md:text-2xl">
 								Top Cursos
 							</h2>
-							<div>
+							<div className="px-8 sm:px-16">
 								<Carousel className="w-full">
 									<CarouselContent>
 										{latestTenCourses.map((course) => (
 											<CarouselItem
 												key={course.id}
-												className="pl-4 md:basis-1/2 lg:basis-1/3"
+												className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3"
 											>
 												<div className="relative h-48 w-full md:h-64">
 													<Image
@@ -238,31 +238,31 @@ export default function StudentDetails({
 											</CarouselItem>
 										))}
 									</CarouselContent>
-									<CarouselPrevious className="-left-20 size-12 bg-black/50 text-white" />
-									<CarouselNext className="-right-20 size-12 bg-black/50 text-white" />
+									<CarouselPrevious className="-left-12 size-10 bg-black/50 text-white sm:-left-20 sm:size-12" />
+									<CarouselNext className="-right-12 size-10 bg-black/50 text-white sm:-right-20 sm:size-12" />
 								</Carousel>
 							</div>
 						</div>
 
 						{/* Programas section */}
-						<div className="animation-delay-300 relative animate-zoom-in px-24">
+						<div className="animation-delay-300 relative animate-zoom-in px-4 sm:px-12 lg:px-24">
 							<h2 className="ml-4 text-xl font-bold text-primary md:text-2xl">
 								Programas
 							</h2>
-							<div>
+							<div className="px-8 sm:px-16">
 								<Carousel className="w-full">
 									<CarouselContent className="my-6">
 										{sortedPrograms.map((program) => (
 											<CarouselItem
 												key={program.id}
-												className="md:basis-2/3 lg:basis-1/3"
+												className="basis-full pl-4 sm:basis-1/2 lg:basis-1/3"
 											>
-												<StudenProgram program={program} />
+												<StudentProgram program={program} />
 											</CarouselItem>
 										))}
 									</CarouselContent>
-									<CarouselPrevious className="-left-20 size-12 bg-black/50 text-white" />
-									<CarouselNext className="-right-20 size-12 bg-black/50 text-white" />
+									<CarouselPrevious className="-left-12 size-10 bg-black/50 text-white sm:-left-20 sm:size-12" />
+									<CarouselNext className="-right-12 size-10 bg-black/50 text-white sm:-right-20 sm:size-12" />
 								</Carousel>
 							</div>
 						</div>

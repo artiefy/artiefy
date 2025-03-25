@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 
 import axios, { isAxiosError } from 'axios';
 
-import { Progress } from '~/components/estudiantes/ui/progress';
+import { Progress } from '~/components/estudiantes/layout/ui/progress';
 import { type LessonWithProgress } from '~/types';
 
 import VideoPlayer from './LessonVideo';

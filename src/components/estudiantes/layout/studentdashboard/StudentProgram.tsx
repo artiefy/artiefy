@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { StarIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
-import { Badge } from '~/components/estudiantes/ui/badge';
+import { Badge } from '~/components/estudiantes/ui/';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
@@ -21,7 +21,7 @@ interface StudenProgramProps {
 	program: Program;
 }
 
-export function StudenProgram({ program }: StudenProgramProps) {
+export function StudentProgram({ program }: StudenProgramProps) {
 	return (
 		<div className="group relative mx-3">
 			<div className="absolute -inset-1.5 animate-gradient rounded-lg bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover:opacity-100" />

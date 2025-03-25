@@ -11,16 +11,17 @@ import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
-import { Button } from '~/components/estudiantes/ui/button';
+import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/layout/ui/badge';
+import { Button } from '~/components/estudiantes/layout/ui/button';
 import {
 	Card,
 	CardContent,
 	CardFooter,
 	CardHeader,
 	CardTitle,
-} from '~/components/estudiantes/ui/card';
+} from '~/components/estudiantes/layout/ui/card';
+import GradientText from '~/components/estudiantes/layout/ui/GradientText';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
@@ -54,9 +55,11 @@ export default async function CourseListStudent({
 
 	return (
 		<>
-			<h2 className="my-6 ml-8 text-3xl font-bold text-primary lg:ml-20">
-				Cursos Artie
-			</h2>
+			<div className="flex justify-center">
+				<GradientText className="my-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
+					Cursos Artie
+				</GradientText>
+			</div>
 			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
 				{await Promise.all(
 					courses.map(async (course) => {

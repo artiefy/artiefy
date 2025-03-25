@@ -1,5 +1,5 @@
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Skeleton } from '~/components/estudiantes/ui/skeleton';
+import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
+import { Skeleton } from '~/components/estudiantes/layout/ui/skeleton';
 
 export function CourseDetailsSkeleton() {
 	return (

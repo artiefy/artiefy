@@ -10,8 +10,8 @@ import { Dialog, DialogPanel } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { UserCircleIcon } from '@heroicons/react/24/solid';
 
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
+import { Button } from '~/components/estudiantes/layout/ui/button';
+import { Icons } from '~/components/estudiantes/layout/ui/icons';
 
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
