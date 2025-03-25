@@ -101,7 +101,7 @@ export default async function MyCoursesStudent() {
 										</div>
 										<Button asChild className="mt-4 w-fit shrink-0">
 											<Link
-												href={`/estudiantes/programa/${program.id}`}
+												href={`/estudiantes/programas/${program.id}`}
 												className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
 											>
 												<p className="font-bold">Ver Programa</p>
