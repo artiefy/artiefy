@@ -124,6 +124,7 @@ export async function POST(request: Request) {
 					instructor: data.instructor,
 					courseTypeId: data.courseTypeId,
 					isActive: data.isActive,
+					requiresProgram: true, // Add this line
 				})
 				.returning();
 
