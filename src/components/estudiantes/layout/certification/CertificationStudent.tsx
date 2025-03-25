@@ -7,7 +7,7 @@ import '~/styles/confetti.css';
 import { useUser } from '@clerk/nextjs';
 import { FaDownload } from 'react-icons/fa';
 
-import { Button } from '~/components/estudiantes/layout/ui/button';
+import { Button } from '~/components/estudiantes/ui/button';
 import { formatDate } from '~/lib/utils2';
 
 import type { Course } from '~/types';

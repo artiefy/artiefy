@@ -15,8 +15,8 @@ import {
 	FiPenTool,
 } from 'react-icons/fi';
 
-import { Icons } from '~/components/estudiantes/layout/ui/icons';
-import { Input } from '~/components/estudiantes/layout/ui/input';
+import { Icons } from '~/components/estudiantes/ui/icons';
+import { Input } from '~/components/estudiantes/ui/input';
 import {
 	saveScrollPosition,
 	restoreScrollPosition,

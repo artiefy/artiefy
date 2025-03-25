@@ -7,15 +7,15 @@ import { StarIcon } from '@heroicons/react/24/solid';
 import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
-import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/layout/ui/badge';
-import { Button } from '~/components/estudiantes/layout/ui/button';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
-} from '~/components/estudiantes/layout/ui/card';
-import { Icons } from '~/components/estudiantes/layout/ui/icons';
+} from '~/components/estudiantes/ui/card';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 
 import { ProgramContent } from './ProgramContent';

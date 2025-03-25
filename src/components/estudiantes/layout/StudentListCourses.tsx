@@ -11,17 +11,17 @@ import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
-import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/layout/ui/badge';
-import { Button } from '~/components/estudiantes/layout/ui/button';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
 	CardContent,
 	CardFooter,
 	CardHeader,
 	CardTitle,
-} from '~/components/estudiantes/layout/ui/card';
-import GradientText from '~/components/estudiantes/layout/ui/GradientText';
+} from '~/components/estudiantes/ui/card';
+import GradientText from '~/components/estudiantes/ui/GradientText';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 

@@ -12,7 +12,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '~/components/educators/ui/card';
-import { Button } from '~/components/estudiantes/layout/ui/button';
+import { Button } from '~/components/estudiantes/ui/button';
 
 export interface Program {
 	id: number;

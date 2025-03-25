@@ -10,8 +10,8 @@ import { FaArrowRight } from 'react-icons/fa';
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
-import { Button } from '~/components/estudiantes/layout/ui/button';
-import { Icons } from '~/components/estudiantes/layout/ui/icons';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
 
 export default function Home() {
 	const { user } = useUser();

@@ -9,14 +9,10 @@ import { useUser } from '@clerk/nextjs'; // 🔥 Agrega esta línea al inicio de
 import { toast } from 'sonner';
 
 import ModalFormCourse from '~/components/educators/modals/program/ModalFormCourse'; // Import ModalFormCourse
-import { Badge } from '~/components/estudiantes/layout/ui/badge';
-import { Button } from '~/components/estudiantes/layout/ui/button';
-import {
-	Card,
-	CardHeader,
-	CardTitle,
-} from '~/components/estudiantes/layout/ui/card';
-import { Label } from '~/components/estudiantes/layout/ui/label';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/estudiantes/ui/card';
+import { Label } from '~/components/estudiantes/ui/label';
 import ProgramCoursesList from '~/components/super-admin/layout/programdetail/ProgramCoursesList';
 import { type CourseData as BaseCourseData } from '~/server/queries/queries';
 

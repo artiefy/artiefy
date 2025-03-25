@@ -19,15 +19,15 @@ import {
 import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
 
-import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/layout/ui/badge';
-import { Button } from '~/components/estudiantes/layout/ui/button';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
-} from '~/components/estudiantes/layout/ui/card';
-import { Icons } from '~/components/estudiantes/layout/ui/icons';
+} from '~/components/estudiantes/ui/card';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { cn } from '~/lib/utils';
 import { formatDate, type GradesApiResponse } from '~/lib/utils2';

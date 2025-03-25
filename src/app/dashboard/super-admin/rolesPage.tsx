@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 
-import { Button } from '~/components/estudiantes/layout/ui/button';
+import { Button } from '~/components/estudiantes/ui/button';
 import { setRoleWrapper } from '~/server/wrappers/serverWrappers';
 
 interface User {

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { StarIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
-import { Badge } from '~/components/estudiantes/ui/';
+import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,

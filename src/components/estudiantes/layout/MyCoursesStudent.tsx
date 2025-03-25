@@ -5,13 +5,13 @@ import { currentUser } from '@clerk/nextjs/server';
 import { BookOpenIcon, StarIcon } from '@heroicons/react/24/outline';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
-import { Badge } from '~/components/estudiantes/layout/ui/badge';
+import { Badge } from '~/components/estudiantes/ui/badge';
 import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 import { getEnrolledPrograms } from '~/server/actions/estudiantes/programs/getEnrolledPrograms';
 
-import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
-import { Progress } from './ui/progress';
+import { Button } from '../ui/button';
+import { Card, CardContent } from '../ui/card';
+import { Progress } from '../ui/progress';
 
 const getImageUrl = (coverImageKey: string | null): string => {
 	if (!coverImageKey || coverImageKey === 'NULL') {

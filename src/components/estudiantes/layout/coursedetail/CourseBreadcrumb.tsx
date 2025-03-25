@@ -10,7 +10,7 @@ import {
 	BreadcrumbList,
 	BreadcrumbPage,
 	BreadcrumbSeparator,
-} from '~/components/estudiantes/layout/ui/breadcrumb';
+} from '~/components/estudiantes/ui/breadcrumb';
 
 interface CourseBreadcrumbProps {
 	title: string;

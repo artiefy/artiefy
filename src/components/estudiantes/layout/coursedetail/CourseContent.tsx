@@ -21,9 +21,9 @@ import {
 	Alert,
 	AlertDescription,
 	AlertTitle,
-} from '~/components/estudiantes/layout/ui/alert';
-import { Button } from '~/components/estudiantes/layout/ui/button';
-import { Progress } from '~/components/estudiantes/layout/ui/progress';
+} from '~/components/estudiantes/ui/alert';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Progress } from '~/components/estudiantes/ui/progress';
 import { cn } from '~/lib/utils';
 
 import type { Course } from '~/types';

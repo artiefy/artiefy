@@ -1,7 +1,7 @@
 'use client';
 import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 
-import { Button } from '~/components/estudiantes/layout/ui/button';
+import { Button } from '~/components/estudiantes/ui/button';
 
 interface LessonWithProgress {
 	isLocked: boolean;

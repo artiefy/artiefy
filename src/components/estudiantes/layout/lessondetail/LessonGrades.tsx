@@ -2,8 +2,8 @@
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaTrophy } from 'react-icons/fa';
 
-import { Button } from '~/components/estudiantes/layout/ui/button';
-import { Icons } from '~/components/estudiantes/layout/ui/icons';
+import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { formatScore } from '~/utils/formatScore';
 
 interface LessonGradesProps {

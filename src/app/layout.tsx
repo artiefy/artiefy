@@ -12,7 +12,7 @@ import {
 	type WithContext,
 } from 'schema-dts';
 
-import { Toaster } from '~/components/estudiantes/layout/ui/sonner';
+import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { metadata as siteMetadata } from '~/lib/metadata';
 
 import Loading from './loading';

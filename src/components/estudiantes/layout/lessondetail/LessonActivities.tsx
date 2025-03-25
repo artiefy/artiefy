@@ -8,7 +8,7 @@ import { TbReportAnalytics } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
-import { Icons } from '~/components/estudiantes/layout/ui/icons';
+import { Icons } from '~/components/estudiantes/ui/icons';
 
 import LessonActivityModal from './LessonActivityModal';
 import { GradeHistory } from './LessonGradeHistory';

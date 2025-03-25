@@ -1,4 +1,4 @@
-import { Skeleton } from '~/components/estudiantes/layout/ui/skeleton';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 // Componentes internos reutilizables
 const CardSkeleton = () => <Skeleton className="h-32 w-full rounded-lg" />;

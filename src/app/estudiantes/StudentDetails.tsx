@@ -11,14 +11,14 @@ import { StarIcon } from '@heroicons/react/24/solid';
 import { LoaderArtieia } from '~/components/estudiantes/layout/LoaderArtieia';
 import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
-import { Badge } from '~/components/estudiantes/layout/ui/badge';
+import { Badge } from '~/components/estudiantes/ui/badge';
 import {
 	Carousel,
 	CarouselContent,
 	CarouselItem,
 	CarouselNext,
 	CarouselPrevious,
-} from '~/components/estudiantes/layout/ui/carousel';
+} from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course, type Program } from '~/types';
 import '~/styles/searchBar.css';
