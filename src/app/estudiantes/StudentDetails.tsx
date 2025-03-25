@@ -214,16 +214,16 @@ export default function StudentDetails({
 														<div className="mb-2 flex items-center justify-between">
 															<Badge
 																variant="outline"
-																className="mb-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
+																className="mt-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
 															>
 																{course.category?.name}
 															</Badge>
-															<span className="text-sm font-bold text-red-500">
+															<span className="mt-2 text-sm font-bold text-red-500">
 																{course.modalidad?.name}
 															</span>
 														</div>
 														<div className="flex items-center justify-between">
-															<p className="text-sm text-primary italic">
+															<p className="text-sm font-semibold text-primary italic">
 																Educador: <span>{course.instructor}</span>
 															</p>
 															<div className="flex items-center">
