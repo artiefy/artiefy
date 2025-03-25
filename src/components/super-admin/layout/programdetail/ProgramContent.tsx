@@ -5,16 +5,16 @@ import Link from 'next/link';
 
 import { StarIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
-import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/layout/ui/badge';
-import { Button } from '~/components/estudiantes/layout/ui/button';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { Badge } from '~/components/estudiantes/ui/badge';
+import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
 	CardContent,
 	CardHeader,
 	CardFooter,
 	CardTitle,
-} from '~/components/estudiantes/layout/ui/card';
+} from '~/components/estudiantes/ui/card';
 
 import type { Program, MateriaWithCourse, Course } from '~/types';
 

@@ -21,7 +21,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '~/components/estudiantes/ui/card';
-import GradientText from '~/components/estudiantes/ui/GradientText';
+import GradientText from '~/components/estudiantes/layout/GradientText';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 

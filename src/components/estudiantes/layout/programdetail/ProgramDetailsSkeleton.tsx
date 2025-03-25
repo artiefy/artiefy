@@ -1,10 +1,10 @@
-import { AspectRatio } from '~/components/estudiantes/layout/ui/aspect-ratio';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import {
 	Card,
 	CardContent,
 	CardHeader,
-} from '~/components/estudiantes/layout/ui/card';
-import { Skeleton } from '~/components/estudiantes/layout/ui/skeleton';
+} from '~/components/estudiantes/ui/card';
+import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 export function ProgramDetailsSkeleton() {
 	return (
