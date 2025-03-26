@@ -1,4 +1,3 @@
-
 import './src/env.js'; // Importa variables de entorno
 import withPlaiceholder from '@plaiceholder/next'; // Importa la configuración de @plaiceholder/next
 
@@ -15,26 +14,19 @@ const nextConfig = {
 		deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840], // Define los tamaños de dispositivo para imágenes responsivas
 		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Define los tamaños de imagen para imágenes responsivas
 		minimumCacheTTL: 60, // Define el tiempo mínimo de vida en caché para imágenes en segundos
+		domains: [
+			's3.us-east-2.amazonaws.com',
+			'placehold.co',
+			'img.clerk.com',
+			new URL(process.env.NEXT_PUBLIC_AWS_S3_URL ?? '').hostname,
+		],
 		remotePatterns: [
 			{
 				protocol: 'https',
-				hostname: 's3.us-east-2.amazonaws.com',
-				port: '',
-				pathname: '/artiefy-upload/**',
+				hostname: '**',
+				pathname: '**',
 			},
-			{
-				protocol: 'https',
-				hostname: 'placehold.co',
-				port: '',
-				pathname: '/**',
-			},
-			{
-				protocol: 'https',
-				hostname: 'img.clerk.com',
-				port: '',
-				pathname: '/**',
-			},
-		], // Define patrones remotos para permitir la carga de imágenes desde dominios específicos
+		],
 	},
 	experimental: {
 		turbo: {

@@ -68,20 +68,25 @@ export async function generateMetadata({
 		};
 	}
 
-	const coverImageUrl = course.coverImageKey
-		? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-		: 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+	// Asegurar que tengamos una URL base válida
+	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
+	const metadataBase = new URL(baseUrl);
+
+	// Construir URL absoluta para la imagen
+	const coverImageUrl = new URL(
+		course.coverImageKey
+			? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+			: 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+	).toString();
 
 	return {
-		metadataBase: new URL(
-			process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
-		),
+		metadataBase,
 		title: `${course.title} | Artiefy`,
 		description: course.description ?? 'No hay descripción disponible.',
 		openGraph: {
 			type: 'website',
 			locale: 'es_ES',
-			url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
+			url: new URL(`/estudiantes/cursos/${id}`, baseUrl).toString(),
 			siteName: 'Artiefy',
 			title: `${course.title} | Artiefy`,
 			description: course.description ?? 'No hay descripción disponible.',
@@ -91,6 +96,9 @@ export async function generateMetadata({
 					width: 1200,
 					height: 630,
 					alt: `Portada del curso: ${course.title}`,
+					type: course.coverImageKey?.endsWith('.png')
+						? 'image/png'
+						: 'image/jpeg',
 				},
 			],
 		},
@@ -99,6 +107,8 @@ export async function generateMetadata({
 			title: `${course.title} | Artiefy`,
 			description: course.description ?? 'No hay descripción disponible.',
 			images: [coverImageUrl],
+			creator: '@artiefy',
+			site: '@artiefy',
 		},
 	};
 }
