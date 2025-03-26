@@ -19,7 +19,6 @@ import {
 	PiCloudBold,
 	PiGlobeBold,
 	PiBrowserBold,
-	PiCodeSimpleBold,
 	PiDeviceMobileBold,
 	PiRobotBold,
 	PiAppWindowBold,
@@ -42,16 +41,10 @@ import {
 	AlertDialogTitle,
 } from '~/components/educators/ui/alert-dialog';
 import { Button } from '~/components/estudiantes/ui/button';
-import { Checkbox } from '~/components/estudiantes/ui/checkbox';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
 import ProgramListAdmin from '~/components/super-admin/ProgramsListAdmin';
-import { getPrograms, updateProgram } from '~/server/queries/queriesSuperAdmin';
-
-interface SubjectOption {
-	value: string; // El ID de la materia en formato string
-	label: string; // El nombre de la materia
-}
+import { getPrograms } from '~/server/queries/queriesSuperAdmin';
 
 // Define el modelo de datos del programa
 export interface ProgramModel {
@@ -65,10 +58,7 @@ export interface ProgramModel {
 	rating: number;
 }
 
-interface ProgramData extends ProgramModel {
-	id: number; // Make id required
-	// Add any other required fields from the API response
-}
+
 
 export type Program = Partial<ProgramModel>;
 
@@ -99,12 +89,7 @@ export default function Page() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [categoryFilter, setCategoryFilter] = useState('');
 	const [totalPrograms, setTotalPrograms] = useState(0);
-	const [totalStudents, setTotalStudents] = useState(0);
-	const [selectedSubjects, setSelectedSubjects] = useState<SubjectOption[]>([]);
-	if (typeof setSelectedSubjects === 'function') {
-		// no hacemos nada, solo para "usarlo"
-	}
-
+	const [totalStudents, setTotalStudents] = useState(0);	
 	// Update the state definition to use the new interface
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]);
@@ -332,26 +317,7 @@ export default function Page() {
 		setIsModalOpen(true);
 	};
 
-	// Función para cerrar el modal de creación de programas
-	const handleCloseModal = () => {
-		setIsModalOpen(false);
-		setEditingProgram(null);
-	};
-
-	// Manejo del título del programa en el modal si no es null
-	const setTitle = (title: string) => {
-		setEditingProgram((prev) => (prev ? { ...prev, title } : prev));
-	};
-
-	// Manejo de la descripción del programa en el modal si no es null
-	const setDescription = (description: string) => {
-		setEditingProgram((prev) => (prev ? { ...prev, description } : prev));
-	};
-
-	// Manejo de la calificación del programa en el modal si no es null
-	const setRating = (rating: number) => {
-		setEditingProgram((prev) => (prev ? { ...prev, rating } : prev));
-	};
+	
 
 	const handleDeleteSelected = async () => {
 		try {

@@ -20,9 +20,9 @@
 		"*.css": "tailwindcss"
 	},
 	"files.watcherExclude": {
-		"**/node_modules/**": true,
-		"**/dist/**": true,
-		"**/.git/**": true
+		"/node_modules/": true,
+		"/dist/": true,
+		"/.git/": true
 	},
 
 	// Language-specific Formatters
@@ -40,7 +40,12 @@
 	},
 
 	// TypeScript Configuration
-	"typescript.tsdk": "./node_modules/typescript/lib",
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"typescript.tsserver.maxTsServerMemory": 4096,
+	"typescript.tsserver.watchOptions": {
+		"fallbackPolling": "dynamicPriorityPolling"
+	},
 
 	// ESLint Configuration
 	"eslint.validate": [
@@ -49,21 +54,17 @@
 		"typescript",
 		"typescriptreact"
 	],
-<<<<<<< HEAD
 	"eslint.workingDirectories": ["./"],
 	"eslint.useFlatConfig": true,
 	"eslint.run": "onType",
 	"eslint.nodePath": "./node_modules",
-	"eslint.debug": true,
+	"eslint.debug": false,
 	"eslint.rules.customizations": [
 		{ "rule": "import/order", "severity": "off" },
 		{ "rule": "no-unused-vars", "severity": "warn" }
 	],
 
 	// Tailwind CSS Configuration
-=======
-	"eslint.debug": true,
->>>>>>> dev/miguel
 	"tailwindCSS.includeLanguages": {
 		"typescript": "javascript",
 		"typescriptreact": "javascript",
@@ -93,9 +94,9 @@
 
 	// Search and Performance
 	"search.exclude": {
-		"**/node_modules": true,
-		"**/dist": true,
-		"**/.git": true
+		"/node_modules": true,
+		"/dist": true,
+		"/.git": true
 	},
 	"javascript.suggest.completeFunctionCalls": true,
 

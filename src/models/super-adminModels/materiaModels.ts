@@ -1,4 +1,4 @@
-import { isNull, eq } from 'drizzle-orm'; // ✅ Importar inArray
+import { eq } from 'drizzle-orm'; // ✅ Importar inArray
 
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';

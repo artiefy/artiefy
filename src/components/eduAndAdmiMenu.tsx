@@ -10,7 +10,6 @@ import {
 	FiBook,
 	FiFileText,
 	FiUser,
-	FiArchive,
 	FiSettings,
 	FiMenu,
 	FiX,

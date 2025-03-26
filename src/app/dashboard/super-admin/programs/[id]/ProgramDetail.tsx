@@ -145,6 +145,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [editingProgram, setEditingProgram] = useState<Program | null>(null);
 	const [editSubjects, setEditSubjects] = useState<number[]>([]); // Add this for subjects
+	void setEditSubjects;
 
 	useEffect(() => {
 		const loadEducators = async () => {
@@ -534,16 +535,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		}
 	};
 
-	// Modify the edit button click handler
-	const handleEditClick = () => {
-		if (!program) return;
-
-		setEditingProgram({
-			...program,
-			categoryid: program.categoryid,
-		});
-		setIsEditModalOpen(true);
-	};
 
 	// Renderizar el componente
 	return (

@@ -10,7 +10,6 @@ import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
 	getCategoryNameById,
-	getInstructorNameById,
 	getCourses,
 	updateCourse,
 	type CourseData,

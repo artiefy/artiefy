@@ -15,10 +15,7 @@ import {
 import { Button } from '~/components/estudiantes/ui/button';
 import { type CourseData } from '~/server/queries/queries';
 
-interface CourseDataWithNames extends CourseData {
-	categoryName?: string;
-	instructorName?: string;
-}
+
 
 interface Course {
 	id?: number;

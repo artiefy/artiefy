@@ -3,7 +3,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
 import {
-	createCourse,
 	deleteCourse,
 	getAllCourses,
 	getCourseById,
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
 		const data = (await request.json()) as {
 			title: string;
 			description: string;
-			coverImageKey: string;
+			coverImageKey: string; 
 			categoryid: number;
 			modalidadesid: number[];
 			nivelid: number;

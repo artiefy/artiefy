@@ -5,7 +5,6 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 
 import Image from 'next/image';
 
-import { useUser } from '@clerk/nextjs';
 import { Plus } from 'lucide-react';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
@@ -122,7 +121,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	educators = [],
 	instructor,
 }) => {
-	// const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null); // Estado para el archivo
 	const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
 	const [fileSize, setFileSize] = useState<number | null>(null); // Estado para el tamaño del archivo
