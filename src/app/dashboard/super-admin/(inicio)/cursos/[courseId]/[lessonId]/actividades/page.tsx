@@ -26,7 +26,7 @@ import {
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
+} from '~/components/super-admin/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
@@ -446,7 +446,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/educadores"
+							href="/dashboard/super-admin"
 						>
 							Inicio
 						</BreadcrumbLink>
@@ -455,7 +455,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/educadores/cursos"
+							href="/dashboard/super-admin/cursos"
 						>
 							Lista de cursos
 						</BreadcrumbLink>
@@ -464,7 +464,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/educadores/cursos/${courseIdNumber}`}
+							href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
 						>
 							Detalles curso
 						</BreadcrumbLink>
@@ -482,7 +482,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink className="text-primary hover:text-gray-300">
-							Creacion de actividad:
+							Creación de actividad:
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />

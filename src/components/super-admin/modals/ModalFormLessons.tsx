@@ -289,7 +289,7 @@ const ModalFormLessons = ({
 						Llena los detalles para crear la nuevo clase
 					</DialogDescription>
 				</DialogHeader>
-				<div className="rounded-lg bg-background px-6 text-black shadow-md">
+				<div className="rounded-lg bg-background px-6 text-white shadow-md">
 					<label htmlFor="title" className="text-lg font-medium text-primary">
 						Título
 					</label>
@@ -298,7 +298,7 @@ const ModalFormLessons = ({
 						placeholder="Título"
 						value={formData.title}
 						onChange={(e) => handleInputChange(e, 'title')}
-						className={`mb-4 w-full rounded border p-2 text-black outline-hidden ${
+						className={`mb-4 w-full rounded border p-2 text-white outline-hidden ${
 							errors.title ? 'border-red-500' : 'border-primary'
 						}`}
 					/>
@@ -316,7 +316,7 @@ const ModalFormLessons = ({
 						placeholder="Descripción"
 						value={formData.description}
 						onChange={(e) => handleInputChange(e, 'description')}
-						className={`mb-3 h-auto w-full rounded border p-2 text-black outline-hidden ${
+						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-hidden ${
 							errors.description ? 'border-red-500' : 'border-primary'
 						}`}
 					/>
@@ -334,7 +334,7 @@ const ModalFormLessons = ({
 						placeholder="Duración"
 						value={formData.duration}
 						onChange={(e) => handleInputChange(e, 'duration')}
-						className={`mb-4 w-full rounded border p-2 text-black outline-hidden ${
+						className={`mb-4 w-full rounded border p-2 text-white outline-hidden ${
 							errors.duration ? 'border-red-500' : 'border-primary'
 						}`}
 					/>

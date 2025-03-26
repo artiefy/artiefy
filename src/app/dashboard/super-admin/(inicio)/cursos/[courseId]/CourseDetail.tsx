@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
+import { Portal } from '@radix-ui/react-portal';
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
@@ -21,18 +22,19 @@ import {
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+import { Label } from '~/components/educators/ui/label';
+import TechLoader from '~/components/estudiantes/ui/tech-loader';
+import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
+import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
-import { Label } from '~/components/educators/ui/label';
-import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
-import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
+} from '~/components/super-admin/ui/breadcrumb';
 
 // Definir la interfaz del curso
 interface Course {
@@ -51,6 +53,7 @@ interface Course {
 	courseTypeId?: number | null; // ✅ Agrega esto
 	courseTypeName?: string;
 	isActive: boolean;
+	instructorName: string;
 }
 interface Materia {
 	id: number;
@@ -71,6 +74,12 @@ export interface Parametros {
 	courseId: number;
 }
 
+// Add these interfaces after the existing interfaces
+interface Educator {
+	id: string;
+	name: string;
+}
+
 // Función para obtener el contraste de un color
 const getContrastYIQ = (hexcolor: string) => {
 	if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
@@ -80,6 +89,66 @@ const getContrastYIQ = (hexcolor: string) => {
 	const b = parseInt(hexcolor.substr(4, 2), 16);
 	const yiq = (r * 299 + g * 587 + b * 114) / 1000;
 	return yiq >= 128 ? 'black' : 'white';
+};
+
+// Add this CSS block at the top of the file after imports:
+const styles = `
+  .svg-frame {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    transform-style: preserve-3d;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .svg-frame svg {
+    position: absolute;
+    transition: .5s;
+    z-index: calc(1 - (0.2 * var(--j)));
+    transform-origin: center;
+    width: 344px;
+    height: 344px;
+    fill: none;
+  }
+
+  .svg-frame:hover svg {
+    transform: rotate(-80deg) skew(30deg) translateX(calc(45px * var(--i))) translateY(calc(-35px * var(--i)));
+  }
+
+  #out2 {
+    animation: rotate16 7s ease-in-out infinite alternate;
+    transform-origin: center;
+  }
+
+  #out3 {
+    animation: rotate16 3s ease-in-out infinite alternate;
+    transform-origin: center;
+    stroke: #ff0;
+  }
+
+  @keyframes rotate16 {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+// Add this after your imports:
+const styleSheet = document.createElement('style');
+styleSheet.textContent = styles;
+document.head.appendChild(styleSheet);
+
+// Replace the FullscreenLoader component with:
+const FullscreenLoader = () => {
+	return (
+		<Portal>
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+				<TechLoader />
+			</div>
+		</Portal>
+	);
 };
 
 const CourseDetail: React.FC<CourseDetailProps> = () => {
@@ -135,6 +204,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		: courseIdUrl; // Obtener el id del curso como string
 	const courseIdString2 = courseIdString ?? ''; // Verificar si el id del curso es nulo
 	const courseIdNumber = parseInt(courseIdString2); // Convertir el id del curso a número
+
+	// Add these new states after the existing states
+	const [educators, setEducators] = useState<Educator[]>([]);
+	const [selectedInstructor, setSelectedInstructor] = useState<string>('');
+	const [showChangeButton, setShowChangeButton] = useState(false);
+	const [isUpdating, setIsUpdating] = useState(false);
+	const [currentInstructor, setCurrentInstructor] = useState('');
+
+	// Agregar este nuevo estado
+	const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
 
 	// Función para obtener el curso y los parámetros
 	const fetchCourse = useCallback(async () => {
@@ -192,12 +271,29 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}
 	}, [courseIdNumber]);
 
+	// Add this function after fetchCourse
+	const fetchEducators = async () => {
+		try {
+			const response = await fetch('/api/super-admin/changeEducators');
+			if (!response.ok) throw new Error('Failed to fetch educators');
+			const data = (await response.json()) as Educator[];
+			setEducators(data);
+		} catch (error) {
+			console.error('Error fetching educators:', error);
+		}
+	};
+
 	// Obtener el curso y los parámetros al cargar la página
 	useEffect(() => {
 		fetchCourse().catch((error) =>
 			console.error('Error fetching course:', error)
 		);
 	}, [fetchCourse]);
+
+	// Add this useEffect after the existing useEffects
+	useEffect(() => {
+		fetchEducators();
+	}, []);
 
 	// Obtener el color seleccionado al cargar la página
 	useEffect(() => {
@@ -354,12 +450,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Función para manejar la edición del curso
 	const handleEditCourse = () => {
-		if (!course) return; // Verificación adicional
+		if (!course) return;
 		setEditTitle(course.title);
 		setEditDescription(course.description);
 		setEditCategory(parseInt(course.categoryid));
 		setEditModalidad(parseInt(course.modalidadesid));
-		setEditNivel(parseInt(course.nivelid));
+		setEditNivel(parseInt(course.nivelid)); // Asegúrate de convertir a número
 		setEditCoverImageKey(course.coverImageKey);
 		setEditParametros(
 			parametros.map((parametro) => ({
@@ -369,10 +465,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				porcentaje: parametro.porcentaje,
 			}))
 		);
-		setEditRating(course.rating); // Añadir esta línea
-		setCourseTypeId(course.courseTypeId ?? null); // <-- ¡Agrega esto!
-		setIsModalOpen(true);
+		setEditRating(course.rating);
+		setCourseTypeId(course.courseTypeId ?? null);
 		setIsActive(course.isActive ?? true);
+		setCurrentInstructor(course.instructor);
+		setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
+		setIsModalOpen(true);
 	};
 
 	// Verificar si se está cargando
@@ -456,6 +554,62 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
 	};
 
+	// Add this function to handle instructor change
+	const handleChangeInstructor = async () => {
+		if (!selectedInstructor || !course?.id) {
+			toast.error('Por favor seleccione un instructor');
+			return;
+		}
+
+		try {
+			setIsUpdating(true); // This will now trigger the fullscreen loader
+
+			const response = await fetch('/api/super-admin/changeEducators', {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					courseId: course.id,
+					newInstructor: selectedInstructor,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error('Error al actualizar el instructor');
+			}
+
+			// Update the course state with new instructor
+			const selectedEducator = educators.find(
+				(e) => e.id === selectedInstructor
+			);
+			if (selectedEducator && course) {
+				setCourse({
+					...course,
+					instructor: selectedInstructor,
+					instructorName: selectedEducator.name,
+				});
+
+				setSelectedInstructor('');
+				setShowChangeButton(false);
+				toast.success('Instructor actualizado exitosamente');
+
+				// Refresh the course data
+				await fetchCourse();
+			}
+		} catch (error) {
+			console.error('Error:', error);
+			toast.error('Error al actualizar el instructor');
+		} finally {
+			setIsUpdating(false);
+		}
+	};
+
+	// Add this before the return statement
+	if (isUpdating) {
+		return <FullscreenLoader />;
+	}
+
 	// Renderizar el componente
 	return (
 		<div className="h-auto w-full rounded-lg bg-background">
@@ -464,7 +618,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/educadores"
+							href="/dashboard/super-admin"
 						>
 							Inicio
 						</BreadcrumbLink>
@@ -473,7 +627,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/educadores/cursos"
+							href="/dashboard/super-admin/cursos"
 						>
 							Lista de cursos
 						</BreadcrumbLink>
@@ -487,9 +641,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
-					className={`relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out zoom-in`}
+					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
@@ -631,20 +785,48 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 								</p>
 							</div>
 							<div className="grid grid-cols-4">
-								<div className="flex flex-col">
+								<div className="flex flex-col gap-2">
 									<h2
-										className={`text-lg font-semibold ${
-											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-										}`}
+										className={`text-lg font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 									>
 										Educador:
 									</h2>
-									<Badge
-										variant="outline"
-										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
-									>
-										{course.instructor}
-									</Badge>
+									<div className="flex flex-col gap-2">
+										<select
+											value={selectedInstructor || course.instructor}
+											onChange={(e) => setSelectedInstructor(e.target.value)}
+											className="w-full rounded-md border border-primary bg-background p-2 text-sm text-primary"
+										>
+											{course.instructor && (
+												<option value={course.instructor}>
+													{(educators.find((e) => e.id === course.instructor)
+														?.name ??
+														course.instructorName) ||
+														'Instructor actual'}
+												</option>
+											)}
+											{educators
+												.filter((educator) => educator.id !== course.instructor)
+												.map((educator) => (
+													<option key={educator.id} value={educator.id}>
+														{educator.name}
+													</option>
+												))}
+										</select>
+
+										{selectedInstructor &&
+											selectedInstructor !== course.instructor && (
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={handleChangeInstructor}
+													className="relative w-full border-primary text-primary hover:bg-primary hover:text-white"
+													disabled={isUpdating}
+												>
+													Guardar cambio
+												</Button>
+											)}
+									</div>
 								</div>
 								<div className="flex flex-col">
 									<h2
@@ -791,7 +973,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				rating={editRating} // Añadir esta línea
 				setTitle={setEditTitle}
 				setDescription={setEditDescription}
-				setModalidadesid={setEditModalidad}
+				setModalidadesid={(value: number | number[]) =>
+					setEditModalidad(
+						Array.isArray(value) ? Number(value[0]) : Number(value)
+					)
+				}
 				setCategoryid={setEditCategory}
 				setNivelid={setEditNivel} // Replaced setid with setNivelid
 				setCoverImageKey={setEditCoverImageKey}
@@ -810,6 +996,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setCourseTypeId={setCourseTypeId}
 				isActive={isActive}
 				setIsActive={setIsActive}
+				instructor={currentInstructor}
+				setInstructor={setCurrentInstructor}
+				educators={educators}
+				subjects={currentSubjects}
+				setSubjects={setCurrentSubjects}
 			/>
 		</div>
 	);

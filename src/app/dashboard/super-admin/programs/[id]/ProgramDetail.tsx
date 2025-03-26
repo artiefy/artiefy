@@ -9,15 +9,39 @@ import { useUser } from '@clerk/nextjs'; // 🔥 Agrega esta línea al inicio de
 import { toast } from 'sonner';
 
 import ModalFormCourse from '~/components/educators/modals/program/ModalFormCourse'; // Import ModalFormCourse
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/estudiantes/ui/card';
 import { Label } from '~/components/estudiantes/ui/label';
 import ProgramCoursesList from '~/components/super-admin/layout/programdetail/ProgramCoursesList';
-import { type CourseData as BaseCourseData } from '~/server/queries/queries';
+import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from '~/components/super-admin/ui/breadcrumb';
+import {
+	type CourseData as BaseCourseData,
+	getCategoryNameById,
+	getInstructorNameById,
+} from '~/server/queries/queries';
 
 interface CourseData extends BaseCourseData {
 	programId?: number; // Add programId as an optional property
+	categoryName?: string; // Add categoryName as an optional property
+	instructorName?: string; // Add instructorName as an optional property
 }
 
 // Definir la interfaz del programa
@@ -113,6 +137,33 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	);
 	void setEditingCourse;
 	void uploading;
+	const [educators, setEducators] = useState<{ id: string; name: string }[]>(
+		[]
+	);
+	const [instructor, setInstructor] = useState('');
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+	const [editSubjects, setEditSubjects] = useState<number[]>([]); // Add this for subjects
+	void setEditSubjects;
+
+	useEffect(() => {
+		const loadEducators = async () => {
+			try {
+				const response = await fetch('/api/super-admin/changeEducators');
+				if (response.ok) {
+					const data = (await response.json()) as {
+						id: string;
+						name: string;
+					}[];
+					setEducators(data);
+				}
+			} catch (error) {
+				console.error('Error al cargar educadores:', error);
+			}
+		};
+		void loadEducators();
+	}, []);
 
 	const [newCourse, setNewCourse] = useState<CourseData>({
 		id: 0,
@@ -145,8 +196,33 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					throw new Error('Error fetching courses');
 				}
 				const coursesData = (await coursesResponse.json()) as CourseData[];
-				setCourses(coursesData);
 
+				// Fetch category names and instructor names for each course
+				const coursesWithNames = await Promise.all(
+					coursesData.map(async (course) => {
+						try {
+							const [categoryName, instructorName] = await Promise.all([
+								getCategoryNameById(course.categoryid),
+								getInstructorNameById(course.instructor),
+							]);
+
+							return {
+								...course,
+								categoryName: categoryName,
+								instructorName: instructorName,
+							};
+						} catch (error) {
+							console.error('Error fetching names:', error);
+							return {
+								...course,
+								categoryName: 'Unknown Category',
+								instructorName: 'Unknown Instructor',
+							};
+						}
+					})
+				);
+
+				setCourses(coursesWithNames);
 				setProgram(data);
 				setLoading(false);
 			} catch (error) {
@@ -241,7 +317,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	};
 
 	const handleCreateOrEditCourse = async (
-		_id: string,
+		id: string,
 		title: string,
 		description: string,
 		file: File | null,
@@ -297,6 +373,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				await fetch(uploadData.url, { method: 'POST', body: formData });
 			}
 
+			const selectedEducator = educators.find((ed) => ed.id === instructor);
+			const instructorName = selectedEducator ? selectedEducator.name : '';
+
 			const response = await fetch('/api/educadores/courses/cursoMateria', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -307,7 +386,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					fileName,
 					categoryid,
 					modalidadesid,
-					instructor: user.fullName,
+					instructor: instructorName, // Aquí enviamos el nombre en lugar del ID
 					creatorId: user.id,
 					nivelid,
 					rating,
@@ -363,7 +442,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				});
 
 				toast.success('Curso(s) creado(s) con éxito', {
-					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData.map((r) => r.id).join(', ')}`,
+					description: `Curso(s) creado(s) exitosamente con ID(s): ${responseData
+						.map((r) => r.id)
+						.join(', ')}`,
 				});
 				await fetchProgram(); // 🔥 refresca los cursos
 				setSubjects([]); // limpiar las materias en el estado
@@ -378,16 +459,114 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		} catch (error) {
 			console.error('Error during course creation:', error);
 			toast.error('Error', {
-				description: `Error during course creation: ${error instanceof Error ? error.message : 'Unknown error'}`,
+				description: `Error during course creation: ${
+					error instanceof Error ? error.message : 'Unknown error'
+				}`,
 			});
 		} finally {
 			setUploading(false);
 		}
 	};
 
+	const handleDeleteProgram = async () => {
+		if (!program) return;
+
+		try {
+			const response = await fetch('/api/super-admin/programs/deleteProgram', {
+				method: 'DELETE',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					programIds: [program.id],
+				}),
+			});
+
+			if (!response.ok) {
+				const error = (await response.json()) as { message?: string };
+				throw new Error(error.message ?? 'Error al eliminar el programa');
+			}
+
+			toast.success('Programa eliminado exitosamente');
+			// Redirect to programs list
+			window.location.href = '/dashboard/super-admin/programs';
+		} catch (error) {
+			toast.error('Error al eliminar el programa');
+			console.error('Error:', error);
+		}
+	};
+
+	// Add this function to handle editing a program
+	const handleEditProgram = async (
+		id: string,
+		title: string,
+		description: string,
+		file: File | null,
+		categoryid: number,
+		rating: number,
+		coverImageKey: string,
+		fileName: string,
+		subjectIds: number[]
+	) => {
+		try {
+			const response = await fetch(`/api/super-admin/programs/${id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					title,
+					description,
+					categoryid,
+					rating,
+					coverImageKey,
+					subjectIds,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error('Error al actualizar el programa');
+			}
+
+			toast.success('Programa actualizado exitosamente');
+			setIsEditModalOpen(false);
+			void fetchProgram(); // Refresh data
+		} catch (error) {
+			toast.error('Error al actualizar el programa');
+			console.error(error);
+		}
+	};
+
+
 	// Renderizar el componente
 	return (
 		<div className="h-auto w-full rounded-lg bg-background">
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="text-primary hover:text-gray-300"
+							href="/dashboard/super-admin"
+						>
+							Inicio
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="text-primary hover:text-gray-300"
+							href="/dashboard/super-admin/programs"
+						>
+							Lista de programas
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink className="text-primary hover:text-gray-300">
+							Detalles del programa
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+
 			<div className="group relative h-auto w-full">
 				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
@@ -494,12 +673,20 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 									{program.description}
 								</p>
 							</div>
-							<Button
-								onClick={handleCreateCourse}
-								className="mt-4 bg-secondary text-white"
-							>
-								Crear Curso
-							</Button>
+							<div className="flex gap-2">
+								<Button
+									onClick={handleCreateCourse}
+									className="mt-4 bg-secondary text-white"
+								>
+									Crear Curso
+								</Button>
+								<Button
+									onClick={() => setShowDeleteConfirm(true)}
+									className="mt-4 bg-red-600 text-white hover:bg-red-700"
+								>
+									Eliminar Programa
+								</Button>
+							</div>
 						</div>
 					</div>
 				</Card>
@@ -550,7 +737,66 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				setSelectedCourseType={setSelectedCourseType}
 				isActive={isActive} // ✅ Agrega esto
 				setIsActive={setIsActive}
+				instructor={instructor}
+				setInstructor={setInstructor}
+				educators={educators}
 			/>
+			<AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+						<AlertDialogDescription>
+							Esta acción no se puede deshacer. Se eliminará el programa &quot;
+							{program?.title}&quot; y todos sus datos relacionados.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDeleteProgram}
+							className="bg-red-600 text-white hover:bg-red-700"
+						>
+							Eliminar
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+			{isEditModalOpen && editingProgram && (
+				<ModalFormProgram
+					isOpen={isEditModalOpen}
+					onCloseAction={() => setIsEditModalOpen(false)}
+					onSubmitAction={handleEditProgram}
+					uploading={uploading}
+					editingProgramId={editingProgram.id}
+					title={editingProgram.title}
+					setTitle={(title) =>
+						setEditingProgram((prev) => (prev ? { ...prev, title } : null))
+					}
+					description={editingProgram.description}
+					setDescription={(desc) =>
+						setEditingProgram((prev) =>
+							prev ? { ...prev, description: desc } : null
+						)
+					}
+					categoryid={Number(editingProgram.categoryid)}
+					setCategoryid={(catId) =>
+						setEditingProgram((prev) =>
+							prev ? { ...prev, categoryid: String(catId) } : null
+						)
+					}
+					coverImageKey={editingProgram.coverImageKey}
+					setCoverImageKey={(cover) =>
+						setEditingProgram((prev) =>
+							prev ? { ...prev, coverImageKey: cover } : null
+						)
+					}
+					rating={editingProgram.rating}
+					setRating={(rating) =>
+						setEditingProgram((prev) => (prev ? { ...prev, rating } : null))
+					}
+					subjectIds={editSubjects}
+				/>
+			)}
 		</div>
 	);
 };

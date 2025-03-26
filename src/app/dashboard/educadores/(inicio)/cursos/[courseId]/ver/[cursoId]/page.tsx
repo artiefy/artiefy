@@ -20,7 +20,7 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 	BreadcrumbPage,
-} from '~/components/educators/ui/breadcrumb';
+} from '~/components/super-admin/ui/breadcrumb';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 
 // Consideraciones de diseño: validar con los contratadores si al pulsar ver course se debe abrir directamente en la vista de estudiante o en la vista de educador
@@ -219,7 +219,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="hover:text-gray-300"
-							href="/dashboard/educadores"
+							href="/dashboard/super-admin"
 						>
 							Inicio
 						</BreadcrumbLink>
@@ -228,7 +228,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="hover:text-gray-300"
-							href="/dashboard/educadores/cursos"
+							href="/dashboard/super-admin/cursos"
 						>
 							Lista de cursos
 						</BreadcrumbLink>

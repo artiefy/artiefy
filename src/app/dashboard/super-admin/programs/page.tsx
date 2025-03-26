@@ -4,17 +4,47 @@ import { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
+import {
+	PiCodeBold,
+	PiDatabaseBold,
+	PiGameControllerBold,
+	PiShieldCheckBold,
+	PiWindBold,
+	PiComputerTowerBold,
+	PiCalculatorBold,
+	PiAtomBold,
+	PiPaintBrushBold,
+	PiMegaphoneBold,
+	PiBrainBold,
+	PiCloudBold,
+	PiGlobeBold,
+	PiBrowserBold,
+	PiDeviceMobileBold,
+	PiRobotBold,
+	PiAppWindowBold,
+	PiSunBold,
+	PiBooksBold,
+	PiScissorsBold,
+	PiChartLineUpBold,
+	PiGraduationCapBold,
+} from 'react-icons/pi';
 import { toast } from 'sonner';
 
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '~/components/educators/ui/alert-dialog';
+import { Button } from '~/components/estudiantes/ui/button';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
 import ProgramListAdmin from '~/components/super-admin/ProgramsListAdmin';
-import { getPrograms, updateProgram } from '~/server/queries/queriesSuperAdmin';
-
-interface SubjectOption {
-	value: string; // El ID de la materia en formato string
-	label: string; // El nombre de la materia
-}
+import { getPrograms } from '~/server/queries/queriesSuperAdmin';
 
 // Define el modelo de datos del programa
 export interface ProgramModel {
@@ -28,7 +58,16 @@ export interface ProgramModel {
 	rating: number;
 }
 
+
+
 export type Program = Partial<ProgramModel>;
+
+// Add this interface near the top with other interfaces
+interface Category {
+	id: number;
+	name: string;
+	is_featured: boolean;
+}
 
 // Define el modelo de datos de los parámetros de evaluación
 export function LoadingPrograms() {
@@ -44,23 +83,17 @@ export function LoadingPrograms() {
 export default function Page() {
 	const { user } = useUser();
 	const [programs, setPrograms] = useState<ProgramModel[]>([]);
-	const [editingProgram, setEditingProgram] = useState<ProgramModel | null>(
-		null
-	);
+	const [editingProgram, setEditingProgram] = useState<Program | null>(null);
 	const [uploading, setUploading] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [categoryFilter, setCategoryFilter] = useState('');
 	const [totalPrograms, setTotalPrograms] = useState(0);
-	const [totalStudents, setTotalStudents] = useState(0);
-	const [selectedSubjects, setSelectedSubjects] = useState<SubjectOption[]>([]);
-	if (typeof setSelectedSubjects === 'function') {
-		// no hacemos nada, solo para "usarlo"
-	}
-
-	const [categories, setCategories] = useState<{ id: number; name: string }[]>(
-		[]
-	);
+	const [totalStudents, setTotalStudents] = useState(0);	
+	// Update the state definition to use the new interface
+	const [categories, setCategories] = useState<Category[]>([]);
+	const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 	// ✅ Obtener programas, totales y categorías
 	useEffect(() => {
@@ -68,17 +101,22 @@ export default function Page() {
 			try {
 				const programsData = await getPrograms();
 				setPrograms(
-					programsData.map((program) => ({
-						...program,
-						id: program.id ?? 0, // ✅ Asegurar que `id` sea un número válido
-						description: program.description ?? '', // Ensure description is a string
-						coverImageKey: program.coverImageKey ?? '', // Ensure coverImageKey is a string
-						rating: program.rating ?? 0, // Ensure rating is a number
-						createdAt:
-							typeof program.createdAt === 'string'
-								? program.createdAt
-								: program.createdAt.toISOString(), // Ensure createdAt is a string
-					}))
+					programsData.map(
+						(program): ProgramModel => ({
+							id: program.id ?? 0,
+							title: program.title ?? '',
+							description: program.description ?? '',
+							categoryid: program.categoryid ?? 0,
+							createdAt:
+								typeof program.createdAt === 'string'
+									? program.createdAt
+									: (program.createdAt?.toISOString() ??
+										new Date().toISOString()),
+							coverImageKey: program.coverImageKey ?? '',
+							creatorId: program.creatorId ?? '',
+							rating: program.rating ?? 0,
+						})
+					)
 				);
 
 				// Obtener métricas
@@ -97,10 +135,8 @@ export default function Page() {
 				const categoriesResponse = await fetch('/api/super-admin/categories');
 				if (!categoriesResponse.ok)
 					throw new Error('Error obteniendo categorías');
-				const categoriesData = (await categoriesResponse.json()) as {
-					id: number;
-					name: string;
-				}[];
+				// Update the type assertion for categoriesData
+				const categoriesData = (await categoriesResponse.json()) as Category[];
 				setCategories(categoriesData);
 			} catch (error) {
 				console.error('❌ Error cargando datos:', error);
@@ -128,7 +164,7 @@ export default function Page() {
 		categoryid: number,
 		rating: number,
 		coverImageKey: string,
-		_fileName: string,
+		fileName: string,
 		subjectIds: number[]
 	) => {
 		if (!user) return;
@@ -160,9 +196,9 @@ export default function Page() {
 					fileName: string;
 				};
 
-				const { url, fields, key } = uploadData;
+				const { url, fields, key, fileName: responseFileName } = uploadData;
 				coverImageKey = key;
-				// We can use the fileName parameter here if needed
+				fileName = responseFileName;
 
 				const formData = new FormData();
 				Object.entries(fields).forEach(([key, value]) => {
@@ -192,17 +228,25 @@ export default function Page() {
 			// 🔹 Convertir `selectedSubjects` a un array de números antes de enviar
 
 			if (id) {
-				response = await updateProgram(Number(id), {
-					title,
-					description: description ?? '',
-					coverImageKey: coverImageKey ?? '',
-					categoryid: Number(categoryid),
-					rating,
-					creatorId,
-					subjectIds, // ✅ Enviar materias
-				} as Program);
+				response = await fetch(`/api/super-admin/programs?programId=${id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title,
+						description: description ?? '',
+						coverImageKey: coverImageKey ?? '',
+						categoryid: Number(categoryid),
+						rating,
+						creatorId,
+						subjectIds, // ✅ Enviar materias
+					}),
+				});
 
-				responseData = { id: Number(id) }; // Como es una actualización, el ID ya es conocido
+				if (!response.ok) {
+					throw new Error('Error al actualizar el programa');
+				}
+
+				responseData = (await response.json()) as { id: number };
 			} else {
 				response = await fetch('/api/super-admin/programs', {
 					method: 'POST',
@@ -229,31 +273,33 @@ export default function Page() {
 						? 'El programa se actualizó con éxito'
 						: 'El programa se creó con éxito',
 				});
-			} else {
-				throw new Error('No se pudo completar la operación');
+
+				// Refresh the programs list
+				const programsData = await getPrograms();
+				setPrograms(
+					programsData.map((program) => ({
+						...program,
+						id: program.id ?? 0,
+						description: program.description ?? '',
+						coverImageKey: program.coverImageKey ?? '',
+						rating: program.rating ?? 0,
+						createdAt:
+							typeof program.createdAt === 'string'
+								? program.createdAt
+								: program.createdAt.toISOString(),
+					}))
+				);
 			}
 		} catch (error) {
 			toast.error('Error al procesar el programa', {
 				description: `Ocurrió un error: ${(error as Error).message}`,
 			});
+		} finally {
+			setUploading(false);
+			setEditingProgram(null); // Reset editing state
 		}
 
 		setIsModalOpen(false);
-		setUploading(false);
-		const programsData = await getPrograms();
-		setPrograms(
-			programsData.map((program) => ({
-				...program,
-				id: program.id ?? 0, // Ensure id is a number
-				description: program.description ?? '', // Ensure description is a string
-				coverImageKey: program.coverImageKey ?? '', // Ensure coverImageKey is a string
-				rating: program.rating ?? 0, // Ensure rating is a number
-				createdAt:
-					typeof program.createdAt === 'string'
-						? program.createdAt
-						: program.createdAt.toISOString(), // Ensure createdAt is a string
-			}))
-		);
 	};
 
 	// Función para abrir el modal de creación de programas
@@ -271,25 +317,62 @@ export default function Page() {
 		setIsModalOpen(true);
 	};
 
-	// Función para cerrar el modal de creación de programas
-	const handleCloseModal = () => {
-		setIsModalOpen(false);
-		setEditingProgram(null);
+	
+
+	const handleDeleteSelected = async () => {
+		try {
+			const response = await fetch('/api/super-admin/programs/deleteProgram', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ programIds: selectedPrograms }),
+			});
+
+			if (!response.ok) {
+				throw new Error('Error al eliminar los programas');
+			}
+
+			toast.success(
+				`${selectedPrograms.length} programa(s) eliminado(s) exitosamente`
+			);
+			setSelectedPrograms([]);
+			// Refresh programs list
+			const programsData = await getPrograms();
+			setPrograms(
+				programsData.map(
+					(program): ProgramModel => ({
+						id: program.id ?? 0,
+						title: program.title ?? '',
+						description: program.description ?? '',
+						categoryid: program.categoryid ?? 0,
+						createdAt:
+							typeof program.createdAt === 'string'
+								? program.createdAt
+								: (program.createdAt?.toISOString() ??
+									new Date().toISOString()),
+						coverImageKey: program.coverImageKey ?? '',
+						creatorId: program.creatorId ?? '',
+						rating: program.rating ?? 0,
+					})
+				)
+			);
+		} catch (error) {
+			toast.error('Error al eliminar los programas');
+			console.error('Error:', error);
+		}
+		setShowDeleteConfirm(false);
 	};
 
-	// Manejo del título del programa en el modal si no es null
-	const setTitle = (title: string) => {
-		setEditingProgram((prev) => (prev ? { ...prev, title } : prev));
+	const toggleProgramSelection = (programId: number) => {
+		setSelectedPrograms((prev) =>
+			prev.includes(programId)
+				? prev.filter((id) => id !== programId)
+				: [...prev, programId]
+		);
 	};
 
-	// Manejo de la descripción del programa en el modal si no es null
-	const setDescription = (description: string) => {
-		setEditingProgram((prev) => (prev ? { ...prev, description } : prev));
-	};
-
-	// Manejo de la calificación del programa en el modal si no es null
-	const setRating = (rating: number) => {
-		setEditingProgram((prev) => (prev ? { ...prev, rating } : prev));
+	const handleEditProgram = (program: Program) => {
+		setEditingProgram(program);
+		setIsModalOpen(true);
 	};
 
 	// spinner de carga
@@ -303,6 +386,35 @@ export default function Page() {
 			</main>
 		);
 	}
+
+	// Add this helper function to get icon by category
+	const getCategoryIcon = (categoryName: string) => {
+		const icons: Record<string, React.ReactNode> = {
+			Redes: <PiCloudBold className="size-5" />,
+			APIs: <PiGlobeBold className="size-5" />,
+			'Análisis de Datos': <PiChartLineUpBold className="size-5" />,
+			Videojuegos: <PiGameControllerBold className="size-5" />,
+			Seguridad: <PiShieldCheckBold className="size-5" />,
+			'Frameworks Web': <PiWindBold className="size-5" />,
+			Tecnología: <PiComputerTowerBold className="size-5" />,
+			Matemáticas: <PiCalculatorBold className="size-5" />,
+			Ciencias: <PiAtomBold className="size-5" />,
+			Diseño: <PiPaintBrushBold className="size-5" />,
+			Marketing: <PiMegaphoneBold className="size-5" />,
+			'Machine Learning': <PiBrainBold className="size-5" />,
+			'Bases de Datos': <PiDatabaseBold className="size-5" />,
+			'Desarrollo Web': <PiBrowserBold className="size-5" />,
+			Programación: <PiCodeBold className="size-5" />,
+			'Desarrollo Móvil': <PiDeviceMobileBold className="size-5" />,
+			'Inteligencia Artificial': <PiRobotBold className="size-5" />,
+			'Desarrollo de Software': <PiAppWindowBold className="size-5" />,
+			'Energía Solar': <PiSunBold className="size-5" />,
+			Humanidades: <PiBooksBold className="size-5" />,
+			Cosmetología: <PiScissorsBold className="size-5" />,
+			Emprendimiento: <PiChartLineUpBold className="size-5" />,
+		};
+		return icons[categoryName] ?? <PiCodeBold className="size-5" />;
+	};
 
 	// Renderizado de la vista
 	return (
@@ -350,65 +462,147 @@ export default function Page() {
 						className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 					/>
 
-					<button
-						onClick={handleCreateProgram}
-						className="font-primary flex items-center gap-2 rounded-md bg-primary px-6 py-2 text-white shadow-lg hover:bg-[#0097A7]"
-					>
-						<FiPlus className="size-5" /> Agregar
-					</button>
+					<div className="flex gap-2">
+						{selectedPrograms.length > 0 && (
+							<Button
+								onClick={() => setShowDeleteConfirm(true)}
+								className="bg-red-600 text-white hover:bg-red-700"
+							>
+								Eliminar Seleccionados ({selectedPrograms.length})
+							</Button>
+						)}
+						<button
+							onClick={handleCreateProgram}
+							className="font-primary flex items-center gap-2 rounded-md bg-primary px-6 py-2 text-white shadow-lg hover:bg-[#0097A7]"
+						>
+							<FiPlus className="size-5" /> Agregar
+						</button>
+					</div>
 				</div>
+
+				{/* Featured Categories - New Design with Icons */}
+				<div className="mb-8 overflow-hidden rounded-lg p-4 shadow-md">
+					<div className="flex flex-wrap gap-3">
+						<button
+							onClick={() => setCategoryFilter('')}
+							className={`group flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
+								!categoryFilter
+									? 'scale-105 bg-gradient-to-r from-[#3AF4EF] to-[#01142B] text-white shadow-lg'
+									: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
+							}`}
+						>
+							<PiGraduationCapBold className="size-5" />
+							<span>Todas</span>
+						</button>
+
+						{categories
+							.filter((category) => category.is_featured)
+							.map((category) => {
+								const isSelected = categoryFilter === category.id.toString();
+								const programCount = programs.filter(
+									(p) => p.categoryid === category.id
+								).length;
+
+								return (
+									<button
+										key={category.id}
+										onClick={() => setCategoryFilter(category.id.toString())}
+										className={`group relative flex items-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
+											isSelected
+												? 'scale-105 bg-gradient-to-r from-[#3AF4EF] to-[#01142B] text-white shadow-lg'
+												: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
+										}`}
+									>
+										{getCategoryIcon(category.name)}
+										<span className="relative z-10">
+											{category.name}
+											<span
+												className={`ml-2 text-xs ${isSelected ? 'text-white' : 'text-gray-500'}`}
+											>
+												({programCount})
+											</span>
+										</span>
+										{isSelected && (
+											<span className="absolute inset-0 animate-pulse bg-white/10" />
+										)}
+									</button>
+								);
+							})}
+					</div>
+				</div>
+
+				<AlertDialog
+					open={showDeleteConfirm}
+					onOpenChange={setShowDeleteConfirm}
+				>
+					<AlertDialogContent>
+						<AlertDialogHeader>
+							<AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+							<AlertDialogDescription>
+								Esta acción eliminará {selectedPrograms.length} programa(s) y
+								todos sus datos relacionados. Esta acción no se puede deshacer.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel>Cancelar</AlertDialogCancel>
+							<AlertDialogAction
+								onClick={handleDeleteSelected}
+								className="bg-red-600 text-white hover:bg-red-700"
+							>
+								Eliminar
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 
 				<ProgramListAdmin
 					programs={filteredPrograms}
-					onEditProgram={(program: Program | null) =>
-						setEditingProgram(
-							program
-								? {
-										id: program.id ?? 0,
-										title: program.title ?? '',
-										description: program.description ?? '',
-										categoryid: program.categoryid ?? 0,
-										createdAt: program.createdAt ?? '',
-										coverImageKey: program.coverImageKey ?? '',
-										creatorId: program.creatorId ?? '',
-										rating: program.rating ?? 0,
-									}
-								: null
-						)
-					}
+					selectedPrograms={selectedPrograms}
+					onToggleSelection={toggleProgramSelection}
+					onEditProgram={handleEditProgram}
 					onDeleteProgram={(programId) => {
 						console.log(`Program with id ${programId} deleted`);
 					}}
+					categories={categories} // Add this line
 				/>
 
 				{isModalOpen && (
 					<ModalFormProgram
 						isOpen={isModalOpen}
-						onCloseAction={handleCloseModal}
+						onCloseAction={() => {
+							setIsModalOpen(false);
+							setEditingProgram(null);
+						}}
 						onSubmitAction={handleCreateOrUpdateProgram}
 						uploading={uploading}
 						editingProgramId={editingProgram?.id ?? null}
 						title={editingProgram?.title ?? ''}
-						setTitle={setTitle}
+						setTitle={(title) =>
+							setEditingProgram((prev) => (prev ? { ...prev, title } : null))
+						}
 						description={editingProgram?.description ?? ''}
-						setDescription={setDescription}
+						setDescription={(description) =>
+							setEditingProgram((prev) =>
+								prev ? { ...prev, description } : null
+							)
+						}
 						categoryid={editingProgram?.categoryid ?? 0}
-						setCategoryid={(categoryid: number) =>
+						setCategoryid={(categoryid) =>
 							setEditingProgram((prev) =>
 								prev ? { ...prev, categoryid } : null
 							)
 						}
 						coverImageKey={editingProgram?.coverImageKey ?? ''}
-						setCoverImageKey={(coverImageKey: string) =>
+						setCoverImageKey={(coverImageKey) =>
 							setEditingProgram((prev) =>
 								prev ? { ...prev, coverImageKey } : null
 							)
 						}
 						rating={editingProgram?.rating ?? 0}
-						setRating={setRating}
-						subjectIds={selectedSubjects.map((subject) =>
-							Number(subject.value)
-						)}
+						setRating={(rating) =>
+							setEditingProgram((prev) => (prev ? { ...prev, rating } : null))
+						}
+						subjectIds={[]}
 					/>
 				)}
 			</div>

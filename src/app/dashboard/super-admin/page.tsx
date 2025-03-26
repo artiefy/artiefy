@@ -1,6 +1,5 @@
 'use client';
-
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -155,7 +154,7 @@ export default function AdminDashboard() {
 	});
 
 	const searchParams = useSearchParams();
-	const query = searchParams.get('search') ?? '';
+	const query = searchParams?.get('search') ?? '';
 	const [newUser, setNewUser] = useState({
 		firstName: '',
 		lastName: '',
@@ -1072,10 +1071,19 @@ export default function AdminDashboard() {
 											placeholder="Nombre"
 											className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
 											value={newUser.firstName}
-											onChange={(e) =>
-												setNewUser({ ...newUser, firstName: e.target.value })
-											}
-										/>
+											onChange={(e) => {
+												// Eliminar espacios y tomar solo la primera palabra
+												const singleName = e.target.value.trim().split(' ')[0];
+												setNewUser({ ...newUser, firstName: singleName });
+											}}
+											onKeyDown={(e) => {
+												// Prevenir el espacio
+												if (e.key === ' ') {
+												e.preventDefault();
+												}
+											}}
+											maxLength={30} // Opcional: limitar la longitud máxima
+											/>
 										<input
 											type="text"
 											placeholder="Apellido"

@@ -29,7 +29,7 @@ import {
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
+} from '~/components/super-admin/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 
@@ -290,7 +290,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/educadores"
+								href="/dashboard/super-admin"
 							>
 								Cursos
 							</BreadcrumbLink>
@@ -299,7 +299,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/educadores/cursos"
+								href="/dashboard/super-admin/cursos"
 							>
 								Lista de cursos
 							</BreadcrumbLink>
@@ -308,7 +308,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href={`/dashboard/educadores/cursos/${courseIdNumber}`}
+								href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
 							>
 								Detalles curso
 							</BreadcrumbLink>

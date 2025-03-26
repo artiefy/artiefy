@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
 import {
 	createCourse,
@@ -15,6 +16,8 @@ import {
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
+import { db } from '~/server/db';
+import { materias } from '~/server/db/schema';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 export const dynamic = 'force-dynamic';
@@ -112,6 +115,7 @@ export async function POST(request: NextRequest) {
 			rating: number;
 			creatorId: string;
 			instructor: string;
+			subjects?: { id: number }[];
 		};
 
 		const {
@@ -151,6 +155,29 @@ export async function POST(request: NextRequest) {
 		});
 
 		const id = courseId.id;
+		for (const subject of body.subjects ?? []) {
+			const existingMateria = await db
+				.select()
+				.from(materias)
+				.where(eq(materias.id, subject.id))
+				.then((res) => res[0]);
+
+			if (!existingMateria) continue;
+
+			if (existingMateria.courseid) {
+				await db.insert(materias).values({
+					title: existingMateria.title,
+					description: existingMateria.description,
+					programaId: existingMateria.programaId,
+					courseid: id,
+				});
+			} else {
+				await db
+					.update(materias)
+					.set({ courseid: id })
+					.where(eq(materias.id, subject.id));
+			}
+		}
 
 		return NextResponse.json({
 			message: 'Curso creado exitosamente',

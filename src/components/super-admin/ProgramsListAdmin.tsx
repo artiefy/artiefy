@@ -13,6 +13,7 @@ import {
 	CardTitle,
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
+import { Checkbox } from '~/components/estudiantes/ui/checkbox';
 
 export interface Program {
 	id: number;
@@ -30,15 +31,35 @@ export interface Program {
 
 interface ProgramListAdminProps {
 	programs: Program[];
-	onEditProgram: (program: Program | null) => void;
-	onDeleteProgram: (programId: number) => void;
+	onEditProgram: (program: Program) => void;
+	onDeleteProgram: (id: number) => void;
+	selectedPrograms: number[];
+	onToggleSelection: (id: number) => void;
+	categories: { id: number; name: string }[]; // Add this line
 }
 
-export default function ProgramListAdmin({ programs }: ProgramListAdminProps) {
+export default function ProgramListAdmin({
+	programs,
+	onEditProgram,
+	selectedPrograms,
+	onToggleSelection,
+	categories, // Add this line
+}: ProgramListAdminProps) {
+	// Add this helper function
+	const getCategoryName = (categoryId: number) => {
+		const category = categories.find((c) => c.id === categoryId);
+		return category?.name ?? 'Sin categoría';
+	};
+
 	return (
 		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
 			{programs.map((program) => (
 				<div key={program.id} className="group relative">
+					<Checkbox
+						checked={selectedPrograms.includes(program.id)}
+						onCheckedChange={() => onToggleSelection(program.id)}
+						className="absolute top-2 right-2 z-10"
+					/>
 					<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 					<Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
 						<CardHeader>
@@ -65,12 +86,11 @@ export default function ProgramListAdmin({ programs }: ProgramListAdminProps) {
 								<div className="font-bold text-primary">{program.title}</div>
 							</CardTitle>
 							<div className="flex items-center">
-								Categoria id:
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"
 								>
-									{program.categoryid}
+									{getCategoryName(program.categoryid)}
 								</Badge>
 							</div>
 							<p className="line-clamp-2 text-sm text-gray-300">
@@ -88,6 +108,13 @@ export default function ProgramListAdmin({ programs }: ProgramListAdminProps) {
 								</p>
 							</div>
 							<div className="flex w-full items-center justify-between">
+								<Button
+									onClick={() => onEditProgram(program)}
+									className="mr-2"
+									variant="outline"
+								>
+									Editar
+								</Button>
 								<Button asChild>
 									<Link
 										href={`/dashboard/super-admin/programs/${program.id}`}

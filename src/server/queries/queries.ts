@@ -10,6 +10,7 @@ import {
 	modalidades,
 	nivel as nivel,
 	materias,
+	users,
 } from '~/server/db/schema';
 
 // Función para verificar el rol de admin y obtener usuarios
@@ -103,6 +104,34 @@ export async function updateUserInfo(
 	}
 }
 
+function generateSecurePassword(length = 14): string {
+	const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+	const lowercase = 'abcdefghjkmnpqrstuvwxyz';
+	const numbers = '23456789';
+	const symbols = '!@#$%^&*()_+-={}[]<>?';
+
+	const allChars = uppercase + lowercase + numbers + symbols;
+
+	let password = '';
+	// Asegurar al menos un carácter de cada tipo
+	password += uppercase[Math.floor(Math.random() * uppercase.length)];
+	password += lowercase[Math.floor(Math.random() * lowercase.length)];
+	password += numbers[Math.floor(Math.random() * numbers.length)];
+	password += symbols[Math.floor(Math.random() * symbols.length)];
+
+	// Completar el resto de la contraseña
+	for (let i = password.length; i < length; i++) {
+		password += allChars[Math.floor(Math.random() * allChars.length)];
+	}
+
+	// Mezclar la contraseña para evitar patrones predecibles
+	return password
+		.split('')
+		.sort(() => 0.5 - Math.random())
+		.join('');
+}
+
+
 export async function createUser(
 	firstName: string,
 	lastName: string,
@@ -110,21 +139,7 @@ export async function createUser(
 	role: string
 ) {
 	try {
-		// 🔹 Obtener la primera letra del primer nombre y primer apellido
-		const firstInitial = firstName.charAt(0).toLowerCase();
-		const lastInitial = lastName?.split(' ')[0]?.charAt(0).toLowerCase() || 'x'; // 'x' si no hay apellido
-
-		// 🔹 Generar la contraseña base (iniciales del nombre y apellido)
-		let generatedPassword = `${firstInitial}${lastInitial}`;
-
-		// 🔹 Si la contraseña es menor a 8 caracteres, agregar "12345678" hasta completar
-		if (generatedPassword.length < 8) {
-			generatedPassword += '12345678'.slice(0, 8 - generatedPassword.length);
-		}
-
-		// 🔹 Agregar un número aleatorio para evitar que la contraseña sea "pwned"
-		const randomDigits = Math.floor(10 + Math.random() * 90); // Número entre 10 y 99
-		generatedPassword += randomDigits;
+		const generatedPassword = generateSecurePassword();
 
 		// 🔹 Generar un nombre de usuario válido (mínimo 4 caracteres, máximo 64)
 		let username = `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
@@ -257,10 +272,12 @@ export async function createCourse(courseData: CourseData) {
 				nivelid: courseData.nivelid,
 				creatorId: courseData.creatorId || 'defaultCreatorId',
 				createdAt: new Date(courseData.createdAt),
-				updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : new Date(),
+				updatedAt: courseData.updatedAt
+					? new Date(courseData.updatedAt)
+					: new Date(),
 				courseTypeId: courseData.courseTypeId ?? 1, // <-- Aquí colocas un valor seguro por defecto
 				isActive: courseData.isActive ?? true,
-			})	
+			})
 			.returning();
 	} catch (error) {
 		console.error('❌ Error al crear curso:', error);
@@ -360,6 +377,46 @@ export async function getMateriasByCourseId(
 		console.error('Error fetching materias:', error);
 		return [];
 	}
-};
+}
+
+// Add this new function to get category name by ID
+export async function getCategoryNameById(id: number): Promise<string> {
+	try {
+		const category = await db
+			.select()
+			.from(categories)
+			.where(eq(categories.id, id));
+		return category[0]?.name ?? 'Unknown Category';
+	} catch (error) {
+		console.error('Error getting category name:', error);
+		return 'Unknown Category';
+	}
+}
+
+// Update this function to get instructor name from users table
+export async function getInstructorNameById(id: string): Promise<string> {
+	try {
+		const user = await db
+			.select()
+			.from(users)
+			.where(eq(users.id, id))
+			.limit(1);
+
+		if (user?.[0]?.name) {
+			return user[0].name;
+		}
+
+		// Fallback to Clerk if not found in local DB
+		const client = await clerkClient();
+		const clerkUser = await client.users.getUser(id);
+		return (
+			`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
+			'Unknown Instructor'
+		);
+	} catch (error) {
+		console.error('Error getting instructor name:', error);
+		return 'Unknown Instructor';
+	}
+}
 
 export {};

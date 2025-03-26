@@ -64,23 +64,6 @@ export const nivel = pgTable('nivel', {
 	description: text('description').notNull(),
 });
 
-// Modificar la tabla courseTypes
-export const courseTypes = pgTable('course_types', {
-	id: serial('id').primaryKey(),
-	name: varchar('name', { length: 255 }).notNull(),
-	description: text('description'),
-	requiredSubscriptionLevel: varchar('required_subscription_level', {
-		length: 255,
-		enum: ['none', 'pro', 'premium'],
-	}).notNull(),
-	isPurchasableIndividually: boolean('is_purchasable_individually').default(
-		false
-	),
-	price: integer('price'),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
 // Tabla de cursos
 export const courses = pgTable('courses', {
 	id: serial('id').primaryKey(),
@@ -106,9 +89,10 @@ export const courses = pgTable('courses', {
 	courseTypeId: integer('course_type_id')
 		.references(() => courseTypes.id)
 		.notNull(),
-	individualPrice: integer('individual_price'), // Solo se usa cuando courseTypeId es 4
+	individualPrice: integer('individual_price'),
 	requiresProgram: boolean('requires_program').default(false),
-	isActive: boolean('is_active').default(true),
+	isActive: boolean('is_active').default(true), 
+
 });
 
 // Tabla de tipos de actividades
@@ -339,7 +323,6 @@ export const parametros = pgTable('parametros', {
 		.notNull(),
 });
 
-// Tabla de programas (debe ir antes de materias)
 export const programas = pgTable('programas', {
 	id: serial('id').primaryKey(),
 	title: varchar('title', { length: 255 }).notNull(),
@@ -364,6 +347,21 @@ export const materias = pgTable('materias', {
 	programaId: integer('programa_id').references(() => programas.id),
 	courseid: integer('courseid').references(() => courses.id), // courseid can be null
 });
+
+export const courseTypes = pgTable('course_types', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: text('description'),
+	requiredSubscriptionLevel: varchar('required_subscription_level', {
+		length: 255,
+		enum: ['none', 'pro', 'premium'],
+	}).notNull(),
+	isPurchasableIndividually: boolean('is_purchasable_individually').default(false),
+	price: integer('price'),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 
 export const materiaGrades = pgTable(
 	'materia_grades',
@@ -400,6 +398,9 @@ export const parameterGrades = pgTable(
 	(table) => [unique('uniq_parameter_user').on(table.parameterId, table.userId)]
 );
 
+
+
+
 // Relaciones de programas
 export const programasRelations = relations(programas, ({ one, many }) => ({
 	creator: one(users, {
@@ -425,6 +426,7 @@ export const materiasRelations = relations(materias, ({ one }) => ({
 	}),
 }));
 
+// Add courses relations for materias
 export const coursesRelations = relations(courses, ({ many, one }) => ({
 	lessons: many(lessons),
 	enrollments: many(enrollments),
@@ -533,7 +535,6 @@ export const nivelRelations = relations(nivel, ({ many }) => ({
 	courses: many(courses),
 }));
 
-// Asegurar que lessons tenga relación con course
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
 	course: one(courses, {
 		fields: [lessons.courseId],
@@ -543,7 +544,6 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
 	userLessonsProgress: many(userLessonsProgress),
 }));
 
-// Actualizar las relaciones de activities para incluir lesson y course
 export const activitiesRelations = relations(activities, ({ one, many }) => ({
 	lesson: one(lessons, {
 		fields: [activities.lessonsId],
@@ -722,9 +722,11 @@ export const anunciosUsuarios = pgTable('anuncios_usuarios', {
 		.notNull(),
 });
 
+
 export const courseTypesRelations = relations(courseTypes, ({ many }) => ({
 	courses: many(courses),
 }));
+
 
 export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
 	materia: one(materias, {
@@ -736,17 +738,3 @@ export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
 		references: [users.id],
 	}),
 }));
-
-export const parameterGradesRelations = relations(
-	parameterGrades,
-	({ one }) => ({
-		parameter: one(parametros, {
-			fields: [parameterGrades.parameterId],
-			references: [parametros.id],
-		}),
-		user: one(users, {
-			fields: [parameterGrades.userId],
-			references: [users.id],
-		}),
-	})
-);

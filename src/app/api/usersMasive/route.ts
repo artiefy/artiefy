@@ -1,10 +1,56 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { NextResponse } from 'next/server';
 
+import nodemailer from 'nodemailer';
 import * as XLSX from 'xlsx';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
+
+// Configuración de Nodemailer usando variables de entorno
+const transporter = nodemailer.createTransport({
+	service: 'gmail',
+	auth: {
+		user: 'direcciongeneral@artiefy.com',
+		pass: process.env.PASS,
+	},
+});
+
+// Función para enviar correo de bienvenida
+async function sendWelcomeEmail(
+	to: string,
+	username: string,
+	password: string
+) {
+	try {
+		const mailOptions = {
+			from: `"Artiefy" <${process.env.EMAIL_USER}>`,
+			to,
+			subject: '🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso',
+			html: `
+				<h2>¡Bienvenido a Artiefy, ${username}!</h2>
+				<p>Estamos emocionados de tenerte con nosotros. A continuación, encontrarás tus credenciales de acceso:</p>
+				<ul>
+					<li><strong>Usuario:</strong> ${username}</li>
+					<li><strong>Email:</strong> ${to}</li>
+					<li><strong>Contraseña:</strong> ${password}</li>
+				</ul>
+				<p>Por favor, inicia sesión en <a href="https://artiefy.com/" target="_blank">Artiefy</a> y cambia tu contraseña lo antes posible.</p>
+				<p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+				<hr>
+				<p>Equipo de Artiefy 🎨</p>
+			`,
+		};
+
+		const info = await transporter.sendMail(mailOptions);
+		console.log(`✅ Correo de bienvenida enviado a ${to}: ${info.messageId}`);
+		return true;
+	} catch (error) {
+		console.error(`❌ Error al enviar correo de bienvenida a ${to}:`, error);
+		return false;
+	}
+}
 
 export async function POST(request: Request) {
 	try {
@@ -31,9 +77,16 @@ export async function POST(request: Request) {
 			lastName: string;
 			email: string;
 			role?: string;
-		}[] = XLSX.utils.sheet_to_json(sheet);
+		}[] = XLSX.utils.sheet_to_json(sheet) as {
+			firstName: string;
+			lastName: string;
+			email: string;
+			role?: string;
+		}[];
 
 		const createdUsers = [];
+		const emailErrors = [];
+		const creationErrors = [];
 
 		for (const user of usersData) {
 			const { firstName, lastName, email, role } = user;
@@ -41,16 +94,21 @@ export async function POST(request: Request) {
 			// Validación de campos
 			if (!firstName || !lastName || !email) {
 				console.error('Faltan campos obligatorios', user);
+				creationErrors.push({
+					email: email || 'Sin email',
+					error: 'Campos incompletos',
+				});
 				continue;
 			}
 
-			// Crear usuario en Clerk
-			const { user: createdUser, generatedPassword } = await createUser(
-				firstName,
-				lastName,
-				email,
-				role ?? 'estudiante'
-			);
+			try {
+				// Crear usuario en Clerk
+				const { user: createdUser, generatedPassword } = await createUser(
+					firstName,
+					lastName,
+					email,
+					role ?? 'estudiante'
+				);
 
 			// Asegurarse de que el rol sea uno válido, por defecto "estudiante"
 			const validRole = (role ?? 'estudiante') as
@@ -78,12 +136,57 @@ export async function POST(request: Request) {
 				role: validRole,
 				password: generatedPassword, // ⚠️ Devuelve la contraseña generada
 			});
+				// Guardar en base de datos
+				await db.insert(users).values({
+					id: createdUser.id,
+					email,
+					role: (role ?? 'estudiante') as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				});
+
+				// Enviar correo de bienvenida
+				const emailSent = await sendWelcomeEmail(
+					email,
+					`${firstName} ${lastName}`,
+					generatedPassword
+				);
+
+				if (!emailSent) {
+					emailErrors.push(email);
+				}
+
+				// Agregar usuario creado a la lista
+				createdUsers.push({
+					id: createdUser.id,
+					firstName,
+					lastName,
+					email,
+					role: role ?? 'estudiante',
+					password: generatedPassword,
+					emailSent,
+				});
+			} catch (error) {
+				console.error(`Error al crear usuario ${email}:`, error);
+				creationErrors.push({
+					email,
+					error: error instanceof Error ? error.message : 'Error desconocido',
+				});
+				continue; // Continuar con el siguiente usuario
+			}
 		}
 
-		// ✅ **En lugar de devolver un archivo, devolvemos JSON con los usuarios creados**
 		return NextResponse.json({
-			message: 'Usuarios creados exitosamente',
-			users: createdUsers, // Enviamos los usuarios en la respuesta
+			message: 'Proceso completado',
+			users: createdUsers,
+			emailErrors: emailErrors.length > 0 ? emailErrors : undefined,
+			creationErrors: creationErrors.length > 0 ? creationErrors : undefined,
+			summary: {
+				total: usersData.length,
+				created: createdUsers.length,
+				failed: creationErrors.length,
+				emailErrors: emailErrors.length,
+			},
 		});
 	} catch (error) {
 		console.error('Error al procesar el archivo:', error);

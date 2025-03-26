@@ -1,10 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import ModalFormMateria from './modalFormCreate';
 
 import type { Materia } from '~/models/super-adminModels/materiaModels';
+
+interface ErrorResponse {
+	error: string;
+}
 
 const MateriasPage: React.FC = () => {
 	const [materias, setMaterias] = useState<Materia[]>([]);
@@ -12,6 +16,10 @@ const MateriasPage: React.FC = () => {
 	const [error, setError] = useState<string | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingMateria, setEditingMateria] = useState<Materia | null>(null);
+	const [searchTerm, setSearchTerm] = useState('');
+	const [currentPage, setCurrentPage] = useState(1);
+	const materiasPerPage = 9;
+
 	const onCreate = (newMateria: Materia) => {
 		setMaterias((prevMaterias) => [...prevMaterias, newMateria]);
 		console.log('Materia creada:', newMateria);
@@ -24,6 +32,31 @@ const MateriasPage: React.FC = () => {
 			)
 		);
 		console.log('Materia actualizada:', updatedMateria);
+	};
+
+	const filteredMaterias = materias.filter((materia) =>
+		materia.title.toLowerCase().includes(searchTerm.toLowerCase())
+	);
+
+	const totalPages = Math.ceil(filteredMaterias.length / materiasPerPage);
+	const indexOfLastMateria = currentPage * materiasPerPage;
+	const indexOfFirstMateria = indexOfLastMateria - materiasPerPage;
+	const currentMaterias = filteredMaterias.slice(
+		indexOfFirstMateria,
+		indexOfLastMateria
+	);
+
+	const handlePageChange = (pageNumber: number) => {
+		setCurrentPage(pageNumber);
+	};
+
+	const getPageNumbers = (current: number, total: number) => {
+		if (total <= 3) return Array.from({ length: total }, (_, i) => i + 1);
+
+		if (current <= 2) return [1, 2, 3];
+		if (current >= total - 1) return [total - 2, total - 1, total];
+
+		return [current - 1, current, current + 1];
 	};
 
 	useEffect(() => {
@@ -77,17 +110,27 @@ const MateriasPage: React.FC = () => {
 				<h1>Materias</h1>
 			</header>
 			<div className="p-6">
-				<p className="mb-6 text-lg text-white">
-					Aquí puedes gestionar las materias.
-				</p>
-				<button
-					onClick={() => handleOpenModal()}
-					className="flex items-center rounded-md bg-secondary px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-primary"
-				>
-					Crear Materia
-				</button>
+				<div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<input
+						type="text"
+						placeholder="Buscar materias..."
+						value={searchTerm}
+						onChange={(e) => {
+							setSearchTerm(e.target.value);
+							setCurrentPage(1);
+						}}
+						className="w-full rounded-md border border-gray-300 bg-gray-700 p-2 text-white focus:border-primary focus:outline-none sm:w-64"
+					/>
+					<button
+						onClick={() => handleOpenModal()}
+						className="flex items-center rounded-md bg-secondary px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105 hover:bg-primary"
+					>
+						Crear Materia
+					</button>
+				</div>
+
 				<ul className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{materias.map((materia) => (
+					{currentMaterias.map((materia) => (
 						<li
 							key={materia.id}
 							className="rounded-lg border border-primary bg-gray-800 p-4 shadow-md"
@@ -103,11 +146,41 @@ const MateriasPage: React.FC = () => {
 								</button>
 								<button
 									onClick={async () => {
-										await fetch(`/api/super-admin/materias/${materia.id}`, {
-											method: 'DELETE',
-										});
+										if (
+											!confirm(
+												'¿Estás seguro de que deseas eliminar esta materia?'
+											)
+										) {
+											return;
+										}
 
-										setMaterias(materias.filter((m) => m.id !== materia.id));
+										try {
+											const response = await fetch(
+												`/api/super-admin/materias/${materia.id}`,
+												{
+													method: 'DELETE',
+												}
+											);
+
+											if (!response.ok) {
+												const errorData =
+													(await response.json()) as ErrorResponse;
+												throw new Error(
+													errorData.error || 'Error al eliminar la materia'
+												);
+											}
+
+											setMaterias((prevMaterias) =>
+												prevMaterias.filter((m) => m.id !== materia.id)
+											);
+										} catch (error) {
+											console.error('Error:', error);
+											alert(
+												error instanceof Error
+													? error.message
+													: 'Error al eliminar la materia'
+											);
+										}
 									}}
 									className="flex items-center rounded-md bg-red-700 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-red-800"
 								>
@@ -117,6 +190,39 @@ const MateriasPage: React.FC = () => {
 						</li>
 					))}
 				</ul>
+
+				{totalPages > 1 && (
+					<div className="mt-6 flex justify-center gap-2">
+						<button
+							onClick={() => handlePageChange(currentPage - 1)}
+							disabled={currentPage === 1}
+							className="rounded-md bg-gray-700 px-3 py-1 text-white transition disabled:opacity-50"
+						>
+							←
+						</button>
+						{getPageNumbers(currentPage, totalPages).map((pageNum) => (
+							<button
+								key={pageNum}
+								onClick={() => handlePageChange(pageNum)}
+								className={`rounded-md px-3 py-1 ${
+									currentPage === pageNum
+										? 'bg-primary text-white'
+										: 'bg-gray-700 text-white'
+								}`}
+							>
+								{pageNum}
+							</button>
+						))}
+						<button
+							onClick={() => handlePageChange(currentPage + 1)}
+							disabled={currentPage === totalPages}
+							className="rounded-md bg-gray-700 px-3 py-1 text-white transition disabled:opacity-50"
+						>
+							→
+						</button>
+					</div>
+				)}
+
 				{isModalOpen && (
 					<div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center">
 						<div className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">

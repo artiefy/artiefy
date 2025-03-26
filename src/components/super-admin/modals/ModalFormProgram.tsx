@@ -5,11 +5,11 @@ import { useEffect, useState, type ChangeEvent } from 'react';
 
 import Image from 'next/image';
 
-
 import { useUser } from '@clerk/nextjs';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
 import Select, { type MultiValue } from 'react-select';
+import { toast } from 'sonner';
 
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
 import { Button } from '~/components/educators/ui/button';
@@ -70,8 +70,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 	categoryid,
 	setCategoryid,
 	coverImageKey,
+	setCoverImageKey,
 	isOpen,
-	onCloseAction
+	onCloseAction,
 }) => {
 	const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null);
@@ -99,6 +100,11 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 	const [coverImage, setCoverImage] = useState<string | null>(null);
 	void modifiedFields;
 	void coverImage;
+
+	// Añade esta función helper después de las declaraciones de estado
+	const getImageUrl = (coverImageKey: string) => {
+		return `${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImageKey}`;
+	};
 
 	// Manejo de cambios en el archivo
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -148,7 +154,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 	const handleSubmit = async () => {
 		const controller = new AbortController();
 		setUploadController(controller);
-		
+
 		const subjectIds = selectedSubjects
 			.map((subject) => Number(subject.value)) // Convertimos `value` a número
 			.filter((id) => !isNaN(id)); // Filtramos valores inválidos
@@ -174,10 +180,10 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 			return;
 		}
 
-		setIsEditing(true);
-		setIsUploading(true);
-
 		try {
+			setIsEditing(true);
+			setIsUploading(true);
+
 			let coverImageKey = currentCoverImageKey ?? '';
 			let uploadedFileName = fileName ?? '';
 
@@ -219,8 +225,35 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 				});
 			}
 
+			const formattedId = editingProgramId ? editingProgramId.toString() : '';
+
+			// If editing, use PUT method
+			if (editingProgramId) {
+				const response = await fetch(
+					`/api/super-admin/programs?programId=${formattedId}`,
+					{
+						method: 'PUT',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							title,
+							description,
+							categoryid,
+							rating,
+							coverImageKey,
+							subjectIds,
+						}),
+					}
+				);
+
+				if (!response.ok) {
+					throw new Error(`Error updating program: ${response.statusText}`);
+				}
+			}
+
 			await onSubmitAction(
-				editingProgramId ? editingProgramId.toString() : '',
+				formattedId,
 				title,
 				description,
 				file,
@@ -228,17 +261,19 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 				rating,
 				coverImageKey,
 				uploadedFileName,
-				selectedSubjects.map((subject) => Number(subject.value))
+				subjectIds
 			);
 
-			if (controller.signal.aborted) {
-				console.log('Upload cancelled');
-			}
-
-			setIsUploading(false);
+			onCloseAction();
 		} catch (error) {
 			console.error('Error during the submission process:', error);
+			toast.error('Error en la operación', {
+				description:
+					error instanceof Error ? error.message : 'Error desconocido',
+			});
+		} finally {
 			setIsUploading(false);
+			setIsEditing(false);
 		}
 	};
 
@@ -255,24 +290,26 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 		field: string,
 		value: string | number | File | null
 	) => {
-		setModifiedFields((prev) => new Set(prev).add(field));
+		if (value === null) return;
+
 		switch (field) {
 			case 'title':
-				setTitle(value as string);
+				if (title !== value) setTitle(value as string);
 				break;
 			case 'description':
-				setDescription(value as string);
+				if (description !== value) setDescription(value as string);
 				break;
 			case 'categoryid':
-				setCategoryid(value as number);
+				if (categoryid !== value) setCategoryid(value as number);
 				break;
 			case 'rating':
-				setRating(value as number);
+				if (rating !== value) setRating(value as number);
 				break;
 			case 'file':
 				setFile(value as File);
 				break;
 		}
+		setModifiedFields((prev) => new Set(prev).add(field));
 	};
 
 	// Efectos para manejar el progreso de carga
@@ -315,9 +352,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 
 	// Utilizamos este tipo en el estado para mantener las opciones seleccionadas
 
-	const handleSelectSubjects = (
-		newValue: MultiValue<SubjectOption>,
-	) => {
+	const handleSelectSubjects = (newValue: MultiValue<SubjectOption>) => {
 		console.log(
 			'📌 Materias seleccionadas (antes de actualizar estado):',
 			newValue
@@ -367,16 +402,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 		}
 	}, [isUploading]);
 
-	useEffect(() => {
-		if (editingProgramId) {
-			setTitle(title);
-			setDescription(description);
-			setCategoryid(categoryid);
-			setRating(rating);
-			setCoverImage(coverImageKey);
-		}
-	}, [editingProgramId]);
-
+	// Modificar este useEffect para que solo limpie los campos cuando se abre el modal para crear
 	useEffect(() => {
 		if (isOpen && !editingProgramId) {
 			setTitle('');
@@ -384,8 +410,59 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 			setCategoryid(0);
 			setRating(0);
 			setCoverImage('');
+			setSelectedSubjects([]);
 		}
 	}, [isOpen, editingProgramId]);
+
+	// Modificar este useEffect para que solo cargue los datos una vez al abrir el modal para editar
+	useEffect(() => {
+		if (editingProgramId && isOpen) {
+			const loadProgramData = async () => {
+				try {
+					const response = await fetch(
+						`/api/super-admin/programs/${editingProgramId}`
+					);
+					if (response.ok) {
+						interface ProgramData {
+							title: string;
+							description: string;
+							categoryid: number;
+							rating: number;
+							coverImageKey: string;
+							materias?: { id: number; title: string }[];
+						}
+						const programData = (await response.json()) as ProgramData;
+						// Solo actualizar si los valores son diferentes
+						if (title !== programData.title) setTitle(programData.title);
+						if (description !== programData.description)
+							setDescription(programData.description);
+						if (categoryid !== programData.categoryid)
+							setCategoryid(programData.categoryid);
+						if (rating !== programData.rating) setRating(programData.rating);
+						if (coverImageKey !== programData.coverImageKey) {
+							setCoverImageKey(programData.coverImageKey);
+							setCoverImage(programData.coverImageKey);
+						}
+
+						if (programData.materias) {
+							const subjectOptions = programData.materias.map(
+								(materia: { id: number; title: string }) => ({
+									value: materia.id.toString(),
+									label: materia.title,
+								})
+							);
+							setSelectedSubjects(subjectOptions);
+						}
+					}
+				} catch (error) {
+					console.error('Error loading program data:', error);
+					toast.error('Error al cargar los datos del programa');
+				}
+			};
+
+			void loadProgramData();
+		}
+	}, [editingProgramId, isOpen]); // Solo depender de editingProgramId e isOpen
 
 	// Renderizado del modal
 	return (
@@ -460,7 +537,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 						</div>
 						{isOpen && (
 							<div className="flex w-full flex-col gap-2">
-                                <label
+								<label
 									htmlFor="subjects"
 									className="text-lg font-medium text-primary"
 								>
@@ -527,12 +604,33 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 						onDrop={handleDrop}
 					>
 						<div className="text-center">
-							{!file ? (
+							{!file && coverImageKey ? (
+								// Mostrar la imagen existente
+								<div className="relative overflow-hidden rounded-lg bg-gray-100">
+									<Image
+										src={getImageUrl(coverImageKey)}
+										alt="current cover"
+										width={500}
+										height={200}
+										className="h-48 w-full object-cover"
+									/>
+									<button
+										onClick={() => {
+											setCoverImageKey('');
+											setErrors((prev) => ({ ...prev, file: true }));
+										}}
+										className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+									>
+										<MdClose className="z-20 size-5" />
+									</button>
+								</div>
+							) : !file ? (
+								// Mostrar el área de drop cuando no hay imagen
 								<>
 									<FiUploadCloud
 										className={`mx-auto size-12 ${
 											errors.file ? 'text-red-500' : 'text-primary'
-										} `}
+										}`}
 									/>
 									<h2 className="mt-4 text-xl font-medium text-gray-700">
 										Arrastra y suelta tu imagen aquí
@@ -562,6 +660,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 									</label>
 								</>
 							) : (
+								// Mostrar la vista previa de la nueva imagen
 								<div className="relative overflow-hidden rounded-lg bg-gray-100">
 									<Image
 										src={URL.createObjectURL(file)}
@@ -609,30 +708,29 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 							</p>
 						</div>
 					)}
+					{/* Botones de acción */}
+					<DialogFooter className="mt-4 grid grid-cols-2 gap-4">
+						<Button
+							onClick={handleCancel}
+							className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
+						>
+							Cancelar
+						</Button>
+						<Button
+							onClick={handleSubmit}
+							className="bg-green-400 text-white hover:bg-green-400/70"
+							disabled={uploading}
+						>
+							{uploading
+								? 'Subiendo...'
+								: editingProgramId
+									? isEditing
+										? 'Editando...'
+										: 'Editar'
+									: 'Crear Programa'}
+						</Button>
+					</DialogFooter>
 				</div>
-
-				{/* Botones de acción */}
-				<DialogFooter className="mt-4 grid grid-cols-2 gap-4">
-					<Button
-						onClick={handleCancel}
-						className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
-					>
-						Cancelar
-					</Button>
-					<Button
-						onClick={handleSubmit}
-						className="bg-green-400 text-white hover:bg-green-400/70"
-						disabled={uploading}
-					>
-						{uploading
-							? 'Subiendo...'
-							: editingProgramId
-								? isEditing
-									? 'Editando...'
-									: 'Editar'
-								: 'Crear Programa'}
-					</Button>
-				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);

@@ -34,7 +34,6 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    
     "plugins": [
       {
         "name": "next"

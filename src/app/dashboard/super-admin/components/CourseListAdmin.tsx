@@ -15,6 +15,8 @@ import {
 import { Button } from '~/components/estudiantes/ui/button';
 import { type CourseData } from '~/server/queries/queries';
 
+
+
 interface Course {
 	id?: number;
 	title: string;
@@ -28,6 +30,8 @@ interface Course {
 	rating?: number | null;
 	modalidadesid: number;
 	nivelid: number; // Replaced  with nivelid
+	categoryName?: string; // <-- agrégalo aquí
+	instructorName?: string;
 }
 
 interface CourseListAdminProps {
@@ -67,12 +71,11 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
 								<div className="font-bold text-primary">{course.title}</div>
 							</CardTitle>
 							<div className="flex items-center">
-								Categoria id:
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"
 								>
-									{course.categoryid}
+									{course.categoryName ?? 'Unknown Category'}
 								</Badge>
 							</div>
 							<p className="line-clamp-2 text-sm text-gray-300">

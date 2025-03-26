@@ -20,9 +20,9 @@
 		"*.css": "tailwindcss"
 	},
 	"files.watcherExclude": {
-		"**/node_modules/**": true,
-		"**/dist/**": true,
-		"**/.git/**": true
+		"/node_modules/": true,
+		"/dist/": true,
+		"/.git/": true
 	},
 
 	// Language-specific Formatters
@@ -94,9 +94,9 @@
 
 	// Search and Performance
 	"search.exclude": {
-		"**/node_modules": true,
-		"**/dist": true,
-		"**/.git": true
+		"/node_modules": true,
+		"/dist": true,
+		"/.git": true
 	},
 	"javascript.suggest.completeFunctionCalls": true,
 

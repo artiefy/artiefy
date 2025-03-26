@@ -17,7 +17,7 @@ import {
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
+} from '~/components/super-admin/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 
 // Ver clase como vista estudiantes, consideraciones: Lo mismo que en course
@@ -203,16 +203,16 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/educadores"
+								href="/dashboard/super-admin"
 							>
-								Cursos
+								Inicio
 							</BreadcrumbLink>
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/educadores/cursos"
+								href="/dashboard/super-admin/cursos"
 							>
 								Lista de cursos
 							</BreadcrumbLink>
@@ -221,7 +221,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href={`/dashboard/educadores/cursos/${courseIdNumber}`}
+								href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
 							>
 								Detalles curso
 							</BreadcrumbLink>
