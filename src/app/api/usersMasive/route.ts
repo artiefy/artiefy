@@ -110,37 +110,12 @@ export async function POST(request: Request) {
 					role ?? 'estudiante'
 				);
 
-			// Asegurarse de que el rol sea uno válido, por defecto "estudiante"
-			const validRole = (role ?? 'estudiante') as
-				| 'estudiante'
-				| 'educador'
-				| 'admin'
-				| 'super-admin';
-
-			// Guardar en base de datos (sin la contraseña)
-			await db.insert(users).values({
-				id: createdUser.id,
-				name: `${firstName} ${lastName}`,
-				email,
-				role: validRole,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			});
-
-			// Agregar usuario a la lista de respuesta
-			createdUsers.push({
-				id: createdUser.id,
-				firstName,
-				lastName,
-				email,
-				role: validRole,
-				password: generatedPassword, // ⚠️ Devuelve la contraseña generada
-			});
 				// Guardar en base de datos
 				await db.insert(users).values({
 					id: createdUser.id,
+					name: `${firstName} ${lastName}`,
 					email,
-					role: (role ?? 'estudiante') as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+					role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin' ?? 'estudiante',
 					createdAt: new Date(),
 					updatedAt: new Date(),
 				});
