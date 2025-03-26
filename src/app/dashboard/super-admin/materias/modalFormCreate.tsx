@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -21,8 +22,8 @@ interface ModalFormMateriaProps {
 	isOpen: boolean;
 	onClose: () => void;
 	editingMateria: Materia | null;
-	onCreate: () => void;
-	onUpdate: () => void;
+	onCreate: (materia: Materia) => void;
+	onUpdate: (materia: Materia) => void;
 }
 
 const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
@@ -75,8 +76,8 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
 				throw new Error('Error al guardar la materia');
 			}
 
-			await response.json();
-			onCreate();
+			const responseData = (await response.json()) as Materia;
+			onCreate(responseData);
 			onClose();
 			toast.success('Materia creada exitosamente');
 		} catch (error) {
@@ -119,8 +120,8 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
 				throw new Error('Error al actualizar la materia');
 			}
 
-			await response.json();
-			onUpdate();
+			const responseData = (await response.json()) as Materia;
+			onUpdate(responseData);
 			onClose();
 			toast.success('Materia actualizada exitosamente');
 		} catch (error) {

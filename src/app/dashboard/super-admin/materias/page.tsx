@@ -20,12 +20,12 @@ const MateriasPage: React.FC = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const materiasPerPage = 9;
 
-	const onCreate = (newMateria: Materia) => {
+	const handleOnCreate = (newMateria: Materia) => {
 		setMaterias((prevMaterias) => [...prevMaterias, newMateria]);
 		console.log('Materia creada:', newMateria);
 	};
 
-	const onUpdate = (updatedMateria: Materia) => {
+	const handleOnUpdate = (updatedMateria: Materia) => {
 		setMaterias((prevMaterias) =>
 			prevMaterias.map((materia) =>
 				materia.id === updatedMateria.id ? updatedMateria : materia
@@ -236,8 +236,8 @@ const MateriasPage: React.FC = () => {
 								isOpen={isModalOpen}
 								onClose={handleCloseModal}
 								editingMateria={editingMateria}
-								onCreate={onCreate}
-								onUpdate={onUpdate}
+								onCreate={handleOnCreate}
+								onUpdate={handleOnUpdate}
 							/>
 						</div>
 					</div>
