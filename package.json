@@ -22,7 +22,6 @@
     "drizzle:migrate": "drizzle-kit push",
     "preview": "next build && next start"
   },
-
   "dependencies": {
     "@aws-sdk/client-s3": "^3.775.0",
     "@aws-sdk/s3-presigned-post": "^3.775.0",
@@ -161,12 +160,6 @@
     "typescript-eslint": "^8.28.0"
   },
   "overrides": {
-    "@esbuild-kit/core-utils": {
-      "esbuild": "0.25.0"
-    },
-    "@esbuild-kit/esm-loader": {
-      "esbuild": "0.25.0"
-    },
     "drizzle-kit": {
       "esbuild": "0.25.0",
       "@esbuild-kit/core-utils": "3.3.2",

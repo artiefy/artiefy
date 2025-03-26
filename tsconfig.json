@@ -48,24 +48,16 @@
     ]
   },
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.js",
-    "src/**/*.jsx",
-    "src/**/*.json",
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    "*.config.ts",
-    "*.config.js",
-    "*.config.mjs"
+    "**/*",
+    ".*/**/*",
+    "./**/.*"
   ],
   "exclude": [
     "node_modules",
     ".next",
-    "out",
-    "dist",
     "build",
-    ".vercel",
-    "coverage"
+    ".vercel"
   ]
 }
