@@ -87,7 +87,7 @@ export default function SignInPage() {
 			await signIn.authenticateWithRedirect({
 				strategy,
 				redirectUrl: '/sign-up/sso-callback',
-				redirectUrlComplete: redirectUrl, // Asegurar redirección correcta
+				redirectUrlComplete: redirectUrl, // Corrected property name
 			});
 		} catch (err) {
 			setLoadingProvider(null);

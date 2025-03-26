@@ -140,7 +140,7 @@ export function Header() {
 				<div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 				<DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
 					<div className="flex items-center justify-between">
-						<div className="relative mt-[-10px] size-[150px]">
+						<div className="relative mt-[-10px] size-[150px] text-left">
 							<Link href="/estudiantes">
 								<Image
 									src="/artiefy-logo2.svg"
@@ -153,7 +153,7 @@ export function Header() {
 						</div>
 						<button
 							onClick={() => setMobileMenuOpen(false)}
-							className="ml-5 rounded-full p-1 text-gray-400 transition-transform hover:bg-gray-100 active:scale-95"
+							className="ml-5 rounded-full p-1 text-gray-400 transition-transform focus:bg-gray-100 active:scale-95"
 							aria-label="Close menu"
 						>
 							<XMarkIcon className="size-6" />
@@ -180,7 +180,7 @@ export function Header() {
 						<SignedOut>
 							<SignInButton>
 								<Button
-									className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+									className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 focus:bg-background focus:text-primary focus:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 									style={{
 										transition: '0.5s',
 										width: '175px',

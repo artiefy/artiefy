@@ -52,12 +52,19 @@ export async function POST(request: Request) {
 				role ?? 'estudiante'
 			);
 
+			// Asegurarse de que el rol sea uno válido, por defecto "estudiante"
+			const validRole = (role ?? 'estudiante') as
+				| 'estudiante'
+				| 'educador'
+				| 'admin'
+				| 'super-admin';
+
 			// Guardar en base de datos (sin la contraseña)
 			await db.insert(users).values({
 				id: createdUser.id,
 				name: `${firstName} ${lastName}`,
 				email,
-				role: role ?? 'estudiante',
+				role: validRole,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 			});
@@ -68,7 +75,7 @@ export async function POST(request: Request) {
 				firstName,
 				lastName,
 				email,
-				role: role ?? 'estudiante',
+				role: validRole,
 				password: generatedPassword, // ⚠️ Devuelve la contraseña generada
 			});
 		}
