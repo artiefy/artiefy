@@ -58,6 +58,7 @@
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.6",
     "@vercel/analytics": "^1.5.0",
+    "@vercel/og": "^0.6.5",
     "@vercel/speed-insights": "^1.2.0",
     "aws-crt": "^1.26.2",
     "aws-sdk": "^2.1692.0",

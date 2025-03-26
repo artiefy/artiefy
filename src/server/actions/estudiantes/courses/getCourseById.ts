@@ -9,7 +9,7 @@ import type { Course, Activity, Lesson } from '~/types';
 
 export async function getCourseById(
 	courseId: number,
-	userId: string | null
+	userId: string | null = null
 ): Promise<Course | null> {
 	try {
 		const course = await db.query.courses.findFirst({

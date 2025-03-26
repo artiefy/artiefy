@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
-import { type Metadata, type ResolvingMetadata } from 'next';
+import { type Metadata } from 'next';
 
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -52,19 +52,14 @@ function generateJsonLd(course: Course): object {
 }
 
 // Función para generar metadata dinámica
-export async function generateMetadata(
-	{ params }: { params: { id: string } },
-	parent: ResolvingMetadata
-): Promise<Metadata> {
-	// Await params before using
+export async function generateMetadata({
+	params,
+}: {
+	params: { id: string };
+}): Promise<Metadata> {
 	const { id } = await Promise.resolve(params);
 	const { userId } = await auth();
-
-	// Fetch data in parallel
-	const [course, parentMetadata] = await Promise.all([
-		getCourseById(Number(id), userId),
-		parent,
-	]);
+	const course = await getCourseById(Number(id), userId);
 
 	if (!course) {
 		return {
@@ -73,9 +68,9 @@ export async function generateMetadata(
 		};
 	}
 
-	// Fix: parentMetadata is already resolved from Promise.all
-	const previousImages = parentMetadata.openGraph?.images ?? [];
-	const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}/opengraph-image`;
+	const coverImageUrl = course.coverImageKey
+		? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+		: 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
 
 	return {
 		metadataBase: new URL(
@@ -92,24 +87,18 @@ export async function generateMetadata(
 			description: course.description ?? 'No hay descripción disponible.',
 			images: [
 				{
-					url: ogImage,
+					url: coverImageUrl,
 					width: 1200,
 					height: 630,
 					alt: `Portada del curso: ${course.title}`,
 				},
-				...previousImages,
 			],
 		},
 		twitter: {
 			card: 'summary_large_image',
 			title: `${course.title} | Artiefy`,
 			description: course.description ?? 'No hay descripción disponible.',
-			images: [ogImage],
-			creator: '@artiefy',
-			site: '@artiefy',
-		},
-		alternates: {
-			canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
+			images: [coverImageUrl],
 		},
 	};
 }
