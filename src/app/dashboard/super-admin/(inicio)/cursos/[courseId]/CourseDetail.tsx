@@ -138,7 +138,7 @@ const styles = `
 // Add this after your imports:
 const styleSheet = document.createElement('style');
 styleSheet.textContent = styles;
-document.head.appendChild(styleSheet);
+void document.head.appendChild(styleSheet);
 
 // Replace the FullscreenLoader component with:
 const FullscreenLoader = () => {
@@ -181,10 +181,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		'from-orange-400 via-pink-500 to-red-500',
 	];
 
-	type BadgeGradientFunction = (index: number) => string;
+	type BadgeGradientFunction = () => string;
 
-	const getBadgeGradient: BadgeGradientFunction = (index) => {
-		return BADGE_GRADIENTS[index % BADGE_GRADIENTS.length];
+	const getBadgeGradient: BadgeGradientFunction = () => {
+		return BADGE_GRADIENTS[Math.floor(Math.random() * BADGE_GRADIENTS.length)];
 	};
 
 	const [isActive, setIsActive] = useState<boolean>(true);
@@ -208,7 +208,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	// Add these new states after the existing states
 	const [educators, setEducators] = useState<Educator[]>([]);
 	const [selectedInstructor, setSelectedInstructor] = useState<string>('');
-	const [showChangeButton, setShowChangeButton] = useState(false);
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [currentInstructor, setCurrentInstructor] = useState('');
 
@@ -285,14 +284,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Obtener el curso y los parámetros al cargar la página
 	useEffect(() => {
-		fetchCourse().catch((error) =>
+		void fetchCourse().catch((error) =>
 			console.error('Error fetching course:', error)
 		);
 	}, [fetchCourse]);
 
 	// Add this useEffect after the existing useEffects
 	useEffect(() => {
-		fetchEducators();
+		void fetchEducators();
 	}, []);
 
 	// Obtener el color seleccionado al cargar la página
@@ -591,7 +590,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				});
 
 				setSelectedInstructor('');
-				setShowChangeButton(false);
 				toast.success('Instructor actualizado exitosamente');
 
 				// Refresh the course data
@@ -896,11 +894,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									<h3 className="text-lg font-semibold">Materias:</h3>
 									{materias.length > 0 ? (
 										<div className="flex flex-wrap gap-2">
-											{materias.map((materia, index) => (
+											{materias.map((materia) => (
 												<Badge
 													key={materia.id}
 													variant="secondary"
-													className={`bg-gradient-to-r ${getBadgeGradient(index)} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+													className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
 												>
 													{materia.title}
 												</Badge>
