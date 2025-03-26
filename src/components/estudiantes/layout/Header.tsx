@@ -140,13 +140,18 @@ export function Header() {
 				<div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 				<DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
 					<div className="flex items-center justify-between">
-						<div className="relative mt-[-10px] size-[150px] text-left">
+						<div className="relative size-[150px]">
 							<Link href="/estudiantes">
 								<Image
 									src="/artiefy-logo2.svg"
-									alt="Logo Artiefy"
-									fill
-									className="object-contain"
+									alt="Logo Artiefy Mobile"
+									width={150}
+									height={150}
+									priority
+									style={{
+										width: '100%',
+										height: 'auto',
+									}}
 									sizes="150px"
 								/>
 							</Link>
