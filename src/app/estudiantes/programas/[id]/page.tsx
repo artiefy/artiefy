@@ -98,7 +98,14 @@ export async function generateMetadata(
 				...previousImages,
 			],
 		},
-		// ...rest of metadata
+		twitter: {
+			card: 'summary_large_image',
+			title: `${program.title} | Artiefy`,
+			description: program.description ?? 'No hay descripción disponible.',
+			images: [coverImageUrl],
+			creator: '@artiefy',
+			site: '@artiefy',
+		},
 	};
 }
 
