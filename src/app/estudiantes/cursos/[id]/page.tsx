@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
-import { type Metadata } from 'next';
+import { type Metadata, type ResolvingMetadata } from 'next';
 
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -52,11 +52,10 @@ function generateJsonLd(course: Course): object {
 }
 
 // Función para generar metadata dinámica
-export async function generateMetadata({
-	params,
-}: {
-	params: { id: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+	{ params }: { params: { id: string } },
+	parent: ResolvingMetadata
+): Promise<Metadata> {
 	const { id } = await Promise.resolve(params);
 	const { userId } = await auth();
 	const course = await getCourseById(Number(id), userId);
@@ -79,6 +78,9 @@ export async function generateMetadata({
 			: 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
 	).toString();
 
+	// Obtener imágenes del padre
+	const previousImages = (await parent).openGraph?.images ?? [];
+
 	return {
 		metadataBase,
 		title: `${course.title} | Artiefy`,
@@ -100,6 +102,7 @@ export async function generateMetadata({
 						? 'image/png'
 						: 'image/jpeg',
 				},
+				...previousImages,
 			],
 		},
 		twitter: {
