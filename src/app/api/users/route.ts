@@ -95,8 +95,8 @@ export async function POST(request: Request) {
 			role: AllowedRole;
 		}
 
-		const body: RequestBody = await request.json();
-		const { firstName, lastName, email, role } = body as RequestBody;
+		const body = (await request.json()) as RequestBody;
+		const { firstName, lastName, email, role } = body;
 
 		// Validar que el rol sea uno de los permitidos
 		const allowedRoles: AllowedRole[] = [
