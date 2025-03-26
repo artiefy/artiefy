@@ -216,24 +216,33 @@
 	color: var(--color-sidebar-foreground);
 }
 
+/* Desktop UserButton styles */
+@media (min-width: 769px) {
+	.cl-userButtonOuterIdentifier {
+		color: #ffff !important; /* Azure color */
+	}
+}
+
 /* Mobile UserButton styles */
-.cl-userButton-root .cl-userButtonBox {
-	font-size: 1.5rem;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
+@media (max-width: 768px) {
+	.cl-userButton-root .cl-userButtonBox {
+		font-size: 1.5rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 
-.cl-userButton-root .cl-userButtonAvatar {
-	width: 3rem;
-	height: 3rem;
-}
+	.cl-userButton-root .cl-userButtonAvatar {
+		width: 3rem;
+		height: 3rem;
+	}
 
-.cl-userButton-root .cl-userButtonOuterIdentifier {
-	color: var(--color-sidebar-foreground);
-	font-size: 1.5rem;
-	margin-left: 1rem;
-	font-weight: 500;
+	.cl-userButton-root .cl-userButtonOuterIdentifier {
+		color: var(--color-sidebar-foreground);
+		font-size: 1.5rem;
+		margin-left: 1rem;
+		font-weight: 500;
+	}
 }
 
 .cl-internal-2z8hkq {
