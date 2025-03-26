@@ -226,22 +226,38 @@
 /* Mobile UserButton styles */
 @media (max-width: 768px) {
 	.cl-userButton-root .cl-userButtonBox {
-		font-size: 1.5rem;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		gap: 1rem;
 	}
 
-	.cl-userButton-root .cl-userButtonAvatar {
-		width: 3rem;
-		height: 3rem;
+	/* Targeting all possible avatar selectors */
+	.cl-userButton-root .cl-userButtonAvatarImage,
+	.cl-userButton-root .cl-userButtonAvatarBox img,
+	.cl-userButton-root img[data-part='userButtonAvatarImage'] {
+		width: 2rem !important;
+		height: 2rem !important;
+		max-width: none !important;
+		max-height: none !important;
+	}
+
+	.cl-userButton-root .cl-userButtonAvatarBox {
+		width: 2rem !important;
+		height: 2rem !important;
 	}
 
 	.cl-userButton-root .cl-userButtonOuterIdentifier {
-		color: var(--color-sidebar-foreground);
-		font-size: 1.5rem;
-		margin-left: 1rem;
+		color: rgb(249 115 22) !important; /* Tailwind orange-500 */
+		font-size: 1rem; /* Increased from 1.5rem */
+		margin: 0;
 		font-weight: 500;
+		order: 2;
+	}
+
+	.cl-userButton-root .cl-userButtonAvatarBox {
+		order: 1;
+		transform: scale(1.2); /* Additional scaling for the avatar box */
 	}
 }
 
