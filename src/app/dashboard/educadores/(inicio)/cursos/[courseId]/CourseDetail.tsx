@@ -103,24 +103,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
 	void materias;
 
-	const BADGE_GRADIENTS = [
-		'from-pink-500 via-red-500 to-yellow-500',
-		'from-green-300 via-blue-500 to-purple-600',
-		'from-pink-300 via-purple-300 to-indigo-400',
-		'from-yellow-400 via-pink-500 to-red-500',
-		'from-blue-400 via-indigo-500 to-purple-600',
-		'from-green-400 via-cyan-500 to-blue-500',
-		'from-orange-400 via-pink-500 to-red-500',
-	];
-
-	type BadgeGradientFunction = (index: number) => string;
-
-	const getBadgeGradient: BadgeGradientFunction = (index) => {
-		return BADGE_GRADIENTS[index % BADGE_GRADIENTS.length];
-	};
-
-	void getBadgeGradient;
-
 	const [isActive, setIsActive] = useState<boolean>(true);
 
 	const [editParametros, setEditParametros] = useState<
