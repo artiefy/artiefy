@@ -19,11 +19,21 @@ const Loading: React.FC = () => {
 
 	return (
 		<div className="loading-fullscreen-background">
-			<div className={`loading-card ${launch ? 'loading-launch' : ''}`}>
-				<div className="loading-card-info flex flex-col items-center">
-					<span className="mb-4 animate-pulse text-xl sm:text-2xl md:text-3xl lg:text-4xl">
-						CARGANDO!
-					</span>
+			<div
+				className={`loading-card flex-col ${launch ? 'loading-launch' : ''}`}
+			>
+				<span className="loading-title mb-16 animate-pulse text-5xl sm:text-4xl md:text-4xl lg:text-4xl">
+					CARGANDO!
+				</span>
+				<div className="flex items-center justify-center gap-8">
+					<Image
+						src="/cursor.png"
+						alt="Logo"
+						className="loading-logo"
+						width={180}
+						height={180}
+						priority
+					/>
 					<div className="loading-wrapper">
 						<div className="loading-circle" />
 						<div className="loading-circle" />
@@ -33,14 +43,6 @@ const Loading: React.FC = () => {
 						<div className="loading-shadow" />
 					</div>
 				</div>
-				<Image
-					src="/cursor.png"
-					alt="Logo"
-					className="loading-logo"
-					width={140}
-					height={140}
-					priority
-				/>
 			</div>
 		</div>
 	);
