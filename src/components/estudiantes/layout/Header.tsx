@@ -180,23 +180,21 @@ export function Header() {
 						<SignedOut>
 							<SignInButton>
 								<Button
-									className="relative skew-x-[-15deg] button-hover cursor-pointer rounded-none border border-background bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+									className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 									style={{
 										transition: '0.5s',
 										width: '175px',
 									}}
 									onClick={handleSignInClick}
 								>
-									<span className="skew-x-[15deg]">
+									<span className="relative skew-x-[15deg] overflow-hidden">
 										{isLoading ? (
 											<Icons.spinner
+												className="animate-spin"
 												style={{ width: '25px', height: '25px' }}
 											/>
 										) : (
-											<>
-												Iniciar Sesión
-												<span className="button-hover-effect absolute top-0 left-0 h-full w-0 skew-x-[-20deg] bg-white opacity-0 shadow-[0_0_50px_30px_white] transition-all duration-500" />
-											</>
+											<>Iniciar Sesión</>
 										)}
 									</span>
 								</Button>

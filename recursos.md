@@ -70,11 +70,9 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 - `npm dedupe` //Reducir la duplicación en el árbol de paquetes
 - `npm doctor` //Comprueba el estado de tu entorno npm
 - `npm prune` //Eliminar paquetes extraños
-- `npm undeprecate` //Retirar la depreciación de una versión de un paquete
-- `npm rebuild` //Recontruir paquetes
 - `npm ci` //# Para CI/CD y despliegues
 - `npm cache verify` //
-- `npm cache npx ls` //
+- `npm install -g npm@11.2.0` //actualizar ultima version del npm
 
 ---
 

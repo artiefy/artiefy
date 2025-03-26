@@ -20,12 +20,9 @@
     "drizzle:studio": "drizzle-kit studio",
     "drizzle:generate": "drizzle-kit generate",
     "drizzle:migrate": "drizzle-kit push",
-    "preview": "next build && next start",
-    "cache:clean": "npm cache clean --force",
-    "cache:verify": "npm cache verify",
-    "reinstall": "npm ci",
-    "reset": "npm run clean && npm run cache:verify && npm ci"
+    "preview": "next build && next start"
   },
+
   "dependencies": {
     "@aws-sdk/client-s3": "^3.775.0",
     "@aws-sdk/s3-presigned-post": "^3.775.0",
@@ -180,5 +177,9 @@
   "ct3aMetadata": {
     "initVersion": "7.38.1"
   },
-  "packageManager": "npm@11.2.0"
+  "packageManager": "npm@11.2.0",
+  "engines": {
+    "node": "22.14.0",
+    "npm": "11.2.0"
+  }
 }

@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 		// 3. Guardar usuario en la base de datos con Drizzle
 		await db.insert(users).values({
 			id: user.id,
-			role: role || 'estudiante',
+			role: 'estudiante',
 			name: `${firstName} ${lastName}`,
 			email:
 				user.emailAddresses.find(
