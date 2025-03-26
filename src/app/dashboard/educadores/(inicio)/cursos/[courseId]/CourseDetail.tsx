@@ -21,6 +21,11 @@ import {
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+import { Label } from '~/components/educators/ui/label';
+import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
+import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -28,11 +33,6 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
-import { Label } from '~/components/educators/ui/label';
-import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
-import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 
 // Definir la interfaz del curso
 interface Course {

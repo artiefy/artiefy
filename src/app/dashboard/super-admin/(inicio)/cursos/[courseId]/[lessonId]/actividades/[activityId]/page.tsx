@@ -31,6 +31,8 @@ import {
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
+import { Button } from '~/components/educators/ui/button';
+import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -38,8 +40,6 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
-import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 
 import type {
 	QuestionFilesSubida,

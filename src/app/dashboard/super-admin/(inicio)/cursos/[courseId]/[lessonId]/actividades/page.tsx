@@ -20,6 +20,10 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
+import { Button } from '~/components/educators/ui/button';
+import { Input } from '~/components/educators/ui/input';
+import { Label } from '~/components/educators/ui/label';
+import { Progress } from '~/components/educators/ui/progress';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -27,10 +31,6 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
-import { Input } from '~/components/educators/ui/input';
-import { Label } from '~/components/educators/ui/label';
-import { Progress } from '~/components/educators/ui/progress';
 
 // Crear actividad
 

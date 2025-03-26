@@ -9,13 +9,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbSeparator,
-} from '~/components/super-admin/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import ListActividadesEducator from '~/components/super-admin/layout/ListActividades';
@@ -31,6 +24,13 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from '~/components/super-admin/ui/alert-dialog';
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from '~/components/super-admin/ui/breadcrumb';
 
 interface Lessons {
 	id: number;

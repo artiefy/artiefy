@@ -13,6 +13,7 @@ import { FaCalendar, FaClock, FaUserGraduate } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { Badge } from '~/components/educators/ui/badge';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -21,7 +22,6 @@ import {
 	BreadcrumbSeparator,
 	BreadcrumbPage,
 } from '~/components/super-admin/ui/breadcrumb';
-import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 
 // Consideraciones de diseño: validar con los contratadores si al pulsar ver course se debe abrir directamente en la vista de estudiante o en la vista de educador
 

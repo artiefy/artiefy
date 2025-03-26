@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 import ListActividadesLookStudent from '~/components/educators/layout/ListActividadesByStudent';
 import VerFileByStudent from '~/components/educators/layout/verFileBystudent';
+import { Button } from '~/components/educators/ui/button';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -18,7 +19,6 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
 
 // Ver clase como vista estudiantes, consideraciones: Lo mismo que en course
 

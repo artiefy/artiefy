@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
 import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
+import { Button } from '~/components/educators/ui/button';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -15,7 +16,6 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
 
 // Define el modelo de datos del curso
 export interface CourseModel {

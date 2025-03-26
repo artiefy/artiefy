@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Button } from '~/components/educators/ui/button';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -23,7 +24,6 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
 
 //Dashboard especifico para los detalles de un curso
 
