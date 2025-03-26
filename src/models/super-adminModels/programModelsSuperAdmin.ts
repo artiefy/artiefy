@@ -128,34 +128,33 @@ export const updateProgram = async (
 	programId: number,
 	programData: Partial<Program>
 ): Promise<Program> => {
-	const result = await db
-		.update(programas)
-		.set({
-			title: programData.title,
-			description: programData.description,
-			coverImageKey: programData.coverImageKey,
-			categoryid: programData.categoryid,
-			creatorId: programData.creatorId,
-			updatedAt: new Date(),
-			rating: programData.rating,
-		})
-		.where(eq(programas.id, programId))
-		.returning({
-			id: programas.id,
-			title: programas.title,
-			description: programas.description,
-			coverImageKey: programas.coverImageKey,
-			categoryid: programas.categoryid,
-			creatorId: programas.creatorId,
-			createdAt: programas.createdAt,
-			updatedAt: programas.updatedAt,
-			rating: programas.rating,
-		})
-		.execute();
-	return {
-		...result[0],
-		id: result[0].id.toString(),
-	};
+	try {
+		const result = await db
+			.update(programas)
+			.set({
+				title: programData.title,
+				description: programData.description,
+				coverImageKey: programData.coverImageKey,
+				categoryid: programData.categoryid,
+				creatorId: programData.creatorId,
+				updatedAt: new Date(),
+				rating: programData.rating,
+			})
+			.where(eq(programas.id, programId))
+			.returning();
+
+		if (!result || result.length === 0) {
+			throw new Error('No se encontró el programa para actualizar');
+		}
+
+		return {
+			...result[0],
+			id: result[0].id.toString(),
+		};
+	} catch (error) {
+		console.error('Error al actualizar el programa:', error);
+		throw new Error('Error al actualizar el programa');
+	}
 };
 
 // Eliminar un programa

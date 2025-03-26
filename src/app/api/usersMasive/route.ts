@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import nodemailer from 'nodemailer';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xls x';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';

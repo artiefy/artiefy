@@ -243,17 +243,25 @@ export default function Page() {
 			// 🔹 Convertir `selectedSubjects` a un array de números antes de enviar
 
 			if (id) {
-				response = await updateProgram(Number(id), {
-					title,
-					description: description ?? '',
-					coverImageKey: coverImageKey ?? '',
-					categoryid: Number(categoryid),
-					rating,
-					creatorId,
-					subjectIds, // ✅ Enviar materias
-				} as Program);
+				response = await fetch(`/api/super-admin/programs?programId=${id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title,
+						description: description ?? '',
+						coverImageKey: coverImageKey ?? '',
+						categoryid: Number(categoryid),
+						rating,
+						creatorId,
+						subjectIds, // ✅ Enviar materias
+					}),
+				});
 
-				responseData = { id: Number(id) }; // Como es una actualización, el ID ya es conocido
+				if (!response.ok) {
+					throw new Error('Error al actualizar el programa');
+				}
+
+				responseData = (await response.json()) as { id: number };
 			} else {
 				response = await fetch('/api/super-admin/programs', {
 					method: 'POST',
@@ -280,31 +288,33 @@ export default function Page() {
 						? 'El programa se actualizó con éxito'
 						: 'El programa se creó con éxito',
 				});
-			} else {
-				throw new Error('No se pudo completar la operación');
+
+				// Refresh the programs list
+				const programsData = await getPrograms();
+				setPrograms(
+					programsData.map((program) => ({
+						...program,
+						id: program.id ?? 0,
+						description: program.description ?? '',
+						coverImageKey: program.coverImageKey ?? '',
+						rating: program.rating ?? 0,
+						createdAt:
+							typeof program.createdAt === 'string'
+								? program.createdAt
+								: program.createdAt.toISOString(),
+					}))
+				);
 			}
 		} catch (error) {
 			toast.error('Error al procesar el programa', {
 				description: `Ocurrió un error: ${(error as Error).message}`,
 			});
+		} finally {
+			setUploading(false);
+			setEditingProgram(null); // Reset editing state
 		}
 
 		setIsModalOpen(false);
-		setUploading(false);
-		const programsData = await getPrograms();
-		setPrograms(
-			programsData.map((program) => ({
-				...program,
-				id: program.id ?? 0, // Ensure id is a number
-				description: program.description ?? '', // Ensure description is a string
-				coverImageKey: program.coverImageKey ?? '', // Ensure coverImageKey is a string
-				rating: program.rating ?? 0, // Ensure rating is a number
-				createdAt:
-					typeof program.createdAt === 'string'
-						? program.createdAt
-						: program.createdAt.toISOString(), // Ensure createdAt is a string
-			}))
-		);
 	};
 
 	// Función para abrir el modal de creación de programas

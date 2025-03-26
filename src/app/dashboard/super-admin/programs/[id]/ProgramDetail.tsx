@@ -695,12 +695,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 								>
 									Eliminar Programa
 								</Button>
-								<Button
-									onClick={handleEditClick}
-									className="mt-4 bg-blue-600 text-white hover:bg-blue-700"
-								>
-									Editar Programa
-								</Button>
 							</div>
 						</div>
 					</div>
