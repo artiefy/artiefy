@@ -67,7 +67,7 @@ const eslintConfig = [
 		rules: {
 			// ⚠️ **Advertencias de Código**
 			'no-console': 'off',
-			'no-unused-vars': 'off',
+			'no-unused-vars': 'warn',
 			'@typescript-eslint/no-unused-vars': [
 				'warn',
 				{ argsIgnorePattern: '^_' },

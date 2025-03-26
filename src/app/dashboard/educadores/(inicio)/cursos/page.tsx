@@ -2,13 +2,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
-import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
 
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
 import { SkeletonCard } from '~/components/educators/layout/SkeletonCard';
 import ModalFormCourse from '~/components/educators/modals/ModalFormCourse';
-import { Button } from '~/components/educators/ui/button';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -285,26 +283,6 @@ export default function Page() {
 					errorData.error ?? 'Ocurrió un error al procesar la solicitud',
 			});
 		}
-	};
-
-	// Función para abrir el modal de creación de cursos
-	const handleCreateCourse = () => {
-		setEditingCourse({
-			id: 0,
-			title: '',
-			description: '',
-			categoryid: '',
-			modalidadesid: '',
-			createdAt: '',
-			instructor: '',
-			coverImageKey: '',
-			creatorId: '',
-			nivelid: '',
-			totalParametros: 0,
-			rating: 0, // Añadir esta línea
-		});
-		setParametrosList([]); // Resetear la lista de parámetros al crear un nuevo curso
-		setIsModalOpen(true);
 	};
 
 	// Función para cerrar el modal de creación de cursos
