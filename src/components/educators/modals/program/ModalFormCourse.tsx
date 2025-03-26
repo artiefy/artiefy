@@ -27,6 +27,7 @@ import {
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 import ModalidadDropdown from '~/components/super-admin/layout/ModalidadDropdown';
+import '~/styles/toggler.css';
 
 // Interfaz para los parámetros del formulario del course
 interface CourseFormProps {
@@ -758,7 +759,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							id="instructor"
 							value={instructor}
 							onChange={(e) => setInstructor(e.target.value)}
-							className="w-full rounded border border-primary p-2 text-white outline-none bg-background"
+							className="w-full rounded border border-primary bg-background p-2 text-white outline-none"
 						>
 							<option value="">Seleccionar instructor</option>
 							{educators.map((educator) => (
@@ -852,27 +853,50 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
 							parametros
 						</p>
-						<div className="flex space-x-2">
-							<label
-								htmlFor="toggle"
-								className="relative inline-block h-8 w-16"
-							>
-								<input
-									type="checkbox"
-									id="toggle"
-									checked={addParametros}
-									onChange={handleToggleParametro}
-									className="absolute size-0"
-								/>
-								<span
-									className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
+						<div className="toggler">
+							<input
+								type="checkbox"
+								id="toggle"
+								checked={addParametros}
+								onChange={handleToggleParametro}
+								name="toggle"
+								value="1"
+							/>
+							<label htmlFor="toggle">
+								<svg
+									className="toggler-on"
+									version="1.1"
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 130.2 130.2"
 								>
-									<span
-										className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
+									<polyline
+										className="path check"
+										points="100.2,40.2 51.5,88.8 29.8,67.5"
 									/>
-								</span>
+								</svg>
+								<svg
+									className="toggler-off"
+									version="1.1"
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 130.2 130.2"
+								>
+									<line
+										className="path line"
+										x1="34.4"
+										y1="34.4"
+										x2="95.8"
+										y2="95.8"
+									/>
+									<line
+										className="path line"
+										x1="95.8"
+										y1="34.4"
+										x2="34.4"
+										y2="95.8"
+									/>
+								</svg>
 							</label>
-							<span className="mt-1 text-sm text-gray-400">
+							<span className="mt-1 ml-2 text-sm text-gray-400">
 								{addParametros ? 'Si' : 'No'}
 							</span>
 						</div>

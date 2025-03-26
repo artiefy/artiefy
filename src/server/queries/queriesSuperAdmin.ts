@@ -15,8 +15,7 @@ import {
 	enrollmentPrograms,
 } from '~/server/db/schema';
 
-import type {  Program, BaseCourse } from '~/types';
-
+import type { Program, BaseCourse } from '~/types';
 
 export interface Materia {
 	id: number;
@@ -27,7 +26,6 @@ export interface Materia {
 	courseid: number;
 	curso: BaseCourse | undefined;
 }
-
 
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query: string | undefined) {
@@ -266,10 +264,12 @@ export async function createCourse(courseData: CourseData) {
 				nivelid: courseData.nivelid,
 				creatorId: courseData.creatorId || 'defaultCreatorId',
 				createdAt: new Date(courseData.createdAt),
-				updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : new Date(),
+				updatedAt: courseData.updatedAt
+					? new Date(courseData.updatedAt)
+					: new Date(),
 				courseTypeId: courseData.courseTypeId ?? 1, // <-- Aquí colocas un valor seguro por defecto
 				isActive: courseData.isActive ?? true,
-			})					
+			})
 			.returning();
 	} catch (error) {
 		console.error('❌ Error al crear curso:', error);
@@ -283,7 +283,9 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
 		const cleanedData = {
 			...courseData,
 			createdAt: new Date(courseData.createdAt),
-			updatedAt: courseData.updatedAt ? new Date(courseData.updatedAt) : new Date(),
+			updatedAt: courseData.updatedAt
+				? new Date(courseData.updatedAt)
+				: new Date(),
 			courseTypeId:
 				typeof courseData.courseTypeId === 'number'
 					? courseData.courseTypeId
@@ -300,7 +302,6 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
 		throw new Error('No se pudo actualizar el curso');
 	}
 }
-
 
 // ✅ Obtener todas las categorías
 export async function getCategories() {
@@ -380,73 +381,64 @@ export async function getPrograms(): Promise<ProgramData[]> {
 }
 
 // Obtener un programa por ID
-export const getProgramById = unstable_cache(
-	async (id: string) => {
-		// Buscar el programa
-		const program = await db.query.programas.findFirst({
-			where: eq(programas.id, parseInt(id, 10)),
-			with: {
-				materias: {
-					with: {
-						curso: true,
-					},
+export const getProgramById = async (id: string) => {
+	// Buscar el programa
+	const program = await db.query.programas.findFirst({
+		where: eq(programas.id, parseInt(id, 10)),
+		with: {
+			materias: {
+				with: {
+					curso: true,
 				},
 			},
-		});
+		},
+	});
 
-		if (!program) {
-			throw new Error('Program not found');
-		}
-
-		// Obtener la cantidad de inscripciones
-		const enrollmentCount = await db
-			.select({ count: sql<number>`count(*)` })
-			.from(enrollmentPrograms)
-			.where(eq(enrollmentPrograms.programaId, parseInt(id, 10)))
-			.then((result) => Number(result[0]?.count ?? 0));
-
-		// Transformar materias con sus cursos
-		const transformedMaterias: Materia[] = program.materias.map((materia) => ({
-			id: materia.id,
-			title: materia.title,
-			description: materia.description ?? '',
-			programaId: materia.programaId ?? 0,
-			courseId: materia.curso?.id ?? 0,
-			courseid: materia.curso?.id ?? 0,
-			curso: materia.curso
-				? {
-						...materia.curso,
-						Nivelid: materia.curso.nivelid,
-						totalStudents: enrollmentCount,
-						lessons: [],
-				  }
-				: undefined, // Ahora sí encaja con curso: BaseCourse | undefined
-		}));
-		
-
-		// Armar el objeto final del programa
-		const programData: Program = {
-			id: program.id.toString(),
-			title: program.title,
-			description: program.description,
-			coverImageKey: program.coverImageKey,
-			createdAt: program.createdAt,
-			updatedAt: program.updatedAt,
-			creatorId: program.creatorId,
-			rating: program.rating,
-			categoryid: program.categoryid,
-			materias: transformedMaterias,
-		};
-
-		return programData;
-	},
-	['program-by-id'],
-	{
-		revalidate: 3600,
-		tags: ['programs'],
+	if (!program) {
+		throw new Error('Program not found');
 	}
-);
 
+	// Obtener la cantidad de inscripciones
+	const enrollmentCount = await db
+		.select({ count: sql<number>`count(*)` })
+		.from(enrollmentPrograms)
+		.where(eq(enrollmentPrograms.programaId, parseInt(id, 10)))
+		.then((result) => Number(result[0]?.count ?? 0));
+
+	// Transformar materias con sus cursos
+	const transformedMaterias: Materia[] = program.materias.map((materia) => ({
+		id: materia.id,
+		title: materia.title,
+		description: materia.description ?? '',
+		programaId: materia.programaId ?? 0,
+		courseId: materia.curso?.id ?? 0,
+		courseid: materia.curso?.id ?? 0,
+		curso: materia.curso
+			? {
+					...materia.curso,
+					Nivelid: materia.curso.nivelid,
+					totalStudents: enrollmentCount,
+					lessons: [],
+				}
+			: undefined, // Ahora sí encaja con curso: BaseCourse | undefined
+	}));
+
+	// Armar el objeto final del programa
+	const programData: Program = {
+		id: program.id.toString(),
+		title: program.title,
+		description: program.description,
+		coverImageKey: program.coverImageKey,
+		createdAt: program.createdAt,
+		updatedAt: program.updatedAt,
+		creatorId: program.creatorId,
+		rating: program.rating,
+		categoryid: program.categoryid,
+		materias: transformedMaterias,
+	};
+
+	return programData;
+};
 
 // Crear un nuevo programa
 export async function createProgram(
@@ -460,8 +452,12 @@ export async function createProgram(
 			creatorId: programData.creatorId!,
 			description: programData.description ?? null,
 			coverImageKey: programData.coverImageKey ?? null,
-			createdAt: programData.createdAt ? new Date(programData.createdAt) : new Date(),
-			updatedAt: programData.updatedAt ? new Date(programData.updatedAt) : new Date(),
+			createdAt: programData.createdAt
+				? new Date(programData.createdAt)
+				: new Date(),
+			updatedAt: programData.updatedAt
+				? new Date(programData.updatedAt)
+				: new Date(),
 			rating: programData.rating ?? null,
 		})
 		.returning({
@@ -479,7 +475,6 @@ export async function createProgram(
 
 	return result[0];
 }
-
 
 // Actualizar un programa
 export async function updateProgram(

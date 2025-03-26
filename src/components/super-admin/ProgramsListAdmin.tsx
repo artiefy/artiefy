@@ -47,7 +47,7 @@ export default function ProgramListAdmin({
 }: ProgramListAdminProps) {
 	// Add this helper function
 	const getCategoryName = (categoryId: number) => {
-		const category = categories.find(c => c.id === categoryId);
+		const category = categories.find((c) => c.id === categoryId);
 		return category?.name ?? 'Sin categoría';
 	};
 
@@ -108,6 +108,13 @@ export default function ProgramListAdmin({
 								</p>
 							</div>
 							<div className="flex w-full items-center justify-between">
+								<Button
+									onClick={() => onEditProgram(program)}
+									className="mr-2"
+									variant="outline"
+								>
+									Editar
+								</Button>
 								<Button asChild>
 									<Link
 										href={`/dashboard/super-admin/programs/${program.id}`}

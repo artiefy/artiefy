@@ -37,7 +37,7 @@ import {
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
+} from '~/components/super-admin/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 
@@ -267,7 +267,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href="/dashboard/educadores"
+							href="/dashboard/super-admin"
 						>
 							Cursos
 						</BreadcrumbLink>
@@ -276,7 +276,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href="/dashboard/educadores/cursos"
+							href="/dashboard/super-admin/cursos"
 						>
 							Lista de cursos
 						</BreadcrumbLink>
@@ -285,7 +285,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href={`/dashboard/educadores/cursos/${courseIdNumber}`}
+							href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
 						>
 							Detalles curso
 						</BreadcrumbLink>
@@ -293,7 +293,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}`}
+							href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
 						>
 							Lección

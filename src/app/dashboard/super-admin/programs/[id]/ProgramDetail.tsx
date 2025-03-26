@@ -24,6 +24,14 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/estudiantes/ui/card';
 import { Label } from '~/components/estudiantes/ui/label';
 import ProgramCoursesList from '~/components/super-admin/layout/programdetail/ProgramCoursesList';
+import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from '~/components/super-admin/ui/breadcrumb';
 import {
 	type CourseData as BaseCourseData,
 	getCategoryNameById,
@@ -134,6 +142,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 	);
 	const [instructor, setInstructor] = useState('');
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [editingProgram, setEditingProgram] = useState<Program | null>(null);
+	const [editSubjects, setEditSubjects] = useState<number[]>([]); // Add this for subjects
 
 	useEffect(() => {
 		const loadEducators = async () => {
@@ -484,9 +495,87 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		}
 	};
 
+	// Add this function to handle editing a program
+	const handleEditProgram = async (
+		id: string,
+		title: string,
+		description: string,
+		file: File | null,
+		categoryid: number,
+		rating: number,
+		coverImageKey: string,
+		fileName: string,
+		subjectIds: number[]
+	) => {
+		try {
+			const response = await fetch(`/api/super-admin/programs/${id}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					title,
+					description,
+					categoryid,
+					rating,
+					coverImageKey,
+					subjectIds,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error('Error al actualizar el programa');
+			}
+
+			toast.success('Programa actualizado exitosamente');
+			setIsEditModalOpen(false);
+			void fetchProgram(); // Refresh data
+		} catch (error) {
+			toast.error('Error al actualizar el programa');
+			console.error(error);
+		}
+	};
+
+	// Modify the edit button click handler
+	const handleEditClick = () => {
+		if (!program) return;
+
+		setEditingProgram({
+			...program,
+			categoryid: program.categoryid,
+		});
+		setIsEditModalOpen(true);
+	};
+
 	// Renderizar el componente
 	return (
 		<div className="h-auto w-full rounded-lg bg-background">
+			<Breadcrumb>
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="text-primary hover:text-gray-300"
+							href="/dashboard/super-admin"
+						>
+							Inicio
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink
+							className="text-primary hover:text-gray-300"
+							href="/dashboard/super-admin/programs"
+						>
+							Lista de programas
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink className="text-primary hover:text-gray-300">
+							Detalles del programa
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+
 			<div className="group relative h-auto w-full">
 				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
@@ -606,6 +695,12 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 								>
 									Eliminar Programa
 								</Button>
+								<Button
+									onClick={handleEditClick}
+									className="mt-4 bg-blue-600 text-white hover:bg-blue-700"
+								>
+									Editar Programa
+								</Button>
 							</div>
 						</div>
 					</div>
@@ -681,6 +776,42 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+			{isEditModalOpen && editingProgram && (
+				<ModalFormProgram
+					isOpen={isEditModalOpen}
+					onCloseAction={() => setIsEditModalOpen(false)}
+					onSubmitAction={handleEditProgram}
+					uploading={uploading}
+					editingProgramId={editingProgram.id}
+					title={editingProgram.title}
+					setTitle={(title) =>
+						setEditingProgram((prev) => (prev ? { ...prev, title } : null))
+					}
+					description={editingProgram.description}
+					setDescription={(desc) =>
+						setEditingProgram((prev) =>
+							prev ? { ...prev, description: desc } : null
+						)
+					}
+					categoryid={Number(editingProgram.categoryid)}
+					setCategoryid={(catId) =>
+						setEditingProgram((prev) =>
+							prev ? { ...prev, categoryid: String(catId) } : null
+						)
+					}
+					coverImageKey={editingProgram.coverImageKey}
+					setCoverImageKey={(cover) =>
+						setEditingProgram((prev) =>
+							prev ? { ...prev, coverImageKey: cover } : null
+						)
+					}
+					rating={editingProgram.rating}
+					setRating={(rating) =>
+						setEditingProgram((prev) => (prev ? { ...prev, rating } : null))
+					}
+					subjectIds={editSubjects}
+				/>
+			)}
 		</div>
 	);
 };

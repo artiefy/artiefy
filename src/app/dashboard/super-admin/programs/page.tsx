@@ -93,9 +93,7 @@ export function LoadingPrograms() {
 export default function Page() {
 	const { user } = useUser();
 	const [programs, setPrograms] = useState<ProgramModel[]>([]);
-	const [editingProgram, setEditingProgram] = useState<ProgramModel | null>(
-		null
-	);
+	const [editingProgram, setEditingProgram] = useState<Program | null>(null);
 	const [uploading, setUploading] = useState(false);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
@@ -396,6 +394,11 @@ export default function Page() {
 		);
 	};
 
+	const handleEditProgram = (program: Program) => {
+		setEditingProgram(program);
+		setIsModalOpen(true);
+	};
+
 	// spinner de carga
 	if (uploading) {
 		return (
@@ -517,10 +520,7 @@ export default function Page() {
 						</button>
 
 						{categories
-							.filter(
-								(category) =>
-									category.is_featured 
-							)
+							.filter((category) => category.is_featured)
 							.map((category) => {
 								const isSelected = categoryFilter === category.id.toString();
 								const programCount = programs.filter(
@@ -583,22 +583,7 @@ export default function Page() {
 					programs={filteredPrograms}
 					selectedPrograms={selectedPrograms}
 					onToggleSelection={toggleProgramSelection}
-					onEditProgram={(program: Program | null) =>
-						setEditingProgram(
-							program
-								? {
-										id: program.id ?? 0,
-										title: program.title ?? '',
-										description: program.description ?? '',
-										categoryid: program.categoryid ?? 0,
-										createdAt: program.createdAt ?? '',
-										coverImageKey: program.coverImageKey ?? '',
-										creatorId: program.creatorId ?? '',
-										rating: program.rating ?? 0,
-									}
-								: null
-						)
-					}
+					onEditProgram={handleEditProgram}
 					onDeleteProgram={(programId) => {
 						console.log(`Program with id ${programId} deleted`);
 					}}
@@ -608,31 +593,40 @@ export default function Page() {
 				{isModalOpen && (
 					<ModalFormProgram
 						isOpen={isModalOpen}
-						onCloseAction={handleCloseModal}
+						onCloseAction={() => {
+							setIsModalOpen(false);
+							setEditingProgram(null);
+						}}
 						onSubmitAction={handleCreateOrUpdateProgram}
 						uploading={uploading}
 						editingProgramId={editingProgram?.id ?? null}
 						title={editingProgram?.title ?? ''}
-						setTitle={setTitle}
+						setTitle={(title) =>
+							setEditingProgram((prev) => (prev ? { ...prev, title } : null))
+						}
 						description={editingProgram?.description ?? ''}
-						setDescription={setDescription}
+						setDescription={(description) =>
+							setEditingProgram((prev) =>
+								prev ? { ...prev, description } : null
+							)
+						}
 						categoryid={editingProgram?.categoryid ?? 0}
-						setCategoryid={(categoryid: number) =>
+						setCategoryid={(categoryid) =>
 							setEditingProgram((prev) =>
 								prev ? { ...prev, categoryid } : null
 							)
 						}
 						coverImageKey={editingProgram?.coverImageKey ?? ''}
-						setCoverImageKey={(coverImageKey: string) =>
+						setCoverImageKey={(coverImageKey) =>
 							setEditingProgram((prev) =>
 								prev ? { ...prev, coverImageKey } : null
 							)
 						}
 						rating={editingProgram?.rating ?? 0}
-						setRating={setRating}
-						subjectIds={selectedSubjects.map((subject) =>
-							Number(subject.value)
-						)}
+						setRating={(rating) =>
+							setEditingProgram((prev) => (prev ? { ...prev, rating } : null))
+						}
+						subjectIds={[]}
 					/>
 				)}
 			</div>

@@ -14,7 +14,7 @@ import {
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
+} from '~/components/super-admin/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 
 // Define el modelo de datos del curso
@@ -376,7 +376,7 @@ export default function Page() {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="../educadores"
+								href="../super-admin"
 							>
 								Inicio
 							</BreadcrumbLink>

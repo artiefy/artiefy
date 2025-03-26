@@ -4,7 +4,7 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 
 import Image from 'next/image';
-
+import { toast } from 'sonner';
 
 import { useUser } from '@clerk/nextjs';
 import { FiUploadCloud } from 'react-icons/fi';
@@ -70,8 +70,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 	categoryid,
 	setCategoryid,
 	coverImageKey,
+	setCoverImageKey,
 	isOpen,
-	onCloseAction
+	onCloseAction,
 }) => {
 	const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null);
@@ -148,7 +149,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 	const handleSubmit = async () => {
 		const controller = new AbortController();
 		setUploadController(controller);
-		
+
 		const subjectIds = selectedSubjects
 			.map((subject) => Number(subject.value)) // Convertimos `value` a número
 			.filter((id) => !isNaN(id)); // Filtramos valores inválidos
@@ -219,17 +220,34 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 				});
 			}
 
-			await onSubmitAction(
-				editingProgramId ? editingProgramId.toString() : '',
-				title,
-				description,
-				file,
-				categoryid,
-				rating,
-				coverImageKey,
-				uploadedFileName,
-				selectedSubjects.map((subject) => Number(subject.value))
+			const endpoint = editingProgramId
+				? `/api/super-admin/programs/${editingProgramId}`
+				: '/api/super-admin/programs';
+			const method = editingProgramId ? 'PUT' : 'POST';
+
+			const response = await fetch(endpoint, {
+				method,
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					title,
+					description,
+					coverImageKey,
+					categoryid,
+					rating,
+					subjectIds,
+				}),
+			});
+
+			if (!response.ok) {
+				throw new Error(`Error: ${response.statusText}`);
+			}
+
+			toast.success(
+				editingProgramId ? 'Programa actualizado' : 'Programa creado',
+				{ description: 'La operación se completó exitosamente' }
 			);
+
+			onCloseAction();
 
 			if (controller.signal.aborted) {
 				console.log('Upload cancelled');
@@ -315,9 +333,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 
 	// Utilizamos este tipo en el estado para mantener las opciones seleccionadas
 
-	const handleSelectSubjects = (
-		newValue: MultiValue<SubjectOption>,
-	) => {
+	const handleSelectSubjects = (newValue: MultiValue<SubjectOption>) => {
 		console.log(
 			'📌 Materias seleccionadas (antes de actualizar estado):',
 			newValue
@@ -386,6 +402,54 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 			setCoverImage('');
 		}
 	}, [isOpen, editingProgramId]);
+
+	useEffect(() => {
+		// Cargar datos del programa cuando se está editando
+		if (editingProgramId) {
+			const loadProgramData = async () => {
+				try {
+					interface ProgramData {
+						title: string;
+						description: string;
+						categoryid: number;
+						rating: number;
+						coverImageKey: string;
+						materias?: { id: number; title: string }[];
+					}
+
+					const response = await fetch(
+						`/api/super-admin/programs/${editingProgramId}`
+					);
+					if (response.ok) {
+						const programData = (await response.json()) as ProgramData;
+						setTitle(programData.title);
+						setDescription(programData.description);
+						setCategoryid(programData.categoryid);
+						setRating(programData.rating);
+						if (programData.coverImageKey) {
+							setCoverImageKey(programData.coverImageKey);
+						}
+
+						// Si el programa tiene materias asociadas, cargarlas
+						if (programData.materias) {
+							const subjectOptions = programData.materias.map(
+								(materia: { id: number; title: string }) => ({
+									value: materia.id.toString(),
+									label: materia.title,
+								})
+							);
+							setSelectedSubjects(subjectOptions);
+						}
+					}
+				} catch (error) {
+					console.error('Error loading program data:', error);
+					toast.error('Error al cargar los datos del programa');
+				}
+			};
+
+			void loadProgramData();
+		}
+	}, [editingProgramId]);
 
 	// Renderizado del modal
 	return (
@@ -460,7 +524,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 						</div>
 						{isOpen && (
 							<div className="flex w-full flex-col gap-2">
-                                <label
+								<label
 									htmlFor="subjects"
 									className="text-lg font-medium text-primary"
 								>

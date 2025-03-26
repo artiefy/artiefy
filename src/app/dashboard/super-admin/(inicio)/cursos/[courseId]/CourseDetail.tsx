@@ -22,19 +22,19 @@ import {
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
 import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from '~/components/super-admin/ui/breadcrumb';
 
 // Definir la interfaz del curso
 interface Course {
@@ -210,6 +210,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [selectedInstructor, setSelectedInstructor] = useState<string>('');
 	const [showChangeButton, setShowChangeButton] = useState(false);
 	const [isUpdating, setIsUpdating] = useState(false);
+	const [currentInstructor, setCurrentInstructor] = useState('');
+
+	// Agregar este nuevo estado
+	const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
 
 	// Función para obtener el curso y los parámetros
 	const fetchCourse = useCallback(async () => {
@@ -446,12 +450,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Función para manejar la edición del curso
 	const handleEditCourse = () => {
-		if (!course) return; // Verificación adicional
+		if (!course) return;
 		setEditTitle(course.title);
 		setEditDescription(course.description);
 		setEditCategory(parseInt(course.categoryid));
 		setEditModalidad(parseInt(course.modalidadesid));
-		setEditNivel(parseInt(course.nivelid));
+		setEditNivel(parseInt(course.nivelid)); // Asegúrate de convertir a número
 		setEditCoverImageKey(course.coverImageKey);
 		setEditParametros(
 			parametros.map((parametro) => ({
@@ -461,10 +465,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				porcentaje: parametro.porcentaje,
 			}))
 		);
-		setEditRating(course.rating); // Añadir esta línea
-		setCourseTypeId(course.courseTypeId ?? null); // <-- ¡Agrega esto!
-		setIsModalOpen(true);
+		setEditRating(course.rating);
+		setCourseTypeId(course.courseTypeId ?? null);
 		setIsActive(course.isActive ?? true);
+		setCurrentInstructor(course.instructor);
+		setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
+		setIsModalOpen(true);
 	};
 
 	// Verificar si se está cargando
@@ -612,7 +618,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/educadores"
+							href="/dashboard/super-admin"
 						>
 							Inicio
 						</BreadcrumbLink>
@@ -621,7 +627,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/educadores/cursos"
+							href="/dashboard/super-admin/cursos"
 						>
 							Lista de cursos
 						</BreadcrumbLink>
@@ -791,9 +797,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 											onChange={(e) => setSelectedInstructor(e.target.value)}
 											className="w-full rounded-md border border-primary bg-background p-2 text-sm text-primary"
 										>
-											<option value={course.instructor}>
-												{course.instructorName}
-											</option>
+											{course.instructor && (
+												<option value={course.instructor}>
+													{(educators.find((e) => e.id === course.instructor)
+														?.name ??
+														course.instructorName) ||
+														'Instructor actual'}
+												</option>
+											)}
 											{educators
 												.filter((educator) => educator.id !== course.instructor)
 												.map((educator) => (
@@ -962,7 +973,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				rating={editRating} // Añadir esta línea
 				setTitle={setEditTitle}
 				setDescription={setEditDescription}
-				setModalidadesid={setEditModalidad}
+				setModalidadesid={(value: number | number[]) =>
+					setEditModalidad(
+						Array.isArray(value) ? Number(value[0]) : Number(value)
+					)
+				}
 				setCategoryid={setEditCategory}
 				setNivelid={setEditNivel} // Replaced setid with setNivelid
 				setCoverImageKey={setEditCoverImageKey}
@@ -981,10 +996,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setCourseTypeId={setCourseTypeId}
 				isActive={isActive}
 				setIsActive={setIsActive}
-				instructor={course?.instructor ?? ''}
-				setInstructor={() => undefined}
-				subjects={[]}            // Si no estás usando subjects en edición, puedes pasar array vacío o mapear si los tienes.
-				setSubjects={() => undefined} 
+				instructor={currentInstructor}
+				setInstructor={setCurrentInstructor}
+				educators={educators}
+				subjects={currentSubjects}
+				setSubjects={setCurrentSubjects}
 			/>
 		</div>
 	);

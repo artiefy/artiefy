@@ -6,6 +6,10 @@ import ModalFormMateria from './modalFormCreate';
 
 import type { Materia } from '~/models/super-adminModels/materiaModels';
 
+interface ErrorResponse {
+	error: string;
+}
+
 const MateriasPage: React.FC = () => {
 	const [materias, setMaterias] = useState<Materia[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -142,11 +146,41 @@ const MateriasPage: React.FC = () => {
 								</button>
 								<button
 									onClick={async () => {
-										await fetch(`/api/super-admin/materias/${materia.id}`, {
-											method: 'DELETE',
-										});
+										if (
+											!confirm(
+												'¿Estás seguro de que deseas eliminar esta materia?'
+											)
+										) {
+											return;
+										}
 
-										setMaterias(materias.filter((m) => m.id !== materia.id));
+										try {
+											const response = await fetch(
+												`/api/super-admin/materias/${materia.id}`,
+												{
+													method: 'DELETE',
+												}
+											);
+
+											if (!response.ok) {
+												const errorData =
+													(await response.json()) as ErrorResponse;
+												throw new Error(
+													errorData.error || 'Error al eliminar la materia'
+												);
+											}
+
+											setMaterias((prevMaterias) =>
+												prevMaterias.filter((m) => m.id !== materia.id)
+											);
+										} catch (error) {
+											console.error('Error:', error);
+											alert(
+												error instanceof Error
+													? error.message
+													: 'Error al eliminar la materia'
+											);
+										}
 									}}
 									className="flex items-center rounded-md bg-red-700 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-red-800"
 								>

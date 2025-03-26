@@ -27,7 +27,7 @@ import {
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/educators/ui/breadcrumb';
+} from '~/components/super-admin/ui/breadcrumb';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';

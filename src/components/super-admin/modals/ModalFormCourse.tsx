@@ -9,12 +9,10 @@ import { useUser } from '@clerk/nextjs';
 import { Plus } from 'lucide-react';
 import { FiUploadCloud } from 'react-icons/fi';
 import { MdClose } from 'react-icons/md';
-import { toast } from 'sonner';
 import Select, { type MultiValue } from 'react-select';
+import { toast } from 'sonner';
+
 import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
-import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
-import ModalidadDropdown from '~/components/educators/layout/ModalidadDropdown';
-import NivelDropdown from '~/components/educators/layout/NivelDropdown'; // Fixed import statement
 import CourseTypeDropdown from '~/components/educators/layout/TypesCourseDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -82,12 +80,31 @@ interface CourseFormProps {
 	setCourseTypeId: (val: number | null) => void;
 	isActive: boolean;
 	setIsActive: (val: boolean) => void;
- 	instructor: string;
- 	setInstructor: (instructor: string) => void;
- 	educators?: { id: string; name: string }[];
-	 subjects: { id: number }[];
-	 setSubjects: (subjects: { id: number }[]) => void;
- 
+	instructor: string;
+	setInstructor: (instructor: string) => void;
+	educators?: { id: string; name: string }[];
+	subjects: { id: number }[];
+	setSubjects: (subjects: { id: number }[]) => void;
+}
+
+// Interfaz para los niveles
+interface Nivel {
+	id: number;
+	name: string;
+	description: string;
+}
+
+// Add these interfaces after the existing interfaces
+interface Category {
+	id: number;
+	name: string;
+	description: string;
+}
+
+interface Modalidad {
+	id: number;
+	name: string;
+	description: string;
 }
 
 // Componente ModalFormCourse
@@ -117,10 +134,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	isActive, // <-- agrega esto
 	setIsActive,
 	setInstructor,
- 	educators = [],
- 	instructor,
-	 subjects,
-	 setSubjects,
+	educators = [],
+	instructor,
+	subjects,
+	setSubjects,
 }) => {
 	const { user } = useUser(); // Obtiene el usuario actual
 	const [file, setFile] = useState<File | null>(null); // Estado para el archivo
@@ -129,8 +146,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [progress, setProgress] = useState(0); // Estado para el progreso
 	const [isEditing, setIsEditing] = useState(false); // Estado para la edición
 	const [isDragging, setIsDragging] = useState(false); // Estado para el arrastre
-	const [allSubjects, setAllSubjects] = useState<{ id: number; title: string }[]>([]);
-
+	const [allSubjects, setAllSubjects] = useState<
+		{ id: number; title: string }[]
+	>([]);
+	const [niveles, setNiveles] = useState<Nivel[]>([]);
+	const [isLoadingNiveles, setIsLoadingNiveles] = useState(true);
 
 	const [errors, setErrors] = useState({
 		title: false,
@@ -152,6 +172,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		useState<AbortController | null>(null); // Estado para el controlador de subida
 	const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
 	const [addParametros, setAddParametros] = useState(false); // Estado para los parámetros
+
+	// Add these new states with other useState declarations
+	const [categories, setCategories] = useState<Category[]>([]);
+	const [modalidades, setModalidades] = useState<Modalidad[]>([]);
+	const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+	const [isLoadingModalidades, setIsLoadingModalidades] = useState(true);
 
 	// Función para manejar el cambio de archivo
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -218,10 +244,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	useEffect(() => {
 		const fetchSubjects = async () => {
 			try {
-				const response = await fetch('/api/super-admin/programs/materiasCourses');
+				const response = await fetch(
+					'/api/super-admin/programs/materiasCourses'
+				);
 				if (response.ok) {
-					const subjects = (await response.json()) as { id: number; title: string }[];
-					setAllSubjects(subjects);
+					const subjectsData = (await response.json()) as {
+						id: number;
+						title: string;
+					}[];
+					setAllSubjects(subjectsData);
 				} else {
 					throw new Error('Error al obtener materias');
 				}
@@ -229,12 +260,94 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				console.error('Error al obtener materias:', error);
 			}
 		};
-	
+
 		if (isOpen) {
 			void fetchSubjects();
 		}
 	}, [isOpen]);
-	
+
+	useEffect(() => {
+		const fetchNiveles = async () => {
+			setIsLoadingNiveles(true);
+			try {
+				const response = await fetch('/api/educadores/nivel', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				});
+
+				if (!response.ok) {
+					const errorData = await response.text();
+					throw new Error(`Error al obtener los niveles: ${errorData}`);
+				}
+
+				const data = (await response.json()) as Nivel[];
+				setNiveles(data);
+			} catch (error) {
+				console.error('Error detallado:', error);
+			} finally {
+				setIsLoadingNiveles(false);
+			}
+		};
+
+		void fetchNiveles();
+	}, []);
+
+	// Add these useEffects after other useEffects
+	useEffect(() => {
+		const fetchCategories = async () => {
+			setIsLoadingCategories(true);
+			try {
+				const response = await fetch('/api/educadores/categories', {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' },
+				});
+
+				if (!response.ok) {
+					throw new Error(
+						`Error al obtener las categorías: ${await response.text()}`
+					);
+				}
+
+				const data = (await response.json()) as Category[];
+				setCategories(data);
+			} catch (error) {
+				console.error('Error detallado:', error);
+			} finally {
+				setIsLoadingCategories(false);
+			}
+		};
+
+		void fetchCategories();
+	}, []);
+
+	useEffect(() => {
+		const fetchModalidades = async () => {
+			setIsLoadingModalidades(true);
+			try {
+				const response = await fetch('/api/educadores/modalidades', {
+					method: 'GET',
+					headers: { 'Content-Type': 'application/json' },
+				});
+
+				if (!response.ok) {
+					throw new Error(
+						`Error al obtener las modalidades: ${await response.text()}`
+					);
+				}
+
+				const data = (await response.json()) as Modalidad[];
+				setModalidades(data);
+			} catch (error) {
+				console.error('Error detallado:', error);
+			} finally {
+				setIsLoadingModalidades(false);
+			}
+		};
+
+		void fetchModalidades();
+	}, []);
 
 	// Función para manejar el cambio de parámetros
 	const handleParametroChange = (
@@ -457,6 +570,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [editingCourseId]);
 
+	// Add this useEffect to handle instructor initialization when editing
+	useEffect(() => {
+		if (editingCourseId && instructor) {
+			setInstructor(instructor);
+		}
+	}, [editingCourseId, instructor, setInstructor]);
+
 	// Efecto para manejar el progreso de carga
 	useEffect(() => {
 		if (uploading) {
@@ -518,8 +638,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setCategoryid(categoryid);
 			setRating(rating); // Añadir esta línea
 			setModalidadesid(modalidadesid);
-			setNivelid(nivelid);
+			setNivelid(Number(nivelid)); // Asegúrate de convertir a número
 			setCoverImage(coverImageKey);
+			setCourseTypeId(courseTypeId ?? null);
+			setIsActive(isActive);
 		}
 	}, [editingCourseId]);
 
@@ -541,6 +663,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setParametrosAction([]);
 		}
 	}, [isOpen, editingCourseId]);
+
+	// Agregar este useEffect para manejar la imagen existente cuando se edita
+	useEffect(() => {
+		if (editingCourseId && coverImageKey) {
+			setCoverImage(coverImageKey);
+		} else {
+			setCoverImage(null);
+		}
+	}, [editingCourseId, coverImageKey]);
 
 	// Render la vista
 	return (
@@ -594,11 +725,24 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							>
 								Nivel
 							</label>
-							<NivelDropdown
-								nivel={nivelid}
-								setNivel={setNivelid}
-								errors={errors}
-							/>
+							{isLoadingNiveles ? (
+								<p className="text-primary">Cargando niveles...</p>
+							) : (
+								<select
+									id="nivel-select"
+									value={nivelid}
+									onChange={(e) => setNivelid(Number(e.target.value))}
+									className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
+										errors.nivelid ? 'border-red-500' : 'border-primary'
+									}`}
+								>
+									{niveles.map((nivel) => (
+										<option key={nivel.id} value={nivel.id}>
+											{nivel.name}
+										</option>
+									))}
+								</select>
+							)}
 							{errors.nivelid && (
 								<p className="text-sm text-red-500">
 									Este campo es obligatorio.
@@ -612,11 +756,24 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							>
 								Modalidad
 							</label>
-							<ModalidadDropdown
-								modalidad={modalidadesid}
-								setModalidad={setModalidadesid}
-								errors={errors}
-							/>
+							{isLoadingModalidades ? (
+								<p className="text-primary">Cargando modalidades...</p>
+							) : (
+								<select
+									id="modalidad-select"
+									value={modalidadesid}
+									onChange={(e) => setModalidadesid(Number(e.target.value))}
+									className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
+										errors.modalidadesid ? 'border-red-500' : 'border-primary'
+									}`}
+								>
+									{modalidades.map((modalidad) => (
+										<option key={modalidad.id} value={modalidad.id}>
+											{modalidad.name}
+										</option>
+									))}
+								</select>
+							)}
 							{errors.modalidadesid && (
 								<p className="text-sm text-red-500">
 									Este campo es obligatorio.
@@ -630,11 +787,24 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							>
 								Categoría
 							</label>
-							<CategoryDropdown
-								category={categoryid}
-								setCategory={setCategoryid}
-								errors={errors}
-							/>
+							{isLoadingCategories ? (
+								<p className="text-primary">Cargando categorías...</p>
+							) : (
+								<select
+									id="category-select"
+									value={categoryid}
+									onChange={(e) => setCategoryid(Number(e.target.value))}
+									className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
+										errors.categoryid ? 'border-red-500' : 'border-primary'
+									}`}
+								>
+									{categories.map((category) => (
+										<option key={category.id} value={category.id}>
+											{category.name}
+										</option>
+									))}
+								</select>
+							)}
 							{errors.categoryid && (
 								<p className="text-sm text-red-500">
 									Este campo es obligatorio.
@@ -690,23 +860,26 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						/>
 					</div>
 					<div className="mb-4">
-  <label htmlFor="instructor" className="text-lg font-medium text-primary">
-    Instructor
-  </label>
-  <select
-    id="instructor"
-    value={instructor}
-    onChange={(e) => setInstructor(e.target.value)}
-    className="w-full rounded border border-primary p-2 text-white outline-none bg-background"
-  >
-    <option value="">Seleccionar instructor</option>
-    {educators?.map((educator) => (
-      <option key={educator.id} value={educator.id}>
-        {educator.name}
-      </option>
-    ))}
-  </select>
-</div>
+						<label
+							htmlFor="instructor"
+							className="text-lg font-medium text-primary"
+						>
+							Instructor
+						</label>
+						<select
+							id="instructor"
+							value={instructor}
+							onChange={(e) => setInstructor(e.target.value)}
+							className="w-full rounded border border-primary bg-background p-2 text-white outline-none"
+						>
+							<option value="">Seleccionar instructor</option>
+							{educators?.map((educator) => (
+								<option key={educator.id} value={educator.id}>
+									{educator.name}
+								</option>
+							))}
+						</select>
+					</div>
 
 					<label htmlFor="file" className="text-lg font-medium text-primary">
 						Imagen de portada
@@ -724,10 +897,31 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						onDrop={handleDrop}
 					>
 						<div className="text-center">
-							{!file ? (
+							{!file && coverImage ? (
+								// Mostrar la imagen existente
+								<div className="relative overflow-hidden rounded-lg bg-gray-100">
+									<Image
+										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImage}`}
+										alt="current cover"
+										width={500}
+										height={200}
+										className="h-48 w-full object-cover"
+									/>
+									<button
+										onClick={() => {
+											setCoverImage(null);
+											setErrors((prev) => ({ ...prev, file: true }));
+										}}
+										className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+									>
+										<MdClose className="z-20 size-5" />
+									</button>
+								</div>
+							) : !file ? (
+								// Mostrar el área de drop cuando no hay imagen
 								<>
 									<FiUploadCloud
-										className={`mx-auto size-12 ${errors.file ? 'text-red-500' : 'text-primary'} `}
+										className={`mx-auto size-12 ${errors.file ? 'text-red-500' : 'text-primary'}`}
 									/>
 									<h2 className="mt-4 text-xl font-medium text-gray-700">
 										Arrastra y suelta tu imagen aquí
@@ -753,6 +947,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 									</label>
 								</>
 							) : (
+								// Mostrar la vista previa de la nueva imagen
 								<div className="relative overflow-hidden rounded-lg bg-gray-100">
 									<Image
 										src={URL.createObjectURL(file)}
@@ -888,35 +1083,44 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										className="mt-1 w-full rounded border p-2 text-white outline-none"
 									/>
 								</div>
-								
 							))}
 						</div>
-						
-						
 					)}
 					{isOpen && (
-  <div className="my-4 flex flex-col">
-    <label htmlFor="subjects" className="text-lg font-medium text-primary">
-      Asignar Materias
-    </label>
-    <Select
-      isMulti
-      options={allSubjects.map((subject) => ({
-        value: subject.id.toString(),
-        label: subject.title,
-      }))}
-	  onChange={(newValue: MultiValue<{ value: string; label: string }>) => {
-		const selectedSubjects = newValue.map((option) => ({
-			id: Number(option.value),
-		}));
-		setSubjects(selectedSubjects);
-	}}	
-      classNamePrefix="react-select"
-      className="mt-2 w-10/12 lg:w-1/2"
-    />
-  </div>
-)}
-
+						<div className="my-4 flex flex-col">
+							<label
+								htmlFor="subjects"
+								className="text-lg font-medium text-primary"
+							>
+								Asignar Materias
+							</label>
+							<Select
+								isMulti
+								value={allSubjects
+									.filter((subject) =>
+										subjects.some((s) => s.id === subject.id)
+									)
+									.map((subject) => ({
+										value: subject.id.toString(),
+										label: subject.title,
+									}))}
+								options={allSubjects.map((subject) => ({
+									value: subject.id.toString(),
+									label: subject.title,
+								}))}
+								onChange={(
+									newValue: MultiValue<{ value: string; label: string }>
+								) => {
+									const selectedSubjects = newValue.map((option) => ({
+										id: Number(option.value),
+									}));
+									setSubjects(selectedSubjects);
+								}}
+								classNamePrefix="react-select"
+								className="mt-2 w-10/12 lg:w-1/2"
+							/>
+						</div>
+					)}
 
 					{(uploading || isUploading) && (
 						<div className="mt-4">

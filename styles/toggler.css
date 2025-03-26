@@ -1,0 +1,155 @@
+.toggler {
+	width: 72px;
+	margin: 40px auto;
+}
+
+.toggler input {
+	display: none;
+}
+
+.toggler label {
+	display: block;
+	position: relative;
+	width: 72px;
+	height: 36px;
+	border: 1px solid #e5e7eb;
+	border-radius: 36px;
+	background: #f3f4f6;
+	cursor: pointer;
+}
+
+.toggler label::after {
+	display: block;
+	border-radius: 100%;
+	background-color: #ef4444; /* Red color for unchecked */
+	content: '';
+	animation-name: toggler-size;
+	animation-duration: 0.15s;
+	animation-timing-function: ease-out;
+	animation-direction: forwards;
+	animation-iteration-count: 1;
+	animation-play-state: running;
+}
+
+.toggler label::after,
+.toggler label .toggler-on,
+.toggler label .toggler-off {
+	position: absolute;
+	top: 50%;
+	left: 25%;
+	width: 26px;
+	height: 26px;
+	transform: translateY(-50%) translateX(-50%);
+	transition:
+		left 0.15s ease-in-out,
+		background-color 0.2s ease-out,
+		width 0.15s ease-in-out,
+		height 0.15s ease-in-out,
+		opacity 0.15s ease-in-out;
+}
+
+.toggler input:checked + label::after,
+.toggler input:checked + label .toggler-on,
+.toggler input:checked + label .toggler-off {
+	left: 75%;
+}
+
+.toggler input:checked + label::after {
+	background-color: #22c55e; /* Green color for checked */
+}
+
+.toggler .toggler-on,
+.toggler .toggler-off {
+	opacity: 1;
+	z-index: 2;
+}
+
+.toggler input:checked + label .toggler-off,
+.toggler input:not(:checked) + label .toggler-on {
+	width: 0;
+	height: 0;
+	opacity: 0;
+}
+
+.toggler .path {
+	fill: none;
+	stroke: #ffffff;
+	stroke-width: 7px;
+	stroke-linecap: round;
+	stroke-miterlimit: 10;
+}
+
+@keyframes toggler-size {
+	0%,
+	100% {
+		width: 26px;
+		height: 26px;
+	}
+	50% {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+@keyframes toggler-size2 {
+	0%,
+	100% {
+		width: 26px;
+		height: 26px;
+	}
+	50% {
+		width: 20px;
+		height: 20px;
+	}
+}
+
+/* Adjust SVG sizes and positions */
+.toggler-on,
+.toggler-off {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	padding: 4px;
+}
+
+/* Make sure SVGs are visible */
+label .toggler-on,
+label .toggler-off {
+	opacity: 1;
+	z-index: 2;
+}
+
+/* Path styling for check and x marks */
+.path {
+	fill: none;
+	stroke: #ffffff;
+	stroke-width: 7px;
+	stroke-linecap: round;
+	stroke-miterlimit: 10;
+}
+
+.path.check {
+	stroke-dasharray: 100;
+	stroke-dashoffset: 100;
+	animation: draw-check 0.3s ease-in-out forwards;
+}
+
+.path.line {
+	stroke-dasharray: 100;
+	stroke-dashoffset: 100;
+	animation: draw-line 0.3s ease-in-out forwards;
+}
+
+@keyframes draw-check {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+
+@keyframes draw-line {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
