@@ -7,11 +7,14 @@ import Link from 'next/link';
 
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
-import { UserCircleIcon } from '@heroicons/react/24/solid';
+import {
+	UserCircleIcon,
+	XMarkIcon as XMarkIconSolid,
+} from '@heroicons/react/24/solid';
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import '~/styles/barsicon.css';
 
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -66,16 +69,16 @@ export function Header() {
 						{/* Auth Button */}
 						<div>
 							<SignedOut>
-								<SignInButton>
+								<SignInButton fallbackRedirectUrl="/estudiantes">
 									<Button
 										className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 										style={{
 											transition: '0.5s',
-											width: '175px',
+											width: '180px',
 										}}
 										onClick={handleSignInClick}
 									>
-										<span className="relative skew-x-[15deg] overflow-hidden">
+										<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
 											{isLoading ? (
 												<Icons.spinner
 													className="animate-spin"
@@ -119,13 +122,20 @@ export function Header() {
 								</div>
 							</Link>
 						</div>
-						<button
-							onClick={() => setMobileMenuOpen(true)}
-							className="inline-flex items-center justify-center p-2 transition-transform active:scale-95"
-							aria-label="Open main menu"
-						>
-							<Bars3Icon className="mr-4 size-8" />
-						</button>
+						<label className="hamburger flex h-12 w-12 items-center justify-center">
+							<input
+								type="checkbox"
+								checked={mobileMenuOpen}
+								onChange={(e) => setMobileMenuOpen(e.target.checked)}
+							/>
+							<svg viewBox="0 0 32 32">
+								<path
+									className="line line-top-bottom"
+									d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"
+								/>
+								<path className="line" d="M7 16 27 16" />
+							</svg>
+						</label>
 					</div>
 				</div>
 			</div>
@@ -139,29 +149,27 @@ export function Header() {
 			>
 				<div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 				<DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
-					<div className="flex items-center justify-between">
+					<div className="mt-16 flex items-center justify-between">
 						<div className="relative size-[150px]">
 							<Link href="/estudiantes">
-								<Image
-									src="/artiefy-logo2.svg"
-									alt="Logo Artiefy Mobile"
-									width={150}
-									height={150}
-									priority
-									style={{
-										width: '100%',
-										height: 'auto',
-									}}
-									sizes="150px"
-								/>
+								<div className="relative size-[150px]">
+									<Image
+										src="/artiefy-logo2.svg"
+										alt="Logo Artiefy Mobile"
+										fill
+										priority
+										className="object-contain"
+										sizes="150px"
+									/>
+								</div>
 							</Link>
 						</div>
 						<button
 							onClick={() => setMobileMenuOpen(false)}
-							className="ml-5 rounded-full p-1 text-gray-400 transition-transform focus:bg-gray-100 active:scale-95"
+							className="ml-5 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
 							aria-label="Close menu"
 						>
-							<XMarkIcon className="size-6" />
+							<XMarkIconSolid className="size-8" />
 						</button>
 					</div>
 
@@ -188,11 +196,11 @@ export function Header() {
 									className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 focus:bg-background focus:text-primary focus:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 									style={{
 										transition: '0.5s',
-										width: '175px',
+										width: '180px',
 									}}
 									onClick={handleSignInClick}
 								>
-									<span className="relative skew-x-[15deg] overflow-hidden">
+									<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
 										{isLoading ? (
 											<Icons.spinner
 												className="animate-spin"
@@ -206,16 +214,18 @@ export function Header() {
 							</SignInButton>
 						</SignedOut>
 						<SignedIn>
-							<UserButton>
-								<UserButton.MenuItems>
-									<UserButton.Link
-										label="Mis Cursos"
-										labelIcon={<UserCircleIcon className="size-4" />}
-										href="/estudiantes/myaccount"
-									/>
-									<UserButton.Action label="manageAccount" />
-								</UserButton.MenuItems>
-							</UserButton>
+							<div className="cl-userButton-root mr-6 flex w-full justify-center">
+								<UserButton showName>
+									<UserButton.MenuItems>
+										<UserButton.Link
+											label="Mis Cursos"
+											labelIcon={<UserCircleIcon className="size-4" />}
+											href="/estudiantes/myaccount"
+										/>
+										<UserButton.Action label="manageAccount" />
+									</UserButton.MenuItems>
+								</UserButton>
+							</div>
 						</SignedIn>
 					</div>
 				</DialogPanel>
