@@ -13,32 +13,41 @@ import {
 	primaryKey,
 } from 'drizzle-orm/pg-core';
 
-
 // Tabla de usuarios (con soporte para Clerk)
-export const users = pgTable('users', {
-	id: text('id').primaryKey(),
-	role: text('role').notNull(),
-	name: text('name'),
-	email: text('email').notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull(),
-	phone: text('phone'),
-	country: text('country'),
-	city: text('city'),
-	address: text('address'),
-	age: integer('age'),
-	birthDate: date('birth_date'),
-	subscriptionStatus: text('subscription_status').default('inactive').notNull(),
-	subscriptionEndDate: timestamp('subscription_end_date', {
-		withTimezone: true,
-		mode: 'date',
-	}),
-	planType: text('plan_type', { enum: ['Pro', 'Premium', 'Enterprise'] }),
-	purchaseDate: timestamp('purchase_date', {
-		withTimezone: true,
-		mode: 'date',
-	}),
-});
+export const users = pgTable(
+	'users',
+	{
+		id: text('id').primaryKey(),
+		role: text('role', {
+			enum: ['estudiante', 'educador', 'admin', 'super-admin'],
+		}).notNull(),
+		name: text('name'),
+		email: text('email').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull(),
+		phone: text('phone'),
+		country: text('country'),
+		city: text('city'),
+		address: text('address'),
+		age: integer('age'),
+		birthDate: date('birth_date'),
+		subscriptionStatus: text('subscription_status')
+			.default('inactive')
+			.notNull(),
+		subscriptionEndDate: timestamp('subscription_end_date', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		planType: text('plan_type', { enum: ['Pro', 'Premium', 'Enterprise'] }),
+		purchaseDate: timestamp('purchase_date', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+	},
+	(table) => [
+		unique('users_email_role_unique').on(table.email, table.role)
+	]
+);
 
 // Tabla de categorías
 export const categories = pgTable('categories', {
@@ -101,7 +110,6 @@ export const courses = pgTable('courses', {
 	requiresProgram: boolean('requires_program').default(false),
 	isActive: boolean('is_active').default(true),
 });
-
 
 // Tabla de tipos de actividades
 export const typeActi = pgTable('type_acti', {
@@ -305,7 +313,6 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 	lastAttemptAt: timestamp('last_attempt_at'),
 });
 
-
 //Tabla de sistema de tickets
 export const tickets = pgTable('tickets', {
 	id: serial('id').primaryKey(),
@@ -354,11 +361,9 @@ export const materias = pgTable('materias', {
 	id: serial('id').primaryKey(),
 	title: varchar('title', { length: 255 }).notNull(),
 	description: text('description'),
-	programaId: integer('programa_id')
-		.references(() => programas.id),
+	programaId: integer('programa_id').references(() => programas.id),
 	courseid: integer('courseid').references(() => courses.id), // courseid can be null
 });
-
 
 export const materiaGrades = pgTable(
 	'materia_grades',
@@ -554,7 +559,6 @@ export const activitiesRelations = relations(activities, ({ one, many }) => ({
 	}),
 	userActivitiesProgress: many(userActivitiesProgress),
 }));
-
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
 	user: one(users, {

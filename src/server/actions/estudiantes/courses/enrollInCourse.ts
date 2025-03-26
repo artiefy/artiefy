@@ -73,7 +73,7 @@ export async function enrollInCourse(
 							? `${user.firstName} ${user.lastName}`
 							: (user.firstName ?? 'Usuario'),
 					email: primaryEmail.emailAddress,
-					role: 'student',
+					role: 'estudiante',
 					subscriptionStatus: shouldBeActive ? 'active' : 'inactive', // Set based on course type
 					createdAt: new Date(),
 					updatedAt: new Date(),

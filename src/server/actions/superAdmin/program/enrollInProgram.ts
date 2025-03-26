@@ -47,7 +47,7 @@ export async function enrollInProgram(
               ? `${user.firstName} ${user.lastName}`
               : (user.firstName ?? 'Usuario'),
           email: primaryEmail.emailAddress,
-          role: 'student',
+          role: 'estudiante',
           subscriptionStatus: 'active', // Set based on Clerk metadata
           createdAt: new Date(),
           updatedAt: new Date(),
