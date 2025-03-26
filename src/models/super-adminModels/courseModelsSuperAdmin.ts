@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq, count } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
@@ -258,23 +259,42 @@ export const deleteCourse = async (courseId: number): Promise<void> => {
 	}
 };
 
-// ✅ Obtener todos los educadores disponibles
-export async function getAllEducators() {
+export async function getAllEducators(query?: string) {
 	try {
-		const educators = await db
-			.select({
-				id: users.id,
-				name: users.name,
-			})
-			.from(users)
-			.where(eq(users.role, 'educador'))
-			.execute();
+		const client = await clerkClient();
+		const usersResponse = await client.users.getUserList({ limit: 100 });
+		const users = usersResponse.data;
 
-		console.log('✅ [DB] Educadores encontrados:', educators);
+		// Filtrar por query si se proporciona
+		const filteredUsers = query
+			? users.filter(
+					(user) =>
+						(user.firstName ?? '')
+							.toLowerCase()
+							.includes(query.toLowerCase()) ||
+						(user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
+						user.emailAddresses.some((email) =>
+							email.emailAddress.toLowerCase().includes(query.toLowerCase())
+						)
+				)
+			: users;
 
+		// Filtrar por rol "educador"
+		const educatorsOne = filteredUsers.filter(
+			(user) => user.publicMetadata.role === 'educador'
+		);
+
+		// ✅ Solo id y name (como lo hace la versión con Drizzle)
+		const educators = educatorsOne.map((user) => ({
+			id: user.id,
+			name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
+		}));
+
+		console.log('✅ Educadores encontrados desde Clerk:', educators);
 		return educators;
-	} catch {
-		throw new Error('Error al obtener educadores de la base de datos');
+	} catch (error) {
+		console.error('❌ Error al obtener educadores desde Clerk:', error);
+		throw new Error('Error al obtener educadores desde Clerk');
 	}
 }
 
@@ -307,7 +327,7 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 			.where(eq(enrollments.userId, userId)); // Filtra por el userId en la tabla de enrollments
 
 		// Verifica los datos obtenidos de la consulta
-	
+
 		console.log('Cursos obtenidos:', coursesData);
 
 		// Si no se obtienen cursos, retornar un array vacío
@@ -324,7 +344,6 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 	}
 };
 
-
 export const getModalidadById = async (modalidadId: number) => {
 	return db
 		.select({
@@ -336,4 +355,3 @@ export const getModalidadById = async (modalidadId: number) => {
 		.where(eq(modalidades.id, modalidadId))
 		.then((rows) => rows[0]);
 };
-

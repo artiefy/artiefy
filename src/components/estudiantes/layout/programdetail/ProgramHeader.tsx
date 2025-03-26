@@ -90,30 +90,42 @@ export function ProgramHeader({
 						placeholder="blur"
 						blurDataURL={blurDataURL}
 					/>
-					<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
-						<h1 className="text-3xl font-bold text-white">{program.title}</h1>
+					<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/50 to-transparent p-4 md:p-6">
+						<h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
+							{program.title}
+						</h1>
+						<div className="mt-2 hidden sm:block">
+							<Badge
+								variant="outline"
+								className="border-primary bg-background/80 text-primary backdrop-blur-sm hover:bg-black/70"
+							>
+								{getCategoryName(program)}
+							</Badge>
+						</div>
 					</div>
 				</AspectRatio>
 			</CardHeader>
 
-			<CardContent className="mx-6 space-y-4">
+			<CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
 				{/* Program metadata */}
-				<div className="flex flex-wrap items-center justify-between gap-4">
-					<div className="flex items-center space-x-4">
-						<Badge
-							variant="outline"
-							className="border-primary bg-background text-primary hover:bg-black/70"
-						>
-							{getCategoryName(program)}
-						</Badge>
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex flex-wrap items-center gap-2 sm:gap-4">
+						<div className="sm:hidden">
+							<Badge
+								variant="outline"
+								className="border-primary bg-background text-primary hover:bg-black/70"
+							>
+								{getCategoryName(program)}
+							</Badge>
+						</div>
 						<div className="flex items-center">
 							<FaCalendar className="mr-2 text-gray-600" />
-							<span className="text-sm text-gray-600">
+							<span className="text-xs text-gray-600 sm:text-sm">
 								Creado: {formatDate(program.createdAt)}
 							</span>
 						</div>
 					</div>
-					<div className="flex items-center space-x-6">
+					<div className="flex items-center justify-between gap-4 sm:gap-6">
 						<div className="flex items-center">
 							<FaUserGraduate className="mr-2 text-blue-600" />
 							<EnrollmentCount programId={parseInt(program.id)} />
@@ -122,14 +134,14 @@ export function ProgramHeader({
 							{Array.from({ length: 5 }).map((_, index) => (
 								<StarIcon
 									key={index}
-									className={`h-5 w-5 ${
+									className={`h-4 w-4 sm:h-5 sm:w-5 ${
 										index < Math.floor(program.rating ?? 0)
 											? 'text-yellow-400'
 											: 'text-gray-300'
 									}`}
 								/>
 							))}
-							<span className="ml-2 text-lg font-semibold text-yellow-400">
+							<span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
 								{program.rating?.toFixed(1) ?? '0.0'}
 							</span>
 						</div>
@@ -138,7 +150,7 @@ export function ProgramHeader({
 
 				{/* Program description */}
 				<div className="prose max-w-none">
-					<p className="leading-relaxed text-gray-700">
+					<p className="text-sm leading-relaxed text-gray-700 sm:text-base">
 						{program.description ?? 'No hay descripción disponible.'}
 					</p>
 				</div>

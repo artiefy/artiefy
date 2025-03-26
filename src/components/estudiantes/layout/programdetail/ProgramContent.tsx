@@ -167,11 +167,9 @@ export function ProgramContent({
 				</Alert>
 			)}
 
-			<div className="mb-6 flex items-center justify-between">
-				<h2 className="text-2xl font-bold text-background">
-					Cursos Del Programa
-				</h2>
-				<div className="flex flex-col items-end gap-2">
+			<div className="mb-6">
+				{/* Subscription Status Section */}
+				<div className="mb-4 flex flex-col items-center justify-center space-y-2 text-center">
 					{isSubscriptionActive && (
 						<div className="flex items-center gap-2 text-green-500">
 							<FaCheck className="size-4" />
@@ -183,6 +181,10 @@ export function ProgramContent({
 							Finaliza: {formatDate(subscriptionEndDate)}
 						</p>
 					)}
+
+					<h2 className="text-2xl font-bold text-background">
+						Cursos Del Programa
+					</h2>
 				</div>
 			</div>
 
