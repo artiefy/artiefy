@@ -83,17 +83,37 @@ export async function GET(request: Request) {
 	}
 }
 
+// Add this type near the top of the file
+type AllowedRole = 'estudiante' | 'educador' | 'admin' | 'super-admin';
+
 export async function POST(request: Request) {
 	try {
-		// 1. Obtener datos del request
 		interface RequestBody {
 			firstName: string;
 			lastName: string;
 			email: string;
-			role: string;
+			role: AllowedRole;
 		}
-		const { firstName, lastName, email, role }: RequestBody =
-			(await request.json()) as RequestBody;
+
+		const body: RequestBody = await request.json();
+		const { firstName, lastName, email, role } = body as RequestBody;
+
+		// Validar que el rol sea uno de los permitidos
+		const allowedRoles: AllowedRole[] = [
+			'estudiante',
+			'educador',
+			'admin',
+			'super-admin',
+		];
+		if (!allowedRoles.includes(role)) {
+			return NextResponse.json(
+				{
+					error:
+						'Rol no válido. Debe ser: estudiante, educador, admin o super-admin',
+				},
+				{ status: 400 }
+			);
+		}
 
 		// 2. Crear usuario en Clerk
 		const { user, generatedPassword } = await createUser(
@@ -106,7 +126,7 @@ export async function POST(request: Request) {
 		// 3. Guardar usuario en la base de datos con Drizzle
 		await db.insert(users).values({
 			id: user.id,
-			role: 'estudiante',
+			role: role, // Ahora usamos el rol proporcionado
 			name: `${firstName} ${lastName}`,
 			email:
 				user.emailAddresses.find(
