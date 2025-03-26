@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import nodemailer from 'nodemailer';
-import * as XLSX from 'xls x';
+import * as XLSX from 'xlsx';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
@@ -76,7 +76,12 @@ export async function POST(request: Request) {
 			lastName: string;
 			email: string;
 			role?: string;
-		}[] = XLSX.utils.sheet_to_json(sheet);
+		}[] = XLSX.utils.sheet_to_json(sheet) as {
+			firstName: string;
+			lastName: string;
+			email: string;
+			role?: string;
+		}[];
 
 		const createdUsers = [];
 		const emailErrors = [];

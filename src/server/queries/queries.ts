@@ -104,6 +104,34 @@ export async function updateUserInfo(
 	}
 }
 
+function generateSecurePassword(length = 14): string {
+	const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+	const lowercase = 'abcdefghjkmnpqrstuvwxyz';
+	const numbers = '23456789';
+	const symbols = '!@#$%^&*()_+-={}[]<>?';
+
+	const allChars = uppercase + lowercase + numbers + symbols;
+
+	let password = '';
+	// Asegurar al menos un carácter de cada tipo
+	password += uppercase[Math.floor(Math.random() * uppercase.length)];
+	password += lowercase[Math.floor(Math.random() * lowercase.length)];
+	password += numbers[Math.floor(Math.random() * numbers.length)];
+	password += symbols[Math.floor(Math.random() * symbols.length)];
+
+	// Completar el resto de la contraseña
+	for (let i = password.length; i < length; i++) {
+		password += allChars[Math.floor(Math.random() * allChars.length)];
+	}
+
+	// Mezclar la contraseña para evitar patrones predecibles
+	return password
+		.split('')
+		.sort(() => 0.5 - Math.random())
+		.join('');
+}
+
+
 export async function createUser(
 	firstName: string,
 	lastName: string,
@@ -111,21 +139,7 @@ export async function createUser(
 	role: string
 ) {
 	try {
-		// 🔹 Obtener la primera letra del primer nombre y primer apellido
-		const firstInitial = firstName.charAt(0).toLowerCase();
-		const lastInitial = lastName?.split(' ')[0]?.charAt(0).toLowerCase() || 'x'; // 'x' si no hay apellido
-
-		// 🔹 Generar la contraseña base (iniciales del nombre y apellido)
-		let generatedPassword = `${firstInitial}${lastInitial}`;
-
-		// 🔹 Si la contraseña es menor a 8 caracteres, agregar "12345678" hasta completar
-		if (generatedPassword.length < 8) {
-			generatedPassword += '12345678'.slice(0, 8 - generatedPassword.length);
-		}
-
-		// 🔹 Agregar un número aleatorio para evitar que la contraseña sea "pwned"
-		const randomDigits = Math.floor(10 + Math.random() * 90); // Número entre 10 y 99
-		generatedPassword += randomDigits;
+		const generatedPassword = generateSecurePassword();
 
 		// 🔹 Generar un nombre de usuario válido (mínimo 4 caracteres, máximo 64)
 		let username = `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
