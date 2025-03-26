@@ -135,10 +135,12 @@ const styles = `
   }
 `;
 
-// Add this after your imports:
-const styleSheet = document.createElement('style');
-styleSheet.textContent = styles;
-void document.head.appendChild(styleSheet);
+// Replace the stylesheet append code
+if (typeof document !== 'undefined') {
+	const styleSheet = document.createElement('style');
+	styleSheet.textContent = styles;
+	document.head.appendChild(styleSheet);
+}
 
 // Replace the FullscreenLoader component with:
 const FullscreenLoader = () => {
@@ -284,14 +286,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Obtener el curso y los parámetros al cargar la página
 	useEffect(() => {
-		void fetchCourse().catch((error) =>
-			console.error('Error fetching course:', error)
-		);
+		void fetchCourse();
 	}, [fetchCourse]);
 
 	// Add this useEffect after the existing useEffects
 	useEffect(() => {
-		void fetchEducators();
+		void fetchEducators(); // Use void operator to explicitly ignore the promise
 	}, []);
 
 	// Obtener el color seleccionado al cargar la página
@@ -488,7 +488,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	if (!course) return <div>No se encontró el curso.</div>;
 
 	// Función para manejar la eliminación del curso
-	const handleDelete = async (id: number) => {
+	const handleDelete = async () => {
+		if (!course) return;
 		try {
 			// Primero intentamos eliminar la imagen de S3
 			if (course.coverImageKey) {
@@ -508,12 +509,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			}
 
 			// Luego eliminamos el curso
-			const response = await fetch(`/api/educadores/courses?courseId=${id}`, {
-				method: 'DELETE',
-			});
+			const response = await fetch(
+				`/api/educadores/courses?courseId=${course.id}`,
+				{
+					method: 'DELETE',
+				}
+			);
 
 			if (!response.ok) {
-				throw new Error(`Error al eliminar el curso, con id: ${id}`);
+				throw new Error(`Error al eliminar el curso`);
 			}
 
 			toast('Curso eliminado', {
@@ -723,7 +727,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										<AlertDialogFooter>
 											<AlertDialogCancel>Cancelar</AlertDialogCancel>
 											<AlertDialogAction
-												onClick={() => handleDelete(course.id)}
+												onClick={() => handleDelete()}
 												className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
 											>
 												Eliminar
