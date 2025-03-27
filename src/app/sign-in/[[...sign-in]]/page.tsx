@@ -283,10 +283,12 @@ export default function SignInPage() {
 							src="/logo-login.webp"
 							alt="Logo de Artiefy"
 							fill
-							className="object-contain"
-							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 							priority
 							quality={100}
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 700px"
+							style={{
+								objectFit: 'contain',
+							}}
 						/>
 					</AspectRatio>
 				</div>
