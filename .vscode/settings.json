@@ -17,7 +17,14 @@
 	// File Configuration
 	"files.autoSave": "afterDelay",
 	"files.associations": {
-		"*.css": "tailwindcss"
+		"*.css": "tailwindcss",
+		"*.env": "dotenv",
+		"*.env.*": "dotenv",
+		".env": "dotenv",
+		".env.development": "dotenv",
+		".env.production": "dotenv",
+		".env.local": "dotenv",
+		".env.example": "dotenv"
 	},
 	"files.watcherExclude": {
 		"/node_modules/": true,
@@ -36,6 +43,12 @@
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
 	"[typescriptreact]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[dotenv]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[env]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
 

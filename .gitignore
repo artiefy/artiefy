@@ -29,8 +29,8 @@ npm-debug.log*
 # env files
 .env
 .env*.local
-.env.production  # Nueva línea agregada
-.env.production.local  # Por si acaso también lo agregas
+.env.production
+.env.production.local
 
 # vercel
 .vercel
