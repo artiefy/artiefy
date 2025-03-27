@@ -149,7 +149,7 @@ export function Header() {
 			>
 				<div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 				<DialogPanel className="fixed inset-y-0 right-0 z-50 w-[65%] max-w-sm bg-white p-6 shadow-xl">
-					<div className="mt-16 flex items-center justify-between">
+					<div className="mt-9 flex items-center justify-between">
 						<div className="relative size-[150px]">
 							<Link href="/estudiantes">
 								<div className="relative size-[150px]">
@@ -173,8 +173,8 @@ export function Header() {
 						</button>
 					</div>
 
-					<nav className="-mt-6">
-						<ul className="space-y-8">
+					<nav className="pb-7">
+						<ul className="space-y-12">
 							{navItems.map((item) => (
 								<li key={item.href}>
 									<Link
@@ -191,7 +191,7 @@ export function Header() {
 
 					<div className="mt-6 flex items-center justify-center">
 						<SignedOut>
-							<SignInButton>
+							<SignInButton fallbackRedirectUrl="/estudiantes">
 								<Button
 									className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 focus:bg-background focus:text-primary focus:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 									style={{
