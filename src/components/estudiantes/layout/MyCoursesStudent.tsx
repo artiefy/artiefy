@@ -99,40 +99,42 @@ export default async function MyCoursesStudent() {
 											/>
 										</div>
 									</div>
-									<CardContent className="flex w-full flex-col px-4 py-4">
-										<div className="flex h-full flex-col justify-between gap-4">
-											<div className="space-y-4">
-												<div className="flex items-start justify-between gap-2">
-													<h3 className="line-clamp-2 min-h-[3.5rem] text-lg leading-normal font-bold text-primary">
-														{program.title}
-													</h3>
-													<div className="flex shrink-0 items-center">
-														{Array.from({ length: 5 }).map((_, index) => (
-															<StarIcon
-																key={index}
-																className={`h-4 w-4 ${
-																	index < Math.floor(program.rating ?? 0)
-																		? 'text-yellow-400'
-																		: 'text-gray-300'
-																}`}
-															/>
-														))}
-														<span className="ml-2 text-sm font-semibold text-yellow-400">
-															{program.rating?.toFixed(1) ?? '0.0'}
-														</span>
-													</div>
+									<CardContent className="flex w-full flex-col justify-between gap-2 px-4 pt-3 pb-2.5">
+										<div className="flex h-full flex-col justify-between">
+											<div className="flex items-start justify-between gap-2">
+												<h3 className="line-clamp-2 min-h-[1.5em] text-lg leading-normal font-bold [overflow-wrap:anywhere] text-primary">
+													{program.title}
+												</h3>
+												<div className="flex shrink-0 items-center">
+													{Array.from({ length: 5 }).map((_, index) => (
+														<StarIcon
+															key={index}
+															className={`h-4 w-4 ${
+																index < Math.floor(program.rating ?? 0)
+																	? 'text-yellow-400'
+																	: 'text-gray-300'
+															}`}
+														/>
+													))}
+													<span className="ml-2 text-sm font-semibold text-yellow-400">
+														{program.rating?.toFixed(1) ?? '0.0'}
+													</span>
 												</div>
 											</div>
-											<div className="-mt-4 flex items-center gap-3">
-												{program.category && (
-													<Badge
-														variant="outline"
-														className="w-fit border-primary bg-background text-primary hover:bg-black/70"
-													>
-														{program.category.name}
-													</Badge>
-												)}
-												<Button asChild className="w-fit shrink-0">
+											<div
+												className="group flex flex-col gap-2 group-data-[long-title=true]:mb-2"
+												data-long-title={program.title.length > 50}
+											>
+												<Badge
+													variant="outline"
+													className="w-fit border-primary bg-background text-primary hover:bg-black/70"
+												>
+													{program.category?.name ?? 'Sin categoría'}
+												</Badge>
+												<Button
+													asChild
+													className="w-fit shrink-0 group-data-[long-title=true]:-mt-9 group-data-[long-title=true]:mb-2 group-data-[long-title=true]:ml-auto"
+												>
 													<Link
 														href={`/estudiantes/programas/${program.id}`}
 														className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
