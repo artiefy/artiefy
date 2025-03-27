@@ -136,7 +136,7 @@ export default function StudentDetails({
 									</div>
 									<div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
 										<div className="mx-auto w-[90%] max-w-4xl text-center">
-											<h2 className="mb-2 text-center text-3xl font-semibold sm:mb-4 sm:text-4xl md:text-6xl">
+											<h2 className="mb-2 line-clamp-3 text-center text-3xl font-semibold sm:mb-4 sm:text-4xl md:text-6xl">
 												{course.title}
 											</h2>
 											<Badge
@@ -208,18 +208,18 @@ export default function StudentDetails({
 													/>
 													<div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
 														<Link href={`/estudiantes/cursos/${course.id}`}>
-															<h3 className="text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
+															<h3 className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
 																{course.title}
 															</h3>
 														</Link>
-														<div className="mt-2 mb-2 flex items-center justify-between sm:mt-2 sm:mb-2">
+														<div className="flex flex-wrap items-start justify-between gap-y-1 sm:mt-2 sm:mb-2">
 															<Badge
 																variant="outline"
-																className="border-primary bg-background text-[10px] text-primary sm:text-sm"
+																className="max-w-[40%] truncate border-primary bg-background text-[8px] text-primary sm:text-sm"
 															>
 																{course.category?.name}
 															</Badge>
-															<span className="text-[11px] font-bold text-red-500 sm:text-base">
+															<span className="max-w-[55%] text-right text-[8px] font-bold text-red-500 sm:text-base">
 																{course.modalidad?.name}
 															</span>
 														</div>
