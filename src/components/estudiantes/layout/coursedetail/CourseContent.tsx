@@ -305,11 +305,8 @@ export function CourseContent({
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
-			<div className="mb-6 flex items-center justify-between">
-				<h2 className="text-2xl font-bold text-background">
-					Contenido del curso
-				</h2>
-				<div className="mt-6 flex flex-col items-end gap-2">
+			<div className="mb-6 flex flex-col gap-4">
+				<div className="flex flex-col items-start gap-2">
 					{isSubscriptionActive && (
 						<div className="flex items-center gap-2 text-green-500">
 							<FaCheck className="size-4" />
@@ -322,6 +319,9 @@ export function CourseContent({
 						</p>
 					)}
 				</div>
+				<h2 className="text-2xl font-bold text-background">
+					Contenido del curso
+				</h2>
 			</div>
 
 			{isEnrolled && isFullyCompleted && (
