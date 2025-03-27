@@ -99,49 +99,53 @@ export default async function MyCoursesStudent() {
 											/>
 										</div>
 									</div>
-									<CardContent className="flex w-full flex-col justify-between px-4 py-3">
-										<div>
-											<div className="flex items-center justify-between">
-												<h3 className="text-lg font-bold text-primary">
-													{program.title}
-												</h3>
-												<div className="flex items-center">
-													{Array.from({ length: 5 }).map((_, index) => (
-														<StarIcon
-															key={index}
-															className={`h-4 w-4 ${
-																index < Math.floor(program.rating ?? 0)
-																	? 'text-yellow-400'
-																	: 'text-gray-300'
-															}`}
-														/>
-													))}
-													<span className="ml-2 text-sm font-semibold text-yellow-400">
-														{program.rating?.toFixed(1) ?? '0.0'}
-													</span>
+									<CardContent className="flex w-full flex-col px-4 py-4">
+										<div className="flex h-full flex-col justify-between gap-4">
+											<div className="space-y-4">
+												<div className="flex items-start justify-between gap-2">
+													<h3 className="line-clamp-2 min-h-[3.5rem] text-lg leading-normal font-bold text-primary">
+														{program.title}
+													</h3>
+													<div className="flex shrink-0 items-center">
+														{Array.from({ length: 5 }).map((_, index) => (
+															<StarIcon
+																key={index}
+																className={`h-4 w-4 ${
+																	index < Math.floor(program.rating ?? 0)
+																		? 'text-yellow-400'
+																		: 'text-gray-300'
+																}`}
+															/>
+														))}
+														<span className="ml-2 text-sm font-semibold text-yellow-400">
+															{program.rating?.toFixed(1) ?? '0.0'}
+														</span>
+													</div>
 												</div>
 											</div>
-											{program.category && (
-												<Badge
-													variant="outline"
-													className="mt-2 w-fit border-primary bg-background text-primary hover:bg-black/70"
-												>
-													{program.category.name}
-												</Badge>
-											)}
+											<div className="-mt-4 flex items-center gap-3">
+												{program.category && (
+													<Badge
+														variant="outline"
+														className="w-fit border-primary bg-background text-primary hover:bg-black/70"
+													>
+														{program.category.name}
+													</Badge>
+												)}
+												<Button asChild className="w-fit shrink-0">
+													<Link
+														href={`/estudiantes/programas/${program.id}`}
+														className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
+													>
+														<p className="font-bold">Ver Programa</p>
+														<ArrowRightCircleIcon className="mr-1 size-4 animate-bounce-right" />
+														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+															<div className="relative h-full w-10 bg-white/30" />
+														</div>
+													</Link>
+												</Button>
+											</div>
 										</div>
-										<Button asChild className="mt-4 w-fit shrink-0">
-											<Link
-												href={`/estudiantes/programas/${program.id}`}
-												className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
-											>
-												<p className="font-bold">Ver Programa</p>
-												<ArrowRightCircleIcon className="mr-1 size-4 animate-bounce-right" />
-												<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-													<div className="relative h-full w-10 bg-white/30" />
-												</div>
-											</Link>
-										</Button>
 									</CardContent>
 								</div>
 							</Card>
