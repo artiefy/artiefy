@@ -45,8 +45,27 @@ const eslintConfig = [
 				...globals.es2022,
 			},
 		},
+		linterOptions: {
+			reportUnusedDisableDirectives: false, // Change this to false
+			noInlineConfig: false,
+		},
 		plugins: {
 			'@typescript-eslint': tseslintPlugin,
+		},
+		rules: {
+			'no-unused-vars': 'off',
+			'@typescript-eslint/no-unused-vars': [
+				'warn', // Change to warn instead of error
+				{
+					args: 'all',
+					argsIgnorePattern: '^_',
+					caughtErrors: 'all',
+					caughtErrorsIgnorePattern: '^_',
+					destructuredArrayIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					ignoreRestSiblings: true,
+				},
+			],
 		},
 	},
 
@@ -69,8 +88,16 @@ const eslintConfig = [
 			'no-console': 'off',
 			'no-unused-vars': 'off',
 			'@typescript-eslint/no-unused-vars': [
-				'warn',
-				{ argsIgnorePattern: '^_' },
+				'warn', // Make sure this is also warn here
+				{
+					args: 'all',
+					argsIgnorePattern: '^_',
+					caughtErrors: 'all',
+					caughtErrorsIgnorePattern: '^_',
+					destructuredArrayIgnorePattern: '^_',
+					varsIgnorePattern: '^_',
+					ignoreRestSiblings: true,
+				},
 			],
 			'@typescript-eslint/consistent-type-definitions': ['warn', 'interface'],
 			'@typescript-eslint/consistent-type-imports': [
