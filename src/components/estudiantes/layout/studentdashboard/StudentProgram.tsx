@@ -46,20 +46,22 @@ export function StudentProgram({ program }: StudenProgramProps) {
 				</CardHeader>
 
 				<CardContent className="flex grow flex-col justify-between space-y-4 px-6">
-					<div>
-						<h3 className="mb-3 line-clamp-2 text-lg font-bold text-primary">
-							{program.title}
-						</h3>
-						<p className="line-clamp-2 text-sm text-gray-300">
-							{program.description}
-						</p>
+					<div className="flex min-h-[120px] flex-col justify-between">
+						<div className="min-h-[56px]">
+							<h3 className="mb-3 line-clamp-2 text-xl font-bold text-primary sm:text-lg">
+								{program.title}
+							</h3>
+							<p className="line-clamp-2 text-base text-gray-300 sm:text-base">
+								{program.description}
+							</p>
+						</div>
 					</div>
 
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-4">
 							<Badge
 								variant="outline"
-								className="border-primary bg-background text-sm sm:text-[9px] lg:text-sm"
+								className="border-primary bg-background text-base lg:text-sm"
 							>
 								{program.category?.name ?? 'Sin categoría'}
 							</Badge>
@@ -75,7 +77,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
 									}`}
 								/>
 							))}
-							<span className="ml-1 text-sm font-bold text-yellow-500">
+							<span className="ml-1 text-base font-bold text-yellow-500">
 								{program.rating?.toFixed(1) ?? '0.0'}
 							</span>
 						</div>
@@ -83,17 +85,17 @@ export function StudentProgram({ program }: StudenProgramProps) {
 				</CardContent>
 
 				<CardFooter className="px-6 pt-2">
-					<div className="flex w-full flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 sm:space-x-4">
-						<div className="text-sm text-gray-400">
+					<div className="flex w-full items-center justify-between gap-4">
+						<div className="flex-shrink-0">
 							<EnrollmentCount programId={parseInt(program.id)} />
 						</div>
-						<Button asChild>
+						<Button asChild className="flex-shrink-0">
 							<Link
 								href={`/estudiantes/programas/${program.id}`}
-								className="group/button relative inline-flex h-10 w-full cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95 sm:w-auto"
+								className="group/button relative inline-flex h-10 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95 sm:h-8"
 							>
-								<p className="font-bold">Ver Programa</p>
-								<ArrowRightCircleIcon className="size-5 animate-bounce-right" />
+								<p className="text-base font-bold sm:text-sm">Ver Programa</p>
+								<ArrowRightCircleIcon className="ml-1 size-5 animate-bounce-right sm:size-4" />
 								<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 									<div className="relative h-full w-10 bg-white/30" />
 								</div>

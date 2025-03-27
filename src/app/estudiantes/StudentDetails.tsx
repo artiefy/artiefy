@@ -84,9 +84,10 @@ export default function StudentDetails({
 								<Image
 									src="/artiefy-icon.png"
 									alt="Artiefy Icon"
-									width={62} // increased from 42
-									height={62} // increased from 42
-									className="sm:size-14" // increased from sm:size-9
+									width={62}
+									height={62}
+									className="size-[62px] sm:size-14"
+									style={{ width: 'auto', height: 'auto' }}
 									priority
 								/>
 								<div className="ml-2">
@@ -124,7 +125,7 @@ export default function StudentDetails({
 													: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
 											}
 											alt={course.title}
-											layout="fill"
+											fill
 											className="object-cover"
 											priority={index === currentSlide}
 											sizes="100vw"
@@ -189,7 +190,7 @@ export default function StudentDetails({
 												key={course.id}
 												className="basis-full sm:basis-1/2 lg:basis-1/3"
 											>
-												<div className="relative h-48 w-full md:h-64">
+												<div className="relative aspect-[4/3] w-full">
 													<Image
 														src={
 															course.coverImageKey &&
@@ -205,30 +206,30 @@ export default function StudentDetails({
 														placeholder="blur"
 														blurDataURL={blurDataURL}
 													/>
-													<div className="absolute inset-x-0 bottom-0 bg-black/50 p-2 text-white">
+													<div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
 														<Link href={`/estudiantes/cursos/${course.id}`}>
-															<h3 className="text-lg font-bold text-white hover:underline active:scale-95">
+															<h3 className="text-base font-bold text-white hover:underline active:scale-95 sm:text-lg">
 																{course.title}
 															</h3>
 														</Link>
 														<div className="mb-2 flex items-center justify-between">
 															<Badge
 																variant="outline"
-																className="mb-2 border-primary bg-background text-[9px] text-primary lg:text-sm"
+																className="mb-2 border-primary bg-background text-sm text-primary"
 															>
 																{course.category?.name}
 															</Badge>
-															<span className="text-sm font-bold text-red-500">
+															<span className="text-base font-bold text-red-500">
 																{course.modalidad?.name}
 															</span>
 														</div>
 														<div className="flex items-center justify-between">
-															<p className="text-sm text-primary italic">
+															<p className="text-base font-semibold text-primary italic">
 																Educador: <span>{course.instructor}</span>
 															</p>
 															<div className="flex items-center">
-																<StarIcon className="size-4 text-yellow-500" />
-																<span className="ml-1 text-sm font-bold text-yellow-500">
+																<StarIcon className="size-5 text-yellow-500" />
+																<span className="ml-1 text-base font-bold text-yellow-500">
 																	{(course.rating ?? 0).toFixed(1)}
 																</span>
 															</div>
