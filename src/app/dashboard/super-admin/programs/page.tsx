@@ -70,7 +70,7 @@ interface Category {
 // Define el modelo de datos de los parámetros de evaluación
 export function LoadingPrograms() {
 	return (
-		<div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+		<div className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 sm:grid-cols-2 lg:grid-cols-3">
 			{Array.from({ length: 9 }).map((_, index) => (
 				<SkeletonCard key={index} />
 			))}
@@ -92,6 +92,7 @@ export default function Page() {
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+	const [currentPage, setCurrentPage] = useState(1);
 
 	// ✅ Obtener programas, totales y categorías
 	useEffect(() => {
@@ -145,6 +146,10 @@ export default function Page() {
 		}
 		void fetchData();
 	}, []);
+
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [searchQuery, categoryFilter]);
 
 	// ✅ Filtrar programas por búsqueda y categoría
 	const filteredPrograms = programs.filter(
@@ -413,26 +418,35 @@ export default function Page() {
 	// Renderizado de la vista
 	return (
 		<>
-			<div className="p-6">
-				<header className="flex items-center justify-between rounded-lg bg-[#3AF4EF] to-[#01142B] p-6 text-3xl font-extrabold text-white shadow-lg">
-					<h1>Gestión de Programas</h1>
+			<div className="p-4 sm:p-6">
+				<header className="group relative overflow-hidden rounded-lg p-[1px]">
+					<div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
+					<div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
+						<h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
+							Gestión de Programas
+						</h1>
+					</div>
 				</header>
 
 				{/* Totales y Filtros */}
-				<div className="my-4 grid grid-cols-3 gap-4">
-					<div className="rounded-lg bg-white p-6 text-black shadow-md">
-						<h2 className="text-lg font-bold">Total de</h2>
-						<h2 className="text-lg font-bold">Programas</h2>
-						<p className="text-3xl">{totalPrograms}</p>
+				<div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					<div className="rounded-lg bg-white p-4 text-center text-black shadow-md sm:p-6">
+						<h2 className="text-base font-bold sm:text-lg">Total de</h2>
+						<h2 className="text-base font-bold sm:text-lg">Programas</h2>
+						<p className="text-2xl sm:text-3xl">{totalPrograms}</p>
 					</div>
-					<div className="rounded-lg bg-white p-6 text-black shadow-md">
-						<h2 className="text-lg font-bold">Estudiantes Inscritos</h2>
-						<p className="text-3xl">{totalStudents}</p>
+					<div className="rounded-lg bg-white p-4 text-center text-black shadow-md sm:p-6">
+						<h2 className="text-base font-bold sm:text-lg">
+							Estudiantes Inscritos
+						</h2>
+						<p className="text-2xl sm:text-3xl">{totalStudents}</p>
 					</div>
-					<div className="rounded-lg bg-white p-6 text-black shadow-md">
-						<h2 className="text-lg font-bold">Filtrar por Categoría</h2>
+					<div className="rounded-lg bg-white p-4 text-center text-black shadow-md sm:p-6">
+						<h2 className="text-base font-bold sm:text-lg">
+							Filtrar por Categoría
+						</h2>
 						<select
-							className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+							className="mt-2 w-full rounded-md border border-gray-300 px-3 py-1.5 sm:px-4 sm:py-2"
 							value={categoryFilter}
 							onChange={(e) => setCategoryFilter(e.target.value)}
 						>
@@ -446,51 +460,58 @@ export default function Page() {
 					</div>
 				</div>
 
-				{/* Buscador y botón en la parte inferior */}
-				<div className="my-4 flex items-center justify-between rounded-lg p-6 text-black shadow-md">
+				{/* Buscador y botón */}
+				<div className="my-4 flex flex-col gap-4 rounded-lg p-4 text-black shadow-md sm:flex-row sm:items-center sm:justify-between sm:p-6">
 					<input
 						type="text"
 						placeholder="Buscar programas..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+						className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 sm:px-4 sm:py-2"
 					/>
 
-					<div className="flex gap-2">
+					<div className="flex flex-col gap-2 sm:flex-row">
 						{selectedPrograms.length > 0 && (
 							<Button
 								onClick={() => setShowDeleteConfirm(true)}
-								className="bg-red-600 text-white hover:bg-red-700"
+								className="w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
 							>
-								Eliminar Seleccionados ({selectedPrograms.length})
+								Eliminar ({selectedPrograms.length})
 							</Button>
 						)}
 						<button
 							onClick={handleCreateProgram}
-							className="font-primary flex items-center gap-2 rounded-md bg-primary px-6 py-2 text-white shadow-lg hover:bg-[#0097A7]"
+							className="group/button relative inline-flex w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:w-[220px] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
 						>
-							<FiPlus className="size-5" /> Agregar
+							<span className="relative z-10 font-medium">
+								Agregar Programa
+							</span>
+							<FiPlus className="relative z-10 size-3.5 sm:size-4" />
+							<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 						</button>
 					</div>
 				</div>
 
-				{/* Featured Categories - New Design with Icons */}
-				<div className="mb-8 overflow-hidden rounded-lg p-4 shadow-md">
-					<div className="flex flex-wrap gap-3">
+				{/* Featured Categories */}
+				<nav className="mb-6">
+					<div className="flex flex-wrap items-center gap-2">
+						{/* All Categories Button */}
 						<button
 							onClick={() => setCategoryFilter('')}
-							className={`group flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
+							className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-all ${
 								!categoryFilter
-									? 'scale-105 bg-gradient-to-r from-[#3AF4EF] to-[#01142B] text-white shadow-lg'
-									: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
+									? 'border-primary bg-primary/10 text-primary'
+									: 'border-gray-200 hover:border-gray-300'
 							}`}
 						>
-							<PiGraduationCapBold className="size-5" />
+							<PiGraduationCapBold className="size-4" />
 							<span>Todas</span>
 						</button>
 
+						{/* Show only top 4 categories on mobile, 8 on desktop */}
 						{categories
 							.filter((category) => category.is_featured)
+							.slice(0, window.innerWidth < 640 ? 4 : 8)
 							.map((category) => {
 								const isSelected = categoryFilter === category.id.toString();
 								const programCount = programs.filter(
@@ -501,29 +522,55 @@ export default function Page() {
 									<button
 										key={category.id}
 										onClick={() => setCategoryFilter(category.id.toString())}
-										className={`group relative flex items-center gap-2 overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-300 ${
+										className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-all ${
 											isSelected
-												? 'scale-105 bg-gradient-to-r from-[#3AF4EF] to-[#01142B] text-white shadow-lg'
-												: 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow'
+												? 'border-primary bg-primary/10 text-primary'
+												: 'border-gray-200 hover:border-gray-300'
 										}`}
 									>
 										{getCategoryIcon(category.name)}
-										<span className="relative z-10">
+										<span className="max-w-[80px] truncate sm:max-w-[120px]">
 											{category.name}
+										</span>
+										{programCount > 0 && (
 											<span
-												className={`ml-2 text-xs ${isSelected ? 'text-white' : 'text-gray-500'}`}
+												className={
+													isSelected ? 'text-primary' : 'text-gray-500'
+												}
 											>
 												({programCount})
 											</span>
-										</span>
-										{isSelected && (
-											<span className="absolute inset-0 animate-pulse bg-white/10" />
 										)}
 									</button>
 								);
 							})}
+
+						{/* More Categories Dropdown */}
+						{categories.filter((c) => c.is_featured).length >
+							(window.innerWidth < 640 ? 4 : 8) && (
+							<select
+								onChange={(e) => setCategoryFilter(e.target.value)}
+								className="rounded-full border border-gray-200 px-3 py-1.5 text-sm hover:border-gray-300"
+								value={categoryFilter}
+							>
+								<option value="">Más categorías...</option>
+								{categories
+									.filter((category) => category.is_featured)
+									.slice(window.innerWidth < 640 ? 4 : 8)
+									.map((category) => (
+										<option key={category.id} value={category.id}>
+											{category.name} (
+											{
+												programs.filter((p) => p.categoryid === category.id)
+													.length
+											}
+											)
+										</option>
+									))}
+							</select>
+						)}
 					</div>
-				</div>
+				</nav>
 
 				<AlertDialog
 					open={showDeleteConfirm}
@@ -549,16 +596,21 @@ export default function Page() {
 					</AlertDialogContent>
 				</AlertDialog>
 
-				<ProgramListAdmin
-					programs={filteredPrograms}
-					selectedPrograms={selectedPrograms}
-					onToggleSelection={toggleProgramSelection}
-					onEditProgram={handleEditProgram}
-					onDeleteProgram={(programId) => {
-						console.log(`Program with id ${programId} deleted`);
-					}}
-					categories={categories} // Add this line
-				/>
+				<div className="mt-4 sm:mt-6">
+					<ProgramListAdmin
+						programs={filteredPrograms}
+						selectedPrograms={selectedPrograms}
+						onToggleSelection={toggleProgramSelection}
+						onEditProgram={handleEditProgram}
+						onDeleteProgram={(programId) => {
+							console.log(`Program with id ${programId} deleted`);
+						}}
+						categories={categories} // Add this line
+						currentPage={currentPage}
+						onPageChange={setCurrentPage}
+						itemsPerPage={6}
+					/>
+				</div>
 
 				{isModalOpen && (
 					<ModalFormProgram
