@@ -3,6 +3,7 @@
 import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
+import { ClockIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
 
@@ -36,26 +37,19 @@ interface ProgramHeaderProps {
 
 export function ProgramHeader({
 	program,
-	isEnrolled,
-	isEnrolling,
-	isUnenrolling,
-	isSubscriptionActive,
-	subscriptionEndDate: _subscriptionEndDate, // Change here: rename in destructuring
-	onEnrollAction,
-	onUnenrollAction,
-	isCheckingEnrollment, // Add this to destructuring
+	...props // other props remain the same
 }: ProgramHeaderProps) {
 	const { user, isSignedIn } = useUser(); // Add isSignedIn
 
-	// Verificar plan Premium y fecha de vencimiento
+	// Handle subscription data with proper typing
 	const isPremium = user?.publicMetadata?.planType === 'Premium';
-	const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-		| string
-		| null;
+	const subscriptionEndDate = typeof user?.publicMetadata?.subscriptionEndDate === 'string' 
+		? user.publicMetadata.subscriptionEndDate 
+		: null;
 	const isSubscriptionValid =
 		isPremium &&
 		(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
-	const canEnroll = isSubscriptionActive && isSubscriptionValid;
+	const canEnroll = props.isSubscriptionActive && isSubscriptionValid;
 
 	const formatDate = (
 		dateString: string | number | Date | null | undefined
@@ -94,57 +88,49 @@ export function ProgramHeader({
 						<h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
 							{program.title}
 						</h1>
-						<div className="mt-2 hidden sm:block">
-							<Badge
-								variant="outline"
-								className="border-primary bg-background/80 text-primary backdrop-blur-sm hover:bg-black/70"
-							>
-								{getCategoryName(program)}
-							</Badge>
-						</div>
 					</div>
 				</AspectRatio>
 			</CardHeader>
 
 			<CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
-				{/* Program metadata */}
-				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div className="flex flex-wrap items-center gap-2 sm:gap-4">
-						<div className="sm:hidden">
-							<Badge
-								variant="outline"
-								className="border-primary bg-background text-primary hover:bg-black/70"
-							>
-								{getCategoryName(program)}
-							</Badge>
-						</div>
-						<div className="flex items-center">
-							<FaCalendar className="mr-2 text-gray-600" />
-							<span className="text-xs text-gray-600 sm:text-sm">
-								Creado: {formatDate(program.createdAt)}
-							</span>
+				 {/* Metadata row with category, dates and rating */}
+				 <div className="flex flex-wrap items-center justify-between border-b border-gray-200 pb-4">
+					<div className="flex flex-wrap items-center gap-4">
+						<Badge 
+							variant="outline"
+							className="border-primary bg-background text-primary hover:bg-black/70"
+						>
+							{program.category?.name ?? 'Sin categoría'}
+						</Badge>
+						<div className="flex items-center gap-6">
+							<div className="flex items-center space-x-2">
+								<CalendarIcon className="h-5 w-5 text-gray-500" />
+								<span className="text-sm text-gray-600">
+									Creado: {formatDate(program.createdAt)}
+								</span>
+							</div>
+							<div className="flex items-center space-x-2">
+									<ClockIcon className="h-5 w-5 text-gray-500" />
+									<span className="text-sm text-gray-600">
+										Actualizado: {formatDate(program.updatedAt)}
+									</span>
+								</div>
 						</div>
 					</div>
-					<div className="flex items-center justify-between gap-4 sm:gap-6">
-						<div className="flex items-center">
-							<FaUserGraduate className="mr-2 text-blue-600" />
-							<EnrollmentCount programId={parseInt(program.id)} />
-						</div>
-						<div className="flex items-center">
-							{Array.from({ length: 5 }).map((_, index) => (
-								<StarIcon
-									key={index}
-									className={`h-4 w-4 sm:h-5 sm:w-5 ${
-										index < Math.floor(program.rating ?? 0)
-											? 'text-yellow-400'
-											: 'text-gray-300'
-									}`}
-								/>
-							))}
-							<span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
-								{program.rating?.toFixed(1) ?? '0.0'}
-							</span>
-						</div>
+					<div className="flex items-center">
+						{Array.from({ length: 5 }).map((_, index) => (
+							<StarIcon
+								key={index}
+								className={`h-4 w-4 sm:h-5 sm:w-5 ${
+									index < Math.floor(program.rating ?? 0)
+										? 'text-yellow-400'
+										: 'text-gray-300'
+								}`}
+							/>
+						))}
+						<span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
+							{program.rating?.toFixed(1) ?? '0.0'}
+						</span>
 					</div>
 				</div>
 
@@ -158,17 +144,17 @@ export function ProgramHeader({
 				{/* Program courses */}
 				<ProgramContent
 					program={program}
-					isEnrolled={isEnrolled}
-					isSubscriptionActive={isSubscriptionActive}
-					subscriptionEndDate={_subscriptionEndDate}
-					isCheckingEnrollment={isCheckingEnrollment}
+					isEnrolled={props.isEnrolled}
+					isSubscriptionActive={props.isSubscriptionActive}
+					subscriptionEndDate={props.subscriptionEndDate}
+					isCheckingEnrollment={props.isCheckingEnrollment}
 				/>
 
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
 						{!isSignedIn ? (
 							<Button
-								onClick={onEnrollAction}
+								onClick={props.onEnrollAction}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95"
 							>
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
@@ -177,7 +163,7 @@ export function ProgramHeader({
 									</div>
 								</span>
 							</Button>
-						) : isEnrolled ? (
+						) : props.isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
 								<Button
 									className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
@@ -187,10 +173,10 @@ export function ProgramHeader({
 								</Button>
 								<Button
 									className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-									onClick={onUnenrollAction}
-									disabled={isUnenrolling}
+									onClick={props.onUnenrollAction}
+									disabled={props.isUnenrolling}
 								>
-									{isUnenrolling ? (
+									{props.isUnenrolling ? (
 										<Icons.spinner className="size-9 animate-spin text-white" />
 									) : (
 										'Cancelar Suscripción'
@@ -199,14 +185,14 @@ export function ProgramHeader({
 							</div>
 						) : (
 							<Button
-								onClick={onEnrollAction}
-								disabled={isEnrolling || !canEnroll || isCheckingEnrollment}
+								onClick={props.onEnrollAction}
+								disabled={props.isEnrolling || !canEnroll || props.isCheckingEnrollment}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
 								<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 									<div className="relative z-10 flex items-center justify-center space-x-2">
-										{isCheckingEnrollment ? (
+										{props.isCheckingEnrollment ? (
 											<>
 												<Icons.spinner
 													className="animate-spin text-white"
@@ -214,7 +200,7 @@ export function ProgramHeader({
 												/>
 												<span>Cargando...</span>
 											</>
-										) : isEnrolling ? (
+										) : props.isEnrolling ? (
 											<>
 												<Icons.spinner
 													className="animate-spin text-white"

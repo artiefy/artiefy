@@ -20,7 +20,20 @@ export async function getCourseById(
 				nivel: true,
 				lessons: {
 					with: {
-						activities: true,
+						activities: {
+							columns: {
+								id: true,
+								name: true,
+								description: true,
+								lessonsId: true,
+								revisada: true,
+								parametroId: true,
+								porcentaje: true,
+								fechaMaximaEntrega: true,
+								lastUpdated: true,
+								typeid: true,
+							},
+						},
 					},
 				},
 				enrollments: true,
@@ -38,6 +51,7 @@ export async function getCourseById(
 			return null;
 		}
 
+		// If userId exists, get progress data
 		const userLessonsProgressData = userId
 			? await db.query.userLessonsProgress.findMany({
 					where: eq(userLessonsProgress.userId, userId),

@@ -48,6 +48,7 @@ interface ActivityModalProps {
 	isLastActivity: boolean; // Add this prop
 	onViewHistory: () => void; // Add this new prop
 	onActivityComplete: () => void; // Add this new prop
+	isLastActivityInLesson: boolean; // Add this prop
 }
 
 interface UserAnswer {
@@ -78,6 +79,7 @@ const LessonActivityModal = ({
 	isLastActivity,
 	onViewHistory,
 	onActivityComplete,
+	isLastActivityInLesson,
 }: ActivityModalProps) => {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
@@ -509,51 +511,27 @@ const LessonActivityModal = ({
 					</>
 				);
 			}
-			// New UI for exhausted attempts
+			// Show different buttons based on activity order and completion
+			if (isLastActivityInLesson && !isLastLesson) {
+				return (
+					<Button
+						onClick={handleFinishAndNavigate}
+						className="w-full bg-green-500 transition-all duration-200 hover:bg-green-600 active:scale-95"
+					>
+						<span className="flex items-center justify-center gap-2 font-semibold text-white">
+							Desbloquear Siguiente CLASE
+							<Unlock className="h-4 w-4" />
+						</span>
+					</Button>
+				);
+			}
 			return (
-				<div className="space-y-3">
-					<div className="rounded-lg bg-red-50 p-4 text-center">
-						<p className="font-semibold text-red-800">
-							Has agotado todos tus intentos
-						</p>
-					</div>
-					{isLastActivity ? (
-						// Show both buttons for last activity when attempts are exhausted
-						<div className="space-y-3">
-							<Button
-								onClick={onViewHistory}
-								className="w-full bg-blue-500 text-white hover:bg-blue-600"
-							>
-								<span className="flex items-center justify-center gap-2">
-									<FaTrophy className="mr-1" />
-									Ver Reporte de Calificaciones
-									<BiSolidReport className="ml-1" />
-								</span>
-							</Button>
-							<Button
-								onClick={() => {
-									onActivityComplete();
-									onClose();
-								}}
-								className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-[0.98]"
-							>
-								Cerrar
-							</Button>
-						</div>
-					) : (
-						!isLastLesson && (
-							<Button
-								onClick={handleFinishAndNavigate}
-								className="w-full bg-green-500 transition-all duration-200 hover:bg-green-600 active:scale-95"
-							>
-								<span className="flex items-center justify-center gap-2 font-semibold text-white">
-									Desbloquear Siguiente CLASE
-									<Unlock className="h-4 w-4" />
-								</span>
-							</Button>
-						)
-					)}
-				</div>
+				<Button
+					onClick={onClose}
+					className="w-full bg-blue-500 text-white"
+				>
+					Cerrar
+				</Button>
 			);
 		}
 
@@ -583,26 +561,23 @@ const LessonActivityModal = ({
 
 		// Si aprobó y puede desbloquear siguiente clase
 		if (finalScore >= 3 && !activity.isCompleted && !isLastLesson) {
-			return (
-				<Button
-					onClick={handleFinishAndNavigate}
-					className="group relative mt-4 w-full overflow-hidden bg-green-500 transition-all duration-200 hover:bg-green-600 active:scale-[0.98]"
-					disabled={isUnlocking}
-				>
-					{isUnlocking ? (
-						<div className="flex items-center justify-center gap-2">
-							<Icons.blocks className="size-5 animate-spin text-white" />
-							<span className="font-bold text-white">
-								Desbloqueando siguiente clase...
-							</span>
-						</div>
-					) : (
-						<span className="flex items-center justify-center gap-2 font-bold text-green-900">
+			// Only show unlock button for last activity in lesson (if not last lesson)
+			if (isLastActivityInLesson && !isLastLesson) {
+				return (
+					<Button
+						onClick={handleFinishAndNavigate}
+						className="w-full bg-green-500"
+					>
+						<span className="flex items-center justify-center gap-2">
 							Desbloquear Siguiente CLASE
-							<Lock className="h-4 w-4 transition-all duration-200 group-hover:hidden" />
-							<Unlock className="hidden h-4 w-4 transition-all duration-200 group-hover:block" />
+							<Unlock className="h-4 w-4" />
 						</span>
-					)}
+					</Button>
+				);
+			}
+			return (
+				<Button onClick={onClose} className="w-full bg-blue-500">
+					Cerrar
 				</Button>
 			);
 		}
