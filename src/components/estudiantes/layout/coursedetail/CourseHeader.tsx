@@ -96,7 +96,7 @@ export function CourseHeader({
 	onEnrollAction,
 	onUnenrollAction,
 }: CourseHeaderProps) {
-	const { user } = useUser();
+	const { user, isSignedIn } = useUser(); // Add isSignedIn here
 	const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
 	const [isLoadingGrade, setIsLoadingGrade] = useState(true);
 
@@ -275,14 +275,6 @@ export function CourseHeader({
 						<h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
 							{course.title}
 						</h1>
-						<div className="mt-2 hidden sm:block">
-							<Badge
-								variant="outline"
-								className="border-primary bg-background/80 text-primary backdrop-blur-sm hover:bg-black/70"
-							>
-								{course.category?.name}
-							</Badge>
-						</div>
 					</div>
 				</AspectRatio>
 			</CardHeader>
@@ -290,27 +282,27 @@ export function CourseHeader({
 			<CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
 				{/* Course metadata */}
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div className="flex flex-wrap items-center gap-2 sm:gap-4">
-						<div className="sm:hidden">
+					<div className="flex flex-wrap items-center gap-2">
+						<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
 							<Badge
 								variant="outline"
-								className="border-primary bg-background text-primary hover:bg-black/70"
+								className="w-fit border-primary bg-background text-primary hover:bg-black/70"
 							>
 								{course.category?.name}
 							</Badge>
-						</div>
-						<div className="flex flex-wrap items-center gap-2 sm:gap-4">
-							<div className="flex items-center">
-								<FaCalendar className="mr-2 text-gray-600" />
-								<span className="text-xs text-gray-600 sm:text-sm">
-									Creado: {formatDateString(course.createdAt)}
-								</span>
-							</div>
-							<div className="flex items-center">
-								<FaClock className="mr-2 text-gray-600" />
-								<span className="text-xs text-gray-600 sm:text-sm">
-									Actualizado: {formatDateString(course.updatedAt)}
-								</span>
+							<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+								<div className="flex items-center">
+									<FaCalendar className="mr-2 text-gray-600" />
+									<span className="text-xs text-gray-600 sm:text-sm">
+										Creado: {formatDateString(course.createdAt)}
+									</span>
+								</div>
+								<div className="flex items-center">
+									<FaClock className="mr-2 text-gray-600" />
+									<span className="text-xs text-gray-600 sm:text-sm">
+										Actualizado: {formatDateString(course.updatedAt)}
+									</span>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -446,6 +438,7 @@ export function CourseHeader({
 					isEnrolled={isEnrolled}
 					isSubscriptionActive={isSubscriptionActive}
 					subscriptionEndDate={subscriptionEndDate}
+					isSignedIn={isSignedIn} // Pass isSignedIn to CourseContent
 				/>
 
 				{/* Enrollment buttons - Simplificado sin skeleton */}

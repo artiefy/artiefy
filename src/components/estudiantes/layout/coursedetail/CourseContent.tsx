@@ -33,6 +33,7 @@ interface CourseContentProps {
 	isEnrolled: boolean;
 	isSubscriptionActive: boolean;
 	subscriptionEndDate: string | null;
+	isSignedIn: boolean; // Add this prop
 }
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +44,7 @@ export function CourseContent({
 	isEnrolled,
 	isSubscriptionActive,
 	subscriptionEndDate,
+	isSignedIn, // Add this to destructuring
 }: CourseContentProps) {
 	const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
 	const router = useRouter();
@@ -306,22 +308,24 @@ export function CourseContent({
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
 			<div className="mb-6 flex flex-col gap-4">
-				<div className="flex flex-col items-start gap-2">
-					{isSubscriptionActive && (
-						<div className="flex items-center gap-2 text-green-500">
-							<FaCheck className="size-4" />
-							<span className="font-medium">Suscripción Activa</span>
+				<div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+					<h2 className="text-2xl font-bold text-background mt-2 sm:mt-0">
+						Contenido del curso
+					</h2>
+					{isSignedIn && isSubscriptionActive && (
+						<div className="flex flex-col items-end gap-1">
+							<div className="sm:mt-4 mt-0 flex items-center gap-2 text-green-500">
+								<FaCheck className="size-4" />
+								<span className="font-medium">Suscripción Activa</span>
+							</div>
+							{subscriptionEndDate && (
+								<p className="text-sm text-red-500">
+									Finaliza: {formatDate(subscriptionEndDate)}
+								</p>
+							)}
 						</div>
 					)}
-					{isSubscriptionActive && subscriptionEndDate && (
-						<p className="text-sm text-red-500">
-							Finaliza: {formatDate(subscriptionEndDate)}
-						</p>
-					)}
 				</div>
-				<h2 className="text-2xl font-bold text-background">
-					Contenido del curso
-				</h2>
 			</div>
 
 			{isEnrolled && isFullyCompleted && (

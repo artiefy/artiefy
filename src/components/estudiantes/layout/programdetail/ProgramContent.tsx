@@ -168,27 +168,24 @@ export function ProgramContent({
 			)}
 
 			<div className="mb-6">
-				{/* Subscription Status Section - Modified */}
-				<div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-					<h2 className="text-2xl font-bold text-background order-2 sm:order-1">
+				{/* Subscription Status Section */}
+				<div className="mb-4 flex flex-row items-center justify-between">
+					<h2 className="text-2xl font-bold text-background">
 						Cursos Del Programa
 					</h2>
-					
-					<div className="flex flex-col items-start sm:items-end order-1 sm:order-2">
-						{isSubscriptionActive && (
-							<>
-								<div className="flex items-center gap-2 text-green-500">
-									<FaCheck className="size-4" />
-									<span className="font-medium">Suscripción Activa</span>
-								</div>
-								{subscriptionEndDate && (
-									<p className="text-sm text-red-500">
-										Finaliza: {formatDate(subscriptionEndDate)}
-									</p>
-								)}
-							</>
-						)}
-					</div>
+					{isSignedIn && isSubscriptionActive && (
+						<div className="flex flex-col items-end gap-1">
+							<div className="flex items-center gap-2 text-green-500">
+								<FaCheck className="size-4" />
+								<span className="font-medium">Suscripción Activa</span>
+							</div>
+							{subscriptionEndDate && (
+								<p className="text-sm text-red-500">
+									Finaliza: {formatDate(subscriptionEndDate)}
+								</p>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
 

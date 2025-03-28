@@ -208,21 +208,7 @@ export default function CourseComments({
 		return date.toLocaleDateString('es-ES', options);
 	};
 
-	// Solo mostrar el skeleton si está inscrito y cargando
-	if (loading && isEnrolled) {
-		return (
-			<div className="rounded-lg border bg-white p-6">
-				<div className="flex items-center justify-between">
-					<h2 className="text-2xl font-bold text-background">Comentarios</h2>
-				</div>
-				<div className="mt-4 space-y-4">
-					<Icons.spinner className="mx-auto animate-spin" />
-					<p className="text-center text-gray-500">Cargando Comentarios...</p>
-				</div>
-			</div>
-		);
-	}
-
+	// Remove the skeleton loader section and modify the return statement
 	return (
 		<div className="mt-8">
 			<h2 className="mb-4 text-2xl font-bold">Deja un comentario</h2>
@@ -317,91 +303,92 @@ export default function CourseComments({
 			</form>
 			{message && <p className="mt-4 text-sm text-green-600">{message}</p>}
 			<div className="mt-8">
-				<h3 className="mb-4 text-xl font-semibold">
-					Comentarios ({comments.length})
-				</h3>
-				{loading ? (
-					<div className="flex items-center gap-2 text-primary">
-						<p>Cargando Comentarios...</p>
-						<Icons.spinner
-							className="animate-spin"
-							style={{ width: '20px', height: '20px' }}
-						/>
-					</div>
-				) : (
-					<ul className="space-y-4">
-						{comments.map((comment) => (
-							<li key={comment.id} className="border-b pb-2">
-								<div className="mb-2 flex items-center justify-between">
-									<div className="flex items-center py-2">
-										{[1, 2, 3, 4, 5].map((star) => (
-											<StarIcon
-												key={star}
-												className={`size-5 ${star <= comment.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-											/>
-										))}
-										<span className="ml-2 text-sm text-gray-600">
-											{formatDate(comment.createdAt)}
-										</span>
+				<div className="mb-4 flex items-center justify-between">
+					<h3 className="text-xl font-semibold flex items-center gap-2">
+						Comentarios ({comments.length})
+						{loading && (
+							<div className="flex items-center gap-2 text-primary">
+								<Icons.spinner
+									className="inline-block animate-spin"
+									style={{ width: '20px', height: '20px' }}
+								/>
+								<span className="text-base text-gray-500">Cargando comentarios...</span>
+							</div>
+						)}
+					</h3>
+				</div>
+				<ul className="space-y-4">
+					{comments.map((comment) => (
+						<li key={comment.id} className="border-b pb-2">
+							<div className="mb-2 flex items-center justify-between">
+								<div className="flex items-center py-2">
+									{[1, 2, 3, 4, 5].map((star) => (
+										<StarIcon
+											key={star}
+											className={`size-5 ${star <= comment.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+										/>
+									))}
+									<span className="ml-2 text-sm text-gray-600">
+										{formatDate(comment.createdAt)}
+									</span>
+								</div>
+								<div className="flex items-center space-x-2">
+									<div className="flex flex-col items-center">
+										<span
+											className={`-mt-6 text-sm ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'}`}
+										>
+											{comment.likes.toString()}
+										</span>{' '}
+										{/* Convert likes to string */}
+										<button
+											onClick={() => handleLike(comment.id)}
+											disabled={likingComment === comment.id}
+										>
+											{likingComment === comment.id ? (
+												<Icons.spinner
+													className="animate-spin text-secondary"
+													style={{ width: '20px', height: '20px' }}
+												/>
+											) : (
+												<HandThumbUpIcon
+													className={`-mb-2 size-5 cursor-pointer transition-colors duration-200 ${comment.hasLiked ? 'text-blue-500' : 'text-gray-400'} hover:text-blue-500`}
+												/>
+											)}
+										</button>
 									</div>
-									<div className="flex items-center space-x-2">
-										<div className="flex flex-col items-center">
-											<span
-												className={`-mt-6 text-sm ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'}`}
-											>
-												{comment.likes.toString()}
-											</span>{' '}
-											{/* Convert likes to string */}
+									{userId === comment.userId && (
+										<>
+											<button onClick={() => handleEdit(comment)}>
+												<PencilIcon className="size-5 cursor-pointer text-gray-500 hover:text-amber-400" />
+											</button>
 											<button
-												onClick={() => handleLike(comment.id)}
-												disabled={likingComment === comment.id}
+												onClick={() => handleDelete(comment.id)}
+												className={
+													deletingComment === comment.id ? 'text-red-500' : ''
+												}
+												disabled={deletingComment === comment.id}
 											>
-												{likingComment === comment.id ? (
+												{deletingComment === comment.id ? (
 													<Icons.spinner
-														className="animate-spin text-secondary"
+														className="animate-spin text-red-500"
 														style={{ width: '20px', height: '20px' }}
 													/>
 												) : (
-													<HandThumbUpIcon
-														className={`-mb-2 size-5 cursor-pointer transition-colors duration-200 ${comment.hasLiked ? 'text-blue-500' : 'text-gray-400'} hover:text-blue-500`}
-													/>
+													<TrashIcon className="size-5 cursor-pointer text-gray-500 hover:text-red-500" />
 												)}
 											</button>
-										</div>
-										{userId === comment.userId && (
-											<>
-												<button onClick={() => handleEdit(comment)}>
-													<PencilIcon className="size-5 cursor-pointer text-gray-500 hover:text-amber-400" />
-												</button>
-												<button
-													onClick={() => handleDelete(comment.id)}
-													className={
-														deletingComment === comment.id ? 'text-red-500' : ''
-													}
-													disabled={deletingComment === comment.id}
-												>
-													{deletingComment === comment.id ? (
-														<Icons.spinner
-															className="animate-spin text-red-500"
-															style={{ width: '20px', height: '20px' }}
-														/>
-													) : (
-														<TrashIcon className="size-5 cursor-pointer text-gray-500 hover:text-red-500" />
-													)}
-												</button>
-											</>
-										)}
-									</div>
+										</>
+									)}
 								</div>
-								<p className="text-primary">{comment.content}</p>
-								<p className="text-sm text-gray-500">
-									Por: {comment.userName}
-								</p>{' '}
-								{/* Mostrar el nombre del usuario */}
-							</li>
-						))}
-					</ul>
-				)}
+							</div>
+							<p className="text-primary">{comment.content}</p>
+							<p className="text-sm text-gray-500">
+								Por: {comment.userName}
+							</p>{' '}
+							{/* Mostrar el nombre del usuario */}
+						</li>
+					))}
+				</ul>
 			</div>
 		</div>
 	);
