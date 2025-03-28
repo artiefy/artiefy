@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
-import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
 
 import CourseListTeacher from '~/components/educators/layout/CourseListTeacher';
@@ -15,7 +14,6 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
-import { Button } from '~/components/educators/ui/button';
 
 // Define el modelo de datos del curso
 export interface CourseModel {
@@ -287,25 +285,7 @@ export default function Page() {
 		}
 	};
 
-	// Función para abrir el modal de creación de cursos
-	const handleCreateCourse = () => {
-		setEditingCourse({
-			id: 0,
-			title: '',
-			description: '',
-			categoryid: '',
-			modalidadesid: '',
-			createdAt: '',
-			instructor: '',
-			coverImageKey: '',
-			creatorId: '',
-			nivelid: '',
-			totalParametros: 0,
-			rating: 0, // Añadir esta línea
-		});
-		setParametrosList([]); // Resetear la lista de parámetros al crear un nuevo curso
-		setIsModalOpen(true);
-	};
+	
 
 	// Función para cerrar el modal de creación de cursos
 	const handleCloseModal = () => {

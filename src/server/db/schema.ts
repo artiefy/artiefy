@@ -15,30 +15,41 @@ import {
 
 
 // Tabla de usuarios (con soporte para Clerk)
-export const users = pgTable('users', {
-	id: text('id').primaryKey(),
-	role: text('role').notNull(),
-	name: text('name'),
-	email: text('email').notNull(),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at').defaultNow().notNull(),
-	phone: text('phone'),
-	country: text('country'),
-	city: text('city'),
-	address: text('address'),
-	age: integer('age'),
-	birthDate: date('birth_date'),
-	subscriptionStatus: text('subscription_status').default('inactive').notNull(),
-	subscriptionEndDate: timestamp('subscription_end_date', {
-		withTimezone: true,
-		mode: 'date',
-	}),
-	planType: text('plan_type', { enum: ['Pro', 'Premium', 'Enterprise'] }),
-	purchaseDate: timestamp('purchase_date', {
-		withTimezone: true,
-		mode: 'date',
-	}),
-});
+// Tabla de usuarios (con soporte para Clerk)
+export const users = pgTable(
+	'users',
+	{
+		id: text('id').primaryKey(),
+		role: text('role', {
+			enum: ['estudiante', 'educador', 'admin', 'super-admin'],
+		}).notNull(),
+		name: text('name'),
+		email: text('email').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at').defaultNow().notNull(),
+		phone: text('phone'),
+		country: text('country'),
+		city: text('city'),
+		address: text('address'),
+		age: integer('age'),
+		birthDate: date('birth_date'),
+		subscriptionStatus: text('subscription_status')
+			.default('inactive')
+			.notNull(),
+		subscriptionEndDate: timestamp('subscription_end_date', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+		planType: text('plan_type', { enum: ['Pro', 'Premium', 'Enterprise'] }),
+		purchaseDate: timestamp('purchase_date', {
+			withTimezone: true,
+			mode: 'date',
+		}),
+	},
+	(table) => [
+		unique('users_email_role_unique').on(table.email, table.role)
+	]
+);
 
 // Tabla de categorías
 export const categories = pgTable('categories', {

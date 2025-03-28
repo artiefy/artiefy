@@ -1489,7 +1489,7 @@ export default function AdminDashboard() {
 
 						<div className="mt-6 overflow-x-auto">
 							<table className="bg-opacity-70 w-full border-collapse rounded-lg bg-gradient-to-br from-background to-gray-800 text-white shadow-lg backdrop-blur-lg">
-								<thead className="rounded-t-lg bg-[#00BDD8] from-primary to-secondary text-[#01142B]">
+								<thead className="rounded-t-lg bg-[#00BDD8] from-background to-secondary text-[#01142B]">
 									<tr>
 										<th className="px-4 py-3">
 											<input

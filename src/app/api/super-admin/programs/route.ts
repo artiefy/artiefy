@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { isNull, eq, and, inArray } from 'drizzle-orm'; // ✅ Importar inArray
+import {  eq, inArray } from 'drizzle-orm'; // ✅ Importar inArray
 import { z } from 'zod';
 
 import {

@@ -22,12 +22,16 @@ const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
 		user: 'direcciongeneral@artiefy.com',
-		pass: process.env.PASS// ⚠️ Usa variables de entorno en producción
+		pass: process.env.PASS, // ⚠️ Usa variables de entorno en producción
 	},
 });
 
 // 📌 Función para enviar correo de bienvenida
-async function sendWelcomeEmail(to: string, username: string, password: string) {
+async function sendWelcomeEmail(
+	to: string,
+	username: string,
+	password: string
+) {
 	try {
 		const mailOptions = {
 			from: `"Artiefy" <${process.env.EMAIL_USER}>`,
@@ -56,7 +60,6 @@ async function sendWelcomeEmail(to: string, username: string, password: string) 
 		return { success: false, message: 'Error al enviar el correo' };
 	}
 }
-
 
 export async function GET(request: Request) {
 	try {
@@ -103,7 +106,7 @@ export async function POST(request: Request) {
 		// 3. Guardar usuario en la base de datos con Drizzle
 		await db.insert(users).values({
 			id: user.id,
-			role: role || 'estudiante',
+			role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
 			name: `${firstName} ${lastName}`,
 			email:
 				user.emailAddresses.find(
@@ -115,21 +118,18 @@ export async function POST(request: Request) {
 		console.log('✅ Usuario guardado en la BD correctamente');
 		// 🔹 Enviar correo con credenciales
 
-
 		// 4. Preparar usuario seguro para la respuesta
 		const safeUser = {
 			id: user.id,
 			firstName: user.firstName,
 			lastName: user.lastName,
-			username: user.username ?? "usuario", 
+			username: user.username ?? 'usuario',
 			email: user.emailAddresses.find(
 				(addr) => addr.id === user.primaryEmailAddressId
 			)?.emailAddress,
 			role: user.publicMetadata?.role ?? 'estudiante',
 		};
 		await sendWelcomeEmail(email, safeUser.username, generatedPassword);
-
-
 
 		return NextResponse.json({
 			user: safeUser,
@@ -216,7 +216,6 @@ export async function PATCH(request: Request) {
 					{ status: 400 }
 				);
 			}
-			return NextResponse.json({ success: true });
 		}
 
 		if (action === 'updateStatus') {
@@ -229,7 +228,6 @@ export async function PATCH(request: Request) {
 					{ status: 400 }
 				);
 			}
-			return NextResponse.json({ success: true });
 		}
 
 		if (action === 'updateMultipleStatus') {

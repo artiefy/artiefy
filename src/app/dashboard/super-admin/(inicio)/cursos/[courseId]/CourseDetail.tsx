@@ -181,6 +181,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		'from-orange-400 via-pink-500 to-red-500',
 	];
 
+	 
 	type BadgeGradientFunction = (index: number) => string;
 
 	const getBadgeGradient: BadgeGradientFunction = (index) => {
@@ -209,6 +210,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [educators, setEducators] = useState<Educator[]>([]);
 	const [selectedInstructor, setSelectedInstructor] = useState<string>('');
 	const [showChangeButton, setShowChangeButton] = useState(false);
+	void showChangeButton;
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [currentInstructor, setCurrentInstructor] = useState('');
 
@@ -292,7 +294,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Add this useEffect after the existing useEffects
 	useEffect(() => {
-		fetchEducators();
+		void fetchEducators();
 	}, []);
 
 	// Obtener el color seleccionado al cargar la página

@@ -336,6 +336,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
 		try {
 			setUploading(true);
+			void id;
 
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {

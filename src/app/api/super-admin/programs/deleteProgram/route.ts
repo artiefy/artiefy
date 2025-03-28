@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { and, eq, inArray } from 'drizzle-orm';
+import { inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { enrollmentPrograms, materias, programas } from '~/server/db/schema';
