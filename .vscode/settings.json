@@ -56,7 +56,6 @@
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"typescript.tsserver.maxTsServerMemory": 4096,
-	"typescript.tsserver.nodePath": "C:/Users/ADMIN/AppData/Roaming/fnm/node-versions/v22.14.0/installation/node.exe",
 	"typescript.tsserver.watchOptions": {
 		"fallbackPolling": "dynamicPriorityPolling"
 	},
@@ -118,5 +117,5 @@
 	// Git Integration
 	"git.enableSmartCommit": true,
 	"git.confirmSync": false,
-	"git.autofetch": true
+  "git.autofetch": true,
 }

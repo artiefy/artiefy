@@ -526,10 +526,7 @@ const LessonActivityModal = ({
 				);
 			}
 			return (
-				<Button
-					onClick={onClose}
-					className="w-full bg-blue-500 text-white"
-				>
+				<Button onClick={onClose} className="w-full bg-blue-500 text-white">
 					Cerrar
 				</Button>
 			);
@@ -765,7 +762,10 @@ const LessonActivityModal = ({
 								) : finalScore >= 3 ? (
 									<FileCheck2 className="size-8 text-green-500" />
 								) : (
-									<FileX2 className="size-8 text-red-500" />
+									<div className="flex items-center gap-2">
+										<FileX2 className="size-8 text-red-500" />
+										<Lock className="size-8 text-red-500" />
+									</div>
 								)
 							) : (
 								<ShieldQuestion className="-mt-2 size-12 text-primary" />

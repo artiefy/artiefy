@@ -279,43 +279,61 @@ export function ProgramContent({
 												<span className="font-bold">Cargando...</span>
 											</Button>
 										) : (
-											<Button
-												onClick={(e) => handleCourseClick(e, course.id, course.isActive)}
-												disabled={
-													!course.isActive || 
-													isCheckingEnrollment || 
-													(!isSignedIn || !isEnrolled)
+											<Link
+												href={
+													course.isActive && isSignedIn && isEnrolled
+														? `/estudiantes/cursos/${course.id}`
+														: '#'
 												}
-												className={`w-full ${
-													!course.isActive || (!isSignedIn || !isEnrolled)
-														? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
-														: ''
-												} group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
-													!course.isActive || (!isSignedIn || !isEnrolled)
-														? 'pointer-events-none bg-gray-600 text-gray-400'
-														: 'bg-background text-primary active:scale-95'
-												}`}
+												onClick={(e) => {
+													if (!course.isActive || !isSignedIn || !isEnrolled) {
+														e.preventDefault();
+													}
+													if (!isSignedIn) {
+														const currentPath = window.location.pathname;
+														router.push(`/sign-in?redirect_url=${currentPath}`);
+													}
+												}}
+												className="block w-full"
+												prefetch={course.isActive && isSignedIn && isEnrolled}
 											>
-												<span className="font-bold">
-													{!course.isActive
-														? 'No Disponible'
-														: !isSignedIn
-															? 'Iniciar Sesión'
-															: !isEnrolled
-																? 'Requiere Inscripción'
-																: courseEnrollments[course.id]
-																	? 'Continuar Curso'
-																	: 'Ver Curso'}
-												</span>
-												{course.isActive && isEnrolled && (
-													<>
-														<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
-														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-															<div className="relative h-full w-10 bg-white/30" />
-														</div>
-													</>
-												)}
-											</Button>
+												<Button
+													disabled={
+														!course.isActive || 
+														isCheckingEnrollment || 
+														(!isSignedIn || !isEnrolled)
+													}
+													className={`w-full ${
+														!course.isActive || (!isSignedIn || !isEnrolled)
+															? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
+															: ''
+													} group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
+														!course.isActive || (!isSignedIn || !isEnrolled)
+															? 'pointer-events-none bg-gray-600 text-gray-400'
+															: 'bg-background text-primary active:scale-95'
+													}`}
+												>
+													<span className="font-bold">
+														{!course.isActive
+															? 'No Disponible'
+															: !isSignedIn
+																? 'Iniciar Sesión'
+																: !isEnrolled
+																	? 'Requiere Inscripción'
+																	: courseEnrollments[course.id]
+																		? 'Continuar Curso'
+																		: 'Ver Curso'}
+													</span>
+													{course.isActive && isEnrolled && (
+														<>
+															<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
+															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+																<div className="relative h-full w-10 bg-white/30" />
+															</div>
+														</>
+													)}
+												</Button>
+											</Link>
 										)}
 									</div>
 								</CardContent>
