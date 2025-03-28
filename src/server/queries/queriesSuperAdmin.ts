@@ -11,6 +11,7 @@ import {
 	nivel as nivel,
 	programas,
 	enrollmentPrograms,
+	users,
 } from '~/server/db/schema';
 
 import type { Program, BaseCourse } from '~/types';
@@ -66,10 +67,22 @@ export async function setRoleWrapper({
 	role: string;
 }) {
 	try {
+		// Update in Clerk
 		const client = await clerkClient();
 		await client.users.updateUser(id, {
-			publicMetadata: { role }, // ✅ Actualiza el rol en Clerk
+			publicMetadata: { role },
 		});
+
+		// Update in database
+		await db
+			.update(users)
+			.set({
+				role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+				updatedAt: new Date(),
+			})
+			.where(eq(users.id, id));
+
+		console.log(`DEBUG: Rol actualizado para usuario ${id} en Clerk y BD`);
 	} catch (error) {
 		console.error('Error al actualizar el rol:', error);
 		throw new Error('No se pudo actualizar el rol');
@@ -83,6 +96,16 @@ export async function removeRole(id: string) {
 		await client.users.updateUser(id, {
 			publicMetadata: {}, // 🔥 Esto elimina el campo role correctamente
 		});
+
+		// Update in database
+		await db
+			.update(users)
+			.set({
+				role: 'estudiante' as const,
+				updatedAt: new Date(),
+			})
+			.where(eq(users.id, id));
+
 		console.log(`DEBUG: Rol eliminado para el usuario ${id}`);
 	} catch (error) {
 		console.error('Error al eliminar rol:', error);
@@ -92,9 +115,14 @@ export async function removeRole(id: string) {
 
 export async function deleteUser(id: string) {
 	try {
+		// Delete from Clerk
 		const client = await clerkClient();
 		await client.users.deleteUser(id);
-		console.log(`DEBUG: Usuario ${id} eliminado correctamente`);
+
+		// Delete from database
+		await db.delete(users).where(eq(users.id, id));
+
+		console.log(`DEBUG: Usuario ${id} eliminado correctamente de Clerk y BD`);
 	} catch (error) {
 		console.error('Error al eliminar usuario:', error);
 		throw new Error('No se pudo eliminar el usuario');
@@ -171,12 +199,24 @@ export async function createUser(
 
 export async function updateUserStatus(id: string, status: string) {
 	try {
+		// Update in Clerk
 		const client = await clerkClient();
 		await client.users.updateUser(id, {
 			publicMetadata: { status },
 		});
 
-		console.log(`DEBUG: Estado del usuario ${id} actualizado a ${status}`);
+		// Update in database
+		await db
+			.update(users)
+			.set({
+				subscriptionStatus: status,
+				updatedAt: new Date(),
+			})
+			.where(eq(users.id, id));
+
+		console.log(
+			`DEBUG: Estado del usuario ${id} actualizado a ${status} en Clerk y BD`
+		);
 	} catch (error) {
 		console.error('Error al actualizar el estado del usuario:', error);
 		throw new Error('No se pudo actualizar el estado del usuario');
@@ -189,14 +229,26 @@ export async function updateMultipleUserStatus(
 ) {
 	try {
 		const client = await clerkClient();
+
+		// Update both Clerk and database for each user
 		for (const id of userIds) {
+			// Update in Clerk
 			await client.users.updateUser(id, {
 				publicMetadata: { status },
 			});
+
+			// Update in database
+			await db
+				.update(users)
+				.set({
+					subscriptionStatus: status,
+					updatedAt: new Date(),
+				})
+				.where(eq(users.id, id));
 		}
 
 		console.log(
-			`DEBUG: Se actualizaron ${userIds.length} usuarios a estado ${status}`
+			`DEBUG: Se actualizaron ${userIds.length} usuarios a estado ${status} en Clerk y BD`
 		);
 	} catch (error) {
 		console.error('Error al actualizar múltiples usuarios:', error);

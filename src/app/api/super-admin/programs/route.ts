@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
-
-import { auth } from '@clerk/nextjs/server';
-import { eq, inArray } from 'drizzle-orm'; // ✅ Importar inArray
+import { auth, clerkClient } from '@clerk/nextjs/server';
+import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
 import {
@@ -9,11 +8,10 @@ import {
 	updateProgram,
 } from '~/models/super-adminModels/programModelsSuperAdmin';
 import { db } from '~/server/db';
-import { materias } from '~/server/db/schema';
+import { materias, users } from '~/server/db/schema';
 
 export async function POST(req: NextRequest) {
 	try {
-		// Obtener el usuario autenticado
 		const { userId } = (await auth()) as { userId: string | null };
 		console.log('✅ Usuario autenticado:', userId);
 		console.log('📌 Recibiendo solicitud POST...');
@@ -23,6 +21,25 @@ export async function POST(req: NextRequest) {
 				{ error: 'Usuario no autenticado.' },
 				{ status: 401 }
 			);
+		}
+
+		// Check if user exists in database
+		const existingUser = await db.query.users.findFirst({
+			where: (users, { eq }) => eq(users.id, userId),
+		});
+
+		// If user doesn't exist, create them
+		if (!existingUser) {
+			const clerk = await clerkClient();
+			const clerkUser = await clerk.users.getUser(userId);
+			await db.insert(users).values({
+				id: userId,
+				role: 'super-admin',
+				name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
+				email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
 		}
 
 		const schema = z.object({
@@ -151,6 +168,25 @@ export async function PUT(req: NextRequest) {
 				{ error: 'Usuario no autenticado.' },
 				{ status: 401 }
 			);
+		}
+
+		// Check if user exists in database
+		const existingUser = await db.query.users.findFirst({
+			where: (users, { eq }) => eq(users.id, userId),
+		});
+
+		// If user doesn't exist, create them
+		if (!existingUser) {
+			const clerk = await clerkClient();
+			const clerkUser = await clerk.users.getUser(userId);
+			await db.insert(users).values({
+				id: userId,
+				role: 'super-admin',
+				name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
+				email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
 		}
 
 		// Get programId from query params

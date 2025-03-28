@@ -74,7 +74,8 @@
 	"eslint.debug": false,
 	"eslint.rules.customizations": [
 		{ "rule": "import/order", "severity": "off" },
-		{ "rule": "no-unused-vars", "severity": "warn" }
+		{ "rule": "no-unused-vars", "severity": "warn" },
+		{ "rule": "@typescript-eslint/no-unused-vars", "severity": "off" }
 	],
 
 	// Tailwind CSS Configuration

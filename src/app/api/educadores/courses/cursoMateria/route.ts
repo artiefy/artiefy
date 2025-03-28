@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 
 import {
 	deleteCourse,
@@ -16,7 +15,7 @@ import {
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAdmin';
 import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
+import { courses, users } from '~/server/db/schema'; // Add users import
 
 export const dynamic = 'force-dynamic';
 
@@ -78,11 +77,31 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
 
+		// Check if user exists in database
+		const existingUser = await db.query.users.findFirst({
+			where: (users, { eq }) => eq(users.id, userId),
+		});
+
+		// If user doesn't exist, create them
+		if (!existingUser) {
+			const clerk = await clerkClient();
+			const clerkUser = await clerk.users.getUser(userId);
+			await db.insert(users).values({
+				id: userId,
+				role: 'super-admin',
+				name: `${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
+				email: clerkUser.emailAddresses[0]?.emailAddress ?? '',
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			});
+			console.log('persona creada correctamenteeeeeee');
+		}
+
 		// Parsear los datos del cuerpo de la solicitud
 		const data = (await request.json()) as {
 			title: string;
 			description: string;
-			coverImageKey: string; 
+			coverImageKey: string;
 			categoryid: number;
 			modalidadesid: number[];
 			nivelid: number;
