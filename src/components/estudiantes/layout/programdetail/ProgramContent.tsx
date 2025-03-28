@@ -126,18 +126,6 @@ export function ProgramContent({
 		void checkCourseEnrollments();
 	}, [userId, courses]);
 
-	// Actualizar el handleCourseClick para simplificarlo y evitar el parámetro no utilizado
-	const handleCourseClick = (e: React.MouseEvent, courseId: number, isActive: boolean) => {
-		e.preventDefault();
-
-		if (!isActive || !isSignedIn || !isEnrolled) {
-			return;
-		}
-
-		// Direct navigation without using Link
-		router.push(`/estudiantes/cursos/${courseId}`);
-	};
-
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
 			{isEnrolled && !isSubscriptionActive && (
@@ -280,35 +268,39 @@ export function ProgramContent({
 											</Button>
 										) : (
 											<Link
-												href={
-													course.isActive && isSignedIn && isEnrolled
-														? `/estudiantes/cursos/${course.id}`
-														: '#'
-												}
+												href={`/estudiantes/cursos/${course.id}`}
 												onClick={(e) => {
 													if (!course.isActive || !isSignedIn || !isEnrolled) {
 														e.preventDefault();
-													}
-													if (!isSignedIn) {
-														const currentPath = window.location.pathname;
-														router.push(`/sign-in?redirect_url=${currentPath}`);
+														if (!isSignedIn) {
+															const currentPath = window.location.pathname;
+															router.push(
+																`/sign-in?redirect_url=${currentPath}`
+															);
+														}
 													}
 												}}
-												className="block w-full"
+												className={`block w-full ${
+													!course.isActive || !isSignedIn || !isEnrolled
+														? 'pointer-events-none'
+														: ''
+												}`}
 												prefetch={course.isActive && isSignedIn && isEnrolled}
+												replace={false} // Add this to ensure normal navigation
 											>
 												<Button
 													disabled={
-														!course.isActive || 
-														isCheckingEnrollment || 
-														(!isSignedIn || !isEnrolled)
+														!course.isActive ||
+														isCheckingEnrollment ||
+														!isSignedIn ||
+														!isEnrolled
 													}
 													className={`w-full ${
-														!course.isActive || (!isSignedIn || !isEnrolled)
+														!course.isActive || !isSignedIn || !isEnrolled
 															? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
 															: ''
 													} group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
-														!course.isActive || (!isSignedIn || !isEnrolled)
+														!course.isActive || !isSignedIn || !isEnrolled
 															? 'pointer-events-none bg-gray-600 text-gray-400'
 															: 'bg-background text-primary active:scale-95'
 													}`}
