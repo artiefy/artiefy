@@ -268,6 +268,10 @@ export function CourseContent({
 		);
 	}, [course.lessons]);
 
+	const handleSubscriptionRedirect = useCallback(() => {
+		window.open('/planes', '_blank', 'noopener,noreferrer');
+	}, []);
+
 	const shouldShowSubscriptionAlert = useMemo(() => {
 		return (
 			isEnrolled &&
@@ -281,11 +285,9 @@ export function CourseContent({
 	]);
 
 	const shouldBlurContent = useMemo(() => {
-		return (
-			isEnrolled &&
-			!isSubscriptionActive &&
-			course.courseType?.requiredSubscriptionLevel !== 'none'
-		);
+		const isPremiumOrPro =
+			course.courseType?.requiredSubscriptionLevel !== 'none';
+		return isEnrolled && !isSubscriptionActive && isPremiumOrPro;
 	}, [
 		isEnrolled,
 		isSubscriptionActive,
@@ -303,11 +305,8 @@ export function CourseContent({
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
-			<div className="mb-6 flex items-center justify-between">
-				<h2 className="text-2xl font-bold text-background">
-					Contenido del curso
-				</h2>
-				<div className="mt-6 flex flex-col items-end gap-2">
+			<div className="mb-6 flex flex-col gap-4">
+				<div className="flex flex-col items-start gap-2">
 					{isSubscriptionActive && (
 						<div className="flex items-center gap-2 text-green-500">
 							<FaCheck className="size-4" />
@@ -320,6 +319,9 @@ export function CourseContent({
 						</p>
 					)}
 				</div>
+				<h2 className="text-2xl font-bold text-background">
+					Contenido del curso
+				</h2>
 			</div>
 
 			{isEnrolled && isFullyCompleted && (
@@ -353,7 +355,7 @@ export function CourseContent({
 									continuar tu aprendizaje, necesitas renovar tu suscripción.
 								</p>
 								<Button
-									onClick={() => router.push('/planes')}
+									onClick={handleSubscriptionRedirect}
 									className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
 								>
 									<FaCrown className="mr-2" />

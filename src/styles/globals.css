@@ -9,6 +9,12 @@
 }
 
 /* Core Theme */
+@theme inline {
+	/* Fonts */
+	--font-sans: var(--font-montserrat);
+	--font-serif: var(--font-merriweather);
+}
+
 @theme {
 	/* Colors */
 	--color-background: oklch(19% 0.0542 252.35);
@@ -59,17 +65,13 @@
 	--radius-lg: var(--radius);
 	--radius-xl: calc(var(--radius) + 4px);
 
-	/* Font - Modified to use CSS variables properly */
-	--font-sans: var(--font-montserrat);
-	--font-serif: var(--font-merriweather);
-
 	/* Animations */
 	--animate-gradient: borderRotate 4s linear infinite;
+	--animate-text-gradient: gradient 8s linear infinite;
 	--animate-bounce-right: bounce-left-right 1s infinite;
 	--animate-bounce-up-down: bounce-up-down 1s infinite;
 	--animate-zoom-in: zoomIn 0.5s ease-in-out;
 
-	/* Animation Keyframes */
 	@keyframes nuevo-badge-pulse {
 		0% {
 			opacity: 1;
@@ -125,6 +127,18 @@
 			transform: translateY(-10px);
 		}
 	}
+
+	@keyframes gradient {
+		0% {
+			background-position: 0% 50%;
+		}
+		50% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0% 50%;
+		}
+	}
 }
 
 /* Base Styles */
@@ -160,15 +174,20 @@
 	}
 }
 
-@utility animate-gradient {
-	background: linear-gradient(
-		to right,
-		var(--color-from),
-		var(--color-via),
-		var(--color-to)
-	);
-	background-size: 300% 100%;
+.animate-gradient {
 	animation: var(--animate-gradient);
+	background-size: 300% 100%;
+}
+
+.animate-text-gradient {
+	animation: var(--animate-text-gradient);
+	background-size: 300% 100%;
+}
+
+@layer utilities {
+	.animate-pulse {
+		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+	}
 }
 
 /* Clerk Components */
@@ -189,6 +208,56 @@
 
 	&:hover {
 		color: var(--color-primary);
+	}
+}
+
+/* Add this new style for mobile menu UserButton */
+.cl-userButton-root .cl-userButtonOuterIdentifier {
+	color: var(--color-sidebar-foreground);
+}
+
+/* Desktop UserButton styles */
+@media (min-width: 769px) {
+	.cl-userButtonOuterIdentifier {
+		color: #ffff !important; /* Azure color */
+	}
+}
+
+/* Mobile UserButton styles */
+@media (max-width: 768px) {
+	.cl-userButton-root .cl-userButtonBox {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	/* Targeting all possible avatar selectors */
+	.cl-userButton-root .cl-userButtonAvatarImage,
+	.cl-userButton-root .cl-userButtonAvatarBox img,
+	.cl-userButton-root img[data-part='userButtonAvatarImage'] {
+		width: 2rem !important;
+		height: 2rem !important;
+		max-width: none !important;
+		max-height: none !important;
+	}
+
+	.cl-userButton-root .cl-userButtonAvatarBox {
+		width: 2rem !important;
+		height: 2rem !important;
+	}
+
+	.cl-userButton-root .cl-userButtonOuterIdentifier {
+		color: rgb(249 115 22) !important; /* Tailwind orange-500 */
+		font-size: 1rem; /* Increased from 1.5rem */
+		margin: 0;
+		font-weight: 500;
+		order: 2;
+	}
+
+	.cl-userButton-root .cl-userButtonAvatarBox {
+		order: 1;
+		transform: scale(1.2); /* Additional scaling for the avatar box */
 	}
 }
 

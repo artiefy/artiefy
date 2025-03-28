@@ -90,7 +90,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 			});
 			return;
 		}
-		setIsOpen(true);
+		setIsOpen(!isOpen); // Toggle the chat visibility
 	};
 
 	return (
@@ -99,7 +99,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 				<button
 					onClick={handleClick}
 					className={`button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
-					style={{ display: isOpen ? 'none' : 'flex' }}
 					aria-label={
 						isSignedIn
 							? 'Abrir chat'
@@ -123,33 +122,24 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 				</button>
 
 				{isOpen && isSignedIn && (
-					<div className="chat-modal">
-						<div
-							className="chat-container"
-							role="dialog"
-							aria-modal="true"
-							aria-labelledby="modal-title"
-						>
-							<div className="chat-header">
+					<div className="animate-in zoom-in-50 slide-in-from-right fixed right-24 bottom-32 z-50 duration-300 ease-in-out">
+						<div className="w-96 rounded-lg border border-gray-200 bg-white shadow-xl">
+							<div className="flex items-center justify-between border-b p-4">
 								<div className="flex items-center space-x-2">
 									<FaRobot className="text-2xl text-secondary" />
-									<h2
-										id="modal-title"
-										className="text-lg font-semibold text-gray-800"
-									>
+									<h2 className="text-lg font-semibold text-gray-800">
 										Artie IA
 									</h2>
 								</div>
 								<button
 									onClick={() => setIsOpen(false)}
 									className="rounded-full p-2 transition-colors hover:bg-gray-100"
-									aria-label="Cerrar chat"
 								>
 									<IoMdClose className="text-xl text-gray-500" />
 								</button>
 							</div>
 
-							<div className="messages-container">
+							<div className="h-96 space-y-4 overflow-y-auto p-4">
 								{messages.map((message) => (
 									<div
 										key={message.id}
@@ -193,8 +183,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 								<div ref={messagesEndRef} />
 							</div>
 
-							<form onSubmit={handleSendMessage} className="input-container">
-								<div className="flex w-full space-x-2">
+							<form onSubmit={handleSendMessage} className="border-t p-4">
+								<div className="flex gap-2">
 									<input
 										ref={inputRef}
 										type="text"
@@ -205,14 +195,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 												? 'Escribe tu mensaje...'
 												: 'Inicia sesión para chatear'
 										}
-										className="flex-1 rounded-lg border border-gray-300 p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
+										className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
 										disabled={!isSignedIn || isLoading}
 									/>
 									<button
 										type="submit"
 										disabled={isLoading}
-										className="rounded-lg bg-secondary px-4 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
-										aria-label="Enviar mensaje"
+										className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
 									>
 										<FiSend className="text-xl" />
 									</button>

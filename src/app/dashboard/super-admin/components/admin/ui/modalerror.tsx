@@ -1,42 +1,40 @@
 'use client';
 
-import React from 'react';
-
 interface ModalErrorProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onCloseAction: () => void;
-  message?: string;
+	isOpen: boolean;
+	onCloseAction: () => void;
+	onRetryAction: () => void;
+	message?: string;
 }
 
 export const ModalError: React.FC<ModalErrorProps> = ({
-  isOpen,
-  onClose,
-  onCloseAction,
-  message = 'Ha ocurrido un error inesperado.',
+	isOpen,
+	onCloseAction,
+	onRetryAction,
+	message = 'Ha ocurrido un error inesperado.',
 }) => {
-  if (!isOpen) return null;
+	if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg p-6 shadow-lg max-w-sm w-full">
-        <h2 className="text-lg font-bold text-red-600">Error</h2>
-        <p className="mt-4 text-gray-700">{message}</p>
-        <div className="mt-6 flex justify-end space-x-4">
-          <button
-            className="px-4 py-2 bg-gray-300 rounded-md"
-            onClick={onClose}
-          >
-            Cerrar
-          </button>
-          <button
-            className="px-4 py-2 bg-red-600 text-white rounded-md"
-            onClick={onCloseAction}
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+	return (
+		<div className="bg-opacity-50 fixed inset-0 flex items-center justify-center bg-black">
+			<div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+				<h2 className="text-lg font-bold text-red-600">Error</h2>
+				<p className="mt-4 text-gray-700">{message}</p>
+				<div className="mt-6 flex justify-end space-x-4">
+					<button
+						className="rounded-md bg-gray-300 px-4 py-2"
+						onClick={onCloseAction}
+					>
+						Cerrar
+					</button>
+					<button
+						className="rounded-md bg-red-600 px-4 py-2 text-white"
+						onClick={onRetryAction}
+					>
+						Reintentar
+					</button>
+				</div>
+			</div>
+		</div>
+	);
 };

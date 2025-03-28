@@ -10,6 +10,7 @@ import {
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 
+import GradientText from '~/components/estudiantes/layout/GradientText';
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -54,9 +55,11 @@ export default async function CourseListStudent({
 
 	return (
 		<>
-			<h2 className="my-6 ml-8 text-3xl font-bold text-primary lg:ml-20">
-				Cursos Artie
-			</h2>
+			<div className="flex justify-center">
+				<GradientText className="my-6 text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
+					Cursos Artie
+				</GradientText>
+			</div>
 			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
 				{await Promise.all(
 					courses.map(async (course) => {
@@ -94,7 +97,7 @@ export default async function CourseListStudent({
 							// Mostrar el precio individual cuando el curso es tipo 4
 							if (course.courseTypeId === 4 && course.individualPrice) {
 								return (
-									<div className="mt-2 flex items-center gap-1">
+									<div className="mt-1 flex items-center gap-1">
 										<FaStar className="text-lg text-blue-500" />
 										<span className="text-sm font-bold text-blue-500">
 											${course.individualPrice.toLocaleString()}
@@ -105,7 +108,7 @@ export default async function CourseListStudent({
 
 							if (requiredSubscriptionLevel === 'none') {
 								return (
-									<div className="mt-2 flex items-center gap-1">
+									<div className="mt-1 flex items-center gap-1">
 										<IoGiftOutline className="text-lg text-green-500" />
 										<span className="text-sm font-bold text-green-500">
 											GRATUITO
@@ -119,7 +122,7 @@ export default async function CourseListStudent({
 									? 'text-purple-500'
 									: 'text-orange-500';
 							return (
-								<div className={`mt-2 flex items-center gap-1 ${color}`}>
+								<div className={`mt-1 flex items-center gap-1 ${color}`}>
 									<FaCrown className="text-lg" />
 									<span className="text-sm font-bold">
 										{requiredSubscriptionLevel.toUpperCase()}
@@ -177,7 +180,7 @@ export default async function CourseListStudent({
 										<p className="line-clamp-2 text-sm text-gray-300">
 											{course.description}
 										</p>
-										<div className="flex items-center justify-between">
+										<div className="-mb-4 flex items-center justify-between">
 											<p className="text-sm font-bold text-red-500">
 												{course.modalidad?.name}
 											</p>
@@ -202,7 +205,7 @@ export default async function CourseListStudent({
 										<Button
 											asChild
 											disabled={!course.isActive}
-											className={`mt-4 w-full ${!course.isActive ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''}`}
+											className={`mt-2 w-full ${!course.isActive ? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''}`}
 										>
 											<Link
 												href={`/estudiantes/cursos/${course.id}`}

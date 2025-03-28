@@ -12,7 +12,6 @@ interface FileUploadProps {
 	label: string;
 	accept: string;
 	maxSize: number; // en MB
-	_required?: boolean;
 	multiple?: boolean;
 	onFileChange: (file: File | File[] | null | undefined) => void;
 	tipo: string;
@@ -23,7 +22,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
 	label,
 	accept,
 	maxSize,
-	_required = false,
 	multiple = false,
 	onFileChange,
 	tipo,
@@ -137,7 +135,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
 	return (
 		<div className="flex flex-col items-center">
-			<label className="text-primary text-center text-lg font-medium">
+			<label className="text-center text-lg font-medium text-primary">
 				{label}
 			</label>
 			<div
@@ -154,7 +152,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 			>
 				{!files.length ? (
 					<div className="text-center">
-						<div className="bg-primary mx-auto size-16 rounded-full pt-2">
+						<div className="mx-auto size-16 rounded-full bg-primary pt-2">
 							{type === 'image' && (
 								<ImageIcon className="mx-auto size-12 text-white" />
 							)}
@@ -185,7 +183,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 						/>
 						<label
 							htmlFor={`file-upload-${type}`}
-							className="bg-primary mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
+							className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
 						>
 							Seleccionar {tipo}
 						</label>
@@ -240,7 +238,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 						)}
 						{type === 'file' && (
 							<div className="space-y-2">
-								{files.map((file, index) => (
+								{files.map((_, index) => (
 									<div
 										key={index}
 										className="relative flex items-center justify-between rounded-lg bg-gray-100 p-2"
@@ -275,7 +273,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 										/>{' '}
 										<label
 											htmlFor={`additional-file-upload-${type}`}
-											className="bg-primary inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
+											className="inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
 										>
 											{' '}
 											Subir más archivos{' '}

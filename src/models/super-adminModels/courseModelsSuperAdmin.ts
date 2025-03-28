@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq, count } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
@@ -260,7 +261,6 @@ export const deleteCourse = async (courseId: number): Promise<void> => {
 	}
 };
 
-// ✅ Obtener todos los educadores disponibles
 export async function getAllEducators(query?: string) {
 	try {
 		const client = await clerkClient();
@@ -271,7 +271,9 @@ export async function getAllEducators(query?: string) {
 		const filteredUsers = query
 			? users.filter(
 					(user) =>
-						(user.firstName ?? '').toLowerCase().includes(query.toLowerCase()) ||
+						(user.firstName ?? '')
+							.toLowerCase()
+							.includes(query.toLowerCase()) ||
 						(user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
 						user.emailAddresses.some((email) =>
 							email.emailAddress.toLowerCase().includes(query.toLowerCase())
@@ -327,7 +329,7 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 			.where(eq(enrollments.userId, userId)); // Filtra por el userId en la tabla de enrollments
 
 		// Verifica los datos obtenidos de la consulta
-	
+
 		console.log('Cursos obtenidos:', coursesData);
 
 		// Si no se obtienen cursos, retornar un array vacío
@@ -344,7 +346,6 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 	}
 };
 
-
 export const getModalidadById = async (modalidadId: number) => {
 	return db
 		.select({
@@ -356,4 +357,3 @@ export const getModalidadById = async (modalidadId: number) => {
 		.where(eq(modalidades.id, modalidadId))
 		.then((rows) => rows[0]);
 };
-

@@ -56,15 +56,9 @@ export async function generateMetadata(
 	{ params }: { params: { id: string } },
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
-	// Await params before using
 	const { id } = await Promise.resolve(params);
 	const { userId } = await auth();
-
-	// Fetch data in parallel
-	const [course, parentMetadata] = await Promise.all([
-		getCourseById(Number(id), userId),
-		parent,
-	]);
+	const course = await getCourseById(Number(id), userId);
 
 	if (!course) {
 		return {
@@ -73,29 +67,40 @@ export async function generateMetadata(
 		};
 	}
 
-	// Fix: parentMetadata is already resolved from Promise.all
-	const previousImages = parentMetadata.openGraph?.images ?? [];
-	const ogImage = `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}/opengraph-image`;
+	// Asegurar que tengamos una URL base válida
+	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
+	const metadataBase = new URL(baseUrl);
+
+	// Construir URL absoluta para la imagen
+	const coverImageUrl = new URL(
+		course.coverImageKey
+			? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+			: 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+	).toString();
+
+	// Obtener imágenes del padre
+	const previousImages = (await parent).openGraph?.images ?? [];
 
 	return {
-		metadataBase: new URL(
-			process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
-		),
+		metadataBase,
 		title: `${course.title} | Artiefy`,
 		description: course.description ?? 'No hay descripción disponible.',
 		openGraph: {
 			type: 'website',
 			locale: 'es_ES',
-			url: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
+			url: new URL(`/estudiantes/cursos/${id}`, baseUrl).toString(),
 			siteName: 'Artiefy',
 			title: `${course.title} | Artiefy`,
 			description: course.description ?? 'No hay descripción disponible.',
 			images: [
 				{
-					url: ogImage,
+					url: coverImageUrl,
 					width: 1200,
 					height: 630,
 					alt: `Portada del curso: ${course.title}`,
+					type: course.coverImageKey?.endsWith('.png')
+						? 'image/png'
+						: 'image/jpeg',
 				},
 				...previousImages,
 			],
@@ -104,12 +109,9 @@ export async function generateMetadata(
 			card: 'summary_large_image',
 			title: `${course.title} | Artiefy`,
 			description: course.description ?? 'No hay descripción disponible.',
-			images: [ogImage],
+			images: [coverImageUrl],
 			creator: '@artiefy',
 			site: '@artiefy',
-		},
-		alternates: {
-			canonical: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${id}`,
 		},
 	};
 }

@@ -8,5 +8,4 @@ export default {
 	dbCredentials: {
 		url: env.POSTGRES_URL,
 	},
-	tablesFilter: ['artiefy_*'],
 } satisfies Config;

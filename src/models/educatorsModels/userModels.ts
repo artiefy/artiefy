@@ -47,9 +47,9 @@ export async function getAllUsers(): Promise<User[]> {
 // Crear un nuevo usuario
 export async function createUser(
 	id: string,
-	role: string,
 	name: string,
-	email: string
+	email: string,
+	role: 'admin' | 'educador' | 'estudiante' | 'super-admin' = 'estudiante'
 ): Promise<void> {
 	await db.insert(users).values({
 		id,

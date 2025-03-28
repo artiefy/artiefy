@@ -64,7 +64,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			await db.insert(users).values({
 				id: userId,
 				email: email_buyer,
-				role: 'student',
+				role: 'estudiante',
 				subscriptionStatus: 'active',
 				subscriptionEndDate: new Date(subscriptionEndBogota), // Guardamos en formato Bogotá
 				planType: planType,

@@ -33,9 +33,9 @@ async function ensureUserExists(userId: string) {
 		if (clerkUser) {
 			await createUser(
 				userId,
-				'educador', // Asigna un rol por defecto, ajusta según sea necesario
-				`${clerkUser.firstName} ${clerkUser.lastName}`,
-				clerkUser.emailAddresses[0].emailAddress
+				'educador' as const, // Use 'as const' to ensure type safety
+				`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
+				clerkUser.emailAddresses[0].emailAddress as 'estudiante' | 'educador' | 'admin' | 'super-admin'
 			);
 		}
 	}

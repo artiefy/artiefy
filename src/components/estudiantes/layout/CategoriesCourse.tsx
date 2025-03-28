@@ -95,7 +95,7 @@ export default function CategoriesCourse({
 					<div className="relative mb-4 w-full sm:w-3/4 md:w-1/3 lg:mb-0 lg:w-1/3">
 						<FunnelIcon className="absolute top-1/2 left-3 size-5 -translate-y-1/2 fill-gray-500" />
 						<select
-							className="focus:border-primary focus:ring-primary block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900"
+							className="block w-full cursor-pointer rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary"
 							onChange={(e) => handleCategorySelect(e.target.value || null)}
 							value={searchParams?.get('category') ?? ''}
 							aria-label="Seleccionar categoría"
@@ -118,13 +118,13 @@ export default function CategoriesCourse({
 									setSearchQuery(e.target.value)
 								}
 								onKeyDown={handleKeyDown}
-								className="text-background w-full bg-white pr-10"
+								className="w-full bg-white pr-10 text-background"
 								aria-label="Buscar cursos"
 							/>
 							<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
 								{isSearching ? (
 									<Icons.spinner
-										className="text-background size-4"
+										className="size-4 text-background"
 										aria-hidden="true"
 									/>
 								) : (
@@ -170,47 +170,50 @@ export default function CategoriesCourse({
 							)}
 						</div>
 					</div>
-					{featuredCategories?.map((category: Category) => (
-						<div
-							key={category.id}
-							className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-6 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95"
-							onClick={() => handleCategorySelect(category.id.toString())}
-							role="button"
-							tabIndex={0}
-							aria-label={`Mostrar cursos de ${category.name}`}
-						>
-							<div className="flex h-full flex-col items-center justify-center">
-								{loadingCategory === category.id.toString() ? (
-									<>
-										<Icons.spinner
-											className="text-background size-10"
-											aria-hidden="true"
-										/>
-										<p className="text-background mt-2 text-sm">
-											Buscando Cursos...
-										</p>
-									</>
-								) : (
-									<>
-										<div
-											className="mb-4 text-3xl text-blue-600"
-											aria-hidden="true"
-										>
-											{categoryIcons[category.name] ?? <FiCode />}
-										</div>
-										<h3 className="text-lg font-semibold text-background sm:text-base md:text-lg lg:text-xl">
-											{category.name}
-										</h3>
-										<p className="mt-2 text-sm text-gray-500">
-											{`${category.courses?.length ?? 0} curso${
-												category.courses?.length !== 1 ? 's' : ''
-											}`}
-										</p>
-									</>
-								)}
+					{/* Solo mostrar categorías que tengan is_featured en true */}
+					{featuredCategories
+						?.filter((category) => category.is_featured)
+						.map((category: Category) => (
+							<div
+								key={category.id}
+								className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-6 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95"
+								onClick={() => handleCategorySelect(category.id.toString())}
+								role="button"
+								tabIndex={0}
+								aria-label={`Mostrar cursos de ${category.name}`}
+							>
+								<div className="flex h-full flex-col items-center justify-center">
+									{loadingCategory === category.id.toString() ? (
+										<>
+											<Icons.spinner
+												className="size-10 text-background"
+												aria-hidden="true"
+											/>
+											<p className="mt-2 text-sm text-background">
+												Buscando Cursos...
+											</p>
+										</>
+									) : (
+										<>
+											<div
+												className="mb-4 text-3xl text-blue-600"
+												aria-hidden="true"
+											>
+												{categoryIcons[category.name] ?? <FiCode />}
+											</div>
+											<h3 className="text-lg font-semibold text-background sm:text-base md:text-lg lg:text-xl">
+												{category.name}
+											</h3>
+											<p className="mt-2 text-sm text-gray-500">
+												{`${category.courses?.length ?? 0} curso${
+													category.courses?.length !== 1 ? 's' : ''
+												}`}
+											</p>
+										</>
+									)}
+								</div>
 							</div>
-						</div>
-					))}
+						))}
 				</div>
 			</div>
 		</section>

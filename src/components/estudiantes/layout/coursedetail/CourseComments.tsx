@@ -223,11 +223,6 @@ export default function CourseComments({
 		);
 	}
 
-	// No renderizar nada si no está inscrito
-	if (!isEnrolled) {
-		return null;
-	}
-
 	return (
 		<div className="mt-8">
 			<h2 className="mb-4 text-2xl font-bold">Deja un comentario</h2>
@@ -253,9 +248,15 @@ export default function CourseComments({
 							id="content"
 							ref={textareaRef}
 							value={content}
-							onChange={(e) => setContent(e.target.value)}
-							onFocus={(e) => (e.target.placeholder = '')}
-							onBlur={(e) => (e.target.placeholder = 'Escribe tu comentario')}
+							onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+								setContent(e.target.value)
+							}
+							onFocus={(e: React.FocusEvent<HTMLTextAreaElement>) =>
+								(e.target.placeholder = '')
+							}
+							onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) =>
+								(e.target.placeholder = 'Escribe tu comentario')
+							}
 							required
 							placeholder="Escribe tu comentario"
 							className="mt-1 block w-full border-[1px] text-primary transition-colors duration-200 hover:border-secondary focus:border-[2px] focus:border-secondary"

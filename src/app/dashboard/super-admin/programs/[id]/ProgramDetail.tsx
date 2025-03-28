@@ -336,7 +336,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
 		try {
 			setUploading(true);
-			void id;
+      void id;
 
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
@@ -499,18 +499,18 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
 	// Add this function to handle editing a program
 	const handleEditProgram = async (
-		id: string,
+		_id: string, // Add underscore to mark as intentionally unused
 		title: string,
 		description: string,
-		file: File | null,
+		_file: File | null, // Add underscore
 		categoryid: number,
 		rating: number,
 		coverImageKey: string,
-		fileName: string,
+		_fileName: string, // Add underscore
 		subjectIds: number[]
 	) => {
 		try {
-			const response = await fetch(`/api/super-admin/programs/${id}`, {
+			const response = await fetch(`/api/super-admin/programs/${_id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -529,13 +529,12 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
 			toast.success('Programa actualizado exitosamente');
 			setIsEditModalOpen(false);
-			void fetchProgram(); // Refresh data
+			void fetchProgram(); // Use void operator
 		} catch (error) {
 			toast.error('Error al actualizar el programa');
 			console.error(error);
 		}
 	};
-
 
 	// Renderizar el componente
 	return (

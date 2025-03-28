@@ -29,8 +29,8 @@ interface ProgramHeaderProps {
 	isUnenrolling: boolean;
 	isSubscriptionActive: boolean;
 	subscriptionEndDate: string | null;
-	onEnroll: () => Promise<void>;
-	onUnenroll: () => Promise<void>;
+	onEnrollAction: () => Promise<void>;
+	onUnenrollAction: () => Promise<void>;
 	isCheckingEnrollment: boolean; // Add this prop
 }
 
@@ -41,11 +41,11 @@ export function ProgramHeader({
 	isUnenrolling,
 	isSubscriptionActive,
 	subscriptionEndDate: _subscriptionEndDate, // Change here: rename in destructuring
-	onEnroll,
-	onUnenroll,
+	onEnrollAction,
+	onUnenrollAction,
 	isCheckingEnrollment, // Add this to destructuring
 }: ProgramHeaderProps) {
-	const { user } = useUser();
+	const { user, isSignedIn } = useUser(); // Add isSignedIn
 
 	// Verificar plan Premium y fecha de vencimiento
 	const isPremium = user?.publicMetadata?.planType === 'Premium';
@@ -90,30 +90,42 @@ export function ProgramHeader({
 						placeholder="blur"
 						blurDataURL={blurDataURL}
 					/>
-					<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
-						<h1 className="text-3xl font-bold text-white">{program.title}</h1>
+					<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/50 to-transparent p-4 md:p-6">
+						<h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
+							{program.title}
+						</h1>
+						<div className="mt-2 hidden sm:block">
+							<Badge
+								variant="outline"
+								className="border-primary bg-background/80 text-primary backdrop-blur-sm hover:bg-black/70"
+							>
+								{getCategoryName(program)}
+							</Badge>
+						</div>
 					</div>
 				</AspectRatio>
 			</CardHeader>
 
-			<CardContent className="mx-6 space-y-4">
+			<CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
 				{/* Program metadata */}
-				<div className="flex flex-wrap items-center justify-between gap-4">
-					<div className="flex items-center space-x-4">
-						<Badge
-							variant="outline"
-							className="border-primary bg-background text-primary hover:bg-black/70"
-						>
-							{getCategoryName(program)}
-						</Badge>
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex flex-wrap items-center gap-2 sm:gap-4">
+						<div className="sm:hidden">
+							<Badge
+								variant="outline"
+								className="border-primary bg-background text-primary hover:bg-black/70"
+							>
+								{getCategoryName(program)}
+							</Badge>
+						</div>
 						<div className="flex items-center">
 							<FaCalendar className="mr-2 text-gray-600" />
-							<span className="text-sm text-gray-600">
+							<span className="text-xs text-gray-600 sm:text-sm">
 								Creado: {formatDate(program.createdAt)}
 							</span>
 						</div>
 					</div>
-					<div className="flex items-center space-x-6">
+					<div className="flex items-center justify-between gap-4 sm:gap-6">
 						<div className="flex items-center">
 							<FaUserGraduate className="mr-2 text-blue-600" />
 							<EnrollmentCount programId={parseInt(program.id)} />
@@ -122,14 +134,14 @@ export function ProgramHeader({
 							{Array.from({ length: 5 }).map((_, index) => (
 								<StarIcon
 									key={index}
-									className={`h-5 w-5 ${
+									className={`h-4 w-4 sm:h-5 sm:w-5 ${
 										index < Math.floor(program.rating ?? 0)
 											? 'text-yellow-400'
 											: 'text-gray-300'
 									}`}
 								/>
 							))}
-							<span className="ml-2 text-lg font-semibold text-yellow-400">
+							<span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
 								{program.rating?.toFixed(1) ?? '0.0'}
 							</span>
 						</div>
@@ -138,7 +150,7 @@ export function ProgramHeader({
 
 				{/* Program description */}
 				<div className="prose max-w-none">
-					<p className="leading-relaxed text-gray-700">
+					<p className="text-sm leading-relaxed text-gray-700 sm:text-base">
 						{program.description ?? 'No hay descripción disponible.'}
 					</p>
 				</div>
@@ -154,13 +166,16 @@ export function ProgramHeader({
 
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
-						{isCheckingEnrollment ? (
+						{!isSignedIn ? (
 							<Button
-								className="h-12 w-64 justify-center border-white/20 bg-gray-500 text-lg font-semibold text-white"
-								disabled={true}
+								onClick={onEnrollAction}
+								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95"
 							>
-								<Icons.spinner className="mr-2 animate-spin" />
-								Cargando...
+								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
+									<div className="relative z-10 flex items-center justify-center space-x-2">
+										<span>Iniciar sesión para inscribirse</span>
+									</div>
+								</span>
 							</Button>
 						) : isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
@@ -172,11 +187,11 @@ export function ProgramHeader({
 								</Button>
 								<Button
 									className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-									onClick={onUnenroll}
+									onClick={onUnenrollAction}
 									disabled={isUnenrolling}
 								>
 									{isUnenrolling ? (
-										<Icons.spinner className="animate-spin size-9 text-white" />
+										<Icons.spinner className="size-9 animate-spin text-white" />
 									) : (
 										'Cancelar Suscripción'
 									)}
@@ -184,24 +199,35 @@ export function ProgramHeader({
 							</div>
 						) : (
 							<Button
-								onClick={onEnroll}
-								disabled={isEnrolling || !canEnroll}
+								onClick={onEnrollAction}
+								disabled={isEnrolling || !canEnroll || isCheckingEnrollment}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
 								<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 									<div className="relative z-10 flex items-center justify-center space-x-2">
-										{isEnrolling ? (
-											<Icons.spinner
-												className="animate-spin text-white"
-												style={{ width: '25px', height: '25px' }}
-											/>
+										{isCheckingEnrollment ? (
+											<>
+												<Icons.spinner
+													className="animate-spin text-white"
+													style={{ width: '20px', height: '20px' }}
+												/>
+												<span>Cargando...</span>
+											</>
+										) : isEnrolling ? (
+											<>
+												<Icons.spinner
+													className="animate-spin text-white"
+													style={{ width: '25px', height: '25px' }}
+												/>
+												<span>Inscribiendo...</span>
+											</>
 										) : (
 											<>
 												<span className="transition-all duration-500 group-hover:translate-x-1">
 													{!canEnroll
 														? 'Requiere Plan Premium'
-														: 'Inscribirse al programa'}
+														: 'Inscribirse al Programa'}
 												</span>
 												<svg
 													className="size-6 transition-transform duration-500 group-hover:translate-x-1"

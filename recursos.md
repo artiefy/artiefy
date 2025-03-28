@@ -51,9 +51,28 @@ max-2xl @media (width < 96rem) { ... }
 
 Para mejorar el rendimiento de tu proyecto y limpiar archivos innecesarios, puedes seguir estos pasos:
 
-- `rm -rf node_modules package-lock.json .next o next/cache` // Remover carpetas cache
-- `npm cache clean --force` // Limpiar la caché de npm
-- `npm i` // Reinstalar las dependencias:
+chmod +x clean.sh //Dale permisos de ejecución (solo la primera vez)
+./clean.sh //Ejecutar el archivo de limpieza automatica
+
+- `rm -rf node_modules package-lock.json .next`
+- `npm cache clean --force`
+- `rm -rf .turbo`
+- `rm -rf next-env.d.ts`
+- `next clean`
+- `rm -rf tsconfig.tsbuildinfo`
+- `rm -rf .tsbuildinfo`
+- `rm -rf .eslintcache`
+
+---
+
+Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
+
+- `npm dedupe` //Reducir la duplicación en el árbol de paquetes
+- `npm doctor` //Comprueba el estado de tu entorno npm
+- `npm prune` //Eliminar paquetes extraños
+- `npm ci` //# Para CI/CD y despliegues
+- `npm cache verify` //
+- `npm install -g npm@11.2.0` //actualizar ultima version del npm
 
 ---
 
@@ -87,7 +106,7 @@ CORREO SOPORTE:
 Colores del manual de marca:
 
 ```css
-#3AF4EF #00BDD8 #01142B
+#3AF4EF #00BDD8 #01142B #2ecc71
 
 #01142B -background //variable de tailwindcss
 #3AF4EF -primary //variable de tailwindcss
@@ -158,17 +177,14 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 Tutorial Para analisar tus dependecias :
 
 1. `npm install -g depcheck`
-2. `depcheck --ignores="@types/*,next,react,react-dom,typescript,@clerk/nextjs,react-icons" --parsers="*.ts:typescript,*.tsx:typescript"`
+2. `npm install -g depcheck typescript`
+3. `depcheck --ignores="@types/*,next,react,react-dom,typescript,@clerk/nextjs,react-icons" --parsers="*.ts:typescript,*.tsx:typescript"`
 
 ---
 
--Pasareladepago18*
+Limpia la caché de VS Code:
 
+Borra los datos en:
+Windows: `C:\Users\TU_USUARIO\AppData\Roaming\Code`
 
-------
-PR Local
-
-ir a la rama main
-1. `git pull origin main`: Se trae los ultimos cambios de main,
-2. se vuelve a la rama propia
-3. `git merge main`: Se hace merge con main y luego se solucionan los conflictos
+---

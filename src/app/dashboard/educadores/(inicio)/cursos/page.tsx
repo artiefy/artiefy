@@ -141,7 +141,7 @@ export default function Page() {
 
 	// Función para crear o editar un curso "los datos vienen del modal"
 	const handleCreateOrEditCourse = async (
-		id: string,
+		_id: string,
 		title: string,
 		description: string,
 		file: File | null,

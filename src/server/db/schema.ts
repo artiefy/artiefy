@@ -13,8 +13,6 @@ import {
 	primaryKey,
 } from 'drizzle-orm/pg-core';
 
-
-// Tabla de usuarios (con soporte para Clerk)
 // Tabla de usuarios (con soporte para Clerk)
 export const users = pgTable(
 	'users',
@@ -96,7 +94,6 @@ export const courses = pgTable('courses', {
 	isActive: boolean('is_active').default(true), 
 
 });
-
 
 // Tabla de tipos de actividades
 export const typeActi = pgTable('type_acti', {
@@ -300,7 +297,6 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 	lastAttemptAt: timestamp('last_attempt_at'),
 });
 
-
 //Tabla de sistema de tickets
 export const tickets = pgTable('tickets', {
 	id: serial('id').primaryKey(),
@@ -348,8 +344,7 @@ export const materias = pgTable('materias', {
 	id: serial('id').primaryKey(),
 	title: varchar('title', { length: 255 }).notNull(),
 	description: text('description'),
-	programaId: integer('programa_id')
-		.references(() => programas.id),
+	programaId: integer('programa_id').references(() => programas.id),
 	courseid: integer('courseid').references(() => courses.id), // courseid can be null
 });
 
@@ -564,7 +559,6 @@ export const activitiesRelations = relations(activities, ({ one, many }) => ({
 	}),
 	userActivitiesProgress: many(userActivitiesProgress),
 }));
-
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
 	user: one(users, {

@@ -2,9 +2,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { BookOpenIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, StarIcon } from '@heroicons/react/24/outline';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 
+import { Badge } from '~/components/estudiantes/ui/badge';
 import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 import { getEnrolledPrograms } from '~/server/actions/estudiantes/programs/getEnrolledPrograms';
 
@@ -19,10 +20,15 @@ const getImageUrl = (coverImageKey: string | null): string => {
 	return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd();
 };
 
+// Update the Program interface
 interface Program {
 	id: number;
 	title: string;
 	coverImageKey: string | null;
+	category: {
+		name: string;
+	} | null;
+	rating: number;
 }
 
 export default async function MyCoursesStudent() {
@@ -93,24 +99,55 @@ export default async function MyCoursesStudent() {
 											/>
 										</div>
 									</div>
-									<CardContent className="flex w-full flex-col justify-between px-4 py-3">
-										<div>
-											<h3 className="text-lg font-bold text-primary">
-												{program.title}
-											</h3>
-										</div>
-										<Button asChild className="mt-4 w-fit shrink-0">
-											<Link
-												href={`/estudiantes/programa/${program.id}`}
-												className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
-											>
-												<p className="font-bold">Ver Programa</p>
-												<ArrowRightCircleIcon className="mr-1 size-4 animate-bounce-right" />
-												<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-													<div className="relative h-full w-10 bg-white/30" />
+									<CardContent className="flex w-full flex-col justify-between gap-2 px-4 pt-3 pb-2.5">
+										<div className="flex h-full flex-col justify-between">
+											<div className="flex items-start justify-between gap-2">
+												<h3 className="line-clamp-2 min-h-[1.5em] text-lg leading-normal font-bold [overflow-wrap:anywhere] text-primary">
+													{program.title}
+												</h3>
+												<div className="flex shrink-0 items-center">
+													{Array.from({ length: 5 }).map((_, index) => (
+														<StarIcon
+															key={index}
+															className={`h-4 w-4 ${
+																index < Math.floor(program.rating ?? 0)
+																	? 'text-yellow-400'
+																	: 'text-gray-300'
+															}`}
+														/>
+													))}
+													<span className="ml-2 text-sm font-semibold text-yellow-400">
+														{program.rating?.toFixed(1) ?? '0.0'}
+													</span>
 												</div>
-											</Link>
-										</Button>
+											</div>
+											<div
+												className="group flex flex-col gap-2 group-data-[long-title=true]:mb-2"
+												data-long-title={program.title.length > 50}
+											>
+												<Badge
+													variant="outline"
+													className="w-fit border-primary bg-background text-primary hover:bg-black/70"
+												>
+													{program.category?.name ?? 'Sin categoría'}
+												</Badge>
+												<Button
+													asChild
+													className="w-fit shrink-0 group-data-[long-title=true]:-mt-9 group-data-[long-title=true]:mb-2 group-data-[long-title=true]:ml-auto"
+												>
+													<Link
+														href={`/estudiantes/programas/${program.id}`}
+														className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
+													>
+														<p className="font-bold">Ver Programa</p>
+														<ArrowRightCircleIcon className="mr-1 size-4 animate-bounce-right" />
+														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+															<div className="relative h-full w-10 bg-white/30" />
+														</div>
+													</Link>
+												</Button>
+											</div>
+										</div>
 									</CardContent>
 								</div>
 							</Card>

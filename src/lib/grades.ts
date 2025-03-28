@@ -13,7 +13,6 @@ export function calculateWeightedGrade(
 }
 
 export async function calculateMateriaGrades(
-	userId: string,
 	materiaId: number
 ): Promise<number> {
 	const activities = await fetchActivitiesForMateria(materiaId);
@@ -55,7 +54,7 @@ export async function getStudentGradeReport(
 	const reports = await Promise.all(
 		materias.map(async (materia) => {
 			const activities = await fetchActivitiesForMateria(materia.id);
-			const grade = await calculateMateriaGrades(userId, materia.id);
+			const grade = await calculateMateriaGrades(materia.id);
 
 			return {
 				materiaId: materia.id,

@@ -21,12 +21,12 @@ interface StudenProgramProps {
 	program: Program;
 }
 
-export function StudenProgram({ program }: StudenProgramProps) {
+export function StudentProgram({ program }: StudenProgramProps) {
 	return (
-		<div className="group relative mx-3">
+		<div className="group relative m-2 sm:m-2">
 			<div className="absolute -inset-1.5 animate-gradient rounded-lg bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover:opacity-100" />
 			<Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white">
-				<CardHeader className="px-6">
+				<CardHeader className="-mb-2">
 					<div className="relative aspect-video overflow-hidden">
 						<Image
 							src={
@@ -45,55 +45,66 @@ export function StudenProgram({ program }: StudenProgramProps) {
 					</div>
 				</CardHeader>
 
-				<CardContent className="flex grow flex-col justify-between space-y-4 px-6">
-					<div>
-						<h3 className="mb-3 line-clamp-2 text-lg font-bold text-primary">
-							{program.title}
-						</h3>
-						<p className="line-clamp-2 text-sm text-gray-300">
-							{program.description}
-						</p>
+				<CardContent className="flex grow flex-col justify-between space-y-0.5 px-6 sm:space-y-4">
+					<div className="flex min-h-[90px] flex-col space-y-2 sm:min-h-[120px] sm:space-y-4">
+						<div>
+							<h3 className="line-clamp-2 text-xs font-bold text-primary sm:-mb-2 sm:text-lg">
+								{program.title}
+							</h3>
+						</div>
+						<div>
+							<p className="line-clamp-2 text-xs text-gray-300 sm:text-sm">
+								{program.description}
+							</p>
+						</div>
 					</div>
 
-					<div className="flex items-center justify-between">
+					<div className="-mt-2 flex items-center justify-between space-y-0 sm:-mt-4">
 						<div className="flex items-center space-x-4">
 							<Badge
 								variant="outline"
-								className="border-primary bg-background text-[9px] text-primary lg:text-sm"
+								className="border-primary bg-background text-xs sm:text-sm"
 							>
 								{program.category?.name ?? 'Sin categoría'}
 							</Badge>
 						</div>
 						<div className="flex items-center">
-							{Array.from({ length: 5 }).map((_, index) => (
-								<StarIcon
-									key={index}
-									className={`h-4 w-4 ${
-										index < Math.floor(program.rating ?? 0)
-											? 'text-yellow-400'
-											: 'text-gray-300'
-									}`}
-								/>
-							))}
-							<span className="ml-1 text-sm font-bold text-yellow-500">
+							<div className="hidden sm:flex">
+								{Array.from({ length: 5 }).map((_, index) => (
+									<StarIcon
+										key={index}
+										className={`h-4 w-4 ${
+											index < Math.floor(program.rating ?? 0)
+												? 'text-yellow-400'
+												: 'text-gray-300'
+										}`}
+									/>
+								))}
+							</div>
+							<div className="flex sm:hidden">
+								<StarIcon className="h-4 w-4 text-yellow-400" />
+							</div>
+							<span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
 								{program.rating?.toFixed(1) ?? '0.0'}
 							</span>
 						</div>
 					</div>
 				</CardContent>
 
-				<CardFooter className="px-6 pt-2">
-					<div className="flex w-full items-center justify-between space-x-4">
-						<div className="text-sm text-gray-400">
+				<CardFooter className="-mt-4 px-6 pt-1 sm:-mt-2 sm:px-6">
+					<div className="flex w-full flex-col items-center gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+						<div className="flex-shrink-0">
 							<EnrollmentCount programId={parseInt(program.id)} />
 						</div>
-						<Button asChild>
+						<Button asChild className="w-full flex-shrink-0 sm:w-auto">
 							<Link
 								href={`/estudiantes/programas/${program.id}`}
-								className="group/button relative inline-flex h-10 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95"
+								className="group/button relative inline-flex h-7 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-white active:scale-95 sm:h-10 sm:px-4"
 							>
-								<p className="font-bold">Ver Programa</p>
-								<ArrowRightCircleIcon className="size-5 animate-bounce-right" />
+								<p className="text-sm font-bold whitespace-nowrap sm:text-sm">
+									Ver Programa
+								</p>
+								<ArrowRightCircleIcon className="ml-1 size-4 animate-bounce-right sm:size-5" />
 								<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 									<div className="relative h-full w-10 bg-white/30" />
 								</div>

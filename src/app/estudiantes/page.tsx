@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import StudentDetails from '~/app/estudiantes/StudenDetails';
+import StudentDetails from '~/app/estudiantes/StudentDetails';
 import CategoriesCourse from '~/components/estudiantes/layout/CategoriesCourse';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';

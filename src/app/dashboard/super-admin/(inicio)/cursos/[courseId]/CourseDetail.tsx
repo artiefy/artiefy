@@ -135,10 +135,12 @@ const styles = `
   }
 `;
 
-// Add this after your imports:
-const styleSheet = document.createElement('style');
-styleSheet.textContent = styles;
-document.head.appendChild(styleSheet);
+// Replace the stylesheet append code
+if (typeof document !== 'undefined') {
+	const styleSheet = document.createElement('style');
+	styleSheet.textContent = styles;
+	document.head.appendChild(styleSheet);
+}
 
 // Replace the FullscreenLoader component with:
 const FullscreenLoader = () => {
@@ -181,11 +183,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		'from-orange-400 via-pink-500 to-red-500',
 	];
 
-	 
-	type BadgeGradientFunction = (index: number) => string;
+	type BadgeGradientFunction = () => string;
 
-	const getBadgeGradient: BadgeGradientFunction = (index) => {
-		return BADGE_GRADIENTS[index % BADGE_GRADIENTS.length];
+	const getBadgeGradient: BadgeGradientFunction = () => {
+		return BADGE_GRADIENTS[Math.floor(Math.random() * BADGE_GRADIENTS.length)];
 	};
 
 	const [isActive, setIsActive] = useState<boolean>(true);
@@ -287,14 +288,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Obtener el curso y los parámetros al cargar la página
 	useEffect(() => {
-		fetchCourse().catch((error) =>
-			console.error('Error fetching course:', error)
-		);
+		void fetchCourse();
 	}, [fetchCourse]);
 
 	// Add this useEffect after the existing useEffects
 	useEffect(() => {
-		void fetchEducators();
+		void fetchEducators(); // Use void operator to explicitly ignore the promise
 	}, []);
 
 	// Obtener el color seleccionado al cargar la página
@@ -307,7 +306,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Manejo de actualizar
 	const handleUpdateCourse = async (
-		id: string,
+		_id: string,
 		title: string,
 		description: string,
 		file: File | null,
@@ -315,7 +314,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		modalidadesid: number,
 		nivelid: number,
 		addParametros: boolean,
-		coverImageKey: string,
+		_coverImageKey: string,
 		fileName: string,
 		rating: number,
 		courseTypeId: number | null
@@ -491,7 +490,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	if (!course) return <div>No se encontró el curso.</div>;
 
 	// Función para manejar la eliminación del curso
-	const handleDelete = async (id: number) => {
+	const handleDelete = async () => {
+		if (!course) return;
 		try {
 			// Primero intentamos eliminar la imagen de S3
 			if (course.coverImageKey) {
@@ -511,12 +511,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			}
 
 			// Luego eliminamos el curso
-			const response = await fetch(`/api/educadores/courses?courseId=${id}`, {
-				method: 'DELETE',
-			});
+			const response = await fetch(
+				`/api/educadores/courses?courseId=${course.id}`,
+				{
+					method: 'DELETE',
+				}
+			);
 
 			if (!response.ok) {
-				throw new Error(`Error al eliminar el curso, con id: ${id}`);
+				throw new Error(`Error al eliminar el curso`);
 			}
 
 			toast('Curso eliminado', {
@@ -593,7 +596,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				});
 
 				setSelectedInstructor('');
-				setShowChangeButton(false);
 				toast.success('Instructor actualizado exitosamente');
 
 				// Refresh the course data
@@ -727,7 +729,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										<AlertDialogFooter>
 											<AlertDialogCancel>Cancelar</AlertDialogCancel>
 											<AlertDialogAction
-												onClick={() => handleDelete(course.id)}
+												onClick={() => handleDelete()}
 												className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
 											>
 												Eliminar
@@ -898,11 +900,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									<h3 className="text-lg font-semibold">Materias:</h3>
 									{materias.length > 0 ? (
 										<div className="flex flex-wrap gap-2">
-											{materias.map((materia, index) => (
+											{materias.map((materia) => (
 												<Badge
 													key={materia.id}
 													variant="secondary"
-													className={`bg-gradient-to-r ${getBadgeGradient(index)} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+													className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
 												>
 													{materia.title}
 												</Badge>

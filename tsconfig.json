@@ -1,46 +1,63 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "ESNext"],
-    "strict": true,
-    "allowJs": true,
-    "skipLibCheck": true,
-    "types": ["node"],
-    "noEmit": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    // Runtime options
     "target": "es2022",
-    "module": "ESNext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "module": "esnext",
     "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
+
+    // Type Checking
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    
+    // Module Resolution
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     },
-    "plugins": [{ "name": "next" }]
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "isolatedModules": true,
+
+    // Output options  
+    "noEmit": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./.tsbuildinfo",
+
+    // Advanced
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    // Actualizar types para incluir todas las dependencias necesarias
+    "types": [
+      "node",
+      "react",
+      "react-dom",
+      "next"
+    ]
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.js",
-    "**/*.jsx",
-    "**/*.json",
-    "**/*.cjs",
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    "eslint.config.mjs",
-    ".prettierrc.mjs",
-    "drizzle.config.ts"
+    "**/*",
+    ".*/**/*",
+    "./**/.*"
   ],
   "exclude": [
     "node_modules",
     ".next",
-    "dist",
     "build",
-    "coverage",
-    ".vercel",
-    ".git"
+    ".vercel"
   ]
 }

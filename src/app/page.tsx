@@ -110,7 +110,7 @@ export default function Home() {
 												<span className="inline-block skew-x-[15deg]">
 													COMIENZA YA
 												</span>
-												<FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
+												<FaArrowRight className="ml-2 inline-block skew-x-[15deg] animate-bounce-right transition-transform duration-500" />
 											</>
 										)}
 									</div>

@@ -58,8 +58,6 @@ export interface ProgramModel {
 	rating: number;
 }
 
-
-
 export type Program = Partial<ProgramModel>;
 
 // Add this interface near the top with other interfaces
@@ -89,7 +87,7 @@ export default function Page() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [categoryFilter, setCategoryFilter] = useState('');
 	const [totalPrograms, setTotalPrograms] = useState(0);
-	const [totalStudents, setTotalStudents] = useState(0);	
+	const [totalStudents, setTotalStudents] = useState(0);
 	// Update the state definition to use the new interface
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]);
@@ -179,7 +177,7 @@ export default function Page() {
 					body: JSON.stringify({
 						contentType: file.type,
 						fileSize: file.size,
-						fileName: file.name,
+						fileName: fileName || file.name, // Use provided fileName or fallback to file.name
 					}),
 				});
 
@@ -193,12 +191,10 @@ export default function Page() {
 					url: string;
 					fields: Record<string, string>;
 					key: string;
-					fileName: string;
 				};
 
-				const { url, fields, key, fileName: responseFileName } = uploadData;
+				const { url, fields, key } = uploadData;
 				coverImageKey = key;
-				fileName = responseFileName;
 
 				const formData = new FormData();
 				Object.entries(fields).forEach(([key, value]) => {
@@ -316,8 +312,6 @@ export default function Page() {
 		});
 		setIsModalOpen(true);
 	};
-
-	
 
 	const handleDeleteSelected = async () => {
 		try {

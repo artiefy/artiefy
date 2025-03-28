@@ -2,9 +2,7 @@
 import { useState, useEffect } from 'react';
 
 import { Button } from '~/components/estudiantes/ui/button';
-import {
-	setRoleWrapper,
-} from '~/server/wrappers/serverWrappers';
+import { setRoleWrapper } from '~/server/wrappers/serverWrappers';
 
 interface User {
 	id: string;
@@ -23,7 +21,7 @@ export default function RolesPage() {
 		async function fetchUsers() {
 			try {
 				const res = await fetch('/api/users'); // 🔥 Conectar con API real
-				const data: User[] = await res.json() as User[];
+				const data: User[] = (await res.json()) as User[];
 				setUsers(data);
 			} catch {
 				setError('Error al cargar los usuarios');

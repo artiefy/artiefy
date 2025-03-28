@@ -1,17 +1,15 @@
 'use client';
 
-import React from 'react';
-
 interface ModalErrorProps {
 	isOpen: boolean;
-	onClose: () => void;
+	closeAction: () => void;
 	onCloseAction: () => void;
 	message?: string;
 }
 
 export const ModalError: React.FC<ModalErrorProps> = ({
 	isOpen,
-	onClose,
+	closeAction,
 	onCloseAction,
 	message = 'Ha ocurrido un error inesperado.',
 }) => {
@@ -25,7 +23,7 @@ export const ModalError: React.FC<ModalErrorProps> = ({
 				<div className="mt-6 flex justify-end space-x-4">
 					<button
 						className="rounded-md bg-gray-300 px-4 py-2"
-						onClick={onClose}
+						onClick={closeAction}
 					>
 						Cerrar
 					</button>

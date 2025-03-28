@@ -49,7 +49,7 @@ export function ProgramContent({
 	isCheckingEnrollment, // Add this to destructuring
 }: ProgramContentProps) {
 	const router = useRouter();
-	const { userId } = useAuth();
+	const { userId, isSignedIn } = useAuth(); // Add isSignedIn
 	const [courseEnrollments, setCourseEnrollments] = useState<
 		Record<number, boolean>
 	>({});
@@ -126,6 +126,15 @@ export function ProgramContent({
 		void checkCourseEnrollments();
 	}, [userId, courses]);
 
+	// Actualizar el handleCourseClick para simplificarlo y evitar el parámetro no utilizado
+	const handleCourseClick = (e: React.MouseEvent) => {
+		if (!isSignedIn) {
+			e.preventDefault();
+			const currentPath = window.location.pathname;
+			void router.push(`/sign-in?redirect_url=${currentPath}`);
+		}
+	};
+
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
 			{isEnrolled && !isSubscriptionActive && (
@@ -158,11 +167,9 @@ export function ProgramContent({
 				</Alert>
 			)}
 
-			<div className="mb-6 flex items-center justify-between">
-				<h2 className="text-2xl font-bold text-background">
-					Cursos Del Programa
-				</h2>
-				<div className="flex flex-col items-end gap-2">
+			<div className="mb-6">
+				{/* Subscription Status Section */}
+				<div className="mb-4 flex flex-col items-center justify-center space-y-2 text-center">
 					{isSubscriptionActive && (
 						<div className="flex items-center gap-2 text-green-500">
 							<FaCheck className="size-4" />
@@ -174,6 +181,10 @@ export function ProgramContent({
 							Finaliza: {formatDate(subscriptionEndDate)}
 						</p>
 					)}
+
+					<h2 className="text-2xl font-bold text-background">
+						Cursos Del Programa
+					</h2>
 				</div>
 			</div>
 
@@ -255,50 +266,50 @@ export function ProgramContent({
 										</div>
 									</div>
 									<div className="mt-2 w-full">
-										{isCheckingEnrollment ? (
-											<Button
-												asChild
-												disabled
-												className="group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary"
-											>
-												<Link href="#" className="flex items-center">
+										{isCheckingEnrollment && isSignedIn ? (
+											<Link href="#" className="flex items-center">
+												<Button
+													disabled
+													className="group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary"
+												>
 													<Icons.spinner className="mr-2 size-4 animate-spin" />
 													<span className="font-bold">Cargando...</span>
-												</Link>
-											</Button>
+												</Button>
+											</Link>
 										) : (
-											<Button
-												asChild
-												disabled={!isEnrolled || !course.isActive}
-												className={`w-full ${
-													!isEnrolled || !course.isActive
-														? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
-														: ''
-												}`}
+											<Link
+												href={
+													course.isActive
+														? `/estudiantes/cursos/${course.id}`
+														: '#'
+												}
+												onClick={(e) => !isSignedIn && handleCourseClick(e)}
+												className="block w-full"
 											>
-												<Link
-													href={
-														isEnrolled && course.isActive
-															? `/estudiantes/cursos/${course.id}`
-															: '#'
-													}
-													className={`group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 ${
-														!course.isActive || !isEnrolled
+												<Button
+													disabled={!course.isActive || isCheckingEnrollment}
+													className={`w-full ${
+														!course.isActive
+															? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
+															: ''
+													} group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
+														!course.isActive
 															? 'pointer-events-none bg-gray-600 text-gray-400'
 															: 'bg-background text-primary active:scale-95'
 													}`}
-													onClick={(e) => !isEnrolled && e.preventDefault()}
 												>
 													<span className="font-bold">
 														{!course.isActive
 															? 'No Disponible'
-															: !isEnrolled
-																? 'Requiere Inscripción'
-																: courseEnrollments[course.id]
-																	? 'Continuar Curso'
-																	: 'Ver Curso'}
+															: !isSignedIn
+																? 'Iniciar Sesión'
+																: !isEnrolled
+																	? 'Requiere Inscripción'
+																	: courseEnrollments[course.id]
+																		? 'Continuar Curso'
+																		: 'Ver Curso'}
 													</span>
-													{course.isActive && isEnrolled && (
+													{course.isActive && (
 														<>
 															<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
 															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
@@ -306,8 +317,8 @@ export function ProgramContent({
 															</div>
 														</>
 													)}
-												</Link>
-											</Button>
+												</Button>
+											</Link>
 										)}
 									</div>
 								</CardContent>

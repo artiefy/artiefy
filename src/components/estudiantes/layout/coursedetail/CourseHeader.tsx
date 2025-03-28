@@ -95,7 +95,7 @@ export function CourseHeader({
 	subscriptionEndDate,
 	onEnrollAction,
 	onUnenrollAction,
-}: Omit<CourseHeaderProps, 'props'>) {
+}: CourseHeaderProps) {
 	const { user } = useUser();
 	const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
 	const [isLoadingGrade, setIsLoadingGrade] = useState(true);
@@ -237,6 +237,22 @@ export function CourseHeader({
 		);
 	};
 
+	const handleEnrollClick = async () => {
+		if (
+			course.courseType?.requiredSubscriptionLevel !== 'none' &&
+			!isSubscriptionActive
+		) {
+			window.open('/planes', '_blank', 'noopener,noreferrer');
+			return;
+		}
+
+		try {
+			await onEnrollAction();
+		} catch (error) {
+			console.error('Error enrolling:', error);
+		}
+	};
+
 	return (
 		<Card className="overflow-hidden p-0">
 			<CardHeader className="px-0">
@@ -255,25 +271,53 @@ export function CourseHeader({
 						placeholder="blur"
 						blurDataURL={blurDataURL}
 					/>
-					<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
-						<h1 className="text-3xl font-bold text-white">{course.title}</h1>
+					<div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/50 to-transparent p-4 md:p-6">
+						<h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
+							{course.title}
+						</h1>
+						<div className="mt-2 hidden sm:block">
+							<Badge
+								variant="outline"
+								className="border-primary bg-background/80 text-primary backdrop-blur-sm hover:bg-black/70"
+							>
+								{course.category?.name}
+							</Badge>
+						</div>
 					</div>
 				</AspectRatio>
 			</CardHeader>
 
-			<CardContent className="mx-6 space-y-4">
-				{/* Instructor info and stats */}
-				<div className="flex flex-wrap items-center justify-between gap-4">
-					<div>
-						<h3 className="text-lg font-extrabold text-background">
-							{course.instructor}
-						</h3>
-						<em className="font-bold text-gray-600">Educador</em>
+			<CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
+				{/* Course metadata */}
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div className="flex flex-wrap items-center gap-2 sm:gap-4">
+						<div className="sm:hidden">
+							<Badge
+								variant="outline"
+								className="border-primary bg-background text-primary hover:bg-black/70"
+							>
+								{course.category?.name}
+							</Badge>
+						</div>
+						<div className="flex flex-wrap items-center gap-2 sm:gap-4">
+							<div className="flex items-center">
+								<FaCalendar className="mr-2 text-gray-600" />
+								<span className="text-xs text-gray-600 sm:text-sm">
+									Creado: {formatDateString(course.createdAt)}
+								</span>
+							</div>
+							<div className="flex items-center">
+								<FaClock className="mr-2 text-gray-600" />
+								<span className="text-xs text-gray-600 sm:text-sm">
+									Actualizado: {formatDateString(course.updatedAt)}
+								</span>
+							</div>
+						</div>
 					</div>
-					<div className="flex items-center space-x-6">
+					<div className="flex items-center justify-between gap-4 sm:gap-6">
 						<div className="flex items-center">
 							<FaUserGraduate className="mr-2 text-blue-600" />
-							<span className="text-background">
+							<span className="text-sm text-gray-600 sm:text-base">
 								{totalStudents} Estudiantes
 							</span>
 						</div>
@@ -281,69 +325,65 @@ export function CourseHeader({
 							{Array.from({ length: 5 }).map((_, index) => (
 								<StarIcon
 									key={index}
-									className={`size-5 ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
+									className={`h-4 w-4 sm:h-5 sm:w-5 ${
+										index < Math.floor(course.rating ?? 0)
+											? 'text-yellow-400'
+											: 'text-gray-300'
+									}`}
 								/>
 							))}
-							<span className="ml-2 text-lg font-semibold text-yellow-400">
+							<span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
 								{course.rating?.toFixed(1)}
 							</span>
 						</div>
 					</div>
 				</div>
 
-				{/* Course metadata - Modificar esta sección */}
-				<div className="flex flex-wrap items-center justify-between gap-4">
-					<div className="flex items-center space-x-4">
-						<Badge
-							variant="outline"
-							className="border-primary bg-background text-primary hover:bg-black/70"
-						>
-							{course.category?.name}
-						</Badge>
-						{getCourseTypeLabel()} {/* Add the course type label here */}
-						<div className="flex items-center">
-							<FaCalendar className="mr-2 text-gray-600" />
-							<span className="text-sm text-gray-600">
-								Creado: {formatDateString(course.createdAt)}
-							</span>
-						</div>
-						<div className="flex items-center">
-							<FaClock className="mr-2 text-gray-600" />
-							<span className="text-sm text-gray-600">
-								Última actualización: {formatDateString(course.updatedAt)}
-							</span>
-						</div>
+				{/* Course type and instructor info */}
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<h3 className="text-base font-extrabold text-background sm:text-lg">
+							{course.instructor}
+						</h3>
+						<em className="text-sm font-bold text-gray-600 sm:text-base">
+							Educador
+						</em>
 					</div>
-					<Badge className="bg-red-500 text-white hover:bg-red-700">
-						{course.modalidad?.name}
-					</Badge>
+					<div className="flex items-center gap-2">
+						{getCourseTypeLabel()}
+						<Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
+							{course.modalidad?.name}
+						</Badge>
+					</div>
 				</div>
 
-				{/* Course description y Mis Calificaciones button */}
-				<div className="flex items-start justify-between gap-4">
+				{/* Course description y botones responsivos */}
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div className="prose flex-1">
-						<p className="leading-relaxed text-gray-700">
+						<p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-gray-700 sm:text-base">
 							{course.description ?? 'No hay descripción disponible.'}
 						</p>
 					</div>
-					<Button
-						onClick={() => setIsGradeModalOpen(true)}
-						disabled={!canAccessGrades}
-						className={cn(
-							'h-9 shrink-0 px-4 font-semibold',
-							canAccessGrades
-								? 'bg-blue-500 text-white hover:bg-blue-600'
-								: 'bg-gray-400/50 text-gray-700'
-						)}
-						aria-label={
-							!isEnrolled
-								? 'Debes inscribirte al curso'
-								: 'Completa todas las clases para ver tus calificaciones'
-						}
-					>
-						<FaTrophy className="mr-2 h-4 w-4" />
-						<span className="text-sm font-semibold">Mis Calificaciones</span>
-					</Button>
+					<div className="flex-shrink-0">
+						<Button
+							onClick={() => setIsGradeModalOpen(true)}
+							disabled={!canAccessGrades}
+							className={cn(
+								'h-9 w-full shrink-0 px-4 font-semibold sm:w-auto',
+								canAccessGrades
+									? 'bg-blue-500 text-white hover:bg-blue-600'
+									: 'bg-gray-400/50 text-gray-700'
+							)}
+							aria-label={
+								!isEnrolled
+									? 'Debes inscribirte al curso'
+									: 'Completa todas las clases para ver tus calificaciones'
+							}
+						>
+							<FaTrophy className="mr-2 h-4 w-4" />
+							<span className="text-sm font-semibold">Mis Calificaciones</span>
+						</Button>
+					</div>
 				</div>
 
 				{/* Botón de certificado con texto descriptivo */}
@@ -392,7 +432,7 @@ export function CourseHeader({
 							<Badge
 								key={materia.id}
 								variant="secondary"
-								className={`bg-gradient-to-r ${getBadgeGradient(index)} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+								className={`whitespace-normal break-words bg-gradient-to-r ${getBadgeGradient(index)} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg max-w-[200px] sm:max-w-none`}
 							>
 								{materia.title}
 							</Badge>
@@ -436,7 +476,7 @@ export function CourseHeader({
 							</div>
 						) : (
 							<Button
-								onClick={onEnrollAction} // Use onEnroll directly from props
+								onClick={handleEnrollClick}
 								disabled={isEnrolling}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
@@ -453,22 +493,10 @@ export function CourseHeader({
 													{course.courseType?.requiredSubscriptionLevel ===
 													'none'
 														? 'Inscribirse Gratis'
-														: 'Inscribirse al Curso'}
+														: !isSubscriptionActive
+															? 'Obtener Suscripción'
+															: 'Inscribirse al Curso'}
 												</span>
-												<svg
-													className="size-6 transition-transform duration-500 group-hover:translate-x-1"
-													data-slot="icon"
-													aria-hidden="true"
-													fill="currentColor"
-													viewBox="0 0 20 20"
-													xmlns="http://www.w3.org/2000/svg"
-												>
-													<path
-														clipRule="evenodd"
-														d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z"
-														fillRule="evenodd"
-													/>
-												</svg>
 											</>
 										)}
 									</div>

@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, createElement } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
+import Script from 'next/script';
 
 import { useAuth } from '@clerk/nextjs';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimesCircle, FaTimes } from 'react-icons/fa';
+import { type WithContext, type Product } from 'schema-dts';
 import { toast } from 'sonner';
 
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -16,6 +18,45 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { plansPersonas, plansEmpresas, type Plan } from '~/types/plans';
 import '~/styles/buttonPlanes.css';
 import { getProductById } from '~/utils/paygateway/products';
+
+const plansJsonLd: WithContext<Product> = {
+	'@context': 'https://schema.org',
+	'@type': 'Product',
+	'@id': 'https://artiefy.com/planes#product',
+	name: 'Planes de Suscripción Artiefy',
+	description:
+		'Planes de suscripción para acceder a cursos y programas en Artiefy',
+	offers: {
+		'@type': 'AggregateOffer',
+		priceCurrency: 'COP',
+		lowPrice: '100000',
+		highPrice: '200000',
+		offerCount: '3',
+		offers: [
+			{
+				'@type': 'Offer',
+				name: 'Plan Pro',
+				price: '100000',
+				priceCurrency: 'COP',
+				availability: 'https://schema.org/InStock',
+			},
+			{
+				'@type': 'Offer',
+				name: 'Plan Premium',
+				price: '150000',
+				priceCurrency: 'COP',
+				availability: 'https://schema.org/InStock',
+			},
+			{
+				'@type': 'Offer',
+				name: 'Plan Enterprise',
+				price: '200000',
+				priceCurrency: 'COP',
+				availability: 'https://schema.org/InStock',
+			},
+		],
+	},
+};
 
 const PlansPage: React.FC = () => {
 	const { isSignedIn } = useAuth();
@@ -62,15 +103,20 @@ const PlansPage: React.FC = () => {
 	const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
 
 	return (
-		<div className="bg-background min-h-screen">
+		<div className="min-h-screen bg-background">
 			<Header />
+			<Script
+				id="plans-jsonld"
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: JSON.stringify(plansJsonLd) }}
+			/>
 			<div className="mb-12 px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-7xl">
 					<div className="text-center">
 						<h2 className="text-3xl font-extrabold text-white sm:text-4xl">
 							Planes Artiefy
 						</h2>
-						<p className="text-primary mt-4 text-xl">
+						<p className="mt-4 text-xl text-primary">
 							Elige el plan perfecto para tu viaje de aprendizaje
 						</p>
 					</div>
@@ -114,7 +160,7 @@ const PlansPage: React.FC = () => {
 												<h3 className="text-2xl font-bold text-background">
 													{plan.name}
 												</h3>
-												{React.createElement(
+												{createElement(
 													plan.icon as React.ComponentType<{
 														className: string;
 													}>,

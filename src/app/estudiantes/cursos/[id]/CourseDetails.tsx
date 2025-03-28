@@ -220,10 +220,24 @@ export default function CourseDetails({
 		setIsEnrolled(enrolled);
 	};
 
+	// Modificar cómo obtenemos la información del programa
+	const programInfo =
+		course.materias?.find((m) => m.programa)?.programa ?? null;
+
 	return (
 		<div className="min-h-screen bg-background">
 			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
-				<CourseBreadcrumb title={course.title} />
+				<CourseBreadcrumb
+					title={course.title}
+					programInfo={
+						programInfo
+							? {
+									id: programInfo.id.toString(),
+									title: programInfo.title,
+								}
+							: null
+					}
+				/>
 				<CourseHeader
 					course={course}
 					totalStudents={totalStudents}
@@ -240,16 +254,12 @@ export default function CourseDetails({
 				/>
 
 				<div className="mt-8 space-y-8">
-					{isEnrolled && (
-						<>
-							<CourseComments
-								courseId={course.id}
-								isEnrolled={isEnrolled}
-								onEnrollmentChange={handleEnrollmentChange}
-							/>
-							<CourseChatbot isEnrolled={isEnrolled} />
-						</>
-					)}
+					<CourseComments
+						courseId={course.id}
+						isEnrolled={isEnrolled}
+						onEnrollmentChange={handleEnrollmentChange}
+					/>
+					{isEnrolled && <CourseChatbot isEnrolled={isEnrolled} />}
 				</div>
 			</main>
 		</div>

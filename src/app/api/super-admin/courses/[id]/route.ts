@@ -11,7 +11,7 @@ import {
 } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 export async function GET(
-	request: Request,
+	_request: Request,
 	{ params }: { params: { id: string } } // ❌ No es una promesa, accede directamente
 ) {
 	try {
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
 
 
 export async function DELETE(
-	request: Request,
+	_request: Request,
 	{ params }: { params: { id: string } } // ✅ Obtén el ID desde params
 ) {
 	try {
