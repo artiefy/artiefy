@@ -211,6 +211,7 @@ export default function Page() {
 			const errorMessage = e instanceof Error ? e.message : 'Unknown error';
 			throw new Error(`Error to upload the file type ${errorMessage}`);
 		}
+		
 		const response = await fetch('/api/educadores/courses', {
 			method: 'POST', // Asegúrate de usar 'POST' cuando no estás editando
 			headers: { 'Content-Type': 'application/json' },

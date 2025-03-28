@@ -10,8 +10,6 @@ import {
 	enrollments,
 	nivel as nivel,
 } from '~/server/db/schema';
-import { clerkClient } from '@clerk/nextjs/server';
-
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
 import { deleteLessonsByCourseId } from './lessonsModels';
