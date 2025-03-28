@@ -72,19 +72,18 @@ export async function enrollInProgram(
 		// Verify subscription status from Clerk metadata
 		const subscriptionStatus = user.publicMetadata?.subscriptionStatus;
 		const planType = user.publicMetadata?.planType;
-		const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as
-			| string
-			| null;
+		const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as string | null;
 
-		const isSubscriptionValid =
-			subscriptionStatus === 'active' &&
-			planType === 'Premium' &&
+		const isSubscriptionValid = subscriptionStatus === 'active' &&
+			planType === 'Premium' && // Only Premium plans can enroll in programs
 			(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
 
 		if (!isSubscriptionValid) {
 			return {
 				success: false,
-				message: 'Se requiere una suscripción premium activa',
+				message: planType === 'Pro' 
+					? 'Los programas requieren una suscripción Premium. Actualiza tu plan para acceder.'
+					: 'Se requiere una suscripción premium activa',
 			};
 		}
 

@@ -307,9 +307,13 @@ export interface MateriaWithCourse {
 	id: number;
 	title: string;
 	description: string | null;
-	programaId: number | null; // Allow null here
+	programaId: number | null;
+	programa?: {
+		id: number;
+		title: string;
+	};
 	courseid: number | null;
-	curso?: BaseCourse; // Simplified this type
+	curso?: BaseCourse;
 }
 
 export type UserWithEnrollments = User & { enrollments: Enrollment[] };

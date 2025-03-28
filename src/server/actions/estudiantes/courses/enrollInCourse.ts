@@ -111,25 +111,31 @@ export async function enrollInCourse(
 			};
 		}
 
-		// Verificar suscripción para cursos premium/pro
-		if (subscriptionLevel !== 'none') {
-			const userSubscriptionStatus = await db.query.users.findFirst({
-				where: eq(users.id, userId),
-			});
+			// Verify subscription level requirements
+		const userPlanType = user.publicMetadata?.planType as string;
+		const courseRequiredLevel = course.courseType?.requiredSubscriptionLevel;
 
-			if (
-				!userSubscriptionStatus?.subscriptionStatus ||
-				userSubscriptionStatus.subscriptionStatus !== 'active' ||
-				(userSubscriptionStatus.subscriptionEndDate &&
-					new Date(userSubscriptionStatus.subscriptionEndDate) <= new Date())
-			) {
-				return {
-					success: false,
-					message:
-						'Se requiere una suscripción activa para acceder a este curso',
-					requiresSubscription: true,
-				};
-			}
+		if (courseRequiredLevel === 'premium' && userPlanType === 'Pro') {
+			return {
+				success: false,
+				message: 'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
+				requiresSubscription: true
+			};
+		}
+		
+		const subscriptionStatus = user.publicMetadata?.subscriptionStatus;
+		const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as string | null;
+
+		const isSubscriptionValid =
+			subscriptionStatus === 'active' &&
+			(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+
+		if (courseRequiredLevel !== 'none' && !isSubscriptionValid) {
+			return {
+				success: false,
+				message: 'Se requiere una suscripción activa',
+				requiresSubscription: true
+			};
 		}
 
 		// Crear inscripción y configurar lecciones

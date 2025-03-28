@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
@@ -17,6 +18,7 @@ import {
 	FaStar,
 } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
+import { toast } from 'sonner';
 import useSWR from 'swr';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -31,6 +33,7 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { cn } from '~/lib/utils';
 import { formatDate, type GradesApiResponse } from '~/lib/utils2';
+import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
 
 import { CourseContent } from './CourseContent';
 import { GradeModal } from './CourseGradeModal';
@@ -97,6 +100,7 @@ export function CourseHeader({
 	onUnenrollAction,
 }: CourseHeaderProps) {
 	const { user, isSignedIn } = useUser(); // Add isSignedIn here
+	const router = useRouter();
 	const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
 	const [isLoadingGrade, setIsLoadingGrade] = useState(true);
 
@@ -179,6 +183,39 @@ export function CourseHeader({
 		});
 	}, [isEnrolled, course.progress, currentFinalGrade]);
 
+	// Add new effect to check program enrollment
+	useEffect(() => {
+		const checkProgramEnrollment = async () => {
+			const programMateria = course.materias?.find(
+				(materia) => materia.programaId !== null
+			);
+
+			if (programMateria?.programaId && user?.id && !isEnrolled) {
+				try {
+					const isProgramEnrolled = await isUserEnrolledInProgram(
+						programMateria.programaId,
+						user.id
+					);
+
+					if (!isProgramEnrolled) {
+						toast.warning(
+							'Este curso requiere inscripción al programa',
+							{
+								description: `Debes estar inscrito en el programa "${programMateria.programa?.title}" para acceder a este curso.`,
+							}
+						);
+						router.push(`/estudiantes/programas/${programMateria.programaId}`);
+					}
+				} catch (error) {
+					const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+					console.error('Error checking program enrollment:', errorMessage);
+				}
+			}
+		};
+
+		void checkProgramEnrollment();
+	}, [course.materias, user?.id, isEnrolled, router]);
+
 	// Helper function to format dates
 	const formatDateString = (date: string | number | Date): string => {
 		return formatDate(new Date(date));
@@ -238,14 +275,39 @@ export function CourseHeader({
 	};
 
 	const handleEnrollClick = async () => {
-		if (
-			course.courseType?.requiredSubscriptionLevel !== 'none' &&
-			!isSubscriptionActive
-		) {
+		const userPlanType = user?.publicMetadata?.planType as string;
+		const isPremiumCourse = course.courseType?.requiredSubscriptionLevel === 'premium';
+		const programMateria = course.materias?.find(materia => materia.programaId !== null);
+	  
+		// First check: If Pro user trying to access Premium course
+		if (userPlanType === 'Pro' && isPremiumCourse) {
+			toast.error('Acceso Restringido', {
+				description: 'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
+			});
 			window.open('/planes', '_blank', 'noopener,noreferrer');
 			return;
 		}
-
+	  
+		// Second check: If Premium user but needs program enrollment
+		if (programMateria?.programaId && isSubscriptionActive) {
+			try {
+				const isProgramEnrolled = await isUserEnrolledInProgram(programMateria.programaId, user?.id ?? '');
+				
+				if (!isProgramEnrolled) {
+					router.push(`/estudiantes/programas/${programMateria.programaId}`);
+					return;
+				}
+			} catch (error) {
+				console.error('Error checking program enrollment:', error);
+			}
+		}
+	  
+		// Regular subscription check
+		if (course.courseType?.requiredSubscriptionLevel !== 'none' && !isSubscriptionActive) {
+			window.open('/planes', '_blank', 'noopener,noreferrer');
+			return;
+		}
+	  
 		try {
 			await onEnrollAction();
 		} catch (error) {
@@ -438,7 +500,7 @@ export function CourseHeader({
 					isEnrolled={isEnrolled}
 					isSubscriptionActive={isSubscriptionActive}
 					subscriptionEndDate={subscriptionEndDate}
-					isSignedIn={isSignedIn} // Pass isSignedIn to CourseContent
+					isSignedIn={!!isSignedIn} // Convert to boolean with !! operator
 				/>
 
 				{/* Enrollment buttons - Simplificado sin skeleton */}

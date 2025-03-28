@@ -127,12 +127,21 @@ export function ProgramContent({
 	}, [userId, courses]);
 
 	// Actualizar el handleCourseClick para simplificarlo y evitar el parámetro no utilizado
-	const handleCourseClick = (e: React.MouseEvent) => {
+	const handleCourseClick = (e: React.MouseEvent, courseId: number, isActive: boolean) => {
+		e.preventDefault();
+
+		if (!isActive) {
+			return;
+		}
+
 		if (!isSignedIn) {
-			e.preventDefault();
 			const currentPath = window.location.pathname;
 			void router.push(`/sign-in?redirect_url=${currentPath}`);
+			return;
 		}
+
+		// Navigate to course
+		void router.push(`/estudiantes/cursos/${courseId}`);
 	};
 
 	return (
@@ -279,46 +288,46 @@ export function ProgramContent({
 											</Link>
 										) : (
 											<Link
-												href={
-													course.isActive
-														? `/estudiantes/cursos/${course.id}`
-														: '#'
-												}
-												onClick={(e) => !isSignedIn && handleCourseClick(e)}
+												href={`/estudiantes/cursos/${course.id}`}
+												onClick={(e) => handleCourseClick(e, course.id, course.isActive)}
 												className="block w-full"
 											>
 												<Button
-													disabled={!course.isActive || isCheckingEnrollment}
-													className={`w-full ${
-														!course.isActive
-															? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
-															: ''
-													} group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
-														!course.isActive
-															? 'pointer-events-none bg-gray-600 text-gray-400'
-															: 'bg-background text-primary active:scale-95'
-													}`}
-												>
-													<span className="font-bold">
-														{!course.isActive
-															? 'No Disponible'
-															: !isSignedIn
-																? 'Iniciar Sesión'
-																: !isEnrolled
-																	? 'Requiere Inscripción'
-																	: courseEnrollments[course.id]
-																		? 'Continuar Curso'
-																		: 'Ver Curso'}
-													</span>
-													{course.isActive && (
-														<>
-															<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
-															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-																<div className="relative h-full w-10 bg-white/30" />
-															</div>
-														</>
-													)}
-												</Button>
+														disabled={
+															!course.isActive || 
+															isCheckingEnrollment || 
+															(!isSignedIn || !isEnrolled) // Add this condition
+														}
+														className={`w-full ${
+															!course.isActive || (!isSignedIn || !isEnrolled)
+																? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
+																: ''
+														} group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
+															!course.isActive || (!isSignedIn || !isEnrolled)
+																? 'pointer-events-none bg-gray-600 text-gray-400'
+																: 'bg-background text-primary active:scale-95'
+														}`}
+													>
+														<span className="font-bold">
+															{!course.isActive
+																? 'No Disponible'
+																: !isSignedIn
+																	? 'Iniciar Sesión'
+																	: !isEnrolled
+																		? 'Requiere Inscripción'
+																		: courseEnrollments[course.id]
+																			? 'Continuar Curso'
+																			: 'Ver Curso'}
+														</span>
+														{course.isActive && (
+															<>
+																<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
+																<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+																	<div className="relative h-full w-10 bg-white/30" />
+																</div>
+															</>
+														)}
+													</Button>
 											</Link>
 										)}
 									</div>
