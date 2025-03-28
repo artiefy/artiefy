@@ -1,7 +1,7 @@
 // src/app/api/getFiles/route.ts
 import { NextResponse } from 'next/server';
 
-import { S3 } from 'aws-sdk';
+import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { Pool } from 'pg';
 
 // Configura tu conexión a la base de datos
@@ -15,9 +15,11 @@ pool.on('error', (err) => {
 });
 
 // Configura tu conexión a S3
-const s3 = new S3({
-	accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-	secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+const s3Client = new S3Client({
+	credentials: {
+		accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+	},
 	region: process.env.AWS_REGION,
 });
 
@@ -63,7 +65,7 @@ export async function GET(req: Request) {
 						Key: key,
 					};
 					try {
-						const headData = await s3.headObject(params).promise();
+						const headData = await s3Client.send(new HeadObjectCommand(params));
 						return { key, fileName: headData.Metadata?.filename ?? key }; // Regresamos clave y nombre
 					} catch (err) {
 						console.error(
