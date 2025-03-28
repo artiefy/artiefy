@@ -13,23 +13,23 @@ const eslintConfig = [
 	// 🔹 Ignorar archivos innecesarios
 	{
 		ignores: [
-			'/node_modules/',
-			'.next/',
-			'out/',
-			'public/',
-			'dist/',
-			'/*.d.ts',
-			'.vercel/',
-			'src/components/estudiantes/ui/',
-			'src/components/educadores/ui/',
-			'src/components/admin/ui/',
-			'src/components/super-admin/ui/',
+			'**/node_modules/**',
+			'.next/**',
+			'out/**',
+			'public/**',
+			'dist/**',
+			'**/*.d.ts',
+			'.vercel/**',
+			'src/components/estudiantes/ui/**',
+			'src/components/educadores/ui/**',
+			'src/components/admin/ui/**',
+			'src/components/super-admin/ui/**',
 		],
 	},
 
 	// 🔹 Configuración para archivos JS/TS
 	{
-		files: ['/*.{js,jsx,mjs,cjs,ts,tsx}'],
+		files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
 		languageOptions: {
 			ecmaVersion: 2022,
 			sourceType: 'module',
@@ -84,7 +84,7 @@ const eslintConfig = [
 			'prettier',
 		],
 		rules: {
-			// ⚠ *Advertencias de Código*
+			// ⚠️ **Advertencias de Código**
 			'no-console': 'off',
 			'no-unused-vars': 'off',
 			'@typescript-eslint/no-unused-vars': [
@@ -111,7 +111,7 @@ const eslintConfig = [
 			],
 			'@typescript-eslint/no-floating-promises': 'warn',
 
-			// 🚨 *Errores Críticos*
+			// 🚨 **Errores Críticos**
 			'@typescript-eslint/no-unsafe-assignment': 'error',
 			'@typescript-eslint/no-unsafe-call': 'error',
 			'@typescript-eslint/no-unsafe-member-access': 'error',
@@ -120,7 +120,7 @@ const eslintConfig = [
 			'no-unused-expressions': 'error',
 			'no-duplicate-imports': 'error',
 
-			// 🔹 *Next.js y React*
+			// 🔹 **Next.js y React**
 			'react/react-in-jsx-scope': 'off',
 			'react/self-closing-comp': [
 				'warn',
@@ -130,7 +130,7 @@ const eslintConfig = [
 				},
 			],
 
-			// 🔹 *Drizzle ORM*
+			// 🔹 **Drizzle ORM**
 			'drizzle/enforce-delete-with-where': [
 				'warn',
 				{ drizzleObjectName: ['db', 'ctx.db'] },
@@ -140,7 +140,7 @@ const eslintConfig = [
 				{ drizzleObjectName: ['db', 'ctx.db'] },
 			],
 
-			// 🔹 *Orden de Imports*
+			// 🔹 **Orden de Imports**
 			'import/order': [
 				'warn',
 				{
@@ -153,14 +153,14 @@ const eslintConfig = [
 					],
 					pathGroups: [
 						{ pattern: 'react', group: 'external', position: 'before' },
-						{ pattern: 'next/', group: 'external', position: 'before' },
+						{ pattern: 'next/**', group: 'external', position: 'before' },
 						{
-							pattern: '@/components/',
+							pattern: '@/components/**',
 							group: 'internal',
 							position: 'after',
 						},
-						{ pattern: '@/lib/', group: 'internal', position: 'after' },
-						{ pattern: '@/styles/', group: 'internal', position: 'after' },
+						{ pattern: '@/lib/**', group: 'internal', position: 'after' },
+						{ pattern: '@/styles/**', group: 'internal', position: 'after' },
 					],
 					pathGroupsExcludedImportTypes: ['react'],
 					alphabetize: {

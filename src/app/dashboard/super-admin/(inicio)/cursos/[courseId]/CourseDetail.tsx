@@ -210,8 +210,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	// Add these new states after the existing states
 	const [educators, setEducators] = useState<Educator[]>([]);
 	const [selectedInstructor, setSelectedInstructor] = useState<string>('');
-	const [showChangeButton, setShowChangeButton] = useState(false);
-	void showChangeButton;
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [currentInstructor, setCurrentInstructor] = useState('');
 
