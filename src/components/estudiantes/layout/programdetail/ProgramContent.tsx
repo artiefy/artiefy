@@ -3,9 +3,8 @@
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
+import { useRouter } from '@bprogress/next/app'; // Change this line
 import { useAuth } from '@clerk/nextjs';
 import {
 	StarIcon,
@@ -48,7 +47,11 @@ export function ProgramContent({
 	subscriptionEndDate,
 	isCheckingEnrollment, // Add this to destructuring
 }: ProgramContentProps) {
-	const router = useRouter();
+	const router = useRouter({
+		showProgress: true,
+		startPosition: 0.3,
+		disableSameURL: true
+	});
 	const { userId, isSignedIn } = useAuth(); // Add isSignedIn
 	const [courseEnrollments, setCourseEnrollments] = useState<
 		Record<number, boolean>
@@ -125,6 +128,28 @@ export function ProgramContent({
 
 		void checkCourseEnrollments();
 	}, [userId, courses]);
+
+	const handleCourseClick = (courseId: number, isActive: boolean) => {
+		if (!isActive || !isSignedIn || !isEnrolled) {
+			if (!isSignedIn) {
+				const currentPath = window.location.pathname;
+				void router.push(`/sign-in?redirect_url=${currentPath}`);
+			}
+			return;
+		}
+
+		try {
+			void router.push(`/estudiantes/cursos/${courseId}`, {
+				showProgress: true,
+				startPosition: 0.3
+			});
+		} catch (error) {
+			console.error(
+				'Navigation error:',
+				error instanceof Error ? error.message : 'Unknown error'
+			);
+		}
+	};
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
@@ -267,65 +292,46 @@ export function ProgramContent({
 												<span className="font-bold">Cargando...</span>
 											</Button>
 										) : (
-											<Link
-												href={`/estudiantes/cursos/${course.id}`}
-												onClick={(e) => {
-													if (!course.isActive || !isSignedIn || !isEnrolled) {
-														e.preventDefault();
-														if (!isSignedIn) {
-															const currentPath = window.location.pathname;
-															router.push(
-																`/sign-in?redirect_url=${currentPath}`
-															);
-														}
-													}
-												}}
-												className={`block w-full ${
+											<Button
+												onClick={() =>
+													handleCourseClick(course.id, course.isActive ?? false)
+												}
+												disabled={
+													!course.isActive ||
+													isCheckingEnrollment ||
+													!isSignedIn ||
+													!isEnrolled
+												}
+												className={`w-full ${
 													!course.isActive || !isSignedIn || !isEnrolled
-														? 'pointer-events-none'
+														? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
 														: ''
+												} group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
+													!course.isActive || !isSignedIn || !isEnrolled
+														? 'pointer-events-none bg-gray-600 text-gray-400'
+														: 'bg-background text-primary active:scale-95'
 												}`}
-												prefetch={course.isActive && isSignedIn && isEnrolled}
-												replace={false} // Add this to ensure normal navigation
 											>
-												<Button
-													disabled={
-														!course.isActive ||
-														isCheckingEnrollment ||
-														!isSignedIn ||
-														!isEnrolled
-													}
-													className={`w-full ${
-														!course.isActive || !isSignedIn || !isEnrolled
-															? 'cursor-not-allowed bg-gray-600 hover:bg-gray-600'
-															: ''
-													} group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
-														!course.isActive || !isSignedIn || !isEnrolled
-															? 'pointer-events-none bg-gray-600 text-gray-400'
-															: 'bg-background text-primary active:scale-95'
-													}`}
-												>
-													<span className="font-bold">
-														{!course.isActive
-															? 'No Disponible'
-															: !isSignedIn
-																? 'Iniciar Sesión'
-																: !isEnrolled
-																	? 'Requiere Inscripción'
-																	: courseEnrollments[course.id]
-																		? 'Continuar Curso'
-																		: 'Ver Curso'}
-													</span>
-													{course.isActive && isEnrolled && (
-														<>
-															<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
-															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-																<div className="relative h-full w-10 bg-white/30" />
-															</div>
-														</>
-													)}
-												</Button>
-											</Link>
+												<span className="font-bold">
+													{!course.isActive
+														? 'No Disponible'
+														: !isSignedIn
+															? 'Iniciar Sesión'
+															: !isEnrolled
+																? 'Requiere Inscripción'
+																: courseEnrollments[course.id]
+																	? 'Continuar Curso'
+																	: 'Ver Curso'}
+												</span>
+												{course.isActive && isEnrolled && (
+													<>
+														<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
+														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+															<div className="relative h-full w-10 bg-white/30" />
+														</div>
+													</>
+												)}
+											</Button>
 										)}
 									</div>
 								</CardContent>
