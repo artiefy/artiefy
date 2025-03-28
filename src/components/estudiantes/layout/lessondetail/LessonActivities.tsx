@@ -117,12 +117,6 @@ interface ActivityAnswersResponse {
 	isAlreadyCompleted: boolean;
 }
 
-// Add strict error type
-interface ActivityError extends Error {
-	message: string;
-	code?: string;
-}
-
 const LessonActivities = ({
 	activity,
 	isVideoCompleted,
