@@ -336,7 +336,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
 		try {
 			setUploading(true);
-      void id;
+			void id;
 
 			if (file) {
 				const uploadResponse = await fetch('/api/upload', {
@@ -538,9 +538,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 
 	// Renderizar el componente
 	return (
-		<div className="h-auto w-full rounded-lg bg-background">
-			<Breadcrumb>
-				<BreadcrumbList>
+		<div className="h-auto w-full rounded-lg bg-background p-4">
+			<Breadcrumb className="mb-4">
+				<BreadcrumbList className="flex flex-wrap gap-2">
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
@@ -570,23 +570,23 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			<div className="group relative h-auto w-full">
 				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
-					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out`}
+					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none p-4 transition-transform duration-300 ease-in-out sm:p-6`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
 					}}
 				>
-					<CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
-						<CardTitle className={`text-xl font-bold text-primary capitalize`}>
+					<CardHeader className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:gap-16">
+						<CardTitle className="text-xl font-bold text-primary sm:text-2xl">
 							Programa: {program.title}
 						</CardTitle>
-						<div className="ml-9 flex flex-col">
+						<div className="flex flex-col">
 							<Label
 								className={
 									selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 								}
 							>
-								Seleccione El Color Deseado
+								Seleccione el color deseado
 							</Label>
 							<div className="mt-2 flex space-x-2">
 								{predefinedColors.map((color) => (
@@ -597,16 +597,17 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 											selectedColor === '#FFFFFF'
 												? 'border-black'
 												: 'border-white'
-										} `}
+										}`}
 										onClick={() => handlePredefinedColorChange(color)}
 									/>
 								))}
 							</div>
 						</div>
 					</CardHeader>
-					<div className={`grid gap-6 md:grid-cols-2`}>
-						{/* Columna izquierda - Imagen */}
-						<div className="flex w-full flex-col">
+
+					<div className="grid gap-6 md:grid-cols-2">
+						{/* Left Column - Image */}
+						<div className="flex w-full flex-col space-y-4">
 							<div className="relative aspect-video w-full">
 								<Image
 									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`}
@@ -618,32 +619,43 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 									quality={75}
 								/>
 							</div>
-							<div className="mt-8 grid grid-cols-4 gap-5" />
+							<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
+								<Button
+									onClick={handleCreateCourse}
+									className="w-full bg-secondary text-white sm:w-auto"
+								>
+									Crear Curso
+								</Button>
+								<Button
+									onClick={() => setShowDeleteConfirm(true)}
+									className="w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
+								>
+									Eliminar Programa
+								</Button>
+							</div>
 						</div>
-						{/* Columna derecha - Información */}
-						<div className="pb-6">
-							<h2 className={`text-xl font-bold text-primary capitalize`}>
+
+						{/* Right Column - Information */}
+						<div className="space-y-6">
+							<h2 className="text-xl font-bold text-primary sm:text-2xl">
 								Información Del Programa
 							</h2>
-							<br />
-							<div className="grid grid-cols-2">
-								<div className="flex flex-col">
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<div className="space-y-2">
 									<h2
-										className={`text-base font-semibold capitalize ${
+										className={`text-base font-semibold sm:text-lg ${
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
 										Programa:
 									</h2>
-									<h1
-										className={`mb-4 text-xl font-bold text-primary capitalize`}
-									>
+									<h1 className="text-xl font-bold text-primary sm:text-2xl">
 										{program.title}
 									</h1>
 								</div>
-								<div className="flex flex-col">
+								<div className="space-y-2">
 									<h2
-										className={`text-base font-semibold capitalize ${
+										className={`text-base font-semibold sm:text-lg ${
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
@@ -651,46 +663,34 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 									</h2>
 									<Badge
 										variant="outline"
-										className="ml-1 w-fit border-primary bg-background text-primary capitalize hover:bg-black/70"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{program.categoryid}
 									</Badge>
 								</div>
 							</div>
-							<div className="mb-4">
+
+							<div className="space-y-2">
 								<h2
-									className={`text-base font-semibold capitalize ${
+									className={`text-base font-semibold sm:text-lg ${
 										selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 									}`}
 								>
 									Descripción:
 								</h2>
 								<p
-									className={`text-justify text-sm capitalize ${
+									className={`text-justify text-sm sm:text-base ${
 										selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 									}`}
 								>
 									{program.description}
 								</p>
 							</div>
-							<div className="flex gap-2">
-								<Button
-									onClick={handleCreateCourse}
-									className="mt-4 bg-secondary text-white"
-								>
-									Crear Curso
-								</Button>
-								<Button
-									onClick={() => setShowDeleteConfirm(true)}
-									className="mt-4 bg-red-600 text-white hover:bg-red-700"
-								>
-									Eliminar Programa
-								</Button>
-							</div>
 						</div>
 					</div>
 				</Card>
 			</div>
+
 			<br />
 			<br />
 			<ProgramCoursesList courses={courses} />

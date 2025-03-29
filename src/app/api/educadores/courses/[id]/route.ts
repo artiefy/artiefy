@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
 import {
 	getAllCourses,
@@ -10,6 +11,43 @@ import {
 	updateCourse,
 	getModalidadById,
 } from '~/models/educatorsModels/courseModelsEducator';
+import { db } from '~/server/db';
+import { materias } from '~/server/db/schema';
+
+interface Materia {
+	id: number;
+	title: string;
+	description: string | null;
+	programaId: number | null;
+	courseid: number | null;
+}
+
+interface UpdateCourseData {
+	subjects?: { id: number }[];
+	title?: string;
+	description?: string;
+	coverImageKey?: string;
+	categoryid?: number;
+	modalidadesid?: number;
+	nivelid?: number;
+	instructor?: string;
+	[key: string]: unknown;
+}
+
+// Agregamos una interfaz para el cuerpo de la solicitud PUT
+interface PutRequestBody {
+	title?: string;
+	description?: string;
+	coverImageKey?: string;
+	categoryid?: number;
+	modalidadesid?: number;
+	nivelid?: number;
+	instructor?: string;
+	rating?: number;
+	courseTypeId?: number | null;
+	isActive?: boolean;
+	subjects?: { id: number }[];
+}
 
 export async function GET(
 	_request: Request,
@@ -49,78 +87,78 @@ export async function PUT(
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		// Autenticación con Clerk
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
 		}
 
-		// Obtener el parámetro ID desde la URL
 		const resolvedParams = await params;
 		const courseId = parseInt(resolvedParams.id);
-		if (isNaN(courseId)) {
-			return NextResponse.json(
-				{ error: 'ID de curso inválido' },
-				{ status: 400 }
-			);
+		console.log('🔵 CourseId:', courseId);
+
+		const data = (await request.json()) as PutRequestBody;
+		console.log('📥 Datos recibidos completos:', data);
+
+		// 1. Actualizar datos básicos del curso
+		const { subjects, ...courseData } = data;
+		await updateCourse(courseId, courseData);
+		console.log('✅ Datos del curso actualizados');
+
+		// 2. Manejar materias si existen
+		if (subjects && subjects.length > 0) {
+			console.log('📚 Procesando materias:', subjects);
+
+			// Obtener materias actuales del curso
+			const currentMaterias = await db
+				.select()
+				.from(materias)
+				.where(eq(materias.courseid, courseId));
+
+			console.log('📋 Materias actuales:', currentMaterias);
+			const programId = currentMaterias[0]?.programaId;
+
+			if (programId !== null && programId !== undefined) {
+				// Procesar cada materia nueva
+				for (const subject of subjects) {
+					// Verificar si la materia ya está asignada
+					const existingMateria = currentMaterias.find(
+						(m) => m.id === subject.id
+					);
+
+					if (!existingMateria) {
+						// Obtener la materia original
+						const materiaOriginal = await db
+							.select()
+							.from(materias)
+							.where(eq(materias.id, subject.id))
+							.limit(1)
+							.then((res) => res[0]);
+
+						if (materiaOriginal) {
+							// Crear copia de la materia
+							const newMateria = await db
+								.insert(materias)
+								.values({
+									title: materiaOriginal.title,
+									description: materiaOriginal.description,
+									programaId: programId,
+									courseid: courseId,
+								})
+								.returning();
+							console.log('✨ Nueva materia creada:', newMateria[0]);
+						}
+					}
+				}
+			}
 		}
 
-		// Obtener los datos enviados en el body
-		const data = (await request.json()) as {
-			title?: string;
-			description?: string;
-			coverImageKey?: string;
-			categoryid?: number;
-			instructor?: string;
-			modalidadesid?: number;
-			nivelid?: number;
-			fileName?: string;
-			rating?: number;
-			courseTypeId?: number | null; // ✅ Incluido el courseTypeId
-			isActive?: boolean;
-		};
-
-		// Crear el objeto updateData solo con los campos que llegaron
-		const updateData: {
-			title?: string;
-			description?: string;
-			coverImageKey?: string;
-			categoryid?: number;
-			instructor?: string;
-			modalidadesid?: number;
-			nivelid?: number;
-			fileName?: string;
-			rating?: number;
-			courseTypeId?: number | null;
-			isActive?: boolean;
-		} = {};
-
-		if (data.isActive !== undefined) updateData.isActive = data.isActive;
-
-		// Asignar los valores si vienen definidos
-		if (data.title !== undefined) updateData.title = data.title;
-		if (data.description !== undefined)
-			updateData.description = data.description;
-		if (data.coverImageKey !== undefined)
-			updateData.coverImageKey = data.coverImageKey;
-		if (data.categoryid !== undefined) updateData.categoryid = data.categoryid;
-		if (data.instructor !== undefined) updateData.instructor = data.instructor;
-		if (data.modalidadesid !== undefined)
-			updateData.modalidadesid = data.modalidadesid;
-		if (data.nivelid !== undefined) updateData.nivelid = data.nivelid;
-		if (data.fileName !== undefined) updateData.fileName = data.fileName;
-		if (data.rating !== undefined) updateData.rating = data.rating;
-		if (data.courseTypeId !== undefined)
-			updateData.courseTypeId = data.courseTypeId;
-
-		// Actualizar el curso en la base de datos
-		await updateCourse(courseId, updateData);
-
-		// Obtener y retornar el curso actualizado
 		const updatedCourse = await getCourseById(courseId);
-		return NextResponse.json(updatedCourse);
+		return NextResponse.json({
+			message: 'Curso y materias actualizados exitosamente',
+			course: updatedCourse,
+		});
 	} catch (error) {
-		console.error('Error al actualizar el curso:', error);
+		console.error('❌ Error:', error);
 		return NextResponse.json(
 			{ error: 'Error al actualizar el curso' },
 			{ status: 500 }

@@ -75,11 +75,11 @@ interface SelectedDetail {
 }
 
 export default function StudentCourseDashboard() {
-	const params = useParams();
+	const params = useParams() ?? {};
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	const user = searchParams.get('user');
+	const user = searchParams?.get('user') ?? '';
 	const courseId = Array.isArray(params.courseId)
 		? params.courseId[0]
 		: params.courseId;

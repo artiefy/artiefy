@@ -1,7 +1,7 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -11,7 +11,23 @@ import {
 	nivel as nivel,
 	materias,
 	users,
+	programas,
 } from '~/server/db/schema';
+
+// Add this cache object at module level
+const categoryNameCache: Record<number, string> = {};
+
+// Add these new interfaces
+interface PaginatedResult<T> {
+	data: T[];
+	total: number;
+}
+
+interface GetCoursesOptions {
+	page?: number;
+	limit?: number;
+	search?: string;
+}
 
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query: string | undefined) {
@@ -260,7 +276,10 @@ export interface CourseData {
 	updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
 	rating?: number | null;
 	courseTypeId?: number; // 🔹 Add courseTypeId as an optional property
-	isActive?: boolean; // 🔹 Add isActive as an optional property
+	isActive?: boolean | null; // 🔹 Allow null for isActive
+	categoryName?: string; // 🔹 Add categoryName as an optional property
+	requiresProgram?: boolean | null;
+	programas?: { id: number; title: string }[];
 }
 
 export interface Materia {
@@ -271,12 +290,84 @@ export interface Materia {
 	courseid: number;
 }
 
-export async function getCourses() {
+export async function getCourses(
+	options: GetCoursesOptions = {}
+): Promise<PaginatedResult<CourseData>> {
+	const { page = 1, limit = 10 } = options;
+	const offset = (page - 1) * limit;
+
 	try {
-		return await db.select().from(courses).orderBy(desc(courses.createdAt));
+		// Get cached categories or fetch them
+		if (Object.keys(categoryNameCache).length === 0) {
+			const categoryResults = await db.select().from(categories);
+			categoryResults.forEach((cat) => {
+				categoryNameCache[cat.id] = cat.name;
+			});
+		}
+
+		// Get courses with their materias and programas
+		const [coursesData, countResult] = await Promise.all([
+			db
+				.select({
+					id: courses.id,
+					title: courses.title,
+					description: courses.description,
+					categoryid: courses.categoryid,
+					modalidadesid: courses.modalidadesid,
+					instructor: courses.instructor,
+					coverImageKey: courses.coverImageKey,
+					creatorId: courses.creatorId,
+					nivelid: courses.nivelid,
+					rating: courses.rating,
+					isActive: courses.isActive,
+					createdAt: courses.createdAt,
+				})
+				.from(courses)
+				.orderBy(desc(courses.createdAt))
+				.limit(limit)
+				.offset(offset),
+
+			db.select({ count: sql`count(*)` }).from(courses),
+		]);
+
+		// Get materias and programas for each course
+		const coursesWithRelations = await Promise.all(
+			coursesData.map(async (course) => {
+				const materiaResults = await db
+					.select({
+						materiaId: materias.id,
+						programaId: materias.programaId,
+						programaTitle: programas.title,
+					})
+					.from(materias)
+					.leftJoin(programas, eq(materias.programaId, programas.id))
+					.where(eq(materias.courseid, course.id));
+
+				const uniquePrograms = materiaResults
+					.filter((m) => m.programaId !== null)
+					.reduce((acc: { id: number; title: string }[], curr) => {
+						if (!acc.some((p) => p.id === curr.programaId)) {
+							acc.push({ id: curr.programaId!, title: curr.programaTitle! });
+						}
+						return acc;
+					}, []);
+
+				return {
+					...course,
+					categoryName:
+						categoryNameCache[course.categoryid] ?? 'Unknown Category',
+					programas: uniquePrograms,
+				};
+			})
+		);
+
+		return {
+			data: coursesWithRelations,
+			total: Number(countResult[0]?.count ?? 0),
+		};
 	} catch (error) {
 		console.error('❌ Error al obtener cursos:', error);
-		return [];
+		return { data: [], total: 0 };
 	}
 }
 
@@ -419,28 +510,15 @@ export async function getMateriasByCourseId(
 	}
 }
 
-// Add this new function to get category name by ID
+// Remove the old getCategoryNameById since we now use cache
 export async function getCategoryNameById(id: number): Promise<string> {
-	try {
-		const category = await db
-			.select()
-			.from(categories)
-			.where(eq(categories.id, id));
-		return category[0]?.name ?? 'Unknown Category';
-	} catch (error) {
-		console.error('Error getting category name:', error);
-		return 'Unknown Category';
-	}
+	return Promise.resolve(categoryNameCache[id] ?? 'Unknown Category');
 }
 
 // Update this function to get instructor name from users table
 export async function getInstructorNameById(id: string): Promise<string> {
 	try {
-		const user = await db
-			.select()
-			.from(users)
-			.where(eq(users.id, id))
-			.limit(1);
+		const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
 
 		if (user?.[0]?.name) {
 			return user[0].name;

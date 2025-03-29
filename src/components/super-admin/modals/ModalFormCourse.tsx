@@ -84,6 +84,7 @@ interface CourseFormProps {
 	educators?: { id: string; name: string }[];
 	subjects: { id: number }[];
 	setSubjects: (subjects: { id: number }[]) => void;
+	defaultAddParametros?: boolean; // Agregar esta prop
 }
 
 // Interfaz para los niveles
@@ -137,6 +138,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	instructor,
 	subjects,
 	setSubjects,
+	defaultAddParametros = false, // Agregar este prop con valor por defecto
 }) => {
 	const [file, setFile] = useState<File | null>(null); // Estado para el archivo
 	const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
@@ -149,7 +151,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	>([]);
 	const [niveles, setNiveles] = useState<Nivel[]>([]);
 	const [isLoadingNiveles, setIsLoadingNiveles] = useState(true);
-
+	void isLoadingNiveles;
 	const [errors, setErrors] = useState({
 		title: false,
 		description: false,
@@ -169,13 +171,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null); // Estado para el controlador de subida
 	const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
-	const [addParametros, setAddParametros] = useState(false); // Estado para los parámetros
+	const [addParametros, setAddParametros] = useState(defaultAddParametros);
 
 	// Add these new states with other useState declarations
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [modalidades, setModalidades] = useState<Modalidad[]>([]);
 	const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 	const [isLoadingModalidades, setIsLoadingModalidades] = useState(true);
+	void isLoadingCategories;
+	void isLoadingModalidades;
 
 	// Función para manejar el cambio de archivo
 	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -192,36 +196,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setErrors((prev) => ({ ...prev, file: true }));
 		}
 		console.log('coverImageKey', coverImage); // Registro de depuración
-	};
-
-	// Función para manejar el arrastre de archivos
-	const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-		e.preventDefault();
-		setIsDragging(true);
-	};
-
-	// Función para manejar el arrastre de salida
-	const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-		e.preventDefault();
-		setIsDragging(false);
-	};
-
-	// Función para manejar el arrastre de soltar
-	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-		e.preventDefault();
-		setIsDragging(false);
-		const files = e.dataTransfer.files;
-		if (files?.[0]) {
-			setFile(files[0]);
-			setFileName(files[0].name);
-			setFileSize(files[0].size);
-			setErrors((prev) => ({ ...prev, file: false }));
-		} else {
-			setFile(null);
-			setFileName(null);
-			setFileSize(null);
-			setErrors((prev) => ({ ...prev, file: true }));
-		}
 	};
 
 	// Función para manejar la adición o creacion de parámetros
@@ -242,8 +216,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	useEffect(() => {
 		const fetchSubjects = async () => {
 			try {
+				// Get courseId from props
+				if (!editingCourseId) {
+					console.error('No course ID found');
+					return;
+				}
+
 				const response = await fetch(
-					'/api/super-admin/programs/materiasCourses'
+					`/api/super-admin/programs/materiasCourses?courseId=${editingCourseId}`
 				);
 				if (response.ok) {
 					const subjectsData = (await response.json()) as {
@@ -259,10 +239,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			}
 		};
 
-		if (isOpen) {
+		if (isOpen && editingCourseId) {
 			void fetchSubjects();
 		}
-	}, [isOpen]);
+	}, [isOpen, editingCourseId]);
 
 	useEffect(() => {
 		const fetchNiveles = async () => {
@@ -671,68 +651,80 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		}
 	}, [editingCourseId, coverImageKey]);
 
+	// Modificar useEffect para manejar los parámetros
+	useEffect(() => {
+		if (editingCourseId) {
+			setAddParametros(parametros.length > 0);
+		}
+	}, [editingCourseId, parametros]);
+
 	// Render la vista
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
-			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
-				<DialogHeader className="mt-4">
-					<DialogTitle className="text-4xl">
+			<DialogContent className="max-h-[90vh] w-[95vw] max-w-4xl overflow-y-auto p-3 md:p-6">
+				<DialogHeader className="mt-2 md:mt-4">
+					<DialogTitle className="text-xl md:text-4xl">
 						{editingCourseId ? 'Editar Curso' : 'Crear Curso'}
 					</DialogTitle>
-					<DialogDescription className="text-xl text-white">
+					<DialogDescription className="text-sm text-white md:text-xl">
 						{editingCourseId
 							? 'Edita los detalles del curso'
 							: 'Llena los detalles para crear un nuevo curso'}
 					</DialogDescription>
 				</DialogHeader>
-				<div className="rounded-lg bg-background px-6 text-black shadow-md">
-					<label htmlFor="title" className="text-lg font-medium text-primary">
-						Título
-					</label>
-					<input
-						type="text"
-						placeholder="Título"
-						value={title}
-						onChange={(e) => handleFieldChange('title', e.target.value)}
-						className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
-					/>
-					{errors.title && (
-						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
-					)}
-					<label
-						htmlFor="description"
-						className="text-lg font-medium text-primary"
-					>
-						Descripción
-					</label>
-					<textarea
-						placeholder="Descripción"
-						value={description}
-						onChange={(e) => handleFieldChange('description', e.target.value)}
-						className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
-					/>
-					{errors.description && (
-						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
-					)}
-
-					<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-						<div className="mx-auto flex flex-col justify-center">
+				<div className="rounded-lg bg-background px-2 py-3 text-black shadow-md md:px-6 md:py-4">
+					<div className="space-y-3 md:space-y-4">
+						<div>
 							<label
-								htmlFor="nivelid"
-								className="justify-center text-center text-lg font-medium text-primary"
+								htmlFor="title"
+								className="text-sm font-medium text-primary md:text-lg"
 							>
-								Nivel
+								Título
 							</label>
-							{isLoadingNiveles ? (
-								<p className="text-primary">Cargando niveles...</p>
-							) : (
+							<input
+								type="text"
+								placeholder="Título"
+								value={title}
+								onChange={(e) => handleFieldChange('title', e.target.value)}
+								className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.title ? 'border-red-500' : 'border-primary'}`}
+							/>
+							{errors.title && (
+								<p className="text-xs text-red-500 md:text-sm">
+									Este campo es obligatorio.
+								</p>
+							)}
+						</div>
+						<div>
+							<label
+								htmlFor="description"
+								className="text-sm font-medium text-primary md:text-lg"
+							>
+								Descripción
+							</label>
+							<textarea
+								placeholder="Descripción"
+								value={description}
+								onChange={(e) =>
+									handleFieldChange('description', e.target.value)
+								}
+								className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.description ? 'border-red-500' : 'border-primary'}`}
+								rows={4}
+							/>
+							{errors.description && (
+								<p className="text-xs text-red-500 md:text-sm">
+									Este campo es obligatorio.
+								</p>
+							)}
+						</div>
+						<div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+							<div className="w-full">
+								<label className="text-sm font-medium text-primary md:text-lg">
+									Nivel
+								</label>
 								<select
-									id="nivel-select"
+									className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
 									value={nivelid}
 									onChange={(e) => setNivelid(Number(e.target.value))}
-									className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
-										errors.nivelid ? 'border-red-500' : 'border-primary'
-									}`}
 								>
 									{niveles.map((nivel) => (
 										<option key={nivel.id} value={nivel.id}>
@@ -740,30 +732,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										</option>
 									))}
 								</select>
-							)}
-							{errors.nivelid && (
-								<p className="text-sm text-red-500">
-									Este campo es obligatorio.
-								</p>
-							)}
-						</div>
-						<div className="mx-auto flex flex-col justify-center">
-							<label
-								htmlFor="modalidadesid"
-								className="justify-center text-center text-lg font-medium text-primary"
-							>
-								Modalidad
-							</label>
-							{isLoadingModalidades ? (
-								<p className="text-primary">Cargando modalidades...</p>
-							) : (
+								{errors.nivelid && (
+									<p className="text-sm text-red-500">
+										Este campo es obligatorio.
+									</p>
+								)}
+							</div>
+							<div className="w-full">
+								<label className="text-sm font-medium text-primary md:text-lg">
+									Modalidad
+								</label>
 								<select
-									id="modalidad-select"
+									className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
 									value={modalidadesid}
 									onChange={(e) => setModalidadesid(Number(e.target.value))}
-									className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
-										errors.modalidadesid ? 'border-red-500' : 'border-primary'
-									}`}
 								>
 									{modalidades.map((modalidad) => (
 										<option key={modalidad.id} value={modalidad.id}>
@@ -771,30 +753,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										</option>
 									))}
 								</select>
-							)}
-							{errors.modalidadesid && (
-								<p className="text-sm text-red-500">
-									Este campo es obligatorio.
-								</p>
-							)}
-						</div>
-						<div className="mx-auto flex flex-col justify-center">
-							<label
-								htmlFor="categoryid"
-								className="justify-center text-center text-lg font-medium text-primary"
-							>
-								Categoría
-							</label>
-							{isLoadingCategories ? (
-								<p className="text-primary">Cargando categorías...</p>
-							) : (
+								{errors.modalidadesid && (
+									<p className="text-sm text-red-500">
+										Este campo es obligatorio.
+									</p>
+								)}
+							</div>
+							<div className="w-full">
+								<label className="text-sm font-medium text-primary md:text-lg">
+									Categoría
+								</label>
 								<select
-									id="category-select"
+									className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
 									value={categoryid}
 									onChange={(e) => setCategoryid(Number(e.target.value))}
-									className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
-										errors.categoryid ? 'border-red-500' : 'border-primary'
-									}`}
 								>
 									{categories.map((category) => (
 										<option key={category.id} value={category.id}>
@@ -802,346 +774,333 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										</option>
 									))}
 								</select>
-							)}
-							{errors.categoryid && (
-								<p className="text-sm text-red-500">
-									Este campo es obligatorio.
-								</p>
-							)}
-						</div>
-						{editingCourseId && (
-							<>
-								<div className="mx-auto flex flex-col justify-center">
-									<label
-										htmlFor="courseTypeId"
-										className="justify-center text-center text-lg font-medium text-primary"
-									>
-										Tipo de Curso
-									</label>
-									<CourseTypeDropdown
-										courseTypeId={courseTypeId}
-										setCourseTypeId={setCourseTypeId}
-									/>
-								</div>
-
-								<div className="mx-auto flex flex-col justify-center">
-									<label
-										htmlFor="isActive"
-										className="justify-center text-center text-lg font-medium text-primary"
-									>
-										Estado del Curso
-									</label>
-									<ActiveDropdown
-										isActive={isActive}
-										setIsActive={setIsActive}
-									/>
-								</div>
-							</>
-						)}
-					</div>
-					<div>
-						<label
-							htmlFor="rating"
-							className="text-lg font-medium text-primary"
-						>
-							Rating
-						</label>
-						<Input
-							type="number"
-							min="0"
-							max="5"
-							step="0.1"
-							placeholder="0-5"
-							className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
-							value={isNaN(rating) ? '' : rating}
-							onChange={(e) => setRating(Number(e.target.value))}
-						/>
-					</div>
-					<div className="mb-4">
-						<label
-							htmlFor="instructor"
-							className="text-lg font-medium text-primary"
-						>
-							Instructor
-						</label>
-						<select
-							id="instructor"
-							value={instructor}
-							onChange={(e) => setInstructor(e.target.value)}
-							className="w-full rounded border border-primary bg-background p-2 text-white outline-none"
-						>
-							<option value="">Seleccionar instructor</option>
-							{educators?.map((educator) => (
-								<option key={educator.id} value={educator.id}>
-									{educator.name}
-								</option>
-							))}
-						</select>
-					</div>
-
-					<label htmlFor="file" className="text-lg font-medium text-primary">
-						Imagen de portada
-					</label>
-					<div
-						className={`mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary p-8 lg:w-1/2 ${
-							isDragging
-								? 'border-blue-500 bg-blue-50'
-								: errors.file
-									? 'border-red-500 bg-red-50'
-									: 'border-gray-300 bg-gray-50'
-						} transition-all duration-300 ease-in-out`}
-						onDragOver={handleDragOver}
-						onDragLeave={handleDragLeave}
-						onDrop={handleDrop}
-					>
-						<div className="text-center">
-							{!file && coverImage ? (
-								// Mostrar la imagen existente
-								<div className="relative overflow-hidden rounded-lg bg-gray-100">
-									<Image
-										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImage}`}
-										alt="current cover"
-										width={500}
-										height={200}
-										className="h-48 w-full object-cover"
-									/>
-									<button
-										onClick={() => {
-											setCoverImage(null);
-											setErrors((prev) => ({ ...prev, file: true }));
-										}}
-										className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
-									>
-										<MdClose className="z-20 size-5" />
-									</button>
-								</div>
-							) : !file ? (
-								// Mostrar el área de drop cuando no hay imagen
+								{errors.categoryid && (
+									<p className="text-sm text-red-500">
+										Este campo es obligatorio.
+									</p>
+								)}
+							</div>
+							{editingCourseId && (
 								<>
-									<FiUploadCloud
-										className={`mx-auto size-12 ${errors.file ? 'text-red-500' : 'text-primary'}`}
-									/>
-									<h2 className="mt-4 text-xl font-medium text-gray-700">
-										Arrastra y suelta tu imagen aquí
-									</h2>
-									<p className="mt-2 text-sm text-gray-500">
-										o haz clic para seleccionar un archivo desde tu computadora
-									</p>
-									<p className="mt-1 text-sm text-gray-500">
-										Supports: JPG, PNG, GIF (Max size: 5MB)
-									</p>
-									<input
-										type="file"
-										accept="image/*"
-										className={`hidden ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
-										onChange={handleFileChange}
-										id="file-upload"
-									/>
-									<label
-										htmlFor="file-upload"
-										className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
-									>
-										Seleccionar Archivo
-									</label>
+									<div className="w-full">
+										<label className="text-sm font-medium text-primary md:text-lg">
+											Tipo de Curso
+										</label>
+										<CourseTypeDropdown
+											courseTypeId={courseTypeId}
+											setCourseTypeId={setCourseTypeId}
+										/>
+									</div>
+									<div className="w-full">
+										<label className="text-sm font-medium text-primary md:text-lg">
+											Estado del Curso
+										</label>
+										<ActiveDropdown
+											isActive={isActive}
+											setIsActive={setIsActive}
+										/>
+									</div>
 								</>
-							) : (
-								// Mostrar la vista previa de la nueva imagen
-								<div className="relative overflow-hidden rounded-lg bg-gray-100">
-									<Image
-										src={URL.createObjectURL(file)}
-										alt="preview"
-										width={500}
-										height={200}
-										className="h-48 w-full object-cover"
-									/>
-									<button
-										onClick={() => {
-											setFile(null);
-											setFileName(null);
-											setFileSize(null);
-											setErrors((prev) => ({ ...prev, file: true }));
-										}}
-										className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
-									>
-										<MdClose className="z-20 size-5" />
-									</button>
-									<div className="flex justify-between p-2">
-										<p className="truncate text-sm text-gray-500">{fileName}</p>
-										<p className="text-sm text-gray-500">
-											{((fileSize ?? 0) / 1024).toFixed(2)} KB
+							)}
+						</div>
+						<div>
+							<label
+								htmlFor="rating"
+								className="text-sm font-medium text-primary md:text-lg"
+							>
+								Rating
+							</label>
+							<Input
+								type="number"
+								min="0"
+								max="5"
+								step="0.1"
+								placeholder="0-5"
+								className="mt-1 w-full rounded border border-primary p-2 text-sm text-white outline-none focus:no-underline md:text-base"
+								value={isNaN(rating) ? '' : rating}
+								onChange={(e) => setRating(Number(e.target.value))}
+							/>
+						</div>
+						<div className="mb-4">
+							<label
+								htmlFor="instructor"
+								className="text-sm font-medium text-primary md:text-lg"
+							>
+								Instructor
+							</label>
+							<select
+								id="instructor"
+								value={instructor}
+								onChange={(e) => setInstructor(e.target.value)}
+								className="w-full rounded border border-primary bg-background p-2 text-sm text-white outline-none md:text-base"
+							>
+								<option value="">Seleccionar instructor</option>
+								{educators?.map((educator) => (
+									<option key={educator.id} value={educator.id}>
+										{educator.name}
+									</option>
+								))}
+							</select>
+						</div>
+						<div className="w-full px-2 md:px-0">
+							<label className="text-sm font-medium text-primary md:text-lg">
+								Imagen de portada
+							</label>
+							<div
+								className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${
+									isDragging
+										? 'border-blue-500 bg-blue-50'
+										: errors.file
+											? 'border-red-500 bg-red-50'
+											: 'border-gray-300 bg-gray-50'
+								}`}
+							>
+								<div className="text-center">
+									{!file && coverImage ? (
+										<div className="relative overflow-hidden rounded-lg bg-gray-100">
+											<Image
+												src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImage}`}
+												alt="current cover"
+												width={500}
+												height={200}
+												className="h-48 w-full object-cover"
+											/>
+											<button
+												onClick={() => {
+													setCoverImage(null);
+													setErrors((prev) => ({ ...prev, file: true }));
+												}}
+												className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+											>
+												<MdClose className="z-20 size-5" />
+											</button>
+										</div>
+									) : !file ? (
+										<>
+											<FiUploadCloud
+												className={`mx-auto size-12 ${errors.file ? 'text-red-500' : 'text-primary'}`}
+											/>
+											<h2 className="mt-4 text-xl font-medium text-gray-700">
+												Arrastra y suelta tu imagen aquí
+											</h2>
+											<p className="mt-2 text-sm text-gray-500">
+												o haz clic para seleccionar un archivo desde tu
+												computadora
+											</p>
+											<p className="mt-1 text-sm text-gray-500">
+												Supports: JPG, PNG, GIF (Max size: 5MB)
+											</p>
+											<input
+												type="file"
+												accept="image/*"
+												className={`hidden ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
+												onChange={handleFileChange}
+												id="file-upload"
+											/>
+											<label
+												htmlFor="file-upload"
+												className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
+											>
+												Seleccionar Archivo
+											</label>
+										</>
+									) : (
+										<div className="relative overflow-hidden rounded-lg bg-gray-100">
+											<Image
+												src={URL.createObjectURL(file)}
+												alt="preview"
+												width={500}
+												height={200}
+												className="h-48 w-full object-cover"
+											/>
+											<button
+												onClick={() => {
+													setFile(null);
+													setFileName(null);
+													setFileSize(null);
+													setErrors((prev) => ({ ...prev, file: true }));
+												}}
+												className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+											>
+												<MdClose className="z-20 size-5" />
+											</button>
+											<div className="flex justify-between p-2">
+												<p className="truncate text-sm text-gray-500">
+													{fileName}
+												</p>
+												<p className="text-sm text-gray-500">
+													{((fileSize ?? 0) / 1024).toFixed(2)} KB
+												</p>
+											</div>
+										</div>
+									)}
+									{errors.file && (
+										<p className="text-sm text-red-500">
+											Este campo es obligatorio.
 										</p>
-									</div>
+									)}
 								</div>
-							)}
-							{errors.file && (
-								<p className="text-sm text-red-500">
-									Este campo es obligatorio.
-								</p>
-							)}
+							</div>
 						</div>
-					</div>
-					<div className="mt-6 flex flex-col text-white">
-						<p>
-							¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
-							parametros
-						</p>
-						<div className="flex space-x-2">
-							<label
-								htmlFor="toggle"
-								className="relative inline-block h-8 w-16"
-							>
-								<input
-									type="checkbox"
-									id="toggle"
-									checked={addParametros}
-									onChange={handleToggleParametro}
-									className="absolute size-0"
-								/>
-								<span
-									className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
+						<div className="mt-6 flex flex-col text-white">
+							<p>
+								¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
+								parametros
+							</p>
+							<div className="flex space-x-2">
+								<label
+									htmlFor="toggle"
+									className="relative inline-block h-8 w-16"
 								>
+									<input
+										type="checkbox"
+										id="toggle"
+										checked={addParametros}
+										onChange={handleToggleParametro}
+										className="absolute size-0"
+									/>
 									<span
-										className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
-									/>
+										className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
+									>
+										<span
+											className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
+										/>
+									</span>
+								</label>
+								<span className="mt-1 text-sm text-gray-400">
+									{addParametros ? 'Si' : 'No'}
 								</span>
-							</label>
-							<span className="mt-1 text-sm text-gray-400">
-								{addParametros ? 'Si' : 'No'}
-							</span>
+							</div>
 						</div>
-					</div>
-					{addParametros && (
-						<div className="my-4 flex flex-col">
-							<label
-								htmlFor="totalParametros"
-								className="text-lg font-medium text-primary"
-							>
-								Parametros de evaluación
-							</label>
-							<Button
-								onClick={handleAddParametro}
-								disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
-								className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
-							>
-								{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
-								parametro
-								<Plus />
-							</Button>
-							{parametros.map((parametro, index) => (
-								<div key={index} className="mt-4 rounded-lg border p-4">
-									<div className="flex items-center justify-between">
-										<h3 className="text-lg font-medium text-primary">
-											Parámetro {index + 1}
-										</h3>
-										<Button
-											variant="destructive"
-											onClick={() => handleRemoveParametro(index)}
-										>
-											Eliminar
-										</Button>
+						{addParametros && (
+							<div className="space-y-3 md:space-y-4">
+								<label className="text-sm font-medium text-primary md:text-lg">
+									Parámetros de evaluación
+								</label>
+								<Button
+									onClick={handleAddParametro}
+									disabled={parametros.length >= 10}
+									className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
+								>
+									{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
+									parametro
+									<Plus />
+								</Button>
+								{parametros.map((parametro, index) => (
+									<div key={index} className="mt-4 rounded-lg border p-4">
+										<div className="flex items-center justify-between">
+											<h3 className="text-sm font-medium text-primary md:text-lg">
+												Parámetro {index + 1}
+											</h3>
+											<Button
+												variant="destructive"
+												onClick={() => handleRemoveParametro(index)}
+											>
+												Eliminar
+											</Button>
+										</div>
+										<label className="mt-2 text-sm font-medium text-primary md:text-lg">
+											Nombre
+										</label>
+										<input
+											type="text"
+											value={parametro.name}
+											onChange={(e) =>
+												handleParametroChange(index, 'name', e.target.value)
+											}
+											className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
+										/>
+										<label className="mt-2 text-sm font-medium text-primary md:text-lg">
+											Descripción
+										</label>
+										<textarea
+											value={parametro.description}
+											onChange={(e) =>
+												handleParametroChange(
+													index,
+													'description',
+													e.target.value
+												)
+											}
+											className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
+										/>
+										<label className="mt-2 text-sm font-medium text-primary md:text-lg">
+											Porcentaje %
+										</label>
+										<input
+											type="number"
+											value={parametro.porcentaje}
+											onChange={(e) =>
+												handleParametroChange(
+													index,
+													'porcentaje',
+													Math.max(1, Math.min(100, parseFloat(e.target.value)))
+												)
+											}
+											className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
+										/>
 									</div>
-									<label className="mt-2 text-lg font-medium text-primary">
-										Nombre
-									</label>
-									<input
-										type="text"
-										value={parametro.name}
-										onChange={(e) =>
-											handleParametroChange(index, 'name', e.target.value)
-										}
-										className="mt-1 w-full rounded border p-2 text-white outline-none"
-									/>
-									<label className="mt-2 text-lg font-medium text-primary">
-										Descripción
-									</label>
-									<textarea
-										value={parametro.description}
-										onChange={(e) =>
-											handleParametroChange(
-												index,
-												'description',
-												e.target.value
-											)
-										}
-										className="mt-1 w-full rounded border p-2 text-white outline-none"
-									/>
-									<label className="mt-2 text-lg font-medium text-primary">
-										Porcentaje %
-									</label>
-									<input
-										type="number"
-										value={parametro.porcentaje}
-										onChange={(e) =>
-											handleParametroChange(
-												index,
-												'porcentaje',
-												Math.max(1, Math.min(100, parseFloat(e.target.value)))
-											)
-										}
-										className="mt-1 w-full rounded border p-2 text-white outline-none"
-									/>
-								</div>
-							))}
-						</div>
-					)}
-					{isOpen && (
-						<div className="my-4 flex flex-col">
-							<label
-								htmlFor="subjects"
-								className="text-lg font-medium text-primary"
-							>
-								Asignar Materias
-							</label>
-							<Select
-								isMulti
-								value={allSubjects
-									.filter((subject) =>
-										subjects.some((s) => s.id === subject.id)
-									)
-									.map((subject) => ({
+								))}
+							</div>
+						)}
+						{isOpen && (
+							<div className="my-4 flex flex-col">
+								<label
+									htmlFor="subjects"
+									className="text-sm font-medium text-primary md:text-lg"
+								>
+									Asignar Materias
+								</label>
+								<Select
+									isMulti
+									value={allSubjects
+										.filter((subject) =>
+											subjects.some((s) => s.id === subject.id)
+										)
+										.map((subject) => ({
+											value: subject.id.toString(),
+											label: subject.title,
+										}))}
+									options={allSubjects.map((subject) => ({
 										value: subject.id.toString(),
 										label: subject.title,
 									}))}
-								options={allSubjects.map((subject) => ({
-									value: subject.id.toString(),
-									label: subject.title,
-								}))}
-								onChange={(
-									newValue: MultiValue<{ value: string; label: string }>
-								) => {
-									const selectedSubjects = newValue.map((option) => ({
-										id: Number(option.value),
-									}));
-									setSubjects(selectedSubjects);
-								}}
-								classNamePrefix="react-select"
-								className="mt-2 w-10/12 lg:w-1/2"
-							/>
-						</div>
-					)}
-
-					{(uploading || isUploading) && (
-						<div className="mt-4">
-							<Progress
-								value={uploading ? progress : uploadProgress}
-								className="w-full"
-							/>
-							<p className="mt-2 text-center text-sm text-gray-500">
-								{uploading ? progress : uploadProgress}% Completado
-							</p>
-						</div>
-					)}
+									onChange={(
+										newValue: MultiValue<{ value: string; label: string }>
+									) => {
+										const selectedSubjects = newValue.map((option) => ({
+											id: Number(option.value),
+										}));
+										setSubjects(selectedSubjects);
+									}}
+									classNamePrefix="react-select"
+									className="mt-2 w-10/12 lg:w-1/2"
+								/>
+							</div>
+						)}
+						{(uploading || isUploading) && (
+							<div className="mt-4">
+								<Progress
+									value={uploading ? progress : uploadProgress}
+									className="w-full"
+								/>
+								<p className="mt-2 text-center text-sm text-gray-500">
+									{uploading ? progress : uploadProgress}% Completado
+								</p>
+							</div>
+						)}
+					</div>
 				</div>
-				<DialogFooter className="mt-4 grid grid-cols-2 gap-4">
+				<DialogFooter className="mt-4 grid grid-cols-2 gap-2 md:gap-4">
 					<Button
 						onClick={handleCancel}
-						className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
+						className="w-full border-transparent bg-gray-600 p-2 text-sm md:p-3 md:text-base"
 					>
 						Cancelar
 					</Button>
 					<Button
 						onClick={handleSubmit}
-						className="bg-green-400 text-white hover:bg-green-400/70"
+						className="w-full bg-green-400 text-sm md:text-base"
 						disabled={uploading}
 					>
 						{uploading

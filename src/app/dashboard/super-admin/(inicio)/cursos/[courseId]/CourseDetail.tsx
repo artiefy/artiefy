@@ -169,7 +169,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
 	const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
 	const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
-	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
+	const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores específicos
 	const [materias, setMaterias] = useState<Materia[]>([]);
 	const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
 
@@ -315,7 +315,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		_coverImageKey: string,
 		fileName: string,
 		rating: number,
-		courseTypeId: number | null
+		courseTypeId: number | null,
+		_isActive: boolean,
+		subjects: { id: number }[] // Asegúrate de recibir los subjects
 	) => {
 		try {
 			let coverImageKey = course?.coverImageKey ?? '';
@@ -365,7 +367,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			}
 
-			// Actualizar el curso
+			// Primero actualizar el curso
 			const response = await fetch(
 				`/api/educadores/courses/${courseIdNumber}`,
 				{
@@ -375,7 +377,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						title,
 						description,
 						coverImageKey,
-						fileName: uploadedFileName, // Agregar fileName al cuerpo de la solicitud
+						fileName: uploadedFileName,
 						categoryid,
 						modalidadesid,
 						nivelid,
@@ -383,47 +385,42 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						rating,
 						courseTypeId,
 						isActive,
+						subjects: subjects || currentSubjects, // Usar los subjects recibidos o los actuales
 					}),
 				}
 			);
 
-			// añadir parametros a la actualización si es true
+			if (!response.ok) {
+				throw new Error('Error al actualizar el curso');
+			}
+
+			// Si hay parámetros, actualizar
 			if (addParametros) {
-				for (const parametro of editParametros) {
-					try {
-						const response = await fetch('/api/educadores/parametros', {
+				try {
+					// 1. Primero eliminar todos los parámetros existentes
+					await fetch(`/api/educadores/parametros?courseId=${courseIdNumber}`, {
+						method: 'DELETE',
+					});
+
+					// 2. Luego crear los nuevos parámetros
+					for (const parametro of editParametros) {
+						await fetch('/api/educadores/parametros', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({
 								name: parametro.name,
 								description: parametro.description,
 								porcentaje: parametro.porcentaje,
-								courseId: Number(courseIdNumber) || 0, // ✅ Asegurar que `courseIdNumber` sea válido
+								courseId: courseIdNumber,
 							}),
 						});
-
-						if (!response.ok) {
-							const errorData = (await response.json()) as { error?: string };
-							throw new Error(errorData.error);
-						}
-
-						toast.success('Parámetro creado exitosamente', {
-							description: 'El parámetro se ha creado exitosamente',
-						});
-					} catch (error) {
-						toast.error('Error al crear el parámetro', {
-							description: `Error: ${(error as Error).message}`,
-						});
 					}
-				}
-			}
 
-			if (!response.ok) {
-				const errorData = (await response.json()) as { error?: string };
-				toast('Error', {
-					description: errorData.error ?? 'Error al actualizar el curso',
-				});
-				throw new Error(errorData.error ?? 'Error al actualizar el curso');
+					toast.success('Parámetros actualizados correctamente');
+				} catch (error) {
+					toast.error('Error al actualizar los parámetros');
+					console.error('Error con los parámetros:', error);
+				}
 			}
 
 			const updatedCourse = (await response.json()) as Course;
@@ -614,9 +611,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Renderizar el componente
 	return (
-		<div className="h-auto w-full rounded-lg bg-background">
-			<Breadcrumb>
-				<BreadcrumbList>
+		<div className="h-auto w-full rounded-lg bg-background p-4">
+			<Breadcrumb className="mb-4">
+				<BreadcrumbList className="flex flex-wrap gap-2">
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
@@ -645,17 +642,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			<div className="group relative h-auto w-full">
 				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
-					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out`}
+					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none p-4 transition-transform duration-300 ease-in-out sm:p-6`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
 					}}
 				>
-					<CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
-						<CardTitle className={`text-2xl font-bold text-primary`}>
+					<CardHeader className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:gap-16">
+						<CardTitle className="text-xl font-bold text-primary sm:text-2xl">
 							Curso: {course.title}
 						</CardTitle>
-						<div className="ml-9 flex flex-col">
+						<div className="flex flex-col">
 							<Label
 								className={
 									selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
@@ -668,16 +665,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									<Button
 										key={color}
 										style={{ backgroundColor: color }}
-										className={`size-8 border ${selectedColor === '#FFFFFF' ? 'border-black' : 'border-white'} `}
+										className={`size-8 border ${
+											selectedColor === '#FFFFFF'
+												? 'border-black'
+												: 'border-white'
+										} `}
 										onClick={() => handlePredefinedColorChange(color)}
 									/>
 								))}
 							</div>
 						</div>
 					</CardHeader>
-					<div className={`grid gap-6 md:grid-cols-2`}>
-						{/* Columna izquierda - Imagen */}
-						<div className="flex w-full flex-col">
+					<div className="grid gap-6 md:grid-cols-2">
+						{/* Left Column - Image */}
+						<div className="flex w-full flex-col space-y-4">
 							<div className="relative aspect-video w-full">
 								<Image
 									src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
@@ -689,10 +690,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									quality={75}
 								/>
 							</div>
-							<div className="mt-8 grid grid-cols-4 gap-5">
-								<Button
-									className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
-								>
+							<div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+								<Button className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto">
 									<Link href={`./${course.id}/ver/${course.id}`}>
 										Visualizar curso
 									</Link>
@@ -701,7 +700,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									onClick={handleEditCourse}
 									className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
 								>
-									Editar cursos
+									Editar curso
 								</Button>
 								<Button className="border-primary bg-primary text-white hover:bg-primary/90">
 									<Link
@@ -737,28 +736,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 								</AlertDialog>
 							</div>
 						</div>
-						{/* Columna derecha - Información */}
-						<div className="pb-6">
-							<h2 className={`text-2xl font-bold text-primary`}>
+						{/* Right Column - Information */}
+						<div className="space-y-6">
+							<h2 className="text-xl font-bold text-primary sm:text-2xl">
 								Información del curso
 							</h2>
-							<br />
-							<div className="grid grid-cols-2">
-								<div className="flex flex-col">
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+								<div className="space-y-2">
 									<h2
-										className={`text-lg font-semibold ${
+										className={`text-base font-semibold sm:text-lg ${
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
 										Curso:
 									</h2>
-									<h1 className={`mb-4 text-2xl font-bold text-primary`}>
+									<h1 className="text-xl font-bold text-primary sm:text-2xl">
 										{course.title}
 									</h1>
 								</div>
-								<div className="flex flex-col">
+								<div className="space-y-2">
 									<h2
-										className={`text-lg font-semibold ${
+										className={`text-base font-semibold sm:text-lg ${
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
@@ -772,24 +770,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</Badge>
 								</div>
 							</div>
-							<div className="mb-4">
+							<div className="space-y-2">
 								<h2
-									className={`text-lg font-semibold ${
+									className={`text-base font-semibold sm:text-lg ${
 										selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 									}`}
 								>
 									Descripción:
 								</h2>
 								<p
-									className={`text-justify ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+									className={`text-justify text-sm sm:text-base ${
+										selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+									}`}
 								>
 									{course.description}
 								</p>
 							</div>
-							<div className="grid grid-cols-4">
-								<div className="flex flex-col gap-2">
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+								<div className="space-y-2">
 									<h2
-										className={`text-lg font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+										className={`text-base font-semibold sm:text-lg ${
+											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+										}`}
 									>
 										Educador:
 									</h2>
@@ -830,9 +832,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 											)}
 									</div>
 								</div>
-								<div className="flex flex-col">
+								<div className="space-y-2">
 									<h2
-										className={`text-lg font-semibold ${
+										className={`text-base font-semibold sm:text-lg ${
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
@@ -845,9 +847,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										{course.nivelid}
 									</Badge>
 								</div>
-								<div className="flex flex-col">
+								<div className="space-y-2">
 									<h2
-										className={`text-lg font-semibold ${
+										className={`text-base font-semibold sm:text-lg ${
 											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
 										}`}
 									>
@@ -860,9 +862,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										{course.modalidadesid}
 									</Badge>
 								</div>
-								<div className="flex flex-col">
+								<div className="space-y-2">
 									<h2
-										className={`text-lg font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+										className={`text-base font-semibold sm:text-lg ${
+											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+										}`}
 									>
 										Tipo de curso:
 									</h2>
@@ -874,11 +878,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</Badge>
 								</div>
 							</div>
-							<br />
-							<div className="grid grid-cols-4">
-								<div className="flex flex-col">
+							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+								<div className="space-y-2">
 									<h2
-										className={`text-lg font-semibold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+										className={`text-base font-semibold sm:text-lg ${
+											selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+										}`}
 									>
 										Estado:
 									</h2>
@@ -893,9 +898,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										{course.isActive ? 'Activo' : 'Inactivo'}
 									</Badge>
 								</div>
-
-								<div className="materias-container">
-									<h3 className="text-lg font-semibold">Materias:</h3>
+								<div className="materias-container col-span-1 sm:col-span-2">
+									<h3 className="mb-2 text-base font-semibold sm:text-lg">
+										Materias:
+									</h3>
 									{materias.length > 0 ? (
 										<div className="flex flex-wrap gap-2">
 											{materias.map((materia) => (
@@ -947,7 +953,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					addParametros,
 					coverImageKey,
 					fileName,
-					courseTypeId
+					courseTypeId,
+					isActive,
+					subjects
 				) =>
 					handleUpdateCourse(
 						id,
@@ -961,7 +969,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						coverImageKey,
 						fileName,
 						rating,
-						courseTypeId
+						courseTypeId,
+						isActive,
+						subjects
 					)
 				}
 				editingCourseId={course.id}

@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 
+import { type Materia } from '~/models/super-adminModels/materiaModels';
+
 import ModalFormMateria from './modalFormCreate';
 
-import { type Materia } from '~/models/super-adminModels/materiaModels';
 
 interface ErrorResponse {
 	error: string;

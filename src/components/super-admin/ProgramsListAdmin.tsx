@@ -123,26 +123,23 @@ export default function ProgramListAdmin({
 								<div className="flex w-full items-center justify-between gap-2">
 									<Button
 										onClick={() => onEditProgram(program)}
-										className="mr-2"
+										className="h-8 w-[95px] px-2 text-[10px]"
 										variant="outline"
 									>
 										Editar
 									</Button>
-									<Button asChild className="w-full sm:w-auto">
+									<Button asChild className="h-8 w-[95px] px-0">
 										<Link
 											href={`/dashboard/super-admin/programs/${program.id}`}
-											className="group/button relative inline-flex w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-[11px] text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-3 sm:py-2 sm:text-xs"
+											className="group/button inline-flex h-full w-full items-center justify-center gap-1.5 rounded-md border border-white/20 bg-background px-2 text-[10px] text-primary transition-all hover:bg-primary/10"
 										>
-											<span className="relative z-10 font-medium">
-												Ver Programa
-											</span>
-											<ArrowRightIcon className="relative z-10 size-2 transition-transform group-hover/button:translate-x-1 sm:size-2.5" />
-											<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+											<span className="relative z-10">Ver Programa</span>
+											<ArrowRightIcon className="relative z-10 size-3" />
 										</Link>
 									</Button>
 									<div className="flex items-center">
-										<StarIcon className="size-5 text-yellow-500" />
-										<span className="ml-1 text-sm font-bold text-yellow-500">
+										<StarIcon className="size-4" />
+										<span className="ml-1 text-xs font-bold text-yellow-500">
 											{(program.rating ?? 0).toFixed(1)}
 										</span>
 									</div>

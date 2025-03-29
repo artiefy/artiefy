@@ -33,9 +33,9 @@ async function ensureUserExists(userId: string) {
 		if (clerkUser) {
 			await createUser(
 				userId,
-				'educador' as const, // Use 'as const' to ensure type safety
+				'educador',
 				`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim(),
-				clerkUser.emailAddresses[0].emailAddress as 'estudiante' | 'educador' | 'admin' | 'super-admin'
+				clerkUser.emailAddresses[0].emailAddress
 			);
 		}
 	}
@@ -208,7 +208,9 @@ export async function PUT(request: NextRequest) {
 			modalidadesid: number;
 			nivelid: number;
 			instructor: string;
+			subjects?: { id: number }[];
 		};
+
 		const {
 			id,
 			title,
@@ -218,6 +220,7 @@ export async function PUT(request: NextRequest) {
 			nivelid,
 			categoryid,
 			instructor,
+			subjects = [],
 		} = body;
 
 		const course = await getCourseById(id);
@@ -225,10 +228,7 @@ export async function PUT(request: NextRequest) {
 			return respondWithError('Curso no encontrado', 404);
 		}
 
-		if (course.creatorId !== userId) {
-			return respondWithError('No autorizado para actualizar este curso', 403);
-		}
-
+		// Update course main data
 		await updateCourse(id, {
 			title,
 			description,
@@ -239,7 +239,91 @@ export async function PUT(request: NextRequest) {
 			nivelid,
 		});
 
-		return NextResponse.json({ message: 'Curso actualizado exitosamente' });
+		// Manejar las materias
+		if (subjects.length > 0) {
+			// Log inicial de todas las materias antes de los cambios
+			const materiasAntes = await db.select().from(materias);
+			console.log('📊 Estado inicial de materias:', materiasAntes);
+
+			for (const subject of subjects) {
+				// Obtener la materia actual
+				const existingMateria = await db
+					.select()
+					.from(materias)
+					.where(eq(materias.id, subject.id))
+					.then((res) => res[0]);
+
+				if (existingMateria) {
+					console.log('🔍 Procesando materia:', {
+						id: existingMateria.id,
+						title: existingMateria.title,
+						courseid: existingMateria.courseid,
+						programaId: existingMateria.programaId,
+					});
+
+					if (existingMateria.courseid) {
+						// Si ya tiene curso asignado, crear una nueva materia
+						const newMateria = await db
+							.insert(materias)
+							.values({
+								title: existingMateria.title,
+								description: existingMateria.description,
+								programaId: existingMateria.programaId,
+								courseid: id,
+							})
+							.returning();
+
+						console.log('✨ Nueva materia creada:', {
+							original: {
+								id: existingMateria.id,
+								title: existingMateria.title,
+								courseid: existingMateria.courseid,
+								programaId: existingMateria.programaId,
+							},
+							nueva: newMateria[0],
+						});
+					} else {
+						// Si no tiene curso asignado, actualizar la materia existente
+						const updatedMateria = await db
+							.update(materias)
+							.set({ courseid: id })
+							.where(eq(materias.id, subject.id))
+							.returning();
+
+						console.log('📝 Materia actualizada:', {
+							antes: {
+								id: existingMateria.id,
+								title: existingMateria.title,
+								courseid: existingMateria.courseid,
+								programaId: existingMateria.programaId,
+							},
+							despues: updatedMateria[0],
+						});
+					}
+				}
+			}
+
+			// Log final de todas las materias después de los cambios
+			const materiasDespues = await db.select().from(materias);
+			console.log('🏁 Estado final de materias:', materiasDespues);
+
+			// Encontrar las nuevas materias
+			const nuevasMaterias = materiasDespues.filter(
+				(materiaFinal) =>
+					!materiasAntes.some(
+						(materiaInicial) => materiaInicial.id === materiaFinal.id
+					)
+			);
+
+			if (nuevasMaterias.length > 0) {
+				console.log('🎯 Materias nuevas creadas:', nuevasMaterias);
+			}
+		}
+
+		return NextResponse.json({
+			message: 'Curso actualizado exitosamente',
+			id: course.id,
+		});
 	} catch (error) {
 		console.error('Error al actualizar el curso:', error);
 		return respondWithError('Error al actualizar el curso', 500);
