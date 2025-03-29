@@ -58,7 +58,6 @@ chmod +x clean.sh //Dale permisos de ejecución (solo la primera vez)
 - `npm cache clean --force`
 - `rm -rf .turbo`
 - `rm -rf next-env.d.ts`
-- `next clean`
 - `rm -rf tsconfig.tsbuildinfo`
 - `rm -rf .tsbuildinfo`
 - `rm -rf .eslintcache`
@@ -87,7 +86,8 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 7. `npx tsc`: Ejecuta el compilador TypeScript localmente.
 8. `tsc`: Ejecuta el compilador TypeScript globalmente.
 9. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
-10. `npm install --save-dev eslint @eslint/eslintrc @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y eslint-plugin-simple-import-sort eslint-config-next` : Dependencias para que funcione el archivo eslint.config.mjs
+10. `npm install --save-dev eslint @eslint/eslintrc @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y eslint-plugin-simple-import-sort eslint-config-next @types/next @types/react` : Dependencias para que funcione el archivo eslint.config.mjs
+11. `npx eslint --debug .` : Debugear Eslint para cuando no quiera detectar errores
 
 ---
 
@@ -170,7 +170,7 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 4. `npm run format:write`: Formatea automáticamente el código del proyecto usando Prettier.
 5. `npm run typecheck`: Ejecuta el verificador de tipos de TypeScript sin generar archivos de salida.
 6. `npm run build`: Ejecuta el verificador de despliegue
-7. `npm audit fix`: Repara algunas fallas del servicio de paquetes de npm
+7. `npm audit fix --force`: Repara algunas fallas del servicio de paquetes de npm
 
 ---
 
