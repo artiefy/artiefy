@@ -495,7 +495,7 @@ export default function LessonDetails({
 				{/* Right Sidebar */}
 				<div className="flex flex-col">
 					<LessonActivities
-						activity={activity ?? null}
+						activities={lesson.activities ?? []} // Cambiado de activity a activities y agregando fallback array vacío
 						isVideoCompleted={isVideoCompleted}
 						isActivityCompleted={isActivityCompleted}
 						handleActivityCompletion={handleActivityCompletion}
@@ -505,7 +505,7 @@ export default function LessonDetails({
 						courseId={lesson.courseId}
 						isLastLesson={isLastLesson()}
 						isLastActivity={isLastActivity()}
-						resourceNames={lesson.resourceNames} // Add this prop
+						resourceNames={lesson.resourceNames}
 					/>
 					<LessonResource resourceNames={lesson.resourceNames} />
 				</div>

@@ -19,7 +19,7 @@ import type { Activity, SavedAnswer } from '~/types';
 import '~/styles/arrowclass.css';
 
 interface LessonActivitiesProps {
-	activity: Activity | null;
+	activities: Activity[]; // Cambiar de activity a activities array
 	isVideoCompleted: boolean;
 	isActivityCompleted: boolean;
 	handleActivityCompletion: () => Promise<void>;
@@ -49,11 +49,12 @@ interface CourseGradeSummary {
 			id: number;
 			name: string;
 			grade: number;
+			percentage: number; // Add percentage field
 		}[];
 	}[];
 }
 
-// Add type for API response
+// Update GradeSummaryResponse interface to include percentage
 interface GradeSummaryResponse {
 	finalGrade: number;
 	courseCompleted?: boolean;
@@ -66,6 +67,7 @@ interface GradeSummaryResponse {
 			id: number;
 			name: string;
 			grade: number;
+			percentage: number; // Add percentage field
 		}[];
 	}[];
 }
@@ -91,7 +93,8 @@ const isValidGradeSummaryResponse = (
 					(act) =>
 						typeof act.id === 'number' &&
 						typeof act.name === 'string' &&
-						typeof act.grade === 'number'
+						typeof act.grade === 'number' &&
+						typeof act.percentage === 'number' // Add percentage field validation
 				)
 		)
 	);
@@ -118,7 +121,7 @@ interface ActivityAnswersResponse {
 }
 
 const LessonActivities = ({
-	activity,
+	activities = [], // Provide default empty array
 	isVideoCompleted,
 	isActivityCompleted,
 	handleActivityCompletion,
@@ -183,7 +186,13 @@ const LessonActivities = ({
 			setGradeSummary({
 				finalGrade: gradeData.finalGrade,
 				courseCompleted: gradeData.isCompleted,
-				parameters: gradeData.parameters,
+				parameters: gradeData.parameters.map((param) => ({
+					...param,
+					activities: param.activities.map((act) => ({
+						...act,
+						percentage: act.percentage, // Now percentage is included in the source data
+					})),
+				})),
 			});
 			setIsGradesLoading(false);
 		}
@@ -206,7 +215,7 @@ const LessonActivities = ({
 	// Add useEffect to check activity completion on mount
 	useEffect(() => {
 		const checkActivityStatus = async () => {
-			if (!activity?.id) {
+			if (!activities?.length) {
 				setIsButtonLoading(false);
 				return;
 			}
@@ -214,7 +223,7 @@ const LessonActivities = ({
 			setIsButtonLoading(true);
 			try {
 				const response = await fetch(
-					`/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+					`/api/activities/getAnswers?activityId=${activities[0].id}&userId=${userId}`
 				);
 
 				if (response.ok) {
@@ -242,9 +251,9 @@ const LessonActivities = ({
 		};
 
 		void checkActivityStatus();
-	}, [activity?.id, userId]);
+	}, [activities, userId]);
 
-	const handleCompletedActivityClick = async () => {
+	const handleCompletedActivityClick = async (activity: Activity) => {
 		setIsLoadingResults(true);
 		try {
 			// Check if activity exists and get its ID safely
@@ -299,31 +308,34 @@ const LessonActivities = ({
 
 	// Modify the isLastActivityInLesson function to determine order based on creation date or ID
 	const isLastActivityInLesson = (currentActivity: Activity) => {
-		if (!activity) return false;
-		
+		if (!activities?.length) return false;
+
 		// Use either creation date or ID to determine order
-		const order = currentActivity.createdAt ? 
-			new Date(currentActivity.createdAt).getTime() :
-			currentActivity.id;
-		
-		const maxOrder = activity.createdAt ? 
-			new Date(activity.createdAt).getTime() :
-			activity.id;
-			
+		const order = currentActivity.createdAt
+			? new Date(currentActivity.createdAt).getTime()
+			: currentActivity.id;
+
+		const lastActivity = activities[activities.length - 1];
+		const maxOrder = lastActivity.createdAt
+			? new Date(lastActivity.createdAt).getTime()
+			: lastActivity.id;
+
 		return order === maxOrder;
 	};
 
 	return (
 		<div className="w-72 p-4">
 			<h2 className="mb-4 text-2xl font-bold text-primary">Actividades</h2>
-			{activity ? (
-				<div className="max-h-[calc(100vh-200px)] overflow-y-auto">
+			{Array.isArray(activities) && activities.length > 0 ? (
+				<div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
 					{/* Limit to 3 activities */}
-					{activity && (
-						<div className="rounded-lg border bg-gray-50 p-4 mb-4">
+					{activities.slice(0, 3).map((activity) => (
+						<div key={activity.id} className="rounded-lg border bg-gray-50 p-4">
 							<div className="flex items-center justify-between">
 								<div>
-									<h3 className="font-semibold text-gray-900">{activity.name}</h3>
+									<h3 className="font-semibold text-gray-900">
+										{activity.name}
+									</h3>
 								</div>
 								{!isButtonLoading &&
 									(activityCompleted ? (
@@ -332,7 +344,9 @@ const LessonActivities = ({
 										<FaLock className="text-gray-400" />
 									))}
 							</div>
-							<p className="mt-2 text-sm text-gray-600">{activity.description}</p>
+							<p className="mt-2 text-sm text-gray-600">
+								{activity.description}
+							</p>
 							{isVideoCompleted && (
 								<div className="flex justify-center">
 									{!isButtonLoading &&
@@ -343,88 +357,86 @@ const LessonActivities = ({
 										))}
 								</div>
 							)}
-							<div className="space-y-2">
-								<button
-									onClick={
-										activityCompleted
-											? handleCompletedActivityClick
-											: handleOpenActivity
-									}
-									disabled={!isVideoCompleted || isButtonLoading}
-									className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${
-										activityCompleted || (isLastActivity && savedResults)
-											? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
-											: isVideoCompleted
-												? 'font-semibold text-black'
-												: 'bg-gray-400 text-background'
-									} [&:disabled]:bg-opacity-50 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
-								>
-									{/* Fondo animado solo cuando está habilitado */}
-									{isVideoCompleted && !activityCompleted && (
-										<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
+							<button
+								onClick={() =>
+									activityCompleted
+										? handleCompletedActivityClick(activity)
+										: handleOpenActivity()
+								}
+								disabled={!isVideoCompleted || isButtonLoading}
+								className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${
+									activityCompleted || (isLastActivity && savedResults)
+										? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
+										: isVideoCompleted
+											? 'font-semibold text-black'
+											: 'bg-gray-400 text-background'
+								} [&:disabled]:bg-opacity-50 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
+							>
+								{/* Fondo animado solo cuando está habilitado */}
+								{isVideoCompleted && !activityCompleted && (
+									<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
+								)}
+
+								{/* Contenido que siempre mantiene su opacidad */}
+								<span className="relative z-10 flex items-center justify-center">
+									{isButtonLoading ? (
+										<div className="flex items-center gap-2">
+											<Icons.spinner className="h-4 w-4 animate-spin text-background" />
+											<span className="font-semibold text-background">
+												Cargando...
+											</span>
+										</div>
+									) : activityCompleted || (isLastActivity && savedResults) ? (
+										<>
+											{isLoadingResults && (
+												<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
+											)}
+											<span className="font-semibold">Ver Resultados</span>
+											<FaCheckCircle className="ml-2 inline text-white" />
+										</>
+									) : (
+										<>
+											{isLoadingActivity && (
+												<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin active:scale-[0.98]" />
+											)}
+											<span>Ver Actividad</span>
+										</>
 									)}
+								</span>
+							</button>
 
-									{/* Contenido que siempre mantiene su opacidad */}
-									<span className="relative z-10 flex items-center justify-center">
-										{isButtonLoading ? (
-											<div className="flex items-center gap-2">
-												<Icons.spinner className="h-4 w-4 animate-spin text-background" />
-												<span className="font-semibold text-background">
-													Cargando...
-												</span>
-											</div>
-										) : activityCompleted || (isLastActivity && savedResults) ? (
-											<>
-												{isLoadingResults && (
-													<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
-												)}
-												<span className="font-semibold">Ver Resultados</span>
-												<FaCheckCircle className="ml-2 inline text-white" />
-											</>
-										) : (
-											<>
-												{isLoadingActivity && (
-													<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin active:scale-[0.98]" />
-												)}
-												<span>Ver Actividad</span>
-											</>
-										)}
-									</span>
-								</button>
-
-								{activityCompleted && nextLessonId && (
-									<div className="mt-4 flex flex-col items-center space-y-2">
-										<div className="w-50 border border-b-gray-500" />
-										<Link
-											href={`/estudiantes/clases/${nextLessonId}`}
-											className="next-lesson-link group flex flex-col items-center text-center"
-										>
-											<button className="arrow-button">
-												<div className="arrow-button-box">
-													<span className="arrow-button-elem">
-														<svg
-															viewBox="0 0 46 40"
-															xmlns="http://www.w3.org/2000/svg"
-														>
-															<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-														</svg>
-													</span>
-													<span className="arrow-button-elem">
-														<svg viewBox="0 0 46 40">
-															<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+							{activityCompleted && nextLessonId && (
+								<div className="mt-4 flex flex-col items-center space-y-2">
+									<div className="w-50 border border-b-gray-500" />
+									<Link
+										href={`/estudiantes/clases/${nextLessonId}`}
+										className="next-lesson-link group flex flex-col items-center text-center"
+									>
+										<button className="arrow-button">
+											<div className="arrow-button-box">
+												<span className="arrow-button-elem">
+													<svg
+														viewBox="0 0 46 40"
+														xmlns="http://www.w3.org/2000/svg"
+													>
+														<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
 													</svg>
 												</span>
-												</div>
-											</button>
-											<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
-												Ir a la siguiente clase
-											</em>
-										</Link>
-									</div>
-								)}
-							</div>
+												<span className="arrow-button-elem">
+													<svg viewBox="0 0 46 40">
+														<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+													</svg>
+												</span>
+											</div>
+										</button>
+										<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
+											Ir a la siguiente clase
+										</em>
+									</Link>
+								</div>
+							)}
 						</div>
-					)}
+					))}
 				</div>
 			) : (
 				<p className="text-gray-600">No hay actividades disponibles</p>
@@ -441,14 +453,14 @@ const LessonActivities = ({
 			</div>
 
 			{/* Modal */}
-			{activity && (
+			{Array.isArray(activities) && activities.length > 0 && activities[0] && (
 				<LessonActivityModal
 					isOpen={isModalOpen}
 					onClose={() => {
 						closeModal();
 						setSavedResults(null);
 					}}
-					activity={activity}
+					activity={activities[0]}
 					onQuestionsAnswered={handleQuestionsAnswered}
 					userId={userId}
 					markActivityAsCompleted={markActivityAsCompleted}
@@ -460,7 +472,7 @@ const LessonActivities = ({
 					courseId={courseId}
 					onViewHistory={() => setIsGradeHistoryOpen(true)} // Add this prop
 					onActivityComplete={handleActivityComplete} // Add this prop
-					isLastActivityInLesson={isLastActivityInLesson(activity)}
+					isLastActivityInLesson={isLastActivityInLesson(activities[0])}
 				/>
 			)}
 

@@ -1,12 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
-
 import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
-
 import { db } from '~/server/db';
 import { userActivitiesProgress, activities } from '~/server/db/schema';
 import { formatScoreNumber } from '~/utils/formatScore';
-
 import type { SavedAnswer, ActivityResults } from '~/types';
 
 interface SaveAnswersRequest {
@@ -21,6 +18,7 @@ interface ActivityData {
 	revisada: boolean;
 	id: number;
 	parametroId: number | null;
+	porcentaje?: number; // Cambiar peso por porcentaje
 }
 
 const redis = new Redis({
@@ -33,7 +31,7 @@ export async function POST(request: NextRequest) {
 		const data = (await request.json()) as SaveAnswersRequest;
 		const { activityId, userId, answers } = data;
 
-		// Get activity and its details
+		// Get activity and its details including weight
 		const activityKey = `activity:${activityId}`;
 		const activity = await redis.get<ActivityData>(activityKey);
 
@@ -72,7 +70,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Calculate score
+		// Calculate score considering activity weight
 		const weightedScore = calculateWeightedScore(answers);
 		const passed = weightedScore >= 3;
 
@@ -176,15 +174,20 @@ export async function POST(request: NextRequest) {
 	}
 }
 
-function calculateWeightedScore(answers: Record<string, SavedAnswer>): number {
+function calculateWeightedScore(
+	answers: Record<string, SavedAnswer>
+): number {
 	let totalWeight = 0;
 	let weightedSum = 0;
 
+	// Calculate question weighted score
 	Object.values(answers).forEach((answer) => {
 		const weight = answer.pesoPregunta ?? 1;
 		totalWeight += weight;
 		weightedSum += answer.isCorrect ? weight : 0;
 	});
 
-	return formatScoreNumber((weightedSum / totalWeight) * 5);
+	// Calculate base score (0-5 scale)
+	const baseScore = (weightedSum / totalWeight) * 5;
+	return formatScoreNumber(baseScore);
 }

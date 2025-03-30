@@ -340,6 +340,13 @@ export interface ActivityResults {
 	courseId?: number;
 }
 
+export interface ActivityResult {
+	id: number;
+	name: string;
+	grade: number;
+	porcentaje: number; // Agregamos el porcentaje
+}
+
 // Original Materia interface
 export interface Materia {
 	id: number;

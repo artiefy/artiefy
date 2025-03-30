@@ -22,6 +22,8 @@ interface ActivityResult {
 	id: number;
 	name: string;
 	grade: number;
+	weight: number;
+	percentage: number;
 }
 
 interface GradeParameter {
@@ -57,18 +59,23 @@ export async function GET(request: NextRequest) {
           p.id,
           p.name,
           p.porcentaje as weight,
-          CAST(AVG(uap.final_grade) AS DECIMAL(10,2)) as grade,
+          -- Calcular promedio ponderado por porcentaje de actividad
+          CAST(
+            SUM(COALESCE(uap.final_grade, 0) * COALESCE(a.porcentaje, 0)) / 
+            NULLIF(SUM(COALESCE(a.porcentaje, 0)), 0)
+          AS DECIMAL(10,2)) as grade,
           json_agg(
             json_build_object(
               'id', a.id,
               'name', a.name,
-              'grade', CAST(uap.final_grade AS DECIMAL(10,2))
-            )
+              'grade', CAST(COALESCE(uap.final_grade, 0) AS DECIMAL(10,2)),
+              'porcentaje', COALESCE(a.porcentaje, 0)
+            ) ORDER BY a.id
           ) as activities
         FROM parametros p
         LEFT JOIN activities a ON a.parametro_id = p.id
-        LEFT JOIN user_activities_progress uap ON uap.activity_id = a.id 
-          AND uap.user_id = ${userId}
+        LEFT JOIN user_activities_progress uap 
+          ON uap.activity_id = a.id AND uap.user_id = ${userId}
         WHERE p.course_id = ${courseId}
         GROUP BY p.id, p.name, p.porcentaje
       )
@@ -77,7 +84,7 @@ export async function GET(request: NextRequest) {
         weight,
         grade,
         activities::text,
-        CAST(SUM(grade * weight / 100) OVER () AS DECIMAL(10,2)) as final_grade
+        CAST(SUM(COALESCE(grade, 0) * weight / 100) OVER () AS DECIMAL(10,2)) as final_grade
       FROM parameter_grades
       ORDER BY id
     `)) as unknown as DBQueryResult;
@@ -110,6 +117,8 @@ export async function GET(request: NextRequest) {
 					id: Number(act.id),
 					name: String(act.name),
 					grade: Number(act.grade),
+					weight: Number(act.weight),
+					percentage: Number(act.percentage),
 				})),
 			};
 		});
