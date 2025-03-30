@@ -61,6 +61,7 @@ chmod +x clean.sh //Dale permisos de ejecución (solo la primera vez)
 - `rm -rf tsconfig.tsbuildinfo`
 - `rm -rf .tsbuildinfo`
 - `rm -rf .eslintcache`
+- `npm cache verify`
 
 ---
 
@@ -70,7 +71,6 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 - `npm doctor` //Comprueba el estado de tu entorno npm
 - `npm prune` //Eliminar paquetes extraños
 - `npm ci` //# Para CI/CD y despliegues
-- `npm cache verify` //
 - `npm install -g npm@11.2.0` //actualizar ultima version del npm
 
 ---

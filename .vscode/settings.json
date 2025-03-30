@@ -53,7 +53,7 @@
 	},
 
 	// TypeScript Configuration
-	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.tsdk": "",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"typescript.tsserver.maxTsServerMemory": 4096,
 	"typescript.tsserver.watchOptions": {
@@ -117,5 +117,6 @@
 	// Git Integration
 	"git.enableSmartCommit": true,
 	"git.confirmSync": false,
-  "git.autofetch": true,
+	"git.autofetch": true,
+	"typescript.tsserver.experimental.enableProjectDiagnostics": true
 }
