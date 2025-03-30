@@ -103,6 +103,7 @@ export function CourseHeader({
 	const router = useRouter();
 	const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
 	const [isLoadingGrade, setIsLoadingGrade] = useState(true);
+	const [isEnrollClicked, setIsEnrollClicked] = useState(false);
 
 	// Replace useEffect with useSWR
 	// Improve error handling with proper types
@@ -198,16 +199,14 @@ export function CourseHeader({
 					);
 
 					if (!isProgramEnrolled) {
-						toast.warning(
-							'Este curso requiere inscripción al programa',
-							{
-								description: `Debes estar inscrito en el programa "${programMateria.programa?.title}" para acceder a este curso.`,
-							}
-						);
+						toast.warning('Este curso requiere inscripción al programa', {
+							description: `Debes estar inscrito en el programa "${programMateria.programa?.title}" para acceder a este curso.`,
+						});
 						router.push(`/estudiantes/programas/${programMateria.programaId}`);
 					}
 				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+					const errorMessage =
+						error instanceof Error ? error.message : 'Error desconocido';
 					console.error('Error checking program enrollment:', errorMessage);
 				}
 			}
@@ -275,43 +274,57 @@ export function CourseHeader({
 	};
 
 	const handleEnrollClick = async () => {
-		const userPlanType = user?.publicMetadata?.planType as string;
-		const isPremiumCourse = course.courseType?.requiredSubscriptionLevel === 'premium';
-		const programMateria = course.materias?.find(materia => materia.programaId !== null);
-	  
-		// First check: If Pro user trying to access Premium course
-		if (userPlanType === 'Pro' && isPremiumCourse) {
-			toast.error('Acceso Restringido', {
-				description: 'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
-			});
-			window.open('/planes', '_blank', 'noopener,noreferrer');
-			return;
-		}
-	  
-		// Second check: If Premium user but needs program enrollment
-		if (programMateria?.programaId && isSubscriptionActive) {
-			try {
-				const isProgramEnrolled = await isUserEnrolledInProgram(programMateria.programaId, user?.id ?? '');
-				
-				if (!isProgramEnrolled) {
-					router.push(`/estudiantes/programas/${programMateria.programaId}`);
-					return;
-				}
-			} catch (error) {
-				console.error('Error checking program enrollment:', error);
-			}
-		}
-	  
-		// Regular subscription check
-		if (course.courseType?.requiredSubscriptionLevel !== 'none' && !isSubscriptionActive) {
-			window.open('/planes', '_blank', 'noopener,noreferrer');
-			return;
-		}
-	  
+		setIsEnrollClicked(true); // Activar spinner inmediatamente
+
 		try {
+			const userPlanType = user?.publicMetadata?.planType as string;
+			const isPremiumCourse =
+				course.courseType?.requiredSubscriptionLevel === 'premium';
+			const programMateria = course.materias?.find(
+				(materia) => materia.programaId !== null
+			);
+
+			// First check: If Pro user trying to access Premium course
+			if (userPlanType === 'Pro' && isPremiumCourse) {
+				toast.error('Acceso Restringido', {
+					description:
+						'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
+				});
+				window.open('/planes', '_blank', 'noopener,noreferrer');
+				return;
+			}
+
+			// Second check: If Premium user but needs program enrollment
+			if (programMateria?.programaId && isSubscriptionActive) {
+				try {
+					const isProgramEnrolled = await isUserEnrolledInProgram(
+						programMateria.programaId,
+						user?.id ?? ''
+					);
+
+					if (!isProgramEnrolled) {
+						router.push(`/estudiantes/programas/${programMateria.programaId}`);
+						return;
+					}
+				} catch (error) {
+					console.error('Error checking program enrollment:', error);
+				}
+			}
+
+			// Regular subscription check
+			if (
+				course.courseType?.requiredSubscriptionLevel !== 'none' &&
+				!isSubscriptionActive
+			) {
+				window.open('/planes', '_blank', 'noopener,noreferrer');
+				return;
+			}
+
 			await onEnrollAction();
 		} catch (error) {
 			console.error('Error enrolling:', error);
+		} finally {
+			setIsEnrollClicked(false); // Desactivar spinner al finalizar
 		}
 	};
 
@@ -372,7 +385,9 @@ export function CourseHeader({
 						<div className="flex items-center">
 							<FaUserGraduate className="mr-2 text-blue-600" />
 							<span className="text-sm text-gray-600 sm:text-base">
-								{totalStudents} Estudiantes
+								{Math.max(0, totalStudents)}{' '}
+								{/* Asegurarse de que nunca sea negativo */}{' '}
+								{totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
 							</span>
 						</div>
 						<div className="flex items-center">
@@ -486,7 +501,7 @@ export function CourseHeader({
 							<Badge
 								key={materia.id}
 								variant="secondary"
-								className={`whitespace-normal break-words bg-gradient-to-r ${getBadgeGradient(index)} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg max-w-[200px] sm:max-w-none`}
+								className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
 							>
 								{materia.title}
 							</Badge>
@@ -532,12 +547,12 @@ export function CourseHeader({
 						) : (
 							<Button
 								onClick={handleEnrollClick}
-								disabled={isEnrolling}
+								disabled={isEnrolling || isEnrollClicked}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 									<div className="relative z-10 flex items-center justify-center space-x-2">
-										{isEnrolling ? (
+										{isEnrolling || isEnrollClicked ? (
 											<Icons.spinner
 												className="animate-spin text-white"
 												style={{ width: '25px', height: '25px' }}
