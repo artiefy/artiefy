@@ -384,9 +384,8 @@ export function CourseHeader({
 					<div className="flex items-center justify-between gap-4 sm:gap-6">
 						<div className="flex items-center">
 							<FaUserGraduate className="mr-2 text-blue-600" />
-							<span className="text-sm text-gray-600 sm:text-base">
+							<span className="text-sm font-semibold text-blue-600 sm:text-base">
 								{Math.max(0, totalStudents)}{' '}
-								{/* Asegurarse de que nunca sea negativo */}{' '}
 								{totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
 							</span>
 						</div>
