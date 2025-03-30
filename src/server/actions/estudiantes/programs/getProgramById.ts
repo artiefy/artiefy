@@ -34,17 +34,6 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
 
 		if (!program) return null;
 
-		// Log raw data for debugging
-		console.log(
-			'Raw program materias:',
-			program.materias.map((m) => ({
-				materiaId: m.id,
-				cursoId: m.curso?.id,
-				modalidadId: m.curso?.modalidadesid,
-				modalidad: m.curso?.modalidad,
-			}))
-		);
-
 		const transformedMaterias: MateriaWithCourse[] = program.materias.map(
 			(materia) => ({
 				...materia,
@@ -64,17 +53,6 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
 			})
 		);
 
-		// Log transformed data for verification
-		console.log(
-			'Transformed materias:',
-			transformedMaterias.map((m) => ({
-				materiaId: m.id,
-				cursoId: m.curso?.id,
-				modalidadName: m.curso?.modalidad?.name,
-				isActive: m.curso?.isActive,
-			}))
-		);
-
 		return {
 			...program,
 			id: program.id.toString(),
@@ -83,10 +61,6 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
 			materias: transformedMaterias,
 		};
 	} catch (error) {
-		console.error(
-			'Error fetching program:',
-			error instanceof Error ? error.message : 'Unknown error'
-		);
 		return null;
 	}
 };

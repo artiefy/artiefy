@@ -17,8 +17,6 @@ export async function GET(request: NextRequest) {
 		const userId = searchParams.get('userId');
 		const courseId = searchParams.get('courseId');
 
-		console.log('Received request with:', { userId, courseId }); // Debug log
-
 		if (!userId || !courseId) {
 			return NextResponse.json(
 				{ error: 'Missing required parameters' },
@@ -26,7 +24,6 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		// Get all materias grades for the course
 		const materiasGrades = await db
 			.select({
 				materiaId: materiaGrades.materiaId,
@@ -35,15 +32,10 @@ export async function GET(request: NextRequest) {
 			.from(materiaGrades)
 			.where(eq(materiaGrades.userId, userId));
 
-		console.log('Found grades:', materiasGrades); // Debug log
-
 		const courseMaterias = await db.query.materias.findMany({
 			where: eq(materias.courseid, parseInt(courseId)),
 		});
 
-		console.log('Found materias:', courseMaterias); // Debug log
-
-		// Map results with proper grade lookup and format grades to 2 decimal places
 		const formattedResults: MateriaWithGrade[] = courseMaterias.map(
 			(materia) => {
 				const gradeRecord = materiasGrades.find(
@@ -52,16 +44,13 @@ export async function GET(request: NextRequest) {
 				return {
 					id: materia.id,
 					title: materia.title,
-					grade: Number((gradeRecord?.grade ?? 0).toFixed(2)), // Format number to 2 decimal places
+					grade: Number((gradeRecord?.grade ?? 0).toFixed(2)),
 				};
 			}
 		);
 
-		console.log('Final formatted results:', formattedResults); // Debug log
-
 		return NextResponse.json({ materias: formattedResults });
 	} catch (error) {
-		console.error('Error fetching materia grades:', error);
 		return NextResponse.json(
 			{ error: 'Failed to fetch grades' },
 			{ status: 500 }

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 import Image from 'next/image';
 
-import { useRouter } from '@bprogress/next/app'; // Change this line
+import { useRouter } from '@bprogress/next/app';
 import { useAuth } from '@clerk/nextjs';
 import {
 	StarIcon,
@@ -37,7 +37,7 @@ interface ProgramContentProps {
 	isEnrolled: boolean;
 	isSubscriptionActive: boolean;
 	subscriptionEndDate: string | null;
-	isCheckingEnrollment: boolean; // Add this prop
+	isCheckingEnrollment: boolean;
 }
 
 export function ProgramContent({
@@ -45,26 +45,24 @@ export function ProgramContent({
 	isEnrolled,
 	isSubscriptionActive,
 	subscriptionEndDate,
-	isCheckingEnrollment, // Add this to destructuring
+	isCheckingEnrollment,
 }: ProgramContentProps) {
 	const router = useRouter({
 		showProgress: true,
 		startPosition: 0.3,
-		disableSameURL: true
+		disableSameURL: true,
 	});
-	const { userId, isSignedIn } = useAuth(); // Add isSignedIn
+	const { userId, isSignedIn } = useAuth();
 	const [courseEnrollments, setCourseEnrollments] = useState<
 		Record<number, boolean>
 	>({});
 
-	// Modificar para filtrar cursos duplicados por ID
 	const safeMateriasWithCursos =
 		program.materias?.filter(
 			(materia): materia is MateriaWithCourse & { curso: Course } =>
 				materia.curso !== undefined && 'id' in materia.curso
 		) ?? [];
 
-	// Filtrar cursos únicos basados en el ID del curso
 	const uniqueCourses = safeMateriasWithCursos.reduce(
 		(acc, materia) => {
 			if (!acc.some((item) => item.curso.id === materia.curso.id)) {
@@ -77,13 +75,6 @@ export function ProgramContent({
 
 	const courses = uniqueCourses.map((materia) => materia.curso);
 
-	// Añadir console.log para debugging
-	console.log('Course data:', courses[0]);
-	console.log(
-		'Courses isActive status:',
-		courses.map((c) => ({ id: c.id, isActive: c.isActive }))
-	);
-
 	const formatDate = (dateString: string | null) => {
 		if (!dateString) return '';
 		return new Date(dateString).toLocaleDateString('es-ES', {
@@ -93,12 +84,11 @@ export function ProgramContent({
 		});
 	};
 
-	// Move course enrollment checks to useEffect
 	useEffect(() => {
+		let isSubscribed = true;
+
 		const checkCourseEnrollments = async () => {
-			if (!userId) {
-				return;
-			}
+			if (!userId) return;
 
 			try {
 				const enrollmentChecks = await Promise.all(
@@ -106,50 +96,51 @@ export function ProgramContent({
 						try {
 							const isEnrolled = await isUserEnrolled(course.id, userId);
 							return [course.id, isEnrolled] as [number, boolean];
-						} catch (error) {
-							console.error(
-								`Error checking enrollment for course ${course.id}:`,
-								error
-							);
+						} catch {
 							return [course.id, false] as [number, boolean];
 						}
 					})
 				);
 
-				const enrollmentMap = Object.fromEntries(enrollmentChecks) as Record<
-					number,
-					boolean
-				>;
-				setCourseEnrollments(enrollmentMap);
-			} catch (error) {
-				console.error('Error checking course enrollments:', error);
+				if (isSubscribed) {
+					const enrollmentMap = Object.fromEntries(enrollmentChecks);
+					setCourseEnrollments(enrollmentMap);
+				}
+			} catch {
+				// Silently handle errors
 			}
 		};
 
 		void checkCourseEnrollments();
+
+		return () => {
+			isSubscribed = false;
+		};
 	}, [userId, courses]);
 
-	const handleCourseClick = (courseId: number, isActive: boolean) => {
-		if (!isActive || !isSignedIn || !isEnrolled) {
-			if (!isSignedIn) {
-				const currentPath = window.location.pathname;
-				void router.push(`/sign-in?redirect_url=${currentPath}`);
+	const handleCourseClick = useCallback(
+		(courseId: number, isActive: boolean) => {
+			if (!isActive || !isSignedIn || !isEnrolled) {
+				if (!isSignedIn) {
+					const currentPath = window.location.pathname;
+					void router.push(`/sign-in?redirect_url=${currentPath}`, {
+						showProgress: true,
+						startPosition: 0.3,
+					});
+				}
+				return;
 			}
-			return;
-		}
 
-		try {
-			void router.push(`/estudiantes/cursos/${courseId}`, {
+			const href = `/estudiantes/cursos/${courseId}`;
+
+			void router.push(href, {
 				showProgress: true,
-				startPosition: 0.3
+				startPosition: 0.3,
+				scroll: true,
 			});
-		} catch (error) {
-			console.error(
-				'Navigation error:',
-				error instanceof Error ? error.message : 'Unknown error'
-			);
-		}
-	};
+		},
+		[isSignedIn, isEnrolled, router]
+	);
 
 	return (
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
@@ -184,7 +175,6 @@ export function ProgramContent({
 			)}
 
 			<div className="mb-6">
-				{/* Subscription Status Section */}
 				<div className="mb-4 flex flex-row items-center justify-between">
 					<h2 className="text-2xl font-bold text-background">
 						Cursos Del Programa
@@ -293,6 +283,7 @@ export function ProgramContent({
 											</Button>
 										) : (
 											<Button
+												data-course-id={course.id}
 												onClick={() =>
 													handleCourseClick(course.id, course.isActive ?? false)
 												}
