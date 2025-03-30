@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm'; // Add inArray import
 
 import { db } from '~/server/db';
 import {
@@ -111,20 +111,23 @@ export async function enrollInCourse(
 			};
 		}
 
-			// Verify subscription level requirements
+		// Verify subscription level requirements
 		const userPlanType = user.publicMetadata?.planType as string;
 		const courseRequiredLevel = course.courseType?.requiredSubscriptionLevel;
 
 		if (courseRequiredLevel === 'premium' && userPlanType === 'Pro') {
 			return {
 				success: false,
-				message: 'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
-				requiresSubscription: true
+				message:
+					'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
+				requiresSubscription: true,
 			};
 		}
-		
+
 		const subscriptionStatus = user.publicMetadata?.subscriptionStatus;
-		const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as string | null;
+		const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as
+			| string
+			| null;
 
 		const isSubscriptionValid =
 			subscriptionStatus === 'active' &&
@@ -134,7 +137,7 @@ export async function enrollInCourse(
 			return {
 				success: false,
 				message: 'Se requiere una suscripción activa',
-				requiresSubscription: true
+				requiresSubscription: true,
 			};
 		}
 
@@ -152,18 +155,35 @@ export async function enrollInCourse(
 			orderBy: (lessons, { asc }) => [asc(lessons.title)],
 		});
 
-		for (const courseLesson of courseLessons) {
-			const isFirstLesson = courseLesson.id === courseLessons[0].id;
+		// Get lesson IDs for this course
+		const lessonIds = courseLessons.map((lesson) => lesson.id);
 
-			await db.insert(userLessonsProgress).values({
-				userId: userId,
-				lessonId: courseLesson.id,
-				progress: 0,
-				isCompleted: false,
-				isLocked: !isFirstLesson, // Only first lesson unlocked
-				isNew: isFirstLesson,
-				lastUpdated: new Date(),
-			});
+		// Get existing progress records for this user and these specific lessons
+		const existingProgress = await db.query.userLessonsProgress.findMany({
+			where: and(
+				eq(userLessonsProgress.userId, userId),
+				inArray(userLessonsProgress.lessonId, lessonIds)
+			),
+		});
+
+		// Create a Set of existing lesson progress for faster lookup
+		const existingProgressSet = new Set(
+			existingProgress.map((progress) => progress.lessonId)
+		);
+
+		// Insert progress only for lessons that don't have progress
+		for (const lesson of courseLessons) {
+			if (!existingProgressSet.has(lesson.id)) {
+				await db.insert(userLessonsProgress).values({
+					userId: userId,
+					lessonId: lesson.id,
+					progress: 0,
+					isCompleted: false,
+					isLocked: lesson.id !== courseLessons[0].id,
+					isNew: lesson.id === courseLessons[0].id,
+					lastUpdated: new Date(),
+				});
+			}
 		}
 
 		return {
@@ -171,7 +191,10 @@ export async function enrollInCourse(
 			message: 'Inscripción exitosa',
 		};
 	} catch (error) {
-		console.error('Error en enrollInCourse:', error);
+		console.error(
+			'Error en enrollInCourse:',
+			error instanceof Error ? error.message : 'Unknown error'
+		);
 		return {
 			success: false,
 			message:
