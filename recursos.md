@@ -188,3 +188,8 @@ Borra los datos en:
 Windows: `C:\Users\TU_USUARIO\AppData\Roaming\Code`
 
 ---
+
+[jjose2911@outlook.com](mailto:jjose2911@outlook.com)
+Studiovisual18*
+
+---
