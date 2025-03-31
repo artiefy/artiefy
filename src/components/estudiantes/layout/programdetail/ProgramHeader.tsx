@@ -86,6 +86,14 @@ export function ProgramHeader({
 		window.location.href = `/sign-in?redirect_url=${returnUrl}`;
 	};
 
+	const handleEnrollClick = async () => {
+		if (!canEnroll) {
+			window.open('/planes', '_blank', 'noopener,noreferrer');
+			return;
+		}
+		await onEnrollAction();
+	};
+
 	return (
 		<Card className="overflow-hidden p-0">
 			<CardHeader className="px-0">
@@ -213,8 +221,8 @@ export function ProgramHeader({
 							</div>
 						) : (
 							<Button
-								onClick={onEnrollAction}
-								disabled={isEnrolling || !canEnroll || isCheckingEnrollment}
+								onClick={handleEnrollClick}
+								disabled={isEnrolling || isCheckingEnrollment}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
 							>
 								<span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
@@ -240,7 +248,7 @@ export function ProgramHeader({
 											<>
 												<span className="transition-all duration-500 group-hover:translate-x-1">
 													{!canEnroll
-														? 'Requiere Plan Premium'
+														? 'Obtener Plan Premium'
 														: 'Inscribirse al Programa'}
 												</span>
 												<svg
