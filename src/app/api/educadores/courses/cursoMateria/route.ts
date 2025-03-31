@@ -1,8 +1,4 @@
 import { type NextRequest, NextResponse } from 'next/server';
-<<<<<<< HEAD
-=======
-
->>>>>>> dev/miguel
 import { auth, clerkClient } from '@clerk/nextjs/server';
 
 import {
