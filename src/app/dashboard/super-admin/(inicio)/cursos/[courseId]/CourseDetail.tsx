@@ -797,20 +797,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</h2>
 									<div className="flex flex-col gap-2">
 										<select
-											value={selectedInstructor || course.instructor}
+											value={selectedInstructor}
 											onChange={(e) => setSelectedInstructor(e.target.value)}
 											className="w-full rounded-md border border-primary bg-background p-2 text-sm text-primary"
 										>
 											{course.instructor && (
-												<option value={course.instructor}>
-													{(educators.find((e) => e.id === course.instructor)
-														?.name ??
-														course.instructorName) ||
-														'Instructor actual'}
-												</option>
+												<option value="">{course.instructor}</option>
 											)}
 											{educators
-												.filter((educator) => educator.id !== course.instructor)
+												.filter(
+													(educator) => educator.name !== course.instructor
+												)
 												.map((educator) => (
 													<option key={educator.id} value={educator.id}>
 														{educator.name}

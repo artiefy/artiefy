@@ -1,56 +1,81 @@
 import { NextResponse } from 'next/server';
 
-import { eq } from 'drizzle-orm';
+import { eq, isNull, sql, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import {  materias } from '~/server/db/schema';
+import { materias } from '~/server/db/schema';
 
 export async function GET(req: Request) {
 	try {
 		const { searchParams } = new URL(req.url);
 		const courseId = searchParams.get('courseId');
 
+		// Si no hay courseId, devolver materias únicas sin programa
 		if (!courseId) {
-			return NextResponse.json(
-				{ error: 'El courseId es obligatorio' },
-				{ status: 400 }
-			);
+			const materiasUnicas = await db
+				.select({
+					id: sql`MIN(${materias.id})`.as('id'),
+					title: materias.title,
+					programaId: materias.programaId,
+				})
+				.from(materias)
+				.where(isNull(materias.programaId))
+				.groupBy(materias.title, materias.programaId);
+
+			return NextResponse.json(materiasUnicas);
 		}
 
-		// 1. Primero, obtén una materia asociada al curso para encontrar su programa
-		const materiaDelCurso = await db
+		// 1. Obtener todas las materias del curso
+		const materiasDelCurso = await db
+			.select()
+			.from(materias)
+			.where(eq(materias.courseid, parseInt(courseId)));
+
+		if (!materiasDelCurso?.length) {
+			// Si no hay materia para ese curso, devolver todas las materias sin programa
+			const materiasUnicas = await db
+				.select({
+					id: sql`MIN(${materias.id})`.as('id'),
+					title: materias.title,
+					programaId: materias.programaId,
+				})
+				.from(materias)
+				.where(isNull(materias.programaId))
+				.groupBy(materias.title, materias.programaId);
+
+			return NextResponse.json(materiasUnicas);
+		}
+
+		const programId = materiasDelCurso[0].programaId;
+
+		if (!programId) {
+			return NextResponse.json([...materiasDelCurso]);
+		}
+
+		// 2. Obtener todas las demás materias del programa (excluyendo las del curso)
+		const otrasMaterias = await db
 			.select({
+				id: sql`MIN(${materias.id})`.as('id'),
+				title: materias.title,
 				programaId: materias.programaId,
 			})
 			.from(materias)
-			.where(eq(materias.courseid, parseInt(courseId)))
-			.limit(1);
+			.where(
+				and(
+					eq(materias.programaId, programId),
+					sql`${materias.title} NOT IN (${materiasDelCurso
+						.map((m) => `'${m.title}'`)
+						.join(', ')})`
+				)
+			)
+			.groupBy(materias.title, materias.programaId);
 
-		if (!materiaDelCurso || materiaDelCurso.length === 0) {
-			return NextResponse.json(
-				{ error: 'No se encontró el programa asociado al curso' },
-				{ status: 404 }
-			);
-		}
+		// 3. Combinar las materias del curso con las otras materias
+		const resultado = [...materiasDelCurso, ...otrasMaterias];
 
-		const programId = materiaDelCurso[0].programaId;
-
-		if (!programId) {
-			return NextResponse.json(
-				{ error: 'La materia no tiene un programa asociado' },
-				{ status: 404 }
-			);
-		}
-
-		// 2. Ahora obtén todas las materias de ese programa
-		const materiasDelPrograma = await db
-			.select()
-			.from(materias)
-			.where(eq(materias.programaId, programId));
-
-		return NextResponse.json(materiasDelPrograma);
+		return NextResponse.json(resultado);
 	} catch (error) {
-		console.error('❌ Error fetching subjects:', error);
+		console.error('❌ Error detallado:', error);
 		const errorMessage =
 			error instanceof Error ? error.message : 'Unknown error';
 		return NextResponse.json({ error: errorMessage }, { status: 500 });

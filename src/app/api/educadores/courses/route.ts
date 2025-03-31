@@ -46,14 +46,14 @@ export async function GET(req: NextRequest) {
 	const { searchParams } = new URL(req.url);
 	const courseId = searchParams.get('courseId');
 	const userId = searchParams.get('userId');
-	const fetchSubjects = searchParams.get('fetchSubjects'); // Check if fetchSubjects is requested
-	console.log('CourseId en api route', courseId);
-	console.log('FetchSubjects:', fetchSubjects); // Add console log to debug
+	const fetchSubjects = searchParams.get('fetchSubjects');
+
+	console.log('GET Request Parameters:', { courseId, userId, fetchSubjects });
 
 	try {
 		if (fetchSubjects) {
 			const subjects = await getSubjects();
-			console.log('Fetched subjects from DB:', subjects); // Add console log to debug
+			console.log('Subjects:', subjects);
 			return NextResponse.json(subjects);
 		}
 		let courses;
@@ -74,13 +74,14 @@ export async function GET(req: NextRequest) {
 			};
 		} else if (userId) {
 			courses = await getCoursesByUserId(userId);
+			console.log('Courses for userId:', userId, courses);
 		} else {
 			courses = await getAllCourses();
+			console.log('All courses:', courses);
 		}
-		console.log('Courses en api route', courses);
 		return NextResponse.json(courses);
 	} catch (error) {
-		console.error('Error:', error);
+		console.error('Error in GET courses:', error);
 		return NextResponse.json(
 			{ error: 'Error al obtener los datos' },
 			{ status: 500 }

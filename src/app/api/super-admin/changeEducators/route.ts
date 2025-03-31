@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { clerkClient } from '@clerk/nextjs/server';
+
 import {
 	getAllEducators,
 	updateCourseInstructor,
@@ -41,7 +43,7 @@ export async function GET() {
 // ✅ Actualizar el educador de un curso
 export async function PUT(req: Request) {
 	try {
-		const body = await req.json() as ChangeEducatorRequest;
+		const body = (await req.json()) as ChangeEducatorRequest;
 
 		if (!body.courseId || !body.newInstructor) {
 			return NextResponse.json(
@@ -50,7 +52,21 @@ export async function PUT(req: Request) {
 			);
 		}
 
-		await updateCourseInstructor(body.courseId, body.newInstructor);
+		// Properly type the user from Clerk
+		const clerk = await clerkClient();
+		const user = await clerk.users.getUser(body.newInstructor);
+		if (!user) {
+			return NextResponse.json(
+				{ error: 'Usuario no encontrado' },
+				{ status: 404 }
+			);
+		}
+
+		// Crear el nombre completo del educador
+		const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+
+		// Actualizar el curso con el nombre completo del educador
+		await updateCourseInstructor(body.courseId, fullName);
 
 		return NextResponse.json({
 			success: true,

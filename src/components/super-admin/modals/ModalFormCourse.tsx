@@ -217,15 +217,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	useEffect(() => {
 		const fetchSubjects = async () => {
 			try {
-				// Get courseId from props
-				if (!editingCourseId) {
-					console.error('No course ID found');
-					return;
-				}
-
 				const response = await fetch(
-					`/api/super-admin/programs/materiasCourses?courseId=${editingCourseId}`
+					editingCourseId
+						? `/api/super-admin/programs/materiasCourses?courseId=${editingCourseId}`
+						: '/api/super-admin/programs/materiasCourses'
 				);
+
 				if (response.ok) {
 					const subjectsData = (await response.json()) as {
 						id: number;
@@ -240,7 +237,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			}
 		};
 
-		if (isOpen && editingCourseId) {
+		if (isOpen) {
 			void fetchSubjects();
 		}
 	}, [isOpen, editingCourseId]);

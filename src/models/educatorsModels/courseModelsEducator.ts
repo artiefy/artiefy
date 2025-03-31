@@ -3,13 +3,13 @@ import { eq, count, sum } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
 	courses,
-	users,
 	categories,
 	modalidades,
 	enrollments,
 	nivel,
 	lessons,
-	materias, courseTypes
+	materias,
+	courseTypes,
 } from '~/server/db/schema';
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
@@ -82,8 +82,8 @@ export const createCourse = async ({
 	instructor: string;
 	creatorId: string;
 	rating: number;
-	courseTypeId: number; 
-	isActive?: boolean; 
+	courseTypeId: number;
+	isActive?: boolean;
 }) => {
 	const [insertedCourse] = await db
 		.insert(courses)
@@ -97,7 +97,8 @@ export const createCourse = async ({
 			instructor,
 			rating,
 			creatorId,
-			courseTypeId, isActive
+			courseTypeId,
+			isActive,
 		})
 		.returning({ id: courses.id });
 	return { ...insertedCourse };
@@ -121,7 +122,6 @@ export const getCoursesByUserId = async (userId: string) => {
 			updatedAt: courses.updatedAt,
 		})
 		.from(courses)
-		.leftJoin(users, eq(courses.instructor, users.id))
 		.leftJoin(categories, eq(courses.categoryid, categories.id))
 		.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
 		.leftJoin(nivel, eq(courses.nivelid, nivel.id))
@@ -221,7 +221,7 @@ export const getCourseById = async (courseId: number) => {
 					.where(eq(courseTypes.id, course.courseTypeId))
 					.then((rows) => rows[0]?.name ?? null)
 			: null;
-		
+
 		const totalStudents = await getTotalStudents(courseId);
 
 		return {
@@ -229,7 +229,7 @@ export const getCourseById = async (courseId: number) => {
 			categoryid: category?.name ?? course.categoryid,
 			modalidadesid: modalidad?.name ?? course.modalidadesid,
 			nivelid: nivelName ?? course.nivelid,
-			courseTypeName, 
+			courseTypeName,
 			totalStudents,
 		};
 	} catch (error) {
@@ -271,10 +271,11 @@ export const updateCourse = async (
 		categoryid,
 		modalidadesid,
 		nivelid,
-		instructor,	
+		instructor,
 		fileName,
 		rating,
-		courseTypeId, isActive
+		courseTypeId,
+		isActive,
 	}: {
 		title?: string;
 		description?: string | null;
@@ -286,13 +287,13 @@ export const updateCourse = async (
 		fileName?: string;
 		rating?: number;
 		courseTypeId?: number | null;
-		isActive?: boolean| null;
+		isActive?: boolean | null;
 	}
 ) => {
 	// Obtener los datos actuales del curso
 	const currentCourse = await getCourseById(courseId);
 	void fileName;
-	
+
 	const updateData: {
 		title?: string;
 		description?: string | null;
@@ -331,14 +332,19 @@ export const updateCourse = async (
 		// fileName is not part of currentCourse, so it is removed
 		rating: rating ?? currentCourse.rating ?? undefined,
 		courseTypeId:
-			typeof courseTypeId === 'number' ? courseTypeId : currentCourse.courseTypeId,
-			isActive: typeof isActive === 'boolean' ? isActive : currentCourse.isActive, 
+			typeof courseTypeId === 'number'
+				? courseTypeId
+				: currentCourse.courseTypeId,
+		isActive: typeof isActive === 'boolean' ? isActive : currentCourse.isActive,
 	};
 
-	return db.update(courses).set({
-		...updateData,
-		courseTypeId: updateData.courseTypeId ?? undefined, // Ensure compatibility
-	}).where(eq(courses.id, courseId));
+	return db
+		.update(courses)
+		.set({
+			...updateData,
+			courseTypeId: updateData.courseTypeId ?? undefined, // Ensure compatibility
+		})
+		.where(eq(courses.id, courseId));
 };
 
 export async function updateMateria(
@@ -352,10 +358,10 @@ export async function updateMateria(
 			.from(materias)
 			.where(eq(materias.id, id))
 			.limit(1);
-	
+
 		if (existingMateria.length > 0) {
 			const materia = existingMateria[0];
-	
+
 			if (materia.courseid) {
 				// Si la materia ya tiene un `courseid`, crear una nueva materia con los mismos datos
 				await db.insert(materias).values({
@@ -377,7 +383,6 @@ export async function updateMateria(
 					`Materia actualizada: ${materia.title} -> courseId: ${data.courseid}`
 				);
 			}
-			
 		}
 	} catch (error) {
 		console.error('Error al procesar materia:', error);
@@ -456,16 +461,40 @@ export const getMateriasByCourseId = async (courseId: number) => {
 	}
 };
 
-
 export const getModalidadById = async (modalidadId: number) => {
-    return db
-        .select({
-            id: modalidades.id,
-            name: modalidades.name,
-            description: modalidades.description,
-        })
-        .from(modalidades)
-        .where(eq(modalidades.id, modalidadId))
-        .then((rows) => rows[0]);
+	return db
+		.select({
+			id: modalidades.id,
+			name: modalidades.name,
+			description: modalidades.description,
+		})
+		.from(modalidades)
+		.where(eq(modalidades.id, modalidadId))
+		.then((rows) => rows[0]);
 };
 
+export const getCoursesByUser = async (userId: string) => {
+	return (
+		db
+			.select({
+				id: courses.id,
+				title: courses.title,
+				description: courses.description,
+				coverImageKey: courses.coverImageKey,
+				categoryid: categories.name,
+				modalidadesid: modalidades.name,
+				nivelid: nivel.name,
+				instructor: courses.instructor,
+				rating: courses.rating,
+				creatorId: courses.creatorId,
+				createdAt: courses.createdAt,
+				updatedAt: courses.updatedAt,
+			})
+			.from(courses)
+			// Removemos el leftJoin con users ya que no es necesario
+			.leftJoin(categories, eq(courses.categoryid, categories.id))
+			.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+			.leftJoin(nivel, eq(courses.nivelid, nivel.id))
+			.where(eq(courses.instructor, userId))
+	);
+};

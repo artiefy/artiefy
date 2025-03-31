@@ -31,7 +31,7 @@ export interface CourseModel {
 	instructor: string;
 	coverImageKey: string;
 	creatorId: string;
-	nivelid: string; 
+	nivelid: string;
 	totalParametros: number; // Add this line
 }
 
@@ -49,7 +49,7 @@ export default function Home() {
 	const [courses, setCourses] = useState<CourseModel[]>([]); // Initialize courses state
 	const [loading, setLoading] = useState(false); // Initialize loading state
 	const [error, setError] = useState<string | null>(null); // Initialize error state
-	const [stats, setStats] = useState<StatsModel>({ 
+	const [stats, setStats] = useState<StatsModel>({
 		totalCourses: 0,
 		totalLessons: 0,
 		totalEnrollments: 0,
@@ -101,9 +101,14 @@ export default function Home() {
 		try {
 			setLoading(true);
 			setError(null);
-			const response = await fetch(`/api/educadores/courses?userId=${user.id}`);
+			const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+			const response = await fetch(
+				`/api/educadores/courses/coursesByEducator?fullName=${encodeURIComponent(fullName)}`
+			);
+			console.log('API Response:', response);
 			if (response.ok) {
 				const data = (await response.json()) as CourseModel[];
+				console.log('Courses data:', data);
 				setCourses(
 					data.map((course) => ({
 						...course,
@@ -112,6 +117,7 @@ export default function Home() {
 						modalidadesid: course.modalidadesid, // Map modalidadesid properly
 					})) as CourseModel[]
 				);
+				console.log('Processed courses:', courses);
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				const errorMessage = errorData.error ?? response.statusText;
@@ -186,8 +192,8 @@ export default function Home() {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-				<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 py-4 text-white transition-transform duration-300 ease-in-out zoom-in">
+				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+				<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 py-4 text-white transition-transform duration-300 ease-in-out">
 					<div className="flex w-full rounded-lg px-4 sm:px-6 lg:px-8">
 						<GraduationCap className="h-14 w-12 text-primary" />
 						<div className="ml-4 flex flex-col">
@@ -205,8 +211,8 @@ export default function Home() {
 				<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 					{/* Average Grade Card */}
 					<div className="group relative">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
+						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+						<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
 							<div className="p-5">
 								<div className="flex items-center">
 									<div className="shrink-0">
@@ -230,8 +236,8 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
+						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+						<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
 							<div className="p-5">
 								<div className="flex items-center">
 									<div className="shrink-0">
@@ -255,8 +261,8 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
+						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+						<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
 							<div className="p-5">
 								<div className="flex items-center">
 									<div className="shrink-0">
@@ -280,8 +286,8 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-						<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in">
+						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+						<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
 							<div className="p-5">
 								<div className="flex items-center">
 									<div className="shrink-0">
