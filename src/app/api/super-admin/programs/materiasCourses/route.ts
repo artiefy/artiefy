@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { courses, materias } from '~/server/db/schema';
+import {  materias } from '~/server/db/schema';
 
 export async function GET(req: Request) {
 	try {

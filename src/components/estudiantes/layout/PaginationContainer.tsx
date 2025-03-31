@@ -45,7 +45,7 @@ const PaginationContainer = ({
 
 	const handlePageChange = (page: number) => {
 		start();
-		const params = new URLSearchParams(searchParams.toString());
+		const params = new URLSearchParams(searchParams?.toString() ?? '');
 
 		if (page === 1) {
 			params.delete('page');
