@@ -14,25 +14,6 @@ import {
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';
 
-interface Materia {
-	id: number;
-	title: string;
-	description: string | null;
-	programaId: number | null;
-	courseid: number | null;
-}
-
-interface UpdateCourseData {
-	subjects?: { id: number }[];
-	title?: string;
-	description?: string;
-	coverImageKey?: string;
-	categoryid?: number;
-	modalidadesid?: number;
-	nivelid?: number;
-	instructor?: string;
-	[key: string]: unknown;
-}
 
 // Agregamos una interfaz para el cuerpo de la solicitud PUT
 interface PutRequestBody {
