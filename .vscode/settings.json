@@ -118,5 +118,6 @@
 	"git.enableSmartCommit": true,
 	"git.confirmSync": false,
 	"git.autofetch": true,
-	"typescript.tsserver.experimental.enableProjectDiagnostics": true
+	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
+	"svg.preview.background": "editor"
 }
