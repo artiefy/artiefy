@@ -374,8 +374,8 @@ export function CourseContent({
 			<div
 				className={cn(
 					'transition-all duration-300',
-					shouldBlurContent && 'pointer-events-none opacity-75 blur-[2px]',
-					!isEnrolled && 'pointer-events-none opacity-75'
+					shouldBlurContent && 'pointer-events-none opacity-100 blur-[2px]',
+					!isEnrolled && 'pointer-events-none opacity-100'
 				)}
 			>
 				<div className="space-y-4">{memoizedLessons}</div>
