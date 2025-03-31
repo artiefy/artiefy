@@ -149,7 +149,7 @@
 	},
 	"overrides": {
 		"esbuild": "0.25.1",
-    "glob": "^11.0.1"
+		"glob": "^11.0.1"
 	},
 	"ct3aMetadata": {
 		"initVersion": "7.38.1"

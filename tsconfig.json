@@ -2,8 +2,8 @@
 	"compilerOptions": {
 		// Runtime options
 		"target": "ES2022",
-		"lib": ["dom", "dom.iterable", "esnext"],
-		"module": "esnext",
+		"lib": ["dom", "dom.iterable", "ESNext"],
+		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"jsx": "preserve",
 

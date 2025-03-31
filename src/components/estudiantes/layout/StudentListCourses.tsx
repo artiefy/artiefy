@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
+import { BookOpenIcon } from '@heroicons/react/24/outline';
 
 import GradientText from '~/components/estudiantes/layout/GradientText';
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
@@ -50,7 +51,21 @@ export default async function CourseListStudent({
 	const userId = user?.id;
 
 	if (!courses || courses.length === 0) {
-		return <div>No hay cursos disponibles</div>;
+		return (
+			<div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 text-center">
+				<BookOpenIcon className="h-16 w-16 text-primary animate-pulse" />
+				<div className="space-y-2">
+					<h3 className="text-2xl font-bold text-primary">
+						No hay cursos disponibles
+					</h3>
+					<p className="text-gray-500">
+						No se encontraron cursos que coincidan con tu búsqueda.
+						{searchTerm ? ' Intenta con otros términos de búsqueda.' : ''}
+						{category ? ' Prueba con otra categoría.' : ''}
+					</p>
+				</div>
+			</div>
+		);
 	}
 
 	return (

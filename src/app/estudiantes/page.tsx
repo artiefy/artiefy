@@ -34,6 +34,11 @@ interface APIResponse {
 
 const ITEMS_PER_PAGE = 9;
 
+// Add this helper function before the fetchData function
+function removeAccents(str: string): string {
+	return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 async function fetchData(
 	params: SearchParams | undefined
 ): Promise<APIResponse> {
@@ -55,13 +60,22 @@ async function fetchData(
 	}
 
 	if (params?.query) {
-		const lowercasedQuery = params.query.toLowerCase();
-		filteredCourses = filteredCourses.filter(
-			(course) =>
-				course.title.toLowerCase().includes(lowercasedQuery) ??
-				course.description?.toLowerCase().includes(lowercasedQuery) ??
-				course.category?.name.toLowerCase().includes(lowercasedQuery)
-		);
+		const normalizedQuery = removeAccents(params.query.toLowerCase());
+		filteredCourses = filteredCourses.filter((course) => {
+			const normalizedTitle = removeAccents(course.title.toLowerCase());
+			const normalizedDescription = course.description
+				? removeAccents(course.description.toLowerCase())
+				: '';
+			const normalizedCategory = course.category?.name
+				? removeAccents(course.category.name.toLowerCase())
+				: '';
+
+			return (
+				normalizedTitle.includes(normalizedQuery) ||
+				normalizedDescription.includes(normalizedQuery) ||
+				normalizedCategory.includes(normalizedQuery)
+			);
+		});
 	}
 
 	const totalFilteredCourses = filteredCourses.length;
