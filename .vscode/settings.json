@@ -53,7 +53,7 @@
 	},
 
 	// TypeScript Configuration
-	"typescript.tsdk": "",
+	"typescript.tsdk": "node_modules\\typescript\\lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"typescript.tsserver.maxTsServerMemory": 4096,
 	"typescript.tsserver.watchOptions": {
