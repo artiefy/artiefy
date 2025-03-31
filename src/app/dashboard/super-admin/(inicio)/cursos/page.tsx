@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
-	getCategoryNameById,
 	getCourses,
 	updateCourse,
 	type CourseData,
@@ -64,43 +63,45 @@ export default function Page() {
 	const [educators, setEducators] = useState<{ id: string; name: string }[]>(
 		[]
 	);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [showProgramCourses, setShowProgramCourses] = useState(false);
+	const [isLoadingMore, setIsLoadingMore] = useState(false);
+	const coursesPerPage = 6;
 
-	// ✅ Obtener cursos, totales y categorías
+	// ✅ Obtener cursos, totales y categorías con lazy loading
 	useEffect(() => {
 		async function fetchData() {
 			try {
-				const coursesData = await getCourses();
+				// First load - quick fetch of first page
+				const initialData = await getCourses({
+					page: 1,
+					limit: coursesPerPage,
+				});
 
-				// Map courses without modifying instructor name
-				const coursesWithNames = await Promise.all(
-					coursesData.map(async (course) => {
-						const categoryName = await getCategoryNameById(course.categoryid);
+				setCourses(initialData.data);
+				setTotalCourses(initialData.total);
 
-						return {
-							...course,
-							id: course.id ?? 0,
-							isActive: course.isActive ?? undefined,
-							categoryName: categoryName ?? 'Sin categoría',
-						};
-					})
-				);
+				// Then load the rest in background
+				setIsLoadingMore(true);
+				const allData = await getCourses({
+					page: 1,
+					limit: initialData.total, // Get all remaining courses
+				});
+				setCourses(allData.data);
+				setIsLoadingMore(false);
 
-				setCourses(coursesWithNames);
+				// Get other data in parallel
+				const [totalsResponse, categoriesResponse] = await Promise.all([
+					fetch('/api/super-admin/courses/totals'),
+					fetch('/api/super-admin/categories'),
+				]);
 
-				// Obtener métricas
-				const totalsResponse = await fetch('/api/super-admin/courses/totals');
 				if (!totalsResponse.ok) throw new Error('Error obteniendo totales');
-				const { totalCourses, totalStudents } =
-					(await totalsResponse.json()) as {
-						totalCourses: number;
-						totalStudents: number;
-					};
-
-				setTotalCourses(totalCourses);
+				const { totalStudents } = (await totalsResponse.json()) as {
+					totalStudents: number;
+				};
 				setTotalStudents(totalStudents);
 
-				// Obtener categorías
-				const categoriesResponse = await fetch('/api/super-admin/categories');
 				if (!categoriesResponse.ok)
 					throw new Error('Error obteniendo categorías');
 				const categoriesData = (await categoriesResponse.json()) as {
@@ -116,7 +117,8 @@ export default function Page() {
 			}
 		}
 		void fetchData();
-	}, []);
+	}, []); // Only run on mount
+
 	useEffect(() => {
 		const loadEducators = async () => {
 			try {
@@ -141,6 +143,44 @@ export default function Page() {
 			course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
 			(categoryFilter ? course.categoryid === Number(categoryFilter) : true)
 	);
+
+	// Modify the filtering logic for program/independent courses
+	const programCourses = filteredCourses.filter(
+		(course) => course.programas && course.programas.length > 0
+	);
+	const nonProgramCourses = filteredCourses.filter(
+		(course) => !course.programas || course.programas.length === 0
+	);
+
+	// Get current courses based on pagination and filter
+	const currentCourses = showProgramCourses
+		? programCourses
+		: nonProgramCourses;
+
+	// Add console logs for debugging
+	console.log('Filtered courses:', {
+		total: filteredCourses.length,
+		program: programCourses.length,
+		independent: nonProgramCourses.length,
+		showing: showProgramCourses ? 'program' : 'independent',
+		current: currentCourses.length,
+	});
+
+	const totalPages = Math.ceil(currentCourses.length / coursesPerPage);
+	const indexOfLastCourse = currentPage * coursesPerPage;
+	const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
+	const displayedCourses = currentCourses.slice(
+		indexOfFirstCourse,
+		indexOfLastCourse
+	);
+
+	const handleNextPage = () => {
+		setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+	};
+
+	const handlePrevPage = () => {
+		setCurrentPage((prev) => Math.max(prev - 1, 1));
+	};
 
 	// ✅ Crear o actualizar curso
 	const handleCreateOrUpdateCourse = async (
@@ -220,6 +260,12 @@ export default function Page() {
 			let response;
 			let responseData: { id: number } | null = null;
 
+			// Get instructor name from educators array based on selected instructor ID
+			const selectedEducator = educators.find(
+				(edu) => edu.id === editingCourse?.instructor
+			);
+			const instructorName = selectedEducator?.name ?? '';
+
 			if (id) {
 				response = await updateCourse(Number(id), {
 					title,
@@ -229,7 +275,7 @@ export default function Page() {
 					modalidadesid: Number(modalidadesid),
 					nivelid: Number(nivelid),
 					rating,
-					instructor: editingCourse?.instructor ?? '',
+					instructor: instructorName, // Use instructor name instead of ID
 				} as CourseData);
 
 				responseData = { id: Number(id) }; // Como es una actualización, el ID ya es conocido
@@ -245,7 +291,7 @@ export default function Page() {
 						modalidadesid,
 						nivelid,
 						rating,
-						instructor: editingCourse?.instructor ?? '',
+						instructor: instructorName, // Use instructor name instead of ID
 						subjects,
 					}),
 				});
@@ -308,8 +354,9 @@ export default function Page() {
 
 		setIsModalOpen(false);
 		setUploading(false);
+		const { data: coursesData } = await getCourses();
 		setCourses(
-			(await getCourses()).map((course) => ({
+			coursesData.map((course) => ({
 				...course,
 				isActive: course.isActive ?? undefined, // Ensure isActive is boolean or undefined
 			}))
@@ -371,125 +418,200 @@ export default function Page() {
 
 	// Renderizado de la vista
 	return (
-		<>
-			<div className="p-6">
-				<header className="flex items-center justify-between rounded-lg bg-[#3AF4EF] to-[#01142B] p-6 text-3xl font-extrabold text-white shadow-lg">
-					<h1>Gestión de Cursos</h1>
-				</header>
-
-				{/* Totales y Filtros */}
-				<div className="my-4 grid grid-cols-3 gap-4">
-					<div className="rounded-lg bg-white p-6 text-black shadow-md">
-						<h2 className="text-lg font-bold">Total de Cursos</h2>
-						<p className="text-3xl">{totalCourses}</p>
-					</div>
-					<div className="rounded-lg bg-white p-6 text-black shadow-md">
-						<h2 className="text-lg font-bold">Estudiantes Inscritos</h2>
-						<p className="text-3xl">{totalStudents}</p>
-					</div>
-					<div className="rounded-lg bg-white p-6 text-black shadow-md">
-						<h2 className="text-lg font-bold">Filtrar por Categoría</h2>
-						<select
-							className="w-full rounded-md border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-							value={categoryFilter}
-							onChange={(e) => setCategoryFilter(e.target.value)}
-						>
-							<option value="">Todas</option>
-							{categories.map((category) => (
-								<option key={category.id} value={category.id}>
-									{category.name}
-								</option>
-							))}
-						</select>
-					</div>
+		<div className="p-4 sm:p-6">
+			{/* Header with gradient effect */}
+			<header className="group relative overflow-hidden rounded-lg p-[1px]">
+				<div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
+				<div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
+					<h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
+						Gestión de Cursos
+					</h1>
 				</div>
+			</header>
 
-				{/* Buscador y botón en la parte inferior */}
-				<div className="my-4 flex items-center justify-between rounded-lg p-6 text-black shadow-md">
+			{/* Stats Cards */}
+			<div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				<div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
+					<h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+						Total de Cursos
+					</h2>
+					<p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+						{totalCourses}
+					</p>
+				</div>
+				<div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
+					<h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+						Estudiantes Inscritos
+					</h2>
+					<p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+						{totalStudents}
+					</p>
+				</div>
+				<div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
+					<h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+						Filtrar por Categoría
+					</h2>
+					<select
+						className="mt-2 w-full rounded-md border border-gray-700 bg-gray-900/50 px-3 py-1.5 text-white sm:px-4 sm:py-2"
+						value={categoryFilter}
+						onChange={(e) => setCategoryFilter(e.target.value)}
+					>
+						<option value="">Todas</option>
+						{categories.map((category) => (
+							<option key={category.id} value={category.id}>
+								{category.name}
+							</option>
+						))}
+					</select>
+				</div>
+			</div>
+
+			{/* Search and Add Button */}
+			<div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+				<div className="col-span-1 rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm lg:col-span-3">
 					<input
 						type="text"
 						placeholder="Buscar cursos..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+						className="w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2 text-white placeholder:text-gray-400"
 					/>
-
+				</div>
+				<div className="col-span-1">
 					<button
 						onClick={handleCreateCourse}
-						className="font-primary flex items-center gap-2 rounded-md bg-primary px-6 py-2 text-white shadow-lg hover:bg-[#0097A7]"
+						className="group/button relative inline-flex h-full w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
 					>
-						<FiPlus className="size-5" /> Agregar
+						<span className="relative z-10 font-medium">Crear Curso</span>
+						<FiPlus className="relative z-10 size-3.5 sm:size-4" />
+						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
 				</div>
-
-				<CourseListAdmin
-					courses={filteredCourses}
-					onEditCourse={(course: CourseData | null) => setEditingCourse(course)}
-					onDeleteCourse={(courseId) => {
-						console.log(`Course with id ${courseId} deleted`);
-					}}
-				/>
-
-				{isModalOpen && (
-					<ModalFormCourse
-						isOpen={isModalOpen}
-						onCloseAction={handleCloseModal}
-						onSubmitAction={handleCreateOrUpdateCourse}
-						uploading={uploading}
-						editingCourseId={editingCourse?.id ?? null}
-						title={editingCourse?.title ?? ''}
-						setTitle={setTitle}
-						description={editingCourse?.description ?? ''}
-						setDescription={setDescription}
-						categoryid={editingCourse?.categoryid ?? 0}
-						setCategoryid={(categoryid: number) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, categoryid } : null
-							)
-						}
-						modalidadesid={editingCourse?.modalidadesid ?? 0}
-						setModalidadesid={(modalidadesid: number) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, modalidadesid } : null
-							)
-						}
-						nivelid={editingCourse?.nivelid ?? 0}
-						setNivelid={(nivelid: number) =>
-							setEditingCourse((prev) => (prev ? { ...prev, nivelid } : null))
-						}
-						coverImageKey={editingCourse?.coverImageKey ?? ''}
-						setCoverImageKey={(coverImageKey: string) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, coverImageKey } : null
-							)
-						}
-						rating={editingCourse?.rating ?? 0}
-						setRating={setRating}
-						parametros={parametrosList.map((parametro, index) => ({
-							...parametro,
-							id: index,
-						}))}
-						setParametrosAction={setParametrosList}
-						courseTypeId={null}
-						setCourseTypeId={(courseTypeId: number | null) =>
-							console.log('Course Type ID set to:', courseTypeId)
-						}
-						isActive={true}
-						setIsActive={(isActive: boolean) =>
-							console.log('Is Active set to:', isActive)
-						}
-						instructor={editingCourse?.instructor ?? ''}
-						setInstructor={(instructor: string) =>
-							setEditingCourse((prev) =>
-								prev ? { ...prev, instructor } : null
-							)
-						}
-						educators={educators}
-						subjects={subjects}
-						setSubjects={setSubjects}
-					/>
-				)}
 			</div>
-		</>
+
+			{/* Program Filter Buttons */}
+			<div className="mb-6 flex justify-center gap-4">
+				<button
+					onClick={() => {
+						setShowProgramCourses(false);
+						setCurrentPage(1);
+					}}
+					className={`rounded-md px-4 py-2 ${
+						!showProgramCourses
+							? 'bg-primary text-white'
+							: 'bg-gray-800 text-gray-300'
+					}`}
+				>
+					Cursos Independientes
+				</button>
+				<button
+					onClick={() => {
+						setShowProgramCourses(true);
+						setCurrentPage(1);
+					}}
+					className={`rounded-md px-4 py-2 ${
+						showProgramCourses
+							? 'bg-primary text-background'
+							: 'bg-gray-800 text-gray-300'
+					}`}
+				>
+					Cursos en Programas
+				</button>
+			</div>
+
+			{/* Course List with Loading Indicator */}
+			<CourseListAdmin
+				courses={displayedCourses}
+				onEditCourse={(course) => setEditingCourse(course)}
+				onDeleteCourse={(courseId) => {
+					console.log(`Course with id ${courseId} deleted`);
+				}}
+			/>
+
+			{isLoadingMore && (
+				<div className="mt-4 text-center text-sm text-gray-400">
+					Cargando cursos adicionales...
+				</div>
+			)}
+
+			{/* Pagination Controls */}
+			<div className="mt-6 flex justify-center gap-4">
+				<button
+					onClick={handlePrevPage}
+					disabled={currentPage === 1 || isLoadingMore}
+					className="rounded-md bg-gray-800 px-4 py-2 text-white disabled:opacity-50"
+				>
+					Anterior
+				</button>
+				<span className="flex items-center text-white">
+					Página {currentPage} de {totalPages}
+					{isLoadingMore && ' (Cargando...)'}
+				</span>
+				<button
+					onClick={handleNextPage}
+					disabled={currentPage === totalPages || isLoadingMore}
+					className="rounded-md bg-gray-800 px-4 py-2 text-white disabled:opacity-50"
+				>
+					Siguiente
+				</button>
+			</div>
+
+			{/* Modal Components */}
+			{isModalOpen && (
+				<ModalFormCourse
+					isOpen={isModalOpen}
+					onCloseAction={handleCloseModal}
+					onSubmitAction={handleCreateOrUpdateCourse}
+					uploading={uploading}
+					editingCourseId={editingCourse?.id ?? null}
+					title={editingCourse?.title ?? ''}
+					setTitle={setTitle}
+					description={editingCourse?.description ?? ''}
+					setDescription={setDescription}
+					categoryid={editingCourse?.categoryid ?? 0}
+					setCategoryid={(categoryid: number) =>
+						setEditingCourse((prev) => (prev ? { ...prev, categoryid } : null))
+					}
+					modalidadesid={editingCourse?.modalidadesid ?? 0}
+					setModalidadesid={(modalidadesid: number) =>
+						setEditingCourse((prev) =>
+							prev ? { ...prev, modalidadesid } : null
+						)
+					}
+					nivelid={editingCourse?.nivelid ?? 0}
+					setNivelid={(nivelid: number) =>
+						setEditingCourse((prev) => (prev ? { ...prev, nivelid } : null))
+					}
+					coverImageKey={editingCourse?.coverImageKey ?? ''}
+					setCoverImageKey={(coverImageKey: string) =>
+						setEditingCourse((prev) =>
+							prev ? { ...prev, coverImageKey } : null
+						)
+					}
+					rating={editingCourse?.rating ?? 0}
+					setRating={setRating}
+					parametros={parametrosList.map((parametro, index) => ({
+						...parametro,
+						id: index,
+					}))}
+					setParametrosAction={setParametrosList}
+					courseTypeId={null}
+					setCourseTypeId={(courseTypeId: number | null) =>
+						console.log('Course Type ID set to:', courseTypeId)
+					}
+					isActive={true}
+					setIsActive={(isActive: boolean) =>
+						console.log('Is Active set to:', isActive)
+					}
+					instructor={editingCourse?.instructor ?? ''}
+					setInstructor={(instructor: string) =>
+						setEditingCourse((prev) => (prev ? { ...prev, instructor } : null))
+					}
+					educators={educators}
+					subjects={subjects}
+					setSubjects={setSubjects}
+				/>
+			)}
+		</div>
 	);
 }

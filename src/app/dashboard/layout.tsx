@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> dev/miguel
 import ResponsiveSidebar from '~/components/eduAndAdmiMenu';
 
 export default function DashboardLayout({

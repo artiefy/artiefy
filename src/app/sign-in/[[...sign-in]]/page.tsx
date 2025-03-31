@@ -33,7 +33,12 @@ export default function SignInPage() {
 
 	// Función para extraer redirect_url sin importar si está en query param o hash
 	const getRedirectUrl = () => {
+<<<<<<< HEAD
 		if (typeof window === 'undefined') return '/';
+=======
+		// Primero intentamos obtenerlo de los query params normales
+		let redirectUrl = searchParams?.get('redirect_url');
+>>>>>>> dev/miguel
 
 		const params = new URLSearchParams(window.location.search);
 		const redirectUrl = params.get('redirect_url');

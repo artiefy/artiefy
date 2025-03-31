@@ -1,14 +1,18 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { eq } from 'drizzle-orm';
+
 import {
 	createParametros,
 	getParametrosByCourseId,
 	updateParametro,
 	deleteParametro,
 } from '~/models/educatorsModels/parametrosModels';
+import { db } from '~/server/db';
+import { parametros } from '~/server/db/schema';
 
-const respondWithError = (message: string, status: number) =>
-	NextResponse.json({ error: message }, { status });
+// const respondWithError = (message: string, status: number) =>
+//	NextResponse.json({ error: message }, { status });
 
 // GET endpoint para obtener parámetros
 export async function GET(request: NextRequest) {
@@ -45,7 +49,12 @@ export async function GET(request: NextRequest) {
 // POST endpoint para crear parámetros
 export async function POST(request: NextRequest) {
 	try {
-		const body = await request.json() as { name: string; description: string; porcentaje: number; courseId: number };
+		const body = (await request.json()) as {
+			name: string;
+			description: string;
+			porcentaje: number;
+			courseId: number;
+		};
 		console.log('📌 Datos recibidos en la API de parámetros:', body);
 
 		// ✅ Verificar si courseId está presente
@@ -76,24 +85,28 @@ export async function POST(request: NextRequest) {
 	}
 }
 
-
 // DELETE endpoint para eliminar parámetros
 export async function DELETE(request: NextRequest) {
 	try {
-		if (!request.body) {
-			return respondWithError('Request body is null', 400);
+		const { searchParams } = new URL(request.url);
+		const courseId = searchParams.get('courseId');
+
+		if (courseId) {
+			// Borrar todos los parámetros del curso
+			await db
+				.delete(parametros)
+				.where(eq(parametros.courseId, parseInt(courseId)));
+			return NextResponse.json({ message: 'Parámetros eliminados' });
+		} else {
+			// Si no hay courseId, mantener la lógica original de borrar por id
+			const { id } = (await request.json()) as { id: string };
+			await deleteParametro(Number(id));
+			return NextResponse.json({ message: 'Parámetro eliminado' });
 		}
-		interface DeleteRequestBody {
-			id: string;
-		}
-		const { id }: DeleteRequestBody =
-			(await request.json()) as DeleteRequestBody;
-		await deleteParametro(Number(id));
-		return NextResponse.json({ message: 'Parámetro eliminado' });
 	} catch (error) {
 		console.error('Error:', error);
 		return NextResponse.json(
-			{ error: 'Error al eliminar el parámetro' },
+			{ error: 'Error al eliminar parámetros' },
 			{ status: 500 }
 		);
 	}

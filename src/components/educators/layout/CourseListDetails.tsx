@@ -34,6 +34,7 @@ interface CourseListTeacherProps {
 }
 
 export default function CourseListDetails({ courses }: CourseListTeacherProps) {
+	console.log('CourseListDetails received courses:', courses); // Add this line
 	// Retorno la vista del componente que muestra la lista de cursos para los educadores en el dashboard
 	return (
 		<div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-2">

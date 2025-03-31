@@ -66,7 +66,10 @@ export default function Page() {
 		try {
 			setLoading(true);
 			setError(null);
-			const response = await fetch(`/api/educadores/courses?userId=${user.id}`);
+			const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+			const response = await fetch(
+				`/api/educadores/courses/coursesByEducator?fullName=${encodeURIComponent(fullName)}`
+			);
 			if (response.ok) {
 				const data = (await response.json()) as CourseModel[];
 				setCourses(
@@ -211,6 +214,7 @@ export default function Page() {
 			const errorMessage = e instanceof Error ? e.message : 'Unknown error';
 			throw new Error(`Error to upload the file type ${errorMessage}`);
 		}
+
 		const response = await fetch('/api/educadores/courses', {
 			method: 'POST', // Asegúrate de usar 'POST' cuando no estás editando
 			headers: { 'Content-Type': 'application/json' },
@@ -404,7 +408,7 @@ export default function Page() {
 					) : (
 						<>
 							<h2 className="mt-5 mb-4 text-2xl font-bold">
-									Listado de Cursos Asociados
+								Listado de Cursos Asociados
 							</h2>
 							<CourseListTeacher courses={courses} />
 						</>

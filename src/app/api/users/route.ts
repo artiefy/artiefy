@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
 		user: 'direcciongeneral@artiefy.com',
-		pass: 'hszz cilc otvj dlpb', // ⚠️ Usa variables de entorno en producción
+		pass: process.env.PASS, // ⚠️ Usa variables de entorno en producción
 	},
 });
 
@@ -126,7 +126,7 @@ export async function POST(request: Request) {
 		// 3. Guardar usuario en la base de datos con Drizzle
 		await db.insert(users).values({
 			id: user.id,
-			role: role, // Ahora usamos el rol proporcionado
+			role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
 			name: `${firstName} ${lastName}`,
 			email:
 				user.emailAddresses.find(

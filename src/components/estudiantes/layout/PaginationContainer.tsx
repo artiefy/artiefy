@@ -44,10 +44,16 @@ const PaginationContainer = ({
   const buildUrl = useCallback((page: number): string => {
     const params = new URLSearchParams();
 
+<<<<<<< HEAD
     // Only add page parameter if not page 1
     if (page !== 1) {
       params.append('page', page.toString());
     }
+=======
+	const handlePageChange = (page: number) => {
+		start();
+		const params = new URLSearchParams(searchParams?.toString() ?? '');
+>>>>>>> dev/miguel
 
     // Add optional parameters if present
     if (category) params.append('category', category);

@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 
+import { type Materia } from '~/models/super-adminModels/materiaModels';
+
 import ModalFormMateria from './modalFormCreate';
 
-import type { Materia } from '~/models/super-adminModels/materiaModels';
 
 interface ErrorResponse {
 	error: string;
@@ -20,12 +21,12 @@ const MateriasPage: React.FC = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const materiasPerPage = 9;
 
-	const handleOnCreate = (newMateria: Materia) => {
+	const onCreate = (newMateria: Materia) => {
 		setMaterias((prevMaterias) => [...prevMaterias, newMateria]);
 		console.log('Materia creada:', newMateria);
 	};
 
-	const handleOnUpdate = (updatedMateria: Materia) => {
+	const onUpdate = (updatedMateria: Materia) => {
 		setMaterias((prevMaterias) =>
 			prevMaterias.map((materia) =>
 				materia.id === updatedMateria.id ? updatedMateria : materia
@@ -236,8 +237,8 @@ const MateriasPage: React.FC = () => {
 								isOpen={isModalOpen}
 								onClose={handleCloseModal}
 								editingMateria={editingMateria}
-								onCreate={handleOnCreate}
-								onUpdate={handleOnUpdate}
+								onCreate={onCreate}
+								onUpdate={onUpdate}
 							/>
 						</div>
 					</div>

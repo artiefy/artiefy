@@ -15,8 +15,6 @@ import {
 import { Button } from '~/components/estudiantes/ui/button';
 import { type CourseData } from '~/server/queries/queries';
 
-
-
 interface Course {
 	id?: number;
 	title: string;
@@ -32,6 +30,8 @@ interface Course {
 	nivelid: number; // Replaced  with nivelid
 	categoryName?: string; // <-- agrégalo aquí
 	instructorName?: string;
+	courseTypeId?: number | null;
+	programas?: { id: number; title: string }[];
 }
 
 interface CourseListAdminProps {
@@ -70,13 +70,23 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
 							<CardTitle className="rounded-lg text-lg text-background">
 								<div className="font-bold text-primary">{course.title}</div>
 							</CardTitle>
-							<div className="flex items-center">
+							<div className="flex flex-wrap items-start gap-2">
 								<Badge
 									variant="outline"
 									className="border-primary bg-background text-primary hover:bg-black/70"
 								>
 									{course.categoryName ?? 'Unknown Category'}
 								</Badge>
+								{course.programas?.map((programa) => (
+									<Badge
+										key={programa.id}
+										variant="outline"
+										title={programa.title} // Añadido title para mostrar el tooltip
+										className="inline-block max-w-[200px] border-green-500 bg-background text-xs text-green-500 hover:bg-green-500/10"
+									>
+										<span className="line-clamp-1">{programa.title}</span>
+									</Badge>
+								))}
 							</div>
 							<p className="line-clamp-2 text-sm text-gray-300">
 								Descripcion: {course.description}

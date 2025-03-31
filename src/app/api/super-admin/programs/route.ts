@@ -1,4 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
+<<<<<<< HEAD
+=======
+
+>>>>>>> dev/miguel
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
@@ -231,13 +235,21 @@ export async function PUT(req: NextRequest) {
 
 		// Update subject associations
 		if (subjectIds.length > 0) {
-			await db
-				.update(materias)
-				.set({ programaId: null })
-				.where(eq(materias.programaId, parseInt(programId)))
-				.execute();
+			// Get existing subjects for this program
+			const existingSubjects = await db
+				.select()
+				.from(materias)
+				.where(eq(materias.programaId, parseInt(programId)));
 
-			for (const materiaId of subjectIds) {
+			const existingSubjectIds = existingSubjects.map((subject) => subject.id);
+
+			// Filter out subjects that are already associated
+			const newSubjectIds = subjectIds.filter(
+				(id) => !existingSubjectIds.includes(id)
+			);
+
+			// Process only new subjects
+			for (const materiaId of newSubjectIds) {
 				const materia = await db
 					.select()
 					.from(materias)

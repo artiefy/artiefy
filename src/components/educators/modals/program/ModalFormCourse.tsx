@@ -558,7 +558,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				const data = (await response.json()) as { id: number; title: string }[];
 
 				if (Array.isArray(data)) {
-					setAllSubjects(data);
+					// Filtrar materias duplicadas basándonos en el id
+					const uniqueSubjects = data.filter(
+						(subject, index, self) =>
+							index === self.findIndex((s) => s.title === subject.title)
+					);
+					setAllSubjects(uniqueSubjects);
 				} else {
 					console.error('La respuesta no es un arreglo:', data);
 					setAllSubjects([]);
@@ -983,10 +988,17 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							</label>
 							<Select
 								isMulti
-								options={allSubjects.map((subject) => ({
-									value: subject.id.toString(),
-									label: subject.title,
-								}))}
+								options={Array.from(
+									new Map(
+										allSubjects.map((subject) => [
+											subject.id,
+											{
+												value: subject.id.toString(),
+												label: subject.title,
+											},
+										])
+									).values()
+								)}
 								onChange={handleSelectSubjects}
 								classNamePrefix="react-select"
 								className="mt-2 w-10/12 lg:w-1/2"
