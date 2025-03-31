@@ -146,6 +146,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [progress, setProgress] = useState(0); // Estado para el progreso
 	const [isEditing, setIsEditing] = useState(false); // Estado para la edición
 	const [isDragging, setIsDragging] = useState(false); // Estado para el arrastre
+	void setIsDragging;
 	const [allSubjects, setAllSubjects] = useState<
 		{ id: number; title: string }[]
 	>([]);

@@ -11,8 +11,8 @@ import {
 import { db } from '~/server/db';
 import { parametros } from '~/server/db/schema';
 
-const respondWithError = (message: string, status: number) =>
-	NextResponse.json({ error: message }, { status });
+// const respondWithError = (message: string, status: number) =>
+//	NextResponse.json({ error: message }, { status });
 
 // GET endpoint para obtener parámetros
 export async function GET(request: NextRequest) {
