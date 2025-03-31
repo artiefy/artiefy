@@ -12,14 +12,14 @@ interface BuyerInfoFormProps {
 	formData: Pick<FormData, 'buyerEmail' | 'buyerFullName' | 'telephone'>;
 	termsAndConditions: boolean;
 	privacyPolicy: boolean;
-	onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	onChangeAction: (e: React.ChangeEvent<HTMLInputElement>) => void;
 	showErrors: boolean;
 	errors: {
 		telephone?: string;
 		termsAndConditions?: string;
 		privacyPolicy?: string;
 	};
-	onSubmit: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+	onSubmitAction: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 	loading?: boolean;
 }
 
@@ -27,10 +27,10 @@ export default function BuyerInfoForm({
 	formData,
 	termsAndConditions,
 	privacyPolicy,
-	onChange,
+	onChangeAction,
 	showErrors,
 	errors,
-	onSubmit,
+	onSubmitAction,
 	loading = false,
 }: BuyerInfoFormProps) {
 	return (
@@ -43,7 +43,7 @@ export default function BuyerInfoForm({
 						name="buyerEmail"
 						placeholder="ejemplo@correo.com"
 						value={formData.buyerEmail}
-						onChange={onChange}
+						onChange={onChangeAction}
 						className="input-field"
 						required
 						readOnly
@@ -59,7 +59,7 @@ export default function BuyerInfoForm({
 						name="buyerFullName"
 						placeholder="Juan Pérez"
 						value={formData.buyerFullName}
-						onChange={onChange}
+						onChange={onChangeAction}
 						className="input-field"
 						required
 						readOnly
@@ -75,7 +75,7 @@ export default function BuyerInfoForm({
 						name="telephone"
 						placeholder="+00 0000000000"
 						value={formData.telephone}
-						onChange={onChange}
+						onChange={onChangeAction}
 						maxLength={14}
 						className={`input-field ${showErrors && errors.telephone ? 'input-error' : ''}`}
 						required
@@ -92,7 +92,7 @@ export default function BuyerInfoForm({
 						type="checkbox"
 						name="termsAndConditions"
 						checked={termsAndConditions}
-						onChange={onChange}
+						onChange={onChangeAction}
 						required
 					/>
 					<span className="checkbox-title">
@@ -104,7 +104,7 @@ export default function BuyerInfoForm({
 						type="checkbox"
 						name="privacyPolicy"
 						checked={privacyPolicy}
-						onChange={onChange}
+						onChange={onChangeAction}
 						required
 					/>
 					<span className="checkbox-title">
@@ -124,7 +124,7 @@ export default function BuyerInfoForm({
 			<button
 				type="button"
 				className="checkout-btn"
-				onClick={onSubmit}
+				onClick={onSubmitAction}
 				disabled={loading}
 			>
 				{loading ? (

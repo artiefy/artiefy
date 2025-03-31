@@ -26,7 +26,7 @@ interface ApiResponse {
 
 interface GradeModalProps {
 	isOpen: boolean;
-	onClose: () => void;
+	onCloseAction: () => void;
 	courseTitle: string;
 	courseId: number;
 	userId: string;
@@ -34,7 +34,7 @@ interface GradeModalProps {
 
 export function GradeModal({
 	isOpen,
-	onClose,
+	onCloseAction,
 	courseTitle,
 	courseId,
 	userId,
@@ -96,7 +96,7 @@ export function GradeModal({
 	}, [isOpen, userId, courseId, hasLoadedOnce]);
 
 	return (
-		<Dialog open={isOpen} onOpenChange={onClose}>
+		<Dialog open={isOpen} onOpenChange={onCloseAction}>
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
 					<DialogTitle className="flex items-center gap-2 text-xl font-bold">

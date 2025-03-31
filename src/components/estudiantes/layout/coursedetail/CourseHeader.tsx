@@ -578,7 +578,7 @@ export function CourseHeader({
 				{/* Add GradeModal */}
 				<GradeModal
 					isOpen={isGradeModalOpen}
-					onClose={() => setIsGradeModalOpen(false)}
+					onCloseAction={() => setIsGradeModalOpen(false)}
 					courseTitle={course.title}
 					courseId={course.id}
 					userId={user?.id ?? ''} // Pass dynamic user ID
