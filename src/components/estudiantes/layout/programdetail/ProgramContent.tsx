@@ -251,7 +251,7 @@ export function ProgramContent({
 										>
 											{course.category?.name}
 										</Badge>
-										<p className="text-sm font-bold text-red-500">
+										<p className="text-right text-sm font-bold text-red-500">
 											{course.modalidad?.name}
 										</p>
 									</div>
