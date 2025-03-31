@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -31,7 +32,7 @@ interface ProgramHeaderProps {
 	subscriptionEndDate: string | null;
 	onEnrollAction: () => Promise<void>;
 	onUnenrollAction: () => Promise<void>;
-	isCheckingEnrollment: boolean; // Add this prop
+	isCheckingEnrollment: boolean;
 }
 
 export function ProgramHeader({
@@ -40,12 +41,12 @@ export function ProgramHeader({
 	isEnrolling,
 	isUnenrolling,
 	isSubscriptionActive,
-	subscriptionEndDate: _subscriptionEndDate, // Change here: rename in destructuring
+	subscriptionEndDate: _subscriptionEndDate,
 	onEnrollAction,
 	onUnenrollAction,
-	isCheckingEnrollment, // Add this to destructuring
+	isCheckingEnrollment,
 }: ProgramHeaderProps) {
-	const { user, isSignedIn } = useUser(); // Add isSignedIn
+	const { user, isSignedIn } = useUser();
 
 	// Verificar plan Premium y fecha de vencimiento
 	const isPremium = user?.publicMetadata?.planType === 'Premium';
@@ -70,6 +71,19 @@ export function ProgramHeader({
 
 	const getCategoryName = (program: Program) => {
 		return program.category?.name ?? 'Sin categoría';
+	};
+
+	const handleSignInRedirect = async () => {
+		toast.error('Inicio de sesión requerido', {
+			description: 'Debes iniciar sesión para inscribirte en este programa',
+			duration: 3000,
+		});
+
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+
+		const currentPath = `/estudiantes/programas/${program.id}`;
+		const returnUrl = encodeURIComponent(currentPath);
+		window.location.href = `/sign-in?redirect_url=${returnUrl}`;
 	};
 
 	return (
@@ -168,7 +182,7 @@ export function ProgramHeader({
 					<div className="relative h-32 w-64">
 						{!isSignedIn ? (
 							<Button
-								onClick={onEnrollAction}
+								onClick={handleSignInRedirect}
 								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95"
 							>
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">

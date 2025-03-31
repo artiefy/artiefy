@@ -8,13 +8,13 @@ import { formatScore } from '~/utils/formatScore';
 
 interface LessonGradesProps {
 	finalGrade: number | null;
-	onViewHistory: () => void;
+	onViewHistoryAction: () => void;
 	isLoading?: boolean;
 }
 
 export function LessonGrades({
 	finalGrade,
-	onViewHistory,
+	onViewHistoryAction,
 	isLoading,
 }: LessonGradesProps) {
 	return (
@@ -44,7 +44,7 @@ export function LessonGrades({
 			</div>
 
 			<Button
-				onClick={onViewHistory}
+				onClick={onViewHistoryAction}
 				className="w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]"
 			>
 				<FaTrophy className="mr-2" />

@@ -128,10 +128,10 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
 				formData={{ buyerEmail, buyerFullName, telephone }}
 				termsAndConditions={termsAccepted}
 				privacyPolicy={privacyAccepted}
-				onChange={handleInputChange}
+				onChangeAction={handleInputChange} // Changed from onChange to onChangeAction
 				showErrors={showErrors}
 				errors={errors}
-				onSubmit={handleSubmit}
+				onSubmitAction={handleSubmit} // Changed from onSubmit to onSubmitAction
 				loading={loading}
 			/>
 			{error && <p className="error">{error}</p>}

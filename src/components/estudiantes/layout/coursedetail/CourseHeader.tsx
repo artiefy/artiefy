@@ -199,9 +199,7 @@ export function CourseHeader({
 					);
 
 					if (!isProgramEnrolled) {
-						toast.warning('Este curso requiere inscripción al programa', {
-							description: `Debes estar inscrito en el programa "${programMateria.programa?.title}" para acceder a este curso.`,
-						});
+						toast.warning('Este curso requiere inscripción al programa', {});
 						router.push(`/estudiantes/programas/${programMateria.programaId}`);
 					}
 				} catch (error) {
@@ -274,6 +272,24 @@ export function CourseHeader({
 	};
 
 	const handleEnrollClick = async () => {
+		if (!isSignedIn) {
+			// Show toast first
+			toast.error('Inicio de sesión requerido', {
+				description: 'Debes iniciar sesión para inscribirte en este curso',
+				duration: 3000,
+			});
+
+			// Wait for toast to be visible
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			const currentPath = `/estudiantes/cursos/${course.id}`;
+			const returnUrl = encodeURIComponent(currentPath);
+
+			// Use window.location for a hard redirect instead of router.push
+			window.location.href = `/sign-in?redirect_url=${returnUrl}`;
+			return;
+		}
+
 		setIsEnrollClicked(true); // Activar spinner inmediatamente
 
 		try {
@@ -303,11 +319,27 @@ export function CourseHeader({
 					);
 
 					if (!isProgramEnrolled) {
+						// Show toast first
+						toast.warning(
+							`Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
+							{
+								description:
+									'Serás redirigido a la página del programa para inscribirte.',
+								duration: 4000,
+							}
+						);
+
+						// Wait a moment for the toast to be visible
+						await new Promise((resolve) => setTimeout(resolve, 1000));
+
+						// Then redirect
 						router.push(`/estudiantes/programas/${programMateria.programaId}`);
 						return;
 					}
 				} catch (error) {
 					console.error('Error checking program enrollment:', error);
+					toast.error('Error al verificar la inscripción al programa');
+					return;
 				}
 			}
 
@@ -323,6 +355,7 @@ export function CourseHeader({
 			await onEnrollAction();
 		} catch (error) {
 			console.error('Error enrolling:', error);
+			toast.error('Error al inscribirse al curso');
 		} finally {
 			setIsEnrollClicked(false); // Desactivar spinner al finalizar
 		}

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { useAuth, useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
@@ -30,22 +30,16 @@ export default function SignInPage() {
 		null
 	);
 	const router = useRouter();
-	const searchParams = useSearchParams();
 
 	// Función para extraer redirect_url sin importar si está en query param o hash
 	const getRedirectUrl = () => {
-		// Primero intentamos obtenerlo de los query params normales
-		let redirectUrl = searchParams.get('redirect_url');
+		if (typeof window === 'undefined') return '/';
 
-		// Si no lo encontramos, intentamos extraerlo del hash
-		if (!redirectUrl && typeof window !== 'undefined') {
-			const hashParams = new URLSearchParams(
-				window.location.hash.replace(/^#\/?/, '')
-			);
-			redirectUrl = hashParams.get('redirect_url');
-		}
+		const params = new URLSearchParams(window.location.search);
+		const redirectUrl = params.get('redirect_url');
 
-		return redirectUrl ?? '/'; // Si no hay redirect_url, por defecto a /
+		// Validate the redirect URL using optional chaining
+		return redirectUrl?.startsWith('/') ? redirectUrl : '/';
 	};
 
 	const redirectUrl = getRedirectUrl();
@@ -54,10 +48,18 @@ export default function SignInPage() {
 
 	useEffect(() => {
 		if (isSignedIn) {
-			console.log('🔄 Usuario autenticado, redirigiendo a:', redirectUrl);
-			router.replace(redirectUrl);
+			const redirectTo = getRedirectUrl();
+			console.log('Redirecting to:', redirectTo);
+			window.location.href = redirectTo;
 		}
-	}, [isSignedIn, router, redirectUrl]);
+	}, [isSignedIn]);
+
+	useEffect(() => {
+		if (typeof window !== 'undefined') {
+			console.log('Current URL:', window.location.href);
+			console.log('Redirect URL:', getRedirectUrl());
+		}
+	}, []);
 
 	if (!isLoaded) {
 		return <Loading />;

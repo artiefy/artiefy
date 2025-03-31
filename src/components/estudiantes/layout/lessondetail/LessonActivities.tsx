@@ -447,7 +447,7 @@ const LessonActivities = ({
 				<h2 className="mb-4 text-2xl font-bold text-primary">Calificaciones</h2>
 				<LessonGrades
 					finalGrade={gradeSummary?.finalGrade ?? null}
-					onViewHistory={() => setIsGradeHistoryOpen(true)}
+					onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
 					isLoading={isGradesLoading}
 				/>
 			</div>
