@@ -117,7 +117,6 @@ export default function Home() {
 						modalidadesid: course.modalidadesid, // Map modalidadesid properly
 					})) as CourseModel[]
 				);
-				console.log('Processed courses:', courses);
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				const errorMessage = errorData.error ?? response.statusText;
