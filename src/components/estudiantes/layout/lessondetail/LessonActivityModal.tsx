@@ -9,7 +9,7 @@ import {
 	ChevronRightIcon,
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
-import { FileCheck2, FileX2, Lock, Unlock, ShieldQuestion } from 'lucide-react';
+import { FileCheck2, FileX2, Unlock, ShieldQuestion } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
 import { FaTrophy } from 'react-icons/fa';
 import { toast } from 'sonner';
@@ -761,14 +761,11 @@ const LessonActivityModal = ({
 						<div className="absolute top-0 right-4">
 							{showResults ? (
 								isUnlocking ? (
-									<Unlock className="size-8 animate-pulse text-green-500" />
+									<Icons.spinner className="size-8 animate-spin text-green-500" />
 								) : finalScore >= 3 ? (
 									<FileCheck2 className="size-8 text-green-500" />
 								) : (
-									<div className="flex items-center gap-2">
-										<FileX2 className="size-8 text-red-500" />
-										<Lock className="size-8 text-red-500" />
-									</div>
+									<FileX2 className="size-8 text-red-500" />
 								)
 							) : (
 								<ShieldQuestion className="-mt-2 size-12 text-primary" />

@@ -24,7 +24,9 @@
 		".env.development": "dotenv",
 		".env.production": "dotenv",
 		".env.local": "dotenv",
-		".env.example": "dotenv"
+		".env.example": "dotenv",
+		".env.testing": "dotenv",
+		".env.staging": "dotenv"
 	},
 	"files.watcherExclude": {
 		"/node_modules/": true,
@@ -45,27 +47,50 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
-
-	// TypeScript Configuration
-	"typescript.tsdk": "node_modules\\typescript\\lib",
-	"typescript.enablePromptUseWorkspaceTsdk": true,
-	"typescript.tsserver.maxTsServerMemory": 4096,
-	"typescript.tsserver.watchOptions": {
-		"fallbackPolling": "dynamicPriorityPolling"
+	"[.env]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[dotenv]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
 
+	// TypeScript Configuration
+	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"typescript.validate.enable": true,
+	"typescript.suggest.enabled": true,
+	"typescript.surveys.enabled": false,
+	"typescript.suggest.completeFunctionCalls": true,
+	"typescript.tsserver.maxTsServerMemory": 8192,
+	"typescript.tsserver.log": "verbose",
+	"typescript.tsserver.watchOptions": {
+		"watchFile": "useFsEvents",
+		"watchDirectory": "useFsEvents",
+		"fallbackPolling": "dynamicPriorityPolling"
+	},
+	"typescript.updateImportsOnFileMove.enabled": "always",
+	"typescript.preferences.importModuleSpecifier": "non-relative",
+
+	// JavaScript/TypeScript Language Features
+	"javascript.validate.enable": true,
+	"js/ts.implicitProjectConfig.checkJs": true,
+
 	// ESLint Configuration
+	"eslint.enable": true,
 	"eslint.validate": [
 		"javascript",
 		"javascriptreact",
 		"typescript",
 		"typescriptreact"
 	],
-	"eslint.workingDirectories": ["./"],
+	"eslint.workingDirectories": [{ "mode": "auto" }],
 	"eslint.useFlatConfig": true,
 	"eslint.run": "onType",
 	"eslint.nodePath": "./node_modules",
-	"eslint.debug": false,
+	"eslint.debug": true,
+	"eslint.execArgv": null,
+	"eslint.lintTask.enable": true,
+	"eslint.format.enable": true,
 	"eslint.rules.customizations": [
 		{ "rule": "import/order", "severity": "off" },
 		{ "rule": "no-unused-vars", "severity": "warn" },
@@ -105,8 +130,8 @@
 		"/node_modules": true,
 		"/dist": true,
 		"/.git": true,
-    "/.next": true,
-    "/.vercel": true,
+		"/.next": true,
+		"/.vercel": true
 	},
 	"javascript.suggest.completeFunctionCalls": true,
 

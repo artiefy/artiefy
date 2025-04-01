@@ -130,7 +130,9 @@ const LessonActivities = ({
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const [savedResults, setSavedResults] = useState<SavedResults | null>(null);
-	const [isLoadingResults, setIsLoadingResults] = useState(false);
+	const [loadingResults, setLoadingResults] = useState<Record<number, boolean>>(
+		{}
+	);
 	const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
 		null
 	);
@@ -152,9 +154,13 @@ const LessonActivities = ({
 
 	const handleQuestionsAnswered = () => {
 		if (selectedActivity) {
+			const currentIndex = activities.indexOf(selectedActivity);
+			const nextActivity = activities[currentIndex + 1];
+
 			setCompletedActivities((prev) => ({
 				...prev,
 				[selectedActivity.id]: true,
+				...(nextActivity && { [nextActivity.id]: false }),
 			}));
 		}
 	};
@@ -215,22 +221,27 @@ const LessonActivities = ({
 			try {
 				const statuses: Record<number, boolean> = {};
 
-				for (const activity of activities.slice(0, 3)) {
-					const response = await fetch(
-						`/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
-					);
+				await Promise.all(
+					activities.slice(0, 3).map(async (activity) => {
+						const response = await fetch(
+							`/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+						);
 
-					if (response.ok) {
-						const rawData: unknown = await response.json();
-						if (
-							isActivityAnswersResponse(rawData) &&
-							rawData.answers &&
-							Object.keys(rawData.answers).length > 0
-						) {
-							statuses[activity.id] = true;
+						if (response.ok) {
+							const rawData: unknown = await response.json();
+							if (
+								isActivityAnswersResponse(rawData) &&
+								rawData.answers &&
+								Object.keys(rawData.answers).length > 0 &&
+								rawData.isAlreadyCompleted
+							) {
+								statuses[activity.id] = true;
+							} else {
+								statuses[activity.id] = false;
+							}
 						}
-					}
-				}
+					})
+				);
 
 				setCompletedActivities(statuses);
 			} catch (error) {
@@ -244,8 +255,8 @@ const LessonActivities = ({
 	}, [activities, userId]);
 
 	const handleCompletedActivityClick = async (activity: Activity) => {
-		setIsLoadingResults(true);
 		try {
+			setLoadingResults((prev) => ({ ...prev, [activity.id]: true }));
 			const activityId = activity?.id;
 			if (!activityId) return;
 
@@ -262,24 +273,22 @@ const LessonActivities = ({
 						answers: rawData.answers,
 						isAlreadyCompleted: true,
 					});
+
+					setSelectedActivity(activity);
 					if (isLastActivity) {
 						setCompletedActivities((prev) => ({
 							...prev,
-							[activity.id]: true,
+							[activityId]: true,
 						}));
 					}
 				}
 			}
-		} catch (e) {
-			if (e instanceof Error) {
-				console.error('Error fetching saved results:', e.message);
-			} else {
-				console.error('Unknown error fetching saved results');
-			}
-			toast.error('Error al cargar los resultados guardados');
-		} finally {
-			setIsLoadingResults(false);
 			openModal();
+		} catch (e) {
+			console.error('Error fetching results:', e);
+			toast.error('Error al cargar los resultados');
+		} finally {
+			setLoadingResults((prev) => ({ ...prev, [activity.id]: false }));
 		}
 	};
 
@@ -295,22 +304,50 @@ const LessonActivities = ({
 
 	const isLastActivityInLesson = (currentActivity: Activity) => {
 		if (!activities.length) return false;
-
-		const order = currentActivity.createdAt
-			? new Date(currentActivity.createdAt).getTime()
-			: currentActivity.id;
-
-		const maxOrder = Math.max(
-			...activities.map((act) =>
-				act.createdAt ? new Date(act.createdAt).getTime() : act.id
-			)
-		);
-
-		return order === maxOrder;
+		const activityIndex = activities.indexOf(currentActivity);
+		return activityIndex === activities.length - 1;
 	};
 
 	const handleModalClose = () => {
 		closeModal();
+
+		if (selectedActivity) {
+			setCompletedActivities((prev) => {
+				const currentIndex = activities.indexOf(selectedActivity);
+				const nextActivity = activities[currentIndex + 1];
+
+				const updatedActivities: Record<number, boolean> = {
+					...prev,
+					[selectedActivity.id]: true,
+				};
+
+				if (nextActivity) {
+					updatedActivities[nextActivity.id] = false;
+				}
+
+				return updatedActivities;
+			});
+
+			void fetch(
+				`/api/activities/getAnswers?activityId=${selectedActivity.id}&userId=${userId}`
+			)
+				.then(async (response) => {
+					if (response.ok) {
+						const data = (await response.json()) as ActivityAnswersResponse;
+						if (isActivityAnswersResponse(data)) {
+							setSavedResults({
+								score: data.score,
+								answers: data.answers,
+								isAlreadyCompleted: true,
+							});
+						}
+					}
+				})
+				.catch((error) => {
+					console.error('Error updating activity status:', error);
+				});
+		}
+
 		setSavedResults(null);
 		setSelectedActivity(null);
 	};
@@ -357,16 +394,65 @@ const LessonActivities = ({
 			};
 		}
 
-		// Other activities are locked until previous activity is completed
+		// Previous activity must be completed to unlock current one
 		const previousActivity = activities[index - 1];
 		const isPreviousCompleted =
 			previousActivity && completedActivities[previousActivity.id];
 
 		return {
-			icon: <FaLock className="text-gray-400" />,
-			bgColor: 'bg-gray-200',
+			icon: isPreviousCompleted ? (
+				<TbClockFilled className="text-blue-500" />
+			) : (
+				<FaLock className="text-gray-400" />
+			),
+			bgColor: isPreviousCompleted ? 'bg-blue-100' : 'bg-gray-200',
 			isActive: isPreviousCompleted ?? false,
 		};
+	};
+
+	const getButtonLabel = (activity: Activity) => {
+		if (isButtonLoading) {
+			return (
+				<div className="flex items-center gap-2">
+					<Icons.spinner className="h-4 w-4 animate-spin text-background" />
+					<span className="font-semibold text-background">Cargando...</span>
+				</div>
+			);
+		}
+
+		if (completedActivities[activity.id]) {
+			return (
+				<>
+					{loadingResults[activity.id] && (
+						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+					)}
+					<span className="font-semibold">Ver Resultados</span>
+					<FaCheckCircle className="ml-2 inline text-white" />
+				</>
+			);
+		}
+
+		return (
+			<>
+				{isLoadingActivity && activity.id === selectedActivity?.id && (
+					<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+				)}
+				<span>Ver Actividad</span>
+			</>
+		);
+	};
+
+	const shouldShowArrows = (activity: Activity, index: number) => {
+		if (!isVideoCompleted) return false;
+		if (completedActivities[activity.id]) return false;
+
+		// Show arrows if this activity is unlocked but not completed
+		const previousActivity = activities[index - 1];
+		const isPreviousCompleted = previousActivity
+			? completedActivities[previousActivity.id]
+			: true; // First activity is considered to have "completed previous"
+
+		return isPreviousCompleted;
 	};
 
 	return (
@@ -405,13 +491,11 @@ const LessonActivities = ({
 								</p>
 
 								<div className="space-y-2">
-									{isVideoCompleted &&
-										isFirstActivity &&
-										!completedActivities[activity.id] && (
-											<div className="flex justify-center py-2">
-												<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
-											</div>
-										)}
+									{shouldShowArrows(activity, index) && (
+										<div className="flex justify-center py-2">
+											<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
+										</div>
+									)}
 
 									{completedActivities[activity.id] && (
 										<div className="flex justify-center">
@@ -438,30 +522,7 @@ const LessonActivities = ({
 											)}
 
 										<span className="relative z-10 flex items-center justify-center">
-											{isButtonLoading ? (
-												<div className="flex items-center gap-2">
-													<Icons.spinner className="h-4 w-4 animate-spin text-background" />
-													<span className="font-semibold text-background">
-														Cargando...
-													</span>
-												</div>
-											) : completedActivities[activity.id] ? (
-												<>
-													{isLoadingResults && (
-														<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-													)}
-													<span className="font-semibold">Ver Resultados</span>
-													<FaCheckCircle className="ml-2 inline text-white" />
-												</>
-											) : (
-												<>
-													{isLoadingActivity &&
-														activity.id === selectedActivity?.id && (
-															<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-														)}
-													<span>Ver Actividad</span>
-												</>
-											)}
+											{getButtonLabel(activity)}
 										</span>
 									</button>
 
