@@ -15,7 +15,7 @@ import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/ge
 
 import LessonDetails from './LessonDetails';
 
-import type { Activity, LessonWithProgress } from '~/types';
+import type { LessonWithProgress } from '~/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -81,14 +81,11 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 		};
 
 		const activityContent = await getActivityContent(lessonId, userId);
-		const activity: Activity | null =
-			activityContent.length > 0
-				? {
-						...activityContent[0],
-						isCompleted: activityContent[0].isCompleted ?? false,
-						userProgress: activityContent[0].userProgress ?? 0,
-					}
-				: null;
+		const activitiesWithProgress = activityContent.map((activity) => ({
+			...activity,
+			isCompleted: activity.isCompleted ?? false,
+			userProgress: activity.userProgress ?? 0,
+		}));
 
 		const [lessons, userProgress] = await Promise.all([
 			getLessonsByCourseId(lesson.courseId, userId),
@@ -115,12 +112,12 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 		return (
 			<LessonDetails
 				lesson={lesson}
-				activity={activity}
+				activities={activitiesWithProgress}
 				lessons={lessonsWithProgress}
 				userLessonsProgress={lessonsProgress}
 				userActivitiesProgress={activitiesProgress}
 				userId={userId}
-				course={course} // Pass course object
+				course={course}
 			/>
 		);
 	} catch (error: unknown) {

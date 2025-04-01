@@ -1,4 +1,6 @@
 'use client';
+import { useEffect, type Dispatch, type SetStateAction } from 'react';
+
 import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import { toast } from 'sonner';
 
@@ -9,7 +11,8 @@ interface LessonCardsProps {
 	selectedLessonId: number | null;
 	onLessonClick: (id: number) => void;
 	progress: number;
-	isNavigating: boolean; // Add new prop
+	isNavigating: boolean;
+	setLessonsState: Dispatch<SetStateAction<LessonWithProgress[]>>; // Add this prop
 }
 
 const LessonCards = ({
@@ -18,7 +21,24 @@ const LessonCards = ({
 	onLessonClick,
 	progress,
 	isNavigating,
+	setLessonsState, // Add this prop
 }: LessonCardsProps) => {
+	// Remove local state as we'll use the parent's state
+	useEffect(() => {
+		if (selectedLessonId && progress >= 1) {
+			setLessonsState((prev) =>
+				prev.map((lesson) =>
+					lesson.id === selectedLessonId
+						? {
+								...lesson,
+								isNew: false,
+							}
+						: lesson
+				)
+			);
+		}
+	}, [progress, selectedLessonId, setLessonsState]);
+
 	const handleClick = (lessonItem: LessonWithProgress) => {
 		if (isNavigating) return; // Prevent clicks while navigating
 		if (!lessonItem.isLocked) {
@@ -34,6 +54,13 @@ const LessonCards = ({
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
 		const isAccessible = !lessonItem.isLocked;
 		const isCompleted = lessonItem.porcentajecompletado === 100;
+		// Show NEW tag only if unlocked, isNew is true, and progress is 0
+		const shouldShowNew =
+			!lessonItem.isLocked &&
+			lessonItem.isNew &&
+			(isCurrentLesson
+				? progress === 0
+				: lessonItem.porcentajecompletado === 0);
 
 		return (
 			<div
@@ -54,13 +81,11 @@ const LessonCards = ({
 						{lessonItem.title}
 					</h3>
 					<div className="flex items-center space-x-2">
-						{isAccessible &&
-							lessonItem.isNew &&
-							lessonItem.porcentajecompletado === 0 && (
-								<span className="relative [animation:nuevo-badge-pulse_1.5s_infinite_ease-in-out] rounded bg-green-500 px-2 py-1 text-xs text-white">
-									Nuevo
-								</span>
-							)}
+						{shouldShowNew && (
+							<span className="relative [animation:nuevo-badge-pulse_1.5s_infinite_ease-in-out] rounded bg-green-500 px-2 py-1 text-xs text-white">
+								Nuevo
+							</span>
+						)}
 						{isCompleted ? (
 							<FaCheckCircle className="text-green-500" />
 						) : lessonItem.isLocked ? (

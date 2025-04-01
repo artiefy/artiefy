@@ -35,23 +35,25 @@ import {
 
 const TIME_ZONE = 'America/Bogota';
 
-export default function LessonDetails({
-	lesson,
-	activity,
-	lessons,
-	userLessonsProgress,
-	userActivitiesProgress,
-	userId,
-	course, // Add course prop
-}: {
+interface LessonDetailsProps {
 	lesson: LessonWithProgress;
-	activity: Activity | null;
+	activities: Activity[]; // Change from activity to activities
 	lessons: Lesson[];
 	userLessonsProgress: UserLessonsProgress[];
 	userActivitiesProgress: UserActivitiesProgress[];
 	userId: string;
-	course: Course; // Add course type
-}) {
+	course: Course;
+}
+
+export default function LessonDetails({
+	lesson,
+	activities, // Update prop name
+	lessons,
+	userLessonsProgress,
+	userActivitiesProgress,
+	userId,
+	course,
+}: LessonDetailsProps) {
 	// Add new state
 	const [isNavigating, setIsNavigating] = useState(false);
 	// State and hooks initialization
@@ -65,8 +67,9 @@ export default function LessonDetails({
 	const [isVideoCompleted, setIsVideoCompleted] = useState(
 		lesson?.porcentajecompletado === 100
 	);
+	// Update to use first activity's completion status
 	const [isActivityCompleted, setIsActivityCompleted] = useState(
-		activity?.isCompleted ?? false
+		activities[0]?.isCompleted ?? false
 	);
 	const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
 	const searchParams = useSearchParams();
@@ -145,8 +148,8 @@ export default function LessonDetails({
 	useEffect(() => {
 		setProgress(lesson?.porcentajecompletado ?? 0);
 		setIsVideoCompleted(lesson?.porcentajecompletado === 100);
-		setIsActivityCompleted(activity?.isCompleted ?? false);
-	}, [lesson, activity]);
+		setIsActivityCompleted(activities[0]?.isCompleted ?? false);
+	}, [lesson, activities]);
 
 	// Redirect if the lesson is locked
 	useEffect(() => {
@@ -194,56 +197,72 @@ export default function LessonDetails({
 		void checkEnrollment();
 	}, [lesson.courseId, userId, router]);
 
-	// Handle video end event
-	const handleVideoEnd = async () => {
-		try {
-			toast.success('Clase completada', {
-				description: activity
-					? 'Ahora completa la actividad para continuar'
-					: 'Video completado exitosamente',
-			});
-
-			await handleLessonCompletion();
-
-			// Remove automatic unlocking - only mark video as complete
-			setProgress(100);
-			setIsVideoCompleted(true);
-		} catch (error) {
-			console.error('Error:', error);
-			toast.error('Error al actualizar el progreso');
-		}
-	};
-
-	// Handle progress update event
+	// Update this function to handle progress synchronization
 	const handleProgressUpdate = async (videoProgress: number) => {
 		const roundedProgress = Math.round(videoProgress);
-		if (roundedProgress > progress && roundedProgress < 100) {
-			setProgress(roundedProgress);
+
+		// Only update if progress has increased
+		if (roundedProgress > progress && roundedProgress <= 100) {
 			try {
+				// Update local state immediately for smooth UI
+				setProgress(roundedProgress);
+
+				// Update database
 				await updateLessonProgress(lesson.id, roundedProgress);
+
+				// Update lessons state to reflect changes
 				setLessonsState((prevLessons) =>
 					prevLessons.map((l) =>
 						l.id === lesson.id
 							? {
 									...l,
 									porcentajecompletado: roundedProgress,
-									isNew: roundedProgress > 1 ? false : l.isNew, // Cambiar isNew a false si el progreso es mayor al 1%
+									isCompleted: roundedProgress === 100,
+									isNew: roundedProgress > 1 ? false : l.isNew,
 								}
 							: l
 					)
 				);
+
+				// If video reaches 100%, mark lesson as completed
+				if (roundedProgress === 100) {
+					setIsVideoCompleted(true);
+					toast.success('Clase completada', {
+						description: activities.length
+							? 'Ahora completa la actividad para continuar'
+							: 'Video completado exitosamente',
+					});
+				}
 			} catch (error) {
-				console.error('Error al actualizar el progreso de la lección:', error);
+				console.error('Error al actualizar el progreso:', error);
+				toast.error('Error al sincronizar el progreso');
+
+				// Revert local state if update fails
+				setProgress(progress);
 			}
+		}
+	};
+
+	// Update video end handler to ensure 100% completion
+	const handleVideoEnd = async () => {
+		try {
+			// Force progress to 100%
+			await handleProgressUpdate(100);
+
+			// Additional completion logic
+			await handleLessonCompletion();
+		} catch (error) {
+			console.error('Error al completar la lección:', error);
+			toast.error('Error al marcar la lección como completada');
 		}
 	};
 
 	// Handle activity completion event
 	const handleActivityCompletion = async () => {
-		if (!activity || !isVideoCompleted) return;
+		if (!activities.length || !isVideoCompleted) return;
 
 		try {
-			await completeActivity(activity.id, userId); // Add userId parameter
+			await completeActivity(activities[0].id, userId); // Add userId parameter
 			setIsActivityCompleted(true);
 
 			// Remove automatic unlocking - let modal handle it
@@ -390,7 +409,7 @@ export default function LessonDetails({
 						? {
 								...l, // Mantener todas las propiedades existentes
 								porcentajecompletado: 100,
-								isCompleted: !activity,
+								isCompleted: !activities.length,
 								// Don't modify isLocked status here
 							}
 						: l
@@ -439,8 +458,8 @@ export default function LessonDetails({
 		if (!isLastLesson) return false;
 
 		const lastActivity = lesson.activities?.[lesson.activities.length - 1];
-		return activity?.id === lastActivity?.id;
-	}, [lesson, activity, lessons]);
+		return activities[0]?.id === lastActivity?.id;
+	}, [lesson, activities, lessons]);
 
 	useEffect(() => {
 		if (!course.isActive) {
@@ -468,6 +487,7 @@ export default function LessonDetails({
 						onLessonClick={handleCardClick}
 						progress={progress}
 						isNavigating={isNavigating}
+						setLessonsState={setLessonsState} // Add this prop
 					/>
 				</div>
 
@@ -495,7 +515,7 @@ export default function LessonDetails({
 				{/* Right Sidebar */}
 				<div className="flex flex-col">
 					<LessonActivities
-						activities={lesson.activities ?? []} // Cambiado de activity a activities y agregando fallback array vacío
+						activities={activities} // Pass full array
 						isVideoCompleted={isVideoCompleted}
 						isActivityCompleted={isActivityCompleted}
 						handleActivityCompletion={handleActivityCompletion}

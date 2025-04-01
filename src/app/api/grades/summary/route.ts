@@ -4,26 +4,21 @@ import { sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 
-// Define strict types for query results
-interface DBRow {
-	[key: string]: unknown;
-	name: string;
-	weight: number;
-	grade: number | null;
-	activities: string | null;
-	final_grade: number | null;
-}
-
-interface DBQueryResult extends Record<string, unknown> {
-	rows: DBRow[];
+// Define query result types
+interface QueryResult {
+	rows: {
+		name: string;
+		weight: number;
+		grade: number | null;
+		activities: string;
+		final_grade: number | null;
+	}[];
 }
 
 interface ActivityResult {
 	id: number;
 	name: string;
 	grade: number;
-	weight: number;
-	percentage: number;
 }
 
 interface GradeParameter {
@@ -52,73 +47,78 @@ export async function GET(request: NextRequest) {
 			);
 		}
 
-		// Execute query with proper type casting and DECIMAL precision
 		const queryResult = (await db.execute(sql`
-      WITH parameter_grades AS (
+      WITH parameter_activities AS (
         SELECT 
-          p.id,
-          p.name,
+          p.id as parameter_id,
+          p.name as parameter_name,
           p.porcentaje as weight,
-          -- Calcular promedio ponderado por porcentaje de actividad
-          CAST(
-            SUM(COALESCE(uap.final_grade, 0) * COALESCE(a.porcentaje, 0)) / 
-            NULLIF(SUM(COALESCE(a.porcentaje, 0)), 0)
-          AS DECIMAL(10,2)) as grade,
-          json_agg(
-            json_build_object(
-              'id', a.id,
-              'name', a.name,
-              'grade', CAST(COALESCE(uap.final_grade, 0) AS DECIMAL(10,2)),
-              'porcentaje', COALESCE(a.porcentaje, 0)
-            ) ORDER BY a.id
-          ) as activities
+          a.id as activity_id,
+          a.name as activity_name,
+          uap.final_grade as activity_grade
         FROM parametros p
         LEFT JOIN activities a ON a.parametro_id = p.id
         LEFT JOIN user_activities_progress uap 
-          ON uap.activity_id = a.id AND uap.user_id = ${userId}
+          ON uap.activity_id = a.id 
+          AND uap.user_id = ${userId}
         WHERE p.course_id = ${courseId}
-        GROUP BY p.id, p.name, p.porcentaje
+      ),
+      parameter_grades AS (
+        SELECT 
+          parameter_id,
+          parameter_name,
+          weight,
+          CAST(AVG(activity_grade) AS DECIMAL(10,2)) as grade,
+          json_agg(
+            json_build_object(
+              'id', activity_id,
+              'name', activity_name,
+              'grade', activity_grade
+            )
+          ) as activities
+        FROM parameter_activities
+        GROUP BY parameter_id, parameter_name, weight
       )
       SELECT 
-        name,
+        parameter_name as name,
         weight,
         grade,
         activities::text,
         CAST(SUM(COALESCE(grade, 0) * weight / 100) OVER () AS DECIMAL(10,2)) as final_grade
       FROM parameter_grades
-      ORDER BY id
-    `)) as unknown as DBQueryResult;
+      ORDER BY parameter_id;
+    `)) as QueryResult;
 
-		// Debug logs for grade calculation
-		console.log('Grade Calculation Debug:');
-		console.log('Raw Query Result:', queryResult);
+		const dbRows = queryResult.rows;
 
-		// Single declaration of rows
-		const dbRows = queryResult?.rows ?? [];
+		// Fix the type checking for contribution calculation
 		console.log(
 			'Parameter Rows:',
 			dbRows.map((row) => ({
 				name: row.name,
-				weight: row.weight,
-				grade: row.grade,
-				contribution: (((row.grade ?? 0) * (row.weight ?? 0)) / 100).toFixed(2),
+				weight: Number(row.weight),
+				grade: Number(row.grade ?? 0),
+				contribution: (
+					(Number(row.grade ?? 0) * Number(row.weight)) /
+					100
+				).toFixed(2),
 			}))
 		);
 
 		// Transform results with proper type safety
 		const parameters: GradeParameter[] = dbRows.map((row) => {
-			const activities = JSON.parse(row.activities ?? '[]') as ActivityResult[];
+			const activities = row.activities
+				? (JSON.parse(row.activities) as ActivityResult[])
+				: [];
 
 			return {
-				name: String(row.name),
+				name: row.name,
 				grade: Number(row.grade ?? 0),
 				weight: Number(row.weight),
 				activities: activities.map((act) => ({
-					id: Number(act.id),
-					name: String(act.name),
-					grade: Number(act.grade),
-					weight: Number(act.weight),
-					percentage: Number(act.percentage),
+					id: Number(act.id ?? 0),
+					name: String(act.name ?? ''),
+					grade: Number(act.grade ?? 0),
 				})),
 			};
 		});

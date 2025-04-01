@@ -44,9 +44,7 @@ export const users = pgTable(
 			mode: 'date',
 		}),
 	},
-	(table) => [
-		unique('users_email_role_unique').on(table.email, table.role)
-	]
+	(table) => [unique('users_email_role_unique').on(table.email, table.role)]
 );
 
 // Tabla de categorías
@@ -91,8 +89,7 @@ export const courses = pgTable('courses', {
 		.notNull(),
 	individualPrice: integer('individual_price'),
 	requiresProgram: boolean('requires_program').default(false),
-	isActive: boolean('is_active').default(true), 
-
+	isActive: boolean('is_active').default(true),
 });
 
 // Tabla de tipos de actividades
@@ -231,7 +228,7 @@ export const userLessonsProgress = pgTable('user_lessons_progress', {
 	progress: real('progress').default(0).notNull(),
 	isCompleted: boolean('is_completed').default(false).notNull(),
 	isLocked: boolean('is_locked').default(true),
-	isNew: boolean('is_new').default(true).notNull(), // Agregar campo isNew
+	isNew: boolean('is_new').default(true).notNull(),
 	lastUpdated: timestamp('last_updated').defaultNow().notNull(),
 });
 
@@ -356,12 +353,13 @@ export const courseTypes = pgTable('course_types', {
 		length: 255,
 		enum: ['none', 'pro', 'premium'],
 	}).notNull(),
-	isPurchasableIndividually: boolean('is_purchasable_individually').default(false),
+	isPurchasableIndividually: boolean('is_purchasable_individually').default(
+		false
+	),
 	price: integer('price'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
-
 
 export const materiaGrades = pgTable(
 	'materia_grades',
@@ -397,9 +395,6 @@ export const parameterGrades = pgTable(
 	},
 	(table) => [unique('uniq_parameter_user').on(table.parameterId, table.userId)]
 );
-
-
-
 
 // Relaciones de programas
 export const programasRelations = relations(programas, ({ one, many }) => ({
@@ -722,11 +717,9 @@ export const anunciosUsuarios = pgTable('anuncios_usuarios', {
 		.notNull(),
 });
 
-
 export const courseTypesRelations = relations(courseTypes, ({ many }) => ({
 	courses: many(courses),
 }));
-
 
 export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
 	materia: one(materias, {

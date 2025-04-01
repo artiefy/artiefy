@@ -186,6 +186,14 @@ export interface Nivel {
 	name: string;
 	description?: string;
 }
+
+export interface ActivityContent {
+	questions: Question[];
+	questionsVOF?: Question[];
+	questionsOM?: Question[];
+	questionsACompletar?: Question[];
+}
+
 export interface Activity {
 	id: number;
 	name: string;
@@ -197,9 +205,7 @@ export interface Activity {
 	parametroId: number | null;
 	typeActi?: TypeActi;
 	userActivitiesProgress?: UserActivitiesProgress[];
-	content?: {
-		questions: Question[];
-	};
+	content?: ActivityContent;
 	typeid: number;
 	isCompleted: boolean;
 	userProgress: number;
@@ -210,6 +216,7 @@ export interface Activity {
 	lastAttemptAt?: Date;
 	pesoPregunta?: number;
 	fechaMaximaEntrega: Date | null;
+	isLastInLesson?: boolean; // Add this property
 }
 
 export interface Question {

@@ -25,7 +25,6 @@ interface GradeHistoryProps {
 				id: number;
 				name: string;
 				grade: number;
-				percentage: number;
 			}[];
 		}[];
 	} | null;
@@ -79,23 +78,17 @@ export function GradeHistory({
 								</div>
 							</div>
 
-							{/* Activities in this parameter with progress bars */}
-							<div className="mb-3 space-y-3">
+							{/* Activities in this parameter */}
+							<div className="mb-3 space-y-2">
 								{param.activities.map((activity, actIndex) => (
-									<div key={actIndex} className="space-y-1">
-										<div className="flex justify-between text-sm">
-											<span className="text-background">{activity.name}</span>
-											<span className="font-bold text-background">
-												{formatScore(activity.grade)} ({activity.percentage}%)
-											</span>
-										</div>
-										{/* Add progress bar */}
-										<div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-											<div
-												className={`h-full transition-all duration-300 ${activity.grade >= 3 ? 'bg-green-500' : 'bg-red-500'}`}
-												style={{ width: `${(activity.grade / 5) * 100}%` }}
-											/>
-										</div>
+									<div
+										key={actIndex}
+										className="flex justify-between rounded bg-gray-50 p-2 text-background"
+									>
+										<span>{activity.name}</span>
+										<span className="font-bold">
+											{formatScore(activity.grade)}
+										</span>
 									</div>
 								))}
 							</div>

@@ -45,12 +45,6 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
-	"[dotenv]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
-	"[env]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
 
 	// TypeScript Configuration
 	"typescript.tsdk": "node_modules\\typescript\\lib",
@@ -110,7 +104,9 @@
 	"search.exclude": {
 		"/node_modules": true,
 		"/dist": true,
-		"/.git": true
+		"/.git": true,
+    "/.next": true,
+    "/.vercel": true,
 	},
 	"javascript.suggest.completeFunctionCalls": true,
 

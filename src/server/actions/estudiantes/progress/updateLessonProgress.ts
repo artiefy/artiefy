@@ -7,7 +7,6 @@ import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNex
 import { db } from '~/server/db';
 import { userLessonsProgress } from '~/server/db/schema';
 
-// Actualizar el progreso de una lección
 export async function updateLessonProgress(
 	lessonId: number,
 	progress: number

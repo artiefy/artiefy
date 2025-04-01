@@ -7,5 +7,3 @@ node_modules
 public
 *.md
 *.mdx
-.env*
-!.env.js

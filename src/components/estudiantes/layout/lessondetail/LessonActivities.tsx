@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { FaCheckCircle, FaLock } from 'react-icons/fa';
 import { MdKeyboardDoubleArrowDown } from 'react-icons/md';
-import { TbReportAnalytics } from 'react-icons/tb';
+import { TbReportAnalytics, TbClockFilled } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
@@ -19,7 +19,7 @@ import type { Activity, SavedAnswer } from '~/types';
 import '~/styles/arrowclass.css';
 
 interface LessonActivitiesProps {
-	activities: Activity[]; // Cambiar de activity a activities array
+	activities: Activity[];
 	isVideoCompleted: boolean;
 	isActivityCompleted: boolean;
 	handleActivityCompletion: () => Promise<void>;
@@ -27,9 +27,9 @@ interface LessonActivitiesProps {
 	nextLessonId?: number;
 	onLessonUnlocked: (lessonId: number) => void;
 	courseId: number;
-	isLastLesson: boolean; // Add this prop
-	isLastActivity: boolean; // Add this prop
-	resourceNames: string[]; // Add this prop
+	isLastLesson: boolean;
+	isLastActivity: boolean;
+	resourceNames: string[];
 }
 
 interface SavedResults {
@@ -49,12 +49,10 @@ interface CourseGradeSummary {
 			id: number;
 			name: string;
 			grade: number;
-			percentage: number; // Add percentage field
 		}[];
 	}[];
 }
 
-// Update GradeSummaryResponse interface to include percentage
 interface GradeSummaryResponse {
 	finalGrade: number;
 	courseCompleted?: boolean;
@@ -67,12 +65,10 @@ interface GradeSummaryResponse {
 			id: number;
 			name: string;
 			grade: number;
-			percentage: number; // Add percentage field
 		}[];
 	}[];
 }
 
-// Add validation function
 const isValidGradeSummaryResponse = (
 	data: unknown
 ): data is GradeSummaryResponse => {
@@ -93,8 +89,7 @@ const isValidGradeSummaryResponse = (
 					(act) =>
 						typeof act.id === 'number' &&
 						typeof act.name === 'string' &&
-						typeof act.grade === 'number' &&
-						typeof act.percentage === 'number' // Add percentage field validation
+						typeof act.grade === 'number'
 				)
 		)
 	);
@@ -113,7 +108,6 @@ const fetchGradeData = async (url: string): Promise<GradeSummaryResponse> => {
 	return rawData;
 };
 
-// Add interface for GET /api/activities/getAnswers response
 interface ActivityAnswersResponse {
 	score: number;
 	answers: Record<string, SavedAnswer>;
@@ -121,9 +115,9 @@ interface ActivityAnswersResponse {
 }
 
 const LessonActivities = ({
-	activities = [], // Provide default empty array
+	activities = [],
 	isVideoCompleted,
-	isActivityCompleted,
+	isActivityCompleted: _isActivityCompleted,
 	handleActivityCompletion,
 	userId,
 	nextLessonId,
@@ -131,11 +125,9 @@ const LessonActivities = ({
 	courseId,
 	isLastLesson,
 	isLastActivity,
-	resourceNames: _resourceNames, // Rename to indicate it's not used here
+	resourceNames: _resourceNames,
 }: LessonActivitiesProps) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [activityCompleted, setActivityCompleted] =
-		useState(isActivityCompleted);
 
 	const [savedResults, setSavedResults] = useState<SavedResults | null>(null);
 	const [isLoadingResults, setIsLoadingResults] = useState(false);
@@ -143,33 +135,41 @@ const LessonActivities = ({
 		null
 	);
 
-	// Add new state for activity loading
 	const [isLoadingActivity, setIsLoadingActivity] = useState(false);
-
-	// Add new state for grade history modal
 	const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
-
-	// Add new state for button loading
 	const [isButtonLoading, setIsButtonLoading] = useState(true);
-
-	// Add loading state for grades
 	const [isGradesLoading, setIsGradesLoading] = useState(true);
+	const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
+		null
+	);
+
+	const [completedActivities, setCompletedActivities] = useState<
+		Record<number, boolean>
+	>({});
 
 	const openModal = () => setIsModalOpen(true);
 	const closeModal = () => setIsModalOpen(false);
 
-	const handleQuestionsAnswered = (answered: boolean) => {
-		// Solo actualizar el estado local si es necesario
-		setActivityCompleted(answered);
+	const handleQuestionsAnswered = () => {
+		if (selectedActivity) {
+			setCompletedActivities((prev) => ({
+				...prev,
+				[selectedActivity.id]: true,
+			}));
+		}
 	};
 
 	const markActivityAsCompleted = async (): Promise<void> => {
-		setActivityCompleted(true);
+		if (selectedActivity) {
+			setCompletedActivities((prev) => ({
+				...prev,
+				[selectedActivity.id]: true,
+			}));
+		}
 		return Promise.resolve();
 	};
 
-	// Modify fetchGradeSummary to use SWR correctly with proper types
-	const { data: gradeData } = useSWR<GradeSummaryResponse>(
+	const { data: grades } = useSWR<GradeSummaryResponse>(
 		courseId && userId
 			? `/api/grades/summary?courseId=${courseId}&userId=${userId}`
 			: null,
@@ -180,25 +180,17 @@ const LessonActivities = ({
 		}
 	);
 
-	// Update gradeSummary when data changes
 	useEffect(() => {
-		if (gradeData) {
+		if (grades) {
 			setGradeSummary({
-				finalGrade: gradeData.finalGrade,
-				courseCompleted: gradeData.isCompleted,
-				parameters: gradeData.parameters.map((param) => ({
-					...param,
-					activities: param.activities.map((act) => ({
-						...act,
-						percentage: act.percentage, // Now percentage is included in the source data
-					})),
-				})),
+				finalGrade: grades.finalGrade,
+				courseCompleted: grades.isCompleted,
+				parameters: grades.parameters,
 			});
 			setIsGradesLoading(false);
 		}
-	}, [gradeData]);
+	}, [grades]);
 
-	// Add type guard
 	const isActivityAnswersResponse = (
 		data: unknown
 	): data is ActivityAnswersResponse => {
@@ -212,51 +204,48 @@ const LessonActivities = ({
 		);
 	};
 
-	// Add useEffect to check activity completion on mount
 	useEffect(() => {
-		const checkActivityStatus = async () => {
-			if (!activities?.length) {
+		const checkActivitiesStatus = async () => {
+			if (!activities.length) {
 				setIsButtonLoading(false);
 				return;
 			}
 
 			setIsButtonLoading(true);
 			try {
-				const response = await fetch(
-					`/api/activities/getAnswers?activityId=${activities[0].id}&userId=${userId}`
-				);
+				const statuses: Record<number, boolean> = {};
 
-				if (response.ok) {
-					const rawData: unknown = await response.json();
+				for (const activity of activities.slice(0, 3)) {
+					const response = await fetch(
+						`/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+					);
 
-					// Set activity as completed if there are any answers, regardless of score
-					if (
-						isActivityAnswersResponse(rawData) &&
-						rawData.answers &&
-						Object.keys(rawData.answers).length > 0
-					) {
-						setActivityCompleted(true);
-						setSavedResults({
-							score: rawData.score,
-							answers: rawData.answers,
-							isAlreadyCompleted: true,
-						});
+					if (response.ok) {
+						const rawData: unknown = await response.json();
+						if (
+							isActivityAnswersResponse(rawData) &&
+							rawData.answers &&
+							Object.keys(rawData.answers).length > 0
+						) {
+							statuses[activity.id] = true;
+						}
 					}
 				}
+
+				setCompletedActivities(statuses);
 			} catch (error) {
-				console.error('Error checking activity status:', error);
+				console.error('Error checking activities status:', error);
 			} finally {
 				setIsButtonLoading(false);
 			}
 		};
 
-		void checkActivityStatus();
+		void checkActivitiesStatus();
 	}, [activities, userId]);
 
 	const handleCompletedActivityClick = async (activity: Activity) => {
 		setIsLoadingResults(true);
 		try {
-			// Check if activity exists and get its ID safely
 			const activityId = activity?.id;
 			if (!activityId) return;
 
@@ -273,9 +262,11 @@ const LessonActivities = ({
 						answers: rawData.answers,
 						isAlreadyCompleted: true,
 					});
-					// For last activity, always set as completed
 					if (isLastActivity) {
-						setActivityCompleted(true);
+						setCompletedActivities((prev) => ({
+							...prev,
+							[activity.id]: true,
+						}));
 					}
 				}
 			}
@@ -292,8 +283,8 @@ const LessonActivities = ({
 		}
 	};
 
-	// Add new handler for opening activity
-	const handleOpenActivity = () => {
+	const handleOpenActivity = (activity: Activity) => {
+		setSelectedActivity(activity);
 		setIsLoadingActivity(true);
 		try {
 			openModal();
@@ -302,147 +293,216 @@ const LessonActivities = ({
 		}
 	};
 
-	const handleActivityComplete = () => {
-		setActivityCompleted(true); // Solo actualiza el estado del botón
-	};
-
-	// Modify the isLastActivityInLesson function to determine order based on creation date or ID
 	const isLastActivityInLesson = (currentActivity: Activity) => {
-		if (!activities?.length) return false;
+		if (!activities.length) return false;
 
-		// Use either creation date or ID to determine order
 		const order = currentActivity.createdAt
 			? new Date(currentActivity.createdAt).getTime()
 			: currentActivity.id;
 
-		const lastActivity = activities[activities.length - 1];
-		const maxOrder = lastActivity.createdAt
-			? new Date(lastActivity.createdAt).getTime()
-			: lastActivity.id;
+		const maxOrder = Math.max(
+			...activities.map((act) =>
+				act.createdAt ? new Date(act.createdAt).getTime() : act.id
+			)
+		);
 
 		return order === maxOrder;
+	};
+
+	const handleModalClose = () => {
+		closeModal();
+		setSavedResults(null);
+		setSelectedActivity(null);
+	};
+
+	const getButtonClasses = (activity: Activity, isLastActivity: boolean) => {
+		return completedActivities[activity.id] || (isLastActivity && savedResults)
+			? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
+			: isVideoCompleted
+				? 'font-semibold text-black'
+				: 'bg-gray-400 text-background';
+	};
+
+	const isLastCompletedActivity = (activity: Activity) => {
+		const activityIndex = activities.indexOf(activity);
+		return (
+			activityIndex === Math.min(activities.length - 1, 2) &&
+			completedActivities[activity.id]
+		);
+	};
+
+	const getActivityStatus = (activity: Activity, index: number) => {
+		if (completedActivities[activity.id]) {
+			return {
+				icon: <FaCheckCircle className="text-green-500" />,
+				bgColor: 'bg-green-100',
+				isActive: true,
+			};
+		}
+
+		if (!isVideoCompleted) {
+			return {
+				icon: <FaLock className="text-gray-400" />,
+				bgColor: 'bg-gray-200',
+				isActive: false,
+			};
+		}
+
+		// First activity is always active when video is completed
+		if (index === 0) {
+			return {
+				icon: <TbClockFilled className="text-blue-500" />,
+				bgColor: 'bg-blue-100',
+				isActive: true,
+			};
+		}
+
+		// Other activities are locked until previous activity is completed
+		const previousActivity = activities[index - 1];
+		const isPreviousCompleted =
+			previousActivity && completedActivities[previousActivity.id];
+
+		return {
+			icon: <FaLock className="text-gray-400" />,
+			bgColor: 'bg-gray-200',
+			isActive: isPreviousCompleted ?? false,
+		};
 	};
 
 	return (
 		<div className="w-72 p-4">
 			<h2 className="mb-4 text-2xl font-bold text-primary">Actividades</h2>
-			{Array.isArray(activities) && activities.length > 0 ? (
+			{activities.length > 0 ? (
 				<div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
-					{/* Limit to 3 activities */}
-					{activities.slice(0, 3).map((activity) => (
-						<div key={activity.id} className="rounded-lg border bg-gray-50 p-4">
-							<div className="flex items-center justify-between">
-								<div>
-									<h3 className="font-semibold text-gray-900">
-										{activity.name}
-									</h3>
-								</div>
-								{!isButtonLoading &&
-									(activityCompleted ? (
-										<FaCheckCircle className="text-green-500" />
-									) : (
-										<FaLock className="text-gray-400" />
-									))}
-							</div>
-							<p className="mt-2 text-sm text-gray-600">
-								{activity.description}
-							</p>
-							{isVideoCompleted && (
-								<div className="flex justify-center">
-									{!isButtonLoading &&
-										(activityCompleted ? (
-											<TbReportAnalytics className="mb-2 size-12 text-2xl text-background" />
-										) : (
-											<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
-										))}
-								</div>
-							)}
-							<button
-								onClick={() =>
-									activityCompleted
-										? handleCompletedActivityClick(activity)
-										: handleOpenActivity()
-								}
-								disabled={!isVideoCompleted || isButtonLoading}
-								className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${
-									activityCompleted || (isLastActivity && savedResults)
-										? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
-										: isVideoCompleted
-											? 'font-semibold text-black'
-											: 'bg-gray-400 text-background'
-								} [&:disabled]:bg-opacity-50 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
+					{activities.slice(0, 3).map((activity, index) => {
+						const status = getActivityStatus(activity, index);
+						const isFirstActivity = index === 0;
+						const canAccess =
+							isFirstActivity || completedActivities[activities[0]?.id];
+
+						return (
+							<div
+								key={activity.id}
+								className={`mb-4 rounded-lg border p-4 ${
+									status.isActive ? 'bg-white' : 'bg-gray-100 opacity-60'
+								}`}
 							>
-								{/* Fondo animado solo cuando está habilitado */}
-								{isVideoCompleted && !activityCompleted && (
-									<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
-								)}
-
-								{/* Contenido que siempre mantiene su opacidad */}
-								<span className="relative z-10 flex items-center justify-center">
-									{isButtonLoading ? (
-										<div className="flex items-center gap-2">
-											<Icons.spinner className="h-4 w-4 animate-spin text-background" />
-											<span className="font-semibold text-background">
-												Cargando...
-											</span>
+								<div className="flex items-center justify-between">
+									<div className="flex-1">
+										<h3 className="font-semibold text-gray-900">
+											{activity.name}
+										</h3>
+									</div>
+									<div className="ml-2">
+										<div className={`rounded-full p-1 ${status.bgColor}`}>
+											{status.icon}
 										</div>
-									) : activityCompleted || (isLastActivity && savedResults) ? (
-										<>
-											{isLoadingResults && (
-												<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin" />
-											)}
-											<span className="font-semibold">Ver Resultados</span>
-											<FaCheckCircle className="ml-2 inline text-white" />
-										</>
-									) : (
-										<>
-											{isLoadingActivity && (
-												<Icons.spinner className="absolute -left-5 h-4 w-4 animate-spin active:scale-[0.98]" />
-											)}
-											<span>Ver Actividad</span>
-										</>
-									)}
-								</span>
-							</button>
-
-							{activityCompleted && nextLessonId && (
-								<div className="mt-4 flex flex-col items-center space-y-2">
-									<div className="w-50 border border-b-gray-500" />
-									<Link
-										href={`/estudiantes/clases/${nextLessonId}`}
-										className="next-lesson-link group flex flex-col items-center text-center"
-									>
-										<button className="arrow-button">
-											<div className="arrow-button-box">
-												<span className="arrow-button-elem">
-													<svg
-														viewBox="0 0 46 40"
-														xmlns="http://www.w3.org/2000/svg"
-													>
-														<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-													</svg>
-												</span>
-												<span className="arrow-button-elem">
-													<svg viewBox="0 0 46 40">
-														<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-													</svg>
-												</span>
-											</div>
-										</button>
-										<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
-											Ir a la siguiente clase
-										</em>
-									</Link>
+									</div>
 								</div>
-							)}
-						</div>
-					))}
+
+								<p className="mt-2 text-sm text-gray-600">
+									{activity.description}
+								</p>
+
+								<div className="space-y-2">
+									{isVideoCompleted &&
+										isFirstActivity &&
+										!completedActivities[activity.id] && (
+											<div className="flex justify-center py-2">
+												<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
+											</div>
+										)}
+
+									{completedActivities[activity.id] && (
+										<div className="flex justify-center">
+											<TbReportAnalytics className="mb-2 size-12 text-2xl text-gray-700" />
+										</div>
+									)}
+
+									<button
+										onClick={
+											completedActivities[activity.id]
+												? () => handleCompletedActivityClick(activity)
+												: () => handleOpenActivity(activity)
+										}
+										disabled={
+											!isVideoCompleted || isButtonLoading || !canAccess
+										}
+										className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity, isLastActivity)} ${!canAccess ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-50 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
+									>
+										{/* Animated gradient background - only show when video completed and activity not completed */}
+										{isVideoCompleted &&
+											!completedActivities[activity.id] &&
+											canAccess && (
+												<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
+											)}
+
+										<span className="relative z-10 flex items-center justify-center">
+											{isButtonLoading ? (
+												<div className="flex items-center gap-2">
+													<Icons.spinner className="h-4 w-4 animate-spin text-background" />
+													<span className="font-semibold text-background">
+														Cargando...
+													</span>
+												</div>
+											) : completedActivities[activity.id] ? (
+												<>
+													{isLoadingResults && (
+														<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+													)}
+													<span className="font-semibold">Ver Resultados</span>
+													<FaCheckCircle className="ml-2 inline text-white" />
+												</>
+											) : (
+												<>
+													{isLoadingActivity &&
+														activity.id === selectedActivity?.id && (
+															<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+														)}
+													<span>Ver Actividad</span>
+												</>
+											)}
+										</span>
+									</button>
+
+									{isLastCompletedActivity(activity) && nextLessonId && (
+										<div className="mt-4 flex flex-col items-center space-y-2">
+											<div className="w-50 border border-b-gray-500" />
+											<Link
+												href={`/estudiantes/clases/${nextLessonId}`}
+												className="next-lesson-link group flex flex-col items-center text-center"
+											>
+												<button className="arrow-button">
+													<div className="arrow-button-box">
+														<span className="arrow-button-elem">
+															<svg
+																viewBox="0 0 46 40"
+																xmlns="http://www.w3.org/2000/svg"
+															>
+																<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+															</svg>
+														</span>
+														<span className="arrow-button-elem">
+															<svg viewBox="0 0 46 40">
+																<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+															</svg>
+														</span>
+													</div>
+												</button>
+												<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
+													Ir a la siguiente clase
+												</em>
+											</Link>
+										</div>
+									)}
+								</div>
+							</div>
+						);
+					})}
 				</div>
 			) : (
 				<p className="text-gray-600">No hay actividades disponibles</p>
 			)}
-
-			{/* Grades Section with Title */}
 			<div className="mt-4">
 				<h2 className="mb-4 text-2xl font-bold text-primary">Calificaciones</h2>
 				<LessonGrades
@@ -451,16 +511,11 @@ const LessonActivities = ({
 					isLoading={isGradesLoading}
 				/>
 			</div>
-
-			{/* Modal */}
-			{Array.isArray(activities) && activities.length > 0 && activities[0] && (
+			{selectedActivity && (
 				<LessonActivityModal
 					isOpen={isModalOpen}
-					onClose={() => {
-						closeModal();
-						setSavedResults(null);
-					}}
-					activity={activities[0]}
+					onClose={handleModalClose}
+					activity={selectedActivity}
 					onQuestionsAnswered={handleQuestionsAnswered}
 					userId={userId}
 					markActivityAsCompleted={markActivityAsCompleted}
@@ -470,13 +525,11 @@ const LessonActivities = ({
 					isLastLesson={isLastLesson}
 					isLastActivity={isLastActivity}
 					courseId={courseId}
-					onViewHistory={() => setIsGradeHistoryOpen(true)} // Add this prop
-					onActivityComplete={handleActivityComplete} // Add this prop
-					isLastActivityInLesson={isLastActivityInLesson(activities[0])}
+					onViewHistory={() => setIsGradeHistoryOpen(true)}
+					onActivityComplete={handleActivityCompletion}
+					isLastActivityInLesson={isLastActivityInLesson(selectedActivity)}
 				/>
 			)}
-
-			{/* Grade History Modal */}
 			<GradeHistory
 				isOpen={isGradeHistoryOpen}
 				onClose={() => setIsGradeHistoryOpen(false)}

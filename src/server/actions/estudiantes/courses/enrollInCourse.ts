@@ -180,7 +180,7 @@ export async function enrollInCourse(
 					progress: 0,
 					isCompleted: false,
 					isLocked: lesson.id !== courseLessons[0].id,
-					isNew: lesson.id === courseLessons[0].id,
+					isNew: true, // Asegurarnos que siempre se crea como true
 					lastUpdated: new Date(),
 				});
 			}

@@ -23,6 +23,20 @@ const getActivityContent = async (
 
 		console.log('Related activities:', relatedActivities);
 
+		// Limit to 3 activities per lesson
+		if (relatedActivities.length > 3) {
+			console.warn(
+				`Lesson ${lessonId} has more than 3 activities, limiting to first 3`
+			);
+			relatedActivities.splice(3);
+		}
+
+		// Sort activities by creation date to ensure consistent order
+		relatedActivities.sort(
+			(a, b) =>
+				new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime()
+		);
+
 		if (relatedActivities.length === 0) {
 			console.log(`No related activities found for lesson ${lessonId}`);
 			return [];
@@ -31,7 +45,7 @@ const getActivityContent = async (
 		const userProgress = await getUserActivityProgress(userId);
 
 		const activitiesWithContent = await Promise.all(
-			relatedActivities.map(async (activity) => {
+			relatedActivities.map(async (activity, index) => {
 				const questionTypes = ['VOF', 'OM', 'ACompletar'] as const;
 				let allQuestions: Question[] = [];
 
@@ -70,6 +84,8 @@ const getActivityContent = async (
 					(progress) => progress.activityId === activity.id
 				);
 
+				const isLastActivityInLesson = index === relatedActivities.length - 1;
+
 				return {
 					...activity,
 					content: {
@@ -78,6 +94,7 @@ const getActivityContent = async (
 					isCompleted: activityProgress?.isCompleted ?? false,
 					userProgress: activityProgress?.progress ?? 0,
 					createdAt: activity.lastUpdated,
+					isLastInLesson: isLastActivityInLesson, // Add this flag
 				} as Activity;
 			})
 		);

@@ -146,15 +146,16 @@ const LessonActivityModal = ({
 				return false;
 			}
 
+			// Modificar la lógica para considerar los intentos y el estado revisada
 			if (activity.revisada) {
-				// Para actividades revisadas, solo permitir cerrar si:
-				// 1. Obtuvo calificación >= 3
-				// 2. Agotó todos los intentos (attemptsLeft === 0)
-				return finalScore >= 3 || attemptsLeft === 0;
+				// Para actividades revisadas:
+				// - Si agotó los intentos (attemptsLeft === 0), puede cerrar sin importar la nota
+				// - Si tiene nota >= 3, puede cerrar
+				return attemptsLeft === 0 || finalScore >= 3;
 			} else {
-				// Para actividades no revisadas, solo permitir cerrar si:
-				// 1. Obtuvo calificación >= 3
-				return finalScore >= 3;
+				// Para actividades no revisadas:
+				// - Siempre puede cerrar, ya que tiene intentos infinitos
+				return true;
 			}
 		};
 
@@ -734,12 +735,14 @@ const LessonActivityModal = ({
 			onOpenChange={(open) => {
 				if (!open) {
 					if (!canCloseModal) {
-						if (activity.revisada && attemptsLeft && attemptsLeft > 0) {
-							toast.error(
-								`Debes completar los ${attemptsLeft} intentos restantes o aprobar la actividad`
-							);
-						} else {
-							toast.error('Debes aprobar la actividad para continuar');
+						if (activity.revisada) {
+							// Mensaje específico para actividades revisadas
+							const intentosRestantes = attemptsLeft ?? 0;
+							if (intentosRestantes > 0) {
+								toast.error(
+									`Te quedan ${intentosRestantes} intento${intentosRestantes !== 1 ? 's' : ''} para aprobar la actividad. Debes obtener una nota de 3 o superior para aprobar.`
+								);
+							}
 						}
 						return;
 					}
