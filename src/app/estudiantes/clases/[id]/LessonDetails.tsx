@@ -423,14 +423,14 @@ export default function LessonDetails({
 	};
 
 	// Add function to get next lesson ID
-	const getNextLessonId = () => {
+	const getNextLessonId = useCallback(() => {
 		const sortedLessons = [...lessonsState].sort((a, b) =>
 			a.title.localeCompare(b.title)
 		);
 		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
 		const nextLesson = sortedLessons[currentIndex + 1];
 		return nextLesson && !nextLesson.isLocked ? nextLesson.id : undefined;
-	};
+	}, [lessonsState, lesson.id]);
 
 	// Function to handle lesson unlock
 	const handleLessonUnlocked = (lessonId: number) => {
@@ -520,12 +520,12 @@ export default function LessonDetails({
 						isActivityCompleted={isActivityCompleted}
 						handleActivityCompletion={handleActivityCompletion}
 						userId={userId}
-						nextLessonId={getNextLessonId()}
 						onLessonUnlocked={handleLessonUnlocked}
 						courseId={lesson.courseId}
 						isLastLesson={isLastLesson()}
 						isLastActivity={isLastActivity()}
 						resourceNames={lesson.resourceNames}
+						getNextLessonId={getNextLessonId} // Add this prop
 					/>
 					<LessonResource resourceNames={lesson.resourceNames} />
 				</div>

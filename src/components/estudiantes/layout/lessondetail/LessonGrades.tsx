@@ -1,4 +1,6 @@
 'use client';
+import React from 'react';
+
 import { StarIcon } from '@heroicons/react/24/solid';
 import { FaTrophy } from 'react-icons/fa';
 
@@ -17,6 +19,11 @@ export function LessonGrades({
 	onViewHistoryAction, // Updated prop name
 	isLoading,
 }: LessonGradesProps) {
+	// Add useMemo to prevent unnecessary re-renders
+	const displayGrade = React.useMemo(() => {
+		return finalGrade !== null ? formatScore(finalGrade) : '0.0';
+	}, [finalGrade]);
+
 	return (
 		<div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-all duration-200 ease-in-out">
 			<div className="mb-3 flex items-center justify-between">
@@ -27,19 +34,17 @@ export function LessonGrades({
 			<div className="mb-4 flex min-h-[40px] items-center justify-center">
 				{isLoading ? (
 					<Icons.spinner className="h-6 w-6 animate-spin text-background" />
-				) : finalGrade !== null ? (
+				) : (
 					<div className="flex items-center">
 						<StarIcon className="size-8 text-yellow-500" />
 						<span
-							className={`ml-2 text-3xl font-bold transition-all duration-200 ${
-								finalGrade < 3 ? 'text-red-600' : 'text-green-600'
+							className={`ml-2 text-3xl font-bold ${
+								Number(displayGrade) < 3 ? 'text-red-600' : 'text-green-600'
 							}`}
 						>
-							{formatScore(finalGrade)}
+							{displayGrade}
 						</span>
 					</div>
-				) : (
-					<span className="text-gray-500">No hay calificaciones</span>
 				)}
 			</div>
 

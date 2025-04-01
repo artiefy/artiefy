@@ -462,7 +462,6 @@ const LessonActivityModal = ({
 	};
 
 	const renderActionButton = () => {
-		// Loading states remain the same
 		if (!isResultsLoaded || isUnlocking) {
 			return (
 				<Button
@@ -475,7 +474,39 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Already completed states remain the same
+		// Modificar la condición para mostrar el botón de historial
+		if (
+			(finalScore < 3 &&
+				activity.revisada &&
+				attemptsLeft === 0 &&
+				isLastActivity) ||
+			(finalScore >= 3 && (isLastActivity || activity.isCompleted))
+		) {
+			return (
+				<div className="space-y-3">
+					<Button
+						onClick={onViewHistory}
+						className="w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]"
+					>
+						<span className="flex items-center justify-center gap-2">
+							<FaTrophy className="mr-1" />
+							Ver Reporte de Calificaciones
+							<BiSolidReport className="ml-1 h-8" />
+						</span>
+					</Button>
+					<Button
+						onClick={() => {
+							onActivityComplete();
+							onClose();
+						}}
+						className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-[0.98]"
+					>
+						Cerrar
+					</Button>
+				</div>
+			);
+		}
+
 		if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
 			return (
 				<Button
@@ -487,7 +518,6 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Modified logic for attempts exhausted
 		if (finalScore < 3 && activity.revisada) {
 			if (attemptsLeft && attemptsLeft > 0) {
 				return (
@@ -512,14 +542,13 @@ const LessonActivityModal = ({
 					</>
 				);
 			}
-			// Show different buttons based on activity order and completion
 			if (isLastActivityInLesson && !isLastLesson) {
 				return (
 					<Button
 						onClick={handleFinishAndNavigate}
-						className="w-full bg-green-500 transition-all duration-200 hover:bg-green-600 active:scale-95"
+						className="w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
 					>
-						<span className="flex items-center justify-center gap-2 font-semibold text-white">
+						<span className="flex items-center justify-center gap-2">
 							Desbloquear Siguiente CLASE
 							<Unlock className="h-4 w-4" />
 						</span>
@@ -533,7 +562,6 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Rest of the renderActionButton code remains the same...
 		if (finalScore < 3 && !activity.revisada) {
 			return (
 				<>
@@ -557,14 +585,12 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Si aprobó y puede desbloquear siguiente clase
 		if (finalScore >= 3 && !activity.isCompleted && !isLastLesson) {
-			// Only show unlock button for last activity in lesson (if not last lesson)
 			if (isLastActivityInLesson && !isLastLesson) {
 				return (
 					<Button
 						onClick={handleFinishAndNavigate}
-						className="w-full bg-green-500"
+						className="w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
 					>
 						<span className="flex items-center justify-center gap-2">
 							Desbloquear Siguiente CLASE
@@ -580,34 +606,6 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Modify the last activity condition
-		if (finalScore >= 3 && isLastActivity) {
-			return (
-				<div className="space-y-3">
-					<Button
-						onClick={onViewHistory}
-						className="w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]"
-					>
-						<span className="flex items-center justify-center gap-2">
-							<FaTrophy className="mr-1" />
-							Ver Reporte de Calificaciones
-							<BiSolidReport className="ml-1 h-8" />
-						</span>
-					</Button>
-					<Button
-						onClick={() => {
-							onActivityComplete(); // Add this callback
-							onClose();
-						}}
-						className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-[0.98]"
-					>
-						Cerrar
-					</Button>
-				</div>
-			);
-		}
-
-		// Por defecto, mostrar botón de cerrar
 		return (
 			<Button
 				onClick={onClose}
@@ -761,7 +759,7 @@ const LessonActivityModal = ({
 						<div className="absolute top-0 right-4">
 							{showResults ? (
 								isUnlocking ? (
-									<Icons.spinner className="size-8 animate-spin text-green-500" />
+									<Unlock className="size-8 text-green-500" />
 								) : finalScore >= 3 ? (
 									<FileCheck2 className="size-8 text-green-500" />
 								) : (

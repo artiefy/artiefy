@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
 
@@ -24,12 +24,12 @@ interface LessonActivitiesProps {
 	isActivityCompleted: boolean;
 	handleActivityCompletion: () => Promise<void>;
 	userId: string;
-	nextLessonId?: number;
 	onLessonUnlocked: (lessonId: number) => void;
 	courseId: number;
 	isLastLesson: boolean;
 	isLastActivity: boolean;
 	resourceNames: string[];
+	getNextLessonId: () => number | undefined; // Add this prop
 }
 
 interface SavedResults {
@@ -120,12 +120,12 @@ const LessonActivities = ({
 	isActivityCompleted: _isActivityCompleted,
 	handleActivityCompletion,
 	userId,
-	nextLessonId,
 	onLessonUnlocked,
 	courseId,
 	isLastLesson,
 	isLastActivity,
 	resourceNames: _resourceNames,
+	getNextLessonId, // Add this prop
 }: LessonActivitiesProps) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -353,6 +353,10 @@ const LessonActivities = ({
 	};
 
 	const getButtonClasses = (activity: Activity, isLastActivity: boolean) => {
+		if (isButtonLoading) {
+			return 'bg-gray-300 text-gray-300 border-none'; // Estilo consistente para todos los botones en carga
+		}
+
 		return completedActivities[activity.id] || (isLastActivity && savedResults)
 			? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
 			: isVideoCompleted
@@ -360,15 +364,66 @@ const LessonActivities = ({
 				: 'bg-gray-400 text-background';
 	};
 
-	const isLastCompletedActivity = (activity: Activity) => {
-		const activityIndex = activities.indexOf(activity);
+	const getButtonLabel = (activity: Activity) => {
+		if (isButtonLoading) {
+			return (
+				<div className="flex items-center gap-2">
+					<Icons.spinner className="h-4 w-4 animate-spin text-gray-800" />
+					<span className="font-semibold text-gray-800">Cargando...</span>
+				</div>
+			);
+		}
+
+		if (completedActivities[activity.id]) {
+			return (
+				<>
+					{loadingResults[activity.id] && (
+						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+					)}
+					<span className="font-semibold">Ver Resultados</span>
+					<FaCheckCircle className="ml-2 inline text-white" />
+				</>
+			);
+		}
+
 		return (
-			activityIndex === Math.min(activities.length - 1, 2) &&
-			completedActivities[activity.id]
+			<>
+				{isLoadingActivity && activity.id === selectedActivity?.id && (
+					<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+				)}
+				<span>Ver Actividad</span>
+			</>
 		);
 	};
 
+	const isLastCompletedActivity = useCallback(
+		(activity: Activity) => {
+			const activityIndex = activities.indexOf(activity);
+			return (
+				activityIndex === Math.min(activities.length - 1, 2) &&
+				completedActivities[activity.id]
+			);
+		},
+		[activities, completedActivities]
+	);
+
+	useEffect(() => {
+		activities.forEach((activity) => {
+			if (isLastCompletedActivity(activity)) {
+				console.debug('Last completed activity:', activity.id);
+			}
+		});
+	}, [activities, isLastCompletedActivity]);
+
 	const getActivityStatus = (activity: Activity, index: number) => {
+		if (isButtonLoading) {
+			return {
+				icon: <TbClockFilled className="text-gray-400" />,
+				bgColor: 'bg-gray-200',
+				isActive: false,
+			};
+		}
+
 		if (completedActivities[activity.id]) {
 			return {
 				icon: <FaCheckCircle className="text-green-500" />,
@@ -410,38 +465,6 @@ const LessonActivities = ({
 		};
 	};
 
-	const getButtonLabel = (activity: Activity) => {
-		if (isButtonLoading) {
-			return (
-				<div className="flex items-center gap-2">
-					<Icons.spinner className="h-4 w-4 animate-spin text-background" />
-					<span className="font-semibold text-background">Cargando...</span>
-				</div>
-			);
-		}
-
-		if (completedActivities[activity.id]) {
-			return (
-				<>
-					{loadingResults[activity.id] && (
-						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-					)}
-					<span className="font-semibold">Ver Resultados</span>
-					<FaCheckCircle className="ml-2 inline text-white" />
-				</>
-			);
-		}
-
-		return (
-			<>
-				{isLoadingActivity && activity.id === selectedActivity?.id && (
-					<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-				)}
-				<span>Ver Actividad</span>
-			</>
-		);
-	};
-
 	const shouldShowArrows = (activity: Activity, index: number) => {
 		if (!isVideoCompleted) return false;
 		if (completedActivities[activity.id]) return false;
@@ -455,111 +478,119 @@ const LessonActivities = ({
 		return isPreviousCompleted;
 	};
 
+	const renderActivityCard = (activity: Activity, index: number) => {
+		const status = getActivityStatus(activity, index);
+		const isFirstActivity = index === 0;
+		const canAccess = isFirstActivity || completedActivities[activities[0]?.id];
+		const isNextLessonAvailable =
+			!isLastLesson && isLastActivityInLesson(activity);
+
+		return (
+			<div key={activity.id}>
+				<div
+					className={`mb-4 rounded-lg border p-4 ${
+						isButtonLoading
+							? 'bg-white' // Tarjeta blanca durante carga
+							: status.isActive
+								? 'bg-white'
+								: 'bg-gray-100 opacity-60'
+					}`}
+				>
+					<div className="flex items-center justify-between">
+						<div className="flex-1">
+							<h3 className="font-semibold text-gray-900">{activity.name}</h3>
+						</div>
+						<div className="ml-2">
+							<div className={`rounded-full p-1 ${status.bgColor}`}>
+								{status.icon}
+							</div>
+						</div>
+					</div>
+
+					<p className="mt-2 text-sm text-gray-600">{activity.description}</p>
+
+					<div className="space-y-2">
+						{/* Mostrar flechas solo cuando la actividad está desbloqueada y no completada */}
+						{shouldShowArrows(activity, index) && !isButtonLoading && (
+							<div className="flex justify-center py-2">
+								<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
+							</div>
+						)}
+
+						{/* Mostrar icono de reporte solo cuando la actividad está completada y no está cargando */}
+						{completedActivities[activity.id] && !isButtonLoading && (
+							<div className="flex justify-center">
+								<TbReportAnalytics className="mb-2 size-12 text-2xl text-gray-700" />
+							</div>
+						)}
+
+						<button
+							onClick={
+								completedActivities[activity.id]
+									? () => handleCompletedActivityClick(activity)
+									: () => handleOpenActivity(activity)
+							}
+							disabled={!isVideoCompleted || isButtonLoading || !canAccess}
+							className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity, isLastActivity)} ${!canAccess && !isButtonLoading ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
+						>
+							{/* Animated gradient background */}
+							{isVideoCompleted &&
+								!completedActivities[activity.id] &&
+								canAccess &&
+								!isButtonLoading && (
+									<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
+								)}
+
+							<span className="relative z-10 flex items-center justify-center">
+								{getButtonLabel(activity)}
+							</span>
+						</button>
+
+						{/* Agregar el botón de siguiente clase cuando la actividad está completada y no es la última lección */}
+						{completedActivities[activity.id] && isNextLessonAvailable && (
+							<div className="mt-4 flex flex-col items-center space-y-2">
+								<div className="w-50 border border-b-gray-500" />
+								<Link
+									href={`/estudiantes/clases/${getNextLessonId()}`}
+									className="next-lesson-link group flex flex-col items-center text-center"
+								>
+									<button className="arrow-button">
+										<div className="arrow-button-box">
+											<span className="arrow-button-elem">
+												<svg
+													viewBox="0 0 46 40"
+													xmlns="http://www.w3.org/2000/svg"
+												>
+													<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+												</svg>
+											</span>
+											<span className="arrow-button-elem">
+												<svg viewBox="0 0 46 40">
+													<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+												</svg>
+											</span>
+										</div>
+									</button>
+									<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
+										Ir a la siguiente clase
+									</em>
+								</Link>
+							</div>
+						)}
+					</div>
+				</div>
+			</div>
+		);
+	};
+
 	return (
 		<div className="w-72 p-4">
 			<h2 className="mb-4 text-2xl font-bold text-primary">Actividades</h2>
 			{activities.length > 0 ? (
 				<div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
-					{activities.slice(0, 3).map((activity, index) => {
-						const status = getActivityStatus(activity, index);
-						const isFirstActivity = index === 0;
-						const canAccess =
-							isFirstActivity || completedActivities[activities[0]?.id];
-
-						return (
-							<div
-								key={activity.id}
-								className={`mb-4 rounded-lg border p-4 ${
-									status.isActive ? 'bg-white' : 'bg-gray-100 opacity-60'
-								}`}
-							>
-								<div className="flex items-center justify-between">
-									<div className="flex-1">
-										<h3 className="font-semibold text-gray-900">
-											{activity.name}
-										</h3>
-									</div>
-									<div className="ml-2">
-										<div className={`rounded-full p-1 ${status.bgColor}`}>
-											{status.icon}
-										</div>
-									</div>
-								</div>
-
-								<p className="mt-2 text-sm text-gray-600">
-									{activity.description}
-								</p>
-
-								<div className="space-y-2">
-									{shouldShowArrows(activity, index) && (
-										<div className="flex justify-center py-2">
-											<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
-										</div>
-									)}
-
-									{completedActivities[activity.id] && (
-										<div className="flex justify-center">
-											<TbReportAnalytics className="mb-2 size-12 text-2xl text-gray-700" />
-										</div>
-									)}
-
-									<button
-										onClick={
-											completedActivities[activity.id]
-												? () => handleCompletedActivityClick(activity)
-												: () => handleOpenActivity(activity)
-										}
-										disabled={
-											!isVideoCompleted || isButtonLoading || !canAccess
-										}
-										className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity, isLastActivity)} ${!canAccess ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-50 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
-									>
-										{/* Animated gradient background - only show when video completed and activity not completed */}
-										{isVideoCompleted &&
-											!completedActivities[activity.id] &&
-											canAccess && (
-												<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
-											)}
-
-										<span className="relative z-10 flex items-center justify-center">
-											{getButtonLabel(activity)}
-										</span>
-									</button>
-
-									{isLastCompletedActivity(activity) && nextLessonId && (
-										<div className="mt-4 flex flex-col items-center space-y-2">
-											<div className="w-50 border border-b-gray-500" />
-											<Link
-												href={`/estudiantes/clases/${nextLessonId}`}
-												className="next-lesson-link group flex flex-col items-center text-center"
-											>
-												<button className="arrow-button">
-													<div className="arrow-button-box">
-														<span className="arrow-button-elem">
-															<svg
-																viewBox="0 0 46 40"
-																xmlns="http://www.w3.org/2000/svg"
-															>
-																<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-															</svg>
-														</span>
-														<span className="arrow-button-elem">
-															<svg viewBox="0 0 46 40">
-																<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-															</svg>
-														</span>
-													</div>
-												</button>
-												<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
-													Ir a la siguiente clase
-												</em>
-											</Link>
-										</div>
-									)}
-								</div>
-							</div>
-						);
-					})}
+					{activities
+						.slice(0, 3)
+						.map((activity, index) => renderActivityCard(activity, index))}
 				</div>
 			) : (
 				<p className="text-gray-600">No hay actividades disponibles</p>
