@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
+
+import Image from 'next/image';
 
 import { X } from 'lucide-react';
 
@@ -9,38 +11,23 @@ interface User {
 	email: string;
 	role: string;
 	status: string;
-	createdAt?: string;
+	profileImage?: string;
 	permissions?: string[];
 }
 
 interface EditUserModalProps {
 	isOpen: boolean;
-	user: User | null;
+	user: User;
 	onClose: () => void;
-	onSave: (updatedUser: User, updatedPermissions: string[]) => void;
+	onSave: (user: User, permissions: string[]) => void;
 }
 
-const AVAILABLE_PERMISSIONS: string[] = [
-	'manage_users',
-	'view_reports',
-	'edit_content',
-	'delete_content',
-	'manage_courses',
-	'assign_roles',
-	'moderate_forums',
-	'access_financials',
-	'export_data',
-	'manage_settings',
-	'create_announcements',
-	'schedule_events',
-	'view_sensitive_data',
-	'issue_refunds',
-	'manage_subscriptions',
-	'send_notifications',
-	'manage_support_tickets',
-	'configure_integrations',
-	'access_developer_tools',
-	'override_permissions',
+const availablePermissions = [
+	{ id: 'create_course', label: 'Crear Cursos' },
+	{ id: 'edit_course', label: 'Editar Cursos' },
+	{ id: 'delete_course', label: 'Eliminar Cursos' },
+	{ id: 'manage_users', label: 'Gestionar Usuarios' },
+	{ id: 'view_reports', label: 'Ver Reportes' },
 ];
 
 export default function EditUserModal({
@@ -49,199 +36,210 @@ export default function EditUserModal({
 	onClose,
 	onSave,
 }: EditUserModalProps) {
-	const [updatedUser, setUpdatedUser] = useState<User | null>(null);
-	const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+	const [editedUser, setEditedUser] = React.useState(user);
+	const [selectedPermissions, setSelectedPermissions] = React.useState<
+		string[]
+	>(user.permissions ?? []);
 
-	// 🔹 Se ejecuta cuando el modal se abre o cambia de usuario
-	useEffect(() => {
-		if (user) {
-			setUpdatedUser(user);
-			setSelectedPermissions(user.permissions ?? []);
-
-			// ✅ Verificar si los permisos llegan correctamente
-			console.log('📌 Permisos del usuario desde Clerk:', user.permissions);
-			console.log('📌 Lista completa de permisos:', AVAILABLE_PERMISSIONS);
-		}
-	}, [user]);
-
-	// ⛔ Evita renderizar si el modal no está abierto
-	if (!isOpen || !updatedUser) return null;
-
-	const handlePermissionChange = (permission: string) => {
-		setSelectedPermissions((prevPermissions) =>
-			prevPermissions.includes(permission)
-				? prevPermissions.filter((p) => p !== permission)
-				: [...prevPermissions, permission]
-		);
-	};
-
-	const handleSave = async () => {
-		if (!updatedUser.firstName.trim() || !updatedUser.lastName.trim()) {
-			alert('El nombre y apellido son obligatorios.');
-			return;
-		}
-
-		try {
-			// 🔹 Llamamos a la API para actualizar en Clerk
-			const response = await fetch('/api/super-admin/udateUser', {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					userId: updatedUser.id,
-					firstName: updatedUser.firstName,
-					lastName: updatedUser.lastName,
-					role: updatedUser.role,
-					status: updatedUser.status,
-					permissions: selectedPermissions,
-				}),
-			});
-
-			const result: { error?: string } = (await response.json()) as {
-				error?: string;
-			};
-			if (!response.ok) {
-				throw new Error(
-					(result as { error?: string }).error ??
-						'Error al actualizar usuario en Clerk'
-				);
-			}
-
-			console.log('✅ Usuario actualizado correctamente:', result);
-
-			// 🔹 Llamamos a la función `onSave` para actualizar en el estado global
-			onSave(updatedUser, selectedPermissions);
-			onClose(); // Cerrar modal
-		} catch (error) {
-			console.error('❌ Error al guardar cambios:', error);
-			alert('Hubo un error al actualizar el usuario.');
-		}
-	};
+	if (!isOpen) return null;
 
 	return (
-		<div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-md">
-			<div className="flex max-h-[70vh] w-full max-w-4xl flex-col rounded-lg bg-gray-900 text-white shadow-lg">
-				{/* Header */}
-				<div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
-					<h2 className="text-xl font-bold">Editar Usuario</h2>
-					<button onClick={onClose}>
-						<X className="text-gray-400 hover:text-white" />
-					</button>
+		<div
+			className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80"
+			onClick={onClose}
+		>
+			<div
+				className="relative mx-auto my-4 h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-[#01142B] shadow-2xl"
+				onClick={(e) => e.stopPropagation()}
+			>
+				{/* Header fijo */}
+				<div className="absolute top-0 right-0 left-0 z-10 border-b border-white/10 bg-[#01142B] p-6">
+					<div className="flex items-center justify-between">
+						<h2 className="text-2xl font-bold text-[#3AF4EF]">
+							Editar Usuario
+						</h2>
+						<button
+							onClick={onClose}
+							className="rounded-lg bg-white/5 p-2 hover:bg-white/10"
+						>
+							<X className="size-5" />
+						</button>
+					</div>
 				</div>
 
-				{/* Contenedor con scroll */}
-				<div className="flex-1 overflow-y-auto px-6 py-4">
-					{/* Formulario */}
-					<div className="space-y-4">
-						<label className="block">
-							<span className="text-gray-300">Nombre</span>
-							<input
-								type="text"
-								value={updatedUser.firstName}
-								onChange={(e) =>
-									setUpdatedUser({ ...updatedUser, firstName: e.target.value })
-								}
-								className="w-full rounded-md bg-gray-800 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500"
-							/>
-						</label>
-
-						<label className="block">
-							<span className="text-gray-300">Apellido</span>
-							<input
-								type="text"
-								value={updatedUser.lastName}
-								onChange={(e) =>
-									setUpdatedUser({ ...updatedUser, lastName: e.target.value })
-								}
-								className="w-full rounded-md bg-gray-800 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500"
-							/>
-						</label>
-
-						<label className="block">
-							<span className="text-gray-300">Correo Electrónico</span>
-							<input
-								type="email"
-								value={updatedUser.email}
-								disabled
-								className="w-full rounded-md bg-gray-700 px-3 py-2 text-gray-400"
-							/>
-						</label>
-
-						<label className="block">
-							<span className="text-gray-300">Rol</span>
-							<select
-								value={updatedUser.role}
-								onChange={(e) =>
-									setUpdatedUser({ ...updatedUser, role: e.target.value })
-								}
-								className="w-full rounded-md bg-gray-800 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500"
-							>
-								<option value="admin">Admin</option>
-								<option value="super-admin">Super Admin</option>
-								<option value="educador">Educador</option>
-								<option value="estudiante">Estudiante</option>
-								<option value="moderador">Moderador</option>
-								<option value="soporte">Soporte</option>
-							</select>
-						</label>
-
-						<label className="block">
-							<span className="text-gray-300">Estado</span>
-							<select
-								value={updatedUser.status}
-								onChange={(e) =>
-									setUpdatedUser({ ...updatedUser, status: e.target.value })
-								}
-								className="w-full rounded-md bg-gray-800 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500"
-							>
-								<option value="activo">Activo</option>
-								<option value="inactivo">Inactivo</option>
-								<option value="suspendido">Suspendido</option>
-							</select>
-						</label>
-
-						{updatedUser.role !== 'estudiante' && (
-							<div>
-								<h3 className="text-gray-300">Permisos en Clerk</h3>
-								{selectedPermissions.length === 0 && (
-									<p className="text-sm text-gray-400">
-										Este usuario no tiene permisos asignados.
-									</p>
+				{/* Contenido scrolleable */}
+				<div className="h-full overflow-y-auto px-6 pt-24 pb-24">
+					<div className="grid gap-8 md:grid-cols-[250px_1fr]">
+						{/* Sidebar - Profile Image & Quick Info */}
+						<div className="space-y-6">
+							<div className="relative mx-auto h-48 w-48 overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg">
+								{editedUser.profileImage ? (
+									<Image
+										src={editedUser.profileImage}
+										alt={`${editedUser.firstName} ${editedUser.lastName}`}
+										fill
+										className="object-cover transition duration-200 hover:scale-105"
+										unoptimized
+									/>
+								) : (
+									<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#012A5C] to-[#01142B] text-4xl font-bold text-white">
+										{editedUser.firstName[0]}
+									</div>
 								)}
-								<div className="mt-2 flex flex-wrap gap-2">
-									{AVAILABLE_PERMISSIONS.map((permission) => (
+							</div>
+
+							{/* Quick Info Card */}
+							<div className="rounded-lg bg-white/5 p-4">
+								<div className="space-y-3 text-sm">
+									<p className="text-gray-400">ID del usuario</p>
+									<p className="font-mono">{editedUser.id}</p>
+									<p className="text-gray-400">Email</p>
+									<p>{editedUser.email}</p>
+								</div>
+							</div>
+						</div>
+
+						{/* Main Edit Form */}
+						<div className="space-y-6">
+							{/* Basic Information */}
+							<div className="rounded-lg bg-white/5 p-6">
+								<h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
+									Información Básica
+								</h3>
+								<div className="grid gap-4">
+									<div>
+										<label className="mb-2 block text-sm text-gray-400">
+											Nombre
+										</label>
+										<input
+											type="text"
+											value={editedUser.firstName}
+											onChange={(e) =>
+												setEditedUser({
+													...editedUser,
+													firstName: e.target.value,
+												})
+											}
+											className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+										/>
+									</div>
+									<div>
+										<label className="mb-2 block text-sm text-gray-400">
+											Apellido
+										</label>
+										<input
+											type="text"
+											value={editedUser.lastName}
+											onChange={(e) =>
+												setEditedUser({
+													...editedUser,
+													lastName: e.target.value,
+												})
+											}
+											className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+										/>
+									</div>
+								</div>
+							</div>
+
+							{/* Role & Status */}
+							<div className="rounded-lg bg-white/5 p-6">
+								<h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
+									Rol y Estado
+								</h3>
+								<div className="grid gap-4 md:grid-cols-2">
+									<div>
+										<label className="mb-2 block text-sm text-gray-400">
+											Rol
+										</label>
+										<select
+											value={editedUser.role}
+											onChange={(e) =>
+												setEditedUser({
+													...editedUser,
+													role: e.target.value,
+												})
+											}
+											className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+										>
+											<option value="estudiante">Estudiante</option>
+											<option value="educador">Educador</option>
+											<option value="admin">Admin</option>
+											<option value="super-admin">Super Admin</option>
+										</select>
+									</div>
+									<div>
+										<label className="mb-2 block text-sm text-gray-400">
+											Estado
+										</label>
+										<select
+											value={editedUser.status}
+											onChange={(e) =>
+												setEditedUser({
+													...editedUser,
+													status: e.target.value,
+												})
+											}
+											className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+										>
+											<option value="activo">Activo</option>
+											<option value="inactivo">Inactivo</option>
+											<option value="suspendido">Suspendido</option>
+										</select>
+									</div>
+								</div>
+							</div>
+
+							{/* Permissions */}
+							<div className="rounded-lg bg-white/5 p-6">
+								<h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
+									Permisos
+								</h3>
+								<div className="grid gap-3 sm:grid-cols-2">
+									{availablePermissions.map((permission) => (
 										<label
-											key={permission}
-											className="flex items-center space-x-2"
+											key={permission.id}
+											className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 p-3 hover:bg-white/5"
 										>
 											<input
 												type="checkbox"
-												checked={selectedPermissions.includes(permission)}
-												onChange={() => handlePermissionChange(permission)}
-												className="form-checkbox text-blue-500"
+												checked={selectedPermissions.includes(permission.id)}
+												onChange={(e) => {
+													setSelectedPermissions(
+														e.target.checked
+															? [...selectedPermissions, permission.id]
+															: selectedPermissions.filter(
+																	(p) => p !== permission.id
+																)
+													);
+												}}
+												className="rounded border-white/20 bg-white/5 text-[#3AF4EF]"
 											/>
-											<span className="text-gray-300">{permission}</span>
+											<span>{permission.label}</span>
 										</label>
 									))}
 								</div>
 							</div>
-						)}
+						</div>
 					</div>
 				</div>
 
-				{/* Botones */}
-				<div className="flex justify-end space-x-3 border-t border-gray-700 bg-gray-900 px-6 py-4">
-					<button
-						onClick={onClose}
-						className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
-					>
-						Cancelar
-					</button>
-					<button
-						onClick={handleSave}
-						className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-					>
-						Guardar Cambios
-					</button>
+				{/* Footer fijo */}
+				<div className="absolute right-0 bottom-0 left-0 border-t border-white/10 bg-[#01142B] p-6">
+					<div className="flex justify-end gap-4">
+						<button
+							onClick={onClose}
+							className="rounded-lg bg-white/5 px-4 py-2 hover:bg-white/10"
+						>
+							Cancelar
+						</button>
+						<button
+							onClick={() => onSave(editedUser, selectedPermissions)}
+							className="rounded-lg bg-[#3AF4EF] px-4 py-2 text-black hover:bg-[#3AF4EF]/90"
+						>
+							Guardar Cambios
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>

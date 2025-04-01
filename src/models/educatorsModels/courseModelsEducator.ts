@@ -263,88 +263,56 @@ export const getAllCourses = async () => {
 
 // Actualizar un curso
 export const updateCourse = async (
-	courseId: number,
-	{
-		title,
-		description,
-		coverImageKey,
-		categoryid,
-		modalidadesid,
-		nivelid,
-		instructor,
-		fileName,
-		rating,
-		courseTypeId,
-		isActive,
-	}: {
+	id: number,
+	data: {
 		title?: string;
-		description?: string | null;
-		coverImageKey?: string | null;
-		categoryid?: number | null;
-		modalidadesid?: number | null;
-		nivelid?: number | null;
+		description?: string;
+		coverImageKey?: string;
+		categoryid?: number;
+		modalidadesid?: number;
+		nivelid?: number;
 		instructor?: string;
-		fileName?: string;
 		rating?: number;
 		courseTypeId?: number | null;
-		isActive?: boolean | null;
+		isActive?: boolean;
 	}
 ) => {
-	// Obtener los datos actuales del curso
-	const currentCourse = await getCourseById(courseId);
-	void fileName;
+	try {
+		console.log('🔄 Actualizando curso:', id, 'con datos:', data);
 
-	const updateData: {
-		title?: string;
-		description?: string | null;
-		coverImageKey?: string | null;
-		categoryid?: number | undefined;
-		modalidadesid?: number | undefined;
-		nivelid?: number | undefined;
-		instructor?: string;
-		fileName?: string;
-		rating?: number;
-		courseTypeId?: number | null;
-		isActive?: boolean | null;
-	} = {
-		title: title ?? currentCourse.title,
-		description: description ?? currentCourse.description,
-		coverImageKey: coverImageKey ?? currentCourse.coverImageKey,
-		categoryid:
-			typeof categoryid === 'number'
-				? categoryid
-				: typeof currentCourse.categoryid === 'number'
-					? currentCourse.categoryid
-					: undefined,
-		modalidadesid:
-			typeof modalidadesid === 'number'
-				? modalidadesid
-				: typeof currentCourse.modalidadesid === 'number'
-					? currentCourse.modalidadesid
-					: undefined,
-		nivelid:
-			typeof nivelid === 'number'
-				? nivelid
-				: typeof currentCourse.nivelid === 'number'
-					? currentCourse.nivelid
-					: undefined,
-		instructor: instructor ?? currentCourse.instructor,
-		// fileName is not part of currentCourse, so it is removed
-		rating: rating ?? currentCourse.rating ?? undefined,
-		courseTypeId:
-			typeof courseTypeId === 'number'
-				? courseTypeId
-				: currentCourse.courseTypeId,
-		isActive: typeof isActive === 'boolean' ? isActive : currentCourse.isActive,
-	};
+		// Create clean update object
+		const updateData = Object.entries(data).reduce(
+			(acc, [key, value]) => {
+				// Only include defined values
+				if (value !== undefined) {
+					acc[key as keyof typeof data] = value;
+				}
+				return acc;
+			},
+			{} as Record<string, unknown>
+		);
 
-	return db
-		.update(courses)
-		.set({
-			...updateData,
-			courseTypeId: updateData.courseTypeId ?? undefined, // Ensure compatibility
-		})
-		.where(eq(courses.id, courseId));
+		// Add updatedAt
+		updateData.updatedAt = new Date();
+
+		console.log('📝 Datos limpiados para actualización:', updateData);
+
+		const updatedCourse = await db
+			.update(courses)
+			.set(updateData)
+			.where(eq(courses.id, id))
+			.returning();
+
+		console.log('✅ Curso actualizado:', updatedCourse[0]);
+		return updatedCourse[0];
+	} catch (error) {
+		console.error('❌ Error al actualizar el curso:', error);
+		throw new Error(
+			`Error al actualizar el curso: ${
+				error instanceof Error ? error.message : 'Error desconocido'
+			}`
+		);
+	}
 };
 
 export async function updateMateria(

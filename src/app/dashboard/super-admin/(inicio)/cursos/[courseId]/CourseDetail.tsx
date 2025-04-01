@@ -317,9 +317,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		rating: number,
 		courseTypeId: number | null,
 		_isActive: boolean,
-		subjects: { id: number }[] // Asegúrate de recibir los subjects
+		subjects: { id: number }[]
 	) => {
 		try {
+			setIsUpdating(true); // Agregar indicador de carga
 			let coverImageKey = course?.coverImageKey ?? '';
 			let uploadedFileName = fileName ?? '';
 
@@ -367,6 +368,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			}
 
+			// Obtener el nombre del instructor seleccionado
+			const selectedEducator = educators.find(
+				(educator) => educator.id === currentInstructor
+			);
+			const instructorName = selectedEducator
+				? selectedEducator.name
+				: course?.instructor;
+
 			// Primero actualizar el curso
 			const response = await fetch(
 				`/api/educadores/courses/${courseIdNumber}`,
@@ -381,11 +390,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						categoryid,
 						modalidadesid,
 						nivelid,
-						instructor: course?.instructor,
+						instructor: instructorName, // Enviar el nombre del instructor en lugar del ID
 						rating,
 						courseTypeId,
 						isActive,
-						subjects: subjects || currentSubjects, // Usar los subjects recibidos o los actuales
+						subjects: subjects || currentSubjects,
 					}),
 				}
 			);
@@ -435,12 +444,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					description: 'Los parámetros se han actualizado con éxito.',
 				});
 			}
+
+			await fetchCourse(); // Recargar los datos del curso después de actualizar
 		} catch (error) {
 			console.error('Error:', error);
-			toast('Error', {
-				description:
-					error instanceof Error ? error.message : 'Error desconocido',
-			});
+			toast.error('Error al actualizar el curso');
+		} finally {
+			setIsUpdating(false); // Asegurarse de que el indicador de carga se apague
 		}
 	};
 

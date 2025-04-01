@@ -39,10 +39,11 @@ export async function GET(
 
 export async function PUT(
 	req: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		const lessonId = parseInt(params.id);
+		const resolvedParams = await params;
+		const lessonId = parseInt(resolvedParams.id);
 
 		if (isNaN(lessonId)) {
 			return new Response(JSON.stringify({ error: 'ID de lección inválido' }), {

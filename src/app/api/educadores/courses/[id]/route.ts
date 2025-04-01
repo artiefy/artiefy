@@ -14,7 +14,6 @@ import {
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';
 
-
 // Agregamos una interfaz para el cuerpo de la solicitud PUT
 interface PutRequestBody {
 	title?: string;
@@ -75,19 +74,35 @@ export async function PUT(
 
 		const resolvedParams = await params;
 		const courseId = parseInt(resolvedParams.id);
-		console.log('🔵 CourseId:', courseId);
 
 		const data = (await request.json()) as PutRequestBody;
-		console.log('📥 Datos recibidos completos:', data);
+		console.log('📥 Datos recibidos:', data);
 
-		// 1. Actualizar datos básicos del curso
-		const { subjects, ...courseData } = data;
-		await updateCourse(courseId, courseData);
-		console.log('✅ Datos del curso actualizados');
+		// Create update data object with type checking
+		const updateData = {
+			title: data.title,
+			description: data.description,
+			coverImageKey: data.coverImageKey,
+			categoryid: data.categoryid ? Number(data.categoryid) : undefined,
+			modalidadesid: data.modalidadesid
+				? Number(data.modalidadesid)
+				: undefined,
+			nivelid: data.nivelid ? Number(data.nivelid) : undefined,
+			instructor: data.instructor ?? undefined,
+			rating: data.rating ? Number(data.rating) : undefined,
+			courseTypeId: 'courseTypeId' in data ? data.courseTypeId : undefined,
+			isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
+		};
 
-		// 2. Manejar materias si existen
-		if (subjects && subjects.length > 0) {
-			console.log('📚 Procesando materias:', subjects);
+		console.log('🔄 Datos a actualizar:', updateData);
+
+		// Update course
+		const updatedCourse = await updateCourse(courseId, updateData);
+		console.log('✅ Curso actualizado:', updatedCourse);
+
+		// Handle subjects if present
+		if (data.subjects && data.subjects.length > 0) {
+			console.log('📚 Procesando materias:', data.subjects);
 
 			// Obtener materias actuales del curso
 			const currentMaterias = await db
@@ -100,7 +115,7 @@ export async function PUT(
 
 			if (programId !== null && programId !== undefined) {
 				// Procesar cada materia nueva
-				for (const subject of subjects) {
+				for (const subject of data.subjects) {
 					// Verificar si la materia ya está asignada
 					const existingMateria = currentMaterias.find(
 						(m) => m.id === subject.id
@@ -133,15 +148,18 @@ export async function PUT(
 			}
 		}
 
-		const updatedCourse = await getCourseById(courseId);
+		const refreshedCourse = await getCourseById(courseId);
 		return NextResponse.json({
-			message: 'Curso y materias actualizados exitosamente',
-			course: updatedCourse,
+			message: 'Curso actualizado exitosamente',
+			course: refreshedCourse,
 		});
 	} catch (error) {
-		console.error('❌ Error:', error);
+		console.error('❌ Error detallado:', error);
 		return NextResponse.json(
-			{ error: 'Error al actualizar el curso' },
+			{
+				error: 'Error al actualizar el curso',
+				details: error instanceof Error ? error.message : 'Error desconocido',
+			},
 			{ status: 500 }
 		);
 	}

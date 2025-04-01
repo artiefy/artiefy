@@ -23,15 +23,16 @@ import {
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
-import { Button } from '~/components/educators/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/super-admin/ui/breadcrumb';
+} from '~/components/educators/ui/breadcrumb';
+import { Button } from '~/components/educators/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
+import { Label } from '~/components/educators/ui/label';
 
 // Detallado de las lecciones
 
@@ -80,6 +81,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 	const [error, setError] = useState<string | null>(null); // Estado de error
 	const [color, setColor] = useState<string>(selectedColor || '#FFFFFF'); // Estado del color
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado del modal de edición
+	const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores predefinidos
 
 	// Obtener el id del curso
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
@@ -95,6 +97,15 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		}
 	}, [courseId]);
 
+	// Función para cambiar el color predefinido
+	const handlePredefinedColorChange = (newColor: string) => {
+		setColor(newColor);
+		localStorage.setItem(
+			`selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`,
+			newColor
+		);
+	};
+
 	// Función para obtener las lecciones
 	const fetchLessons = useCallback(
 		async (lessonsIdNumber: number) => {
@@ -103,7 +114,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				setLoading(true);
 				setError(null);
 				const response = await fetch(
-					`/api/educadores/lessons/${lessonsIdNumber}`
+					`/api/educators/lessons/${lessonsIdNumber}`
 				);
 				if (response.ok) {
 					const data = (await response.json()) as Lessons;
@@ -241,6 +252,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 		}
 	};
 
+	// Add this function to refresh the lesson data
+	const refreshLessonData = useCallback(async () => {
+		if (!lessonId) return;
+
+		const lessonsId2 = Array.isArray(lessonId) ? lessonId[0] : (lessonId ?? '');
+		const lessonsIdNumber = parseInt(lessonsId2 ?? '');
+		if (!isNaN(lessonsIdNumber) && lessonsIdNumber > 0) {
+			await fetchLessons(lessonsIdNumber);
+		}
+	}, [lessonId, fetchLessons]);
+
 	// Si está cargando, mostrar el spinner
 	if (loading) {
 		return (
@@ -290,7 +312,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/super-admin"
+								href="/dashboard/educators"
 							>
 								Cursos
 							</BreadcrumbLink>
@@ -299,7 +321,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/super-admin/cursos"
+								href="/dashboard/educators/cursos"
 							>
 								Lista de cursos
 							</BreadcrumbLink>
@@ -308,7 +330,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+								href={`/dashboard/educators/cursos/${courseIdNumber}`}
 							>
 								Detalles curso
 							</BreadcrumbLink>
@@ -325,7 +347,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 					</BreadcrumbList>
 				</Breadcrumb>
 				<div className="group relative h-auto w-full">
-					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+					<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 					<Card
 						className={`relative mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 						style={{
@@ -337,6 +359,28 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 							<CardTitle className={`text-2xl font-bold text-primary`}>
 								Clase: {lessons.title}
 							</CardTitle>
+							{/* Add color selection buttons */}
+							<div className="flex flex-col">
+								<Label
+									className={color === '#FFFFFF' ? 'text-black' : 'text-white'}
+								>
+									Seleccione el color deseado
+								</Label>
+								<div className="mt-2 flex space-x-2">
+									{predefinedColors.map((predefinedColor) => (
+										<Button
+											key={predefinedColor}
+											style={{ backgroundColor: predefinedColor }}
+											className={`size-8 border ${
+												color === '#FFFFFF' ? 'border-black' : 'border-white'
+											}`}
+											onClick={() =>
+												handlePredefinedColorChange(predefinedColor)
+											}
+										/>
+									))}
+								</div>
+							</div>
 						</CardHeader>
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 lg:gap-6">
 							{/* Columna izquierda - Imagen */}
@@ -499,11 +543,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 			</div>
 			<ModalFormLessons
 				isOpen={isEditModalOpen}
-				onCloseAction={() => setIsEditModalOpen(false)}
+				onCloseAction={() => {
+					setIsEditModalOpen(false);
+				}}
 				uploading={false}
 				courseId={courseIdNumber ?? 0}
 				isEditing={true}
 				editingLesson={lessons}
+				modalClassName="z-[9999]" // Use the same name here
+				onUpdateSuccess={() => {
+					void refreshLessonData().catch(console.error);
+				}}
 			/>
 		</>
 	);
