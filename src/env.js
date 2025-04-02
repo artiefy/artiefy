@@ -34,9 +34,9 @@ export const env = createEnv({
 		CONFIRMATION_URL: z.string().url(),
 
 		// SMTP
-		SMTP_HOST: z.string().min(1).default('smtp.gmail.com'),
-		SMTP_PORT: z.coerce.string().default('587'),
-		SMTP_USER: z.string().email().default('artiefy@gmail.com'),
+		SMTP_HOST: z.string().min(1),
+		SMTP_PORT: z.coerce.string(),
+		SMTP_USER: z.string().email(),
 		SMTP_PASS: z.string().min(1),
 		PASS: z.string().min(1),
 
@@ -99,9 +99,9 @@ export const env = createEnv({
 		CONFIRMATION_URL: process.env.CONFIRMATION_URL,
 
 		// SMTP
-		SMTP_HOST: process.env.SMTP_HOST ?? 'smtp.gmail.com',
-		SMTP_PORT: process.env.SMTP_PORT ?? '587',
-		SMTP_USER: process.env.SMTP_USER ?? 'artiefy@gmail.com',
+		SMTP_HOST: process.env.SMTP_HOST,
+		SMTP_PORT: process.env.SMTP_PORT,
+		SMTP_USER: process.env.SMTP_USER,
 		SMTP_PASS: process.env.SMTP_PASS,
 		PASS: process.env.PASS,
 
