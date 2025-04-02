@@ -28,6 +28,10 @@ interface StudentDashboardProps {
 	initialPrograms: Program[];
 }
 
+interface ApiResponse {
+	response: string;
+}
+
 export default function StudentDetails({
 	initialCourses,
 	initialPrograms,
@@ -46,6 +50,7 @@ export default function StudentDetails({
 	});
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [searchQuery, setSearchQuery] = useState('');
+	const [chatbotKey, setChatbotKey] = useState(0);
 
 	console.log('Programs received:', initialPrograms); // Añadir este log para debug
 
@@ -74,6 +79,31 @@ export default function StudentDetails({
 	const latestFiveCourses = sortedCourses.slice(0, 5);
 	const latestTenCourses = sortedCourses.slice(0, 10);
 
+	const handleSearch = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!searchQuery.trim()) return;
+
+		try {
+			const response = await fetch('/api/iahome', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ prompt: searchQuery }),
+			});
+
+			if (response.ok) {
+				const data = (await response.json()) as ApiResponse;
+				// Only trigger chatbot if we have a response
+				if (data.response) {
+					setChatbotKey((prev) => prev + 1);
+				}
+			}
+		} catch (error) {
+			console.error('Error searching:', error);
+		}
+	};
+
 	return (
 		<div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
 			<main className="grow">
@@ -94,7 +124,10 @@ export default function StudentDetails({
 									<LoaderArtieia />
 								</div>
 							</div>
-							<form className="flex w-full flex-col items-center space-y-2">
+							<form
+								onSubmit={handleSearch}
+								className="flex w-full flex-col items-center space-y-2"
+							>
 								<div className="input-container w-full">
 									<input
 										required
@@ -270,7 +303,11 @@ export default function StudentDetails({
 					</div>
 				</div>
 			</main>
-			<StudentChatbot className="animation-delay-400 animate-zoom-in" />
+			<StudentChatbot
+				key={chatbotKey}
+				className="animation-delay-400 animate-zoom-in"
+				initialSearchQuery={searchQuery}
+			/>
 		</div>
 	);
 }

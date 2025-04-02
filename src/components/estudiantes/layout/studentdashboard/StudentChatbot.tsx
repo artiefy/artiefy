@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useAuth } from '@clerk/nextjs';
@@ -10,16 +11,43 @@ import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
 import { toast } from 'sonner';
+
 import '~/styles/chatmodal.css';
 
 interface StudentChatbotProps {
 	className?: string;
+	initialSearchQuery?: string;
 }
 
-const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
+interface ChatResponse {
+	response: string;
+}
+
+interface CourseItem {
+	title: string;
+	id: string;
+}
+
+const formatCourseList = (text: string): CourseItem[] => {
+	const coursesMatch = text.match(/\d+\.\s+([^:?\n]+)/g);
+	return (
+		coursesMatch?.map((course) => {
+			const [, title] = /\d+\.\s+(.+)/.exec(course) ?? [];
+			return {
+				title: title ?? '',
+				id: (title ?? '').toLowerCase().replace(/\s+/g, '-'),
+			};
+		}) ?? []
+	);
+};
+
+const StudentChatbot: React.FC<StudentChatbotProps> = ({
+	className,
+	initialSearchQuery,
+}) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [messages, setMessages] = useState([
-		{ id: 1, text: 'Hola ¿En qué puedo ayudarte hoy?', sender: 'bot' },
+		{ id: Date.now(), text: 'Hola ¿En qué puedo ayudarte hoy?', sender: 'bot' },
 	]);
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +56,41 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 
 	const { isSignedIn } = useAuth();
 	const router = useRouter();
+
+	const handleBotResponse = useCallback(async (query: string) => {
+		setIsLoading(true);
+		try {
+			const response = await fetch('/api/iahome', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ prompt: query }),
+			});
+
+			const data = (await response.json()) as ChatResponse;
+			const messageText =
+				data.response ?? 'Lo siento, no pude encontrar información relevante.';
+
+			const botResponse = {
+				id: Date.now() + Math.random(),
+				text: messageText,
+				sender: 'bot' as const,
+			};
+
+			setMessages((prev) => [...prev, botResponse]);
+		} catch (error) {
+			console.error('Error getting bot response:', error);
+			const errorMessage = {
+				id: Date.now() + Math.random(),
+				text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
+				sender: 'bot' as const,
+			};
+			setMessages((prev) => [...prev, errorMessage]);
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
 
 	useEffect(() => {
 		if (isOpen && inputRef.current) {
@@ -39,11 +102,32 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 		scrollToBottom();
 	}, [messages]);
 
+	useEffect(() => {
+		if (initialSearchQuery && isSignedIn) {
+			setIsOpen(true);
+			setMessages([
+				{
+					id: Date.now(),
+					text: 'Hola ¿En qué puedo ayudarte hoy?',
+					sender: 'bot',
+				},
+			]);
+			const searchMessage = {
+				id: Date.now() + 1,
+				text: initialSearchQuery,
+				sender: 'user' as const,
+			};
+
+			setMessages((prev) => [...prev, searchMessage]);
+			void handleBotResponse(initialSearchQuery);
+		}
+	}, [initialSearchQuery, isSignedIn, handleBotResponse]);
+
 	const scrollToBottom = () => {
-		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+		void messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 	};
 
-	const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!isSignedIn) {
 			toast.error('Debes iniciar sesión para usar el chat', {
@@ -58,24 +142,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 		if (!inputText.trim()) return;
 
 		const newUserMessage = {
-			id: messages.length + 1,
+			id: Date.now(),
 			text: inputText,
 			sender: 'user' as const,
 		};
 
 		setMessages((prev) => [...prev, newUserMessage]);
 		setInputText('');
-		setIsLoading(true);
-
-		setTimeout(() => {
-			const botResponse = {
-				id: messages.length + 2,
-				text: 'Gracias por tu mensaje. Estoy procesando tu solicitud.',
-				sender: 'bot' as const,
-			};
-			setMessages((prev) => [...prev, botResponse]);
-			setIsLoading(false);
-		}, 1000);
+		await handleBotResponse(inputText);
 	};
 
 	const handleClick = () => {
@@ -90,7 +164,42 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 			});
 			return;
 		}
-		setIsOpen(!isOpen); // Toggle the chat visibility
+		setIsOpen(!isOpen);
+	};
+
+	const renderMessage = (message: {
+		id: number;
+		text: string;
+		sender: string;
+	}) => {
+		if (message.sender === 'bot') {
+			const courses = formatCourseList(message.text);
+			const introText = message.text.split('\n\n')[0];
+			const outroText = message.text.split('\n\n').slice(-1)[0];
+
+			return (
+				<div className="flex flex-col space-y-4">
+					<p>{introText}</p>
+					{courses.length > 0 && (
+						<ul className="list-disc space-y-2 pl-4">
+							{courses.map((course, index) => (
+								<li key={index} className="flex flex-col space-y-2">
+									<span>{course.title}</span>
+									<Link
+										href={`/estudiantes/cursos/${course.id}`}
+										className="self-start rounded-md bg-secondary px-3 py-1 text-sm text-white hover:bg-secondary/80"
+									>
+										Ir al curso
+									</Link>
+								</li>
+							))}
+						</ul>
+					)}
+					{outroText !== introText && <p>{outroText}</p>}
+				</div>
+			);
+		}
+		return message.text;
 	};
 
 	return (
@@ -122,8 +231,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 				</button>
 
 				{isOpen && isSignedIn && (
-					<div className="animate-in zoom-in-50 slide-in-from-right fixed right-24 bottom-32 z-50 duration-300 ease-in-out">
-						<div className="w-96 rounded-lg border border-gray-200 bg-white shadow-xl">
+					<div className="animate-in zoom-in-50 slide-in-from-right fixed right-24 bottom-32 z-50 w-[400px] duration-300 ease-in-out">
+						<div className="flex h-[600px] flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
 							<div className="flex items-center justify-between border-b p-4">
 								<div className="flex items-center space-x-2">
 									<FaRobot className="text-2xl text-secondary" />
@@ -139,7 +248,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 								</button>
 							</div>
 
-							<div className="h-96 space-y-4 overflow-y-auto p-4">
+							<div className="flex-1 space-y-4 overflow-y-auto p-4">
 								{messages.map((message) => (
 									<div
 										key={message.id}
@@ -164,7 +273,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({ className }) => {
 														: 'bg-gray-100 text-gray-800'
 												}`}
 											>
-												{message.text}
+												{renderMessage(message)}
 											</div>
 										</div>
 									</div>
