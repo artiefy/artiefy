@@ -315,7 +315,6 @@ const LessonActivityModal = ({
 	);
 
 	const handleFinishAndNavigate = async () => {
-		// Remove the canClose validation
 		try {
 			setIsUnlocking(true);
 			await markActivityAsCompleted();
@@ -323,12 +322,16 @@ const LessonActivityModal = ({
 			onQuestionsAnswered(true);
 
 			const result = await unlockNextLesson(activity.lessonsId);
-			if (result.success && result.nextLessonId) {
+
+			// Add null check and proper type checking
+			if (result && result.success && result.nextLessonId) {
 				onLessonUnlocked(result.nextLessonId);
 				toast.success('¡Siguiente clase desbloqueada!');
 				onClose();
 			} else {
-				toast.error('Error al desbloquear la siguiente clase');
+				// Handle the case where unlocking failed but don't show error
+				// This could happen if it's the last lesson
+				onClose();
 			}
 		} catch (error) {
 			console.error('Error:', error);
@@ -474,14 +477,8 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Modificar la condición para mostrar el botón de historial
-		if (
-			(finalScore < 3 &&
-				activity.revisada &&
-				attemptsLeft === 0 &&
-				isLastActivity) ||
-			(finalScore >= 3 && (isLastActivity || activity.isCompleted))
-		) {
+		// Show grade report button for last activity of last lesson regardless of score or attempts
+		if (isLastActivity && isLastLesson && showResults) {
 			return (
 				<div className="space-y-3">
 					<Button
@@ -556,8 +553,11 @@ const LessonActivityModal = ({
 				);
 			}
 			return (
-				<Button onClick={onClose} className="w-full bg-blue-500 text-white">
-					Cerrar
+				<Button
+					onClick={onClose}
+					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+				>
+					CERRAR
 				</Button>
 			);
 		}
@@ -600,8 +600,11 @@ const LessonActivityModal = ({
 				);
 			}
 			return (
-				<Button onClick={onClose} className="w-full bg-blue-500">
-					Cerrar
+				<Button
+					onClick={onClose}
+					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+				>
+					CERRAR
 				</Button>
 			);
 		}
@@ -609,9 +612,9 @@ const LessonActivityModal = ({
 		return (
 			<Button
 				onClick={onClose}
-				className="mt-4 w-full bg-blue-500 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+				className="mt-4 w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 			>
-				Cerrar
+				CERRAR
 			</Button>
 		);
 	};

@@ -54,9 +54,15 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 		const fetchComments = async () => {
 			try {
 				const response = await getCommentsByLessonId(lessonId);
-				setComments(response.comments);
+				if (response && 'comments' in response) {
+					setComments(response.comments || []);
+				} else {
+					console.error('Invalid response format:', response);
+					setComments([]);
+				}
 			} catch (error) {
 				console.error('Error fetching comments:', error);
+				setComments([]);
 			} finally {
 				setLoading(false);
 			}
@@ -224,15 +230,23 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 			</form>
 			{message && <p className="mt-4 text-sm text-green-600">{message}</p>}
 			<div className="mt-8">
-				<h3 className="mb-4 text-xl font-semibold">
-					Comentarios ({comments.length})
-				</h3>
-				{loading ? (
-					<div className="flex items-center space-x-2">
-						<p>Cargando comentarios</p>
-						<Icons.spinner className="h-4 w-4 animate-spin text-primary" />
-					</div>
-				) : (
+				<div className="mb-4 flex items-center justify-between">
+					<h3 className="flex items-center gap-2 text-xl font-semibold">
+						Comentarios ({comments.length})
+						{loading && (
+							<div className="flex items-center gap-2 text-primary">
+								<Icons.spinner
+									className="inline-block animate-spin"
+									style={{ width: '20px', height: '20px' }}
+								/>
+								<span className="text-base text-gray-500">
+									Cargando Comentarios...
+								</span>
+							</div>
+						)}
+					</h3>
+				</div>
+				{!loading && (
 					<ul className="space-y-4">
 						{comments.map((comment) => (
 							<li key={comment.id} className="border-b pb-2">

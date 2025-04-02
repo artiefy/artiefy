@@ -56,64 +56,79 @@ export async function generateMetadata(
 	{ params }: { params: { id: string } },
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
-	const { id } = await Promise.resolve(params);
-	const { userId } = await auth();
-	const course = await getCourseById(Number(id), userId);
+	try {
+		const courseId = Number(params.id);
+		if (isNaN(courseId)) {
+			return {
+				title: 'Curso no encontrado',
+				description: 'ID de curso inválido',
+			};
+		}
 
-	if (!course) {
+		const { userId } = await auth();
+		const course = await getCourseById(courseId, userId);
+
+		if (!course) {
+			return {
+				title: 'Curso no encontrado',
+				description: 'El curso solicitado no pudo ser encontrado.',
+			};
+		}
+
+		// Asegurar que tengamos una URL base válida
+		const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
+		const metadataBase = new URL(baseUrl);
+
+		// Construir URL absoluta para la imagen
+		const coverImageUrl = new URL(
+			course.coverImageKey
+				? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+				: 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+		).toString();
+
+		// Obtener imágenes del padre
+		const previousImages = (await parent).openGraph?.images ?? [];
+
 		return {
-			title: 'Curso no encontrado',
-			description: 'El curso solicitado no pudo ser encontrado.',
+			metadataBase,
+			title: `${course.title} | Artiefy`,
+			description: course.description ?? 'No hay descripción disponible.',
+			openGraph: {
+				type: 'website',
+				locale: 'es_ES',
+				url: new URL(`/estudiantes/cursos/${courseId}`, baseUrl).toString(),
+				siteName: 'Artiefy',
+				title: `${course.title} | Artiefy`,
+				description: course.description ?? 'No hay descripción disponible.',
+				images: [
+					{
+						url: coverImageUrl,
+						width: 1200,
+						height: 630,
+						alt: `Portada del curso: ${course.title}`,
+						type: course.coverImageKey?.endsWith('.png')
+							? 'image/png'
+							: 'image/jpeg',
+					},
+					...previousImages,
+				],
+			},
+			twitter: {
+				card: 'summary_large_image',
+				title: `${course.title} | Artiefy`,
+				description: course.description ?? 'No hay descripción disponible.',
+				images: [coverImageUrl],
+				creator: '@artiefy',
+				site: '@artiefy',
+			},
+		};
+	} catch (error) {
+		console.error('Error generating metadata:', error);
+		return {
+			title: 'Error',
+			description: 'Error al cargar el curso',
 		};
 	}
-
-	// Asegurar que tengamos una URL base válida
-	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
-	const metadataBase = new URL(baseUrl);
-
-	// Construir URL absoluta para la imagen
-	const coverImageUrl = new URL(
-		course.coverImageKey
-			? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-			: 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-	).toString();
-
-	// Obtener imágenes del padre
-	const previousImages = (await parent).openGraph?.images ?? [];
-
-	return {
-		metadataBase,
-		title: `${course.title} | Artiefy`,
-		description: course.description ?? 'No hay descripción disponible.',
-		openGraph: {
-			type: 'website',
-			locale: 'es_ES',
-			url: new URL(`/estudiantes/cursos/${id}`, baseUrl).toString(),
-			siteName: 'Artiefy',
-			title: `${course.title} | Artiefy`,
-			description: course.description ?? 'No hay descripción disponible.',
-			images: [
-				{
-					url: coverImageUrl,
-					width: 1200,
-					height: 630,
-					alt: `Portada del curso: ${course.title}`,
-					type: course.coverImageKey?.endsWith('.png')
-						? 'image/png'
-						: 'image/jpeg',
-				},
-				...previousImages,
-			],
-		},
-		twitter: {
-			card: 'summary_large_image',
-			title: `${course.title} | Artiefy`,
-			description: course.description ?? 'No hay descripción disponible.',
-			images: [coverImageUrl],
-			creator: '@artiefy',
-			site: '@artiefy',
-		},
-	};
 }
 
 // Componente principal de la página del curso
@@ -134,45 +149,55 @@ export default async function Page({ params }: { params: PageParams }) {
 
 // Componente para renderizar los detalles del curso
 async function CourseContent({ id }: { id: string }) {
-	const { userId } = await auth();
-	const course = await getCourseById(Number(id), userId);
+	try {
+		const courseId = Number(id);
+		if (isNaN(courseId)) {
+			notFound();
+		}
 
-	if (!course) {
-		notFound();
+		const { userId } = await auth();
+		const course = await getCourseById(courseId, userId);
+
+		if (!course) {
+			notFound();
+		}
+
+		const courseForDetails: Course = {
+			...course,
+			totalStudents: course.enrollments?.length ?? 0,
+			lessons:
+				course.lessons?.sort((a, b) => a.title.localeCompare(b.title)) ?? [], // Ordenar por título
+			category: course.category
+				? {
+						id: course.category.id,
+						name: course.category.name,
+						description: course.category.description,
+						is_featured: course.category.is_featured,
+					}
+				: undefined,
+			modalidad: course.modalidad
+				? {
+						name: course.modalidad.name,
+					}
+				: undefined,
+			enrollments: course.enrollments,
+		};
+
+		const jsonLd = generateJsonLd(course);
+
+		return (
+			<section>
+				<CourseDetails course={courseForDetails} />
+				<script
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify(jsonLd),
+					}}
+				/>
+			</section>
+		);
+	} catch (error) {
+		console.error('Error in CourseContent:', error);
+		throw error;
 	}
-
-	const courseForDetails: Course = {
-		...course,
-		totalStudents: course.enrollments?.length ?? 0,
-		lessons:
-			course.lessons?.sort((a, b) => a.title.localeCompare(b.title)) ?? [], // Ordenar por título
-		category: course.category
-			? {
-					id: course.category.id,
-					name: course.category.name,
-					description: course.category.description,
-					is_featured: course.category.is_featured,
-				}
-			: undefined,
-		modalidad: course.modalidad
-			? {
-					name: course.modalidad.name,
-				}
-			: undefined,
-		enrollments: course.enrollments,
-	};
-
-	const jsonLd = generateJsonLd(course);
-
-	return (
-		<section>
-			<CourseDetails course={courseForDetails} />
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(jsonLd),
-				}}
-			/>
-		</section>
-	);
 }

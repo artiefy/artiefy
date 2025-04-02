@@ -8,12 +8,19 @@ import { courses, userLessonsProgress } from '~/server/db/schema';
 import type { Course, Activity, Lesson } from '~/types';
 
 export async function getCourseById(
-	courseId: number,
+	courseId: number | string,
 	userId: string | null = null
 ): Promise<Course | null> {
 	try {
+		// Parse and validate courseId
+		const parsedCourseId = Number(courseId);
+		if (isNaN(parsedCourseId)) {
+			console.error('Invalid course ID:', courseId);
+			return null;
+		}
+
 		const course = await db.query.courses.findFirst({
-			where: eq(courses.id, courseId),
+			where: eq(courses.id, parsedCourseId),
 			with: {
 				category: true,
 				modalidad: true,

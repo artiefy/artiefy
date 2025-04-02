@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 import Link from 'next/link';
 
@@ -114,6 +114,12 @@ interface ActivityAnswersResponse {
 	isAlreadyCompleted: boolean;
 }
 
+interface ActivityState {
+	savedResults: SavedResults | null;
+	isLoading: boolean;
+	isCompleted: boolean;
+}
+
 const LessonActivities = ({
 	activities = [],
 	isVideoCompleted,
@@ -127,27 +133,19 @@ const LessonActivities = ({
 	resourceNames: _resourceNames,
 	getNextLessonId, // Add this prop
 }: LessonActivitiesProps) => {
+	const [activitiesState, setActivitiesState] = useState<
+		Record<number, ActivityState>
+	>({});
 	const [isModalOpen, setIsModalOpen] = useState(false);
-
-	const [savedResults, setSavedResults] = useState<SavedResults | null>(null);
-	const [loadingResults, setLoadingResults] = useState<Record<number, boolean>>(
-		{}
-	);
-	const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
-		null
-	);
-
-	const [isLoadingActivity, setIsLoadingActivity] = useState(false);
-	const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
-	const [isButtonLoading, setIsButtonLoading] = useState(true);
-	const [isGradesLoading, setIsGradesLoading] = useState(true);
 	const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
 		null
 	);
-
-	const [completedActivities, setCompletedActivities] = useState<
-		Record<number, boolean>
-	>({});
+	const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
+	const [isButtonLoading, setIsButtonLoading] = useState(true);
+	const [isGradesLoading, setIsGradesLoading] = useState(true);
+	const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
+		null
+	);
 
 	const openModal = () => setIsModalOpen(true);
 	const closeModal = () => setIsModalOpen(false);
@@ -157,19 +155,27 @@ const LessonActivities = ({
 			const currentIndex = activities.indexOf(selectedActivity);
 			const nextActivity = activities[currentIndex + 1];
 
-			setCompletedActivities((prev) => ({
+			setActivitiesState((prev) => ({
 				...prev,
-				[selectedActivity.id]: true,
-				...(nextActivity && { [nextActivity.id]: false }),
+				[selectedActivity.id]: {
+					...prev[selectedActivity.id],
+					isCompleted: true,
+				},
+				...(nextActivity && {
+					[nextActivity.id]: { ...prev[nextActivity.id], isCompleted: false },
+				}),
 			}));
 		}
 	};
 
 	const markActivityAsCompleted = async (): Promise<void> => {
 		if (selectedActivity) {
-			setCompletedActivities((prev) => ({
+			setActivitiesState((prev) => ({
 				...prev,
-				[selectedActivity.id]: true,
+				[selectedActivity.id]: {
+					...prev[selectedActivity.id],
+					isCompleted: true,
+				},
 			}));
 		}
 		return Promise.resolve();
@@ -219,31 +225,49 @@ const LessonActivities = ({
 
 			setIsButtonLoading(true);
 			try {
-				const statuses: Record<number, boolean> = {};
-
-				await Promise.all(
-					activities.slice(0, 3).map(async (activity) => {
+				const activityPromises = activities
+					.slice(0, 3)
+					.map(async (activity) => {
 						const response = await fetch(
 							`/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
 						);
 
-						if (response.ok) {
-							const rawData: unknown = await response.json();
-							if (
-								isActivityAnswersResponse(rawData) &&
-								rawData.answers &&
-								Object.keys(rawData.answers).length > 0 &&
-								rawData.isAlreadyCompleted
-							) {
-								statuses[activity.id] = true;
-							} else {
-								statuses[activity.id] = false;
-							}
+						if (!response.ok) {
+							return null;
 						}
-					})
-				);
 
-				setCompletedActivities(statuses);
+						const rawData: unknown = await response.json();
+						if (isActivityAnswersResponse(rawData)) {
+							return {
+								activityId: activity.id,
+								state: {
+									savedResults: {
+										score: rawData.score,
+										answers: rawData.answers,
+										isAlreadyCompleted: rawData.isAlreadyCompleted,
+									},
+									isLoading: false,
+									isCompleted: rawData.isAlreadyCompleted,
+								},
+							};
+						}
+						return null;
+					});
+
+				const results = await Promise.all(activityPromises);
+				const newActivitiesState: Record<number, ActivityState> = {};
+
+				results.forEach((result) => {
+					if (result) {
+						newActivitiesState[result.activityId] = result.state;
+					}
+				});
+
+				// Update state only once with all results
+				setActivitiesState((prev) => ({
+					...prev,
+					...newActivitiesState,
+				}));
 			} catch (error) {
 				console.error('Error checking activities status:', error);
 			} finally {
@@ -252,54 +276,55 @@ const LessonActivities = ({
 		};
 
 		void checkActivitiesStatus();
-	}, [activities, userId]);
+	}, [activities, userId]); // Only depend on activities and userId
 
 	const handleCompletedActivityClick = async (activity: Activity) => {
 		try {
-			setLoadingResults((prev) => ({ ...prev, [activity.id]: true }));
-			const activityId = activity?.id;
-			if (!activityId) return;
+			setActivitiesState((prev) => ({
+				...prev,
+				[activity.id]: { ...prev[activity.id], isLoading: true },
+			}));
 
 			const response = await fetch(
-				`/api/activities/getAnswers?activityId=${activityId}&userId=${userId}`
+				`/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
 			);
 
 			if (response.ok) {
 				const rawData: unknown = await response.json();
-
 				if (isActivityAnswersResponse(rawData)) {
-					setSavedResults({
-						score: rawData.score,
-						answers: rawData.answers,
-						isAlreadyCompleted: true,
-					});
-
-					setSelectedActivity(activity);
-					if (isLastActivity) {
-						setCompletedActivities((prev) => ({
-							...prev,
-							[activityId]: true,
-						}));
-					}
+					setActivitiesState((prev) => ({
+						...prev,
+						[activity.id]: {
+							savedResults: {
+								score: rawData.score,
+								answers: rawData.answers,
+								isAlreadyCompleted: true,
+							},
+							isLoading: false,
+							isCompleted: true,
+						},
+					}));
 				}
 			}
+			setSelectedActivity(activity);
 			openModal();
 		} catch (e) {
 			console.error('Error fetching results:', e);
 			toast.error('Error al cargar los resultados');
-		} finally {
-			setLoadingResults((prev) => ({ ...prev, [activity.id]: false }));
 		}
 	};
 
 	const handleOpenActivity = (activity: Activity) => {
 		setSelectedActivity(activity);
-		setIsLoadingActivity(true);
-		try {
-			openModal();
-		} finally {
-			setIsLoadingActivity(false);
-		}
+		setActivitiesState((prev) => ({
+			...prev,
+			[activity.id]: {
+				...prev[activity.id],
+				savedResults: null, // Resetear resultados al abrir una nueva actividad
+				isLoading: false,
+			},
+		}));
+		openModal();
 	};
 
 	const isLastActivityInLesson = (currentActivity: Activity) => {
@@ -309,55 +334,65 @@ const LessonActivities = ({
 	};
 
 	const handleModalClose = () => {
-		closeModal();
-
-		if (selectedActivity) {
-			setCompletedActivities((prev) => {
-				const currentIndex = activities.indexOf(selectedActivity);
-				const nextActivity = activities[currentIndex + 1];
-
-				const updatedActivities: Record<number, boolean> = {
-					...prev,
-					[selectedActivity.id]: true,
-				};
-
-				if (nextActivity) {
-					updatedActivities[nextActivity.id] = false;
-				}
-
-				return updatedActivities;
-			});
-
-			void fetch(
-				`/api/activities/getAnswers?activityId=${selectedActivity.id}&userId=${userId}`
-			)
-				.then(async (response) => {
-					if (response.ok) {
-						const data = (await response.json()) as ActivityAnswersResponse;
-						if (isActivityAnswersResponse(data)) {
-							setSavedResults({
-								score: data.score,
-								answers: data.answers,
-								isAlreadyCompleted: true,
-							});
-						}
-					}
-				})
-				.catch((error) => {
-					console.error('Error updating activity status:', error);
-				});
+		if (!selectedActivity) {
+			closeModal();
+			return;
 		}
 
-		setSavedResults(null);
+		const currentActivity = selectedActivity;
+		closeModal();
+
+		// Remove the state updates that were affecting other activities
+		setActivitiesState((prev) => {
+			const updatedState = { ...prev };
+
+			// Only update the current activity's state
+			updatedState[currentActivity.id] = {
+				...(prev[currentActivity.id] || {}),
+				isCompleted: true,
+			};
+
+			return updatedState;
+		});
+
+		// Keep the fetch call to update current activity's results
+		void fetch(
+			`/api/activities/getAnswers?activityId=${currentActivity.id}&userId=${userId}`
+		)
+			.then(async (response) => {
+				if (response.ok) {
+					const rawData: unknown = await response.json();
+					if (isActivityAnswersResponse(rawData)) {
+						setActivitiesState((prev) => ({
+							...prev,
+							[currentActivity.id]: {
+								savedResults: {
+									score: rawData.score,
+									answers: rawData.answers,
+									isAlreadyCompleted: rawData.isAlreadyCompleted,
+								},
+								isLoading: false,
+								isCompleted: true,
+							},
+						}));
+					}
+				}
+			})
+			.catch((error) => {
+				console.error('Error updating activity status:', error);
+			});
+
 		setSelectedActivity(null);
 	};
 
-	const getButtonClasses = (activity: Activity, isLastActivity: boolean) => {
+	const getButtonClasses = (activity: Activity) => {
+		const activityState = activitiesState[activity.id];
+
 		if (isButtonLoading) {
 			return 'bg-gray-300 text-gray-300 border-none'; // Estilo consistente para todos los botones en carga
 		}
 
-		return completedActivities[activity.id] || (isLastActivity && savedResults)
+		return activityState?.isCompleted
 			? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
 			: isVideoCompleted
 				? 'font-semibold text-black'
@@ -365,6 +400,8 @@ const LessonActivities = ({
 	};
 
 	const getButtonLabel = (activity: Activity) => {
+		const activityState = activitiesState[activity.id];
+
 		if (isButtonLoading) {
 			return (
 				<div className="flex items-center gap-2">
@@ -374,10 +411,10 @@ const LessonActivities = ({
 			);
 		}
 
-		if (completedActivities[activity.id]) {
+		if (activityState?.isCompleted) {
 			return (
 				<>
-					{loadingResults[activity.id] && (
+					{activityState.isLoading && (
 						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 					)}
 					<span className="font-semibold">Ver Resultados</span>
@@ -388,7 +425,7 @@ const LessonActivities = ({
 
 		return (
 			<>
-				{isLoadingActivity && activity.id === selectedActivity?.id && (
+				{activityState?.isLoading && (
 					<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 				)}
 				<span>Ver Actividad</span>
@@ -396,26 +433,9 @@ const LessonActivities = ({
 		);
 	};
 
-	const isLastCompletedActivity = useCallback(
-		(activity: Activity) => {
-			const activityIndex = activities.indexOf(activity);
-			return (
-				activityIndex === Math.min(activities.length - 1, 2) &&
-				completedActivities[activity.id]
-			);
-		},
-		[activities, completedActivities]
-	);
-
-	useEffect(() => {
-		activities.forEach((activity) => {
-			if (isLastCompletedActivity(activity)) {
-				console.debug('Last completed activity:', activity.id);
-			}
-		});
-	}, [activities, isLastCompletedActivity]);
-
 	const getActivityStatus = (activity: Activity, index: number) => {
+		const activityState = activitiesState[activity.id];
+
 		if (isButtonLoading) {
 			return {
 				icon: <TbClockFilled className="text-gray-400" />,
@@ -424,7 +444,7 @@ const LessonActivities = ({
 			};
 		}
 
-		if (completedActivities[activity.id]) {
+		if (activityState?.isCompleted) {
 			return {
 				icon: <FaCheckCircle className="text-green-500" />,
 				bgColor: 'bg-green-100',
@@ -452,7 +472,7 @@ const LessonActivities = ({
 		// Previous activity must be completed to unlock current one
 		const previousActivity = activities[index - 1];
 		const isPreviousCompleted =
-			previousActivity && completedActivities[previousActivity.id];
+			previousActivity && activitiesState[previousActivity.id]?.isCompleted;
 
 		return {
 			icon: isPreviousCompleted ? (
@@ -467,21 +487,25 @@ const LessonActivities = ({
 
 	const shouldShowArrows = (activity: Activity, index: number) => {
 		if (!isVideoCompleted) return false;
-		if (completedActivities[activity.id]) return false;
+		if (activitiesState[activity.id]?.isCompleted) return false;
 
 		// Show arrows if this activity is unlocked but not completed
 		const previousActivity = activities[index - 1];
 		const isPreviousCompleted = previousActivity
-			? completedActivities[previousActivity.id]
+			? activitiesState[previousActivity.id]?.isCompleted
 			: true; // First activity is considered to have "completed previous"
 
 		return isPreviousCompleted;
 	};
 
 	const renderActivityCard = (activity: Activity, index: number) => {
+		const activityState = activitiesState[activity.id];
 		const status = getActivityStatus(activity, index);
 		const isFirstActivity = index === 0;
-		const canAccess = isFirstActivity || completedActivities[activities[0]?.id];
+		const previousActivity = index > 0 ? activities[index - 1] : null;
+		const isPreviousCompleted =
+			!previousActivity || activitiesState[previousActivity.id]?.isCompleted;
+		const canAccess = isFirstActivity || isPreviousCompleted;
 		const isNextLessonAvailable =
 			!isLastLesson && isLastActivityInLesson(activity);
 
@@ -518,7 +542,7 @@ const LessonActivities = ({
 						)}
 
 						{/* Mostrar icono de reporte solo cuando la actividad está completada y no está cargando */}
-						{completedActivities[activity.id] && !isButtonLoading && (
+						{activityState?.isCompleted && !isButtonLoading && (
 							<div className="flex justify-center">
 								<TbReportAnalytics className="mb-2 size-12 text-2xl text-gray-700" />
 							</div>
@@ -526,16 +550,16 @@ const LessonActivities = ({
 
 						<button
 							onClick={
-								completedActivities[activity.id]
+								activityState?.isCompleted
 									? () => handleCompletedActivityClick(activity)
 									: () => handleOpenActivity(activity)
 							}
 							disabled={!isVideoCompleted || isButtonLoading || !canAccess}
-							className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity, isLastActivity)} ${!canAccess && !isButtonLoading ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
+							className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
 						>
 							{/* Animated gradient background */}
 							{isVideoCompleted &&
-								!completedActivities[activity.id] &&
+								!activityState?.isCompleted &&
 								canAccess &&
 								!isButtonLoading && (
 									<div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
@@ -547,7 +571,7 @@ const LessonActivities = ({
 						</button>
 
 						{/* Agregar el botón de siguiente clase cuando la actividad está completada y no es la última lección */}
-						{completedActivities[activity.id] && isNextLessonAvailable && (
+						{activityState?.isCompleted && isNextLessonAvailable && (
 							<div className="mt-4 flex flex-col items-center space-y-2">
 								<div className="w-50 border border-b-gray-500" />
 								<Link
@@ -587,7 +611,7 @@ const LessonActivities = ({
 		<div className="w-72 p-4">
 			<h2 className="mb-4 text-2xl font-bold text-primary">Actividades</h2>
 			{activities.length > 0 ? (
-				<div className="max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
+				<div className="space-y-4">
 					{activities
 						.slice(0, 3)
 						.map((activity, index) => renderActivityCard(activity, index))}
@@ -612,7 +636,7 @@ const LessonActivities = ({
 					userId={userId}
 					markActivityAsCompleted={markActivityAsCompleted}
 					onActivityCompleted={handleActivityCompletion}
-					savedResults={savedResults}
+					savedResults={activitiesState[selectedActivity.id]?.savedResults}
 					onLessonUnlocked={onLessonUnlocked}
 					isLastLesson={isLastLesson}
 					isLastActivity={isLastActivity}

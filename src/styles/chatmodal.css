@@ -187,3 +187,29 @@
 .loading-dot:nth-child(3) {
 	animation: bounce 1s infinite 0.3s;
 }
+
+.react-resizable {
+	position: relative;
+}
+
+.react-resizable-handle {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	bottom: 0;
+	right: 0;
+	cursor: se-resize;
+	z-index: 100;
+}
+
+.react-resizable-handle::after {
+	content: '';
+	position: absolute;
+	right: 3px;
+	bottom: 3px;
+	width: 8px;
+	height: 8px;
+	border-right: 2px solid #3af4ef;
+	border-bottom: 2px solid #3af4ef;
+	border-radius: 1px;
+}
