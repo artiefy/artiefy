@@ -2,6 +2,8 @@
 
 Esta API permite a los usuarios obtener información sobre cursos, planificar proyectos y mantener conversaciones con un asistente virtual cuando los profesores no están disponibles.
 
+Y cuando busque algo en el input principal por ejemplo comoser veterinario profesional me retorne en el chatbot una guia de los cursos que esten subidos con esa informacion te diga que cursos ver para solucionar esa idea
+
 ## 📂 Instalación y Configuración
 
 1. Clona el repositorio:
