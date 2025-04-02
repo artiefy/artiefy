@@ -18,8 +18,9 @@
 	"files.autoSave": "afterDelay",
 	"files.associations": {
 		"*.css": "tailwindcss",
-		"*.env.*": "dotenv",
-
+		"*.env": "env",
+		".env.*": "env",
+		".env": "env"
 	},
 	"files.watcherExclude": {
 		"/node_modules/": true,
@@ -40,11 +41,14 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
-	"[dotenv]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	},
 	"[env]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
+		"editor.defaultFormatter": "IronGeek.vscode-env"
+	},
+	"[dotenv]": {
+		"editor.defaultFormatter": "IronGeek.vscode-env"
+	},
+	"[.env]": {
+		"editor.defaultFormatter": "IronGeek.vscode-env"
 	},
 
 	// TypeScript Configuration
@@ -114,5 +118,10 @@
 	"git.confirmSync": false,
 	"git.autofetch": true,
 	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
-	"svg.preview.background": "editor"
+	"svg.preview.background": "editor",
+	"workbench.colorTheme": "Tomorrow Night Blue",
+
+	// Dotenv Intellisense Configuration
+	"dotenv-intellisense.maskValues": true,
+	"dotenv-intellisense.filePatterns": ["/.env", "/.env.*"]
 }

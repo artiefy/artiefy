@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 @config "../../tailwind.config.js";
 
-/* Hover Media Query */
-@media (hover: hover) {
-	.hover\:underline:hover {
+/* Custom hover variant - Legacy support for touch devices */
+@custom-variant hover (&:hover) {
+	.hover\:underline {
 		text-decoration: underline;
 	}
 }

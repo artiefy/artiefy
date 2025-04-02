@@ -2,7 +2,7 @@
 .next
 .db
 .history
-out
+.vercel
 node_modules
 public
 *.md
