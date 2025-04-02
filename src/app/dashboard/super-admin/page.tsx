@@ -20,10 +20,7 @@ import SunEditor from 'suneditor-react';
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
-import {
-	setRoleWrapper,
-	deleteUser,
-} from '~/server/queries/queries';
+import { setRoleWrapper, deleteUser } from '~/server/queries/queries';
 
 import BulkUploadUsers from './components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -205,13 +202,14 @@ export default function AdminDashboard() {
 
 	const fetchPrograms = useCallback(async () => {
 		try {
-			const res = await fetch('/api/super-admin/programs'); // Ajusta la URL según tu API
+			const res = await fetch('/api/super-admin/programs/getAllPrograms'); // Actualizar la ruta correcta
 			if (!res.ok) throw new Error('Error al obtener programas');
 
 			const data = (await res.json()) as { id: string; title: string }[];
 			setPrograms(data);
 		} catch (error) {
 			console.error('Error fetching programs:', error);
+			setPrograms([]); // Asegurarse de que programs siempre tenga un valor válido
 		}
 	}, []);
 
@@ -811,7 +809,6 @@ export default function AdminDashboard() {
 		});
 	};
 
-
 	const handleMassRemoveRole = () => {
 		if (selectedUsers.length === 0) {
 			showNotification('No has seleccionado usuarios.', 'error');
@@ -880,8 +877,6 @@ export default function AdminDashboard() {
 			},
 		});
 	};
-
-	
 
 	const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
 	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
@@ -1362,76 +1357,130 @@ export default function AdminDashboard() {
 				</div>
 			)}
 			{viewUser && (
-				<div className="fixed inset-0 z-[10000] flex items-center justify-center backdrop-blur-md">
-					<div className="relative z-50 w-full max-w-5xl rounded-lg bg-[#01142B] p-8 text-white shadow-[0_0px_50px_rgba(0,189,216,0.7)]">
-						{/* Información del Usuario */}
-						<div className="flex">
-							{/* Foto de Perfil */}
-							<div className="ml-20 h-48 w-48 overflow-hidden rounded-full border-4 border-[#3AF4EF]">
-								{viewUser.profileImage ? (
-									<Image
-										src={viewUser.profileImage}
-										alt="Foto de perfil"
-										layout="fill"
-										objectFit="cover"
-									/>
-								) : (
-									<div className="flex h-full w-full items-center justify-center bg-gray-600 text-center text-5xl text-white">
-										{viewUser.firstName?.charAt(0)}
-									</div>
-								)}
-							</div>
-
-							{/* Información del Usuario */}
-							<div className="ml-80 flex flex-col justify-start space-x-4">
-								<p className="text-4xl font-semibold">
-									{viewUser.firstName} {viewUser.lastName}
-								</p>
-								<p className="text-lg text-gray-400">{viewUser.email}</p>
-								<p className="mt-2 text-lg">
-									<strong>Rol:</strong>{' '}
-									<span className="font-bold text-[#3AF4EF]">
-										{viewUser.role}
-									</span>
-								</p>
-								<p className="text-lg">
-									<strong>Estado:</strong>{' '}
-									<span className="font-bold text-[#3AF4EF]">
-										{viewUser.status}
-									</span>
-								</p>
-								<p className="text-lg">
-									<strong>Fecha de Creación:</strong>{' '}
-									{viewUser.createdAt ?? 'Fecha no disponible'}
-								</p>
-							</div>
-						</div>
-
-						{/* 🔹 Carrusel de Cursos dentro del modal */}
-						<div className="">
-							<h3 className="text-2xl font-bold text-white">
-								Cursos del Estudiante
-							</h3>
-							{viewUser.courses && viewUser.courses.length > 0 ? (
-								<CourseCarousel
-									courses={viewUser.courses}
-									userId={viewUser.id}
-								/>
-							) : (
-								<p className="text-gray-400">
-									Este usuario no está inscrito en ningún curso.
-								</p>
-							)}
-						</div>
-
-						{/* Botón de Cerrar */}
-						<div className="mt-0 text-center">
+				<div
+					className="fixed inset-0 z-[10000] flex items-center justify-center overflow-y-auto bg-black/80"
+					onClick={() => setViewUser(null)}
+				>
+					<div
+						className="relative m-4 w-full max-w-5xl rounded-xl bg-[#01142B] p-6 text-white shadow-2xl md:p-8"
+						onClick={(e) => e.stopPropagation()}
+					>
+						{/* Header */}
+						<div className="mb-8 flex items-center justify-between border-b border-white/10 pb-4">
+							<h2 className="text-2xl font-bold text-[#3AF4EF]">
+								Detalles del Usuario
+							</h2>
 							<button
 								onClick={() => setViewUser(null)}
-								className="rounded bg-red-500 px-6 py-3 text-white transition hover:bg-red-600"
+								className="rounded-lg bg-white/5 p-2 hover:bg-white/10"
 							>
-								Cerrar
+								<X className="size-5" />
 							</button>
+						</div>
+
+						{/* Content */}
+						<div className="grid gap-8 md:grid-cols-[300px_1fr]">
+							{/* Sidebar - Info básica */}
+							<div className="space-y-6">
+								{/* Avatar */}
+								<div className="relative mx-auto h-64 w-64 overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg">
+									{viewUser.profileImage ? (
+										<Image
+											src={viewUser.profileImage}
+											alt={`Foto de ${viewUser.firstName}`}
+											fill
+											className="object-cover transition duration-200 hover:scale-105"
+											unoptimized
+										/>
+									) : (
+										<div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#012A5C] to-[#01142B] text-6xl font-bold text-white">
+											{viewUser.firstName?.[0]}
+										</div>
+									)}
+								</div>
+
+								{/* Información básica */}
+								<div className="rounded-lg bg-white/5 p-4">
+									<h3 className="mb-4 text-xl font-bold text-white">
+										{viewUser.firstName} {viewUser.lastName}
+									</h3>
+									<div className="space-y-3 text-sm">
+										<p className="flex items-center gap-2 text-gray-300">
+											<span>Email:</span>
+											<span className="font-medium text-white">
+												{viewUser.email}
+											</span>
+										</p>
+										<p className="flex items-center gap-2 text-gray-300">
+											<span>Creado:</span>
+											<span className="font-medium text-white">
+												{viewUser.createdAt}
+											</span>
+										</p>
+									</div>
+
+									{/* Badges */}
+									<div className="mt-4 flex flex-wrap gap-2">
+										<span
+											className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${
+												viewUser.status === 'activo'
+													? 'bg-green-500/10 text-green-400'
+													: 'bg-red-500/10 text-red-400'
+											}`}
+										>
+											<span
+												className={`size-2 rounded-full ${
+													viewUser.status === 'activo'
+														? 'bg-green-400'
+														: 'bg-red-400'
+												}`}
+											/>
+											{viewUser.status}
+										</span>
+										<span className="inline-flex items-center rounded-lg bg-blue-500/10 px-3 py-1.5 text-sm font-medium text-blue-400">
+											{viewUser.role}
+										</span>
+									</div>
+								</div>
+							</div>
+
+							{/* Main Content */}
+							<div className="space-y-8">
+								{/* Información de la cuenta */}
+								<div>
+									<h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
+										Información adicional
+									</h3>
+									<div className="rounded-lg bg-white/5 p-4">
+										<div className="grid gap-4 md:grid-cols-2">
+											<div className="space-y-2">
+												<p className="text-sm text-gray-400">ID del usuario</p>
+												<p className="font-mono text-sm">{viewUser.id}</p>
+											</div>
+											{/* Aquí puedes agregar más campos de información */}
+										</div>
+									</div>
+								</div>
+
+								{/* Cursos */}
+								<div>
+									<h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
+										Cursos inscritos
+									</h3>
+									<div className="rounded-lg bg-white/5 p-4">
+										{viewUser.courses && viewUser.courses.length > 0 ? (
+											<CourseCarousel
+												courses={viewUser.courses}
+												userId={viewUser.id}
+											/>
+										) : (
+											<p className="text-center text-gray-400">
+												Este usuario no está inscrito en ningún curso.
+											</p>
+										)}
+									</div>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -1602,7 +1651,7 @@ export default function AdminDashboard() {
 			)}
 
 			{/* Contenedor de botones arriba de la tabla */}
-		
+
 			{notification && (
 				<div
 					className={`fixed right-5 bottom-5 rounded-md px-4 py-2 text-white shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}
@@ -1741,7 +1790,7 @@ export default function AdminDashboard() {
 			{editingUser && (
 				<EditUserModal
 					isOpen={!!editingUser}
-					user={editingUser} // ✅ Pasamos el usuario completo
+					user={editingUser}
 					onClose={() => setEditingUser(null)}
 					onSave={(updatedUser, updatedPermissions) => {
 						setUsers(

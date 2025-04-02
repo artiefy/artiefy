@@ -5,11 +5,10 @@ interface ClerkUserResponse {
 	first_name: string;
 	last_name: string;
 	email_addresses: { email_address: string }[];
-	created_at: string; 
-	profile_image_url: string; 
+	created_at: string;
+	profile_image_url: string;
 	public_metadata?: { role?: string; status?: string; permissions?: string[] };
 }
-
 
 const getClerkUser = async (userId: string) => {
 	try {
@@ -34,15 +33,14 @@ const getClerkUser = async (userId: string) => {
 		const createdAt = new Date(userData.created_at);
 		const formattedCreatedAt =
 			createdAt instanceof Date && !isNaN(createdAt.getTime())
-				? createdAt.toLocaleDateString() 
-				: 'Fecha no disponible'; 
-		console.log('Fecha formateada:', formattedCreatedAt); 
+				? createdAt.toLocaleDateString()
+				: 'Fecha no disponible';
+		console.log('Fecha formateada:', formattedCreatedAt);
 
 		// Obtener rol y estado de los metadatos
 		const role = userData.public_metadata?.role ?? 'Sin rol';
-		const status = userData.public_metadata?.status ?? 'Activo'; 
+		const status = userData.public_metadata?.status ?? 'Activo';
 
-		
 		const permissions: string[] = Array.isArray(
 			userData.public_metadata?.permissions
 		)
@@ -54,11 +52,11 @@ const getClerkUser = async (userId: string) => {
 			name: `${userData.first_name} ${userData.last_name}`,
 			email: userData.email_addresses?.[0]?.email_address || 'Sin correo',
 			createdAt: formattedCreatedAt,
-			profileImage: userData.profile_image_url || '/default-avatar.png',
+			profileImage: userData.profile_image_url || null, // Cambiado: enviar null si no hay imagen
 			role,
 			status,
 			password: 'No disponible', // Clerk no expone la contraseña
-			permissions, 
+			permissions,
 		};
 
 		return user;
@@ -71,9 +69,8 @@ const getClerkUser = async (userId: string) => {
 // API Route para obtener detalles de un usuario por ID
 export async function GET(request: Request) {
 	try {
-		const url = new URL(request.url); 
-		const userId = url.searchParams.get('id'); 
-
+		const url = new URL(request.url);
+		const userId = url.searchParams.get('id');
 
 		if (!userId) {
 			return NextResponse.json(

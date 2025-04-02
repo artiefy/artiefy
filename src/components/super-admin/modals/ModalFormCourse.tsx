@@ -550,8 +550,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	useEffect(() => {
 		if (editingCourseId && instructor) {
 			setInstructor(instructor);
+			// Actualizar el estado local cuando cambie el instructor
+			const selectedEducator = educators?.find((e) => e.id === instructor);
+			if (selectedEducator) {
+				setModifiedFields((prev) => new Set(prev).add('instructor'));
+			}
 		}
-	}, [editingCourseId, instructor, setInstructor]);
+	}, [editingCourseId, instructor, educators]);
 
 	// Efecto para manejar el progreso de carga
 	useEffect(() => {

@@ -1,6 +1,8 @@
 'use client';
 import { useState, type ChangeEvent, useEffect, useRef } from 'react';
 
+import Image from 'next/image';
+
 import { toast } from 'sonner';
 
 import FileUpload from '~/components/educators/layout/FilesUpload';
@@ -22,6 +24,8 @@ interface LessonsFormProps {
 	onCloseAction: () => void;
 	courseId: number;
 	isEditing?: boolean;
+	modalClassName?: string; // Use a single, consistent name
+	onUpdateSuccess?: () => void;
 	editingLesson?: {
 		id?: number;
 		title?: string;
@@ -41,6 +45,8 @@ const ModalFormLessons = ({
 	courseId,
 	isEditing = false,
 	editingLesson,
+	modalClassName, // Use the same name as in interface
+	onUpdateSuccess,
 }: LessonsFormProps) => {
 	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
 	const [formData, setFormData] = useState({
@@ -351,7 +357,8 @@ const ModalFormLessons = ({
 						: 'La lección se creó con éxito.',
 				});
 				onCloseAction();
-				window.location.reload();
+				// Call onUpdateSuccess instead of reloading the page
+				onUpdateSuccess?.();
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				toast('Error', {
@@ -383,7 +390,9 @@ const ModalFormLessons = ({
 	// Renderizar el formulario
 	return (
 		<Dialog open={isOpen} onOpenChange={onCloseAction}>
-			<DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
+			<DialogContent
+				className={`max-h-[90vh] max-w-5xl overflow-y-auto ${modalClassName}`} // Use the same name
+			>
 				<DialogHeader className="mt-4">
 					<DialogTitle className="text-4xl">
 						{isEditing ? 'Actualizar' : 'Crear'} clase
@@ -445,6 +454,54 @@ const ModalFormLessons = ({
 					/>
 					{errors.duration && (
 						<p className="text-sm text-red-500">Este campo es obligatorio.</p>
+					)}
+					{isEditing && (
+						<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+							{formData.cover_image_key && (
+								<div className="flex flex-col gap-2">
+									<label className="text-sm font-medium text-primary">
+										Imagen actual:
+									</label>
+									<Image
+										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${formData.cover_image_key}`}
+										alt="Imagen actual"
+										width={400}
+										height={128}
+										className="h-32 w-full rounded-lg object-cover"
+									/>
+								</div>
+							)}
+							{formData.cover_video_key && (
+								<div className="flex flex-col gap-2">
+									<label className="text-sm font-medium text-primary">
+										Video actual:
+									</label>
+									<video
+										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${formData.cover_video_key}`}
+										className="h-32 w-full rounded-lg object-cover"
+										controls
+									/>
+								</div>
+							)}
+							{formData.resource_keys.length > 0 && (
+								<div className="flex flex-col gap-2">
+									<label className="text-sm font-medium text-primary">
+										Archivos actuales:
+									</label>
+									{formData.resource_keys.map((key, index) => (
+										<a
+											key={index}
+											href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="text-primary hover:underline"
+										>
+											{key.split('/').pop()}
+										</a>
+									))}
+								</div>
+							)}
+						</div>
 					)}
 					<div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 						<FileUpload
