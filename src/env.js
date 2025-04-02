@@ -34,10 +34,6 @@ export const env = createEnv({
 		CONFIRMATION_URL: z.string().url(),
 
 		// SMTP
-		SMTP_HOST: z.string().min(1),
-		SMTP_PORT: z.coerce.string(),
-		SMTP_USER: z.string().email(),
-		SMTP_PASS: z.string().min(1),
 		PASS: z.string().min(1),
 
 		// App Config
@@ -99,10 +95,6 @@ export const env = createEnv({
 		CONFIRMATION_URL: process.env.CONFIRMATION_URL,
 
 		// SMTP
-		SMTP_HOST: process.env.SMTP_HOST,
-		SMTP_PORT: process.env.SMTP_PORT,
-		SMTP_USER: process.env.SMTP_USER,
-		SMTP_PASS: process.env.SMTP_PASS,
 		PASS: process.env.PASS,
 
 		// App Config
