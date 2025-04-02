@@ -18,15 +18,8 @@
 	"files.autoSave": "afterDelay",
 	"files.associations": {
 		"*.css": "tailwindcss",
-		"*.env": "dotenv",
 		"*.env.*": "dotenv",
-		".env": "dotenv",
-		".env.development": "dotenv",
-		".env.production": "dotenv",
-		".env.local": "dotenv",
-		".env.example": "dotenv",
-		".env.testing": "dotenv",
-		".env.staging": "dotenv"
+
 	},
 	"files.watcherExclude": {
 		"/node_modules/": true,
@@ -47,50 +40,33 @@
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
-	"[.env]": {
+	"[dotenv]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
-	"[dotenv]": {
+	"[env]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
 	},
 
 	// TypeScript Configuration
-	"typescript.tsdk": "node_modules/typescript/lib",
+	"typescript.tsdk": "node_modules\\typescript\\lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
-	"typescript.validate.enable": true,
-	"typescript.suggest.enabled": true,
-	"typescript.surveys.enabled": false,
-	"typescript.suggest.completeFunctionCalls": true,
-	"typescript.tsserver.maxTsServerMemory": 8192,
-	"typescript.tsserver.log": "verbose",
+	"typescript.tsserver.maxTsServerMemory": 4096,
 	"typescript.tsserver.watchOptions": {
-		"watchFile": "useFsEvents",
-		"watchDirectory": "useFsEvents",
 		"fallbackPolling": "dynamicPriorityPolling"
 	},
-	"typescript.updateImportsOnFileMove.enabled": "always",
-	"typescript.preferences.importModuleSpecifier": "non-relative",
-
-	// JavaScript/TypeScript Language Features
-	"javascript.validate.enable": true,
-	"js/ts.implicitProjectConfig.checkJs": true,
 
 	// ESLint Configuration
-	"eslint.enable": true,
 	"eslint.validate": [
 		"javascript",
 		"javascriptreact",
 		"typescript",
 		"typescriptreact"
 	],
-	"eslint.workingDirectories": [{ "mode": "auto" }],
+	"eslint.workingDirectories": ["./"],
 	"eslint.useFlatConfig": true,
 	"eslint.run": "onType",
 	"eslint.nodePath": "./node_modules",
-	"eslint.debug": true,
-	"eslint.execArgv": null,
-	"eslint.lintTask.enable": true,
-	"eslint.format.enable": true,
+	"eslint.debug": false,
 	"eslint.rules.customizations": [
 		{ "rule": "import/order", "severity": "off" },
 		{ "rule": "no-unused-vars", "severity": "warn" },
@@ -129,9 +105,7 @@
 	"search.exclude": {
 		"/node_modules": true,
 		"/dist": true,
-		"/.git": true,
-		"/.next": true,
-		"/.vercel": true
+		"/.git": true
 	},
 	"javascript.suggest.completeFunctionCalls": true,
 

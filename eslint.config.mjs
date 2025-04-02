@@ -75,8 +75,6 @@ const eslintConfig = [
 			'eslint:recommended',
 			'next/core-web-vitals',
 			'next/typescript',
-			'next',
-			'plugin:react/recommended',
 			'plugin:@next/next/recommended',
 			'plugin:@typescript-eslint/recommended',
 			'plugin:@typescript-eslint/recommended-type-checked',
