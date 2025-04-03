@@ -19,8 +19,16 @@
 	"files.associations": {
 		"*.css": "tailwindcss",
 		"*.env": "env",
-		".env.*": "env",
-		".env": "env"
+		"*.tsx": "typescriptreact",
+		"*.ts": "typescript",
+		"*.mjs": "javascript",
+		"*.js": "javascript",
+		"*.json": "json",
+		"*.config.mjs": "javascript",
+		"*.config.js": "javascript",
+		"*.config.ts": "typescript",
+		"*.md": "markdown",
+		"*.mdx": "mdx"
 	},
 	"files.watcherExclude": {
 		"/node_modules/": true,
@@ -52,7 +60,7 @@
 	},
 
 	// TypeScript Configuration
-	"typescript.tsdk": "node_modules\\typescript\\lib",
+	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"typescript.tsserver.maxTsServerMemory": 8192,
 	"typescript.tsserver.watchOptions": {
