@@ -223,7 +223,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 								<CardFooter className="-mt-6 flex flex-col items-start justify-between">
 									<Button asChild className="mx-auto">
 										<Link
-											href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
+											href={`/dashboard/educadores/cursos/${courseId}/${lesson.id}`}
 											className={`group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95`}
 										>
 											<p>Ver clase</p>

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
+import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -24,7 +25,6 @@ import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
-import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
 	Breadcrumb,
@@ -279,32 +279,30 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 			// añadir parametros a la actualización si es true
 			if (addParametros) {
-				for (const parametro of editParametros) {
-					try {
-						const response = await fetch('/api/educadores/parametros', {
+				try {
+					// 1. Primero eliminar todos los parámetros existentes
+					await fetch(`/api/educadores/parametros?courseId=${courseIdNumber}`, {
+						method: 'DELETE',
+					});
+
+					// 2. Luego crear los nuevos parámetros
+					for (const parametro of editParametros) {
+						await fetch('/api/educadores/parametros', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({
 								name: parametro.name,
 								description: parametro.description,
 								porcentaje: parametro.porcentaje,
-								courseId: Number(courseIdNumber) || 0, // ✅ Asegurar que `courseIdNumber` sea válido
+								courseId: courseIdNumber,
 							}),
 						});
-
-						if (!response.ok) {
-							const errorData = (await response.json()) as { error?: string };
-							throw new Error(errorData.error);
-						}
-
-						toast.success('Parámetro creado exitosamente', {
-							description: 'El parámetro se ha creado exitosamente',
-						});
-					} catch (error) {
-						toast.error('Error al crear el parámetro', {
-							description: `Error: ${(error as Error).message}`,
-						});
 					}
+
+					toast.success('Parámetros actualizados correctamente');
+				} catch (error) {
+					toast.error('Error al actualizar los parámetros');
+					console.error('Error con los parámetros:', error);
 				}
 			}
 
@@ -328,6 +326,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					description: 'Los parámetros se han actualizado con éxito.',
 				});
 			}
+
+			// Recargar la página después de actualizar exitosamente
+			router.refresh();
+			window.location.reload();
 		} catch (error) {
 			console.error('Error:', error);
 			toast('Error', {
@@ -472,9 +474,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
-					className={`relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out zoom-in`}
+					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none bg-black p-6 text-white transition-transform duration-300 ease-in-out`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),
@@ -716,54 +718,65 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				selectedColor={selectedColor}
 			/>
 			<ModalFormCourse
-	isOpen={isModalOpen}
-	onSubmitAction={(id, title, description, file, categoryid, modalidadesid, nivelid, rating, addParametros, coverImageKey, fileName, courseTypeId) =>
-		handleUpdateCourse(
-			id,
-			title,
-			description,
-			file,
-			categoryid,
-			modalidadesid,
-			nivelid,
-			addParametros,
-			coverImageKey,
-			fileName,
-			rating,
-			courseTypeId
-		)
-	}
-	editingCourseId={course.id}
-	title={editTitle}
-	description={editDescription}
-	categoryid={editCategory}
-	modalidadesid={editModalidad}
-	nivelid={editNivel}
-	coverImageKey={editCoverImageKey}
-	parametros={editParametros}
-	rating={editRating}
-	setTitle={setEditTitle}
-	setDescription={setEditDescription}
-	setModalidadesid={setEditModalidad}
-	setCategoryid={setEditCategory}
-	setNivelid={setEditNivel}
-	setCoverImageKey={setEditCoverImageKey}
-	setParametrosAction={(parametros) => setEditParametros(parametros)}
-	setRating={setEditRating}
-	onCloseAction={() => setIsModalOpen(false)}
-	uploading={false}
-	courseTypeId={courseTypeId}
-	setCourseTypeId={setCourseTypeId}
-	isActive={isActive}
-	setIsActive={setIsActive}
-
-	// 👉 AGREGAR ESTAS LÍNEAS:
-	instructor={course?.instructor ?? ''}
-	setInstructor={() => undefined}
-	subjects={[]}            // Si no estás usando subjects en edición, puedes pasar array vacío o mapear si los tienes.
-	setSubjects={() => undefined}   // Mismo caso, una función vacía si no editas materias desde ahí.
-/>
-
+				isOpen={isModalOpen}
+				onSubmitAction={(
+					id,
+					title,
+					description,
+					file,
+					categoryid,
+					modalidadesid,
+					nivelid,
+					rating,
+					addParametros,
+					coverImageKey,
+					fileName,
+					courseTypeId
+				) =>
+					handleUpdateCourse(
+						id,
+						title,
+						description,
+						file,
+						categoryid,
+						modalidadesid,
+						nivelid,
+						addParametros,
+						coverImageKey,
+						fileName,
+						rating,
+						courseTypeId
+					)
+				}
+				editingCourseId={course.id}
+				title={editTitle}
+				description={editDescription}
+				categoryid={editCategory}
+				modalidadesid={editModalidad}
+				nivelid={editNivel}
+				coverImageKey={editCoverImageKey}
+				parametros={editParametros}
+				rating={editRating}
+				setTitle={setEditTitle}
+				setDescription={setEditDescription}
+				setModalidadesid={setEditModalidad}
+				setCategoryid={setEditCategory}
+				setNivelid={setEditNivel}
+				setCoverImageKey={setEditCoverImageKey}
+				setParametrosAction={(parametros) => setEditParametros(parametros)}
+				setRating={setEditRating}
+				onCloseAction={() => setIsModalOpen(false)}
+				uploading={false}
+				courseTypeId={courseTypeId}
+				setCourseTypeId={setCourseTypeId}
+				isActive={isActive}
+				setIsActive={setIsActive}
+				// 👉 AGREGAR ESTAS LÍNEAS:
+				instructor={course?.instructor ?? ''}
+				setInstructor={() => undefined}
+				subjects={[]} // Si no estás usando subjects en edición, puedes pasar array vacío o mapear si los tienes.
+				setSubjects={() => undefined} // Mismo caso, una función vacía si no editas materias desde ahí.
+			/>
 		</div>
 	);
 };
