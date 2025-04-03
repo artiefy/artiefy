@@ -80,11 +80,11 @@ export default function StudentDetails({
 
 		if (!query) return;
 
-		// Prevent scroll when opening chat
-		const currentScroll = window.scrollY;
-		setShowChatbot(true);
-		setChatbotKey((prev) => prev + 1);
-		window.scrollTo({ top: currentScroll });
+		// Set chatbot state only if not already open with same query
+		if (!showChatbot || chatbotKey === 0) {
+			setShowChatbot(true);
+			setChatbotKey((prev) => prev + 1);
+		}
 	};
 
 	const handleSearchIconClick = (e: React.MouseEvent) => {

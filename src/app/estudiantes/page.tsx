@@ -4,6 +4,7 @@ import StudentDetails from '~/app/estudiantes/StudentDetails';
 import CategoriesCourse from '~/components/estudiantes/layout/CategoriesCourse';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
@@ -124,6 +125,13 @@ export default async function Page({ searchParams }: PageProps) {
 
 		return (
 			<div className="flex min-h-screen flex-col">
+				<StudentChatbot
+					isAlwaysVisible={true}
+					showChat={!!params?.query}
+					key={params?.query ? 1 : 0}
+					className="animation-delay-400 fixed z-[9999] animate-zoom-in"
+					initialSearchQuery={params?.query ?? ''}
+				/>
 				<Header />
 				<StudentDetails
 					initialCourses={allCourses}

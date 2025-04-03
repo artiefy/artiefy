@@ -157,7 +157,7 @@
 	},
 	"packageManager": "npm@11.2.0",
 	"engines": {
-		"node": "22.14.0",
+		"node": "22.x",
 		"npm": "11.2.0"
 	}
 }

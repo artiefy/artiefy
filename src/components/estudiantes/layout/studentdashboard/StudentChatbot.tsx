@@ -26,6 +26,7 @@ interface StudentChatbotProps {
 
 interface ChatResponse {
 	response: string;
+	courses?: { id: number; title: string }[];
 }
 
 interface ResizeData {
@@ -35,7 +36,7 @@ interface ResizeData {
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	className,
-	initialSearchQuery,
+	initialSearchQuery = '',
 	isAlwaysVisible = false,
 	showChat = false,
 }) => {
@@ -92,14 +93,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		if (isOpen && inputRef.current) {
 			inputRef.current.focus();
 		}
-	}, [isOpen]);
+	}, [isOpen, initialSearchQuery]);
 
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
 
 	useEffect(() => {
-		if (initialSearchQuery && isSignedIn && showChat) {
+		const handleInitialSearch = async () => {
+			if (!initialSearchQuery?.trim() || !isSignedIn || !showChat) return;
+
 			setIsOpen(true);
 			setMessages([
 				{
@@ -107,16 +110,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					text: 'Hola ¿En qué puedo ayudarte hoy?',
 					sender: 'bot',
 				},
+				{ id: Date.now() + 1, text: initialSearchQuery.trim(), sender: 'user' },
 			]);
-			const searchMessage = {
-				id: Date.now() + 1,
-				text: initialSearchQuery,
-				sender: 'user' as const,
-			};
 
-			setMessages((prev) => [...prev, searchMessage]);
-			void handleBotResponse(initialSearchQuery);
-		}
+			await handleBotResponse(initialSearchQuery.trim());
+		};
+
+		void handleInitialSearch();
 	}, [initialSearchQuery, isSignedIn, showChat, handleBotResponse]);
 
 	useEffect(() => {
@@ -203,41 +203,50 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		[]
 	);
 
-	const renderMessage = (message: { id: number; text: string; sender: string }) => {
+	const renderMessage = (message: {
+		id: number;
+		text: string;
+		sender: string;
+	}) => {
 		if (message.sender === 'bot') {
-			// Extract unique courses using a more robust pattern
-			const courseMatches = message.text.match(/\d+\.\s+(.*?)(?=(?:\n\n|\n|$))/g) ?? [];
+			const courseMatches =
+				message.text.match(/\d+\.\s+(.*?)\|(\d+)(?=\n\n|\n|$)/g) ?? [];
 			const uniqueCourses = [...new Set(courseMatches)]
-				.map(course => {
-					const match = /\d+\.\s+(.+)/.exec(course);
-					return match?.[1]?.trim();
-				})
-				.filter(Boolean);
+				.map((course) => {
+					const match = /\d+\.\s+(.*?)\|(\d+)/.exec(course);
+					if (!match || match.length < 3) return null;
 
-			// Get intro text (first line before courses list)
-			const introText = message.text.split(/\n\n/)[0];
+					const [, title, courseId] = match;
+					return {
+						id: Number(courseId),
+						title: title.trim(),
+					};
+				})
+				.filter((course): course is { id: number; title: string } =>
+					Boolean(course && !isNaN(course.id))
+				);
+
+			const introText = message.text.split('\n\n')[0];
 
 			return (
 				<div className="flex flex-col space-y-4">
 					<p className="font-medium text-gray-800">{introText}</p>
 					{uniqueCourses.length > 0 && (
 						<ul className="space-y-4">
-							{uniqueCourses.map((course, index) => (
-									<li key={index} className="flex flex-col space-y-2 rounded-lg bg-gray-700 p-4 shadow-sm">
-										<h4 className="font-semibold text-primary">{course}</h4>
-										<Link
-											href={`/estudiantes/cursos/${encodeURIComponent(
-												course?.toLowerCase()
-													.replace(/[^\w\s-]/g, '')
-													.replace(/\s+/g, '-')
-													.replace(/-+/g, '-') ?? ''
-											)}`}
-											className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
-										>
-											Ir al curso
-										</Link>
-									</li>
-								))}
+							{uniqueCourses.map((course) => (
+								<li
+									key={course.id}
+									className="flex flex-col space-y-2 rounded-lg bg-background p-4 shadow-sm"
+								>
+									<h4 className="font-semibold text-primary">{course.title}</h4>
+									<Link
+										href={`/estudiantes/cursos/${course.id}`} // Changed to use database ID directly
+										className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
+									>
+										Ir al curso
+									</Link>
+								</li>
+							))}
 						</ul>
 					)}
 				</div>
