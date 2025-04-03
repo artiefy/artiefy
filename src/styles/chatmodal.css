@@ -26,14 +26,13 @@
 	justify-content: center;
 	animation: text-rotation 8s linear infinite;
 	pointer-events: none;
+	text-transform: uppercase;
 }
 
 .button__text > span {
 	position: absolute;
 	transform: rotate(calc(22deg * var(--index)));
 	inset: 7px;
-	font-size: 14px;
-	text-transform: uppercase;
 }
 
 .button__circle {
@@ -155,6 +154,8 @@
 	padding: 1rem;
 }
 
+/* ...existing styles... */
+
 @keyframes bounce {
 	0%,
 	100% {
@@ -184,124 +185,4 @@
 
 .loading-dot:nth-child(3) {
 	animation: bounce 1s infinite 0.3s;
-}
-
-.react-resizable {
-	position: relative;
-	background: white;
-	border-radius: 0.5rem;
-	overflow: hidden;
-}
-
-.react-resizable-handle {
-	position: absolute;
-	width: 20px;
-	height: 20px;
-	background: transparent;
-	opacity: 0.8;
-	transition: opacity 0.2s;
-	z-index: 10;
-}
-
-.react-resizable-handle::before {
-	content: '⋮⋮';
-	position: absolute;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 100%;
-	height: 100%;
-	color: #00a5c0;
-	font-size: 12px;
-	letter-spacing: -2px;
-	transform: rotate(45deg);
-}
-
-.react-resizable-handle-n::before {
-	transform: rotate(90deg);
-}
-
-.react-resizable-handle-s::before {
-	transform: rotate(90deg);
-}
-
-.react-resizable-handle-e::before {
-	transform: rotate(0deg);
-}
-
-.react-resizable-handle-w::before {
-	transform: rotate(0deg);
-}
-
-.react-resizable-handle-ne::before,
-.react-resizable-handle-sw::before {
-	transform: rotate(45deg);
-}
-
-.react-resizable-handle-nw::before,
-.react-resizable-handle-se::before {
-	transform: rotate(-45deg);
-}
-
-.react-resizable-handle:hover {
-	opacity: 1;
-}
-
-/* Ajustamos las posiciones de los manejadores */
-.react-resizable-handle-n {
-	top: 0;
-	left: 50%;
-	transform: translateX(-50%);
-	cursor: n-resize;
-}
-
-.react-resizable-handle-e {
-	right: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	cursor: e-resize;
-}
-
-.react-resizable-handle-s {
-	bottom: 0;
-	left: 50%;
-	transform: translateX(-50%);
-	cursor: s-resize;
-}
-
-.react-resizable-handle-w {
-	left: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	cursor: w-resize;
-}
-
-.react-resizable-handle-ne {
-	right: 0;
-	top: 0;
-	cursor: ne-resize;
-}
-
-.react-resizable-handle-nw {
-	left: 0;
-	top: 0;
-	cursor: nw-resize;
-}
-
-.react-resizable-handle-se {
-	right: 0;
-	bottom: 0;
-	cursor: se-resize;
-}
-
-.react-resizable-handle-sw {
-	left: 0;
-	bottom: 0;
-	cursor: sw-resize;
-}
-
-.chat-resizable {
-	position: relative;
-	border-radius: 0.5rem;
-	overflow: hidden;
 }

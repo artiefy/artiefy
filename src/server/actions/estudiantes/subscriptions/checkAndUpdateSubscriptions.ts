@@ -1,69 +1,76 @@
-import { clerkClient, type User } from '@clerk/nextjs/server';
-import { eq, and, lt } from 'drizzle-orm';
+import { clerkClient } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 
 export async function checkAndUpdateSubscriptions() {
 	const now = new Date();
+	console.log('🕒 Iniciando verificación de suscripciones:', now.toISOString());
 
 	try {
-		// Obtener usuarios con suscripciones activas que hayan expirado
-		const usersWithExpiredSubscriptions = await db.query.users.findMany({
-			where: and(
-				eq(users.subscriptionStatus, 'active'),
-				lt(users.subscriptionEndDate, now)
-			),
+		// Obtener todos los usuarios con suscripciones activas
+		const activeUsers = await db.query.users.findMany({
+			where: eq(users.subscriptionStatus, 'active'),
 		});
 
-		for (const user of usersWithExpiredSubscriptions) {
-			const userId = user.id;
+		console.log(`📊 Total usuarios activos encontrados: ${activeUsers.length}`);
 
-			// Actualizar el estado de la suscripción en la base de datos
-			await db
-				.update(users)
-				.set({
-					subscriptionStatus: 'inactive',
-					updatedAt: new Date(),
-				})
-				.where(eq(users.id, userId));
-
-			// 🔍 Buscar usuario en Clerk y obtener su ID
-			const clerk = await clerkClient();
-			const clerkUsers = await clerk.users.getUserList({
-				emailAddress: [user.email],
-			});
-
-			if (clerkUsers.data.length === 0) {
-				console.warn(`⚠️ Usuario no encontrado en Clerk: ${user.email}`);
+		for (const user of activeUsers) {
+			// Asegurarse de que subscriptionEndDate no sea null
+			if (!user.subscriptionEndDate) {
+				console.warn(`⚠️ Usuario sin fecha de expiración: ${user.email}`);
 				continue;
 			}
 
-			const clerkUser = clerkUsers.data[0] as User | undefined;
-			if (!clerkUser) {
-				console.warn(`⚠️ Usuario no encontrado en Clerk: ${user.email}`);
-				continue;
-			}
+			const endDate = new Date(user.subscriptionEndDate);
+			console.log(`\n👤 Verificando usuario: ${user.email}`);
+			console.log(`📅 Fecha de expiración: ${endDate.toISOString()}`);
+			console.log(`⏰ Fecha actual: ${now.toISOString()}`);
 
-			await clerk.users.updateUser(clerkUser.id, {
-				publicMetadata: {
-					subscriptionStatus: 'inactive',
-				},
-			});
-			console.log(
-				`⚠️ Suscripción expirada para ${user.email}, cambiando a inactive.`
-			);
+			if (endDate < now) {
+				console.log(`⚠️ Suscripción expirada para ${user.email}`);
+
+				// Actualizar en base de datos
+				await db
+					.update(users)
+					.set({
+						subscriptionStatus: 'inactive',
+						updatedAt: new Date(),
+					})
+					.where(eq(users.id, user.id));
+
+				console.log('✅ BD actualizada a inactive');
+
+				// Actualizar en Clerk
+				const clerk = await clerkClient();
+				const clerkUsers = await clerk.users.getUserList({
+					emailAddress: [user.email],
+				});
+
+				if (clerkUsers.data.length > 0) {
+					const clerkUser = clerkUsers.data[0];
+					await clerk.users.updateUser(clerkUser.id, {
+						publicMetadata: {
+							subscriptionStatus: 'inactive',
+							subscriptionEndDate: endDate.toISOString(),
+						},
+					});
+					console.log('✅ Clerk actualizado a inactive');
+				} else {
+					console.warn(`⚠️ Usuario no encontrado en Clerk: ${user.email}`);
+				}
+			} else {
+				console.log(`✅ Suscripción vigente para ${user.email}`);
+			}
 		}
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			console.error(
-				'Error al verificar y actualizar las suscripciones:',
-				error.message
-			);
-		} else {
-			console.error(
-				'Error desconocido al verificar y actualizar las suscripciones'
-			);
-		}
+
+		return {
+			usersChecked: activeUsers.length,
+			timestamp: now.toISOString(),
+		};
+	} catch (error) {
+		console.error('❌ Error en checkAndUpdateSubscriptions:', error);
+		throw error;
 	}
 }

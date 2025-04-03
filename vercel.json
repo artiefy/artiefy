@@ -21,7 +21,16 @@
 	"crons": [
 		{
 			"path": "/api/cron/check-subscriptions",
-			"schedule": "0 0 * * *"
+			"schedule": "0 */1 * * *",
+			"timeout": 300,
+			"headers": {
+				"Authorization": "Bearer ${CRON_SECRET}",
+				"user-agent": "vercel-cron/1.0"
+			},
+			"retry": {
+				"attempts": 3,
+				"backoff": "exponential"
+			}
 		}
 	],
 	"trailingSlash": false,

@@ -97,6 +97,7 @@
 	color: #4b5563;
 	background: linear-gradient(to right, #4b5563 0, #3af4ef 10%, #4b5563 20%);
 	background-position: 0;
+	background-clip: text;
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 	animation: shine 2s infinite linear;
