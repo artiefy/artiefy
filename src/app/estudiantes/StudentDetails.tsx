@@ -123,7 +123,7 @@ export default function StudentDetails({
 											required
 											className="input"
 											name="search"
-											placeholder="Escribe tu búsqueda y presiona Enter..."
+											placeholder="Que Deseas Crear? Escribe Tu Idea..."
 											type="search"
 											value={searchQuery}
 											onChange={handleSearchChange}
