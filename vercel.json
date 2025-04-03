@@ -2,8 +2,16 @@
 	"$schema": "https://openapi.vercel.sh/vercel.json",
 	"functions": {
 		"app/api/**/*": {
-			"memory": 1024,
-			"maxDuration": 30
+			"memory": 3008,
+			"maxDuration": 60
+		},
+		"app/api/iahome/**/*": {
+			"memory": 3008,
+			"maxDuration": 300
+		},
+		"app/api/cron/**/*": {
+			"memory": 3008,
+			"maxDuration": 300
 		}
 	},
 	"framework": "nextjs",
