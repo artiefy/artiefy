@@ -46,6 +46,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	]);
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
+	const [lastSearchQuery, setLastSearchQuery] = useState('');
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -103,7 +104,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		const handleInitialSearch = async () => {
 			if (!initialSearchQuery?.trim() || !isSignedIn || !showChat) return;
 
+			// Evitar búsquedas duplicadas comparando con la última búsqueda
+			if (initialSearchQuery.trim() === lastSearchQuery) return;
+
 			setIsOpen(true);
+			setLastSearchQuery(initialSearchQuery.trim());
+
 			setMessages([
 				{
 					id: Date.now(),
@@ -117,7 +123,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		};
 
 		void handleInitialSearch();
-	}, [initialSearchQuery, isSignedIn, showChat, handleBotResponse]);
+	}, [
+		initialSearchQuery,
+		isSignedIn,
+		showChat,
+		handleBotResponse,
+		lastSearchQuery,
+	]);
 
 	useEffect(() => {
 		setIsOpen(showChat);

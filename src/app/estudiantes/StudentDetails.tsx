@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import '~/styles/ia.css';
 
 import Image from 'next/image';
@@ -74,18 +74,22 @@ export default function StudentDetails({
 	const latestFiveCourses = sortedCourses.slice(0, 5);
 	const latestTenCourses = sortedCourses.slice(0, 10);
 
-	const handleSearch = (e?: React.FormEvent) => {
-		e?.preventDefault();
-		const query = searchQuery.trim();
+	// Modificar handleSearch para evitar búsquedas duplicadas
+	const handleSearch = useCallback(
+		(e?: React.FormEvent) => {
+			e?.preventDefault();
+			const query = searchQuery.trim();
 
-		if (!query) return;
+			if (!query) return;
 
-		// Set chatbot state only if not already open with same query
-		if (!showChatbot || chatbotKey === 0) {
-			setShowChatbot(true);
-			setChatbotKey((prev) => prev + 1);
-		}
-	};
+			// Actualizar el estado del chatbot solo si hay cambios reales
+			if (!showChatbot) {
+				setShowChatbot(true);
+				setChatbotKey((prev) => prev + 1);
+			}
+		},
+		[searchQuery, showChatbot]
+	);
 
 	const handleSearchIconClick = (e: React.MouseEvent) => {
 		e.preventDefault(); // Prevent any default behavior
@@ -95,6 +99,10 @@ export default function StudentDetails({
 
 	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setSearchQuery(e.target.value);
+		// Si el chatbot está abierto y se limpia la búsqueda, cerrarlo
+		if (e.target.value.trim() === '' && showChatbot) {
+			setShowChatbot(false);
+		}
 	};
 
 	return (
