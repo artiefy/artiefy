@@ -114,7 +114,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				setLoading(true);
 				setError(null);
 				const response = await fetch(
-					`/api/educators/lessons/${lessonsIdNumber}`
+					`/api/educadores/lessons/${lessonsIdNumber}`
 				);
 				if (response.ok) {
 					const data = (await response.json()) as Lessons;
