@@ -33,6 +33,10 @@ export interface Lesson {
 	};
 }
 
+interface CreateLessonResult {
+	id: number;
+}
+
 // Crear una nueva lección
 export async function createLesson({
 	title,
@@ -52,18 +56,22 @@ export async function createLesson({
 	courseId: number;
 	resourceKey?: string;
 	resourceNames?: string;
-}) {
+}): Promise<CreateLessonResult> {
 	try {
-		const newLesson = await db.insert(lessons).values({
-			title,
-			description: description ?? '',
-			duration,
-			coverImageKey: coverImageKey ?? '',
-			coverVideoKey: coverVideoKey ?? '',
-			courseId,
-			resourceKey: resourceKey ?? '',
-			resourceNames: resourceNames ?? '',
-		});
+		const [newLesson] = await db
+			.insert(lessons)
+			.values({
+				title,
+				description: description ?? '',
+				duration,
+				coverImageKey: coverImageKey ?? '',
+				coverVideoKey: coverVideoKey ?? '',
+				courseId,
+				resourceKey: resourceKey ?? '',
+				resourceNames: resourceNames ?? '',
+			})
+			.returning({ id: lessons.id });
+
 		console.log('Lección creada:', newLesson);
 		return newLesson;
 	} catch (error) {
@@ -71,16 +79,6 @@ export async function createLesson({
 		throw error;
 	}
 }
-
-// export const countLessonsByCourseAndDifficulty = async (courseId: number) => {
-// 	const count = await db
-// 		.select({ count: sql`COUNT(${lessons.id})` })
-// 		.from(lessons)
-// 		.where(eq(lessons.courseId, courseId))
-// 		.then((rows) => Number(rows[0]?.count) ?? 0);
-
-// 	return count;
-// };
 
 // Obtener la  del curso
 export const getCourseDifficulty = async (courseId: number) => {
