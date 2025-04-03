@@ -154,7 +154,111 @@
 	padding: 1rem;
 }
 
-/* ...existing styles... */
+/* Resizable box styles */
+.react-resizable {
+	position: relative;
+	background: white;
+	border-radius: 0.5rem;
+	overflow: hidden;
+}
+
+.react-resizable-handle {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	background: transparent;
+	opacity: 0.8;
+	transition: opacity 0.2s;
+	z-index: 10;
+}
+
+.react-resizable-handle::before {
+	content: '⋮⋮';
+	position: absolute;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	color: #00a5c0;
+	font-size: 12px;
+	letter-spacing: -2px;
+}
+
+/* Lados - puntos verticales */
+.react-resizable-handle-w::before,
+.react-resizable-handle-e::before {
+	transform: rotate(0deg); /* Vertical */
+}
+
+/* Esquinas - puntos diagonales */
+.react-resizable-handle-ne::before,
+.react-resizable-handle-sw::before {
+	transform: rotate(-45deg); /* Diagonal / - Changed back to original */
+}
+
+.react-resizable-handle-nw::before,
+.react-resizable-handle-se::before {
+	transform: rotate(-45deg); /* Diagonal / - Keep original for these corners */
+}
+
+/* Arriba y abajo - puntos horizontales */
+.react-resizable-handle-n::before,
+.react-resizable-handle-s::before {
+	transform: rotate(90deg); /* Horizontal -- */
+}
+
+.react-resizable-handle-n,
+.react-resizable-handle-s {
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.react-resizable-handle-e,
+.react-resizable-handle-w {
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.react-resizable-handle-n {
+	top: 0;
+}
+.react-resizable-handle-s {
+	bottom: 0;
+}
+.react-resizable-handle-e {
+	right: 0;
+}
+.react-resizable-handle-w {
+	left: 0;
+}
+
+.react-resizable-handle-ne,
+.react-resizable-handle-nw {
+	top: 0;
+}
+
+.react-resizable-handle-se,
+.react-resizable-handle-sw {
+	bottom: 0;
+}
+
+.react-resizable-handle-nw {
+	left: 0;
+}
+.react-resizable-handle-ne {
+	right: 0;
+}
+.react-resizable-handle-sw {
+	left: 0;
+}
+.react-resizable-handle-se {
+	right: 0;
+}
+
+.react-resizable-handle:hover {
+	opacity: 1;
+}
 
 @keyframes bounce {
 	0%,

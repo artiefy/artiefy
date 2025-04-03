@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 
-interface APIResponse {
-	result: string[];
-}
-
 interface RequestBody {
 	prompt: string;
+}
+
+interface ApiResponse {
+	result: string[];
 }
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +14,8 @@ export async function POST(request: Request) {
 	try {
 		const body = (await request.json()) as RequestBody;
 		const { prompt } = body;
+
+		console.log('🔍 Searching for:', prompt);
 
 		const response = await fetch('http://18.117.124.192:5000/root_courses', {
 			method: 'POST',
@@ -24,37 +26,42 @@ export async function POST(request: Request) {
 			body: JSON.stringify({
 				prompt: prompt.toLowerCase().trim(),
 			}),
-			cache: 'no-store',
 		});
 
 		if (!response.ok) {
+			console.error('API Error:', response.status, await response.text());
 			throw new Error(`API responded with status: ${response.status}`);
 		}
 
-		const data = (await response.json()) as APIResponse;
+		const data = (await response.json()) as ApiResponse;
+		console.log('📦 API Response:', data);
 
-		if (!data?.result?.length) {
+		// Verify we have results
+		if (
+			!data?.result ||
+			!Array.isArray(data.result) ||
+			data.result.length === 0
+		) {
 			return NextResponse.json({
 				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta con otros términos.`,
 			});
 		}
 
-		// Limitar y formatear resultados
-		const formattedCourses = data.result
+		// Format the courses into a response
+		const formattedResponse = `He encontrado estos cursos relacionados con "${prompt}":\n\n${data.result
 			.slice(0, 5)
-			.map((course) => course.trim()) // Removed unused index parameter
-			.filter(Boolean);
-
-		const responseText = `He encontrado estos cursos relacionados con "${prompt}":\n\n${formattedCourses
-			.map((course, index) => `${index + 1}. ${course}`)
+			.map((title, index) => `${index + 1}. ${title}`)
 			.join('\n\n')}`;
 
-		return NextResponse.json({ response: responseText });
+		return NextResponse.json({ response: formattedResponse });
 	} catch (error) {
-		console.error('Error fetching courses:', error);
-		return NextResponse.json({
-			response:
-				'Error al buscar cursos. Por favor, intenta de nuevo en unos momentos.',
-		});
+		console.error('Search Error:', error);
+		return NextResponse.json(
+			{
+				response:
+					'Error al buscar cursos. Por favor, intenta de nuevo en unos momentos.',
+			},
+			{ status: 500 }
+		);
 	}
 }

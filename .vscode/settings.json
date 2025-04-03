@@ -77,60 +77,56 @@
 	"eslint.debug": false,
 	"eslint.rules.customizations": [
 		{
-			"eslint.rules.customizations": [
-				{
-					"rule": "import/named",
-					"severity": "off"
-				},
-				{
-					"rule": "import/order",
-					"severity": "off"
-				},
-				{
-					"rule": "no-unused-vars",
-					"severity": "warn"
-				},
-				{
-					"rule": "@typescript-eslint/no-unused-vars",
-					"severity": "off"
-				}
-			],
-			// Tailwind CSS Configuration
-			"tailwindCSS.includeLanguages": {
-				"typescript": "javascript",
-				"typescriptreact": "javascript",
-				"html": "html",
-				"css": "css"
-			},
-			"tailwindCSS.emmetCompletions": true,
-			"tailwindCSS.classAttributes": [
-				"class",
-				"className",
-				"ngClass",
-				"class:list",
-				"classList"
-			],
-			"tailwindCSS.suggestions": true,
-			"tailwindCSS.hovers": true,
-			"tailwindCSS.codeActions": true,
-			"tailwindCSS.validate": true,
-			"tailwindCSS.showPixelEquivalents": true,
-			"tailwindCSS.colorDecorators": true,
-			"tailwindCSS.lint.recommendedVariantOrder": "warning",
-			// CSS Validation
-			"css.validate": false,
-			"scss.validate": false,
-			"less.validate": false,
-			// Search and Performance
-			"search.exclude": {
-				"/node_modules": true,
-				"/dist": true,
-				"/.git": true
-			},
-			"javascript.suggest.completeFunctionCalls": true,
-			"typescript.tsserver.experimental.enableProjectDiagnostics": true,
-			"svg.preview.background": "editor",
-			"workbench.colorTheme": "Tomorrow Night Blue"
+			"rule": "import/named",
+			"severity": "off"
+		},
+		{
+			"rule": "import/order",
+			"severity": "off"
+		},
+		{
+			"rule": "no-unused-vars",
+			"severity": "warn"
+		},
+		{
+			"rule": "@typescript-eslint/no-unused-vars",
+			"severity": "off"
 		}
-	]
+	],
+	// Tailwind CSS Configuration
+	"tailwindCSS.includeLanguages": {
+		"typescript": "javascript",
+		"typescriptreact": "javascript",
+		"html": "html",
+		"css": "css"
+	},
+	"tailwindCSS.emmetCompletions": true,
+	"tailwindCSS.classAttributes": [
+		"class",
+		"className",
+		"ngClass",
+		"class:list",
+		"classList"
+	],
+	"tailwindCSS.suggestions": true,
+	"tailwindCSS.hovers": true,
+	"tailwindCSS.codeActions": true,
+	"tailwindCSS.validate": true,
+	"tailwindCSS.showPixelEquivalents": true,
+	"tailwindCSS.colorDecorators": true,
+	"tailwindCSS.lint.recommendedVariantOrder": "warning",
+	// CSS Validation
+	"css.validate": false,
+	"scss.validate": false,
+	"less.validate": false,
+	// Search and Performance
+	"search.exclude": {
+		"/node_modules": true,
+		"/dist": true,
+		"/.git": true
+	},
+	"javascript.suggest.completeFunctionCalls": true,
+	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
+	"svg.preview.background": "editor",
+	"workbench.colorTheme": "Tomorrow Night Blue"
 }

@@ -7,7 +7,8 @@
 		},
 		"app/api/cron/**/*.ts": {
 			"memory": 3009,
-			"maxDuration": 300
+			"maxDuration": 300,
+			"runtime": "nodejs18"
 		}
 	},
 	"framework": "nextjs",

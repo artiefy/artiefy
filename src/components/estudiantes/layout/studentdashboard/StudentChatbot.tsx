@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { BsPersonCircle } from 'react-icons/bs';
 import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
@@ -27,28 +28,10 @@ interface ChatResponse {
 	response: string;
 }
 
-interface CourseItem {
-	title: string;
-	id: string;
-}
-
 interface ResizeData {
 	size: { width: number; height: number };
 	handle: string;
 }
-
-const formatCourseList = (text: string): CourseItem[] => {
-	const coursesMatch = text.match(/\d+\.\s+([^:?\n]+)/g);
-	return (
-		coursesMatch?.map((course) => {
-			const [, title] = /\d+\.\s+(.+)/.exec(course) ?? [];
-			return {
-				title: title ?? '',
-				id: (title ?? '').toLowerCase().replace(/\s+/g, '-'),
-			};
-		}) ?? []
-	);
-};
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	className,
@@ -67,6 +50,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 
 	const { isSignedIn } = useAuth();
+	const { user } = useUser();
 	const router = useRouter();
 
 	const handleBotResponse = useCallback(async (query: string) => {
@@ -219,36 +203,41 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		[]
 	);
 
-	const renderMessage = (message: {
-		id: number;
-		text: string;
-		sender: string;
-	}) => {
+	const renderMessage = (message: { id: number; text: string; sender: string }) => {
 		if (message.sender === 'bot') {
-			const courses = formatCourseList(message.text);
-			const introText = message.text.split('\n\n')[0];
+			// Extract unique courses using a more robust pattern
+			const courseMatches = message.text.match(/\d+\.\s+(.*?)(?=(?:\n\n|\n|$))/g) ?? [];
+			const uniqueCourses = [...new Set(courseMatches)]
+				.map(course => {
+					const match = /\d+\.\s+(.+)/.exec(course);
+					return match?.[1]?.trim();
+				})
+				.filter(Boolean);
+
+			// Get intro text (first line before courses list)
+			const introText = message.text.split(/\n\n/)[0];
 
 			return (
 				<div className="flex flex-col space-y-4">
 					<p className="font-medium text-gray-800">{introText}</p>
-					{courses.length > 0 && (
+					{uniqueCourses.length > 0 && (
 						<ul className="space-y-4">
-							{courses.map((course, index) => (
-								<li
-									key={index}
-									className="flex flex-col space-y-2 rounded-lg border border-gray-100 bg-white p-4"
-								>
-									<h4 className="font-semibold text-gray-900">
-										{course.title}
-									</h4>
-									<Link
-										href={`/estudiantes/cursos/${course.id}`}
-										className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
-									>
-										Ir al curso
-									</Link>
-								</li>
-							))}
+							{uniqueCourses.map((course, index) => (
+									<li key={index} className="flex flex-col space-y-2 rounded-lg bg-gray-700 p-4 shadow-sm">
+										<h4 className="font-semibold text-primary">{course}</h4>
+										<Link
+											href={`/estudiantes/cursos/${encodeURIComponent(
+												course?.toLowerCase()
+													.replace(/[^\w\s-]/g, '')
+													.replace(/\s+/g, '-')
+													.replace(/-+/g, '-') ?? ''
+											)}`}
+											className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
+										>
+											Ir al curso
+										</Link>
+									</li>
+								))}
 						</ul>
 					)}
 				</div>
@@ -332,6 +321,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										>
 											{message.sender === 'bot' ? (
 												<FaRobot className="mt-2 text-xl text-secondary" />
+											) : user?.imageUrl ? (
+												<Image
+													src={user.imageUrl}
+													alt={user.fullName ?? 'User'}
+													width={24}
+													height={24}
+													className="mt-2 rounded-full"
+												/>
 											) : (
 												<BsPersonCircle className="mt-2 text-xl text-gray-500" />
 											)}

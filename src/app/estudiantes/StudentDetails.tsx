@@ -80,11 +80,15 @@ export default function StudentDetails({
 
 		if (!query) return;
 
+		// Prevent scroll when opening chat
+		const currentScroll = window.scrollY;
 		setShowChatbot(true);
 		setChatbotKey((prev) => prev + 1);
+		window.scrollTo({ top: currentScroll });
 	};
 
-	const handleSearchIconClick = () => {
+	const handleSearchIconClick = (e: React.MouseEvent) => {
+		e.preventDefault(); // Prevent any default behavior
 		if (!searchQuery.trim()) return;
 		handleSearch();
 	};
@@ -114,7 +118,10 @@ export default function StudentDetails({
 								</div>
 							</div>
 							<form
-								onSubmit={handleSearch}
+								onSubmit={(e) => {
+									e.preventDefault();
+									handleSearch(e);
+								}}
 								className="flex w-full flex-col items-center space-y-2"
 							>
 								<div className="input-container">
@@ -310,7 +317,7 @@ export default function StudentDetails({
 				isAlwaysVisible={true}
 				showChat={showChatbot}
 				key={chatbotKey}
-				className="animation-delay-400 animate-zoom-in"
+				className="animation-delay-400 fixed animate-zoom-in"
 				initialSearchQuery={searchQuery.trim()}
 			/>
 		</div>
