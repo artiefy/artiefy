@@ -81,7 +81,8 @@
 	flex: 1;
 	min-width: 680px;
 	width: 720px;
-	padding: 15px 20px;
+	padding: 12px 20px; /* Reducido de 15px a 12px */
+	height: 50px; /* Añadida altura específica reducida */
 	background: linear-gradient(
 		135deg,
 		rgb(218, 232, 247) 0%,
@@ -89,10 +90,12 @@
 	);
 	border: none;
 	color: #01142b;
-	font-size: 20px;
+	font-size: 18px; /* Reducido ligeramente el tamaño de fuente */
 	border-radius: 50px;
 	position: relative;
 	z-index: 1;
+	will-change: transform; /* Optimización de rendimiento */
+	transform: translateZ(0); /* Forzar GPU acceleration */
 }
 
 .input::placeholder {
@@ -111,9 +114,9 @@
 }
 
 .search__icon {
-	min-width: 40px;
-	width: 40px;
-	height: 40px;
+	min-width: 35px; /* Reducido de 40px */
+	width: 35px; /* Reducido de 40px */
+	height: 35px; /* Reducido de 40px */
 	flex-shrink: 0;
 	border-left: 2px solid white;
 	padding-left: 12px;

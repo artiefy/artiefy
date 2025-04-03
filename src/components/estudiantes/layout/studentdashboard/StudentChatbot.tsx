@@ -32,6 +32,11 @@ interface CourseItem {
 	id: string;
 }
 
+interface ResizeData {
+	size: { width: number; height: number };
+	handle: string;
+}
+
 const formatCourseList = (text: string): CourseItem[] => {
 	const coursesMatch = text.match(/\d+\.\s+([^:?\n]+)/g);
 	return (
@@ -59,6 +64,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const [isLoading, setIsLoading] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const chatContainerRef = useRef<HTMLDivElement>(null);
 
 	const { isSignedIn } = useAuth();
 	const router = useRouter();
@@ -173,6 +179,46 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		setIsOpen(!isOpen);
 	};
 
+	const handleResize = useCallback(
+		(_e: React.SyntheticEvent, data: ResizeData) => {
+			const windowHeight = window.innerHeight;
+			const chatPosition = chatContainerRef.current?.getBoundingClientRect();
+
+			if (!chatPosition) return;
+
+			// Calcular el límite superior mínimo (80px desde el tope de la ventana)
+			const minTopMargin = 80;
+			const maxHeight = windowHeight - chatPosition.top - 20;
+
+			// Si el chat se está expandiendo hacia arriba
+			if (data.handle.includes('n')) {
+				const newTop =
+					chatPosition.top - (data.size.height - chatPosition.height);
+				if (newTop < minTopMargin) {
+					// Ajustar la altura para mantener el margen superior mínimo
+					data.size.height =
+						chatPosition.height + (chatPosition.top - minTopMargin);
+					return;
+				}
+			}
+
+			// Si la nueva altura excede el espacio disponible
+			if (data.size.height > maxHeight) {
+				data.size.height = maxHeight;
+				return;
+			}
+
+			// Ajustar scroll si es necesario
+			if (chatPosition.top < minTopMargin) {
+				window.scrollTo({
+					top: window.scrollY - (minTopMargin - chatPosition.top),
+					behavior: 'smooth',
+				});
+			}
+		},
+		[]
+	);
+
 	const renderMessage = (message: {
 		id: number;
 		text: string;
@@ -241,14 +287,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			)}
 
 			{isOpen && isSignedIn && (
-				<div className="fixed right-24 bottom-32 z-50">
+				<div className="fixed right-24 bottom-32 z-50" ref={chatContainerRef}>
 					<ResizableBox
 						width={400}
-						height={500} // Cambiado de 600 a 500
+						height={500}
 						minConstraints={[300, 400]}
-						maxConstraints={[800, 800]}
+						maxConstraints={[800, window.innerHeight - 160]} // 160px total de margen (80px arriba y abajo)
 						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
 						className="chat-resizable"
+						onResize={handleResize}
 					>
 						<div className="flex h-full w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
 							<div className="flex items-center justify-between border-b p-4">
