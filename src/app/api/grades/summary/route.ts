@@ -4,6 +4,8 @@ import { sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 
+export const dynamic = 'force-dynamic';
+
 // Define strict types for query results
 interface DBRow {
 	[key: string]: unknown;

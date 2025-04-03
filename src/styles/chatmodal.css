@@ -155,8 +155,6 @@
 	padding: 1rem;
 }
 
-/* ...existing styles... */
-
 @keyframes bounce {
 	0%,
 	100% {
@@ -190,26 +188,120 @@
 
 .react-resizable {
 	position: relative;
+	background: white;
+	border-radius: 0.5rem;
+	overflow: hidden;
 }
 
 .react-resizable-handle {
 	position: absolute;
 	width: 20px;
 	height: 20px;
-	bottom: 0;
-	right: 0;
-	cursor: se-resize;
-	z-index: 100;
+	background: transparent;
+	opacity: 0.8;
+	transition: opacity 0.2s;
+	z-index: 10;
 }
 
-.react-resizable-handle::after {
-	content: '';
+.react-resizable-handle::before {
+	content: '⋮⋮';
 	position: absolute;
-	right: 3px;
-	bottom: 3px;
-	width: 8px;
-	height: 8px;
-	border-right: 2px solid #3af4ef;
-	border-bottom: 2px solid #3af4ef;
-	border-radius: 1px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	color: #00a5c0;
+	font-size: 12px;
+	letter-spacing: -2px;
+	transform: rotate(45deg);
+}
+
+.react-resizable-handle-n::before {
+	transform: rotate(90deg);
+}
+
+.react-resizable-handle-s::before {
+	transform: rotate(90deg);
+}
+
+.react-resizable-handle-e::before {
+	transform: rotate(0deg);
+}
+
+.react-resizable-handle-w::before {
+	transform: rotate(0deg);
+}
+
+.react-resizable-handle-ne::before,
+.react-resizable-handle-sw::before {
+	transform: rotate(45deg);
+}
+
+.react-resizable-handle-nw::before,
+.react-resizable-handle-se::before {
+	transform: rotate(-45deg);
+}
+
+.react-resizable-handle:hover {
+	opacity: 1;
+}
+
+/* Ajustamos las posiciones de los manejadores */
+.react-resizable-handle-n {
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	cursor: n-resize;
+}
+
+.react-resizable-handle-e {
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	cursor: e-resize;
+}
+
+.react-resizable-handle-s {
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	cursor: s-resize;
+}
+
+.react-resizable-handle-w {
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	cursor: w-resize;
+}
+
+.react-resizable-handle-ne {
+	right: 0;
+	top: 0;
+	cursor: ne-resize;
+}
+
+.react-resizable-handle-nw {
+	left: 0;
+	top: 0;
+	cursor: nw-resize;
+}
+
+.react-resizable-handle-se {
+	right: 0;
+	bottom: 0;
+	cursor: se-resize;
+}
+
+.react-resizable-handle-sw {
+	left: 0;
+	bottom: 0;
+	cursor: sw-resize;
+}
+
+.chat-resizable {
+	position: relative;
+	border-radius: 0.5rem;
+	overflow: hidden;
 }

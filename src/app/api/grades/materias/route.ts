@@ -5,6 +5,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { materiaGrades, materias } from '~/server/db/schema';
 
+export const dynamic = 'force-dynamic';
+
 interface MateriaWithGrade {
 	id: number;
 	title: string;

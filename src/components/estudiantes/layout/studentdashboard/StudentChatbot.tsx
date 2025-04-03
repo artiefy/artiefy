@@ -10,7 +10,9 @@ import { BsPersonCircle } from 'react-icons/bs';
 import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
+import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
+import 'react-resizable/css/styles.css';
 
 import '~/styles/chatmodal.css';
 
@@ -107,7 +109,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	}, [messages]);
 
 	useEffect(() => {
-		if (initialSearchQuery && isSignedIn) {
+		if (initialSearchQuery && isSignedIn && showChat) {
 			setIsOpen(true);
 			setMessages([
 				{
@@ -125,7 +127,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			setMessages((prev) => [...prev, searchMessage]);
 			void handleBotResponse(initialSearchQuery);
 		}
-	}, [initialSearchQuery, isSignedIn, handleBotResponse]);
+	}, [initialSearchQuery, isSignedIn, showChat, handleBotResponse]);
 
 	useEffect(() => {
 		setIsOpen(showChat);
@@ -138,26 +140,22 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!isSignedIn) {
-			toast.error('Debes iniciar sesión para usar el chat', {
-				description: 'Por favor, inicia sesión para acceder al chat.',
-				action: {
-					label: 'Iniciar sesión',
-					onClick: () => router.push('/sign-in'),
-				},
-			});
+			toast.error('Debes iniciar sesión para usar el chat');
 			return;
 		}
-		if (!inputText.trim()) return;
+
+		const trimmedInput = inputText.trim();
+		if (!trimmedInput) return;
 
 		const newUserMessage = {
 			id: Date.now(),
-			text: inputText,
+			text: trimmedInput,
 			sender: 'user' as const,
 		};
 
 		setMessages((prev) => [...prev, newUserMessage]);
 		setInputText('');
-		await handleBotResponse(inputText);
+		await handleBotResponse(trimmedInput);
 	};
 
 	const handleClick = () => {
@@ -182,20 +180,24 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	}) => {
 		if (message.sender === 'bot') {
 			const courses = formatCourseList(message.text);
+			const introText = message.text.split('\n\n')[0];
+
 			return (
 				<div className="flex flex-col space-y-4">
-					<p className="font-medium">{message.text.split('\n\n')[0]}</p>
+					<p className="font-medium text-gray-800">{introText}</p>
 					{courses.length > 0 && (
 						<ul className="space-y-4">
 							{courses.map((course, index) => (
 								<li
 									key={index}
-									className="flex flex-col space-y-2 border-b border-gray-100 pb-4 last:border-0"
+									className="flex flex-col space-y-2 rounded-lg border border-gray-100 bg-white p-4"
 								>
-									<span className="font-medium">{course.title}</span>
+									<h4 className="font-semibold text-gray-900">
+										{course.title}
+									</h4>
 									<Link
 										href={`/estudiantes/cursos/${course.id}`}
-										className="self-start rounded-md bg-secondary px-3 py-1 text-sm text-white hover:bg-secondary/80"
+										className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
 									>
 										Ir al curso
 									</Link>
@@ -239,94 +241,105 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			)}
 
 			{isOpen && isSignedIn && (
-				<div className="animate-in zoom-in-50 slide-in-from-right fixed right-24 bottom-32 z-50 w-[400px] duration-300 ease-in-out">
-					<div className="flex h-[600px] flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
-						<div className="flex items-center justify-between border-b p-4">
-							<div className="flex items-center space-x-2">
-								<FaRobot className="text-2xl text-secondary" />
-								<h2 className="text-lg font-semibold text-gray-800">
-									Artie IA
-								</h2>
-							</div>
-							<button
-								onClick={() => setIsOpen(false)}
-								className="rounded-full p-2 transition-colors hover:bg-gray-100"
-							>
-								<IoMdClose className="text-xl text-gray-500" />
-							</button>
-						</div>
-
-						<div className="flex-1 space-y-4 overflow-y-auto p-4">
-							{messages.map((message) => (
-								<div
-									key={message.id}
-									className={`flex ${
-										message.sender === 'user' ? 'justify-end' : 'justify-start'
-									} mb-4`}
-								>
-									<div
-										className={`flex max-w-[80%] items-start space-x-2 ${
-											message.sender === 'user'
-												? 'flex-row-reverse space-x-reverse'
-												: 'flex-row'
-										}`}
-									>
-										{message.sender === 'bot' ? (
-											<FaRobot className="mt-2 text-xl text-secondary" />
-										) : (
-											<BsPersonCircle className="mt-2 text-xl text-gray-500" />
-										)}
-										<div
-											className={`rounded-lg p-3 ${
-												message.sender === 'user'
-													? 'bg-secondary text-white'
-													: 'bg-gray-100 text-gray-800'
-											}`}
-										>
-											{renderMessage(message)}
-										</div>
-									</div>
+				<div className="fixed right-24 bottom-32 z-50">
+					<ResizableBox
+						width={400}
+						height={500} // Cambiado de 600 a 500
+						minConstraints={[300, 400]}
+						maxConstraints={[800, 800]}
+						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
+						className="chat-resizable"
+					>
+						<div className="flex h-full w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
+							<div className="flex items-center justify-between border-b p-4">
+								<div className="flex items-center space-x-2">
+									<FaRobot className="text-2xl text-secondary" />
+									<h2 className="text-lg font-semibold text-gray-800">
+										Artie IA
+									</h2>
 								</div>
-							))}
-							{isLoading && (
-								<div className="flex justify-start">
-									<div className="rounded-lg bg-gray-100 p-3">
-										<div className="flex space-x-2">
-											<div className="loading-dot" />
-											<div className="loading-dot" />
-											<div className="loading-dot" />
-										</div>
-									</div>
-								</div>
-							)}
-							<div ref={messagesEndRef} />
-						</div>
-
-						<form onSubmit={handleSendMessage} className="border-t p-4">
-							<div className="flex gap-2">
-								<input
-									ref={inputRef}
-									type="text"
-									value={inputText}
-									onChange={(e) => setInputText(e.target.value)}
-									placeholder={
-										isSignedIn
-											? 'Escribe tu mensaje...'
-											: 'Inicia sesión para chatear'
-									}
-									className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
-									disabled={!isSignedIn || isLoading}
-								/>
 								<button
-									type="submit"
-									disabled={isLoading}
-									className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+									onClick={() => setIsOpen(false)}
+									className="rounded-full p-2 transition-colors hover:bg-gray-100"
 								>
-									<FiSend className="text-xl" />
+									<IoMdClose className="text-xl text-gray-500" />
 								</button>
 							</div>
-						</form>
-					</div>
+
+							<div className="flex-1 space-y-4 overflow-y-auto p-4">
+								{messages.map((message) => (
+									<div
+										key={message.id}
+										className={`flex ${
+											message.sender === 'user'
+												? 'justify-end'
+												: 'justify-start'
+										} mb-4`}
+									>
+										<div
+											className={`flex max-w-[80%] items-start space-x-2 ${
+												message.sender === 'user'
+													? 'flex-row-reverse space-x-reverse'
+													: 'flex-row'
+											}`}
+										>
+											{message.sender === 'bot' ? (
+												<FaRobot className="mt-2 text-xl text-secondary" />
+											) : (
+												<BsPersonCircle className="mt-2 text-xl text-gray-500" />
+											)}
+											<div
+												className={`rounded-lg p-3 ${
+													message.sender === 'user'
+														? 'bg-secondary text-white'
+														: 'bg-gray-100 text-gray-800'
+												}`}
+											>
+												{renderMessage(message)}
+											</div>
+										</div>
+									</div>
+								))}
+								{isLoading && (
+									<div className="flex justify-start">
+										<div className="rounded-lg bg-gray-100 p-3">
+											<div className="flex space-x-2">
+												<div className="loading-dot" />
+												<div className="loading-dot" />
+												<div className="loading-dot" />
+											</div>
+										</div>
+									</div>
+								)}
+								<div ref={messagesEndRef} />
+							</div>
+
+							<form onSubmit={handleSendMessage} className="border-t p-4">
+								<div className="flex gap-2">
+									<input
+										ref={inputRef}
+										type="text"
+										value={inputText}
+										onChange={(e) => setInputText(e.target.value)}
+										placeholder={
+											isSignedIn
+												? 'Escribe tu mensaje...'
+												: 'Inicia sesión para chatear'
+										}
+										className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
+										disabled={!isSignedIn || isLoading}
+									/>
+									<button
+										type="submit"
+										disabled={isLoading}
+										className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+									>
+										<FiSend className="text-xl" />
+									</button>
+								</div>
+							</form>
+						</div>
+					</ResizableBox>
 				</div>
 			)}
 		</div>

@@ -121,15 +121,7 @@
 	},
 	"javascript.suggest.completeFunctionCalls": true,
 
-	// Git Integration
-	"git.enableSmartCommit": true,
-	"git.confirmSync": false,
-	"git.autofetch": true,
 	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
 	"svg.preview.background": "editor",
 	"workbench.colorTheme": "Tomorrow Night Blue",
-
-	// Dotenv Intellisense Configuration
-	"dotenv-intellisense.maskValues": true,
-	"dotenv-intellisense.filePatterns": ["/.env", "/.env.*"]
 }
