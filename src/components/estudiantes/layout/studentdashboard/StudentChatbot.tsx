@@ -17,6 +17,8 @@ import '~/styles/chatmodal.css';
 interface StudentChatbotProps {
 	className?: string;
 	initialSearchQuery?: string;
+	isAlwaysVisible?: boolean;
+	showChat?: boolean;
 }
 
 interface ChatResponse {
@@ -44,8 +46,10 @@ const formatCourseList = (text: string): CourseItem[] => {
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	className,
 	initialSearchQuery,
+	isAlwaysVisible = false,
+	showChat = false,
 }) => {
-	const [isOpen, setIsOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(showChat);
 	const [messages, setMessages] = useState([
 		{ id: Date.now(), text: 'Hola ¿En qué puedo ayudarte hoy?', sender: 'bot' },
 	]);
@@ -123,6 +127,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		}
 	}, [initialSearchQuery, isSignedIn, handleBotResponse]);
 
+	useEffect(() => {
+		setIsOpen(showChat);
+	}, [showChat]);
+
 	const scrollToBottom = () => {
 		void messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
 	};
@@ -174,17 +182,17 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	}) => {
 		if (message.sender === 'bot') {
 			const courses = formatCourseList(message.text);
-			const introText = message.text.split('\n\n')[0];
-			const outroText = message.text.split('\n\n').slice(-1)[0];
-
 			return (
 				<div className="flex flex-col space-y-4">
-					<p>{introText}</p>
+					<p className="font-medium">{message.text.split('\n\n')[0]}</p>
 					{courses.length > 0 && (
-						<ul className="list-disc space-y-2 pl-4">
+						<ul className="space-y-4">
 							{courses.map((course, index) => (
-								<li key={index} className="flex flex-col space-y-2">
-									<span>{course.title}</span>
+								<li
+									key={index}
+									className="flex flex-col space-y-2 border-b border-gray-100 pb-4 last:border-0"
+								>
+									<span className="font-medium">{course.title}</span>
 									<Link
 										href={`/estudiantes/cursos/${course.id}`}
 										className="self-start rounded-md bg-secondary px-3 py-1 text-sm text-white hover:bg-secondary/80"
@@ -195,7 +203,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							))}
 						</ul>
 					)}
-					{outroText !== introText && <p>{outroText}</p>}
 				</div>
 			);
 		}
@@ -203,8 +210,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	};
 
 	return (
-		<>
-			<div className={className}>
+		<div className={className}>
+			{isAlwaysVisible && (
 				<button
 					onClick={handleClick}
 					className={`button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
@@ -229,98 +236,100 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						/>
 					</div>
 				</button>
+			)}
 
-				{isOpen && isSignedIn && (
-					<div className="animate-in zoom-in-50 slide-in-from-right fixed right-24 bottom-32 z-50 w-[400px] duration-300 ease-in-out">
-						<div className="flex h-[600px] flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
-							<div className="flex items-center justify-between border-b p-4">
-								<div className="flex items-center space-x-2">
-									<FaRobot className="text-2xl text-secondary" />
-									<h2 className="text-lg font-semibold text-gray-800">
-										Artie IA
-									</h2>
-								</div>
-								<button
-									onClick={() => setIsOpen(false)}
-									className="rounded-full p-2 transition-colors hover:bg-gray-100"
-								>
-									<IoMdClose className="text-xl text-gray-500" />
-								</button>
+			{isOpen && isSignedIn && (
+				<div className="animate-in zoom-in-50 slide-in-from-right fixed right-24 bottom-32 z-50 w-[400px] duration-300 ease-in-out">
+					<div className="flex h-[600px] flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
+						<div className="flex items-center justify-between border-b p-4">
+							<div className="flex items-center space-x-2">
+								<FaRobot className="text-2xl text-secondary" />
+								<h2 className="text-lg font-semibold text-gray-800">
+									Artie IA
+								</h2>
 							</div>
+							<button
+								onClick={() => setIsOpen(false)}
+								className="rounded-full p-2 transition-colors hover:bg-gray-100"
+							>
+								<IoMdClose className="text-xl text-gray-500" />
+							</button>
+						</div>
 
-							<div className="flex-1 space-y-4 overflow-y-auto p-4">
-								{messages.map((message) => (
+						<div className="flex-1 space-y-4 overflow-y-auto p-4">
+							{messages.map((message) => (
+								<div
+									key={message.id}
+									className={`flex ${
+										message.sender === 'user' ? 'justify-end' : 'justify-start'
+									} mb-4`}
+								>
 									<div
-										key={message.id}
-										className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+										className={`flex max-w-[80%] items-start space-x-2 ${
+											message.sender === 'user'
+												? 'flex-row-reverse space-x-reverse'
+												: 'flex-row'
+										}`}
 									>
+										{message.sender === 'bot' ? (
+											<FaRobot className="mt-2 text-xl text-secondary" />
+										) : (
+											<BsPersonCircle className="mt-2 text-xl text-gray-500" />
+										)}
 										<div
-											className={`flex max-w-[80%] items-start space-x-2 ${
+											className={`rounded-lg p-3 ${
 												message.sender === 'user'
-													? 'flex-row-reverse space-x-reverse'
-													: 'flex-row'
+													? 'bg-secondary text-white'
+													: 'bg-gray-100 text-gray-800'
 											}`}
 										>
-											{message.sender === 'bot' ? (
-												<FaRobot className="mt-2 text-xl text-secondary" />
-											) : (
-												<BsPersonCircle className="mt-2 text-xl text-gray-500" />
-											)}
-											<div
-												className={`rounded-lg p-3 ${
-													message.sender === 'user'
-														? 'bg-secondary text-white'
-														: 'bg-gray-100 text-gray-800'
-												}`}
-											>
-												{renderMessage(message)}
-											</div>
+											{renderMessage(message)}
 										</div>
 									</div>
-								))}
-								{isLoading && (
-									<div className="flex justify-start">
-										<div className="rounded-lg bg-gray-100 p-3">
-											<div className="flex space-x-2">
-												<div className="loading-dot" />
-												<div className="loading-dot" />
-												<div className="loading-dot" />
-											</div>
-										</div>
-									</div>
-								)}
-								<div ref={messagesEndRef} />
-							</div>
-
-							<form onSubmit={handleSendMessage} className="border-t p-4">
-								<div className="flex gap-2">
-									<input
-										ref={inputRef}
-										type="text"
-										value={inputText}
-										onChange={(e) => setInputText(e.target.value)}
-										placeholder={
-											isSignedIn
-												? 'Escribe tu mensaje...'
-												: 'Inicia sesión para chatear'
-										}
-										className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
-										disabled={!isSignedIn || isLoading}
-									/>
-									<button
-										type="submit"
-										disabled={isLoading}
-										className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
-									>
-										<FiSend className="text-xl" />
-									</button>
 								</div>
-							</form>
+							))}
+							{isLoading && (
+								<div className="flex justify-start">
+									<div className="rounded-lg bg-gray-100 p-3">
+										<div className="flex space-x-2">
+											<div className="loading-dot" />
+											<div className="loading-dot" />
+											<div className="loading-dot" />
+										</div>
+									</div>
+								</div>
+							)}
+							<div ref={messagesEndRef} />
 						</div>
+
+						<form onSubmit={handleSendMessage} className="border-t p-4">
+							<div className="flex gap-2">
+								<input
+									ref={inputRef}
+									type="text"
+									value={inputText}
+									onChange={(e) => setInputText(e.target.value)}
+									placeholder={
+										isSignedIn
+											? 'Escribe tu mensaje...'
+											: 'Inicia sesión para chatear'
+									}
+									className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
+									disabled={!isSignedIn || isLoading}
+								/>
+								<button
+									type="submit"
+									disabled={isLoading}
+									className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+								>
+									<FiSend className="text-xl" />
+								</button>
+							</div>
+						</form>
 					</div>
-				)}
-			</div>
-		</>
+				</div>
+			)}
+		</div>
 	);
 };
 

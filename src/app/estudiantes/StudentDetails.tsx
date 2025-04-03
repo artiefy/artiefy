@@ -23,19 +23,13 @@ import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course, type Program } from '~/types';
 import '~/styles/searchBar.css';
 
-interface StudentDashboardProps {
-	initialCourses: Course[];
-	initialPrograms: Program[];
-}
-
-interface ApiResponse {
-	response: string;
-}
-
 export default function StudentDetails({
 	initialCourses,
 	initialPrograms,
-}: StudentDashboardProps) {
+}: {
+	initialCourses: Course[];
+	initialPrograms: Program[];
+}) {
 	const [courses] = useState<Course[]>(initialCourses);
 	const [sortedPrograms] = useState(() => {
 		if (!Array.isArray(initialPrograms)) {
@@ -51,6 +45,7 @@ export default function StudentDetails({
 	const [currentSlide, setCurrentSlide] = useState(0);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [chatbotKey, setChatbotKey] = useState(0);
+	const [showChatbot, setShowChatbot] = useState(false);
 
 	console.log('Programs received:', initialPrograms); // Añadir este log para debug
 
@@ -79,29 +74,12 @@ export default function StudentDetails({
 	const latestFiveCourses = sortedCourses.slice(0, 5);
 	const latestTenCourses = sortedCourses.slice(0, 10);
 
-	const handleSearch = async (e: React.FormEvent) => {
+	const handleSearch = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!searchQuery.trim()) return;
 
-		try {
-			const response = await fetch('/api/iahome', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ prompt: searchQuery }),
-			});
-
-			if (response.ok) {
-				const data = (await response.json()) as ApiResponse;
-				// Only trigger chatbot if we have a response
-				if (data.response) {
-					setChatbotKey((prev) => prev + 1);
-				}
-			}
-		} catch (error) {
-			console.error('Error searching:', error);
-		}
+		setShowChatbot(true);
+		setChatbotKey((prev) => prev + 1);
 	};
 
 	return (
@@ -304,6 +282,8 @@ export default function StudentDetails({
 				</div>
 			</main>
 			<StudentChatbot
+				isAlwaysVisible={true}
+				showChat={showChatbot}
 				key={chatbotKey}
 				className="animation-delay-400 animate-zoom-in"
 				initialSearchQuery={searchQuery}
