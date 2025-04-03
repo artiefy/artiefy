@@ -50,6 +50,7 @@
 		linear-gradient(#fff 0 0);
 	-webkit-mask-composite: xor;
 	mask-composite: exclude;
+	pointer-events: none;
 }
 
 .search-container::after {
@@ -73,6 +74,7 @@
 	-webkit-mask-composite: xor;
 	mask-composite: exclude;
 	z-index: -1;
+	pointer-events: none;
 }
 
 .input {
@@ -89,10 +91,13 @@
 	color: #01142b;
 	font-size: 20px;
 	border-radius: 50px;
+	position: relative;
+	z-index: 1;
 }
 
 .input::placeholder {
 	color: #9ebcd9;
+	opacity: 1;
 }
 
 .input:focus {
@@ -102,6 +107,7 @@
 		rgb(239, 247, 255) 0%,
 		rgb(214, 229, 247) 100%
 	);
+	z-index: 2;
 }
 
 .search__icon {
