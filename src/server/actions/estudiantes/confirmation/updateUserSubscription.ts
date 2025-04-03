@@ -8,7 +8,7 @@ import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { sendEmail } from '~/utils/email/notifications';
 
-const SUBSCRIPTION_DURATION = 5 * 60 * 1000;
+const SUBSCRIPTION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 const TIME_ZONE = 'America/Bogota';
 
 interface PaymentData {

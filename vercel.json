@@ -8,7 +8,6 @@
 		"app/api/cron/**/*.ts": {
 			"memory": 3009,
 			"maxDuration": 300
-	
 		}
 	},
 	"framework": "nextjs",
@@ -18,7 +17,7 @@
 	"crons": [
 		{
 			"path": "/api/cron/check-subscriptions",
-			"schedule": "0 * * * *"
+			"schedule": "0 0 * * *"
 		}
 	],
 	"trailingSlash": false,
