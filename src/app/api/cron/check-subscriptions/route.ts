@@ -4,6 +4,8 @@ import { checkAndUpdateSubscriptions } from '~/server/actions/estudiantes/subscr
 
 // Configure route behavior
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60; // Reduced to 60 seconds
+export const fetchCache = 'force-no-store';
 
 // Types
 interface CronResponse {
@@ -18,51 +20,63 @@ const validateAuth = (request: NextRequest): boolean => {
 	const authHeader = request.headers.get('authorization');
 	const userAgent = request.headers.get('user-agent');
 	const cronSecret = process.env.CRON_SECRET;
+	const isLocalhost = process.env.NODE_ENV === 'development';
 
-	console.log('🔒 Validating cron request at:', new Date().toISOString());
-	console.log('- Request Path:', request.nextUrl.pathname);
-	console.log('- User Agent:', userAgent);
+	console.log('🔍 Debug Info:', {
+		env: process.env.NODE_ENV,
+		authHeader,
+		userAgent,
+		hasCronSecret: !!cronSecret,
+		isLocalhost,
+	});
 
-	if (!cronSecret || typeof cronSecret !== 'string') {
-		console.error('❌ CRON_SECRET is not properly configured');
-		return false;
+	if (!cronSecret) return false;
+
+	// En desarrollo, permitir cualquier solicitud con el token correcto
+	if (isLocalhost && authHeader === `Bearer ${cronSecret}`) {
+		return true;
 	}
 
-	const expectedAuth = `Bearer ${cronSecret}`;
-	const isValidAuth = authHeader === expectedAuth;
-	const isValidUserAgent = Boolean(userAgent?.includes('vercel-cron')); // Force boolean
+	// Validar autorización
+	const isValidAuth = authHeader === `Bearer ${cronSecret}`;
 
-	if (!isValidAuth) console.warn('❌ Invalid authorization header');
-	if (!isValidUserAgent) console.warn('❌ Invalid user agent');
+	// En desarrollo, permitir cualquier user-agent
+	const isValidUserAgent = isLocalhost
+		? true
+		: Boolean(userAgent?.includes('vercel-cron'));
 
-	return Boolean(isValidAuth && isValidUserAgent); // Force boolean return
+	// Log de validación
+	console.log('✓ Validation Results:', { isValidAuth, isValidUserAgent });
+
+	// Permitir acceso local sin verificación en desarrollo
+	return isLocalhost ? true : isValidAuth && isValidUserAgent;
 };
 
 export async function GET(request: NextRequest) {
 	console.log(`🕒 Cron job started at: ${new Date().toISOString()}`);
 
-	// Validación estricta
-	if (!validateAuth(request)) {
-		console.error('🚫 Unauthorized cron attempt');
-		return new Response('Unauthorized', { status: 401 });
-	}
-
 	try {
-		// Añadir un timeout de seguridad
-		const timeoutPromise = new Promise((_, reject) => {
-			setTimeout(() => reject(new Error('Timeout')), 290000); // 290s para permitir cleanup
-		});
+		if (!validateAuth(request)) {
+			console.error('🚫 Unauthorized cron attempt');
+			return new Response('Unauthorized', { status: 401 });
+		}
 
-		const result = await Promise.race([
-			checkAndUpdateSubscriptions(),
-			timeoutPromise,
-		]);
+		const result = await checkAndUpdateSubscriptions();
 
-		return NextResponse.json({
-			success: true,
-			timestamp: new Date().toISOString(),
-			details: result,
-		});
+		return new Response(
+			JSON.stringify({
+				success: true,
+				timestamp: new Date().toISOString(),
+				details: result,
+			}),
+			{
+				status: 200,
+				headers: {
+					'Content-Type': 'application/json',
+					'Cache-Control': 'no-store',
+				},
+			}
+		);
 	} catch (error) {
 		// Log error details
 		console.error('❌ Error in subscription check:', error);
