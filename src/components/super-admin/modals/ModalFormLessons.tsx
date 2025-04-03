@@ -76,7 +76,7 @@ const ModalFormLessons = ({
 	}); // Estado para los errores del formulario
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null); // Estado para el controlador de subida
-
+	void setErrors;
 	const videoRef = useRef<HTMLVideoElement | null>(null); // Referencia al video para capturar un frame
 	const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referencia al canvas para capturar un frame
 
