@@ -49,6 +49,13 @@ export async function GET(request: Request) {
 	}
 }
 
+interface CreateLessonBody {
+	title: string;
+	description: string;
+	courseId: number;
+	duration: number;
+}
+
 export async function POST(req: NextRequest) {
 	try {
 		const { userId } = await auth();
@@ -56,65 +63,14 @@ export async function POST(req: NextRequest) {
 			return respondWithError('No autorizado', 403);
 		}
 
-		const body = (await req.json()) as {
-			title: string;
-			description: string;
-			duration: number;
-			coverImageKey?: string;
-			coverVideoKey?: string;
-			courseId: number;
-			resourceKey?: string;
-			resourceNames?: string;
-			modalidadesId: {
-				id: number;
-				name: string;
-			};
-			categoryId: {
-				id: number;
-				name: string;
-			};
-		};
-
-		const {
-			title,
-			description,
-			duration,
-			coverImageKey,
-			coverVideoKey,
-			resourceKey,
-			resourceNames,
-			courseId,
-		} = body;
-
-		await createLesson(body);
-
-		console.log('Datos recibidos en el backend:', {
-			title,
-			description,
-			duration,
-			coverImageKey, // Asegurarse de que el nombre de la columna coincida
-			coverVideoKey, // Asegurarse de que el nombre de la columna coincida
-			resourceKey, // Asegurarse de que el nombre de la columna coincida
-			resourceNames,
-			courseId,
-		});
-
-		// Si alguno de los campos importantes está ausente, devolver un error
-		if (
-			!title ||
-			!description ||
-			!duration ||
-			!coverImageKey ||
-			!coverVideoKey ||
-			!resourceKey ||
-			!courseId ||
-			!resourceNames
-		) {
-			console.log('Faltan campos obligatorios.');
-		}
+		const body = (await req.json()) as CreateLessonBody;
+		const result = await createLesson(body);
 
 		return NextResponse.json(
-			{ message: 'Lección creada exitosamente' },
+			{
+				message: 'Lección creada exitosamente',
+				id: result.id,
+			},
 			{ status: 201 }
 		);
 	} catch (error) {
@@ -191,22 +147,27 @@ export async function PATCH(req: NextRequest) {
 
 		const body = (await req.json()) as {
 			lessonId: number;
+			coverVideoKey?: string;
 		};
-		const { lessonId } = body; // Asegurarse de usar el nombre correcto
+		const { lessonId, coverVideoKey } = body;
 
 		if (!lessonId) {
 			return respondWithError('Se requiere el ID de la lección', 400);
 		}
 
+		if (coverVideoKey) {
+			await updateLesson(Number(lessonId), { coverVideoKey });
+		}
+
 		return NextResponse.json({
-			message: 'Progreso de la lección actualizado exitosamente',
+			message: 'Lección actualizada exitosamente',
 		});
 	} catch (error) {
-		console.error('Error al actualizar el progreso de la lección:', error);
+		console.error('Error al actualizar la lección:', error);
 		const errorMessage =
 			error instanceof Error ? error.message : 'Error desconocido';
 		return respondWithError(
-			`Error al actualizar el progreso de la lección: ${errorMessage}`,
+			`Error al actualizar la lección: ${errorMessage}`,
 			500
 		);
 	}

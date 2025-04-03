@@ -38,6 +38,11 @@ interface LessonsFormProps {
 	};
 }
 
+interface LessonResponse {
+	id: number;
+	message: string;
+}
+
 const ModalFormLessons = ({
 	uploading,
 	isOpen,
@@ -254,35 +259,21 @@ const ModalFormLessons = ({
 			const fileNames: string[] = [];
 
 			let coverImageKey = formData.cover_image_key;
-			let coverVideoKey = '';
-			let coverImageName = '';
-			let coverVideoName = '';
+			const coverVideoKey = formData.cover_video_key;
 
-			const totalFiles = [coverimage, covervideo, ...resourcefiles].filter(
-				Boolean
-			).length;
-
+			const totalFiles = [coverimage, ...resourcefiles].filter(Boolean).length;
 			let currentIndex = 0;
-			// Subir imagen de portada
+
+			// Subir imagen primero si existe
 			if (coverimage) {
-				const { key, fileName } = await uploadFile(
+				const { key } = await uploadFile(
 					coverimage,
 					currentIndex++,
 					totalFiles
 				);
 				coverImageKey = key;
-				coverImageName = fileName;
 			}
-			// Subir video de portada
-			if (covervideo) {
-				const { key, fileName } = await uploadFile(
-					covervideo,
-					currentIndex++,
-					totalFiles
-				);
-				coverVideoKey = key;
-				coverVideoName = fileName;
-			}
+
 			// Subir archivos de recursos
 			for (const file of resourcefiles) {
 				const { key, fileName } = await uploadFile(
@@ -294,76 +285,75 @@ const ModalFormLessons = ({
 				fileNames.push(fileName);
 			}
 
-			// Actualizar el estado con las claves de las imágenes y el video
-			setFormData((prev) => ({
-				...prev,
-				cover_image_key: coverImageKey,
-				cover_video_key: coverVideoKey,
-				cover_image_name: coverImageName,
-				cover_video_name: coverVideoName,
-			}));
+			// Crear/actualizar la lección primero sin el video
+			const method = isEditing ? 'PUT' : 'POST';
+			const endpoint = '/api/educadores/lessons';
 
-			// Validar campos después de establecer las claves de los archivos
-			const newErrors = {
-				title: !formData.title,
-				description: !formData.description,
-				duration: !formData.duration,
+			const requestBody = {
+				...(isEditing && { lessonId: editingLesson?.id }),
+				title: formData.title,
+				description: formData.description,
+				duration: Number(formData.duration),
+				coverImageKey: coverImageKey || undefined,
+				coverVideoKey: coverVideoKey || undefined,
+				resourceKey: resourceKeys.join(',') || undefined,
+				resourceNames: fileNames.join(',') || undefined,
+				courseId: Number(courseId),
 			};
 
-			if (Object.values(newErrors).some((error) => error)) {
-				setErrors((prevErrors) => ({ ...prevErrors, ...newErrors }));
-				toast('Error', {
-					description: 'Por favor completa los campos obligatorios.',
-				});
-				return;
-			}
-
-			if (controller.signal.aborted) {
-				console.log('Upload cancelled');
-				return; // Salir de la función si se cancela la carga
-			}
-
-			// Concatenar las claves de los archivos para solo guardarlas en 1 campo
-			const concatenatedResourceKeys = resourceKeys.join(',');
-			// Concatenar los nombres de los archivos para solo guardarlo en 1 campo
-			const concatenatedFileNames = fileNames.join(',');
-
-			const endpoint = isEditing
-				? `/api/educadores/lessons/${editingLesson?.id}`
-				: '/api/educadores/lessons';
-
-			// Método para la solicitud
-			const method = isEditing ? 'PUT' : 'POST';
-
 			const response = await fetch(endpoint, {
-				method: method,
+				method,
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					title: formData.title,
-					description: formData.description,
-					duration: Number(formData.duration),
-					coverImageKey: coverImageKey || formData.cover_image_key || undefined,
-					coverVideoKey: coverVideoKey || formData.cover_video_key || undefined,
-					resourceKey: concatenatedResourceKeys || undefined,
-					resourceNames: concatenatedFileNames || undefined,
-					courseId: Number(courseId),
-				}),
+				body: JSON.stringify(requestBody),
 			});
 
+			const responseData = (await response.json()) as LessonResponse;
+			const lessonId = isEditing ? editingLesson?.id : responseData.id;
+
+			// Si hay un nuevo video para subir, hacerlo en segundo plano
+			if (covervideo && lessonId) {
+				toast.info('Subiendo video en segundo plano...', {
+					duration: 0, // Mantener hasta que se complete
+					id: 'video-upload',
+				});
+
+				uploadFile(covervideo, 0, 1)
+					.then(async ({ key }) => {
+						const updateResponse = await fetch('/api/educadores/lessons', {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								lessonId: lessonId,
+								coverVideoKey: key,
+							}),
+						});
+
+						if (updateResponse.ok) {
+							toast.success('Video subido exitosamente', {
+								duration: 3000,
+							});
+							toast.dismiss('video-upload');
+							if (onUpdateSuccess) {
+								onUpdateSuccess();
+							}
+						} else {
+							throw new Error('Error al actualizar la lección con el video');
+						}
+					})
+					.catch((error: unknown) => {
+						const errorMessage =
+							error instanceof Error ? error.message : String(error);
+						toast.error(`Error al subir el video: ${errorMessage}`);
+						toast.dismiss('video-upload');
+					});
+			}
+
 			if (response.ok) {
-				toast(isEditing ? 'Lección actualizada' : 'Lección creada', {
-					description: isEditing
-						? 'La lección se actualizó con éxito.'
-						: 'La lección se creó con éxito.',
-				});
+				toast.success(isEditing ? 'Lección actualizada' : 'Lección creada');
 				onCloseAction();
-				// Call onUpdateSuccess instead of reloading the page
-				onUpdateSuccess?.();
-			} else {
-				const errorData = (await response.json()) as { error?: string };
-				toast('Error', {
-					description: errorData.error ?? 'Error al crear la lección.',
-				});
+				if (onUpdateSuccess) {
+					onUpdateSuccess();
+				}
 			}
 		} catch (error) {
 			if ((error as Error).name === 'AbortError') {
@@ -521,7 +511,7 @@ const ModalFormLessons = ({
 							type="video"
 							label="Video de la clase:"
 							accept="video/mp4"
-							maxSize={2000}
+							maxSize={16000} // Aumentado a 16GB (16000MB)
 							tipo="Video"
 							onFileChange={(file) =>
 								handleFileChange('covervideo', file ?? null)

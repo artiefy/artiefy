@@ -8,8 +8,8 @@ import {
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { v4 as uuidv4 } from 'uuid';
 
-const MAX_SIMPLE_UPLOAD_SIZE = 100 * 1024 * 1024; // 100 MB
-const MAX_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
+const MAX_SIMPLE_UPLOAD_SIZE = 500 * 1024 * 1024; // 500 MB
+const MAX_FILE_SIZE = 25 * 1024 * 1024 * 1024; // 25 GB for videos up to 5+ hours
 
 // Simplificamos la creación del cliente S3
 const client = new S3Client({ region: process.env.AWS_REGION });
@@ -29,12 +29,12 @@ export async function POST(request: Request) {
 
 		if (fileSize > MAX_FILE_SIZE) {
 			throw new Error(
-				'El archivo es demasiado grande. El tamaño máximo permitido es 1 GB.'
+				'El archivo es demasiado grande. El tamaño máximo permitido es 25 GB.'
 			);
 		}
 
 		if (fileSize <= MAX_SIMPLE_UPLOAD_SIZE) {
-			// Carga simple para archivos pequeños (hasta 100 MB)
+			// Carga simple para archivos pequeños (hasta 500 MB)
 			const { url, fields } = await createPresignedPost(client, {
 				Bucket: process.env.AWS_BUCKET_NAME,
 				Key: key,
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 				uploadType: 'simple',
 			});
 		} else {
-			// Carga multiparte para archivos grandes (100 MB - 1 GB)
+			// Carga multiparte para archivos grandes (500 MB - 25 GB)
 			const multipartUpload = await client.send(
 				new CreateMultipartUploadCommand({
 					Bucket: process.env.AWS_BUCKET_NAME,
