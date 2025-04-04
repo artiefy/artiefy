@@ -165,7 +165,6 @@ export async function PUT(
 								title: materiaOriginal?.title ?? 'Título predeterminado',
 								description:
 									materiaOriginal?.description ?? 'Descripción predeterminada',
-								programaId: 9999999, // ID único que nunca se usará
 								courseid: courseId, // Asignar el curso actual
 							})
 							.catch((err) => {
