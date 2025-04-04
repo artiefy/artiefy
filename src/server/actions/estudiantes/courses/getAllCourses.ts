@@ -9,6 +9,7 @@ import {
 	modalidades,
 	nivel,
 	courseTypes,
+	users,
 } from '~/server/db/schema';
 
 import type { Course, SubscriptionLevel } from '~/types';
@@ -20,7 +21,8 @@ interface CourseQueryResult {
 	description: string | null;
 	coverImageKey: string | null;
 	categoryid: number;
-	instructor: string | null;
+	instructor: string;
+	instructorName: string | null; // Add this field
 	createdAt: Date;
 	updatedAt: Date;
 	creatorId: string;
@@ -50,6 +52,7 @@ const baseCoursesQuery = {
 	coverImageKey: courses.coverImageKey,
 	categoryid: courses.categoryid,
 	instructor: courses.instructor,
+	instructorName: users.name, // Add this field
 	createdAt: courses.createdAt,
 	updatedAt: courses.updatedAt,
 	creatorId: courses.creatorId,
@@ -80,6 +83,7 @@ const transformCourseData = (coursesData: CourseQueryResult[]): Course[] => {
 		coverImageKey: course.coverImageKey ?? '',
 		categoryid: course.categoryid,
 		instructor: course.instructor ?? '',
+		instructorName: course.instructorName ?? 'Instructor no encontrado',
 		createdAt: course.createdAt,
 		updatedAt: course.updatedAt,
 		creatorId: course.creatorId,
@@ -122,7 +126,8 @@ export async function getAllCourses(): Promise<Course[]> {
 			.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
 			.leftJoin(nivel, eq(courses.nivelid, nivel.id))
 			.leftJoin(courseTypes, eq(courses.courseTypeId, courseTypes.id))
-			 .where(eq(courses.requiresProgram, false)) // Removido el filtro de isActive
+			.leftJoin(users, eq(courses.instructor, users.id)) // Add this join
+			.where(eq(courses.requiresProgram, false)) // Removido el filtro de isActive
 			.orderBy(desc(courses.createdAt))
 			.limit(100);
 

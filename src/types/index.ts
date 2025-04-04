@@ -21,6 +21,7 @@ export interface BaseCourse {
 	coverImageKey: string | null;
 	categoryid: number;
 	instructor: string;
+	instructorName?: string;
 	createdAt: string | number | Date;
 	updatedAt: string | number | Date;
 	creatorId: string;

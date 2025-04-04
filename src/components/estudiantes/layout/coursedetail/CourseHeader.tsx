@@ -394,7 +394,7 @@ export function CourseHeader({
 						<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
 							<Badge
 								variant="outline"
-								className="w-fit border-primary bg-background text-primary hover:bg-black/70"
+								className="border-primary bg-background text-primary w-fit hover:bg-black/70"
 							>
 								{course.category?.name}
 							</Badge>
@@ -443,8 +443,8 @@ export function CourseHeader({
 				{/* Course type and instructor info */}
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<h3 className="text-base font-extrabold text-background sm:text-lg">
-							{course.instructor}
+						<h3 className="text-background text-base font-extrabold sm:text-lg">
+							{course.instructorName ?? 'Instructor no encontrado'}
 						</h3>
 						<em className="text-sm font-bold text-gray-600 sm:text-base">
 							Educador
@@ -556,7 +556,7 @@ export function CourseHeader({
 						{isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
 								<Button
-									className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+									className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
 									disabled={true}
 								>
 									<FaCheck className="mr-2" /> Suscrito Al Curso

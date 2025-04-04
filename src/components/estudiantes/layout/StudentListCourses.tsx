@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { currentUser } from '@clerk/nextjs/server';
+import { BookOpenIcon } from '@heroicons/react/24/outline';
 import {
 	ArrowRightCircleIcon,
 	StarIcon,
@@ -9,7 +10,6 @@ import {
 } from '@heroicons/react/24/solid';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
-import { BookOpenIcon } from '@heroicons/react/24/outline';
 
 import GradientText from '~/components/estudiantes/layout/GradientText';
 import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
@@ -207,7 +207,7 @@ export default async function CourseListStudent({
 											<p className="text-sm font-bold text-gray-300 italic">
 												Educador:{' '}
 												<span className="font-bold italic">
-													{course.instructor}
+													{course.instructorName ?? 'Instructor no encontrado'}
 												</span>
 											</p>
 											<div className="flex items-center">

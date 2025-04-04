@@ -297,7 +297,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			{isAlwaysVisible && (
 				<button
 					onClick={handleClick}
-					className={`button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
+					className={`button fixed right-6 bottom-6 z-[9999] ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
 					aria-label={
 						isSignedIn
 							? 'Abrir chat'
@@ -323,7 +323,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 			{isOpen && isSignedIn && (
 				<div
-					className="fixed right-24 bottom-32 z-[9999]"
+					className="fixed right-24 bottom-24 z-[99999]"
 					ref={chatContainerRef}
 				>
 					<ResizableBox
@@ -332,7 +332,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						minConstraints={[300, 400]}
 						maxConstraints={[800, window.innerHeight - 160]} // 160px total de margen (80px arriba y abajo)
 						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
-						className="chat-resizable"
+						className="chat-resizable relative"
 						onResize={handleResize}
 					>
 						<div className="flex h-full w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl">

@@ -3,19 +3,78 @@
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { courses, userLessonsProgress } from '~/server/db/schema';
+import {
+	courses,
+	userLessonsProgress,
+	categories,
+	modalidades,
+	nivel,
+	courseTypes,
+	users,
+} from '~/server/db/schema';
 
 import type { Course, Activity, Lesson } from '~/types';
+
+// Update interface with all required fields
+interface CourseDetailQueryResult {
+	id: number;
+	title: string | null;
+	description: string | null;
+	coverImageKey: string | null;
+	categoryid: number;
+	instructor: string;
+	instructorName: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	creatorId: string;
+	rating: number | null;
+	modalidadesid: number;
+	nivelid: number;
+	isActive: boolean | null;
+	requiresProgram: boolean | null;
+	courseTypeId: number | null;
+}
 
 export async function getCourseById(
 	courseId: number | string,
 	userId: string | null = null
 ): Promise<Course | null> {
 	try {
-		// Parse and validate courseId
 		const parsedCourseId = Number(courseId);
 		if (isNaN(parsedCourseId)) {
 			console.error('Invalid course ID:', courseId);
+			return null;
+		}
+
+		// Use the interface to type the query result
+		const [courseData] = (await db
+			.select({
+				id: courses.id,
+				title: courses.title,
+				description: courses.description,
+				coverImageKey: courses.coverImageKey,
+				categoryid: courses.categoryid,
+				instructor: courses.instructor,
+				instructorName: users.name,
+				createdAt: courses.createdAt,
+				updatedAt: courses.updatedAt,
+				creatorId: courses.creatorId,
+				rating: courses.rating,
+				modalidadesid: courses.modalidadesid,
+				nivelid: courses.nivelid,
+				isActive: courses.isActive,
+				requiresProgram: courses.requiresProgram,
+				courseTypeId: courses.courseTypeId,
+			})
+			.from(courses)
+			.leftJoin(categories, eq(categories.id, courses.categoryid))
+			.leftJoin(modalidades, eq(modalidades.id, courses.modalidadesid))
+			.leftJoin(nivel, eq(nivel.id, courses.nivelid))
+			.leftJoin(courseTypes, eq(courseTypes.id, courses.courseTypeId))
+			.leftJoin(users, eq(courses.instructor, users.id))
+			.where(eq(courses.id, parsedCourseId))) as CourseDetailQueryResult[];
+
+		if (!courseData) {
 			return null;
 		}
 
@@ -148,6 +207,8 @@ export async function getCourseById(
 				: undefined,
 			requiresProgram: Boolean(course.requiresProgram), // Ensure it's always boolean
 			isActive: Boolean(course.isActive), // Also ensure isActive is always boolean
+			instructor: courseData.instructor,
+			instructorName: courseData.instructorName ?? 'Instructor no encontrado',
 		};
 
 		return transformedCourse;
