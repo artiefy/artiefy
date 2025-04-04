@@ -8,6 +8,15 @@ import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
+interface UserInput {
+	firstName: string;
+	lastName: string;
+	email: string;
+	role?: string;
+}
+
+
+
 // Configuración de Nodemailer usando variables de entorno
 const transporter = nodemailer.createTransport({
 	service: 'gmail',
@@ -54,7 +63,6 @@ async function sendWelcomeEmail(
 
 export async function POST(request: Request) {
 	try {
-		// Recibir archivo
 		const formData = await request.formData();
 		const file = formData.get('file');
 
@@ -65,176 +73,93 @@ export async function POST(request: Request) {
 			);
 		}
 
-		// Leer archivo Excel
 		const data = await file.arrayBuffer();
 		const workbook = XLSX.read(data, { type: 'array' });
 		const sheetName = workbook.SheetNames[0];
 		const sheet = workbook.Sheets[sheetName];
+		const usersData = XLSX.utils.sheet_to_json(sheet) as UserInput[];
 
-		// Convertir datos a JSON
-		const usersData: {
-			firstName: string;
-			lastName: string;
-			email: string;
-			role?: string;
-		}[] = XLSX.utils.sheet_to_json(sheet) as {
-			firstName: string;
-			lastName: string;
-			email: string;
-			role?: string;
-		}[];
-
-		const createdUsers = [];
+		const successfulUsers = [];
 		const emailErrors = [];
-		const creationErrors = [];
+		console.log(`Processing ${usersData.length} users...`);
 
-		for (const user of usersData) {
-			const { firstName, lastName, email, role } = user;
-
-			// Validación de campos
-			if (!firstName || !lastName || !email) {
-				console.error('Faltan campos obligatorios', user);
-				creationErrors.push({
-					email: email || 'Sin email',
-					error: 'Campos incompletos',
-				});
-				continue;
-			}
-
+		for (const userData of usersData) {
 			try {
-				// Crear usuario en Clerk
-				const { user: createdUser, generatedPassword } = await createUser(
-					firstName,
-					lastName,
-					email,
-					role ?? 'estudiante'
+				console.log(`Creating user: ${userData.email}`);
+				const result = await createUser(
+					userData.firstName.trim(),
+					userData.lastName.trim(),
+					userData.email.trim(),
+					userData.role ?? 'estudiante'
 				);
 
-			// Asegurarse de que el rol sea uno válido, por defecto "estudiante"
-			const validRole = (role ?? 'estudiante') as
-				| 'estudiante'
-				| 'educador'
-				| 'admin'
-				| 'super-admin';
+				if (result?.user) {
+					const { user: createdUser, generatedPassword } = result;
 
-			// Guardar en base de datos (sin la contraseña)
-			await db.insert(users).values({
-				id: createdUser.id,
-				name: `${firstName} ${lastName}`,
-				email,
-				role: validRole,
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			});
+					// Add to database
+					await db.insert(users).values({
+						id: createdUser.id,
+						name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
+						email: userData.email.trim(),
+						role: (userData.role ?? 'estudiante') as "estudiante" | "educador" | "admin" | "super-admin",
+						createdAt: new Date(),
+						updatedAt: new Date(),
+					});
 
-			// Agregar usuario a la lista de respuesta
-			createdUsers.push({
-				id: createdUser.id,
-				firstName,
-				lastName,
-				email,
-				role: validRole,
-				password: generatedPassword, // ⚠ Devuelve la contraseña generada
-			});
-				// Guardar en base de datos
-				await db.insert(users).values({
-					id: createdUser.id,
-					email,
-					role: (role ?? 'estudiante') as 'estudiante' | 'educador' | 'admin' | 'super-admin',
-					createdAt: new Date(),
-					updatedAt: new Date(),
-				});
+					// Send welcome email with retries
+					let emailSent = false;
+					for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
+						emailSent = await sendWelcomeEmail(
+							userData.email.trim(),
+							`${userData.firstName} ${userData.lastName}`.trim(),
+							generatedPassword
+						);
+						if (!emailSent) {
+							console.log(
+								`Retry ${attempts + 1} sending email to ${userData.email}`
+							);
+							await new Promise((r) => setTimeout(r, 1000));
+						}
+					}
 
-				// Enviar correo de bienvenida
-				const emailSent = await sendWelcomeEmail(
-					email,
-					`${firstName} ${lastName}`,
-					generatedPassword
-				);
+					if (!emailSent) {
+						emailErrors.push(userData.email);
+					}
 
-				if (!emailSent) {
-					emailErrors.push(email);
+					// Add to successful users with isNew flag
+					successfulUsers.push({
+						id: createdUser.id,
+						firstName: userData.firstName,
+						lastName: userData.lastName,
+						email: userData.email,
+						role: userData.role ?? 'estudiante',
+						status: 'activo',
+						isNew: true,
+					});
+
+					console.log(`✅ User ${userData.email} created successfully`);
 				}
-
-				// Agregar usuario creado a la lista
-				createdUsers.push({
-					id: createdUser.id,
-					firstName,
-					lastName,
-					email,
-					role: role ?? 'estudiante',
-					password: generatedPassword,
-					emailSent,
-				});
 			} catch (error) {
-				console.error(`Error al crear usuario ${email}:`, error);
-				creationErrors.push({
-					email,
-					error: error instanceof Error ? error.message : 'Error desconocido',
-				});
-				continue; // Continuar con el siguiente usuario
+				console.log(`❌ Error creating user ${userData.email}:`, error);
+				continue;
 			}
 		}
 
 		return NextResponse.json({
 			message: 'Proceso completado',
-			users: createdUsers,
-			emailErrors: emailErrors.length > 0 ? emailErrors : undefined,
-			creationErrors: creationErrors.length > 0 ? creationErrors : undefined,
+			users: successfulUsers,
+			emailErrors,
 			summary: {
 				total: usersData.length,
-				created: createdUsers.length,
-				failed: creationErrors.length,
+				created: successfulUsers.length,
+				failed: usersData.length - successfulUsers.length,
 				emailErrors: emailErrors.length,
 			},
 		});
 	} catch (error) {
 		console.error('Error al procesar el archivo:', error);
-
-		// Captura de errores más detallada
-		if (error instanceof Error) {
-			return NextResponse.json({ error: error.message }, { status: 500 });
-		}
-
-		return NextResponse.json({ error: 'Error desconocido' }, { status: 500 });
-	}
-}
-
-// Ruta para descargar la plantilla de usuarios en formato Excel
-export function GET() {
-	try {
-		// Datos de ejemplo que representarán el formato de la plantilla
-		const templateData = [
-			{
-				firstName: 'John',
-				lastName: 'Doe',
-				email: 'johndoe@example.com',
-				role: 'estudiante', // Puedes omitir o personalizar según el formato requerido
-			},
-		];
-
-		// Crear el archivo Excel
-		const ws = XLSX.utils.json_to_sheet(templateData);
-		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
-
-		const excelBuffer = XLSX.write(wb, {
-			bookType: 'xlsx',
-			type: 'array',
-		}) as ArrayBuffer;
-
-		// Retornamos el archivo Excel como respuesta
-		return new NextResponse(excelBuffer, {
-			headers: {
-				'Content-Type':
-					'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-				'Content-Disposition': 'attachment; filename=plantilla_usuarios.xlsx',
-			},
-		});
-	} catch (error) {
-		console.error('Error al generar la plantilla Excel:', error);
 		return NextResponse.json(
-			{ error: 'Error al generar la plantilla Excel' },
+			{ error: error instanceof Error ? error.message : 'Error desconocido' },
 			{ status: 500 }
 		);
 	}

@@ -101,7 +101,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
 	const [materias, setMaterias] = useState<Materia[]>([]);
 	const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
-
+	void parametros;
 	void materias;
 
 	const [isActive, setIsActive] = useState<boolean>(true);

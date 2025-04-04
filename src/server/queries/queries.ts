@@ -164,6 +164,29 @@ function generateSecurePassword(length = 14): string {
 		.join('');
 }
 
+async function generateUniqueUsername(baseUsername: string): Promise<string> {
+	const client = await clerkClient();
+	let username = baseUsername;
+	let counter = 1;
+
+	while (true) {
+		try {
+			const existingUsers = await client.users.getUserList({
+				username: [username],
+			});
+
+			if (existingUsers.data.length === 0) {
+				return username;
+			}
+
+			username = `${baseUsername}${counter}`;
+			counter++;
+		} catch {
+			return username;
+		}
+	}
+}
+
 export async function createUser(
 	firstName: string,
 	lastName: string,
@@ -172,34 +195,42 @@ export async function createUser(
 ) {
 	try {
 		const generatedPassword = generateSecurePassword();
+		let baseUsername =
+			`${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
+		if (baseUsername.length < 4) baseUsername += 'user';
+		baseUsername = baseUsername.slice(0, 60); // Leave room for numbers
 
-		// 🔹 Generar un nombre de usuario válido (mínimo 4 caracteres, máximo 64)
-		let username = `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
-		if (username.length < 4) username += 'user';
-		username = username.slice(0, 64);
+		const uniqueUsername = await generateUniqueUsername(baseUsername);
 
 		const client = await clerkClient();
-		const newUser = await client.users.createUser({
-			firstName,
-			lastName,
-			username,
-			password: generatedPassword,
-			emailAddress: [email],
-			publicMetadata: { role, mustChangePassword: true },
-		});
+		try {
+			const newUser = await client.users.createUser({
+				firstName,
+				lastName,
+				username: uniqueUsername,
+				password: generatedPassword,
+				emailAddress: [email],
+				publicMetadata: { role, mustChangePassword: true },
+			});
 
-		console.log(
-			`DEBUG: Usuario ${newUser.id} creado con contraseña: ${generatedPassword}`
-		);
-		return { user: newUser, generatedPassword };
-	} catch (error: unknown) {
-		console.error(
-			'DEBUG: Error al crear usuario en Clerk:',
-			JSON.stringify(error, null, 2)
-		);
-		throw new Error(
-			(error as { message: string }).message || 'No se pudo crear el usuario'
-		);
+			return { user: newUser, generatedPassword };
+		} catch (error: unknown) {
+			// Si el error es por email duplicado, retornamos null sin lanzar error
+			if (
+				(error as { errors?: { code: string; meta?: { paramName: string } }[] })?.errors?.some(
+					(e) =>
+						e.code === 'form_identifier_exists' &&
+						e.meta?.paramName === 'email_address'
+				)
+			) {
+				return null;
+			}
+			// Si es otro tipo de error, lo lanzamos
+			throw error;
+		}
+	} catch (error) {
+		console.error('Error al crear usuario:', error);
+		throw error;
 	}
 }
 

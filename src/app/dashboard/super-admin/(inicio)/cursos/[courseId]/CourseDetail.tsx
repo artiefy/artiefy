@@ -370,13 +370,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			}
 
-			// Obtener el nombre del instructor seleccionado
-			const selectedEducator = educators.find(
-				(educator) => educator.id === currentInstructor
-			);
-			const instructorName = selectedEducator
-				? selectedEducator.name
-				: course?.instructor;
+			
 
 			// Primero actualizar el curso
 			const response = await fetch(

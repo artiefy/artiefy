@@ -18,7 +18,6 @@ import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import 
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';
-import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
