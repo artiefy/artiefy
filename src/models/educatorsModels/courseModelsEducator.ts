@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq, count, sum } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
@@ -86,7 +87,7 @@ function isApiError(error: unknown): error is ApiError {
 
 export async function createCourse(data: CreateCourseData) {
 	try {
-			// Add validation for required instructor
+		// Add validation for required instructor
 		if (!data.instructor) {
 			throw new Error('Instructor ID is required');
 		}
@@ -190,7 +191,7 @@ export const getCourseById = async (courseId: number) => {
 				modalidadesid: courses.modalidadesid,
 				nivelid: courses.nivelid,
 				rating: courses.rating,
-				instructor: courses.instructor, // Changed from instructorId
+				instructor: courses.instructor,
 				creatorId: courses.creatorId,
 				createdAt: courses.createdAt,
 				updatedAt: courses.updatedAt,
@@ -204,6 +205,11 @@ export const getCourseById = async (courseId: number) => {
 		if (!course) {
 			throw new Error('Curso no encontrado');
 		}
+
+		// Fetch instructor details from Clerk
+		const clerk = await clerkClient();
+		const user = await clerk.users.getUser(course.instructor);
+		const instructorName = `${user.firstName} ${user.lastName}`.trim();
 
 		// Obtener los nombres de las relaciones por separado
 		const category = course.categoryid
@@ -241,6 +247,7 @@ export const getCourseById = async (courseId: number) => {
 
 		return {
 			...course,
+			instructor: instructorName, // Replace instructor ID with full name
 			categoryid: category?.name ?? course.categoryid,
 			modalidadesid: modalidad?.name ?? course.modalidadesid,
 			nivelid: nivelName ?? course.nivelid,

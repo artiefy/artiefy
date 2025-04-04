@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-
-
 import {
 	getAllCourses,
 	getCourseById,
@@ -19,14 +17,13 @@ const respondWithError = (message: string, status: number) =>
 export async function GET(req: NextRequest) {
 	const { searchParams } = new URL(req.url);
 	const courseId = searchParams.get('courseId');
-	const userId = searchParams.get('fullName'); // Changed from userId to use fullName
+	const userId = searchParams.get('userId');
 	const fullName = searchParams.get('fullName');
 	const fetchSubjects = searchParams.get('fetchSubjects');
-	
 
 	console.log('GET Request Parameters:', {
 		courseId,
-		userId: fullName, // Log the fullName as userId
+		userId,
 		fullName,
 		fetchSubjects,
 	});
@@ -52,18 +49,16 @@ export async function GET(req: NextRequest) {
 				totalStudents,
 				totalDuration,
 				lessons,
-				instructor: fullName, // Add the instructor name from Clerk
+				instructor: fullName,
 			};
 		} else if (userId) {
-			// This now uses the fullName value
 			courses = await getCoursesByUser(userId);
-			// Add the instructor name to each course
 			courses = courses.map((course) => ({
 				...course,
 				instructor: fullName,
-				userId: fullName, // Add this line to ensure userId is also the fullName
+				userId: userId,
 			}));
-			console.log('Courses for instructor:', fullName, courses);
+			console.log('Courses for instructor ID:', userId, courses);
 		} else {
 			courses = await getAllCourses();
 			console.log('All courses:', courses);

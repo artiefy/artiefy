@@ -9,14 +9,13 @@ export const getUserData = async (userId: string) => {
 	// Get user's full name from Clerk
 	const clerk = await clerkClient();
 	const user = await clerk.users.getUser(userId);
-	const instructorFullName =
-		`${user.firstName} ${user.lastName}`.trim();
+	const instructorFullName = `${user.firstName} ${user.lastName}`.trim();
 
 	// Obtener el número total de cursos creados por el usuario
 	const totalCourses = await db
 		.select({ totalCourses: count() })
 		.from(courses)
-		.where(eq(courses.instructor, instructorFullName))
+		.where(eq(courses.creatorId, userId))
 		.then((rows) => rows[0]?.totalCourses ?? 0);
 
 	// Obtener el número total de clases (lessons) creadas por el usuario
