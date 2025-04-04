@@ -1,15 +1,5 @@
 {
 	"$schema": "https://openapi.vercel.sh/vercel.json",
-	"functions": {
-		"app/api/**/*.ts": {
-			"memory": 3009,
-			"maxDuration": 60
-		},
-		"app/api/cron/**/*.ts": {
-			"memory": 3009,
-			"maxDuration": 300
-		}
-	},
 	"framework": "nextjs",
 	"ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
 	"installCommand": "npm install",
