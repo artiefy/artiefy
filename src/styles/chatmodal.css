@@ -172,9 +172,8 @@
 	z-index: 10;
 }
 
-/* Modify the resize handle appearance */
 .react-resizable-handle::before {
-	content: "⋯"; /* Change to three dots */
+	content: '⋮⋮';
 	position: absolute;
 	display: flex;
 	align-items: center;
@@ -182,34 +181,79 @@
 	width: 100%;
 	height: 100%;
 	color: #00a5c0;
-	font-size: 16px;
+	font-size: 12px;
+	letter-spacing: -2px;
 }
 
-/* Rotate handles for top and bottom */
+/* Lados - puntos verticales */
+.react-resizable-handle-w::before,
+.react-resizable-handle-e::before {
+	transform: rotate(0deg); /* Vertical */
+}
+
+/* Esquinas - puntos diagonales */
+.react-resizable-handle-ne::before,
+.react-resizable-handle-sw::before {
+	transform: rotate(-45deg); /* Diagonal / - Changed back to original */
+}
+
+.react-resizable-handle-nw::before,
+.react-resizable-handle-se::before {
+	transform: rotate(-45deg); /* Diagonal / - Keep original for these corners */
+}
+
+/* Arriba y abajo - puntos horizontales */
 .react-resizable-handle-n::before,
 .react-resizable-handle-s::before {
-	transform: rotate(0deg); /* Make dots horizontal */
+	transform: rotate(90deg); /* Horizontal -- */
 }
 
-/* Position the handles */
+.react-resizable-handle-n,
+.react-resizable-handle-s {
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.react-resizable-handle-e,
+.react-resizable-handle-w {
+	top: 50%;
+	transform: translateY(-50%);
+}
+
 .react-resizable-handle-n {
 	top: 0;
-	cursor: ns-resize;
 }
-
 .react-resizable-handle-s {
 	bottom: 0;
-	cursor: ns-resize;
+}
+.react-resizable-handle-e {
+	right: 0;
+}
+.react-resizable-handle-w {
+	left: 0;
 }
 
-/* Remove unused handle styles */
-.react-resizable-handle-e,
-.react-resizable-handle-w,
 .react-resizable-handle-ne,
-.react-resizable-handle-nw,
+.react-resizable-handle-nw {
+	top: 0;
+}
+
 .react-resizable-handle-se,
 .react-resizable-handle-sw {
-	display: none;
+	bottom: 0;
+}
+
+.react-resizable-handle-nw {
+	left: 0;
+}
+.react-resizable-handle-ne {
+	right: 0;
+}
+.react-resizable-handle-sw {
+	left: 0;
+}
+.react-resizable-handle-se {
+	right: 0;
 }
 
 .react-resizable-handle:hover {

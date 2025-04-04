@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { BsPersonCircle } from 'react-icons/bs';
+import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
 import { ResizableBox } from 'react-resizable';
@@ -235,10 +236,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		sender: string;
 	}) => {
 		if (message.sender === 'bot') {
+			// Split the message into parts and extract courses
 			const parts = message.text.split('\n\n');
 			const introText = parts[0];
 			const courseTexts = parts.slice(1);
 
+			// Parse all courses from the message
 			const courses = courseTexts
 				.map((text) => {
 					const match = /(\d+)\.\s+(.*?)\|(\d+)/.exec(text);
@@ -264,10 +267,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									key={course.id}
 									className="relative flex flex-col space-y-2 rounded-lg p-4"
 								>
-									<div className="absolute inset-0 rounded-lg bg-gray-800" />
+									{/* Background div positioned absolutely */}
+									<div className="absolute inset-0 rounded-lg bg-gray-100/50" />
 
+									{/* Content on top of background */}
 									<div className="relative z-10 flex flex-col space-y-2">
-										<h4 className="text-primary font-semibold">
+										<h4 className="font-semibold text-gray-800">
 											{course.number}. {course.title}
 										</h4>
 										<Link
@@ -307,45 +312,33 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						))}
 					</div>
 					<div className="button__circle">
-						<Image
-							src="/robotia.svg"
-							alt="Robot IA"
-							width={20}
-							height={20}
-							className="button__icon"
-						/>
-						<Image
-							src="/robotia.svg"
-							alt="Robot IA"
-							width={20}
-							height={20}
+						<FaRobot className="button__icon" aria-hidden="true" />
+						<FaRobot
 							className="button__icon button__icon--copy"
+							aria-hidden="true"
 						/>
 					</div>
 				</button>
 			)}
 
 			{isOpen && isSignedIn && (
-				<div className="fixed right-24 bottom-32 z-50" ref={chatContainerRef}>
+				<div
+					className="fixed right-24 bottom-32 z-[9999]"
+					ref={chatContainerRef}
+				>
 					<ResizableBox
 						width={400}
 						height={500}
 						minConstraints={[300, 400]}
 						maxConstraints={[800, window.innerHeight - 160]} // 160px total de margen (80px arriba y abajo)
-						resizeHandles={['s', 'n']} // Only keep top and bottom handles
+						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
 						className="chat-resizable"
 						onResize={handleResize}
 					>
 						<div className="flex h-full w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
 							<div className="flex items-center justify-between border-b p-4">
 								<div className="flex items-center space-x-2">
-									<Image
-										src="/robotia.svg"
-										alt="Robot IA"
-										width={32}
-										height={32}
-										className="text-secondary"
-									/>
+									<FaRobot className="text-secondary text-2xl" />
 									<h2 className="text-lg font-semibold text-gray-800">
 										Artie IA
 									</h2>
@@ -376,13 +369,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											}`}
 										>
 											{message.sender === 'bot' ? (
-												<Image
-													src="/robotia.svg"
-													alt="Robot IA"
-													width={24}
-													height={24}
-													className="mt-2"
-												/>
+												<FaRobot className="text-secondary mt-2 text-xl" />
 											) : user?.imageUrl ? (
 												<Image
 													src={user.imageUrl}
