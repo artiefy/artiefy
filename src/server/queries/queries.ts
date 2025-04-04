@@ -541,9 +541,7 @@ export async function updateUserInClerk({
 			},
 		});
 
-		console.log(
-			`✅ Usuario ${userId} actualizado correctamente en Clerk.`
-		);
+		console.log(`✅ Usuario ${userId} actualizado correctamente en Clerk.`);
 		return true;
 	} catch (error) {
 		console.error('❌ Error al actualizar usuario en Clerk:', error);
@@ -573,22 +571,29 @@ export async function getCategoryNameById(id: number): Promise<string> {
 // Update this function to get instructor name from users table
 export async function getInstructorNameById(id: string): Promise<string> {
 	try {
+		// First try local DB
 		const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
 
 		if (user?.[0]?.name) {
 			return user[0].name;
 		}
 
-		// Fallback to Clerk if not found in local DB
-		const client = await clerkClient();
-		const clerkUser = await client.users.getUser(id);
-		return (
-			`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
-			'Unknown Instructor'
-		);
+		// Try Clerk but handle 404 gracefully
+		try {
+			const client = await clerkClient();
+			const clerkUser = await client.users.getUser(id);
+			return (
+				`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
+				'Unknown Instructor'
+			);
+		} catch (clerkError) {
+			// If Clerk returns 404 or any other error, return a default value
+			console.log(`Instructor ${id} not found in Clerk:`, clerkError);
+			return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
+		}
 	} catch (error) {
 		console.error('Error getting instructor name:', error);
-		return 'Unknown Instructor';
+		return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
 	}
 }
 export {};

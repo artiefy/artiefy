@@ -332,6 +332,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 		programId: number,
 		isActive: boolean
 	) => {
+		if (!user) return;
+
 		try {
 			setUploading(true);
 			void id;
@@ -373,7 +375,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 			}
 
 			const selectedEducator = educators.find((ed) => ed.id === instructor);
-			const instructorId = selectedEducator ? selectedEducator.id : '';
+			const instructorName = selectedEducator ? selectedEducator.name : '';
 
 			const response = await fetch('/api/educadores/courses/cursoMateria', {
 				method: 'POST',
@@ -385,8 +387,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					fileName,
 					categoryid,
 					modalidadesid,
-					instructorId, // Pass instructorId explicitly
-					creatorId: user?.id,
+					instructor: instructorName, // Aquí enviamos el nombre en lugar del ID
+					creatorId: user.id,
 					nivelid,
 					rating,
 					subjects,
@@ -448,7 +450,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				await fetchProgram(); // 🔥 refresca los cursos
 				setSubjects([]); // limpiar las materias en el estado
 				setIsCourseModalOpen(false); // cierra el modal
-				handleCloseCourseModal(); // También llama al manejador de cierre
 			} else {
 				const errorData = (await response.json()) as { error?: string };
 				toast.error('Error', {
@@ -700,7 +701,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				editingCourseId={editingCourse ? editingCourse.id : null}
 				title={newCourse.title}
 				parametros={editParametros}
-				setTitle={(newTitle) => setNewCourse((prev) => ({ ...prev, title: newTitle }))}
+				setTitle={(title) => setNewCourse((prev) => ({ ...prev, title }))}
 				description={newCourse.description ?? ''}
 				setDescription={(desc) =>
 					setNewCourse((prev) => ({ ...prev, description: desc }))
