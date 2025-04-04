@@ -332,7 +332,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						height={500}
 						minConstraints={[300, 400]}
 						maxConstraints={[800, window.innerHeight - 160]} // 160px total de margen (80px arriba y abajo)
-						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
+						resizeHandles={['s', 'n']} // Only keep top and bottom handles
 						className="chat-resizable"
 						onResize={handleResize}
 					>
