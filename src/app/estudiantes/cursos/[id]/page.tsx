@@ -57,7 +57,10 @@ export async function generateMetadata(
 	parent: ResolvingMetadata
 ): Promise<Metadata> {
 	try {
-		const courseId = Number(params.id);
+		// Await params to ensure it's resolved
+		const { id } = await Promise.resolve(params);
+		const courseId = Number(id);
+
 		if (isNaN(courseId)) {
 			return {
 				title: 'Curso no encontrado',
@@ -133,7 +136,7 @@ export async function generateMetadata(
 
 // Componente principal de la página del curso
 export default async function Page({ params }: { params: PageParams }) {
-	// Await params
+	// Already awaiting params here, keep this as is
 	const { id } = await Promise.resolve(params);
 
 	return (

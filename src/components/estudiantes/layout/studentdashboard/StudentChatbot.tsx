@@ -47,6 +47,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [lastSearchQuery, setLastSearchQuery] = useState('');
+	const [processingQuery, setProcessingQuery] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -55,40 +56,47 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const { user } = useUser();
 	const router = useRouter();
 
-	const handleBotResponse = useCallback(async (query: string) => {
-		setIsLoading(true);
-		try {
-			const response = await fetch('/api/iahome', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({ prompt: query }),
-			});
+	const handleBotResponse = useCallback(
+		async (query: string) => {
+			if (processingQuery) return;
+			setProcessingQuery(true);
+			setIsLoading(true);
+			try {
+				const response = await fetch('/api/iahome', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ prompt: query }),
+				});
 
-			const data = (await response.json()) as ChatResponse;
-			const messageText =
-				data.response ?? 'Lo siento, no pude encontrar información relevante.';
+				const data = (await response.json()) as ChatResponse;
+				const messageText =
+					data.response ??
+					'Lo siento, no pude encontrar información relevante.';
 
-			const botResponse = {
-				id: Date.now() + Math.random(),
-				text: messageText,
-				sender: 'bot' as const,
-			};
+				const botResponse = {
+					id: Date.now() + Math.random(),
+					text: messageText,
+					sender: 'bot' as const,
+				};
 
-			setMessages((prev) => [...prev, botResponse]);
-		} catch (error) {
-			console.error('Error getting bot response:', error);
-			const errorMessage = {
-				id: Date.now() + Math.random(),
-				text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
-				sender: 'bot' as const,
-			};
-			setMessages((prev) => [...prev, errorMessage]);
-		} finally {
-			setIsLoading(false);
-		}
-	}, []);
+				setMessages((prev) => [...prev, botResponse]);
+			} catch (error) {
+				console.error('Error getting bot response:', error);
+				const errorMessage = {
+					id: Date.now() + Math.random(),
+					text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
+					sender: 'bot' as const,
+				};
+				setMessages((prev) => [...prev, errorMessage]);
+			} finally {
+				setIsLoading(false);
+				setProcessingQuery(false);
+			}
+		},
+		[processingQuery]
+	);
 
 	useEffect(() => {
 		if (isOpen && inputRef.current) {
@@ -102,7 +110,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	useEffect(() => {
 		const handleInitialSearch = async () => {
-			if (!initialSearchQuery?.trim() || !isSignedIn || !showChat) return;
+			if (
+				!initialSearchQuery?.trim() ||
+				!isSignedIn ||
+				!showChat ||
+				processingQuery
+			)
+				return;
 
 			// Evitar búsquedas duplicadas comparando con la última búsqueda
 			if (initialSearchQuery.trim() === lastSearchQuery) return;
@@ -129,6 +143,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		showChat,
 		handleBotResponse,
 		lastSearchQuery,
+		processingQuery,
 	]);
 
 	useEffect(() => {
@@ -221,42 +236,52 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		sender: string;
 	}) => {
 		if (message.sender === 'bot') {
-			const courseMatches =
-				message.text.match(/\d+\.\s+(.*?)\|(\d+)(?=\n\n|\n|$)/g) ?? [];
-			const uniqueCourses = [...new Set(courseMatches)]
-				.map((course) => {
-					const match = /\d+\.\s+(.*?)\|(\d+)/.exec(course);
-					if (!match || match.length < 3) return null;
+			// Split the message into parts and extract courses
+			const parts = message.text.split('\n\n');
+			const introText = parts[0];
+			const courseTexts = parts.slice(1);
 
-					const [, title, courseId] = match;
+			// Parse all courses from the message
+			const courses = courseTexts
+				.map((text) => {
+					const match = /(\d+)\.\s+(.*?)\|(\d+)/.exec(text);
+					if (!match) return null;
 					return {
-						id: Number(courseId),
-						title: title.trim(),
+						number: parseInt(match[1]),
+						title: match[2].trim(),
+						id: parseInt(match[3]),
 					};
 				})
-				.filter((course): course is { id: number; title: string } =>
-					Boolean(course && !isNaN(course.id))
+				.filter(
+					(course): course is { number: number; title: string; id: number } =>
+						Boolean(course)
 				);
-
-			const introText = message.text.split('\n\n')[0];
 
 			return (
 				<div className="flex flex-col space-y-4">
 					<p className="font-medium text-gray-800">{introText}</p>
-					{uniqueCourses.length > 0 && (
+					{courses.length > 0 && (
 						<ul className="space-y-4">
-							{uniqueCourses.map((course) => (
+							{courses.map((course) => (
 								<li
 									key={course.id}
-									className="flex flex-col space-y-2 rounded-lg bg-background p-4 shadow-sm"
+									className="relative flex flex-col space-y-2 rounded-lg p-4"
 								>
-									<h4 className="font-semibold text-primary">{course.title}</h4>
-									<Link
-										href={`/estudiantes/cursos/${course.id}`} // Changed to use database ID directly
-										className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
-									>
-										Ir al curso
-									</Link>
+									{/* Background div positioned absolutely */}
+									<div className="absolute inset-0 rounded-lg bg-gray-100/50" />
+
+									{/* Content on top of background */}
+									<div className="relative z-10 flex flex-col space-y-2">
+										<h4 className="font-semibold text-gray-800">
+											{course.number}. {course.title}
+										</h4>
+										<Link
+											href={`/estudiantes/cursos/${course.id}`}
+											className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
+										>
+											Ir al curso
+										</Link>
+									</div>
 								</li>
 							))}
 						</ul>
@@ -367,11 +392,20 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								))}
 								{isLoading && (
 									<div className="flex justify-start">
-										<div className="rounded-lg bg-gray-100 p-3">
-											<div className="flex space-x-2">
-												<div className="loading-dot" />
-												<div className="loading-dot" />
-												<div className="loading-dot" />
+										<div className="rounded-lg bg-gray-100 p-1">
+											<div className="loader">
+												<div className="circle">
+													<div className="dot" />
+													<div className="outline" />
+												</div>
+												<div className="circle">
+													<div className="dot" />
+													<div className="outline" />
+												</div>
+												<div className="circle">
+													<div className="dot" />
+													<div className="outline" />
+												</div>
 											</div>
 										</div>
 									</div>

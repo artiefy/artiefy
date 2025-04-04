@@ -46,6 +46,7 @@ export default function StudentDetails({
 	const [searchQuery, setSearchQuery] = useState('');
 	const [chatbotKey, setChatbotKey] = useState(0);
 	const [showChatbot, setShowChatbot] = useState(false);
+	const [searchInProgress, setSearchInProgress] = useState(false);
 
 	console.log('Programs received:', initialPrograms); // Añadir este log para debug
 
@@ -74,35 +75,39 @@ export default function StudentDetails({
 	const latestFiveCourses = sortedCourses.slice(0, 5);
 	const latestTenCourses = sortedCourses.slice(0, 10);
 
-	// Modificar handleSearch para evitar búsquedas duplicadas
+	// Modificar handleSearch para prevenir búsquedas duplicadas
 	const handleSearch = useCallback(
 		(e?: React.FormEvent) => {
 			e?.preventDefault();
-			const query = searchQuery.trim();
 
-			if (!query) return;
+			if (searchInProgress || !searchQuery.trim()) return;
 
-			// Actualizar el estado del chatbot solo si hay cambios reales
-			if (!showChatbot) {
-				setShowChatbot(true);
-				setChatbotKey((prev) => prev + 1);
-			}
+			setSearchInProgress(true);
+			setShowChatbot(true);
+			setChatbotKey((prev) => prev + 1);
 		},
-		[searchQuery, showChatbot]
+		[searchQuery, searchInProgress]
 	);
+
+	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setSearchQuery(e.target.value);
+		if (e.target.value.trim() === '') {
+			setShowChatbot(false);
+			setSearchInProgress(false);
+		}
+	};
+
+	useEffect(() => {
+		// Reset search state when chatbot is closed
+		if (!showChatbot) {
+			setSearchInProgress(false);
+		}
+	}, [showChatbot]);
 
 	const handleSearchIconClick = (e: React.MouseEvent) => {
 		e.preventDefault(); // Prevent any default behavior
 		if (!searchQuery.trim()) return;
 		handleSearch();
-	};
-
-	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setSearchQuery(e.target.value);
-		// Si el chatbot está abierto y se limpia la búsqueda, cerrarlo
-		if (e.target.value.trim() === '' && showChatbot) {
-			setShowChatbot(false);
-		}
 	};
 
 	return (
@@ -148,12 +153,35 @@ export default function StudentDetails({
 											className="search__icon"
 											onClick={handleSearchIconClick}
 											role="button"
-											tabIndex={0}
 											aria-label="Buscar"
+											style={{
+												cursor: 'pointer',
+												outline: 'none',
+												transition: 'transform 0.2s ease',
+											}}
+											onMouseEnter={(e) => {
+												const path = e.currentTarget.querySelector('path');
+												if (path) path.style.fill = '#01142B';
+											}}
+											onMouseLeave={(e) => {
+												const path = e.currentTarget.querySelector('path');
+												if (path) path.style.fill = '';
+											}}
+											onMouseDown={(e) => {
+												e.currentTarget.style.transform = 'scale(1.1)';
+												const path = e.currentTarget.querySelector('path');
+												if (path) path.style.fill = '#01142B';
+											}}
+											onMouseUp={(e) => {
+												e.currentTarget.style.transform = 'scale(1)';
+											}}
 										>
-											<g>
-												<path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-											</g>
+											<path
+												d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"
+												style={{
+													transition: 'fill 0.2s ease',
+												}}
+											/>
 										</svg>
 									</div>
 								</div>

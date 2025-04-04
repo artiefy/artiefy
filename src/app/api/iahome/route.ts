@@ -47,18 +47,23 @@ export async function POST(request: Request) {
 			});
 		}
 
-		// Find courses in database by matching titles
+		// Create separate SQL conditions for each title
+		const titleConditions = data.result.map((title) => {
+			// Escape special characters and handle case-insensitive search
+			const searchTerm = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			return like(courses.title, `%${searchTerm}%`);
+		});
+
+		// Find matching courses with combined conditions
 		const foundCourses = await db
 			.select({
 				id: courses.id,
 				title: courses.title,
 			})
 			.from(courses)
-			.where(
-				data.result
-					.map((title) => like(courses.title, `%${title}%`))
-					.reduce((acc, curr) => acc || curr)
-			);
+			.where(titleConditions.reduce((acc, curr) => acc || curr))
+			.orderBy(courses.createdAt)
+			.limit(5);
 
 		if (!foundCourses.length) {
 			return NextResponse.json({
@@ -66,6 +71,7 @@ export async function POST(request: Request) {
 			});
 		}
 
+		// Format response with line breaks to ensure proper parsing
 		const formattedResponse = `He encontrado estos cursos relacionados con "${prompt}":\n\n${foundCourses
 			.map((course, idx) => `${idx + 1}. ${course.title}|${course.id}`)
 			.join('\n\n')}`;

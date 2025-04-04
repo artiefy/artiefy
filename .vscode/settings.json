@@ -23,6 +23,8 @@
 		"*.mjs": "javascript",
 		"*.js": "javascript",
 		"*.json": "json",
+		"*.svg": "svg", // Changed from "html" to "svg"
+		"*.xml": "html",
 		"*.config.mjs": "javascript",
 		"*.config.js": "javascript",
 		"*.config.ts": "typescript",
@@ -55,6 +57,23 @@
 	},
 	"[.env]": {
 		"editor.defaultFormatter": "IronGeek.vscode-env"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	},
+	"[svg]": {
+		"editor.defaultFormatter": "jock.svg",
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true
+	},
+	"[html]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true
+	},
+	"[xml]": {
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true
 	},
 	// TypeScript Configuration
 	"typescript.tsdk": "node_modules/typescript/lib",
