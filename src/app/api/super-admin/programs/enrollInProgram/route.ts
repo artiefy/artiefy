@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq, inArray, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { enrollmentPrograms, users, programas } from '~/server/db/schema';
 
 const BATCH_SIZE = 100;
-
 
 export async function GET() {
 	try {
@@ -26,13 +26,17 @@ export async function POST(request: Request) {
 		const body = (await request.json()) as {
 			programId: string;
 			userIds: string[];
+			planType: 'Pro' | 'Premium' | 'Enterprise';
 		};
 
-		const { programId, userIds } = body;
+		const { programId, userIds, planType } = body;
 		const parsedProgramId = Number(programId);
 
 		if (isNaN(parsedProgramId)) {
-			return NextResponse.json({ error: 'programId inválido' }, { status: 400 });
+			return NextResponse.json(
+				{ error: 'programId inválido' },
+				{ status: 400 }
+			);
 		}
 
 		if (!Array.isArray(userIds) || userIds.some((id) => !id.trim())) {
@@ -70,6 +74,36 @@ export async function POST(request: Request) {
 		const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
 
 		if (newUsers.length > 0) {
+			const oneMonthFromNow = new Date();
+			oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+
+			// Format date for Clerk
+			const formattedDate =
+				oneMonthFromNow.toISOString().slice(0, 10) + ' 23:59:59';
+
+			// Update DB users
+			await db
+				.update(users)
+				.set({
+					subscriptionStatus: 'active',
+					planType: planType,
+					subscriptionEndDate: oneMonthFromNow,
+				})
+				.where(inArray(users.id, newUsers));
+
+			const clerk = await clerkClient();
+			await Promise.all(
+				newUsers.map(async (userId) => {
+					await clerk.users.updateUser(userId, {
+						publicMetadata: {
+							subscriptionStatus: 'active',
+							subscriptionEndDate: formattedDate,
+							planType: planType,
+						},
+					});
+				})
+			);
+
 			for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
 				const batch = newUsers.slice(i, i + BATCH_SIZE);
 				await db.insert(enrollmentPrograms).values(
@@ -98,4 +132,3 @@ export async function POST(request: Request) {
 		);
 	}
 }
-

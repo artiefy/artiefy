@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { clerkClient } from '@clerk/nextjs/server';
 
 import {
 	getAllEducators,
@@ -20,9 +19,13 @@ export async function GET() {
 
 		const educators = await getAllEducators();
 
-		console.log('✅ [API] Educadores obtenidos:', educators);
+		// Transform the data to include only what we need
+		const formattedEducators = educators.map((educator) => ({
+			id: educator.id,
+			name: educator.name || 'Sin nombre', // Use name from users table
+		}));
 
-		if (!educators || educators.length === 0) {
+		if (!formattedEducators || formattedEducators.length === 0) {
 			console.warn('⚠️ [API] No hay educadores disponibles');
 			return NextResponse.json(
 				{ error: 'No hay educadores disponibles' },
@@ -30,7 +33,7 @@ export async function GET() {
 			);
 		}
 
-		return NextResponse.json(educators);
+		return NextResponse.json(formattedEducators);
 	} catch (error) {
 		console.error('❌ [API] Error al obtener educadores:', error);
 		return NextResponse.json(
@@ -52,25 +55,13 @@ export async function PUT(req: Request) {
 			);
 		}
 
-		// Properly type the user from Clerk
-		const clerk = await clerkClient();
-		const user = await clerk.users.getUser(body.newInstructor);
-		if (!user) {
-			return NextResponse.json(
-				{ error: 'Usuario no encontrado' },
-				{ status: 404 }
-			);
-		}
-
-		// Crear el nombre completo del educador
-		const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
-
-		// Actualizar el curso con el nombre completo del educador
-		await updateCourseInstructor(body.courseId, fullName);
+		// Update course with instructor ID directly
+		await updateCourseInstructor(body.courseId, body.newInstructor);
 
 		return NextResponse.json({
 			success: true,
 			message: '✅ Educador actualizado exitosamente',
+			instructorId: body.newInstructor,
 		});
 	} catch (error) {
 		console.error('❌ Error al actualizar el educador:', error);

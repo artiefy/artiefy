@@ -18,12 +18,25 @@ import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import 
 import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';
-import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>
 	NextResponse.json({ error: message }, { status });
+
+interface ApiError {
+	message: string;
+	code?: string;
+}
+
+function isApiError(error: unknown): error is ApiError {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		'message' in error &&
+		typeof (error as ApiError).message === 'string'
+	);
+}
 
 // Función para verificar si el usuario es nuevo y agregarlo a la tabla users
 async function ensureUserExists(userId: string) {
@@ -81,9 +94,11 @@ export async function GET(req: NextRequest) {
 		}
 		return NextResponse.json(courses);
 	} catch (error) {
-		console.error('Error in GET courses:', error);
+		const errorMessage = isApiError(error)
+			? error.message
+			: 'Unknown error occurred';
 		return NextResponse.json(
-			{ error: 'Error al obtener los datos' },
+			{ error: `Error al obtener los datos: ${errorMessage}` },
 			{ status: 500 }
 		);
 	}
@@ -96,99 +111,59 @@ export async function POST(request: NextRequest) {
 			return respondWithError('No autorizado', 403);
 		}
 
-		// Verificar si el usuario es nuevo y agregarlo a la tabla users
 		await ensureUserExists(userId);
-
-		// Implement rate limiting
-		const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
-		const { success } = await ratelimit.limit(ip);
-		if (!success) {
-			return respondWithError('Demasiadas solicitudes', 429);
-		}
 
 		const body = (await request.json()) as {
 			title: string;
 			description: string;
-			coverImageKey: string;
+			coverImageKey?: string;
 			categoryid: number;
 			modalidadesid: number;
 			nivelid: number;
-			rating: number;
-			creatorId: string;
-			instructor: string;
-			subjects?: { id: number }[];
+			instructorId?: string;
 		};
 
 		const {
 			title,
 			description,
+			coverImageKey = '',
+			categoryid,
+			modalidadesid,
+			nivelid,
+			instructorId = userId, // Default to current user if not provided
+		} = body;
+
+		console.log('Creating course with data:', {
+			title,
+			description,
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			rating,
 			nivelid,
-			creatorId,
-			instructor,
-		} = body;
-		const courseId = await createCourse({
+			instructor: instructorId, // Log to verify instructor ID
+			creatorId: userId,
+		});
+
+		const course = await createCourse({
 			title,
 			description,
 			creatorId: userId,
 			coverImageKey,
 			categoryid,
-			rating,
 			modalidadesid,
 			nivelid,
-			instructor,
-			courseTypeId: 1, // Replace with the appropriate value for courseTypeId
+			instructor: instructorId, // Make sure to pass instructor ID
 		});
 
-		console.log('Datos enviados al servidor:', {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			creatorId,
-			rating,
-			modalidadesid,
-			nivelid,
-			instructor,
-		});
-
-		const id = courseId.id;
-		for (const subject of body.subjects ?? []) {
-			const existingMateria = await db
-				.select()
-				.from(materias)
-				.where(eq(materias.id, subject.id))
-				.then((res) => res[0]);
-
-			if (!existingMateria) continue;
-
-			if (existingMateria.courseid) {
-				await db.insert(materias).values({
-					title: existingMateria.title,
-					description: existingMateria.description,
-					programaId: existingMateria.programaId,
-					courseid: id,
-				});
-			} else {
-				await db
-					.update(materias)
-					.set({ courseid: id })
-					.where(eq(materias.id, subject.id));
-			}
-		}
-
-		return NextResponse.json({
-			message: 'Curso creado exitosamente',
-			id,
-		});
-	} catch (error: unknown) {
-		console.error('Error al crear el curso:', error);
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
-		return respondWithError(`Error al crear el curso: ${errorMessage}`, 500);
+		return NextResponse.json({ message: 'Curso creado exitosamente', course });
+	} catch (error) {
+		console.error('Error creating course:', error);
+		return respondWithError(
+			`Error al crear el curso: ${
+				error instanceof Error ? error.message : 'Unknown error'
+			}`,
+			500
+		);
 	}
 }
 
@@ -208,7 +183,7 @@ export async function PUT(request: NextRequest) {
 			categoryid: number;
 			modalidadesid: number;
 			nivelid: number;
-			instructor: string;
+			instructorId: string; // Changed from instructor to instructorId
 			subjects?: { id: number }[];
 		};
 
@@ -220,7 +195,7 @@ export async function PUT(request: NextRequest) {
 			modalidadesid,
 			nivelid,
 			categoryid,
-			instructor,
+			instructorId, // Updated from instructor
 			subjects = [],
 		} = body;
 
@@ -236,7 +211,7 @@ export async function PUT(request: NextRequest) {
 			coverImageKey,
 			categoryid,
 			modalidadesid,
-			instructor,
+			instructor: instructorId, // Map instructorId to instructor
 			nivelid,
 		});
 
@@ -323,7 +298,10 @@ export async function PUT(request: NextRequest) {
 
 		return NextResponse.json({
 			message: 'Curso actualizado exitosamente',
-			id: course.id,
+			id:
+				course && 'id' in course && typeof course.id === 'number'
+					? course.id
+					: id,
 		});
 	} catch (error) {
 		console.error('Error al actualizar el curso:', error);

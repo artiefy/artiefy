@@ -483,6 +483,10 @@ export default function AdminDashboard() {
 		}
 	};
 
+	const [selectedPlanType, setSelectedPlanType] = useState<
+		'Pro' | 'Premium' | 'Enterprise'
+	>('Premium');
+
 	const handleAssignStudents = async () => {
 		if (selectedStudents.length === 0) return;
 
@@ -496,6 +500,7 @@ export default function AdminDashboard() {
 					body: JSON.stringify({
 						courseId: selectedCourse,
 						userIds: selectedStudents,
+						planType: selectedPlanType,
 					}),
 				});
 			}
@@ -507,6 +512,7 @@ export default function AdminDashboard() {
 					body: JSON.stringify({
 						programId: selectedProgram,
 						userIds: selectedStudents,
+						planType: selectedPlanType,
 					}),
 				});
 			} else {
@@ -1562,6 +1568,25 @@ export default function AdminDashboard() {
 
 							{/* Colapsable Cursos y Programas */}
 							<div className="space-y-4 rounded-lg bg-gray-700 p-4">
+								<div className="mb-4">
+									<label className="mb-2 block text-sm font-medium text-white">
+										Plan de Suscripción
+									</label>
+									<select
+										value={selectedPlanType}
+										onChange={(e) =>
+											setSelectedPlanType(
+												e.target.value as 'Pro' | 'Premium' | 'Enterprise'
+											)
+										}
+										className="w-full rounded border border-gray-600 bg-gray-800 px-3 py-2 text-white"
+									>
+										<option value="Pro">Pro</option>
+										<option value="Premium">Premium</option>
+										<option value="Enterprise">Enterprise</option>
+									</select>
+								</div>
+
 								<div>
 									<button
 										onClick={() => setCoursesCollapsed(!coursesCollapsed)}

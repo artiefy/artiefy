@@ -116,12 +116,11 @@ export async function POST(request: Request) {
 		}
 
 		// 2. Crear usuario en Clerk
-		const { user, generatedPassword } = await createUser(
-			firstName,
-			lastName,
-			email,
-			role
-		);
+		const result = await createUser(firstName, lastName, email, role);
+		if (!result) {
+			return NextResponse.json({ error: 'Failed to create user' }, { status: 400 });
+		}
+		const { user, generatedPassword } = result;
 
 		// 3. Guardar usuario en la base de datos con Drizzle
 		await db.insert(users).values({

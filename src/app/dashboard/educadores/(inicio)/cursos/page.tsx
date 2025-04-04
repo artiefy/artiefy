@@ -66,9 +66,8 @@ export default function Page() {
 		try {
 			setLoading(true);
 			setError(null);
-			const fullName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
 			const response = await fetch(
-				`/api/educadores/courses/coursesByEducator?fullName=${encodeURIComponent(fullName)}`
+				`/api/educadores/courses/coursesByEducator?userId=${encodeURIComponent(user.id)}&fullName=${encodeURIComponent(user.fullName ?? '')}`
 			);
 			if (response.ok) {
 				const data = (await response.json()) as CourseModel[];

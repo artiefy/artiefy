@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq, count, sum } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
@@ -52,57 +53,72 @@ export interface Course {
 	modalidadesid: number | null;
 	nivelid: number | null;
 	rating: number;
-	instructor: string;
+	instructor: string; // Changed from instructorId
 	creatorId: string;
 	createdAt: string | number | Date;
 	updatedAt: string | number | Date;
 }
 
-// CRUD de cursos
-// Crear un nuevo curso
-export const createCourse = async ({
-	title,
-	description,
-	coverImageKey,
-	categoryid,
-	modalidadesid,
-	nivelid,
-	instructor,
-	creatorId,
-	rating,
-	courseTypeId,
-	isActive,
-}: {
+interface CreateCourseData {
 	title: string;
 	description: string;
 	coverImageKey: string;
 	categoryid: number;
 	modalidadesid: number;
 	nivelid: number;
-	instructor: string;
+	instructor: string; // This is required
 	creatorId: string;
-	rating: number;
-	courseTypeId: number;
-	isActive?: boolean;
-}) => {
-	const [insertedCourse] = await db
-		.insert(courses)
-		.values({
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			nivelid,
-			instructor,
-			rating,
-			creatorId,
-			courseTypeId,
-			isActive,
-		})
-		.returning({ id: courses.id });
-	return { ...insertedCourse };
-};
+	courseTypeId?: number | null;
+}
+
+interface ApiError {
+	message: string;
+	code?: string;
+}
+
+function isApiError(error: unknown): error is ApiError {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		'message' in error &&
+		typeof (error as ApiError).message === 'string'
+	);
+}
+
+export async function createCourse(data: CreateCourseData) {
+	try {
+		// Add validation for required instructor
+		if (!data.instructor) {
+			throw new Error('Instructor ID is required');
+		}
+
+		console.log('Creating course with validated data:', data);
+
+		// Create course with explicit instructor field
+		const result = await db
+			.insert(courses)
+			.values({
+				title: data.title,
+				description: data.description,
+				coverImageKey: data.coverImageKey,
+				categoryid: data.categoryid,
+				modalidadesid: data.modalidadesid,
+				nivelid: data.nivelid,
+				instructor: data.instructor, // Ensure instructor is set
+				creatorId: data.creatorId,
+				courseTypeId: 1,
+				isActive: true,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			.returning();
+
+		return result[0];
+	} catch (error) {
+		console.error('Database error creating course:', error);
+		throw error;
+	}
+}
 
 // Obtener todos los cursos de un profesor
 export const getCoursesByUserId = async (userId: string) => {
@@ -115,7 +131,7 @@ export const getCoursesByUserId = async (userId: string) => {
 			categoryid: categories.name,
 			modalidadesid: modalidades.name,
 			nivelid: nivel.name,
-			instructor: courses.instructor,
+			instructor: courses.instructor, // Keep using instructor for now
 			rating: courses.rating,
 			creatorId: courses.creatorId,
 			createdAt: courses.createdAt,
@@ -190,6 +206,11 @@ export const getCourseById = async (courseId: number) => {
 			throw new Error('Curso no encontrado');
 		}
 
+		// Fetch instructor details from Clerk
+		const clerk = await clerkClient();
+		const user = await clerk.users.getUser(course.instructor);
+		const instructorName = `${user.firstName} ${user.lastName}`.trim();
+
 		// Obtener los nombres de las relaciones por separado
 		const category = course.categoryid
 			? await db
@@ -226,6 +247,7 @@ export const getCourseById = async (courseId: number) => {
 
 		return {
 			...course,
+			instructor: instructorName, // Replace instructor ID with full name
 			categoryid: category?.name ?? course.categoryid,
 			modalidadesid: modalidad?.name ?? course.modalidadesid,
 			nivelid: nivelName ?? course.nivelid,
@@ -233,8 +255,10 @@ export const getCourseById = async (courseId: number) => {
 			totalStudents,
 		};
 	} catch (error) {
-		console.error('Error al obtener el curso:', error);
-		throw new Error('Error al obtener el curso');
+		const errorMessage = isApiError(error)
+			? error.message
+			: 'Unknown error occurred';
+		throw new Error(`Error al obtener el curso: ${errorMessage}`);
 	}
 };
 
@@ -249,7 +273,7 @@ export const getAllCourses = async () => {
 			categoryid: categories.name,
 			modalidadesid: modalidades.name,
 			nivelid: nivel.name,
-			instructor: courses.instructor,
+			instructor: courses.instructor, // Changed from instructorId
 			creatorId: courses.creatorId,
 			createdAt: courses.createdAt,
 			updatedAt: courses.updatedAt,
@@ -271,7 +295,7 @@ export const updateCourse = async (
 		categoryid?: number;
 		modalidadesid?: number;
 		nivelid?: number;
-		instructor?: string;
+		instructor?: string; // Changed from instructorId
 		rating?: number;
 		courseTypeId?: number | null;
 		isActive?: boolean;
@@ -306,12 +330,10 @@ export const updateCourse = async (
 		console.log('✅ Curso actualizado:', updatedCourse[0]);
 		return updatedCourse[0];
 	} catch (error) {
-		console.error('❌ Error al actualizar el curso:', error);
-		throw new Error(
-			`Error al actualizar el curso: ${
-				error instanceof Error ? error.message : 'Error desconocido'
-			}`
-		);
+		const errorMessage = isApiError(error)
+			? error.message
+			: 'Unknown error occurred';
+		throw new Error(`Error al actualizar el curso: ${errorMessage}`);
 	}
 };
 
@@ -401,8 +423,10 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 		// De lo contrario, devolver los cursos
 		return coursesData;
 	} catch (error) {
-		console.error('Error al obtener los cursos:', error);
-		throw new Error('Error al obtener los cursos');
+		const errorMessage = isApiError(error)
+			? error.message
+			: 'Unknown error occurred';
+		throw new Error(`Error al obtener los cursos: ${errorMessage}`);
 	}
 };
 
@@ -452,7 +476,7 @@ export const getCoursesByUser = async (userId: string) => {
 				categoryid: categories.name,
 				modalidadesid: modalidades.name,
 				nivelid: nivel.name,
-				instructor: courses.instructor,
+				instructor: courses.instructor, // Changed from instructorId
 				rating: courses.rating,
 				creatorId: courses.creatorId,
 				createdAt: courses.createdAt,
@@ -463,6 +487,6 @@ export const getCoursesByUser = async (userId: string) => {
 			.leftJoin(categories, eq(courses.categoryid, categories.id))
 			.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
 			.leftJoin(nivel, eq(courses.nivelid, nivel.id))
-			.where(eq(courses.instructor, userId))
+			.where(eq(courses.instructor, userId)) // Changed from instructorId
 	);
 };

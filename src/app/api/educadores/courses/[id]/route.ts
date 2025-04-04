@@ -22,7 +22,7 @@ interface PutRequestBody {
 	categoryid?: number;
 	modalidadesid?: number;
 	nivelid?: number;
-	instructor?: string;
+	instructorId?: string; // Changed from instructor to instructorId
 	rating?: number;
 	courseTypeId?: number | null;
 	isActive?: boolean;
@@ -88,7 +88,7 @@ export async function PUT(
 				? Number(data.modalidadesid)
 				: undefined,
 			nivelid: data.nivelid ? Number(data.nivelid) : undefined,
-			instructor: data.instructor ?? undefined,
+			instructorId: data.instructorId ?? undefined, // Changed from instructor to instructorId
 			rating: data.rating ? Number(data.rating) : undefined,
 			courseTypeId: 'courseTypeId' in data ? data.courseTypeId : undefined,
 			isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
@@ -185,7 +185,7 @@ interface CourseData {
 	categoryid: number;
 	modalidadesid: number;
 	nivelid: number;
-	instructor: string;
+	instructorId: string;
 	creatorId: string;
 	rating: number;
 }
@@ -245,6 +245,7 @@ export async function POST(request: Request) {
 				...data,
 				title: newTitle, // Usar el título modificado
 				modalidadesid: modalidadId, // Asignar el ID de la modalidad actual
+				instructor: data.instructorId, // Use consistent property name
 			});
 			console.log(`Curso creado para modalidadId ${modalidadId}:`, newCourse);
 

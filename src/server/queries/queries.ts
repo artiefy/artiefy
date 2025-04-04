@@ -164,6 +164,29 @@ function generateSecurePassword(length = 14): string {
 		.join('');
 }
 
+async function generateUniqueUsername(baseUsername: string): Promise<string> {
+	const client = await clerkClient();
+	let username = baseUsername;
+	let counter = 1;
+
+	while (true) {
+		try {
+			const existingUsers = await client.users.getUserList({
+				username: [username],
+			});
+
+			if (existingUsers.data.length === 0) {
+				return username;
+			}
+
+			username = `${baseUsername}${counter}`;
+			counter++;
+		} catch {
+			return username;
+		}
+	}
+}
+
 export async function createUser(
 	firstName: string,
 	lastName: string,
@@ -172,34 +195,42 @@ export async function createUser(
 ) {
 	try {
 		const generatedPassword = generateSecurePassword();
+		let baseUsername =
+			`${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
+		if (baseUsername.length < 4) baseUsername += 'user';
+		baseUsername = baseUsername.slice(0, 60); // Leave room for numbers
 
-		// 🔹 Generar un nombre de usuario válido (mínimo 4 caracteres, máximo 64)
-		let username = `${firstName}${lastName?.split(' ')[0] || ''}`.toLowerCase();
-		if (username.length < 4) username += 'user';
-		username = username.slice(0, 64);
+		const uniqueUsername = await generateUniqueUsername(baseUsername);
 
 		const client = await clerkClient();
-		const newUser = await client.users.createUser({
-			firstName,
-			lastName,
-			username,
-			password: generatedPassword,
-			emailAddress: [email],
-			publicMetadata: { role, mustChangePassword: true },
-		});
+		try {
+			const newUser = await client.users.createUser({
+				firstName,
+				lastName,
+				username: uniqueUsername,
+				password: generatedPassword,
+				emailAddress: [email],
+				publicMetadata: { role, mustChangePassword: true },
+			});
 
-		console.log(
-			`DEBUG: Usuario ${newUser.id} creado con contraseña: ${generatedPassword}`
-		);
-		return { user: newUser, generatedPassword };
-	} catch (error: unknown) {
-		console.error(
-			'DEBUG: Error al crear usuario en Clerk:',
-			JSON.stringify(error, null, 2)
-		);
-		throw new Error(
-			(error as { message: string }).message || 'No se pudo crear el usuario'
-		);
+			return { user: newUser, generatedPassword };
+		} catch (error: unknown) {
+			// Si el error es por email duplicado, retornamos null sin lanzar error
+			if (
+				(error as { errors?: { code: string; meta?: { paramName: string } }[] })?.errors?.some(
+					(e) =>
+						e.code === 'form_identifier_exists' &&
+						e.meta?.paramName === 'email_address'
+				)
+			) {
+				return null;
+			}
+			// Si es otro tipo de error, lo lanzamos
+			throw error;
+		}
+	} catch (error) {
+		console.error('Error al crear usuario:', error);
+		throw error;
 	}
 }
 
@@ -280,6 +311,7 @@ export interface CourseData {
 	categoryName?: string; // 🔹 Add categoryName as an optional property
 	requiresProgram?: boolean | null;
 	programas?: { id: number; title: string }[];
+	instructorName?: string; // Add instructorName as an optional property
 }
 
 export interface Materia {
@@ -330,7 +362,60 @@ export async function getCourses(
 			db.select({ count: sql`count(*)` }).from(courses),
 		]);
 
-		// Get materias and programas for each course
+		// Get instructors info from Clerk
+		const clerk = await clerkClient();
+		console.log('Fetching instructor info for courses:', coursesData);
+
+		const instructorsInfo = await Promise.all(
+			coursesData.map(async (course) => {
+				if (!course.instructor) {
+					return { id: '', name: 'No Instructor Assigned' };
+				}
+
+				try {
+					// First try to get from users table
+					const dbUser = await db
+						.select()
+						.from(users)
+						.where(eq(users.id, course.instructor))
+						.limit(1);
+
+					if (dbUser?.[0]?.name) {
+						return { id: course.instructor, name: dbUser[0].name };
+					}
+
+					// If not in DB, try Clerk
+					try {
+						const user = await clerk.users.getUser(course.instructor);
+						const name =
+							`${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+						return {
+							id: course.instructor,
+							name: name || course.instructor, // Fallback to instructor ID if no name
+						};
+					} catch (clerkError) {
+						// If Clerk fails, use the instructor field directly
+						return {
+							id: course.instructor,
+							name: course.instructor, // Use the instructor field as is
+						};
+					}
+				} catch (error) {
+					console.error(
+						`Error fetching instructor for course ${course.id}:`,
+						error
+					);
+					return { id: course.instructor, name: course.instructor };
+				}
+			})
+		);
+
+		// Create lookup for instructor names
+		const instructorNames = Object.fromEntries(
+			instructorsInfo.map((info) => [info.id, info.name])
+		);
+
+		// Get materias and programas for each course with instructor names
 		const coursesWithRelations = await Promise.all(
 			coursesData.map(async (course) => {
 				const materiaResults = await db
@@ -357,6 +442,8 @@ export async function getCourses(
 					categoryName:
 						categoryNameCache[course.categoryid] ?? 'Unknown Category',
 					programas: uniquePrograms,
+					instructorName:
+						instructorNames[course.instructor] || course.instructor,
 				};
 			})
 		);
@@ -475,7 +562,7 @@ export async function updateUserInClerk({
 		const client = await clerkClient();
 
 		// 🔥 Aseguramos que Clerk reciba TODOS los valores correctamente
-		const updatedUser = await client.users.updateUser(userId, {
+		await client.users.updateUser(userId, {
 			firstName,
 			lastName,
 			publicMetadata: {
@@ -485,10 +572,7 @@ export async function updateUserInClerk({
 			},
 		});
 
-		console.log(
-			`✅ Usuario ${userId} actualizado correctamente en Clerk.`,
-			updatedUser
-		);
+		console.log(`✅ Usuario ${userId} actualizado correctamente en Clerk.`);
 		return true;
 	} catch (error) {
 		console.error('❌ Error al actualizar usuario en Clerk:', error);
@@ -518,22 +602,29 @@ export async function getCategoryNameById(id: number): Promise<string> {
 // Update this function to get instructor name from users table
 export async function getInstructorNameById(id: string): Promise<string> {
 	try {
+		// First try local DB
 		const user = await db.select().from(users).where(eq(users.id, id)).limit(1);
 
 		if (user?.[0]?.name) {
 			return user[0].name;
 		}
 
-		// Fallback to Clerk if not found in local DB
-		const client = await clerkClient();
-		const clerkUser = await client.users.getUser(id);
-		return (
-			`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
-			'Unknown Instructor'
-		);
+		// Try Clerk but handle 404 gracefully
+		try {
+			const client = await clerkClient();
+			const clerkUser = await client.users.getUser(id);
+			return (
+				`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
+				'Unknown Instructor'
+			);
+		} catch (clerkError) {
+			// If Clerk returns 404 or any other error, return a default value
+			console.log(`Instructor ${id} not found in Clerk:`, clerkError);
+			return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
+		}
 	} catch (error) {
 		console.error('Error getting instructor name:', error);
-		return 'Unknown Instructor';
+		return id || 'Unknown Instructor'; // Return the ID if available, otherwise Unknown Instructor
 	}
 }
 export {};

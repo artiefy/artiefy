@@ -247,6 +247,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					const data = (await response.json()) as Course;
 					setCourse(data);
 					setCourseTypeId(data.courseTypeId ?? null);
+					setCurrentInstructor(data.instructor); // Set current instructor when course loads
+					setSelectedInstructor(data.instructor); // Set selected instructor when course loads
 
 					const dataParametros =
 						(await responseParametros.json()) as Parametros[]; // Obtener los parámetros
@@ -368,13 +370,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			}
 
-			// Obtener el nombre del instructor seleccionado
-			const selectedEducator = educators.find(
-				(educator) => educator.id === currentInstructor
-			);
-			const instructorName = selectedEducator
-				? selectedEducator.name
-				: course?.instructor;
+			
 
 			// Primero actualizar el curso
 			const response = await fetch(
@@ -390,7 +386,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						categoryid,
 						modalidadesid,
 						nivelid,
-						instructor: instructorName, // Enviar el nombre del instructor en lugar del ID
+						instructor: currentInstructor, // Enviar el ID del instructor
 						rating,
 						courseTypeId,
 						isActive,
@@ -564,7 +560,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
 	};
 
-	// Add this function to handle instructor change
+	// Modify handleChangeInstructor to include name
 	const handleChangeInstructor = async () => {
 		if (!selectedInstructor || !course?.id) {
 			toast.error('Por favor seleccione un instructor');
@@ -572,7 +568,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}
 
 		try {
-			setIsUpdating(true); // This will now trigger the fullscreen loader
+			setIsUpdating(true);
 
 			const response = await fetch('/api/super-admin/changeEducators', {
 				method: 'PUT',
@@ -593,6 +589,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			const selectedEducator = educators.find(
 				(e) => e.id === selectedInstructor
 			);
+
 			if (selectedEducator && course) {
 				setCourse({
 					...course,
@@ -602,8 +599,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 				setSelectedInstructor('');
 				toast.success('Instructor actualizado exitosamente');
-
-				// Refresh the course data
 				await fetchCourse();
 			}
 		} catch (error) {
@@ -807,17 +802,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</h2>
 									<div className="flex flex-col gap-2">
 										<select
-											value={selectedInstructor}
+											value={selectedInstructor || course.instructor} // Use current instructor as fallback
 											onChange={(e) => setSelectedInstructor(e.target.value)}
 											className="w-full rounded-md border border-primary bg-background p-2 text-sm text-primary"
 										>
-											{course.instructor && (
-												<option value="">{course.instructor}</option>
-											)}
+											<option value={course.instructor}>
+												{course.instructorName ??
+													educators.find((e) => e.id === course.instructor)
+														?.name ??
+													'Sin nombre'}
+											</option>
 											{educators
-												.filter(
-													(educator) => educator.name !== course.instructor
-												)
+												.filter((ed) => ed.id !== course.instructor)
 												.map((educator) => (
 													<option key={educator.id} value={educator.id}>
 														{educator.name}

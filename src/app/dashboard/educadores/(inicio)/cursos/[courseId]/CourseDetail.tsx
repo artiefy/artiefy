@@ -101,6 +101,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicos
 	const [materias, setMaterias] = useState<Materia[]>([]);
 	const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
+	void parametros;
 	void materias;
 
 	const [isActive, setIsActive] = useState<boolean>(true);
@@ -339,29 +340,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		}
 	};
 
-	// Función para manejar la edición del curso
-	const handleEditCourse = () => {
-		if (!course) return; // Verificación adicional
-		setEditTitle(course.title);
-		setEditDescription(course.description);
-		setEditCategory(parseInt(course.categoryid));
-		setEditModalidad(parseInt(course.modalidadesid));
-		setEditNivel(parseInt(course.nivelid));
-		setEditCoverImageKey(course.coverImageKey);
-		setEditParametros(
-			parametros.map((parametro) => ({
-				id: parametro.id,
-				name: parametro.name,
-				description: parametro.description,
-				porcentaje: parametro.porcentaje,
-			}))
-		);
-		setEditRating(course.rating); // Añadir esta línea
-		setCourseTypeId(course.courseTypeId ?? null); // <-- ¡Agrega esto!
-		setIsModalOpen(true);
-		setIsActive(course.isActive ?? true);
-	};
-
 	// Verificar si se está cargando
 	if (loading) {
 		return (
@@ -520,19 +498,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									quality={75}
 								/>
 							</div>
-							<div className="mt-8 grid grid-cols-4 gap-5">
+							<div className="mt-8 grid grid-cols-3 gap-5">
 								<Button
 									className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
 								>
 									<Link href={`./${course.id}/ver/${course.id}`}>
 										Visualizar curso
 									</Link>
-								</Button>
-								<Button
-									onClick={handleEditCourse}
-									className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
-								>
-									Editar cursos
 								</Button>
 								<Button className="border-primary bg-primary text-white hover:bg-primary/90">
 									<Link

@@ -75,7 +75,7 @@ const ProgramCoursesList: React.FC<ProgramCoursesListProps> = ({ courses }) => {
 								<p className="text-sm font-bold text-gray-300 italic">
 									Educador:{' '}
 									<span className="font-bold italic">
-										{course.instructor ?? 'Unknown Instructor'}
+										{course.instructorName ?? 'Sin instructor asignado'}
 									</span>
 								</p>
 								<p className="text-sm font-bold text-red-500">
