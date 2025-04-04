@@ -190,7 +190,7 @@ Windows: `C:\Users\TU_USUARIO\AppData\Roaming\Code`
 
 ---
 
-[jjose2911@outlook.com](mailto:jjose2911@outlook.com)
-Studiovisual18*
+[visualstudio308@gmail.com](mailto:visualstudio308@gmail.com)
+Camilsebas18*
 
 ---
