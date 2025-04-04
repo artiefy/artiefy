@@ -280,6 +280,7 @@ export interface CourseData {
 	categoryName?: string; // 🔹 Add categoryName as an optional property
 	requiresProgram?: boolean | null;
 	programas?: { id: number; title: string }[];
+	instructorName?: string; // Add instructorName as an optional property
 }
 
 export interface Materia {
@@ -330,7 +331,60 @@ export async function getCourses(
 			db.select({ count: sql`count(*)` }).from(courses),
 		]);
 
-		// Get materias and programas for each course
+		// Get instructors info from Clerk
+		const clerk = await clerkClient();
+		console.log('Fetching instructor info for courses:', coursesData);
+
+		const instructorsInfo = await Promise.all(
+			coursesData.map(async (course) => {
+				if (!course.instructor) {
+					return { id: '', name: 'No Instructor Assigned' };
+				}
+
+				try {
+					// First try to get from users table
+					const dbUser = await db
+						.select()
+						.from(users)
+						.where(eq(users.id, course.instructor))
+						.limit(1);
+
+					if (dbUser?.[0]?.name) {
+						return { id: course.instructor, name: dbUser[0].name };
+					}
+
+					// If not in DB, try Clerk
+					try {
+						const user = await clerk.users.getUser(course.instructor);
+						const name =
+							`${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+						return {
+							id: course.instructor,
+							name: name || course.instructor, // Fallback to instructor ID if no name
+						};
+					} catch (clerkError) {
+						// If Clerk fails, use the instructor field directly
+						return {
+							id: course.instructor,
+							name: course.instructor, // Use the instructor field as is
+						};
+					}
+				} catch (error) {
+					console.error(
+						`Error fetching instructor for course ${course.id}:`,
+						error
+					);
+					return { id: course.instructor, name: course.instructor };
+				}
+			})
+		);
+
+		// Create lookup for instructor names
+		const instructorNames = Object.fromEntries(
+			instructorsInfo.map((info) => [info.id, info.name])
+		);
+
+		// Get materias and programas for each course with instructor names
 		const coursesWithRelations = await Promise.all(
 			coursesData.map(async (course) => {
 				const materiaResults = await db
@@ -357,6 +411,8 @@ export async function getCourses(
 					categoryName:
 						categoryNameCache[course.categoryid] ?? 'Unknown Category',
 					programas: uniquePrograms,
+					instructorName:
+						instructorNames[course.instructor] || course.instructor,
 				};
 			})
 		);
@@ -475,7 +531,7 @@ export async function updateUserInClerk({
 		const client = await clerkClient();
 
 		// 🔥 Aseguramos que Clerk reciba TODOS los valores correctamente
-		const updatedUser = await client.users.updateUser(userId, {
+		await client.users.updateUser(userId, {
 			firstName,
 			lastName,
 			publicMetadata: {
@@ -486,8 +542,7 @@ export async function updateUserInClerk({
 		});
 
 		console.log(
-			`✅ Usuario ${userId} actualizado correctamente en Clerk.`,
-			updatedUser
+			`✅ Usuario ${userId} actualizado correctamente en Clerk.`
 		);
 		return true;
 	} catch (error) {
