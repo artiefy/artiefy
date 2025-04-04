@@ -393,7 +393,7 @@ export async function getCourses(
 							id: course.instructor,
 							name: name || course.instructor, // Fallback to instructor ID if no name
 						};
-					} catch (clerkError) {
+					} catch (_) {
 						// If Clerk fails, use the instructor field directly
 						return {
 							id: course.instructor,

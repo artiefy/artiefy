@@ -67,13 +67,26 @@ export async function PUT(
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
+		// Validar autenticación del usuario
 		const { userId } = await auth();
 		if (!userId) {
-			return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+			console.warn('⚠️ Usuario no autenticado.');
+			return NextResponse.json(
+				{ error: 'No autorizado. Por favor, inicie sesión.' },
+				{ status: 403 }
+			);
 		}
 
 		const resolvedParams = await params;
 		const courseId = parseInt(resolvedParams.id);
+
+		if (isNaN(courseId)) {
+			console.warn('⚠️ ID de curso inválido.');
+			return NextResponse.json(
+				{ error: 'ID de curso inválido' },
+				{ status: 400 }
+			);
+		}
 
 		const data = (await request.json()) as PutRequestBody;
 		console.log('📥 Datos recibidos:', data);
@@ -108,11 +121,77 @@ export async function PUT(
 			const currentMaterias = await db
 				.select()
 				.from(materias)
-				.where(eq(materias.courseid, courseId));
+				.where(eq(materias.courseid, courseId))
+				.catch((err) => {
+					console.error('❌ Error al obtener materias actuales:', err);
+					throw new Error('Error al obtener materias actuales');
+				});
 
 			console.log('📋 Materias actuales:', currentMaterias);
-			const programId = currentMaterias[0]?.programaId;
 
+			// Nueva validación: Si el curso no tiene programa y la materia no tiene ni curso ni programa
+			for (const subject of data.subjects) {
+				try {
+					const materiaOriginal = await db
+						.select()
+						.from(materias)
+						.where(eq(materias.id, subject.id))
+						.limit(1)
+						.then((res) => res[0])
+						.catch((err) => {
+							console.error(
+								`❌ Error al obtener la materia con ID ${subject.id}:`,
+								err
+							);
+							throw new Error(
+								`Error al obtener la materia con ID ${subject.id}`
+							);
+						});
+
+					if (
+						(!currentMaterias.length ||
+							currentMaterias[0]?.programaId === undefined) &&
+						!materiaOriginal?.programaId &&
+						!materiaOriginal?.courseid
+					) {
+						console.log(
+							`⚠️ Materia con ID ${subject.id} y curso ${courseId} no tienen programa ni curso asignado.`
+						);
+
+						// Asignar programaId único y el curso actual
+						await db
+							.insert(materias)
+							.values({
+								title: materiaOriginal?.title ?? 'Título predeterminado',
+								description:
+									materiaOriginal?.description ?? 'Descripción predeterminada',
+								programaId: 9999999, // ID único que nunca se usará
+								courseid: courseId, // Asignar el curso actual
+							})
+							.catch((err) => {
+								console.error(
+									`❌ Error al insertar la materia con ID ${subject.id}:`,
+									err
+								);
+								throw new Error(
+									`Error al insertar la materia con ID ${subject.id}`
+								);
+							});
+						console.log(
+							`✨ Materia con ID ${subject.id} asignada al curso ${courseId} con programaId 9999999.`
+						);
+						continue; // Pasar a la siguiente materia
+					}
+				} catch (err) {
+					console.error(
+						`❌ Error al procesar la materia con ID ${subject.id}:`,
+						err
+					);
+				}
+			}
+
+			// Validaciones existentes
+			const programId = currentMaterias[0]?.programaId;
 			if (programId !== null && programId !== undefined) {
 				// Procesar cada materia nueva
 				for (const subject of data.subjects) {
@@ -128,11 +207,20 @@ export async function PUT(
 							.from(materias)
 							.where(eq(materias.id, subject.id))
 							.limit(1)
-							.then((res) => res[0]);
+							.then((res) => res[0])
+							.catch((err) => {
+								console.error(
+									`❌ Error al obtener la materia con ID ${subject.id}:`,
+									err
+								);
+								throw new Error(
+									`Error al obtener la materia con ID ${subject.id}`
+								);
+							});
 
 						if (materiaOriginal) {
 							// Crear copia de la materia
-							const newMateria = await db
+							await db
 								.insert(materias)
 								.values({
 									title: materiaOriginal.title,
@@ -140,8 +228,19 @@ export async function PUT(
 									programaId: programId,
 									courseid: courseId,
 								})
-								.returning();
-							console.log('✨ Nueva materia creada:', newMateria[0]);
+								.catch((err) => {
+									console.error(
+										`❌ Error al insertar la materia con ID ${subject.id}:`,
+										err
+									);
+									throw new Error(
+										`Error al insertar la materia con ID ${subject.id}`
+									);
+								});
+							console.log(
+								`✨ Nueva materia creada para el curso ${courseId}:`,
+								subject.id
+							);
 						}
 					}
 				}

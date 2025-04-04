@@ -373,7 +373,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					: [modalidadesid],
 				nivelid,
 				rating,
-				instructor, // Make sure instructor is included here
+				instructor, // Ensure instructor ID is included here
 				subjects: selectedSubjects,
 				fileName: uploadedFileName,
 				courseTypeId: selectedCourseType,
