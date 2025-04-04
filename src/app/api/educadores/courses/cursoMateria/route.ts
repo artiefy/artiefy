@@ -107,7 +107,7 @@ export async function POST(request: Request) {
 			modalidadesid: number[];
 			nivelid: number;
 			rating: number;
-			instructor: string;
+			instructorId: string; // Changed from instructor to instructorId
 			subjects?: { id: number }[];
 			courseTypeId: number; // 👉 agregar este campo
 			isActive: boolean;
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
 					rating: data.rating,
 					modalidadesid: modalidadId,
 					nivelid: data.nivelid,
-					instructor: data.instructor,
+					instructor: data.instructorId, // Use instructorId here
 					courseTypeId: data.courseTypeId,
 					isActive: data.isActive,
 					requiresProgram: true, // Add this line
