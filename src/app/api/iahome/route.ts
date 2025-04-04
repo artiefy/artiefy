@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
 
-import { like } from 'drizzle-orm';
-
-import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
-
 interface RequestBody {
 	prompt: string;
 }
 
+// Actualizar para coincidir con la respuesta real de la API
 interface ApiResponse {
 	result: string[];
 }
@@ -30,55 +26,41 @@ export async function POST(request: Request) {
 			},
 			body: JSON.stringify({
 				prompt: prompt.toLowerCase().trim(),
+				min_results: 5,
 			}),
 		});
 
 		if (!response.ok) {
-			console.error('API Error:', response.status, await response.text());
 			throw new Error(`API responded with status: ${response.status}`);
 		}
 
 		const data = (await response.json()) as ApiResponse;
 		console.log('📦 API Response:', data);
 
-		if (!data?.result?.length) {
+		if (
+			!data?.result ||
+			!Array.isArray(data.result) ||
+			data.result.length === 0
+		) {
 			return NextResponse.json({
 				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta con otros términos.`,
 			});
 		}
 
-		// Create separate SQL conditions for each title
-		const titleConditions = data.result.map((title) => {
-			// Escape special characters and handle case-insensitive search
-			const searchTerm = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-			return like(courses.title, `%${searchTerm}%`);
-		});
+		// Simular IDs para los cursos ya que la API solo devuelve títulos
+		const coursesWithIds = data.result.map((title, index) => ({
+			id: index + 1001, // Usar IDs que empiecen desde 1001 para evitar conflictos
+			title: title,
+		}));
 
-		// Find matching courses with combined conditions
-		const foundCourses = await db
-			.select({
-				id: courses.id,
-				title: courses.title,
-			})
-			.from(courses)
-			.where(titleConditions.reduce((acc, curr) => acc || curr))
-			.orderBy(courses.createdAt)
-			.limit(5);
-
-		if (!foundCourses.length) {
-			return NextResponse.json({
-				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta con otros términos.`,
-			});
-		}
-
-		// Format response with line breaks to ensure proper parsing
-		const formattedResponse = `He encontrado estos cursos relacionados con "${prompt}":\n\n${foundCourses
+		// Formatear la respuesta para el chatbot
+		const formattedResponse = `He encontrado estos cursos relacionados con "${prompt}":\n\n${coursesWithIds
 			.map((course, idx) => `${idx + 1}. ${course.title}|${course.id}`)
 			.join('\n\n')}`;
 
 		return NextResponse.json({
 			response: formattedResponse,
-			courses: foundCourses,
+			courses: coursesWithIds,
 		});
 	} catch (error) {
 		console.error(

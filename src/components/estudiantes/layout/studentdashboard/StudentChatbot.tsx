@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { BsPersonCircle } from 'react-icons/bs';
-import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
 import { ResizableBox } from 'react-resizable';
@@ -236,12 +235,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		sender: string;
 	}) => {
 		if (message.sender === 'bot') {
-			// Split the message into parts and extract courses
 			const parts = message.text.split('\n\n');
 			const introText = parts[0];
 			const courseTexts = parts.slice(1);
 
-			// Parse all courses from the message
 			const courses = courseTexts
 				.map((text) => {
 					const match = /(\d+)\.\s+(.*?)\|(\d+)/.exec(text);
@@ -267,17 +264,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									key={course.id}
 									className="relative flex flex-col space-y-2 rounded-lg p-4"
 								>
-									{/* Background div positioned absolutely */}
-									<div className="absolute inset-0 rounded-lg bg-gray-100/50" />
+									<div className="absolute inset-0 rounded-lg bg-gray-800" />
 
-									{/* Content on top of background */}
 									<div className="relative z-10 flex flex-col space-y-2">
-										<h4 className="font-semibold text-gray-800">
+										<h4 className="text-primary font-semibold">
 											{course.number}. {course.title}
 										</h4>
 										<Link
 											href={`/estudiantes/cursos/${course.id}`}
-											className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
+											className="bg-secondary hover:bg-secondary/90 self-start rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
 										>
 											Ir al curso
 										</Link>
@@ -312,10 +307,19 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						))}
 					</div>
 					<div className="button__circle">
-						<FaRobot className="button__icon" aria-hidden="true" />
-						<FaRobot
+						<Image
+							src="/robotia.svg"
+							alt="Robot IA"
+							width={20}
+							height={20}
+							className="button__icon"
+						/>
+						<Image
+							src="/robotia.svg"
+							alt="Robot IA"
+							width={20}
+							height={20}
 							className="button__icon button__icon--copy"
-							aria-hidden="true"
 						/>
 					</div>
 				</button>
@@ -335,7 +339,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						<div className="flex h-full w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
 							<div className="flex items-center justify-between border-b p-4">
 								<div className="flex items-center space-x-2">
-									<FaRobot className="text-2xl text-secondary" />
+									<Image
+										src="/robotia.svg"
+										alt="Robot IA"
+										width={32}
+										height={32}
+										className="text-secondary"
+									/>
 									<h2 className="text-lg font-semibold text-gray-800">
 										Artie IA
 									</h2>
@@ -366,7 +376,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											}`}
 										>
 											{message.sender === 'bot' ? (
-												<FaRobot className="mt-2 text-xl text-secondary" />
+												<Image
+													src="/robotia.svg"
+													alt="Robot IA"
+													width={24}
+													height={24}
+													className="mt-2"
+												/>
 											) : user?.imageUrl ? (
 												<Image
 													src={user.imageUrl}
@@ -425,13 +441,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 												? 'Escribe tu mensaje...'
 												: 'Inicia sesión para chatear'
 										}
-										className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
+										className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
 										disabled={!isSignedIn || isLoading}
 									/>
 									<button
 										type="submit"
 										disabled={isLoading}
-										className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+										className="bg-secondary rounded-lg px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
 									>
 										<FiSend className="text-xl" />
 									</button>
