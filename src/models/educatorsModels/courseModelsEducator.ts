@@ -1,4 +1,3 @@
-import { clerkClient } from '@clerk/nextjs/server';
 import { eq, count, sum } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
@@ -10,6 +9,7 @@ import {
 	nivel,
 	lessons,
 	materias,
+	users,
 	courseTypes,
 } from '~/server/db/schema';
 
@@ -91,8 +91,6 @@ export async function createCourse(data: CreateCourseData) {
 		if (!data.instructor) {
 			throw new Error('Instructor ID is required');
 		}
-
-		console.log('Creating course with validated data:', data);
 
 		// Create course with explicit instructor field
 		const result = await db
@@ -197,19 +195,18 @@ export const getCourseById = async (courseId: number) => {
 				updatedAt: courses.updatedAt,
 				courseTypeId: courses.courseTypeId,
 				isActive: courses.isActive,
+				instructorName: users.name, // Fetch instructor name
+				instructorEmail: users.email, // Fetch instructor email
 			})
 			.from(courses)
+			.leftJoin(users, eq(courses.instructor, users.id)) // Properly join the users table
 			.where(eq(courses.id, courseId))
 			.then((rows) => rows[0]);
 
 		if (!course) {
-			throw new Error('Curso no encontrado');
+			console.error(`❌ Curso con ID ${courseId} no encontrado.`);
+			return null;
 		}
-
-		// Fetch instructor details from Clerk
-		const clerk = await clerkClient();
-		const user = await clerk.users.getUser(course.instructor);
-		const instructorName = `${user.firstName} ${user.lastName}`.trim();
 
 		// Obtener los nombres de las relaciones por separado
 		const category = course.categoryid
@@ -235,6 +232,7 @@ export const getCourseById = async (courseId: number) => {
 					.where(eq(nivel.id, course.nivelid))
 					.then((rows) => rows[0]?.name ?? null)
 			: null;
+
 		const courseTypeName = course.courseTypeId
 			? await db
 					.select({ name: courseTypes.name })
@@ -247,18 +245,20 @@ export const getCourseById = async (courseId: number) => {
 
 		return {
 			...course,
-			instructor: instructorName, // Replace instructor ID with full name
+			instructor: course.instructorName ?? 'Sin nombre',
+			instructorEmail: course.instructorEmail ?? 'No disponible',
 			categoryid: category?.name ?? course.categoryid,
 			modalidadesid: modalidad?.name ?? course.modalidadesid,
 			nivelid: nivelName ?? course.nivelid,
 			courseTypeName,
 			totalStudents,
 		};
-	} catch (error) {
-		const errorMessage = isApiError(error)
-			? error.message
-			: 'Unknown error occurred';
-		throw new Error(`Error al obtener el curso: ${errorMessage}`);
+	} catch (err: unknown) {
+		console.error(
+			`❌ Error al obtener el curso con ID ${courseId}:`,
+			err instanceof Error ? err.message : 'Error desconocido'
+		);
+		return null;
 	}
 };
 

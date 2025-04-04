@@ -16,9 +16,11 @@ export async function GET(
 			);
 		}
 
-		// Aquí se obtienen las materias asociadas al curso usando la función importada
+		// Obtener las materias asociadas al curso
 		const materias = await getMateriasByCourseId(courseId);
-		if (materias.length === 0) {
+
+		if (!materias || materias.length === 0) {
+			// Return a 404 response if no materias are found
 			return NextResponse.json(
 				{ error: 'No se encontraron materias para este curso' },
 				{ status: 404 }
@@ -28,7 +30,7 @@ export async function GET(
 		// Devuelve las materias encontradas
 		return NextResponse.json(materias);
 	} catch (error) {
-		console.error('Error al obtener las matemateriasonerias:', error);
+		console.error('Error al obtener las materias:', error);
 		return NextResponse.json(
 			{ error: 'Error al obtener las materias' },
 			{ status: 500 }

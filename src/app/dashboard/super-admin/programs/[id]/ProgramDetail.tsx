@@ -374,9 +374,6 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 				await fetch(uploadData.url, { method: 'POST', body: formData });
 			}
 
-			const selectedEducator = educators.find((ed) => ed.id === instructor);
-			const instructorName = selectedEducator ? selectedEducator.name : '';
-
 			const response = await fetch('/api/educadores/courses/cursoMateria', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -387,7 +384,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
 					fileName,
 					categoryid,
 					modalidadesid,
-					instructor: instructorName, // Aquí enviamos el nombre en lugar del ID
+					instructorId: instructor, // Send the instructor's ID instead of the name
 					creatorId: user.id,
 					nivelid,
 					rating,

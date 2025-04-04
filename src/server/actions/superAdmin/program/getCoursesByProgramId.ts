@@ -51,7 +51,7 @@ export async function getCoursesByProgramId(programId: string) {
 							...course,
 							instructorName: name || course.instructor,
 						};
-					} catch (clerkError) {
+					} catch (_) {
 						// Si falla Clerk, usar el campo instructor directamente
 						return {
 							...course,
