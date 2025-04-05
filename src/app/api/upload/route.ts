@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 
 import {
-	CreateMultipartUploadCommand,
 	DeleteObjectCommand,
 	S3Client,
 	PutObjectCommand,
