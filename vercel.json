@@ -30,6 +30,14 @@
 		"app/api/**/*.ts": {
 			"memory": 2048,
 			"maxDuration": 60
+		},
+		"app/estudiantes/**/*.ts": {
+			"memory": 3009,
+			"maxDuration": 60
+		},
+		"app/**/*.ts": {
+			"memory": 2048,
+			"maxDuration": 60
 		}
 	},
 

@@ -1,4 +1,3 @@
-
 import './src/env.js'; // Importa variables de entorno
 import withPlaiceholder from '@plaiceholder/next'; // Importa la configuración de @plaiceholder/next
 
@@ -10,7 +9,7 @@ const nextConfig = {
 	reactStrictMode: true, // Habilita el modo estricto de React para detectar problemas potenciales en la aplicación
 	images: {
 		dangerouslyAllowSVG: true, // Permite el uso de imágenes SVG
-		contentDispositionType: 'inline', // Configura el tipo de disposición del contenido para imágenes
+		contentDispositionType: 'attachment', // Configura el tipo de disposición del contenido para imágenes
 		contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Configura la política de seguridad de contenido para imágenes
 		deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840], // Define los tamaños de dispositivo para imágenes responsivas
 		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Define los tamaños de imagen para imágenes responsivas
@@ -40,8 +39,57 @@ const nextConfig = {
 		turbo: {
 			rules: {
 				'*.svg': {
-					loaders: ['@svgr/webpack'], // Define el cargador para archivos SVG
-					as: '*.js', // Define la extensión de salida para archivos SVG
+					loaders: [
+						{
+							loader: '@svgr/webpack',
+							options: {
+								svgo: true,
+								svgoConfig: {
+									plugins: [
+										{
+											name: 'preset-default',
+											params: {
+												overrides: {
+													removeViewBox: false,
+													convertStyleToAttrs: true,
+													cleanupAttrs: true,
+													removeDoctype: true,
+													removeXMLProcInst: true,
+													removeComments: true,
+													removeMetadata: true,
+													removeTitle: true,
+													removeDesc: true,
+													removeEmptyAttrs: true,
+													removeHiddenElems: true,
+													removeEmptyText: true,
+													removeEmptyContainers: true,
+													minifyStyles: true,
+													convertColors: true,
+													convertPathData: true,
+													convertTransform: true,
+													removeUnknownsAndDefaults: true,
+													removeNonInheritableGroupAttrs: true,
+													removeUselessStrokeAndFill: true,
+													removeUnusedNS: true,
+													cleanupIds: true,
+													cleanupNumericValues: true,
+													moveElemsAttrsToGroup: true,
+													moveGroupAttrsToElems: true,
+													collapseGroups: true,
+													removeRasterImages: true,
+													mergePaths: true,
+													convertShapeToPath: true,
+													sortAttrs: true,
+													removeDimensions: true,
+												},
+											},
+										},
+									],
+								},
+							},
+						},
+					],
+					as: '*.js',
 				},
 			},
 			resolveAlias: {
@@ -58,8 +106,13 @@ const nextConfig = {
 				'.json',
 			], // Define las extensiones de archivo que se resolverán automáticamente
 		},
+		// Add memory optimization for webpack
+		swcMinify: true,
+		optimizeFonts: true,
+		optimizeImages: true,
+		workerThreads: true,
+		memoryLimit: 4096, // 4GB limit for webpack
 	},
 	expireTime: 3600, // Define un tiempo de expiración personalizado para el encabezado Cache-Control (1 hora)
 };
-
 export default withPlaiceholder(nextConfig);

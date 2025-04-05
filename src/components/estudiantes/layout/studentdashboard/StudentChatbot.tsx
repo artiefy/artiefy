@@ -29,7 +29,7 @@ interface SVGComponentProps {
 
 // Update dynamic imports with type assertions
 const CircuitIcon = dynamic<SVGComponentProps>(
-	() => import('public/circuit-svgrepo-com.min.svg'),
+	() => import('public/circuit-svgrepo-com.svg'),
 	{
 		ssr: false,
 		loading: () => null,
