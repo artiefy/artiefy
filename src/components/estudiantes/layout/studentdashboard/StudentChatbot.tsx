@@ -440,7 +440,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									{staticPositions.map((pos, i) => (
 										<Image
 											key={i}
-											src="/circuit-svgrepo-com.svg"
+											src="/circuit-svgrepo-com2.png"
 											alt="Circuit"
 											width={56}
 											height={56}
