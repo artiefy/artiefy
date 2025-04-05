@@ -63,3 +63,21 @@ FORZAR EL CRON
 curl -X GET https://artiefy.com/api/cron/check-subscriptions \
 -H "Authorization: Bearer 6a8cfb161629e387044a10761c6503639bec96a8e7c7dc7922b4982633fd5c4e"
 ---------------------------------------------------------
+
+---
+
+busca el archivo que esta causando este error de exceso de useffect post inifnito y repararlo pero sin dañar ninguna funcionalidad
+
+Error: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render.
+    at createUnhandledError (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js:879:71)
+    at handleClientError (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js:1052:56)
+    at console.error (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js:1191:56)
+    at getRootForUpdatedFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4702:143)
+    at enqueueConcurrentRenderForLane (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:4689:16)
+    at forceStoreRerender (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:5854:20)
+    at http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:5840:45
+    at http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js:12091:39
+    at Array.forEach (<anonymous>)
+    at _devbuildindicator.devBuildIndicator.show (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js:12091:19)
+    at handleDevBuildIndicatorHmrEvents (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js:14487:54)
+    at WebSocket.handler (http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_43e3ffb8._.js:15040:88)

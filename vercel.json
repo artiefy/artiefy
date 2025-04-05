@@ -4,13 +4,42 @@
 	"ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
 	"installCommand": "npm install",
 	"public": true,
+	"trailingSlash": false,
+
+	"functions": {
+		"app/api/iahome/**/*.ts": {
+			"memory": 3009,
+			"maxDuration": 60
+		},
+		"app/api/grades/summary/**/*.ts": {
+			"memory": 2048,
+			"maxDuration": 30
+		},
+		"app/api/super-admin/programs/**/*.ts": {
+			"memory": 2048,
+			"maxDuration": 30
+		},
+		"app/api/usersMasive/**/*.ts": {
+			"memory": 2048,
+			"maxDuration": 60
+		},
+		"app/api/activities/saveAnswers/**/*.ts": {
+			"memory": 2048,
+			"maxDuration": 30
+		},
+		"app/api/**/*.ts": {
+			"memory": 1024,
+			"maxDuration": 10
+		}
+	},
+
 	"crons": [
 		{
 			"path": "/api/cron/check-subscriptions",
 			"schedule": "0 0 * * *"
 		}
 	],
-	"trailingSlash": false,
+
 	"headers": [
 		{
 			"source": "/api/(.*)",

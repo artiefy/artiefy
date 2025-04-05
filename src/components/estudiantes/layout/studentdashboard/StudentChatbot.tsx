@@ -10,13 +10,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { BsPersonCircle } from 'react-icons/bs';
-import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 import 'react-resizable/css/styles.css';
 
 import '~/styles/chatmodal.css';
+import SendIcon from 'public/send-svgrepo-com.svg';
 import { Card } from '~/components/estudiantes/ui/card';
 
 // Add SVG component interfaces
@@ -51,14 +51,14 @@ interface StudentChatbotProps {
 	showChat?: boolean;
 }
 
-interface ChatResponse {
-	response: string;
-	courses?: { id: number; title: string }[];
-}
-
 interface ResizeData {
 	size: { width: number; height: number };
 	handle: string;
+}
+
+interface ChatResponse {
+	response: string;
+	courses: { id: number; title: string }[];
 }
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
@@ -67,26 +67,30 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	isAlwaysVisible = false,
 	showChat = false,
 }) => {
-	// Fix useState declaration to include setter
+	// Modify the static positions calculation to better fill space
 	const [staticPositions, setStaticPositions] = useState(() =>
-		Array.from({ length: 400 }, (_, i) => {
-			const gap = 12; // Volvemos al espaciado original
-			const x = (i % 20) * gap + Math.random() * gap * 0.5;
-			const y = Math.floor(i / 20) * gap + Math.random() * gap * 0.5;
-			const rotation = Math.random() * 360;
-			const scale = 0.5 + Math.random() * 0.2;
+		Array.from({ length: 150 }, (_, i) => {
+			// Aumentado a 150 íconos
+			const row = Math.floor(i / 12);
+			const col = i % 12;
+			// Nuevos cálculos para mejor distribución
+			const x = col * 10 - row * 2; // Más cercanos horizontalmente
+			const y = row * 8; // Más cercanos verticalmente
+			const rotation = 45 + (Math.random() * 20 - 10); // Rotación más variada
+			const scale = 0.28 + Math.random() * 0.1; // Escalas más variadas y pequeñas
 			return { x, y, rotation, scale };
 		})
 	);
 
 	const generateNewLayout = useCallback(() => {
 		setStaticPositions(
-			Array.from({ length: 400 }, (_, i) => {
-				const gap = 12;
-				const x = (i % 20) * gap + Math.random() * gap * 0.5;
-				const y = Math.floor(i / 20) * gap + Math.random() * gap * 0.5;
-				const rotation = Math.random() * 360;
-				const scale = 0.5 + Math.random() * 0.2;
+			Array.from({ length: 150 }, (_, i) => {
+				const row = Math.floor(i / 12);
+				const col = i % 12;
+				const x = col * 10 - row * 2;
+				const y = row * 8;
+				const rotation = 45 + (Math.random() * 20 - 10);
+				const scale = 0.28 + Math.random() * 0.1;
 				return { x, y, rotation, scale };
 			})
 		);
@@ -138,35 +142,31 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					cache: 'no-store',
 				});
 
+				if (!response.ok) {
+					throw new Error(`Error: ${response.status}`);
+				}
+
 				const data = (await response.json()) as ChatResponse;
+				console.log('Bot Response:', data); // Para debugging
 
-				const messageText =
-					data.response ??
-					'Lo siento, no pude encontrar información relevante.';
-
-				setMessages((prev) => {
-					const isDuplicate = prev.some(
-						(msg) => msg.sender === 'bot' && msg.text === messageText
-					);
-
-					if (isDuplicate) return prev;
-
-					return [
+				// Solo actualizar mensajes si hay una respuesta válida
+				if (data?.response) {
+					setMessages((prev) => [
 						...prev,
 						{
 							id: Date.now() + Math.random(),
-							text: messageText,
+							text: data.response,
 							sender: 'bot' as const,
 						},
-					];
-				});
+					]);
+				}
 			} catch (error) {
 				console.error('Error getting bot response:', error);
 				setMessages((prev) => [
 					...prev,
 					{
 						id: Date.now() + Math.random(),
-						text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
+						text: 'Lo siento, ocurrió un error al buscar los cursos. Por favor, intenta de nuevo.',
 						sender: 'bot' as const,
 					},
 				]);
@@ -439,22 +439,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								/>
 							</div>
 
-							{/* Circuit icons layer - Ajustado para estar debajo del header e input */}
-							<div className="pointer-events-none absolute inset-0 z-[2]">
-								{staticPositions.map(
-									(pos, i) =>
-										pos.y <= 64 && (
-											<CircuitIcon
-												key={i}
-												className="absolute size-12 opacity-20"
-												style={{
-													left: `${pos.x}%`,
-													top: `${15 + pos.y}%`,
-													transform: `rotate(${pos.rotation}deg) scale(${pos.scale})`,
-												}}
-											/>
-										)
-								)}
+							{/* Modified Circuit icons layer */}
+							<div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
+								<div className="relative h-full w-full">
+									{staticPositions.map((pos, i) => (
+										<CircuitIcon
+											key={i}
+											className="absolute size-14 opacity-40" // Reducida opacidad
+											style={{
+												left: `${Math.min(Math.max(pos.x, -15), 110)}%`, // Ampliado rango
+												top: `${Math.min(Math.max(pos.y, -15), 110)}%`, // Ampliado rango
+												transform: `rotate(${pos.rotation}deg) scale(${pos.scale})`,
+											}}
+										/>
+									))}
+								</div>
 							</div>
 
 							{/* Header - Mayor z-index */}
@@ -556,7 +555,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								<div ref={messagesEndRef} />
 							</div>
 
-							{/* Input form - Mayor z-index y fondo semi-transparente */}
+							{/* Input form section */}
 							<div className="relative z-[5] border-t bg-white/95 p-4 backdrop-blur-sm">
 								<form onSubmit={handleSendMessage}>
 									<div className="flex gap-2">
@@ -576,9 +575,17 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										<button
 											type="submit"
 											disabled={isLoading}
-											className="bg-secondary rounded-lg px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+											className="bg-secondary group relative flex h-10 w-14 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
 										>
-											<FiSend className="text-xl" />
+											<SendIcon
+												className="size-6 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12"
+												style={{
+													stroke: '#0095FF',
+													fill: 'currentColor',
+													'--tw-text-opacity': '1',
+													color: 'rgb(255 255 255 / var(--tw-text-opacity))',
+												}}
+											/>
 										</button>
 									</div>
 								</form>

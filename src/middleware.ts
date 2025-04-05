@@ -34,6 +34,7 @@ const middlewareConfig: ClerkMiddlewareOptions = {
 			? ['http://localhost:3000']
 			: []),
 	],
+	clockSkewInMs: 60 * 1000, // 60 seconds tolerance
 };
 
 export default clerkMiddleware(async (auth, req) => {
