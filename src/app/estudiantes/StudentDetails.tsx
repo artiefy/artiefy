@@ -8,6 +8,7 @@ import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
 
+import GradientText from '~/components/estudiantes/layout/GradientText';
 import { LoaderArtieia } from '~/components/estudiantes/layout/LoaderArtieia';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
@@ -115,7 +116,7 @@ export default function StudentDetails({
 			<main className="grow">
 				<div className="container mx-auto px-8 sm:px-12 lg:px-16">
 					<div className="flex flex-col space-y-12 sm:space-y-16">
-						<div className="mt-8 flex animate-zoom-in flex-col items-center space-y-4">
+						<div className="animate-zoom-in mt-8 flex flex-col items-center space-y-4">
 							<div className="flex items-center">
 								<Image
 									src="/artiefy-icon.png"
@@ -188,7 +189,7 @@ export default function StudentDetails({
 							</form>
 						</div>
 
-						<div className="animation-delay-100 relative h-[300px] animate-zoom-in overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
+						<div className="animation-delay-100 animate-zoom-in relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
 							{latestFiveCourses.map((course, index) => (
 								<div
 									key={course.id}
@@ -213,14 +214,14 @@ export default function StudentDetails({
 											blurDataURL={blurDataURL}
 										/>
 									</div>
-									<div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4 text-primary">
+									<div className="text-primary absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4">
 										<div className="mx-auto w-[90%] max-w-4xl text-center">
 											<h2 className="mb-2 line-clamp-3 text-center text-3xl font-semibold sm:mb-4 sm:text-4xl md:text-6xl">
 												{course.title}
 											</h2>
 											<Badge
 												variant="outline"
-												className="mb-2 border-primary text-primary"
+												className="border-primary text-primary mb-2"
 											>
 												{course.category?.name ?? 'Sin categoría'}
 											</Badge>
@@ -257,10 +258,12 @@ export default function StudentDetails({
 						</div>
 
 						{/* Top Cursos section */}
-						<div className="animation-delay-200 relative animate-zoom-in px-12 sm:px-24">
-							<h2 className="mb-6 text-center text-3xl font-extrabold text-primary sm:text-5xl">
-								Top Cursos
-							</h2>
+						<div className="animation-delay-200 animate-zoom-in relative px-12 sm:px-24">
+							<div className="flex justify-center">
+								<GradientText className="mb-6 text-3xl sm:text-5xl">
+									Top Cursos
+								</GradientText>
+							</div>
 							<div>
 								<Carousel className="w-full">
 									<CarouselContent className="">
@@ -294,7 +297,7 @@ export default function StudentDetails({
 														<div className="flex flex-wrap items-start justify-between gap-y-1 sm:mt-2 sm:mb-2">
 															<Badge
 																variant="outline"
-																className="max-w-[40%] truncate border-primary bg-background text-[8px] text-primary sm:text-sm"
+																className="border-primary bg-background text-primary max-w-[40%] truncate text-[8px] sm:text-sm"
 															>
 																{course.category?.name}
 															</Badge>
@@ -303,7 +306,7 @@ export default function StudentDetails({
 															</span>
 														</div>
 														<div className="flex items-center justify-between">
-															<p className="text-xs font-semibold text-primary italic sm:text-base">
+															<p className="text-primary text-xs font-semibold italic sm:text-base">
 																Educador: <span>{course.instructor}</span>
 															</p>
 															<div className="flex items-center">
@@ -325,10 +328,12 @@ export default function StudentDetails({
 						</div>
 
 						{/* Programas section */}
-						<div className="animation-delay-300 relative animate-zoom-in px-4 sm:px-24">
-							<h2 className="text-center text-3xl font-extrabold text-primary sm:text-5xl">
-								Programas
-							</h2>
+						<div className="animation-delay-300 animate-zoom-in relative px-4 sm:px-24">
+							<div className="flex justify-center">
+								<GradientText className="text-3xl sm:text-5xl">
+									Programas
+								</GradientText>
+							</div>
 							<div>
 								<Carousel className="w-full">
 									<CarouselContent className="my-6 pl-4 sm:pl-0">
@@ -353,7 +358,7 @@ export default function StudentDetails({
 				isAlwaysVisible={true}
 				showChat={showChatbot}
 				key={chatbotKey}
-				className="animation-delay-400 fixed animate-zoom-in"
+				className="animation-delay-400 animate-zoom-in fixed"
 				initialSearchQuery={searchQuery.trim()}
 			/>
 		</div>

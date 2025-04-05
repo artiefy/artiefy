@@ -1,5 +1,7 @@
 import React, { type ReactNode } from 'react';
 
+import { cn } from '~/lib/utils';
+
 interface GradientTextProps {
 	children: ReactNode;
 	className?: string;
@@ -22,11 +24,14 @@ export default function GradientText({
 
 	return (
 		<div
-			className={`relative mx-auto flex max-w-fit cursor-pointer flex-row items-center justify-center overflow-hidden rounded-[1.25rem] font-extrabold backdrop-blur transition-shadow duration-500 ${className}`}
+			className={cn(
+				'relative mx-auto flex max-w-fit cursor-pointer flex-row items-center justify-center overflow-hidden rounded-[1.25rem] font-extrabold backdrop-blur transition-shadow duration-500',
+				className
+			)}
 		>
 			{showBorder && (
 				<div
-					className="pointer-events-none absolute inset-0 z-0 animate-gradient bg-cover"
+					className="animate-gradient pointer-events-none absolute inset-0 z-0 bg-cover"
 					style={{
 						...gradientStyle,
 						backgroundSize: '300% 100%',
@@ -45,7 +50,7 @@ export default function GradientText({
 				</div>
 			)}
 			<div
-				className="relative z-2 inline-block animate-text-gradient bg-cover text-transparent"
+				className="animate-text-gradient relative z-2 inline-block bg-cover pb-1 leading-relaxed text-transparent"
 				style={{
 					...gradientStyle,
 					backgroundClip: 'text',

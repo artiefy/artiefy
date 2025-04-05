@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
+import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { BsPersonCircle } from 'react-icons/bs';
 import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
@@ -16,6 +17,7 @@ import { toast } from 'sonner';
 import 'react-resizable/css/styles.css';
 
 import '~/styles/chatmodal.css';
+import { Card } from '~/components/estudiantes/ui/card';
 
 interface StudentChatbotProps {
 	className?: string;
@@ -261,30 +263,30 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				<div className="flex flex-col space-y-4">
 					<p className="font-medium text-gray-800">{introText}</p>
 					{courses.length > 0 && (
-						<ul className="space-y-4">
+						<div className="grid gap-4">
 							{courses.map((course) => (
-								<li
+								<Card
 									key={course.id}
-									className="relative flex flex-col space-y-2 rounded-lg p-4"
+									className="text-primary overflow-hidden bg-gray-800 transition-all hover:scale-[1.02]"
 								>
-									{/* Background div positioned absolutely */}
-									<div className="absolute inset-0 rounded-lg bg-gray-100/50" />
-
-									{/* Content on top of background */}
-									<div className="relative z-10 flex flex-col space-y-2">
-										<h4 className="font-semibold text-gray-800">
+									<div className="px-4">
+										<h4 className="mb-3 font-bold">
 											{course.number}. {course.title}
 										</h4>
 										<Link
 											href={`/estudiantes/cursos/${course.id}`}
-											className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
+											className="group/button bg-background text-primary relative inline-flex h-9 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
 										>
-											Ir al curso
+											<span className="font-bold">Ver Curso</span>
+											<ArrowRightCircleIcon className="animate-bounce-right ml-2 h-5 w-5" />
+											<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+												<div className="relative h-full w-10 bg-white/30" />
+											</div>
 										</Link>
 									</div>
-								</li>
+								</Card>
 							))}
-						</ul>
+						</div>
 					)}
 				</div>
 			);
@@ -335,7 +337,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						<div className="flex h-full w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
 							<div className="flex items-center justify-between border-b p-4">
 								<div className="flex items-center space-x-2">
-									<FaRobot className="text-2xl text-secondary" />
+									<FaRobot className="text-secondary text-2xl" />
 									<h2 className="text-lg font-semibold text-gray-800">
 										Artie IA
 									</h2>
@@ -366,7 +368,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											}`}
 										>
 											{message.sender === 'bot' ? (
-												<FaRobot className="mt-2 text-xl text-secondary" />
+												<FaRobot className="text-secondary mt-2 text-xl" />
 											) : user?.imageUrl ? (
 												<Image
 													src={user.imageUrl}
@@ -425,13 +427,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 												? 'Escribe tu mensaje...'
 												: 'Inicia sesión para chatear'
 										}
-										className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
+										className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
 										disabled={!isSignedIn || isLoading}
 									/>
 									<button
 										type="submit"
 										disabled={isLoading}
-										className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+										className="bg-secondary rounded-lg px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
 									>
 										<FiSend className="text-xl" />
 									</button>

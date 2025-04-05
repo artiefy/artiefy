@@ -97,7 +97,7 @@
 	background: rgba(0, 0, 0, 0.5);
 	position: fixed;
 	inset: 0;
-	z-index: 50;
+	z-index: 1000;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -173,7 +173,7 @@
 }
 
 .react-resizable-handle::before {
-	content: '⋮⋮';
+	content: "⋮⋮";
 	position: absolute;
 	display: flex;
 	align-items: center;

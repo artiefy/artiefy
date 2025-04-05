@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { like } from 'drizzle-orm';
+import { type SQL, like, or } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courses } from '~/server/db/schema';
@@ -10,7 +10,7 @@ interface RequestBody {
 }
 
 interface ApiResponse {
-	result: string[];
+	result: { id: number; title: string }[];
 }
 
 export const dynamic = 'force-dynamic';
@@ -33,47 +33,80 @@ export async function POST(request: Request) {
 			}),
 		});
 
-		if (!response.ok) {
-			console.error('API Error:', response.status, await response.text());
-			throw new Error(`API responded with status: ${response.status}`);
-		}
-
-		const data = (await response.json()) as ApiResponse;
-		console.log('📦 API Response:', data);
-
-		if (!data?.result?.length) {
+		// Improve error handling for the external API
+		let data: ApiResponse;
+		try {
+			const textResponse = await response.text();
+			try {
+				data = JSON.parse(textResponse) as ApiResponse;
+			} catch (parseError) {
+				console.error('API Response Parse Error:', textResponse);
+				throw new Error(`Invalid JSON response from API: ${textResponse}`);
+			}
+		} catch (error) {
+			console.error('API Error:', error);
 			return NextResponse.json({
-				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta con otros términos.`,
+				response: `Lo siento, hubo un error al procesar tu búsqueda: "${prompt}". Por favor, intenta de nuevo.`,
 			});
 		}
 
-		// Create separate SQL conditions for each title
-		const titleConditions = data.result.map((title) => {
-			// Escape special characters and handle case-insensitive search
-			const searchTerm = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-			return like(courses.title, `%${searchTerm}%`);
-		});
+		console.log('📦 API Response:', data);
 
-		// Find matching courses with combined conditions
+		// Handle empty or invalid results from external API
+		if (
+			!data?.result ||
+			!Array.isArray(data.result) ||
+			data.result.length === 0
+		) {
+			return NextResponse.json({
+				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta con otros términos.`,
+				courses: [],
+			});
+		}
+
+		// Create conditions only for valid titles
+		const titleConditions: SQL[] = data.result
+			.filter(
+				(item): item is { id: number; title: string } =>
+					typeof item?.title === 'string' && item?.title.length > 0
+			)
+			.map((item) => {
+				const searchTerm = item.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				return like(courses.title, `%${searchTerm}%`);
+			});
+
+		if (titleConditions.length === 0) {
+			return NextResponse.json({
+				response: `No se encontraron términos de búsqueda válidos para "${prompt}".`,
+				courses: [],
+			});
+		}
+
+		// Find matching courses
 		const foundCourses = await db
 			.select({
 				id: courses.id,
 				title: courses.title,
 			})
 			.from(courses)
-			.where(titleConditions.reduce((acc, curr) => acc || curr))
+			.where(or(...titleConditions))
 			.orderBy(courses.createdAt)
 			.limit(5);
 
+		// Only return not found message if no courses were found
 		if (!foundCourses.length) {
 			return NextResponse.json({
 				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta con otros términos.`,
+				courses: [],
 			});
 		}
 
-		// Format response with line breaks to ensure proper parsing
+		// Format successful response - Remove the initial message when courses are found
 		const formattedResponse = `He encontrado estos cursos relacionados con "${prompt}":\n\n${foundCourses
-			.map((course, idx) => `${idx + 1}. ${course.title}|${course.id}`)
+			.map(
+				(course, idx) =>
+					`${idx + 1}. ${course.title ?? 'Sin título'}|${course.id}`
+			)
 			.join('\n\n')}`;
 
 		return NextResponse.json({

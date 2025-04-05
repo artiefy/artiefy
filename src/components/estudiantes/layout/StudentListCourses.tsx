@@ -75,7 +75,8 @@ export default async function CourseListStudent({
 					Cursos Artie
 				</GradientText>
 			</div>
-			<div className="mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
+			{/* Add z-index-0 to push cards to background */}
+			<div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
 				{await Promise.all(
 					courses.map(async (course) => {
 						let imageUrl =
