@@ -514,7 +514,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										>
 											{message.sender === 'bot' ? (
 												<Image
-													src="/robot-face.png"
+													src="/robot-face-svgrepo-com.svg"
 													alt="Robot"
 													width={32}
 													height={32}
@@ -535,7 +535,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 												className={`rounded-lg p-3 ${
 													message.sender === 'user'
 														? 'bg-secondary text-white'
-														: 'bg-gray-100 text-gray-800'
+														: 'bg-gray-300 text-gray-800'
 												}`}
 											>
 												{renderMessage(message)}
