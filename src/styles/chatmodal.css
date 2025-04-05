@@ -1,6 +1,6 @@
 .button {
 	cursor: pointer;
-	border: none;
+	border: 2px solid #2ecc71;
 	background: #00a5c0;
 	color: #fff;
 	width: 100px;
@@ -13,9 +13,13 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	transition: all 300ms;
+	transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 	font-weight: 600;
-	z-index: 1000;
+	z-index: 99999 !important; /* Valor más alto que cualquier otro elemento */
+	will-change: transform !important;
+	transform: scale(1) translateZ(0);
+	backface-visibility: hidden;
+	perspective: 1000px;
 }
 
 .button__text {
@@ -24,15 +28,18 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	animation: text-rotation 8s linear infinite;
+	animation: text-rotation 12s linear infinite;
 	pointer-events: none;
 	text-transform: uppercase;
+	will-change: transform;
 }
 
 .button__text > span {
-	position: absolute;
-	transform: rotate(calc(22deg * var(--index)));
-	inset: 7px;
+	position: absolute !important;
+	transform: rotate(calc(15deg * var(--index)));
+	inset: 4px;
+	font-size: 0.75rem;
+	letter-spacing: 1px;
 }
 
 .button__circle {
@@ -64,7 +71,7 @@
 
 .button:hover {
 	background: #000;
-	transform: scale(1.05);
+	transform: scale(1.1) translateZ(0) !important;
 	border: 2px solid #fff;
 }
 
@@ -83,13 +90,16 @@
 }
 
 @keyframes text-rotation {
+	from {
+		transform: rotate(0deg);
+	}
 	to {
-		rotate: 360deg;
+		transform: rotate(360deg);
 	}
 }
 
 .button:active {
-	transform: scale(0.95);
+	transform: scale(0.9) translateZ(0) !important;
 }
 
 /* Estilos adicionales para el modal del chat */
@@ -97,8 +107,8 @@
 	background: rgba(0, 0, 0, 0.5);
 	position: fixed;
 	inset: 0;
-	z-index: 1000;
-	display: flex;
+	z-index: 1000 !important;
+	display: flex !important;
 	align-items: center;
 	justify-content: center;
 	padding: 1rem;
@@ -128,10 +138,10 @@
 	box-shadow:
 		0 20px 25px -5px rgba(0, 0, 0, 0.1),
 		0 10px 10px -5px rgba(0, 0, 0, 0.04);
-	background-color: white;
+	background-color: white !important;
 	width: 320px;
 	height: 450px;
-	overflow: hidden;
+	overflow: hidden !important;
 }
 
 .chat-header {
@@ -143,8 +153,8 @@
 }
 
 .messages-container {
-	flex: 1;
-	overflow-y: auto;
+	flex: 1 !important;
+	overflow-y: auto !important;
 	padding: 1rem;
 	flex-grow: 1;
 }
@@ -173,7 +183,7 @@
 }
 
 .react-resizable-handle::before {
-	content: "⋮⋮";
+	content: '⋮⋮';
 	position: absolute;
 	display: flex;
 	align-items: center;
@@ -402,4 +412,30 @@
 		outline-offset: 20px;
 		opacity: 0;
 	}
+}
+
+/* Aumentar el z-index del botón y del chat a un valor muy alto */
+.chat-resizable {
+	isolation: isolate !important;
+	z-index: 99999 !important; /* Mismo valor alto que el botón */
+}
+
+/* Añadir un nuevo contenedor para el chat */
+.chat-container-wrapper {
+	position: fixed;
+	inset: 0;
+	pointer-events: none !important; /* Permite hacer clic en elementos debajo */
+	z-index: 99998 !important; /* Justo debajo del botón y chat */
+}
+
+.chat-container-wrapper > * {
+	pointer-events: auto !important; /* Restaura la interactividad solo para el chat */
+}
+
+.pattern-grid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	grid-template-rows: repeat(5, 1fr);
+	opacity: 0.05;
+	pointer-events: none !important;
 }

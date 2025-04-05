@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -9,7 +10,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { BsPersonCircle } from 'react-icons/bs';
-import { FaRobot } from 'react-icons/fa';
 import { FiSend } from 'react-icons/fi';
 import { IoMdClose } from 'react-icons/io';
 import { ResizableBox } from 'react-resizable';
@@ -18,6 +18,31 @@ import 'react-resizable/css/styles.css';
 
 import '~/styles/chatmodal.css';
 import { Card } from '~/components/estudiantes/ui/card';
+
+// Add SVG component interfaces
+interface SVGComponentProps {
+	className?: string;
+	'aria-hidden'?: string;
+	style?: React.CSSProperties;
+	key?: React.Key;
+}
+
+// Update dynamic imports with type assertions
+const CircuitIcon = dynamic<SVGComponentProps>(
+	() => import('public/circuit-svgrepo-com.min.svg'),
+	{
+		ssr: false,
+		loading: () => null,
+	}
+);
+
+const RobotIcon = dynamic<SVGComponentProps>(
+	() => import('public/robot-face-svgrepo-com.svg'),
+	{
+		ssr: false,
+		loading: () => null,
+	}
+);
 
 interface StudentChatbotProps {
 	className?: string;
@@ -42,6 +67,42 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	isAlwaysVisible = false,
 	showChat = false,
 }) => {
+	// Fix useState declaration to include setter
+	const [staticPositions, setStaticPositions] = useState(() =>
+		Array.from({ length: 400 }, (_, i) => {
+			const gap = 12; // Volvemos al espaciado original
+			const x = (i % 20) * gap + Math.random() * gap * 0.5;
+			const y = Math.floor(i / 20) * gap + Math.random() * gap * 0.5;
+			const rotation = Math.random() * 360;
+			const scale = 0.5 + Math.random() * 0.2;
+			return { x, y, rotation, scale };
+		})
+	);
+
+	const generateNewLayout = useCallback(() => {
+		setStaticPositions(
+			Array.from({ length: 400 }, (_, i) => {
+				const gap = 12;
+				const x = (i % 20) * gap + Math.random() * gap * 0.5;
+				const y = Math.floor(i / 20) * gap + Math.random() * gap * 0.5;
+				const rotation = Math.random() * 360;
+				const scale = 0.5 + Math.random() * 0.2;
+				return { x, y, rotation, scale };
+			})
+		);
+	}, []);
+
+	// Botón para generar nuevo layout (solo en desarrollo)
+	const DevTools =
+		process.env.NODE_ENV === 'development' ? (
+			<button
+				onClick={generateNewLayout}
+				className="absolute top-2 right-2 z-[3] rounded bg-gray-200 px-2 py-1 text-xs"
+			>
+				Nuevo patrón
+			</button>
+		) : null;
+
 	const [isOpen, setIsOpen] = useState(showChat);
 	const [messages, setMessages] = useState([
 		{ id: Date.now(), text: 'Hola ¿En qué puedo ayudarte hoy?', sender: 'bot' },
@@ -53,6 +114,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const chatContainerRef = useRef<HTMLDivElement>(null);
+	const searchRequestInProgress = useRef(false);
 
 	const { isSignedIn } = useAuth();
 	const { user } = useUser();
@@ -60,9 +122,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const handleBotResponse = useCallback(
 		async (query: string) => {
-			if (processingQuery) return;
+			if (processingQuery || searchRequestInProgress.current) return;
+
+			searchRequestInProgress.current = true;
 			setProcessingQuery(true);
 			setIsLoading(true);
+
 			try {
 				const response = await fetch('/api/iahome', {
 					method: 'POST',
@@ -70,31 +135,45 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({ prompt: query }),
+					cache: 'no-store',
 				});
 
 				const data = (await response.json()) as ChatResponse;
+
 				const messageText =
 					data.response ??
 					'Lo siento, no pude encontrar información relevante.';
 
-				const botResponse = {
-					id: Date.now() + Math.random(),
-					text: messageText,
-					sender: 'bot' as const,
-				};
+				setMessages((prev) => {
+					const isDuplicate = prev.some(
+						(msg) => msg.sender === 'bot' && msg.text === messageText
+					);
 
-				setMessages((prev) => [...prev, botResponse]);
+					if (isDuplicate) return prev;
+
+					return [
+						...prev,
+						{
+							id: Date.now() + Math.random(),
+							text: messageText,
+							sender: 'bot' as const,
+						},
+					];
+				});
 			} catch (error) {
 				console.error('Error getting bot response:', error);
-				const errorMessage = {
-					id: Date.now() + Math.random(),
-					text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
-					sender: 'bot' as const,
-				};
-				setMessages((prev) => [...prev, errorMessage]);
+				setMessages((prev) => [
+					...prev,
+					{
+						id: Date.now() + Math.random(),
+						text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
+						sender: 'bot' as const,
+					},
+				]);
 			} finally {
 				setIsLoading(false);
 				setProcessingQuery(false);
+				searchRequestInProgress.current = false;
 			}
 		},
 		[processingQuery]
@@ -116,15 +195,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				!initialSearchQuery?.trim() ||
 				!isSignedIn ||
 				!showChat ||
-				processingQuery
+				processingQuery ||
+				searchRequestInProgress.current ||
+				initialSearchQuery.trim() === lastSearchQuery
 			)
 				return;
-
-			// Evitar búsquedas duplicadas comparando con la última búsqueda
-			if (initialSearchQuery.trim() === lastSearchQuery) return;
-
-			setIsOpen(true);
-			setLastSearchQuery(initialSearchQuery.trim());
 
 			setMessages([
 				{
@@ -135,6 +210,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				{ id: Date.now() + 1, text: initialSearchQuery.trim(), sender: 'user' },
 			]);
 
+			setIsOpen(true);
+			setLastSearchQuery(initialSearchQuery.trim());
 			await handleBotResponse(initialSearchQuery.trim());
 		};
 
@@ -164,7 +241,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		}
 
 		const trimmedInput = inputText.trim();
-		if (!trimmedInput) return;
+		if (!trimmedInput || searchRequestInProgress.current) return;
 
 		const newUserMessage = {
 			id: Date.now(),
@@ -188,6 +265,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				duration: 5000,
 			});
 			return;
+		}
+		// Regenerar posiciones al abrir el chat
+		if (!isOpen) {
+			generateNewLayout();
 		}
 		setIsOpen(!isOpen);
 	};
@@ -307,16 +388,24 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					}
 				>
 					<div className="button__text">
-						{Array.from('-ARTI-IA-ARTI-IA').map((char, i) => (
+						{Array.from('-ARTIE-IA').map((char, i) => (
 							<span key={i} style={{ '--index': i } as React.CSSProperties}>
+								{char}
+							</span>
+						))}
+						{Array.from('-ARTIE-IA-ARTIE').map((char, i) => (
+							<span
+								key={i + 9}
+								style={{ '--index': i + 9 } as React.CSSProperties}
+							>
 								{char}
 							</span>
 						))}
 					</div>
 					<div className="button__circle">
-						<FaRobot className="button__icon" aria-hidden="true" />
-						<FaRobot
-							className="button__icon button__icon--copy"
+						<RobotIcon className="button__icon size-6" aria-hidden="true" />
+						<RobotIcon
+							className="button__icon button__icon--copy size-6"
 							aria-hidden="true"
 						/>
 					</div>
@@ -324,33 +413,85 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			)}
 
 			{isOpen && isSignedIn && (
-				<div className="fixed right-24 bottom-32 z-50" ref={chatContainerRef}>
+				<div
+					className="fixed right-24 bottom-32 z-[9999]"
+					ref={chatContainerRef}
+				>
 					<ResizableBox
 						width={400}
 						height={500}
 						minConstraints={[300, 400]}
-						maxConstraints={[800, window.innerHeight - 160]} // 160px total de margen (80px arriba y abajo)
+						maxConstraints={[800, window.innerHeight - 160]}
 						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
 						className="chat-resizable"
 						onResize={handleResize}
 					>
-						<div className="flex h-full w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
-							<div className="flex items-center justify-between border-b p-4">
-								<div className="flex items-center space-x-2">
-									<FaRobot className="text-secondary text-2xl" />
-									<h2 className="text-lg font-semibold text-gray-800">
-										Artie IA
-									</h2>
-								</div>
-								<button
-									onClick={() => setIsOpen(false)}
-									className="rounded-full p-2 transition-colors hover:bg-gray-100"
-								>
-									<IoMdClose className="text-xl text-gray-500" />
-								</button>
+						<div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+							{DevTools}
+							{/* Logo background */}
+							<div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
+								<Image
+									src="/artiefy-logo2.svg"
+									alt="Artiefy Logo Background"
+									width={300}
+									height={100}
+									className="w-4/5"
+								/>
 							</div>
 
-							<div className="flex-1 space-y-4 overflow-y-auto p-4">
+							{/* Circuit icons layer - Ajustado para estar debajo del header e input */}
+							<div className="pointer-events-none absolute inset-0 z-[2]">
+								{staticPositions.map(
+									(pos, i) =>
+										pos.y <= 64 && (
+											<CircuitIcon
+												key={i}
+												className="absolute size-12 opacity-20"
+												style={{
+													left: `${pos.x}%`,
+													top: `${15 + pos.y}%`,
+													transform: `rotate(${pos.rotation}deg) scale(${pos.scale})`,
+												}}
+											/>
+										)
+								)}
+							</div>
+
+							{/* Header - Mayor z-index */}
+							<div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
+								{/* Header container */}
+								<div className="flex items-start justify-between">
+									{/* Left side with robot icon */}
+									<RobotIcon className="text-secondary mt-1 size-10" />
+
+									{/* Center content */}
+									<div className="-ml-6 flex flex-1 flex-col items-center">
+										<h2 className="mt-1 text-lg font-semibold text-gray-800">
+											Artie IA
+										</h2>
+										<div className="flex items-center gap-2">
+											<em className="text-sm font-semibold text-gray-600">
+												{user?.fullName}
+											</em>
+											<div className="relative inline-flex">
+												<div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-green-500/30" />
+												<div className="relative h-2.5 w-2.5 rounded-full bg-green-500" />
+											</div>
+										</div>
+									</div>
+
+									{/* Close button */}
+									<button
+										onClick={() => setIsOpen(false)}
+										className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
+									>
+										<IoMdClose className="text-xl text-gray-500" />
+									</button>
+								</div>
+							</div>
+
+							{/* Messages container - z-index medio para estar sobre los circuitos */}
+							<div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
 								{messages.map((message) => (
 									<div
 										key={message.id}
@@ -368,7 +509,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											}`}
 										>
 											{message.sender === 'bot' ? (
-												<FaRobot className="text-secondary mt-2 text-xl" />
+												<RobotIcon className="text-secondary mt-2 size-8" />
 											) : user?.imageUrl ? (
 												<Image
 													src={user.imageUrl}
@@ -415,30 +556,33 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								<div ref={messagesEndRef} />
 							</div>
 
-							<form onSubmit={handleSendMessage} className="border-t p-4">
-								<div className="flex gap-2">
-									<input
-										ref={inputRef}
-										type="text"
-										value={inputText}
-										onChange={(e) => setInputText(e.target.value)}
-										placeholder={
-											isSignedIn
-												? 'Escribe tu mensaje...'
-												: 'Inicia sesión para chatear'
-										}
-										className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
-										disabled={!isSignedIn || isLoading}
-									/>
-									<button
-										type="submit"
-										disabled={isLoading}
-										className="bg-secondary rounded-lg px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
-									>
-										<FiSend className="text-xl" />
-									</button>
-								</div>
-							</form>
+							{/* Input form - Mayor z-index y fondo semi-transparente */}
+							<div className="relative z-[5] border-t bg-white/95 p-4 backdrop-blur-sm">
+								<form onSubmit={handleSendMessage}>
+									<div className="flex gap-2">
+										<input
+											ref={inputRef}
+											type="text"
+											value={inputText}
+											onChange={(e) => setInputText(e.target.value)}
+											placeholder={
+												isSignedIn
+													? 'Escribe tu mensaje...'
+													: 'Inicia sesión para chatear'
+											}
+											className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
+											disabled={!isSignedIn || isLoading}
+										/>
+										<button
+											type="submit"
+											disabled={isLoading}
+											className="bg-secondary rounded-lg px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+										>
+											<FiSend className="text-xl" />
+										</button>
+									</div>
+								</form>
+							</div>
 						</div>
 					</ResizableBox>
 				</div>

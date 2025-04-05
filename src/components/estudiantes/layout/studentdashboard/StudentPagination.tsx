@@ -24,7 +24,7 @@ interface PaginationContainerProps {
   itemsPerPage?: number;
 }
 
-const PaginationContainer = ({
+const StudentPagination = ({
   totalPages,
   currentPage,
   totalCourses,
@@ -135,4 +135,4 @@ const PaginationContainer = ({
   );
 };
 
-export default PaginationContainer;
+export default StudentPagination;

@@ -8,9 +8,9 @@ import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
 
-import GradientText from '~/components/estudiantes/layout/GradientText';
-import { LoaderArtieia } from '~/components/estudiantes/layout/LoaderArtieia';
+import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
+import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import {
@@ -32,7 +32,7 @@ export default function StudentDetails({
 	initialPrograms: Program[];
 }) {
 	const [courses] = useState<Course[]>(initialCourses);
-	const [sortedPrograms] = useState(() => {
+	const [sortedPrograms] = useState<Program[]>(() => {
 		if (!Array.isArray(initialPrograms)) {
 			console.warn('initialPrograms is not an array:', initialPrograms);
 			return [];
@@ -43,33 +43,16 @@ export default function StudentDetails({
 			return dateB - dateA;
 		});
 	});
-	const [currentSlide, setCurrentSlide] = useState(0);
-	const [searchQuery, setSearchQuery] = useState('');
-	const [chatbotKey, setChatbotKey] = useState(0);
-	const [showChatbot, setShowChatbot] = useState(false);
-	const [searchInProgress, setSearchInProgress] = useState(false);
+	const [currentSlide, setCurrentSlide] = useState<number>(0);
+	const [searchQuery, setSearchQuery] = useState<string>('');
+	const [chatbotKey, setChatbotKey] = useState<number>(0);
+	const [showChatbot, setShowChatbot] = useState<boolean>(false);
+	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
 
-	const searchInitiated = useRef(false);
+	const searchInitiated = useRef<boolean>(false);
+	const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-	console.log('Programs received:', initialPrograms); // Añadir este log para debug
-
-	const truncateDescription = (description: string, maxLength: number) => {
-		if (description.length <= maxLength) return description;
-		return description.slice(0, maxLength) + '...';
-	};
-
-	useEffect(() => {
-		const interval = setInterval(() => {
-			setCurrentSlide(
-				(prevSlide) => (prevSlide + 1) % Math.min(courses.length, 5)
-			);
-		}, 5000);
-
-		return () => {
-			void clearInterval(interval); // Add void operator to ignore promise
-		};
-	}, [courses.length]);
-
+	// Memoized values to prevent re-renders
 	const sortedCourses = useMemo(() => {
 		return [...courses].sort(
 			(a, b) =>
@@ -77,50 +60,100 @@ export default function StudentDetails({
 		);
 	}, [courses]);
 
-	const latestFiveCourses = sortedCourses.slice(0, 5);
-	const latestTenCourses = sortedCourses.slice(0, 10);
+	const latestFiveCourses = useMemo(
+		() => sortedCourses.slice(0, 5),
+		[sortedCourses]
+	);
+	const latestTenCourses = useMemo(
+		() => sortedCourses.slice(0, 10),
+		[sortedCourses]
+	);
 
+	// Use useCallback for stable function references
 	const handleSearch = useCallback(
 		(e?: React.FormEvent) => {
 			e?.preventDefault();
 
-			if (searchInProgress || !searchQuery.trim() || searchInitiated.current)
-				return;
+			const trimmedQuery = searchQuery.trim();
 
+			if (searchInProgress || !trimmedQuery || searchInitiated.current) return;
+
+			// Clear any existing timeout
+			if (searchTimeoutRef.current) {
+				clearTimeout(searchTimeoutRef.current);
+			}
+
+			// Reset previous search state
+			setShowChatbot(false);
 			searchInitiated.current = true;
-			setSearchInProgress(true);
-			setShowChatbot(true);
-			setChatbotKey(Date.now());
+
+			// Debounce search to prevent multiple rapid calls
+			searchTimeoutRef.current = setTimeout(() => {
+				setSearchInProgress(true);
+				setShowChatbot(true);
+				setChatbotKey((prev) => prev + 1);
+			}, 300);
 		},
 		[searchQuery, searchInProgress]
 	);
 
-	useEffect(() => {
-		if (!showChatbot) {
-			void setSearchInProgress(false);
-		}
-	}, [showChatbot]);
+	const handleSearchChange = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			const newValue = e.target.value;
+			setSearchQuery(newValue);
 
+			if (!newValue.trim()) {
+				setShowChatbot(false);
+				setSearchInProgress(false);
+				searchInitiated.current = false;
+				setChatbotKey(0);
+			}
+		},
+		[]
+	);
+
+	// Slide interval effect with cleanup
+	useEffect(() => {
+		const interval = setInterval(() => {
+			setCurrentSlide(
+				(prevSlide) => (prevSlide + 1) % Math.min(courses.length, 5)
+			);
+		}, 5000);
+
+		return () => clearInterval(interval);
+	}, [courses.length]);
+
+	// Cleanup effect for search state
 	useEffect(() => {
 		return () => {
+			if (searchTimeoutRef.current) {
+				clearTimeout(searchTimeoutRef.current);
+			}
 			searchInitiated.current = false;
 			setSearchInProgress(false);
 		};
 	}, [searchQuery]);
 
-	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setSearchQuery(e.target.value);
-		if (e.target.value.trim() === '') {
-			setShowChatbot(false);
-			setSearchInProgress(false);
+	// Reset search state when chatbot visibility changes
+	useEffect(() => {
+		if (!showChatbot) {
 			searchInitiated.current = false;
+			setSearchInProgress(false);
 		}
-	};
+	}, [showChatbot]);
 
-	const handleSearchIconClick = (e: React.MouseEvent) => {
-		e.preventDefault(); // Prevent any default behavior
-		if (!searchQuery.trim()) return;
-		handleSearch();
+	const handleSearchIconClick = useCallback(
+		(e: React.MouseEvent) => {
+			e.preventDefault();
+			if (!searchQuery.trim()) return;
+			handleSearch();
+		},
+		[searchQuery, handleSearch]
+	);
+
+	const truncateDescription = (description: string, maxLength: number) => {
+		if (description.length <= maxLength) return description;
+		return description.slice(0, maxLength) + '...';
 	};
 
 	return (
@@ -140,7 +173,7 @@ export default function StudentDetails({
 									priority
 								/>
 								<div className="ml-2">
-									<LoaderArtieia />
+									<StudentArtieIa />
 								</div>
 							</div>
 							<form
@@ -275,9 +308,9 @@ export default function StudentDetails({
 						{/* Top Cursos section */}
 						<div className="animation-delay-200 animate-zoom-in relative px-12 sm:px-24">
 							<div className="flex justify-center">
-								<GradientText className="mb-6 text-3xl sm:text-5xl">
+								<StudentGradientText className="mb-6 text-3xl sm:text-5xl">
 									Top Cursos
-								</GradientText>
+								</StudentGradientText>
 							</div>
 							<div>
 								<Carousel className="w-full">
@@ -345,9 +378,9 @@ export default function StudentDetails({
 						{/* Programas section */}
 						<div className="animation-delay-300 animate-zoom-in relative px-4 sm:px-24">
 							<div className="flex justify-center">
-								<GradientText className="text-3xl sm:text-5xl">
+								<StudentGradientText className="text-3xl sm:text-5xl">
 									Programas
-								</GradientText>
+								</StudentGradientText>
 							</div>
 							<div>
 								<Carousel className="w-full">

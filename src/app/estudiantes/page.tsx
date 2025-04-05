@@ -1,10 +1,11 @@
 import { Suspense } from 'react';
 
 import StudentDetails from '~/app/estudiantes/StudentDetails';
-import CategoriesCourse from '~/components/estudiantes/layout/CategoriesCourse';
+import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import CourseListStudent from '~/components/estudiantes/layout/StudentListCourses';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
+import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
@@ -63,17 +64,18 @@ async function fetchData(
 		const normalizedQuery = removeAccents(params.query.toLowerCase());
 		filteredCourses = filteredCourses.filter((course) => {
 			const normalizedTitle = removeAccents(course.title.toLowerCase());
-			const normalizedDescription = course.description
-				? removeAccents(course.description.toLowerCase())
-				: '';
 			const normalizedCategory = course.category?.name
 				? removeAccents(course.category.name.toLowerCase())
 				: '';
+			const normalizedModalidad = course.modalidad?.name
+				? removeAccents(course.modalidad.name.toLowerCase())
+				: '';
 
+			// Solo buscar en título, categoría y modalidad
 			return (
 				normalizedTitle.includes(normalizedQuery) ||
-				normalizedDescription.includes(normalizedQuery) ||
-				normalizedCategory.includes(normalizedQuery)
+				normalizedCategory.includes(normalizedQuery) ||
+				normalizedModalidad.includes(normalizedQuery)
 			);
 		});
 	}
@@ -123,45 +125,59 @@ export default async function Page({ searchParams }: PageProps) {
 		const allCourses = await fetchAllCourses();
 
 		return (
-			<div className="flex min-h-screen flex-col">
-				<Header />
-				<StudentDetails
-					initialCourses={allCourses}
-					initialPrograms={data.programs}
-				/>
-				<CategoriesCourse
-					allCategories={data.categories}
-					featuredCategories={data.featuredCategories}
-				/>
-				<Suspense
-					fallback={
-						<div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
-							{Array.from({ length: 9 }).map((_, i) => (
-								<div key={i} className="group relative p-4">
-									<Skeleton className="relative h-40 w-full md:h-56" />
-									<div className="mt-3 flex flex-col space-y-2">
-										<Skeleton className="h-6 w-3/4" />
-										<Skeleton className="h-4 w-1/2" />
-										<Skeleton className="h-4 w-full" />
-										<Skeleton className="h-4 w-full" />
-										<Skeleton className="h-4 w-1/2" />
-									</div>
-								</div>
-							))}
-						</div>
-					}
+			<>
+				<div
+					className="flex min-h-screen flex-col"
+					style={{ isolation: 'isolate', zIndex: 1 }}
 				>
-					<CourseListStudent
-						courses={data.courses}
-						currentPage={data.page}
-						totalPages={data.totalPages}
-						totalCourses={data.total}
-						category={data.categoryId?.toString()}
-						searchTerm={data.searchTerm}
+					<Header />
+					<StudentDetails
+						initialCourses={allCourses}
+						initialPrograms={data.programs}
 					/>
-				</Suspense>
-				<Footer />
-			</div>
+					<StudentCategories
+						allCategories={data.categories}
+						featuredCategories={data.featuredCategories}
+					/>
+					<Suspense
+						fallback={
+							<div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
+								{Array.from({ length: 9 }).map((_, i) => (
+									<div key={i} className="group relative p-4">
+										<Skeleton className="relative h-40 w-full md:h-56" />
+										<div className="mt-3 flex flex-col space-y-2">
+											<Skeleton className="h-6 w-3/4" />
+											<Skeleton className="h-4 w-1/2" />
+											<Skeleton className="h-4 w-full" />
+											<Skeleton className="h-4 w-full" />
+											<Skeleton className="h-4 w-1/2" />
+										</div>
+									</div>
+								))}
+							</div>
+						}
+					>
+						<StudentListCourses
+							courses={data.courses}
+							currentPage={data.page}
+							totalPages={data.totalPages}
+							totalCourses={data.total}
+							category={data.categoryId?.toString()}
+							searchTerm={data.searchTerm}
+						/>
+					</Suspense>
+					<Footer />
+				</div>
+				{/* Chat container con z-index más alto */}
+				<div className="chat-container-wrapper">
+					<StudentChatbot
+						isAlwaysVisible={true}
+						showChat={false} // Set default value to false
+						className="animation-delay-400 animate-zoom-in"
+						initialSearchQuery=""
+					/>
+				</div>
+			</>
 		);
 	} catch (error) {
 		console.error('Error al cargar los cursos:', error);

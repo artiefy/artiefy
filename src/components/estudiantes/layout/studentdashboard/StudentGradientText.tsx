@@ -10,7 +10,7 @@ interface GradientTextProps {
 	showBorder?: boolean;
 }
 
-export default function GradientText({
+export default function StudentGradientText({
 	children,
 	className = '',
 	colors = ['#2ecc71', '#3AF4EF', '#00BDD8'],

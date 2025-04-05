@@ -11,8 +11,8 @@ import {
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 
-import GradientText from '~/components/estudiantes/layout/GradientText';
-import PaginationContainer from '~/components/estudiantes/layout/PaginationContainer';
+import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
+import StudentPagination from './StudentPagination';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -39,7 +39,7 @@ interface CourseListStudentProps {
 
 export const revalidate = 3600;
 
-export default async function CourseListStudent({
+export default async function StudentListCourses({
 	courses,
 	currentPage,
 	totalPages,
@@ -53,9 +53,9 @@ export default async function CourseListStudent({
 	if (!courses || courses.length === 0) {
 		return (
 			<div className="flex min-h-[400px] flex-col items-center justify-center space-y-4 text-center">
-				<BookOpenIcon className="h-16 w-16 text-primary animate-pulse" />
+				<BookOpenIcon className="text-primary h-16 w-16 animate-pulse" />
 				<div className="space-y-2">
-					<h3 className="text-2xl font-bold text-primary">
+					<h3 className="text-primary text-2xl font-bold">
 						No hay cursos disponibles
 					</h3>
 					<p className="text-gray-500">
@@ -149,7 +149,7 @@ export default async function CourseListStudent({
 
 						return (
 							<div key={course.id} className="group relative">
-								<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+								<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 								<Card
 									className={`zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02] ${!course.isActive ? 'opacity-50' : ''}`}
 								>
@@ -172,8 +172,8 @@ export default async function CourseListStudent({
 									</CardHeader>
 
 									<CardContent className="-mt-3 flex grow flex-col justify-between space-y-2">
-										<CardTitle className="rounded text-lg text-background">
-											<div className="font-bold text-primary">
+										<CardTitle className="text-background rounded text-lg">
+											<div className="text-primary font-bold">
 												{course.title}
 											</div>
 										</CardTitle>
@@ -208,7 +208,7 @@ export default async function CourseListStudent({
 											<p className="text-sm font-bold text-gray-300 italic">
 												Educador:{' '}
 												<span className="font-bold italic">
-													{course.instructorName ?? 'Instructor no encontrado'}
+													{course.instructorName ?? 'No tiene'}
 												</span>
 											</p>
 											<div className="flex items-center">
@@ -236,7 +236,7 @@ export default async function CourseListStudent({
 												</span>
 												{course.isActive && (
 													<>
-														<ArrowRightCircleIcon className="ml-2 size-5 animate-bounce-right" />
+														<ArrowRightCircleIcon className="animate-bounce-right ml-2 size-5" />
 														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 															<div className="relative h-full w-10 bg-white/30" />
 														</div>
@@ -251,7 +251,7 @@ export default async function CourseListStudent({
 					})
 				)}
 			</div>
-			<PaginationContainer
+			<StudentPagination
 				totalPages={totalPages}
 				currentPage={currentPage}
 				totalCourses={totalCourses}
