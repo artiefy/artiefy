@@ -35,18 +35,18 @@ function sanitizeFileName(fileName: string): string {
 }
 
 export async function POST(request: Request) {
-	const { contentType, fileSize, fileName } = (await request.json()) as {
-		contentType: string;
-		fileSize: number;
-		fileName: string;
-	};
-
 	try {
+		const { contentType, fileSize, fileName } = (await request.json()) as {
+			contentType: string;
+			fileSize: number;
+			fileName: string;
+		};
+
 		if (!process.env.AWS_BUCKET_NAME) {
 			throw new Error('AWS_BUCKET_NAME no está definido');
 		}
 
-		// Usar el nombre sanitizado para la key
+		// Sanitize the file name
 		const sanitizedFileName = sanitizeFileName(fileName);
 		const key = `uploads/${sanitizedFileName}`;
 
@@ -56,8 +56,8 @@ export async function POST(request: Request) {
 			);
 		}
 
+		// Handle simple or multipart uploads
 		if (fileSize <= MAX_SIMPLE_UPLOAD_SIZE) {
-			// Carga simple para archivos pequeños (hasta 500 MB)
 			const { url, fields } = await createPresignedPost(client, {
 				Bucket: process.env.AWS_BUCKET_NAME,
 				Key: key,
@@ -67,26 +67,25 @@ export async function POST(request: Request) {
 				],
 				Fields: {
 					'Content-Type': contentType,
-					acl: 'public-read', // Aseguramos que el objeto sea público
+					acl: 'public-read',
 				},
-				Expires: 3600, // 1 hora
+				Expires: 3600,
 			});
 
 			return NextResponse.json({
 				url,
 				fields,
 				key,
-				fileName: sanitizedFileName, // Usar el nombre sanitizado
+				fileName: sanitizedFileName,
 				uploadType: 'simple',
-				contentType, // Add contentType to match structure
+				contentType,
 			});
-		} else if (fileSize < 5 * 1024 * 1024 * 1024) {
-			// Usar presigned PUT para archivos hasta 5 GB
+		} else {
 			const command = new PutObjectCommand({
 				Bucket: process.env.AWS_BUCKET_NAME,
 				Key: key,
 				ContentType: contentType,
-				ContentLength: fileSize, // Add Content-Length
+				ContentLength: fileSize,
 				ACL: 'public-read',
 			});
 
@@ -94,43 +93,18 @@ export async function POST(request: Request) {
 				expiresIn: 3600,
 			});
 
-			// Return final URL where the file will be accessible
-			const finalUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`;
-
 			return NextResponse.json({
 				url: signedUrl,
 				key,
-				fileName: sanitizedFileName, // Usar el nombre sanitizado
+				fileName: sanitizedFileName,
 				uploadType: 'put',
 				contentType,
-				fileSize,
-				finalUrl, // Add the final URL where the file will be accessible
-			});
-		} else {
-			// Carga multiparte para archivos grandes (5 GB - 25 GB)
-			const multipartUpload = await client.send(
-				new CreateMultipartUploadCommand({
-					Bucket: process.env.AWS_BUCKET_NAME,
-					Key: key,
-					ContentType: contentType,
-					ACL: 'public-read', // Aseguramos que el objeto sea público
-				})
-			);
-
-			return NextResponse.json({
-				uploadId: multipartUpload.UploadId,
-				key: key,
-				fileName: sanitizedFileName, // Usar el nombre sanitizado
-				uploadType: 'multipart',
-				url: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`, // Add additional fields to match simple upload structure
-				fields: {},
-				contentType, // Add contentType to match structure
 			});
 		}
 	} catch (error) {
-		console.error('Error en la carga:', error);
+		console.error('Error en la carga (POST):', error);
 		return NextResponse.json(
-			{ error: (error as Error).message },
+			{ error: (error as Error).message || 'Error desconocido' },
 			{ status: 500 }
 		);
 	}
