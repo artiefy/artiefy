@@ -195,19 +195,19 @@ export default function StudentCategories({
 										<>
 											<div className="mb-4 text-3xl text-blue-600">
 												<Image
-													src={`/icons/${
+													src={`/${
 														index === 0
-															? 'circuit'
+															? 'alembic-svgrepo-com'
 															: index === 1
-																? 'list'
+																? 'list-svgrepo-com'
 																: index === 2
-																	? 'brush'
+																	? 'brush-svgrepo-com'
 																	: index === 3
-																		? 'web-dev'
+																		? 'web-page-browser-analysis-screen-svgrepo-com'
 																		: index === 4
-																			? 'database'
-																			: 'code'
-													}.png`}
+																			? 'database-svgrepo-com'
+																			: 'code-svgrepo-com'
+													}.svg`}
 													alt={category.name}
 													width={48}
 													height={48}

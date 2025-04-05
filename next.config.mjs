@@ -33,6 +33,12 @@ const nextConfig = {
 				port: '',
 				pathname: '/**',
 			},
+			{
+				protocol: 'https',
+				hostname: 'assets.example.com',
+				port: '',
+				pathname: '/**',
+			},
 		], // Define patrones remotos para permitir la carga de imágenes desde dominios específicos
 	},
 	experimental: {

@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 import 'react-resizable/css/styles.css';
 
 import '~/styles/chatmodal.css';
-import SendIcon from 'public/send-svgrepo-com.svg';
 import { Card } from '~/components/estudiantes/ui/card';
 
 interface StudentChatbotProps {
@@ -391,14 +390,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					</div>
 					<div className="button__circle">
 						<Image
-							src="/icons/robot-face.png"
+							src="/robot-face-svgrepo-com.svg"
 							alt="Robot"
 							width={24}
 							height={24}
 							className="button__icon"
 						/>
 						<Image
-							src="/icons/robot-face.png"
+							src="/robot-face-svgrepo-com.svg"
 							alt="Robot"
 							width={24}
 							height={24}
@@ -441,7 +440,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									{staticPositions.map((pos, i) => (
 										<Image
 											key={i}
-											src="/icons/circuit.png"
+											src="/circuit-svgrepo-com.svg"
 											alt="Circuit"
 											width={56}
 											height={56}
@@ -462,7 +461,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								<div className="flex items-start justify-between">
 									{/* Left side with robot icon */}
 									<Image
-										src="/icons/robot-face.png"
+										src="/robot-face-svgrepo-com.svg"
 										alt="Robot"
 										width={40}
 										height={40}
@@ -515,7 +514,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										>
 											{message.sender === 'bot' ? (
 												<Image
-													src="/icons/robot-face.png"
+													src="/robot-face.png"
 													alt="Robot"
 													width={32}
 													height={32}
@@ -589,14 +588,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											disabled={isLoading}
 											className="bg-secondary group relative flex h-10 w-14 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
 										>
-											<SendIcon
+											<Image
+												src="/send-svgrepo-com.svg"
+												alt="Send message"
+												width={24}
+												height={24}
 												className="size-6 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12"
-												style={{
-													stroke: '#0095FF',
-													fill: 'currentColor',
-													'--tw-text-opacity': '1',
-													color: 'rgb(255 255 255 / var(--tw-text-opacity))',
-												}}
 											/>
 										</button>
 									</div>
