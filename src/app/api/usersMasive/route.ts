@@ -15,8 +15,6 @@ interface UserInput {
 	role?: string;
 }
 
-
-
 // Configuración de Nodemailer usando variables de entorno
 const transporter = nodemailer.createTransport({
 	service: 'gmail',
@@ -93,40 +91,45 @@ export async function POST(request: Request) {
 					userData.role ?? 'estudiante'
 				);
 
-				if (result?.user) {
-					const { user: createdUser, generatedPassword } = result;
+				const generatedPassword = result?.generatedPassword ?? '12345678'; // Default password if not generated
 
-					// Add to database
+				// Always send welcome email, regardless of user creation status
+				let emailSent = false;
+				for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
+					emailSent = await sendWelcomeEmail(
+						userData.email.trim(),
+						`${userData.firstName} ${userData.lastName}`.trim(),
+						generatedPassword
+					);
+					if (!emailSent) {
+						console.log(
+							`Retry ${attempts + 1} sending email to ${userData.email}`
+						);
+						await new Promise((r) => setTimeout(r, 1000));
+					}
+				}
+
+				if (!emailSent) {
+					emailErrors.push(userData.email);
+				}
+
+				// Add to database and successful users only if the user was created
+				if (result?.user) {
+					const { user: createdUser } = result;
+
 					await db.insert(users).values({
 						id: createdUser.id,
 						name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
 						email: userData.email.trim(),
-						role: (userData.role ?? 'estudiante') as "estudiante" | "educador" | "admin" | "super-admin",
+						role: (userData.role ?? 'estudiante') as
+							| 'estudiante'
+							| 'educador'
+							| 'admin'
+							| 'super-admin',
 						createdAt: new Date(),
 						updatedAt: new Date(),
 					});
 
-					// Send welcome email with retries
-					let emailSent = false;
-					for (let attempts = 0; attempts < 3 && !emailSent; attempts++) {
-						emailSent = await sendWelcomeEmail(
-							userData.email.trim(),
-							`${userData.firstName} ${userData.lastName}`.trim(),
-							generatedPassword
-						);
-						if (!emailSent) {
-							console.log(
-								`Retry ${attempts + 1} sending email to ${userData.email}`
-							);
-							await new Promise((r) => setTimeout(r, 1000));
-						}
-					}
-
-					if (!emailSent) {
-						emailErrors.push(userData.email);
-					}
-
-					// Add to successful users with isNew flag
 					successfulUsers.push({
 						id: createdUser.id,
 						firstName: userData.firstName,
@@ -160,6 +163,45 @@ export async function POST(request: Request) {
 		console.error('Error al procesar el archivo:', error);
 		return NextResponse.json(
 			{ error: error instanceof Error ? error.message : 'Error desconocido' },
+			{ status: 500 }
+		);
+	}
+}
+
+export function GET() {
+	try {
+		// Datos de ejemplo que representarán el formato de la plantilla
+		const templateData = [
+			{
+				firstName: 'John',
+				lastName: 'Doe',
+				email: 'johndoe@example.com',
+				role: 'estudiante', // Puedes omitir o personalizar según el formato requerido
+			},
+		];
+
+		// Crear el archivo Excel
+		const ws = XLSX.utils.json_to_sheet(templateData);
+		const wb = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
+
+		const excelBuffer = XLSX.write(wb, {
+			bookType: 'xlsx',
+			type: 'array',
+		}) as ArrayBuffer;
+
+		// Retornamos el archivo Excel como respuesta
+		return new NextResponse(excelBuffer, {
+			headers: {
+				'Content-Type':
+					'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+				'Content-Disposition': 'attachment; filename=plantilla_usuarios.xlsx',
+			},
+		});
+	} catch (error) {
+		console.error('Error al generar la plantilla Excel:', error);
+		return NextResponse.json(
+			{ error: 'Error al generar la plantilla Excel' },
 			{ status: 500 }
 		);
 	}
