@@ -1,3 +1,4 @@
+
 import './src/env.js'; // Importa variables de entorno
 import withPlaiceholder from '@plaiceholder/next'; // Importa la configuración de @plaiceholder/next
 
@@ -39,57 +40,8 @@ const nextConfig = {
 		turbo: {
 			rules: {
 				'*.svg': {
-					loaders: [
-						{
-							loader: '@svgr/webpack',
-							options: {
-								svgo: true,
-								svgoConfig: {
-									plugins: [
-										{
-											name: 'preset-default',
-											params: {
-												overrides: {
-													removeViewBox: false,
-													convertStyleToAttrs: true,
-													cleanupAttrs: true,
-													removeDoctype: true,
-													removeXMLProcInst: true,
-													removeComments: true,
-													removeMetadata: true,
-													removeTitle: true,
-													removeDesc: true,
-													removeEmptyAttrs: true,
-													removeHiddenElems: true,
-													removeEmptyText: true,
-													removeEmptyContainers: true,
-													minifyStyles: true,
-													convertColors: true,
-													convertPathData: true,
-													convertTransform: true,
-													removeUnknownsAndDefaults: true,
-													removeNonInheritableGroupAttrs: true,
-													removeUselessStrokeAndFill: true,
-													removeUnusedNS: true,
-													cleanupIds: true,
-													cleanupNumericValues: true,
-													moveElemsAttrsToGroup: true,
-													moveGroupAttrsToElems: true,
-													collapseGroups: true,
-													removeRasterImages: true,
-													mergePaths: true,
-													convertShapeToPath: true,
-													sortAttrs: true,
-													removeDimensions: true,
-												},
-											},
-										},
-									],
-								},
-							},
-						},
-					],
-					as: '*.js',
+					loaders: ['@svgr/webpack'], // Define el cargador para archivos SVG
+					as: '*.js', // Define la extensión de salida para archivos SVG
 				},
 			},
 			resolveAlias: {
@@ -106,13 +58,8 @@ const nextConfig = {
 				'.json',
 			], // Define las extensiones de archivo que se resolverán automáticamente
 		},
-		// Add memory optimization for webpack
-		swcMinify: true,
-		optimizeFonts: true,
-		optimizeImages: true,
-		workerThreads: true,
-		memoryLimit: 4096, // 4GB limit for webpack
 	},
 	expireTime: 3600, // Define un tiempo de expiración personalizado para el encabezado Cache-Control (1 hora)
 };
+
 export default withPlaiceholder(nextConfig);
