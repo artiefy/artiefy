@@ -48,7 +48,7 @@ export default async function MyCoursesStudent() {
 	return (
 		<div className="container mx-auto mb-22 px-4">
 			{/* Welcome Message */}
-			<h1 className="mb-8 text-4xl font-bold text-primary">
+			<h1 className="text-primary mb-8 text-4xl font-bold">
 				Bienvenido, {user.firstName}!
 			</h1>
 
@@ -77,7 +77,7 @@ export default async function MyCoursesStudent() {
 			{/* Programs Section */}
 			{programs.length > 0 && (
 				<section className="mb-12">
-					<h2 className="mb-6 text-2xl font-bold text-primary">
+					<h2 className="text-primary mb-6 text-2xl font-bold">
 						Mis Programas
 					</h2>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -101,51 +101,66 @@ export default async function MyCoursesStudent() {
 									</div>
 									<CardContent className="flex w-full flex-col justify-between gap-2 px-4 pt-3 pb-2.5">
 										<div className="flex h-full flex-col justify-between">
-											<div className="flex items-start justify-between gap-2">
-												<h3 className="line-clamp-2 min-h-[1.5em] text-lg leading-normal font-bold [overflow-wrap:anywhere] text-primary">
-													{program.title}
-												</h3>
-												<div className="flex shrink-0 items-center">
-													{Array.from({ length: 5 }).map((_, index) => (
-														<StarIcon
-															key={index}
-															className={`h-4 w-4 ${
-																index < Math.floor(program.rating ?? 0)
-																	? 'text-yellow-400'
-																	: 'text-gray-300'
-															}`}
-														/>
-													))}
-													<span className="ml-2 text-sm font-semibold text-yellow-400">
-														{program.rating?.toFixed(1) ?? '0.0'}
-													</span>
-												</div>
-											</div>
-											<div
-												className="group flex flex-col gap-2 group-data-[long-title=true]:mb-2"
-												data-long-title={program.title.length > 50}
-											>
-												<Badge
-													variant="outline"
-													className="w-fit border-primary bg-background text-primary hover:bg-black/70"
-												>
-													{program.category?.name ?? 'Sin categoría'}
-												</Badge>
-												<Button
-													asChild
-													className="w-fit shrink-0 group-data-[long-title=true]:-mt-9 group-data-[long-title=true]:mb-2 group-data-[long-title=true]:ml-auto"
-												>
-													<Link
-														href={`/estudiantes/programas/${program.id}`}
-														className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
+											<div className="flex flex-col gap-2">
+												{/* Título y rating */}
+												<div className="flex items-start justify-between gap-2">
+													<h3
+														className="text-primary line-clamp-2 text-lg font-bold"
+														ref={(el) => {
+															if (el) {
+																// Check if title has multiple lines
+																const isTwoLines = el.offsetHeight > 28; // Altura aproximada de una línea
+																el
+																	.closest('.flex-col')
+																	?.classList.toggle(
+																		'has-multiline',
+																		isTwoLines
+																	);
+															}
+														}}
 													>
-														<p className="font-bold">Ver Programa</p>
-														<ArrowRightCircleIcon className="mr-1 size-4 animate-bounce-right" />
-														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-															<div className="relative h-full w-10 bg-white/30" />
-														</div>
-													</Link>
-												</Button>
+														{program.title}
+													</h3>
+													<div className="flex shrink-0 items-center">
+														{Array.from({ length: 5 }).map((_, index) => (
+															<StarIcon
+																key={index}
+																className={`h-4 w-4 ${
+																	index < Math.floor(program.rating ?? 0)
+																		? 'text-yellow-400'
+																		: 'text-gray-300'
+																}`}
+															/>
+														))}
+														<span className="ml-2 text-sm font-semibold text-yellow-400">
+															{program.rating?.toFixed(1) ?? '0.0'}
+														</span>
+													</div>
+												</div>
+												{/* Categoría y botón */}
+												<div className="has-multiline:justify-between flex items-center justify-between gap-2 data-[layout=stacked]:flex-col data-[layout=stacked]:items-start">
+													<Badge
+														variant="outline"
+														className="border-primary bg-background text-primary hover:bg-black/70"
+													>
+														{program.category?.name ?? 'Sin categoría'}
+													</Badge>
+													<Button
+														asChild
+														className="has-multiline:ml-auto shrink-0"
+													>
+														<Link
+															href={`/estudiantes/programas/${program.id}`}
+															className="group/button bg-background text-primary relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 active:scale-95"
+														>
+															<p className="font-bold">Ver Programa</p>
+															<ArrowRightCircleIcon className="animate-bounce-right mr-1 size-4" />
+															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+																<div className="relative h-full w-10 bg-white/30" />
+															</div>
+														</Link>
+													</Button>
+												</div>
 											</div>
 										</div>
 									</CardContent>
@@ -159,7 +174,7 @@ export default async function MyCoursesStudent() {
 			{/* In Progress Courses Section */}
 			{inProgressCourses.length > 0 && (
 				<section className="mb-12">
-					<h2 className="mb-6 text-2xl font-bold text-primary">
+					<h2 className="text-primary mb-6 text-2xl font-bold">
 						Mi Progreso de Aprendizaje
 					</h2>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -183,7 +198,7 @@ export default async function MyCoursesStudent() {
 									</div>
 									<CardContent className="flex w-full flex-col justify-between px-4 py-3">
 										<div>
-											<h3 className="text-lg font-bold text-primary">
+											<h3 className="text-primary text-lg font-bold">
 												{course.title}
 											</h3>
 											<div className="flex items-center gap-2">
@@ -201,7 +216,7 @@ export default async function MyCoursesStudent() {
 													<span className="-mt-1 text-sm font-bold text-gray-300">
 														Progreso Del Curso :
 													</span>
-													<span className="text-sm font-semibold text-primary">
+													<span className="text-primary text-sm font-semibold">
 														{course.progress}%
 													</span>
 												</div>
@@ -213,10 +228,10 @@ export default async function MyCoursesStudent() {
 											<Button asChild className="mt-4 shrink-0">
 												<Link
 													href={`/estudiantes/cursos/${course.id}`}
-													className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
+													className="group/button bg-background text-primary relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 active:scale-95"
 												>
 													<p className="font-bold">Continuar</p>
-													<ArrowRightCircleIcon className="mr-1 size-4 animate-bounce-right" />
+													<ArrowRightCircleIcon className="animate-bounce-right mr-1 size-4" />
 													<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 														<div className="relative h-full w-10 bg-white/30" />
 													</div>
@@ -234,7 +249,7 @@ export default async function MyCoursesStudent() {
 			{/* Completed Courses Section */}
 			{completedCourses.length > 0 && (
 				<section className="mt-12">
-					<h2 className="mb-6 text-2xl font-bold text-primary">
+					<h2 className="text-primary mb-6 text-2xl font-bold">
 						Cursos Completados
 					</h2>
 					<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -258,7 +273,7 @@ export default async function MyCoursesStudent() {
 									</div>
 									<CardContent className="flex w-full flex-col justify-between px-4 py-3">
 										<div>
-											<h3 className="text-lg font-bold text-primary">
+											<h3 className="text-primary text-lg font-bold">
 												{course.title}
 											</h3>
 											<div className="flex items-center gap-2">
@@ -276,7 +291,7 @@ export default async function MyCoursesStudent() {
 													<span className="-mt-1 text-sm font-bold text-gray-300">
 														Progreso Del Curso :
 													</span>
-													<span className="text-sm font-semibold text-primary">
+													<span className="text-primary text-sm font-semibold">
 														{course.progress}%
 													</span>
 												</div>
@@ -294,7 +309,7 @@ export default async function MyCoursesStudent() {
 													className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 text-white active:scale-95"
 												>
 													<p className="font-bold">Ver Curso</p>
-													<ArrowRightCircleIcon className="mr-1 size-4 animate-bounce-right" />
+													<ArrowRightCircleIcon className="animate-bounce-right mr-1 size-4" />
 													<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 														<div className="relative h-full w-10 bg-white/30" />
 													</div>
@@ -312,7 +327,7 @@ export default async function MyCoursesStudent() {
 				<>
 					<div className="my-8 border-b border-gray-700/50" />
 					<div className="mt-8 rounded-lg bg-gray-800 p-8 text-center text-white">
-						<BookOpenIcon className="mx-auto h-12 w-12 text-primary" />
+						<BookOpenIcon className="text-primary mx-auto h-12 w-12" />
 						<h3 className="mt-4 text-xl font-semibold">
 							No hay cursos inscritos
 						</h3>
@@ -321,7 +336,7 @@ export default async function MyCoursesStudent() {
 						</p>
 						<Link
 							href="/estudiantes"
-							className="mt-4 inline-block rounded-md bg-primary px-6 py-2 font-semibold text-background hover:bg-primary/90"
+							className="bg-primary text-background hover:bg-primary/90 mt-4 inline-block rounded-md px-6 py-2 font-semibold"
 						>
 							Ver cursos disponibles
 						</Link>

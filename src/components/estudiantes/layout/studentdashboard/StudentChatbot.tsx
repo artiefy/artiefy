@@ -124,11 +124,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const { user } = useUser();
 	const router = useRouter();
 
+	// Add a new ref to track initial search
+	const initialSearchDone = useRef(false);
+
 	const handleBotResponse = useCallback(
 		async (query: string) => {
-			if (processingQuery || searchRequestInProgress.current) return;
-
-			searchRequestInProgress.current = true;
+			if (processingQuery) return;
 			setProcessingQuery(true);
 			setIsLoading(true);
 
@@ -139,41 +140,34 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({ prompt: query }),
-					cache: 'no-store',
 				});
 
-				if (!response.ok) {
-					throw new Error(`Error: ${response.status}`);
-				}
-
 				const data = (await response.json()) as ChatResponse;
-				console.log('Bot Response:', data); // Para debugging
+				const messageText =
+					data.response ??
+					'Lo siento, no pude encontrar información relevante.';
 
-				// Solo actualizar mensajes si hay una respuesta válida
-				if (data?.response) {
-					setMessages((prev) => [
-						...prev,
-						{
-							id: Date.now() + Math.random(),
-							text: data.response,
-							sender: 'bot' as const,
-						},
-					]);
-				}
+				setMessages((prev) => [
+					...prev,
+					{
+						id: Date.now() + Math.random(),
+						text: messageText,
+						sender: 'bot' as const,
+					},
+				]);
 			} catch (error) {
 				console.error('Error getting bot response:', error);
 				setMessages((prev) => [
 					...prev,
 					{
 						id: Date.now() + Math.random(),
-						text: 'Lo siento, ocurrió un error al buscar los cursos. Por favor, intenta de nuevo.',
+						text: 'Lo siento, ocurrió un error al procesar tu solicitud.',
 						sender: 'bot' as const,
 					},
 				]);
 			} finally {
 				setIsLoading(false);
 				setProcessingQuery(false);
-				searchRequestInProgress.current = false;
 			}
 		},
 		[processingQuery]
@@ -191,15 +185,19 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	useEffect(() => {
 		const handleInitialSearch = async () => {
+			// Add check for initialSearchDone
 			if (
 				!initialSearchQuery?.trim() ||
 				!isSignedIn ||
 				!showChat ||
 				processingQuery ||
 				searchRequestInProgress.current ||
-				initialSearchQuery.trim() === lastSearchQuery
+				initialSearchQuery.trim() === lastSearchQuery ||
+				initialSearchDone.current
 			)
 				return;
+
+			initialSearchDone.current = true; // Mark initial search as done
 
 			setMessages([
 				{
@@ -224,6 +222,20 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		lastSearchQuery,
 		processingQuery,
 	]);
+
+	// Add cleanup effect for initial search flag
+	useEffect(() => {
+		return () => {
+			initialSearchDone.current = false;
+		};
+	}, []);
+
+	// Reset initial search flag when chat closes
+	useEffect(() => {
+		if (!showChat) {
+			initialSearchDone.current = false;
+		}
+	}, [showChat]);
 
 	useEffect(() => {
 		setIsOpen(showChat);
@@ -324,15 +336,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			const introText = parts[0];
 			const courseTexts = parts.slice(1);
 
-			// Parse all courses from the message
+			// Parse all courses from the message with exact ID from API
 			const courses = courseTexts
 				.map((text) => {
 					const match = /(\d+)\.\s+(.*?)\|(\d+)/.exec(text);
 					if (!match) return null;
+					const courseId = parseInt(match[3]); // Este es el ID del curso de la API
 					return {
 						number: parseInt(match[1]),
 						title: match[2].trim(),
-						id: parseInt(match[3]),
+						id: courseId, // Usamos el ID exacto de la API
 					};
 				})
 				.filter(
@@ -355,7 +368,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											{course.number}. {course.title}
 										</h4>
 										<Link
-											href={`/estudiantes/cursos/${course.id}`}
+											href={`/estudiantes/cursos/${course.id}`} // Corregida la ruta para usar cursos
 											className="group/button bg-background text-primary relative inline-flex h-9 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
 										>
 											<span className="font-bold">Ver Curso</span>
