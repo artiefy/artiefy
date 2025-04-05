@@ -65,15 +65,22 @@ export async function POST(request: Request) {
 		}
 
 		// Create conditions only for valid titles
-		const titleConditions: SQL[] = data.result
-			.filter(
-				(item): item is { id: number; title: string } =>
-					typeof item?.title === 'string' && item?.title.length > 0
-			)
-			.map((item) => {
-				const searchTerm = item.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-				return like(courses.title, `%${searchTerm}%`);
-			});
+		const titleConditions: SQL[] = [
+			...new Set(
+				data.result
+					.filter(
+						(item): item is { id: number; title: string } =>
+							typeof item?.title === 'string' && item?.title.length > 0
+					)
+					.map((item) => {
+						const searchTerm = item.title.replace(
+							/[.*+?^${}()|[\]\\]/g,
+							'\\$&'
+						);
+						return like(courses.title, `%${searchTerm}%`);
+					})
+			),
+		];
 
 		if (titleConditions.length === 0) {
 			return NextResponse.json({
@@ -82,7 +89,7 @@ export async function POST(request: Request) {
 			});
 		}
 
-		// Find matching courses
+		// Find matching courses and remove duplicates
 		const foundCourses = await db
 			.select({
 				id: courses.id,
@@ -93,8 +100,12 @@ export async function POST(request: Request) {
 			.orderBy(courses.createdAt)
 			.limit(5);
 
+		const uniqueCourses = Array.from(
+			new Map(foundCourses.map((course) => [course.id, course])).values()
+		);
+
 		// Only return not found message if no courses were found
-		if (!foundCourses.length) {
+		if (!uniqueCourses.length) {
 			return NextResponse.json({
 				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta con otros términos.`,
 				courses: [],
@@ -102,7 +113,7 @@ export async function POST(request: Request) {
 		}
 
 		// Format successful response - Remove the initial message when courses are found
-		const formattedResponse = `He encontrado estos cursos relacionados con "${prompt}":\n\n${foundCourses
+		const formattedResponse = `He encontrado estos cursos relacionados con "${prompt}":\n\n${uniqueCourses
 			.map(
 				(course, idx) =>
 					`${idx + 1}. ${course.title ?? 'Sin título'}|${course.id}`
@@ -111,7 +122,7 @@ export async function POST(request: Request) {
 
 		return NextResponse.json({
 			response: formattedResponse,
-			courses: foundCourses,
+			courses: uniqueCourses,
 		});
 	} catch (error) {
 		console.error(

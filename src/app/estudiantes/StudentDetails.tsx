@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import '~/styles/ia.css';
 
 import Image from 'next/image';
@@ -49,6 +49,8 @@ export default function StudentDetails({
 	const [showChatbot, setShowChatbot] = useState(false);
 	const [searchInProgress, setSearchInProgress] = useState(false);
 
+	const searchInitiated = useRef(false);
+
 	console.log('Programs received:', initialPrograms); // Añadir este log para debug
 
 	const truncateDescription = (description: string, maxLength: number) => {
@@ -63,7 +65,9 @@ export default function StudentDetails({
 			);
 		}, 5000);
 
-		return () => clearInterval(interval);
+		return () => {
+			void clearInterval(interval); // Add void operator to ignore promise
+		};
 	}, [courses.length]);
 
 	const sortedCourses = useMemo(() => {
@@ -76,34 +80,42 @@ export default function StudentDetails({
 	const latestFiveCourses = sortedCourses.slice(0, 5);
 	const latestTenCourses = sortedCourses.slice(0, 10);
 
-	// Modificar handleSearch para prevenir búsquedas duplicadas
 	const handleSearch = useCallback(
 		(e?: React.FormEvent) => {
 			e?.preventDefault();
 
-			if (searchInProgress || !searchQuery.trim()) return;
+			if (searchInProgress || !searchQuery.trim() || searchInitiated.current)
+				return;
 
+			searchInitiated.current = true;
 			setSearchInProgress(true);
 			setShowChatbot(true);
-			setChatbotKey((prev) => prev + 1);
+			setChatbotKey(Date.now());
 		},
 		[searchQuery, searchInProgress]
 	);
+
+	useEffect(() => {
+		if (!showChatbot) {
+			void setSearchInProgress(false);
+		}
+	}, [showChatbot]);
+
+	useEffect(() => {
+		return () => {
+			searchInitiated.current = false;
+			setSearchInProgress(false);
+		};
+	}, [searchQuery]);
 
 	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setSearchQuery(e.target.value);
 		if (e.target.value.trim() === '') {
 			setShowChatbot(false);
 			setSearchInProgress(false);
+			searchInitiated.current = false;
 		}
 	};
-
-	useEffect(() => {
-		// Reset search state when chatbot is closed
-		if (!showChatbot) {
-			setSearchInProgress(false);
-		}
-	}, [showChatbot]);
 
 	const handleSearchIconClick = (e: React.MouseEvent) => {
 		e.preventDefault(); // Prevent any default behavior
@@ -134,7 +146,10 @@ export default function StudentDetails({
 							<form
 								onSubmit={(e) => {
 									e.preventDefault();
-									handleSearch(e);
+									// Only handle search if not already in progress
+									if (!searchInProgress) {
+										handleSearch(e);
+									}
 								}}
 								className="flex w-full flex-col items-center space-y-2"
 							>
@@ -357,7 +372,7 @@ export default function StudentDetails({
 			<StudentChatbot
 				isAlwaysVisible={true}
 				showChat={showChatbot}
-				key={chatbotKey}
+				key={`${chatbotKey}-${searchQuery}`}
 				className="animation-delay-400 animate-zoom-in fixed"
 				initialSearchQuery={searchQuery.trim()}
 			/>
