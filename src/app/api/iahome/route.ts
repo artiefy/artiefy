@@ -9,6 +9,10 @@ interface RequestBody {
 	prompt: string;
 }
 
+interface ApiResponse {
+	result: { id: number; title: string }[];
+}
+
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
@@ -18,50 +22,68 @@ export async function POST(request: Request) {
 
 		console.log('🔍 Searching for:', prompt);
 
-		const searchTerms = prompt.toLowerCase().trim().split(/\s+/);
+		// 1. Obtener sugerencias de títulos de la API externa
+		const response = await fetch('http://18.117.124.192:5000/root_courses', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify({
+				prompt: prompt.toLowerCase().trim(),
+			}),
+		});
 
-		const conditions: SQL[] = searchTerms.map((term) =>
-			like(courses.title, `%${term}%`)
+		const data = (await response.json()) as ApiResponse;
+
+		if (
+			!data?.result ||
+			!Array.isArray(data.result) ||
+			data.result.length === 0
+		) {
+			return NextResponse.json({
+				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta buscar con otros términos.`,
+				courses: [],
+			});
+		}
+
+		// 2. Buscar cursos en la base de datos local usando los títulos sugeridos
+		const titleConditions: SQL[] = data.result.map((course) =>
+			like(courses.title, `%${course.title}%`)
 		);
 
-		const foundCourses = await db
+		const localCourses = await db
 			.select({
 				id: courses.id,
 				title: courses.title,
 			})
 			.from(courses)
-			.where(or(...conditions))
+			.where(or(...titleConditions))
 			.limit(5);
 
-		if (!foundCourses.length) {
+		if (!localCourses.length) {
 			return NextResponse.json({
-				response: `No encontré cursos relacionados con "${prompt}". Por favor, intenta con otros términos.`,
+				response: `No encontré cursos relacionados con "${prompt}" en nuestra plataforma. Por favor, intenta con otros términos.`,
 				courses: [],
-			} as const);
+			});
 		}
 
-		const formattedResponse = `He encontrado estos cursos relacionados con "${prompt}":\n\n${foundCourses
-			.map(
-				(course, idx) =>
-					`${idx + 1}. ${course.title ?? 'Sin título'}|${course.id}`
-			)
+		// 3. Formatear respuesta con los IDs locales
+		const formattedResponse = `He encontrado estos cursos que podrían interesarte:\n\n${localCourses
+			.map((course, idx) => `${idx + 1}. ${course.title}|${course.id}`)
 			.join('\n\n')}`;
 
 		return NextResponse.json({
 			response: formattedResponse,
-			courses: foundCourses,
-		} as const);
+			courses: localCourses,
+		});
 	} catch (error) {
-		console.error(
-			'Search Error:',
-			error instanceof Error ? error.message : 'Unknown error'
-		);
+		console.error('Search Error:', error);
 		return NextResponse.json(
 			{
 				response:
-					'Error al buscar cursos. Por favor, intenta de nuevo en unos momentos.',
+					'Lo siento, hubo un problema al procesar tu búsqueda. Por favor, intenta de nuevo.',
 				courses: [],
-			} as const,
+			},
 			{ status: 500 }
 		);
 	}

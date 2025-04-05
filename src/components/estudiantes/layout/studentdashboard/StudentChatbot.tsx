@@ -102,7 +102,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const handleBotResponse = useCallback(
 		async (query: string) => {
-			if (processingQuery) return;
+			if (processingQuery || searchRequestInProgress.current) return;
+
+			searchRequestInProgress.current = true;
 			setProcessingQuery(true);
 			setIsLoading(true);
 
@@ -116,15 +118,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				});
 
 				const data = (await response.json()) as ChatResponse;
-				const messageText =
-					data.response ??
-					'Lo siento, no pude encontrar información relevante.';
 
+				// Asegurarse de que siempre agregamos el mensaje del bot
 				setMessages((prev) => [
 					...prev,
 					{
 						id: Date.now() + Math.random(),
-						text: messageText,
+						text: data.response,
 						sender: 'bot' as const,
 					},
 				]);
@@ -141,6 +141,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			} finally {
 				setIsLoading(false);
 				setProcessingQuery(false);
+				searchRequestInProgress.current = false;
 			}
 		},
 		[processingQuery]
@@ -309,16 +310,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			const introText = parts[0];
 			const courseTexts = parts.slice(1);
 
-			// Parse all courses from the message with exact ID from API
+			// Parse courses from the message
 			const courses = courseTexts
 				.map((text) => {
 					const match = /(\d+)\.\s+(.*?)\|(\d+)/.exec(text);
 					if (!match) return null;
-					const courseId = parseInt(match[3]); // Este es el ID del curso de la API
 					return {
 						number: parseInt(match[1]),
 						title: match[2].trim(),
-						id: courseId, // Usamos el ID exacto de la API
+						id: parseInt(match[3]),
 					};
 				})
 				.filter(
@@ -341,7 +341,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											{course.number}. {course.title}
 										</h4>
 										<Link
-											href={`/estudiantes/cursos/${course.id}`} // Corregida la ruta para usar cursos
+											href={`/estudiantes/cursos/${course.id}`}
 											className="group/button bg-background text-primary relative inline-flex h-9 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
 										>
 											<span className="font-bold">Ver Curso</span>

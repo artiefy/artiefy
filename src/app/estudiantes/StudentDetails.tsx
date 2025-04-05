@@ -50,7 +50,7 @@ export default function StudentDetails({
 	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
 
 	const searchInitiated = useRef<boolean>(false);
-	const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+	const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
 	// Memoized values to prevent re-renders
 	const sortedCourses = useMemo(() => {
@@ -81,6 +81,7 @@ export default function StudentDetails({
 			// Clear any existing timeout
 			if (searchTimeoutRef.current) {
 				clearTimeout(searchTimeoutRef.current);
+				searchTimeoutRef.current = null;
 			}
 
 			// Reset previous search state
@@ -92,6 +93,8 @@ export default function StudentDetails({
 				setSearchInProgress(true);
 				setShowChatbot(true);
 				setChatbotKey((prev) => prev + 1);
+				// Reset search initiated after search is complete
+				searchInitiated.current = false;
 			}, 300);
 		},
 		[searchQuery, searchInProgress]
@@ -128,6 +131,7 @@ export default function StudentDetails({
 		return () => {
 			if (searchTimeoutRef.current) {
 				clearTimeout(searchTimeoutRef.current);
+				searchTimeoutRef.current = null;
 			}
 			searchInitiated.current = false;
 			setSearchInProgress(false);
