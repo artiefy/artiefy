@@ -392,12 +392,16 @@ export function CourseHeader({
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div className="flex flex-wrap items-center gap-2">
 						<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-							<Badge
-								variant="outline"
-								className="border-primary bg-background text-primary w-fit hover:bg-black/70"
-							>
-								{course.category?.name}
-							</Badge>
+							<div className="flex flex-wrap items-center gap-2">
+								<Badge
+									variant="outline"
+									className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+								>
+									{course.category?.name}
+								</Badge>
+								{/* Moved course type label here */}
+								{getCourseTypeLabel()}
+							</div>
 							<div className="flex flex-col gap-2 sm:flex-row sm:items-center">
 								<div className="flex items-center">
 									<FaCalendar className="mr-2 text-gray-600" />
@@ -441,31 +445,17 @@ export function CourseHeader({
 				</div>
 
 				{/* Course type and instructor info */}
-				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div>
-						<h3 className="text-background text-base font-extrabold sm:text-lg">
-							{course.instructorName ?? 'Instructor no encontrado'}
-						</h3>
-						<em className="text-sm font-bold text-gray-600 sm:text-base">
-							Educador
-						</em>
-					</div>
-					<div className="flex items-center gap-2">
-						{getCourseTypeLabel()}
-						<Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
-							{course.modalidad?.name}
-						</Badge>
-					</div>
-				</div>
-
-				{/* Course description y botones responsivos */}
 				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-					<div className="prose flex-1">
-						<p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-gray-700 sm:text-base">
-							{course.description ?? 'No hay descripción disponible.'}
-						</p>
-					</div>
-					<div className="flex-shrink-0">
+					<div className="space-y-4">
+						<div>
+							<h3 className="text-background text-base font-extrabold sm:text-lg">
+								{course.instructorName ?? 'Instructor no encontrado'}
+							</h3>
+							<em className="text-sm font-bold text-gray-600 sm:text-base">
+								Educador
+							</em>
+						</div>
+						{/* Moved grade button here */}
 						<Button
 							onClick={() => setIsGradeModalOpen(true)}
 							disabled={!canAccessGrades}
@@ -484,6 +474,20 @@ export function CourseHeader({
 							<FaTrophy className="mr-2 h-4 w-4" />
 							<span className="text-sm font-semibold">Mis Calificaciones</span>
 						</Button>
+					</div>
+					<div className="flex items-center gap-2">
+						<Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
+							{course.modalidad?.name}
+						</Badge>
+					</div>
+				</div>
+
+				{/* Course description y botones responsivos */}
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+					<div className="prose flex-1">
+						<p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-gray-700 sm:text-base">
+							{course.description ?? 'No hay descripción disponible.'}
+						</p>
 					</div>
 				</div>
 

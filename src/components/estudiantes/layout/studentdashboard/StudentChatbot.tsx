@@ -277,7 +277,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										</h4>
 										<Link
 											href={`/estudiantes/cursos/${course.id}`}
-											className="bg-secondary hover:bg-secondary/90 self-start rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+											className="self-start rounded-md bg-secondary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-secondary/90"
 										>
 											Ir al curso
 										</Link>
@@ -297,7 +297,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			{isAlwaysVisible && (
 				<button
 					onClick={handleClick}
-					className={`button fixed right-6 bottom-6 z-[9999] ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
+					className={`button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
 					aria-label={
 						isSignedIn
 							? 'Abrir chat'
@@ -322,23 +322,20 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			)}
 
 			{isOpen && isSignedIn && (
-				<div
-					className="fixed right-24 bottom-24 z-[99999]"
-					ref={chatContainerRef}
-				>
+				<div className="fixed right-24 bottom-32 z-50" ref={chatContainerRef}>
 					<ResizableBox
 						width={400}
 						height={500}
 						minConstraints={[300, 400]}
 						maxConstraints={[800, window.innerHeight - 160]} // 160px total de margen (80px arriba y abajo)
 						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
-						className="chat-resizable relative"
+						className="chat-resizable"
 						onResize={handleResize}
 					>
 						<div className="flex h-full w-full flex-col rounded-lg border border-gray-200 bg-white shadow-xl">
 							<div className="flex items-center justify-between border-b p-4">
 								<div className="flex items-center space-x-2">
-									<FaRobot className="text-secondary text-2xl" />
+									<FaRobot className="text-2xl text-secondary" />
 									<h2 className="text-lg font-semibold text-gray-800">
 										Artie IA
 									</h2>
@@ -369,7 +366,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											}`}
 										>
 											{message.sender === 'bot' ? (
-												<FaRobot className="text-secondary mt-2 text-xl" />
+												<FaRobot className="mt-2 text-xl text-secondary" />
 											) : user?.imageUrl ? (
 												<Image
 													src={user.imageUrl}
@@ -428,13 +425,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 												? 'Escribe tu mensaje...'
 												: 'Inicia sesión para chatear'
 										}
-										className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
+										className="flex-1 rounded-lg border p-2 text-background focus:ring-2 focus:ring-secondary focus:outline-none"
 										disabled={!isSignedIn || isLoading}
 									/>
 									<button
 										type="submit"
 										disabled={isLoading}
-										className="bg-secondary rounded-lg px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+										className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
 									>
 										<FiSend className="text-xl" />
 									</button>
