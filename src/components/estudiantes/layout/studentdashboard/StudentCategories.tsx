@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+import Image from 'next/image';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
@@ -9,11 +10,6 @@ import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 import { FiCode } from 'react-icons/fi';
 import useSWR from 'swr';
 
-import BrushIcon from 'public/brush-svgrepo-com.svg';
-import CircuitIcon from 'public/circuit-svgrepo-com.svg';
-import DatabaseIcon from 'public/database-svgrepo-com.svg';
-import ListIcon from 'public/list-svgrepo-com.svg';
-import WebDevIcon from 'public/web-page-browser-analysis-screen-svgrepo-com.svg';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Input } from '~/components/estudiantes/ui/input';
 import {
@@ -197,23 +193,26 @@ export default function StudentCategories({
 										</>
 									) : (
 										<>
-											<div
-												className="mb-4 text-3xl text-blue-600"
-												aria-hidden="true"
-											>
-												{index === 0 ? (
-													<CircuitIcon className="size-12" />
-												) : index === 1 ? (
-													<ListIcon className="size-12" />
-												) : index === 2 ? (
-													<BrushIcon className="size-12" />
-												) : index === 3 ? (
-													<WebDevIcon className="size-12" />
-												) : index === 4 ? (
-													<DatabaseIcon className="size-12" />
-												) : (
-													<FiCode className="size-8" />
-												)}
+											<div className="mb-4 text-3xl text-blue-600">
+												<Image
+													src={`/icons/${
+														index === 0
+															? 'circuit'
+															: index === 1
+																? 'list'
+																: index === 2
+																	? 'brush'
+																	: index === 3
+																		? 'web-dev'
+																		: index === 4
+																			? 'database'
+																			: 'code'
+													}.png`}
+													alt={category.name}
+													width={48}
+													height={48}
+													className="size-12"
+												/>
 											</div>
 											<h3 className="text-background text-lg font-semibold sm:text-base md:text-lg lg:text-xl">
 												{category.name}

@@ -1,4 +1,3 @@
-
 import './src/env.js'; // Importa variables de entorno
 import withPlaiceholder from '@plaiceholder/next'; // Importa la configuración de @plaiceholder/next
 
@@ -38,12 +37,6 @@ const nextConfig = {
 	},
 	experimental: {
 		turbo: {
-			rules: {
-				'*.svg': {
-					loaders: ['@svgr/webpack'], // Define el cargador para archivos SVG
-					as: '*.js', // Define la extensión de salida para archivos SVG
-				},
-			},
 			resolveAlias: {
 				underscore: 'lodash', // Alias para reemplazar 'underscore' con 'lodash'
 				mocha: { browser: 'mocha/browser-entry.js' }, // Alias para reemplazar 'mocha' con la entrada del navegador de 'mocha'

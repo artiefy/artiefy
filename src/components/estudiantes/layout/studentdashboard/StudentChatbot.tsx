@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,31 +17,6 @@ import 'react-resizable/css/styles.css';
 import '~/styles/chatmodal.css';
 import SendIcon from 'public/send-svgrepo-com.svg';
 import { Card } from '~/components/estudiantes/ui/card';
-
-// Add SVG component interfaces
-interface SVGComponentProps {
-	className?: string;
-	'aria-hidden'?: string;
-	style?: React.CSSProperties;
-	key?: React.Key;
-}
-
-// Update dynamic imports with type assertions
-const CircuitIcon = dynamic<SVGComponentProps>(
-	() => import('public/circuit-svgrepo-com.svg'),
-	{
-		ssr: false,
-		loading: () => null,
-	}
-);
-
-const RobotIcon = dynamic<SVGComponentProps>(
-	() => import('public/robot-face-svgrepo-com.svg'),
-	{
-		ssr: false,
-		loading: () => null,
-	}
-);
 
 interface StudentChatbotProps {
 	className?: string;
@@ -416,10 +390,19 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						))}
 					</div>
 					<div className="button__circle">
-						<RobotIcon className="button__icon size-6" aria-hidden="true" />
-						<RobotIcon
-							className="button__icon button__icon--copy size-6"
-							aria-hidden="true"
+						<Image
+							src="/icons/robot-face.png"
+							alt="Robot"
+							width={24}
+							height={24}
+							className="button__icon"
+						/>
+						<Image
+							src="/icons/robot-face.png"
+							alt="Robot"
+							width={24}
+							height={24}
+							className="button__icon button__icon--copy"
 						/>
 					</div>
 				</button>
@@ -456,12 +439,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							<div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
 								<div className="relative h-full w-full">
 									{staticPositions.map((pos, i) => (
-										<CircuitIcon
+										<Image
 											key={i}
-											className="absolute size-14 opacity-40" // Reducida opacidad
+											src="/icons/circuit.png"
+											alt="Circuit"
+											width={56}
+											height={56}
+											className="absolute size-14 opacity-40"
 											style={{
-												left: `${Math.min(Math.max(pos.x, -15), 110)}%`, // Ampliado rango
-												top: `${Math.min(Math.max(pos.y, -15), 110)}%`, // Ampliado rango
+												left: `${Math.min(Math.max(pos.x, -15), 110)}%`,
+												top: `${Math.min(Math.max(pos.y, -15), 110)}%`,
 												transform: `rotate(${pos.rotation}deg) scale(${pos.scale})`,
 											}}
 										/>
@@ -474,7 +461,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								{/* Header container */}
 								<div className="flex items-start justify-between">
 									{/* Left side with robot icon */}
-									<RobotIcon className="text-secondary mt-1 size-10" />
+									<Image
+										src="/icons/robot-face.png"
+										alt="Robot"
+										width={40}
+										height={40}
+										className="text-secondary mt-1"
+									/>
 
 									{/* Center content */}
 									<div className="-ml-6 flex flex-1 flex-col items-center">
@@ -521,7 +514,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											}`}
 										>
 											{message.sender === 'bot' ? (
-												<RobotIcon className="text-secondary mt-2 size-8" />
+												<Image
+													src="/icons/robot-face.png"
+													alt="Robot"
+													width={32}
+													height={32}
+													className="text-secondary mt-2"
+												/>
 											) : user?.imageUrl ? (
 												<Image
 													src={user.imageUrl}
