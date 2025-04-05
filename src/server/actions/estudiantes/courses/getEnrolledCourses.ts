@@ -4,14 +4,23 @@ import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollments, userLessonsProgress, lessons } from '~/server/db/schema';
+import {
+	enrollments,
+	userLessonsProgress,
+	lessons,
+	users,
+} from '~/server/db/schema';
 
 export interface EnrolledCourse {
 	id: number;
 	title: string;
-	instructor: string;
+	instructorName: string;
 	coverImageKey: string | null;
 	progress: number;
+	rating: number;
+	category: {
+		name: string;
+	} | null;
 }
 
 export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
@@ -19,11 +28,15 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
 		const user = await currentUser();
 		if (!user?.id) throw new Error('Usuario no autenticado');
 
-		// Get enrolled courses
+		// Get enrolled courses with category relation
 		const enrolledCourses = await db.query.enrollments.findMany({
 			where: eq(enrollments.userId, user.id),
 			with: {
-				course: true,
+				course: {
+					with: {
+						category: true, // Include category relation
+					},
+				},
 			},
 		});
 
@@ -53,12 +66,27 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
 						? Math.round((completedLessons / totalLessons) * 100)
 						: 0;
 
+				// Fetch instructor name
+				const instructor = await db.query.users.findFirst({
+					where: eq(users.id, enrollment.course.instructor),
+				});
+
+				const instructorName = instructor
+					? `${instructor.name}`
+					: 'Unknown Instructor';
+
 				return {
 					id: enrollment.courseId,
 					title: enrollment.course.title,
-					instructor: enrollment.course.instructor,
+					instructorName: instructorName,
 					coverImageKey: enrollment.course.coverImageKey,
 					progress,
+					rating: enrollment.course.rating ?? 0,
+					category: enrollment.course.category
+						? {
+								name: enrollment.course.category.name,
+							}
+						: null,
 				};
 			})
 		);

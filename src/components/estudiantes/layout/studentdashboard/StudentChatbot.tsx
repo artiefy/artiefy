@@ -442,8 +442,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											key={i}
 											src="/circuit-svgrepo-com2.png"
 											alt="Circuit"
-											width={56}
-											height={56}
+											width={60}
+											height={60}
 											className="absolute size-14 opacity-40"
 											style={{
 												left: `${Math.min(Math.max(pos.x, -15), 110)}%`,
