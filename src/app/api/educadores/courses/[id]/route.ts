@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { eq, and, ne as neq } from 'drizzle-orm';
 
 import {
 	getAllCourses,
@@ -147,7 +147,7 @@ export async function PUT(
 								`Error al obtener la materia con ID ${subject.id}`
 							);
 						});
-
+			
 					if (
 						(!currentMaterias.length ||
 							currentMaterias[0]?.programaId === undefined) &&
@@ -157,15 +157,14 @@ export async function PUT(
 						console.log(
 							`⚠️ Materia con ID ${subject.id} y curso ${courseId} no tienen programa ni curso asignado.`
 						);
-
-						// Asignar programaId único y el curso actual
+			
 						await db
 							.insert(materias)
 							.values({
 								title: materiaOriginal?.title ?? 'Título predeterminado',
 								description:
 									materiaOriginal?.description ?? 'Descripción predeterminada',
-								courseid: courseId, // Asignar el curso actual
+								courseid: courseId,
 							})
 							.catch((err) => {
 								console.error(
@@ -176,10 +175,11 @@ export async function PUT(
 									`Error al insertar la materia con ID ${subject.id}`
 								);
 							});
+			
 						console.log(
 							`✨ Materia con ID ${subject.id} asignada al curso ${courseId} con programaId 9999999.`
 						);
-						continue; // Pasar a la siguiente materia
+						continue;
 					}
 				} catch (err) {
 					console.error(
@@ -188,19 +188,15 @@ export async function PUT(
 					);
 				}
 			}
-
-			// Validaciones existentes
+			
 			const programId = currentMaterias[0]?.programaId;
 			if (programId !== null && programId !== undefined) {
-				// Procesar cada materia nueva
 				for (const subject of data.subjects) {
-					// Verificar si la materia ya está asignada
 					const existingMateria = currentMaterias.find(
 						(m) => m.id === subject.id
 					);
-
+			
 					if (!existingMateria) {
-						// Obtener la materia original
 						const materiaOriginal = await db
 							.select()
 							.from(materias)
@@ -216,9 +212,8 @@ export async function PUT(
 									`Error al obtener la materia con ID ${subject.id}`
 								);
 							});
-
+			
 						if (materiaOriginal) {
-							// Crear copia de la materia
 							await db
 								.insert(materias)
 								.values({
@@ -236,14 +231,74 @@ export async function PUT(
 										`Error al insertar la materia con ID ${subject.id}`
 									);
 								});
+			
 							console.log(
 								`✨ Nueva materia creada para el curso ${courseId}:`,
 								subject.id
 							);
+			
+							const conditions = [
+								eq(materias.title, materiaOriginal.title)
+							];
+							
+							if (materiaOriginal.programaId) {
+								conditions.push(neq(materias.programaId, materiaOriginal.programaId));
+							}
+		
+							const materiasIguales = await db
+								.select()
+								.from(materias)
+								.where(and(...conditions));
+				
+			
+							for (const materia of materiasIguales) {
+								if (!materia.courseid) {
+									await db
+										.update(materias)
+										.set({ courseid: courseId })
+										.where(eq(materias.id, materia.id))
+										.catch((err) => {
+											console.error(
+												`❌ Error al actualizar la materia con ID ${materia.id}:`,
+												err
+											);
+											throw new Error(
+												`Error al actualizar la materia con ID ${materia.id}`
+											);
+										});
+			
+									console.log(
+										`🔄 Materia con ID ${materia.id} actualizada con curso ${courseId}`
+									);
+								} else {
+									await db
+										.insert(materias)
+										.values({
+											title: materia.title,
+											description: materia.description,
+											programaId: materia.programaId,
+											courseid: courseId,
+										})
+										.catch((err) => {
+											console.error(
+												`❌ Error al duplicar la materia con ID ${materia.id}:`,
+												err
+											);
+											throw new Error(
+												`Error al duplicar la materia con ID ${materia.id}`
+											);
+										});
+			
+									console.log(
+										`📚 Materia duplicada para programa ${materia.programaId} con nuevo curso ${courseId}`
+									);
+								}
+							}
 						}
 					}
 				}
 			}
+			
 		}
 
 		const refreshedCourse = await getCourseById(courseId);
