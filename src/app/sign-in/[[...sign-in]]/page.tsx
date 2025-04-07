@@ -1,267 +1,233 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
 import { useAuth, useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
-
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
-
 import Loading from '../../loading';
 
 export default function SignInPage() {
-	const { isLoaded, isSignedIn } = useAuth();
-	const { signIn, setActive } = useSignIn();
-	const [email, setEmail] = useState('');
-	const [password, setPassword] = useState('');
-	const [code, setCode] = useState('');
-	const [successfulCreation, setSuccessfulCreation] = useState(false);
-	const [secondFactor, setSecondFactor] = useState(false);
-	const [errors, setErrors] = useState<ClerkAPIError[]>();
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [isForgotPassword, setIsForgotPassword] = useState(false);
-	const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
-		null
-	);
-	const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { signIn, setActive } = useSignIn();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [successfulCreation, setSuccessfulCreation] = useState(false);
+  const [secondFactor, setSecondFactor] = useState(false);
+  const [errors, setErrors] = useState<ClerkAPIError[]>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-	// Función para extraer redirect_url sin importar si está en query param o hash
-	const getRedirectUrl = () => {
-		if (typeof window === 'undefined') return '/';
+  // Función para extraer redirect_url sin importar si está en query param o hash
+  const getRedirectUrl = () => {
+    // Primero intentamos obtenerlo de los query params normales
+    let redirectUrl = searchParams.get('redirect_url');
+    
+    // Si no lo encontramos, intentamos extraerlo del hash
+    if (!redirectUrl && typeof window !== 'undefined') {
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#\/?/, ''));
+      redirectUrl = hashParams.get('redirect_url');
+    }
 
-		const params = new URLSearchParams(window.location.search);
-		const redirectUrl = params.get('redirect_url');
+    return redirectUrl ?? '/'; // Si no hay redirect_url, por defecto a /
+  };
 
-		// Validate the redirect URL using optional chaining
-		return redirectUrl?.startsWith('/') ? redirectUrl : '/';
-	};
+  const redirectUrl = getRedirectUrl();
 
-	const redirectUrl = getRedirectUrl();
+  console.log('✅ Redirect URL detectada:', redirectUrl);
 
-	console.log('✅ Redirect URL detectada:', redirectUrl);
+  useEffect(() => {
+    if (isSignedIn) {
+      console.log('🔄 Usuario autenticado, redirigiendo a:', redirectUrl);
+      router.replace(redirectUrl);
+    }
+  }, [isSignedIn, router, redirectUrl]);
 
-	useEffect(() => {
-		if (isSignedIn) {
-			const redirectTo = getRedirectUrl();
-			console.log('Redirecting to:', redirectTo);
-			window.location.href = redirectTo;
-		}
-	}, [isSignedIn]);
+  if (!isLoaded) {
+    return <Loading />;
+  }
 
-	useEffect(() => {
-		if (typeof window !== 'undefined') {
-			console.log('Current URL:', window.location.href);
-			console.log('Redirect URL:', getRedirectUrl());
-		}
-	}, []);
+  // Login con OAuth (Google, Facebook, etc.)
+  const signInWith = async (strategy: OAuthStrategy) => {
+    if (!signIn) {
+      setErrors([{ code: 'sign_in_undefined', message: 'SignIn no está definido', meta: {} }]);
+      return;
+    }
+    console.log('🔄 Iniciando sesión con OAuth:', strategy, '➡️ Redirigiendo a:', redirectUrl);
+    
+    try {
+      setLoadingProvider(strategy);
+      await signIn.authenticateWithRedirect({
+        strategy,
+        redirectUrl: '/sign-up/sso-callback',
+        redirectUrlComplete: redirectUrl, // Asegurar redirección correcta
+      });
+    } catch (err) {
+      setLoadingProvider(null);
+      console.error('❌ Error en OAuth:', err);
+      setErrors([{ code: 'oauth_error', message: 'Error en el inicio de sesión con OAuth', meta: {} }]);
+    }
+  };
 
-	if (!isLoaded) {
-		return <Loading />;
-	}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
+    if (!signIn) return;
+    if (!isLoaded) return;
 
-	// Login con OAuth (Google, Facebook, etc.)
-	const signInWith = async (strategy: OAuthStrategy) => {
-		if (!signIn) {
-			setErrors([
-				{
-					code: 'sign_in_undefined',
-					message: 'SignIn no está definido',
-					meta: {},
-				},
-			]);
-			return;
-		}
-		console.log(
-			'🔄 Iniciando sesión con OAuth:',
-			strategy,
-			'➡️ Redirigiendo a:',
-			redirectUrl
-		);
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
 
-		try {
-			setLoadingProvider(strategy);
-			await signIn.authenticateWithRedirect({
-				strategy,
-				redirectUrl: '/sign-up/sso-callback',
-				redirectUrlComplete: redirectUrl, // Corrected property name
-			});
-		} catch (err) {
-			setLoadingProvider(null);
-			console.error('❌ Error en OAuth:', err);
-			setErrors([
-				{
-					code: 'oauth_error',
-					message: 'Error en el inicio de sesión con OAuth',
-					meta: {},
-				},
-			]);
-		}
-	};
+      if (signInAttempt.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: signInAttempt.createdSessionId });
+        }
+        router.replace(redirectUrl);
+      } else if (signInAttempt.status === 'needs_first_factor') {
+        const supportedStrategies = signInAttempt.supportedFirstFactors?.map((factor) => factor.strategy) ?? [];
+        if (!supportedStrategies.includes('password')) {
+          setErrors([
+            {
+              code: 'invalid_strategy',
+              message: 'Estrategia de verificación inválida',
+              longMessage: 'Estrategia de verificación inválida',
+              meta: {},
+            },
+          ]);
+        }
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors(undefined);
-		setIsSubmitting(true);
-		if (!signIn) return;
-		if (!isLoaded) return;
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
 
-		try {
-			const signInAttempt = await signIn.create({
-				identifier: email,
-				password,
-			});
+    try {
+      if (!signIn) return;
+      await signIn.create({
+        strategy: 'reset_password_email_code',
+        identifier: email,
+      });
+      setSuccessfulCreation(true);
+      setErrors(undefined);
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-			if (signInAttempt.status === 'complete') {
-				if (setActive) {
-					await setActive({ session: signInAttempt.createdSessionId });
-				}
-				router.replace(redirectUrl);
-			} else if (signInAttempt.status === 'needs_first_factor') {
-				const supportedStrategies =
-					signInAttempt.supportedFirstFactors?.map(
-						(factor) => factor.strategy
-					) ?? [];
-				if (!supportedStrategies.includes('password')) {
-					setErrors([
-						{
-							code: 'invalid_strategy',
-							message: 'Estrategia de verificación inválida',
-							longMessage: 'Estrategia de verificación inválida',
-							meta: {},
-						},
-					]);
-				}
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} catch (err) {
-			if (isClerkAPIResponseError(err)) {
-				setErrors(err.errors);
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+    setIsSubmitting(true);
 
-	const handleForgotPassword = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors(undefined);
-		setIsSubmitting(true);
+    try {
+      if (!signIn) {
+        setErrors([
+          {
+            code: 'sign_in_undefined',
+            message: 'SignIn no está definido',
+            longMessage: 'SignIn no está definido',
+            meta: {},
+          },
+        ]);
+        setIsSubmitting(false);
+        return;
+      }
+      const result = await signIn.attemptFirstFactor({
+        strategy: 'reset_password_email_code',
+        code,
+        password,
+      });
 
-		try {
-			if (!signIn) return;
-			await signIn.create({
-				strategy: 'reset_password_email_code',
-				identifier: email,
-			});
-			setSuccessfulCreation(true);
-			setErrors(undefined);
-		} catch (err) {
-			if (isClerkAPIResponseError(err)) {
-				setErrors(err.errors);
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+      if (result.status === 'needs_second_factor') {
+        setSecondFactor(true);
+        setErrors(undefined);
+      } else if (result.status === 'complete') {
+        if (setActive) {
+          await setActive({ session: result.createdSessionId });
+        }
+        router.replace(redirectUrl);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-	const handleResetPassword = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setErrors(undefined);
-		setIsSubmitting(true);
-
-		try {
-			if (!signIn) {
-				setErrors([
-					{
-						code: 'sign_in_undefined',
-						message: 'SignIn no está definido',
-						longMessage: 'SignIn no está definido',
-						meta: {},
-					},
-				]);
-				setIsSubmitting(false);
-				return;
-			}
-			const result = await signIn.attemptFirstFactor({
-				strategy: 'reset_password_email_code',
-				code,
-				password,
-			});
-
-			if (result.status === 'needs_second_factor') {
-				setSecondFactor(true);
-				setErrors(undefined);
-			} else if (result.status === 'complete') {
-				if (setActive) {
-					await setActive({ session: result.createdSessionId });
-				}
-				router.replace(redirectUrl);
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} catch (err) {
-			if (isClerkAPIResponseError(err)) {
-				setErrors(err.errors);
-			} else {
-				setErrors([
-					{
-						code: 'unknown_error',
-						message: 'Ocurrió un error desconocido',
-						longMessage: 'Ocurrió un error desconocido',
-						meta: {},
-					},
-				]);
-			}
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
-
-	const emailError = errors?.some(
-		(error) => error.code === 'form_identifier_not_found'
-	);
-	const passwordError = errors?.some(
-		(error) => error.code === 'form_password_incorrect'
-	);
+  const emailError = errors?.some((error) => error.code === 'form_identifier_not_found');
+  const passwordError = errors?.some((error) => error.code === 'form_password_incorrect');
 
 	return (
 		<div className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
@@ -285,12 +251,10 @@ export default function SignInPage() {
 							src="/logo-login.webp"
 							alt="Logo de Artiefy"
 							fill
+							className="object-contain"
+							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 							priority
 							quality={100}
-							sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 700px"
-							style={{
-								objectFit: 'contain',
-							}}
 						/>
 					</AspectRatio>
 				</div>
@@ -327,7 +291,7 @@ export default function SignInPage() {
 										required
 										className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 outline-hidden ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${
 											emailError ? 'ring-rose-400' : 'ring-white/20'
-										} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 focus:ring-primary data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400`}
+										} hover:ring-white/30 focus:ring-[1.5px] focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-primary data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400`}
 									/>
 								</div>
 								<div className="mt-4 flex justify-center">
@@ -341,13 +305,13 @@ export default function SignInPage() {
 										required
 										className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 outline-hidden ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${
 											passwordError ? 'ring-rose-400' : 'ring-white/20'
-										} hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 focus:ring-primary data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400`}
+										} hover:ring-white/30 focus:ring-[1.5px] focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-primary data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400`}
 									/>
 								</div>
 								<div className="mt-6 flex justify-center">
 									<button
 										type="submit"
-										className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium text-primary italic shadow-sm ring-1 ring-primary ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
+										className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium text-primary italic ring-1 shadow-sm ring-primary ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
 										style={{ width: '150px' }}
 										disabled={isSubmitting}
 									>
@@ -374,7 +338,7 @@ export default function SignInPage() {
 										value={password}
 										placeholder="Nueva Contraseña"
 										required
-										className="w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 focus:ring-primary"
+										className="w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:ring-[1.5px] focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-primary"
 									/>
 								</div>
 								<div className="mt-4">
@@ -386,13 +350,13 @@ export default function SignInPage() {
 										value={code}
 										placeholder="Código de Restablecimiento"
 										required
-										className="w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 focus:ring-primary"
+										className="w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:ring-[1.5px] focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-primary"
 									/>
 								</div>
 								<div className="mt-6 flex justify-center">
 									<button
 										type="submit"
-										className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium text-primary italic shadow-sm ring-1 ring-primary ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
+										className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium text-primary italic ring-1 shadow-sm ring-primary ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
 										style={{ width: '150px' }}
 										disabled={isSubmitting}
 									>
@@ -419,13 +383,13 @@ export default function SignInPage() {
 										value={email}
 										placeholder="Correo Electrónico"
 										required
-										className="w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 focus:ring-primary"
+										className="w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:ring-[1.5px] focus:shadow-[0_0_6px_0] focus:shadow-emerald-500/20 focus:ring-primary"
 									/>
 								</div>
 								<div className="mt-6 flex justify-center">
 									<button
 										type="submit"
-										className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium text-primary italic shadow-sm ring-1 ring-primary ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
+										className="rounded-none px-3.5 py-2.5 text-center text-sm font-medium text-primary italic ring-1 shadow-sm ring-primary ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95 active:text-primary/70"
 										style={{ width: '150px' }}
 										disabled={isSubmitting}
 									>

@@ -10,6 +10,8 @@ import {
 	lessons,
 	userLessonsProgress,
 	courses,
+	activities,
+	userActivitiesProgress,
 } from '~/server/db/schema';
 
 import type { EnrollmentResponse, SubscriptionLevel } from '~/types';
@@ -172,15 +174,59 @@ export async function enrollInCourse(
 		);
 
 		// Insert progress only for lessons that don't have progress
-		for (const lesson of courseLessons) {
+		for (const [index, lesson] of courseLessons.entries()) {
 			if (!existingProgressSet.has(lesson.id)) {
+				const previousLesson = index > 0 ? courseLessons[index - 1] : null;
+				let shouldBeLocked = true;
+
+				if (index === 0) {
+					// Primera lección siempre desbloqueada
+					shouldBeLocked = false;
+				} else if (previousLesson) {
+					// Verificar el progreso de la lección anterior
+					const prevProgress = await db.query.userLessonsProgress.findFirst({
+						where: and(
+							eq(userLessonsProgress.userId, userId),
+							eq(userLessonsProgress.lessonId, previousLesson.id)
+						),
+					});
+
+					// Verificar actividades de la lección anterior
+					const prevActivities = await db.query.activities.findMany({
+						where: eq(activities.lessonsId, previousLesson.id),
+					});
+
+					if (prevProgress?.isCompleted) {
+						if (prevActivities.length === 0) {
+							// Si la lección anterior no tiene actividades y está completada
+							shouldBeLocked = false;
+						} else {
+							// Verificar si todas las actividades están completadas
+							const activitiesProgress =
+								await db.query.userActivitiesProgress.findMany({
+									where: and(
+										eq(userActivitiesProgress.userId, userId),
+										inArray(
+											userActivitiesProgress.activityId,
+											prevActivities.map((a) => a.id)
+										)
+									),
+								});
+
+							shouldBeLocked = !activitiesProgress.every(
+								(ap) => ap.isCompleted
+							);
+						}
+					}
+				}
+
 				await db.insert(userLessonsProgress).values({
 					userId: userId,
 					lessonId: lesson.id,
 					progress: 0,
 					isCompleted: false,
-					isLocked: lesson.id !== courseLessons[0].id,
-					isNew: true, // Asegurarnos que siempre se crea como true
+					isLocked: shouldBeLocked,
+					isNew: true,
 					lastUpdated: new Date(),
 				});
 			}

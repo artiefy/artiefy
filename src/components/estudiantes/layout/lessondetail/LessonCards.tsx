@@ -54,7 +54,6 @@ const LessonCards = ({
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
 		const isAccessible = !lessonItem.isLocked;
 		const isCompleted = lessonItem.porcentajecompletado === 100;
-		// Show NEW tag only if unlocked, isNew is true, and progress is 0
 		const shouldShowNew =
 			!lessonItem.isLocked &&
 			lessonItem.isNew &&
@@ -70,7 +69,7 @@ const LessonCards = ({
 					isAccessible
 						? 'cursor-pointer hover:scale-[1.01] hover:transform'
 						: 'cursor-not-allowed opacity-75'
-				} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${isCompleted ? 'border-green-500' : ''} `}
+				} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${isCompleted ? 'border-green-500' : ''} ${shouldShowNew ? 'ring-2 ring-green-400' : ''}`}
 			>
 				<div className="mb-2 flex items-center justify-between">
 					<h3
@@ -83,7 +82,7 @@ const LessonCards = ({
 					<div className="flex items-center space-x-2">
 						{shouldShowNew && (
 							<span className="relative [animation:nuevo-badge-pulse_1.5s_infinite_ease-in-out] rounded bg-green-500 px-2 py-1 text-xs text-white">
-								Nuevo
+								Nueva
 							</span>
 						)}
 						{isCompleted ? (

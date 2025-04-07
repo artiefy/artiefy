@@ -198,7 +198,7 @@ export default async function MyCoursesStudent() {
 										{/* Title and content wrapper */}
 										<div className="flex flex-col space-y-2">
 											{/* Common title for both mobile and desktop */}
-											<div className="-mt-1 flex items-center justify-between">
+											<div className="flex items-center justify-between">
 												<h3 className="text-primary text-lg font-bold">
 													{course.title}
 												</h3>
@@ -285,7 +285,7 @@ export default async function MyCoursesStudent() {
 
 											{/* Desktop layout - simplified */}
 											<div className="hidden md:flex md:flex-col md:gap-2">
-												<div className="-mt-1 flex items-center gap-2">
+												<div className="flex items-center gap-2">
 													<em className="text-sm font-bold text-gray-400">
 														Educador:
 													</em>
@@ -302,27 +302,25 @@ export default async function MyCoursesStudent() {
 													)}
 												</div>
 
-												<div className="-mt-2 flex items-center gap-4">
-													<div className="flex flex-1 items-center">
-														<div className="w-full">
-															<div className="mb-1 flex items-center justify-between">
-																<span className="text-sm font-bold text-gray-300">
-																	Progreso Del Curso:
-																</span>
-																<span className="text-primary text-sm font-semibold">
-																	{course.progress}%
-																</span>
-															</div>
-															<Progress
-																value={course.progress}
-																className="h-2 w-full"
-															/>
+												<div className="flex items-center gap-4">
+													<div className="flex-1">
+														<div className="mb-1 flex items-center justify-between">
+															<span className="-mt-1 text-sm font-bold text-gray-300">
+																Progreso Del Curso:
+															</span>
+															<span className="text-primary text-sm font-semibold">
+																{course.progress}%
+															</span>
 														</div>
+														<Progress
+															value={course.progress}
+															className="h-2 w-full"
+														/>
 													</div>
 													<Button asChild className="shrink-0">
 														<Link
 															href={`/estudiantes/cursos/${course.id}`}
-															className="mt-4 group/button bg-background text-primary relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 active:scale-95"
+															className="group/button bg-background text-primary relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 active:scale-95"
 														>
 															<p className="font-bold">Continuar</p>
 															<ArrowRightCircleIcon className="animate-bounce-right mr-1 size-4" />

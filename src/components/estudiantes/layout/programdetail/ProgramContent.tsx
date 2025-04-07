@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 
 import Image from 'next/image';
 
@@ -12,6 +12,7 @@ import {
 	CheckCircleIcon,
 } from '@heroicons/react/24/solid';
 import { FaCrown, FaCheck } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 import {
 	Alert,
@@ -56,24 +57,30 @@ export function ProgramContent({
 	const [courseEnrollments, setCourseEnrollments] = useState<
 		Record<number, boolean>
 	>({});
+	const [isNavigating, setIsNavigating] = useState(false);
+	const [enrollmentCache, setEnrollmentCache] = useState<
+		Record<number, boolean>
+	>({});
 
-	const safeMateriasWithCursos =
-		program.materias?.filter(
-			(materia): materia is MateriaWithCourse & { curso: Course } =>
-				materia.curso !== undefined && 'id' in materia.curso
-		) ?? [];
+	const courses = useMemo(() => {
+		const safeMateriasWithCursos =
+			program.materias?.filter(
+				(materia): materia is MateriaWithCourse & { curso: Course } =>
+					materia.curso !== undefined && 'id' in materia.curso
+			) ?? [];
 
-	const uniqueCourses = safeMateriasWithCursos.reduce(
-		(acc, materia) => {
-			if (!acc.some((item) => item.curso.id === materia.curso.id)) {
-				acc.push(materia);
-			}
-			return acc;
-		},
-		[] as (MateriaWithCourse & { curso: Course })[]
-	);
+		const uniqueCourses = safeMateriasWithCursos.reduce(
+			(acc, materia) => {
+				if (!acc.some((item) => item.curso.id === materia.curso.id)) {
+					acc.push(materia);
+				}
+				return acc;
+			},
+			[] as (MateriaWithCourse & { curso: Course })[]
+		);
 
-	const courses = uniqueCourses.map((materia) => materia.curso);
+		return uniqueCourses.map((materia) => materia.curso);
+	}, [program.materias]);
 
 	const formatDate = (dateString: string | null) => {
 		if (!dateString) return '';
@@ -86,13 +93,18 @@ export function ProgramContent({
 
 	useEffect(() => {
 		let isSubscribed = true;
-
-		const checkCourseEnrollments = async () => {
+		const checkTimeout = setTimeout(async () => {
 			if (!userId) return;
 
 			try {
+				const checksNeeded = courses.filter(
+					(course) => enrollmentCache[course.id] === undefined
+				);
+
+				if (checksNeeded.length === 0) return;
+
 				const enrollmentChecks = await Promise.all(
-					courses.map(async (course) => {
+					checksNeeded.map(async (course) => {
 						try {
 							const isEnrolled = await isUserEnrolled(course.id, userId);
 							return [course.id, isEnrolled] as [number, boolean];
@@ -103,24 +115,24 @@ export function ProgramContent({
 				);
 
 				if (isSubscribed) {
-					const enrollmentMap = Object.fromEntries(enrollmentChecks);
-					setCourseEnrollments(enrollmentMap);
+					const newEnrollments = Object.fromEntries(enrollmentChecks);
+					setEnrollmentCache((prev) => ({ ...prev, ...newEnrollments }));
+					setCourseEnrollments((prev) => ({ ...prev, ...newEnrollments }));
 				}
-			} catch {
-				// Silently handle errors
+			} catch (error) {
+				console.error('Error checking enrollments:', error);
 			}
-		};
-
-		void checkCourseEnrollments();
+		}, 500); // Debounce time
 
 		return () => {
 			isSubscribed = false;
+			clearTimeout(checkTimeout);
 		};
-	}, [userId, courses]);
+	}, [userId, courses, enrollmentCache]);
 
 	const handleCourseClick = useCallback(
 		(courseId: number, isActive: boolean) => {
-			if (!isActive || !isSignedIn || !isEnrolled) {
+			if (isNavigating || !isActive || !isSignedIn || !isEnrolled) {
 				if (!isSignedIn) {
 					const currentPath = window.location.pathname;
 					void router.push(`/sign-in?redirect_url=${currentPath}`, {
@@ -131,15 +143,24 @@ export function ProgramContent({
 				return;
 			}
 
-			const href = `/estudiantes/cursos/${courseId}`;
-
-			void router.push(href, {
-				showProgress: true,
-				startPosition: 0.3,
-				scroll: true,
-			});
+			try {
+				setIsNavigating(true);
+				// Mantener el progressbar de @bprogress
+				void router.push(`/estudiantes/cursos/${courseId}`, {
+					showProgress: true,
+					startPosition: 0.3,
+					scroll: true,
+				});
+			} catch (error) {
+				console.error('Navigation error:', error);
+				toast.error('Error al navegar al curso');
+			} finally {
+				setTimeout(() => {
+					setIsNavigating(false);
+				}, 1000);
+			}
 		},
-		[isSignedIn, isEnrolled, router]
+		[isSignedIn, isEnrolled, router, isNavigating]
 	);
 
 	return (
@@ -176,7 +197,7 @@ export function ProgramContent({
 
 			<div className="mb-6">
 				<div className="mb-4 flex flex-row items-center justify-between">
-					<h2 className="text-2xl font-bold text-background">
+					<h2 className="text-background text-2xl font-bold">
 						Cursos Del Programa
 					</h2>
 					{isSignedIn && isSubscriptionActive && (
@@ -205,7 +226,7 @@ export function ProgramContent({
 				<div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					{courses.map((course, index) => (
 						<div key={`${course.id}-${index}`} className="group relative">
-							<div className="absolute -inset-2 animate-gradient rounded-xl bg-linear-to-r from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px] transition-all duration-500 group-hover:opacity-100" />
+							<div className="animate-gradient absolute -inset-2 rounded-xl bg-linear-to-r from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px] transition-all duration-500 group-hover:opacity-100" />
 							<Card
 								className={`zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02] ${
 									!course.isActive ? 'opacity-50' : ''
@@ -232,8 +253,8 @@ export function ProgramContent({
 
 								<CardContent className="-mt-3 flex grow flex-col justify-between space-y-2">
 									<div className="flex items-center justify-between">
-										<CardTitle className="rounded text-lg text-background">
-											<div className="font-bold text-primary">
+										<CardTitle className="text-background rounded text-lg">
+											<div className="text-primary font-bold">
 												{course.title}
 											</div>
 										</CardTitle>
@@ -262,7 +283,7 @@ export function ProgramContent({
 										<p className="text-sm font-bold text-gray-300 italic">
 											Educador:{' '}
 											<span className="font-bold italic">
-												{course.instructor}
+												{course.instructorName ?? 'No tiene'}
 											</span>
 										</p>
 										<div className="flex items-center">
@@ -276,7 +297,7 @@ export function ProgramContent({
 										{isCheckingEnrollment && isSignedIn ? (
 											<Button
 												disabled
-												className="group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary"
+												className="group/button bg-background text-primary relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2"
 											>
 												<Icons.spinner className="mr-2 size-4 animate-spin" />
 												<span className="font-bold">Cargando...</span>
@@ -316,7 +337,7 @@ export function ProgramContent({
 												</span>
 												{course.isActive && isEnrolled && (
 													<>
-														<ArrowRightCircleIcon className="ml-1.5 size-5 animate-bounce-right" />
+														<ArrowRightCircleIcon className="animate-bounce-right ml-1.5 size-5" />
 														<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 															<div className="relative h-full w-10 bg-white/30" />
 														</div>
