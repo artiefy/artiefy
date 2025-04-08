@@ -202,7 +202,7 @@ export default async function MyCoursesStudent() {
 												<h3 className="text-primary text-lg font-bold">
 													{course.title}
 												</h3>
-												<div className="-mt-0 sm:-mt-8 hidden shrink-0 items-center md:flex">
+												<div className="-mt-0 hidden shrink-0 items-center sm:-mt-8 md:flex">
 													{Array.from({ length: 5 }).map((_, index) => (
 														<StarIcon
 															key={index}
@@ -274,7 +274,7 @@ export default async function MyCoursesStudent() {
 															>
 																<p className="text-sm font-bold">Continuar</p>
 																<ArrowRightCircleIcon className="animate-bounce-right ml-1 size-4" />
-																<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)]">
+																<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 																	<div className="relative h-full w-10 bg-white/30" />
 																</div>
 															</Link>
@@ -324,7 +324,7 @@ export default async function MyCoursesStudent() {
 														>
 															<p className="font-bold">Continuar</p>
 															<ArrowRightCircleIcon className="animate-bounce-right mr-1 size-4" />
-															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)]">
+															<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
 																<div className="relative h-full w-10 bg-white/30" />
 															</div>
 														</Link>
