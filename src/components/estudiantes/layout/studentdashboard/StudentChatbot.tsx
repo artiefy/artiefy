@@ -100,8 +100,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						sender: 'bot' as const,
 					},
 				]);
-			} catch (error) {
-				if (error.name === 'AbortError') {
+			} catch (error: unknown) {
+				if (error instanceof Error && error.name === 'AbortError') {
 					console.log('Request cancelled');
 					return;
 				}
