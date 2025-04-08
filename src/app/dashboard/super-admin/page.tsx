@@ -202,7 +202,9 @@ export default function AdminDashboard() {
 
 	const fetchPrograms = useCallback(async () => {
 		try {
-			const res = await fetch('/api/super-admin/programs/getAllPrograms'); // Actualizar la ruta correcta
+			const res = await fetch(
+				'server/actions/estudiantes/programs/getAllPrograms'
+			); // Actualizar la ruta correcta
 			if (!res.ok) throw new Error('Error al obtener programas');
 
 			const data = (await res.json()) as { id: string; title: string }[];
