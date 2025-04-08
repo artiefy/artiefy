@@ -455,3 +455,11 @@
 .group:active svg {
 	animation: sendButtonClick 0.3s ease-in-out;
 }
+
+/* Estilos adicionales para el modal del chat */
+@media (max-width: 640px) {
+	.react-resizable {
+		width: 90% !important; /* O un valor fijo como 300px */
+		max-width: 320px !important;
+	}
+}

@@ -101,7 +101,7 @@ export default async function MyCoursesStudent() {
 								key={program.id}
 								className="overflow-hidden bg-gray-800 py-0 text-white"
 							>
-								<div className="flex h-auto flex-col md:h-32 md:flex-row">
+								<div className="flex h-auto flex-col md:h-40 md:flex-row">
 									<div className="w-full md:w-48">
 										<div className="relative h-48 w-full md:h-full">
 											<Image
@@ -115,8 +115,8 @@ export default async function MyCoursesStudent() {
 										</div>
 									</div>
 									<CardContent className="flex w-full flex-col px-4 py-4">
-										<div className="flex h-full flex-col justify-between gap-4">
-											<div className="space-y-4">
+										<div className="flex h-full flex-col justify-start gap-4">
+											<div className="space-y-2">
 												<div className="flex flex-col items-start justify-between gap-2 md:flex-row">
 													<h3 className="text-primary text-lg leading-normal font-bold break-words md:text-lg">
 														{program.title}
@@ -181,7 +181,7 @@ export default async function MyCoursesStudent() {
 								key={course.id}
 								className="overflow-hidden bg-gray-800 py-0 text-white"
 							>
-								<div className="flex h-auto flex-col md:h-32 md:flex-row">
+								<div className="flex h-auto flex-col md:h-40 md:flex-row">
 									<div className="w-full md:w-48">
 										<div className="relative h-48 w-full md:h-full">
 											<Image
@@ -202,7 +202,7 @@ export default async function MyCoursesStudent() {
 												<h3 className="text-primary text-lg font-bold">
 													{course.title}
 												</h3>
-												<div className="hidden shrink-0 items-center md:flex">
+												<div className="-mt-0 sm:-mt-8 hidden shrink-0 items-center md:flex">
 													{Array.from({ length: 5 }).map((_, index) => (
 														<StarIcon
 															key={index}
@@ -284,7 +284,7 @@ export default async function MyCoursesStudent() {
 											</div>
 
 											{/* Desktop layout - simplified */}
-											<div className="hidden md:flex md:flex-col md:gap-2">
+											<div className="-mt-0 hidden sm:-mt-2 md:flex md:flex-col md:gap-2">
 												<div className="flex items-center gap-2">
 													<em className="text-sm font-bold text-gray-400">
 														Educador:
@@ -302,7 +302,7 @@ export default async function MyCoursesStudent() {
 													)}
 												</div>
 
-												<div className="flex items-center gap-4">
+												<div className="-mt-0 flex items-center gap-4 sm:-mt-2">
 													<div className="flex-1">
 														<div className="mb-1 flex items-center justify-between">
 															<span className="-mt-1 text-sm font-bold text-gray-300">
@@ -317,7 +317,7 @@ export default async function MyCoursesStudent() {
 															className="h-2 w-full"
 														/>
 													</div>
-													<Button asChild className="shrink-0">
+													<Button asChild className="mt-2 shrink-0 sm:mt-6">
 														<Link
 															href={`/estudiantes/cursos/${course.id}`}
 															className="group/button bg-background text-primary relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 active:scale-95"
@@ -365,7 +365,7 @@ export default async function MyCoursesStudent() {
 											/>
 										</div>
 									</div>
-									<CardContent className="flex w-full flex-col justify-between px-4 py-2">
+									<CardContent className="flex w-full flex-col justify-start px-4 py-2">
 										<div>
 											<div className="flex items-center justify-between">
 												<h3 className="text-primary text-lg font-bold">

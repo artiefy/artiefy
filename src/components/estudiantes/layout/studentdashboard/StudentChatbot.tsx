@@ -337,7 +337,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									className="text-primary overflow-hidden bg-gray-800 transition-all hover:scale-[1.02]"
 								>
 									<div className="px-4">
-										<h4 className="mb-3 font-bold">
+										<h4 className="mb-3 font-bold text-white">
 											{course.number}. {course.title}
 										</h4>
 										<Link
