@@ -177,6 +177,15 @@ export default function StudentDetails({
 		return description.slice(0, maxLength) + '...';
 	};
 
+	const getPlaceholderText = () => {
+		if (typeof window !== 'undefined') {
+			return window.innerWidth <= 768
+				? 'Escribe tu Idea...?'
+				: 'Que Deseas Crear? Escribe Tu Idea...';
+		}
+		return 'Que Deseas Crear? Escribe Tu Idea...';
+	};
+
 	return (
 		<div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
 			<main className="grow">
@@ -216,7 +225,7 @@ export default function StudentDetails({
 											placeholder={
 												searchBarDisabled
 													? 'Procesando consulta...'
-													: 'Que Deseas Crear? Escribe Tu Idea...'
+													: getPlaceholderText()
 											}
 											type="search"
 											value={searchQuery}
