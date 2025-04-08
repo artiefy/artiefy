@@ -66,7 +66,7 @@ curl -X GET https://artiefy.com/api/cron/check-subscriptions \
 
 ---
 
-bnpm versionNPM Downloadssize
+npm versionNPM Downloadssize
 
 Next video is a react component for adding video to your next.js application. It extends both the <video> element and your Next app with features for automatic video optimization.
 

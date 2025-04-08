@@ -15,7 +15,7 @@ interface PageProps {
 
 export default async function CertificatePage({ params }: PageProps) {
 	// Get and validate params and auth in parallel
-	const [resolvedParams, { userId }] = await Promise.all([params, auth()]);
+	const [resolvedParams, { userId }] = await Promise.all([params, await auth()]);
 
 	if (!resolvedParams?.id) {
 		redirect('/estudiantes/cursos');

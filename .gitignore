@@ -91,3 +91,13 @@ npm-debug.log*
 # Project specific
 src/config/credenciales-gmail.json
 !src/config/credenciales-gmail.example.json
+
+# next-video
+/videos/*
+!/videos/*.json
+# next-video
+videos/*
+!videos/*.json
+!videos/*.js
+!videos/*.ts
+public/_next-video

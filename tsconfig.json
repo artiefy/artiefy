@@ -40,14 +40,16 @@
 			}
 		],
 		// Actualizar types para incluir todas las dependencias necesarias
-		"types": ["node", "react", "react-dom", "next"]
+		"types": ["node", "react", "react-dom", "next", "next-video"]
 	},
 	"include": [
-		"next-env.d.ts",
-		".next/types/**/*.ts",
-		"**/*",
+    "next-video.config.js",
+    "**/*",
 		".*/**/*",
-		"./**/.*"
+		"./**/.*",
+		"video.d.ts",
+		"next-env.d.ts",
+		".next/types/**/*.ts"
 	],
 	"exclude": ["node_modules", ".next", "build", ".vercel"]
 }

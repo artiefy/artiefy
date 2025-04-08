@@ -72,7 +72,7 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 - `npm doctor` //Comprueba el estado de tu entorno npm
 - `npm prune` //Eliminar paquetes extraños
 - `npm ci` //# Para CI/CD y despliegues
-- `npm install -g npm@11.2.0` //actualizar ultima version del npm
+- `npm install -g npm@latest` //actualizar ultima version del npm
 
 ---
 
@@ -175,7 +175,7 @@ Tutorial de Comandos Para El Fomateo Eslint, Prettier y Typescript:
 
 ---
 
-Tutorial Para analisar tus dependecias :
+Tutorial Para analizar tus dependecias :
 
 1. `npm install -g depcheck`
 2. `npm install -g depcheck typescript`
