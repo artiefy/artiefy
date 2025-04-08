@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import '~/styles/ia.css';
+import '~/styles/searchbar.css';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,7 +23,6 @@ import {
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course, type Program } from '~/types';
-import '~/styles/searchbar.css';
 
 export default function StudentDetails({
 	initialCourses,
