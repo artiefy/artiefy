@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import '~/styles/ia.css';
-import '~/styles/searchbar.css';
+import '~/styles/searchBar.css';
 
 import Image from 'next/image';
 import Link from 'next/link';
