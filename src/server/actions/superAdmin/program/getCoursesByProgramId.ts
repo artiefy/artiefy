@@ -26,7 +26,7 @@ export async function getCoursesByProgramId(programId: string) {
 		const coursesWithInstructors = await Promise.all(
 			result.map(async (course) => {
 				if (!course.instructor) {
-					return { ...course, instructorName: 'No Instructor Assigned' };
+					return { ...course, instructorName: 'Sin instructor asignado' };
 				}
 
 				try {
