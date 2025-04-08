@@ -22,6 +22,7 @@ interface StudentChatbotProps {
 	initialSearchQuery?: string;
 	isAlwaysVisible?: boolean;
 	showChat?: boolean;
+	onApiComplete?: () => void;
 }
 
 interface ResizeData {
@@ -39,47 +40,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	initialSearchQuery = '',
 	isAlwaysVisible = false,
 	showChat = false,
+	onApiComplete,
 }) => {
-	// Modify the static positions calculation to better fill space
-	const [staticPositions, setStaticPositions] = useState(() =>
-		Array.from({ length: 150 }, (_, i) => {
-			// Aumentado a 150 íconos
-			const row = Math.floor(i / 12);
-			const col = i % 12;
-			// Nuevos cálculos para mejor distribución
-			const x = col * 10 - row * 2; // Más cercanos horizontalmente
-			const y = row * 8; // Más cercanos verticalmente
-			const rotation = 45 + (Math.random() * 20 - 10); // Rotación más variada
-			const scale = 0.28 + Math.random() * 0.1; // Escalas más variadas y pequeñas
-			return { x, y, rotation, scale };
-		})
-	);
-
-	const generateNewLayout = useCallback(() => {
-		setStaticPositions(
-			Array.from({ length: 150 }, (_, i) => {
-				const row = Math.floor(i / 12);
-				const col = i % 12;
-				const x = col * 10 - row * 2;
-				const y = row * 8;
-				const rotation = 45 + (Math.random() * 20 - 10);
-				const scale = 0.28 + Math.random() * 0.1;
-				return { x, y, rotation, scale };
-			})
-		);
-	}, []);
-
-	// Botón para generar nuevo layout (solo en desarrollo)
-	const DevTools =
-		process.env.NODE_ENV === 'development' ? (
-			<button
-				onClick={generateNewLayout}
-				className="absolute top-2 right-2 z-[3] rounded bg-gray-200 px-2 py-1 text-xs"
-			>
-				Nuevo patrón
-			</button>
-		) : null;
-
 	const [isOpen, setIsOpen] = useState(showChat);
 	const [messages, setMessages] = useState([
 		{ id: Date.now(), text: 'Hola ¿En qué puedo ayudarte hoy?', sender: 'bot' },
@@ -97,12 +59,22 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const { user } = useUser();
 	const router = useRouter();
 
-	// Add a new ref to track initial search
 	const initialSearchDone = useRef(false);
+
+	// Add abort controller ref
+	const abortControllerRef = useRef<AbortController | null>(null);
 
 	const handleBotResponse = useCallback(
 		async (query: string) => {
 			if (processingQuery || searchRequestInProgress.current) return;
+
+			// Cancel any existing request
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort();
+			}
+
+			// Create new abort controller
+			abortControllerRef.current = new AbortController();
 
 			searchRequestInProgress.current = true;
 			setProcessingQuery(true);
@@ -115,11 +87,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({ prompt: query }),
+					signal: abortControllerRef.current.signal,
 				});
 
 				const data = (await response.json()) as ChatResponse;
 
-				// Asegurarse de que siempre agregamos el mensaje del bot
 				setMessages((prev) => [
 					...prev,
 					{
@@ -129,6 +101,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					},
 				]);
 			} catch (error) {
+				if (error.name === 'AbortError') {
+					console.log('Request cancelled');
+					return;
+				}
 				console.error('Error getting bot response:', error);
 				setMessages((prev) => [
 					...prev,
@@ -142,9 +118,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				setIsLoading(false);
 				setProcessingQuery(false);
 				searchRequestInProgress.current = false;
+				abortControllerRef.current = null;
+				onApiComplete?.(); // Notify parent component
 			}
 		},
-		[processingQuery]
+		[processingQuery, onApiComplete]
 	);
 
 	useEffect(() => {
@@ -159,7 +137,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	useEffect(() => {
 		const handleInitialSearch = async () => {
-			// Add check for initialSearchDone
 			if (
 				!initialSearchQuery?.trim() ||
 				!isSignedIn ||
@@ -171,7 +148,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			)
 				return;
 
-			initialSearchDone.current = true; // Mark initial search as done
+			initialSearchDone.current = true;
 
 			setMessages([
 				{
@@ -197,14 +174,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		processingQuery,
 	]);
 
-	// Add cleanup effect for initial search flag
 	useEffect(() => {
 		return () => {
 			initialSearchDone.current = false;
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort();
+			}
 		};
 	}, []);
 
-	// Reset initial search flag when chat closes
 	useEffect(() => {
 		if (!showChat) {
 			initialSearchDone.current = false;
@@ -252,10 +230,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			});
 			return;
 		}
-		// Regenerar posiciones al abrir el chat
-		if (!isOpen) {
-			generateNewLayout();
-		}
 		setIsOpen(!isOpen);
 	};
 
@@ -266,29 +240,24 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 			if (!chatPosition) return;
 
-			// Calcular el límite superior mínimo (80px desde el tope de la ventana)
 			const minTopMargin = 80;
 			const maxHeight = windowHeight - chatPosition.top - 20;
 
-			// Si el chat se está expandiendo hacia arriba
 			if (data.handle.includes('n')) {
 				const newTop =
 					chatPosition.top - (data.size.height - chatPosition.height);
 				if (newTop < minTopMargin) {
-					// Ajustar la altura para mantener el margen superior mínimo
 					data.size.height =
 						chatPosition.height + (chatPosition.top - minTopMargin);
 					return;
 				}
 			}
 
-			// Si la nueva altura excede el espacio disponible
 			if (data.size.height > maxHeight) {
 				data.size.height = maxHeight;
 				return;
 			}
 
-			// Ajustar scroll si es necesario
 			if (chatPosition.top < minTopMargin) {
 				window.scrollTo({
 					top: window.scrollY - (minTopMargin - chatPosition.top),
@@ -299,18 +268,23 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		[]
 	);
 
+	const handleClose = () => {
+		if (abortControllerRef.current) {
+			abortControllerRef.current.abort();
+		}
+		setIsOpen(false);
+	};
+
 	const renderMessage = (message: {
 		id: number;
 		text: string;
 		sender: string;
 	}) => {
 		if (message.sender === 'bot') {
-			// Split the message into parts and extract courses
 			const parts = message.text.split('\n\n');
 			const introText = parts[0];
 			const courseTexts = parts.slice(1);
 
-			// Parse courses from the message
 			const courses = courseTexts
 				.map((text) => {
 					const match = /(\d+)\.\s+(.*?)\|(\d+)/.exec(text);
@@ -422,7 +396,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						onResize={handleResize}
 					>
 						<div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
-							{DevTools}
 							{/* Logo background */}
 							<div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
 								<Image
@@ -434,32 +407,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								/>
 							</div>
 
-							{/* Modified Circuit icons layer */}
-							<div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
-								<div className="relative h-full w-full">
-									{staticPositions.map((pos, i) => (
-										<Image
-											key={i}
-											src="/circuit-svgrepo-com2.png"
-											alt="Circuit"
-											width={60}
-											height={60}
-											className="absolute size-14 opacity-40"
-											style={{
-												left: `${Math.min(Math.max(pos.x, -15), 110)}%`,
-												top: `${Math.min(Math.max(pos.y, -15), 110)}%`,
-												transform: `rotate(${pos.rotation}deg) scale(${pos.scale})`,
-											}}
-										/>
-									))}
-								</div>
-							</div>
-
-							{/* Header - Mayor z-index */}
+							{/* Header */}
 							<div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
-								{/* Header container */}
 								<div className="flex items-start justify-between">
-									{/* Left side with robot icon */}
 									<Image
 										src="/robot-face-svgrepo-com.svg"
 										alt="Robot"
@@ -468,7 +418,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										className="text-secondary mt-1"
 									/>
 
-									{/* Center content */}
 									<div className="-ml-6 flex flex-1 flex-col items-center">
 										<h2 className="mt-1 text-lg font-semibold text-gray-800">
 											Artie IA
@@ -484,9 +433,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										</div>
 									</div>
 
-									{/* Close button */}
 									<button
-										onClick={() => setIsOpen(false)}
+										onClick={handleClose}
 										className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
 									>
 										<IoMdClose className="text-xl text-gray-500" />
@@ -494,7 +442,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								</div>
 							</div>
 
-							{/* Messages container - z-index medio para estar sobre los circuitos */}
+							{/* Messages */}
 							<div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
 								{messages.map((message) => (
 									<div
@@ -566,7 +514,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								<div ref={messagesEndRef} />
 							</div>
 
-							{/* Input form section */}
+							{/* Input */}
 							<div className="relative z-[5] border-t bg-white/95 p-4 backdrop-blur-sm">
 								<form onSubmit={handleSendMessage}>
 									<div className="flex gap-2">

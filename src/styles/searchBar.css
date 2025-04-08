@@ -229,6 +229,10 @@
 		border-radius: 50px;
 	}
 
+	.input::placeholder {
+		font-size: 12px; /* Reduced placeholder text size for small screens */
+	}
+
 	.input:focus {
 		outline: none;
 		background: linear-gradient(
@@ -264,7 +268,7 @@
 		width: 650px; /* Set a fixed width for larger screens */
 	}
 	.input-container {
-		padding: 8px; /* Reduce padding for larger screens */
+		padding: 4px; /* Reduced from 6px */
 		width: 70%; /* Reduce width for larger screens */
 		max-width: 720px; /* Reduce max-width for larger screens */
 	}

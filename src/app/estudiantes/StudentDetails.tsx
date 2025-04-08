@@ -48,6 +48,9 @@ export default function StudentDetails({
 	const [chatbotKey, setChatbotKey] = useState<number>(0);
 	const [showChatbot, setShowChatbot] = useState<boolean>(false);
 	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
+	const [isSearchbarDisabled, setIsSearchbarDisabled] =
+		useState<boolean>(false);
+	const [isApiProcessing, setIsApiProcessing] = useState<boolean>(false);
 
 	const searchInitiated = useRef<boolean>(false);
 	const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,6 +72,19 @@ export default function StudentDetails({
 		[sortedCourses]
 	);
 
+	// Add new function to cancel search
+	const cancelSearch = useCallback(() => {
+		if (searchTimeoutRef.current) {
+			clearTimeout(searchTimeoutRef.current);
+			searchTimeoutRef.current = null;
+		}
+		setShowChatbot(false);
+		setSearchInProgress(false);
+		searchInitiated.current = false;
+		setIsSearchbarDisabled(false);
+		setIsApiProcessing(false);
+	}, []);
+
 	// Use useCallback for stable function references
 	const handleSearch = useCallback(
 		(e?: React.FormEvent) => {
@@ -87,6 +103,8 @@ export default function StudentDetails({
 			// Reset previous search state
 			setShowChatbot(false);
 			searchInitiated.current = true;
+			setIsSearchbarDisabled(true); // Disable searchbar while processing
+			setIsApiProcessing(true); // Set API processing state
 
 			// Debounce search to prevent multiple rapid calls
 			searchTimeoutRef.current = setTimeout(() => {
@@ -95,6 +113,9 @@ export default function StudentDetails({
 				setChatbotKey((prev) => prev + 1);
 				// Reset search initiated after search is complete
 				searchInitiated.current = false;
+				setSearchInProgress(false);
+				setIsSearchbarDisabled(false); // Re-enable searchbar after processing
+				setIsApiProcessing(false); // Reset API processing state
 			}, 300);
 		},
 		[searchQuery, searchInProgress]
@@ -105,6 +126,7 @@ export default function StudentDetails({
 			const newValue = e.target.value;
 			setSearchQuery(newValue);
 
+			// No auto-search on change, only on submit or icon click
 			if (!newValue.trim()) {
 				setShowChatbot(false);
 				setSearchInProgress(false);
@@ -200,6 +222,15 @@ export default function StudentDetails({
 											type="search"
 											value={searchQuery}
 											onChange={handleSearchChange}
+											disabled={isSearchbarDisabled || isApiProcessing} // Add disabled state
+											style={{
+												cursor:
+													isSearchbarDisabled || isApiProcessing
+														? 'not-allowed'
+														: 'text',
+												opacity:
+													isSearchbarDisabled || isApiProcessing ? 0.7 : 1,
+											}}
 										/>
 										<svg
 											viewBox="0 0 24 24"

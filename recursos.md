@@ -189,8 +189,3 @@ Borra los datos en:
 Windows: `C:\Users\TU_USUARIO\AppData\Roaming\Code`
 
 ---
-
-[visualstudio308@gmail.com](mailto:visualstudio308@gmail.com)
-Camilsebas18*
-
----
