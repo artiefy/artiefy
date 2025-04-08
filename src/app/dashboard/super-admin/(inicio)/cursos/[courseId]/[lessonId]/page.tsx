@@ -8,7 +8,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
-import ListActividadesEducator from '~/components/educators/layout/ListActividades';
 import ViewFiles from '~/components/educators/layout/ViewFiles';
 import {
 	AlertDialog,
@@ -25,6 +24,7 @@ import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
+import ListActividadesEducator from '~/components/super-admin/layout/ListActividades';
 import ModalFormLessons from '~/components/super-admin/modals/ModalFormLessons';
 import {
 	Breadcrumb,

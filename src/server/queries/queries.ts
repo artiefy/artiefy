@@ -47,16 +47,19 @@ export async function getAdminUsers(query: string | undefined) {
 			)
 		: users;
 
-	const simplifiedUsers = filteredUsers.map((user) => ({
-		id: user.id,
-		firstName: user.firstName,
-		lastName: user.lastName,
-		email: user.emailAddresses.find(
-			(email) => email.id === user.primaryEmailAddressId
-		)?.emailAddress,
-		role: user.publicMetadata.role ?? 'estudiante',
-		status: user.publicMetadata.status ?? 'activo', // ✅ Agregar estado con valor por defecto
-	}));
+		const simplifiedUsers = filteredUsers.map((user) => ({
+			id: user.id,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			email: user.emailAddresses.find(
+			  (email) => email.id === user.primaryEmailAddressId
+			)?.emailAddress,
+			role: typeof user.publicMetadata?.role === 'string'
+				? user.publicMetadata.role.trim().toLowerCase()
+				: 'estudiante',
+			status: user.publicMetadata?.status ?? 'activo',
+		  }));
+		  
 
 	return simplifiedUsers;
 }
