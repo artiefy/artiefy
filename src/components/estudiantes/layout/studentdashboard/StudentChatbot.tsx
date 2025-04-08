@@ -22,6 +22,7 @@ interface StudentChatbotProps {
 	initialSearchQuery?: string;
 	isAlwaysVisible?: boolean;
 	showChat?: boolean;
+	onSearchComplete?: () => void;
 }
 
 interface ResizeData {
@@ -39,6 +40,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	initialSearchQuery = '',
 	isAlwaysVisible = false,
 	showChat = false,
+	onSearchComplete,
 }) => {
 	const [isOpen, setIsOpen] = useState(showChat);
 	const [messages, setMessages] = useState([
@@ -46,7 +48,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	]);
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
-	const [lastSearchQuery, setLastSearchQuery] = useState('');
 	const [processingQuery, setProcessingQuery] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -100,9 +101,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				setIsLoading(false);
 				setProcessingQuery(false);
 				searchRequestInProgress.current = false;
+				onSearchComplete?.();
 			}
 		},
-		[processingQuery]
+		[processingQuery, onSearchComplete]
 	);
 
 	useEffect(() => {
@@ -121,26 +123,26 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				!initialSearchQuery?.trim() ||
 				!isSignedIn ||
 				!showChat ||
-				processingQuery ||
+				processingQuery || // This is used in the dependency check
 				searchRequestInProgress.current ||
-				initialSearchQuery.trim() === lastSearchQuery ||
 				initialSearchDone.current
 			)
 				return;
 
 			initialSearchDone.current = true;
+			setIsOpen(true);
 
-			setMessages([
+			// Add user message first
+			setMessages((prev) => [
+				...prev,
 				{
-					id: Date.now(),
-					text: 'Hola ¿En qué puedo ayudarte hoy?',
-					sender: 'bot',
+					id: Date.now() + 1,
+					text: initialSearchQuery.trim(),
+					sender: 'user',
 				},
-				{ id: Date.now() + 1, text: initialSearchQuery.trim(), sender: 'user' },
 			]);
 
-			setIsOpen(true);
-			setLastSearchQuery(initialSearchQuery.trim());
+			// Then process the bot response
 			await handleBotResponse(initialSearchQuery.trim());
 		};
 
@@ -150,9 +152,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		isSignedIn,
 		showChat,
 		handleBotResponse,
-		lastSearchQuery,
 		processingQuery,
-	]);
+	]); // Added processingQuery
 
 	useEffect(() => {
 		return () => {
@@ -163,8 +164,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	useEffect(() => {
 		if (!showChat) {
 			initialSearchDone.current = false;
+			setProcessingQuery(false);
 		}
-	}, [showChat]);
+	}, [showChat, processingQuery]);
 
 	useEffect(() => {
 		setIsOpen(showChat);
@@ -195,6 +197,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		await handleBotResponse(trimmedInput);
 	};
 
+	const handleClose = () => {
+		setIsOpen(false);
+		setMessages([
+			{
+				id: Date.now(),
+				text: 'Hola ¿En qué puedo ayudarte hoy?',
+				sender: 'bot',
+			},
+		]);
+		setInputText('');
+		initialSearchDone.current = false;
+		setProcessingQuery(false);
+		onSearchComplete?.();
+	};
+
 	const handleClick = () => {
 		if (!isSignedIn) {
 			toast.error('Acceso restringido', {
@@ -207,7 +224,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			});
 			return;
 		}
-		setIsOpen(!isOpen);
+		if (isOpen) {
+			handleClose();
+		} else {
+			setIsOpen(true);
+		}
 	};
 
 	const handleResize = useCallback(
@@ -306,7 +327,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	};
 
 	return (
-		<div className={className}>
+		<div className={`${className} fixed`} style={{ zIndex: 99999 }}>
 			{isAlwaysVisible && (
 				<button
 					onClick={handleClick}
@@ -353,8 +374,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 			{isOpen && isSignedIn && (
 				<div
-					className="fixed right-24 bottom-32 z-[9999]"
+					className="fixed right-24 bottom-32"
 					ref={chatContainerRef}
+					style={{ zIndex: 100000 }}
 				>
 					<ResizableBox
 						width={400}

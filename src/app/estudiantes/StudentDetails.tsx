@@ -48,6 +48,8 @@ export default function StudentDetails({
 	const [chatbotKey, setChatbotKey] = useState<number>(0);
 	const [showChatbot, setShowChatbot] = useState<boolean>(false);
 	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
+	const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
+	const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
 
 	const searchInitiated = useRef<boolean>(false);
 	const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,47 +71,62 @@ export default function StudentDetails({
 		[sortedCourses]
 	);
 
-	// Use useCallback for stable function references
+	// Modify the effect to properly handle search bar state
+	useEffect(() => {
+		setSearchBarDisabled(searchInProgress);
+	}, [searchInProgress]);
+
+	const handleSearchComplete = useCallback(() => {
+		setSearchInProgress(false);
+	}, []);
+
+	// Update handleSearch to properly handle the query
 	const handleSearch = useCallback(
 		(e?: React.FormEvent) => {
 			e?.preventDefault();
 
 			const trimmedQuery = searchQuery.trim();
 
-			if (searchInProgress || !trimmedQuery || searchInitiated.current) return;
+			if (searchBarDisabled || !trimmedQuery || searchInitiated.current) return;
 
-			// Clear any existing timeout
 			if (searchTimeoutRef.current) {
 				clearTimeout(searchTimeoutRef.current);
 				searchTimeoutRef.current = null;
 			}
 
-			// Reset previous search state
+			setSearchInProgress(true);
 			setShowChatbot(false);
 			searchInitiated.current = true;
 
-			// Debounce search to prevent multiple rapid calls
+			const currentQuery = trimmedQuery; // Store the current query
+
 			searchTimeoutRef.current = setTimeout(() => {
-				setSearchInProgress(true);
 				setShowChatbot(true);
 				setChatbotKey((prev) => prev + 1);
-				// Reset search initiated after search is complete
-				searchInitiated.current = false;
+
+				// Use the stored query when showing the chatbot
+				setLastSearchQuery(currentQuery);
+
+				// Clear search bar after ensuring query is passed
+				setTimeout(() => {
+					setSearchQuery('');
+					setSearchInProgress(false);
+				}, 100);
 			}, 300);
 		},
-		[searchQuery, searchInProgress]
+		[searchQuery, searchBarDisabled]
 	);
 
+	// Update handleSearchChange to not clear chatbot when clearing searchbar
 	const handleSearchChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			const newValue = e.target.value;
 			setSearchQuery(newValue);
 
+			// Only reset search progress if there's no query
 			if (!newValue.trim()) {
-				setShowChatbot(false);
 				setSearchInProgress(false);
 				searchInitiated.current = false;
-				setChatbotKey(0);
 			}
 		},
 		[]
@@ -194,12 +211,17 @@ export default function StudentDetails({
 									<div className="search-container">
 										<input
 											required
-											className="input placeholder:text-xs sm:placeholder:text-base"
+											className={`input ${searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''}`}
 											name="search"
-											placeholder="Que Deseas Crear? Escribe Tu Idea..."
+											placeholder={
+												searchBarDisabled
+													? 'Procesando consulta...'
+													: 'Que Deseas Crear? Escribe Tu Idea...'
+											}
 											type="search"
 											value={searchQuery}
 											onChange={handleSearchChange}
+											disabled={searchBarDisabled}
 										/>
 										<svg
 											viewBox="0 0 24 24"
@@ -409,9 +431,10 @@ export default function StudentDetails({
 			<StudentChatbot
 				isAlwaysVisible={true}
 				showChat={showChatbot}
-				key={`${chatbotKey}-${searchQuery}`}
+				key={chatbotKey}
 				className="animation-delay-400 animate-zoom-in fixed"
-				initialSearchQuery={searchQuery.trim()}
+				initialSearchQuery={lastSearchQuery || searchQuery.trim()} // Use lastSearchQuery if available
+				onSearchComplete={handleSearchComplete}
 			/>
 		</div>
 	);
