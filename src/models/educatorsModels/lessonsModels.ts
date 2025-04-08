@@ -1,4 +1,4 @@
-import { eq, inArray, and } from 'drizzle-orm';
+import { eq, inArray, and, desc, lt } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
@@ -9,6 +9,7 @@ import {
 	users,
 	activities,
 	userLessonsProgress,
+	userActivitiesProgress,
 } from '~/server/db/schema';
 
 export interface Lesson {
@@ -33,11 +34,7 @@ export interface Lesson {
 	};
 }
 
-interface CreateLessonResult {
-	id: number;
-}
 
-// Crear una nueva lección
 export async function createLesson({
 	title,
 	description,
@@ -56,8 +53,9 @@ export async function createLesson({
 	courseId: number;
 	resourceKey?: string;
 	resourceNames?: string;
-}): Promise<CreateLessonResult> {
+}): Promise<{ id: number }> {
 	try {
+		// 1. Crear la nueva lección primero
 		const [newLesson] = await db
 			.insert(lessons)
 			.values({
@@ -72,10 +70,68 @@ export async function createLesson({
 			})
 			.returning({ id: lessons.id });
 
-		console.log('Lección creada:', newLesson);
+		// 2. Buscar la lección anterior (la última creada antes de esta)
+		const previousLesson = await db
+			.select()
+			.from(lessons)
+			.where(and(eq(lessons.courseId, courseId), lt(lessons.id, newLesson.id)))
+			.orderBy(desc(lessons.id))
+			.limit(1);
+
+		if (previousLesson.length > 0) {
+			const previousLessonId = previousLesson[0].id;
+
+			// 3. Obtener todos los progresos de los usuarios en esa lección
+			const userProgressData = await db
+				.select()
+				.from(userLessonsProgress)
+				.where(eq(userLessonsProgress.lessonId, previousLessonId));
+
+			for (const progress of userProgressData) {
+				let unlockNextLesson = false;
+
+				// 4. Verificar si la clase anterior tenía actividades
+				const lessonActivities = await db
+					.select()
+					.from(activities)
+					.where(eq(activities.lessonsId, previousLessonId));
+
+				if (lessonActivities.length === 0) {
+					// Sin actividades: desbloquear si video >= 100%
+					unlockNextLesson = progress.progress >= 100;
+				} else {
+					// Con actividades: desbloquear si TODAS están completas
+					const activityIds = lessonActivities.map((a) => a.id);
+
+					const userActivityProgress = await db
+						.select()
+						.from(userActivitiesProgress)
+						.where(
+							and(
+								inArray(userActivitiesProgress.activityId, activityIds),
+								eq(userActivitiesProgress.userId, progress.userId)
+							)
+						);
+
+					unlockNextLesson =
+						userActivityProgress.length === activityIds.length &&
+						userActivityProgress.every((a) => a.isCompleted);
+				}
+
+				// 5. Crear el progreso para la nueva lección para este usuario
+				await db.insert(userLessonsProgress).values({
+					userId: progress.userId,
+					lessonId: newLesson.id,
+					isLocked: !unlockNextLesson,
+					isNew: unlockNextLesson,
+				});
+			}
+		}
+
+		console.log('✅ Lección creada:', newLesson);
 		return newLesson;
 	} catch (error) {
-		console.error('Error al crear la lección:', error);
+		console.error('❌ Error al crear la lección:', error);
 		throw error;
 	}
 }
@@ -263,39 +319,94 @@ export const updateLesson = async (
 
 // Eliminar una lección por su ID y datos asociados
 export const deleteLesson = async (lessonId: number): Promise<void> => {
-	//Elimina las actividades asociadas a la lección
-	await db.delete(activities).where(eq(activities.lessonsId, lessonId));
-	await db.delete(lessons).where(eq(lessons.id, lessonId));
+	try {
+		// Log the start of the deletion process
+		console.log(`Iniciando la eliminación de la lección con ID: ${lessonId}`);
+
+		// Obtener las actividades asociadas a la lección
+		const activityIds = await db
+			.select({ id: activities.id })
+			.from(activities)
+			.where(eq(activities.lessonsId, lessonId))
+			.then((rows) => rows.map((row) => row.id));
+
+		// Eliminar el progreso de los usuarios asociado a las actividades
+		if (activityIds.length > 0) {
+			await db
+				.delete(userActivitiesProgress)
+				.where(inArray(userActivitiesProgress.activityId, activityIds));
+		}
+
+		// Eliminar las actividades asociadas a la lección
+		await db
+			.delete(activities)
+			.where(eq(activities.lessonsId, lessonId));
+
+		// Eliminar el progreso de los usuarios asociado a la lección
+		await db
+			.delete(userLessonsProgress)
+			.where(eq(userLessonsProgress.lessonId, lessonId));
+
+		// Eliminar la lección
+		await db
+			.delete(lessons)
+			.where(eq(lessons.id, lessonId));
+	} catch (error) {
+		// Log the error with more context
+		console.error(`Error al eliminar la lección con ID: ${lessonId}`, error);
+		throw new Error('No se pudo eliminar la lección correctamente.');
+	}
 };
 
 // Eliminar todas las lecciones asociadas a un curso por su ID
 export const deleteLessonsByCourseId = async (courseId: number) => {
-	// Obtener todas las lecciones asociadas al curso
-	const lessonIds = await db
-		.select({ id: lessons.id })
-		.from(lessons)
-		.where(eq(lessons.courseId, courseId))
-		.then((rows) => rows.map((row) => row.id));
+	try {
+		// Obtener todas las lecciones asociadas al curso
+		const lessonIds = await db
+			.select({ id: lessons.id })
+			.from(lessons)
+			.where(eq(lessons.courseId, courseId))
+			.then((rows) => rows.map((row) => row.id));
 
-	// Eliminar el progreso de los usuarios asociado a las lecciones del curso
-	await db
-		.delete(userLessonsProgress)
-		.where(inArray(userLessonsProgress.lessonId, lessonIds));
+		// Obtener todas las actividades asociadas a las lecciones del curso
+		const activityIds = await db
+			.select({ id: activities.id })
+			.from(activities)
+			.where(inArray(activities.lessonsId, lessonIds))
+			.then((rows) => rows.map((row) => row.id));
 
-	// Eliminar todas las actividades asociadas a las lecciones del curso
-	await db
-		.delete(activities)
-		.where(
-			inArray(
-				activities.lessonsId,
-				db
-					.select({ id: lessons.id })
-					.from(lessons)
-					.where(eq(lessons.courseId, courseId))
-			)
+		// Eliminar el progreso de los usuarios asociado a las actividades
+		if (activityIds.length > 0) {
+			await db
+				.delete(userActivitiesProgress)
+				.where(inArray(userActivitiesProgress.activityId, activityIds));
+		}
+
+		// Eliminar todas las actividades asociadas a las lecciones del curso
+		if (lessonIds.length > 0) {
+			await db
+				.delete(activities)
+				.where(inArray(activities.lessonsId, lessonIds));
+		}
+
+		// Eliminar el progreso de los usuarios asociado a las lecciones del curso
+		if (lessonIds.length > 0) {
+			await db
+				.delete(userLessonsProgress)
+				.where(inArray(userLessonsProgress.lessonId, lessonIds));
+		}
+
+		// Eliminar todas las lecciones asociadas al curso
+		await db.delete(lessons).where(eq(lessons.courseId, courseId));
+	} catch (error) {
+		console.error(
+			`Error al eliminar las lecciones del curso con ID: ${courseId}`,
+			error
 		);
-	// Elimina todas las lecciones asociadas a un curso por su ID
-	await db.delete(lessons).where(eq(lessons.courseId, courseId));
+		throw new Error(
+			'No se pudieron eliminar las lecciones del curso correctamente.'
+		);
+	}
 };
 
 // Obtener el progreso de los usuarios por lección

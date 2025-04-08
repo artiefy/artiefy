@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { eq, and, ne } from 'drizzle-orm';
 
 import {
 	createCourse,
@@ -217,12 +217,10 @@ export async function PUT(request: NextRequest) {
 
 		// Manejar las materias
 		if (subjects.length > 0) {
-			// Log inicial de todas las materias antes de los cambios
 			const materiasAntes = await db.select().from(materias);
 			console.log('📊 Estado inicial de materias:', materiasAntes);
 
 			for (const subject of subjects) {
-				// Obtener la materia actual
 				const existingMateria = await db
 					.select()
 					.from(materias)
@@ -230,15 +228,10 @@ export async function PUT(request: NextRequest) {
 					.then((res) => res[0]);
 
 				if (existingMateria) {
-					console.log('🔍 Procesando materia:', {
-						id: existingMateria.id,
-						title: existingMateria.title,
-						courseid: existingMateria.courseid,
-						programaId: existingMateria.programaId,
-					});
+					console.log('🔍 Procesando materia:', existingMateria);
 
 					if (existingMateria.courseid) {
-						// Si ya tiene curso asignado, crear una nueva materia
+						// Ya tiene curso, se crea una nueva
 						const newMateria = await db
 							.insert(materias)
 							.values({
@@ -249,41 +242,66 @@ export async function PUT(request: NextRequest) {
 							})
 							.returning();
 
-						console.log('✨ Nueva materia creada:', {
-							original: {
-								id: existingMateria.id,
-								title: existingMateria.title,
-								courseid: existingMateria.courseid,
-								programaId: existingMateria.programaId,
-							},
-							nueva: newMateria[0],
-						});
+						console.log('✨ Nueva materia creada:', newMateria[0]);
 					} else {
-						// Si no tiene curso asignado, actualizar la materia existente
+						// Se actualiza la existente
 						const updatedMateria = await db
 							.update(materias)
 							.set({ courseid: id })
 							.where(eq(materias.id, subject.id))
 							.returning();
 
-						console.log('📝 Materia actualizada:', {
-							antes: {
-								id: existingMateria.id,
-								title: existingMateria.title,
-								courseid: existingMateria.courseid,
-								programaId: existingMateria.programaId,
-							},
-							despues: updatedMateria[0],
-						});
+						console.log('📝 Materia actualizada:', updatedMateria[0]);
+					}
+
+					// 🔁 Buscar otras materias iguales por título en otros programas (excepto la actual)
+					const conditions = [eq(materias.title, existingMateria.title)];
+
+					if (existingMateria.programaId) {
+						conditions.push(
+							ne(materias.programaId, existingMateria.programaId)
+						);
+					}
+
+					const materiasIguales = await db
+						.select()
+						.from(materias)
+						.where(and(...conditions));
+
+					for (const materia of materiasIguales) {
+						if (!materia.courseid) {
+							// Si no tiene curso, se actualiza
+							const updated = await db
+								.update(materias)
+								.set({ courseid: id })
+								.where(eq(materias.id, materia.id))
+								.returning();
+
+							console.log('🔄 Materia igual actualizada:', updated[0]);
+						} else {
+							// Si ya tiene curso, se clona con el nuevo curso
+							const newMateria = await db
+								.insert(materias)
+								.values({
+									title: materia.title,
+									description: materia.description,
+									programaId: materia.programaId,
+									courseid: id,
+								})
+								.returning();
+
+							console.log(
+								'📚 Materia duplicada para nuevo curso:',
+								newMateria[0]
+							);
+						}
 					}
 				}
 			}
 
-			// Log final de todas las materias después de los cambios
 			const materiasDespues = await db.select().from(materias);
 			console.log('🏁 Estado final de materias:', materiasDespues);
 
-			// Encontrar las nuevas materias
 			const nuevasMaterias = materiasDespues.filter(
 				(materiaFinal) =>
 					!materiasAntes.some(

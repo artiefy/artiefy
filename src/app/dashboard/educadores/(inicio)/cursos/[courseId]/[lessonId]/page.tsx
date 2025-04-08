@@ -243,8 +243,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				description: `La clase ${lessons?.title} ha sido eliminada exitosamente.`,
 			});
 
-			router.back(); // Redirige a la página anterior
-		} catch (error) {
+			router.push(`/dashboard/super-admin/cursos/${courseIdNumber}`);
+			} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error', {
 				description: 'No se pudo eliminar la clase completamente',

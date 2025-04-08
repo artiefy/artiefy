@@ -369,7 +369,7 @@ export async function getCourses(
 		const instructorsInfo = await Promise.all(
 			coursesData.map(async (course) => {
 				if (!course.instructor) {
-					return { id: '', name: 'No Instructor Assigned' };
+					return { id: '', name: 'Sin instructor asignado' };
 				}
 
 				try {

@@ -155,6 +155,7 @@ export async function PATCH(req: NextRequest) {
 			return respondWithError('Se requiere el ID de la lección', 400);
 		}
 
+		// Update the lesson only if coverVideoKey is provided
 		if (coverVideoKey) {
 			await updateLesson(Number(lessonId), { coverVideoKey });
 		}
@@ -163,7 +164,7 @@ export async function PATCH(req: NextRequest) {
 			message: 'Lección actualizada exitosamente',
 		});
 	} catch (error) {
-		console.error('Error al actualizar la lección:', error);
+		console.error('Error al actualizar la lección (PATCH):', error);
 		const errorMessage =
 			error instanceof Error ? error.message : 'Error desconocido';
 		return respondWithError(

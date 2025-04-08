@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, and, isNotNull, ne } from 'drizzle-orm';
 import { z } from 'zod';
 
 import {
@@ -103,45 +103,64 @@ export async function POST(req: NextRequest) {
 
 			// Validar que las materias existan antes de actualizar
 			const existingMaterias = await db
-				.select({ id: materias.id })
+				.select()
 				.from(materias)
-				.where(inArray(materias.id, subjectIds))
-				.execute();
+				.where(inArray(materias.id, subjectIds));
 
-			const existingIds = existingMaterias.map((m) => m.id);
-
-			if (existingIds.length === 0) {
+			if (existingMaterias.length === 0) {
 				return NextResponse.json(
 					{ error: 'No existen materias con los IDs proporcionados' },
 					{ status: 400 }
 				);
 			}
 
-			for (const materiaId of existingIds) {
-				const materia = await db
-					.select()
-					.from(materias)
-					.where(eq(materias.id, materiaId))
-					.then((res) => res[0]);
-
+			for (const materia of existingMaterias) {
 				if (materia.courseid) {
-					// Si ya tiene courseid, crear una nueva materia duplicando, con courseid en null:
+					// Si ya tiene curso, duplicar la materia en el nuevo programa
 					await db
 						.insert(materias)
 						.values({
 							title: materia.title,
 							description: materia.description,
 							programaId: newProgram.id,
-							courseid: null, // aquí lo dejas null
+							courseid: materia.courseid,
 						})
 						.execute();
 				} else {
-					// Si no tiene courseId, solo actualizamos:
-					await db
-						.update(materias)
-						.set({ programaId: newProgram.id, courseid: null }) // courseid null también aquí
-						.where(eq(materias.id, materiaId))
-						.execute();
+					// Buscar si existen versiones de esa materia con curso en otros programas
+					const materiasConCurso = await db
+						.select()
+						.from(materias)
+						.where(
+							and(
+								eq(materias.title, materia.title),
+								isNotNull(materias.courseid),
+								isNotNull(materias.programaId),
+								ne(materias.programaId, newProgram.id)
+							)
+						);
+
+					if (materiasConCurso.length > 0) {
+						// Por cada curso encontrado, duplicar la materia con ese curso y el nuevo programa
+						for (const materiaCurso of materiasConCurso) {
+							await db
+								.insert(materias)
+								.values({
+									title: materiaCurso.title,
+									description: materiaCurso.description,
+									programaId: newProgram.id,
+									courseid: materiaCurso.courseid,
+								})
+								.execute();
+						}
+					} else {
+						// Si no hay cursos asociados, simplemente actualizar la materia original
+						await db
+							.update(materias)
+							.set({ programaId: newProgram.id, courseid: null })
+							.where(eq(materias.id, materia.id))
+							.execute();
+					}
 				}
 			}
 		}

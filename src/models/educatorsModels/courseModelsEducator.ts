@@ -1,4 +1,4 @@
-import { eq, count, sum } from 'drizzle-orm';
+import { eq, count, sum, and, ne as neq, isNotNull } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
@@ -347,35 +347,78 @@ export async function updateMateria(
 			.select()
 			.from(materias)
 			.where(eq(materias.id, id))
-			.limit(1);
+			.limit(1)
+			.then((res) => res[0]);
 
-		if (existingMateria.length > 0) {
-			const materia = existingMateria[0];
+		if (!existingMateria) return;
 
-			if (materia.courseid) {
-				// Si la materia ya tiene un `courseid`, crear una nueva materia con los mismos datos
-				await db.insert(materias).values({
-					title: materia.title, // Copiar el título de la materia existente
-					description: materia.description ?? '', // Copiar la descripción si existe
-					courseid: data.courseid, // Asociar al nuevo curso
-					programaId: materia.programaId ?? 0, // Asegurar que programaId esté presente
-				});
-				console.log(
-					`Materia duplicada creada: ${materia.title} -> courseId: ${data.courseid}`
-				);
-			} else {
-				// Si la materia no tiene un `courseid`, actualizarla
+		if (existingMateria.courseid) {
+			// Ya tiene curso → crear nueva con el nuevo courseid
+			await db.insert(materias).values({
+				title: existingMateria.title,
+				description: existingMateria.description ?? '',
+				courseid: data.courseid,
+				programaId: existingMateria.programaId ?? 0,
+			});
+
+			console.log(
+				`📚 Materia duplicada creada: ${existingMateria.title} -> courseId: ${data.courseid}`
+			);
+		} else {
+			// No tiene curso → actualizar
+			await db
+				.update(materias)
+				.set({ courseid: data.courseid })
+				.where(eq(materias.id, id));
+
+			console.log(
+				`📝 Materia actualizada: ${existingMateria.title} -> courseId: ${data.courseid}`
+			);
+		}
+
+		// 🔁 Propagar el curso a otras materias con el mismo título
+		const conditions = [
+			eq(materias.title, existingMateria.title),
+			neq(materias.id, existingMateria.id),
+			isNotNull(materias.programaId),
+		];
+
+		const materiasIguales = await db
+			.select()
+			.from(materias)
+			.where(and(...conditions));
+
+		for (const materia of materiasIguales) {
+			if (!materia.courseid) {
+				// Si no tiene curso → actualizar
 				await db
 					.update(materias)
 					.set({ courseid: data.courseid })
-					.where(eq(materias.id, id));
+					.where(eq(materias.id, materia.id));
+
 				console.log(
-					`Materia actualizada: ${materia.title} -> courseId: ${data.courseid}`
+					`🔄 Materia actualizada (otra con mismo título): ${materia.title} -> courseId: ${data.courseid}`
+				);
+			} else {
+				// Ya tiene curso → duplicar con el nuevo curso
+				await db.insert(materias).values({
+					title: materia.title,
+					description: materia.description ?? '',
+					programaId: materia.programaId ?? 0,
+					courseid: data.courseid,
+				});
+
+				console.log(
+					`📦 Materia duplicada con nuevo curso: ${materia.title} -> courseId: ${data.courseid}`
 				);
 			}
 		}
-	} catch (error) {
-		console.error('Error al procesar materia:', error);
+	} catch (error: unknown) {
+		if (error instanceof Error) {
+			console.error('❌ Error al procesar materia:', error.message);
+		} else {
+			console.error('❌ Error desconocido al procesar materia:', error);
+		}
 		throw new Error('Error al procesar la materia');
 	}
 }

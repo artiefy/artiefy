@@ -66,6 +66,18 @@ interface UploadResult {
 	fileName: string;
 }
 
+// Tipos para las respuestas del backend
+interface VideoUploadResponse {
+	key: string;
+	message: string;
+}
+
+interface ErrorResponse {
+	error: string;
+	message?: string;
+	statusCode?: number;
+}
+
 const ModalFormLessons = ({
 	uploading,
 	isOpen,
@@ -394,52 +406,57 @@ const ModalFormLessons = ({
 				body: JSON.stringify(requestBody),
 			});
 
-			const responseData = (await response.json()) as LessonResponse;
-			const lessonId = isEditing ? editingLesson?.id : responseData.id;
-
-			// Si hay un nuevo video para subir, hacerlo en segundo plano
-			if (covervideo && lessonId) {
-				toast.info('Subiendo video en segundo plano...', {
-					duration: 0, // Mantener hasta que se complete
-					id: 'video-upload',
-				});
-
-				uploadFile(covervideo)
-					.then(async (result) => {
-						const updateResponse = await fetch('/api/educadores/lessons', {
-							method: 'PUT',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({
-								lessonId: lessonId,
-								coverVideoKey: result.key,
-							}),
-						});
-
-						if (updateResponse.ok) {
-							toast.success('Video subido exitosamente', {
-								duration: 3000,
-							});
-							toast.dismiss('video-upload');
-							if (onUpdateSuccess) {
-								onUpdateSuccess();
-							}
-						} else {
-							throw new Error('Error al actualizar la lección con el video');
-						}
-					})
-					.catch((error) => {
-						const errorMessage =
-							error instanceof Error ? error.message : String(error);
-						toast.error(`Error al subir el video: ${errorMessage}`);
-						toast.dismiss('video-upload');
-					});
-			}
+			const lessonId = isEditing
+				? editingLesson?.id
+				: ((await response.json()) as LessonResponse).id;
 
 			if (response.ok) {
 				toast.success(isEditing ? 'Lección actualizada' : 'Lección creada');
-				onCloseAction();
+				onCloseAction(); // Cerrar el modal inmediatamente después de la notificación
 				if (onUpdateSuccess) {
 					onUpdateSuccess();
+				}
+
+				// Si hay un nuevo video para subir, hacerlo en segundo plano
+				if (covervideo && lessonId) {
+					toast.info('Subiendo video en segundo plano...', {
+						duration: 0, // Mantener hasta que se complete
+						id: 'video-upload',
+					});
+
+					const formData = new FormData();
+					formData.append('file', covervideo);
+					formData.append('lessonId', lessonId.toString());
+
+					try {
+						const response = await fetch('/api/video/upload', {
+							method: 'POST',
+							body: formData,
+						});
+
+						if (response.ok) {
+							const responseData =
+								(await response.json()) as VideoUploadResponse;
+							console.log('Video subido exitosamente:', responseData.key);
+
+							// Mostrar notificación globalmente
+							toast.success('Video subido exitosamente', {
+								duration: 5000,
+							});
+							toast.dismiss('video-upload');
+						} else {
+							const errorData = (await response.json()) as ErrorResponse;
+							throw new Error(
+								(errorData.error || errorData.message) ?? 'Error desconocido'
+							);
+						}
+					} catch (error) {
+						const errorMessage =
+							error instanceof Error ? error.message : 'Error desconocido';
+						console.error('Error al subir el video:', errorMessage);
+						toast.error(`Error al subir el video: ${errorMessage}`);
+						toast.dismiss('video-upload');
+					}
 				}
 			}
 		} catch (error) {

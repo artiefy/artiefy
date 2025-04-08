@@ -243,7 +243,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				description: `La clase ${lessons?.title} ha sido eliminada exitosamente.`,
 			});
 
-			router.back(); // Redirige a la página anterior
+			// Navigate back to the course details page
+			router.push(`/dashboard/super-admin/cursos/${courseIdNumber}`);
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error', {

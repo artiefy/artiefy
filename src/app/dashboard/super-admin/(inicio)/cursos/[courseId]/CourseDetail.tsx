@@ -902,25 +902,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</Badge>
 								</div>
 								<div className="materias-container col-span-1 sm:col-span-2">
-									<h3 className="mb-2 text-base font-semibold sm:text-lg">
-										Materias:
-									</h3>
-									{materias.length > 0 ? (
-										<div className="flex flex-wrap gap-2">
-											{materias.map((materia) => (
-												<Badge
-													key={materia.id}
-													variant="secondary"
-													className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
-												>
-													{materia.title}
-												</Badge>
-											))}
-										</div>
-									) : (
-										<p>No hay materias asociadas a este curso.</p>
-									)}
-								</div>
+	<h3 className="mb-2 text-base font-semibold sm:text-lg">Materias:</h3>
+	{materias.length > 0 ? (
+		<div className="flex flex-wrap gap-2">
+			{[
+				...new Map(materias.map((m) => [m.title, m])).values(),
+			].map((materia) => (
+				<Badge
+					key={materia.id}
+					variant="secondary"
+					className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+				>
+					{materia.title}
+				</Badge>
+			))}
+		</div>
+	) : (
+		<p>No hay materias asociadas a este curso.</p>
+	)}
+</div>
+
 							</div>
 						</div>
 					</div>
