@@ -18,7 +18,7 @@ import { metadata as siteMetadata } from '~/lib/metadata';
 import Loading from './loading';
 import Providers from './providers';
 
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 
 const montserrat = Montserrat({
 	subsets: ['latin'],
@@ -37,13 +37,6 @@ const merriweather = Merriweather({
 	preload: true, // Change to true because it's used in root layout
 	adjustFontFallback: true, // Add this to optimize font loading
 });
-
-export const viewport: Viewport = {
-	width: 'device-width',
-	initialScale: 1,
-	maximumScale: 1,
-	userScalable: false,
-};
 
 export const metadata: Metadata = siteMetadata;
 

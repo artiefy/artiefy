@@ -22,7 +22,7 @@ import {
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course, type Program } from '~/types';
-import '~/styles/searchBar.css';
+import '~/styles/searchbar.css';
 
 export default function StudentDetails({
 	initialCourses,
