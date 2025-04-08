@@ -22,7 +22,6 @@ interface StudentChatbotProps {
 	initialSearchQuery?: string;
 	isAlwaysVisible?: boolean;
 	showChat?: boolean;
-	onApiComplete?: () => void;
 }
 
 interface ResizeData {
@@ -40,7 +39,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	initialSearchQuery = '',
 	isAlwaysVisible = false,
 	showChat = false,
-	onApiComplete,
 }) => {
 	const [isOpen, setIsOpen] = useState(showChat);
 	const [messages, setMessages] = useState([
@@ -61,20 +59,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const initialSearchDone = useRef(false);
 
-	// Add abort controller ref
-	const abortControllerRef = useRef<AbortController | null>(null);
-
 	const handleBotResponse = useCallback(
 		async (query: string) => {
 			if (processingQuery || searchRequestInProgress.current) return;
-
-			// Cancel any existing request
-			if (abortControllerRef.current) {
-				abortControllerRef.current.abort();
-			}
-
-			// Create new abort controller
-			abortControllerRef.current = new AbortController();
 
 			searchRequestInProgress.current = true;
 			setProcessingQuery(true);
@@ -87,7 +74,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({ prompt: query }),
-					signal: abortControllerRef.current.signal,
 				});
 
 				const data = (await response.json()) as ChatResponse;
@@ -100,11 +86,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						sender: 'bot' as const,
 					},
 				]);
-			} catch (error: unknown) {
-				if (error instanceof Error && error.name === 'AbortError') {
-					console.log('Request cancelled');
-					return;
-				}
+			} catch (error) {
 				console.error('Error getting bot response:', error);
 				setMessages((prev) => [
 					...prev,
@@ -118,11 +100,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 				setIsLoading(false);
 				setProcessingQuery(false);
 				searchRequestInProgress.current = false;
-				abortControllerRef.current = null;
-				onApiComplete?.(); // Notify parent component
 			}
 		},
-		[processingQuery, onApiComplete]
+		[processingQuery]
 	);
 
 	useEffect(() => {
@@ -177,9 +157,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	useEffect(() => {
 		return () => {
 			initialSearchDone.current = false;
-			if (abortControllerRef.current) {
-				abortControllerRef.current.abort();
-			}
 		};
 	}, []);
 
@@ -267,13 +244,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		},
 		[]
 	);
-
-	const handleClose = () => {
-		if (abortControllerRef.current) {
-			abortControllerRef.current.abort();
-		}
-		setIsOpen(false);
-	};
 
 	const renderMessage = (message: {
 		id: number;
@@ -434,7 +404,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									</div>
 
 									<button
-										onClick={handleClose}
+										onClick={() => setIsOpen(false)}
 										className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
 									>
 										<IoMdClose className="text-xl text-gray-500" />
