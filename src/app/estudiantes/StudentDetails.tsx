@@ -126,16 +126,26 @@ export default function StudentDetails({
 			const newValue = e.target.value;
 			setSearchQuery(newValue);
 
-			// No auto-search on change, only on submit or icon click
+			// Cancel search when input is cleared
 			if (!newValue.trim()) {
-				setShowChatbot(false);
-				setSearchInProgress(false);
-				searchInitiated.current = false;
-				setChatbotKey(0);
+				cancelSearch();
 			}
 		},
-		[]
+		[cancelSearch]
 	);
+
+	// Add keydown event handler
+	useEffect(() => {
+		const handleEscKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				cancelSearch();
+				setSearchQuery('');
+			}
+		};
+
+		window.addEventListener('keydown', handleEscKey);
+		return () => window.removeEventListener('keydown', handleEscKey);
+	}, [cancelSearch]);
 
 	// Slide interval effect with cleanup
 	useEffect(() => {

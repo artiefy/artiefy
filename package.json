@@ -153,8 +153,14 @@
 	"engines": {
 		"node": "22.x"
 	},
-	"os": ["win32", "linux", "darwin"],
-	"cpu": ["x64"],
+	"os": [
+		"win32",
+		"linux",
+		"darwin"
+	],
+	"cpu": [
+		"x64"
+	],
 	"ct3aMetadata": {
 		"initVersion": "7.38.1"
 	},
