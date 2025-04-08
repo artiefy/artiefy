@@ -34,9 +34,6 @@ export interface Lesson {
 	};
 }
 
-interface CreateLessonResult {
-	id: number;
-}
 
 export async function createLesson({
 	title,
@@ -335,23 +332,23 @@ export const deleteLesson = async (lessonId: number): Promise<void> => {
 
 		// Eliminar el progreso de los usuarios asociado a las actividades
 		if (activityIds.length > 0) {
-			const deletedUserActivityProgress = await db
+			await db
 				.delete(userActivitiesProgress)
 				.where(inArray(userActivitiesProgress.activityId, activityIds));
 		}
 
 		// Eliminar las actividades asociadas a la lección
-		const deletedActivities = await db
+		await db
 			.delete(activities)
 			.where(eq(activities.lessonsId, lessonId));
 
 		// Eliminar el progreso de los usuarios asociado a la lección
-		const deletedUserProgress = await db
+		await db
 			.delete(userLessonsProgress)
 			.where(eq(userLessonsProgress.lessonId, lessonId));
 
 		// Eliminar la lección
-		const deletedLesson = await db
+		await db
 			.delete(lessons)
 			.where(eq(lessons.id, lessonId));
 	} catch (error) {
