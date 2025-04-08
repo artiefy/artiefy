@@ -6,11 +6,14 @@ export const formatDate = (date: Date | string): string => {
 	});
 };
 
+export interface MateriaGrade {
+	id: number;
+	title: string;
+	grade: number;
+	courseTitle?: string;
+}
+
 export interface GradesApiResponse {
-	materias: {
-		id: number;
-		title: string;
-		grade: number;
-	}[];
+	materias: MateriaGrade[];
 	error?: string;
 }

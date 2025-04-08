@@ -11,6 +11,7 @@ interface MateriaWithGrade {
 	id: number;
 	title: string;
 	grade: number;
+	courseTitle: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -36,6 +37,13 @@ export async function GET(request: NextRequest) {
 
 		const courseMaterias = await db.query.materias.findMany({
 			where: eq(materias.courseid, parseInt(courseId)),
+			with: {
+				curso: {
+					columns: {
+						title: true,
+					},
+				},
+			},
 		});
 
 		const formattedResults: MateriaWithGrade[] = courseMaterias.map(
@@ -47,6 +55,7 @@ export async function GET(request: NextRequest) {
 					id: materia.id,
 					title: materia.title,
 					grade: Number((gradeRecord?.grade ?? 0).toFixed(2)),
+					courseTitle: materia.curso?.title ?? 'Curso sin nombre',
 				};
 			}
 		);

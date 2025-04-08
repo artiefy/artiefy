@@ -1,11 +1,14 @@
 'use client';
 
+import { useState, useEffect, useMemo } from 'react';
+
 import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
-import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
+import { FaUserGraduate, FaCalendar, FaCheck, FaTrophy } from 'react-icons/fa';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -18,8 +21,10 @@ import {
 } from '~/components/estudiantes/ui/card';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
+import { formatDate, type GradesApiResponse } from '~/lib/utils2';
 
 import { ProgramContent } from './ProgramContent';
+import { ProgramGradesModal } from './ProgramGradesModal';
 
 import type { Program } from '~/types';
 
@@ -35,6 +40,12 @@ interface ProgramHeaderProps {
 	isCheckingEnrollment: boolean;
 }
 
+// Add error type
+interface FetchError {
+	error?: string;
+	message?: string;
+}
+
 export function ProgramHeader({
 	program,
 	isEnrolled,
@@ -47,6 +58,84 @@ export function ProgramHeader({
 	isCheckingEnrollment,
 }: ProgramHeaderProps) {
 	const { user, isSignedIn } = useUser();
+	const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
+	const [isLoadingGrade, setIsLoadingGrade] = useState(true);
+
+	// Replace useEffect with useSWR
+	// Improve error handling with proper types
+	const { data: gradesData, error: gradesError } = useSWR<
+		GradesApiResponse,
+		FetchError
+	>(
+		user?.id
+			? `/api/grades/materias?userId=${user.id}&courseId=${program.id}`
+			: null,
+		async (url: string): Promise<GradesApiResponse> => {
+			const res = await fetch(url);
+			if (!res.ok) throw new Error('Error fetching grades');
+			const data = (await res.json()) as GradesApiResponse;
+			return data;
+		},
+		{
+			refreshInterval: 5000, // Poll every 5 seconds
+			revalidateOnFocus: true,
+		}
+	);
+
+	const currentFinalGrade = useMemo(() => {
+		if (!gradesData?.materias?.length) return 0;
+
+		// Simplemente calcular el promedio de las notas
+		const average =
+			gradesData.materias.reduce((acc, materia) => acc + materia.grade, 0) /
+			gradesData.materias.length;
+
+		console.log('Cálculo de nota:', {
+			materias: gradesData.materias,
+			promedio: average,
+			mostrarCertificado: average >= 3,
+		});
+
+		return Number(average.toFixed(2));
+	}, [gradesData]);
+
+	interface CourseGrade {
+		courseTitle: string;
+		finalGrade: number;
+	}
+
+	const coursesGrades = useMemo(() => {
+		if (!gradesData?.materias?.length) return [];
+
+		// Agrupar las materias por curso y calcular promedios
+		const courseGrades = new Map<string, { sum: number; count: number }>();
+
+		gradesData.materias.forEach((materia) => {
+			if (!materia.courseTitle) return; // Skip if no courseTitle
+			const current = courseGrades.get(materia.courseTitle) ?? {
+				sum: 0,
+				count: 0,
+			};
+			courseGrades.set(materia.courseTitle, {
+				sum: current.sum + materia.grade,
+				count: current.count + 1,
+			});
+		});
+
+		// Convertir el Map a un array de CourseGrade
+		return Array.from(courseGrades.entries()).map(
+			([courseTitle, { sum, count }]): CourseGrade => ({
+				courseTitle,
+				finalGrade: Number((sum / count).toFixed(2)),
+			})
+		);
+	}, [gradesData]);
+
+	// Update loading state based on SWR
+	// Update loading state with proper error handling
+	useEffect(() => {
+		setIsLoadingGrade(!gradesData && !gradesError);
+	}, [gradesData, gradesError]);
 
 	// Verificar plan Premium y fecha de vencimiento
 	const isPremium = user?.publicMetadata?.planType === 'Premium';
@@ -57,17 +146,6 @@ export function ProgramHeader({
 		isPremium &&
 		(!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
 	const canEnroll = isSubscriptionActive && isSubscriptionValid;
-
-	const formatDate = (
-		dateString: string | number | Date | null | undefined
-	) => {
-		if (!dateString) return 'Fecha no disponible';
-		return new Date(dateString).toLocaleDateString('es-ES', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-		});
-	};
 
 	const getCategoryName = (program: Program) => {
 		return program.category?.name ?? 'Sin categoría';
@@ -93,6 +171,8 @@ export function ProgramHeader({
 		}
 		await onEnrollAction();
 	};
+
+	const canAccessGrades = isEnrolled;
 
 	return (
 		<Card className="overflow-hidden p-0">
@@ -127,7 +207,7 @@ export function ProgramHeader({
 						<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
 							<Badge
 								variant="outline"
-								className="w-fit border-primary bg-background text-primary hover:bg-black/70"
+								className="border-primary bg-background text-primary w-fit hover:bg-black/70"
 							>
 								{getCategoryName(program)}
 							</Badge>
@@ -135,13 +215,14 @@ export function ProgramHeader({
 								<div className="flex items-center">
 									<FaCalendar className="mr-2 text-gray-600" />
 									<span className="text-xs text-gray-600 sm:text-sm">
-										Creado: {formatDate(program.createdAt)}
+										Creado: {formatDate(program.createdAt?.toString() ?? '')}
 									</span>
 								</div>
 								<div className="flex items-center">
 									<FaCalendar className="mr-2 text-gray-600" />
 									<span className="text-xs text-gray-600 sm:text-sm">
-										Actualizado: {formatDate(program.updatedAt)}
+										Actualizado:{' '}
+										{formatDate(program.updatedAt?.toString() ?? '')}
 									</span>
 								</div>
 							</div>
@@ -171,10 +252,25 @@ export function ProgramHeader({
 				</div>
 
 				{/* Program description */}
-				<div className="prose max-w-none">
-					<p className="text-sm leading-relaxed text-gray-700 sm:text-base">
-						{program.description ?? 'No hay descripción disponible.'}
-					</p>
+				<div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
+					<div className="prose max-w-none">
+						<p className="text-sm leading-relaxed text-gray-700 sm:text-base">
+							{program.description ?? 'No hay descripción disponible.'}
+						</p>
+					</div>
+					<Button
+						onClick={() => setIsGradeModalOpen(true)}
+						disabled={!canAccessGrades}
+						className="h-9 w-full shrink-0 bg-blue-500 px-4 font-semibold text-white hover:bg-blue-600 sm:w-auto"
+						aria-label={
+							!isEnrolled
+								? 'Debes inscribirte al programa'
+								: 'Ver tus calificaciones'
+						}
+					>
+						<FaTrophy className="mr-2 h-4 w-4" />
+						<span className="text-sm font-semibold">Mis Calificaciones</span>
+					</Button>
 				</div>
 
 				{/* Program courses */}
@@ -202,7 +298,7 @@ export function ProgramHeader({
 						) : isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
 								<Button
-									className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+									className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
 									disabled={true}
 								>
 									<FaCheck className="mr-2" /> Suscrito Al Programa
@@ -273,6 +369,14 @@ export function ProgramHeader({
 						)}
 					</div>
 				</div>
+				<ProgramGradesModal
+					isOpen={isGradeModalOpen}
+					onCloseAction={() => setIsGradeModalOpen(false)}
+					programTitle={program.title}
+					finalGrade={currentFinalGrade}
+					isLoading={isLoadingGrade}
+					coursesGrades={coursesGrades}
+				/>
 			</CardContent>
 		</Card>
 	);
