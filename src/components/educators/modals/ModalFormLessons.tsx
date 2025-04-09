@@ -67,16 +67,6 @@ interface UploadResult {
 }
 
 // Tipos para las respuestas del backend
-interface VideoUploadResponse {
-	key: string;
-	message: string;
-}
-
-interface ErrorResponse {
-	error: string;
-	message?: string;
-	statusCode?: number;
-}
 
 const ModalFormLessons = ({
 	uploading,
@@ -420,36 +410,64 @@ const ModalFormLessons = ({
 				// Si hay un nuevo video para subir, hacerlo en segundo plano
 				if (covervideo && lessonId) {
 					toast.info('Subiendo video en segundo plano...', {
-						duration: 0, // Mantener hasta que se complete
+						duration: 0,
 						id: 'video-upload',
 					});
 
-					const formData = new FormData();
-					formData.append('file', covervideo);
-					formData.append('lessonId', lessonId.toString());
-
 					try {
-						const response = await fetch('/api/video/upload', {
+						// Step 1: Get presigned URL for video upload
+						const res = await fetch('/api/upload', {
 							method: 'POST',
-							body: formData,
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								contentType: covervideo.type,
+								fileSize: covervideo.size,
+								fileName: covervideo.name,
+							}),
 						});
 
-						if (response.ok) {
-							const responseData =
-								(await response.json()) as VideoUploadResponse;
-							console.log('Video subido exitosamente:', responseData.key);
+						if (!res.ok) throw new Error('Error al obtener la URL de subida');
 
-							// Mostrar notificación globalmente
-							toast.success('Video subido exitosamente', {
-								duration: 5000,
-							});
-							toast.dismiss('video-upload');
-						} else {
-							const errorData = (await response.json()) as ErrorResponse;
-							throw new Error(
-								(errorData.error || errorData.message) ?? 'Error desconocido'
+						const uploadData = (await res.json()) as UploadResponse;
+
+						// Step 2: Upload the file to S3
+						await new Promise<void>((resolve, reject) => {
+							const xhr = new XMLHttpRequest();
+							xhr.open(
+								uploadData.uploadType === 'put' ? 'PUT' : 'POST',
+								uploadData.url
 							);
-						}
+
+							if (uploadData.uploadType === 'put') {
+								xhr.setRequestHeader('Content-Type', covervideo.type);
+								xhr.send(covervideo);
+							} else {
+								const formData = new FormData();
+								Object.entries(uploadData.fields ?? {}).forEach(([key, val]) =>
+									formData.append(key, val)
+								);
+								formData.append('file', covervideo);
+								xhr.send(formData);
+							}
+
+							xhr.onload = () =>
+								xhr.status < 300
+									? resolve()
+									: reject(new Error('Fallo la carga'));
+							xhr.onerror = () => reject(new Error('Fallo la carga'));
+						});
+
+						// Step 3: Register the video key with the lesson
+						const regRes = await fetch('/api/video/register', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ key: uploadData.key, lessonId }),
+						});
+
+						if (!regRes.ok) throw new Error('Error al registrar el video');
+
+						toast.success('Video subido exitosamente');
+						toast.dismiss('video-upload');
 					} catch (error) {
 						const errorMessage =
 							error instanceof Error ? error.message : 'Error desconocido';
