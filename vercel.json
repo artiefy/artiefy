@@ -28,7 +28,7 @@
 			"maxDuration": 30
 		},
 		"app/api/**/*.ts": {
-			"memory": 2048,
+			"memory": 3009,
 			"maxDuration": 60
 		}
 	},
