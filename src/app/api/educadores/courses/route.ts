@@ -90,6 +90,11 @@ export async function GET(req: NextRequest) {
 			console.log('Courses for userId:', userId, courses);
 		} else {
 			courses = await getAllCourses();
+			// Filter out duplicate titles
+			const uniqueCourses = Array.from(
+				new Map(courses.map((course) => [course.title, course])).values()
+			);
+			courses = uniqueCourses;
 			console.log('All courses:', courses);
 		}
 		return NextResponse.json(courses);

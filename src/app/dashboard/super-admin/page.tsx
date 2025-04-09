@@ -38,6 +38,16 @@ interface User {
 	isNew?: boolean;
 }
 
+interface Program {
+	id: string;
+	title: string;
+}
+
+interface Course {
+	id: string;
+	title: string;
+}
+
 type ConfirmationState = {
 	isOpen: boolean;
 	title: string;
@@ -45,6 +55,12 @@ type ConfirmationState = {
 	onConfirm: () => void;
 	onCancel?: () => void;
 } | null;
+
+interface Materia {
+	id: string;
+	courseId: string;
+	programaId: string;
+}
 
 interface ViewUserResponse {
 	id: string;
@@ -111,6 +127,7 @@ export default function AdminDashboard() {
 	} | null>(null);
 	const [editingUser, setEditingUser] = useState<User | null>(null);
 	const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
+	const [loadingPrograms, setLoadingPrograms] = useState(false);
 
 	const [editValues, setEditValues] = useState<{
 		firstName: string;
@@ -173,6 +190,8 @@ export default function AdminDashboard() {
 	}
 
 	const [showCreateForm, setShowCreateForm] = useState(false);
+	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+
 	const handleUserSelection = useCallback((userId: string, email: string) => {
 		setSelectedUsers((prevSelected) =>
 			prevSelected.includes(userId)
@@ -188,6 +207,174 @@ export default function AdminDashboard() {
 			}
 		});
 	}, []);
+	interface Program {
+		id: string;
+		title: string;
+	}
+
+	interface Course {
+		id: string;
+		title: string;
+	}
+
+	function isValidCourseArray(data: unknown): data is Course[] {
+		return (
+			Array.isArray(data) &&
+			data.every(
+				(item) =>
+					typeof item === 'object' &&
+					item !== null &&
+					'id' in item &&
+					'title' in item &&
+					(typeof (item as { id: unknown }).id === 'string' ||
+						typeof (item as { id: unknown }).id === 'number') &&
+					typeof (item as { title: unknown }).title === 'string'
+			)
+		);
+	}
+
+	function isValidProgramArray(data: unknown): data is Program[] {
+		return (
+			Array.isArray(data) &&
+			data.every(
+				(item) =>
+					typeof item === 'object' &&
+					item !== null &&
+					'id' in item &&
+					'title' in item &&
+					(typeof (item as { id: unknown }).id === 'string' ||
+						typeof (item as { id: unknown }).id === 'number') &&
+					typeof (item as { title: unknown }).title === 'string'
+			)
+		);
+	}
+
+	const fetchAllPrograms = async () => {
+		try {
+			const res = await fetch('/api/super-admin/programs');
+			if (!res.ok) throw new Error('Error al obtener programas');
+
+			const rawData = (await res.json()) as unknown; // Explicitly type as unknown
+
+			if (!isValidProgramArray(rawData)) {
+				throw new Error('Datos inválidos para programas');
+			}
+
+			// Use a Set to eliminate duplicates and normalize IDs to strings
+			const data = Array.from(
+				new Map(
+					rawData.map((p) => [p.id, { id: String(p.id), title: p.title }])
+				).values()
+			);
+
+			setPrograms(data);
+			setAllPrograms(data); // Cache all programs for later use
+		} catch (error) {
+			console.error('Error cargando todos los programas:', error);
+			setPrograms([]);
+		}
+	};
+
+	const [materias, setMaterias] = useState<Materia[]>([]);
+	const [allPrograms, setAllPrograms] = useState<Program[]>([]);
+	const [courses, setCourses] = useState<Course[]>([]);
+	const [allCourses, setAllCourses] = useState<Course[]>([]);
+
+	useEffect(() => {
+		const fetchMaterias = async () => {
+			try {
+				const res = await fetch('/api/super-admin/materias');
+				const rawData: unknown = await res.json();
+				if (
+					!Array.isArray(rawData) ||
+					!rawData.every(
+						(item) =>
+							typeof item === 'object' &&
+							item !== null &&
+							'id' in item &&
+							'courseId' in item &&
+							'programaId' in item
+					)
+				) {
+					throw new Error('Invalid data format for Materias');
+				}
+				const data: Materia[] = rawData as Materia[];
+				setMaterias(data);
+			} catch (error) {
+				console.error('Error al cargar materias:', error);
+			}
+		};
+
+		void fetchMaterias();
+	}, []);
+
+	useEffect(() => {
+		if (!selectedCourse) {
+			setPrograms(allPrograms); // Mostrar todos los programas si no hay curso seleccionado
+			return;
+		}
+
+		const programIds = materias
+			.filter((m) => m.courseId === selectedCourse)
+			.map((m) => m.programaId);
+
+		const uniqueProgramIds = [...new Set(programIds)]; // Eliminar duplicados
+
+		const relatedPrograms = allPrograms.filter((p) =>
+			uniqueProgramIds.includes(p.id)
+		);
+
+		setPrograms(relatedPrograms);
+	}, [selectedCourse, materias, allPrograms]); // ✅ todo ok
+
+	const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (!selectedProgram) {
+			setCourses(allCourses); // Mostrar todos los cursos si no hay programa seleccionado
+			return;
+		}
+
+		const courseIds = materias
+			.filter((m) => m.programaId === selectedProgram)
+			.map((m) => m.courseId);
+
+		const uniqueCourseIds = [...new Set(courseIds)]; // Eliminar duplicados
+
+		const relatedCourses = allCourses.filter((c) =>
+			uniqueCourseIds.includes(c.id)
+		);
+
+		setCourses(relatedCourses);
+	}, [selectedProgram, materias, allCourses]);
+
+	useEffect(() => {
+		void fetchAllPrograms();
+	}, []);
+
+	const fetchAllCourses = async () => {
+		try {
+			const res = await fetch('/api/super-admin/courses');
+			if (!res.ok) throw new Error('Error al obtener cursos');
+
+			const rawData: unknown = await res.json();
+
+			if (!isValidCourseArray(rawData)) {
+				throw new Error('Datos inválidos para cursos');
+			}
+
+			const data = rawData.map((c) => ({
+				id: String(c.id),
+				title: c.title,
+			}));
+
+			setCourses(data);
+			setAllCourses(data);
+		} catch (error) {
+			console.error('Error cargando todos los cursos:', error);
+			setCourses([]);
+		}
+	};
 
 	// 1️⃣ Filtrar usuarios
 	const filteredUsers = users.filter(
@@ -207,7 +394,23 @@ export default function AdminDashboard() {
 			); // Actualizar la ruta correcta
 			if (!res.ok) throw new Error('Error al obtener programas');
 
-			const data = (await res.json()) as { id: string; title: string }[];
+			const rawData: unknown = await res.json();
+			if (
+				!Array.isArray(rawData) ||
+				!rawData.every(
+					(item) =>
+						typeof item === 'object' &&
+						item !== null &&
+						'id' in item &&
+						'title' in item &&
+						typeof (item as { id: unknown }).id === 'string' &&
+						typeof (item as { title: unknown }).title === 'string'
+				)
+			) {
+				throw new Error('Datos inválidos recibidos');
+			}
+
+			const data = rawData as { id: string; title: string }[];
 			setPrograms(data);
 		} catch (error) {
 			console.error('Error fetching programs:', error);
@@ -493,58 +696,76 @@ export default function AdminDashboard() {
 		if (selectedStudents.length === 0) return;
 
 		try {
-			let response;
-			// Si hay un curso seleccionado:
+			const payload: {
+				userIds: string[];
+				planType: 'Pro' | 'Premium' | 'Enterprise';
+				courseId?: string;
+				programId?: string;
+			} = {
+				userIds: selectedStudents,
+				planType: selectedPlanType,
+			};
+
 			if (selectedCourse) {
-				response = await fetch('/api/enrollments', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						courseId: selectedCourse,
-						userIds: selectedStudents,
-						planType: selectedPlanType,
-					}),
-				});
+				payload.courseId = selectedCourse;
 			}
-			// Si hay un programa seleccionado:
-			else if (selectedProgram) {
-				response = await fetch('/api/super-admin/programs/enrollInProgram', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						programId: selectedProgram,
-						userIds: selectedStudents,
-						planType: selectedPlanType,
-					}),
-				});
+
+			if (selectedProgram) {
+				payload.programId = selectedProgram;
+			}
+
+			const response = await fetch('/api/enrollments', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+			});
+
+			if (!response.ok) throw new Error('Error during enrollment');
+
+			const rawResult: unknown = await response.json();
+
+			if (
+				typeof rawResult === 'object' &&
+				rawResult !== null &&
+				'success' in rawResult &&
+				typeof (rawResult as { success: unknown }).success === 'boolean' &&
+				'message' in rawResult &&
+				typeof (rawResult as { message: unknown }).message === 'string'
+			) {
+				const result: { success: boolean; message: string } = rawResult as {
+					success: boolean;
+					message: string;
+				};
+
+				console.log('Enrollment successful:', result);
+				setShowAssignModal(false);
+				setSelectedStudents([]);
+				setSelectedCourse(null);
+				setSelectedProgram(null);
+
+				// Show success message
+				const courseName = selectedCourse
+					? courses.find((course) => course.id === selectedCourse)?.title
+					: null;
+				const programName = selectedProgram
+					? programs.find((program) => program.id === selectedProgram)?.title
+					: null;
+
+				let successMessage = `Se matricularon ${selectedStudents.length} estudiantes`;
+				if (courseName && programName) {
+					successMessage += ` al curso "${courseName}" y al programa "${programName}".`;
+				} else if (courseName) {
+					successMessage += ` al curso "${courseName}".`;
+				} else if (programName) {
+					successMessage += ` al programa "${programName}".`;
+				}
+
+				alert(successMessage);
 			} else {
-				showNotification('Debes seleccionar un curso o un programa.', 'error');
-				return;
+				throw new Error('Invalid response format');
 			}
-
-			if (!response.ok) throw new Error('Error al asignar');
-
-			const result = (await response.json()) as { message: string };
-			const { message } = result;
-
-			setShowAssignModal(false);
-
-			setTimeout(() => {
-				setConfirmation({
-					isOpen: true,
-					title: 'Asignación completada',
-					message: `${message}\n¿Quieres seguir asignando más estudiantes?`,
-					onConfirm: () => {
-						setSelectedStudents([]);
-						setSelectedCourse(null);
-						setSelectedProgram(null);
-						setShowAssignModal(true);
-					},
-					onCancel: () => setConfirmation(null),
-				});
-			}, 300);
-		} catch {
-			showNotification('Error al asignar estudiantes.', 'error');
+		} catch (error) {
+			console.error('Error assigning students:', error);
 		}
 	};
 
@@ -887,13 +1108,9 @@ export default function AdminDashboard() {
 	};
 
 	const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
-	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-	const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
 	const [programsCollapsed, setProgramsCollapsed] = useState(true);
 	const [coursesCollapsed, setCoursesCollapsed] = useState(true);
 	const [studentSearch, setStudentSearch] = useState('');
-
-	const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
 
 	const handleMassUserUpload = useCallback(
 		(newUsers: User[]) => {
@@ -961,14 +1178,175 @@ export default function AdminDashboard() {
 		}
 	};
 
+	useEffect(() => {
+		const fetchProgramsFromCourse = async () => {
+			if (!selectedCourse) {
+				setPrograms(allPrograms); // Use cached programs if no course is selected
+				return;
+			}
+
+			try {
+				const res = await fetch(
+					`/api/super-admin/programs/fromCourse?courseId=${selectedCourse}`
+				);
+				if (!res.ok) throw new Error('Error al obtener programas desde curso');
+
+				const rawData: unknown = await res.json();
+
+				if (!isValidProgramArray(rawData)) {
+					throw new Error('Datos inválidos al obtener programas desde curso');
+				}
+
+				const data = Array.from(
+					new Map(
+						rawData.map((p) => [p.id, { id: String(p.id), title: p.title }])
+					).values()
+				);
+
+				setPrograms(data);
+			} catch (error) {
+				console.error('Error cargando programas desde curso:', error);
+				setPrograms([]);
+			}
+		};
+		void fetchProgramsFromCourse();
+	}, [selectedCourse, allPrograms]);
+
+	useEffect(() => {
+		const fetchCoursesFromProgram = async () => {
+			try {
+				const res = await fetch(
+					`/api/super-admin/courses/fromProgram?programId=${selectedProgram}`
+				);
+				if (!res.ok) throw new Error('Error al obtener cursos desde programa');
+
+				const rawData: unknown = await res.json();
+
+				if (!isValidCourseArray(rawData)) {
+					throw new Error('Datos inválidos al obtener cursos desde programa');
+				}
+
+				const data = rawData; // ✅ ahora es Course[]
+				setCourses(data);
+			} catch (error) {
+				console.error('Error cargando cursos desde programa:', error);
+				setCourses([]);
+			}
+		};
+
+		if (selectedProgram) {
+			void fetchCoursesFromProgram();
+		} else {
+			void fetchAllCourses(); // 🔁 Si se deselecciona, mostrar todos
+		}
+	}, [selectedProgram]);
+
+	useEffect(() => {
+		if (!selectedProgram) {
+			setCourses([...new Set(allCourses)]); // Eliminar duplicados en cursos
+			return;
+		}
+
+		const loadCourses = async () => {
+			try {
+				const res = await fetch(
+					`/api/super-admin/courses/fromProgram?programId=${selectedProgram}`
+				);
+				if (!res.ok) throw new Error('Error al obtener cursos');
+
+				const rawData: unknown = await res.json();
+				if (
+					!Array.isArray(rawData) ||
+					!rawData.every(
+						(item) =>
+							typeof item === 'object' &&
+							item !== null &&
+							'id' in item &&
+							'title' in item
+					)
+				) {
+					throw new Error('Datos inválidos recibidos');
+				}
+
+				const data: { id: string; title: string }[] = rawData as {
+					id: string;
+					title: string;
+				}[];
+
+				setCourses([...new Set(data)]); // Eliminar duplicados en cursos
+			} catch (err) {
+				console.error('Error al cargar cursos desde programa:', err);
+			}
+		};
+
+		loadCourses();
+	}, [selectedProgram]);
+
+	useEffect(() => {
+		if (!selectedCourse) {
+			setPrograms([...new Set(allPrograms)]); // Eliminar duplicados en programas
+			return;
+		}
+
+		const loadPrograms = async () => {
+			try {
+				const res = await fetch(
+					`/api/super-admin/programs/fromCourse?courseId=${selectedCourse}`
+				);
+				if (!res.ok) throw new Error('Error al obtener programas');
+
+				const rawData: unknown = await res.json();
+				if (
+					!Array.isArray(rawData) ||
+					!rawData.every(
+						(item) =>
+							typeof item === 'object' &&
+							item !== null &&
+							'id' in item &&
+							'title' in item
+					)
+				) {
+					throw new Error('Datos inválidos recibidos');
+				}
+
+				const data: { id: string; title: string }[] = rawData as {
+					id: string;
+					title: string;
+				}[];
+
+				setPrograms([...new Set(data)]); // Eliminar duplicados en programas
+			} catch (err) {
+				console.error('Error al cargar programas desde curso:', err);
+			}
+		};
+
+		loadPrograms();
+	}, [selectedCourse]);
+
+	// Add search filters for courses and programs
+	const [courseSearch, setCourseSearch] = useState('');
+	const [programSearch, setProgramSearch] = useState('');
+
+	const filteredCourses = Array.from(
+		new Map(courses.map((course) => [course.title, course])).values()
+	).filter((course) =>
+		course.title.toLowerCase().includes(courseSearch.toLowerCase())
+	);
+
+	const filteredPrograms = Array.from(
+		new Map(programs.map((program) => [program.title, program])).values()
+	).filter((program) =>
+		program.title.toLowerCase().includes(programSearch.toLowerCase())
+	);
+
 	return (
 		<>
 			<div className="p-4 sm:p-6">
 				{/* Header with gradient effect */}
 				<header className="group relative overflow-hidden rounded-lg p-[1px]">
-					<div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
+					<div className="animate-gradient absolute -inset-0.5 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
 					<div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
-						<h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
+						<h1 className="text-primary flex items-center gap-3 text-xl font-extrabold tracking-tight sm:text-2xl lg:text-3xl">
 							Administrador de usuarios
 						</h1>
 					</div>
@@ -979,7 +1357,7 @@ export default function AdminDashboard() {
 				<div className="mb-6 flex flex-wrap gap-2">
 					<button
 						onClick={() => setShowCreateForm(true)}
-						className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
 					>
 						<span className="relative z-10 font-medium">Crear Usuario</span>
 						<UserPlus className="relative z-10 size-3.5 sm:size-4" />
@@ -1030,7 +1408,7 @@ export default function AdminDashboard() {
 
 					<button
 						onClick={() => setShowAssignModal(true)}
-						className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
 					>
 						<span className="relative z-10 font-medium">
 							Asignar a Curso o Programa
@@ -1041,7 +1419,7 @@ export default function AdminDashboard() {
 
 					<button
 						onClick={() => setShowAnuncioModal(true)}
-						className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
 					>
 						<span className="relative z-10 font-medium">Crear Anuncio</span>
 						<UserPlus className="relative z-10 size-3.5 sm:size-4" />
@@ -1050,7 +1428,7 @@ export default function AdminDashboard() {
 
 					<button
 						onClick={() => setShowEmailModal(true)}
-						className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
 					>
 						<span className="relative z-10 font-medium">Enviar Correo</span>
 						<Paperclip className="relative z-10 size-3.5 sm:size-4" />
@@ -1156,8 +1534,8 @@ export default function AdminDashboard() {
 											</td>
 											<td className="px-2 py-3 sm:px-4 sm:py-4">
 												<div className="flex items-center gap-2 sm:gap-3">
-													<div className="size-8 rounded-full bg-primary/10 p-1 sm:size-10 sm:p-2">
-														<span className="flex h-full w-full items-center justify-center text-xs font-semibold text-primary sm:text-sm">
+													<div className="bg-primary/10 size-8 rounded-full p-1 sm:size-10 sm:p-2">
+														<span className="text-primary flex h-full w-full items-center justify-center text-xs font-semibold sm:text-sm">
 															{user.firstName[0]}
 															{user.lastName[0]}
 														</span>
@@ -1352,7 +1730,7 @@ export default function AdminDashboard() {
 						{/* Botón para crear usuario */}
 						<button
 							onClick={handleCreateUser}
-							className="mt-4 flex w-full justify-center rounded-md bg-primary px-4 py-2 font-bold text-white hover:bg-secondary"
+							className="bg-primary hover:bg-secondary mt-4 flex w-full justify-center rounded-md px-4 py-2 font-bold text-white"
 							disabled={creatingUser}
 						>
 							{creatingUser ? (
@@ -1592,13 +1970,20 @@ export default function AdminDashboard() {
 								<div>
 									<button
 										onClick={() => setCoursesCollapsed(!coursesCollapsed)}
-										className="w-full rounded bg-secondary py-2 text-white"
+										className="bg-secondary w-full rounded py-2 text-white"
 									>
 										{coursesCollapsed ? 'Mostrar Cursos' : 'Ocultar Cursos'}
 									</button>
 									{!coursesCollapsed && (
 										<div className="mt-2 h-48 overflow-y-auto rounded border border-gray-600">
-											{courses.map((course) => (
+											<input
+												type="text"
+												placeholder="Buscar cursos..."
+												value={courseSearch}
+												onChange={(e) => setCourseSearch(e.target.value)}
+												className="mb-2 w-full rounded border bg-gray-600 p-2 text-white"
+											/>
+											{filteredCourses.map((course) => (
 												<label
 													key={course.id}
 													className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
@@ -1606,11 +1991,10 @@ export default function AdminDashboard() {
 													<span className="text-white">{course.title}</span>
 													<input
 														type="radio"
-														name="selectCourseOrProgram"
+														name="selectedCourse"
 														checked={selectedCourse === course.id}
 														onChange={() => {
-															setSelectedCourse(course.id);
-															setSelectedProgram(null);
+															setSelectedCourse(course.id); // ✅ No longer resets the program
 														}}
 														className="form-radio h-5 w-5 text-blue-500"
 													/>
@@ -1618,20 +2002,41 @@ export default function AdminDashboard() {
 											))}
 										</div>
 									)}
+									{selectedCourse && (
+										<button
+											onClick={() => {
+												setSelectedCourse(null);
+												void fetchAllPrograms(); // 🔁 Forzar recarga de programas
+											}}
+											className="mt-2 w-full rounded bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+										>
+											Quitar selección de curso
+										</button>
+									)}
 								</div>
 
 								<div>
 									<button
-										onClick={() => setProgramsCollapsed(!programsCollapsed)}
-										className="w-full rounded bg-primary py-2 text-white"
+										onClick={() => {
+											setProgramsCollapsed(!programsCollapsed); // ✅ Esto era lo que faltaba
+										}}
+										className="bg-primary w-full rounded py-2 text-white"
 									>
 										{programsCollapsed
 											? 'Mostrar Programas'
 											: 'Ocultar Programas'}
 									</button>
+
 									{!programsCollapsed && (
 										<div className="mt-2 h-48 overflow-y-auto rounded border border-gray-600">
-											{programs.map((program) => (
+											<input
+												type="text"
+												placeholder="Buscar programas..."
+												value={programSearch}
+												onChange={(e) => setProgramSearch(e.target.value)}
+												className="mb-2 w-full rounded border bg-gray-600 p-2 text-white"
+											/>
+											{filteredPrograms.map((program) => (
 												<label
 													key={program.id}
 													className="flex cursor-pointer items-center justify-between px-3 py-2 hover:bg-gray-600"
@@ -1639,17 +2044,24 @@ export default function AdminDashboard() {
 													<span className="text-white">{program.title}</span>
 													<input
 														type="radio"
-														name="selectCourseOrProgram"
+														name="selectedProgram"
 														checked={selectedProgram === program.id}
 														onChange={() => {
-															setSelectedProgram(program.id);
-															setSelectedCourse(null);
+															setSelectedProgram(program.id); // ✅ No longer resets the course
 														}}
 														className="form-radio h-5 w-5 text-green-500"
 													/>
 												</label>
 											))}
 										</div>
+									)}
+									{selectedProgram && (
+										<button
+											onClick={() => setSelectedProgram(null)}
+											className="mt-2 w-full rounded bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+										>
+											Quitar selección de programa
+										</button>
 									)}
 								</div>
 							</div>
@@ -1837,27 +2249,13 @@ export default function AdminDashboard() {
 				isOpen={confirmation?.isOpen ?? false}
 				title={confirmation?.title ?? ''}
 				message={confirmation?.message ?? ''}
-				onConfirm={async () => {
-					await Promise.resolve(confirmation?.onConfirm?.());
-					setConfirmation(null);
-				}}
-				onCancel={() => {
-					confirmation?.onCancel?.();
-					setConfirmation(null);
-				}}
-			/>
-
-			<ConfirmDialog
-				isOpen={confirmation?.isOpen ?? false}
-				title={confirmation?.title ?? ''}
-				message={confirmation?.message ?? ''}
 				onConfirm={
 					confirmation?.onConfirm
 						? async () => {
 								await Promise.resolve(confirmation.onConfirm?.());
 							}
 						: async () => Promise.resolve()
-				} // Asegura que `onConfirm` siempre devuelva una Promise<void>
+				} // Asegura que `onConfirm` siempre devuelva una Promise<void></void>
 				onCancel={() => setConfirmation(null)}
 			/>
 

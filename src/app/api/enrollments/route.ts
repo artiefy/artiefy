@@ -4,206 +4,133 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { eq, inArray, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollments, users } from '~/server/db/schema';
+import { enrollments, users, enrollmentPrograms } from '~/server/db/schema';
 
 const BATCH_SIZE = 100;
 
 export async function POST(request: Request) {
 	try {
-		// Validar que el request tenga body
+		// Validate request body
 		if (!request.body) {
-			console.error('❌ Request sin body');
-			return NextResponse.json({ error: 'Request inválido' }, { status: 400 });
-		}
-
-		interface EnrollmentRequest {
-			courseId: number | string;
-			userIds: string[];
-			planType: 'Pro' | 'Premium' | 'Enterprise';
-		}
-
-		const body = (await request.json()) as EnrollmentRequest;
-
-		// Validar estructura del body
-		if (!body || typeof body !== 'object') {
-			console.error('❌ Body inválido:', body);
 			return NextResponse.json(
-				{ error: 'Formato de datos inválido' },
+				{ error: 'Missing request body' },
 				{ status: 400 }
 			);
 		}
 
-		const { courseId, userIds, planType } = body;
+		const body = (await request.json()) as { courseId?: string; programId?: string; userIds: string[]; planType?: string };
+		const { courseId, programId, userIds, planType } = body;
 
-		// Logging para debug
-		console.log('📥 Datos recibidos:', { courseId, userIds, planType });
-
-		// Validaciones detalladas
-		if (!courseId) {
-			console.error('❌ courseId faltante');
+		if (!Array.isArray(userIds) || userIds.length === 0) {
 			return NextResponse.json(
-				{ error: 'courseId es requerido' },
+				{ error: 'userIds must be a non-empty array' },
 				{ status: 400 }
 			);
 		}
 
-		if (!userIds) {
-			console.error('❌ userIds faltante');
+		const parsedCourseId = courseId ? Number(courseId) : undefined;
+		const parsedProgramId = programId ? Number(programId) : undefined;
+
+		if (courseId && (parsedCourseId === undefined || isNaN(parsedCourseId))) {
+			return NextResponse.json({ error: 'Invalid courseId' }, { status: 400 });
+		}
+
+		if (programId && (parsedProgramId === undefined || isNaN(parsedProgramId))) {
+			return NextResponse.json({ error: 'Invalid programId' }, { status: 400 });
+		}
+
+		if (!parsedCourseId && !parsedProgramId) {
 			return NextResponse.json(
-				{ error: 'userIds es requerido' },
+				{ error: 'At least one of courseId or programId must be provided' },
 				{ status: 400 }
 			);
 		}
 
-		if (!planType) {
-			console.error('❌ planType faltante');
-			return NextResponse.json(
-				{ error: 'planType es requerido' },
-				{ status: 400 }
-			);
-		}
-
-		// Validar courseId
-		const parsedCourseId = Number(courseId);
-		if (isNaN(parsedCourseId)) {
-			console.error('❌ courseId inválido:', courseId);
-			return NextResponse.json(
-				{ error: 'courseId debe ser un número válido' },
-				{ status: 400 }
-			);
-		}
-
-		// Validar userIds
-		if (!Array.isArray(userIds)) {
-			console.error('❌ userIds no es un array:', userIds);
-			return NextResponse.json(
-				{ error: 'userIds debe ser un array' },
-				{ status: 400 }
-			);
-		}
-
-		if (userIds.length === 0) {
-			console.error('❌ userIds está vacío');
-			return NextResponse.json(
-				{ error: 'Debe proporcionar al menos un userId' },
-				{ status: 400 }
-			);
-		}
-
-		if (userIds.some((id) => !id || typeof id !== 'string')) {
-			console.error('❌ userIds contiene valores inválidos:', userIds);
-			return NextResponse.json(
-				{ error: 'Todos los userIds deben ser strings válidos' },
-				{ status: 400 }
-			);
-		}
-
-		// Verificar usuarios existentes
+		// Fetch valid users
 		const existingUsers = await db
 			.select({ id: users.id })
 			.from(users)
 			.where(inArray(users.id, userIds))
 			.execute();
 
-		console.log('📊 Usuarios encontrados:', existingUsers.length);
-
 		const validUserIds = new Set(existingUsers.map((u) => u.id));
 		const filteredUserIds = userIds.filter((id) => validUserIds.has(id));
 
 		if (filteredUserIds.length === 0) {
-			console.error('❌ Ningún usuario válido encontrado');
 			return NextResponse.json(
-				{ error: 'Ninguno de los usuarios existe en la base de datos' },
+				{ error: 'No valid users found' },
 				{ status: 400 }
 			);
 		}
 
-		// Verificar inscripciones existentes
-		const existingEnrollments = await db
-			.select({ userId: enrollments.userId })
-			.from(enrollments)
-			.where(
-				and(
-					eq(enrollments.courseId, parsedCourseId),
-					inArray(enrollments.userId, filteredUserIds)
+		// Enroll in course if courseId is provided
+		if (parsedCourseId) {
+			const existingEnrollments = await db
+				.select({ userId: enrollments.userId })
+				.from(enrollments)
+				.where(
+					and(
+						eq(enrollments.courseId, parsedCourseId),
+						inArray(enrollments.userId, filteredUserIds)
+					)
 				)
-			)
-			.execute();
+				.execute();
 
-		const existingUserIds = new Set(existingEnrollments.map((e) => e.userId));
-		const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
+			const existingUserIds = new Set(existingEnrollments.map((e) => e.userId));
+			const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
 
-		// Insertar nuevas inscripciones
-		if (newUsers.length > 0) {
-			try {
-				// Actualizar suscripciones de usuarios
-				const oneMonthFromNow = new Date();
-				oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-
-				// Format date for Clerk
-				const formattedDate =
-					oneMonthFromNow.toISOString().slice(0, 10) + ' 23:59:59';
-
-				await db
-					.update(users)
-					.set({
-						subscriptionStatus: 'active',
-						planType: planType,
-						subscriptionEndDate: oneMonthFromNow,
-					})
-					.where(inArray(users.id, newUsers));
-
-				const clerk = await clerkClient();
-				await Promise.all(
-					newUsers.map(async (userId) => {
-						await clerk.users.updateUser(userId, {
-							publicMetadata: {
-								subscriptionStatus: 'active',
-								subscriptionEndDate: formattedDate,
-								planType: planType,
-							},
-						});
-					})
+			if (newUsers.length > 0) {
+				await db.insert(enrollments).values(
+					newUsers.map((userId) => ({
+						userId,
+						courseId: parsedCourseId,
+						enrolledAt: new Date(),
+						completed: false,
+					}))
 				);
-
-				for (let i = 0; i < newUsers.length; i += BATCH_SIZE) {
-					const batch = newUsers.slice(i, i + BATCH_SIZE);
-					await db.insert(enrollments).values(
-						batch.map((userId) => ({
-							userId,
-							courseId: parsedCourseId,
-							enrolledAt: new Date(),
-							completed: false,
-						}))
-					);
-				}
-				console.log(
-					'✅ Inscripciones y suscripciones actualizadas:',
-					newUsers.length
-				);
-			} catch (error) {
-				console.error('❌ Error en actualización:', error);
-				throw error;
 			}
 		}
 
-		const message = `Se asignaron ${newUsers.length} estudiantes al curso. ${existingUserIds.size} ya estaban inscritos.`;
+		// Enroll in program if programId is provided
+		if (parsedProgramId) {
+			const existingProgramEnrollments = await db
+				.select({ userId: enrollmentPrograms.userId })
+				.from(enrollmentPrograms)
+				.where(
+					and(
+						eq(enrollmentPrograms.programaId, parsedProgramId),
+						inArray(enrollmentPrograms.userId, filteredUserIds)
+					)
+				)
+				.execute();
+
+			const existingProgramUserIds = new Set(
+				existingProgramEnrollments.map((e) => e.userId)
+			);
+			const newProgramUsers = filteredUserIds.filter(
+				(id) => !existingProgramUserIds.has(id)
+			);
+
+			if (newProgramUsers.length > 0) {
+				await db.insert(enrollmentPrograms).values(
+					newProgramUsers.map((userId) => ({
+						userId,
+						programaId: parsedProgramId,
+						enrolledAt: new Date(),
+						completed: false,
+					}))
+				);
+			}
+		}
 
 		return NextResponse.json({
 			success: true,
-			added: newUsers.length,
-			alreadyEnrolled: existingUserIds.size,
-			message,
+			message: 'Enrollment completed successfully',
 		});
 	} catch (error) {
-		console.error('❌ Error general:', error);
+		console.error('Error in POST /api/enrollments:', error);
 		return NextResponse.json(
-			{
-				error:
-					error instanceof Error ? error.message : 'Error interno del servidor',
-				details:
-					process.env.NODE_ENV === 'development' ? String(error) : undefined,
-			},
+			{ error: 'Internal server error' },
 			{ status: 500 }
 		);
 	}
