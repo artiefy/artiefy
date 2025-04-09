@@ -193,6 +193,7 @@ export interface ActivityContent {
 	questionsVOF?: Question[];
 	questionsOM?: Question[];
 	questionsACompletar?: Question[];
+	questionsFilesSubida?: Question[]; // Add this new type
 }
 
 export interface Activity {
@@ -223,12 +224,13 @@ export interface Activity {
 export interface Question {
 	id: string;
 	text: string;
-	type: 'VOF' | 'OM' | 'COMPLETAR';
+	type: 'VOF' | 'OM' | 'COMPLETAR' | 'FILE_UPLOAD';
 	correctOptionId?: string;
 	options?: Option[];
 	correctAnswer?: string;
 	answer?: string;
-	pesoPregunta: number; // Add weight for question
+	pesoPregunta: number;
+	parametros?: string; // Add this for file upload parameters
 }
 
 export interface Option {

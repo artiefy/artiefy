@@ -9,7 +9,7 @@ import {
 	ChevronRightIcon,
 	StarIcon as StarSolidIcon,
 } from '@heroicons/react/24/solid';
-import { FileCheck2, FileX2, Unlock, ShieldQuestion } from 'lucide-react';
+import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
 import { FaTrophy } from 'react-icons/fa';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ import { formatScore, formatScoreNumber } from '~/utils/formatScore';
 import type { Activity, Question, SavedAnswer } from '~/types';
 
 import '~/styles/arrowactivity.css';
+import { FileUploadForm } from './FileUploadForm';
 
 interface ActivityModalProps {
 	isOpen: boolean;
@@ -94,6 +95,9 @@ const LessonActivityModal = ({
 	const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
 	const [isSavingResults, setIsSavingResults] = useState(false);
 	const [canCloseModal, setCanCloseModal] = useState(false); // Add new state to track if user can close modal
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	const [uploadProgress, setUploadProgress] = useState(0);
+	const [isUploading, setIsUploading] = useState(false);
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
@@ -309,7 +313,7 @@ const LessonActivityModal = ({
 
 	const renderLoadingState = (message: string) => (
 		<div className="flex flex-col items-center justify-center p-8">
-			<Icons.blocks className="size-22 animate-pulse fill-primary" />
+			<Icons.blocks className="fill-primary size-22 animate-pulse" />
 			<p className="mt-6 text-center text-xl text-white">{message}</p>
 		</div>
 	);
@@ -391,13 +395,28 @@ const LessonActivityModal = ({
 	const renderQuestion = () => {
 		if (!currentQuestion) return null;
 
+		// Add handler for file upload type
+		if (currentQuestion.type === 'FILE_UPLOAD') {
+			return (
+				<FileUploadForm
+					question={currentQuestion}
+					activityId={activity.id}
+					userId={userId}
+					onSubmit={() => {
+						handleAnswer('uploaded');
+						setShowResults(true);
+					}}
+				/>
+			);
+		}
+
 		const isQuestionAnswered = userAnswers[currentQuestion.id];
 
 		return (
 			<div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
 				<h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
 					<div className="flex items-center">
-						<span className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 font-bold text-background">
+						<span className="bg-primary/20 text-background mr-2 flex h-8 w-8 items-center justify-center rounded-full font-bold">
 							{currentQuestionIndex + 1}
 						</span>
 						{currentQuestion.text}
@@ -417,7 +436,7 @@ const LessonActivityModal = ({
 							type="text"
 							value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
 							onChange={(e) => handleAnswer(e.target.value)}
-							className="w-full rounded-md border border-gray-300 p-3 text-background shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
+							className="text-background w-full rounded-md border border-gray-300 p-3 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
 							placeholder="Escribe tu respuesta..."
 						/>
 					) : (
@@ -435,7 +454,7 @@ const LessonActivityModal = ({
 											userAnswers[currentQuestion.id]?.answer === option.id
 										}
 										onChange={(e) => handleAnswer(e.target.value)}
-										className="h-4 w-4 text-primary focus:ring-primary"
+										className="text-primary focus:ring-primary h-4 w-4"
 									/>
 									<span className="ml-3 text-gray-700">{option.text}</span>
 								</label>
@@ -508,7 +527,7 @@ const LessonActivityModal = ({
 			return (
 				<Button
 					onClick={onClose}
-					className="mt-3 w-full bg-blue-500 font-bold text-background transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+					className="text-background mt-3 w-full bg-blue-500 font-bold transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 				>
 					CERRAR
 				</Button>
@@ -532,7 +551,7 @@ const LessonActivityModal = ({
 								setUserAnswers({});
 								setShowResults(false);
 							}}
-							className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600 active:scale-[0.98]"
+							className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600 active:scale-[0.98]"
 						>
 							Intentar Nuevamente
 						</Button>
@@ -574,7 +593,7 @@ const LessonActivityModal = ({
 							setUserAnswers({});
 							setShowResults(false);
 						}}
-						className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
+						className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600"
 					>
 						Intentar Nuevamente
 					</Button>
@@ -627,7 +646,7 @@ const LessonActivityModal = ({
 		return (
 			<div className="-mt-14 space-y-3 px-4">
 				<div className="text-center">
-					<h3 className="text-xl font-bold text-background">Resultados</h3>
+					<h3 className="text-background text-xl font-bold">Resultados</h3>
 					<div className="mt-1">
 						{renderStars(finalScore)}
 						<p className="mt-1 text-lg font-medium text-gray-400">
@@ -710,9 +729,223 @@ const LessonActivityModal = ({
 				return 'Selección Múltiple';
 			case 'COMPLETAR':
 				return 'Completar Texto';
+			case 'FILE_UPLOAD':
+				return 'Subir Archivo';
 			default:
 				return 'Pregunta';
 		}
+	};
+
+	const handleFileUpload = (file: File) => {
+		setSelectedFile(file);
+		setUploadProgress(0);
+		setIsUploading(false);
+	};
+
+	const handleUpload = async () => {
+		if (!selectedFile) return;
+
+		try {
+			setIsUploading(true);
+			setUploadProgress(0);
+
+			// Simulate upload progress
+			const interval = setInterval(() => {
+				setUploadProgress((prev) => {
+					if (prev >= 100) {
+						clearInterval(interval);
+						setIsUploading(false);
+						return 100;
+					}
+					return prev + 10;
+				});
+			}, 500);
+
+			// Here you would implement your actual file upload logic
+			// For now, we'll simulate a delay
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+
+			// Clear interval and mark as complete
+			clearInterval(interval);
+			setUploadProgress(100);
+			setIsUploading(false);
+
+			// Handle successful upload
+			await handleFinishAndNavigate();
+		} catch (error) {
+			// Type assertion for error
+			const errorMessage =
+				error instanceof Error ? error.message : 'Unknown error occurred';
+			console.error('Upload error:', errorMessage);
+			toast.error('Error al subir el archivo');
+			setIsUploading(false);
+		}
+	};
+
+	const renderContent = () => {
+		// Check if activity is file upload type (typeid === 1)
+		const isFileUploadActivity = activity.typeid === 1;
+
+		if (isFileUploadActivity) {
+			return (
+				<div className="group relative w-full">
+					<div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-cyan-500/10">
+						<div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
+						<div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
+
+						<div className="relative p-6">
+							<div className="flex items-center justify-between">
+								<div>
+									<h3 className="text-lg font-semibold text-white">
+										{activity.name}
+									</h3>
+									<p className="text-sm text-slate-400">
+										{activity.description}
+									</p>
+								</div>
+								<div className="rounded-lg bg-cyan-500/10 p-2">
+									<svg
+										className="h-6 w-6 text-cyan-500"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											strokeWidth="2"
+											d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+										/>
+									</svg>
+								</div>
+							</div>
+
+							<div className="group/dropzone mt-6">
+								<div className="relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors group-hover/dropzone:border-cyan-500/50">
+									<input
+										type="file"
+										className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
+										onChange={(e) => {
+											if (e.target.files?.[0]) {
+												// Handle file upload
+												handleFileUpload(e.target.files[0]);
+											}
+										}}
+									/>
+									<div className="space-y-6 text-center">
+										<div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
+											<svg
+												className="h-10 w-10 text-cyan-500"
+												fill="none"
+												viewBox="0 0 24 24"
+												stroke="currentColor"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth="2"
+													d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+												/>
+											</svg>
+										</div>
+
+										<div className="space-y-2">
+											<p className="text-base font-medium text-white">
+												Arrastra tus archivos aquí o haz clic para buscar
+											</p>
+											<p className="text-sm text-slate-400">
+												Formatos soportados: PDF, DOC, DOCX
+											</p>
+											<p className="text-xs text-slate-400">
+												Tamaño máximo: 10MB
+											</p>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							{/* Add file progress indicator here */}
+							{uploadProgress > 0 && (
+								<div className="mt-6 space-y-4">
+									<div className="rounded-xl bg-slate-900/50 p-4">
+										<div className="flex items-center justify-between">
+											<p className="text-sm text-white">{selectedFile?.name}</p>
+											<span className="text-sm text-cyan-500">
+												{uploadProgress}%
+											</span>
+										</div>
+										<div className="mt-2 h-2 w-full rounded-full bg-slate-800">
+											<div
+												className="h-full rounded-full bg-cyan-500 transition-all duration-300"
+												style={{ width: `${uploadProgress}%` }}
+											/>
+										</div>
+									</div>
+								</div>
+							)}
+
+							<button
+								onClick={handleUpload}
+								disabled={!selectedFile || isUploading}
+								className="group/btn relative mt-6 w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 p-px font-medium text-white shadow-[0_1000px_0_0_hsl(0_0%_100%_/_0%)_inset] transition-colors hover:shadow-[0_1000px_0_0_hsl(0_0%_100%_/_2%)_inset] disabled:cursor-not-allowed disabled:opacity-50"
+							>
+								<span className="relative flex items-center justify-center gap-2 rounded-xl bg-slate-950/50 px-4 py-2 transition-colors group-hover/btn:bg-transparent">
+									{isUploading ? (
+										<>
+											<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+											Subiendo...
+										</>
+									) : (
+										'Subir Documento'
+									)}
+								</span>
+							</button>
+						</div>
+					</div>
+				</div>
+			);
+		}
+
+		// Regular activity content for questions
+		return (
+			// ...existing question rendering code...
+			<div className="space-y-6">
+				{showResults ? (
+					renderResults()
+				) : (
+					<>
+						<div className="mb-8 flex flex-col items-center justify-center text-center">
+							<span className="text-primary text-2xl font-bold">
+								{getQuestionTypeLabel(currentQuestion?.type ?? '')}
+							</span>
+							<span className="mt-2 text-sm text-gray-500">
+								{currentQuestionIndex + 1} de {questions.length}
+							</span>
+						</div>
+						{renderQuestion()}
+						{/* Navigation buttons */}
+						<div className="flex justify-between">
+							<button
+								className="btn-arrow btn-arrow-prev"
+								disabled={currentQuestionIndex === 0}
+								onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
+							>
+								<ChevronRightIcon />
+								<span>Anterior</span>
+							</button>
+							<button
+								className={`btn-arrow ${isLastQuestion ? 'btn-arrow-success' : ''}`}
+								disabled={!canProceedToNext}
+								onClick={isLastQuestion ? handleFinish : handleNext}
+							>
+								<span>{isLastQuestion ? 'Ver resultados' : 'Siguiente'}</span>
+								<ChevronRightIcon />
+							</button>
+						</div>
+					</>
+				)}
+			</div>
+		);
 	};
 
 	if (isLoading) {
@@ -755,62 +988,19 @@ const LessonActivityModal = ({
 				onClose();
 			}}
 		>
-			<DialogContent className="sm:max-w-[500px] [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background">
+			<DialogContent className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background sm:max-w-[500px]">
 				<DialogHeader className="relative pb-6">
 					<DialogTitle className="text-center text-3xl font-bold">
-						ACTIVIDAD
-						<div className="absolute top-0 right-4">
-							{showResults ? (
-								isUnlocking ? (
-									<Unlock className="size-8 text-green-500" />
-								) : finalScore >= 3 ? (
-									<FileCheck2 className="size-8 text-green-500" />
-								) : (
-									<FileX2 className="size-8 text-red-500" />
-								)
-							) : (
-								<ShieldQuestion className="-mt-2 size-12 text-primary" />
-							)}
-						</div>
+						{activity.content?.questionsFilesSubida?.[0] != null
+							? 'SUBIDA DE DOCUMENTO'
+							: 'ACTIVIDAD'}
 					</DialogTitle>
 				</DialogHeader>
-				{isUnlocking ? (
-					renderLoadingState('Desbloqueando Siguiente Clase...')
-				) : isSavingResults ? (
-					renderLoadingState('Cargando Resultados...')
-				) : showResults ? (
-					renderResults()
-				) : (
-					<div className="space-y-6">
-						<div className="mb-8 flex flex-col items-center justify-center text-center">
-							<span className="text-2xl font-bold text-primary">
-								{getQuestionTypeLabel(currentQuestion?.type ?? '')}
-							</span>
-							<span className="mt-2 text-sm text-gray-500">
-								{currentQuestionIndex + 1} de {questions.length}
-							</span>
-						</div>
-						{renderQuestion()}
-						<div className="flex justify-between">
-							<button
-								className="btn-arrow btn-arrow-prev"
-								disabled={currentQuestionIndex === 0}
-								onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
-							>
-								<ChevronRightIcon />
-								<span>Anterior</span>
-							</button>
-							<button
-								className={`btn-arrow ${isLastQuestion ? 'btn-arrow-success' : ''}`}
-								disabled={!canProceedToNext}
-								onClick={isLastQuestion ? handleFinish : handleNext}
-							>
-								<span>{isLastQuestion ? 'Ver resultados' : 'Siguiente'}</span>
-								<ChevronRightIcon />
-							</button>
-						</div>
-					</div>
-				)}
+				{isUnlocking
+					? renderLoadingState('Desbloqueando Siguiente Clase...')
+					: isSavingResults
+						? renderLoadingState('Cargando Resultados...')
+						: renderContent()}
 			</DialogContent>
 		</Dialog>
 	);

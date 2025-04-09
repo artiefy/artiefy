@@ -207,6 +207,7 @@ const LessonActivities = ({
 		data: unknown
 	): data is ActivityAnswersResponse => {
 		if (!data || typeof data !== 'object') return false;
+
 		const response = data as Partial<ActivityAnswersResponse>;
 		return (
 			typeof response.score === 'number' &&
@@ -320,10 +321,11 @@ const LessonActivities = ({
 			...prev,
 			[activity.id]: {
 				...prev[activity.id],
-				savedResults: null, // Resetear resultados al abrir una nueva actividad
+				savedResults: null,
 				isLoading: false,
 			},
 		}));
+
 		openModal();
 	};
 
@@ -537,7 +539,7 @@ const LessonActivities = ({
 						{/* Mostrar flechas solo cuando la actividad está desbloqueada y no completada */}
 						{shouldShowArrows(activity, index) && !isButtonLoading && (
 							<div className="flex justify-center py-2">
-								<MdKeyboardDoubleArrowDown className="size-10 animate-bounce-up-down text-2xl text-green-500" />
+								<MdKeyboardDoubleArrowDown className="animate-bounce-up-down size-10 text-2xl text-green-500" />
 							</div>
 						)}
 
@@ -609,7 +611,7 @@ const LessonActivities = ({
 
 	return (
 		<div className="w-72 p-4">
-			<h2 className="mb-4 text-2xl font-bold text-primary">Actividades</h2>
+			<h2 className="text-primary mb-4 text-2xl font-bold">Actividades</h2>
 			{activities.length > 0 ? (
 				<div className="space-y-4">
 					{activities
@@ -620,7 +622,7 @@ const LessonActivities = ({
 				<p className="text-gray-600">No hay actividades disponibles</p>
 			)}
 			<div className="mt-4">
-				<h2 className="mb-4 text-2xl font-bold text-primary">Calificaciones</h2>
+				<h2 className="text-primary mb-4 text-2xl font-bold">Calificaciones</h2>
 				<LessonGrades
 					finalGrade={gradeSummary?.finalGrade ?? null}
 					onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
@@ -636,11 +638,11 @@ const LessonActivities = ({
 					userId={userId}
 					markActivityAsCompleted={markActivityAsCompleted}
 					onActivityCompleted={handleActivityCompletion}
+					courseId={courseId}
 					savedResults={activitiesState[selectedActivity.id]?.savedResults}
 					onLessonUnlocked={onLessonUnlocked}
 					isLastLesson={isLastLesson}
 					isLastActivity={isLastActivity}
-					courseId={courseId}
 					onViewHistory={() => setIsGradeHistoryOpen(true)}
 					onActivityComplete={handleActivityCompletion}
 					isLastActivityInLesson={isLastActivityInLesson(selectedActivity)}

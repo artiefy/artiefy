@@ -2,7 +2,7 @@
 
 // import { useState, useEffect } from 'react';
 
-// import { useAuth } from '@clerk/nextjs';
+// import { ter } from '@clerk/nextjs';
 // import { StarIcon } from '@heroicons/react/24/solid';
 // import Image from 'next/image';
 // import Link from 'next/link';
