@@ -270,7 +270,7 @@
 		width: 650px; /* Set a fixed width for larger screens */
 	}
 	.input-container {
-		padding: 6px; /* Reduce padding for larger screens */
+    padding: 6px;
 		width: 70%; /* Reduce width for larger screens */
 		max-width: 720px; /* Reduce max-width for larger screens */
 	}

@@ -1,13 +1,11 @@
 {
 	"compilerOptions": {
-		// Runtime options
 		"target": "ES2022",
 		"lib": ["dom", "dom.iterable", "ESNext"],
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"jsx": "preserve",
 
-		// Type Checking
 		"strict": true,
 		"noImplicitAny": true,
 		"strictNullChecks": true,
@@ -15,7 +13,6 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 
-		// Module Resolution
 		"baseUrl": ".",
 		"paths": {
 			"~/*": ["./src/*"]
@@ -24,12 +21,10 @@
 		"allowJs": true,
 		"isolatedModules": true,
 
-		// Output options
 		"noEmit": true,
 		"incremental": true,
 		"tsBuildInfoFile": "./.tsbuildinfo",
 
-		// Advanced
 		"skipLibCheck": true,
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
@@ -39,8 +34,7 @@
 				"name": "next"
 			}
 		],
-		// Actualizar types para incluir todas las dependencias necesarias
-		"types": ["node", "react", "react-dom", "next", "next-video"]
+		"types": ["node", "react", "react-dom", "next"]
 	},
 	"include": [
     "next-video.config.js",
