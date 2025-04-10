@@ -549,18 +549,21 @@ const LessonActivities = ({
 					</p>
 
 					<div className="space-y-2">
-						{/* Mostrar flechas solo cuando la actividad está desbloqueada y no completada */}
-						{shouldShowArrows(activity, index) && !isButtonLoading && (
-							<div className="flex justify-center pt-4">
-								<MdKeyboardDoubleArrowDown className="animate-bounce-up-down size-10 text-2xl text-green-500" />
-							</div>
-						)}
+						{/* Solo mostrar flechas y botón de siguiente clase cuando no está cargando */}
+						{!isButtonLoading && (
+							<>
+								{shouldShowArrows(activity, index) && (
+									<div className="flex justify-center pt-4">
+										<MdKeyboardDoubleArrowDown className="animate-bounce-up-down size-10 text-2xl text-green-500" />
+									</div>
+								)}
 
-						{/* Mostrar icono de reporte solo cuando la actividad está completada y no está cargando */}
-						{activityState?.isCompleted && !isButtonLoading && (
-							<div className="flex justify-center">
-								<TbReportAnalytics className="mt-3 size-12 text-2xl text-gray-700" />
-							</div>
+								{activityState?.isCompleted && (
+									<div className="flex justify-center">
+										<TbReportAnalytics className="mt-3 size-12 text-2xl text-gray-700" />
+									</div>
+								)}
+							</>
 						)}
 
 						<button
@@ -586,36 +589,39 @@ const LessonActivities = ({
 						</button>
 
 						{/* Agregar el botón de siguiente clase cuando la actividad está completada y no es la última lección */}
-						{activityState?.isCompleted && isNextLessonAvailable && (
-							<div className="mt-4 flex flex-col items-center space-y-2">
-								<div className="w-50 border border-b-gray-500" />
-								<Link
-									href={`/estudiantes/clases/${getNextLessonId()}`}
-									className="next-lesson-link group flex flex-col items-center text-center"
-								>
-									<button className="arrow-button">
-										<div className="arrow-button-box">
-											<span className="arrow-button-elem">
-												<svg
-													viewBox="0 0 46 40"
-													xmlns="http://www.w3.org/2000/svg"
-												>
-													<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-												</svg>
-											</span>
-											<span className="arrow-button-elem">
-												<svg viewBox="0 0 46 40">
-													<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-												</svg>
-											</span>
-										</div>
-									</button>
-									<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
-										Ir a la siguiente clase
-									</em>
-								</Link>
-							</div>
-						)}
+						{activityState?.isCompleted &&
+							isNextLessonAvailable &&
+							!isButtonLoading &&
+							!activityState.isLoading && (
+								<div className="mt-4 flex flex-col items-center space-y-2">
+									<div className="w-50 border border-b-gray-500" />
+									<Link
+										href={`/estudiantes/clases/${getNextLessonId()}`}
+										className="next-lesson-link group flex flex-col items-center text-center"
+									>
+										<button className="arrow-button">
+											<div className="arrow-button-box">
+												<span className="arrow-button-elem">
+													<svg
+														viewBox="0 0 46 40"
+														xmlns="http://www.w3.org/2000/svg"
+													>
+														<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+													</svg>
+												</span>
+												<span className="arrow-button-elem">
+													<svg viewBox="0 0 46 40">
+														<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+													</svg>
+												</span>
+											</div>
+										</button>
+										<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
+											Ir a la siguiente clase
+										</em>
+									</Link>
+								</div>
+							)}
 					</div>
 				</div>
 			</div>

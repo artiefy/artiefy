@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -75,6 +75,18 @@ export default function LessonDetails({
 	const searchParams = useSearchParams();
 	const { start, stop } = useProgress();
 
+	// Add isInitialized ref to prevent infinite loop
+	const isInitialized = useRef(false);
+
+	useEffect(() => {
+		if (!isInitialized.current) {
+			setProgress(lesson?.porcentajecompletado ?? 0);
+			setIsVideoCompleted(lesson?.porcentajecompletado === 100);
+			setIsActivityCompleted(activities[0]?.isCompleted ?? false);
+			isInitialized.current = true;
+		}
+	}, [lesson?.porcentajecompletado, activities]);
+
 	// Show loading progress on initial render
 	useEffect(() => {
 		start();
@@ -143,13 +155,6 @@ export default function LessonDetails({
 	useEffect(() => {
 		restoreScrollPosition();
 	}, [lesson?.id]);
-
-	// Set initial progress and video completion state based on lesson data
-	useEffect(() => {
-		setProgress(lesson?.porcentajecompletado ?? 0);
-		setIsVideoCompleted(lesson?.porcentajecompletado === 100);
-		setIsActivityCompleted(activities[0]?.isCompleted ?? false);
-	}, [lesson, activities]);
 
 	// Redirect if the lesson is locked
 	useEffect(() => {
@@ -479,8 +484,8 @@ export default function LessonDetails({
 			/>
 			<div className="flex flex-1 px-4 py-6">
 				{/* Left Sidebar */}
-				<div className="w-80 bg-background p-4">
-					<h2 className="mb-4 text-2xl font-bold text-primary">Clases</h2>
+				<div className="bg-background w-80 p-4">
+					<h2 className="text-primary mb-4 text-2xl font-bold">Clases</h2>
 					<LessonCards
 						lessonsState={lessonsState}
 						selectedLessonId={selectedLessonId}
