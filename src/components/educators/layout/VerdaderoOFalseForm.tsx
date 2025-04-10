@@ -63,37 +63,41 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
 	}, [editingQuestion]);
 
 	// Función para validar el porcentaje total de las preguntas
-	const validateTotalPercentage = async (newPesoPregunta: number) => {
-		const response = await fetch(
-			`/api/educadores/question/totalPercentage?activityId=${activityId}`
-		);
-		const data = (await response.json()) as { totalPercentage: number };
-		const totalPercentage =
-			data.totalPercentage +
-			newPesoPregunta -
-			(editingQuestion?.pesoPregunta ?? 0);
+	// Función para validar el porcentaje total de las preguntas
+	// Función para validar el porcentaje total de las preguntas
+const validateTotalPercentage = async (newPesoPregunta: number) => {
+	const response = await fetch(
+		`/api/educadores/question/totalPercentage?activityId=${activityId}`
+	);
+	const data = (await response.json()) as { totalPercentage: number | string };
 
-		console.log('Data Total Percentage:', data.totalPercentage);
-		console.log('New Peso Pregunta:', newPesoPregunta);
-		console.log(
-			'Editing Question Peso Pregunta:',
-			editingQuestion?.pesoPregunta ?? 0
-		);
-		console.log('Total Percentage:', totalPercentage);
-		return totalPercentage <= 100;
-	};
+	// 🔧 Asegúrate de convertir todo a número
+	const totalActual = Number(data.totalPercentage);
+	const pesoNuevo = Number(newPesoPregunta);
+	const pesoAnterior = Number(editingQuestion?.pesoPregunta ?? 0);
+
+	const totalWithNew = totalActual + pesoNuevo - pesoAnterior;
+
+	console.log('Total actual:', totalActual);
+	console.log('Peso nuevo:', pesoNuevo);
+	console.log('Peso anterior (si aplica):', pesoAnterior);
+	console.log('Nuevo total proyectado:', totalWithNew);
+
+	return totalWithNew > 100;
+};
+
 
 	// Función para manejar el envio del formulario
 	const handleSubmit = async (question: VerdaderoOFlaso) => {
-		const totalPercentage = await validateTotalPercentage(pesoPregunta);
-		if (!totalPercentage) {
+		const excedeLimite = await validateTotalPercentage(pesoPregunta);
+		if (excedeLimite) {
 			toast('Error', {
 				description:
 					'El porcentaje total de las preguntas no puede exceder el 100%',
 			});
-			setIsUploading(false);
 			return;
 		}
+
 		const method = editingQuestion ? 'PUT' : 'POST';
 		setIsUploading(true);
 		setUploadProgress(0);

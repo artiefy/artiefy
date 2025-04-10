@@ -65,38 +65,36 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 	};
 
 	const validateTotalPercentage = async (newPesoPregunta: number) => {
-		console.log('newPesoPregunta:', newPesoPregunta);
 		const response = await fetch(
-			`/api/educadores/question/totalPercentage2?activityId=${activityId}`
+			`/api/educadores/question/totalPercentage?activityId=${activityId}`
 		);
-		console.log('Response:', response);
 		const data = (await response.json()) as { totalPercentage: number };
-		console.log('Data:', data);
-		const totalPercentage =
-			data.totalPercentage +
-			newPesoPregunta -
-			(editingQuestion?.pesoPregunta ?? 0);
-		console.log('Total Percentage:', totalPercentage);
-		const comprobacion = totalPercentage <= 100 ? false : true;
-		console.log('Comprobacion:', comprobacion);
-		return comprobacion;
+	
+		// Calcula el nuevo total con el cambio (agregar o editar)
+		const totalWithNew = data.totalPercentage + newPesoPregunta - (editingQuestion?.pesoPregunta ?? 0);
+	
+		console.log('Total actual:', data.totalPercentage);
+		console.log('Peso nuevo:', newPesoPregunta);
+		console.log('Peso anterior (si aplica):', editingQuestion?.pesoPregunta ?? 0);
+		console.log('Nuevo total proyectado:', totalWithNew);
+	
+		// Devuelve true si SE EXCEDE el 100%
+		return totalWithNew > 100;
 	};
+	
 
 	// Maneja el envio del formulario para guardar la pregunta
 	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		console.log('Form Data:', formData);
-		const isTotalPercentageValid = await validateTotalPercentage(
-			formData.pesoPregunta
-		);
-		console.log('isTotalPercentageValid:', isTotalPercentageValid);
-		if (isTotalPercentageValid) {
+		const excedeLimite = await validateTotalPercentage(formData.pesoPregunta);
+		if (excedeLimite) {
 			toast('Error', {
-				description:
-					'El porcentaje total de las preguntas no puede ser mayor a 1%',
+				description: 'El porcentaje total de las preguntas no puede exceder el 100%',
 			});
 			return;
 		}
+
 		setIsVisible(false);
 		const method = editingQuestion ? 'PUT' : 'POST';
 		const questionId = editingQuestion
