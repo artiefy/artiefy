@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 
+import Player from 'next-video/player';
+
 interface VideoPlayerProps {
 	videoKey: string;
 	onVideoEnd: () => void;
@@ -119,16 +121,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 	return (
 		<div className="flex items-center justify-center">
-			<video
-				ref={videoRef}
-				controls
+			<Player
+				src={videoUrl}
 				className="h-auto w-full rounded-lg"
 				onEnded={handleVideoEnd}
 				onTimeUpdate={handleTimeUpdate}
-			>
-				<source src={videoUrl} type="video/mp4" />
-				Tu navegador no soporta la reproducción de videos.
-			</video>
+				controls
+			/>
 		</div>
 	);
 };

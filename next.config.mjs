@@ -1,5 +1,6 @@
 import './src/env.js'; // Importa variables de entorno
 import withPlaiceholder from '@plaiceholder/next'; // Importa la configuración de @plaiceholder/next
+import { withNextVideo } from 'next-video/process'; // Importa la configuración de next-video
 
 /**
  * @type {import('next').NextConfig}
@@ -61,4 +62,4 @@ const nextConfig = {
 	expireTime: 3600, // Define un tiempo de expiración personalizado para el encabezado Cache-Control (1 hora)
 };
 
-export default withPlaiceholder(nextConfig);
+export default withNextVideo(withPlaiceholder(nextConfig));

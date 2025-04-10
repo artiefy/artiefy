@@ -37,6 +37,7 @@
 		"types": ["node", "react", "react-dom", "next"]
 	},
 	"include": [
+    "video.d.ts",
     "next-video.config.js",
     "**/*",
 		".*/**/*",
