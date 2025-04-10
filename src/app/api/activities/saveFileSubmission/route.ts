@@ -20,6 +20,7 @@ interface FileSubmissionRequest {
 		documentKey: string; // Add this field
 		uploadDate: string;
 		status: 'pending' | 'reviewed';
+		grade?: number; // Add optional grade field
 	};
 }
 
@@ -59,7 +60,8 @@ export async function POST(request: NextRequest) {
 				isCompleted: true, // Explicit boolean
 				lastUpdated: new Date(),
 				attemptCount: 1,
-				revisada: false, // Explicit boolean
+				revisada: fileInfo.status === 'reviewed', // Set based on status
+				finalGrade: fileInfo.grade ?? null, // Add grade if present
 			})
 			.onConflictDoUpdate({
 				target: [
@@ -71,6 +73,8 @@ export async function POST(request: NextRequest) {
 					isCompleted: true, // Explicit boolean
 					lastUpdated: new Date(),
 					attemptCount: sql`${userActivitiesProgress.attemptCount} + 1`,
+					finalGrade: fileInfo.grade ?? null, // Update grade if present
+					revisada: fileInfo.status === 'reviewed',
 				},
 			});
 

@@ -204,6 +204,7 @@ const LessonActivityModal = ({
 	const [uploadedFileInfo, setUploadedFileInfo] =
 		useState<StoredFileInfo | null>(null);
 	const [filePreview, setFilePreview] = useState<FilePreview | null>(null);
+	const [isLoadingDocument, setIsLoadingDocument] = useState(false);
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
@@ -283,6 +284,7 @@ const LessonActivityModal = ({
 		const loadDocumentInfo = async () => {
 			if (activity.typeid === 1) {
 				try {
+					setIsLoadingDocument(true);
 					const response = await fetch(
 						`/api/activities/getFileSubmission?activityId=${activity.id}&userId=${userId}`
 					);
@@ -302,6 +304,8 @@ const LessonActivityModal = ({
 				} catch (error) {
 					console.error('Error loading document info:', error);
 					toast.error('Error al cargar la información del documento');
+				} finally {
+					setIsLoadingDocument(false);
 				}
 			}
 		};
@@ -1035,6 +1039,15 @@ const LessonActivityModal = ({
 	};
 
 	const renderSubmissionStatus = () => {
+		if (isLoadingDocument) {
+			return (
+				<div className="mt-4 flex flex-col items-center justify-center space-y-2 p-4">
+					<Icons.spinner className="h-8 w-8 animate-spin text-blue-500" />
+					<p className="text-sm text-gray-400">Cargando documento subido...</p>
+				</div>
+			);
+		}
+
 		if (!uploadedFileInfo) return null;
 
 		const isFirstSubmission = !activity.isCompleted;
@@ -1073,15 +1086,25 @@ const LessonActivityModal = ({
 											<span className="text-sm font-semibold text-gray-200">
 												Archivo
 											</span>
-											{uploadedFileInfo.status !== 'reviewed' && (
-												<Image
-													src="/contract-pending-line-svgrepo-com.png"
-													alt="Archivo en revisión"
-													width={32}
-													height={32}
-													className="text-yellow-500"
-												/>
-											)}
+											<Image
+												src={
+													uploadedFileInfo.status === 'reviewed'
+														? '/contract-filed-line-svgrepo-com.png'
+														: '/contract-pending-line-svgrepo-com.png'
+												}
+												alt={
+													uploadedFileInfo.status === 'reviewed'
+														? 'Revisado'
+														: 'En revisión'
+												}
+												width={40}
+												height={40}
+												className={
+													uploadedFileInfo.status === 'reviewed'
+														? 'text-green-500'
+														: 'text-yellow-500'
+												}
+											/>
 										</div>
 										<div className="px-4">
 											<span className="text-sm text-gray-300">
@@ -1111,7 +1134,9 @@ const LessonActivityModal = ({
 										Calificación del Educador:
 									</span>
 									<span className="text-lg font-bold text-white">
-										{uploadedFileInfo.grade?.toFixed(1) ?? '0.0'}
+										{uploadedFileInfo?.grade
+											? formatScore(uploadedFileInfo.grade)
+											: '0.0'}
 									</span>
 								</div>
 							</div>
@@ -1195,11 +1220,17 @@ const LessonActivityModal = ({
 
 								{/* Zona de subida de archivos - Desactivada si ya hay un archivo subido */}
 								<div
-									className={`mt-6 ${uploadedFileInfo ? 'pointer-events-none opacity-50' : ''}`}
+									className={`mt-6 ${
+										uploadedFileInfo ? 'pointer-events-none opacity-50' : ''
+									}`}
 								>
 									<div className="group/dropzone">
 										<div
-											className={`relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors ${uploadedFileInfo ? 'cursor-not-allowed' : 'group-hover/dropzone:border-cyan-500/50'}`}
+											className={`relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors ${
+												uploadedFileInfo
+													? 'cursor-not-allowed'
+													: 'group-hover/dropzone:border-cyan-500/50'
+											}`}
 										>
 											<input
 												type="file"
@@ -1214,7 +1245,11 @@ const LessonActivityModal = ({
 											<div className="space-y-6 text-center">
 												<div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
 													<svg
-														className={`h-10 w-10 ${uploadedFileInfo ? 'text-gray-500' : 'text-cyan-500'}`}
+														className={`h-10 w-10 ${
+															uploadedFileInfo
+																? 'text-gray-500'
+																: 'text-cyan-500'
+														}`}
 														fill="none"
 														viewBox="0 0 24 24"
 														stroke="currentColor"
@@ -1316,7 +1351,9 @@ const LessonActivityModal = ({
 								<span>Anterior</span>
 							</button>
 							<button
-								className={`btn-arrow ${isLastQuestion ? 'btn-arrow-success' : ''}`}
+								className={`btn-arrow ${
+									isLastQuestion ? 'btn-arrow-success' : ''
+								}`}
 								disabled={!canProceedToNext}
 								onClick={isLastQuestion ? handleFinish : handleNext}
 							>
@@ -1356,7 +1393,9 @@ const LessonActivityModal = ({
 							const intentosRestantes = attemptsLeft ?? 0;
 							if (intentosRestantes > 0) {
 								toast.error(
-									`Te quedan ${intentosRestantes} intento${intentosRestantes !== 1 ? 's' : ''} para aprobar la actividad. Debes obtener una nota de 3 o superior para aprobar.`
+									`Te quedan ${intentosRestantes} intento${
+										intentosRestantes !== 1 ? 's' : ''
+									} para aprobar la actividad. Debes obtener una nota de 3 o superior para aprobar.`
 								);
 							}
 						}

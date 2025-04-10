@@ -556,7 +556,7 @@ const LessonActivities = ({
 						{/* Mostrar icono de reporte solo cuando la actividad está completada y no está cargando */}
 						{activityState?.isCompleted && !isButtonLoading && (
 							<div className="flex justify-center">
-								<TbReportAnalytics className="my-2 size-12 text-2xl text-gray-700" />
+								<TbReportAnalytics className="mt-3 size-12 text-2xl text-gray-700" />
 							</div>
 						)}
 
