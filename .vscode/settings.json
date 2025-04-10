@@ -79,9 +79,7 @@
 	"typescript.tsdk": "node_modules/typescript/lib",
 	"typescript.enablePromptUseWorkspaceTsdk": true,
 	"typescript.tsserver.maxTsServerMemory": 8192,
-	"typescript.tsserver.watchOptions": {
-		"fallbackPolling": "dynamicPriorityPolling"
-	},
+  
 	// ESLint Configuration
 	"eslint.validate": [
 		"javascript",
@@ -89,11 +87,7 @@
 		"typescript",
 		"typescriptreact"
 	],
-	"eslint.workingDirectories": ["./"],
-	"eslint.useFlatConfig": true,
-	"eslint.run": "onType",
-	"eslint.nodePath": "./node_modules",
-	"eslint.debug": false,
+
 	"eslint.rules.customizations": [
 		{
 			"rule": "import/named",

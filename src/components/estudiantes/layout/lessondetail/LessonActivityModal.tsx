@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+import Image from 'next/image';
+
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
 	CheckCircleIcon,
@@ -96,6 +98,14 @@ interface FilePreview {
 	status: 'uploading' | 'complete' | 'error';
 }
 
+// Add this interface near the other interfaces
+interface FileSubmissionResponse {
+	submission: StoredFileInfo | null;
+	progress: {
+		isCompleted: boolean;
+	} | null;
+}
+
 // Add formatFileSize as a standalone utility function
 const formatFileSize = (bytes: number): string => {
 	if (bytes === 0) return '0 B';
@@ -124,7 +134,7 @@ const getFileIcon = (fileType: string) => {
 			<svg className="h-6 w-6 text-blue-500" viewBox="0 0 384 512">
 				<path
 					fill="currentColor"
-					d="M48 448V64c0-8.8 7.2-16 16-16h256c8.8 0 16 7.2 16 16v384c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16zm0-448C21.5 0 0 21.5 0 48v416c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V48c0-26.5-21.5-48-48-48H48zm144 232h-40v40c0 13.3-10.7 24-24 24s-24-10.7-24-24v-40H64c-13.3 0-24-10.7-24-24s10.7-24 24-24h40v-40c0-13.3 10.7-24 24-24s24 10.7 24 24v40h40c13.3 0 24 10.7 24 24s-10.7 24-24 24z"
+					d="M48 448V64c0-8.8 7.2-16 16-16h256c8.8 0 16 7.2 16 16v384c0 8.8-7.2 16 16 16H64c-8.8 0-16-7.2-16-16zm0-448C21.5 0 0 21.5 0 48v416c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V48c0-26.5-21.5-48-48-48H48zm144 232h-40v40c0 13.3-10.7 24-24 24s-24-10.7-24-24v-40H64c-13.3 0-24-10.7-24-24s10.7-24 24-24h40v-40c0-13.3 10.7-24 24-24s24 10.7 24 24v40h40c13.3 0 24 10.7 24 24s-10.7 24-24 24z"
 				/>
 			</svg>
 		);
@@ -268,6 +278,36 @@ const LessonActivityModal = ({
 		activity.isCompleted,
 		savedResults?.isAlreadyCompleted,
 	]);
+
+	useEffect(() => {
+		const loadDocumentInfo = async () => {
+			if (activity.typeid === 1) {
+				try {
+					const response = await fetch(
+						`/api/activities/getFileSubmission?activityId=${activity.id}&userId=${userId}`
+					);
+
+					if (response.ok) {
+						const data = (await response.json()) as FileSubmissionResponse;
+						if (data.submission) {
+							setUploadedFileInfo(data.submission);
+							setShowResults(true);
+
+							if (data.progress?.isCompleted) {
+								setFilePreview(null);
+								setSelectedFile(null);
+							}
+						}
+					}
+				} catch (error) {
+					console.error('Error loading document info:', error);
+					toast.error('Error al cargar la información del documento');
+				}
+			}
+		};
+
+		void loadDocumentInfo();
+	}, [activity.id, activity.typeid, userId]);
 
 	const currentQuestion = questions[currentQuestionIndex];
 	const isLastQuestion = currentQuestionIndex === questions.length - 1;
@@ -782,7 +822,9 @@ const LessonActivityModal = ({
 
 						{/* Action buttons */}
 						<div className="mt-4 space-y-2">
-							{isLastActivityInLesson && !isLastLesson ? (
+							{isLastActivityInLesson &&
+							!isLastLesson &&
+							!activity.isCompleted ? (
 								<Button
 									onClick={handleFinishAndNavigate}
 									className="w-full bg-green-500 text-white hover:bg-green-600"
@@ -794,7 +836,13 @@ const LessonActivityModal = ({
 								</Button>
 							) : (
 								<Button
-									onClick={onClose}
+									onClick={async () => {
+										if (!isLastActivityInLesson && !activity.isCompleted) {
+											await markActivityAsCompleted();
+											await onActivityCompleted();
+										}
+										onClose();
+									}}
 									className="w-full bg-blue-500 text-white hover:bg-blue-600"
 								>
 									Cerrar
@@ -989,44 +1037,99 @@ const LessonActivityModal = ({
 	const renderSubmissionStatus = () => {
 		if (!uploadedFileInfo) return null;
 
+		const isFirstSubmission = !activity.isCompleted;
+		const shouldShowUnlockButton =
+			isFirstSubmission && isLastActivityInLesson && !isLastLesson;
+
 		return (
 			<div className="mt-6 space-y-4">
 				<div className="rounded-xl bg-slate-900/50 p-4">
-					{/* File info and status */}
-					<div className="flex items-center justify-between">
-						<div>
-							<h4 className="text-lg font-medium text-white">
-								Estado del Documento
-							</h4>
-							<p className="text-sm text-slate-400">
-								{uploadedFileInfo.fileName}
-							</p>
-							<p className="mt-1 text-xs text-slate-500">
-								Subido el:{' '}
-								{new Date(uploadedFileInfo.uploadDate).toLocaleDateString()}
-							</p>
-						</div>
-						<div className="flex flex-col items-end">
+					{/* Status badge in top right corner */}
+					<div className="mb-4 flex flex-col">
+						<div className="flex items-center justify-between">
+							<h3 className="text-lg font-semibold text-white">
+								Documento Subido
+							</h3>
 							<span
-								className={`text-sm ${uploadedFileInfo.status === 'reviewed' ? 'text-green-400' : 'text-yellow-400'}`}
+								className={`rounded-full px-3 py-1 text-sm font-medium ${
+									uploadedFileInfo.status === 'reviewed'
+										? 'bg-green-100 text-green-800'
+										: 'bg-yellow-100 text-yellow-800'
+								}`}
 							>
 								{uploadedFileInfo.status === 'reviewed'
 									? 'Revisado'
 									: 'En Revisión'}
 							</span>
-							{uploadedFileInfo.grade && (
-								<span className="mt-1 text-lg font-bold text-white">
-									Nota: {uploadedFileInfo.grade}
-								</span>
-							)}
+						</div>
+					</div>
+
+					{/* Document info table */}
+					<div className="overflow-hidden rounded-lg">
+						<table className="min-w-full divide-y divide-gray-700">
+							<thead>
+								<tr>
+									<th className="flex items-center justify-start px-4 py-3 text-sm font-semibold text-gray-200">
+										Archivo
+										<Image
+											src={
+												uploadedFileInfo.status === 'reviewed'
+													? '/contract-filed-line-svgrepo-com.png'
+													: '/contract-pending-line-svgrepo-com (1).png'
+											}
+											alt={
+												uploadedFileInfo.status === 'reviewed'
+													? 'Archivo revisado'
+													: 'Archivo en revisión'
+											}
+											width={24}
+											height={24}
+											className={`ml-2 ${
+												uploadedFileInfo.status === 'reviewed'
+													? 'brightness-0 invert'
+													: 'opacity-50 brightness-0 invert'
+											}`}
+										/>
+									</th>
+									<th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">
+										Fecha de Subida
+									</th>
+								</tr>
+							</thead>
+							<tbody className="divide-y divide-gray-700">
+								<tr>
+									<td className="px-4 py-3 text-sm whitespace-nowrap text-gray-300">
+										{uploadedFileInfo.fileName}
+									</td>
+									<td className="px-4 py-3 text-sm whitespace-nowrap text-gray-300">
+										{new Date(uploadedFileInfo.uploadDate).toLocaleDateString()}
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					{/* Grade section */}
+					<div className="mt-4 border-t border-gray-700 pt-4">
+						<div className="flex items-center justify-between">
+							<span className="text-sm text-gray-300">
+								Calificación del Educador:
+							</span>
+							<span className="text-lg font-bold text-white">
+								{uploadedFileInfo.grade?.toFixed(1) ?? '0.0'}
+							</span>
 						</div>
 					</div>
 
 					{/* Action buttons */}
 					<div className="mt-4 space-y-2">
-						{isLastActivityInLesson && !isLastLesson ? (
+						{shouldShowUnlockButton ? (
 							<Button
-								onClick={handleFinishAndNavigate}
+								onClick={async () => {
+									await handleFinishAndNavigate();
+									// Mark activity as completed to prevent showing unlock button again
+									await markActivityAsCompleted();
+								}}
 								className="w-full bg-green-500 text-white hover:bg-green-600"
 							>
 								<span className="flex items-center justify-center gap-2">
@@ -1036,7 +1139,14 @@ const LessonActivityModal = ({
 							</Button>
 						) : (
 							<Button
-								onClick={onClose}
+								onClick={async () => {
+									// If it's not the last activity, unlock next activity before closing
+									if (!isLastActivityInLesson && !activity.isCompleted) {
+										await markActivityAsCompleted();
+										await onActivityCompleted();
+									}
+									onClose();
+								}}
 								className="w-full bg-blue-500 text-white hover:bg-blue-600"
 							>
 								Cerrar
@@ -1053,7 +1163,9 @@ const LessonActivityModal = ({
 
 		if (isFileUploadActivity) {
 			return (
-				<div className="max-h-[80vh] overflow-y-auto pr-4"> {/* Add these classes */}
+				<div className="max-h-[80vh] overflow-y-auto pr-4">
+					{' '}
+					{/* Add these classes */}
 					<div className="group relative w-full">
 						<div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-cyan-500/10">
 							<div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
@@ -1107,9 +1219,9 @@ const LessonActivityModal = ({
 													stroke="currentColor"
 												>
 													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
 														d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
 													/>
 												</svg>
@@ -1250,7 +1362,9 @@ const LessonActivityModal = ({
 				onClose();
 			}}
 		>
-			<DialogContent className="max-h-[90vh] overflow-hidden [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background sm:max-w-[500px]"> {/* Add max-h-[90vh] and overflow-hidden */}
+			<DialogContent className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background max-h-[90vh] overflow-hidden sm:max-w-[500px]">
+				{' '}
+				{/* Add max-h-[90vh] and overflow-hidden */}
 				<DialogHeader className="relative pb-6">
 					<DialogTitle className="text-center text-3xl font-bold">
 						{activity.content?.questionsFilesSubida?.[0] != null
