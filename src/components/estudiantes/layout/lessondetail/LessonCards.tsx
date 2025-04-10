@@ -50,6 +50,12 @@ const LessonCards = ({
 		}
 	};
 
+	const truncateDescription = (description: string | null, maxLength = 50) => {
+		if (!description) return '';
+		if (description.length <= maxLength) return description;
+		return description.slice(0, maxLength).trim() + '...';
+	};
+
 	const renderLessonCard = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
 		const isAccessible = !lessonItem.isLocked;
@@ -94,7 +100,9 @@ const LessonCards = ({
 						)}
 					</div>
 				</div>
-				<p className="mb-2 text-sm text-gray-600">{lessonItem.description}</p>
+				<p className="mb-2 line-clamp-1 text-sm text-gray-600">
+					{truncateDescription(lessonItem.description)}
+				</p>
 				<div className="relative h-2 rounded bg-gray-200">
 					<div
 						className="absolute h-2 rounded bg-blue-500"

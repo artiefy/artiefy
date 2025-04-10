@@ -1042,116 +1042,111 @@ const LessonActivityModal = ({
 			isFirstSubmission && isLastActivityInLesson && !isLastLesson;
 
 		return (
-			<div className="mt-6 space-y-4">
-				<div className="rounded-xl bg-slate-900/50 p-4">
-					{/* Status badge in top right corner */}
-					<div className="mb-4 flex flex-col">
-						<div className="flex items-center justify-between">
-							<h3 className="text-lg font-semibold text-white">
-								Documento Subido
-							</h3>
-							<span
-								className={`rounded-full px-3 py-1 text-sm font-medium ${
-									uploadedFileInfo.status === 'reviewed'
-										? 'bg-green-100 text-green-800'
-										: 'bg-yellow-100 text-yellow-800'
-								}`}
-							>
-								{uploadedFileInfo.status === 'reviewed'
-									? 'Revisado'
-									: 'En Revisión'}
-							</span>
-						</div>
-					</div>
-
-					{/* Document info table */}
-					<div className="overflow-hidden rounded-lg">
-						<table className="min-w-full divide-y divide-gray-700">
-							<thead>
-								<tr>
-									<th className="flex items-center justify-start px-4 py-3 text-sm font-semibold text-gray-200">
-										Archivo
-										<Image
-											src={
-												uploadedFileInfo.status === 'reviewed'
-													? '/contract-filed-line-svgrepo-com.png'
-													: '/contract-pending-line-svgrepo-com (1).png'
-											}
-											alt={
-												uploadedFileInfo.status === 'reviewed'
-													? 'Archivo revisado'
-													: 'Archivo en revisión'
-											}
-											width={24}
-											height={24}
-											className={`ml-2 ${
-												uploadedFileInfo.status === 'reviewed'
-													? 'brightness-0 invert'
-													: 'opacity-50 brightness-0 invert'
-											}`}
-										/>
-									</th>
-									<th className="px-4 py-3 text-left text-sm font-semibold text-gray-200">
-										Fecha de Subida
-									</th>
-								</tr>
-							</thead>
-							<tbody className="divide-y divide-gray-700">
-								<tr>
-									<td className="px-4 py-3 text-sm whitespace-nowrap text-gray-300">
-										{uploadedFileInfo.fileName}
-									</td>
-									<td className="px-4 py-3 text-sm whitespace-nowrap text-gray-300">
-										{new Date(uploadedFileInfo.uploadDate).toLocaleDateString()}
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-
-					{/* Grade section */}
-					<div className="mt-4 border-t border-gray-700 pt-4">
-						<div className="flex items-center justify-between">
-							<span className="text-sm text-gray-300">
-								Calificación del Educador:
-							</span>
-							<span className="text-lg font-bold text-white">
-								{uploadedFileInfo.grade?.toFixed(1) ?? '0.0'}
-							</span>
-						</div>
-					</div>
-
-					{/* Action buttons */}
-					<div className="mt-4 space-y-2">
-						{shouldShowUnlockButton ? (
-							<Button
-								onClick={async () => {
-									await handleFinishAndNavigate();
-									// Mark activity as completed to prevent showing unlock button again
-									await markActivityAsCompleted();
-								}}
-								className="w-full bg-green-500 text-white hover:bg-green-600"
-							>
-								<span className="flex items-center justify-center gap-2">
-									Desbloquear Siguiente Clase
-									<Unlock className="h-4 w-4" />
+			<div className="mt-4">
+				<div className="rounded-xl bg-slate-900/50">
+					<div className="flex flex-col">
+						<div className="p-6">
+							{/* Document info and status */}
+							<div className="mb-6 flex items-center justify-between">
+								<div className="flex flex-col">
+									<h3 className="text-lg font-semibold text-white">Subido</h3>
+								</div>
+								<span
+									className={`rounded-full px-4 py-2 text-sm font-medium ${
+										uploadedFileInfo.status === 'reviewed'
+											? 'bg-green-100 text-green-800'
+											: 'bg-yellow-100 text-yellow-800'
+									}`}
+								>
+									{uploadedFileInfo.status === 'reviewed'
+										? 'Revisado'
+										: 'En Revisión'}
 								</span>
-							</Button>
-						) : (
-							<Button
-								onClick={async () => {
-									// If it's not the last activity, unlock next activity before closing
-									if (!isLastActivityInLesson && !activity.isCompleted) {
+							</div>
+
+							{/* Document info with consistent spacing */}
+							<div className="overflow-hidden rounded-lg">
+								<div className="space-y-4">
+									{/* File section */}
+									<div className="space-y-2">
+										<div className="flex items-center justify-between px-4">
+											<span className="text-sm font-semibold text-gray-200">
+												Archivo
+											</span>
+											{uploadedFileInfo.status !== 'reviewed' && (
+												<Image
+													src="/contract-pending-line-svgrepo-com.png"
+													alt="Archivo en revisión"
+													width={32}
+													height={32}
+													className="text-yellow-500"
+												/>
+											)}
+										</div>
+										<div className="px-4">
+											<span className="text-sm text-gray-300">
+												{uploadedFileInfo.fileName}
+											</span>
+										</div>
+									</div>
+
+									{/* Upload date row */}
+									<div className="flex items-center justify-between px-4 py-2">
+										<span className="text-sm font-medium text-white">
+											Fecha De Subida:
+										</span>
+										<span className="text-sm text-gray-400">
+											{new Date(
+												uploadedFileInfo.uploadDate
+											).toLocaleDateString()}
+										</span>
+									</div>
+								</div>
+							</div>
+
+							{/* Grade section */}
+							<div className="mt-6 border-t border-gray-700 pt-4">
+								<div className="flex items-center justify-between px-4">
+									<span className="text-sm text-gray-300">
+										Calificación del Educador:
+									</span>
+									<span className="text-lg font-bold text-white">
+										{uploadedFileInfo.grade?.toFixed(1) ?? '0.0'}
+									</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Action buttons */}
+						<div className="border-t border-gray-700 bg-slate-900/95 p-6">
+							{shouldShowUnlockButton ? (
+								<Button
+									onClick={async () => {
+										await handleFinishAndNavigate();
 										await markActivityAsCompleted();
-										await onActivityCompleted();
-									}
-									onClose();
-								}}
-								className="w-full bg-blue-500 text-white hover:bg-blue-600"
-							>
-								Cerrar
-							</Button>
-						)}
+									}}
+									className="w-full bg-green-500 text-white hover:bg-green-600"
+								>
+									<span className="flex items-center justify-center gap-2">
+										Desbloquear Siguiente Clase
+										<Unlock className="h-4 w-4" />
+									</span>
+								</Button>
+							) : (
+								<Button
+									onClick={async () => {
+										if (!isLastActivityInLesson && !activity.isCompleted) {
+											await markActivityAsCompleted();
+											await onActivityCompleted();
+										}
+										onClose();
+									}}
+									className="w-full bg-blue-500 text-white hover:bg-blue-600"
+								>
+									Cerrar
+								</Button>
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -1163,9 +1158,7 @@ const LessonActivityModal = ({
 
 		if (isFileUploadActivity) {
 			return (
-				<div className="max-h-[80vh] overflow-y-auto pr-4">
-					{' '}
-					{/* Add these classes */}
+				<div className="max-h-[calc(90vh-10rem)] overflow-y-auto px-4">
 					<div className="group relative w-full">
 						<div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-cyan-500/10">
 							<div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
@@ -1219,9 +1212,9 @@ const LessonActivityModal = ({
 													stroke="currentColor"
 												>
 													<path
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														stroke-width="2"
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
 														d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
 													/>
 												</svg>
@@ -1362,21 +1355,21 @@ const LessonActivityModal = ({
 				onClose();
 			}}
 		>
-			<DialogContent className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background max-h-[90vh] overflow-hidden sm:max-w-[500px]">
-				{' '}
-				{/* Add max-h-[90vh] and overflow-hidden */}
-				<DialogHeader className="relative pb-6">
+			<DialogContent className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex max-h-[90vh] flex-col overflow-hidden sm:max-w-[500px]">
+				<DialogHeader className="bg-background sticky top-0 z-50 pb-4">
 					<DialogTitle className="text-center text-3xl font-bold">
 						{activity.content?.questionsFilesSubida?.[0] != null
 							? 'SUBIDA DE DOCUMENTO'
 							: 'ACTIVIDAD'}
 					</DialogTitle>
 				</DialogHeader>
-				{isUnlocking
-					? renderLoadingState('Desbloqueando Siguiente Clase...')
-					: isSavingResults
-						? renderLoadingState('Cargando Resultados...')
-						: renderContent()}
+				<div className="flex-1 overflow-y-auto">
+					{isUnlocking
+						? renderLoadingState('Desbloqueando Siguiente Clase...')
+						: isSavingResults
+							? renderLoadingState('Cargando Resultados...')
+							: renderContent()}
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

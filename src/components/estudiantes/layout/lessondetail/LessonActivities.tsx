@@ -432,9 +432,7 @@ const LessonActivities = ({
 				{activityState?.isLoading && (
 					<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 				)}
-				<span>
-					{activity.typeid === 1 ? 'Subir Documento' : 'Ver Actividad'}
-				</span>
+				<span>{activity.typeid === 1 ? 'Ver Actividad' : 'Ver Actividad'}</span>
 			</>
 		);
 	};
@@ -504,6 +502,12 @@ const LessonActivities = ({
 		return isPreviousCompleted;
 	};
 
+	const truncateDescription = (description: string | null, maxLength = 60) => {
+		if (!description) return '';
+		if (description.length <= maxLength) return description;
+		return description.slice(0, maxLength).trim() + '...';
+	};
+
 	const renderActivityCard = (activity: Activity, index: number) => {
 		const activityState = activitiesState[activity.id];
 		const status = getActivityStatus(activity, index);
@@ -537,12 +541,14 @@ const LessonActivities = ({
 						</div>
 					</div>
 
-					<p className="mt-2 text-sm text-gray-600">{activity.description}</p>
+					<p className="mt-2 line-clamp-2 text-sm text-gray-600">
+						{truncateDescription(activity.description)}
+					</p>
 
 					<div className="space-y-2">
 						{/* Mostrar flechas solo cuando la actividad está desbloqueada y no completada */}
 						{shouldShowArrows(activity, index) && !isButtonLoading && (
-							<div className="flex justify-center py-2">
+							<div className="flex justify-center pt-4">
 								<MdKeyboardDoubleArrowDown className="animate-bounce-up-down size-10 text-2xl text-green-500" />
 							</div>
 						)}
@@ -550,7 +556,7 @@ const LessonActivities = ({
 						{/* Mostrar icono de reporte solo cuando la actividad está completada y no está cargando */}
 						{activityState?.isCompleted && !isButtonLoading && (
 							<div className="flex justify-center">
-								<TbReportAnalytics className="mb-2 size-12 text-2xl text-gray-700" />
+								<TbReportAnalytics className="my-2 size-12 text-2xl text-gray-700" />
 							</div>
 						)}
 
