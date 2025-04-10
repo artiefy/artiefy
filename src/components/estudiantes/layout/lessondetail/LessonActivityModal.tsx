@@ -1160,11 +1160,13 @@ const LessonActivityModal = ({
 			return (
 				<div className="max-h-[calc(90vh-10rem)] overflow-y-auto px-4">
 					<div className="group relative w-full">
-						<div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-cyan-500/10">
+						<div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl">
+							{/* Fondo y contenido del encabezado */}
 							<div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 							<div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 
 							<div className="relative p-6">
+								{/* Título y descripción */}
 								<div className="flex items-center justify-between">
 									<div>
 										<h3 className="text-lg font-semibold text-white">
@@ -1191,51 +1193,60 @@ const LessonActivityModal = ({
 									</div>
 								</div>
 
-								<div className="group/dropzone mt-6">
-									<div className="relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors group-hover/dropzone:border-cyan-500/50">
-										<input
-											type="file"
-											className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
-											onChange={(e) => {
-												if (e.target.files?.[0]) {
-													// Handle file upload
-													handleFileUpload(e.target.files[0]);
-												}
-											}}
-										/>
-										<div className="space-y-6 text-center">
-											<div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
-												<svg
-													className="h-10 w-10 text-cyan-500"
-													fill="none"
-													viewBox="0 0 24 24"
-													stroke="currentColor"
-												>
-													<path
-														strokeLinecap="round"
-														strokeLinejoin="round"
-														strokeWidth="2"
-														d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-													/>
-												</svg>
-											</div>
+								{/* Zona de subida de archivos - Desactivada si ya hay un archivo subido */}
+								<div
+									className={`mt-6 ${uploadedFileInfo ? 'pointer-events-none opacity-50' : ''}`}
+								>
+									<div className="group/dropzone">
+										<div
+											className={`relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors ${uploadedFileInfo ? 'cursor-not-allowed' : 'group-hover/dropzone:border-cyan-500/50'}`}
+										>
+											<input
+												type="file"
+												className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
+												onChange={(e) => {
+													if (e.target.files?.[0]) {
+														handleFileUpload(e.target.files[0]);
+													}
+												}}
+												disabled={!!uploadedFileInfo}
+											/>
+											<div className="space-y-6 text-center">
+												<div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
+													<svg
+														className={`h-10 w-10 ${uploadedFileInfo ? 'text-gray-500' : 'text-cyan-500'}`}
+														fill="none"
+														viewBox="0 0 24 24"
+														stroke="currentColor"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth="2"
+															d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+														/>
+													</svg>
+												</div>
 
-											<div className="space-y-2">
-												<p className="text-base font-medium text-white">
-													Arrastra tus archivos aquí o haz clic para buscar
-												</p>
-												<p className="text-sm text-slate-400">
-													Formatos soportados: PDF, DOC, DOCX
-												</p>
-												<p className="text-xs text-slate-400">
-													Tamaño máximo: 10MB
-												</p>
+												<div className="space-y-2">
+													<p className="text-base font-medium text-white">
+														{uploadedFileInfo
+															? 'Ya has subido un documento para esta actividad'
+															: 'Arrastra tus archivos aquí o haz clic para buscar'}
+													</p>
+													<p className="text-sm text-slate-400">
+														Formatos soportados: PDF, DOC, DOCX
+													</p>
+													<p className="text-xs text-slate-400">
+														Tamaño máximo: 10MB
+													</p>
+												</div>
 											</div>
 										</div>
 									</div>
 								</div>
 
-								{/* Add file progress indicator here */}
+								{/* Vista previa del archivo y botón de subida */}
 								{renderFilePreview()}
 
 								<button
@@ -1248,10 +1259,10 @@ const LessonActivityModal = ({
 											setUploadProgress,
 											setUploadedFileInfo,
 											setShowResults,
-											setFilePreview, // Add this new parameter
+											setFilePreview,
 										})
 									}
-									disabled={!selectedFile || isUploading}
+									disabled={!selectedFile || isUploading || !!uploadedFileInfo}
 									className="group/btn relative mt-6 w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 p-px font-medium text-white shadow-[0_1000px_0_0_hsl(0_0%_100%_/_0%)_inset] transition-colors hover:shadow-[0_1000px_0_0_hsl(0_0%_100%_/_2%)_inset] disabled:cursor-not-allowed disabled:opacity-50"
 								>
 									<span className="relative flex items-center justify-center gap-2 rounded-xl bg-slate-950/50 px-4 py-2 transition-colors group-hover/btn:bg-transparent">
@@ -1260,12 +1271,16 @@ const LessonActivityModal = ({
 												<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 												Subiendo...
 											</>
+										) : uploadedFileInfo ? (
+											'Documento ya subido'
 										) : (
 											'Subir Documento'
 										)}
 									</span>
 								</button>
-								{uploadedFileInfo ? renderSubmissionStatus() : null}
+
+								{/* Mostrar el estado del documento subido */}
+								{uploadedFileInfo && renderSubmissionStatus()}
 							</div>
 						</div>
 					</div>
