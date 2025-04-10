@@ -27,6 +27,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const [error, setError] = useState('');
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [posterUrl, setPosterUrl] = useState<string | undefined>(undefined);
+	const [isVideoAvailable, setIsVideoAvailable] = useState(false);
 
 	useEffect(() => {
 		const fetchVideoUrl = async () => {
@@ -93,6 +94,30 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		void checkPosterExists();
 	}, [videoKey, isVideoReady]);
 
+	useEffect(() => {
+		const checkVideoAvailability = async () => {
+			if (!videoKey) return;
+
+			try {
+				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
+				const response = await fetch(url, { method: 'HEAD' });
+
+				if (response.ok) {
+					setIsVideoAvailable(true);
+					setVideoUrl(url);
+				} else {
+					setIsVideoAvailable(false);
+					setError('Video aún no disponible');
+				}
+			} catch (err) {
+				setIsVideoAvailable(false);
+				console.error('Error checking video:', err);
+			}
+		};
+
+		void checkVideoAvailability();
+	}, [videoKey]);
+
 	const handleTimeUpdate = () => {
 		if (videoRef.current && !isVideoCompleted) {
 			const progress =
@@ -108,6 +133,51 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const handleVideoCanPlay = () => {
 		setIsVideoReady(true);
 	};
+
+	const renderLoadingState = () => (
+		<div className="absolute inset-0 z-50 flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg">
+			<div className="absolute inset-0">
+				<div className="absolute inset-0 bg-gradient-to-r from-[#3498db] to-[#2ecc71] shadow-lg" />
+				<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)] bg-[length:20px_20px] opacity-50" />
+			</div>
+			<div className="relative z-10 flex flex-col items-center justify-center space-y-6 text-center">
+				{isVideoAvailable ? (
+					<>
+						<div className="hourglassBackground">
+							<div className="hourglassContainer">
+								<div className="hourglassCurves" />
+								<div className="hourglassCapTop" />
+								<div className="hourglassGlassTop" />
+								<div className="hourglassSand" />
+								<div className="hourglassSandStream" />
+								<div className="hourglassCapBottom" />
+								<div className="hourglassGlass" />
+							</div>
+						</div>
+						<p className="text-lg font-medium text-white">
+							Preparando video de la clase...
+						</p>
+					</>
+				) : (
+					<>
+						<h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
+							Video de la Clase
+						</h2>
+						<p className="text-5xl font-extrabold text-white">
+							<span className="bg-gradient-to-r from-teal-400 to-green-400 bg-clip-text text-transparent">
+								Disponible muy pronto
+							</span>
+						</p>
+						<div className="mt-4 flex items-center space-x-2">
+							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-100" />
+							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-200" />
+							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-300" />
+						</div>
+					</>
+				)}
+			</div>
+		</div>
+	);
 
 	if (isLoading) {
 		return (
@@ -167,30 +237,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					'aria-label': 'Cargando video de la clase...',
 				})}
 			/>
-			{!isVideoReady && (
-				<div className="absolute inset-0 z-50 flex aspect-video w-full items-center justify-center rounded-lg bg-gray-900">
-					<div className="relative flex h-full w-full flex-col items-center justify-center">
-						<div className="absolute inset-0 bg-gradient-to-r from-[#3498db] to-[#2ecc71] shadow-lg" />
-						<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)] bg-[length:20px_20px] opacity-50" />
-						<div className="z-10 flex flex-col items-center justify-center space-y-4">
-							<div className="hourglassBackground">
-								<div className="hourglassContainer">
-									<div className="hourglassCurves" />
-									<div className="hourglassCapTop" />
-									<div className="hourglassGlassTop" />
-									<div className="hourglassSand" />
-									<div className="hourglassSandStream" />
-									<div className="hourglassCapBottom" />
-									<div className="hourglassGlass" />
-								</div>
-							</div>
-							<p className="text-lg font-medium text-white">
-								Preparando video de la clase...
-							</p>
-						</div>
-					</div>
-				</div>
-			)}
+			{!isVideoReady && renderLoadingState()}
 		</div>
 	);
 };
