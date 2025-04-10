@@ -65,6 +65,99 @@ interface AttemptsResponse {
 	lastGrade: number | null;
 }
 
+interface StoredFileInfo {
+	fileName: string;
+	fileUrl: string;
+	uploadDate: string;
+	status: 'pending' | 'reviewed';
+	grade?: number;
+	feedback?: string;
+}
+
+interface PresignedResponse {
+	url: string;
+	fields: Record<string, string>;
+	key: string;
+	fileUrl: string;
+}
+
+interface DocumentUploadResponse {
+	success: boolean;
+	status: 'pending' | 'reviewed';
+	fileUrl: string;
+	documentKey: string;
+}
+
+interface FilePreview {
+	file: File;
+	type: string;
+	size: string;
+	progress: number;
+	status: 'uploading' | 'complete' | 'error';
+}
+
+// Add formatFileSize as a standalone utility function
+const formatFileSize = (bytes: number): string => {
+	if (bytes === 0) return '0 B';
+	const k = 1024;
+	const sizes = ['B', 'KB', 'MB', 'GB'];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+	return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
+const getFileIcon = (fileType: string) => {
+	const type = fileType.toLowerCase();
+
+	if (type === 'pdf') {
+		return (
+			<svg className="h-6 w-6 text-red-500" viewBox="0 0 384 512">
+				<path
+					fill="currentColor"
+					d="M320 464c8.8 0 16-7.2 16-16V160H256c-17.7 0-32-14.3-32-32V48H64c-8.8 0-16 7.2-16 16v384c0 8.8 7.2 16 16 16h256zM0 64C0 28.7 28.7 0 64 0h160l128 128v304c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm160 240c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16h-32c-8.8 0-16-7.2-16-16v-32zm96 0c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32c0 8.8-7.2 16-16 16h-32c-8.8 0-16-7.2-16-16v-32z"
+				/>
+			</svg>
+		);
+	}
+
+	if (type === 'doc' || type === 'docx') {
+		return (
+			<svg className="h-6 w-6 text-blue-500" viewBox="0 0 384 512">
+				<path
+					fill="currentColor"
+					d="M48 448V64c0-8.8 7.2-16 16-16h256c8.8 0 16 7.2 16 16v384c0 8.8-7.2 16-16 16H64c-8.8 0-16-7.2-16-16zm0-448C21.5 0 0 21.5 0 48v416c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V48c0-26.5-21.5-48-48-48H48zm144 232h-40v40c0 13.3-10.7 24-24 24s-24-10.7-24-24v-40H64c-13.3 0-24-10.7-24-24s10.7-24 24-24h40v-40c0-13.3 10.7-24 24-24s24 10.7 24 24v40h40c13.3 0 24 10.7 24 24s-10.7 24-24 24z"
+				/>
+			</svg>
+		);
+	}
+
+	if (['png', 'jpg', 'jpeg', 'gif'].includes(type)) {
+		return (
+			<svg className="h-6 w-6 text-green-500" viewBox="0 0 512 512">
+				<g>
+					<path
+						style={{ fill: 'currentColor' }}
+						d="M476.694,512H35.306c-8.03,0-14.54-6.509-14.54-14.54V14.54c0-8.03,6.509-14.54,14.54-14.54h441.389c8.03,0,14.54,6.509,14.54,14.54v328.698c0,8.03-6.509,14.54-14.54,14.54s-14.54-6.509-14.54-14.54V29.08H49.845V482.92h412.309v-51.955c0-8.03,6.509-14.54,14.54-14.54s14.54,6.509,14.54,14.54v66.495C491.234,505.491,484.725,512,476.694,512z"
+					/>
+				</g>
+				<path
+					style={{ fill: '#4ade80' }}
+					d="M100.735,79.969v256.969h310.531V79.969H100.735z M134.881,335.968l77.135-133.602l77.135,133.602H134.881z M320.701,205.274c-20.165,0-36.512-16.347-36.512-36.514s16.347-36.514,36.512-36.514s36.512,16.347,36.512,36.514S340.868,205.274,320.701,205.274z"
+				/>
+			</svg>
+		);
+	}
+
+	// Default file icon
+	return (
+		<svg className="h-6 w-6 text-gray-500" viewBox="0 0 384 512">
+			<path
+				fill="currentColor"
+				d="M320 464c8.8 0 16-7.2 16-16V160H256c-17.7 0-32-14.3-32-32V48H64c-8.8 0-16 7.2-16 16v384c0 8.8 7.2 16 16 16h256zM0 64C0 28.7 28.7 0 64 0h160l128 128v304c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64z"
+			/>
+		</svg>
+	);
+};
+
 const LessonActivityModal = ({
 	isOpen,
 	onClose,
@@ -98,6 +191,9 @@ const LessonActivityModal = ({
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [isUploading, setIsUploading] = useState(false);
+	const [uploadedFileInfo, setUploadedFileInfo] =
+		useState<StoredFileInfo | null>(null);
+	const [filePreview, setFilePreview] = useState<FilePreview | null>(null);
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
@@ -643,6 +739,74 @@ const LessonActivityModal = ({
 			return renderLoadingState('Cargando Resultados...');
 		}
 
+		// If it's a document upload activity
+		if (activity.typeid === 1) {
+			return (
+				<div className="space-y-4 p-4">
+					<div className="rounded-lg bg-gray-50 p-4">
+						<h3 className="text-lg font-medium text-gray-900">
+							Estado del Documento
+						</h3>
+						{uploadedFileInfo && (
+							<>
+								<div className="mt-4 flex items-center">
+									<span
+										className={`mr-2 h-3 w-3 rounded-full ${
+											uploadedFileInfo.status === 'reviewed'
+												? 'bg-green-500'
+												: 'bg-yellow-500'
+										}`}
+									/>
+									<span className="text-sm text-gray-600">
+										{uploadedFileInfo.status === 'reviewed'
+											? 'Revisado'
+											: 'En revisión'}
+									</span>
+								</div>
+								{uploadedFileInfo.grade && (
+									<div className="mt-2 text-lg font-semibold text-gray-900">
+										Calificación: {uploadedFileInfo.grade}
+									</div>
+								)}
+							</>
+						)}
+
+						{/* Document preview */}
+						<div className="mt-4">
+							<iframe
+								src={uploadedFileInfo?.fileUrl}
+								className="h-[60vh] w-full rounded border border-gray-200"
+								title="Document Preview"
+							/>
+						</div>
+
+						{/* Action buttons */}
+						<div className="mt-4 space-y-2">
+							{isLastActivityInLesson && !isLastLesson ? (
+								<Button
+									onClick={handleFinishAndNavigate}
+									className="w-full bg-green-500 text-white hover:bg-green-600"
+								>
+									<span className="flex items-center justify-center gap-2">
+										Desbloquear Siguiente Clase
+										<Unlock className="h-4 w-4" />
+									</span>
+								</Button>
+							) : (
+								<Button
+									onClick={onClose}
+									className="w-full bg-blue-500 text-white hover:bg-blue-600"
+								>
+									Cerrar
+								</Button>
+							)}
+						</div>
+					</div>
+				</div>
+			);
+		}
+
+		// Regular activity results rendering
 		return (
 			<div className="-mt-14 space-y-3 px-4">
 				<div className="text-center">
@@ -695,7 +859,11 @@ const LessonActivityModal = ({
 
 								<div className="ml-6 space-y-2">
 									<div
-										className={`rounded-md p-2 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}
+										className={`rounded-md p-2 ${
+											isCorrect
+												? 'bg-green-50 text-green-800'
+												: 'bg-red-50 text-red-800'
+										}`}
 									>
 										<p className="text-sm">
 											<span className="font-bold">Tu respuesta:</span>{' '}
@@ -737,169 +905,263 @@ const LessonActivityModal = ({
 	};
 
 	const handleFileUpload = (file: File) => {
+		if (file.size > 10 * 1024 * 1024) {
+			toast.error('El archivo no debe superar los 10MB');
+			return;
+		}
+
 		setSelectedFile(file);
+		setFilePreview({
+			file,
+			type: file.type.split('/')[1].toUpperCase(),
+			size: formatFileSize(file.size),
+			progress: 0,
+			status: 'uploading',
+		});
 		setUploadProgress(0);
 		setIsUploading(false);
 	};
 
-	const handleUpload = async () => {
-		if (!selectedFile) return;
+	const renderFilePreview = () => {
+		if (!filePreview) return null;
 
-		try {
-			setIsUploading(true);
-			setUploadProgress(0);
+		const fileExtension =
+			filePreview.file.name.split('.').pop()?.toLowerCase() ?? '';
 
-			// Simulate upload progress
-			const interval = setInterval(() => {
-				setUploadProgress((prev) => {
-					if (prev >= 100) {
-						clearInterval(interval);
-						setIsUploading(false);
-						return 100;
-					}
-					return prev + 10;
-				});
-			}, 500);
+		return (
+			<div className="mt-6 space-y-4">
+				<div className="rounded-xl bg-slate-900/50 p-4">
+					<div className="flex items-center justify-between">
+						<div className="flex items-center gap-3">
+							<div className="rounded-lg bg-slate-800 p-2">
+								{getFileIcon(fileExtension)}
+							</div>
+							<div>
+								<p className="font-medium text-white">
+									{filePreview.file.name}
+								</p>
+								<p className="text-xs text-slate-400">
+									{filePreview.size} • {filePreview.type}
+								</p>
+							</div>
+						</div>
+						<div className="flex items-center gap-4">
+							<span className="text-sm font-medium text-cyan-500">
+								{uploadProgress}%
+							</span>
+							<button
+								onClick={() => {
+									setSelectedFile(null);
+									setFilePreview(null);
+								}}
+								className="text-slate-400 transition-colors hover:text-white"
+							>
+								<svg
+									className="h-5 w-5"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke="currentColor"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</button>
+						</div>
+					</div>
 
-			// Here you would implement your actual file upload logic
-			// For now, we'll simulate a delay
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+					<div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-800">
+						<div
+							className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-sky-500 transition-all duration-300"
+							style={{ width: `${uploadProgress}%` }}
+						>
+							<div className="h-full w-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	};
 
-			// Clear interval and mark as complete
-			clearInterval(interval);
-			setUploadProgress(100);
-			setIsUploading(false);
+	const renderSubmissionStatus = () => {
+		if (!uploadedFileInfo) return null;
 
-			// Handle successful upload
-			await handleFinishAndNavigate();
-		} catch (error) {
-			// Type assertion for error
-			const errorMessage =
-				error instanceof Error ? error.message : 'Unknown error occurred';
-			console.error('Upload error:', errorMessage);
-			toast.error('Error al subir el archivo');
-			setIsUploading(false);
-		}
+		return (
+			<div className="mt-6 space-y-4">
+				<div className="rounded-xl bg-slate-900/50 p-4">
+					{/* File info and status */}
+					<div className="flex items-center justify-between">
+						<div>
+							<h4 className="text-lg font-medium text-white">
+								Estado del Documento
+							</h4>
+							<p className="text-sm text-slate-400">
+								{uploadedFileInfo.fileName}
+							</p>
+							<p className="mt-1 text-xs text-slate-500">
+								Subido el:{' '}
+								{new Date(uploadedFileInfo.uploadDate).toLocaleDateString()}
+							</p>
+						</div>
+						<div className="flex flex-col items-end">
+							<span
+								className={`text-sm ${uploadedFileInfo.status === 'reviewed' ? 'text-green-400' : 'text-yellow-400'}`}
+							>
+								{uploadedFileInfo.status === 'reviewed'
+									? 'Revisado'
+									: 'En Revisión'}
+							</span>
+							{uploadedFileInfo.grade && (
+								<span className="mt-1 text-lg font-bold text-white">
+									Nota: {uploadedFileInfo.grade}
+								</span>
+							)}
+						</div>
+					</div>
+
+					{/* Action buttons */}
+					<div className="mt-4 space-y-2">
+						{isLastActivityInLesson && !isLastLesson ? (
+							<Button
+								onClick={handleFinishAndNavigate}
+								className="w-full bg-green-500 text-white hover:bg-green-600"
+							>
+								<span className="flex items-center justify-center gap-2">
+									Desbloquear Siguiente Clase
+									<Unlock className="h-4 w-4" />
+								</span>
+							</Button>
+						) : (
+							<Button
+								onClick={onClose}
+								className="w-full bg-blue-500 text-white hover:bg-blue-600"
+							>
+								Cerrar
+							</Button>
+						)}
+					</div>
+				</div>
+			</div>
+		);
 	};
 
 	const renderContent = () => {
-		// Check if activity is file upload type (typeid === 1)
 		const isFileUploadActivity = activity.typeid === 1;
 
 		if (isFileUploadActivity) {
 			return (
-				<div className="group relative w-full">
-					<div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-cyan-500/10">
-						<div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
-						<div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
+				<div className="max-h-[80vh] overflow-y-auto pr-4"> {/* Add these classes */}
+					<div className="group relative w-full">
+						<div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-cyan-500/10">
+							<div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
+							<div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 
-						<div className="relative p-6">
-							<div className="flex items-center justify-between">
-								<div>
-									<h3 className="text-lg font-semibold text-white">
-										{activity.name}
-									</h3>
-									<p className="text-sm text-slate-400">
-										{activity.description}
-									</p>
-								</div>
-								<div className="rounded-lg bg-cyan-500/10 p-2">
-									<svg
-										className="h-6 w-6 text-cyan-500"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth="2"
-											d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-										/>
-									</svg>
-								</div>
-							</div>
-
-							<div className="group/dropzone mt-6">
-								<div className="relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors group-hover/dropzone:border-cyan-500/50">
-									<input
-										type="file"
-										className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
-										onChange={(e) => {
-											if (e.target.files?.[0]) {
-												// Handle file upload
-												handleFileUpload(e.target.files[0]);
-											}
-										}}
-									/>
-									<div className="space-y-6 text-center">
-										<div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
-											<svg
-												className="h-10 w-10 text-cyan-500"
-												fill="none"
-												viewBox="0 0 24 24"
-												stroke="currentColor"
-											>
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth="2"
-													d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-												/>
-											</svg>
-										</div>
-
-										<div className="space-y-2">
-											<p className="text-base font-medium text-white">
-												Arrastra tus archivos aquí o haz clic para buscar
-											</p>
-											<p className="text-sm text-slate-400">
-												Formatos soportados: PDF, DOC, DOCX
-											</p>
-											<p className="text-xs text-slate-400">
-												Tamaño máximo: 10MB
-											</p>
-										</div>
+							<div className="relative p-6">
+								<div className="flex items-center justify-between">
+									<div>
+										<h3 className="text-lg font-semibold text-white">
+											{activity.name}
+										</h3>
+										<p className="text-sm text-slate-400">
+											{activity.description}
+										</p>
 									</div>
-								</div>
-							</div>
-
-							{/* Add file progress indicator here */}
-							{uploadProgress > 0 && (
-								<div className="mt-6 space-y-4">
-									<div className="rounded-xl bg-slate-900/50 p-4">
-										<div className="flex items-center justify-between">
-											<p className="text-sm text-white">{selectedFile?.name}</p>
-											<span className="text-sm text-cyan-500">
-												{uploadProgress}%
-											</span>
-										</div>
-										<div className="mt-2 h-2 w-full rounded-full bg-slate-800">
-											<div
-												className="h-full rounded-full bg-cyan-500 transition-all duration-300"
-												style={{ width: `${uploadProgress}%` }}
+									<div className="rounded-lg bg-cyan-500/10 p-2">
+										<svg
+											className="h-6 w-6 text-cyan-500"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth="2"
+												d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
 											/>
+										</svg>
+									</div>
+								</div>
+
+								<div className="group/dropzone mt-6">
+									<div className="relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors group-hover/dropzone:border-cyan-500/50">
+										<input
+											type="file"
+											className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
+											onChange={(e) => {
+												if (e.target.files?.[0]) {
+													// Handle file upload
+													handleFileUpload(e.target.files[0]);
+												}
+											}}
+										/>
+										<div className="space-y-6 text-center">
+											<div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
+												<svg
+													className="h-10 w-10 text-cyan-500"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+													/>
+												</svg>
+											</div>
+
+											<div className="space-y-2">
+												<p className="text-base font-medium text-white">
+													Arrastra tus archivos aquí o haz clic para buscar
+												</p>
+												<p className="text-sm text-slate-400">
+													Formatos soportados: PDF, DOC, DOCX
+												</p>
+												<p className="text-xs text-slate-400">
+													Tamaño máximo: 10MB
+												</p>
+											</div>
 										</div>
 									</div>
 								</div>
-							)}
 
-							<button
-								onClick={handleUpload}
-								disabled={!selectedFile || isUploading}
-								className="group/btn relative mt-6 w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 p-px font-medium text-white shadow-[0_1000px_0_0_hsl(0_0%_100%_/_0%)_inset] transition-colors hover:shadow-[0_1000px_0_0_hsl(0_0%_100%_/_2%)_inset] disabled:cursor-not-allowed disabled:opacity-50"
-							>
-								<span className="relative flex items-center justify-center gap-2 rounded-xl bg-slate-950/50 px-4 py-2 transition-colors group-hover/btn:bg-transparent">
-									{isUploading ? (
-										<>
-											<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-											Subiendo...
-										</>
-									) : (
-										'Subir Documento'
-									)}
-								</span>
-							</button>
+								{/* Add file progress indicator here */}
+								{renderFilePreview()}
+
+								<button
+									onClick={() =>
+										handleUpload({
+											selectedFile,
+											activity,
+											userId,
+											setIsUploading,
+											setUploadProgress,
+											setUploadedFileInfo,
+											setShowResults,
+											setFilePreview, // Add this new parameter
+										})
+									}
+									disabled={!selectedFile || isUploading}
+									className="group/btn relative mt-6 w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 p-px font-medium text-white shadow-[0_1000px_0_0_hsl(0_0%_100%_/_0%)_inset] transition-colors hover:shadow-[0_1000px_0_0_hsl(0_0%_100%_/_2%)_inset] disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									<span className="relative flex items-center justify-center gap-2 rounded-xl bg-slate-950/50 px-4 py-2 transition-colors group-hover/btn:bg-transparent">
+										{isUploading ? (
+											<>
+												<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+												Subiendo...
+											</>
+										) : (
+											'Subir Documento'
+										)}
+									</span>
+								</button>
+								{uploadedFileInfo ? renderSubmissionStatus() : null}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -988,7 +1250,7 @@ const LessonActivityModal = ({
 				onClose();
 			}}
 		>
-			<DialogContent className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background sm:max-w-[500px]">
+			<DialogContent className="max-h-[90vh] overflow-hidden [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background sm:max-w-[500px]"> {/* Add max-h-[90vh] and overflow-hidden */}
 				<DialogHeader className="relative pb-6">
 					<DialogTitle className="text-center text-3xl font-bold">
 						{activity.content?.questionsFilesSubida?.[0] != null
@@ -1005,5 +1267,141 @@ const LessonActivityModal = ({
 		</Dialog>
 	);
 };
+
+interface UploadParams {
+	selectedFile: File | null;
+	activity: Activity;
+	userId: string;
+	setIsUploading: (value: boolean) => void;
+	setUploadProgress: (value: number) => void;
+	setUploadedFileInfo: (info: StoredFileInfo | null) => void;
+	setShowResults: (value: boolean) => void;
+	setFilePreview: (preview: FilePreview | null) => void;
+}
+
+// Add custom error type
+class UploadError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'UploadError';
+	}
+}
+
+// Update handleUpload function with proper error handling
+async function handleUpload({
+	selectedFile,
+	activity,
+	userId,
+	setIsUploading,
+	setUploadProgress,
+	setUploadedFileInfo,
+	setShowResults,
+	setFilePreview,
+}: UploadParams): Promise<void> {
+	if (!selectedFile) return;
+
+	const updateFilePreview = (
+		progress: number,
+		status: FilePreview['status'] = 'uploading'
+	): void => {
+		setFilePreview({
+			file: selectedFile,
+			type: selectedFile.type.split('/')[1].toUpperCase(),
+			size: formatFileSize(selectedFile.size),
+			progress,
+			status,
+		});
+	};
+
+	try {
+		setIsUploading(true);
+		setUploadProgress(0);
+		updateFilePreview(0);
+
+		// Get presigned URL
+		const presignedResponse = await fetch('/api/activities/documentupload', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				filename: selectedFile.name,
+				contentType: selectedFile.type,
+				activityId: activity.id,
+				userId,
+			}),
+		});
+
+		if (!presignedResponse.ok) {
+			throw new UploadError('Failed to get upload URL');
+		}
+
+		const presignedData = (await presignedResponse.json()) as PresignedResponse;
+		const { url, fields, key, fileUrl } = presignedData;
+
+		updateFilePreview(20);
+
+		// Upload to S3
+		const formData = new FormData();
+		Object.entries(fields).forEach(([fieldKey, value]) => {
+			formData.append(fieldKey, String(value));
+		});
+		formData.append('file', selectedFile);
+
+		const uploadResponse = await fetch(url, {
+			method: 'POST',
+			body: formData,
+		});
+
+		if (!uploadResponse.ok) {
+			throw new UploadError('Upload to storage failed');
+		}
+
+		updateFilePreview(60);
+
+		// Save in database
+		const dbResponse = await fetch('/api/activities/saveFileSubmission', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				activityId: activity.id,
+				userId,
+				fileInfo: {
+					fileName: selectedFile.name,
+					fileUrl,
+					documentKey: key,
+					uploadDate: new Date().toISOString(),
+					status: 'pending',
+				},
+			}),
+		});
+
+		if (!dbResponse.ok) {
+			throw new UploadError('Failed to save submission');
+		}
+
+		const result = (await dbResponse.json()) as DocumentUploadResponse;
+
+		updateFilePreview(100, 'complete');
+		setUploadProgress(100);
+		setUploadedFileInfo({
+			fileName: selectedFile.name,
+			fileUrl: result.fileUrl,
+			uploadDate: new Date().toISOString(),
+			status: result.status,
+		});
+
+		toast.success('Documento subido correctamente');
+		setShowResults(true);
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error
+				? error.message
+				: 'Error desconocido al subir el archivo';
+		updateFilePreview(0, 'error');
+		console.error('Upload error:', errorMessage);
+		toast.error(`Error al subir el archivo: ${errorMessage}`);
+	} finally {
+		setIsUploading(false);
+	}
+}
 
 export default LessonActivityModal;

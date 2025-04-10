@@ -419,7 +419,9 @@ const LessonActivities = ({
 					{activityState.isLoading && (
 						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 					)}
-					<span className="font-semibold">Ver Resultados</span>
+					<span className="font-semibold">
+						{activity.typeid === 1 ? 'Ver Documento' : 'Ver Resultados'}
+					</span>
 					<FaCheckCircle className="ml-2 inline text-white" />
 				</>
 			);
@@ -430,7 +432,9 @@ const LessonActivities = ({
 				{activityState?.isLoading && (
 					<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 				)}
-				<span>Ver Actividad</span>
+				<span>
+					{activity.typeid === 1 ? 'Subir Documento' : 'Ver Actividad'}
+				</span>
 			</>
 		);
 	};
