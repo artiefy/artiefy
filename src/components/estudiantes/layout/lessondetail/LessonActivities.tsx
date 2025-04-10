@@ -13,6 +13,7 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import LessonActivityModal from './LessonActivityModal';
 import { GradeHistory } from './LessonGradeHistory';
 import { LessonGrades } from './LessonGrades';
+import LessonResource from './LessonResource';
 
 import type { Activity, SavedAnswer } from '~/types';
 
@@ -30,6 +31,7 @@ interface LessonActivitiesProps {
 	isLastActivity: boolean;
 	resourceNames: string[];
 	getNextLessonId: () => number | undefined; // Add this prop
+	resourceKey?: string; // Add this prop
 }
 
 interface SavedResults {
@@ -130,8 +132,9 @@ const LessonActivities = ({
 	courseId,
 	isLastLesson,
 	isLastActivity,
-	resourceNames: _resourceNames,
+	resourceNames, // Change from _resourceNames to resourceNames
 	getNextLessonId, // Add this prop
+	resourceKey, // Add this prop
 }: LessonActivitiesProps) => {
 	const [activitiesState, setActivitiesState] = useState<
 		Record<number, ActivityState>
@@ -639,6 +642,10 @@ const LessonActivities = ({
 					isLoading={isGradesLoading}
 				/>
 			</div>
+			<LessonResource
+				resourceNames={resourceNames}
+				resourceKey={resourceKey} // Pass the resourceKey
+			/>
 			{selectedActivity && (
 				<LessonActivityModal
 					isOpen={isModalOpen}

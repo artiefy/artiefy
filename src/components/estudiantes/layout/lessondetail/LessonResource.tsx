@@ -2,9 +2,13 @@ import { FaFilePdf, FaFilePowerpoint, FaLink } from 'react-icons/fa';
 
 interface RecursosLessonProps {
 	resourceNames: string[];
+	resourceKey?: string; // Add resourceKey prop
 }
 
-const LessonResource = ({ resourceNames }: RecursosLessonProps) => {
+const LessonResource = ({
+	resourceNames,
+	resourceKey,
+}: RecursosLessonProps) => {
 	const getIcon = (fileName: string) => {
 		const extension = fileName.split('.').pop();
 		switch (extension) {
@@ -18,14 +22,17 @@ const LessonResource = ({ resourceNames }: RecursosLessonProps) => {
 	};
 
 	const getFileUrl = (fileName: string) => {
-		// Utilizamos la variable de entorno para la URL del bucket S3
-		return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${fileName}`;
+		if (!resourceKey) return '';
+
+		// Combine the resource key with the filename to create the full path
+		const fullPath = `${resourceKey}/${fileName}`;
+		return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${fullPath}`;
 	};
 
 	return (
-		<div className="w-72 bg-background px-4 shadow-lg">
-			<h2 className="mb-4 text-2xl font-bold text-primary">Recursos</h2>
-			{resourceNames.length > 0 ? (
+		<div className="bg-background w-72 px-4 shadow-lg">
+			<h2 className="text-primary mb-4 text-2xl font-bold">Recursos</h2>
+			{resourceNames.length > 0 && resourceKey ? (
 				<ul>
 					{resourceNames.map((fileName, index) => (
 						<li key={index} className="mb-2">
