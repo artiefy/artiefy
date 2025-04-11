@@ -10,8 +10,12 @@ const BATCH_SIZE = 100;
 
 export async function GET() {
 	try {
-		const allPrograms = await db.select().from(programas);
-		return NextResponse.json(allPrograms);
+		const allPrograms = await db.select().from(programas).execute();
+		// Use a Set to filter out duplicate titles more efficiently
+		const uniquePrograms = Array.from(
+			new Map(allPrograms.map((program) => [program.title, program])).values()
+		);
+		return NextResponse.json(uniquePrograms);
 	} catch (error) {
 		console.error('Error al obtener programas:', error);
 		return NextResponse.json(

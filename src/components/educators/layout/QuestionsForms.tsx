@@ -69,23 +69,30 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
 			`/api/educadores/question/totalPercentage?activityId=${activityId}`
 		);
 		const data = (await response.json()) as { totalPercentage: number };
-		const totalPercentage =
-			data.totalPercentage +
-			newPesoPregunta -
-			(editingQuestion?.pesoPregunta ?? 0);
-		return totalPercentage > 100;
+	
+		// Calcula el nuevo total con el cambio (agregar o editar)
+		const totalWithNew = data.totalPercentage + newPesoPregunta - (editingQuestion?.pesoPregunta ?? 0);
+	
+		console.log('Total actual:', data.totalPercentage);
+		console.log('Peso nuevo:', newPesoPregunta);
+		console.log('Peso anterior (si aplica):', editingQuestion?.pesoPregunta ?? 0);
+		console.log('Nuevo total proyectado:', totalWithNew);
+	
+		// Devuelve true si SE EXCEDE el 100%
+		return totalWithNew > 100;
 	};
+	
 
 	// Maneja el envio del formulario para guardar la pregunta
 	const handleSubmit = async (questions: Question) => {
-		if (await validateTotalPercentage(pesoPregunta)) {
+		const excedeLimite = await validateTotalPercentage(pesoPregunta);
+		if (excedeLimite) {
 			toast('Error', {
-				description:
-					'El porcentaje total de las preguntas no puede exceder el 100%',
+				description: 'El porcentaje total de las preguntas no puede exceder el 100%',
 			});
-			setIsUploading(false);
 			return;
 		}
+
 		const method = editingQuestion ? 'PUT' : 'POST';
 		setIsUploading(true);
 		setUploadProgress(0);

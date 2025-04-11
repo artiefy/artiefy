@@ -9,30 +9,58 @@ const redis = new Redis({
 	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
+function safeParse<T>(data: unknown): T {
+	if (typeof data === 'string') {
+		try {
+			return JSON.parse(data) as T;
+		} catch {
+			return [] as T;
+		}
+	}
+	if (Array.isArray(data)) {
+		return data as T;
+	}
+	return [] as T;
+}
+
 export async function GET(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
 		const activityId = searchParams.get('activityId');
+
 		if (!activityId) {
 			return NextResponse.json(
 				{ success: false, message: 'Se requiere activityId' },
 				{ status: 400 }
 			);
 		}
+
 		const keyOM = `activity:${activityId}:questionsOM`;
 		const keyVOF = `activity:${activityId}:questionsVOF`;
 		const keyCompletar = `activity:${activityId}:questionsACompletar`;
 
-		const questionsOM = (await redis.get<Question[]>(keyOM)) ?? [];
-		const questionsVOF = (await redis.get<VerdaderoOFlaso[]>(keyVOF)) ?? [];
-		const questionsACompletar =
-			(await redis.get<Completado[]>(keyCompletar)) ?? [];
+		// Obtener desde Redis
 
+		// Parsear solo si es string
+		const questionsOM: Question[] = safeParse<Question[]>(
+			await redis.get(keyOM)
+		);
+		const questionsVOF: VerdaderoOFlaso[] = safeParse<VerdaderoOFlaso[]>(
+			await redis.get(keyVOF)
+		);
+		const questionsACompletar: Completado[] = safeParse<Completado[]>(
+			await redis.get(keyCompletar)
+		);
+
+		// Calcular total correctamente
 		const totalPercentage = [
 			...questionsOM,
 			...questionsVOF,
 			...questionsACompletar,
-		].reduce((total, question) => total + question.pesoPregunta, 0);
+		].reduce(
+			(total, question) => total + Number(question.pesoPregunta || 0),
+			0
+		);
 
 		return NextResponse.json({ totalPercentage });
 	} catch (error) {
