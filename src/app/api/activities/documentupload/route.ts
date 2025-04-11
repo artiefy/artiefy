@@ -70,9 +70,10 @@ export async function POST(request: Request) {
 			key,
 			fileUrl: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`,
 			fileName: filename,
-			status: 'pending',
+			status: 'pending', // Reset status to pending for resubmissions
 		};
 
+		// Always update the metadata for the document, allowing resubmissions
 		await redis.set(documentKey, metadata);
 
 		// Return presigned URL and fields

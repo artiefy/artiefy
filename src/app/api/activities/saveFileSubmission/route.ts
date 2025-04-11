@@ -39,30 +39,32 @@ export async function POST(request: NextRequest) {
 		// Now TypeScript knows this is a valid FileSubmissionRequest
 		const { activityId, userId, fileInfo } = rawBody;
 
-		// Save document key and file info in Upstash
+		// Guarda en Upstash con valores reiniciados
 		const submissionKey = `activity:${activityId}:user:${userId}:submission`;
 		await redis.set(
 			submissionKey,
 			{
 				...fileInfo,
-				documentKey: fileInfo.documentKey, // Store the S3 key
-				grade: 0.0, // Agregar nota inicial 0.0
+				documentKey: fileInfo.documentKey,
+				grade: 0.0, // Reiniciar calificación
+				status: 'pending', // Reiniciar estado a pendiente
+				feedback: null, // Limpiar feedback anterior
 			},
 			{ ex: 2592000 }
-		); // 30 days TTL
+		);
 
-		// Update progress in database with explicit boolean values
+		// Actualizar en la base de datos también reiniciando valores
 		await db
 			.insert(userActivitiesProgress)
 			.values({
 				userId,
 				activityId,
 				progress: 100,
-				isCompleted: true, // Explicit boolean
+				isCompleted: true,
 				lastUpdated: new Date(),
 				attemptCount: 1,
-				revisada: fileInfo.status === 'reviewed', // Set based on status
-				finalGrade: fileInfo.grade ?? null, // Add grade if present
+				revisada: false, // Reiniciar estado de revisión
+				finalGrade: 0.0, // Reiniciar calificación
 			})
 			.onConflictDoUpdate({
 				target: [
@@ -71,11 +73,11 @@ export async function POST(request: NextRequest) {
 				],
 				set: {
 					progress: 100,
-					isCompleted: true, // Explicit boolean
+					isCompleted: true,
 					lastUpdated: new Date(),
 					attemptCount: sql`${userActivitiesProgress.attemptCount} + 1`,
-					finalGrade: fileInfo.grade ?? null, // Update grade if present
-					revisada: fileInfo.status === 'reviewed',
+					finalGrade: 0.0, // Reiniciar calificación
+					revisada: false, // Reiniciar estado de revisión
 				},
 			});
 
