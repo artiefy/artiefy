@@ -141,5 +141,5 @@
 	"javascript.suggest.completeFunctionCalls": true,
 	"typescript.tsserver.experimental.enableProjectDiagnostics": true,
 	"svg.preview.background": "editor",
-	"workbench.colorTheme": "Material Theme Darker High Contrast"
+	"workbench.colorTheme": "GitHub Dark Default"
 }

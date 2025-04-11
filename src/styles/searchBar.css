@@ -224,15 +224,13 @@
 			rgb(214, 229, 247) 100%
 		);
 		border: none;
-		color: #9ebcd9;
 		font-size: 14px; /* Reduced font size for mobile */
 		border-radius: 50px;
 	}
 
 	.input::placeholder {
 		content: "Escribe tu Idea...?";
-		font-size: 12px; /* Even smaller placeholder text for mobile */
-		opacity: 1;
+		font-size: 14px; /* Even smaller placeholder text for mobile */
 	}
 
 	.input:focus {
@@ -264,17 +262,17 @@
 	}
 }
 
-/* Larger screens */
+/* Larger screens - usando selectores más específicos */
 @media (min-width: 769px) {
-	.input {
-		width: 650px; /* Set a fixed width for larger screens */
+	html body .input {
+		width: 650px;
 	}
-	.input-container {
-    padding: 6px;
-		width: 70%; /* Reduce width for larger screens */
-		max-width: 720px; /* Reduce max-width for larger screens */
+	html body .input-container {
+		padding: 0.8%; /* Changed from 7px to 0.4% */
+		width: 70%;
+		max-width: 720px;
 	}
-	.input::placeholder {
+	html body .input::placeholder {
 		content: "Que Deseas Crear? Escribe Tu Idea...";
 		opacity: 1;
 	}
