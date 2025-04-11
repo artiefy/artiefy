@@ -181,7 +181,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 	if (isLoading) {
 		return (
-			<div className="flex h-[400px] items-center justify-center bg-gray-900">
+			<div className="flex aspect-video w-full items-center justify-center bg-gray-900">
 				<div className="flex flex-col items-center">
 					<Icons.spinner className="mb-4 h-8 w-8 animate-spin text-blue-500" />
 					<p className="text-sm text-gray-400">Cargando video...</p>

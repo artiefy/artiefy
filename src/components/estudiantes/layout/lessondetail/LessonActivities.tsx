@@ -27,11 +27,10 @@ interface LessonActivitiesProps {
 	userId: string;
 	onLessonUnlocked: (lessonId: number) => void;
 	courseId: number;
+	lessonId: number;
 	isLastLesson: boolean;
 	isLastActivity: boolean;
-	resourceNames: string[];
-	getNextLessonId: () => number | undefined; // Add this prop
-	resourceKey?: string; // Add this prop
+	getNextLessonId: () => number | undefined;
 }
 
 interface SavedResults {
@@ -130,11 +129,10 @@ const LessonActivities = ({
 	userId,
 	onLessonUnlocked,
 	courseId,
+	lessonId,
 	isLastLesson,
 	isLastActivity,
-	resourceNames, // Change from _resourceNames to resourceNames
-	getNextLessonId, // Add this prop
-	resourceKey, // Add this prop
+	getNextLessonId,
 }: LessonActivitiesProps) => {
 	const [activitiesState, setActivitiesState] = useState<
 		Record<number, ActivityState>
@@ -631,6 +629,7 @@ const LessonActivities = ({
 	return (
 		<div className="w-72 p-4">
 			<h2 className="text-primary mb-4 text-2xl font-bold">Actividades</h2>
+			{/* Activities section */}
 			{activities.length > 0 ? (
 				<div className="space-y-4">
 					{activities
@@ -640,6 +639,8 @@ const LessonActivities = ({
 			) : (
 				<p className="text-gray-600">No hay actividades disponibles</p>
 			)}
+
+			{/* Grades section */}
 			<div className="mt-4">
 				<h2 className="text-primary mb-4 text-2xl font-bold">Calificaciones</h2>
 				<LessonGrades
@@ -648,10 +649,10 @@ const LessonActivities = ({
 					isLoading={isGradesLoading}
 				/>
 			</div>
-			<LessonResource
-				resourceNames={resourceNames}
-				resourceKey={resourceKey} // Pass the resourceKey
-			/>
+
+			{/* Resources section */}
+			<LessonResource lessonId={lessonId} />
+
 			{selectedActivity && (
 				<LessonActivityModal
 					isOpen={isModalOpen}

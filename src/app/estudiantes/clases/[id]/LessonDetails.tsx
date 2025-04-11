@@ -16,7 +16,6 @@ import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonCh
 import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
-import LessonResource from '~/components/estudiantes/layout/lessondetail/LessonResource';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -527,12 +526,11 @@ export default function LessonDetails({
 						userId={userId}
 						onLessonUnlocked={handleLessonUnlocked}
 						courseId={lesson.courseId}
+						lessonId={lesson.id} // Add this line
 						isLastLesson={isLastLesson()}
 						isLastActivity={isLastActivity()}
-						resourceNames={lesson.resourceNames}
 						getNextLessonId={getNextLessonId} // Add this prop
 					/>
-					<LessonResource resourceNames={lesson.resourceNames} />
 				</div>
 
 				{/* Chatbot Button and Modal */}
