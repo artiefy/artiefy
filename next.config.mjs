@@ -56,7 +56,14 @@ const nextConfig = {
 				'.js',
 				'.mjs',
 				'.json',
+				'.mp4',
 			], // Define las extensiones de archivo que se resolverán automáticamente
+			rules: {
+				'**/*.mp4': {
+					loaders: ['next-video/webpack/video-loader'],
+					type: 'asset',
+				},
+			},
 		},
 	},
 	expireTime: 3600, // Define un tiempo de expiración personalizado para el encabezado Cache-Control (1 hora)

@@ -10,7 +10,8 @@
 		"db:migrate": "drizzle-kit migrate",
 		"db:push": "drizzle-kit push",
 		"db:studio": "drizzle-kit studio",
-		"dev": "next dev --turbo",
+		"dev": "next dev",
+		"dev:turbo": "next dev --turbo",
 		"lint": "set NODE_OPTIONS=--max-old-space-size=8192 && next lint",
 		"lint:fix": "set NODE_OPTIONS=--max-old-space-size=8192 && next lint --fix",
 		"start": "next start",
@@ -153,14 +154,8 @@
 	"engines": {
 		"node": "22.x"
 	},
-	"os": [
-		"win32",
-		"linux",
-		"darwin"
-	],
-	"cpu": [
-		"x64"
-	],
+	"os": ["win32", "linux", "darwin"],
+	"cpu": ["x64"],
 	"ct3aMetadata": {
 		"initVersion": "7.38.1"
 	},
