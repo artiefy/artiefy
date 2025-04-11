@@ -20,7 +20,7 @@ interface FileSubmissionRequest {
 		documentKey: string; // Add this field
 		uploadDate: string;
 		status: 'pending' | 'reviewed';
-		grade?: number; // Add optional grade field
+		grade: number; // Cambiado de opcional a requerido
 	};
 }
 
@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
 			{
 				...fileInfo,
 				documentKey: fileInfo.documentKey, // Store the S3 key
+				grade: 0.0, // Agregar nota inicial 0.0
 			},
 			{ ex: 2592000 }
 		); // 30 days TTL
