@@ -38,11 +38,6 @@ interface User {
 	isNew?: boolean;
 }
 
-interface Program {
-	id: string;
-	title: string;
-}
-
 interface Course {
 	id: string;
 	title: string;
@@ -127,7 +122,6 @@ export default function AdminDashboard() {
 	} | null>(null);
 	const [editingUser, setEditingUser] = useState<User | null>(null);
 	const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
-	const [loadingPrograms, setLoadingPrograms] = useState(false);
 
 	const [editValues, setEditValues] = useState<{
 		firstName: string;
@@ -191,6 +185,9 @@ export default function AdminDashboard() {
 
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
+	const [allPrograms, setAllPrograms] = useState<Program[]>([]);
+	const [materias, setMaterias] = useState<Materia[]>([]);
+	const [courses, setCourses] = useState<Course[]>([]);
 
 	const handleUserSelection = useCallback((userId: string, email: string) => {
 		setSelectedUsers((prevSelected) =>
@@ -216,68 +213,60 @@ export default function AdminDashboard() {
 		id: string;
 		title: string;
 	}
+	const isValidProgramArray = useCallback(
+		(data: unknown): data is Program[] => {
+			return (
+				Array.isArray(data) &&
+				data.every(
+					(item) =>
+						typeof item === 'object' &&
+						item !== null &&
+						'id' in item &&
+						'title' in item &&
+						(typeof (item as { id: unknown }).id === 'string' ||
+							typeof (item as { id: unknown }).id === 'number') &&
+						typeof (item as { title: unknown }).title === 'string'
+				)
+			);
+		},
+		[]
+	);
 
-	function isValidCourseArray(data: unknown): data is Course[] {
-		return (
-			Array.isArray(data) &&
-			data.every(
-				(item) =>
-					typeof item === 'object' &&
-					item !== null &&
-					'id' in item &&
-					'title' in item &&
-					(typeof (item as { id: unknown }).id === 'string' ||
-						typeof (item as { id: unknown }).id === 'number') &&
-					typeof (item as { title: unknown }).title === 'string'
-			)
-		);
-	}
-
-	function isValidProgramArray(data: unknown): data is Program[] {
-		return (
-			Array.isArray(data) &&
-			data.every(
-				(item) =>
-					typeof item === 'object' &&
-					item !== null &&
-					'id' in item &&
-					'title' in item &&
-					(typeof (item as { id: unknown }).id === 'string' ||
-						typeof (item as { id: unknown }).id === 'number') &&
-					typeof (item as { title: unknown }).title === 'string'
-			)
-		);
-	}
-
-	const fetchAllPrograms = async () => {
+	const fetchAllPrograms = useCallback(async () => {
 		try {
 			const res = await fetch('/api/super-admin/programs');
 			if (!res.ok) throw new Error('Error al obtener programas');
-
-			const rawData = (await res.json()) as unknown; // Explicitly type as unknown
-
-			if (!isValidProgramArray(rawData)) {
-				throw new Error('Datos inválidos para programas');
-			}
-
-			// Use a Set to eliminate duplicates and normalize IDs to strings
+			const rawData: unknown = await res.json();
+			if (!isValidProgramArray(rawData)) throw new Error('Datos inválidos');
 			const data = Array.from(
 				new Map(
 					rawData.map((p) => [p.id, { id: String(p.id), title: p.title }])
 				).values()
 			);
-
 			setPrograms(data);
-			setAllPrograms(data); // Cache all programs for later use
+			setAllPrograms(data);
 		} catch (error) {
-			console.error('Error cargando todos los programas:', error);
+			console.error('Error cargando programas:', error);
 			setPrograms([]);
 		}
-	};
+	}, [setPrograms, setAllPrograms, isValidProgramArray]);
 
-	const [materias, setMaterias] = useState<Materia[]>([]);
-	const [allPrograms, setAllPrograms] = useState<Program[]>([]);
-	const [courses, setCourses] = useState<Course[]>([]);
+	const isValidCourseArray = useCallback((data: unknown): data is Course[] => {
+		return (
+			Array.isArray(data) &&
+			data.every(
+				(item) =>
+					typeof item === 'object' &&
+					item !== null &&
+					'id' in item &&
+					'title' in item &&
+					(typeof (item as { id: unknown }).id === 'string' ||
+						typeof (item as { id: unknown }).id === 'number') &&
+					typeof (item as { title: unknown }).title === 'string'
+			)
+		);
+	}, []);
+
 	const [allCourses, setAllCourses] = useState<Course[]>([]);
 
 	useEffect(() => {
@@ -325,7 +314,7 @@ export default function AdminDashboard() {
 		);
 
 		setPrograms(relatedPrograms);
-	}, [selectedCourse, materias, allPrograms]); // ✅ todo ok
+	}, [selectedCourse, materias, allPrograms, isValidProgramArray]); // ✅ añadimos
 
 	const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
 
@@ -350,31 +339,31 @@ export default function AdminDashboard() {
 
 	useEffect(() => {
 		void fetchAllPrograms();
-	}, []);
+	}, [fetchAllPrograms]); // ✅ lo añadimos
 
-	const fetchAllCourses = async () => {
+	const fetchAllCourses = useCallback(async () => {
 		try {
 			const res = await fetch('/api/super-admin/courses');
 			if (!res.ok) throw new Error('Error al obtener cursos');
-
+	
 			const rawData: unknown = await res.json();
-
+	
 			if (!isValidCourseArray(rawData)) {
 				throw new Error('Datos inválidos para cursos');
 			}
-
+	
 			const data = rawData.map((c) => ({
 				id: String(c.id),
 				title: c.title,
 			}));
-
+	
 			setCourses(data);
 			setAllCourses(data);
 		} catch (error) {
 			console.error('Error cargando todos los cursos:', error);
 			setCourses([]);
 		}
-	};
+	}, [isValidCourseArray]);
 
 	// 1️⃣ Filtrar usuarios
 	const filteredUsers = users.filter(
@@ -1210,7 +1199,7 @@ export default function AdminDashboard() {
 			}
 		};
 		void fetchProgramsFromCourse();
-	}, [selectedCourse, allPrograms]);
+	}, [selectedCourse, allPrograms, isValidProgramArray]);
 
 	useEffect(() => {
 		const fetchCoursesFromProgram = async () => {
@@ -1226,7 +1215,7 @@ export default function AdminDashboard() {
 					throw new Error('Datos inválidos al obtener cursos desde programa');
 				}
 
-				const data = rawData; // ✅ ahora es Course[]
+				const data: Program[] = rawData as Program[];
 				setCourses(data);
 			} catch (error) {
 				console.error('Error cargando cursos desde programa:', error);
@@ -1239,7 +1228,14 @@ export default function AdminDashboard() {
 		} else {
 			void fetchAllCourses(); // 🔁 Si se deselecciona, mostrar todos
 		}
-	}, [selectedProgram]);
+	}, [
+		selectedCourse,
+		allPrograms,
+		isValidProgramArray,
+		fetchAllCourses,
+		isValidCourseArray,
+		selectedProgram,
+	]); // ✅ para programas
 
 	useEffect(() => {
 		if (!selectedProgram) {
@@ -1279,8 +1275,8 @@ export default function AdminDashboard() {
 			}
 		};
 
-		loadCourses();
-	}, [selectedProgram]);
+		void loadCourses();
+	}, [selectedProgram, allCourses, isValidCourseArray]); // ✅ para cursos
 
 	useEffect(() => {
 		if (!selectedCourse) {
@@ -1320,8 +1316,8 @@ export default function AdminDashboard() {
 			}
 		};
 
-		loadPrograms();
-	}, [selectedCourse]);
+		void loadPrograms();
+	}, [selectedCourse, allPrograms]);
 
 	// Add search filters for courses and programs
 	const [courseSearch, setCourseSearch] = useState('');
