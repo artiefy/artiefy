@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
 
-import { clerkClient } from '@clerk/nextjs/server';
 import { eq, inArray, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { enrollments, users, enrollmentPrograms } from '~/server/db/schema';
 
-const BATCH_SIZE = 100;
 
 export async function POST(request: Request) {
 	try {
@@ -19,7 +17,7 @@ export async function POST(request: Request) {
 		}
 
 		const body = (await request.json()) as { courseId?: string; programId?: string; userIds: string[]; planType?: string };
-		const { courseId, programId, userIds, planType } = body;
+		const { courseId, programId, userIds } = body;
 
 		if (!Array.isArray(userIds) || userIds.length === 0) {
 			return NextResponse.json(

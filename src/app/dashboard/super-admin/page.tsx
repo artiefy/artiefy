@@ -38,11 +38,6 @@ interface User {
 	isNew?: boolean;
 }
 
-interface Program {
-	id: string;
-	title: string;
-}
-
 interface Course {
 	id: string;
 	title: string;
@@ -127,7 +122,6 @@ export default function AdminDashboard() {
 	} | null>(null);
 	const [editingUser, setEditingUser] = useState<User | null>(null);
 	const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
-	const [loadingPrograms, setLoadingPrograms] = useState(false);
 
 	const [editValues, setEditValues] = useState<{
 		firstName: string;
@@ -192,6 +186,8 @@ export default function AdminDashboard() {
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
 
+	
+
 	const handleUserSelection = useCallback((userId: string, email: string) => {
 		setSelectedUsers((prevSelected) =>
 			prevSelected.includes(userId)
@@ -216,6 +212,7 @@ export default function AdminDashboard() {
 		id: string;
 		title: string;
 	}
+	
 
 	function isValidCourseArray(data: unknown): data is Course[] {
 		return (
@@ -249,31 +246,7 @@ export default function AdminDashboard() {
 		);
 	}
 
-	const fetchAllPrograms = async () => {
-		try {
-			const res = await fetch('/api/super-admin/programs');
-			if (!res.ok) throw new Error('Error al obtener programas');
-
-			const rawData = (await res.json()) as unknown; // Explicitly type as unknown
-
-			if (!isValidProgramArray(rawData)) {
-				throw new Error('Datos inválidos para programas');
-			}
-
-			// Use a Set to eliminate duplicates and normalize IDs to strings
-			const data = Array.from(
-				new Map(
-					rawData.map((p) => [p.id, { id: String(p.id), title: p.title }])
-				).values()
-			);
-
-			setPrograms(data);
-			setAllPrograms(data); // Cache all programs for later use
-		} catch (error) {
-			console.error('Error cargando todos los programas:', error);
-			setPrograms([]);
-		}
-	};
+	
 
 	const [materias, setMaterias] = useState<Materia[]>([]);
 	const [allPrograms, setAllPrograms] = useState<Program[]>([]);
