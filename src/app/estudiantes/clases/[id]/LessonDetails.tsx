@@ -201,60 +201,53 @@ export default function LessonDetails({
 		void checkEnrollment();
 	}, [lesson.courseId, userId, router]);
 
-	// Update this function to handle progress synchronization
-	const handleProgressUpdate = async (videoProgress: number) => {
-		const roundedProgress = Math.round(videoProgress);
+	// Update this function to properly handle async/await
+	const handleProgressUpdate = useCallback(
+		async (videoProgress: number) => {
+			const roundedProgress = Math.round(videoProgress);
 
-		// Only update if progress has increased
-		if (roundedProgress > progress && roundedProgress <= 100) {
-			try {
-				// Update local state immediately for smooth UI
-				setProgress(roundedProgress);
+			// Only update if progress is different from current
+			if (roundedProgress !== progress) {
+				try {
+					// Update local state immediately
+					setProgress(roundedProgress);
 
-				// Update database
-				await updateLessonProgress(lesson.id, roundedProgress);
+					// Update lessons state
+					setLessonsState((prevLessons) =>
+						prevLessons.map((l) =>
+							l.id === lesson.id
+								? {
+										...l,
+										porcentajecompletado: roundedProgress,
+										isCompleted: roundedProgress === 100,
+										isNew: roundedProgress > 1 ? false : l.isNew,
+									}
+								: l
+						)
+					);
 
-				// Update lessons state to reflect changes
-				setLessonsState((prevLessons) =>
-					prevLessons.map((l) =>
-						l.id === lesson.id
-							? {
-									...l,
-									porcentajecompletado: roundedProgress,
-									isCompleted: roundedProgress === 100,
-									isNew: roundedProgress > 1 ? false : l.isNew,
-								}
-							: l
-					)
-				);
-
-				// If video reaches 100%, mark lesson as completed
-				if (roundedProgress === 100) {
-					setIsVideoCompleted(true);
-					toast.success('Clase completada', {
-						description: activities.length
-							? 'Ahora completa la actividad para continuar'
-							: 'Video completado exitosamente',
-					});
+					// Update database
+					await updateLessonProgress(lesson.id, roundedProgress);
+				} catch (error) {
+					console.error('Error al actualizar el progreso:', error);
+					toast.error('Error al sincronizar el progreso');
 				}
-			} catch (error) {
-				console.error('Error al actualizar el progreso:', error);
-				toast.error('Error al sincronizar el progreso');
-
-				// Revert local state if update fails
-				setProgress(progress);
 			}
-		}
-	};
+		},
+		[progress, lesson.id, setLessonsState]
+	);
 
-	// Update video end handler to ensure 100% completion
+	// Update video end handler
 	const handleVideoEnd = async () => {
 		try {
-			// Force progress to 100%
 			await handleProgressUpdate(100);
+			setIsVideoCompleted(true);
 
-			// Additional completion logic
-			await handleLessonCompletion();
+			toast.success('Clase completada', {
+				description: activities.length
+					? 'Ahora completa la actividad para continuar'
+					: 'Video completado exitosamente',
+			});
 		} catch (error) {
 			console.error('Error al completar la lección:', error);
 			toast.error('Error al marcar la lección como completada');
@@ -397,34 +390,6 @@ export default function LessonDetails({
 		// Solo verificar una vez al cargar el componente
 		checkSubscriptionStatus();
 	}, [course.courseType?.requiredSubscriptionLevel, router, user]);
-
-	// Nuevo manejador para completar lecciones
-	const handleLessonCompletion = async () => {
-		try {
-			setProgress(100);
-			setIsVideoCompleted(true);
-
-			await updateLessonProgress(lesson.id, 100);
-
-			// Corregir el tipo manteniendo todas las propiedades requeridas
-			setLessonsState((prevLessons) =>
-				prevLessons.map((l) =>
-					l.id === lesson.id
-						? {
-								...l, // Mantener todas las propiedades existentes
-								porcentajecompletado: 100,
-								isCompleted: !activities.length,
-								// Don't modify isLocked status here
-							}
-						: l
-				)
-			);
-		} catch (error) {
-			console.error('Error:', error);
-			toast.error('Error al completar la lección');
-			throw error;
-		}
-	};
 
 	// Add function to get next lesson ID
 	const getNextLessonId = useCallback(() => {

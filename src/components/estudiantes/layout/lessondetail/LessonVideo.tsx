@@ -120,9 +120,12 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 	const handleTimeUpdate = () => {
 		if (videoRef.current && !isVideoCompleted) {
-			const progress =
-				(videoRef.current.currentTime / videoRef.current.duration) * 100;
-			onProgressUpdate(progress);
+			const currentTime = videoRef.current.currentTime;
+			const duration = videoRef.current.duration;
+			if (duration > 0) {
+				const progress = Math.round((currentTime / duration) * 100);
+				onProgressUpdate(progress);
+			}
 		}
 	};
 
@@ -218,6 +221,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	return (
 		<div className="relative aspect-video w-full">
 			<Player
+				ref={videoRef}
 				src={videoUrl}
 				className="h-full w-full rounded-lg"
 				onEnded={handleVideoEnd}

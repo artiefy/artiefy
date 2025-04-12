@@ -61,6 +61,22 @@ const LessonCards = ({
 		return description.slice(0, maxLength).trim() + '...';
 	};
 
+	const renderProgressBar = (lessonItem: LessonWithProgress) => {
+		const isCurrentLesson = lessonItem.id === selectedLessonId;
+		const currentProgress = isCurrentLesson ? progress : lessonItem.porcentajecompletado;
+
+		return (
+			<div className="relative h-2 rounded bg-gray-200">
+				<div
+					className="absolute h-2 rounded bg-blue-500 transition-all duration-300 ease-in-out"
+					style={{
+						width: `${currentProgress}%`,
+					}}
+				/>
+			</div>
+		);
+	};
+
 	const renderLessonCard = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
 		const isAccessible = !lessonItem.isLocked;
@@ -108,14 +124,7 @@ const LessonCards = ({
 				<p className="mb-2 line-clamp-1 text-sm text-gray-600">
 					{truncateDescription(lessonItem.description)}
 				</p>
-				<div className="relative h-2 rounded bg-gray-200">
-					<div
-						className="absolute h-2 rounded bg-blue-500"
-						style={{
-							width: `${isCurrentLesson ? progress : lessonItem.porcentajecompletado}%`,
-						}}
-					/>
-				</div>
+				{renderProgressBar(lessonItem)}
 				<div className="mt-2 flex justify-between text-xs text-gray-500">
 					<span>{lessonItem.duration} mins</span>
 					<span>
