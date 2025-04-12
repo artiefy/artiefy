@@ -15,6 +15,11 @@ interface LessonCardsProps {
 	setLessonsState: Dispatch<SetStateAction<LessonWithProgress[]>>; // Add this prop
 }
 
+const extractNumberFromTitle = (title: string) => {
+	const match = /\d+/.exec(title);
+	return match ? parseInt(match[0]) : 0;
+};
+
 const LessonCards = ({
 	lessonsState,
 	selectedLessonId,
@@ -124,10 +129,12 @@ const LessonCards = ({
 	return (
 		<>
 			{lessonsState
-				.sort(
-					(a, b) =>
-						new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-				)
+				.sort((a, b) => {
+					// Sort by numeric part in title (e.g., "Clase 1" or "Sesión 1")
+					return (
+						extractNumberFromTitle(a.title) - extractNumberFromTitle(b.title)
+					);
+				})
 				.map(renderLessonCard)}
 		</>
 	);

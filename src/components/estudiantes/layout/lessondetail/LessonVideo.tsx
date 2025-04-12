@@ -163,8 +163,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						<h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
 							Video de la Clase
 						</h2>
-						<p className="text-5xl font-extrabold text-white">
-							<span className="bg-gradient-to-r from-teal-400 to-green-400 bg-clip-text text-transparent">
+						<p className="text-5xl font-extrabold">
+							<span className="bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent">
 								Disponible muy pronto
 							</span>
 						</p>
@@ -216,7 +216,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	}
 
 	return (
-		<div className="relative flex aspect-video w-full items-center justify-center">
+		<div className="relative aspect-video w-full">
 			<Player
 				src={videoUrl}
 				className="h-full w-full rounded-lg"

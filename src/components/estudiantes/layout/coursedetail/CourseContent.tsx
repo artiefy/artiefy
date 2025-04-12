@@ -39,6 +39,11 @@ interface CourseContentProps {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+const extractNumberFromTitle = (title: string) => {
+	const match = /\d+/.exec(title);
+	return match ? parseInt(match[0]) : 0;
+};
+
 export function CourseContent({
 	course,
 	isEnrolled,
@@ -60,8 +65,13 @@ export function CourseContent({
 
 	const memoizedLessons = useMemo(() => {
 		return course.lessons
-			.sort((a, b) => a.title.localeCompare(b.title))
-			.map((lesson, index) => {
+			.sort((a, b) => {
+				// Sort by numeric part in title (e.g., "Clase 1" or "Sesión 1")
+				return (
+					extractNumberFromTitle(a.title) - extractNumberFromTitle(b.title)
+				);
+			})
+			.map((lesson) => {
 				const isUnlocked =
 					isEnrolled &&
 					(course.courseType?.requiredSubscriptionLevel === 'none' ||
@@ -94,8 +104,8 @@ export function CourseContent({
 									) : (
 										<FaLock className="mr-2 size-5 text-gray-400" />
 									)}
-									<span className="font-medium text-background">
-										Clase {index + 1}: {lesson.title}{' '}
+									<span className="text-background font-medium">
+										{lesson.title}{' '}
 										<span className="ml-2 text-sm text-gray-500">
 											({lesson.duration} mins)
 										</span>
@@ -309,12 +319,12 @@ export function CourseContent({
 		<div className="relative rounded-lg border bg-white p-6 shadow-sm">
 			<div className="mb-6 flex flex-col gap-4">
 				<div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
-					<h2 className="text-2xl font-bold text-background mt-2 sm:mt-0">
+					<h2 className="text-background mt-2 text-2xl font-bold sm:mt-0">
 						Contenido del curso
 					</h2>
 					{isSignedIn && isSubscriptionActive && (
 						<div className="flex flex-col items-end gap-1">
-							<div className="sm:mt-4 mt-0 flex items-center gap-2 text-green-500">
+							<div className="mt-0 flex items-center gap-2 text-green-500 sm:mt-4">
 								<FaCheck className="size-4" />
 								<span className="font-medium">Suscripción Activa</span>
 							</div>
