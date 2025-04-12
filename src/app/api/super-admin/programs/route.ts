@@ -155,11 +155,26 @@ export async function POST(req: NextRequest) {
 						}
 					} else {
 						// Si no hay cursos asociados, simplemente actualizar la materia original
-						await db
-							.update(materias)
-							.set({ programaId: newProgram.id, courseid: null })
-							.where(eq(materias.id, materia.id))
-							.execute();
+						if (materia.programaId) {
+							// Si ya tiene un programa, duplicar para no tocar la original
+							await db
+								.insert(materias)
+								.values({
+									title: materia.title,
+									description: materia.description,
+									programaId: newProgram.id,
+									courseid: null,
+								})
+								.execute();
+						} else {
+							// Si no tiene programa, puedes actualizarla
+							await db
+								.update(materias)
+								.set({ programaId: newProgram.id, courseid: null })
+								.where(eq(materias.id, materia.id))
+								.execute();
+						}
+						
 					}
 				}
 			}
@@ -270,27 +285,59 @@ export async function PUT(req: NextRequest) {
 					.from(materias)
 					.where(eq(materias.id, materiaId))
 					.then((res) => res[0]);
-
-				if (materia) {
-					if (materia.courseid) {
-						await db
-							.insert(materias)
-							.values({
+			
+				if (!materia) continue;
+			
+				if (materia.courseid) {
+					// Ya tiene curso → duplicar
+					await db.insert(materias).values({
+						title: materia.title,
+						description: materia.description,
+						programaId: Number(updatedProgram.id),
+						courseid: materia.courseid,
+					});
+				} else {
+					// Ver si existen otras con curso para ese título
+					const materiasConCurso = await db
+						.select()
+						.from(materias)
+						.where(
+							and(
+								eq(materias.title, materia.title),
+								isNotNull(materias.courseid),
+								isNotNull(materias.programaId),
+								ne(materias.programaId, Number(updatedProgram.id))
+							)
+						);
+			
+					if (materiasConCurso.length > 0) {
+						for (const materiaCurso of materiasConCurso) {
+							await db.insert(materias).values({
+								title: materiaCurso.title,
+								description: materiaCurso.description,
+								programaId: Number(updatedProgram.id),
+								courseid: materiaCurso.courseid,
+							});
+						}
+					} else {
+						if (materia.programaId) {
+							// Ya tiene programa → duplicar
+							await db.insert(materias).values({
 								title: materia.title,
 								description: materia.description,
-								programaId: parseInt(programId),
+								programaId: Number(updatedProgram.id),
 								courseid: null,
-							})
-							.execute();
-					} else {
-						await db
-							.update(materias)
-							.set({ programaId: parseInt(programId) })
-							.where(eq(materias.id, materiaId))
-							.execute();
+							});
+						} else {
+							// No tiene programa aún → actualizar
+							await db.update(materias)
+							.set({ programaId: Number(updatedProgram.id), courseid: null })
+							.where(eq(materias.programaId, Number(updatedProgram.id)))
+							}
 					}
 				}
 			}
+			
 		}
 
 		return NextResponse.json(updatedProgram);
