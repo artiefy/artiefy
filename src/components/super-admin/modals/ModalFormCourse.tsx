@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+/* editar curso en super admin*/
 'use client';
 
 import { useEffect, useState, type ChangeEvent } from 'react';
@@ -1056,18 +1057,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								</label>
 								<Select
 									isMulti
-									value={allSubjects
-										.filter((subject) =>
-											subjects.some((s) => s.id === subject.id)
-										)
-										.map((subject) => ({
-											value: subject.id.toString(),
-											label: subject.title,
-										}))}
-									options={allSubjects.map((subject) => ({
+									value={Array.from(
+										new Map(
+										  allSubjects
+											.filter((subject) => subjects.some((s) => s.id === subject.id))
+											.map((subject) => [subject.title, subject])
+										).values()
+									  ).map((subject) => ({
 										value: subject.id.toString(),
 										label: subject.title,
-									}))}
+									  }))}									  
+									  options={Array.from(
+										new Map(allSubjects.map((subject) => [subject.title, subject])).values()
+									  ).map((subject) => ({
+										value: subject.id.toString(),
+										label: subject.title,
+									  }))}
 									onChange={(
 										newValue: MultiValue<{ value: string; label: string }>
 									) => {

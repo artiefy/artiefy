@@ -334,8 +334,14 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 			try {
 				const response = await fetch('/api/super-admin/materias'); // Ajusta la URL según necesidad
 				const data = (await response.json()) as { id: number; title: string }[];
+
+				// Filtrar duplicados por el título (subject.title)
+				const uniqueSubjects = Array.from(
+					new Map(data.map((subject) => [subject.title, subject])).values()
+				);
+
 				setAllSubjects(
-					data.map((subject) => ({
+					uniqueSubjects.map((subject) => ({
 						value: subject.id.toString(),
 						label: subject.title,
 					}))
@@ -349,6 +355,11 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 			void fetchSubjects();
 		}
 	}, [isOpen]);
+	const uniqueSelectedSubjects = Array.from(
+		new Map(
+			selectedSubjects.map((subject) => [subject.label, subject])
+		).values()
+	);
 
 	// Utilizamos este tipo en el estado para mantener las opciones seleccionadas
 
@@ -478,9 +489,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 							: 'Llena los detalles para crear un nuevo programa'}
 					</DialogDescription>
 				</DialogHeader>
-				<div className="rounded-lg bg-background px-6 text-black shadow-md">
+				<div className="bg-background rounded-lg px-6 text-black shadow-md">
 					{/* Título */}
-					<label htmlFor="title" className="text-lg font-medium text-primary">
+					<label htmlFor="title" className="text-primary text-lg font-medium">
 						Título
 					</label>
 					<input
@@ -499,7 +510,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 					{/* Descripción */}
 					<label
 						htmlFor="description"
-						className="text-lg font-medium text-primary"
+						className="text-primary text-lg font-medium"
 					>
 						Descripción
 					</label>
@@ -520,7 +531,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 						<div className="flex w-full flex-col gap-2">
 							<label
 								htmlFor="categoryid"
-								className="text-lg font-medium text-primary"
+								className="text-primary text-lg font-medium"
 							>
 								Categoría
 							</label>
@@ -539,20 +550,20 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 							<div className="flex w-full flex-col gap-2">
 								<label
 									htmlFor="subjects"
-									className="text-lg font-medium text-primary"
+									className="text-primary text-lg font-medium"
 								>
 									Materias
 								</label>
 								<label
 									htmlFor="subjects"
-									className="text-lg font-medium text-primary"
+									className="text-primary text-lg font-medium"
 								>
 									Asignar Materias
 								</label>
 								<Select
 									isMulti
 									options={allSubjects}
-									value={selectedSubjects}
+									value={uniqueSelectedSubjects}
 									onChange={handleSelectSubjects}
 									classNamePrefix="react-select"
 									className="w-full"
@@ -561,8 +572,8 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 						)}
 					</div>
 
-					<div className="mb-4 w-full rounded border border-primary p-2">
-						<h3 className="text-lg font-medium text-primary">
+					<div className="border-primary mb-4 w-full rounded border p-2">
+						<h3 className="text-primary text-lg font-medium">
 							Instructor: {user?.fullName}
 						</h3>
 					</div>
@@ -571,7 +582,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 					<div>
 						<label
 							htmlFor="rating"
-							className="text-lg font-medium text-primary"
+							className="text-primary text-lg font-medium"
 						>
 							Rating
 						</label>
@@ -581,18 +592,18 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
 							max="5"
 							step="0.1"
 							placeholder="0-5"
-							className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
+							className="border-primary mt-1 w-full rounded border p-2 text-white outline-none focus:no-underline"
 							value={rating}
 							onChange={(e) => setRating(Number(e.target.value))}
 						/>
 					</div>
 
 					{/* Imagen de portada */}
-					<label htmlFor="file" className="text-lg font-medium text-primary">
+					<label htmlFor="file" className="text-primary text-lg font-medium">
 						Imagen de portada
 					</label>
 					<div
-						className={`mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary p-8 lg:w-1/2 ${
+						className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${
 							isDragging
 								? 'border-blue-500 bg-blue-50'
 								: errors.file
