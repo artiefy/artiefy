@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
-import { FaTrophy } from 'react-icons/fa';
+import { FaTrophy, FaLink } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -257,15 +257,8 @@ const getFileIcon = (fileType: string) => {
 		);
 	}
 
-	// Default file icon
-	return (
-		<svg className="h-6 w-6 text-gray-500" viewBox="0 0 384 512">
-			<path
-				fill="currentColor"
-				d="M320 464c8.8 0 16-7.2 16-16V160H256c-17.7 0-32-14.3-32-32V48H64c-8.8 0-16 7.2-16 16v384c0 8.8 7.2 16 16 16h256zM0 64C0 28.7 28.7 0 64 0h160l128 128v304c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64z"
-			/>
-		</svg>
-	);
+	// Default file icon - changed to use FaLink
+	return <FaLink className="h-6 w-6 text-blue-500" />;
 };
 
 const LessonActivityModal = ({
