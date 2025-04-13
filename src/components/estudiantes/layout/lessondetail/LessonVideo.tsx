@@ -47,9 +47,15 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			}
 
 			try {
-				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
-				console.log('Fetching video from URL:', url);
-				const response = await fetch(url);
+				// Add cache busting parameter and proper headers
+				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}?t=${Date.now()}`;
+				const response = await fetch(url, {
+					headers: {
+						'Cache-Control': 'no-cache',
+						Pragma: 'no-cache',
+					},
+					cache: 'no-store',
+				});
 
 				if (!response.ok) {
 					if (response.status === 403) {
@@ -59,7 +65,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					}
 					setVideoUrl('');
 				} else {
-					setVideoUrl(url);
+					// Add cache busting to video URL
+					setVideoUrl(`${url}`);
 					setError('');
 				}
 			} catch (err) {
@@ -99,8 +106,16 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			if (!videoKey) return;
 
 			try {
-				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
-				const response = await fetch(url, { method: 'HEAD' });
+				// Add cache busting and headers for availability check
+				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}?t=${Date.now()}`;
+				const response = await fetch(url, {
+					method: 'HEAD',
+					headers: {
+						'Cache-Control': 'no-cache',
+						Pragma: 'no-cache',
+					},
+					cache: 'no-store',
+				});
 
 				if (response.ok) {
 					setIsVideoAvailable(true);
@@ -240,6 +255,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					'aria-busy': true,
 					'aria-label': 'Cargando video de la clase...',
 				})}
+				// Add crossOrigin attribute
+				crossOrigin="anonymous"
 			/>
 			{!isVideoReady && renderLoadingState()}
 		</div>

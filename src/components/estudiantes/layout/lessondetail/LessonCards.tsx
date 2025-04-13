@@ -15,9 +15,13 @@ interface LessonCardsProps {
 	setLessonsState: Dispatch<SetStateAction<LessonWithProgress[]>>; // Add this prop
 }
 
-const extractNumberFromTitle = (title: string) => {
-	const match = /\d+/.exec(title);
-	return match ? parseInt(match[0]) : 0;
+const extractLessonNumber = (title: string) => {
+	// Handle special case for "Bienvenida"
+	if (title.toLowerCase().includes('bienvenida')) return -1;
+
+	// Extract number from titles like "1 Introducción..." or "Clase 1:"
+	const match = /^(\d+)/.exec(title);
+	return match ? parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER;
 };
 
 const LessonCards = ({
@@ -44,6 +48,44 @@ const LessonCards = ({
 		}
 	}, [progress, selectedLessonId, setLessonsState]);
 
+	// Sort the lessons considering "Bienvenida" and numeric order
+	const sortedLessons = [...lessonsState].sort((a, b) => {
+		const aNum = extractLessonNumber(a.title);
+		const bNum = extractLessonNumber(b.title);
+		return aNum - bNum;
+	});
+
+	// Update the unlocking logic
+	useEffect(() => {
+		if (selectedLessonId && progress === 100) {
+			// Get the current lesson and next lesson
+			const currentIndex = sortedLessons.findIndex(
+				(l) => l.id === selectedLessonId
+			);
+			const currentLesson = sortedLessons[currentIndex];
+			const nextLesson = sortedLessons[currentIndex + 1];
+
+			if (nextLesson) {
+				// Only unlock next lesson if current lesson has no activities or all activities are completed
+				const hasActivities =
+					currentLesson.activities && currentLesson.activities.length > 0;
+				const allActivitiesCompleted = hasActivities
+					? currentLesson.activities?.every((activity) => activity.isCompleted)
+					: true;
+
+				if (!hasActivities || allActivitiesCompleted) {
+					setLessonsState((prev) =>
+						prev.map((lesson) =>
+							lesson.id === nextLesson.id
+								? { ...lesson, isLocked: false, isNew: true }
+								: lesson
+						)
+					);
+				}
+			}
+		}
+	}, [progress, selectedLessonId, sortedLessons, setLessonsState]);
+
 	const handleClick = (lessonItem: LessonWithProgress) => {
 		if (isNavigating) return; // Prevent clicks while navigating
 		if (!lessonItem.isLocked) {
@@ -63,7 +105,9 @@ const LessonCards = ({
 
 	const renderProgressBar = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
-		const currentProgress = isCurrentLesson ? progress : lessonItem.porcentajecompletado;
+		const currentProgress = isCurrentLesson
+			? progress
+			: lessonItem.porcentajecompletado;
 
 		return (
 			<div className="relative h-2 rounded bg-gray-200">
@@ -77,9 +121,22 @@ const LessonCards = ({
 		);
 	};
 
-	const renderLessonCard = (lessonItem: LessonWithProgress) => {
+	const renderLessonCard = (lessonItem: LessonWithProgress, index: number) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
-		const isAccessible = !lessonItem.isLocked;
+		const previousLesson = index > 0 ? sortedLessons[index - 1] : null;
+
+		// A lesson should be accessible if:
+		// 1. It's the first lesson (Bienvenida or Lesson 1)
+		// 2. It's explicitly unlocked in the database
+		// 3. The previous lesson is completed and has no pending activities
+		const isAccessible =
+			index === 0 ||
+			(!lessonItem.isLocked &&
+				(!previousLesson ||
+					(previousLesson.porcentajecompletado === 100 &&
+						(!previousLesson.activities?.length ||
+							previousLesson.activities.every((a) => a.isCompleted)))));
+
 		const isCompleted = lessonItem.porcentajecompletado === 100;
 		const shouldShowNew =
 			!lessonItem.isLocked &&
@@ -136,16 +193,7 @@ const LessonCards = ({
 	};
 
 	return (
-		<>
-			{lessonsState
-				.sort((a, b) => {
-					// Sort by numeric part in title (e.g., "Clase 1" or "Sesión 1")
-					return (
-						extractNumberFromTitle(a.title) - extractNumberFromTitle(b.title)
-					);
-				})
-				.map(renderLessonCard)}
-		</>
+		<>{sortedLessons.map((lesson, index) => renderLessonCard(lesson, index))}</>
 	);
 };
 

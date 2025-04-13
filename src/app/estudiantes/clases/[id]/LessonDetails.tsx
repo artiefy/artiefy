@@ -46,10 +46,10 @@ interface LessonDetailsProps {
 
 export default function LessonDetails({
 	lesson,
-	activities, // Update prop name
-	lessons,
-	userLessonsProgress,
-	userActivitiesProgress,
+	activities = [], // Add default empty array
+	lessons = [], // Add default empty array
+	userLessonsProgress = [], // Add default empty array
+	userActivitiesProgress = [], // Add default empty array
 	userId,
 	course,
 }: LessonDetailsProps) {
@@ -95,35 +95,49 @@ export default function LessonDetails({
 	// Initialize lessons state with progress and locked status
 	useEffect(() => {
 		const initializeLessonsState = () => {
-			const sortedLessons = [...lessons].sort((a, b) =>
-				a.title.localeCompare(b.title, undefined, { numeric: true })
-			);
+			const sortedLessons = [...lessons].sort((a, b) => {
+				// Special handling for "Bienvenida"
+				if (a.title.toLowerCase().includes('bienvenida')) return -1;
+				if (b.title.toLowerCase().includes('bienvenida')) return 1;
+
+				// Extract and compare lesson numbers
+				const aMatch = /^(\d+)/.exec(a.title);
+				const bMatch = /^(\d+)/.exec(b.title);
+				const aNum = aMatch ? parseInt(aMatch[1], 10) : Number.MAX_SAFE_INTEGER;
+				const bNum = bMatch ? parseInt(bMatch[1], 10) : Number.MAX_SAFE_INTEGER;
+				return aNum - bNum;
+			});
 
 			const lessonsWithProgress = sortedLessons.map((lessonItem, index) => {
 				const progress = userLessonsProgress.find(
 					(p) => p.lessonId === lessonItem.id
 				);
 
-				// Only first lesson is unlocked by default
-				if (index === 0) {
+				// First lesson or "Bienvenida" is always unlocked
+				if (
+					index === 0 ||
+					lessonItem.title.toLowerCase().includes('bienvenida')
+				) {
 					return {
 						...lessonItem,
 						isLocked: false,
 						porcentajecompletado: progress?.progress ?? 0,
 						isCompleted: progress?.isCompleted ?? false,
-						isNew: progress?.isNew ?? true, // Agregar propiedad isNew
-						courseTitle: lesson.courseTitle, // Add courseTitle property
+						isNew: progress?.isNew ?? true,
+						courseTitle: lesson.courseTitle,
 					};
 				}
 
-				// Other lessons remain locked until explicitly unlocked via activity completion
+				// A lesson should be locked unless explicitly unlocked in the database
+				const shouldBeLocked = progress?.isLocked ?? true;
+
 				return {
 					...lessonItem,
-					isLocked: progress?.isLocked ?? true, // Use stored lock state or default to locked
+					isLocked: shouldBeLocked,
 					porcentajecompletado: progress?.progress ?? 0,
 					isCompleted: progress?.isCompleted ?? false,
-					isNew: progress?.isNew ?? true, // Agregar propiedad isNew
-					courseTitle: lesson.courseTitle, // Add courseTitle property
+					isNew: progress?.isNew ?? true,
+					courseTitle: lesson.courseTitle,
 				};
 			});
 
@@ -421,12 +435,13 @@ export default function LessonDetails({
 	}, [lessonsState, lesson.id]);
 
 	const isLastActivity = useCallback(() => {
+		if (!lessons.length || !activities.length) return false;
 		const lastLesson = lessons[lessons.length - 1];
-		const isLastLesson = lesson.id === lastLesson.id;
+		const isLastLesson = lesson?.id === lastLesson?.id;
 
 		if (!isLastLesson) return false;
 
-		const lastActivity = lesson.activities?.[lesson.activities.length - 1];
+		const lastActivity = lesson.activities?.[lesson.activities?.length - 1];
 		return activities[0]?.id === lastActivity?.id;
 	}, [lesson, activities, lessons]);
 
@@ -438,6 +453,15 @@ export default function LessonDetails({
 			router.push('/estudiantes');
 		}
 	}, [course.isActive, router]);
+
+	// Add safety check for lesson
+	if (!lesson) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<p>Lección no encontrada</p>
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex min-h-screen flex-col">
