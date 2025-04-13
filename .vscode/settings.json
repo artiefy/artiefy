@@ -25,6 +25,7 @@
 		"*.json": "json",
 		"*.svg": "svg", // Changed from "html" to "svg"
 		"*.xml": "html",
+    "*.html": "html",
 		"*.config.mjs": "javascript",
 		"*.config.js": "javascript",
 		"*.config.ts": "typescript",

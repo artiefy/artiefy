@@ -75,6 +75,7 @@
 		"multer": "^1.4.5-lts.2",
 		"next": "^15.2.4",
 		"next-nprogress-bar": "^2.4.7",
+		"next-seo": "^6.6.0",
 		"next-themes": "^0.4.6",
 		"next-video": "^2.2.0",
 		"node-emoji": "^2.2.0",
@@ -151,11 +152,20 @@
 		"tsx": "^4.19.3",
 		"typescript": "^5.8.3"
 	},
+  "overrides": {
+    "esbuild": "0.25.2"
+  },
 	"engines": {
 		"node": "22.x"
-	},
-	"os": ["win32", "linux", "darwin"],
-	"cpu": ["x64"],
+  },
+	"os": [
+		"win32",
+		"linux",
+		"darwin"
+	],
+	"cpu": [
+		"x64"
+	],
 	"ct3aMetadata": {
 		"initVersion": "7.38.1"
 	},
