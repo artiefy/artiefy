@@ -6,9 +6,20 @@ export default function robots(): MetadataRoute.Robots {
 			{
 				userAgent: '*',
 				allow: '/',
-				disallow: ['/loading', '/loading/', '/_next/', '/api/', '/dashboard/'],
+				disallow: [
+					'/loading/',
+					'/_next/',
+					'/api/',
+					'/dashboard/',
+					'/sign-in/',
+					'/sign-up/',
+					'/*.json$',
+					'*?loading=*',
+					'*loading*',
+				],
 			},
 		],
 		sitemap: 'https://artiefy.com/sitemap.xml',
+		host: 'https://artiefy.com',
 	};
 }

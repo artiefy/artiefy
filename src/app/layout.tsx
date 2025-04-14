@@ -41,11 +41,11 @@ const merriweather = Merriweather({
 export const metadata: Metadata = {
 	metadataBase: new URL('https://artiefy.com'),
 	title: {
-		default: 'Artiefy - Tu Plataforma de Educación Definitiva',
 		template: '%s | Artiefy',
+		default: 'Artiefy - Plataforma Educativa Digital',
 	},
 	description:
-		'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
+		'Artiefy es la plataforma líder en educación digital. Aprende desarrollo web, programación y más con expertos de la industria.',
 	keywords: ['cursos', 'aprendizaje', 'educación', 'profesores', 'estudiantes'],
 	applicationName: 'Artiefy',
 	authors: [{ name: 'Equipo Artiefy', url: 'https://artiefy.com' }],
@@ -81,6 +81,7 @@ export const metadata: Metadata = {
 			'max-video-preview': -1,
 			'max-image-preview': 'large',
 			'max-snippet': -1,
+			noimageindex: true,
 		},
 	},
 	icons: {
@@ -89,6 +90,9 @@ export const metadata: Metadata = {
 	},
 	verification: {
 		google: 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
+	},
+	other: {
+		'google-site-verification': 'TU-CÓDIGO-DE-VERIFICACIÓN',
 	},
 };
 
@@ -202,6 +206,10 @@ export default function RootLayout({
 					<meta
 						name="google-site-verification"
 						content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
+					/>
+					<meta
+						name="robots"
+						content="max-snippet:-1, max-image-preview:large, max-video-preview:-1"
 					/>
 					<Script
 						id="organization-jsonld"
