@@ -5,6 +5,7 @@ import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { type LessonWithProgress } from '~/types';
+import { sortLessons } from '~/utils/sortLessons';
 
 interface LessonCardsProps {
 	lessonsState: LessonWithProgress[];
@@ -59,7 +60,9 @@ const LessonCards = ({
 				return aNum === bNum ? a.title.localeCompare(b.title) : aNum - bNum;
 			});
 
-			const currentIndex = sortedLessons.findIndex(l => l.id === selectedLessonId);
+			const currentIndex = sortedLessons.findIndex(
+				(l) => l.id === selectedLessonId
+			);
 			const currentLesson = sortedLessons[currentIndex];
 			const nextLesson = sortedLessons[currentIndex + 1];
 
@@ -67,8 +70,8 @@ const LessonCards = ({
 
 			const activities = currentLesson?.activities ?? [];
 			const hasActivities = activities.length > 0;
-			const allActivitiesCompleted = hasActivities 
-				? activities.every(activity => activity.isCompleted)
+			const allActivitiesCompleted = hasActivities
+				? activities.every((activity) => activity.isCompleted)
 				: true;
 
 			// Unlock next lesson if video is complete AND (no activities OR all activities completed)
@@ -87,34 +90,30 @@ const LessonCards = ({
 					if (!response.ok) throw new Error('Failed to unlock lesson');
 
 					// If database update successful, update UI state
-					setLessonsState(prev =>
-						prev.map(lesson =>
+					setLessonsState((prev) =>
+						prev.map((lesson) =>
 							lesson.id === nextLesson.id
 								? { ...lesson, isLocked: false, isNew: true }
 								: lesson
 						)
 					);
 
-						// Show success notification
-						toast.success('¡Nueva clase desbloqueada!', {
-							description: 'Ya puedes acceder a la siguiente clase.',
-						});
-					} catch (error) {
-						console.error('Error unlocking next lesson:', error);
-						toast.error('Error al desbloquear la siguiente clase');
-					}
+					// Show success notification
+					toast.success('¡Nueva clase desbloqueada!', {
+						description: 'Ya puedes acceder a la siguiente clase.',
+					});
+				} catch (error) {
+					console.error('Error unlocking next lesson:', error);
+					toast.error('Error al desbloquear la siguiente clase');
 				}
-			};
+			}
+		};
 
 		void unlockNextLesson();
 	}, [selectedLessonId, progress, lessonsState, setLessonsState]);
 
 	// Sort lessons for rendering
-	const sortedLessons = [...lessonsState].sort((a, b) => {
-		const aNum = extractLessonNumber(a.title);
-		const bNum = extractLessonNumber(b.title);
-		return aNum === bNum ? a.title.localeCompare(b.title) : aNum - bNum;
-	});
+	const sortedLessons = sortLessons(lessonsState);
 
 	const handleClick = (lessonItem: LessonWithProgress) => {
 		if (isNavigating) return; // Prevent clicks while navigating

@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 
-import { Lock } from 'lucide-react';
 import Player from 'next-video/player';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -28,7 +27,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const [videoUrl, setVideoUrl] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [isVideoReady, setIsVideoReady] = useState(false);
-	const [error, setError] = useState('');
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [posterUrl, setPosterUrl] = useState<string | undefined>(undefined);
 	const [isVideoAvailable, setIsVideoAvailable] = useState(false);
@@ -72,16 +70,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	useEffect(() => {
 		const fetchVideoUrl = async () => {
 			setIsLoading(true);
-			setError('');
 
-			if (isLocked) {
-				setError('Esta clase está bloqueada');
-				setIsLoading(false);
-				return;
-			}
-
-			if (!videoKey) {
-				setError('Video no disponible');
+			if (!videoKey || videoKey === 'null') {
+				setIsVideoAvailable(false);
 				setIsLoading(false);
 				return;
 			}
@@ -95,11 +86,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				const blob = await response.blob();
 				const newVideoUrl = URL.createObjectURL(blob);
 				setVideoUrl(newVideoUrl);
+				setIsVideoAvailable(true);
 			} catch (err) {
 				console.error('Error fetching video:', err);
-				setError(
-					err instanceof Error ? err.message : 'Error al cargar el video'
-				);
+				setIsVideoAvailable(false);
 			} finally {
 				setIsLoading(false);
 			}
@@ -151,7 +141,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					setVideoUrl(url);
 				} else {
 					setIsVideoAvailable(false);
-					setError('Video aún no disponible');
 				}
 			} catch (err) {
 				setIsVideoAvailable(false);
@@ -188,7 +177,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)] bg-[length:20px_20px] opacity-50" />
 			</div>
 			<div className="relative z-10 flex flex-col items-center justify-center space-y-6 text-center">
-				{isVideoAvailable ? (
+				{!videoKey || videoKey === 'null' || !isVideoAvailable ? (
+					<>
+						<h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
+							Video de la Clase
+						</h2>
+						<p className="text-5xl font-extrabold">
+							<span className="bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent">
+								Disponible muy pronto
+							</span>
+						</p>
+						<div className="mt-4 flex items-center space-x-2">
+							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-100" />
+							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-200" />
+							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-300" />
+						</div>
+					</>
+				) : (
 					<>
 						<div className="hourglassBackground">
 							<div className="hourglassContainer">
@@ -204,22 +209,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						<p className="text-lg font-medium text-white">
 							Preparando video de la clase...
 						</p>
-					</>
-				) : (
-					<>
-						<h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
-							Video de la Clase
-						</h2>
-						<p className="text-5xl font-extrabold">
-							<span className="bg-gradient-to-r from-slate-800 to-slate-900 bg-clip-text text-transparent">
-								Disponible muy pronto
-							</span>
-						</p>
-						<div className="mt-4 flex items-center space-x-2">
-							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-100" />
-							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-200" />
-							<div className="h-2 w-2 animate-bounce rounded-full bg-white delay-300" />
-						</div>
 					</>
 				)}
 			</div>
@@ -237,55 +226,32 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		);
 	}
 
-	if (error) {
-		return (
-			<div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg">
-				<div className="absolute inset-0 bg-gradient-to-r from-[#3498db] to-[#2ecc71] shadow-lg" />
-				<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)] bg-[length:20px_20px]" />
-				<div className="z-10 flex flex-col items-center justify-center space-y-6 px-4 text-center">
-					<div className="animate-bounce rounded-full bg-gray-700/50 p-6 backdrop-blur-sm">
-						<Lock className="h-12 w-12 text-yellow-500" />
-					</div>
-					<div className="space-y-3">
-						<h3 className="text-3xl font-bold text-white">
-							Contenido Bloqueado
-						</h3>
-						<p className="max-w-sm font-semibold text-gray-700">
-							{error === 'Esta clase está bloqueada'
-								? 'Completa las clases anteriores para desbloquear este contenido'
-								: error}
-						</p>
-					</div>
-					<div className="mt-2 h-1 w-16 rounded bg-yellow-500" />
-				</div>
-			</div>
-		);
-	}
-
 	return (
 		<div className="relative aspect-video w-full">
-			<Player
-				ref={videoRef}
-				src={videoUrl}
-				className="h-full w-full rounded-lg"
-				onEnded={handleVideoEnd}
-				onTimeUpdate={handleTimeUpdate}
-				onCanPlay={handleVideoCanPlay}
-				controls
-				playsInline
-				poster={posterUrl}
-				style={{
-					'--media-primary-color': '#3AF4EF',
-					'--media-secondary-color': '#00BDD8',
-					'--media-accent-color': '#2ecc71',
-					visibility: isVideoReady ? 'visible' : 'hidden', // Hide player until ready
-				}}
-				{...(!isVideoReady && {
-					'aria-busy': true,
-					'aria-label': 'Cargando video de la clase...',
-				})}
-			/>
-			{!isVideoReady && renderLoadingState()}
+			{videoUrl ? (
+				<Player
+					ref={videoRef}
+					src={videoUrl}
+					className="h-full w-full rounded-lg"
+					onEnded={handleVideoEnd}
+					onTimeUpdate={handleTimeUpdate}
+					onCanPlay={handleVideoCanPlay}
+					controls
+					playsInline
+					poster={posterUrl}
+					style={{
+						'--media-primary-color': '#3AF4EF',
+						'--media-secondary-color': '#00BDD8',
+						'--media-accent-color': '#2ecc71',
+						visibility: isVideoReady ? 'visible' : 'hidden', // Hide player until ready
+					}}
+					{...(!isVideoReady && {
+						'aria-busy': true,
+						'aria-label': 'Cargando video de la clase...',
+					})}
+				/>
+			) : null}
+			{(!videoUrl || !isVideoReady) && renderLoadingState()}
 		</div>
 	);
 };

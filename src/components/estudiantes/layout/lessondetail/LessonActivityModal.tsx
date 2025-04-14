@@ -453,20 +453,25 @@ const LessonActivityModal = ({
 	const handleFinishAndNavigate = async () => {
 		try {
 			setIsUnlocking(true);
+
+			// First mark activity as completed
 			await markActivityAsCompleted();
+
+			// Then run the activity completion handler
 			await onActivityCompleted();
+
+			// Update the questions answered status
 			onQuestionsAnswered(true);
 
+			// Finally try to unlock next lesson
 			const result = await unlockNextLesson(activity.lessonsId);
 
-			// Add null check and proper type checking
-			if (result && result.success && result.nextLessonId) {
+			if (result?.success && result.nextLessonId) {
 				onLessonUnlocked(result.nextLessonId);
 				toast.success('¡Siguiente clase desbloqueada!');
 				onClose();
 			} else {
-				// Handle the case where unlocking failed but don't show error
-				// This could happen if it's the last lesson
+				// Just close if it's the last lesson
 				onClose();
 			}
 		} catch (error) {
@@ -1263,10 +1268,7 @@ const LessonActivityModal = ({
 						<div className="border-t border-gray-700 bg-slate-900/95 p-6">
 							{shouldShowUnlockButton ? (
 								<Button
-									onClick={async () => {
-										await handleFinishAndNavigate();
-										await markActivityAsCompleted();
-									}}
+									onClick={handleFinishAndNavigate} // Changed to directly use handleFinishAndNavigate
 									className="w-full bg-green-500 text-white hover:bg-green-600"
 								>
 									<span className="flex items-center justify-center gap-2">

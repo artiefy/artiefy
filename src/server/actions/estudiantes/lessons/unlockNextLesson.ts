@@ -20,7 +20,7 @@ export async function unlockNextLesson(
 		const user = await currentUser();
 		if (!user?.id) throw new Error('Usuario no autenticado');
 
-		// Get current lesson and its activity status
+		// Get current lesson
 		const currentLesson = await db.query.lessons.findFirst({
 			where: eq(lessons.id, currentLessonId),
 			with: {
@@ -35,6 +35,7 @@ export async function unlockNextLesson(
 		// Get all lessons for the course
 		const courseLessons = await db.query.lessons.findMany({
 			where: eq(lessons.courseId, currentLesson.courseId),
+			orderBy: (lessons, { asc }) => [asc(lessons.id)],
 		});
 
 		// Sort lessons by numeric value in title
@@ -43,7 +44,7 @@ export async function unlockNextLesson(
 				extractNumberFromTitle(a.title) - extractNumberFromTitle(b.title)
 		);
 
-		// Find current lesson index
+		// Find current lesson index and get next lesson
 		const currentIndex = sortedLessons.findIndex(
 			(l) => l.id === currentLessonId
 		);
@@ -53,7 +54,7 @@ export async function unlockNextLesson(
 			return { success: false };
 		}
 
-		// Update progress for next lesson
+		// Insert or update progress for next lesson
 		await db
 			.insert(userLessonsProgress)
 			.values({
@@ -74,6 +75,7 @@ export async function unlockNextLesson(
 				},
 			});
 
+		// Force revalidation of the lessons page
 		revalidatePath('/estudiantes/clases/[id]', 'page');
 
 		return {
