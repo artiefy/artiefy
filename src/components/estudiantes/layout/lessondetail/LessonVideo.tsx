@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 import { Lock } from 'lucide-react';
 import Player from 'next-video/player';
@@ -14,6 +14,10 @@ interface VideoPlayerProps {
 	isLocked?: boolean;
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+const FETCH_TIMEOUT = 10000;
+
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	videoKey,
 	onVideoEnd,
@@ -28,6 +32,42 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [posterUrl, setPosterUrl] = useState<string | undefined>(undefined);
 	const [isVideoAvailable, setIsVideoAvailable] = useState(false);
+
+	const fetchWithTimeout = async (url: string, timeout: number) => {
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+		try {
+			const response = await fetch(url, { signal: controller.signal });
+			clearTimeout(timeoutId);
+			return response;
+		} catch (error) {
+			clearTimeout(timeoutId);
+			throw error;
+		}
+	};
+
+	const fetchWithRetry = useCallback(
+		async (url: string, retries = MAX_RETRIES) => {
+			for (let i = 0; i < retries; i++) {
+				try {
+					const response = await fetchWithTimeout(url, FETCH_TIMEOUT);
+					if (!response.ok) {
+						throw new Error(`HTTP error! status: ${response.status}`);
+					}
+					return response;
+				} catch (error) {
+					console.error(`Attempt ${i + 1} failed:`, error);
+					if (i === retries - 1) throw error;
+					await new Promise((resolve) =>
+						setTimeout(resolve, RETRY_DELAY * (i + 1))
+					);
+				}
+			}
+			throw new Error('Failed after all retries');
+		},
+		[]
+	);
 
 	useEffect(() => {
 		const fetchVideoUrl = async () => {
@@ -49,30 +89,34 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			try {
 				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
 				console.log('Fetching video from URL:', url);
-				const response = await fetch(url);
+				const response = await fetchWithRetry(url);
+				if (!response) throw new Error('No response received');
 
-				if (!response.ok) {
-					if (response.status === 403) {
-						setError('No tienes acceso a este video');
-					} else {
-						setError('Error al cargar el video');
-					}
-					setVideoUrl('');
-				} else {
-					setVideoUrl(url);
-					setError('');
-				}
+				const blob = await response.blob();
+				const newVideoUrl = URL.createObjectURL(blob);
+				setVideoUrl(newVideoUrl);
 			} catch (err) {
 				console.error('Error fetching video:', err);
-				setError('Error al cargar el video');
-				setVideoUrl('');
+				setError(
+					err instanceof Error ? err.message : 'Error al cargar el video'
+				);
 			} finally {
 				setIsLoading(false);
 			}
 		};
 
 		void fetchVideoUrl();
-	}, [videoKey, isLocked]);
+
+		// Cleanup function that references both videoUrl and setVideoUrl
+		return () => {
+			setVideoUrl((prevUrl) => {
+				if (prevUrl) {
+					URL.revokeObjectURL(prevUrl);
+				}
+				return '';
+			});
+		};
+	}, [videoKey, isLocked, fetchWithRetry]); // videoUrl not needed in deps since we use functional state update
 
 	useEffect(() => {
 		const checkPosterExists = async () => {
