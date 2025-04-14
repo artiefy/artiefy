@@ -93,7 +93,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<ClerkProvider localization={esMX}>
+		<ClerkProvider localization={esMX} dynamic>
 			<html
 				lang="es"
 				className={`${montserrat.variable} ${merriweather.variable}`}
