@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
 
 import StudentDetails from '~/app/estudiantes/StudentDetails';
-import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
@@ -12,7 +12,19 @@ import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/g
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
+import type { Metadata } from 'next';
 import type { Category, Course, Program } from '~/types';
+
+export const metadata: Metadata = {
+	title: 'Portal de Estudiantes | Artiefy',
+	description:
+		'Accede a todos tus cursos, programas y contenido educativo personalizado. Desarrolla tus habilidades con Artiefy.',
+	openGraph: {
+		title: 'Portal de Estudiantes | Artiefy',
+		description:
+			'Accede a todos tus cursos y contenido educativo personalizado.',
+	},
+};
 
 interface SearchParams {
 	category?: string;

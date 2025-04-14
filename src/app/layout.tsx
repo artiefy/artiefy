@@ -1,9 +1,12 @@
+import type { Metadata } from 'next';
+
+import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
+
 import { Montserrat, Merriweather } from 'next/font/google';
 import '~/styles/globals.css';
 import Script from 'next/script';
 
 import { esMX } from '@clerk/localizations';
-import { ClerkLoaded, ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import {
@@ -13,12 +16,9 @@ import {
 } from 'schema-dts';
 
 import { Toaster } from '~/components/estudiantes/ui/sonner';
-import { metadata as siteMetadata } from '~/lib/metadata';
 
 import Loading from './loading';
 import Providers from './providers';
-
-import type { Metadata } from 'next';
 
 const montserrat = Montserrat({
 	subsets: ['latin'],
@@ -38,7 +38,59 @@ const merriweather = Merriweather({
 	adjustFontFallback: true, // Add this to optimize font loading
 });
 
-export const metadata: Metadata = siteMetadata;
+export const metadata: Metadata = {
+	metadataBase: new URL('https://artiefy.com'),
+	title: {
+		default: 'Artiefy - Tu Plataforma de Educación Definitiva',
+		template: '%s | Artiefy',
+	},
+	description:
+		'Artiefy es la plataforma de aprendizaje más innovadora para estudiantes y profesores.',
+	keywords: ['cursos', 'aprendizaje', 'educación', 'profesores', 'estudiantes'],
+	applicationName: 'Artiefy',
+	authors: [{ name: 'Equipo Artiefy', url: 'https://artiefy.com' }],
+	creator: 'Equipo Artiefy',
+	category: 'Educacion',
+	openGraph: {
+		type: 'website',
+		locale: 'es_ES',
+		url: 'https://artiefy.com',
+		title: 'Artiefy - Aprende y Crea',
+		description: 'Artiefy es la plataforma de aprendizaje más innovadora.',
+		siteName: 'Artiefy',
+		images: [
+			{
+				url: 'https://artiefy.com/opengraph-image',
+				width: 1200,
+				height: 630,
+				alt: 'Artiefy - App Web Educativa de Cursos Online',
+			},
+		],
+	},
+	twitter: {
+		card: 'summary_large_image',
+		site: '@artiefy',
+		creator: '@artiefy',
+	},
+	robots: {
+		index: true,
+		follow: true,
+		googleBot: {
+			index: true,
+			follow: true,
+			'max-video-preview': -1,
+			'max-image-preview': 'large',
+			'max-snippet': -1,
+		},
+	},
+	icons: {
+		icon: '/favicon.ico',
+		apple: '/artiefy-icon.png',
+	},
+	verification: {
+		google: 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
+	},
+};
 
 const organizationJsonLd: WithContext<EducationalOrganization> = {
 	'@context': 'https://schema.org',
@@ -148,21 +200,9 @@ export default function RootLayout({
 			>
 				<head>
 					<meta
-						name="robots"
-						content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
-					/>
-					<meta
-						name="keywords"
-						content="cursos online, educación tecnología, programación, ciencias, Colombia, plataforma educativa"
-					/>
-					<meta name="robots" content="index, follow" />
-					<meta
 						name="google-site-verification"
 						content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
 					/>
-					<link rel="canonical" href="https://artiefy.com" />
-					<meta property="og:type" content="website" />
-					<meta property="og:site_name" content="Artiefy" />
 					<Script
 						id="organization-jsonld"
 						type="application/ld+json"
@@ -180,7 +220,7 @@ export default function RootLayout({
 						strategy="afterInteractive"
 					/>
 				</head>
-				<body className="bg-background font-sans text-primary">
+				<body className="bg-background text-primary font-sans">
 					<ClerkLoading>
 						<Loading />
 					</ClerkLoading>
