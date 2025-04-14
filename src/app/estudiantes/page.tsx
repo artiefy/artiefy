@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
 
+import Script from 'next/script';
+
 import StudentDetails from '~/app/estudiantes/StudentDetails';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -16,13 +18,12 @@ import type { Metadata } from 'next';
 import type { Category, Course, Program } from '~/types';
 
 export const metadata: Metadata = {
-	title: 'Portal de Estudiantes | Artiefy',
-	description:
-		'Accede a todos tus cursos, programas y contenido educativo personalizado. Desarrolla tus habilidades con Artiefy.',
+	title: 'Panel de Estudiantes - Artiefy',
+	description: 'Accede a tus cursos y contenido educativo en Artiefy',
 	openGraph: {
-		title: 'Portal de Estudiantes | Artiefy',
-		description:
-			'Accede a todos tus cursos y contenido educativo personalizado.',
+		title: 'Panel de Estudiantes - Artiefy',
+		description: 'Accede a tus cursos y contenido educativo en Artiefy',
+		url: 'https://artiefy.com/estudiantes',
 	},
 };
 
@@ -138,6 +139,20 @@ export default async function Page({ searchParams }: PageProps) {
 
 		return (
 			<>
+				<Script id="learning-platform-schema" type="application/ld+json">
+					{JSON.stringify({
+						'@context': 'https://schema.org',
+						'@type': 'WebPage',
+						name: 'Panel de Estudiantes - Artiefy',
+						description: 'Accede a tus cursos y contenido educativo en Artiefy',
+						url: 'https://artiefy.com/estudiantes',
+						isPartOf: {
+							'@type': 'WebSite',
+							'@id': 'https://artiefy.com/#website',
+						},
+					})}
+				</Script>
+
 				<div
 					className="flex min-h-screen flex-col"
 					style={{ isolation: 'isolate', zIndex: 1 }}

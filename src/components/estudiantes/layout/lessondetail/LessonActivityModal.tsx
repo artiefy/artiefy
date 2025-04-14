@@ -1269,11 +1269,21 @@ const LessonActivityModal = ({
 							{shouldShowUnlockButton ? (
 								<Button
 									onClick={handleFinishAndNavigate} // Changed to directly use handleFinishAndNavigate
+									disabled={isUnlocking}
 									className="w-full bg-green-500 text-white hover:bg-green-600"
 								>
 									<span className="flex items-center justify-center gap-2">
-										Desbloquear Siguiente Clase
-										<Unlock className="h-4 w-4" />
+										{isUnlocking ? (
+											<>
+												<Icons.spinner className="h-4 w-4 animate-spin" />
+												Desbloqueando...
+											</>
+										) : (
+											<>
+												Desbloquear Siguiente Clase
+												<Unlock className="h-4 w-4" />
+											</>
+										)}
 									</span>
 								</Button>
 							) : (
