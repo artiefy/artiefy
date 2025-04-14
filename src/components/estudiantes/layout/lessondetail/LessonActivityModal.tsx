@@ -229,28 +229,37 @@ const LessonActivityModal = ({
 
 	useEffect(() => {
 		const canClose = () => {
+			// Si la actividad ya está completada, siempre puede cerrar
 			if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
 				return true;
 			}
 
+			// Si no hay resultados mostrados, no puede cerrar
 			if (!showResults) {
 				return false;
 			}
 
-			// Modificar la lógica para considerar los intentos y el estado revisada
+			// Para actividades revisadas
 			if (activity.revisada) {
-				// Para actividades revisadas:
-				// - Si agotó los intentos (attemptsLeft === 0), puede cerrar sin importar la nota
-				// - Si tiene nota >= 3, puede cerrar
-				return attemptsLeft === 0 || finalScore >= 3;
-			} else {
-				// Para actividades no revisadas:
-				// - Siempre puede cerrar, ya que tiene intentos infinitos
-				return true;
+				// Puede cerrar si:
+				// 1. No tiene intentos restantes (attemptsLeft === 0)
+				// 2. Tiene nota aprobatoria (finalScore >= 3)
+				// 3. Es la última actividad del curso (isLastActivity && isLastLesson)
+				return (
+					attemptsLeft === 0 ||
+					finalScore >= 3 ||
+					(isLastActivity && isLastLesson)
+				);
 			}
+
+			// Para actividades no revisadas, siempre puede cerrar después de ver resultados
+			return true;
 		};
 
-		setCanCloseModal(canClose());
+		const newCanClose = canClose();
+		if (canCloseModal !== newCanClose) {
+			setCanCloseModal(newCanClose);
+		}
 	}, [
 		showResults,
 		finalScore,
@@ -258,6 +267,9 @@ const LessonActivityModal = ({
 		activity.revisada,
 		activity.isCompleted,
 		savedResults?.isAlreadyCompleted,
+		isLastActivity,
+		isLastLesson,
+		canCloseModal,
 	]);
 
 	useEffect(() => {
@@ -533,54 +545,60 @@ const LessonActivityModal = ({
 		const isQuestionAnswered = userAnswers[currentQuestion.id];
 
 		return (
-			<div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-				<h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
-					<div className="flex items-center">
-						<span className="bg-primary/20 text-background mr-2 flex h-8 w-8 items-center justify-center rounded-full font-bold">
-							{currentQuestionIndex + 1}
-						</span>
-						{currentQuestion.text}
-					</div>
+			<div className="relative">
+				{' '}
+				{/* Add container for positioning */}
+				<div className="absolute -top-2 right-0 translate-y-[-100%] transform">
 					<LightBulbIcon
-						className={`h-6 w-6 transition-all duration-300 ${
+						className={`h-8 w-8 transition-all duration-300 ${
 							isQuestionAnswered
 								? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]'
 								: 'text-gray-300'
 						}`}
 					/>
-				</h3>
-
-				<div className="space-y-3">
-					{currentQuestion.type === 'COMPLETAR' ? (
-						<input
-							type="text"
-							value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
-							onChange={(e) => handleAnswer(e.target.value)}
-							className="text-background w-full rounded-md border border-gray-300 p-3 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
-							placeholder="Escribe tu respuesta..."
-						/>
-					) : (
-						<div className="grid gap-3">
-							{currentQuestion.options?.map((option) => (
-								<label
-									key={option.id}
-									className="flex cursor-pointer items-center rounded-lg border border-gray-200 p-4 transition-all hover:bg-gray-50"
-								>
-									<input
-										type="radio"
-										name={currentQuestion.id}
-										value={option.id}
-										checked={
-											userAnswers[currentQuestion.id]?.answer === option.id
-										}
-										onChange={(e) => handleAnswer(e.target.value)}
-										className="text-primary focus:ring-primary h-4 w-4"
-									/>
-									<span className="ml-3 text-gray-700">{option.text}</span>
-								</label>
-							))}
+				</div>
+				<div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+					<h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
+						<div className="flex items-center">
+							<span className="bg-primary/20 text-background mr-2 flex h-8 w-8 items-center justify-center rounded-full font-bold">
+								{currentQuestionIndex + 1}
+							</span>
+							{currentQuestion.text}
 						</div>
-					)}
+					</h3>
+
+					<div className="space-y-3">
+						{currentQuestion.type === 'COMPLETAR' ? (
+							<input
+								type="text"
+								value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
+								onChange={(e) => handleAnswer(e.target.value)}
+								className="text-background w-full rounded-md border border-gray-300 p-3 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
+								placeholder="Escribe tu respuesta..."
+							/>
+						) : (
+							<div className="grid gap-3">
+								{currentQuestion.options?.map((option) => (
+									<label
+										key={option.id}
+										className="flex cursor-pointer items-center rounded-lg border border-gray-200 p-4 transition-all hover:bg-gray-50"
+									>
+										<input
+											type="radio"
+											name={currentQuestion.id}
+											value={option.id}
+											checked={
+												userAnswers[currentQuestion.id]?.answer === option.id
+											}
+											onChange={(e) => handleAnswer(e.target.value)}
+											className="text-primary focus:ring-primary h-4 w-4"
+										/>
+										<span className="ml-3 text-gray-700">{option.text}</span>
+									</label>
+								))}
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
 		);
@@ -656,8 +674,58 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// For revisada=false activities
-		if (!activity.revisada) {
+		// For activities with revisada=true and score < 3
+		if (activity.revisada && finalScore < 3) {
+			if (attemptsLeft && attemptsLeft > 0) {
+				return (
+					<div className="space-y-3">
+						<p className="text-center text-sm text-gray-400">
+							Te quedan{' '}
+							<span className="text-2xl font-bold text-white">
+								{attemptsLeft}
+							</span>{' '}
+							intento{attemptsLeft !== 1 ? 's' : ''}
+						</p>
+						<Button
+							onClick={() => {
+								setCurrentQuestionIndex(0);
+								setUserAnswers({});
+								setShowResults(false);
+							}}
+							className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600"
+						>
+							Intentar Nuevamente
+						</Button>
+					</div>
+				);
+			}
+
+			// No attempts left, show unlock or close button
+			if (isLastActivityInLesson && !isLastLesson) {
+				return (
+					<Button
+						onClick={handleFinishAndNavigate}
+						className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+					>
+						<span className="flex items-center justify-center gap-2 py-4">
+							Desbloquear Siguiente CLASE
+							<Unlock className="h-4 w-4" />
+						</span>
+					</Button>
+				);
+			}
+			return (
+				<Button
+					onClick={onClose}
+					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+				>
+					CERRAR
+				</Button>
+			);
+		}
+
+		// For non-revisada activities with score < 3
+		if (!activity.revisada && finalScore < 3) {
 			return (
 				<div className="space-y-3">
 					<p className="pt-4 text-center font-extralight text-gray-200">
@@ -677,9 +745,9 @@ const LessonActivityModal = ({
 					{isLastActivityInLesson && !isLastLesson ? (
 						<Button
 							onClick={handleFinishAndNavigate}
-							className="w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+							className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
 						>
-							<span className="flex items-center justify-center gap-2">
+							<span className="flex items-center justify-center gap-2 py-4">
 								Desbloquear Siguiente CLASE
 								<Unlock className="h-4 w-4" />
 							</span>
@@ -695,6 +763,31 @@ const LessonActivityModal = ({
 						)
 					)}
 				</div>
+			);
+		}
+
+		// For non-revisada activities with passing score
+		if (!activity.revisada && finalScore >= 3) {
+			if (isLastActivityInLesson && !isLastLesson) {
+				return (
+					<Button
+						onClick={handleFinishAndNavigate}
+						className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+					>
+						<span className="flex items-center justify-center gap-2 py-4">
+							Desbloquear Siguiente CLASE
+							<Unlock className="h-4 w-4" />
+						</span>
+					</Button>
+				);
+			}
+			return (
+				<Button
+					onClick={onClose}
+					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+				>
+					CERRAR
+				</Button>
 			);
 		}
 
@@ -726,9 +819,9 @@ const LessonActivityModal = ({
 				return (
 					<Button
 						onClick={handleFinishAndNavigate}
-						className="w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+						className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
 					>
-						<span className="flex items-center justify-center gap-2">
+						<span className="flex items-center justify-center gap-2 py-4">
 							Desbloquear Siguiente CLASE
 							<Unlock className="h-4 w-4" />
 						</span>
@@ -767,9 +860,9 @@ const LessonActivityModal = ({
 					{isLastActivityInLesson && !isLastLesson && (
 						<Button
 							onClick={handleFinishAndNavigate}
-							className="w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+							className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
 						>
-							<span className="flex items-center justify-center gap-2">
+							<span className="flex items-center justify-center gap-2 py-4">
 								Desbloquear Siguiente CLASE
 								<Unlock className="h-4 w-4" />
 							</span>
@@ -794,9 +887,9 @@ const LessonActivityModal = ({
 				return (
 					<Button
 						onClick={handleFinishAndNavigate}
-						className="w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+						className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
 					>
-						<span className="flex items-center justify-center gap-2">
+						<span className="flex items-center justify-center gap-2 py-4">
 							Desbloquear Siguiente CLASE
 							<Unlock className="h-4 w-4" />
 						</span>
@@ -816,7 +909,7 @@ const LessonActivityModal = ({
 		return (
 			<Button
 				onClick={onClose}
-				className="mt-4 w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+				className="mt-2 w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 			>
 				CERRAR
 			</Button>
@@ -854,9 +947,8 @@ const LessonActivityModal = ({
 
 		// Regular activity results rendering - Update these styles
 		return (
-			<div className="-mt-6 px-4">
+			<div className="px-4">
 				<div className="text-center">
-					<h3 className="text-primary text-xl font-bold">Resultados</h3>
 					{/* Reduce space between title and stars */}
 					<div className="mt-1">
 						{' '}
@@ -878,66 +970,67 @@ const LessonActivityModal = ({
 							</span>
 						</p>
 					</div>
-				</div>
 
-				{/* Add margin top to questions container */}
-				<div className="mt-3 max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-					{questions.map((question, idx) => {
-						const userAnswer = userAnswers[question.id];
-						const isCorrect = userAnswer?.isCorrect;
-						const displayAnswer = userAnswer
-							? getDisplayAnswer(userAnswer, question)
-							: '';
+					{/* Add margin top to questions container */}
+					<div className="mt-3 max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+						{questions.map((question, idx) => {
+							const userAnswer = userAnswers[question.id];
+							const isCorrect = userAnswer?.isCorrect;
+							const displayAnswer = userAnswer
+								? getDisplayAnswer(userAnswer, question)
+								: '';
 
-						return (
-							<div
-								key={question.id}
-								className="space-y-3 p-4 transition-all hover:bg-gray-50"
-							>
-								<div className="flex items-start justify-between">
-									<div className="flex-1">
-										<p className="font-medium text-gray-900">
-											<span className="mr-2 text-gray-500">
-												Pregunta {idx + 1}:
-											</span>
-											{question.text}
-										</p>
-									</div>
-									{isCorrect ? (
-										<CheckCircleIcon className="h-6 w-6 text-green-600" />
-									) : (
-										<XCircleIcon className="h-6 w-6 text-red-600" />
-									)}
-								</div>
-
-								<div className="ml-6 space-y-2">
-									<div
-										className={`rounded-md p-2 ${
-											isCorrect
-												? 'bg-green-50 text-green-800'
-												: 'bg-red-50 text-red-800'
-										}`}
-									>
-										<p className="text-sm">
-											<span className="font-bold">Tu respuesta:</span>{' '}
-											<span className="font-bold">{displayAnswer}</span>
-										</p>
-									</div>
-									{/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
-									{!isCorrect && finalScore >= 3 && (
-										<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
-											<span className="font-bold">Respuesta correcta:</span>{' '}
-											<span className="font-bold">
-												{getDisplayCorrectAnswer(question)}
-											</span>
+							return (
+								<div
+									key={question.id}
+									className="space-y-3 p-4 transition-all hover:bg-gray-50"
+								>
+									<div className="flex items-start justify-between">
+										<div className="flex-1">
+											<p className="font-medium text-gray-900">
+												<span className="mr-2 text-gray-500">
+													Pregunta {idx + 1}:
+												</span>
+												{question.text}
+											</p>
 										</div>
-									)}
+										{isCorrect ? (
+											<CheckCircleIcon className="h-6 w-6 text-green-600" />
+										) : (
+											<XCircleIcon className="h-6 w-6 text-red-600" />
+										)}
+									</div>
+
+									<div className="ml-6 space-y-2">
+										<div
+											className={`rounded-md p-2 ${
+												isCorrect
+													? 'bg-green-50 text-green-800'
+													: 'bg-red-50 text-red-800'
+											}`}
+										>
+											<p className="text-sm">
+												<span className="font-bold">Tu respuesta:</span>{' '}
+												<span className="font-bold">{displayAnswer}</span>
+											</p>
+										</div>
+										{/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
+										{!isCorrect && finalScore >= 3 && (
+											<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
+												<span className="font-bold">Respuesta correcta:</span>{' '}
+												<span className="font-bold">
+													{getDisplayCorrectAnswer(question)}
+												</span>
+											</div>
+										)}
+									</div>
 								</div>
-							</div>
-						);
-					})}
+							);
+						})}
+					</div>
 				</div>
-				{renderActionButton()}
+				{/* Add margin-top to create space between results and action buttons */}
+				<div className="mt-6">{renderActionButton()}</div>
 			</div>
 		);
 	};
@@ -1382,12 +1475,14 @@ const LessonActivityModal = ({
 
 		// Regular activity content for questions
 		return (
-			// ...existing question rendering code...
 			<div className="space-y-6">
 				{showResults ? (
 					renderResults()
 				) : (
-					<>
+					// Add padding-right to create space for scrollbar
+					<div className="pr-4">
+						{' '}
+						{/* Add right padding */}
 						<div className="mb-8 flex flex-col items-center justify-center text-center">
 							<span className="text-primary text-2xl font-bold">
 								{getQuestionTypeLabel(currentQuestion?.type ?? '')}
@@ -1398,7 +1493,9 @@ const LessonActivityModal = ({
 						</div>
 						{renderQuestion()}
 						{/* Navigation buttons */}
-						<div className="flex justify-between">
+						<div className="mt-6 flex justify-between">
+							{' '}
+							{/* Added top margin */}
 							<button
 								className="btn-arrow btn-arrow-prev"
 								disabled={currentQuestionIndex === 0}
@@ -1418,7 +1515,7 @@ const LessonActivityModal = ({
 								<ChevronRightIcon />
 							</button>
 						</div>
-					</>
+					</div>
 				)}
 			</div>
 		);
@@ -1446,7 +1543,6 @@ const LessonActivityModal = ({
 				if (!open) {
 					if (!canCloseModal) {
 						if (activity.revisada) {
-							// Mensaje específico para actividades revisadas
 							const intentosRestantes = attemptsLeft ?? 0;
 							if (intentosRestantes > 0) {
 								toast.error(
@@ -1467,18 +1563,19 @@ const LessonActivityModal = ({
 			}}
 		>
 			<DialogContent className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex max-h-[90vh] flex-col overflow-hidden sm:max-w-[500px]">
-				<DialogHeader className="bg-background sticky top-0 z-50 pb-2">
+				<DialogHeader className="bg-background sticky top-0 z-50">
 					{' '}
 					{/* Reduced bottom padding from pb-4 to pb-2 */}
-					<DialogTitle className="-pb-8 text-center text-3xl font-bold">
+					<DialogTitle className="text-center text-3xl font-bold">
 						{activity.content?.questionsFilesSubida?.[0] != null
 							? 'SUBIDA DE DOCUMENTO'
 							: 'ACTIVIDAD'}
 					</DialogTitle>
 				</DialogHeader>
-				<div className="flex-1 overflow-y-auto pt-2">
+				{/* Add padding to create space between content and scrollbar */}
+				<div className="flex-1 overflow-y-auto px-4">
 					{' '}
-					{/* Added small top padding */}
+					{/* Updated padding */}
 					{isUnlocking
 						? renderLoadingState('Desbloqueando Siguiente Clase...')
 						: isSavingResults

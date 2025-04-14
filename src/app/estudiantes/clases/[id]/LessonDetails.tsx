@@ -403,16 +403,6 @@ export default function LessonDetails({
 		checkSubscriptionStatus();
 	}, [course.courseType?.requiredSubscriptionLevel, router, user]);
 
-	// Add function to get next lesson ID
-	const getNextLessonId = useCallback(() => {
-		const sortedLessons = [...lessonsState].sort((a, b) =>
-			a.title.localeCompare(b.title)
-		);
-		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
-		const nextLesson = sortedLessons[currentIndex + 1];
-		return nextLesson && !nextLesson.isLocked ? nextLesson.id : undefined;
-	}, [lessonsState, lesson.id]);
-
 	// Function to handle lesson unlock
 	const handleLessonUnlocked = (lessonId: number) => {
 		setLessonsState((prevLessons) =>
@@ -539,7 +529,7 @@ export default function LessonDetails({
 						lessonId={lesson.id} // Add this line
 						isLastLesson={isLastLesson()}
 						isLastActivity={isLastActivity()}
-						getNextLessonId={getNextLessonId} // Add this prop
+						lessons={lessonsState} // Add this prop
 					/>
 				</div>
 
