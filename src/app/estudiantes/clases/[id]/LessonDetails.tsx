@@ -336,17 +336,15 @@ export default function LessonDetails({
 
 		try {
 			saveScrollPosition();
-			// Store the navigation button element position
 			const navigationElement = document.querySelector('.navigation-buttons');
 			const yOffset = navigationElement?.getBoundingClientRect().top ?? 0;
-			const scrollPosition = yOffset + window.scrollY + 40; // Add 200px to scroll further down
+			const scrollPosition = yOffset + window.scrollY + 40;
 
 			await Promise.all([
 				new Promise((resolve) => setTimeout(resolve, 300)),
 				router.push(`/estudiantes/clases/${targetId}`, { scroll: false }),
 			]);
 			restoreScrollPosition();
-			// Scroll to the navigation buttons after route change
 			window.scrollTo({
 				top: scrollPosition,
 				behavior: 'smooth',
@@ -426,22 +424,45 @@ export default function LessonDetails({
 		);
 	};
 
+	const extractLessonNumber = (title: string) => {
+		if (title.toLowerCase().includes('bienvenida')) return -1;
+		const numberRegex = /\d+/;
+		const match = numberRegex.exec(title);
+		return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
+	};
+
 	const isLastLesson = useCallback(() => {
-		const sortedLessons = [...lessonsState].sort((a, b) =>
-			a.title.localeCompare(b.title)
-		);
+		const sortedLessons = [...lessonsState].sort((a, b) => {
+			const aNum = extractLessonNumber(a.title);
+			const bNum = extractLessonNumber(b.title);
+			if (aNum === bNum) {
+				return a.title.localeCompare(b.title);
+			}
+			return aNum - bNum;
+		});
+
 		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
 		return currentIndex === sortedLessons.length - 1;
 	}, [lessonsState, lesson.id]);
 
 	const isLastActivity = useCallback(() => {
 		if (!lessons.length || !activities.length) return false;
-		const lastLesson = lessons[lessons.length - 1];
-		const isLastLesson = lesson?.id === lastLesson?.id;
 
-		if (!isLastLesson) return false;
+		const sortedLessons = [...lessons].sort((a, b) => {
+			const aNum = extractLessonNumber(a.title);
+			const bNum = extractLessonNumber(b.title);
+			if (aNum === bNum) {
+				return a.title.localeCompare(b.title);
+			}
+			return aNum - bNum;
+		});
 
-		const lastActivity = lesson.activities?.[lesson.activities?.length - 1];
+		const lastLesson = sortedLessons[sortedLessons.length - 1];
+		const isCurrentLessonLast = lesson?.id === lastLesson?.id;
+
+		if (!isCurrentLessonLast) return false;
+
+		const lastActivity = activities[activities.length - 1];
 		return activities[0]?.id === lastActivity?.id;
 	}, [lesson, activities, lessons]);
 

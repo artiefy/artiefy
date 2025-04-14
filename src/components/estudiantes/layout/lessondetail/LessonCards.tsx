@@ -19,9 +19,9 @@ const extractLessonNumber = (title: string) => {
 	// Handle special case for "Bienvenida"
 	if (title.toLowerCase().includes('bienvenida')) return -1;
 
-	// Extract number from titles like "1 Introducción..." or "Clase 1:"
-	const match = /^(\d+)/.exec(title);
-	return match ? parseInt(match[1], 10) : Number.MAX_SAFE_INTEGER;
+	// Extract number considering different formats like "1.", "1 -", "Clase 1:", etc.
+	const match = /\d+/.exec(title);
+	return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
 };
 
 const LessonCards = ({
@@ -32,59 +32,89 @@ const LessonCards = ({
 	isNavigating,
 	setLessonsState, // Add this prop
 }: LessonCardsProps) => {
-	// Remove local state as we'll use the parent's state
+	// First useEffect with corrected dependencies and optional chaining
 	useEffect(() => {
 		if (selectedLessonId && progress >= 1) {
-			setLessonsState((prev) =>
-				prev.map((lesson) =>
-					lesson.id === selectedLessonId
-						? {
-								...lesson,
-								isNew: false,
-							}
-						: lesson
-				)
-			);
+			const currentLesson = lessonsState.find((l) => l.id === selectedLessonId);
+			if (currentLesson?.isNew) {
+				setLessonsState((prev) =>
+					prev.map((lesson) =>
+						lesson.id === selectedLessonId
+							? { ...lesson, isNew: false }
+							: lesson
+					)
+				);
+			}
 		}
-	}, [progress, selectedLessonId, setLessonsState]);
+	}, [selectedLessonId, progress, setLessonsState, lessonsState]);
 
-	// Sort the lessons considering "Bienvenida" and numeric order
-	const sortedLessons = [...lessonsState].sort((a, b) => {
-		const aNum = extractLessonNumber(a.title);
-		const bNum = extractLessonNumber(b.title);
-		return aNum - bNum;
-	});
-
-	// Update the unlocking logic
+	// Updated unlocking effect with improved real-time logic
 	useEffect(() => {
-		if (selectedLessonId && progress === 100) {
-			// Get the current lesson and next lesson
-			const currentIndex = sortedLessons.findIndex(
-				(l) => l.id === selectedLessonId
-			);
+		const unlockNextLesson = async () => {
+			if (!selectedLessonId || progress < 100) return;
+
+			const sortedLessons = [...lessonsState].sort((a, b) => {
+				const aNum = extractLessonNumber(a.title);
+				const bNum = extractLessonNumber(b.title);
+				return aNum === bNum ? a.title.localeCompare(b.title) : aNum - bNum;
+			});
+
+			const currentIndex = sortedLessons.findIndex(l => l.id === selectedLessonId);
 			const currentLesson = sortedLessons[currentIndex];
 			const nextLesson = sortedLessons[currentIndex + 1];
 
-			if (nextLesson) {
-				// Only unlock next lesson if current lesson has no activities or all activities are completed
-				const hasActivities =
-					currentLesson.activities && currentLesson.activities.length > 0;
-				const allActivitiesCompleted = hasActivities
-					? currentLesson.activities?.every((activity) => activity.isCompleted)
-					: true;
+			if (!nextLesson?.isLocked) return; // Skip if next lesson is already unlocked
 
-				if (!hasActivities || allActivitiesCompleted) {
-					setLessonsState((prev) =>
-						prev.map((lesson) =>
+			const activities = currentLesson?.activities ?? [];
+			const hasActivities = activities.length > 0;
+			const allActivitiesCompleted = hasActivities 
+				? activities.every(activity => activity.isCompleted)
+				: true;
+
+			// Unlock next lesson if video is complete AND (no activities OR all activities completed)
+			if (progress === 100 && (!hasActivities || allActivitiesCompleted)) {
+				try {
+					// Update database first
+					const response = await fetch('/api/lessons/unlock', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							lessonId: nextLesson.id,
+							currentLessonId: selectedLessonId,
+						}),
+					});
+
+					if (!response.ok) throw new Error('Failed to unlock lesson');
+
+					// If database update successful, update UI state
+					setLessonsState(prev =>
+						prev.map(lesson =>
 							lesson.id === nextLesson.id
 								? { ...lesson, isLocked: false, isNew: true }
 								: lesson
 						)
 					);
+
+						// Show success notification
+						toast.success('¡Nueva clase desbloqueada!', {
+							description: 'Ya puedes acceder a la siguiente clase.',
+						});
+					} catch (error) {
+						console.error('Error unlocking next lesson:', error);
+						toast.error('Error al desbloquear la siguiente clase');
+					}
 				}
-			}
-		}
-	}, [progress, selectedLessonId, sortedLessons, setLessonsState]);
+			};
+
+		void unlockNextLesson();
+	}, [selectedLessonId, progress, lessonsState, setLessonsState]);
+
+	// Sort lessons for rendering
+	const sortedLessons = [...lessonsState].sort((a, b) => {
+		const aNum = extractLessonNumber(a.title);
+		const bNum = extractLessonNumber(b.title);
+		return aNum === bNum ? a.title.localeCompare(b.title) : aNum - bNum;
+	});
 
 	const handleClick = (lessonItem: LessonWithProgress) => {
 		if (isNavigating) return; // Prevent clicks while navigating
@@ -121,21 +151,12 @@ const LessonCards = ({
 		);
 	};
 
-	const renderLessonCard = (lessonItem: LessonWithProgress, index: number) => {
+	const renderLessonCard = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
-		const previousLesson = index > 0 ? sortedLessons[index - 1] : null;
 
-		// A lesson should be accessible if:
-		// 1. It's the first lesson (Bienvenida or Lesson 1)
-		// 2. It's explicitly unlocked in the database
-		// 3. The previous lesson is completed and has no pending activities
-		const isAccessible =
-			index === 0 ||
-			(!lessonItem.isLocked &&
-				(!previousLesson ||
-					(previousLesson.porcentajecompletado === 100 &&
-						(!previousLesson.activities?.length ||
-							previousLesson.activities.every((a) => a.isCompleted)))));
+		// Remove unused previousLesson variable
+		// Update isAccessible logic to only rely on isLocked status
+		const isAccessible = !lessonItem.isLocked;
 
 		const isCompleted = lessonItem.porcentajecompletado === 100;
 		const shouldShowNew =
@@ -149,11 +170,17 @@ const LessonCards = ({
 			<div
 				key={lessonItem.id}
 				onClick={() => handleClick(lessonItem)}
-				className={`mb-2 rounded-lg p-4 transition-transform duration-200 ease-in-out ${isNavigating ? 'cursor-not-allowed opacity-50' : ''} ${
+				className={`mb-2 rounded-lg p-4 transition-transform duration-200 ease-in-out ${
+					isNavigating ? 'cursor-not-allowed opacity-50' : ''
+				} ${
 					isAccessible
-						? 'cursor-pointer hover:scale-[1.01] hover:transform'
-						: 'cursor-not-allowed opacity-75'
-				} ${isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : 'bg-gray-50'} ${isCompleted ? 'border-green-500' : ''} ${shouldShowNew ? 'ring-2 ring-green-400' : ''}`}
+						? 'cursor-pointer bg-white hover:scale-[1.01] hover:transform'
+						: 'cursor-not-allowed bg-gray-50 opacity-75'
+				} ${
+					isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : ''
+				} ${isCompleted ? 'border-green-500' : ''} ${
+					shouldShowNew ? 'ring-2 ring-green-400' : ''
+				}`}
 			>
 				<div className="mb-2 flex items-center justify-between">
 					<h3
@@ -192,9 +219,7 @@ const LessonCards = ({
 		);
 	};
 
-	return (
-		<>{sortedLessons.map((lesson, index) => renderLessonCard(lesson, index))}</>
-	);
+	return <>{sortedLessons.map((lesson) => renderLessonCard(lesson))}</>;
 };
 
 export default LessonCards;
