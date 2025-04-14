@@ -909,7 +909,7 @@ const LessonActivityModal = ({
 		return (
 			<Button
 				onClick={onClose}
-				className="mt-2 w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+				className="w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 			>
 				CERRAR
 			</Button>
@@ -972,65 +972,73 @@ const LessonActivityModal = ({
 					</div>
 
 					{/* Add margin top to questions container */}
-					<div className="mt-3 max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-						{questions.map((question, idx) => {
-							const userAnswer = userAnswers[question.id];
-							const isCorrect = userAnswer?.isCorrect;
-							const displayAnswer = userAnswer
-								? getDisplayAnswer(userAnswer, question)
-								: '';
+					<div className="mt-3 mb-4">
+						{' '}
+						{/* Added mb-4 to add space at bottom */}
+						<div className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+							{' '}
+							{/* Added pl-4 for left padding */}
+							{questions.map((question, idx) => {
+								const userAnswer = userAnswers[question.id];
+								const isCorrect = userAnswer?.isCorrect;
+								const displayAnswer = userAnswer
+									? getDisplayAnswer(userAnswer, question)
+									: '';
 
-							return (
-								<div
-									key={question.id}
-									className="space-y-3 p-4 transition-all hover:bg-gray-50"
-								>
-									<div className="flex items-start justify-between">
-										<div className="flex-1">
-											<p className="font-medium text-gray-900">
-												<span className="mr-2 text-gray-500">
-													Pregunta {idx + 1}:
-												</span>
-												{question.text}
-											</p>
-										</div>
-										{isCorrect ? (
-											<CheckCircleIcon className="h-6 w-6 text-green-600" />
-										) : (
-											<XCircleIcon className="h-6 w-6 text-red-600" />
-										)}
-									</div>
-
-									<div className="ml-6 space-y-2">
-										<div
-											className={`rounded-md p-2 ${
-												isCorrect
-													? 'bg-green-50 text-green-800'
-													: 'bg-red-50 text-red-800'
-											}`}
-										>
-											<p className="text-sm">
-												<span className="font-bold">Tu respuesta:</span>{' '}
-												<span className="font-bold">{displayAnswer}</span>
-											</p>
-										</div>
-										{/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
-										{!isCorrect && finalScore >= 3 && (
-											<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
-												<span className="font-bold">Respuesta correcta:</span>{' '}
-												<span className="font-bold">
-													{getDisplayCorrectAnswer(question)}
-												</span>
+								return (
+									<div
+										key={question.id}
+										className="space-y-3 p-4 transition-all hover:bg-gray-50"
+									>
+										<div className="flex items-start justify-between">
+											<div className="flex-1">
+												<p className="font-medium text-gray-900">
+													<span className="mr-2 text-gray-500">
+														Pregunta {idx + 1}:
+													</span>
+													{question.text}
+												</p>
 											</div>
-										)}
+											{isCorrect ? (
+												<CheckCircleIcon className="h-6 w-6 text-green-600" />
+											) : (
+												<XCircleIcon className="h-6 w-6 text-red-600" />
+											)}
+										</div>
+
+										<div className="ml-6 space-y-2">
+											<div
+												className={`rounded-md p-2 ${
+													isCorrect
+														? 'bg-green-50 text-green-800'
+														: 'bg-red-50 text-red-800'
+												}`}
+											>
+												<p className="text-sm">
+													<span className="font-bold">Tu respuesta:</span>{' '}
+													<span className="font-bold">{displayAnswer}</span>
+												</p>
+											</div>
+											{/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
+											{!isCorrect && finalScore >= 3 && (
+												<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
+													<span className="font-bold">
+														Respuesta correcta:
+													</span>{' '}
+													<span className="font-bold">
+														{getDisplayCorrectAnswer(question)}
+													</span>
+												</div>
+											)}
+										</div>
 									</div>
-								</div>
-							);
-						})}
+								);
+							})}
+						</div>
 					</div>
 				</div>
 				{/* Add margin-top to create space between results and action buttons */}
-				<div className="mt-6">{renderActionButton()}</div>
+				<div className="mt-2">{renderActionButton()}</div>
 			</div>
 		);
 	};
@@ -1480,7 +1488,7 @@ const LessonActivityModal = ({
 					renderResults()
 				) : (
 					// Add padding-right to create space for scrollbar
-					<div className="pr-4">
+					<div className="">
 						{' '}
 						{/* Add right padding */}
 						<div className="mb-8 flex flex-col items-center justify-center text-center">
