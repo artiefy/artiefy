@@ -177,7 +177,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)] bg-[length:20px_20px] opacity-50" />
 			</div>
 			<div className="relative z-10 flex flex-col items-center justify-center space-y-6 text-center">
-				{!videoKey || videoKey === 'null' || !isVideoAvailable ? (
+				{!videoKey || videoKey === 'null' || !isVideoAvailable || isLocked ? (
 					<>
 						<h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
 							Video de la Clase

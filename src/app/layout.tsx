@@ -8,7 +8,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
 import { Toaster } from '~/components/estudiantes/ui/sonner';
-import { esMx } from '@clerk/localizations'
+import { esMX } from '@clerk/localizations'
 
 import Providers from './providers';
 
