@@ -52,7 +52,6 @@ export async function POST(req: NextRequest) {
 		});
 
 		const body = schema.parse(await req.json()); // 📌 Validar y parsear JSON
-		console.log('📥 Datos recibidos:', body);
 		// Validar los campos requeridos manualmente
 		const {
 			title,
@@ -97,7 +96,6 @@ export async function POST(req: NextRequest) {
 			);
 		}
 		// 📌 Validar y actualizar materias
-		console.log('📌 Actualizando materias con los IDs:', subjectIds);
 		if (subjectIds.length > 0) {
 			console.log('📌 Actualizando materias:', subjectIds);
 

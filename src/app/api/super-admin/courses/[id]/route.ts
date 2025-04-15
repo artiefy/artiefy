@@ -73,10 +73,7 @@ export async function PUT(
 		}
 
 		const data = (await request.json()) as CourseData;
-		console.log(
-			'📌 Datos recibidos en el backend para actualizar curso:',
-			data
-		);
+
 
 		// 🛠 Asegurar que `coverImageKey` existe antes de enviar a la BD
 		if (!data.coverImageKey) {

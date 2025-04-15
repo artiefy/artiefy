@@ -89,7 +89,6 @@ export async function PUT(
 		}
 
 		const data = (await request.json()) as PutRequestBody;
-		console.log('📥 Datos recibidos:', data);
 
 		// Create update data object with type checking
 		const updateData = {
@@ -107,16 +106,10 @@ export async function PUT(
 			isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
 		};
 
-		console.log('🔄 Datos a actualizar:', updateData);
-
 		// Update course
-		const updatedCourse = await updateCourse(courseId, updateData);
-		console.log('✅ Curso actualizado:', updatedCourse);
-
+		await updateCourse(courseId, updateData);
 		// Handle subjects if present
 		if (data.subjects && data.subjects.length > 0) {
-			console.log('📚 Procesando materias:', data.subjects);
-
 			// Obtener materias actuales del curso
 			const currentMaterias = await db
 				.select()
@@ -127,7 +120,6 @@ export async function PUT(
 					throw new Error('Error al obtener materias actuales');
 				});
 
-			console.log('📋 Materias actuales:', currentMaterias);
 
 			// Nueva validación: Si el curso no tiene programa y la materia no tiene ni curso ni programa
 			for (const subject of data.subjects) {
@@ -359,8 +351,6 @@ export async function POST(request: Request) {
 			isActive?: boolean; // ✅ Opcional
 		};
 
-		console.log('Datos recibidos:', data);
-
 		// Validar los datos recibidos
 		if (
 			!data.title ||
@@ -368,7 +358,6 @@ export async function POST(request: Request) {
 			!data.modalidadesid ||
 			data.modalidadesid.length === 0
 		) {
-			console.log('Datos inválidos:', data);
 			return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
 		}
 

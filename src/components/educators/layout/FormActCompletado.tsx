@@ -28,6 +28,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 		id: '',
 		text: '',
 		parametros: '',
+		pesoPregunta: 0, // ✅
 	}); // Estado para los datos del formulario
 
 	// Efecto para cargar los datos de la pregunta
@@ -39,6 +40,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 				id: '',
 				text: '',
 				parametros: '',
+				pesoPregunta: 0, // ✅
 			});
 		}
 	}, [editingQuestion]);
@@ -48,9 +50,10 @@ const FormActCompletado: React.FC<formSubida> = ({
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 	) => {
 		const { name, value } = e.target;
+
 		setFormData((prevData) => ({
 			...prevData,
-			[name]: name === 'pesoNota' ? Number(value) : value,
+			[name]: name === 'pesoPregunta' ? Number(value) : value,
 		}));
 	};
 
@@ -118,6 +121,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 				</h2>
 				<form onSubmit={handleSubmit}>
 					<label>Pregunta</label>
+
 					<textarea
 						className="w-full rounded-lg border border-slate-400 p-2 outline-none"
 						placeholder="Digite aqui en esta seccion el trabajo a subir"
@@ -125,6 +129,21 @@ const FormActCompletado: React.FC<formSubida> = ({
 						value={formData.text}
 						onChange={handleChange}
 					/>
+					<label className="mb-1 block text-sm font-medium text-gray-700">
+						Peso de la pregunta (%)
+					</label>
+					<input
+						type="number"
+						name="pesoPregunta"
+						value={formData.pesoPregunta}
+						onChange={handleChange}
+						min={0}
+						max={100}
+						step={1}
+						required
+						className="mb-4 w-full rounded-lg border border-slate-400 p-2 outline-none"
+					/>
+
 					<label>Parametros de evaluacion</label>
 					<textarea
 						className="w-full rounded-lg border border-slate-400 p-2 outline-none"
