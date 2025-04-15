@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
-import { formatInTimeZone } from 'date-fns-tz';
 import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
 
@@ -16,6 +15,7 @@ import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonCh
 import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -27,13 +27,17 @@ import {
 	type UserActivitiesProgress,
 	type Course,
 } from '~/types';
+import { sortLessons } from '~/utils/lessonSorting';
 import {
 	saveScrollPosition,
 	restoreScrollPosition,
 } from '~/utils/scrollPosition';
-import { sortLessons } from '~/utils/lessonSorting';
 
-const TIME_ZONE = 'America/Bogota';
+interface PublicMetadata {
+	planType: string | null;
+	subscriptionStatus: string | null;
+	subscriptionEndDate: string | null;
+}
 
 interface LessonDetailsProps {
 	lesson: LessonWithProgress;
@@ -44,6 +48,27 @@ interface LessonDetailsProps {
 	userId: string;
 	course: Course;
 }
+
+// Move these hooks to the top level
+const isLastLesson = (lessons: LessonWithProgress[], currentId: number) => {
+	const sortedLessons = sortLessons(lessons);
+	const currentIndex = sortedLessons.findIndex((l) => l.id === currentId);
+	return currentIndex === sortedLessons.length - 1;
+};
+
+const isLastActivity = (
+	lessons: LessonWithProgress[],
+	activities: Activity[],
+	currentLesson: LessonWithProgress
+) => {
+	if (!lessons.length || !activities.length) return false;
+	const sortedLessons = sortLessons(lessons);
+	const lastLesson = sortedLessons[sortedLessons.length - 1];
+	const isCurrentLessonLast = currentLesson?.id === lastLesson?.id;
+	if (!isCurrentLessonLast) return false;
+	const lastActivity = activities[activities.length - 1];
+	return activities[0]?.id === lastActivity?.id;
+};
 
 export default function LessonDetails({
 	lesson,
@@ -77,6 +102,19 @@ export default function LessonDetails({
 
 	// Add isInitialized ref to prevent infinite loop
 	const isInitialized = useRef(false);
+
+	// Add check to track if subscription has been verified
+	const [isSubscriptionVerified, setIsSubscriptionVerified] = useState(false);
+
+	// Move course active check to the top
+	useEffect(() => {
+		if (!course.isActive) {
+			toast.error('Curso no disponible', {
+				description: 'Este curso no está disponible actualmente.',
+			});
+			router.push('/estudiantes');
+		}
+	}, [course.isActive, router]);
 
 	useEffect(() => {
 		if (!isInitialized.current) {
@@ -365,44 +403,82 @@ export default function LessonDetails({
 
 	// Add new effect to check subscription status with free course handling
 	useEffect(() => {
-		const checkSubscriptionStatus = () => {
-			// If it's a free course, skip subscription check
-			if (course.courseType?.requiredSubscriptionLevel === 'none') {
-				return;
-			}
+		if (
+			isSubscriptionVerified ||
+			course.courseType?.requiredSubscriptionLevel === 'none'
+		) {
+			return;
+		}
 
-			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-			const rawSubscriptionEndDate = user?.publicMetadata
-				?.subscriptionEndDate as string | null;
+		// Cast metadata with type assertion after validating its shape
+		const metadata = user?.publicMetadata as Record<string, unknown>;
+		if (!metadata) return;
 
-			const formattedSubscriptionEndDate = rawSubscriptionEndDate
-				? formatInTimeZone(
-						new Date(rawSubscriptionEndDate),
-						TIME_ZONE,
-						'yyyy-MM-dd HH:mm:ss'
-					)
-				: null;
-
-			const isSubscriptionActive =
-				subscriptionStatus === 'active' &&
-				(!formattedSubscriptionEndDate ||
-					new Date(formattedSubscriptionEndDate) > new Date());
-
-			if (!isSubscriptionActive) {
-				// Usar un ID único para el toast para evitar duplicados
-				toast.error(
-					'Debes tener una suscripción activa para poder ver las clases.',
-					{
-						id: 'subscription-required',
-					}
-				);
-				void router.push('/planes');
-			}
+		const publicMetadata: PublicMetadata = {
+			planType:
+				typeof metadata.planType === 'string' ? metadata.planType : null,
+			subscriptionStatus:
+				typeof metadata.subscriptionStatus === 'string'
+					? metadata.subscriptionStatus
+					: null,
+			subscriptionEndDate:
+				typeof metadata.subscriptionEndDate === 'string'
+					? metadata.subscriptionEndDate
+					: null,
 		};
 
-		// Solo verificar una vez al cargar el componente
-		checkSubscriptionStatus();
-	}, [course.courseType?.requiredSubscriptionLevel, router, user]);
+		const status = publicMetadata.subscriptionStatus?.toLowerCase();
+		const endDate = publicMetadata.subscriptionEndDate
+			? new Date(publicMetadata.subscriptionEndDate)
+			: null;
+
+		const isActive = status === 'active';
+		const isValid = endDate ? endDate > new Date() : false;
+		const hasValidSubscription = isActive && isValid;
+
+		if (!hasValidSubscription) {
+			toast.error(
+				'Debes tener una suscripción activa para poder ver las clases.',
+				{
+					id: 'subscription-required',
+					duration: 5000,
+				}
+			);
+			void router.push('/planes');
+			return;
+		}
+
+		setIsSubscriptionVerified(true);
+	}, [
+		user?.publicMetadata,
+		course.courseType?.requiredSubscriptionLevel,
+		router,
+		isSubscriptionVerified,
+	]);
+
+	// Add loading state while verifying subscription
+	if (
+		course.courseType?.requiredSubscriptionLevel !== 'none' &&
+		(!user?.publicMetadata || !isSubscriptionVerified)
+	) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<div className="flex flex-col items-center gap-4">
+					<Icons.spinner className="h-8 w-8 animate-spin text-blue-500" />
+					<p className="text-gray-600">Verificando suscripción...</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Add safety check for lesson
+	if (!lesson) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<p>Lección no encontrada</p>
+			</div>
+		);
+	}
 
 	// Function to handle lesson unlock
 	const handleLessonUnlocked = (lessonId: number) => {
@@ -414,43 +490,6 @@ export default function LessonDetails({
 			)
 		);
 	};
-
-	const isLastLesson = useCallback(() => {
-		const sortedLessons = sortLessons(lessonsState);
-		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
-		return currentIndex === sortedLessons.length - 1;
-	}, [lessonsState, lesson.id]);
-
-	const isLastActivity = useCallback(() => {
-		if (!lessons.length || !activities.length) return false;
-
-		const sortedLessons = sortLessons(lessons);
-		const lastLesson = sortedLessons[sortedLessons.length - 1];
-		const isCurrentLessonLast = lesson?.id === lastLesson?.id;
-
-		if (!isCurrentLessonLast) return false;
-
-		const lastActivity = activities[activities.length - 1];
-		return activities[0]?.id === lastActivity?.id;
-	}, [lesson, activities, lessons]);
-
-	useEffect(() => {
-		if (!course.isActive) {
-			toast.error('Curso no disponible', {
-				description: 'Este curso no está disponible actualmente.',
-			});
-			router.push('/estudiantes');
-		}
-	}, [course.isActive, router]);
-
-	// Add safety check for lesson
-	if (!lesson) {
-		return (
-			<div className="flex h-screen items-center justify-center">
-				<p>Lección no encontrada</p>
-			</div>
-		);
-	}
 
 	return (
 		<div className="flex min-h-screen flex-col">
@@ -505,8 +544,8 @@ export default function LessonDetails({
 						onLessonUnlocked={handleLessonUnlocked}
 						courseId={lesson.courseId}
 						lessonId={lesson.id} // Add this line
-						isLastLesson={isLastLesson()}
-						isLastActivity={isLastActivity()}
+						isLastLesson={isLastLesson(lessonsState, lesson.id)}
+						isLastActivity={isLastActivity(lessonsState, activities, lesson)}
 						lessons={lessonsState} // Add this prop
 					/>
 				</div>
