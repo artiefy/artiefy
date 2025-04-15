@@ -33,7 +33,7 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
-import { formatScore, formatScoreNumber } from '~/utils/formatScore';
+import { formatScoreNumber } from '~/utils/formatScore';
 
 import type { Activity, Question, SavedAnswer } from '~/types';
 
@@ -147,6 +147,9 @@ const getFileIcon = (fileType: string) => {
 			return <FaLink className="h-6 w-6 text-blue-500" />;
 	}
 };
+
+// Add a description ID constant
+const MODAL_DESCRIPTION_ID = 'activity-modal-description';
 
 const LessonActivityModal = ({
 	isOpen,
@@ -609,6 +612,14 @@ const LessonActivityModal = ({
 		);
 	};
 
+	// Add safety check for formatScore
+	const formatScore = (score: unknown): string => {
+		if (typeof score !== 'number' || isNaN(score)) {
+			return '0.0';
+		}
+		return score.toFixed(1);
+	};
+
 	const renderStars = (score: number) => {
 		const totalStars = 5;
 		const starScore = Math.round((score / 5) * totalStars);
@@ -622,6 +633,9 @@ const LessonActivityModal = ({
 						<StarOutlineIcon key={index} className="h-8 w-8 text-gray-300" />
 					)
 				)}
+				<span className="ml-2 text-sm font-semibold text-yellow-400">
+					{formatScore(score)}
+				</span>
 			</div>
 		);
 	};
@@ -1586,7 +1600,10 @@ const LessonActivityModal = ({
 				onClose();
 			}}
 		>
-			<DialogContent className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex max-h-[90vh] flex-col overflow-hidden sm:max-w-[500px]">
+			<DialogContent
+				className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex max-h-[90vh] flex-col overflow-hidden sm:max-w-[500px]"
+				aria-describedby={MODAL_DESCRIPTION_ID}
+			>
 				<DialogHeader className="bg-background sticky top-0 z-50">
 					{' '}
 					{/* Reduced bottom padding from pb-4 to pb-2 */}
@@ -1595,6 +1612,10 @@ const LessonActivityModal = ({
 							? 'SUBIDA DE DOCUMENTO'
 							: 'ACTIVIDAD'}
 					</DialogTitle>
+					{/* Add description for accessibility */}
+					<div id={MODAL_DESCRIPTION_ID} className="sr-only">
+						{activity.description ?? 'Actividad del curso'}
+					</div>
 				</DialogHeader>
 				{/* Add padding to create space between content and scrollbar */}
 				<div className="flex-1 overflow-y-auto px-4">
