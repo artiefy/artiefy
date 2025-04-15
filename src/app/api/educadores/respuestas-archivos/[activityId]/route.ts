@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
@@ -8,67 +8,148 @@ const redis = new Redis({
 	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-export async function GET(
-	_request: Request,
-	{ params }: { params: { activityId: string } }
-) {
+interface Pregunta {
+	id: string;
+	text: string;
+	parametros?: string;
+	pesoPregunta?: number;
+}
+
+interface RawSubmission {
+	fileName?: unknown;
+	submittedAt?: unknown;
+	userId?: unknown;
+	userName?: unknown;
+	status?: unknown;
+	fileContent?: unknown;
+	grade?: unknown;
+}
+
+interface Respuesta {
+	fileName: string;
+	submittedAt: string;
+	userId: string;
+	userName: string;
+	status: string;
+	fileContent: string;
+	grade: number | null;
+}
+
+export async function GET(request: NextRequest) {
+	const url = new URL(request.url);
+	const activityId = url.pathname.split('/').pop();
+
+	if (!activityId) {
+		return NextResponse.json(
+			{ error: 'Falta el ID de actividad' },
+			{ status: 400 }
+		);
+	}
+
+	const { userId } = await auth();
+	if (!userId) {
+		return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+	}
+
+	let preguntas: Pregunta[] = [];
+
 	try {
-		// Verificar autenticación
-		const { userId } = await auth();
-		if (!userId) {
-			return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-		}
-		// Asegurarnos de que tenemos el activityId
-		const { activityId } = params;
-		if (!activityId) {
+		const rawPreguntas = await redis.get(
+			`activity:${activityId}:questionsFilesSubida`
+		);
+
+		if (typeof rawPreguntas === 'string') {
+			preguntas = JSON.parse(rawPreguntas) as Pregunta[];
+		} else if (Array.isArray(rawPreguntas)) {
+			preguntas = rawPreguntas as Pregunta[];
+		} else {
 			return NextResponse.json(
-				{ error: 'ID de actividad no proporcionado' },
-				{ status: 400 }
+				{ error: 'Preguntas no válidas' },
+				{ status: 500 }
 			);
 		}
 
-		const activityIndex = `activity:${activityId}:submissions`;
-
-		// Obtener todas las claves de archivos para esta actividad
-		const submissionKeys = await redis.smembers(activityIndex);
-		console.log('Claves de envíos:', submissionKeys); // Para debugging
-		const respuestas: Record<string, {
-			fileName: string;
-			submittedAt: string;
-			userId: string;
-			userName: string;
-			status: string;
-			fileContent: string;
-			grade: number | null;
-		}> = {};
-
-		for (const key of submissionKeys) {
-			const fileDetails = await redis.hgetall(key);
-			if (fileDetails) {
-				respuestas[key] = {
-					fileName: typeof fileDetails.fileName === 'string' ? fileDetails.fileName : '',
-					submittedAt: typeof fileDetails.submittedAt === 'string' ? fileDetails.submittedAt : new Date().toISOString(),
-					userId: typeof fileDetails.userId === 'string' ? fileDetails.userId : '',
-					userName: typeof fileDetails.userName === 'string' ? fileDetails.userName : '',
-					status: typeof fileDetails.status === 'string' ? fileDetails.status : 'pendiente',
-					fileContent: typeof fileDetails.fileContent === 'string' ? fileDetails.fileContent : '',
-					grade:
-						fileDetails.grade && typeof fileDetails.grade === 'string'
-							? parseFloat(fileDetails.grade)
-							: null,
-				};
-			} else {
-				console.log('No se encontraron detalles para la clave:', key); // Para debugging
-			}
-		}
-
-		console.log('Respuestas recuperadas:', respuestas); // Para debugging
-		return NextResponse.json({ respuestas });
+		console.log('📋 Preguntas cargadas:', preguntas);
 	} catch (error) {
-		console.error('Error al obtener respuestas:', error);
+		console.error('❌ Error parseando preguntas:', error);
 		return NextResponse.json(
-			{ error: 'Error al obtener las respuestas' },
+			{ error: 'Error en formato de preguntas' },
 			{ status: 500 }
 		);
 	}
+
+	const respuestas: Record<string, Respuesta> = {};
+
+	try {
+		const allKeys = await redis.keys(`activity:${activityId}:user:*:submission`);
+		console.log('🗝️ Claves encontradas:', allKeys);
+
+		for (const key of allKeys) {
+			console.log(`📂 Procesando clave: ${key}`);
+
+			const rawDoc = await redis.get<RawSubmission>(key);
+
+			if (!rawDoc || typeof rawDoc !== 'object' || Array.isArray(rawDoc)) {
+				console.log('📭 Documento vacío o no válido para clave:', key);
+				continue;
+			}
+
+			const questionIdInKey = preguntas[0]?.id.trim(); // solo si manejas una pregunta
+			console.log('🎯 ID de pregunta extraído:', questionIdInKey);
+
+			const match = preguntas.some((p) => p.id.trim() === questionIdInKey);
+			preguntas.forEach((p) => {
+				console.log(`🧪 Comparando: "${p.id.trim()}" === "${questionIdInKey}"`);
+			});
+
+			if (!match) {
+				console.log('❌ No matchea pregunta:', questionIdInKey);
+				continue;
+			}
+
+			const fileName =
+				typeof rawDoc.fileName === 'string' ? rawDoc.fileName : '';
+			const submittedAt =
+				typeof rawDoc.submittedAt === 'string'
+					? rawDoc.submittedAt
+					: new Date().toISOString();
+			const fileContent =
+				typeof rawDoc.fileContent === 'string' ? rawDoc.fileContent : '';
+			const status =
+				typeof rawDoc.status === 'string' ? rawDoc.status : 'pendiente';
+			const userIdFromKey =
+				typeof rawDoc.userId === 'string' ? rawDoc.userId : key.split(':')[2];
+			const userName =
+				typeof rawDoc.userName === 'string' ? rawDoc.userName : userIdFromKey;
+
+			let grade: number | null = null;
+			if (typeof rawDoc.grade === 'number') {
+				grade = rawDoc.grade;
+			} else if (
+				typeof rawDoc.grade === 'string' &&
+				!isNaN(Number(rawDoc.grade))
+			) {
+				grade = Number(rawDoc.grade);
+			}
+
+			respuestas[key] = {
+				fileName,
+				submittedAt,
+				userId: userIdFromKey,
+				userName,
+				status,
+				fileContent,
+				grade,
+			};
+		}
+	} catch (err) {
+		console.error('❌ Error procesando respuestas:', err);
+	}
+
+	console.log(
+		'✅ Total respuestas encontradas:',
+		Object.keys(respuestas).length
+	);
+
+	return NextResponse.json({ respuestas });
 }

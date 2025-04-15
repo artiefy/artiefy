@@ -14,6 +14,7 @@ interface RespuestaArchivo {
 	userName: string;
 	status: string;
 	grade: number | null;
+	fileContent: string; // ✅ Agregar esto
 }
 
 /**
@@ -194,27 +195,23 @@ export default function VerRespuestasArchivos({
 	 *
 	 * @param {string} key - La clave de la respuesta.
 	 */
-	const descargarArchivo = async (key: string) => {
-		try {
-			const response = await fetch(`/api/educadores/descargar-archivo/${key}`);
-			if (!response.ok)
-				throw new Error(`Error al descargar archivo: ${response.statusText}`);
-
-			const blob = await response.blob();
-			const url = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = respuestas[key].fileName;
-			document.body.appendChild(a);
-			a.click();
-			window.URL.revokeObjectURL(url);
-			document.body.removeChild(a);
-		} catch (error) {
-			console.error('Error al descargar archivo:', error);
+	const descargarArchivo = (key: string) => {
+		const fileUrl = respuestas[key]?.fileContent;
+		if (!fileUrl) {
 			toast('Error', {
-				description: 'No se pudo descargar el archivo',
+				description: 'No se encontró el archivo para esta respuesta.',
 			});
+			return;
 		}
+
+		// Abrir directamente en una nueva pestaña o forzar descarga
+		const a = document.createElement('a');
+		a.href = fileUrl;
+		a.download = respuestas[key].fileName;
+		a.target = '_blank';
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
 	};
 
 	if (loading) return <div>Cargando respuestas...</div>;

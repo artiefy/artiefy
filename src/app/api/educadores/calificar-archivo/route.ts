@@ -7,60 +7,66 @@ const redis = new Redis({
 	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
+interface CalificacionPayload {
+	activityId: string;
+	questionId: string;
+	userId: string;
+	grade: number;
+	submissionKey: string;
+}
+
 export async function POST(request: Request) {
 	try {
-		const { activityId, questionId, userId, grade, submissionKey }: { activityId: string, questionId: string, userId: string, grade: number, submissionKey: string } =
-			await request.json() as { activityId: string, questionId: string, userId: string, grade: number, submissionKey: string };
+		const payload = (await request.json()) as CalificacionPayload;
+		const { activityId, questionId, userId, grade, submissionKey } = payload;
+
+		console.log('📨 Payload recibido:', payload);
 
 		if (
-			!activityId ||
-			!questionId ||
-			!userId ||
+			!activityId?.trim() ||
+			!questionId?.trim() ||
+			!userId?.trim() ||
 			grade === undefined ||
-			!submissionKey
+			!submissionKey?.trim()
 		) {
+			console.warn('❌ Datos incompletos en payload');
 			return NextResponse.json(
 				{ error: 'Faltan datos requeridos' },
 				{ status: 400 }
 			);
 		}
 
-		// Obtener los datos actuales directamente usando la clave completa
-		const currentData = await redis.hgetall(submissionKey);
-		console.log('Datos actuales:', { submissionKey, currentData });
+		const cleanedKey = submissionKey.trim();
+		console.log('🔑 Clave usada para Redis:', cleanedKey);
 
-		if (!currentData) {
+		// 🚨 Este es el punto clave:
+		const raw = await redis.get(cleanedKey);
+		console.log('📦 Datos actuales (raw):', raw);
+
+		if (!raw || typeof raw !== 'object') {
+			console.warn(
+				'⚠️ No se encontraron datos o tipo incorrecto para la clave'
+			);
 			return NextResponse.json(
 				{ error: 'No se encontraron datos para la respuesta' },
 				{ status: 404 }
 			);
 		}
 
-		// Actualizar los datos manteniendo todos los campos existentes
-		const updateData = {
-			...currentData,
-			grade: grade.toString(),
-			status: 'calificado',
-			lastUpdated: new Date().toISOString(),
-		};
+		// Ya que viene como objeto, no hay que parsear, solo modificar
+		const parsed = { ...raw } as Record<string, unknown>;
 
-		// Actualizar los datos
-		await redis.hset(submissionKey, updateData);
+		parsed.grade = grade;
+		parsed.status = 'reviewed';
+		parsed.lastUpdated = new Date().toISOString();
 
-		// Verificar la actualización
-		const updatedData = await redis.hgetall(submissionKey);
-		console.log('Datos después de actualizar:', updatedData);
+		await redis.set(cleanedKey, parsed); // ← directo como objeto, Redis lo serializa
 
-		if (!updatedData) {
-			throw new Error('No se pudo verificar la actualización');
-		}
+		console.log('✅ Datos después de actualizar:', parsed);
 
-		return NextResponse.json({
-			success: true,
-			data: updatedData,
-		});
+		return NextResponse.json({ success: true, data: parsed });
 	} catch (error) {
-		console.error('Error detallado al calificar:', error);
+		console.error('💥 Error al calificar:', error);
 		return NextResponse.json(
 			{
 				error: 'Error al calificar la respuesta',
