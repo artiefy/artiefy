@@ -30,39 +30,72 @@ interface GetCoursesOptions {
 }
 
 // Función para verificar el rol de admin y obtener usuarios
-export async function getAdminUsers(query: string | undefined) {
-	console.log('DEBUG: Ejecutando getAdminUsers con query ->', query);
+export async function getAdminUsers(query?: string) {
+	console.log('DEBUG: Ejecutando getAdminUsers (SIN paginar por count)');
+
 	const client = await clerkClient();
-	const usersResponse = await client.users.getUserList({ limit: 100 });
-	const users = usersResponse.data;
+	const allUsers: {
+		id: string;
+		firstName?: string;
+		lastName?: string;
+		emailAddresses: { emailAddress: string; id: string }[];
+		primaryEmailAddressId?: string;
+		publicMetadata?: { role?: string; status?: string };
+	}[] = [];
 
-	const filteredUsers = query
-		? users.filter(
-				(user) =>
-					(user.firstName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-					(user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-					user.emailAddresses.some((email) =>
-						email.emailAddress.toLowerCase().includes(query.toLowerCase())
-					)
-			)
-		: users;
+	let offset = 0;
+	const limit = 100;
 
-		const simplifiedUsers = filteredUsers.map((user) => ({
-			id: user.id,
-			firstName: user.firstName,
-			lastName: user.lastName,
-			email: user.emailAddresses.find(
-			  (email) => email.id === user.primaryEmailAddressId
-			)?.emailAddress,
-			role: typeof user.publicMetadata?.role === 'string'
-				? user.publicMetadata.role.trim().toLowerCase()
-				: 'estudiante',
-			status: user.publicMetadata?.status ?? 'activo',
-		  }));
-		  
+	while (true) {
+		const response = await client.users.getUserList({ limit, offset });
+		const users = response.data;
 
+		console.log(`🧪 Página offset: ${offset}, Traídos: ${users.length}`);
+
+		if (!users.length) break;
+
+		allUsers.push(
+			...users.map((user) => ({
+				...user,
+				firstName: user.firstName ?? undefined,
+				lastName: user.lastName ?? undefined,
+				primaryEmailAddressId: user.primaryEmailAddressId ?? undefined,
+			}))
+		);
+
+		offset += limit;
+	}
+
+	const simplifiedUsers = allUsers.map((user) => ({
+		id: user.id,
+		firstName: user.firstName ?? '',
+		lastName: user.lastName ?? '',
+		email: user.emailAddresses.find(
+			(email) => email.id === user.primaryEmailAddressId
+		)?.emailAddress ?? '',
+		role: typeof user.publicMetadata?.role === 'string'
+			? user.publicMetadata.role.trim().toLowerCase()
+			: 'estudiante',
+		status: typeof user.publicMetadata?.status === 'string'
+			? user.publicMetadata.status
+			: 'activo',
+	}));
+
+	const filtered = query
+		? simplifiedUsers.filter((user) =>
+				`${user.firstName} ${user.lastName} ${user.email}`
+					.toLowerCase()
+					.includes(query.toLowerCase())
+		  )
+		: simplifiedUsers;
+
+	console.log(`✅ Total de usuarios encontrados: ${filtered.length}`);
+	return filtered;
+
+	console.log(`✅ Total de usuarios encontrados: ${simplifiedUsers.length}`);
 	return simplifiedUsers;
 }
+
 
 // ✅ Función para actualizar el rol de un usuario
 export async function setRoleWrapper({
