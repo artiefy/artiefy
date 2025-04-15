@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
+import { eq } from 'drizzle-orm';
+
+import { db } from '~/server/db';
+import { userActivitiesProgress } from '~/server/db/schema';
 
 const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -29,7 +33,6 @@ export async function POST(request: Request) {
 			grade === undefined ||
 			!submissionKey?.trim()
 		) {
-			console.warn('❌ Datos incompletos en payload');
 			return NextResponse.json(
 				{ error: 'Faltan datos requeridos' },
 				{ status: 400 }
@@ -39,30 +42,38 @@ export async function POST(request: Request) {
 		const cleanedKey = submissionKey.trim();
 		console.log('🔑 Clave usada para Redis:', cleanedKey);
 
-		// 🚨 Este es el punto clave:
 		const raw = await redis.get(cleanedKey);
 		console.log('📦 Datos actuales (raw):', raw);
 
 		if (!raw || typeof raw !== 'object') {
-			console.warn(
-				'⚠️ No se encontraron datos o tipo incorrecto para la clave'
-			);
 			return NextResponse.json(
 				{ error: 'No se encontraron datos para la respuesta' },
 				{ status: 404 }
 			);
 		}
 
-		// Ya que viene como objeto, no hay que parsear, solo modificar
 		const parsed = { ...raw } as Record<string, unknown>;
-
 		parsed.grade = grade;
 		parsed.status = 'reviewed';
 		parsed.lastUpdated = new Date().toISOString();
 
-		await redis.set(cleanedKey, parsed); // ← directo como objeto, Redis lo serializa
+		await redis.set(cleanedKey, parsed);
+		console.log('✅ Redis actualizado:', parsed);
 
-		console.log('✅ Datos después de actualizar:', parsed);
+		// ✅ ACTUALIZAR revisada, nota, y fecha en userActivitiesProgress
+		await db
+			.update(userActivitiesProgress)
+			.set({
+				finalGrade: grade,
+				revisada: true,
+				lastAttemptAt: new Date(),
+			})
+			.where(
+				eq(userActivitiesProgress.userId, userId) &&
+					eq(userActivitiesProgress.activityId, Number(activityId))
+			);
+
+		console.log('📝 BD actualizada: finalGrade, revisada, lastAttemptAt');
 
 		return NextResponse.json({ success: true, data: parsed });
 	} catch (error) {
