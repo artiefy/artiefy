@@ -31,6 +31,7 @@ import {
 	saveScrollPosition,
 	restoreScrollPosition,
 } from '~/utils/scrollPosition';
+import { sortLessons } from '~/utils/lessonSorting';
 
 const TIME_ZONE = 'America/Bogota';
 
@@ -414,23 +415,8 @@ export default function LessonDetails({
 		);
 	};
 
-	const extractLessonNumber = (title: string) => {
-		if (title.toLowerCase().includes('bienvenida')) return -1;
-		const numberRegex = /\d+/;
-		const match = numberRegex.exec(title);
-		return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
-	};
-
 	const isLastLesson = useCallback(() => {
-		const sortedLessons = [...lessonsState].sort((a, b) => {
-			const aNum = extractLessonNumber(a.title);
-			const bNum = extractLessonNumber(b.title);
-			if (aNum === bNum) {
-				return a.title.localeCompare(b.title);
-			}
-			return aNum - bNum;
-		});
-
+		const sortedLessons = sortLessons(lessonsState);
 		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
 		return currentIndex === sortedLessons.length - 1;
 	}, [lessonsState, lesson.id]);
@@ -438,15 +424,7 @@ export default function LessonDetails({
 	const isLastActivity = useCallback(() => {
 		if (!lessons.length || !activities.length) return false;
 
-		const sortedLessons = [...lessons].sort((a, b) => {
-			const aNum = extractLessonNumber(a.title);
-			const bNum = extractLessonNumber(b.title);
-			if (aNum === bNum) {
-				return a.title.localeCompare(b.title);
-			}
-			return aNum - bNum;
-		});
-
+		const sortedLessons = sortLessons(lessons);
 		const lastLesson = sortedLessons[sortedLessons.length - 1];
 		const isCurrentLessonLast = lesson?.id === lastLesson?.id;
 

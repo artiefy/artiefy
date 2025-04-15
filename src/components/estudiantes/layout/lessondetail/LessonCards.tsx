@@ -3,8 +3,10 @@ import { useEffect, type Dispatch, type SetStateAction } from 'react';
 
 import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 
 import { type LessonWithProgress } from '~/types';
+import { sortLessons } from '~/utils/lessonSorting';
 
 interface LessonCardsProps {
 	lessonsState: LessonWithProgress[];
@@ -15,13 +17,24 @@ interface LessonCardsProps {
 	setLessonsState: Dispatch<SetStateAction<LessonWithProgress[]>>; // Add this prop
 }
 
-const extractLessonNumber = (title: string) => {
-	// Handle special case for "Bienvenida"
-	if (title.toLowerCase().includes('bienvenida')) return -1;
+interface NextLessonStatus {
+	lessonId: number | null;
+	isUnlocked: boolean;
+}
 
-	// Extract number considering different formats like "1.", "1 -", "Clase 1:", etc.
-	const match = /\d+/.exec(title);
-	return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
+interface ApiResponse {
+	lessonId: number | null;
+	isUnlocked: boolean;
+}
+
+const fetcher = async (url: string): Promise<NextLessonStatus> => {
+	const res = await fetch(url);
+	if (!res.ok) throw new Error('Failed to fetch lesson status');
+	const data = (await res.json()) as ApiResponse;
+	return {
+		isUnlocked: Boolean(data.isUnlocked),
+		lessonId: data.lessonId,
+	};
 };
 
 const LessonCards = ({
@@ -32,6 +45,18 @@ const LessonCards = ({
 	isNavigating,
 	setLessonsState, // Add this prop
 }: LessonCardsProps) => {
+	// Add SWR hook to automatically check lesson status
+	const { data: nextLessonStatus, mutate } = useSWR<NextLessonStatus>(
+		selectedLessonId && progress === 100
+			? `/api/lessons/${selectedLessonId}/next-lesson-status`
+			: null,
+		fetcher,
+		{
+			refreshInterval: 0,
+			revalidateOnFocus: false,
+		}
+	);
+
 	// First useEffect with corrected dependencies and optional chaining
 	useEffect(() => {
 		if (selectedLessonId && progress >= 1) {
@@ -48,18 +73,15 @@ const LessonCards = ({
 		}
 	}, [selectedLessonId, progress, setLessonsState, lessonsState]);
 
-	// Updated unlocking effect with improved real-time logic
+	// Modified unlocking effect with real-time updates
 	useEffect(() => {
 		const unlockNextLesson = async () => {
 			if (!selectedLessonId || progress < 100) return;
 
-			const sortedLessons = [...lessonsState].sort((a, b) => {
-				const aNum = extractLessonNumber(a.title);
-				const bNum = extractLessonNumber(b.title);
-				return aNum === bNum ? a.title.localeCompare(b.title) : aNum - bNum;
-			});
-
-			const currentIndex = sortedLessons.findIndex(l => l.id === selectedLessonId);
+			const sortedLessons = sortLessons(lessonsState);
+			const currentIndex = sortedLessons.findIndex(
+				(l) => l.id === selectedLessonId
+			);
 			const currentLesson = sortedLessons[currentIndex];
 			const nextLesson = sortedLessons[currentIndex + 1];
 
@@ -67,8 +89,8 @@ const LessonCards = ({
 
 			const activities = currentLesson?.activities ?? [];
 			const hasActivities = activities.length > 0;
-			const allActivitiesCompleted = hasActivities 
-				? activities.every(activity => activity.isCompleted)
+			const allActivitiesCompleted = hasActivities
+				? activities.every((activity) => activity.isCompleted)
 				: true;
 
 			// Unlock next lesson if video is complete AND (no activities OR all activities completed)
@@ -87,34 +109,46 @@ const LessonCards = ({
 					if (!response.ok) throw new Error('Failed to unlock lesson');
 
 					// If database update successful, update UI state
-					setLessonsState(prev =>
-						prev.map(lesson =>
+					setLessonsState((prev) =>
+						prev.map((lesson) =>
 							lesson.id === nextLesson.id
 								? { ...lesson, isLocked: false, isNew: true }
 								: lesson
 						)
 					);
 
-						// Show success notification
-						toast.success('¡Nueva clase desbloqueada!', {
-							description: 'Ya puedes acceder a la siguiente clase.',
-						});
-					} catch (error) {
-						console.error('Error unlocking next lesson:', error);
-						toast.error('Error al desbloquear la siguiente clase');
-					}
+					// Revalidate next lesson status
+					await mutate();
+
+					// Show success notification
+					toast.success('¡Nueva clase desbloqueada!', {
+						description: 'Ya puedes acceder a la siguiente clase.',
+					});
+				} catch (error) {
+					console.error('Error unlocking next lesson:', error);
+					toast.error('Error al desbloquear la siguiente clase');
 				}
-			};
+			}
+		};
 
 		void unlockNextLesson();
-	}, [selectedLessonId, progress, lessonsState, setLessonsState]);
+	}, [selectedLessonId, progress, lessonsState, setLessonsState, mutate]);
+
+	// Update lessons state when nextLessonStatus changes
+	useEffect(() => {
+		if (nextLessonStatus?.isUnlocked && nextLessonStatus.lessonId !== null) {
+			setLessonsState((prev) =>
+				prev.map((lesson) =>
+					lesson.id === nextLessonStatus.lessonId
+						? { ...lesson, isLocked: false, isNew: true }
+						: lesson
+				)
+			);
+		}
+	}, [nextLessonStatus, setLessonsState]);
 
 	// Sort lessons for rendering
-	const sortedLessons = [...lessonsState].sort((a, b) => {
-		const aNum = extractLessonNumber(a.title);
-		const bNum = extractLessonNumber(b.title);
-		return aNum === bNum ? a.title.localeCompare(b.title) : aNum - bNum;
-	});
+	const sortedLessons = sortLessons(lessonsState);
 
 	const handleClick = (lessonItem: LessonWithProgress) => {
 		if (isNavigating) return; // Prevent clicks while navigating
@@ -151,16 +185,37 @@ const LessonCards = ({
 		);
 	};
 
+	const getActivityStatus = (lessonItem: LessonWithProgress) => {
+		// Always check isLocked first
+		if (lessonItem.isLocked === true) {
+			return {
+				icon: <FaLock className="text-gray-400" />,
+				isAccessible: false,
+				className: 'cursor-not-allowed bg-gray-50 opacity-75',
+			};
+		}
+
+		// Only if explicitly unlocked (isLocked === false), check other conditions
+		if (lessonItem.porcentajecompletado === 100) {
+			return {
+				icon: <FaCheckCircle className="text-green-500" />,
+				isAccessible: true,
+				className: 'cursor-pointer bg-white hover:scale-[1.01] hover:transform',
+			};
+		}
+
+		return {
+			icon: <FaClock className="text-gray-400" />,
+			isAccessible: true,
+			className: 'cursor-pointer bg-white hover:scale-[1.01] hover:transform',
+		};
+	};
+
 	const renderLessonCard = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
-
-		// Remove unused previousLesson variable
-		// Update isAccessible logic to only rely on isLocked status
-		const isAccessible = !lessonItem.isLocked;
-
-		const isCompleted = lessonItem.porcentajecompletado === 100;
+		const status = getActivityStatus(lessonItem);
 		const shouldShowNew =
-			!lessonItem.isLocked &&
+			lessonItem.isLocked === false && // Explicitly check for false
 			lessonItem.isNew &&
 			(isCurrentLesson
 				? progress === 0
@@ -172,20 +227,14 @@ const LessonCards = ({
 				onClick={() => handleClick(lessonItem)}
 				className={`mb-2 rounded-lg p-4 transition-transform duration-200 ease-in-out ${
 					isNavigating ? 'cursor-not-allowed opacity-50' : ''
-				} ${
-					isAccessible
-						? 'cursor-pointer bg-white hover:scale-[1.01] hover:transform'
-						: 'cursor-not-allowed bg-gray-50 opacity-75'
-				} ${
+				} ${status.className} ${
 					isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : ''
-				} ${isCompleted ? 'border-green-500' : ''} ${
-					shouldShowNew ? 'ring-2 ring-green-400' : ''
-				}`}
+				} ${shouldShowNew ? 'ring-2 ring-green-400' : ''}`}
 			>
 				<div className="mb-2 flex items-center justify-between">
 					<h3
 						className={`font-semibold ${
-							isAccessible ? 'text-gray-900' : 'text-gray-500'
+							status.isAccessible ? 'text-gray-900' : 'text-gray-500'
 						}`}
 					>
 						{lessonItem.title}
@@ -196,13 +245,7 @@ const LessonCards = ({
 								Nueva
 							</span>
 						)}
-						{isCompleted ? (
-							<FaCheckCircle className="text-green-500" />
-						) : lessonItem.isLocked ? (
-							<FaLock className="text-gray-400" />
-						) : (
-							<FaClock className="text-gray-400" />
-						)}
+						{status.icon}
 					</div>
 				</div>
 				<p className="mb-2 line-clamp-1 text-sm text-gray-600">
