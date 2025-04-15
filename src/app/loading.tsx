@@ -5,6 +5,14 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import '~/styles/loading.css';
 
+// Add metadata noindex
+export const metadata = {
+	robots: {
+		index: false,
+		follow: false,
+	},
+};
+
 export const dynamic = 'force-static';
 
 const Loading: React.FC = () => {
