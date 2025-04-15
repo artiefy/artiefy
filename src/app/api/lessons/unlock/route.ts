@@ -1,97 +1,73 @@
 import { NextResponse } from 'next/server';
 
-import { auth } from '@clerk/nextjs/server';
-import { eq, and } from 'drizzle-orm';
+import { currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 import { db } from '~/server/db';
-import { userLessonsProgress, activities } from '~/server/db/schema';
+import { userLessonsProgress, lessons } from '~/server/db/schema';
 
-interface UnlockRequestBody {
-	lessonId: number;
-	currentLessonId: number;
-}
+// Define schema for request validation
+const unlockRequestSchema = z.object({
+	lessonId: z.number(),
+	currentLessonId: z.number(),
+	hasActivities: z.boolean(),
+	allActivitiesCompleted: z.boolean(),
+});
 
-function isValidUnlockRequest(data: unknown): data is UnlockRequestBody {
-	if (!data || typeof data !== 'object') return false;
-	return (
-		'lessonId' in data &&
-		typeof (data as UnlockRequestBody).lessonId === 'number' &&
-		'currentLessonId' in data &&
-		typeof (data as UnlockRequestBody).currentLessonId === 'number'
-	);
-}
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
 	try {
-		const authData = await auth();
-		if (!authData?.userId) {
-			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-		}
-
-		let parsedBody: unknown;
-		try {
-			parsedBody = await req.json();
-		} catch (e) {
-			return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-		}
-
-		if (!isValidUnlockRequest(parsedBody)) {
+		const user = await currentUser();
+		if (!user?.id) {
 			return NextResponse.json(
-				{ error: 'Invalid request body' },
+				{ success: false, error: 'Unauthorized' },
+				{ status: 401 }
+			);
+		}
+
+		// Parse and validate request data
+		const requestBody = unlockRequestSchema.safeParse(await request.json());
+
+		if (!requestBody.success) {
+			return NextResponse.json(
+				{ success: false, error: 'Invalid request data' },
 				{ status: 400 }
 			);
 		}
 
-		const { lessonId, currentLessonId } = parsedBody;
+		const { lessonId, currentLessonId, hasActivities, allActivitiesCompleted } =
+			requestBody.data;
 
-		// Verify current lesson is complete
-		const currentProgress = await db.query.userLessonsProgress.findFirst({
-			where: and(
-				eq(userLessonsProgress.lessonId, currentLessonId),
-				eq(userLessonsProgress.userId, authData.userId)
-			),
+		// Validate that current lesson exists and is completed
+		const currentLesson = await db.query.lessons.findFirst({
+			where: eq(lessons.id, currentLessonId),
+			with: {
+				activities: true,
+			},
 		});
 
-		if (!currentProgress || currentProgress.progress < 100) {
+		if (!currentLesson) {
 			return NextResponse.json(
-				{ error: 'Current lesson not completed' },
+				{ success: false, error: 'Current lesson not found' },
+				{ status: 404 }
+			);
+		}
+
+		// Check if the lesson should be unlocked based on activities
+		const shouldUnlock = hasActivities ? allActivitiesCompleted : true;
+
+		if (!shouldUnlock) {
+			return NextResponse.json(
+				{ success: false, error: 'Activities not completed' },
 				{ status: 400 }
 			);
 		}
 
-		// Get activities for current lesson
-		const lessonActivities = await db.query.activities.findMany({
-			where: eq(activities.lessonsId, currentLessonId),
-		});
-
-		// Check if all activities are completed (if any exist)
-		if (lessonActivities.length > 0) {
-			const activitiesProgress = await db.query.userActivitiesProgress.findMany(
-				{
-					where: and(eq(userLessonsProgress.userId, authData.userId)),
-				}
-			);
-
-			const allActivitiesCompleted = lessonActivities.every((activity) =>
-				activitiesProgress.some(
-					(progress) =>
-						progress.activityId === activity.id && progress.isCompleted
-				)
-			);
-
-			if (!allActivitiesCompleted) {
-				return NextResponse.json(
-					{ error: 'Not all activities completed' },
-					{ status: 400 }
-				);
-			}
-		}
-
-		// Update or insert progress record for next lesson
-		const result = await db
+		// Proceed with unlocking
+		await db
 			.insert(userLessonsProgress)
 			.values({
-				userId: authData.userId,
+				userId: user.id,
 				lessonId,
 				progress: 0,
 				isCompleted: false,
@@ -111,12 +87,14 @@ export async function POST(req: Request) {
 		return NextResponse.json({
 			success: true,
 			message: 'Lesson unlocked successfully',
-			result,
 		});
 	} catch (error) {
-		console.error('Error unlocking lesson:', error);
+		console.error(
+			'Error unlocking lesson:',
+			error instanceof Error ? error.message : 'Unknown error'
+		);
 		return NextResponse.json(
-			{ error: 'Failed to unlock lesson' },
+			{ success: false, error: 'Internal server error' },
 			{ status: 500 }
 		);
 	}

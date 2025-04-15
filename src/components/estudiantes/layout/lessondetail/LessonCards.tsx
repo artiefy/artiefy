@@ -27,6 +27,12 @@ interface ApiResponse {
 	isUnlocked: boolean;
 }
 
+// Add interface for API response
+interface UnlockResponse {
+	success: boolean;
+	error?: string;
+}
+
 const fetcher = async (url: string): Promise<NextLessonStatus> => {
 	const res = await fetch(url);
 	if (!res.ok) throw new Error('Failed to fetch lesson status');
@@ -89,12 +95,16 @@ const LessonCards = ({
 
 			const activities = currentLesson?.activities ?? [];
 			const hasActivities = activities.length > 0;
-			const allActivitiesCompleted = hasActivities
-				? activities.every((activity) => activity.isCompleted)
-				: true;
 
-			// Unlock next lesson if video is complete AND (no activities OR all activities completed)
-			if (progress === 100 && (!hasActivities || allActivitiesCompleted)) {
+			// Only proceed if:
+			// 1. There are no activities and video is complete
+			// 2. OR all activities are completed and video is complete
+			const shouldUnlock = hasActivities
+				? activities.every((activity) => activity.isCompleted) &&
+					progress === 100
+				: progress === 100;
+
+			if (shouldUnlock) {
 				try {
 					// Update database first
 					const response = await fetch('/api/lessons/unlock', {
@@ -103,27 +113,34 @@ const LessonCards = ({
 						body: JSON.stringify({
 							lessonId: nextLesson.id,
 							currentLessonId: selectedLessonId,
+							hasActivities,
+							allActivitiesCompleted: hasActivities
+								? activities.every((a) => a.isCompleted)
+								: true,
 						}),
 					});
 
 					if (!response.ok) throw new Error('Failed to unlock lesson');
 
-					// If database update successful, update UI state
-					setLessonsState((prev) =>
-						prev.map((lesson) =>
-							lesson.id === nextLesson.id
-								? { ...lesson, isLocked: false, isNew: true }
-								: lesson
-						)
-					);
+					const result = (await response.json()) as UnlockResponse;
 
-					// Revalidate next lesson status
-					await mutate();
+					if (result.success) {
+						setLessonsState((prev) =>
+							prev.map((lesson) =>
+								lesson.id === nextLesson.id
+									? { ...lesson, isLocked: false, isNew: true }
+									: lesson
+							)
+						);
 
-					// Show success notification
-					toast.success('¡Nueva clase desbloqueada!', {
-						description: 'Ya puedes acceder a la siguiente clase.',
-					});
+						// Revalidate next lesson status
+						await mutate();
+
+						// Show success notification
+						toast.success('¡Nueva clase desbloqueada!', {
+							description: 'Ya puedes acceder a la siguiente clase.',
+						});
+					}
 				} catch (error) {
 					console.error('Error unlocking next lesson:', error);
 					toast.error('Error al desbloquear la siguiente clase');
