@@ -40,7 +40,6 @@ export async function GET(req: Request) {
 			.where(and(eq(anuncios.activo, true), eq(enrollments.userId, userId)))
 			.orderBy(desc(anuncios.id)); // ✅ Ordenados del más reciente al más antiguo
 
-		console.log('📌 Anuncios enviados desde la API:', anunciosUsuario);
 
 		// Enviar todos los anuncios en lugar de solo uno
 		return NextResponse.json(anunciosUsuario.length > 0 ? anunciosUsuario : []);

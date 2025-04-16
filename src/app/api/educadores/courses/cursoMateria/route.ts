@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+
 import { auth, clerkClient } from '@clerk/nextjs/server';
 
 import {
@@ -29,12 +30,10 @@ export async function GET(req: NextRequest) {
 	const userId = searchParams.get('userId');
 	const fetchSubjects = searchParams.get('fetchSubjects'); // Check if fetchSubjects is requested
 	console.log('CourseId en api route', courseId);
-	console.log('FetchSubjects:', fetchSubjects); // Add console log to debug
 
 	try {
 		if (fetchSubjects) {
 			const subjects = await getSubjects();
-			console.log('Fetched subjects from DB:', subjects); // Add console log to debug
 			return NextResponse.json(subjects);
 		}
 		let courses;
@@ -58,7 +57,6 @@ export async function GET(req: NextRequest) {
 		} else {
 			courses = await getAllCourses();
 		}
-		console.log('Courses en api route', courses);
 		return NextResponse.json(courses);
 	} catch (error) {
 		console.error('Error:', error);
@@ -111,9 +109,6 @@ export async function POST(request: Request) {
 			courseTypeId: number; // 👉 agregar este campo
 			isActive: boolean;
 		};
-		console.log('Received data:', data);
-
-		console.log('Datos recibidos en el backend:', data);
 
 		const createdCourses = [];
 		const isMultipleModalities = data.modalidadesid.length > 1;
@@ -142,12 +137,9 @@ export async function POST(request: Request) {
 					instructor: data.instructorId, // Use instructorId here
 					courseTypeId: data.courseTypeId,
 					isActive: data.isActive,
-					requiresProgram: true, // Add this line
+					requiresProgram: false, // Add this line
 				})
 				.returning();
-
-			console.log('Curso creado:', newCourse);
-
 			// Actualizar las materias con el ID del curso recién creado
 			// Actualizar las materias con el ID del curso recién creado
 			if (
@@ -155,7 +147,6 @@ export async function POST(request: Request) {
 				Array.isArray(data.subjects) &&
 				data.subjects.length > 0
 			) {
-				console.log('Actualizando materias:', data.subjects);
 				await Promise.all(
 					data.subjects.map(async (subject) => {
 						await updateMateria(subject.id, {
@@ -172,8 +163,6 @@ export async function POST(request: Request) {
 
 			createdCourses.push(newCourse);
 		}
-
-		console.log('Cursos creados:', createdCourses);
 
 		return NextResponse.json(createdCourses, { status: 201 });
 	} catch (error) {

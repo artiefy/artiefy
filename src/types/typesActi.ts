@@ -61,4 +61,5 @@ export interface QuestionFilesSubida {
 	id: string; // Identificador único de la pregunta
 	text: string; // Texto de la pregunta
 	parametros: string; // Parámetros adicionales de la pregunta
+	pesoPregunta: number; // ✅ nuevo campo
 }

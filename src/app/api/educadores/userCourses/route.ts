@@ -18,7 +18,6 @@ export async function GET(request: Request) {
 		const courses = await getCoursesByUserIdSimplified(userId);
 
 		// Log para ver qué cursos estamos obteniendo
-		console.log('Cursos obtenidos:', courses);
 
 		if (!courses || courses.length === 0) {
 			return NextResponse.json({ courses: [] }, { status: 200 });
@@ -35,7 +34,6 @@ export async function GET(request: Request) {
 		}));
 
 		// Log para ver los cursos filtrados antes de devolverlos
-		console.log('Cursos filtrados:', filteredCourses);
 
 		return NextResponse.json({ courses: filteredCourses }, { status: 200 });
 	} catch (error) {

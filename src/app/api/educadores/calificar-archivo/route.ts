@@ -1,23 +1,37 @@
 import { NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
+import { eq } from 'drizzle-orm';
+
+import { db } from '~/server/db';
+import { userActivitiesProgress } from '~/server/db/schema';
 
 const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,
 	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
+interface CalificacionPayload {
+	activityId: string;
+	questionId: string;
+	userId: string;
+	grade: number;
+	submissionKey: string;
+}
+
 export async function POST(request: Request) {
 	try {
-		const { activityId, questionId, userId, grade, submissionKey }: { activityId: string, questionId: string, userId: string, grade: number, submissionKey: string } =
-			await request.json() as { activityId: string, questionId: string, userId: string, grade: number, submissionKey: string };
+		const payload = (await request.json()) as CalificacionPayload;
+		const { activityId, questionId, userId, grade, submissionKey } = payload;
+
+		console.log('📨 Payload recibido:', payload);
 
 		if (
-			!activityId ||
-			!questionId ||
-			!userId ||
+			!activityId?.trim() ||
+			!questionId?.trim() ||
+			!userId?.trim() ||
 			grade === undefined ||
-			!submissionKey
+			!submissionKey?.trim()
 		) {
 			return NextResponse.json(
 				{ error: 'Faltan datos requeridos' },
@@ -25,42 +39,45 @@ export async function POST(request: Request) {
 			);
 		}
 
-		// Obtener los datos actuales directamente usando la clave completa
-		const currentData = await redis.hgetall(submissionKey);
-		console.log('Datos actuales:', { submissionKey, currentData });
+		const cleanedKey = submissionKey.trim();
+		console.log('🔑 Clave usada para Redis:', cleanedKey);
 
-		if (!currentData) {
+		const raw = await redis.get(cleanedKey);
+		console.log('📦 Datos actuales (raw):', raw);
+
+		if (!raw || typeof raw !== 'object') {
 			return NextResponse.json(
 				{ error: 'No se encontraron datos para la respuesta' },
 				{ status: 404 }
 			);
 		}
 
-		// Actualizar los datos manteniendo todos los campos existentes
-		const updateData = {
-			...currentData,
-			grade: grade.toString(),
-			status: 'calificado',
-			lastUpdated: new Date().toISOString(),
-		};
+		const parsed = { ...raw } as Record<string, unknown>;
+		parsed.grade = grade;
+		parsed.status = 'reviewed';
+		parsed.lastUpdated = new Date().toISOString();
 
-		// Actualizar los datos
-		await redis.hset(submissionKey, updateData);
+		await redis.set(cleanedKey, parsed);
+		console.log('✅ Redis actualizado:', parsed);
 
-		// Verificar la actualización
-		const updatedData = await redis.hgetall(submissionKey);
-		console.log('Datos después de actualizar:', updatedData);
+		// ✅ ACTUALIZAR revisada, nota, y fecha en userActivitiesProgress
+		await db
+			.update(userActivitiesProgress)
+			.set({
+				finalGrade: grade,
+				revisada: true,
+				lastAttemptAt: new Date(),
+			})
+			.where(
+				eq(userActivitiesProgress.userId, userId) &&
+					eq(userActivitiesProgress.activityId, Number(activityId))
+			);
 
-		if (!updatedData) {
-			throw new Error('No se pudo verificar la actualización');
-		}
+		console.log('📝 BD actualizada: finalGrade, revisada, lastAttemptAt');
 
-		return NextResponse.json({
-			success: true,
-			data: updatedData,
-		});
+		return NextResponse.json({ success: true, data: parsed });
 	} catch (error) {
-		console.error('Error detallado al calificar:', error);
+		console.error('💥 Error al calificar:', error);
 		return NextResponse.json(
 			{
 				error: 'Error al calificar la respuesta',

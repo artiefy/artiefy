@@ -73,7 +73,6 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 				nivelid: number;
 				instructor?: string;
 			};
-			console.log('📩 Datos recibidos:', body);
 	
 			const {
 				title,

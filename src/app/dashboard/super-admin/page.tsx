@@ -345,18 +345,18 @@ export default function AdminDashboard() {
 		try {
 			const res = await fetch('/api/super-admin/courses');
 			if (!res.ok) throw new Error('Error al obtener cursos');
-	
+
 			const rawData: unknown = await res.json();
-	
+
 			if (!isValidCourseArray(rawData)) {
 				throw new Error('Datos inválidos para cursos');
 			}
-	
+
 			const data = rawData.map((c) => ({
 				id: String(c.id),
 				title: c.title,
 			}));
-	
+
 			setCourses(data);
 			setAllCourses(data);
 		} catch (error) {
@@ -1625,35 +1625,51 @@ export default function AdminDashboard() {
 					</div>
 
 					{/* Pagination - Keep existing pagination code */}
-					<div className="mt-4 flex justify-center space-x-2">
-						<button
-							onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-							disabled={currentPage === 1}
-							className="rounded bg-gray-700 px-4 py-2 text-white disabled:opacity-50"
-						>
-							Anterior
-						</button>
+					<div className="mt-6 flex flex-col items-center justify-between gap-4 px-4 py-4 sm:flex-row">
+						<p className="text-sm text-gray-300">
+							Mostrando {currentUsers.length} de {filteredUsers.length} usuarios
+						</p>
 
-						<span className="rounded bg-gray-800 px-4 py-2 text-white">
-							Página {currentPage} de{' '}
-							{Math.ceil(filteredUsers.length / usersPerPage)}
-						</span>
+						<div className="flex flex-wrap items-center gap-2">
+							<button
+								onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+								disabled={currentPage === 1}
+								className="rounded bg-gray-700 px-3 py-1 text-sm text-white hover:bg-gray-600 disabled:opacity-50"
+							>
+								Anterior
+							</button>
 
-						<button
-							onClick={() =>
-								setCurrentPage((prev) =>
-									prev < Math.ceil(filteredUsers.length / usersPerPage)
-										? prev + 1
-										: prev
-								)
-							}
-							disabled={
-								currentPage === Math.ceil(filteredUsers.length / usersPerPage)
-							}
-							className="rounded bg-gray-700 px-4 py-2 text-white disabled:opacity-50"
-						>
-							Siguiente
-						</button>
+							<select
+								value={currentPage}
+								onChange={(e) => setCurrentPage(Number(e.target.value))}
+								className="rounded-md bg-gray-700 px-2 py-1 text-sm text-white"
+							>
+								{Array.from(
+									{ length: Math.ceil(filteredUsers.length / usersPerPage) },
+									(_, i) => i + 1
+								).map((page) => (
+									<option key={page} value={page}>
+										Página {page}
+									</option>
+								))}
+							</select>
+
+							<button
+								onClick={() =>
+									setCurrentPage((prev) =>
+										prev < Math.ceil(filteredUsers.length / usersPerPage)
+											? prev + 1
+											: prev
+									)
+								}
+								disabled={
+									currentPage === Math.ceil(filteredUsers.length / usersPerPage)
+								}
+								className="rounded bg-gray-700 px-3 py-1 text-sm text-white hover:bg-gray-600 disabled:opacity-50"
+							>
+								Siguiente
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
