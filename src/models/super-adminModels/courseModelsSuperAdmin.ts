@@ -290,7 +290,6 @@ export async function getAllEducators(query?: string) {
 			name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
 		}));
 
-		console.log('✅ Educadores encontrados desde Clerk:', educators);
 		return educators;
 	} catch (error) {
 		console.error('❌ Error al obtener educadores desde Clerk:', error);

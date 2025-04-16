@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq, inArray, and, desc, lt } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
@@ -33,7 +34,6 @@ export interface Lesson {
 		name: string;
 	};
 }
-
 
 export async function createLesson({
 	title,
@@ -149,7 +149,6 @@ export const getCourseDifficulty = async (courseId: number) => {
 // Esta función obtiene las lecciones asociadas a un curso por su ID
 export async function getLessonsByCourseId(courseId: number) {
 	try {
-		// Filtra las lecciones por courseId y obtiene datos del curso asociado
 		const lessonsData = await db
 			.select({
 				lessonId: lessons.id,
@@ -171,8 +170,27 @@ export async function getLessonsByCourseId(courseId: number) {
 				courseNivel: courses.nivelid,
 			})
 			.from(lessons)
-			.innerJoin(courses, eq(courses.id, lessons.courseId)) // Hace el JOIN con la tabla courses
-			.where(eq(lessons.courseId, courseId)); // Filtra por el courseId
+			.innerJoin(courses, eq(courses.id, lessons.courseId))
+			.where(eq(lessons.courseId, courseId));
+
+		if (!lessonsData || lessonsData.length === 0) {
+			return [];
+		}
+
+		const clerk = await clerkClient();
+		let fullname = '';
+		const instructorId = lessonsData[0].courseInstructor;
+
+		console.log('Intentando obtener instructor:', instructorId);
+
+		try {
+			const clerkUser = await clerk.users.getUser(instructorId);
+			fullname =
+				`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
+		} catch (error) {
+			console.error('Error al obtener datos del instructor:', error);
+			fullname = 'Instructor no encontrado';
+		}
 
 		const lessonsWithCourse = lessonsData.map(
 			(Lesson: {
@@ -208,7 +226,7 @@ export async function getLessonsByCourseId(courseId: number) {
 					id: Lesson.courseId,
 					title: Lesson.courseTitle,
 					description: Lesson.courseDescription,
-					instructor: Lesson.courseInstructor,
+					instructor: fullname || 'Instructor no disponible',
 					courseCategories: Lesson.courseCategories,
 					categories: Lesson.courseCategories,
 					modalidad: Lesson.courseModalidad,
@@ -219,8 +237,8 @@ export async function getLessonsByCourseId(courseId: number) {
 
 		return lessonsWithCourse;
 	} catch (error) {
-		console.error('Error al obtener las lecciones por courseId', error);
-		throw error;
+		console.error('Error al obtener las lecciones:', error);
+		throw new Error('No se pudieron cargar las lecciones del curso');
 	}
 }
 
@@ -249,37 +267,82 @@ export const getUserProgressByLessonId = async (
 export const getLessonById = async (
 	lessonId: number
 ): Promise<Lesson | null> => {
-	const lessonData = await db
-		.select({
-			id: lessons.id,
-			title: lessons.title,
-			description: lessons.description,
-			duration: lessons.duration,
-			coverImageKey: lessons.coverImageKey,
-			coverVideoKey: lessons.coverVideoKey,
-			courseId: lessons.courseId,
-			createdAt: lessons.createdAt,
-			updatedAt: lessons.updatedAt,
-			resourceKey: lessons.resourceKey,
-			resourceNames: lessons.resourceNames,
-			course: {
-				id: courses.id,
-				title: courses.title,
-				modalidadId: modalidades.name,
-				categoryId: categories.name,
-				description: courses.description,
-				instructor: courses.instructor, // Asegúrate de que el nombre del instructor esté disponible
-			},
-		})
-		.from(lessons)
-		.leftJoin(courses, eq(lessons.courseId, courses.id))
-		.leftJoin(users, eq(courses.instructor, users.id))
-		.leftJoin(categories, eq(courses.categoryid, categories.id))
-		.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-		.where(eq(lessons.id, lessonId))
-		.then((rows) => rows[0]);
+	try {
+		const lessonData = await db
+			.select({
+				id: lessons.id,
+				title: lessons.title,
+				description: lessons.description,
+				duration: lessons.duration,
+				coverImageKey: lessons.coverImageKey,
+				coverVideoKey: lessons.coverVideoKey,
+				courseId: lessons.courseId,
+				createdAt: lessons.createdAt,
+				updatedAt: lessons.updatedAt,
+				resourceKey: lessons.resourceKey,
+				resourceNames: lessons.resourceNames,
+				course: {
+					id: courses.id,
+					title: courses.title,
+					modalidadId: modalidades.name,
+					categoryId: categories.name,
+					description: courses.description,
+					instructor: courses.instructor,
+				},
+			})
+			.from(lessons)
+			.leftJoin(courses, eq(lessons.courseId, courses.id))
+			.leftJoin(users, eq(courses.instructor, users.id))
+			.leftJoin(categories, eq(courses.categoryid, categories.id))
+			.leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+			.where(eq(lessons.id, lessonId))
+			.then((rows) => rows[0]);
 
-	return (lessonData as unknown as Lesson) || null;
+		if (!lessonData) {
+			return null;
+		}
+
+		const clerk = await clerkClient();
+		let instructorName = '';
+		const instructorId = lessonData.course.instructor;
+
+		console.log('Datos del instructor en getLessonById:', {
+			lessonId,
+			instructorId,
+			courseTitle: lessonData.course.title,
+		});
+
+		try {
+			if (!instructorId) {
+				console.log('ID del instructor no encontrado en la base de datos');
+				instructorName = 'Instructor no asignado';
+			} else {
+				const clerkUser = await clerk.users.getUser(instructorId);
+				if (!clerkUser) {
+					console.log('Usuario no encontrado en Clerk:', instructorId);
+					instructorName = 'Instructor no encontrado';
+				} else {
+					instructorName =
+						`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
+						'Instructor sin nombre';
+				}
+			}
+		} catch (error) {
+			console.error('Error al obtener datos del instructor:', error);
+			instructorName = 'Instructor no encontrado';
+		}
+
+		return {
+			...lessonData,
+			course: {
+				...lessonData.course,
+				instructor: instructorName,
+			},
+		} as unknown as Lesson;
+	} catch (error) {
+		console.error('Error al obtener la lección por ID:', error);
+		throw new Error('No se pudo cargar la lección');
+	}
 };
 
 // Agregar esta interfaz si no existe
@@ -338,9 +401,7 @@ export const deleteLesson = async (lessonId: number): Promise<void> => {
 		}
 
 		// Eliminar las actividades asociadas a la lección
-		await db
-			.delete(activities)
-			.where(eq(activities.lessonsId, lessonId));
+		await db.delete(activities).where(eq(activities.lessonsId, lessonId));
 
 		// Eliminar el progreso de los usuarios asociado a la lección
 		await db
@@ -348,9 +409,7 @@ export const deleteLesson = async (lessonId: number): Promise<void> => {
 			.where(eq(userLessonsProgress.lessonId, lessonId));
 
 		// Eliminar la lección
-		await db
-			.delete(lessons)
-			.where(eq(lessons.id, lessonId));
+		await db.delete(lessons).where(eq(lessons.id, lessonId));
 	} catch (error) {
 		// Log the error with more context
 		console.error(`Error al eliminar la lección con ID: ${lessonId}`, error);
