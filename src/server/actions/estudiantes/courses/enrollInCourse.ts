@@ -16,6 +16,11 @@ import {
 
 import type { EnrollmentResponse, SubscriptionLevel } from '~/types';
 
+function extractNumberFromTitle(title: string): number {
+	const match = /\d+/.exec(title);
+	return match ? parseInt(match[0], 10) : 0;
+}
+
 export async function enrollInCourse(
 	courseId: number
 ): Promise<EnrollmentResponse> {
@@ -154,11 +159,16 @@ export async function enrollInCourse(
 		// Configure lesson progress with progressive unlocking
 		const courseLessons = await db.query.lessons.findMany({
 			where: eq(lessons.courseId, courseId),
-			orderBy: (lessons, { asc }) => [asc(lessons.title)],
 		});
 
-		// Get lesson IDs for this course
-		const lessonIds = courseLessons.map((lesson) => lesson.id);
+		// Sort lessons by numeric value in title
+		const sortedLessons = courseLessons.sort(
+			(a, b) =>
+				extractNumberFromTitle(a.title) - extractNumberFromTitle(b.title)
+		);
+
+		// Get lesson IDs in correct order
+		const lessonIds = sortedLessons.map((lesson) => lesson.id);
 
 		// Get existing progress records for this user and these specific lessons
 		const existingProgress = await db.query.userLessonsProgress.findMany({
@@ -174,9 +184,9 @@ export async function enrollInCourse(
 		);
 
 		// Insert progress only for lessons that don't have progress
-		for (const [index, lesson] of courseLessons.entries()) {
+		for (const [index, lesson] of sortedLessons.entries()) {
 			if (!existingProgressSet.has(lesson.id)) {
-				const previousLesson = index > 0 ? courseLessons[index - 1] : null;
+				const previousLesson = index > 0 ? sortedLessons[index - 1] : null;
 				let shouldBeLocked = true;
 
 				if (index === 0) {

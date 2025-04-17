@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 
 import { notFound } from 'next/navigation';
+import Script from 'next/script';
 
 import { auth } from '@clerk/nextjs/server';
 import { type Metadata, type ResolvingMetadata } from 'next';
@@ -8,6 +9,7 @@ import { type Metadata, type ResolvingMetadata } from 'next';
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import { generateCourseStructuredData } from '~/lib/structuredData/courseStructuredData';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 import CourseDetails from './CourseDetails';
@@ -16,39 +18,6 @@ import type { Course } from '~/types';
 
 interface PageParams {
 	id: string;
-}
-
-// Función para generar el JSON-LD para SEO
-function generateJsonLd(course: Course): object {
-	return {
-		'@context': 'https://schema.org',
-		'@type': 'Course',
-		name: course.title,
-		description: course.description ?? 'No hay descripción disponible.',
-		provider: {
-			'@type': 'Organization',
-			name: 'Artiefy',
-			sameAs: process.env.NEXT_PUBLIC_BASE_URL ?? '',
-		},
-		author: {
-			'@type': 'Person',
-			name: course.instructor,
-		},
-		dateCreated: new Date(course.createdAt).toISOString(),
-		dateModified: new Date(course.updatedAt).toISOString(),
-		aggregateRating: course.rating
-			? {
-					'@type': 'AggregateRating',
-					ratingValue: course.rating,
-					ratingCount: course.enrollments?.length ?? 0,
-					bestRating: 5,
-					worstRating: 1,
-				}
-			: undefined,
-		image: course.coverImageKey
-			? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-			: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT',
-	};
 }
 
 // Función para generar metadata dinámica
@@ -186,15 +155,31 @@ async function CourseContent({ id }: { id: string }) {
 			enrollments: course.enrollments,
 		};
 
-		const jsonLd = generateJsonLd(course);
-
 		return (
 			<section>
 				<CourseDetails course={courseForDetails} />
-				<script
+				<Script
+					id="course-structured-data"
 					type="application/ld+json"
 					dangerouslySetInnerHTML={{
-						__html: JSON.stringify(jsonLd),
+						__html: JSON.stringify(
+							generateCourseStructuredData(
+								course,
+								// Add example reviews - you should replace this with real reviews from your database
+								[
+									{
+										author: 'Estudiante Ejemplo',
+										reviewRating: {
+											ratingValue: 5,
+											worstRating: 1,
+											bestRating: 5,
+										},
+										reviewBody: 'Excelente curso, muy bien explicado',
+										datePublished: new Date().toISOString(),
+									},
+								]
+							)
+						),
 					}}
 				/>
 			</section>

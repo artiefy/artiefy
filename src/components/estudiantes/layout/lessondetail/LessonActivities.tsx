@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Link from 'next/link';
 
@@ -30,7 +30,7 @@ interface LessonActivitiesProps {
 	lessonId: number;
 	isLastLesson: boolean;
 	isLastActivity: boolean;
-	getNextLessonId: () => number | undefined;
+	lessons: { id: number; title: string }[];
 }
 
 interface SavedResults {
@@ -121,6 +121,13 @@ interface ActivityState {
 	isCompleted: boolean;
 }
 
+// Add helper function to extract and sort lesson numbers
+const extractLessonNumber = (title: string): number => {
+	if (title.toLowerCase().includes('bienvenida')) return -1;
+	const match = /\d+/.exec(title);
+	return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
+};
+
 const LessonActivities = ({
 	activities = [],
 	isVideoCompleted,
@@ -132,7 +139,7 @@ const LessonActivities = ({
 	lessonId,
 	isLastLesson,
 	isLastActivity,
-	getNextLessonId,
+	lessons,
 }: LessonActivitiesProps) => {
 	const [activitiesState, setActivitiesState] = useState<
 		Record<number, ActivityState>
@@ -509,6 +516,27 @@ const LessonActivities = ({
 		return description.slice(0, maxLength).trim() + '...';
 	};
 
+	const getNextAvailableLessonId = useCallback(() => {
+		if (!lessons || lessons.length === 0) return undefined;
+
+		// Sort lessons by their number
+		const sortedLessons = [...lessons].sort((a, b) => {
+			const aNum = extractLessonNumber(a.title);
+			const bNum = extractLessonNumber(b.title);
+			return aNum - bNum;
+		});
+
+		// Find current lesson index
+		const currentIndex = sortedLessons.findIndex((l) => l.id === lessonId);
+		if (currentIndex === -1 || currentIndex === sortedLessons.length - 1) {
+			return undefined;
+		}
+
+		// Get next lesson
+		const nextLesson = sortedLessons[currentIndex + 1];
+		return nextLesson?.id;
+	}, [lessons, lessonId]);
+
 	const renderActivityCard = (activity: Activity, index: number) => {
 		const activityState = activitiesState[activity.id];
 		const status = getActivityStatus(activity, index);
@@ -593,31 +621,36 @@ const LessonActivities = ({
 							!activityState.isLoading && (
 								<div className="mt-4 flex flex-col items-center space-y-2">
 									<div className="w-50 border border-b-gray-500" />
-									<Link
-										href={`/estudiantes/clases/${getNextLessonId()}`}
-										className="next-lesson-link group flex flex-col items-center text-center"
-									>
-										<button className="arrow-button">
-											<div className="arrow-button-box">
-												<span className="arrow-button-elem">
-													<svg
-														viewBox="0 0 46 40"
-														xmlns="http://www.w3.org/2000/svg"
-													>
-														<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-													</svg>
-												</span>
-												<span className="arrow-button-elem">
-													<svg viewBox="0 0 46 40">
-														<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-													</svg>
-												</span>
-											</div>
-										</button>
-										<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
-											Ir a la siguiente clase
-										</em>
-									</Link>
+									{(() => {
+										const nextId = getNextAvailableLessonId();
+										return nextId ? (
+											<Link
+												href={`/estudiantes/clases/${nextId}`}
+												className="next-lesson-link group flex flex-col items-center text-center"
+											>
+												<button className="arrow-button">
+													<div className="arrow-button-box">
+														<span className="arrow-button-elem">
+															<svg
+																viewBox="0 0 46 40"
+																xmlns="http://www.w3.org/2000/svg"
+															>
+																<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+															</svg>
+														</span>
+														<span className="arrow-button-elem">
+															<svg viewBox="0 0 46 40">
+																<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+															</svg>
+														</span>
+													</div>
+												</button>
+												<em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
+													Ir a la siguiente clase
+												</em>
+											</Link>
+										) : null;
+									})()}
 								</div>
 							)}
 					</div>

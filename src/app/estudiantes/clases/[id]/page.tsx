@@ -73,15 +73,19 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 			return notFound();
 		}
 
-		// Now create lesson with course data
+		// Now create lesson with course data and ensure all properties are initialized
 		const lesson: LessonWithProgress = {
 			...lessonData,
 			isLocked: lessonData.isLocked ?? false,
 			courseTitle: course.title,
+			activities: lessonData.activities ?? [], // Initialize activities array
+			porcentajecompletado: lessonData.porcentajecompletado ?? 0,
+			isCompleted: lessonData.isCompleted ?? false,
+			isNew: lessonData.isNew ?? true,
 		};
 
 		const activityContent = await getActivityContent(lessonId, userId);
-		const activitiesWithProgress = activityContent.map((activity) => ({
+		const activitiesWithProgress = (activityContent ?? []).map((activity) => ({
 			...activity,
 			isCompleted: activity.isCompleted ?? false,
 			userProgress: activity.userProgress ?? 0,
@@ -92,10 +96,11 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 			getUserLessonsProgress(userId),
 		]);
 
-		const { lessonsProgress, activitiesProgress } = userProgress;
+		const { lessonsProgress = [], activitiesProgress = [] } =
+			userProgress ?? {};
 
-		// Add course title to all lessons
-		const lessonsWithProgress = lessons.map((lessonItem) => {
+		// Add null checks here
+		const lessonsWithProgress = (lessons ?? []).map((lessonItem) => {
 			const lessonProgress = lessonsProgress.find(
 				(progress) => progress.lessonId === lessonItem.id
 			);
@@ -106,6 +111,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
 				porcentajecompletado: lessonProgress?.progress ?? 0,
 				isLocked: lessonProgress?.isLocked ?? true,
 				isCompleted: lessonProgress?.isCompleted ?? false,
+				activities: lessonItem.activities ?? [], // Ensure activities is initialized
 			};
 		});
 

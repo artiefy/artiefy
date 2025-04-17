@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
-import { formatInTimeZone } from 'date-fns-tz';
 import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
 
@@ -16,6 +15,7 @@ import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonCh
 import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -27,12 +27,17 @@ import {
 	type UserActivitiesProgress,
 	type Course,
 } from '~/types';
+import { sortLessons } from '~/utils/lessonSorting';
 import {
 	saveScrollPosition,
 	restoreScrollPosition,
 } from '~/utils/scrollPosition';
 
-const TIME_ZONE = 'America/Bogota';
+interface PublicMetadata {
+	planType: string | null;
+	subscriptionStatus: string | null;
+	subscriptionEndDate: string | null;
+}
 
 interface LessonDetailsProps {
 	lesson: LessonWithProgress;
@@ -44,12 +49,33 @@ interface LessonDetailsProps {
 	course: Course;
 }
 
+// Move these hooks to the top level
+const isLastLesson = (lessons: LessonWithProgress[], currentId: number) => {
+	const sortedLessons = sortLessons(lessons);
+	const currentIndex = sortedLessons.findIndex((l) => l.id === currentId);
+	return currentIndex === sortedLessons.length - 1;
+};
+
+const isLastActivity = (
+	lessons: LessonWithProgress[],
+	activities: Activity[],
+	currentLesson: LessonWithProgress
+) => {
+	if (!lessons.length || !activities.length) return false;
+	const sortedLessons = sortLessons(lessons);
+	const lastLesson = sortedLessons[sortedLessons.length - 1];
+	const isCurrentLessonLast = currentLesson?.id === lastLesson?.id;
+	if (!isCurrentLessonLast) return false;
+	const lastActivity = activities[activities.length - 1];
+	return activities[0]?.id === lastActivity?.id;
+};
+
 export default function LessonDetails({
 	lesson,
-	activities, // Update prop name
-	lessons,
-	userLessonsProgress,
-	userActivitiesProgress,
+	activities = [], // Add default empty array
+	lessons = [], // Add default empty array
+	userLessonsProgress = [], // Add default empty array
+	userActivitiesProgress = [], // Add default empty array
 	userId,
 	course,
 }: LessonDetailsProps) {
@@ -77,6 +103,19 @@ export default function LessonDetails({
 	// Add isInitialized ref to prevent infinite loop
 	const isInitialized = useRef(false);
 
+	// Add check to track if subscription has been verified
+	const [isSubscriptionVerified, setIsSubscriptionVerified] = useState(false);
+
+	// Move course active check to the top
+	useEffect(() => {
+		if (!course.isActive) {
+			toast.error('Curso no disponible', {
+				description: 'Este curso no está disponible actualmente.',
+			});
+			router.push('/estudiantes');
+		}
+	}, [course.isActive, router]);
+
 	useEffect(() => {
 		if (!isInitialized.current) {
 			setProgress(lesson?.porcentajecompletado ?? 0);
@@ -95,35 +134,49 @@ export default function LessonDetails({
 	// Initialize lessons state with progress and locked status
 	useEffect(() => {
 		const initializeLessonsState = () => {
-			const sortedLessons = [...lessons].sort((a, b) =>
-				a.title.localeCompare(b.title, undefined, { numeric: true })
-			);
+			const sortedLessons = [...lessons].sort((a, b) => {
+				// Special handling for "Bienvenida"
+				if (a.title.toLowerCase().includes('bienvenida')) return -1;
+				if (b.title.toLowerCase().includes('bienvenida')) return 1;
+
+				// Extract and compare lesson numbers
+				const aMatch = /^(\d+)/.exec(a.title);
+				const bMatch = /^(\d+)/.exec(b.title);
+				const aNum = aMatch ? parseInt(aMatch[1], 10) : Number.MAX_SAFE_INTEGER;
+				const bNum = bMatch ? parseInt(bMatch[1], 10) : Number.MAX_SAFE_INTEGER;
+				return aNum - bNum;
+			});
 
 			const lessonsWithProgress = sortedLessons.map((lessonItem, index) => {
 				const progress = userLessonsProgress.find(
 					(p) => p.lessonId === lessonItem.id
 				);
 
-				// Only first lesson is unlocked by default
-				if (index === 0) {
+				// First lesson or "Bienvenida" is always unlocked
+				if (
+					index === 0 ||
+					lessonItem.title.toLowerCase().includes('bienvenida')
+				) {
 					return {
 						...lessonItem,
 						isLocked: false,
 						porcentajecompletado: progress?.progress ?? 0,
 						isCompleted: progress?.isCompleted ?? false,
-						isNew: progress?.isNew ?? true, // Agregar propiedad isNew
-						courseTitle: lesson.courseTitle, // Add courseTitle property
+						isNew: progress?.isNew ?? true,
+						courseTitle: lesson.courseTitle,
 					};
 				}
 
-				// Other lessons remain locked until explicitly unlocked via activity completion
+				// A lesson should be locked unless explicitly unlocked in the database
+				const shouldBeLocked = progress?.isLocked ?? true;
+
 				return {
 					...lessonItem,
-					isLocked: progress?.isLocked ?? true, // Use stored lock state or default to locked
+					isLocked: shouldBeLocked,
 					porcentajecompletado: progress?.progress ?? 0,
 					isCompleted: progress?.isCompleted ?? false,
-					isNew: progress?.isNew ?? true, // Agregar propiedad isNew
-					courseTitle: lesson.courseTitle, // Add courseTitle property
+					isNew: progress?.isNew ?? true,
+					courseTitle: lesson.courseTitle,
 				};
 			});
 
@@ -201,60 +254,53 @@ export default function LessonDetails({
 		void checkEnrollment();
 	}, [lesson.courseId, userId, router]);
 
-	// Update this function to handle progress synchronization
-	const handleProgressUpdate = async (videoProgress: number) => {
-		const roundedProgress = Math.round(videoProgress);
+	// Update this function to properly handle async/await
+	const handleProgressUpdate = useCallback(
+		async (videoProgress: number) => {
+			const roundedProgress = Math.round(videoProgress);
 
-		// Only update if progress has increased
-		if (roundedProgress > progress && roundedProgress <= 100) {
-			try {
-				// Update local state immediately for smooth UI
-				setProgress(roundedProgress);
+			// Only update if progress is different from current
+			if (roundedProgress !== progress) {
+				try {
+					// Update local state immediately
+					setProgress(roundedProgress);
 
-				// Update database
-				await updateLessonProgress(lesson.id, roundedProgress);
+					// Update lessons state
+					setLessonsState((prevLessons) =>
+						prevLessons.map((l) =>
+							l.id === lesson.id
+								? {
+										...l,
+										porcentajecompletado: roundedProgress,
+										isCompleted: roundedProgress === 100,
+										isNew: roundedProgress > 1 ? false : l.isNew,
+									}
+								: l
+						)
+					);
 
-				// Update lessons state to reflect changes
-				setLessonsState((prevLessons) =>
-					prevLessons.map((l) =>
-						l.id === lesson.id
-							? {
-									...l,
-									porcentajecompletado: roundedProgress,
-									isCompleted: roundedProgress === 100,
-									isNew: roundedProgress > 1 ? false : l.isNew,
-								}
-							: l
-					)
-				);
-
-				// If video reaches 100%, mark lesson as completed
-				if (roundedProgress === 100) {
-					setIsVideoCompleted(true);
-					toast.success('Clase completada', {
-						description: activities.length
-							? 'Ahora completa la actividad para continuar'
-							: 'Video completado exitosamente',
-					});
+					// Update database
+					await updateLessonProgress(lesson.id, roundedProgress);
+				} catch (error) {
+					console.error('Error al actualizar el progreso:', error);
+					toast.error('Error al sincronizar el progreso');
 				}
-			} catch (error) {
-				console.error('Error al actualizar el progreso:', error);
-				toast.error('Error al sincronizar el progreso');
-
-				// Revert local state if update fails
-				setProgress(progress);
 			}
-		}
-	};
+		},
+		[progress, lesson.id, setLessonsState]
+	);
 
-	// Update video end handler to ensure 100% completion
+	// Update video end handler
 	const handleVideoEnd = async () => {
 		try {
-			// Force progress to 100%
 			await handleProgressUpdate(100);
+			setIsVideoCompleted(true);
 
-			// Additional completion logic
-			await handleLessonCompletion();
+			toast.success('Clase completada', {
+				description: activities.length
+					? 'Ahora completa la actividad para continuar'
+					: 'Video completado exitosamente',
+			});
 		} catch (error) {
 			console.error('Error al completar la lección:', error);
 			toast.error('Error al marcar la lección como completada');
@@ -329,17 +375,15 @@ export default function LessonDetails({
 
 		try {
 			saveScrollPosition();
-			// Store the navigation button element position
 			const navigationElement = document.querySelector('.navigation-buttons');
 			const yOffset = navigationElement?.getBoundingClientRect().top ?? 0;
-			const scrollPosition = yOffset + window.scrollY + 40; // Add 200px to scroll further down
+			const scrollPosition = yOffset + window.scrollY + 40;
 
 			await Promise.all([
 				new Promise((resolve) => setTimeout(resolve, 300)),
 				router.push(`/estudiantes/clases/${targetId}`, { scroll: false }),
 			]);
 			restoreScrollPosition();
-			// Scroll to the navigation buttons after route change
 			window.scrollTo({
 				top: scrollPosition,
 				behavior: 'smooth',
@@ -359,82 +403,82 @@ export default function LessonDetails({
 
 	// Add new effect to check subscription status with free course handling
 	useEffect(() => {
-		const checkSubscriptionStatus = () => {
-			// If it's a free course, skip subscription check
-			if (course.courseType?.requiredSubscriptionLevel === 'none') {
-				return;
-			}
+		if (
+			isSubscriptionVerified ||
+			course.courseType?.requiredSubscriptionLevel === 'none'
+		) {
+			return;
+		}
 
-			const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-			const rawSubscriptionEndDate = user?.publicMetadata
-				?.subscriptionEndDate as string | null;
+		// Cast metadata with type assertion after validating its shape
+		const metadata = user?.publicMetadata as Record<string, unknown>;
+		if (!metadata) return;
 
-			const formattedSubscriptionEndDate = rawSubscriptionEndDate
-				? formatInTimeZone(
-						new Date(rawSubscriptionEndDate),
-						TIME_ZONE,
-						'yyyy-MM-dd HH:mm:ss'
-					)
-				: null;
-
-			const isSubscriptionActive =
-				subscriptionStatus === 'active' &&
-				(!formattedSubscriptionEndDate ||
-					new Date(formattedSubscriptionEndDate) > new Date());
-
-			if (!isSubscriptionActive) {
-				// Usar un ID único para el toast para evitar duplicados
-				toast.error(
-					'Debes tener una suscripción activa para poder ver las clases.',
-					{
-						id: 'subscription-required',
-					}
-				);
-				void router.push('/planes');
-			}
+		const publicMetadata: PublicMetadata = {
+			planType:
+				typeof metadata.planType === 'string' ? metadata.planType : null,
+			subscriptionStatus:
+				typeof metadata.subscriptionStatus === 'string'
+					? metadata.subscriptionStatus
+					: null,
+			subscriptionEndDate:
+				typeof metadata.subscriptionEndDate === 'string'
+					? metadata.subscriptionEndDate
+					: null,
 		};
 
-		// Solo verificar una vez al cargar el componente
-		checkSubscriptionStatus();
-	}, [course.courseType?.requiredSubscriptionLevel, router, user]);
+		const status = publicMetadata.subscriptionStatus?.toLowerCase();
+		const endDate = publicMetadata.subscriptionEndDate
+			? new Date(publicMetadata.subscriptionEndDate)
+			: null;
 
-	// Nuevo manejador para completar lecciones
-	const handleLessonCompletion = async () => {
-		try {
-			setProgress(100);
-			setIsVideoCompleted(true);
+		const isActive = status === 'active';
+		const isValid = endDate ? endDate > new Date() : false;
+		const hasValidSubscription = isActive && isValid;
 
-			await updateLessonProgress(lesson.id, 100);
-
-			// Corregir el tipo manteniendo todas las propiedades requeridas
-			setLessonsState((prevLessons) =>
-				prevLessons.map((l) =>
-					l.id === lesson.id
-						? {
-								...l, // Mantener todas las propiedades existentes
-								porcentajecompletado: 100,
-								isCompleted: !activities.length,
-								// Don't modify isLocked status here
-							}
-						: l
-				)
+		if (!hasValidSubscription) {
+			toast.error(
+				'Debes tener una suscripción activa para poder ver las clases.',
+				{
+					id: 'subscription-required',
+					duration: 5000,
+				}
 			);
-		} catch (error) {
-			console.error('Error:', error);
-			toast.error('Error al completar la lección');
-			throw error;
+			void router.push('/planes');
+			return;
 		}
-	};
 
-	// Add function to get next lesson ID
-	const getNextLessonId = useCallback(() => {
-		const sortedLessons = [...lessonsState].sort((a, b) =>
-			a.title.localeCompare(b.title)
+		setIsSubscriptionVerified(true);
+	}, [
+		user?.publicMetadata,
+		course.courseType?.requiredSubscriptionLevel,
+		router,
+		isSubscriptionVerified,
+	]);
+
+	// Add loading state while verifying subscription
+	if (
+		course.courseType?.requiredSubscriptionLevel !== 'none' &&
+		(!user?.publicMetadata || !isSubscriptionVerified)
+	) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<div className="flex flex-col items-center gap-4">
+					<Icons.spinner className="h-8 w-8 animate-spin text-blue-500" />
+					<p className="text-gray-600">Verificando suscripción...</p>
+				</div>
+			</div>
 		);
-		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
-		const nextLesson = sortedLessons[currentIndex + 1];
-		return nextLesson && !nextLesson.isLocked ? nextLesson.id : undefined;
-	}, [lessonsState, lesson.id]);
+	}
+
+	// Add safety check for lesson
+	if (!lesson) {
+		return (
+			<div className="flex h-screen items-center justify-center">
+				<p>Lección no encontrada</p>
+			</div>
+		);
+	}
 
 	// Function to handle lesson unlock
 	const handleLessonUnlocked = (lessonId: number) => {
@@ -446,33 +490,6 @@ export default function LessonDetails({
 			)
 		);
 	};
-
-	const isLastLesson = useCallback(() => {
-		const sortedLessons = [...lessonsState].sort((a, b) =>
-			a.title.localeCompare(b.title)
-		);
-		const currentIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
-		return currentIndex === sortedLessons.length - 1;
-	}, [lessonsState, lesson.id]);
-
-	const isLastActivity = useCallback(() => {
-		const lastLesson = lessons[lessons.length - 1];
-		const isLastLesson = lesson.id === lastLesson.id;
-
-		if (!isLastLesson) return false;
-
-		const lastActivity = lesson.activities?.[lesson.activities.length - 1];
-		return activities[0]?.id === lastActivity?.id;
-	}, [lesson, activities, lessons]);
-
-	useEffect(() => {
-		if (!course.isActive) {
-			toast.error('Curso no disponible', {
-				description: 'Este curso no está disponible actualmente.',
-			});
-			router.push('/estudiantes');
-		}
-	}, [course.isActive, router]);
 
 	return (
 		<div className="flex min-h-screen flex-col">
@@ -527,9 +544,9 @@ export default function LessonDetails({
 						onLessonUnlocked={handleLessonUnlocked}
 						courseId={lesson.courseId}
 						lessonId={lesson.id} // Add this line
-						isLastLesson={isLastLesson()}
-						isLastActivity={isLastActivity()}
-						getNextLessonId={getNextLessonId} // Add this prop
+						isLastLesson={isLastLesson(lessonsState, lesson.id)}
+						isLastActivity={isLastActivity(lessonsState, activities, lesson)}
+						lessons={lessonsState} // Add this prop
 					/>
 				</div>
 

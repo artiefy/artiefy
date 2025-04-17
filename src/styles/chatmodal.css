@@ -175,8 +175,8 @@
 
 .react-resizable-handle {
 	position: absolute;
-	width: 20px;
-	height: 20px;
+	width: 10px;
+	height: 10px;
 	background: transparent;
 	opacity: 0.8;
 	transition: opacity 0.2s;
@@ -196,27 +196,16 @@
 	letter-spacing: -2px;
 }
 
-/* Lados - puntos verticales */
+/* Remove all arrow transformations and keep only dots */
 .react-resizable-handle-w::before,
-.react-resizable-handle-e::before {
-	transform: rotate(0deg); /* Vertical */
-}
-
-/* Esquinas - puntos diagonales */
-.react-resizable-handle-ne::before,
-.react-resizable-handle-sw::before {
-	transform: rotate(-45deg); /* Diagonal / - Changed back to original */
-}
-
-.react-resizable-handle-nw::before,
-.react-resizable-handle-se::before {
-	transform: rotate(-45deg); /* Diagonal / - Keep original for these corners */
-}
-
-/* Arriba y abajo - puntos horizontales */
+.react-resizable-handle-e::before,
 .react-resizable-handle-n::before,
-.react-resizable-handle-s::before {
-	transform: rotate(90deg); /* Horizontal -- */
+.react-resizable-handle-s::before,
+.react-resizable-handle-ne::before,
+.react-resizable-handle-nw::before,
+.react-resizable-handle-se::before,
+.react-resizable-handle-sw::before {
+	transform: none;
 }
 
 .react-resizable-handle-n,

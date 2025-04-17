@@ -1,9 +1,11 @@
 import { Suspense } from 'react';
 
+import Script from 'next/script';
+
 import StudentDetails from '~/app/estudiantes/StudentDetails';
-import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
@@ -12,7 +14,18 @@ import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/g
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
+import type { Metadata } from 'next';
 import type { Category, Course, Program } from '~/types';
+
+export const metadata: Metadata = {
+	title: 'Panel de Estudiantes - Artiefy',
+	description: 'Accede a tus cursos y contenido educativo en Artiefy',
+	openGraph: {
+		title: 'Panel de Estudiantes - Artiefy',
+		description: 'Accede a tus cursos y contenido educativo en Artiefy',
+		url: 'https://artiefy.com/estudiantes',
+	},
+};
 
 interface SearchParams {
 	category?: string;
@@ -126,6 +139,20 @@ export default async function Page({ searchParams }: PageProps) {
 
 		return (
 			<>
+				<Script id="learning-platform-schema" type="application/ld+json">
+					{JSON.stringify({
+						'@context': 'https://schema.org',
+						'@type': 'WebPage',
+						name: 'Panel de Estudiantes - Artiefy',
+						description: 'Accede a tus cursos y contenido educativo en Artiefy',
+						url: 'https://artiefy.com/estudiantes',
+						isPartOf: {
+							'@type': 'WebSite',
+							'@id': 'https://artiefy.com/#website',
+						},
+					})}
+				</Script>
+
 				<div
 					className="flex min-h-screen flex-col"
 					style={{ isolation: 'isolate', zIndex: 1 }}

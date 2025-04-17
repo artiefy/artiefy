@@ -385,7 +385,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						height={500}
 						minConstraints={[300, 400]}
 						maxConstraints={[800, window.innerHeight - 160]}
-						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
+						resizeHandles={['se']} // Only keep bottom-right corner for resizing
 						className="chat-resizable"
 						onResize={handleResize}
 					>

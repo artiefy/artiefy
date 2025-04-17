@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 
-import { FaFilePdf, FaFilePowerpoint, FaFileWord, FaLink } from 'react-icons/fa';
+import { BsFiletypeXls } from "react-icons/bs";
+import {
+	FaFilePdf,
+	FaFilePowerpoint,
+	FaFileWord,
+	FaLink,
+	FaRegFileImage,
+} from 'react-icons/fa';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 
@@ -74,6 +81,14 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
 			case 'doc':
 			case 'docx':
 				return <FaFileWord className="text-blue-500" />;
+			case 'xlsx':
+			case 'xls':
+				return <BsFiletypeXls className="text-green-600" />;
+			case 'png':
+			case 'jpg':
+			case 'jpeg':
+			case 'gif':
+				return <FaRegFileImage className="text-purple-500" />;
 			default:
 				return <FaLink className="text-blue-500" />;
 		}
@@ -85,7 +100,7 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
 			<div className="rounded-lg bg-white p-4 shadow-lg">
 				{loading ? (
 					<div className="flex items-center justify-center p-4">
-						<Icons.spinner className="h-8 w-8 animate-spin text-background" />
+						<Icons.spinner className="text-background h-8 w-8 animate-spin" />
 					</div>
 				) : files.length > 0 ? (
 					<ul className="space-y-2">
@@ -98,7 +113,10 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
 									className="flex items-center rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
 								>
 									<span className="mr-3 text-xl">{getIcon(file.fileName)}</span>
-									<span className="flex-1 truncate text-sm font-medium text-gray-700">
+									<span
+										className="flex-1 truncate text-sm font-medium text-gray-700"
+										title={file.fileName} // Agregar el atributo title para mostrar el tooltip
+									>
 										{file.fileName}
 									</span>
 								</a>

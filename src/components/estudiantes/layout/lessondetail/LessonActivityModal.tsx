@@ -13,7 +13,15 @@ import {
 } from '@heroicons/react/24/solid';
 import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
-import { FaTrophy } from 'react-icons/fa';
+import { BsFiletypeXls } from 'react-icons/bs';
+import {
+	FaTrophy,
+	FaLink,
+	FaFilePdf,
+	FaFilePowerpoint,
+	FaFileWord,
+} from 'react-icons/fa';
+import { FaRegFileImage } from 'react-icons/fa6'; // Update this import
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -25,7 +33,7 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
-import { formatScore, formatScoreNumber } from '~/utils/formatScore';
+import { formatScoreNumber } from '~/utils/formatScore';
 
 import type { Activity, Question, SavedAnswer } from '~/types';
 
@@ -118,155 +126,30 @@ const formatFileSize = (bytes: number): string => {
 const getFileIcon = (fileType: string) => {
 	const type = fileType.toLowerCase();
 
-	if (type === 'pdf') {
-		return (
-			<svg className="h-6 w-6 text-red-500" viewBox="0 0 303.188 303.188">
-				<path fill="#e8e8e8" d="M219.821 0H32.842v303.188h237.504V50.525z" />
-				<path
-					d="M230.013 149.935c-3.643-6.493-16.231-8.533-22.006-9.451-4.552-.724-9.199-.94-13.803-.936-3.615-.024-7.177.154-10.693.354-1.296.087-2.579.199-3.861.31a93.594 93.594 0 01-3.813-4.202c-7.82-9.257-14.134-19.755-19.279-30.664 1.366-5.271 2.459-10.772 3.119-16.485 1.205-10.427 1.619-22.31-2.288-32.251-1.349-3.431-4.946-7.608-9.096-5.528-4.771 2.392-6.113 9.169-6.502 13.973-.313 3.883-.094 7.776.558 11.594.664 3.844 1.733 7.494 2.897 11.139a165.324 165.324 0 003.588 9.943 171.593 171.593 0 01-2.63 7.603c-2.152 5.643-4.479 11.004-6.717 16.161l-3.465 7.507c-3.576 7.855-7.458 15.566-11.815 23.02-10.163 3.585-19.283 7.741-26.857 12.625-4.063 2.625-7.652 5.476-10.641 8.603-2.822 2.952-5.69 6.783-5.941 11.024-.141 2.394.807 4.717 2.768 6.137 2.697 2.015 6.271 1.881 9.4 1.225 10.25-2.15 18.121-10.961 24.824-18.387 4.617-5.115 9.872-11.61 15.369-19.465l.037-.054c9.428-2.923 19.689-5.391 30.579-7.205 4.975-.825 10.082-1.5 15.291-1.974 3.663 3.431 7.621 6.555 11.939 9.164 3.363 2.069 6.94 3.816 10.684 5.119 3.786 1.237 7.595 2.247 11.528 2.886 1.986.284 4.017.413 6.092.335 4.631-.175 11.278-1.951 11.714-7.57.134-1.72-.237-3.228-.98-4.55zm-110.869 10.31a170.827 170.827 0 01-6.232 9.041c-4.827 6.568-10.34 14.369-18.322 17.286-1.516.554-3.512 1.126-5.616 1.002-1.874-.11-3.722-.937-3.637-3.065.042-1.114.587-2.535 1.423-3.931.915-1.531 2.048-2.935 3.275-4.226 2.629-2.762 5.953-5.439 9.777-7.918 5.865-3.805 12.867-7.23 20.672-10.286-.449.71-.897 1.416-1.34 2.097zm27.222-84.26a38.169 38.169 0 01-.323-10.503 24.858 24.858 0 011.038-4.952c.428-1.33 1.352-4.576 2.826-4.993 2.43-.688 3.177 4.529 3.452 6.005 1.566 8.396.186 17.733-1.693 25.969-.299 1.31-.632 2.599-.973 3.883a121.219 121.219 0 01-1.648-4.821c-1.1-3.525-2.106-7.091-2.679-10.588zm16.683 66.28a236.508 236.508 0 00-25.979 5.708c.983-.275 5.475-8.788 6.477-10.555 4.721-8.315 8.583-17.042 11.358-26.197 4.9 9.691 10.847 18.962 18.153 27.214.673.749 1.357 1.489 2.053 2.22-4.094.441-8.123.978-12.062 1.61zm61.744 11.694c-.334 1.805-4.189 2.837-5.988 3.121-5.316.836-10.94.167-16.028-1.542-3.491-1.172-6.858-2.768-10.057-4.688-3.18-1.921-6.155-4.181-8.936-6.673 3.429-.206 6.9-.341 10.388-.275 3.488.035 7.003.211 10.475.664 6.511.726 13.807 2.961 18.932 7.186 1.009.833 1.331 1.569 1.214 2.207zM227.64 25.263H32.842V0h186.979z"
-					fill="#fb3449"
-				/>
-				<g fill="#a4a9ad">
-					<path d="M126.841 241.152c0 5.361-1.58 9.501-4.742 12.421-3.162 2.921-7.652 4.381-13.472 4.381h-3.643v15.917H92.022v-47.979h16.606c6.06 0 10.611 1.324 13.652 3.971 3.041 2.647 4.561 6.41 4.561 11.289zm-21.856 6.235h2.363c1.947 0 3.495-.546 4.644-1.641 1.149-1.094 1.723-2.604 1.723-4.529 0-3.238-1.794-4.857-5.382-4.857h-3.348v11.027zM175.215 248.864c0 8.007-2.205 14.177-6.613 18.509s-10.606 6.498-18.591 6.498h-15.523v-47.979h16.606c7.701 0 13.646 1.969 17.836 5.907 4.189 3.938 6.285 9.627 6.285 17.065zm-13.455.46c0-4.398-.87-7.657-2.609-9.78-1.739-2.122-4.381-3.183-7.926-3.183h-3.773v26.877h2.888c3.939 0 6.826-1.143 8.664-3.43 1.837-2.285 2.756-5.78 2.756-10.484zM196.579 273.871h-12.766v-47.979h28.355v10.403h-15.589v9.156h14.374v10.403h-14.374v18.017z" />
-				</g>
-				<path fill="#d1d3d3" d="M219.821 50.525h50.525L219.821 0z" />
-			</svg>
-		);
+	switch (type) {
+		case 'pdf':
+			return <FaFilePdf className="h-6 w-6 text-red-500" />;
+		case 'doc':
+		case 'docx':
+			return <FaFileWord className="h-6 w-6 text-blue-500" />;
+		case 'ppt':
+		case 'pptx':
+			return <FaFilePowerpoint className="h-6 w-6 text-orange-500" />;
+		case 'xls':
+		case 'xlsx':
+			return <BsFiletypeXls className="h-6 w-6 text-green-600" />;
+		case 'png':
+		case 'jpg':
+		case 'jpeg':
+		case 'gif':
+			return <FaRegFileImage className="h-6 w-6 text-purple-500" />; // Using updated icon
+		default:
+			return <FaLink className="h-6 w-6 text-blue-500" />;
 	}
-
-	if (type === 'doc' || type === 'docx') {
-		return (
-			<svg
-				className="h-6 w-6 text-blue-500"
-				viewBox="0 0 321.492 321.492"
-				fill="currentColor"
-			>
-				<path d="M296.635 165.204h-26.861V9a9 9 0 00-9-9H84.409a8.998 8.998 0 00-6.78 3.082L18.077 71.315a8.996 8.996 0 00-2.22 5.918v235.259a9 9 0 009 9h235.917a9 9 0 009-9v-25.778h26.861a9 9 0 009-9v-103.51a9 9 0 00-9-9zm-9 103.51H94.497v-85.51h193.139v85.51zM75.409 32.999v35.234H44.657l30.752-35.234zm176.365 270.493H33.857V86.233h50.552a9 9 0 009-9V18h158.365v147.204H85.497a9 9 0 00-9 9v103.51a9 9 0 009 9h166.277v16.778z" />
-				<path d="M146.802 200.112H123.75v52.216h22.616c17.235 0 21.672-16.145 21.672-27.344 0-9.89-3.636-24.872-21.236-24.872zm-1.745 43.199H134.44v-34.18h10.472c4.654 0 11.999 1.236 11.999 16.653 0 8.581-2.982 17.527-11.854 17.527zM199.021 198.731c-6.908 0-25.089 2.981-25.089 27.489s18.181 27.489 25.089 27.489c6.909 0 25.09-2.981 25.09-27.489s-18.181-27.489-25.09-27.489zm0 45.743c-5.891 0-14.181-3.636-14.181-18.253s8.29-18.254 14.181-18.254 14.182 3.637 14.182 18.254-8.291 18.253-14.182 18.253zM254.514 198.731c-13.453 0-23.998 9.309-23.998 27.562 0 18.035 9.963 27.417 23.853 27.417 13.091 0 20.509-7.927 22.69-19.271H266.15c-1.309 6.399-5.526 9.817-11.563 9.817-9.236 0-12.945-8.436-12.945-17.817 0-14.763 7.709-18.254 12.945-18.254 9.018 0 10.69 5.891 11.563 9.019h10.909c-.582-7.71-6.909-18.473-22.545-18.473zM147.307 81.414l5.689-26.596h.137l5.689 26.596h9.872l10.486-36.467h-9.871l-5.688 26.184h-.138L158 44.947h-9.665l-5.141 26.184h-.137l-5.689-26.184h-10.214l10.282 36.467zM194.938 77.458h15.379c4.971 0 9-4.029 9-9s-4.029-9-9-9h-15.379c-4.971 0-9 4.029-9 9s4.029 9 9 9zM211.529 93.354h-74.346c-4.971 0-9 4.029-9 9s4.029 9 9 9h74.346c4.971 0 9-4.029 9-9s-4.029-9-9-9zM211.529 127.294h-74.346c-4.971 0-9 4.029-9 9s4.029 9 9 9h74.346c4.971 0 9-4.029 9-9s-4.029-9-9-9z" />
-			</svg>
-		);
-	}
-
-	if (type === 'ppt' || type === 'pptx') {
-		return (
-			<svg className="h-6 w-6 text-orange-500" viewBox="0 0 303.188 303.188">
-				<g>
-					<polygon
-						style={{ fill: '#E8E8E8' }}
-						points="219.821,0 32.842,0 32.842,303.188 270.346,303.188 270.346,50.525"
-					/>
-					<g>
-						<rect
-							x="90.902"
-							y="61.704"
-							style={{ fill: '#FF671B' }}
-							width="119.89"
-							height="119.89"
-						/>
-						<rect
-							x="101.303"
-							y="72.105"
-							style={{ fill: '#FFFFFF' }}
-							width="99.089"
-							height="99.087"
-						/>
-						<g>
-							<rect
-								x="115.616"
-								y="92.182"
-								style={{ fill: '#FF671B' }}
-								width="70.463"
-								height="58.933"
-							/>
-							<rect
-								x="120.918"
-								y="98.303"
-								style={{ fill: '#FFFFFF' }}
-								width="59.861"
-								height="7.613"
-							/>
-							<path
-								style={{ fill: '#FFFFFF' }}
-								d="M135.872,112.472c-8.259,0-14.955,6.696-14.955,14.954c0,8.259,6.695,14.955,14.955,14.955c8.258,0,14.954-6.696,14.954-14.955h-14.954V112.472z"
-							/>
-							<rect
-								x="157.902"
-								y="113.564"
-								style={{ fill: '#FFFFFF' }}
-								width="22.876"
-								height="4.434"
-							/>
-							<rect
-								x="157.902"
-								y="122.993"
-								style={{ fill: '#FFFFFF' }}
-								width="22.876"
-								height="4.433"
-							/>
-							<rect
-								x="157.902"
-								y="132.422"
-								style={{ fill: '#FFFFFF' }}
-								width="22.876"
-								height="4.432"
-							/>
-						</g>
-					</g>
-					<polygon
-						style={{ fill: '#FF671B' }}
-						points="227.64,25.263 32.842,25.263 32.842,0 219.821,0"
-					/>
-					{/* Added text paths for PPT letters */}
-					<g transform="translate(90, 240)">
-						<path
-							style={{ fill: '#A4A9AD' }}
-							d="M38.532,1.152c0,5.361-1.581,9.501-4.742,12.421c-3.162,2.921-7.652,4.381-13.472,4.381h-3.643v15.917H3.712v-47.979h16.606c6.06,0,10.611,1.324,13.652,3.971C37.011,-7.49,38.532,-3.727,38.532,1.152z M16.675,7.387h2.363c1.947,0,3.495-0.546,4.644-1.641c1.148-1.094,1.723-2.604,1.723-4.529c0-3.238-1.794-4.857-5.382-4.857h-3.348V7.387z"
-						/>
-						<path
-							style={{ fill: '#A4A9AD' }}
-							d="M80.998,1.152c0,5.361-1.581,9.501-4.742,12.421c-3.162,2.921-7.652,4.381-13.472,4.381h-3.643v15.917H46.178v-47.979h16.606c6.06,0,10.61,1.324,13.652,3.971C79.477,-7.49,80.998,-3.727,80.998,1.152z M59.142,7.387h2.362c1.947,0,3.495-0.546,4.644-1.641c1.149-1.094,1.724-2.604,1.724-4.529c0-3.238-1.795-4.857-5.383-4.857h-3.347V7.387z"
-						/>
-						<path
-							style={{ fill: '#A4A9AD' }}
-							d="M109.812,33.871H96.849v-37.379H85.133v-10.6h36.361v10.6h-11.683V33.871z"
-						/>
-					</g>
-					<polygon
-						style={{ fill: '#D1D3D3' }}
-						points="219.821,50.525 270.346,50.525 219.821,0"
-					/>
-				</g>
-			</svg>
-		);
-	}
-
-	if (['png', 'jpg', 'jpeg', 'gif'].includes(type)) {
-		return (
-			<svg className="h-6 w-6 text-green-500" viewBox="0 0 512 512">
-				<g>
-					<path
-						style={{ fill: 'currentColor' }}
-						d="M476.694,512H35.306c-8.03,0-14.54-6.509-14.54-14.54V14.54c0-8.03,6.509-14.54,14.54-14.54h441.389c8.03,0,14.54,6.509,14.54,14.54v328.698c0,8.03-6.509,14.54-14.54,14.54s-14.54-6.509-14.54-14.54V29.08H49.845V482.92h412.309v-51.955c0-8.03,6.509-14.54,14.54-14.54s14.54,6.509,14.54,14.54v66.495C491.234,505.491,484.725,512,476.694,512z"
-					/>
-				</g>
-				<path
-					style={{ fill: '#4ade80' }}
-					d="M100.735,79.969v256.969h310.531V79.969H100.735z M134.881,335.968l77.135-133.602l77.135,133.602H134.881z M320.701,205.274c-20.165,0-36.512-16.347-36.512-36.514s16.347-36.514,36.512-36.514s36.512,16.347,36.512,36.514S340.868,205.274,320.701,205.274z"
-				/>
-			</svg>
-		);
-	}
-
-	// Default file icon
-	return (
-		<svg className="h-6 w-6 text-gray-500" viewBox="0 0 384 512">
-			<path
-				fill="currentColor"
-				d="M320 464c8.8 0 16-7.2 16-16V160H256c-17.7 0-32-14.3-32-32V48H64c-8.8 0-16 7.2-16 16v384c0 8.8 7.2 16 16 16h256zM0 64C0 28.7 28.7 0 64 0h160l128 128v304c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64z"
-			/>
-		</svg>
-	);
 };
+
+// Add a description ID constant
+const MODAL_DESCRIPTION_ID = 'activity-modal-description';
 
 const LessonActivityModal = ({
 	isOpen,
@@ -349,28 +232,37 @@ const LessonActivityModal = ({
 
 	useEffect(() => {
 		const canClose = () => {
+			// Si la actividad ya está completada, siempre puede cerrar
 			if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
 				return true;
 			}
 
+			// Si no hay resultados mostrados, no puede cerrar
 			if (!showResults) {
 				return false;
 			}
 
-			// Modificar la lógica para considerar los intentos y el estado revisada
+			// Para actividades revisadas
 			if (activity.revisada) {
-				// Para actividades revisadas:
-				// - Si agotó los intentos (attemptsLeft === 0), puede cerrar sin importar la nota
-				// - Si tiene nota >= 3, puede cerrar
-				return attemptsLeft === 0 || finalScore >= 3;
-			} else {
-				// Para actividades no revisadas:
-				// - Siempre puede cerrar, ya que tiene intentos infinitos
-				return true;
+				// Puede cerrar si:
+				// 1. No tiene intentos restantes (attemptsLeft === 0)
+				// 2. Tiene nota aprobatoria (finalScore >= 3)
+				// 3. Es la última actividad del curso (isLastActivity && isLastLesson)
+				return (
+					attemptsLeft === 0 ||
+					finalScore >= 3 ||
+					(isLastActivity && isLastLesson)
+				);
 			}
+
+			// Para actividades no revisadas, siempre puede cerrar después de ver resultados
+			return true;
 		};
 
-		setCanCloseModal(canClose());
+		const newCanClose = canClose();
+		if (canCloseModal !== newCanClose) {
+			setCanCloseModal(newCanClose);
+		}
 	}, [
 		showResults,
 		finalScore,
@@ -378,6 +270,9 @@ const LessonActivityModal = ({
 		activity.revisada,
 		activity.isCompleted,
 		savedResults?.isAlreadyCompleted,
+		isLastActivity,
+		isLastLesson,
+		canCloseModal,
 	]);
 
 	useEffect(() => {
@@ -561,20 +456,25 @@ const LessonActivityModal = ({
 	const handleFinishAndNavigate = async () => {
 		try {
 			setIsUnlocking(true);
+
+			// First mark activity as completed
 			await markActivityAsCompleted();
+
+			// Then run the activity completion handler
 			await onActivityCompleted();
+
+			// Update the questions answered status
 			onQuestionsAnswered(true);
 
+			// Finally try to unlock next lesson
 			const result = await unlockNextLesson(activity.lessonsId);
 
-			// Add null check and proper type checking
-			if (result && result.success && result.nextLessonId) {
+			if (result?.success && result.nextLessonId) {
 				onLessonUnlocked(result.nextLessonId);
 				toast.success('¡Siguiente clase desbloqueada!');
 				onClose();
 			} else {
-				// Handle the case where unlocking failed but don't show error
-				// This could happen if it's the last lesson
+				// Just close if it's the last lesson
 				onClose();
 			}
 		} catch (error) {
@@ -653,57 +553,71 @@ const LessonActivityModal = ({
 		const isQuestionAnswered = userAnswers[currentQuestion.id];
 
 		return (
-			<div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-				<h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
-					<div className="flex items-center">
-						<span className="bg-primary/20 text-background mr-2 flex h-8 w-8 items-center justify-center rounded-full font-bold">
-							{currentQuestionIndex + 1}
-						</span>
-						{currentQuestion.text}
-					</div>
+			<div className="relative">
+				{' '}
+				{/* Add container for positioning */}
+				<div className="absolute -top-2 right-0 translate-y-[-100%] transform">
 					<LightBulbIcon
-						className={`h-6 w-6 transition-all duration-300 ${
+						className={`h-8 w-8 transition-all duration-300 ${
 							isQuestionAnswered
 								? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]'
 								: 'text-gray-300'
 						}`}
 					/>
-				</h3>
-
-				<div className="space-y-3">
-					{currentQuestion.type === 'COMPLETAR' ? (
-						<input
-							type="text"
-							value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
-							onChange={(e) => handleAnswer(e.target.value)}
-							className="text-background w-full rounded-md border border-gray-300 p-3 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
-							placeholder="Escribe tu respuesta..."
-						/>
-					) : (
-						<div className="grid gap-3">
-							{currentQuestion.options?.map((option) => (
-								<label
-									key={option.id}
-									className="flex cursor-pointer items-center rounded-lg border border-gray-200 p-4 transition-all hover:bg-gray-50"
-								>
-									<input
-										type="radio"
-										name={currentQuestion.id}
-										value={option.id}
-										checked={
-											userAnswers[currentQuestion.id]?.answer === option.id
-										}
-										onChange={(e) => handleAnswer(e.target.value)}
-										className="text-primary focus:ring-primary h-4 w-4"
-									/>
-									<span className="ml-3 text-gray-700">{option.text}</span>
-								</label>
-							))}
+				</div>
+				<div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+					<h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
+						<div className="flex items-center">
+							<span className="bg-primary/20 text-background mr-2 flex h-8 w-8 items-center justify-center rounded-full font-bold">
+								{currentQuestionIndex + 1}
+							</span>
+							{currentQuestion.text}
 						</div>
-					)}
+					</h3>
+
+					<div className="space-y-3">
+						{currentQuestion.type === 'COMPLETAR' ? (
+							<input
+								type="text"
+								value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
+								onChange={(e) => handleAnswer(e.target.value)}
+								className="text-background w-full rounded-md border border-gray-300 p-3 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
+								placeholder="Escribe tu respuesta..."
+							/>
+						) : (
+							<div className="grid gap-3">
+								{currentQuestion.options?.map((option) => (
+									<label
+										key={option.id}
+										className="flex cursor-pointer items-center rounded-lg border border-gray-200 p-4 transition-all hover:bg-gray-50"
+									>
+										<input
+											type="radio"
+											name={currentQuestion.id}
+											value={option.id}
+											checked={
+												userAnswers[currentQuestion.id]?.answer === option.id
+											}
+											onChange={(e) => handleAnswer(e.target.value)}
+											className="text-primary focus:ring-primary h-4 w-4"
+										/>
+										<span className="ml-3 text-gray-700">{option.text}</span>
+									</label>
+								))}
+							</div>
+						)}
+					</div>
 				</div>
 			</div>
 		);
+	};
+
+	// Add safety check for formatScore
+	const formatScore = (score: unknown): string => {
+		if (typeof score !== 'number' || isNaN(score)) {
+			return '0.0';
+		}
+		return score.toFixed(1);
 	};
 
 	const renderStars = (score: number) => {
@@ -719,11 +633,15 @@ const LessonActivityModal = ({
 						<StarOutlineIcon key={index} className="h-8 w-8 text-gray-300" />
 					)
 				)}
+				<span className="ml-2 text-sm font-semibold text-yellow-400">
+					{formatScore(score)}
+				</span>
 			</div>
 		);
 	};
 
 	const renderActionButton = () => {
+		// Loading states checks
 		if (!isResultsLoaded || isUnlocking) {
 			return (
 				<Button
@@ -736,7 +654,7 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Show grade report button for last activity of last lesson regardless of score or attempts
+		// Last activity of last lesson with grade report
 		if (isLastActivity && isLastLesson && showResults) {
 			return (
 				<div className="space-y-3">
@@ -763,11 +681,129 @@ const LessonActivityModal = ({
 			);
 		}
 
+		// Already completed activity
 		if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
 			return (
 				<Button
 					onClick={onClose}
 					className="text-background mt-3 w-full bg-blue-500 font-bold transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+				>
+					CERRAR
+				</Button>
+			);
+		}
+
+		// For activities with revisada=true and score < 3
+		if (activity.revisada && finalScore < 3) {
+			if (attemptsLeft && attemptsLeft > 0) {
+				return (
+					<div className="space-y-3">
+						<p className="text-center text-sm text-gray-400">
+							Te quedan{' '}
+							<span className="text-2xl font-bold text-white">
+								{attemptsLeft}
+							</span>{' '}
+							intento{attemptsLeft !== 1 ? 's' : ''}
+						</p>
+						<Button
+							onClick={() => {
+								setCurrentQuestionIndex(0);
+								setUserAnswers({});
+								setShowResults(false);
+							}}
+							className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600"
+						>
+							Intentar Nuevamente
+						</Button>
+					</div>
+				);
+			}
+
+			// No attempts left, show unlock or close button
+			if (isLastActivityInLesson && !isLastLesson) {
+				return (
+					<Button
+						onClick={handleFinishAndNavigate}
+						className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+					>
+						<span className="flex items-center justify-center gap-2 py-4">
+							Desbloquear Siguiente CLASE
+							<Unlock className="h-4 w-4" />
+						</span>
+					</Button>
+				);
+			}
+			return (
+				<Button
+					onClick={onClose}
+					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+				>
+					CERRAR
+				</Button>
+			);
+		}
+
+		// For non-revisada activities with score < 3
+		if (!activity.revisada && finalScore < 3) {
+			return (
+				<div className="space-y-3">
+					<p className="pt-4 text-center font-extralight text-gray-200">
+						! Intentos ilimitados hasta aprobar !
+					</p>
+					<Button
+						onClick={() => {
+							setCurrentQuestionIndex(0);
+							setUserAnswers({});
+							setShowResults(false);
+						}}
+						className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600"
+					>
+						Intentar Nuevamente
+					</Button>
+
+					{isLastActivityInLesson && !isLastLesson ? (
+						<Button
+							onClick={handleFinishAndNavigate}
+							className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+						>
+							<span className="flex items-center justify-center gap-2 py-4">
+								Desbloquear Siguiente CLASE
+								<Unlock className="h-4 w-4" />
+							</span>
+						</Button>
+					) : (
+						!isLastActivityInLesson && (
+							<Button
+								onClick={onClose}
+								className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+							>
+								CERRAR
+							</Button>
+						)
+					)}
+				</div>
+			);
+		}
+
+		// For non-revisada activities with passing score
+		if (!activity.revisada && finalScore >= 3) {
+			if (isLastActivityInLesson && !isLastLesson) {
+				return (
+					<Button
+						onClick={handleFinishAndNavigate}
+						className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+					>
+						<span className="flex items-center justify-center gap-2 py-4">
+							Desbloquear Siguiente CLASE
+							<Unlock className="h-4 w-4" />
+						</span>
+					</Button>
+				);
+			}
+			return (
+				<Button
+					onClick={onClose}
+					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
 				>
 					CERRAR
 				</Button>
@@ -802,9 +838,9 @@ const LessonActivityModal = ({
 				return (
 					<Button
 						onClick={handleFinishAndNavigate}
-						className="w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+						className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
 					>
-						<span className="flex items-center justify-center gap-2">
+						<span className="flex items-center justify-center gap-2 py-4">
 							Desbloquear Siguiente CLASE
 							<Unlock className="h-4 w-4" />
 						</span>
@@ -822,9 +858,10 @@ const LessonActivityModal = ({
 		}
 
 		if (finalScore < 3 && !activity.revisada) {
+			// For non-revisada activities
 			return (
-				<>
-					<p className="text-center font-extralight text-gray-400">
+				<div className="space-y-3">
+					<p className="pt-4 text-center font-extralight text-gray-200">
 						! Intentos ilimitados hasta aprobar !
 					</p>
 					<Button
@@ -837,10 +874,30 @@ const LessonActivityModal = ({
 					>
 						Intentar Nuevamente
 					</Button>
-					<Button onClick={onClose} className="mt-2 w-full bg-gray-500">
-						Cerrar
-					</Button>
-				</>
+
+					{/* Show unlock button only for last activity */}
+					{isLastActivityInLesson && !isLastLesson && (
+						<Button
+							onClick={handleFinishAndNavigate}
+							className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+						>
+							<span className="flex items-center justify-center gap-2 py-4">
+								Desbloquear Siguiente CLASE
+								<Unlock className="h-4 w-4" />
+							</span>
+						</Button>
+					)}
+
+					{/* Show close button if not last activity */}
+					{!isLastActivityInLesson && (
+						<Button
+							onClick={onClose}
+							className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+						>
+							CERRAR
+						</Button>
+					)}
+				</div>
 			);
 		}
 
@@ -849,9 +906,9 @@ const LessonActivityModal = ({
 				return (
 					<Button
 						onClick={handleFinishAndNavigate}
-						className="w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+						className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
 					>
-						<span className="flex items-center justify-center gap-2">
+						<span className="flex items-center justify-center gap-2 py-4">
 							Desbloquear Siguiente CLASE
 							<Unlock className="h-4 w-4" />
 						</span>
@@ -871,7 +928,7 @@ const LessonActivityModal = ({
 		return (
 			<Button
 				onClick={onClose}
-				className="mt-4 w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+				className="w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 			>
 				CERRAR
 			</Button>
@@ -907,14 +964,19 @@ const LessonActivityModal = ({
 			);
 		}
 
-		// Regular activity results rendering
+		// Regular activity results rendering - Update these styles
 		return (
-			<div className="-mt-14 space-y-3 px-4">
+			<div className="px-4">
 				<div className="text-center">
-					<h3 className="text-background text-xl font-bold">Resultados</h3>
+					{/* Reduce space between title and stars */}
 					<div className="mt-1">
+						{' '}
+						{/* Changed from mt-3 to mt-1 */}
 						{renderStars(finalScore)}
-						<p className="mt-1 text-lg font-medium text-gray-400">
+						{/* Reduce space between stars and grade */}
+						<p className="mt-2 text-lg font-medium text-gray-400">
+							{' '}
+							{/* Changed from mt-3 to mt-2 */}
 							Calificación:{' '}
 							<span
 								className={`text-2xl font-bold ${
@@ -927,65 +989,79 @@ const LessonActivityModal = ({
 							</span>
 						</p>
 					</div>
-				</div>
 
-				<div className="max-h-[60vh] divide-y divide-gray-100 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm">
-					{questions.map((question, idx) => {
-						const userAnswer = userAnswers[question.id];
-						const isCorrect = userAnswer?.isCorrect;
-						const displayAnswer = userAnswer
-							? getDisplayAnswer(userAnswer, question)
-							: '';
+					{/* Add margin top to questions container */}
+					<div className="mt-3 mb-4">
+						{' '}
+						{/* Added mb-4 to add space at bottom */}
+						<div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+							<div className="max-h-[60vh] overflow-y-auto pr-6">
+								{' '}
+								{/* Added pr-6 for more spacing */}
+								<div className="divide-y divide-gray-100">
+									{questions.map((question, idx) => {
+										const userAnswer = userAnswers[question.id];
+										const isCorrect = userAnswer?.isCorrect;
+										const displayAnswer = userAnswer
+											? getDisplayAnswer(userAnswer, question)
+											: '';
 
-						return (
-							<div
-								key={question.id}
-								className="space-y-3 p-4 transition-all hover:bg-gray-50"
-							>
-								<div className="flex items-start justify-between">
-									<div className="flex-1">
-										<p className="font-medium text-gray-900">
-											<span className="mr-2 text-gray-500">
-												Pregunta {idx + 1}:
-											</span>
-											{question.text}
-										</p>
-									</div>
-									{isCorrect ? (
-										<CheckCircleIcon className="h-6 w-6 text-green-600" />
-									) : (
-										<XCircleIcon className="h-6 w-6 text-red-600" />
-									)}
-								</div>
+										return (
+											<div
+												key={question.id}
+												className="space-y-3 p-4 transition-all hover:bg-gray-50"
+											>
+												<div className="flex items-start justify-between">
+													<div className="flex-1">
+														<p className="font-medium text-gray-900">
+															<span className="mr-2 text-gray-500">
+																Pregunta {idx + 1}:
+															</span>
+															{question.text}
+														</p>
+													</div>
+													{isCorrect ? (
+														<CheckCircleIcon className="h-6 w-6 text-green-600" />
+													) : (
+														<XCircleIcon className="h-6 w-6 text-red-600" />
+													)}
+												</div>
 
-								<div className="ml-6 space-y-2">
-									<div
-										className={`rounded-md p-2 ${
-											isCorrect
-												? 'bg-green-50 text-green-800'
-												: 'bg-red-50 text-red-800'
-										}`}
-									>
-										<p className="text-sm">
-											<span className="font-bold">Tu respuesta:</span>{' '}
-											<span className="font-bold">{displayAnswer}</span>
-										</p>
-									</div>
-									{/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
-									{!isCorrect && finalScore >= 3 && (
-										<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
-											<span className="font-bold">Respuesta correcta:</span>{' '}
-											<span className="font-bold">
-												{getDisplayCorrectAnswer(question)}
-											</span>
-										</div>
-									)}
+												<div className="ml-6 space-y-2">
+													<div
+														className={`rounded-md p-2 ${
+															isCorrect
+																? 'bg-green-50 text-green-800'
+																: 'bg-red-50 text-red-800'
+														}`}
+													>
+														<p className="text-sm">
+															<span className="font-bold">Tu respuesta:</span>{' '}
+															<span className="font-bold">{displayAnswer}</span>
+														</p>
+													</div>
+													{/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
+													{!isCorrect && finalScore >= 3 && (
+														<div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
+															<span className="font-bold">
+																Respuesta correcta:
+															</span>{' '}
+															<span className="font-bold">
+																{getDisplayCorrectAnswer(question)}
+															</span>
+														</div>
+													)}
+												</div>
+											</div>
+										);
+									})}
 								</div>
 							</div>
-						);
-					})}
+						</div>
+					</div>
 				</div>
-				{renderActionButton()}
+				{/* Add margin-top to create space between results and action buttons */}
+				<div>{renderActionButton()}</div>
 			</div>
 		);
 	};
@@ -1206,15 +1282,22 @@ const LessonActivityModal = ({
 						<div className="border-t border-gray-700 bg-slate-900/95 p-6">
 							{shouldShowUnlockButton ? (
 								<Button
-									onClick={async () => {
-										await handleFinishAndNavigate();
-										await markActivityAsCompleted();
-									}}
+									onClick={handleFinishAndNavigate} // Changed to directly use handleFinishAndNavigate
+									disabled={isUnlocking}
 									className="w-full bg-green-500 text-white hover:bg-green-600"
 								>
 									<span className="flex items-center justify-center gap-2">
-										Desbloquear Siguiente Clase
-										<Unlock className="h-4 w-4" />
+										{isUnlocking ? (
+											<>
+												<Icons.spinner className="h-4 w-4 animate-spin" />
+												Desbloqueando...
+											</>
+										) : (
+											<>
+												Desbloquear Siguiente Clase
+												<Unlock className="h-4 w-4" />
+											</>
+										)}
 									</span>
 								</Button>
 							) : (
@@ -1430,12 +1513,14 @@ const LessonActivityModal = ({
 
 		// Regular activity content for questions
 		return (
-			// ...existing question rendering code...
 			<div className="space-y-6">
 				{showResults ? (
 					renderResults()
 				) : (
-					<>
+					// Add padding-right to create space for scrollbar
+					<div className="">
+						{' '}
+						{/* Add right padding */}
 						<div className="mb-8 flex flex-col items-center justify-center text-center">
 							<span className="text-primary text-2xl font-bold">
 								{getQuestionTypeLabel(currentQuestion?.type ?? '')}
@@ -1446,7 +1531,9 @@ const LessonActivityModal = ({
 						</div>
 						{renderQuestion()}
 						{/* Navigation buttons */}
-						<div className="flex justify-between">
+						<div className="mt-6 flex justify-between">
+							{' '}
+							{/* Added top margin */}
 							<button
 								className="btn-arrow btn-arrow-prev"
 								disabled={currentQuestionIndex === 0}
@@ -1466,7 +1553,7 @@ const LessonActivityModal = ({
 								<ChevronRightIcon />
 							</button>
 						</div>
-					</>
+					</div>
 				)}
 			</div>
 		);
@@ -1494,7 +1581,6 @@ const LessonActivityModal = ({
 				if (!open) {
 					if (!canCloseModal) {
 						if (activity.revisada) {
-							// Mensaje específico para actividades revisadas
 							const intentosRestantes = attemptsLeft ?? 0;
 							if (intentosRestantes > 0) {
 								toast.error(
@@ -1514,15 +1600,27 @@ const LessonActivityModal = ({
 				onClose();
 			}}
 		>
-			<DialogContent className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex max-h-[90vh] flex-col overflow-hidden sm:max-w-[500px]">
-				<DialogHeader className="bg-background sticky top-0 z-50 pb-4">
+			<DialogContent
+				className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex max-h-[90vh] flex-col overflow-hidden sm:max-w-[500px]"
+				aria-describedby={MODAL_DESCRIPTION_ID}
+			>
+				<DialogHeader className="bg-background sticky top-0 z-50">
+					{' '}
+					{/* Reduced bottom padding from pb-4 to pb-2 */}
 					<DialogTitle className="text-center text-3xl font-bold">
 						{activity.content?.questionsFilesSubida?.[0] != null
 							? 'SUBIDA DE DOCUMENTO'
 							: 'ACTIVIDAD'}
 					</DialogTitle>
+					{/* Add description for accessibility */}
+					<div id={MODAL_DESCRIPTION_ID} className="sr-only">
+						{activity.description ?? 'Actividad del curso'}
+					</div>
 				</DialogHeader>
-				<div className="flex-1 overflow-y-auto">
+				{/* Add padding to create space between content and scrollbar */}
+				<div className="flex-1 overflow-y-auto px-4">
+					{' '}
+					{/* Updated padding */}
 					{isUnlocking
 						? renderLoadingState('Desbloqueando Siguiente Clase...')
 						: isSavingResults
