@@ -3,13 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import {
-	Loader2,
-	X,
-	Edit,
-	Trash2,
-	UserPlus,
-} from 'lucide-react';
+import { Loader2, X, Edit, Trash2, UserPlus } from 'lucide-react';
 
 import BulkUploadUsers from '~/app/dashboard/super-admin/components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
 import { ConfirmDialog } from '~/app/dashboard/super-admin/components/ConfirmDialog';
@@ -35,18 +29,6 @@ type ConfirmationState = {
 	onConfirm: () => void;
 	onCancel?: () => void;
 } | null;
-
-interface ViewUserResponse {
-	id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	profileImage?: string;
-	createdAt?: string;
-	role: string;
-	status: string;
-	password?: string;
-}
 
 interface UserData {
 	id: string;
@@ -80,13 +62,16 @@ export default function AdminDashboard() {
 		firstName: string;
 		lastName: string;
 	}>({ firstName: '', lastName: '' });
+	void loading;
+	void error;
+	void updatingUserId;
+	void editValues;
 	const [infoDialogOpen, setInfoDialogOpen] = useState(false);
 	const [infoDialogTitle, setInfoDialogTitle] = useState('');
 	const [infoDialogMessage, setInfoDialogMessage] = useState('');
 
 	const [showCreateForm, setShowCreateForm] = useState(false);
 	const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-	const [viewUser, setViewUser] = useState<ViewUserResponse | null>(null);
 
 	const [newUser, setNewUser] = useState({
 		firstName: '',
@@ -98,7 +83,6 @@ export default function AdminDashboard() {
 
 	const searchParams = useSearchParams();
 	const query = searchParams?.get('search') ?? '';
-	const [modalIsOpen, setModalIsOpen] = useState(false);
 
 	const fetchUsers = useCallback(async () => {
 		try {
@@ -612,16 +596,38 @@ export default function AdminDashboard() {
 					isOpen={!!editingUser}
 					user={editingUser}
 					onClose={() => setEditingUser(null)}
-					onSave={(updatedUser, updatedPermissions) => {
-						setUsers(
-							users.map((user) =>
-								user.id === updatedUser.id
-									? { ...updatedUser, permissions: updatedPermissions }
-									: user
-							)
-						);
-						setEditingUser(null);
-						showNotification('Usuario actualizado con éxito.', 'success');
+					onSave={async (updatedUser, updatedPermissions) => {
+						try {
+							const res = await fetch('/api/super-admin/udateUser', {
+								method: 'PATCH',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({
+									userId: updatedUser.id,
+									firstName: updatedUser.firstName,
+									lastName: updatedUser.lastName,
+									role: updatedUser.role,
+									status: updatedUser.status,
+									permissions: updatedPermissions,
+								}),
+							});
+
+							if (!res.ok) throw new Error('Error actualizando usuario');
+
+							// Actualizar el usuario localmente en el estado
+							setUsers(
+								users.map((user) =>
+									user.id === updatedUser.id
+										? { ...updatedUser, permissions: updatedPermissions }
+										: user
+								)
+							);
+
+							setEditingUser(null);
+							showNotification('Usuario actualizado con éxito.', 'success');
+						} catch (err) {
+							console.error('❌ Error actualizando usuario:', err);
+							showNotification('Error al actualizar usuario', 'error');
+						}
 					}}
 				/>
 			)}

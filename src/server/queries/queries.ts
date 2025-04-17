@@ -597,24 +597,37 @@ export async function updateUserInClerk({
 	try {
 		const client = await clerkClient();
 
-		// 🔥 Aseguramos que Clerk reciba TODOS los valores correctamente
+		// 🧠 Actualizar en Clerk
 		await client.users.updateUser(userId, {
 			firstName,
 			lastName,
 			publicMetadata: {
-				role: role || 'estudiante', // Valor por defecto si no existe
+				role: (role || 'estudiante') as 'admin' | 'educador' | 'super-admin' | 'estudiante',
 				status: status || 'activo',
-				permissions: Array.isArray(permissions) ? permissions : [], // Validar array
+				permissions: Array.isArray(permissions) ? permissions : [],
 			},
 		});
 
-		console.log(`✅ Usuario ${userId} actualizado correctamente en Clerk.`);
+		// 🧠 También actualizar en Drizzle
+		await db
+			.update(users)
+			.set({
+				name: `${firstName} ${lastName}`,
+				role: (role || 'estudiante') as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+				subscriptionStatus: status || 'activo',
+				updatedAt: new Date(),
+			})
+			.where(eq(users.id, userId));
+
+		console.log(`✅ Usuario ${userId} actualizado en Clerk y BD`);
 		return true;
 	} catch (error) {
-		console.error('❌ Error al actualizar usuario en Clerk:', error);
+		console.error('❌ Error al actualizar usuario:', error);
 		return false;
 	}
 }
+
+
 export async function getMateriasByCourseId(
 	courseId: string
 ): Promise<Materia[]> {
