@@ -1,27 +1,27 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
 	CheckCircleIcon,
-	XCircleIcon,
-	LightBulbIcon,
 	ChevronRightIcon,
+	LightBulbIcon,
 	StarIcon as StarSolidIcon,
+	XCircleIcon,
 } from '@heroicons/react/24/solid';
+import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
 import { BsFiletypeXls } from 'react-icons/bs';
 import {
-	FaTrophy,
-	FaLink,
 	FaFilePdf,
 	FaFilePowerpoint,
 	FaFileWord,
+	FaLink,
+	FaTrophy,
 } from 'react-icons/fa';
-import { FaRegFileImage } from 'react-icons/fa6'; // Update this import
+import { FaRegFileImage } from 'react-icons/fa6';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
@@ -34,8 +34,7 @@ import {
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { formatScoreNumber } from '~/utils/formatScore';
-
-import type { Activity, Question, SavedAnswer } from '~/types';
+import { type Activity, type Question, type SavedAnswer } from '~/types';
 
 import '~/styles/arrowactivity.css';
 import { FileUploadForm } from './FileUploadForm';

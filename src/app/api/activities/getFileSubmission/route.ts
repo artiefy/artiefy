@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
-
 import { and, eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { userActivitiesProgress } from '~/server/db/schema';
 

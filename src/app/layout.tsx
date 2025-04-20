@@ -1,6 +1,7 @@
 import '~/styles/globals.css';
 
 import { Merriweather, Montserrat } from 'next/font/google';
+import { esMX } from '@clerk/localizations';
 
 import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
@@ -8,9 +9,8 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
 import { Toaster } from '~/components/estudiantes/ui/sonner';
-import { esMX } from '@clerk/localizations'
-
 import Providers from './providers';
+
 
 const montserrat = Montserrat({
 	subsets: ['latin'],

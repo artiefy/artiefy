@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
-import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
+
 import {
 	getAllEducators,
 } from '~/models/super-adminModels/courseModelsSuperAdmin';
+import { db } from '~/server/db';
+import { courses } from '~/server/db/schema';
+
 
 
 // ✅ Obtener la lista de educadores
@@ -17,7 +19,7 @@ export async function GET() {
 		// Transform the data to include only what we need
 		const formattedEducators = educators.map((educator) => ({
 			id: educator.id,
-			name: educator.name || 'Sin nombre', // Use name from users table
+			name: educator.name ?? 'Sin nombre', // Use name from users table
 		}));
 
 		if (!formattedEducators || formattedEducators.length === 0) {

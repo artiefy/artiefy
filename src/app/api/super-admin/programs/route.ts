@@ -7,8 +7,10 @@ import {
 	createProgram,
 	updateProgram,
 } from '~/models/super-adminModels/programModelsSuperAdmin';
+
 import { db } from '~/server/db';
 import { materias, users } from '~/server/db/schema';
+
 
 export async function POST(req: NextRequest) {
 	try {
@@ -172,7 +174,6 @@ export async function POST(req: NextRequest) {
 								.where(eq(materias.id, materia.id))
 								.execute();
 						}
-						
 					}
 				}
 			}
@@ -283,9 +284,9 @@ export async function PUT(req: NextRequest) {
 					.from(materias)
 					.where(eq(materias.id, materiaId))
 					.then((res) => res[0]);
-			
+
 				if (!materia) continue;
-			
+
 				if (materia.courseid) {
 					// Ya tiene curso → duplicar
 					await db.insert(materias).values({
@@ -307,7 +308,7 @@ export async function PUT(req: NextRequest) {
 								ne(materias.programaId, Number(updatedProgram.id))
 							)
 						);
-			
+
 					if (materiasConCurso.length > 0) {
 						for (const materiaCurso of materiasConCurso) {
 							await db.insert(materias).values({
@@ -328,14 +329,14 @@ export async function PUT(req: NextRequest) {
 							});
 						} else {
 							// No tiene programa aún → actualizar
-							await db.update(materias)
-							.set({ programaId: Number(updatedProgram.id), courseid: null })
-							.where(eq(materias.programaId, Number(updatedProgram.id)))
-							}
+							await db
+								.update(materias)
+								.set({ programaId: Number(updatedProgram.id), courseid: null })
+								.where(eq(materias.programaId, Number(updatedProgram.id)));
+						}
 					}
 				}
 			}
-			
 		}
 
 		return NextResponse.json(updatedProgram);

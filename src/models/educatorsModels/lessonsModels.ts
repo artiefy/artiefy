@@ -201,7 +201,7 @@ export async function getLessonsByCourseId(courseId: number) {
 					.where(eq(users.id, instructorId))
 					.then((rows) => rows[0]);
 
-				if (dbUser && dbUser.name) {
+				if (dbUser?.name) {
 					fullname = dbUser.name;
 				} else {
 					console.error('Instructor no encontrado en la base de datos');
@@ -355,7 +355,7 @@ export const getLessonById = async (
 						.where(eq(users.id, instructorId))
 						.then((rows) => rows[0]);
 
-					if (dbUser && dbUser.name) {
+					if (dbUser?.name) {
 						instructorName = dbUser.name;
 					} else {
 						console.error('Instructor no encontrado en la base de datos');

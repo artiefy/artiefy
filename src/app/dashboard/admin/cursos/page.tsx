@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
 
+import CourseListAdmin from '~/app/dashboard/super-admin/components/CourseListAdmin';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
@@ -13,8 +13,6 @@ import {
 	updateCourse,
 	type CourseData,
 } from '~/server/queries/queries';
-
-import CourseListAdmin from '~/app/dashboard/super-admin/components/CourseListAdmin';
 
 // Define el modelo de datos del curso
 export interface CourseModel {
