@@ -130,9 +130,9 @@ export async function createLesson({
 
 		console.log('✅ Lección creada:', newLesson);
 		return newLesson;
-	} catch (error) {
-		console.error('❌ Error al crear la lección:', error);
-		throw error;
+	} catch (_error) {
+		console.error('❌ Error al crear la lección:', _error);
+		throw _error;
 	}
 }
 
@@ -188,7 +188,7 @@ export async function getLessonsByCourseId(courseId: number) {
 				const clerkUser = await clerk.users.getUser(instructorId);
 				fullname =
 					`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
-			} catch (error) {
+			} catch (_error) {
 				console.log(
 					'Instructor no encontrado en Clerk, buscando en base de datos...'
 				);
@@ -208,8 +208,8 @@ export async function getLessonsByCourseId(courseId: number) {
 					fullname = 'Instructor no encontrado';
 				}
 			}
-		} catch (error) {
-			console.error('Error al obtener datos del instructor:', error);
+		} catch (_error) {
+			console.error('Error al obtener datos del instructor:', _error);
 			fullname = 'Instructor no encontrado';
 		}
 
@@ -257,8 +257,8 @@ export async function getLessonsByCourseId(courseId: number) {
 		);
 
 		return lessonsWithCourse;
-	} catch (error) {
-		console.error('Error al obtener las lecciones:', error);
+	} catch (_error) {
+		console.error('Error al obtener las lecciones:', _error);
 		throw new Error('No se pudieron cargar las lecciones del curso');
 	}
 }
@@ -342,7 +342,7 @@ export const getLessonById = async (
 					const clerkUser = await clerk.users.getUser(instructorId);
 					instructorName =
 						`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
-				} catch (error) {
+				} catch (_error) {
 					console.log(
 						'Instructor no encontrado en Clerk, buscando en base de datos...'
 					);
@@ -363,8 +363,8 @@ export const getLessonById = async (
 					}
 				}
 			}
-		} catch (error) {
-			console.error('Error al obtener datos del instructor:', error);
+		} catch (_error) {
+			console.error('Error al obtener datos del instructor:', _error);
 			instructorName = 'Instructor no encontrado';
 		}
 
@@ -375,8 +375,8 @@ export const getLessonById = async (
 				instructor: instructorName,
 			},
 		} as unknown as Lesson;
-	} catch (error) {
-		console.error('Error al obtener la lección por ID:', error);
+	} catch (_error) {
+		console.error('Error al obtener la lección por ID:', _error);
 		throw new Error('No se pudo cargar la lección');
 	}
 };
@@ -446,9 +446,9 @@ export const deleteLesson = async (lessonId: number): Promise<void> => {
 
 		// Eliminar la lección
 		await db.delete(lessons).where(eq(lessons.id, lessonId));
-	} catch (error) {
+	} catch (_error) {
 		// Log the error with more context
-		console.error(`Error al eliminar la lección con ID: ${lessonId}`, error);
+		console.error(`Error al eliminar la lección con ID: ${lessonId}`, _error);
 		throw new Error('No se pudo eliminar la lección correctamente.');
 	}
 };
@@ -493,10 +493,10 @@ export const deleteLessonsByCourseId = async (courseId: number) => {
 
 		// Eliminar todas las lecciones asociadas al curso
 		await db.delete(lessons).where(eq(lessons.courseId, courseId));
-	} catch (error) {
+	} catch (_error) {
 		console.error(
 			`Error al eliminar las lecciones del curso con ID: ${courseId}`,
-			error
+			_error
 		);
 		throw new Error(
 			'No se pudieron eliminar las lecciones del curso correctamente.'
