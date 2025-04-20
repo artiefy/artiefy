@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { db } from '~/server/db';
 import { nivel } from '~/server/db/schema';
 
@@ -17,7 +18,8 @@ export async function GET() {
 		) {
 			return NextResponse.json(
 				{
-					error: 'Error de conexión a la base de datos. Por favor, intente nuevamente más tarde.',
+					error:
+						'Error de conexión a la base de datos. Por favor, intente nuevamente más tarde.',
 				},
 				{ status: 500 }
 			);

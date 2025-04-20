@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 		);
 
 		return NextResponse.json({ materias: formattedResults });
-	} catch (error) {
+	} catch (_error) {
 		return NextResponse.json(
 			{ error: 'Failed to fetch grades' },
 			{ status: 500 }
