@@ -285,6 +285,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			console.error('Error fetching educators:', error);
 		}
 	};
+	useEffect(() => {
+		if (currentInstructor && educators.length > 0) {
+			const foundByName = educators.find((e) => e.name === currentInstructor);
+			if (foundByName) {
+				// Esto corrige el error si por alguna razón vino el nombre en vez del ID
+				setCurrentInstructor(foundByName.id);
+			}
+		}
+	}, [currentInstructor, educators]);
+	
 
 	// Obtener el curso y los parámetros al cargar la página
 	useEffect(() => {
