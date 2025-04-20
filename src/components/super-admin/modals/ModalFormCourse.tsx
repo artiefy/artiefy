@@ -828,26 +828,26 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							/>
 						</div>
 						<div className="mb-4">
-	<label
-		htmlFor="instructor"
-		className="text-primary text-sm font-medium md:text-lg"
-	>
-		Instructor
-	</label>
-	<select
-		id="instructor"
-		value={educators.find((e) => e.id === instructor)?.id || ''} // importante!
-		onChange={(e) => setInstructor(e.target.value)} // guarda solo el ID
-		className="border-primary bg-background w-full rounded border p-2 text-sm text-white outline-none md:text-base"
-	>
-		<option value="">Seleccionar instructor</option>
-		{educators.map((educator) => (
-			<option key={educator.id} value={educator.id}>
-				{educator.name}
-			</option>
-		))}
-	</select>
-</div>
+							<label
+								htmlFor="instructor"
+								className="text-primary text-sm font-medium md:text-lg"
+							>
+								Instructor
+							</label>
+							<select
+								id="instructor"
+								value={educators.find((e) => e.id === instructor)?.id ?? ''} // importante!
+								onChange={(e) => setInstructor(e.target.value)} // guarda solo el ID
+								className="border-primary bg-background w-full rounded border p-2 text-sm text-white outline-none md:text-base"
+							>
+								<option value="">Seleccionar instructor</option>
+								{educators.map((educator) => (
+									<option key={educator.id} value={educator.id}>
+										{educator.name}
+									</option>
+								))}
+							</select>
+						</div>
 
 						<div className="w-full px-2 md:px-0">
 							<label className="text-primary text-sm font-medium md:text-lg">
