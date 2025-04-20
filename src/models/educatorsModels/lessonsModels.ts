@@ -184,9 +184,30 @@ export async function getLessonsByCourseId(courseId: number) {
 		console.log('Intentando obtener instructor:', instructorId);
 
 		try {
-			const clerkUser = await clerk.users.getUser(instructorId);
-			fullname =
-				`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
+			try {
+				const clerkUser = await clerk.users.getUser(instructorId);
+				fullname =
+					`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
+			} catch (error) {
+				console.log(
+					'Instructor no encontrado en Clerk, buscando en base de datos...'
+				);
+				// Buscar en la base de datos
+				const dbUser = await db
+					.select({
+						name: users.name,
+					})
+					.from(users)
+					.where(eq(users.id, instructorId))
+					.then((rows) => rows[0]);
+
+				if (dbUser && dbUser.name) {
+					fullname = dbUser.name;
+				} else {
+					console.error('Instructor no encontrado en la base de datos');
+					fullname = 'Instructor no encontrado';
+				}
+			}
 		} catch (error) {
 			console.error('Error al obtener datos del instructor:', error);
 			fullname = 'Instructor no encontrado';
@@ -317,14 +338,29 @@ export const getLessonById = async (
 				console.log('ID del instructor no encontrado en la base de datos');
 				instructorName = 'Instructor no asignado';
 			} else {
-				const clerkUser = await clerk.users.getUser(instructorId);
-				if (!clerkUser) {
-					console.log('Usuario no encontrado en Clerk:', instructorId);
-					instructorName = 'Instructor no encontrado';
-				} else {
+				try {
+					const clerkUser = await clerk.users.getUser(instructorId);
 					instructorName =
-						`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim() ||
-						'Instructor sin nombre';
+						`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
+				} catch (error) {
+					console.log(
+						'Instructor no encontrado en Clerk, buscando en base de datos...'
+					);
+					// Buscar en la base de datos
+					const dbUser = await db
+						.select({
+							name: users.name,
+						})
+						.from(users)
+						.where(eq(users.id, instructorId))
+						.then((rows) => rows[0]);
+
+					if (dbUser && dbUser.name) {
+						instructorName = dbUser.name;
+					} else {
+						console.error('Instructor no encontrado en la base de datos');
+						instructorName = 'Instructor no encontrado';
+					}
 				}
 			}
 		} catch (error) {

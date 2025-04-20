@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
-
-
+import { eq } from 'drizzle-orm';
+import { db } from '~/server/db';
+import { courses } from '~/server/db/schema';
 import {
 	getAllEducators,
-	updateCourseInstructor,
 } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
-// ✅ Definir tipo de datos esperado
-interface ChangeEducatorRequest {
-	courseId: number;
-	newInstructor: string;
-}
 
 // ✅ Obtener la lista de educadores
 export async function GET() {
@@ -46,27 +41,51 @@ export async function GET() {
 // ✅ Actualizar el educador de un curso
 export async function PUT(req: Request) {
 	try {
-		const body = (await req.json()) as ChangeEducatorRequest;
+		const body = (await req.json()) as {
+			courseId: number;
+			newInstructor: string;
+		};
 
 		if (!body.courseId || !body.newInstructor) {
 			return NextResponse.json(
-				{ error: 'Se requiere courseId e instructorId' },
+				{ error: 'Se requiere courseId y newInstructor' },
 				{ status: 400 }
 			);
 		}
 
-		// Update course with instructor ID directly
-		await updateCourseInstructor(body.courseId, body.newInstructor);
+		console.log('📌 Recibiendo actualización de instructor:', {
+			courseId: body.courseId,
+			newInstructor: body.newInstructor,
+		});
+
+		// Update course with instructor directly
+		const result = await db
+			.update(courses)
+			.set({
+				instructor: body.newInstructor,
+				updatedAt: new Date(),
+			})
+			.where(eq(courses.id, body.courseId))
+			.returning();
+
+		console.log('✅ Resultado de la actualización:', result);
+
+		if (!result.length) {
+			return NextResponse.json(
+				{ error: 'No se encontró el curso' },
+				{ status: 404 }
+			);
+		}
 
 		return NextResponse.json({
 			success: true,
-			message: '✅ Educador actualizado exitosamente',
-			instructorId: body.newInstructor,
+			message: 'Instructor actualizado exitosamente',
+			course: result[0],
 		});
 	} catch (error) {
-		console.error('❌ Error al actualizar el educador:', error);
+		console.error('❌ Error al actualizar el instructor:', error);
 		return NextResponse.json(
-			{ error: 'Error al actualizar educador' },
+			{ error: 'Error al actualizar el instructor' },
 			{ status: 500 }
 		);
 	}

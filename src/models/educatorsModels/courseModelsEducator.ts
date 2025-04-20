@@ -287,53 +287,47 @@ export const getAllCourses = async () => {
 
 // Actualizar un curso
 export const updateCourse = async (
-	id: number,
-	data: {
+	courseId: number,
+	updateData: {
 		title?: string;
 		description?: string;
 		coverImageKey?: string;
 		categoryid?: number;
 		modalidadesid?: number;
 		nivelid?: number;
-		instructor?: string; // Changed from instructorId
+		instructor?: string;
 		rating?: number;
-		courseTypeId?: number | null;
+		courseTypeId?: number;
 		isActive?: boolean;
 	}
 ) => {
+	console.log('🔄 Actualizando curso:', courseId, 'con datos:', updateData);
+
+	// Clean undefined values
+	const cleanedData = Object.fromEntries(
+		Object.entries(updateData).filter(([_, v]) => v !== undefined)
+	);
+
+	// Add updatedAt timestamp
+	const dataToUpdate = {
+		...cleanedData,
+		updatedAt: new Date(),
+	};
+
+	console.log('📝 Datos limpiados para actualización:', dataToUpdate);
+
 	try {
-		console.log('🔄 Actualizando curso:', id, 'con datos:', data);
-
-		// Create clean update object
-		const updateData = Object.entries(data).reduce(
-			(acc, [key, value]) => {
-				// Only include defined values
-				if (value !== undefined) {
-					acc[key as keyof typeof data] = value;
-				}
-				return acc;
-			},
-			{} as Record<string, unknown>
-		);
-
-		// Add updatedAt
-		updateData.updatedAt = new Date();
-
-		console.log('📝 Datos limpiados para actualización:', updateData);
-
-		const updatedCourse = await db
+		const result = await db
 			.update(courses)
-			.set(updateData)
-			.where(eq(courses.id, id))
+			.set(dataToUpdate)
+			.where(eq(courses.id, courseId))
 			.returning();
 
-		console.log('✅ Curso actualizado:', updatedCourse[0]);
-		return updatedCourse[0];
+		console.log('✅ Curso actualizado:', result[0]);
+		return result[0];
 	} catch (error) {
-		const errorMessage = isApiError(error)
-			? error.message
-			: 'Unknown error occurred';
-		throw new Error(`Error al actualizar el curso: ${errorMessage}`);
+		console.error('❌ Error al actualizar el curso:', error);
+		throw error;
 	}
 };
 
@@ -470,29 +464,6 @@ export const getCoursesByUserIdSimplified = async (userId: string) => {
 			? error.message
 			: 'Unknown error occurred';
 		throw new Error(`Error al obtener los cursos: ${errorMessage}`);
-	}
-};
-
-// Función para obtener materias por el ID del curso
-export const getMateriasByCourseId = async (courseId: number) => {
-	try {
-		// Realiza la consulta para obtener las materias relacionadas con el curso
-		const materiasList = await db
-			.select({
-				id: materias.id,
-				title: materias.title,
-				description: materias.description,
-				programaId: materias.programaId,
-				courseid: materias.courseid,
-			})
-			.from(materias)
-			.where(eq(materias.courseid, courseId))
-			.execute();
-
-		return materiasList;
-	} catch (error) {
-		console.error('Error fetching materias for courseId:', courseId, error);
-		throw new Error('Failed to fetch materias');
 	}
 };
 
