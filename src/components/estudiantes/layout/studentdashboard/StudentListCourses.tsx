@@ -12,7 +12,6 @@ import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
-import StudentPagination from './StudentPagination';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -25,6 +24,8 @@ import {
 } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
+
+import StudentPagination from './StudentPagination';
 
 import type { Course } from '~/types';
 

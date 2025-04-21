@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth, useSignIn } from '@clerk/nextjs';
-import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
-import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+import { useAuth, useSignIn } from '@clerk/nextjs';
+import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
+import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
+
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
+
 import Loading from '../../loading';
 
 export default function SignInPage() {
@@ -29,7 +32,7 @@ export default function SignInPage() {
   // Función para extraer redirect_url sin importar si está en query param o hash
   const getRedirectUrl = () => {
     // Primero intentamos obtenerlo de los query params normales
-    let redirectUrl = searchParams.get('redirect_url');
+	let redirectUrl = searchParams?.get('redirect_url');
     
     // Si no lo encontramos, intentamos extraerlo del hash
     if (!redirectUrl && typeof window !== 'undefined') {

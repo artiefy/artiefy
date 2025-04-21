@@ -146,7 +146,7 @@ if (typeof document !== 'undefined') {
 const FullscreenLoader = () => {
 	return (
 		<Portal>
-			<div className="bg-background/20 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
 				<TechLoader />
 			</div>
 		</Portal>
@@ -285,16 +285,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			console.error('Error fetching educators:', error);
 		}
 	};
-	useEffect(() => {
-		if (currentInstructor && educators.length > 0) {
-			const foundByName = educators.find((e) => e.name === currentInstructor);
-			if (foundByName) {
-				// Esto corrige el error si por alguna razón vino el nombre en vez del ID
-				setCurrentInstructor(foundByName.id);
-			}
-		}
-	}, [currentInstructor, educators]);
-	
 
 	// Obtener el curso y los parámetros al cargar la página
 	useEffect(() => {
@@ -332,7 +322,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 		subjects: { id: number }[]
 	) => {
 		try {
-			setIsUpdating(true);
+			setIsUpdating(true); // Agregar indicador de carga
 			let coverImageKey = course?.coverImageKey ?? '';
 			let uploadedFileName = fileName ?? '';
 
@@ -380,7 +370,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				}
 			}
 
-			// First update the course
+			
+
+			// Primero actualizar el curso
 			const response = await fetch(
 				`/api/educadores/courses/${courseIdNumber}`,
 				{
@@ -394,7 +386,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						categoryid,
 						modalidadesid,
 						nivelid,
-						instructor: currentInstructor,
+						instructor: currentInstructor, // Enviar el ID del instructor
 						rating,
 						courseTypeId,
 						isActive,
@@ -407,26 +399,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				throw new Error('Error al actualizar el curso');
 			}
 
-			// Then update the instructor through changeEducators endpoint
-			const instructorResponse = await fetch(
-				'/api/super-admin/changeEducators',
-				{
-					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						courseId: courseIdNumber,
-						newInstructor: currentInstructor,
-					}),
-				}
-			);
-
-			if (!instructorResponse.ok) {
-				console.error('Error al actualizar el instructor en changeEducators');
-			}
-
-			// Continue with parameters update if needed
+			// Si hay parámetros, actualizar
 			if (addParametros) {
 				try {
 					// 1. Primero eliminar todos los parámetros existentes
@@ -473,7 +446,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			console.error('Error:', error);
 			toast.error('Error al actualizar el curso');
 		} finally {
-			setIsUpdating(false);
+			setIsUpdating(false); // Asegurarse de que el indicador de carga se apague
 		}
 	};
 
@@ -506,7 +479,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
+				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -572,7 +545,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					</p>
 					<button
 						onClick={fetchCourse}
-						className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
 					>
 						Reintentar
 					</button>
@@ -643,7 +616,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Renderizar el componente
 	return (
-		<div className="bg-background h-auto w-full rounded-lg p-4">
+		<div className="h-auto w-full rounded-lg bg-background p-4">
 			<Breadcrumb className="mb-4">
 				<BreadcrumbList className="flex flex-wrap gap-2">
 					<BreadcrumbItem>
@@ -672,7 +645,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative h-auto w-full">
-				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
 				<Card
 					className={`zoom-in relative mt-3 h-auto overflow-hidden border-none p-4 transition-transform duration-300 ease-in-out sm:p-6`}
 					style={{
@@ -681,7 +654,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					}}
 				>
 					<CardHeader className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:gap-16">
-						<CardTitle className="text-primary text-xl font-bold sm:text-2xl">
+						<CardTitle className="text-xl font-bold text-primary sm:text-2xl">
 							Curso: {course.title}
 						</CardTitle>
 						<div className="flex flex-col">
@@ -734,7 +707,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 								>
 									Editar curso
 								</Button>
-								<Button className="border-primary bg-primary hover:bg-primary/90 text-white">
+								<Button className="border-primary bg-primary text-white hover:bg-primary/90">
 									<Link
 										href={`/dashboard/educadores/detailsDashboard/${course.id}`}
 									>
@@ -770,7 +743,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 						</div>
 						{/* Right Column - Information */}
 						<div className="space-y-6">
-							<h2 className="text-primary text-xl font-bold sm:text-2xl">
+							<h2 className="text-xl font-bold text-primary sm:text-2xl">
 								Información del curso
 							</h2>
 							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -782,7 +755,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									>
 										Curso:
 									</h2>
-									<h1 className="text-primary text-xl font-bold sm:text-2xl">
+									<h1 className="text-xl font-bold text-primary sm:text-2xl">
 										{course.title}
 									</h1>
 								</div>
@@ -796,7 +769,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</h2>
 									<Badge
 										variant="outline"
-										className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.categoryid}
 									</Badge>
@@ -831,7 +804,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 										<select
 											value={selectedInstructor || course.instructor} // Use current instructor as fallback
 											onChange={(e) => setSelectedInstructor(e.target.value)}
-											className="border-primary bg-background text-primary w-full rounded-md border p-2 text-sm"
+											className="w-full rounded-md border border-primary bg-background p-2 text-sm text-primary"
 										>
 											<option value={course.instructor}>
 												{course.instructorName ??
@@ -854,7 +827,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 													variant="outline"
 													size="sm"
 													onClick={handleChangeInstructor}
-													className="border-primary text-primary hover:bg-primary relative w-full hover:text-white"
+													className="relative w-full border-primary text-primary hover:bg-primary hover:text-white"
 													disabled={isUpdating}
 												>
 													Guardar cambio
@@ -872,7 +845,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</h2>
 									<Badge
 										variant="outline"
-										className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.nivelid}
 									</Badge>
@@ -887,7 +860,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</h2>
 									<Badge
 										variant="outline"
-										className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.modalidadesid}
 									</Badge>
@@ -902,7 +875,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</h2>
 									<Badge
 										variant="outline"
-										className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+										className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
 									>
 										{course.courseTypeName ?? 'No especificado'}
 									</Badge>
@@ -929,27 +902,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 									</Badge>
 								</div>
 								<div className="materias-container col-span-1 sm:col-span-2">
-									<h3 className="mb-2 text-base font-semibold sm:text-lg">
-										Materias:
-									</h3>
-									{materias.length > 0 ? (
-										<div className="flex flex-wrap gap-2">
-											{[
-												...new Map(materias.map((m) => [m.title, m])).values(),
-											].map((materia) => (
-												<Badge
-													key={materia.id}
-													variant="secondary"
-													className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
-												>
-													{materia.title}
-												</Badge>
-											))}
-										</div>
-									) : (
-										<p>No hay materias asociadas a este curso.</p>
-									)}
-								</div>
+	<h3 className="mb-2 text-base font-semibold sm:text-lg">Materias:</h3>
+	{materias.length > 0 ? (
+		<div className="flex flex-wrap gap-2">
+			{[
+				...new Map(materias.map((m) => [m.title, m])).values(),
+			].map((materia) => (
+				<Badge
+					key={materia.id}
+					variant="secondary"
+					className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+				>
+					{materia.title}
+				</Badge>
+			))}
+		</div>
+	) : (
+		<p>No hay materias asociadas a este curso.</p>
+	)}
+</div>
+
 							</div>
 						</div>
 					</div>

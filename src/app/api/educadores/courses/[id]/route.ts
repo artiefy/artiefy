@@ -100,9 +100,9 @@ export async function PUT(
 				? Number(data.modalidadesid)
 				: undefined,
 			nivelid: data.nivelid ? Number(data.nivelid) : undefined,
-			instructorId: data.instructorId ?? undefined, // Changed from instructor to instructorId
+			instructor: data.instructorId, // Changed to match schema's instructor field
 			rating: data.rating ? Number(data.rating) : undefined,
-			courseTypeId: 'courseTypeId' in data ? data.courseTypeId : undefined,
+			courseTypeId: data.courseTypeId !== null ? data.courseTypeId : undefined,
 			isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
 		};
 
@@ -119,7 +119,6 @@ export async function PUT(
 					console.error('❌ Error al obtener materias actuales:', err);
 					throw new Error('Error al obtener materias actuales');
 				});
-
 
 			// Nueva validación: Si el curso no tiene programa y la materia no tiene ni curso ni programa
 			for (const subject of data.subjects) {
@@ -139,7 +138,7 @@ export async function PUT(
 								`Error al obtener la materia con ID ${subject.id}`
 							);
 						});
-			
+
 					if (
 						(!currentMaterias.length ||
 							currentMaterias[0]?.programaId === undefined) &&
@@ -149,7 +148,7 @@ export async function PUT(
 						console.log(
 							`⚠️ Materia con ID ${subject.id} y curso ${courseId} no tienen programa ni curso asignado.`
 						);
-			
+
 						await db
 							.insert(materias)
 							.values({
@@ -167,7 +166,7 @@ export async function PUT(
 									`Error al insertar la materia con ID ${subject.id}`
 								);
 							});
-			
+
 						console.log(
 							`✨ Materia con ID ${subject.id} asignada al curso ${courseId} con programaId 9999999.`
 						);
@@ -180,14 +179,14 @@ export async function PUT(
 					);
 				}
 			}
-			
+
 			const programId = currentMaterias[0]?.programaId;
 			if (programId !== null && programId !== undefined) {
 				for (const subject of data.subjects) {
 					const existingMateria = currentMaterias.find(
 						(m) => m.id === subject.id
 					);
-			
+
 					if (!existingMateria) {
 						const materiaOriginal = await db
 							.select()
@@ -204,7 +203,7 @@ export async function PUT(
 									`Error al obtener la materia con ID ${subject.id}`
 								);
 							});
-			
+
 						if (materiaOriginal) {
 							await db
 								.insert(materias)
@@ -223,26 +222,25 @@ export async function PUT(
 										`Error al insertar la materia con ID ${subject.id}`
 									);
 								});
-			
+
 							console.log(
 								`✨ Nueva materia creada para el curso ${courseId}:`,
 								subject.id
 							);
-			
-							const conditions = [
-								eq(materias.title, materiaOriginal.title)
-							];
-							
+
+							const conditions = [eq(materias.title, materiaOriginal.title)];
+
 							if (materiaOriginal.programaId) {
-								conditions.push(neq(materias.programaId, materiaOriginal.programaId));
+								conditions.push(
+									neq(materias.programaId, materiaOriginal.programaId)
+								);
 							}
-		
+
 							const materiasIguales = await db
 								.select()
 								.from(materias)
 								.where(and(...conditions));
-				
-			
+
 							for (const materia of materiasIguales) {
 								if (!materia.courseid) {
 									await db
@@ -258,7 +256,7 @@ export async function PUT(
 												`Error al actualizar la materia con ID ${materia.id}`
 											);
 										});
-			
+
 									console.log(
 										`🔄 Materia con ID ${materia.id} actualizada con curso ${courseId}`
 									);
@@ -280,7 +278,7 @@ export async function PUT(
 												`Error al duplicar la materia con ID ${materia.id}`
 											);
 										});
-			
+
 									console.log(
 										`📚 Materia duplicada para programa ${materia.programaId} con nuevo curso ${courseId}`
 									);
@@ -290,7 +288,6 @@ export async function PUT(
 					}
 				}
 			}
-			
 		}
 
 		const refreshedCourse = await getCourseById(courseId);

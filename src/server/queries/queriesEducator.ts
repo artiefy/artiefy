@@ -59,10 +59,6 @@ export async function getUsersEnrolledInCourse(courseId: number) {
 		})
 	);
 
-	console.log(
-		`Usuarios inscritos en el curso ${courseId} y progreso:`,
-		simplifiedUsers,
-		enrolledUsers
-	);
+	
 	return simplifiedUsers;
 }

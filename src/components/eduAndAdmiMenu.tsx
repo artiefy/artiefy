@@ -102,26 +102,37 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			icon: <FiHome size={24} />,
 			title: 'Home',
 			id: 'home',
-			link: '/',
+			link: '/dashboard/admin',
 		},
 		{
 			icon: <FiBook size={24} />,
-			title: 'Courses',
+			title: 'Cursos',
 			id: 'courses',
-			link: '/',
+			link: '/dashboard/admin/cursos',
 		},
 		{
 			icon: <FiFileText size={24} />,
 			title: 'Proyectos',
 			id: 'Proyectos',
-			link: '/',
+			link: '/dashboard/admin/proyectos',
 		},
-		{ icon: <FiUser size={24} />, title: 'Profile', id: 'profile', link: '/' },
+		{
+			icon: <FiUser size={24} />,
+			title: 'Perfil',
+			id: 'profile',
+			link: '/dashboard/admin/perfil',
+		},
 		{
 			icon: <FiSettings size={24} />,
-			title: 'Settings',
+			title: 'Configuraciones',
 			id: 'settings',
-			link: '/',
+			link: '/dashboard/admin/configuraciones',
+		},
+		{
+			icon: <FiMessageSquare size={24} />,
+			title: 'Foro',
+			id: 'foro',
+			link: '/dashboard/admin/foro',
 		},
 	];
 
@@ -143,9 +154,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 	const [activeItem, setActiveItem] = useState('home');
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="bg-background min-h-screen">
 			{/* Navbar */}
-			<nav className="fixed top-0 z-20 w-full border-b border-gray-200 bg-background shadow-xs">
+			<nav className="bg-background fixed top-0 z-20 w-full border-b border-gray-200 shadow-xs">
 				<div className="p-3 lg:px-5 lg:pl-3">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center">
@@ -187,12 +198,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			{/* Sidebar */}
 			<aside
 				className={cn(
-					'fixed top-0 left-0 z-10 h-screen w-64 border-r border-gray-200 bg-background pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
+					'bg-background fixed top-0 left-0 z-10 h-screen w-64 border-r border-gray-200 pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
 					!isOpen && '-translate-x-full'
 				)}
 				aria-label="Sidebar"
 			>
-				<div className="h-full overflow-y-auto bg-background px-3 pb-4">
+				<div className="bg-background h-full overflow-y-auto px-3 pb-4">
 					<ul className="space-y-5 font-medium">
 						{navItems.map((item) => (
 							<li key={item.id} onClick={item.onClick}>
@@ -200,7 +211,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 									href={item.link ?? '#'}
 									onClick={() => setActiveItem(item.id)}
 									className={cn(
-										'group flex w-full items-center rounded-lg p-2 text-white hover:bg-primary',
+										'group hover:bg-primary flex w-full items-center rounded-lg p-2 text-white',
 										activeItem === item.id ? 'bg-primary text-black' : ''
 									)}
 								>
@@ -225,7 +236,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 								<li>
 									<button
 										onClick={() => setIsCoursesOpen(!isCoursesOpen)}
-										className="flex w-full items-center justify-between rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white"
+										className="hover:bg-secondary flex w-full items-center justify-between rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white"
 									>
 										<div className="flex items-center space-x-2">
 											<FiBook size={24} />
@@ -244,7 +255,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 											<li>
 												<Link
 													href="/dashboard/super-admin/cursos"
-													className={`block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white ${pathname === '/dashboard/super-admin/cursos' ? 'bg-primary text-[#01142B]' : ''}`}
+													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/cursos' ? 'bg-primary text-[#01142B]' : ''}`}
 												>
 													Todos los Cursos
 												</Link>
@@ -252,7 +263,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 											<li>
 												<Link
 													href="/dashboard/super-admin/categories"
-													className={`block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white ${pathname === '/dashboard/super-admin/categories' ? 'bg-primary text-[#01142B]' : ''}`}
+													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/categories' ? 'bg-primary text-[#01142B]' : ''}`}
 												>
 													Categorías
 												</Link>
@@ -260,7 +271,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 											<li>
 												<Link
 													href="/dashboard/super-admin/modalities"
-													className={`block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
+													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
 												>
 													Modalidades
 												</Link>
@@ -268,7 +279,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 											<li>
 												<Link
 													href="/dashboard/super-admin/difficulties"
-													className={`block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white ${pathname === '/dashboard/super-admin/difficulties' ? 'bg-primary text-[#01142B]' : ''}`}
+													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/difficulties' ? 'bg-primary text-[#01142B]' : ''}`}
 												>
 													Niveles
 												</Link>
@@ -279,7 +290,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 								<li>
 									<button
 										onClick={() => setIsProgramsOpen(!isProgramsOpen)}
-										className="flex w-full items-center justify-between rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white"
+										className="hover:bg-secondary flex w-full items-center justify-between rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white"
 									>
 										<div className="flex items-center space-x-2">
 											<FiBook size={24} />
@@ -298,7 +309,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 											<li>
 												<Link
 													href="/dashboard/super-admin/programs"
-													className={`block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white ${pathname === '/dashboard/super-admin/programs' ? 'bg-primary text-[#01142B]' : ''}`}
+													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/programs' ? 'bg-primary text-[#01142B]' : ''}`}
 												>
 													Todos los programas
 												</Link>
@@ -306,7 +317,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 											<li>
 												<Link
 													href="/dashboard/super-admin/materias"
-													className={`block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-secondary hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
+													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
 												>
 													Materias
 												</Link>

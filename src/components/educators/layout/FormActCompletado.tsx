@@ -129,20 +129,6 @@ const FormActCompletado: React.FC<formSubida> = ({
 						value={formData.text}
 						onChange={handleChange}
 					/>
-					<label className="mb-1 block text-sm font-medium text-gray-700">
-						Peso de la pregunta (%)
-					</label>
-					<input
-						type="number"
-						name="pesoPregunta"
-						value={formData.pesoPregunta}
-						onChange={handleChange}
-						min={0}
-						max={100}
-						step={1}
-						required
-						className="mb-4 w-full rounded-lg border border-slate-400 p-2 outline-none"
-					/>
 
 					<label>Parametros de evaluacion</label>
 					<textarea

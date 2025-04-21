@@ -1,7 +1,6 @@
-import { clerkClient } from '@clerk/nextjs/server';
 import { eq, count } from 'drizzle-orm';
 
-import { db } from '~/server/db/index';
+import { db } from '~/server/db';
 import {
 	courses,
 	users,
@@ -261,40 +260,29 @@ export const deleteCourse = async (courseId: number): Promise<void> => {
 
 export async function getAllEducators(query?: string) {
 	try {
-		const client = await clerkClient();
-		const usersResponse = await client.users.getUserList({ limit: 100 });
-		const users = usersResponse.data;
+		// Fetch educators from database
+		const educators = await db
+			.select({
+				id: users.id,
+				name: users.name,
+			})
+			.from(users)
+			.where(eq(users.role, 'educador'));
 
-		// Filtrar por query si se proporciona
-		const filteredUsers = query
-			? users.filter(
-					(user) =>
-						(user.firstName ?? '')
-							.toLowerCase()
-							.includes(query.toLowerCase()) ||
-						(user.lastName ?? '').toLowerCase().includes(query.toLowerCase()) ||
-						user.emailAddresses.some((email) =>
-							email.emailAddress.toLowerCase().includes(query.toLowerCase())
-						)
-				)
-			: users;
+		// Filter by query if provided
+		if (query) {
+			return educators.filter((user) =>
+				user.name?.toLowerCase().includes(query.toLowerCase())
+			);
+		}
 
-		// Filtrar por rol "educador"
-		const educatorsOne = filteredUsers.filter(
-			(user) => user.publicMetadata.role === 'educador'
-		);
-
-		// ✅ Solo id y name (como lo hace la versión con Drizzle)
-		const educators = educatorsOne.map((user) => ({
-			id: user.id,
-			name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim(),
-		}));
-
-		console.log('✅ Educadores encontrados desde Clerk:', educators);
 		return educators;
 	} catch (error) {
-		console.error('❌ Error al obtener educadores desde Clerk:', error);
-		throw new Error('Error al obtener educadores desde Clerk');
+		console.error(
+			'❌ Error al obtener educadores desde la base de datos:',
+			error
+		);
+		throw new Error('Error al obtener educadores desde la base de datos');
 	}
 }
 
@@ -303,11 +291,27 @@ export const updateCourseInstructor = async (
 	courseId: number,
 	newInstructor: string
 ) => {
-	return db
-		.update(courses)
-		.set({ instructor: newInstructor })
-		.where(eq(courses.id, courseId))
-		.execute();
+	console.log('📌 Actualizando instructor:', {
+		courseId,
+		newInstructor,
+	});
+
+	try {
+		const result = await db
+			.update(courses)
+			.set({ instructor: newInstructor })
+			.where(eq(courses.id, courseId))
+			.returning({
+				updatedId: courses.id,
+				updatedInstructor: courses.instructor,
+			});
+
+		console.log('✅ Resultado de la actualización:', result);
+		return result[0];
+	} catch (error) {
+		console.error('❌ Error en updateCourseInstructor:', error);
+		throw error;
+	}
 };
 
 export const getCoursesByUserIdSimplified = async (userId: string) => {

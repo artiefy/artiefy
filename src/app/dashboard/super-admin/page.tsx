@@ -2243,17 +2243,40 @@ export default function AdminDashboard() {
 					isOpen={!!editingUser}
 					user={editingUser}
 					onClose={() => setEditingUser(null)}
-					onSave={(updatedUser, updatedPermissions) => {
-						setUsers(
-							users.map((user) =>
-								user.id === updatedUser.id
-									? { ...updatedUser, permissions: updatedPermissions }
-									: user
-							)
-						);
-						setEditingUser(null);
-						showNotification('Usuario actualizado con éxito.', 'success');
+					onSave={async (updatedUser, updatedPermissions) => {
+						try {
+							const res = await fetch('/api/super-admin/udateUser', {
+								method: 'PATCH',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({
+									userId: updatedUser.id,
+									firstName: updatedUser.firstName,
+									lastName: updatedUser.lastName,
+									role: updatedUser.role,
+									status: updatedUser.status,
+									permissions: updatedPermissions,
+								}),
+							});
+					
+							if (!res.ok) throw new Error('Error actualizando usuario');
+					
+							// Actualizar el usuario localmente en el estado
+							setUsers(
+								users.map((user) =>
+									user.id === updatedUser.id
+										? { ...updatedUser, permissions: updatedPermissions }
+										: user
+								)
+							);
+					
+							setEditingUser(null);
+							showNotification('Usuario actualizado con éxito.', 'success');
+						} catch (err) {
+							console.error('❌ Error actualizando usuario:', err);
+							showNotification('Error al actualizar usuario', 'error');
+						}
 					}}
+					
 				/>
 			)}
 

@@ -152,7 +152,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 	// Renderizamos las lecciones si todo es correcto
 	return (
 		<>
-			<h2 className="mt-10 mb-4 text-2xl font-bold">Lista de:</h2>
+			<h2 className="mt-10 mb-4 text-2xl font-bold">Lista de clases:</h2>
 			<div className="flex w-full flex-col">
 				<div className="grid grid-cols-1 gap-4 px-3 sm:grid-cols-2 lg:grid-cols-2 lg:px-1">
 					{lessons.map((lesson) => (

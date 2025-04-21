@@ -376,6 +376,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		const controller = new AbortController();
 		setUploadController(controller);
 		// Validar los campos del formulario
+		console.log('✅ Instructor enviado:', instructor); // debería mostrar el ID
+
 		const newErrors = {
 			title: !editingCourseId && !title,
 			description: !editingCourseId && !description,
@@ -676,12 +678,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							: 'Llena los detalles para crear un nuevo curso'}
 					</DialogDescription>
 				</DialogHeader>
-				<div className="rounded-lg bg-background px-2 py-3 text-black shadow-md md:px-6 md:py-4">
+				<div className="bg-background rounded-lg px-2 py-3 text-black shadow-md md:px-6 md:py-4">
 					<div className="space-y-3 md:space-y-4">
 						<div>
 							<label
 								htmlFor="title"
-								className="text-sm font-medium text-primary md:text-lg"
+								className="text-primary text-sm font-medium md:text-lg"
 							>
 								Título
 							</label>
@@ -701,7 +703,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div>
 							<label
 								htmlFor="description"
-								className="text-sm font-medium text-primary md:text-lg"
+								className="text-primary text-sm font-medium md:text-lg"
 							>
 								Descripción
 							</label>
@@ -722,11 +724,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						</div>
 						<div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
 							<div className="w-full">
-								<label className="text-sm font-medium text-primary md:text-lg">
+								<label className="text-primary text-sm font-medium md:text-lg">
 									Nivel
 								</label>
 								<select
-									className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+									className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
 									value={nivelid}
 									onChange={(e) => setNivelid(Number(e.target.value))}
 								>
@@ -743,11 +745,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								)}
 							</div>
 							<div className="w-full">
-								<label className="text-sm font-medium text-primary md:text-lg">
+								<label className="text-primary text-sm font-medium md:text-lg">
 									Modalidad
 								</label>
 								<select
-									className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+									className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
 									value={modalidadesid}
 									onChange={(e) => setModalidadesid(Number(e.target.value))}
 								>
@@ -764,11 +766,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								)}
 							</div>
 							<div className="w-full">
-								<label className="text-sm font-medium text-primary md:text-lg">
+								<label className="text-primary text-sm font-medium md:text-lg">
 									Categoría
 								</label>
 								<select
-									className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+									className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
 									value={categoryid}
 									onChange={(e) => setCategoryid(Number(e.target.value))}
 								>
@@ -787,7 +789,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							{editingCourseId && (
 								<>
 									<div className="w-full">
-										<label className="text-sm font-medium text-primary md:text-lg">
+										<label className="text-primary text-sm font-medium md:text-lg">
 											Tipo de Curso
 										</label>
 										<CourseTypeDropdown
@@ -796,7 +798,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										/>
 									</div>
 									<div className="w-full">
-										<label className="text-sm font-medium text-primary md:text-lg">
+										<label className="text-primary text-sm font-medium md:text-lg">
 											Estado del Curso
 										</label>
 										<ActiveDropdown
@@ -810,7 +812,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div>
 							<label
 								htmlFor="rating"
-								className="text-sm font-medium text-primary md:text-lg"
+								className="text-primary text-sm font-medium md:text-lg"
 							>
 								Rating
 							</label>
@@ -820,7 +822,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								max="5"
 								step="0.1"
 								placeholder="0-5"
-								className="mt-1 w-full rounded border border-primary p-2 text-sm text-white outline-none focus:no-underline md:text-base"
+								className="border-primary mt-1 w-full rounded border p-2 text-sm text-white outline-none focus:no-underline md:text-base"
 								value={isNaN(rating) ? '' : rating}
 								onChange={(e) => setRating(Number(e.target.value))}
 							/>
@@ -828,26 +830,27 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div className="mb-4">
 							<label
 								htmlFor="instructor"
-								className="text-sm font-medium text-primary md:text-lg"
+								className="text-primary text-sm font-medium md:text-lg"
 							>
 								Instructor
 							</label>
 							<select
 								id="instructor"
-								value={instructor}
-								onChange={(e) => setInstructor(e.target.value)}
-								className="w-full rounded border border-primary bg-background p-2 text-sm text-white outline-none md:text-base"
+								value={educators.find((e) => e.id === instructor)?.id ?? ''} // importante!
+								onChange={(e) => setInstructor(e.target.value)} // guarda solo el ID
+								className="border-primary bg-background w-full rounded border p-2 text-sm text-white outline-none md:text-base"
 							>
 								<option value="">Seleccionar instructor</option>
-								{educators?.map((educator) => (
+								{educators.map((educator) => (
 									<option key={educator.id} value={educator.id}>
 										{educator.name}
 									</option>
 								))}
 							</select>
 						</div>
+
 						<div className="w-full px-2 md:px-0">
-							<label className="text-sm font-medium text-primary md:text-lg">
+							<label className="text-primary text-sm font-medium md:text-lg">
 								Imagen de portada
 							</label>
 							<div
@@ -967,7 +970,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
 									>
 										<span
-											className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
+											className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
 										/>
 									</span>
 								</label>
@@ -978,13 +981,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						</div>
 						{addParametros && (
 							<div className="space-y-3 md:space-y-4">
-								<label className="text-sm font-medium text-primary md:text-lg">
+								<label className="text-primary text-sm font-medium md:text-lg">
 									Parámetros de evaluación
 								</label>
 								<Button
 									onClick={handleAddParametro}
 									disabled={parametros.length >= 10}
-									className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
+									className="bg-primary mt-2 w-10/12 text-white lg:w-1/2"
 								>
 									{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
 									parametro
@@ -993,7 +996,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								{parametros.map((parametro, index) => (
 									<div key={index} className="mt-4 rounded-lg border p-4">
 										<div className="flex items-center justify-between">
-											<h3 className="text-sm font-medium text-primary md:text-lg">
+											<h3 className="text-primary text-sm font-medium md:text-lg">
 												Parámetro {index + 1}
 											</h3>
 											<Button
@@ -1003,7 +1006,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 												Eliminar
 											</Button>
 										</div>
-										<label className="mt-2 text-sm font-medium text-primary md:text-lg">
+										<label className="text-primary mt-2 text-sm font-medium md:text-lg">
 											Nombre
 										</label>
 										<input
@@ -1014,7 +1017,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 											}
 											className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
 										/>
-										<label className="mt-2 text-sm font-medium text-primary md:text-lg">
+										<label className="text-primary mt-2 text-sm font-medium md:text-lg">
 											Descripción
 										</label>
 										<textarea
@@ -1028,7 +1031,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 											}
 											className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
 										/>
-										<label className="mt-2 text-sm font-medium text-primary md:text-lg">
+										<label className="text-primary mt-2 text-sm font-medium md:text-lg">
 											Porcentaje %
 										</label>
 										<input
@@ -1051,28 +1054,32 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							<div className="my-4 flex flex-col">
 								<label
 									htmlFor="subjects"
-									className="text-sm font-medium text-primary md:text-lg"
+									className="text-primary text-sm font-medium md:text-lg"
 								>
-									Asignar Materias
+									Asignar Mateias
 								</label>
 								<Select
 									isMulti
 									value={Array.from(
 										new Map(
-										  allSubjects
-											.filter((subject) => subjects.some((s) => s.id === subject.id))
-											.map((subject) => [subject.title, subject])
+											allSubjects
+												.filter((subject) =>
+													subjects.some((s) => s.id === subject.id)
+												)
+												.map((subject) => [subject.title, subject])
 										).values()
-									  ).map((subject) => ({
+									).map((subject) => ({
 										value: subject.id.toString(),
 										label: subject.title,
-									  }))}									  
-									  options={Array.from(
-										new Map(allSubjects.map((subject) => [subject.title, subject])).values()
-									  ).map((subject) => ({
+									}))}
+									options={Array.from(
+										new Map(
+											allSubjects.map((subject) => [subject.title, subject])
+										).values()
+									).map((subject) => ({
 										value: subject.id.toString(),
 										label: subject.title,
-									  }))}
+									}))}
 									onChange={(
 										newValue: MultiValue<{ value: string; label: string }>
 									) => {

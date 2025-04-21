@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { getMateriasByCourseId } from '~/models/educatorsModels/courseModelsEducator';
+import { getMateriasByCourseId } from '~/server/actions/educadores/getMateriasByCourseId';
 
 export async function GET(
 	_request: Request,
@@ -17,7 +17,7 @@ export async function GET(
 		}
 
 		// Obtener las materias asociadas al curso
-		const materias = await getMateriasByCourseId(courseId);
+		const materias = await getMateriasByCourseId(courseId.toString());
 
 		if (!materias || materias.length === 0) {
 			// Return a 404 response if no materias are found
