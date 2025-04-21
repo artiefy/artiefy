@@ -2,13 +2,13 @@ import '~/styles/globals.css';
 
 import { Merriweather, Montserrat } from 'next/font/google';
 
+import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
 import { Toaster } from '~/components/estudiantes/ui/sonner';
-import { esMX } from '@clerk/localizations'
 
 import Providers from './providers';
 
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
 		default: 'Artiefy - Plataforma Educativa Digital',
 	},
 	description:
-		'Artiefy es la plataforma líder en educación digital. Aprende desarrollo web, programación y más con expertos de la industria.',
+		'Aprende desarrollo web, programación y más con expertos de la industria en Artiefy, la plataforma líder en educación digital.',
 	keywords: ['cursos', 'aprendizaje', 'educación', 'profesores', 'estudiantes'],
 	applicationName: 'Artiefy',
 	authors: [{ name: 'Equipo Artiefy', url: 'https://artiefy.com' }],
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
 		url: 'https://artiefy.com',
 		title: 'Artiefy - Aprende y Crea',
 		description: 'Artiefy es la plataforma de aprendizaje más innovadora.',
-		siteName: 'Artiefy',
+		siteName: 'Artiefy - Plataforma de Educación Online',
 		images: [
 			{
 				url: 'https://artiefy.com/opengraph-image',
@@ -85,6 +85,19 @@ export const metadata: Metadata = {
 	},
 	other: {
 		'google-site-verification': 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
+		'google-sitelinks-searchbox': JSON.stringify({
+			'@context': 'https://schema.org',
+			'@type': 'WebSite',
+			url: 'https://artiefy.com/',
+			potentialAction: {
+				'@type': 'SearchAction',
+				target: 'https://artiefy.com/search?q={search_term_string}',
+				'query-input': 'required name=search_term_string',
+			},
+		}),
+	},
+	alternates: {
+		canonical: 'https://artiefy.com',
 	},
 };
 
@@ -99,6 +112,10 @@ export default function RootLayout({
 				lang="es"
 				className={`${montserrat.variable} ${merriweather.variable}`}
 			>
+				<meta
+					name="google-site-verification"
+					content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
+				/>
 				<body className="bg-background text-primary font-sans">
 					<Providers>{children}</Providers>
 					<SpeedInsights />

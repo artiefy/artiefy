@@ -15,7 +15,6 @@ import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonCh
 import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
-import { Icons } from '~/components/estudiantes/ui/icons';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -32,12 +31,6 @@ import {
 	saveScrollPosition,
 	restoreScrollPosition,
 } from '~/utils/scrollPosition';
-
-interface PublicMetadata {
-	planType: string | null;
-	subscriptionStatus: string | null;
-	subscriptionEndDate: string | null;
-}
 
 interface LessonDetailsProps {
 	lesson: LessonWithProgress;
@@ -102,9 +95,6 @@ export default function LessonDetails({
 
 	// Add isInitialized ref to prevent infinite loop
 	const isInitialized = useRef(false);
-
-	// Add check to track if subscription has been verified
-	const [isSubscriptionVerified, setIsSubscriptionVerified] = useState(false);
 
 	// Move course active check to the top
 	useEffect(() => {
@@ -401,75 +391,34 @@ export default function LessonDetails({
 		}
 	};
 
-	// Add new effect to check subscription status with free course handling
+	// Keep subscription check but remove the loading UI
 	useEffect(() => {
-		if (
-			isSubscriptionVerified ||
-			course.courseType?.requiredSubscriptionLevel === 'none'
-		) {
+		if (course.courseType?.requiredSubscriptionLevel === 'none') {
 			return;
 		}
 
-		// Cast metadata with type assertion after validating its shape
 		const metadata = user?.publicMetadata as Record<string, unknown>;
-		if (!metadata) return;
-
-		const publicMetadata: PublicMetadata = {
-			planType:
-				typeof metadata.planType === 'string' ? metadata.planType : null,
-			subscriptionStatus:
-				typeof metadata.subscriptionStatus === 'string'
-					? metadata.subscriptionStatus
-					: null,
-			subscriptionEndDate:
-				typeof metadata.subscriptionEndDate === 'string'
-					? metadata.subscriptionEndDate
-					: null,
-		};
-
-		const status = publicMetadata.subscriptionStatus?.toLowerCase();
-		const endDate = publicMetadata.subscriptionEndDate
-			? new Date(publicMetadata.subscriptionEndDate)
-			: null;
-
-		const isActive = status === 'active';
-		const isValid = endDate ? endDate > new Date() : false;
-		const hasValidSubscription = isActive && isValid;
-
-		if (!hasValidSubscription) {
-			toast.error(
-				'Debes tener una suscripción activa para poder ver las clases.',
-				{
-					id: 'subscription-required',
-					duration: 5000,
-				}
-			);
+		if (!metadata) {
 			void router.push('/planes');
 			return;
 		}
 
-		setIsSubscriptionVerified(true);
+		const status = metadata.subscriptionStatus as string;
+		const endDate = metadata.subscriptionEndDate as string;
+
+		const isActive = status?.toLowerCase() === 'active';
+		const isValid = endDate ? new Date(endDate) > new Date() : false;
+		const hasValidSubscription = isActive && isValid;
+
+		if (!hasValidSubscription) {
+			toast.error('Se requiere una suscripción activa para ver las clases');
+			void router.push('/planes');
+		}
 	}, [
 		user?.publicMetadata,
 		course.courseType?.requiredSubscriptionLevel,
 		router,
-		isSubscriptionVerified,
 	]);
-
-	// Add loading state while verifying subscription
-	if (
-		course.courseType?.requiredSubscriptionLevel !== 'none' &&
-		(!user?.publicMetadata || !isSubscriptionVerified)
-	) {
-		return (
-			<div className="flex h-screen items-center justify-center">
-				<div className="flex flex-col items-center gap-4">
-					<Icons.spinner className="h-8 w-8 animate-spin text-blue-500" />
-					<p className="text-gray-600">Verificando suscripción...</p>
-				</div>
-			</div>
-		);
-	}
 
 	// Add safety check for lesson
 	if (!lesson) {

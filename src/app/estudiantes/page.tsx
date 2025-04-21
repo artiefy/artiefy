@@ -18,10 +18,10 @@ import type { Metadata } from 'next';
 import type { Category, Course, Program } from '~/types';
 
 export const metadata: Metadata = {
-	title: 'Panel de Estudiantes - Artiefy',
+	title: 'Artiefy - Estudiantes',
 	description: 'Accede a tus cursos y contenido educativo en Artiefy',
 	openGraph: {
-		title: 'Panel de Estudiantes - Artiefy',
+		title: 'Artiefy - Estudiantes',
 		description: 'Accede a tus cursos y contenido educativo en Artiefy',
 		url: 'https://artiefy.com/estudiantes',
 	},
