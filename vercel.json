@@ -1,95 +1,92 @@
 {
-	"$schema": "https://openapi.vercel.sh/vercel.json",
-	"framework": "nextjs",
-	"ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
-	"installCommand": "npm install",
-	"public": true,
-	"trailingSlash": false,
-
-	"functions": {
-		"app/api/iahome/**/*.ts": {
-			"memory": 3009,
-			"maxDuration": 60
-		},
-		"app/api/grades/summary/**/*.ts": {
-			"memory": 2048,
-			"maxDuration": 30
-		},
-		"app/api/super-admin/programs/**/*.ts": {
-			"memory": 2048,
-			"maxDuration": 30
-		},
-		"app/api/usersMasive/**/*.ts": {
-			"memory": 2048,
-			"maxDuration": 60
-		},
-		"app/api/activities/saveAnswers/**/*.ts": {
-			"memory": 2048,
-			"maxDuration": 30
-		},
-		"app/api/**/*.ts": {
-			"memory": 3009,
-			"maxDuration": 60
-		}
-	},
-
-	"crons": [
-		{
-			"path": "/api/cron/check-subscriptions",
-			"schedule": "0 0 * * *"
-		}
-	],
-
-	"headers": [
-		{
-			"source": "/api/(.*)",
-			"headers": [
-				{
-					"key": "Cache-Control",
-					"value": "no-store"
-				}
-			]
-		},
-		{
-			"source": "/app/(.*)",
-			"headers": [
-				{
-					"key": "Cache-Control",
-					"value": "public, max-age=3600, must-revalidate"
-				}
-			]
-		},
-		{
-			"source": "/(.*)",
-			"headers": [
-				{
-					"key": "X-Content-Type-Options",
-					"value": "nosniff"
-				},
-				{
-					"key": "X-Frame-Options",
-					"value": "DENY"
-				},
-				{
-					"key": "X-XSS-Protection",
-					"value": "1; mode=block"
-				}
-			]
-		},
-		{
-			"source": "/:path*",
-			"has": [
-				{
-					"type": "query",
-					"key": "authorized"
-				}
-			],
-			"headers": [
-				{
-					"key": "x-authorized",
-					"value": "true"
-				}
-			]
-		}
-	]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
+  "installCommand": "npm install",
+  "public": true,
+  "trailingSlash": false,
+  "functions": {
+    "app/api/iahome/**/*.ts": {
+      "memory": 3009,
+      "maxDuration": 60
+    },
+    "app/api/grades/summary/**/*.ts": {
+      "memory": 2048,
+      "maxDuration": 30
+    },
+    "app/api/super-admin/programs/**/*.ts": {
+      "memory": 2048,
+      "maxDuration": 30
+    },
+    "app/api/usersMasive/**/*.ts": {
+      "memory": 2048,
+      "maxDuration": 60
+    },
+    "app/api/activities/saveAnswers/**/*.ts": {
+      "memory": 2048,
+      "maxDuration": 30
+    },
+    "app/api/**/*.ts": {
+      "memory": 3009,
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/check-subscriptions",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/app/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "query",
+          "key": "authorized"
+        }
+      ],
+      "headers": [
+        {
+          "key": "x-authorized",
+          "value": "true"
+        }
+      ]
+    }
+  ]
 }
