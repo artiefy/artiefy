@@ -9,11 +9,9 @@ echo -e "\e[36mHaciendo backup de package-lock.json...\e[0m"
 cp package-lock.json package-lock.backup.json 2>/dev/null
 
 echo -e "\e[36m1. Limpiando directorios de Next.js y cache...\e[0m"
-rm -rf .next                    # Cache de Next.js
-rm -rf node_modules            # Módulos de Node
-rm -rf .turbo                  # Cache de Turbo
-rm -rf .swc                    # Cache de SWC compiler
-rm -rf .vercel                 # Cache de Vercel (si usas Vercel)
+rm -rf .next        # Cache de Next.js
+rm -rf node_modules # Módulos de Node
+rm -rf .turbo       # Cache de Turbo
 
 echo -e "\e[36m2. Limpiando archivos temporales...\e[0m"
 rm -f package-lock.json
@@ -29,15 +27,15 @@ npm cache verify
 echo -e "\e[36m4. Reinstalación limpia de dependencias...\e[0m"
 # Usar npm ci para instalación consistente
 if [ -f package-lock.json ]; then
-    npm ci
+  npm ci
 else
-    # Si no existe package-lock.json, restaurar desde backup
-    if [ -f package-lock.backup.json ]; then
-        cp package-lock.backup.json package-lock.json
-        npm ci
-    else
-        npm install
-    fi
+  # Si no existe package-lock.json, restaurar desde backup
+  if [ -f package-lock.backup.json ]; then
+    cp package-lock.backup.json package-lock.json
+    npm ci
+  else
+    npm install
+  fi
 fi
 
 echo -e "\e[36m5. Limpiando y optimizando Next.js...\e[0m"
