@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
+    "build": "next build --turbopack",
     "check": "next lint && tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -158,14 +158,6 @@
   "engines": {
     "node": "22.x"
   },
-  "os": [
-    "win32",
-    "linux",
-    "darwin"
-  ],
-  "cpu": [
-    "x64"
-  ],
   "ct3aMetadata": {
     "initVersion": "7.38.1"
   },

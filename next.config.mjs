@@ -1,72 +1,55 @@
-import './src/env.js'; // Importa variables de entorno
-import withPlaiceholder from '@plaiceholder/next'; // Importa la configuración de @plaiceholder/next
-import { withNextVideo } from 'next-video/process'; // Importa la configuración de next-video
+import './src/env.js';
+import withPlaiceholder from '@plaiceholder/next';
+import { withNextVideo } from 'next-video/process';
+
+// @ts-check
 
 /**
  * @type {import('next').NextConfig}
  */
-
 const nextConfig = {
-	reactStrictMode: true, // Habilita el modo estricto de React para detectar problemas potenciales en la aplicación
+	reactStrictMode: true,
 	images: {
-		dangerouslyAllowSVG: true, // Permite el uso de imágenes SVG
-		contentDispositionType: 'attachment', // Configura el tipo de disposición del contenido para imágenes
-		contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Configura la política de seguridad de contenido para imágenes
-		deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840], // Define los tamaños de dispositivo para imágenes responsivas
-		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Define los tamaños de imagen para imágenes responsivas
-		minimumCacheTTL: 60, // Define el tiempo mínimo de vida en caché para imágenes en segundos
+		dangerouslyAllowSVG: true,
+		contentDispositionType: 'attachment',
+		contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+		deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+		minimumCacheTTL: 60,
 		remotePatterns: [
-			{
-				protocol: 'https',
-				hostname: 's3.us-east-2.amazonaws.com',
-				port: '',
-				pathname: '/artiefy-upload/**',
-			},
-			{
-				protocol: 'https',
-				hostname: 'placehold.co',
-				port: '',
-				pathname: '/**',
-			},
-			{
-				protocol: 'https',
-				hostname: 'img.clerk.com',
-				port: '',
-				pathname: '/**',
-			},
-			{
-				protocol: 'https',
-				hostname: 'assets.example.com',
-				port: '',
-				pathname: '/**',
-			},
-		], // Define patrones remotos para permitir la carga de imágenes desde dominios específicos
+			new URL('https://s3.us-east-2.amazonaws.com/artiefy-upload/**'),
+			new URL('https://placehold.co/**'),
+			new URL('https://img.clerk.com/**'),
+			new URL('https://assets.example.com/**'),
+		],
 	},
-	experimental: {
-		turbo: {
-			resolveAlias: {
-				underscore: 'lodash', // Alias para reemplazar 'underscore' con 'lodash'
-				mocha: { browser: 'mocha/browser-entry.js' }, // Alias para reemplazar 'mocha' con la entrada del navegador de 'mocha'
+	turbopack: {
+		resolveAlias: {
+			underscore: 'lodash',
+			mocha: { browser: 'mocha/browser-entry.js' },
+		},
+		resolveExtensions: [
+			'.mdx',
+			'.tsx',
+			'.ts',
+			'.jsx',
+			'.js',
+			'.mjs',
+			'.json',
+			'.mp4',
+		],
+		rules: {
+			'*.svg': {
+				loaders: ['@svgr/webpack'],
+				as: '*.js',
 			},
-			resolveExtensions: [
-				'.mdx',
-				'.tsx',
-				'.ts',
-				'.jsx',
-				'.js',
-				'.mjs',
-				'.json',
-				'.mp4',
-			], // Define las extensiones de archivo que se resolverán automáticamente
-			rules: {
-				'**/*.mp4': {
-					loaders: ['next-video/webpack/video-loader'],
-					type: 'asset',
-				},
+			'**/*.mp4': {
+				loaders: ['next-video/webpack/video-loader'],
+				type: 'asset',
 			},
 		},
 	},
-	expireTime: 3600, // Define un tiempo de expiración personalizado para el encabezado Cache-Control (1 hora)
+	expireTime: 3600,
 };
 
 export default withNextVideo(withPlaiceholder(nextConfig));
