@@ -3,11 +3,12 @@ import '~/styles/globals.css';
 import { Merriweather, Montserrat } from 'next/font/google';
 
 import { esMX } from '@clerk/localizations';
-import { ClerkProvider } from '@clerk/nextjs';
+import { ClerkLoading, ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 
 import Providers from './providers';
@@ -121,6 +122,11 @@ export default function RootLayout({
 					content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
 				/>
 				<body className="bg-background text-primary font-sans">
+					<ClerkLoading>
+						<div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm">
+							<Icons.spinner className="h-8 w-8 animate-spin" />
+						</div>
+					</ClerkLoading>
 					<Providers>{children}</Providers>
 					<SpeedInsights />
 					<Analytics />
