@@ -1,6 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
+  "buildCommand": "next build --turbopack",
+  "devCommand": "next dev --turbopack",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
   "installCommand": "npm install",
   "public": true,
