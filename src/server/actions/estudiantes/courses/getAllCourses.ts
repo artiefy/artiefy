@@ -83,7 +83,7 @@ const transformCourseData = (coursesData: CourseQueryResult[]): Course[] => {
 		coverImageKey: course.coverImageKey ?? '',
 		categoryid: course.categoryid,
 		instructor: course.instructor ?? '',
-		instructorName: course.instructorName ?? 'Instructor no encontrado',
+		instructorName: course.instructorName ?? 'no encontrado',
 		createdAt: course.createdAt,
 		updatedAt: course.updatedAt,
 		creatorId: course.creatorId,

@@ -312,7 +312,7 @@ export default function StudentDetails({
 												{truncateDescription(course.description ?? '', 150)}
 											</p>
 											<p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">
-												Educador: {course.instructor}
+												Educador: {course.instructorName}
 											</p>
 											<p className="mb-1 hidden text-sm font-bold text-red-500 sm:block sm:text-base md:text-lg">
 												{course.modalidad?.name ?? 'Modalidad no especificada'}
@@ -377,20 +377,20 @@ export default function StudentDetails({
 																{course.title}
 															</h3>
 														</Link>
-														<div className="flex flex-wrap items-start justify-between gap-y-1 sm:mt-2 sm:mb-2">
+														<div className="-mb-1 mt-1 sm:mb-3 flex items-center justify-between gap-x-2 sm:mt-2">
 															<Badge
 																variant="outline"
-																className="border-primary bg-background text-primary max-w-[40%] truncate text-[8px] sm:text-sm"
+																className="border-primary bg-background text-primary line-clamp-1 max-w-[60%] text-[8px] sm:text-sm"
 															>
 																{course.category?.name}
 															</Badge>
-															<span className="max-w-[55%] text-right text-[8px] font-bold text-red-500 sm:text-base">
+															<span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
 																{course.modalidad?.name}
 															</span>
 														</div>
-														<div className="flex items-center justify-between">
+														<div className="mt-2 flex items-center justify-between">
 															<p className="text-primary text-xs font-semibold italic sm:text-base">
-																Educador: <span>{course.instructor}</span>
+																Educador: <span>{course.instructorName}</span>
 															</p>
 															<div className="flex items-center">
 																<StarIcon className="size-4 text-yellow-500 sm:size-5" />

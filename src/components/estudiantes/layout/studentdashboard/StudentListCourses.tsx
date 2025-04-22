@@ -197,8 +197,8 @@ export default async function StudentListCourses({
 										<p className="line-clamp-2 text-sm text-gray-300">
 											{course.description}
 										</p>
-										<div className="-mb-4 flex items-center justify-between">
-											<p className="text-sm font-bold text-red-500">
+										<div className="-mb-4 flex items-start justify-between">
+											<p className="max-w-[60%] text-sm font-bold break-words text-red-500">
 												{course.modalidad?.name}
 											</p>
 											{getCourseTypeLabel()}
