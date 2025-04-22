@@ -375,6 +375,8 @@ export default function AdminDashboard() {
 			(roleFilter ? user.role === roleFilter : true) &&
 			(statusFilter ? user.status === statusFilter : true)
 	);
+	const [sendingEmails, setSendingEmails] = useState(false);
+
 
 	const fetchPrograms = useCallback(async () => {
 		try {
@@ -1359,7 +1361,6 @@ export default function AdminDashboard() {
 						<UserPlus className="relative z-10 size-3.5 sm:size-4" />
 						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
-
 					<button
 						onClick={() => handleMassUpdateStatus('activo')}
 						className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
@@ -1373,7 +1374,6 @@ export default function AdminDashboard() {
 						<Check className="relative z-10 size-3.5 sm:size-4" />
 						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
-
 					<button
 						onClick={() => handleMassUpdateStatus('inactivo')}
 						className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
@@ -1387,7 +1387,6 @@ export default function AdminDashboard() {
 						<XCircle className="relative z-10 size-3.5 sm:size-4" />
 						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
-
 					<button
 						onClick={handleMassRemoveRole}
 						className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
@@ -1402,6 +1401,65 @@ export default function AdminDashboard() {
 						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
 
+<button
+    onClick={async () => {
+        try {
+            if (selectedUsers.length === 0) {
+                showNotification('No hay usuarios seleccionados', 'error');
+                return;
+            }
+
+            setSendingEmails(true);
+            showNotification(`Enviando ${selectedUsers.length} correos...`, 'success');
+
+            const response = await fetch('/api/users/emailsUsers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userIds: selectedUsers,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al enviar las credenciales');
+            }
+
+            const result = await response.json();
+            const successCount = result.results.filter(
+                (r: { status: string }) => r.status === 'success'
+            ).length;
+            showNotification(
+                `Credenciales enviadas a ${successCount} usuarios`,
+                'success'
+            );
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error al enviar las credenciales', 'error');
+        } finally {
+            setSendingEmails(false);
+        }
+    }}
+    className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
+        selectedUsers.length === 0
+            ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+            : 'border border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
+    }`}
+    disabled={selectedUsers.length === 0 || sendingEmails}
+>
+    <span className="relative z-10 font-medium">
+        {sendingEmails ? (
+            <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Enviando...
+            </div>
+        ) : (
+            'Reenviar Credenciales'
+        )}
+    </span>
+    {!sendingEmails && <Paperclip className="relative z-10 size-3.5 sm:size-4" />}
+</button>
 					<button
 						onClick={() => setShowAssignModal(true)}
 						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
@@ -1412,7 +1470,6 @@ export default function AdminDashboard() {
 						<UserPlus className="relative z-10 size-3.5 sm:size-4" />
 						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
-
 					<button
 						onClick={() => setShowAnuncioModal(true)}
 						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
@@ -1421,7 +1478,6 @@ export default function AdminDashboard() {
 						<UserPlus className="relative z-10 size-3.5 sm:size-4" />
 						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
-
 					<button
 						onClick={() => setShowEmailModal(true)}
 						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
@@ -1430,7 +1486,6 @@ export default function AdminDashboard() {
 						<Paperclip className="relative z-10 size-3.5 sm:size-4" />
 						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
-
 					<BulkUploadUsers onUsersUploaded={handleMassUserUpload} />
 				</div>
 
@@ -2257,9 +2312,9 @@ export default function AdminDashboard() {
 									permissions: updatedPermissions,
 								}),
 							});
-					
+
 							if (!res.ok) throw new Error('Error actualizando usuario');
-					
+
 							// Actualizar el usuario localmente en el estado
 							setUsers(
 								users.map((user) =>
@@ -2268,7 +2323,7 @@ export default function AdminDashboard() {
 										: user
 								)
 							);
-					
+
 							setEditingUser(null);
 							showNotification('Usuario actualizado con éxito.', 'success');
 						} catch (err) {
@@ -2276,7 +2331,6 @@ export default function AdminDashboard() {
 							showNotification('Error al actualizar usuario', 'error');
 						}
 					}}
-					
 				/>
 			)}
 

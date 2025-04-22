@@ -396,6 +396,17 @@ export const parameterGrades = pgTable(
 	(table) => [unique('uniq_parameter_user').on(table.parameterId, table.userId)]
 );
 
+// Tabla de credenciales de usuario
+export const userCredentials = pgTable('user_credentials', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	password: text('password').notNull(),
+	clerkUserId: text('clerk_user_id').notNull(),
+	email: text('email').notNull(),
+});
+
 // Relaciones de programas
 export const programasRelations = relations(programas, ({ one, many }) => ({
 	creator: one(users, {

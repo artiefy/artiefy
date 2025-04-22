@@ -3,9 +3,10 @@
 import { NextResponse } from 'next/server';
 
 import nodemailer from 'nodemailer';
+import { eq } from 'drizzle-orm';
 
-import { db } from '~/server/db'; // Asegúrate de importar correctamente la conexión de Drizzle
-import { users } from '~/server/db/schema';
+import { db } from '~/server/db';
+import { users, userCredentials } from '~/server/db/schema';
 import {
 	createUser,
 	getAdminUsers,
@@ -118,22 +119,36 @@ export async function POST(request: Request) {
 		// 2. Crear usuario en Clerk
 		const result = await createUser(firstName, lastName, email, role);
 		if (!result) {
-			return NextResponse.json({ error: 'Failed to create user' }, { status: 400 });
+			return NextResponse.json(
+				{ error: 'Failed to create user' },
+				{ status: 400 }
+			);
 		}
 		const { user, generatedPassword } = result;
 
 		// 3. Guardar usuario en la base de datos con Drizzle
-		await db.insert(users).values({
-			id: user.id,
-			role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
-			name: `${firstName} ${lastName}`,
-			email:
-				user.emailAddresses.find(
-					(addr) => addr.id === user.primaryEmailAddressId
-				)?.emailAddress ?? email,
-			createdAt: new Date(),
-			updatedAt: new Date(),
-		});
+		await db
+			.insert(users)
+			.values({
+				id: user.id,
+				role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+				name: `${firstName} ${lastName}`,
+				email:
+					user.emailAddresses.find(
+						(addr) => addr.id === user.primaryEmailAddressId
+					)?.emailAddress ?? email,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+			})
+			.onConflictDoUpdate({
+				target: [users.email, users.role],
+				set: {
+					id: user.id,
+					name: `${firstName} ${lastName}`,
+					updatedAt: new Date(),
+				},
+			});
+
 		console.log('✅ Usuario guardado en la BD correctamente');
 		// 🔹 Enviar correo con credenciales
 
@@ -148,6 +163,34 @@ export async function POST(request: Request) {
 			)?.emailAddress,
 			role: user.publicMetadata?.role ?? 'estudiante',
 		};
+
+		// Guardar credenciales
+		const existingCredentials = await db
+			.select()
+			.from(userCredentials)
+			.where(eq(userCredentials.userId, user.id))
+			.limit(1);
+
+		if (existingCredentials.length > 0) {
+			// Update existing credentials
+			await db
+				.update(userCredentials)
+				.set({
+					password: generatedPassword,
+					clerkUserId: user.id,
+					email: email,
+				})
+				.where(eq(userCredentials.userId, user.id));
+		} else {
+			// Insert new credentials
+			await db.insert(userCredentials).values({
+				userId: user.id,
+				password: generatedPassword,
+				clerkUserId: user.id,
+				email: email,
+			});
+		}
+
 		await sendWelcomeEmail(email, safeUser.username, generatedPassword);
 
 		return NextResponse.json({

@@ -12,6 +12,7 @@ import {
 	materias,
 	users,
 	programas,
+	userCredentials,
 } from '~/server/db/schema';
 
 // Add this cache object at module level
@@ -70,15 +71,18 @@ export async function getAdminUsers(query?: string) {
 		id: user.id,
 		firstName: user.firstName ?? '',
 		lastName: user.lastName ?? '',
-		email: user.emailAddresses.find(
-			(email) => email.id === user.primaryEmailAddressId
-		)?.emailAddress ?? '',
-		role: typeof user.publicMetadata?.role === 'string'
-			? user.publicMetadata.role.trim().toLowerCase()
-			: 'estudiante',
-		status: typeof user.publicMetadata?.status === 'string'
-			? user.publicMetadata.status
-			: 'activo',
+		email:
+			user.emailAddresses.find(
+				(email) => email.id === user.primaryEmailAddressId
+			)?.emailAddress ?? '',
+		role:
+			typeof user.publicMetadata?.role === 'string'
+				? user.publicMetadata.role.trim().toLowerCase()
+				: 'estudiante',
+		status:
+			typeof user.publicMetadata?.status === 'string'
+				? user.publicMetadata.status
+				: 'activo',
 	}));
 
 	const filtered = query
@@ -86,16 +90,12 @@ export async function getAdminUsers(query?: string) {
 				`${user.firstName} ${user.lastName} ${user.email}`
 					.toLowerCase()
 					.includes(query.toLowerCase())
-		  )
+			)
 		: simplifiedUsers;
 
 	console.log(`✅ Total de usuarios encontrados: ${filtered.length}`);
 	return filtered;
-
-	console.log(`✅ Total de usuarios encontrados: ${simplifiedUsers.length}`);
-	return simplifiedUsers;
 }
-
 
 // ✅ Función para actualizar el rol de un usuario
 export async function setRoleWrapper({
@@ -144,14 +144,27 @@ export async function removeRole(id: string) {
 
 export async function deleteUser(id: string) {
 	try {
-		// Delete from Clerk
-		const client = await clerkClient();
-		await client.users.deleteUser(id);
+		// Primero eliminar las credenciales
+		await db.delete(userCredentials).where(eq(userCredentials.userId, id));
+
+		// Delete from Clerk (manejando el caso de usuario no encontrado)
+		try {
+			const client = await clerkClient();
+			await client.users.deleteUser(id);
+		} catch (clerkError: any) {
+			// Si el usuario no existe en Clerk (404), continuamos con la eliminación local
+			if (clerkError.status !== 404) {
+				throw clerkError; // Si es otro error, lo propagamos
+			}
+			console.log(
+				`Usuario ${id} no encontrado en Clerk, continuando con eliminación local`
+			);
+		}
 
 		// Delete from database
 		await db.delete(users).where(eq(users.id, id));
 
-		console.log(`DEBUG: Usuario ${id} eliminado correctamente de Clerk y BD`);
+		console.log(`DEBUG: Usuario ${id} eliminado correctamente de la BD`);
 	} catch (error) {
 		console.error('Error al eliminar usuario:', error);
 		throw new Error('No se pudo eliminar el usuario');
@@ -253,7 +266,9 @@ export async function createUser(
 		} catch (error: unknown) {
 			// Si el error es por email duplicado, retornamos null sin lanzar error
 			if (
-				(error as { errors?: { code: string; meta?: { paramName: string } }[] })?.errors?.some(
+				(
+					error as { errors?: { code: string; meta?: { paramName: string } }[] }
+				)?.errors?.some(
 					(e) =>
 						e.code === 'form_identifier_exists' &&
 						e.meta?.paramName === 'email_address'
@@ -602,7 +617,11 @@ export async function updateUserInClerk({
 			firstName,
 			lastName,
 			publicMetadata: {
-				role: (role || 'estudiante') as 'admin' | 'educador' | 'super-admin' | 'estudiante',
+				role: (role || 'estudiante') as
+					| 'admin'
+					| 'educador'
+					| 'super-admin'
+					| 'estudiante',
 				status: status || 'activo',
 				permissions: Array.isArray(permissions) ? permissions : [],
 			},
@@ -613,7 +632,11 @@ export async function updateUserInClerk({
 			.update(users)
 			.set({
 				name: `${firstName} ${lastName}`,
-				role: (role || 'estudiante') as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+				role: (role || 'estudiante') as
+					| 'estudiante'
+					| 'educador'
+					| 'admin'
+					| 'super-admin',
 				subscriptionStatus: status || 'activo',
 				updatedAt: new Date(),
 			})
@@ -626,7 +649,6 @@ export async function updateUserInClerk({
 		return false;
 	}
 }
-
 
 export async function getMateriasByCourseId(
 	courseId: string
