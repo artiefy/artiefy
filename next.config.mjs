@@ -1,10 +1,6 @@
 import './src/env.js';
 import withPlaiceholder from '@plaiceholder/next';
 import { withNextVideo } from 'next-video/process';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // @ts-check
 
@@ -48,7 +44,6 @@ const nextConfig = {
 		], // Define patrones remotos para permitir la carga de imágenes desde dominios específicos
 	},
 	turbopack: {
-		root: __dirname,
 		resolveAlias: {
 			underscore: 'lodash',
 			mocha: { browser: 'mocha/browser-entry.js' },
