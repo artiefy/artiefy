@@ -123,8 +123,8 @@ export default function RootLayout({
 				/>
 				<body className="bg-background text-primary font-sans">
 					<ClerkLoading>
-						<div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm">
-							<Icons.spinner className="h-8 w-8 animate-spin" />
+						<div className="fixed inset-0 flex items-center justify-center">
+							<Icons.spinner className="h-8 w-8 animate-spin text-primary" />
 						</div>
 					</ClerkLoading>
 					<Providers>{children}</Providers>
