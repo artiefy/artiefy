@@ -76,7 +76,7 @@ export const metadata: Metadata = {
 			noimageindex: true,
 		},
 	},
-	icons: {
+  icons: {
 		icon: '/favicon.ico',
 		apple: '/artiefy-icon.png',
 	},
