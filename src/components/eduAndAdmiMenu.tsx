@@ -114,25 +114,25 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			icon: <FiFileText size={24} />,
 			title: 'Proyectos',
 			id: 'Proyectos',
-			link: '/dashboard/admin/proyectos',
+			link: '/dashboard/admin2/app/proyectos',
 		},
 		{
 			icon: <FiUser size={24} />,
 			title: 'Perfil',
 			id: 'profile',
-			link: '/dashboard/admin/perfil',
+			link: '/dashboard/admin2/app/perfil',
 		},
 		{
 			icon: <FiSettings size={24} />,
 			title: 'Configuraciones',
 			id: 'settings',
-			link: '/dashboard/admin/configuraciones',
+			link: '/dashboard/admin2/app/configuracion',
 		},
 		{
 			icon: <FiMessageSquare size={24} />,
 			title: 'Foro',
 			id: 'foro',
-			link: '/dashboard/admin/foro',
+			link: '/dashboard/admin2/app/foros',
 		},
 	];
 
