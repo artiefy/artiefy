@@ -173,117 +173,91 @@
 	z-index: 100000 !important;
 }
 
+/* Reset existing handle styles */
 .react-resizable-handle {
 	position: absolute;
 	width: 20px;
 	height: 20px;
-	background-repeat: no-repeat;
-	background-position: center;
-	background-color: transparent;
+	background: rgba(0, 165, 192, 0.1);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100001;
 }
 
 .react-resizable-handle::after {
 	content: "⋮⋮";
-	position: absolute;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 100%;
-	height: 100%;
 	color: #00a5c0;
-	font-size: 14px;
+	font-size: 16px;
+	line-height: 1;
 	letter-spacing: -2px;
 }
 
-.react-resizable-handle-n {
-	top: 0;
-	left: 50%;
-	transform: translateX(-50%) rotate(90deg);
-	cursor: n-resize;
-}
-
-.react-resizable-handle-s {
-	bottom: 0;
-	left: 50%;
-	transform: translateX(-50%) rotate(90deg);
-	cursor: s-resize;
-}
-
-.react-resizable-handle-e {
-	right: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	cursor: e-resize;
-}
-
-.react-resizable-handle-w {
-	left: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	cursor: w-resize;
-}
-
-.react-resizable-handle-ne {
-	right: 0;
-	top: 0;
-	cursor: ne-resize;
-}
-
-.react-resizable-handle-nw {
-	left: 0;
-	top: 0;
-	cursor: nw-resize;
-}
-
-.react-resizable-handle-se {
-	right: 0;
-	bottom: 0;
-	cursor: se-resize;
-}
-
-.react-resizable-handle-sw {
-	left: 0;
-	bottom: 0;
-	cursor: sw-resize;
-}
-
-.react-resizable-handle::before {
-	content: "⋮⋮";
-	position: absolute;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 100%;
-	height: 100%;
-	color: #00a5c0;
-	font-size: 12px;
-	letter-spacing: -2px;
-}
-
-/* Remove all arrow transformations and keep only dots */
-.react-resizable-handle-w::before,
-.react-resizable-handle-e::before,
-.react-resizable-handle-n::before,
-.react-resizable-handle-s::before,
-.react-resizable-handle-ne::before,
-.react-resizable-handle-nw::before,
-.react-resizable-handle-se::before,
-.react-resizable-handle-sw::before {
-	transform: none;
-}
-
+/* Handle positions and rotations */
 .react-resizable-handle-n,
 .react-resizable-handle-s {
 	left: 50%;
 	transform: translateX(-50%);
+	width: 40px;
+	height: 20px;
+}
+
+.react-resizable-handle-n::after,
+.react-resizable-handle-s::after {
+	content: "⋮⋮";
+	letter-spacing: -1px;
 }
 
 .react-resizable-handle-e,
 .react-resizable-handle-w {
 	top: 50%;
 	transform: translateY(-50%);
+	width: 20px;
+	height: 40px;
 }
 
+/* Ajustar la rotación específica para cada esquina */
+.react-resizable-handle-se::after,
+.react-resizable-handle-nw::after {
+	content: "⋮⋮";
+	font-size: 18px;
+}
+
+.react-resizable-handle-sw::after,
+.react-resizable-handle-ne::after {
+	content: "⋮⋮";
+	font-size: 18px;
+}
+
+/* Ajustar el tamaño del contenedor para los handles laterales */
+.react-resizable-handle-ne::after,
+.react-resizable-handle-sw::after {
+content: "⋮⋮";
+	transform: rotate(0deg);
+}
+
+/* Ajustar la rotación específica para cada esquina */
+.react-resizable-handle-se::after {
+	content: "⋮⋮";
+	transform: rotate(-45deg);
+}
+
+.react-resizable-handle-sw::after {
+	content: "⋮⋮";
+	transform: rotate(-45deg);
+}
+
+.react-resizable-handle-ne::after {
+	content: "⋮⋮";
+	transform: rotate(-45deg);
+}
+
+.react-resizable-handle-nw::after {
+	content: "⋮⋮";
+	transform: rotate(-45deg);
+}
+
+/* Specific positions */
 .react-resizable-handle-n {
 	top: 0;
 }
@@ -296,32 +270,27 @@
 .react-resizable-handle-w {
 	left: 0;
 }
-
-.react-resizable-handle-ne,
-.react-resizable-handle-nw {
-	top: 0;
-}
-
-.react-resizable-handle-se,
-.react-resizable-handle-sw {
+.react-resizable-handle-se {
+	right: 0;
 	bottom: 0;
 }
-
-.react-resizable-handle-nw {
+.react-resizable-handle-sw {
 	left: 0;
+	bottom: 0;
 }
 .react-resizable-handle-ne {
 	right: 0;
+	top: 0;
 }
-.react-resizable-handle-sw {
+.react-resizable-handle-nw {
 	left: 0;
-}
-.react-resizable-handle-se {
-	right: 0;
+	top: 0;
 }
 
+/* Hover effect */
 .react-resizable-handle:hover {
 	opacity: 1;
+	background-color: rgba(0, 165, 192, 0.2);
 }
 
 @keyframes bounce {
@@ -528,4 +497,46 @@
 	) !important;
 	opacity: 0.7;
 	cursor: not-allowed;
+}
+
+/* Estilos para los handles de arriba y abajo (horizontales) */
+.react-resizable-handle-n::after,
+.react-resizable-handle-s::after {
+	content: "⋮⋮";
+	transform: rotate(90deg);
+	font-size: 18px;
+	letter-spacing: -1px;
+}
+
+/* Estilos para los handles laterales (verticales) */
+.react-resizable-handle-e::after,
+.react-resizable-handle-w::after {
+	content: "⋮⋮";
+	transform: rotate(0deg);
+	font-size: 18px;
+	letter-spacing: -1px;
+}
+
+/* Estilos para las esquinas (diagonales) */
+.react-resizable-handle-se::after,
+.react-resizable-handle-sw::after,
+.react-resizable-handle-ne::after,
+.react-resizable-handle-nw::after {
+	content: "⋮⋮";
+	font-size: 18px;
+	letter-spacing: -2px;
+}
+
+/* Rotaciones específicas para las esquinas */
+.react-resizable-handle-se::after {
+	transform: rotate(-45deg);
+}
+.react-resizable-handle-sw::after {
+	transform: rotate(-45deg);
+}
+.react-resizable-handle-ne::after {
+	transform: rotate(-45deg);
+}
+.react-resizable-handle-nw::after {
+	transform: rotate(-45deg);
 }

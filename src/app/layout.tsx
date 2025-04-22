@@ -1,16 +1,16 @@
 import '~/styles/globals.css';
 
 import { Merriweather, Montserrat } from 'next/font/google';
-import { esMX } from '@clerk/localizations';
 
+import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
 import { Toaster } from '~/components/estudiantes/ui/sonner';
-import Providers from './providers';
 
+import Providers from './providers';
 
 const montserrat = Montserrat({
 	subsets: ['latin'],
@@ -76,9 +76,13 @@ export const metadata: Metadata = {
 			noimageindex: true,
 		},
 	},
-  icons: {
-		icon: '/favicon.ico',
-		apple: '/artiefy-icon.png',
+	icons: {
+		icon: [
+			{ url: '/favicon.ico', sizes: 'any' },
+			{ url: '/icon.png', sizes: '32x32' },
+		],
+		shortcut: '/favicon.ico',
+		apple: [{ url: '/apple-icon.png', sizes: '180x180' }],
 	},
 	verification: {
 		google: 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',

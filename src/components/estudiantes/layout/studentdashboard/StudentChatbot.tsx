@@ -360,7 +360,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							width={24}
 							height={24}
 							className="button__icon"
-              priority
+							priority
 						/>
 						<Image
 							src="/robot-face-svgrepo-com.svg"
@@ -368,7 +368,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							width={24}
 							height={24}
 							className="button__icon button__icon--copy"
-              priority
+							priority
 						/>
 					</div>
 				</button>
@@ -385,7 +385,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						height={500}
 						minConstraints={[300, 400]}
 						maxConstraints={[800, window.innerHeight - 160]}
-						resizeHandles={['se']} // Only keep bottom-right corner for resizing
+						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']} // Enable all resize handles
 						className="chat-resizable"
 						onResize={handleResize}
 					>
@@ -398,7 +398,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									width={300}
 									height={100}
 									className="w-4/5"
-                  priority
+									priority
 								/>
 							</div>
 
@@ -411,7 +411,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										width={40}
 										height={40}
 										className="text-secondary mt-1"
-                    priority
+										priority
 									/>
 
 									<div className="-ml-6 flex flex-1 flex-col items-center">
@@ -463,7 +463,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 													width={32}
 													height={32}
 													className="text-secondary mt-2"
-                          priority
+													priority
 												/>
 											) : user?.imageUrl ? (
 												<Image
@@ -472,7 +472,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 													width={24}
 													height={24}
 													className="mt-2 rounded-full"
-                          priority
+													priority
 												/>
 											) : (
 												<BsPersonCircle className="mt-2 text-xl text-gray-500" />
@@ -540,7 +540,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 												width={24}
 												height={24}
 												className="size-6 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12"
-                        priority
+												priority
 											/>
 										</button>
 									</div>
