@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 	metadataBase: new URL('https://artiefy.com'),
 	title: {
 		template: '%s | Artiefy',
-		default: 'Artiefy - Plataforma Educativa Digital',
+		default: 'Artiefy - Plataforma Educativa Digital Líder',
 	},
 	description:
 		'Aprende desarrollo web, programación y más con expertos de la industria en Artiefy, la plataforma líder en educación digital.',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
 		type: 'website',
 		locale: 'es_ES',
 		url: 'https://artiefy.com',
-		title: 'Artiefy - Aprende y Crea',
+		title: 'Artiefy - Plataforma Educativa Digital Líder',
 		description: 'Artiefy es la plataforma de aprendizaje más innovadora.',
 		siteName: 'Artiefy - Plataforma de Educación Online',
 		images: [

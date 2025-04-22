@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		type: 'website',
 		url: 'https://artiefy.com',
-		title: 'Artiefy - Plataforma Educativa Digital',
+		title: 'Artiefy - Plataforma Educativa Digital Líder',
 		description: 'Aprende y desarrolla tus habilidades tecnológicas...',
 	},
 	alternates: {
@@ -98,7 +98,7 @@ export default function HomePage() {
 					'@context': 'https://schema.org',
 					'@type': 'WebSite',
 					'@id': 'https://artiefy.com/#website',
-					name: 'Artiefy - Plataforma Educativa',
+					name: 'Artiefy - Plataforma Educativa Digital Líder',
 					url: 'https://artiefy.com',
 				})}
 			</Script>

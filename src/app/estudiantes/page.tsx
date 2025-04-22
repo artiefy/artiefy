@@ -18,13 +18,8 @@ import type { Metadata } from 'next';
 import type { Category, Course, Program } from '~/types';
 
 export const metadata: Metadata = {
-	title: 'Artiefy - Estudiantes',
-	description: 'Accede a tus cursos y contenido educativo en Artiefy',
-	openGraph: {
-		title: 'Artiefy - Estudiantes',
-		description: 'Accede a tus cursos y contenido educativo en Artiefy',
-		url: 'https://artiefy.com/estudiantes',
-	},
+	title: 'Artiefy - Plataforma Educativa Digital Líder',
+	description: 'Accede a tus cursos y contenido educativo en Artiefy'
 };
 
 interface SearchParams {
@@ -143,7 +138,7 @@ export default async function Page({ searchParams }: PageProps) {
 					{JSON.stringify({
 						'@context': 'https://schema.org',
 						'@type': 'WebPage',
-						name: 'Panel de Estudiantes - Artiefy',
+						name: 'Artiefy - Plataforma Educativa Digital Líder',
 						description: 'Accede a tus cursos y contenido educativo en Artiefy',
 						url: 'https://artiefy.com/estudiantes',
 						isPartOf: {

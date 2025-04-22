@@ -1,11 +1,11 @@
 import { type Metadata } from 'next';
 
 export const metadata: Metadata = {
-	title: 'Portal de Cursos | Artiefy',
+	title: 'Artiefy - Plataforma Educativa Digital Líder',
 	description:
 		'Accede a tus cursos, clases y recursos educativos en Artiefy. Aprende desarrollo web, programación y más con expertos de la industria.',
 	openGraph: {
-		title: 'Portal de Cursos | Artiefy',
+		title: 'Artiefy - Plataforma Educativa Digital Líder',
 		description:
 			'Accede a tus cursos, clases y recursos educativos en Artiefy. La mejor plataforma de educación digital.',
 		url: 'https://artiefy.com/estudiantes',
