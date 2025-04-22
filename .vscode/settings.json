@@ -31,10 +31,9 @@
     "*.config.ts": "typescript",
     "*.md": "markdown",
     "*.mdx": "mdx",
-    "*.txt": "plaintext",
     "*.lock": "json",
-    "*.sh": "shell",
-    "*.bash": "shell",
+    "*.sh": "shellscript",
+    "*.bash": "shell"
   },
   "files.watcherExclude": {
     "/node_modules/": true,
@@ -60,9 +59,6 @@
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
-  "[shellscript]": {
-    "editor.defaultFormatter": "foxundermoon.shell-format"
-  },
   "[svg]": {
     "editor.defaultFormatter": "jock.svg",
   },
@@ -71,6 +67,9 @@
   },
   "[xml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
   },
   // TypeScript Configuration
   "typescript.tsdk": "node_modules/typescript/lib",
@@ -133,5 +132,5 @@
   "javascript.suggest.completeFunctionCalls": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "svg.preview.background": "editor",
-  "workbench.colorTheme": "GitHub Dark Default"
+  "workbench.colorTheme": "GitHub Dark Default",
 }
