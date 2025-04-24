@@ -95,8 +95,8 @@ export async function POST(request: Request) {
 				})
 				.where(inArray(users.id, newUsers));
 
-			const clerk = await clerkClient();
-			await Promise.all(
+				const clerk = clerkClient;
+				await Promise.all(
 				newUsers.map(async (userId) => {
 					await clerk.users.updateUser(userId, {
 						publicMetadata: {
