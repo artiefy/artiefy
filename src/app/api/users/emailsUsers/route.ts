@@ -46,8 +46,8 @@ export async function POST(request: Request) {
 
 		for (const userId of userIds) {
 			try {
-				const client = await clerkClient();
-				const clerkUser = await client.users.getUser(userId);
+				const clerkUser = await clerkClient.users.getUser(userId);
+
 
 				if (!clerkUser) {
 					results.push({
