@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+
 import { clerkClient } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import { db } from '~/server/db';
 import { userCredentials } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 const transporter = nodemailer.createTransport({
 	service: 'gmail',
@@ -27,14 +28,26 @@ function generateRandomPassword(length = 12) {
 
 export async function POST(request: Request) {
 	try {
-		const { userIds } = await request.json();
-		const results = [];
+		const { userIds }: { userIds: string[] } = await request.json();
+		type Result =
+			| {
+					userId: string;
+					status: 'error';
+					message: string;
+			  }
+			| {
+					userId: string;
+					status: 'success';
+					email: string;
+					message: string;
+			  };
+
+		const results: Result[] = [];
 
 		for (const userId of userIds) {
 			try {
-				// Get user from Clerk with proper initialization
-				const clerk = await clerkClient();
-				const clerkUser = await clerk.users.getUser(userId);
+				const client = await clerkClient();
+				const clerkUser = await client.users.getUser(userId);
 
 				if (!clerkUser) {
 					results.push({
@@ -59,29 +72,26 @@ export async function POST(request: Request) {
 				}
 
 				const username =
-					clerkUser.username ||
-					`${clerkUser.firstName} ${clerkUser.lastName}`.trim();
-				let password;
+					clerkUser.username ??
+					`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
 
-				// Get existing credentials or generate new ones
-				let credentials = await db
+				let password: string;
+
+				const credentials = await db
 					.select()
 					.from(userCredentials)
 					.where(eq(userCredentials.userId, userId));
 
 				if (credentials.length === 0) {
-					// Si no hay credenciales, generamos nueva contraseña y actualizamos Clerk
 					password = generateRandomPassword();
 					try {
-						await clerk.users.updateUser(userId, {
-							password: password,
-						});
+						await clerkClient.users.updateUser(userId, { password });
 
 						await db.insert(userCredentials).values({
-							userId: userId,
-							password: password,
+							userId,
+							password,
 							clerkUserId: userId,
-							email: email,
+							email,
 						});
 					} catch (error) {
 						console.error(`Error creating credentials for ${userId}:`, error);
@@ -93,28 +103,15 @@ export async function POST(request: Request) {
 						continue;
 					}
 				} else {
-					// Si ya existen credenciales, usamos la contraseña almacenada
 					password = credentials[0].password;
 				}
 
 				try {
-					const mailOptions = {
+					const mailOptions: nodemailer.SendMailOptions = {
 						from: '"Artiefy" <direcciongeneral@artiefy.com>',
 						to: email,
 						subject: '🎨 Credenciales de Acceso - Artiefy',
-						html: `
-              <h2>¡Hola ${username}!</h2>
-              <p>Aquí están tus credenciales de acceso para Artiefy:</p>
-              <ul>
-                <li><strong>Usuario:</strong> ${username}</li>
-                <li><strong>Email:</strong> ${email}</li>
-                <li><strong>Contraseña:</strong> ${password}</li>
-              </ul>
-              <p>Por favor, inicia sesión en <a href="https://artiefy.com/" target="_blank">Artiefy</a></p>
-              <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-              <hr>
-              <p>Equipo de Artiefy 🎨</p>
-            `,
+						html: `...`,
 					};
 
 					await transporter.sendMail(mailOptions);

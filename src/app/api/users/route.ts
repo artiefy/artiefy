@@ -2,8 +2,8 @@
 
 import { NextResponse } from 'next/server';
 
-import nodemailer from 'nodemailer';
 import { eq } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
 import { db } from '~/server/db';
 import { users, userCredentials } from '~/server/db/schema';

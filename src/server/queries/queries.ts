@@ -151,15 +151,19 @@ export async function deleteUser(id: string) {
 		try {
 			const client = await clerkClient();
 			await client.users.deleteUser(id);
-		} catch (clerkError: any) {
-			// Si el usuario no existe en Clerk (404), continuamos con la eliminación local
-			if (clerkError.status !== 404) {
-				throw clerkError; // Si es otro error, lo propagamos
+		} catch (clerkError: unknown) {
+			if (
+			  typeof clerkError === 'object' &&
+			  clerkError !== null &&
+			  'status' in clerkError &&
+			  typeof (clerkError as { status: unknown }).status === 'number' &&
+			  (clerkError as { status: number }).status !== 404
+			) {
+			  throw clerkError;
 			}
-			console.log(
-				`Usuario ${id} no encontrado en Clerk, continuando con eliminación local`
-			);
-		}
+			console.log(`Usuario ${id} no encontrado en Clerk, continuando con eliminación local`);
+		  }
+		  
 
 		// Delete from database
 		await db.delete(users).where(eq(users.id, id));

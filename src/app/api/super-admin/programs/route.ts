@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { eq, inArray, and, isNotNull, ne } from 'drizzle-orm';
 import { z } from 'zod';
@@ -7,10 +8,8 @@ import {
 	createProgram,
 	updateProgram,
 } from '~/models/super-adminModels/programModelsSuperAdmin';
-
 import { db } from '~/server/db';
 import { materias, users } from '~/server/db/schema';
-
 
 export async function POST(req: NextRequest) {
 	try {

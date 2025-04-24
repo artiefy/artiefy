@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
+import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
 	CheckCircleIcon,
 	ChevronRightIcon,
@@ -10,7 +11,6 @@ import {
 	StarIcon as StarSolidIcon,
 	XCircleIcon,
 } from '@heroicons/react/24/solid';
-import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
 import { BsFiletypeXls } from 'react-icons/bs';
@@ -33,8 +33,8 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
-import { formatScoreNumber } from '~/utils/formatScore';
 import { type Activity, type Question, type SavedAnswer } from '~/types';
+import { formatScoreNumber } from '~/utils/formatScore';
 
 import '~/styles/arrowactivity.css';
 import { FileUploadForm } from './FileUploadForm';

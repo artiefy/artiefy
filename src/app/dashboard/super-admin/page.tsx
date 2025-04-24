@@ -98,6 +98,16 @@ interface CoursesData {
 	courses: Course[];
 }
 
+interface EmailResult {
+	userId: string;
+	status: string;
+	message?: string;
+}
+
+interface EmailResponse {
+	results: EmailResult[];
+}
+
 export default function AdminDashboard() {
 	const [users, setUsers] = useState<User[]>([]);
 	// 🔍 Estados de búsqueda y filtros
@@ -1426,10 +1436,12 @@ export default function AdminDashboard() {
                 throw new Error('Error al enviar las credenciales');
             }
 
-            const result = await response.json();
-            const successCount = result.results.filter(
-                (r: { status: string }) => r.status === 'success'
-            ).length;
+			const result: EmailResponse = await response.json();
+
+			const successCount = result.results.filter(
+				(r) => r.status === 'success'
+			).length;
+
             showNotification(
                 `Credenciales enviadas a ${successCount} usuarios`,
                 'success'
