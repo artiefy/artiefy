@@ -71,10 +71,6 @@ export async function POST(request: Request) {
 					continue;
 				}
 
-				const username =
-					clerkUser.username ??
-					`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
-
 				let password: string;
 
 				const credentials = await db
