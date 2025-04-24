@@ -95,10 +95,9 @@ export async function POST(request: Request) {
 				})
 				.where(inArray(users.id, newUsers));
 
-				const clerk = clerkClient;
-				await Promise.all(
+			await Promise.all(
 				newUsers.map(async (userId) => {
-					await clerk.users.updateUser(userId, {
+					await clerkClient.users.updateUser(userId, {
 						publicMetadata: {
 							subscriptionStatus: 'active',
 							subscriptionEndDate: formattedDate,
