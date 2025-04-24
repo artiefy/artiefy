@@ -46,7 +46,8 @@ export async function POST(request: Request) {
 
 		for (const userId of userIds) {
 			try {
-				const clerkUser = await clerkClient.users.getUser(userId);
+				const clerk = await clerkClient();
+				const clerkUser = await clerk.users.getUser(userId);
 
 
 				if (!clerkUser) {
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
 				if (credentials.length === 0) {
 					password = generateRandomPassword();
 					try {
-						await clerkClient.users.updateUser(userId, { password });
+						await clerk.users.updateUser(userId, { password });
 
 						await db.insert(userCredentials).values({
 							userId,
