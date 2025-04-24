@@ -134,6 +134,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			id: 'foro',
 			link: '/dashboard/admin2/app/foros',
 		},
+		{
+			icon: <FiMessageSquare size={24} />,
+			title: 'Tickets',
+			id: 'tickets',
+			link: '/dashboard/admin/tickets',
+		},
 	];
 
 	// Determina el rol del usuario y selecciona los elementos de navegación correspondientes

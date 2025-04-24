@@ -3,7 +3,7 @@ import {
 	boolean,
 	integer,
 	pgTable,
-	real, 
+	real,
 	serial,
 	text,
 	timestamp,
@@ -297,16 +297,37 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 //Tabla de sistema de tickets
 export const tickets = pgTable('tickets', {
 	id: serial('id').primaryKey(),
-	userId: text('user_id')
+	creatorId: text('creator_id')
 		.references(() => users.id)
 		.notNull(),
+	assignedToId: text('assigned_to_id').references(() => users.id),
 	comments: varchar('comments', { length: 255 }).notNull(),
 	description: text('description').notNull(),
-	estado: boolean('estado').default(false).notNull(),
+	estado: text('estado', {
+		enum: ['abierto', 'en proceso', 'en revision', 'solucionado', 'cerrado'],
+	})
+		.default('abierto')
+		.notNull(),
+	tipo: text('tipo', {
+		enum: ['otro', 'bug', 'revision', 'logs'],
+	}).notNull(),
 	email: text('email').notNull(),
 	coverImageKey: text('cover_image_key'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+//Tabla de comentarios de tickets
+export const ticketComments = pgTable('ticket_comments', {
+	id: serial('id').primaryKey(),
+	ticketId: integer('ticket_id')
+		.references(() => tickets.id)
+		.notNull(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	content: text('content').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 //Tabla de parametros
@@ -739,6 +760,29 @@ export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
 	}),
 	user: one(users, {
 		fields: [materiaGrades.userId],
+		references: [users.id],
+	}),
+}));
+
+export const ticketsRelations = relations(tickets, ({ one, many }) => ({
+	creator: one(users, {
+		fields: [tickets.creatorId],
+		references: [users.id],
+	}),
+	assignedTo: one(users, {
+		fields: [tickets.assignedToId],
+		references: [users.id],
+	}),
+	comments: many(ticketComments),
+}));
+
+export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
+	ticket: one(tickets, {
+		fields: [ticketComments.ticketId],
+		references: [tickets.id],
+	}),
+	user: one(users, {
+		fields: [ticketComments.userId],
 		references: [users.id],
 	}),
 }));
