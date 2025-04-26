@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Loader2, Plus, Pencil, Trash2, Info } from 'lucide-react';
 import TicketModal from './TicketModal';
+import ChatList from '../chat/ChatList';
+import FloatingChat from '../chat/FloatingChat';
 
 export default function TicketsPage() {
 	const [tickets, setTickets] = useState([]);
@@ -12,9 +14,12 @@ export default function TicketsPage() {
 		[key: string]: any;
 	} | null>(null);
 	const [loading, setLoading] = useState(true);
-	const [activeTab, setActiveTab] = useState('created'); // 'created', 'assigned', 'logs'
+	const [activeTab, setActiveTab] = useState<
+		'created' | 'assigned' | 'logs' | 'chats'
+	>('created');
 	const [filterType, setFilterType] = useState('all');
 	const [filterStatus, setFilterStatus] = useState('all');
+	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 	const [viewTicket, setViewTicket] = useState<{
 		id: string;
 		email: string;
@@ -110,6 +115,13 @@ export default function TicketsPage() {
 		setSelectedTicket(null);
 		setIsModalOpen(true);
 	};
+	const handleSelectChat = (chatId: string) => {
+		setSelectedChatId(chatId);
+	};
+
+	const handleCloseChat = () => {
+		setSelectedChatId(null);
+	};
 
 	return (
 		<div className="p-4 sm:p-6">
@@ -156,10 +168,21 @@ export default function TicketsPage() {
 					>
 						Logs
 					</button>
+					<button
+						onClick={() => setActiveTab('chats')}
+						className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
+							activeTab === 'chats'
+								? 'border-blue-500 text-blue-500'
+								: 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
+						}`}
+					>
+						Chats
+					</button>
 				</div>
 			</div>
 
 			{/* Action buttons */}
+
 			<div className="my-6 flex flex-wrap items-center justify-between gap-4">
 				<button
 					onClick={handleOpenCreateModal}
@@ -203,125 +226,131 @@ export default function TicketsPage() {
 			</div>
 
 			{/* Tickets table */}
-			<div className="mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl backdrop-blur-sm">
-				<div className="overflow-x-auto">
-					<table className="min-w-full table-auto border-collapse">
-						<thead>
-							<tr className="border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] text-white">
-								<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-									ID
-								</th>
-								<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-									Usuario
-								</th>
-								<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-									Tipo
-								</th>
-								<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-									Estado
-								</th>
-								<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-									Asignado a
-								</th>
-								<th className="px-4 py-3 text-right text-xs font-medium sm:text-sm">
-									Acciones
-								</th>
-							</tr>
-						</thead>
-						<tbody className="divide-y divide-gray-700/50">
-							{loading ? (
-								<tr>
-									<td colSpan={6} className="px-4 py-8 text-center">
-										<Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
-									</td>
+			{activeTab === 'chats' ? (
+				<div className="mt-6">
+					<ChatList onSelectChat={handleSelectChat} />
+				</div>
+			) : (
+				<div className="mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl backdrop-blur-sm">
+					<div className="overflow-x-auto">
+						<table className="min-w-full table-auto border-collapse">
+							<thead>
+								<tr className="border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] text-white">
+									<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
+										ID
+									</th>
+									<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
+										Usuario
+									</th>
+									<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
+										Tipo
+									</th>
+									<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
+										Estado
+									</th>
+									<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
+										Asignado a
+									</th>
+									<th className="px-4 py-3 text-right text-xs font-medium sm:text-sm">
+										Acciones
+									</th>
 								</tr>
-							) : filteredTickets.length === 0 ? (
-								<tr>
-									<td
-										colSpan={6}
-										className="px-4 py-8 text-center text-gray-400"
-									>
-										No hay tickets disponibles
-									</td>
-								</tr>
-							) : (
-								filteredTickets.map((ticket: any) => (
-									<tr
-										key={ticket.id}
-										className="group transition-colors hover:bg-gray-700/50"
-									>
-										<td className="px-4 py-4">#{ticket.id}</td>
-										<td className="px-4 py-4">{ticket.email}</td>
-										<td className="px-4 py-4">
-											<span
-												className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-													ticket.tipo === 'bug'
-														? 'bg-red-500/10 text-red-500'
-														: ticket.tipo === 'revision'
-															? 'bg-yellow-500/10 text-yellow-500'
-															: ticket.tipo === 'logs'
-																? 'bg-purple-500/10 text-purple-500'
-																: 'bg-gray-500/10 text-gray-500'
-												}`}
-											>
-												{ticket.tipo}
-											</span>
-										</td>
-										<td className="px-4 py-4">
-											<span
-												className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-													ticket.estado === 'abierto'
-														? 'bg-green-500/10 text-green-500'
-														: ticket.estado === 'en proceso'
-															? 'bg-blue-500/10 text-blue-500'
-															: ticket.estado === 'en revision'
-																? 'bg-yellow-500/10 text-yellow-500'
-																: ticket.estado === 'solucionado'
-																	? 'bg-purple-500/10 text-purple-500'
-																	: 'bg-gray-500/10 text-gray-500'
-												}`}
-											>
-												{ticket.estado}
-											</span>
-										</td>
-										<td className="px-4 py-4">
-											{ticket.assignedToName || 'Sin asignar'}
-										</td>
-										<td className="px-4 py-4">
-											<div className="flex items-center justify-end gap-1 sm:gap-2">
-												<button
-													onClick={() => setViewTicket(ticket)}
-													className="rounded-md p-1 hover:bg-blue-500/10 hover:text-blue-500"
-													title="Ver detalles"
-												>
-													<Info className="size-3.5 sm:size-4" />
-												</button>
-												<button
-													onClick={() => {
-														setSelectedTicket(ticket);
-														setIsModalOpen(true);
-													}}
-													className="rounded-md p-1 hover:bg-gray-700"
-													title="Editar"
-												>
-													<Pencil className="size-3.5 sm:size-4" />
-												</button>
-												<button
-													onClick={() => handleDelete(ticket.id)}
-													className="rounded-md p-1 hover:bg-red-500/10 hover:text-red-500"
-													title="Eliminar"
-												>
-													<Trash2 className="size-3.5 sm:size-4" />
-												</button>
-											</div>
+							</thead>
+							<tbody className="divide-y divide-gray-700/50">
+								{loading ? (
+									<tr>
+										<td colSpan={6} className="px-4 py-8 text-center">
+											<Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
 										</td>
 									</tr>
-								))
-							)}
-						</tbody>
-					</table>
+								) : filteredTickets.length === 0 ? (
+									<tr>
+										<td
+											colSpan={6}
+											className="px-4 py-8 text-center text-gray-400"
+										>
+											No hay tickets disponibles
+										</td>
+									</tr>
+								) : (
+									filteredTickets.map((ticket: any) => (
+										<tr
+											key={ticket.id}
+											className="group transition-colors hover:bg-gray-700/50"
+										>
+											<td className="px-4 py-4">#{ticket.id}</td>
+											<td className="px-4 py-4">{ticket.email}</td>
+											<td className="px-4 py-4">
+												<span
+													className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+														ticket.tipo === 'bug'
+															? 'bg-red-500/10 text-red-500'
+															: ticket.tipo === 'revision'
+																? 'bg-yellow-500/10 text-yellow-500'
+																: ticket.tipo === 'logs'
+																	? 'bg-purple-500/10 text-purple-500'
+																	: 'bg-gray-500/10 text-gray-500'
+													}`}
+												>
+													{ticket.tipo}
+												</span>
+											</td>
+											<td className="px-4 py-4">
+												<span
+													className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+														ticket.estado === 'abierto'
+															? 'bg-green-500/10 text-green-500'
+															: ticket.estado === 'en proceso'
+																? 'bg-blue-500/10 text-blue-500'
+																: ticket.estado === 'en revision'
+																	? 'bg-yellow-500/10 text-yellow-500'
+																	: ticket.estado === 'solucionado'
+																		? 'bg-purple-500/10 text-purple-500'
+																		: 'bg-gray-500/10 text-gray-500'
+													}`}
+												>
+													{ticket.estado}
+												</span>
+											</td>
+											<td className="px-4 py-4">
+												{ticket.assignedToName || 'Sin asignar'}
+											</td>
+											<td className="px-4 py-4">
+												<div className="flex items-center justify-end gap-1 sm:gap-2">
+													<button
+														onClick={() => setViewTicket(ticket)}
+														className="rounded-md p-1 hover:bg-blue-500/10 hover:text-blue-500"
+														title="Ver detalles"
+													>
+														<Info className="size-3.5 sm:size-4" />
+													</button>
+													<button
+														onClick={() => {
+															setSelectedTicket(ticket);
+															setIsModalOpen(true);
+														}}
+														className="rounded-md p-1 hover:bg-gray-700"
+														title="Editar"
+													>
+														<Pencil className="size-3.5 sm:size-4" />
+													</button>
+													<button
+														onClick={() => handleDelete(ticket.id)}
+														className="rounded-md p-1 hover:bg-red-500/10 hover:text-red-500"
+														title="Eliminar"
+													>
+														<Trash2 className="size-3.5 sm:size-4" />
+													</button>
+												</div>
+											</td>
+										</tr>
+									))
+								)}
+							</tbody>
+						</table>
+					</div>
 				</div>
-			</div>
+			)}
 
 			{viewTicket && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-8">
@@ -430,6 +459,8 @@ export default function TicketsPage() {
 				onSubmit={selectedTicket ? handleUpdate : handleCreate}
 				ticket={selectedTicket}
 			/>
+
+			<FloatingChat chatId={selectedChatId} onClose={handleCloseChat} />
 		</div>
 	);
 }

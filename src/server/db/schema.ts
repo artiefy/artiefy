@@ -786,3 +786,14 @@ export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
 		references: [users.id],
 	}),
 }));
+
+// Tabla de mensajes de chat
+export const chatMessages = pgTable('chat_messages', {
+	id: serial('id').primaryKey(),
+	senderId: text('sender_id')
+		.references(() => users.id)
+		.notNull(),
+	receiverId: text('receiver_id').references(() => users.id), // Puede ser null (broadcast)
+	message: text('message').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+});
