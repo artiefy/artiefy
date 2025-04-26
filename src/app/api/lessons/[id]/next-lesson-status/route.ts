@@ -8,14 +8,31 @@ import { lessons, userLessonsProgress } from '~/server/db/schema';
 interface NextLessonStatusResponse {
 	lessonId: number | null;
 	isUnlocked: boolean;
+	error?: string;
 }
 
 export async function GET(
-	_: Request,
+	_request: Request,
 	{ params }: { params: { id: string } }
 ): Promise<NextResponse<NextLessonStatusResponse>> {
 	try {
-		const currentLessonId = parseInt(params.id);
+		if (!params?.id) {
+			return NextResponse.json({
+				lessonId: null,
+				isUnlocked: false,
+				error: 'ID no proporcionado',
+			});
+		}
+
+		const currentLessonId = Number(params.id);
+		if (isNaN(currentLessonId)) {
+			return NextResponse.json({
+				lessonId: null,
+				isUnlocked: false,
+				error: 'ID inválido',
+			});
+		}
+
 		const currentLesson = await db.query.lessons.findFirst({
 			where: eq(lessons.id, currentLessonId),
 			with: {
@@ -24,10 +41,7 @@ export async function GET(
 		});
 
 		if (!currentLesson) {
-			return NextResponse.json(
-				{ lessonId: null, isUnlocked: false },
-				{ status: 404 }
-			);
+			return NextResponse.json({ lessonId: null, isUnlocked: false });
 		}
 
 		// Get next lesson with its progress
@@ -37,10 +51,7 @@ export async function GET(
 		});
 
 		if (!nextLesson) {
-			return NextResponse.json(
-				{ lessonId: null, isUnlocked: false },
-				{ status: 200 }
-			);
+			return NextResponse.json({ lessonId: null, isUnlocked: false });
 		}
 
 		// Get lesson progress
@@ -53,10 +64,10 @@ export async function GET(
 			isUnlocked: progress?.isLocked === false,
 		});
 	} catch (error) {
-		console.error('Error checking next lesson status:', error);
-		return NextResponse.json(
-			{ lessonId: null, isUnlocked: false },
-			{ status: 500 }
-		);
+		return NextResponse.json({
+			lessonId: null,
+			isUnlocked: false,
+			error: 'Error interno del servidor',
+		});
 	}
 }

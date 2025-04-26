@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import Player from 'next-video/player';
 
@@ -12,10 +12,6 @@ interface VideoPlayerProps {
 	isVideoCompleted: boolean;
 	isLocked?: boolean;
 }
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
-const FETCH_TIMEOUT = 10000;
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	videoKey,
@@ -31,46 +27,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const [posterUrl, setPosterUrl] = useState<string | undefined>(undefined);
 	const [isVideoAvailable, setIsVideoAvailable] = useState(false);
 
-	const fetchWithTimeout = async (url: string, timeout: number) => {
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-		try {
-			const response = await fetch(url, { signal: controller.signal });
-			clearTimeout(timeoutId);
-			return response;
-		} catch (error) {
-			clearTimeout(timeoutId);
-			throw error;
-		}
-	};
-
-	const fetchWithRetry = useCallback(
-		async (url: string, retries = MAX_RETRIES) => {
-			for (let i = 0; i < retries; i++) {
-				try {
-					const response = await fetchWithTimeout(url, FETCH_TIMEOUT);
-					if (!response.ok) {
-						throw new Error(`HTTP error! status: ${response.status}`);
-					}
-					return response;
-				} catch (error) {
-					console.error(`Attempt ${i + 1} failed:`, error);
-					if (i === retries - 1) throw error;
-					await new Promise((resolve) =>
-						setTimeout(resolve, RETRY_DELAY * (i + 1))
-					);
-				}
-			}
-			throw new Error('Failed after all retries');
-		},
-		[]
-	);
-
 	useEffect(() => {
-		const fetchVideoUrl = async () => {
-			setIsLoading(true);
-
+		const checkVideoAvailability = async () => {
 			if (!videoKey || videoKey === 'null') {
 				setIsVideoAvailable(false);
 				setIsLoading(false);
@@ -79,77 +37,32 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 			try {
 				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
-				console.log('Fetching video from URL:', url);
-				const response = await fetchWithRetry(url);
-				if (!response) throw new Error('No response received');
-
-				const blob = await response.blob();
-				const newVideoUrl = URL.createObjectURL(blob);
-				setVideoUrl(newVideoUrl);
-				setIsVideoAvailable(true);
-			} catch (err) {
-				console.error('Error fetching video:', err);
-				setIsVideoAvailable(false);
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		void fetchVideoUrl();
-
-		// Cleanup function that references both videoUrl and setVideoUrl
-		return () => {
-			setVideoUrl((prevUrl) => {
-				if (prevUrl) {
-					URL.revokeObjectURL(prevUrl);
-				}
-				return '';
-			});
-		};
-	}, [videoKey, isLocked, fetchWithRetry]); // videoUrl not needed in deps since we use functional state update
-
-	useEffect(() => {
-		const checkPosterExists = async () => {
-			if (videoKey && isVideoReady) {
-				const posterUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey.replace('.mp4', '-poster.jpg')}`;
-				try {
-					const response = await fetch(posterUrl, { method: 'HEAD' });
-					if (response.ok) {
-						setPosterUrl(posterUrl);
-					} else {
-						setPosterUrl(undefined);
-					}
-				} catch {
-					setPosterUrl(undefined);
-				}
-			}
-		};
-
-		void checkPosterExists();
-	}, [videoKey, isVideoReady]);
-
-	useEffect(() => {
-		const checkVideoAvailability = async () => {
-			if (!videoKey) return;
-
-			try {
-				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
 				const response = await fetch(url, { method: 'HEAD' });
 
 				if (response.ok) {
 					setIsVideoAvailable(true);
-					setVideoUrl(url);
+					setVideoUrl(url); // Usar directamente la URL del video
+					setIsLoading(false);
 				} else {
 					setIsVideoAvailable(false);
+					setIsLoading(false);
 				}
 			} catch (err) {
-				setIsVideoAvailable(false);
 				console.error('Error checking video:', err);
+				setIsVideoAvailable(false);
+				setIsLoading(false);
 			}
 		};
 
 		void checkVideoAvailability();
 	}, [videoKey]);
+
+	useEffect(() => {
+		if (videoKey && isVideoReady) {
+			const posterUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey.replace('.mp4', '-poster.jpg')}`;
+			setPosterUrl(posterUrl);
+		}
+	}, [videoKey, isVideoReady]);
 
 	const handleTimeUpdate = () => {
 		if (videoRef.current && !isVideoCompleted) {
@@ -228,7 +141,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 	return (
 		<div className="relative aspect-video w-full">
-			{videoUrl ? (
+			{videoUrl && (
 				<Player
 					ref={videoRef}
 					src={videoUrl}
@@ -243,14 +156,14 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						'--media-primary-color': '#3AF4EF',
 						'--media-secondary-color': '#00BDD8',
 						'--media-accent-color': '#2ecc71',
-						visibility: isVideoReady ? 'visible' : 'hidden', // Hide player until ready
+						visibility: isVideoReady ? 'visible' : 'hidden',
 					}}
 					{...(!isVideoReady && {
 						'aria-busy': true,
 						'aria-label': 'Cargando video de la clase...',
 					})}
 				/>
-			) : null}
+			)}
 			{(!videoUrl || !isVideoReady) && renderLoadingState()}
 		</div>
 	);
