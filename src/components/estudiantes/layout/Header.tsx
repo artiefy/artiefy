@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,6 +19,11 @@ import '~/styles/barsicon.css';
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
+	const [isMounted, setIsMounted] = useState(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
 
 	const navItems = [
 		{ href: '/', label: 'Inicio' },
@@ -91,26 +96,33 @@ export function Header() {
 									</Button>
 								</SignInButton>
 							</SignedOut>
+							{/* Desktop Auth section */}
 							<SignedIn>
 								<div className="relative">
-									<UserButton
-										showName
-										appearance={{
-											elements: {
-												userButtonBox: 'w-full h-full',
-												userButtonTrigger: 'w-full h-full',
-											},
-										}}
-									>
-										<UserButton.MenuItems>
-											<UserButton.Link
-												label="Mis Cursos"
-												labelIcon={<UserCircleIcon className="size-4" />}
-												href="/estudiantes/myaccount"
-											/>
-											<UserButton.Action label="manageAccount" />
-										</UserButton.MenuItems>
-									</UserButton>
+									{isMounted ? (
+										<UserButton
+											showName
+											appearance={{
+												elements: {
+													userButtonBox: 'w-full h-full',
+													userButtonTrigger: 'w-full h-full',
+												},
+											}}
+										>
+											<UserButton.MenuItems>
+												<UserButton.Link
+													label="Mis Cursos"
+													labelIcon={<UserCircleIcon className="size-4" />}
+													href="/estudiantes/myaccount"
+												/>
+												<UserButton.Action label="manageAccount" />
+											</UserButton.MenuItems>
+										</UserButton>
+									) : (
+										<div className="flex h-10 w-10 items-center justify-center">
+											<Icons.spinner className="size-6 animate-spin" />
+										</div>
+									)}
 								</div>
 							</SignedIn>
 						</div>
@@ -223,26 +235,33 @@ export function Header() {
 								</Button>
 							</SignInButton>
 						</SignedOut>
+						{/* Mobile Auth section */}
 						<SignedIn>
 							<div className="relative flex w-full justify-center">
-								<UserButton
-									showName
-									appearance={{
-										elements: {
-											userButtonBox: 'w-full h-full',
-											userButtonTrigger: 'w-full h-full',
-										},
-									}}
-								>
-									<UserButton.MenuItems>
-										<UserButton.Link
-											label="Mis Cursos"
-											labelIcon={<UserCircleIcon className="size-4" />}
-											href="/estudiantes/myaccount"
-										/>
-										<UserButton.Action label="manageAccount" />
-									</UserButton.MenuItems>
-								</UserButton>
+								{isMounted ? (
+									<UserButton
+										showName
+										appearance={{
+											elements: {
+												userButtonBox: 'w-full h-full',
+												userButtonTrigger: 'w-full h-full',
+											},
+										}}
+									>
+										<UserButton.MenuItems>
+											<UserButton.Link
+												label="Mis Cursos"
+												labelIcon={<UserCircleIcon className="size-4" />}
+												href="/estudiantes/myaccount"
+											/>
+											<UserButton.Action label="manageAccount" />
+										</UserButton.MenuItems>
+									</UserButton>
+								) : (
+									<div className="flex h-10 w-10 items-center justify-center">
+										<Icons.spinner className="size-6 animate-spin" />
+									</div>
+								)}
 							</div>
 						</SignedIn>
 					</div>

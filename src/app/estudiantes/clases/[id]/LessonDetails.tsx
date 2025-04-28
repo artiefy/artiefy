@@ -65,10 +65,10 @@ const isLastActivity = (
 
 export default function LessonDetails({
 	lesson,
-	activities = [], // Add default empty array
-	lessons = [], // Add default empty array
-	userLessonsProgress = [], // Add default empty array
-	userActivitiesProgress = [], // Add default empty array
+	activities = [],
+	lessons = [],
+	userLessonsProgress = [],
+	userActivitiesProgress = [],
 	userId,
 	course,
 }: LessonDetailsProps) {
@@ -89,7 +89,21 @@ export default function LessonDetails({
 	const [isActivityCompleted, setIsActivityCompleted] = useState(
 		activities[0]?.isCompleted ?? false
 	);
-	const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>([]);
+	// Inicializar lessonsState con un valor predeterminado
+	const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>(() =>
+		lessons.map((lessonItem) => ({
+			...lessonItem,
+			isLocked: true,
+			porcentajecompletado: 0,
+			isCompleted: false,
+			isNew: true,
+			courseTitle: lesson.courseTitle,
+		}))
+	);
+
+	// Mover la inicialización de estados al useEffect con una bandera
+	const [isInitialLoad, setIsInitialLoad] = useState(true);
+
 	const searchParams = useSearchParams();
 	const { start, stop } = useProgress();
 
@@ -121,60 +135,59 @@ export default function LessonDetails({
 		return () => stop();
 	}, [start, stop]);
 
-	// Initialize lessons state with progress and locked status
+	// Mover la inicialización de lecciones a un useEffect
 	useEffect(() => {
-		const initializeLessonsState = () => {
-			const sortedLessons = [...lessons].sort((a, b) => {
-				// Special handling for "Bienvenida"
-				if (a.title.toLowerCase().includes('bienvenida')) return -1;
-				if (b.title.toLowerCase().includes('bienvenida')) return 1;
+		if (isInitialLoad && lessons.length > 0) {
+			const initializeLessonsState = () => {
+				const sortedLessons = [...lessons].sort((a, b) => {
+					// Special handling for "Bienvenida"
+					if (a.title.toLowerCase().includes('bienvenida')) return -1;
+					if (b.title.toLowerCase().includes('bienvenida')) return 1;
 
-				// Extract and compare lesson numbers
-				const aMatch = /^(\d+)/.exec(a.title);
-				const bMatch = /^(\d+)/.exec(b.title);
-				const aNum = aMatch ? parseInt(aMatch[1], 10) : Number.MAX_SAFE_INTEGER;
-				const bNum = bMatch ? parseInt(bMatch[1], 10) : Number.MAX_SAFE_INTEGER;
-				return aNum - bNum;
-			});
+					// Extract and compare lesson numbers
+					const aMatch = /^(\d+)/.exec(a.title);
+					const bMatch = /^(\d+)/.exec(b.title);
+					const aNum = aMatch
+						? parseInt(aMatch[1], 10)
+						: Number.MAX_SAFE_INTEGER;
+					const bNum = bMatch
+						? parseInt(bMatch[1], 10)
+						: Number.MAX_SAFE_INTEGER;
+					return aNum - bNum;
+				});
 
-			const lessonsWithProgress = sortedLessons.map((lessonItem, index) => {
-				const progress = userLessonsProgress.find(
-					(p) => p.lessonId === lessonItem.id
-				);
+				const lessonsWithProgress = sortedLessons.map((lessonItem, index) => {
+					const progress = userLessonsProgress.find(
+						(p) => p.lessonId === lessonItem.id
+					);
 
-				// First lesson or "Bienvenida" is always unlocked
-				if (
-					index === 0 ||
-					lessonItem.title.toLowerCase().includes('bienvenida')
-				) {
+					const isFirst =
+						index === 0 ||
+						lessonItem.title.toLowerCase().includes('bienvenida');
+
 					return {
 						...lessonItem,
-						isLocked: false,
+						isLocked: isFirst ? false : (progress?.isLocked ?? true),
 						porcentajecompletado: progress?.progress ?? 0,
 						isCompleted: progress?.isCompleted ?? false,
 						isNew: progress?.isNew ?? true,
 						courseTitle: lesson.courseTitle,
 					};
-				}
+				});
 
-				// A lesson should be locked unless explicitly unlocked in the database
-				const shouldBeLocked = progress?.isLocked ?? true;
+				setLessonsState(lessonsWithProgress);
+				setIsInitialLoad(false);
+			};
 
-				return {
-					...lessonItem,
-					isLocked: shouldBeLocked,
-					porcentajecompletado: progress?.progress ?? 0,
-					isCompleted: progress?.isCompleted ?? false,
-					isNew: progress?.isNew ?? true,
-					courseTitle: lesson.courseTitle,
-				};
-			});
-
-			setLessonsState(lessonsWithProgress);
-		};
-
-		initializeLessonsState();
-	}, [lessons, userLessonsProgress, lesson.courseTitle]);
+			initializeLessonsState();
+		}
+	}, [
+		isInitialLoad,
+		lessons,
+		userLessonsProgress,
+		lesson.courseTitle,
+		setLessonsState,
+	]);
 
 	// Usar userActivitiesProgress para algo útil, por ejemplo, mostrar el progreso de las actividades
 	useEffect(() => {

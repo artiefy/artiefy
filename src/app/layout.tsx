@@ -1,9 +1,11 @@
 import '~/styles/globals.css';
 
+import { Suspense } from 'react';
+
 import { Merriweather, Montserrat } from 'next/font/google';
 
 import { esMX } from '@clerk/localizations';
-import { ClerkLoading, ClerkProvider } from '@clerk/nextjs';
+import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
@@ -122,17 +124,22 @@ export default function RootLayout({
 					content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
 				/>
 				<body className="bg-background text-primary font-sans">
-					<ClerkLoading>
-						<div className="fixed inset-0 flex items-center justify-center">
-							<Icons.spinner className="h-8 w-8 animate-spin text-primary" />
-						</div>
-					</ClerkLoading>
-					<Providers>{children}</Providers>
+					<Suspense fallback={<LoadingSkeleton />}>
+						<Providers>{children}</Providers>
+					</Suspense>
 					<SpeedInsights />
 					<Analytics />
 					<Toaster />
 				</body>
 			</html>
 		</ClerkProvider>
+	);
+}
+
+function LoadingSkeleton() {
+	return (
+		<div className="flex h-screen w-full items-center justify-center">
+			<Icons.spinner className="h-32 w-32 animate-spin" />
+		</div>
 	);
 }

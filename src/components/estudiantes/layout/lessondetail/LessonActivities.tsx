@@ -30,7 +30,7 @@ interface LessonActivitiesProps {
 	lessonId: number;
 	isLastLesson: boolean;
 	isLastActivity: boolean;
-	lessons: { id: number; title: string }[];
+	lessons: { id: number; title: string; coverVideoKey?: string }[]; // Add coverVideoKey
 }
 
 interface SavedResults {
@@ -464,7 +464,14 @@ const LessonActivities = ({
 			};
 		}
 
-		if (!isVideoCompleted) {
+		const currentLesson = activity.lessonsId
+			? lessons.find((l) => l.id === activity.lessonsId)
+			: null;
+		if (
+			!isVideoCompleted &&
+			currentLesson &&
+			currentLesson.coverVideoKey !== 'none'
+		) {
 			return {
 				icon: <FaLock className="text-gray-400" />,
 				bgColor: 'bg-gray-200',
@@ -472,7 +479,7 @@ const LessonActivities = ({
 			};
 		}
 
-		// First activity is always active when video is completed
+		// First activity is always active when video is completed or when there's no video
 		if (index === 0) {
 			return {
 				icon: <TbClockFilled className="text-blue-500" />,
@@ -498,7 +505,12 @@ const LessonActivities = ({
 	};
 
 	const shouldShowArrows = (activity: Activity, index: number) => {
-		if (!isVideoCompleted) return false;
+		const currentLesson = activity.lessonsId
+			? lessons.find((l) => l.id === activity.lessonsId)
+			: null;
+		const hasNoVideo = currentLesson?.coverVideoKey === 'none';
+
+		if (!isVideoCompleted && !hasNoVideo) return false;
 		if (activitiesState[activity.id]?.isCompleted) return false;
 
 		// Show arrows if this activity is unlocked but not completed

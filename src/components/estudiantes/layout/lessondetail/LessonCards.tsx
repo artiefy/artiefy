@@ -294,10 +294,34 @@ const LessonCards = ({
 		);
 	};
 
+	// Agregar un estado de carga inicial
+	const hasLessons = lessonsState.length > 0;
+
+	// Renderizar un esqueleto mientras no hay lecciones
+	if (!hasLessons) {
+		return (
+			<div className="lesson-cards-container relative z-10 space-y-2">
+				{[...Array(3)].map((_, i) => (
+					<div
+						key={i}
+						className="h-32 animate-pulse rounded-lg bg-gray-100 p-4 shadow-sm"
+					>
+						<div className="mb-2 h-4 w-3/4 rounded bg-gray-200" />
+						<div className="mb-4 h-3 w-1/2 rounded bg-gray-200" />
+						<div className="h-2 w-full rounded bg-gray-200" />
+					</div>
+				))}
+			</div>
+		);
+	}
+
 	return (
 		<div className="lesson-cards-container relative z-10 space-y-2">
 			{sortedLessons.map((lesson) => (
-				<div key={lesson.id} className="relative transition-transform">
+				<div
+					key={lesson.id}
+					className="relative transition-transform will-change-transform"
+				>
 					{renderLessonCard(lesson)}
 				</div>
 			))}
