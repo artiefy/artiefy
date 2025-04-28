@@ -84,12 +84,16 @@ const LessonCards = ({
 
 	useEffect(() => {
 		const unlockNextLesson = async () => {
-			if (!selectedLessonId || progress < 100) return;
+			if (!selectedLessonId) return;
 
 			const currentLesson = sortedLessons.find(
 				(l) => l.id === selectedLessonId
 			);
-			const currentIndex = sortedLessons.indexOf(currentLesson!);
+
+			// Verificar el progreso real de la base de datos, no el progreso local
+			if (!currentLesson || currentLesson.porcentajecompletado < 100) return;
+
+			const currentIndex = sortedLessons.indexOf(currentLesson);
 			const nextLesson = sortedLessons[currentIndex + 1];
 
 			if (!nextLesson?.isLocked) return;
@@ -98,8 +102,8 @@ const LessonCards = ({
 			const hasActivities = activities.length > 0;
 			const shouldUnlock = hasActivities
 				? activities.every((activity) => activity.isCompleted) &&
-					progress === 100
-				: progress === 100;
+					currentLesson.porcentajecompletado === 100 // Usar el progreso de la base de datos
+				: currentLesson.porcentajecompletado === 100;
 
 			if (shouldUnlock) {
 				try {
@@ -152,16 +156,40 @@ const LessonCards = ({
 		}, 300);
 
 		return () => clearTimeout(timeoutId);
-	}, [
-		selectedLessonId,
-		progress,
-		sortedLessons,
-		checkLessonStatus,
-		setLessonsState,
-	]);
+	}, [selectedLessonId, sortedLessons, checkLessonStatus, setLessonsState]);
+
+	const getActivityStatus = (lessonItem: LessonWithProgress) => {
+		// Siempre usar el estado isLocked de la base de datos
+		if (lessonItem.isLocked) {
+			return {
+				icon: <FaLock className="text-gray-400" />,
+				isAccessible: false,
+				className: 'cursor-not-allowed bg-gray-50/95 opacity-75 shadow-sm',
+			};
+		}
+
+		// Si no está bloqueada, verificar si está completada
+		if (lessonItem.porcentajecompletado === 100) {
+			return {
+				icon: <FaCheckCircle className="text-green-500" />,
+				isAccessible: true,
+				className:
+					'cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-colors duration-200 active:scale-[0.98] active:transition-transform',
+			};
+		}
+
+		// Desbloqueada pero no completada
+		return {
+			icon: <FaClock className="text-gray-400" />,
+			isAccessible: true,
+			className:
+				'cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] active:transition-transform',
+		};
+	};
 
 	const handleClick = (lessonItem: LessonWithProgress) => {
-		if (isNavigating) return; // Prevent clicks while navigating
+		if (isNavigating) return;
+		// Usar directamente isLocked de la base de datos
 		if (!lessonItem.isLocked) {
 			onLessonClick(lessonItem.id);
 		} else {
@@ -184,9 +212,16 @@ const LessonCards = ({
 
 	const renderProgressBar = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
-		const currentProgress = isCurrentLesson
-			? progress
-			: lessonItem.porcentajecompletado;
+		let currentProgress;
+
+		if (isCurrentLesson) {
+			// Si estamos navegando o es una nueva lección seleccionada,
+			// mostrar el progreso real y no el heredado
+			currentProgress = isNavigating ? 0 : progress;
+		} else {
+			// Para las otras lecciones, mostrar su progreso almacenado
+			currentProgress = lessonItem.porcentajecompletado;
+		}
 
 		return (
 			<div className="relative h-2 rounded bg-gray-200">
@@ -200,32 +235,6 @@ const LessonCards = ({
 		);
 	};
 
-	const getActivityStatus = (lessonItem: LessonWithProgress) => {
-		if (lessonItem.isLocked === true) {
-			return {
-				icon: <FaLock className="text-gray-400" />,
-				isAccessible: false,
-				className: 'cursor-not-allowed bg-gray-50/95 opacity-75 shadow-sm',
-			};
-		}
-
-		if (lessonItem.porcentajecompletado === 100) {
-			return {
-				icon: <FaCheckCircle className="text-green-500" />,
-				isAccessible: true,
-				className:
-					'cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-colors duration-200 active:scale-[0.98] active:transition-transform',
-			};
-		}
-
-		return {
-			icon: <FaClock className="text-gray-400" />,
-			isAccessible: true,
-			className:
-				'cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] active:transition-transform',
-		};
-	};
-
 	const renderLessonCard = (lessonItem: LessonWithProgress) => {
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
 		const status = getActivityStatus(lessonItem);
@@ -235,6 +244,13 @@ const LessonCards = ({
 			(isCurrentLesson
 				? progress === 0
 				: lessonItem.porcentajecompletado === 0);
+
+		// Calcular el progreso a mostrar
+		const displayProgress = isCurrentLesson
+			? isNavigating
+				? 0
+				: progress
+			: lessonItem.porcentajecompletado;
 
 		return (
 			<div
@@ -272,9 +288,7 @@ const LessonCards = ({
 				{renderProgressBar(lessonItem)}
 				<div className="mt-2 flex justify-between text-xs text-gray-500">
 					<span>{lessonItem.duration} mins</span>
-					<span>
-						{isCurrentLesson ? progress : lessonItem.porcentajecompletado}%
-					</span>
+					<span>{displayProgress}%</span>
 				</div>
 			</div>
 		);
