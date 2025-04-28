@@ -59,8 +59,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 	useEffect(() => {
 		if (videoKey && isVideoReady) {
-			const posterUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey.replace('.mp4', '-poster.jpg')}`;
-			setPosterUrl(posterUrl);
+			const checkPosterAvailability = async () => {
+				const posterPath = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey.replace('.mp4', '-poster.jpg')}`;
+				try {
+					const response = await fetch(posterPath, { method: 'HEAD' });
+					if (response.ok) {
+						setPosterUrl(posterPath);
+					} else {
+						setPosterUrl(undefined);
+					}
+				} catch {
+					setPosterUrl(undefined);
+				}
+			};
+			void checkPosterAvailability();
 		}
 	}, [videoKey, isVideoReady]);
 

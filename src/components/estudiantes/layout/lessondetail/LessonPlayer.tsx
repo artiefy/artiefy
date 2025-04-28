@@ -1,3 +1,5 @@
+import { Lock } from 'lucide-react';
+
 import { Progress } from '~/components/estudiantes/ui/progress';
 import { type LessonWithProgress } from '~/types';
 
@@ -20,22 +22,10 @@ const LessonPlayer = ({
 
 	if (isLocked) {
 		return (
-			<div className="relative flex h-[400px] items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-gray-800 to-gray-900">
+			<div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-gray-800 to-gray-900">
 				<div className="z-10 flex flex-col items-center justify-center space-y-4 px-4 text-center">
-					<div className="animate-bounce rounded-full bg-gray-700 p-6">
-						<svg
-							className="h-12 w-12 text-yellow-500"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M12 15v2m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0z"
-							/>
-						</svg>
+					<div className="animate-bounce rounded-full bg-gray-700/50 p-6">
+						<Lock className="h-12 w-12 text-yellow-500" strokeWidth={1.5} />
 					</div>
 					<h3 className="text-2xl font-bold text-white">Clase Bloqueada</h3>
 					<p className="max-w-sm text-gray-300">

@@ -1,9 +1,13 @@
 'use client';
-import { useEffect, type Dispatch, type SetStateAction } from 'react';
+import {
+	useEffect,
+	useCallback,
+	type Dispatch,
+	type SetStateAction,
+} from 'react';
 
 import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import { toast } from 'sonner';
-import useSWR from 'swr';
 
 import { type LessonWithProgress } from '~/types';
 import { sortLessons } from '~/utils/lessonSorting';
@@ -22,26 +26,11 @@ interface NextLessonStatus {
 	isUnlocked: boolean;
 }
 
-interface ApiResponse {
-	lessonId: number | null;
-	isUnlocked: boolean;
-}
-
-// Add interface for API response
+// Remove unused ApiResponse interface
 interface UnlockResponse {
 	success: boolean;
 	error?: string;
 }
-
-const fetcher = async (url: string): Promise<NextLessonStatus> => {
-	const res = await fetch(url);
-	if (!res.ok) throw new Error('Failed to fetch lesson status');
-	const data = (await res.json()) as ApiResponse;
-	return {
-		isUnlocked: Boolean(data.isUnlocked),
-		lessonId: data.lessonId,
-	};
-};
 
 const LessonCards = ({
 	lessonsState,
@@ -49,56 +38,64 @@ const LessonCards = ({
 	onLessonClick,
 	progress,
 	isNavigating,
-	setLessonsState, // Add this prop
+	setLessonsState,
 }: LessonCardsProps) => {
-	// Add SWR hook to automatically check lesson status
-	const { data: nextLessonStatus, mutate } = useSWR<NextLessonStatus>(
-		selectedLessonId && progress === 100
-			? `/api/lessons/${selectedLessonId}/next-lesson-status`
-			: null,
-		fetcher,
-		{
-			refreshInterval: 0,
-			revalidateOnFocus: false,
-		}
+	const checkLessonStatus = useCallback(
+		async (lessonId: number) => {
+			if (selectedLessonId && progress === 100) {
+				try {
+					const response = await fetch(
+						`/api/lessons/${lessonId}/next-lesson-status`
+					);
+					if (!response.ok) {
+						throw new Error('Network response was not ok');
+					}
+					const data = (await response.json()) as NextLessonStatus;
+
+					if (data.isUnlocked && data.lessonId) {
+						setLessonsState((prev) =>
+							prev.map((lesson) =>
+								lesson.id === data.lessonId
+									? { ...lesson, isLocked: false, isNew: true }
+									: lesson
+							)
+						);
+					}
+				} catch (error) {
+					console.error('Error checking lesson status:', error);
+				}
+			}
+		},
+		[selectedLessonId, progress, setLessonsState]
 	);
 
-	// First useEffect with corrected dependencies and optional chaining
+	// Pre-sort lessons once
+	const sortedLessons = sortLessons(lessonsState);
+
 	useEffect(() => {
 		if (selectedLessonId && progress >= 1) {
-			const currentLesson = lessonsState.find((l) => l.id === selectedLessonId);
-			if (currentLesson?.isNew) {
-				setLessonsState((prev) =>
-					prev.map((lesson) =>
-						lesson.id === selectedLessonId
-							? { ...lesson, isNew: false }
-							: lesson
-					)
-				);
-			}
+			setLessonsState((prev) =>
+				prev.map((lesson) =>
+					lesson.id === selectedLessonId ? { ...lesson, isNew: false } : lesson
+				)
+			);
 		}
-	}, [selectedLessonId, progress, setLessonsState, lessonsState]);
+	}, [selectedLessonId, progress, setLessonsState]);
 
-	// Modified unlocking effect with real-time updates
 	useEffect(() => {
 		const unlockNextLesson = async () => {
 			if (!selectedLessonId || progress < 100) return;
 
-			const sortedLessons = sortLessons(lessonsState);
-			const currentIndex = sortedLessons.findIndex(
+			const currentLesson = sortedLessons.find(
 				(l) => l.id === selectedLessonId
 			);
-			const currentLesson = sortedLessons[currentIndex];
+			const currentIndex = sortedLessons.indexOf(currentLesson!);
 			const nextLesson = sortedLessons[currentIndex + 1];
 
-			if (!nextLesson?.isLocked) return; // Skip if next lesson is already unlocked
+			if (!nextLesson?.isLocked) return;
 
 			const activities = currentLesson?.activities ?? [];
 			const hasActivities = activities.length > 0;
-
-			// Only proceed if:
-			// 1. There are no activities and video is complete
-			// 2. OR all activities are completed and video is complete
 			const shouldUnlock = hasActivities
 				? activities.every((activity) => activity.isCompleted) &&
 					progress === 100
@@ -106,7 +103,6 @@ const LessonCards = ({
 
 			if (shouldUnlock) {
 				try {
-					// Update database first
 					const response = await fetch('/api/lessons/unlock', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
@@ -123,7 +119,6 @@ const LessonCards = ({
 					if (!response.ok) throw new Error('Failed to unlock lesson');
 
 					const result = (await response.json()) as UnlockResponse;
-
 					if (result.success) {
 						setLessonsState((prev) =>
 							prev.map((lesson) =>
@@ -133,39 +128,37 @@ const LessonCards = ({
 							)
 						);
 
-						// Revalidate next lesson status
-						await mutate();
-
-						// Show success notification
+						// Solo mostrar el toast una vez después de actualizar el estado
 						toast.success('¡Nueva clase desbloqueada!', {
-							description: 'Ya puedes acceder a la siguiente clase.',
+							id: 'lesson-unlocked', // Identificador único para evitar duplicados
+							duration: 3000,
 						});
+
+						// Remover el toast del checkLessonStatus
+						await checkLessonStatus(selectedLessonId);
 					}
 				} catch (error) {
 					console.error('Error unlocking next lesson:', error);
-					toast.error('Error al desbloquear la siguiente clase');
+					toast.error('Error al desbloquear la siguiente clase', {
+						id: 'lesson-unlock-error',
+					});
 				}
 			}
 		};
 
-		void unlockNextLesson();
-	}, [selectedLessonId, progress, lessonsState, setLessonsState, mutate]);
+		// Debounce la ejecución para evitar múltiples llamadas
+		const timeoutId = setTimeout(() => {
+			void unlockNextLesson();
+		}, 300);
 
-	// Update lessons state when nextLessonStatus changes
-	useEffect(() => {
-		if (nextLessonStatus?.isUnlocked && nextLessonStatus.lessonId !== null) {
-			setLessonsState((prev) =>
-				prev.map((lesson) =>
-					lesson.id === nextLessonStatus.lessonId
-						? { ...lesson, isLocked: false, isNew: true }
-						: lesson
-				)
-			);
-		}
-	}, [nextLessonStatus, setLessonsState]);
-
-	// Sort lessons for rendering
-	const sortedLessons = sortLessons(lessonsState);
+		return () => clearTimeout(timeoutId);
+	}, [
+		selectedLessonId,
+		progress,
+		sortedLessons,
+		checkLessonStatus,
+		setLessonsState,
+	]);
 
 	const handleClick = (lessonItem: LessonWithProgress) => {
 		if (isNavigating) return; // Prevent clicks while navigating
@@ -181,7 +174,12 @@ const LessonCards = ({
 	const truncateDescription = (description: string | null, maxLength = 50) => {
 		if (!description) return '';
 		if (description.length <= maxLength) return description;
-		return description.slice(0, maxLength).trim() + '...';
+		return description.slice(0, maxLength).trim();
+	};
+
+	const truncateTitle = (title: string) => {
+		if (title.length <= 18) return title;
+		return title.slice(0, 18).trim();
 	};
 
 	const renderProgressBar = (lessonItem: LessonWithProgress) => {
@@ -203,28 +201,28 @@ const LessonCards = ({
 	};
 
 	const getActivityStatus = (lessonItem: LessonWithProgress) => {
-		// Always check isLocked first
 		if (lessonItem.isLocked === true) {
 			return {
 				icon: <FaLock className="text-gray-400" />,
 				isAccessible: false,
-				className: 'cursor-not-allowed bg-gray-50 opacity-75',
+				className: 'cursor-not-allowed bg-gray-50/95 opacity-75 shadow-sm',
 			};
 		}
 
-		// Only if explicitly unlocked (isLocked === false), check other conditions
 		if (lessonItem.porcentajecompletado === 100) {
 			return {
 				icon: <FaCheckCircle className="text-green-500" />,
 				isAccessible: true,
-				className: 'cursor-pointer bg-white hover:scale-[1.01] hover:transform',
+				className:
+					'cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-colors duration-200 active:scale-[0.98] active:transition-transform',
 			};
 		}
 
 		return {
 			icon: <FaClock className="text-gray-400" />,
 			isAccessible: true,
-			className: 'cursor-pointer bg-white hover:scale-[1.01] hover:transform',
+			className:
+				'cursor-pointer bg-white/95 shadow-sm hover:bg-gray-50 transition-all duration-200 active:scale-[0.98] active:transition-transform',
 		};
 	};
 
@@ -232,7 +230,7 @@ const LessonCards = ({
 		const isCurrentLesson = lessonItem.id === selectedLessonId;
 		const status = getActivityStatus(lessonItem);
 		const shouldShowNew =
-			lessonItem.isLocked === false && // Explicitly check for false
+			lessonItem.isLocked === false &&
 			lessonItem.isNew &&
 			(isCurrentLesson
 				? progress === 0
@@ -242,19 +240,22 @@ const LessonCards = ({
 			<div
 				key={lessonItem.id}
 				onClick={() => handleClick(lessonItem)}
-				className={`mb-2 rounded-lg p-4 transition-transform duration-200 ease-in-out ${
+				className={`relative rounded-lg p-4 transition-all duration-200 ease-in-out ${
 					isNavigating ? 'cursor-not-allowed opacity-50' : ''
 				} ${status.className} ${
-					isCurrentLesson ? 'border-l-8 border-blue-500 bg-blue-50' : ''
-				} ${shouldShowNew ? 'ring-2 ring-green-400' : ''}`}
+					isCurrentLesson
+						? 'z-20 border-l-8 border-blue-500 bg-blue-50/95 shadow-md'
+						: ''
+				}`}
 			>
 				<div className="mb-2 flex items-center justify-between">
 					<h3
-						className={`font-semibold ${
+						className={`max-w-[calc(100%-4rem)] truncate font-semibold ${
 							status.isAccessible ? 'text-gray-900' : 'text-gray-500'
 						}`}
+						title={lessonItem.title}
 					>
-						{lessonItem.title}
+						{truncateTitle(lessonItem.title)}
 					</h3>
 					<div className="flex items-center space-x-2">
 						{shouldShowNew && (
@@ -279,7 +280,15 @@ const LessonCards = ({
 		);
 	};
 
-	return <>{sortedLessons.map((lesson) => renderLessonCard(lesson))}</>;
+	return (
+		<div className="lesson-cards-container relative z-10 space-y-2">
+			{sortedLessons.map((lesson) => (
+				<div key={lesson.id} className="relative transition-transform">
+					{renderLessonCard(lesson)}
+				</div>
+			))}
+		</div>
+	);
 };
 
 export default LessonCards;

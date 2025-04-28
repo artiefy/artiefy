@@ -670,9 +670,12 @@ const LessonActivities = ({
 						.map((activity, index) => renderActivityCard(activity, index))}
 				</div>
 			) : (
-				<p className="text-gray-600">No hay actividades disponibles</p>
+				<div className="rounded-lg bg-white p-4 shadow-lg">
+					<p className="text-gray-600">No hay actividades disponibles</p>
+				</div>
 			)}
 
+			{/* Rest of the component */}
 			{/* Grades section */}
 			<div className="mt-4">
 				<h2 className="text-primary mb-4 text-2xl font-bold">Calificaciones</h2>

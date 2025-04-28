@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { BsFiletypeXls } from "react-icons/bs";
+import { BsFiletypeXls } from 'react-icons/bs';
 import {
 	FaFilePdf,
 	FaFilePowerpoint,
@@ -16,6 +16,11 @@ interface FileInfo {
 	fileName: string;
 }
 
+interface ApiResponse {
+	files: FileInfo[];
+	message?: string;
+}
+
 interface LessonResourceProps {
 	lessonId: number;
 }
@@ -27,41 +32,19 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
 	useEffect(() => {
 		const fetchFiles = async () => {
 			try {
-				console.log('Fetching files for lessonId:', lessonId);
 				const response = await fetch(
 					`/api/estudiantes/getFiles?lessonId=${lessonId}`
 				);
-				console.log('Response status:', response.status);
 
 				if (response.ok) {
-					const rawData: unknown = await response.json();
-
-					const isValidFileArray = (data: unknown): data is FileInfo[] => {
-						return (
-							Array.isArray(data) &&
-							data.every(
-								(item) =>
-									typeof item === 'object' &&
-									item !== null &&
-									typeof (item as FileInfo).key === 'string' &&
-									typeof (item as FileInfo).fileName === 'string'
-							)
-						);
-					};
-
-					if (isValidFileArray(rawData)) {
-						console.log('Files data:', rawData);
-						setFiles(rawData);
-					} else {
-						console.error('Invalid data format received');
-						setFiles([]);
-					}
+					const data = (await response.json()) as ApiResponse;
+					setFiles(Array.isArray(data) ? data : []);
 				} else {
-					const errorText = await response.text();
-					console.error('Error response:', errorText);
+					setFiles([]);
 				}
 			} catch (error) {
 				console.error('Error fetching files:', error);
+				setFiles([]);
 			} finally {
 				setLoading(false);
 			}

@@ -67,7 +67,7 @@ export function Header() {
 						))}
 
 						{/* Auth Button */}
-						<div>
+						<div className="flex items-center justify-center">
 							<SignedOut>
 								<SignInButton fallbackRedirectUrl="/estudiantes">
 									<Button
@@ -92,12 +92,13 @@ export function Header() {
 								</SignInButton>
 							</SignedOut>
 							<SignedIn>
-								{/* Envolver UserButton en un div con key única */}
-								<div key="user-button">
+								<div className="relative">
 									<UserButton
+										showName
 										appearance={{
 											elements: {
-												userButtonBox: 'w-full',
+												userButtonBox: 'w-full h-full',
+												userButtonTrigger: 'w-full h-full',
 											},
 										}}
 									>
@@ -223,8 +224,16 @@ export function Header() {
 							</SignInButton>
 						</SignedOut>
 						<SignedIn>
-							<div className="cl-userButton-root mr-6 flex w-full justify-center">
-								<UserButton showName>
+							<div className="relative flex w-full justify-center">
+								<UserButton
+									showName
+									appearance={{
+										elements: {
+											userButtonBox: 'w-full h-full',
+											userButtonTrigger: 'w-full h-full',
+										},
+									}}
+								>
 									<UserButton.MenuItems>
 										<UserButton.Link
 											label="Mis Cursos"

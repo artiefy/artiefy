@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { eq } from 'drizzle-orm';
 
@@ -12,11 +12,15 @@ interface NextLessonStatusResponse {
 }
 
 export async function GET(
-	_request: Request,
+	_: NextRequest, // Rename 'request' to '_' to indicate it's intentionally unused
 	{ params }: { params: { id: string } }
 ): Promise<NextResponse<NextLessonStatusResponse>> {
 	try {
-		if (!params?.id) {
+		// Usar el patrón recomendado por Next.js para params asíncronos
+		const paramsData = await Promise.resolve(params);
+		const { id } = paramsData;
+
+		if (!id) {
 			return NextResponse.json({
 				lessonId: null,
 				isUnlocked: false,
@@ -24,7 +28,7 @@ export async function GET(
 			});
 		}
 
-		const currentLessonId = Number(params.id);
+		const currentLessonId = Number(id);
 		if (isNaN(currentLessonId)) {
 			return NextResponse.json({
 				lessonId: null,
@@ -33,6 +37,7 @@ export async function GET(
 			});
 		}
 
+		// Get current lesson with activities
 		const currentLesson = await db.query.lessons.findFirst({
 			where: eq(lessons.id, currentLessonId),
 			with: {
@@ -44,7 +49,7 @@ export async function GET(
 			return NextResponse.json({ lessonId: null, isUnlocked: false });
 		}
 
-		// Get next lesson with its progress
+		// Get next lesson with progress
 		const nextLesson = await db.query.lessons.findFirst({
 			where: eq(lessons.courseId, currentLesson.courseId),
 			orderBy: (lessons, { asc }) => [asc(lessons.id)],
@@ -64,6 +69,7 @@ export async function GET(
 			isUnlocked: progress?.isLocked === false,
 		});
 	} catch (error) {
+		console.error('Error in next-lesson-status:', error);
 		return NextResponse.json({
 			lessonId: null,
 			isUnlocked: false,
