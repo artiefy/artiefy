@@ -54,15 +54,15 @@ export default function CourseDetails({
 			setIsCheckingEnrollment(true);
 			try {
 				if (userId) {
-					// Verificar inscripción primero para actualización rápida
+					// Verificar inscripción primero
 					const isUserEnrolled =
-						Array.isArray(course.enrollments) &&
-						course.enrollments.some(
+						Array.isArray(initialCourse.enrollments) &&
+						initialCourse.enrollments.some(
 							(enrollment: Enrollment) => enrollment.userId === userId
 						);
 					setIsEnrolled(isUserEnrolled);
 
-					// Verificar suscripción en paralelo
+					// Verificar suscripción
 					const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
 					const subscriptionEndDate = user?.publicMetadata
 						?.subscriptionEndDate as string | null;
@@ -74,18 +74,23 @@ export default function CourseDetails({
 
 					// Si está inscrito, cargar progreso
 					if (isUserEnrolled) {
-						const lessons = await getLessonsByCourseId(course.id, userId);
-						setCourse((prev) => ({
-							...prev,
-							lessons: lessons
-								.map((lesson) => ({
-									...lesson,
-									isLocked: lesson.isLocked,
-									porcentajecompletado: lesson.userProgress,
-									isNew: lesson.isNew, // Asegurarse de que la propiedad isNew se maneje correctamente
-								}))
-								.sort((a, b) => a.title.localeCompare(b.title)),
-						}));
+						const lessons = await getLessonsByCourseId(
+							initialCourse.id,
+							userId
+						);
+						if (lessons) {
+							setCourse((prev) => ({
+								...prev,
+								lessons: lessons
+									.map((lesson) => ({
+										...lesson,
+										isLocked: lesson.isLocked,
+										porcentajecompletado: lesson.userProgress,
+										isNew: lesson.isNew,
+									}))
+									.sort((a, b) => a.title.localeCompare(b.title)),
+							}));
+						}
 					}
 				}
 			} catch (error) {
@@ -97,7 +102,7 @@ export default function CourseDetails({
 		};
 
 		void checkEnrollmentAndProgress();
-	}, [course.enrollments, course.id, userId, user]);
+	}, [userId, user, initialCourse.id, initialCourse.enrollments]);
 
 	if (isLoading) {
 		return <CourseDetailsSkeleton />;
@@ -225,7 +230,7 @@ export default function CourseDetails({
 		course.materias?.find((m) => m.programa)?.programa ?? null;
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="bg-background min-h-screen">
 			<main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
 				<CourseBreadcrumb
 					title={course.title}
