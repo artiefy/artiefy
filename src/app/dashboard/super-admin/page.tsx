@@ -1438,17 +1438,19 @@ export default function AdminDashboard() {
 									throw new Error('Error al enviar las credenciales');
 								}
 
-								const rawResult = await response.json();
+								const rawResult: unknown = await response.json();
 
 								if (
-									!rawResult ||
-									typeof rawResult !== 'object' ||
-									!('results' in rawResult)
+								!rawResult ||
+								typeof rawResult !== 'object' ||
+								!('results' in rawResult) ||
+								!Array.isArray((rawResult as { results: unknown }).results)
 								) {
-									throw new Error('Invalid email response');
+								throw new Error('Invalid email response');
 								}
 
 								const result = rawResult as EmailResponse;
+
 
 								const successCount = result.results.filter(
 									(r) => r.status === 'success'

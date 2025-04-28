@@ -1,8 +1,6 @@
 import { Server, type Server as SocketIOServer } from 'socket.io';
-
 import type { Server as NetServer } from 'http';
 import type { Socket } from 'net';
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 interface CustomNextApiResponse extends NextApiResponse {
 	socket: Socket & {

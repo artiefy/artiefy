@@ -153,17 +153,21 @@ export async function deleteUser(id: string) {
 			await client.users.deleteUser(id);
 		} catch (clerkError: unknown) {
 			if (
-			  typeof clerkError === 'object' &&
-			  clerkError !== null &&
-			  'status' in clerkError &&
-			  typeof (clerkError as { status: unknown }).status === 'number' &&
-			  (clerkError as { status: number }).status !== 404
+				typeof clerkError === 'object' &&
+				clerkError !== null &&
+				'status' in clerkError &&
+				typeof (clerkError as { status: unknown }).status === 'number' &&
+				(clerkError as { status: number }).status !== 404
 			) {
-			  throw clerkError;
+				if (clerkError instanceof Error) {
+					throw clerkError;
+				}
+				throw new Error('Unknown Clerk error during user deletion');
 			}
-			console.log(`Usuario ${id} no encontrado en Clerk, continuando con eliminación local`);
-		  }
-		  
+			console.log(
+				`Usuario ${id} no encontrado en Clerk, continuando con eliminación local`
+			);
+		}
 
 		// Delete from database
 		await db.delete(users).where(eq(users.id, id));
