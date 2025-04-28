@@ -397,16 +397,25 @@ const LessonActivities = ({
 
 	const getButtonClasses = (activity: Activity) => {
 		const activityState = activitiesState[activity.id];
+		const currentLesson = activity.lessonsId
+			? lessons.find((l) => l.id === activity.lessonsId)
+			: null;
+		const hasNoVideo = currentLesson?.coverVideoKey === 'none';
 
 		if (isButtonLoading) {
-			return 'bg-gray-300 text-gray-300 border-none'; // Estilo consistente para todos los botones en carga
+			return 'bg-gray-300 text-gray-300 border-none';
 		}
 
-		return activityState?.isCompleted
-			? 'bg-green-500 text-white hover:bg-green-700 active:scale-95'
-			: isVideoCompleted
-				? 'font-semibold text-black'
-				: 'bg-gray-400 text-background';
+		if (activityState?.isCompleted) {
+			return 'bg-green-500 text-black hover:bg-green-700 active:scale-95';
+		}
+
+		// Enable button styling for no video or completed video
+		if (hasNoVideo || isVideoCompleted) {
+			return 'font-semibold text-black relative z-10';
+		}
+
+		return 'bg-gray-400 text-background';
 	};
 
 	const getButtonLabel = (activity: Activity) => {
@@ -547,7 +556,7 @@ const LessonActivities = ({
 		// Get next lesson
 		const nextLesson = sortedLessons[currentIndex + 1];
 		return nextLesson?.id;
-	}, [lessons, lessonId]);
+	}, [lessons, lessonId])
 
 	const renderActivityCard = (activity: Activity, index: number) => {
 		const activityState = activitiesState[activity.id];
@@ -556,7 +565,12 @@ const LessonActivities = ({
 		const previousActivity = index > 0 ? activities[index - 1] : null;
 		const isPreviousCompleted =
 			!previousActivity || activitiesState[previousActivity.id]?.isCompleted;
-		const canAccess = isFirstActivity || isPreviousCompleted;
+		const currentLesson = activity.lessonsId
+			? lessons.find((l) => l.id === activity.lessonsId)
+			: null;
+		const hasNoVideo = currentLesson?.coverVideoKey === 'none';
+		const canAccess =
+			hasNoVideo || isVideoCompleted || isFirstActivity || isPreviousCompleted;
 		const isNextLessonAvailable =
 			!isLastLesson && isLastActivityInLesson(activity);
 
@@ -610,11 +624,15 @@ const LessonActivities = ({
 									? () => handleCompletedActivityClick(activity)
 									: () => handleOpenActivity(activity)
 							}
-							disabled={!isVideoCompleted || isButtonLoading || !canAccess}
+							disabled={
+								(!hasNoVideo && !isVideoCompleted) ||
+								isButtonLoading ||
+								!canAccess
+							}
 							className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
 						>
 							{/* Animated gradient background */}
-							{isVideoCompleted &&
+							{(hasNoVideo || isVideoCompleted) &&
 								!activityState?.isCompleted &&
 								canAccess &&
 								!isButtonLoading && (

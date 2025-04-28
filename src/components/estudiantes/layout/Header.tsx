@@ -1,11 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import {
+	SignInButton,
+	SignedIn,
+	SignedOut,
+	UserButton,
+	ClerkLoaded,
+	ClerkLoading,
+} from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import {
 	UserCircleIcon,
@@ -19,11 +26,38 @@ import '~/styles/barsicon.css';
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
-	const [isMounted, setIsMounted] = useState(false);
 
-	useEffect(() => {
-		setIsMounted(true);
-	}, []);
+	const UserButtonWithLoading = () => (
+		<div className="flex items-center">
+			<ClerkLoading>
+				<div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+					<Icons.spinner className="h-5 w-5 animate-spin text-gray-500" />
+				</div>
+			</ClerkLoading>
+			<ClerkLoaded>
+				<UserButton
+					showName
+					appearance={{
+						elements: {
+							userButtonBox: 'flex items-center gap-2 h-9',
+							userButtonTrigger: 'h-full flex items-center px-2',
+							userButtonOuterIdentifier: 'text-base font-normal',
+							userButtonAvatarBox: 'size-8',
+						},
+					}}
+				>
+					<UserButton.MenuItems>
+						<UserButton.Link
+							label="Mis Cursos"
+							labelIcon={<UserCircleIcon className="size-4" />}
+							href="/estudiantes/myaccount"
+						/>
+						<UserButton.Action label="manageAccount" />
+					</UserButton.MenuItems>
+				</UserButton>
+			</ClerkLoaded>
+		</div>
+	);
 
 	const navItems = [
 		{ href: '/', label: 'Inicio' },
@@ -72,7 +106,7 @@ export function Header() {
 						))}
 
 						{/* Auth Button */}
-						<div className="flex items-center justify-center">
+						<div className="flex items-center">
 							<SignedOut>
 								<SignInButton fallbackRedirectUrl="/estudiantes">
 									<Button
@@ -96,34 +130,8 @@ export function Header() {
 									</Button>
 								</SignInButton>
 							</SignedOut>
-							{/* Desktop Auth section */}
 							<SignedIn>
-								<div className="relative">
-									{isMounted ? (
-										<UserButton
-											showName
-											appearance={{
-												elements: {
-													userButtonBox: 'w-full h-full',
-													userButtonTrigger: 'w-full h-full',
-												},
-											}}
-										>
-											<UserButton.MenuItems>
-												<UserButton.Link
-													label="Mis Cursos"
-													labelIcon={<UserCircleIcon className="size-4" />}
-													href="/estudiantes/myaccount"
-												/>
-												<UserButton.Action label="manageAccount" />
-											</UserButton.MenuItems>
-										</UserButton>
-									) : (
-										<div className="flex h-10 w-10 items-center justify-center">
-											<Icons.spinner className="size-6 animate-spin" />
-										</div>
-									)}
-								</div>
+								<UserButtonWithLoading />
 							</SignedIn>
 						</div>
 					</div>
@@ -235,34 +243,8 @@ export function Header() {
 								</Button>
 							</SignInButton>
 						</SignedOut>
-						{/* Mobile Auth section */}
 						<SignedIn>
-							<div className="relative flex w-full justify-center">
-								{isMounted ? (
-									<UserButton
-										showName
-										appearance={{
-											elements: {
-												userButtonBox: 'w-full h-full',
-												userButtonTrigger: 'w-full h-full',
-											},
-										}}
-									>
-										<UserButton.MenuItems>
-											<UserButton.Link
-												label="Mis Cursos"
-												labelIcon={<UserCircleIcon className="size-4" />}
-												href="/estudiantes/myaccount"
-											/>
-											<UserButton.Action label="manageAccount" />
-										</UserButton.MenuItems>
-									</UserButton>
-								) : (
-									<div className="flex h-10 w-10 items-center justify-center">
-										<Icons.spinner className="size-6 animate-spin" />
-									</div>
-								)}
-							</div>
+							<UserButtonWithLoading />
 						</SignedIn>
 					</div>
 				</DialogPanel>

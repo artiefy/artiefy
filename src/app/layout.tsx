@@ -1,18 +1,24 @@
-import '~/styles/globals.css';
-
+// 1. React/Next.js core imports
 import { Suspense } from 'react';
 
+import { type Metadata } from 'next';
+
+// 2. Global styles
+import '~/styles/globals.css';
+
+// 3. Fonts
 import { Merriweather, Montserrat } from 'next/font/google';
 
+// 4. External libraries
 import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { type Metadata } from 'next';
 
-import { Icons } from '~/components/estudiantes/ui/icons';
+// 5. Internal components
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 
+import Loading from './loading';
 import Providers from './providers';
 
 const montserrat = Montserrat({
@@ -114,32 +120,24 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<ClerkProvider localization={esMX} dynamic>
-			<html
-				lang="es"
-				className={`${montserrat.variable} ${merriweather.variable}`}
-			>
-				<meta
-					name="google-site-verification"
-					content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
-				/>
-				<body className="bg-background text-primary font-sans">
-					<Suspense fallback={<LoadingSkeleton />}>
+		<html
+			lang="es"
+			className={`${montserrat.variable} ${merriweather.variable}`}
+		>
+			<meta
+				name="google-site-verification"
+				content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
+			/>
+			<body className="bg-background text-primary font-sans">
+				<ClerkProvider localization={esMX}>
+					<Suspense fallback={<Loading />}>
 						<Providers>{children}</Providers>
 					</Suspense>
-					<SpeedInsights />
-					<Analytics />
-					<Toaster />
-				</body>
-			</html>
-		</ClerkProvider>
-	);
-}
-
-function LoadingSkeleton() {
-	return (
-		<div className="flex h-screen w-full items-center justify-center">
-			<Icons.spinner className="h-32 w-32 animate-spin" />
-		</div>
+				</ClerkProvider>
+				<SpeedInsights />
+				<Analytics />
+				<Toaster />
+			</body>
+		</html>
 	);
 }

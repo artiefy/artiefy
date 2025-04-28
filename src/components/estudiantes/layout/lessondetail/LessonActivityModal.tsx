@@ -231,6 +231,11 @@ const LessonActivityModal = ({
 
 	useEffect(() => {
 		const canClose = () => {
+			// Para actividades tipo documento (typeid === 1), siempre permitir cerrar
+			if (activity.typeid === 1) {
+				return true;
+			}
+
 			// Si la actividad ya está completada, siempre puede cerrar
 			if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
 				return true;
@@ -243,10 +248,6 @@ const LessonActivityModal = ({
 
 			// Para actividades revisadas
 			if (activity.revisada) {
-				// Puede cerrar si:
-				// 1. No tiene intentos restantes (attemptsLeft === 0)
-				// 2. Tiene nota aprobatoria (finalScore >= 3)
-				// 3. Es la última actividad del curso (isLastActivity && isLastLesson)
 				return (
 					attemptsLeft === 0 ||
 					finalScore >= 3 ||
@@ -268,6 +269,7 @@ const LessonActivityModal = ({
 		attemptsLeft,
 		activity.revisada,
 		activity.isCompleted,
+		activity.typeid,
 		savedResults?.isAlreadyCompleted,
 		isLastActivity,
 		isLastLesson,
@@ -1575,6 +1577,12 @@ const LessonActivityModal = ({
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open) {
+					// Para actividades tipo documento, permitir cerrar sin restricciones
+					if (activity.typeid === 1) {
+						onClose();
+						return;
+					}
+
 					if (!canCloseModal) {
 						if (activity.revisada) {
 							const intentosRestantes = attemptsLeft ?? 0;

@@ -164,16 +164,41 @@
 	padding: 1rem;
 }
 
-/* Resizable box styles */
-.react-resizable {
+/* Panel styles */
+.chat-resizable {
 	position: relative;
 	background: white;
 	border-radius: 0.5rem;
-	overflow: hidden;
+	overflow: visible;
 	z-index: 100000 !important;
+	width: 400px;
+	height: 500px;
 }
 
-/* Reset existing handle styles */
+/* Custom resize handle styles for diagonals */
+.diagonal-handles {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.edge-handles {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+/* Style for built-in Panel resize handle */
+[data-panel-resize-handle-id] {
+	background: rgba(0, 165, 192, 0.1);
+	transition: background-color 150ms ease;
+}
+
+[data-panel-resize-handle-id]:hover {
+	background: rgba(0, 165, 192, 0.2);
+}
+
+/* Custom handle styles */
 .react-resizable-handle {
 	position: absolute;
 	width: 20px;
@@ -183,17 +208,42 @@
 	align-items: center;
 	justify-content: center;
 	z-index: 100001;
+	pointer-events: auto;
 }
 
-.react-resizable-handle::after {
-	content: "⋮⋮";
-	color: #00a5c0;
-	font-size: 16px;
-	line-height: 1;
+/* Diagonal handles */
+.react-resizable-handle-se,
+.react-resizable-handle-sw,
+.react-resizable-handle-ne,
+.react-resizable-handle-nw {
+	width: 20px;
+	height: 20px;
+	font-size: 18px;
 	letter-spacing: -2px;
 }
 
-/* Handle positions and rotations */
+.react-resizable-handle-se {
+	right: -10px;
+	bottom: -10px;
+	transform: rotate(-45deg);
+}
+.react-resizable-handle-sw {
+	left: -10px;
+	bottom: -10px;
+	transform: rotate(-45deg);
+}
+.react-resizable-handle-ne {
+	right: -10px;
+	top: -10px;
+	transform: rotate(-45deg);
+}
+.react-resizable-handle-nw {
+	left: -10px;
+	top: -10px;
+	transform: rotate(-45deg);
+}
+
+/* Top and bottom handles */
 .react-resizable-handle-n,
 .react-resizable-handle-s {
 	left: 50%;
@@ -202,94 +252,23 @@
 	height: 20px;
 }
 
+.react-resizable-handle-n {
+	top: -10px;
+}
+.react-resizable-handle-s {
+	bottom: -10px;
+}
+
 .react-resizable-handle-n::after,
 .react-resizable-handle-s::after {
 	content: "⋮⋮";
+	transform: rotate(90deg);
+	font-size: 18px;
 	letter-spacing: -1px;
 }
 
-.react-resizable-handle-e,
-.react-resizable-handle-w {
-	top: 50%;
-	transform: translateY(-50%);
-	width: 20px;
-	height: 40px;
-}
-
-/* Ajustar la rotación específica para cada esquina */
-.react-resizable-handle-se::after,
-.react-resizable-handle-nw::after {
-	content: "⋮⋮";
-	font-size: 18px;
-}
-
-.react-resizable-handle-sw::after,
-.react-resizable-handle-ne::after {
-	content: "⋮⋮";
-	font-size: 18px;
-}
-
-/* Ajustar el tamaño del contenedor para los handles laterales */
-.react-resizable-handle-ne::after,
-.react-resizable-handle-sw::after {
-content: "⋮⋮";
-	transform: rotate(0deg);
-}
-
-/* Ajustar la rotación específica para cada esquina */
-.react-resizable-handle-se::after {
-	content: "⋮⋮";
-	transform: rotate(-45deg);
-}
-
-.react-resizable-handle-sw::after {
-	content: "⋮⋮";
-	transform: rotate(-45deg);
-}
-
-.react-resizable-handle-ne::after {
-	content: "⋮⋮";
-	transform: rotate(-45deg);
-}
-
-.react-resizable-handle-nw::after {
-	content: "⋮⋮";
-	transform: rotate(-45deg);
-}
-
-/* Specific positions */
-.react-resizable-handle-n {
-	top: 0;
-}
-.react-resizable-handle-s {
-	bottom: 0;
-}
-.react-resizable-handle-e {
-	right: 0;
-}
-.react-resizable-handle-w {
-	left: 0;
-}
-.react-resizable-handle-se {
-	right: 0;
-	bottom: 0;
-}
-.react-resizable-handle-sw {
-	left: 0;
-	bottom: 0;
-}
-.react-resizable-handle-ne {
-	right: 0;
-	top: 0;
-}
-.react-resizable-handle-nw {
-	left: 0;
-	top: 0;
-}
-
-/* Hover effect */
+/* Hover effects */
 .react-resizable-handle:hover {
-	opacity: 1;
 	background-color: rgba(0, 165, 192, 0.2);
 }
 
@@ -497,46 +476,4 @@ content: "⋮⋮";
 	) !important;
 	opacity: 0.7;
 	cursor: not-allowed;
-}
-
-/* Estilos para los handles de arriba y abajo (horizontales) */
-.react-resizable-handle-n::after,
-.react-resizable-handle-s::after {
-	content: "⋮⋮";
-	transform: rotate(90deg);
-	font-size: 18px;
-	letter-spacing: -1px;
-}
-
-/* Estilos para los handles laterales (verticales) */
-.react-resizable-handle-e::after,
-.react-resizable-handle-w::after {
-	content: "⋮⋮";
-	transform: rotate(0deg);
-	font-size: 18px;
-	letter-spacing: -1px;
-}
-
-/* Estilos para las esquinas (diagonales) */
-.react-resizable-handle-se::after,
-.react-resizable-handle-sw::after,
-.react-resizable-handle-ne::after,
-.react-resizable-handle-nw::after {
-	content: "⋮⋮";
-	font-size: 18px;
-	letter-spacing: -2px;
-}
-
-/* Rotaciones específicas para las esquinas */
-.react-resizable-handle-se::after {
-	transform: rotate(-45deg);
-}
-.react-resizable-handle-sw::after {
-	transform: rotate(-45deg);
-}
-.react-resizable-handle-ne::after {
-	transform: rotate(-45deg);
-}
-.react-resizable-handle-nw::after {
-	transform: rotate(-45deg);
 }
