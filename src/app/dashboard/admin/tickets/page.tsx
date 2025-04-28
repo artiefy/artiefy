@@ -1,18 +1,55 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import { Loader2, Plus, Pencil, Trash2, Info } from 'lucide-react';
+
 import TicketModal from './TicketModal';
 import ChatList from '../chat/ChatList';
 import FloatingChat from '../chat/FloatingChat';
 
+// src/types/tickets.ts
+
+export interface Ticket {
+	id: string;
+	email: string;
+	description: string;
+	tipo: string;
+	estado: string;
+	assignedToName?: string;
+	assignedToEmail?: string;
+	creatorName?: string;
+	creatorEmail?: string;
+	comments?: string;
+	assignedToId?: string; // <- lo agregamos aquí también
+	coverImageKey?: string;
+	creatorId?: string;
+  }
+  
+  export interface TicketFormData {
+	email: string;
+	description: string;
+	tipo: string;
+	estado: string;
+	assignedToId?: string; // <- y aquí también
+	comments?: string;
+	coverImageKey?: string;
+	newComment?: string;
+  }
+  export interface Comment {
+	id: number;
+	content: string;
+	createdAt: string;
+	user: {
+	  name: string;
+	};
+  }
+  
+
 export default function TicketsPage() {
-	const [tickets, setTickets] = useState([]);
+	const [tickets, setTickets] = useState<Ticket[]>([]);
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [selectedTicket, setSelectedTicket] = useState<{
-		id: string;
-		[key: string]: any;
-	} | null>(null);
+	const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [activeTab, setActiveTab] = useState<
 		'created' | 'assigned' | 'logs' | 'chats'
@@ -20,15 +57,7 @@ export default function TicketsPage() {
 	const [filterType, setFilterType] = useState('all');
 	const [filterStatus, setFilterStatus] = useState('all');
 	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-	const [viewTicket, setViewTicket] = useState<{
-		id: string;
-		email: string;
-		description?: string;
-		tipo?: string;
-		estado?: string;
-		assignedToName?: string;
-		comments?: string;
-	} | null>(null);
+	const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
 
 	const fetchTickets = async () => {
 		try {
@@ -36,13 +65,17 @@ export default function TicketsPage() {
 			const response = await fetch(`/api/admin/tickets?type=${activeTab}`);
 			const data = await response.json();
 
-			// Mapear snake_case → camelCase
-			const mapped = data.map((ticket: any) => ({
-				...ticket,
-				creatorName: ticket.creator_name,
-				creatorEmail: ticket.creator_email,
-				assignedToName: ticket.assigned_to_name,
-				assignedToEmail: ticket.assigned_to_email,
+			const mapped: Ticket[] = (data as any[]).map((ticket) => ({
+				id: ticket.id,
+				email: ticket.email,
+				description: ticket.description,
+				tipo: ticket.tipo,
+				estado: ticket.estado,
+				assignedToName: ticket.assigned_to_name ?? '',
+				assignedToEmail: ticket.assigned_to_email ?? '',
+				creatorName: ticket.creator_name ?? '',
+				creatorEmail: ticket.creator_email ?? '',
+				comments: ticket.comments ?? '',
 			}));
 
 			setTickets(mapped);
@@ -57,17 +90,15 @@ export default function TicketsPage() {
 		void fetchTickets();
 	}, [activeTab]);
 
-	const filteredTickets = Array.isArray(tickets)
-		? tickets.filter((ticket: any) => {
-				return (
-					(filterType === 'all' || ticket.tipo === filterType) &&
-					(filterStatus === 'all' || ticket.estado === filterStatus)
-				);
-			})
-		: [];
+	const filteredTickets = tickets.filter((ticket) => {
+		return (
+			(filterType === 'all' || ticket.tipo === filterType) &&
+			(filterStatus === 'all' || ticket.estado === filterStatus)
+		);
+	});
 
-	const handleCreate = async (data: any) => {
-		try {
+	const handleCreate = async (data: TicketFormData) => {
+				try {
 			await fetch('/api/admin/tickets', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -79,7 +110,7 @@ export default function TicketsPage() {
 		}
 	};
 
-	const handleUpdate = async (data: any) => {
+	const handleUpdate = async (data: TicketFormData) => {
 		try {
 			if (!selectedTicket) return;
 			await fetch(`/api/admin/tickets/${selectedTicket.id}`, {
@@ -97,9 +128,7 @@ export default function TicketsPage() {
 		if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) return;
 
 		try {
-			await fetch(`/api/admin/tickets/${id}`, {
-				method: 'DELETE',
-			});
+			await fetch(`/api/admin/tickets/${id}`, { method: 'DELETE' });
 			void fetchTickets();
 		} catch (error) {
 			console.error('Error deleting ticket:', error);
@@ -108,13 +137,14 @@ export default function TicketsPage() {
 
 	const handleCloseModal = () => {
 		setIsModalOpen(false);
-		setSelectedTicket(null); // Reset selected ticket when closing modal
+		setSelectedTicket(null);
 	};
 
 	const handleOpenCreateModal = () => {
 		setSelectedTicket(null);
 		setIsModalOpen(true);
 	};
+
 	const handleSelectChat = (chatId: string) => {
 		setSelectedChatId(chatId);
 	};

@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Send, X, MessageSquare } from 'lucide-react';
+
 import { useUser } from '@clerk/nextjs';
-import { io, Socket } from 'socket.io-client';
+import { io, type Socket } from 'socket.io-client';
+import { Send, X, MessageSquare } from 'lucide-react';
 
 interface Message {
 	from: string;
@@ -16,11 +17,12 @@ interface Chat {
 	messages: Message[];
 }
 
-let socket: Socket | null = null;
-
 interface FloatingChatProps {
 	chatId?: string | null;
+	onClose: () => void;
 }
+
+let socket: Socket | null = null;
 
 export default function FloatingChat({ chatId }: FloatingChatProps) {
 	const { user } = useUser();
@@ -41,12 +43,12 @@ export default function FloatingChat({ chatId }: FloatingChatProps) {
 			console.log('🔌 Conectado');
 			socket?.emit('join', {
 				userId: user.id,
-				username: user.firstName || 'Anon',
+				username: user.firstName ?? 'Anon',
 			});
 		});
 
 		socket.on('message', (msg: Message) => {
-			if (!user || msg.from === user.id) return; // ❌
+			if (!user || msg.from === user.id) return;
 			setChats((prevChats) => {
 				const chatIndex = prevChats.findIndex(
 					(chat) => chat.userId === msg.from
@@ -77,15 +79,14 @@ export default function FloatingChat({ chatId }: FloatingChatProps) {
 	}, [chatId]);
 
 	const sendMessage = () => {
-		if (!message.trim() || !user || !socket || !socket.connected) return;
-		const msg = {
+		if (!message.trim() || !user || !socket?.connected) return;
+
+		socket.emit('message', {
 			from: user.id,
 			to: activeChatId,
 			text: message,
-		};
-		socket.emit('message', msg);
+		});
 
-		
 		setMessage('');
 	};
 
@@ -138,11 +139,13 @@ export default function FloatingChat({ chatId }: FloatingChatProps) {
 						{activeChat?.messages.map((msg, idx) => (
 							<div
 								key={idx}
-								className={`flex ${msg.from === 'Tú' ? 'justify-end' : 'justify-start'}`}
+								className={`flex ${
+									msg.from === user?.id ? 'justify-end' : 'justify-start'
+								}`}
 							>
 								<div
 									className={`rounded-2xl px-4 py-2 ${
-										msg.from === 'Tú'
+										msg.from === user?.id
 											? 'bg-blue-600 text-white'
 											: 'bg-gray-700 text-white'
 									}`}

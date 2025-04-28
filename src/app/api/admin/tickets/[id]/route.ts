@@ -1,12 +1,26 @@
 import { NextResponse } from 'next/server';
+
 import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { db } from '~/server/db';
-import { tickets, ticketComments } from '~/server/db/schema';
+
 import {
 	sendEmail,
 	getTicketStatusChangeEmail,
 } from '~/lib/emails/ticketEmails';
+import { db } from '~/server/db';
+import { tickets, ticketComments } from '~/server/db/schema';
+
+// Tipos seguros
+interface UpdateTicketBody {
+	assignedToId?: string;
+	newComment?: string;
+	estado?: 'abierto' | 'en proceso' | 'en revision' | 'solucionado' | 'cerrado';
+	description?: string;
+	tipo?: 'otro' | 'bug' | 'revision' | 'logs';
+	email?: string;
+	coverImageKey?: string | null;
+	comments?: string;
+}
 
 export async function PUT(
 	request: Request,
@@ -25,9 +39,8 @@ export async function PUT(
 			return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
 		}
 
-		const body = await request.json();
+		const body = (await request.json()) as UpdateTicketBody;
 
-		// Get the current ticket
 		const currentTicket = await db.query.tickets.findFirst({
 			where: eq(tickets.id, ticketId),
 			with: {
@@ -39,7 +52,6 @@ export async function PUT(
 			return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
 		}
 
-		// Add comment if new comment provided
 		if (body.newComment) {
 			await db.insert(ticketComments).values({
 				ticketId,
@@ -49,14 +61,12 @@ export async function PUT(
 			});
 		}
 
-		// Clean update data
 		const updateData = { ...body };
 		if (!updateData.assignedToId) {
 			delete updateData.assignedToId;
 		}
 		delete updateData.newComment;
 
-		// Update the ticket
 		const updatedTicket = await db
 			.update(tickets)
 			.set({
@@ -66,7 +76,6 @@ export async function PUT(
 			.where(eq(tickets.id, ticketId))
 			.returning();
 
-		// Get all comments for email
 		const comments = await db.query.ticketComments.findMany({
 			where: eq(ticketComments.ticketId, ticketId),
 			with: {
@@ -75,17 +84,13 @@ export async function PUT(
 			orderBy: (comments, { desc }) => [desc(comments.createdAt)],
 		});
 
-		// Send email to ticket creator
 		if (currentTicket.creator?.email) {
-			console.log(
-				'📧 Enviando notificación de actualización a:',
-				currentTicket.creator.email
-			);
+			console.log('📧 Enviando notificación a:', currentTicket.creator.email);
 
 			const commentHistory = comments
 				.map(
 					(c) =>
-						`${c.user?.name || 'Usuario'}: ${c.content} (${new Date(c.createdAt).toLocaleString()})`
+						`${c.user?.name ?? 'Usuario'}: ${c.content} (${new Date(c.createdAt).toLocaleString()})`
 				)
 				.join('\n');
 
@@ -94,12 +99,13 @@ export async function PUT(
 				subject: `Ticket #${ticketId} - Actualización`,
 				html: getTicketStatusChangeEmail(
 					ticketId,
-					body.estado || currentTicket.estado,
+					body.estado ?? currentTicket.estado,
 					currentTicket.description,
 					commentHistory,
-					body.newComment
+					body.newComment ?? ''
 				),
 			});
+
 			console.log('📧 Resultado del envío:', emailResult);
 		}
 

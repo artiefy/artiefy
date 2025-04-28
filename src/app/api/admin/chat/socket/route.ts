@@ -1,16 +1,18 @@
-import { Server } from 'socket.io';
 import { NextResponse } from 'next/server';
-import { Server as NetServer } from 'http';
-import { NextApiResponseServerIO } from '~/types/socket';
+
+import { Server } from 'socket.io';
+
+import type { Server as NetServer } from 'http';
+import type { NextApiResponseServerIO } from '~/types/socket';
 
 export const dynamic = 'force-dynamic';
 
 let io: Server | undefined;
 
-export async function GET(req: Request, res: NextApiResponseServerIO) {
+export function GET(_: Request, res: NextApiResponseServerIO) {
 	if (!res.socket.server.io) {
 		console.log('🚀 Initializing Socket.IO server...');
-		const httpServer: NetServer = res.socket.server as any;
+		const httpServer = res.socket.server as unknown as NetServer;
 		io = new Server(httpServer, {
 			path: '/api/admin/chat/socketio',
 			cors: {
@@ -25,10 +27,9 @@ export async function GET(req: Request, res: NextApiResponseServerIO) {
 		io.on('connection', (socket) => {
 			console.log('👤 User connected:', socket.id);
 
-			// AQUÍ ES DONDE FALTABA
 			socket.on('message', (data) => {
 				console.log('📩 Message received:', data);
-				socket.broadcast.emit('message', data); // SOLO a los demás
+				socket.broadcast.emit('message', data);
 			});
 
 			socket.on('disconnect', () => {

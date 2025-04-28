@@ -1,54 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+
 import { Modal } from '~/components/shared/Modal';
+
+interface FormData {
+	email: string;
+	tipo: string;
+	estado: string;
+	assignedToId: string;
+	description: string;
+	comments: string;
+}
+
 interface TicketModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onSubmit: (data: any) => void;
-	ticket?: any;
+	onSubmit: (data: FormData) => void;
+	ticket?: Partial<FormData> & { assignedToName?: string };
 }
+
 const TicketModal = ({
 	isOpen,
 	onClose,
 	onSubmit,
 	ticket,
 }: TicketModalProps) => {
-	const initialFormState = {
-		email: '',
-		tipo: '',
-		estado: '',
-		assignedToId: '',
-		description: '',
-		comments: '',
-	};
+	const initialFormState = useMemo<FormData>(
+		() => ({
+			email: '',
+			tipo: '',
+			estado: '',
+			assignedToId: '',
+			description: '',
+			comments: '',
+		}),
+		[]
+	);
 
-	const [formData, setFormData] = useState(initialFormState);
+	const [formData, setFormData] = useState<FormData>(initialFormState);
 
 	useEffect(() => {
 		if (ticket) {
 			setFormData({
-				email: ticket.email || '',
-				tipo: ticket.tipo || '',
-				estado: ticket.estado || '',
-				assignedToId: ticket.assignedToId || '',
-				description: ticket.description || '',
-				comments: ticket.comments || '',
+				email: ticket.email ?? '',
+				tipo: ticket.tipo ?? '',
+				estado: ticket.estado ?? '',
+				assignedToId: ticket.assignedToId ?? '',
+				description: ticket.description ?? '',
+				comments: ticket.comments ?? '',
 			});
 		} else {
 			setFormData(initialFormState);
 		}
-	}, [ticket, isOpen]);
+	}, [ticket, isOpen, initialFormState]);
 
 	const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
 
 	useEffect(() => {
-		// Fetch users from API or other source
 		const fetchUsers = async () => {
-			const response = await fetch('/api/users');
-			const data = await response.json();
-			setUsers(data);
+			try {
+				const response = await fetch('/api/users');
+				const data = (await response.json()) as { id: string; name: string }[];
+				setUsers(data);
+			} catch (error) {
+				console.error('Error fetching users:', error);
+			}
 		};
 
-		fetchUsers();
+		void fetchUsers();
 	}, []);
 
 	const handleInputChange = (
@@ -63,7 +81,7 @@ const TicketModal = ({
 		}));
 	};
 
-	const handleSubmit = (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		onSubmit(formData);
 	};
@@ -91,7 +109,7 @@ const TicketModal = ({
 									className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white shadow-sm"
 								>
 									<option value="">
-										{ticket?.assignedToName || 'Seleccionar usuario'}
+										{ticket?.assignedToName ?? 'Seleccionar usuario'}
 									</option>
 									{users.map((user) => (
 										<option key={user.id} value={user.id}>
@@ -183,6 +201,7 @@ const TicketModal = ({
 					</div>
 				</div>
 
+				{/* Botones de acción */}
 				<div className="mt-4 flex justify-end space-x-3 border-t border-gray-700 pt-4">
 					<button
 						type="button"

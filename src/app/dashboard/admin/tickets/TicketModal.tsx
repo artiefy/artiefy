@@ -1,136 +1,163 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Loader2 } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
+import { X, Loader2 } from 'lucide-react';
+
 import { Modal } from '~/components/shared/Modal';
 
-interface TicketModalProps {
-	isOpen: boolean;
-	onClose: () => void;
-	onSubmit: (data: any) => void;
-	ticket?: any;
-}
+// src/types/tickets.ts
 
-interface AdminUser {
+export interface Ticket {
+	id: string;
+	email: string;
+	description: string;
+	tipo: string;
+	estado: string;
+	assignedToName?: string;
+	assignedToEmail?: string;
+	creatorName?: string;
+	creatorEmail?: string;
+	comments?: string;
+	assignedToId?: string; // <- lo agregamos aquí también
+	coverImageKey?: string;
+	creatorId?: string;
+  }
+  
+  export interface TicketFormData {
+	email: string;
+	description: string;
+	tipo: string;
+	estado: string;
+	assignedToId?: string; // <- y aquí también
+	comments?: string;
+	coverImageKey?: string;
+	newComment?: string;
+  }
+  
+  export interface AdminUser {
 	id: string;
 	name: string;
 	email: string;
 	role: string;
-}
-
-interface Comment {
+  }
+  
+  export interface Comment {
 	id: number;
 	content: string;
 	createdAt: string;
 	user: {
-		name: string;
+	  name: string;
 	};
-}
+  }
+  
+
+
+  interface TicketModalProps {
+	isOpen: boolean;
+	onClose: () => void;
+	onSubmit: (data: TicketFormData) => void;
+	ticket?: Ticket | null;
+  }
 
 export default function TicketModal({
-	isOpen,
-	onClose,
-	onSubmit,
-	ticket,
+  isOpen,
+  onClose,
+  onSubmit,
+  ticket,
 }: TicketModalProps) {
-	const { user } = useUser();
-	const [formData, setFormData] = useState({
-		assignedToId: ticket?.assignedToId || '',
-		email: ticket?.email || '',
-		description: ticket?.description || '',
-		comments: ticket?.comments || '',
-		estado: ticket?.estado || 'abierto',
-		tipo: ticket?.tipo || 'otro',
-		coverImageKey: ticket?.coverImageKey || '',
-		newComment: '',
-	});
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [admins, setAdmins] = useState<AdminUser[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [comments, setComments] = useState<Comment[]>([]);
-	const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const { user } = useUser();
 
-	useEffect(() => {
-		const fetchAdmins = async () => {
-			try {
-				setIsLoading(true);
-				const response = await fetch('/api/admin/users/admins');
-				const data = await response.json();
-				setAdmins(data);
-			} catch (error) {
-				console.error('Error al cargar administradores:', error);
-			} finally {
-				setIsLoading(false);
-			}
-		};
+  const initialFormState: TicketFormData = {
+    assignedToId: '',
+    email: '',
+    description: '',
+    comments: '',
+    estado: 'abierto',
+    tipo: 'otro',
+    coverImageKey: '',
+    newComment: '',
+  };
 
-		if (isOpen) void fetchAdmins();
-	}, [isOpen]);
+  const [formData, setFormData] = useState<TicketFormData>(initialFormState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-	useEffect(() => {
-		if (ticket) {
-			setFormData({
-				assignedToId: ticket.assignedToId || '',
-				email: ticket.email || '',
-				description: ticket.description || '',
-				comments: ticket.comments || '',
-				estado: ticket.estado || 'abierto',
-				tipo: ticket.tipo || 'otro',
-				coverImageKey: ticket.coverImageKey || '',
-				newComment: '',
-			});
-		} else {
-			setFormData({
-				assignedToId: '',
-				email: '',
-				description: '',
-				comments: '',
-				estado: 'abierto',
-				tipo: 'otro',
-				coverImageKey: '',
-				newComment: '',
-			});
-		}
-	}, [ticket]);
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        setIsLoadingAdmins(true);
+        const response = await fetch('/api/admin/users/admins');
+        const data: AdminUser[] = await response.json();
+        setAdmins(data);
+      } catch (error) {
+        console.error('Error loading admins:', error);
+      } finally {
+        setIsLoadingAdmins(false);
+      }
+    };
 
-	useEffect(() => {
-		const fetchComments = async () => {
-			if (isOpen && ticket?.id) {
-				setIsLoadingComments(true);
-				try {
-					const response = await fetch(
-						`/api/admin/tickets/${ticket.id}/comments`
-					);
-					const data = await response.json();
-					setComments(data);
-				} catch (error) {
-					console.error('Error fetching comments:', error);
-				}
-				setIsLoadingComments(false);
-			}
-		};
-		void fetchComments();
-	}, [isOpen, ticket?.id]);
+    if (isOpen) void fetchAdmins();
+  }, [isOpen]);
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!user) return;
+  useEffect(() => {
+    if (ticket) {
+      setFormData({
+        assignedToId: ticket.assignedToId ?? '',
+        email: ticket.email ?? '',
+        description: ticket.description ?? '',
+        comments: ticket.comments ?? '',
+        estado: ticket.estado ?? 'abierto',
+        tipo: ticket.tipo ?? 'otro',
+        coverImageKey: ticket.coverImageKey ?? '',
+        newComment: '',
+      });
+    } else {
+      setFormData(initialFormState);
+    }
+  }, [ticket]);
 
-		setIsSubmitting(true);
-		const submitData = { ...formData };
-		if (!submitData.assignedToId) {
-			delete submitData.assignedToId;
-		}
-		await onSubmit({
-			...submitData,
-			creatorId: ticket ? ticket.creatorId : user.id,
-		});
-		setIsSubmitting(false);
-		onClose();
-	};
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (isOpen && ticket?.id) {
+        setIsLoadingComments(true);
+        try {
+          const response = await fetch(`/api/admin/tickets/${ticket.id}/comments`);
+          const data: Comment[] = await response.json();
+          setComments(data);
+        } catch (error) {
+          console.error('Error fetching comments:', error);
+        } finally {
+          setIsLoadingComments(false);
+        }
+      }
+    };
 
-	if (!isOpen) return null;
+    void fetchComments();
+  }, [isOpen, ticket?.id]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!user) return;
+
+    setIsSubmitting(true);
+
+    const submitData = { ...formData };
+    if (!submitData.assignedToId) {
+      delete submitData.assignedToId;
+    }
+
+    await onSubmit(submitData);
+
+
+    setIsSubmitting(false);
+    onClose();
+  };
+
+  if (!isOpen) return null;
 
 	return (
 		<Modal
@@ -178,7 +205,7 @@ export default function TicketModal({
 								setFormData({ ...formData, assignedToId: e.target.value })
 							}
 							className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white transition focus:ring-2 focus:ring-blue-500"
-							disabled={isLoading}
+							disabled={isLoadingAdmins}
 						>
 							<option value="">Sin asignar</option>
 							{admins.map((admin) => (

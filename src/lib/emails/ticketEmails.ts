@@ -11,11 +11,11 @@ const transporter = nodemailer.createTransport({
 	},
 });
 
-type EmailData = {
+interface EmailData {
 	to: string;
 	subject: string;
 	html: string;
-};
+}
 
 export async function sendEmail({ to, subject, html }: EmailData) {
 	console.log('📧 Intentando enviar email a:', to);

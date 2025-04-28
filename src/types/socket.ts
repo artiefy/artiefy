@@ -1,11 +1,11 @@
-import { Server as HTTPServer } from 'http';
-import { Socket } from 'net';
-import { Server as IOServer } from 'socket.io';
+import { type Server as HTTPServer } from 'http';
+import { type Socket } from 'net';
+import { type Server as IOServer } from 'socket.io';
 
-export type NextApiResponseServerIO = {
+export interface NextApiResponseServerIO {
   socket: Socket & {
     server: HTTPServer & {
       io: IOServer;
     };
   };
-};
+}

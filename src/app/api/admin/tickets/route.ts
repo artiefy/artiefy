@@ -1,15 +1,36 @@
 import { NextResponse } from 'next/server';
+
 import { auth } from '@clerk/nextjs/server';
-import { db } from '~/server/db';
-import { sql } from 'drizzle-orm';
-import { tickets, users, ticketComments } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
+
 import {
 	sendEmail,
 	getNewTicketAssignmentEmail,
 } from '~/lib/emails/ticketEmails';
+import { db } from '~/server/db';
+import { tickets, users, ticketComments } from '~/server/db/schema';
 
+
+// Tipos seguros
+interface CreateTicketBody {
+	email: string;
+	tipo: 'otro' | 'bug' | 'revision' | 'logs';
+	description: string;
+	comments: string;
+	estado: 'abierto' | 'en proceso' | 'en revision' | 'solucionado' | 'cerrado';
+	assignedToId?: string;
+	coverImageKey?: string | null;
+}
+
+interface UpdateTicketBody extends Partial<CreateTicketBody> {
+	id: number;
+}
+
+export const dynamic = 'force-dynamic';
+
+// ========================
 // GET /api/admin/tickets
+// ========================
 export async function GET(request: Request) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -52,6 +73,7 @@ export async function GET(request: Request) {
 		`;
 
 		const result = await db.execute(query);
+
 		return NextResponse.json(result.rows ?? []);
 	} catch (error) {
 		console.error('❌ Error fetching tickets:', error);
@@ -62,7 +84,9 @@ export async function GET(request: Request) {
 	}
 }
 
+// ========================
 // POST /api/admin/tickets
+// ========================
 export async function POST(request: Request) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -72,7 +96,7 @@ export async function POST(request: Request) {
 	}
 
 	try {
-		const body = await request.json();
+		const body = (await request.json()) as CreateTicketBody;
 		console.log('📝 Creando nuevo ticket:', body);
 
 		const ticketData = {
@@ -86,16 +110,12 @@ export async function POST(request: Request) {
 			delete ticketData.assignedToId;
 		}
 
-		// Create the ticket first
 		const newTicket = await db.insert(tickets).values(ticketData).returning();
 		console.log('✅ Ticket creado:', newTicket[0]);
 
-		// Try to send email if there's an assignee
+		// Enviar correo si el ticket tiene asignado
 		if (body.assignedToId) {
-			console.log(
-				'📧 Ticket asignado, buscando información del usuario:',
-				body.assignedToId
-			);
+			console.log('📧 Buscando usuario asignado:', body.assignedToId);
 
 			try {
 				const assignee = await db.query.users.findFirst({
@@ -103,10 +123,8 @@ export async function POST(request: Request) {
 				});
 
 				if (assignee?.email) {
-					console.log(
-						'📧 Enviando notificación al usuario asignado:',
-						assignee.email
-					);
+					console.log('📧 Enviando correo a:', assignee.email);
+
 					const emailResult = await sendEmail({
 						to: assignee.email,
 						subject: `Nuevo Ticket Asignado #${newTicket[0].id}`,
@@ -115,15 +133,16 @@ export async function POST(request: Request) {
 							body.description
 						),
 					});
-					console.log('📧 Resultado del envío:', emailResult);
+
+					console.log('📧 Email enviado:', emailResult);
 				} else {
-					console.log('⚠️ Usuario asignado no tiene email configurado');
+					console.log('⚠️ Usuario asignado no tiene correo configurado');
 				}
 			} catch (error) {
-				console.error('❌ Error en el proceso de envío de email:', error);
+				console.error('❌ Error enviando correo:', error);
 			}
 
-			// Add initial comment for assignment
+			// Agregar comentario de asignación
 			console.log('📝 Agregando comentario de asignación');
 			await db.insert(ticketComments).values({
 				ticketId: newTicket[0].id,
@@ -138,7 +157,7 @@ export async function POST(request: Request) {
 
 		return NextResponse.json(newTicket[0]);
 	} catch (error) {
-		console.error('❌ Error creating ticket:', error);
+		console.error('❌ Error creando ticket:', error);
 		return NextResponse.json(
 			{ error: 'Error creating ticket' },
 			{ status: 500 }
@@ -146,7 +165,9 @@ export async function POST(request: Request) {
 	}
 }
 
+// ========================
 // PUT /api/admin/tickets
+// ========================
 export async function PUT(request: Request) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -156,7 +177,7 @@ export async function PUT(request: Request) {
 	}
 
 	try {
-		const body = await request.json();
+		const body = (await request.json()) as UpdateTicketBody;
 		const { id, ...updateData } = body;
 
 		const updatedTicket = await db
@@ -177,3 +198,32 @@ export async function PUT(request: Request) {
 		);
 	}
 }
+
+
+export async function DELETE(request: Request) {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+  
+	if (!userId || (role !== 'admin' && role !== 'super-admin')) {
+	  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+	}
+  
+	const { searchParams } = new URL(request.url);
+	const id = searchParams.get('id');
+  
+	if (!id) {
+	  return NextResponse.json({ error: 'Missing ticket ID' }, { status: 400 });
+	}
+  
+	try {
+	  await db.delete(tickets).where(eq(tickets.id, Number(id)));
+	  return NextResponse.json({ success: true });
+	} catch (error) {
+	  console.error('❌ Error deleting ticket:', error);
+	  return NextResponse.json(
+		{ error: 'Error deleting ticket' },
+		{ status: 500 }
+	  );
+	}
+  }
+  

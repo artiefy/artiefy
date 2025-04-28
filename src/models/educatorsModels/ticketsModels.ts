@@ -31,12 +31,13 @@ export async function createTicket({
 }) {
 	try {
 		return db.insert(tickets).values({
-			comments,
 			description,
+			comments, // <-- también faltaba comments
 			coverImageKey: coverImageKey || null,
-			estado: false,
+			estado: 'abierto',
 			email,
-			userId,
+			creatorId: userId, // <-- corregido aquí
+			tipo: 'otro', // <-- falta en tu insert porque "tipo" es obligatorio en la tabla
 		});
 	} catch (error) {
 		console.error('Error al crear el ticket:', error);
@@ -53,7 +54,7 @@ export function getTickets() {
 			estado: tickets.estado,
 			coverImageKey: tickets.coverImageKey,
 			email: tickets.email,
-			userId: tickets.userId,
+			userId: tickets.creatorId,
 			createdAt: tickets.createdAt,
 			updatedAt: tickets.updatedAt,
 		});
@@ -73,12 +74,12 @@ export function getTicketsByUserId(userId: string) {
 				estado: tickets.estado,
 				coverImageKey: tickets.coverImageKey,
 				email: tickets.email,
-				userId: tickets.userId,
+				userId: tickets.creatorId,
 				createdAt: tickets.createdAt,
 				updatedAt: tickets.updatedAt,
 			})
 			.from(tickets)
-			.where(eq(tickets.userId, userId));
+			.where(eq(tickets.creatorId, userId));
 	} catch (error) {
 		console.error('Error al obtener los tickets:', error);
 	}
@@ -89,7 +90,7 @@ export async function updateTicketState(ticketId: number) {
 	try {
 		return db
 			.update(tickets)
-			.set({ estado: true })
+			.set({ estado: 'solucionado' })
 			.where(eq(tickets.id, ticketId));
 	} catch (error) {
 		console.error('Error al actualizar el estado del ticket:', error);

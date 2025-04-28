@@ -1,6 +1,7 @@
+import { type NextApiRequest } from 'next';
 import { Server } from 'socket.io';
-import { NextApiRequest } from 'next';
-import { NextApiResponseServerIO } from '~/types/socket';
+
+import { type NextApiResponseServerIO } from '~/types/socket';
 
 export const config = {
 	api: {
@@ -14,6 +15,7 @@ export default function handler(
 ) {
 	if (!res.socket.server.io) {
 		console.log('🔌 Iniciando servidor Socket.IO');
+		void req;
 
 		const io = new Server(res.socket.server, {
 			path: '/api/socketio',
@@ -48,5 +50,5 @@ export default function handler(
 			});
 		});
 	}
-	res.end();
+	(res as any).end();
 }

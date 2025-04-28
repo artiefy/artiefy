@@ -1,8 +1,10 @@
-import { auth } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+
+import { auth } from '@clerk/nextjs/server';
+import { eq, or } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
-import { eq, or } from 'drizzle-orm';
 
 export async function GET() {
 	const { userId } = await auth();
@@ -24,7 +26,7 @@ export async function GET() {
 
 		return NextResponse.json(adminUsers);
 	} catch (error) {
-		console.error('Error fetching admin users:', error);
+		console.error('❌ Error fetching admin users:', error);
 		return NextResponse.json(
 			{ error: 'Error fetching admin users' },
 			{ status: 500 }
