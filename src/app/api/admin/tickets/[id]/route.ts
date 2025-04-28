@@ -4,7 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import {
-	sendEmail,
+	sendTicketEmail,
 	getTicketStatusChangeEmail,
 } from '~/lib/emails/ticketEmails';
 import { db } from '~/server/db';
@@ -94,7 +94,7 @@ export async function PUT(
 				)
 				.join('\n');
 
-			const emailResult = await sendEmail({
+			const emailResult = await sendTicketEmail({
 				to: currentTicket.creator.email,
 				subject: `Ticket #${ticketId} - Actualización`,
 				html: getTicketStatusChangeEmail(

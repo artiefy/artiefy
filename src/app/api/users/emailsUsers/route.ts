@@ -7,6 +7,7 @@ import nodemailer from 'nodemailer';
 import { db } from '~/server/db';
 import { userCredentials } from '~/server/db/schema';
 
+// Interfaces and types
 interface MailOptions {
 	from: string;
 	to: string;
@@ -21,6 +22,7 @@ interface Result {
 	email?: string;
 }
 
+// Nodemailer transporter setup
 const transporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
@@ -29,7 +31,7 @@ const transporter = nodemailer.createTransport({
 	},
 });
 
-// Función para generar contraseña aleatoria
+// Function to generate a random password
 function generateRandomPassword(length = 12): string {
 	const charset =
 		'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
@@ -40,16 +42,17 @@ function generateRandomPassword(length = 12): string {
 	return password;
 }
 
+// API Route Handler
 export async function POST(request: Request) {
 	try {
-		const { userIds }: { userIds: string[] } = await request.json();
+		const body = (await request.json()) as { userIds: string[] };
+		const { userIds } = body;
 		const results: Result[] = [];
 
 		for (const userId of userIds) {
 			try {
 				const clerk = await clerkClient();
 				const clerkUser = await clerk.users.getUser(userId);
-
 				if (!clerkUser) {
 					results.push({
 						userId,
@@ -76,6 +79,7 @@ export async function POST(request: Request) {
 				const username =
 					clerkUser.username ??
 					`${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`.trim();
+
 				let password: string;
 
 				const credentials = await db
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
 							email,
 						});
 					} catch (error) {
-						console.error(`Error creating credentials for ${userId}:`, error);
+						console.error(`Error creando credenciales para ${userId}:`, error);
 						results.push({
 							userId,
 							status: 'error',
@@ -113,18 +117,18 @@ export async function POST(request: Request) {
 					to: email,
 					subject: '🎨 Credenciales de Acceso - Artiefy',
 					html: `
-						<h2>¡Hola ${username}!</h2>
-						<p>Aquí están tus credenciales de acceso para Artiefy:</p>
-						<ul>
-							<li><strong>Usuario:</strong> ${username}</li>
-							<li><strong>Email:</strong> ${email}</li>
-							<li><strong>Contraseña:</strong> ${password}</li>
-						</ul>
-						<p>Por favor, inicia sesión en <a href="https://artiefy.com/" target="_blank">Artiefy</a></p>
-						<p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-						<hr>
-						<p>Equipo de Artiefy 🎨</p>
-					`,
+            <h2>¡Hola ${username}!</h2>
+            <p>Aquí están tus credenciales de acceso para Artiefy:</p>
+            <ul>
+              <li><strong>Usuario:</strong> ${username}</li>
+              <li><strong>Email:</strong> ${email}</li>
+              <li><strong>Contraseña:</strong> ${password}</li>
+            </ul>
+            <p>Por favor, inicia sesión en <a href="https://artiefy.com/" target="_blank">Artiefy</a></p>
+            <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+            <hr>
+            <p>Equipo de Artiefy 🎨</p>
+          `,
 				};
 
 				await transporter.sendMail(mailOptions);
@@ -147,7 +151,7 @@ export async function POST(request: Request) {
 
 		return NextResponse.json({ results });
 	} catch (error) {
-		console.error('Error in emailsUsers route:', error);
+		console.error('Error en la ruta emailsUsers:', error);
 		return NextResponse.json(
 			{ error: 'Error al enviar los correos' },
 			{ status: 500 }

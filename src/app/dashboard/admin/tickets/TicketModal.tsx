@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { X, Loader2 } from 'lucide-react';
 
@@ -22,9 +23,9 @@ export interface Ticket {
 	assignedToId?: string; // <- lo agregamos aquí también
 	coverImageKey?: string;
 	creatorId?: string;
-  }
-  
-  export interface TicketFormData {
+}
+
+export interface TicketFormData {
 	email: string;
 	description: string;
 	tipo: string;
@@ -33,131 +34,133 @@ export interface Ticket {
 	comments?: string;
 	coverImageKey?: string;
 	newComment?: string;
-  }
-  
-  export interface AdminUser {
+}
+
+export interface AdminUser {
 	id: string;
 	name: string;
 	email: string;
 	role: string;
-  }
-  
-  export interface Comment {
+}
+
+export interface Comment {
 	id: number;
 	content: string;
 	createdAt: string;
 	user: {
-	  name: string;
+		name: string;
 	};
-  }
-  
+}
 
-
-  interface TicketModalProps {
+interface TicketModalProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onSubmit: (data: TicketFormData) => void;
 	ticket?: Ticket | null;
-  }
+}
 
 export default function TicketModal({
-  isOpen,
-  onClose,
-  onSubmit,
-  ticket,
+	isOpen,
+	onClose,
+	onSubmit,
+	ticket,
 }: TicketModalProps) {
-  const { user } = useUser();
+	const { user } = useUser();
 
-  const initialFormState: TicketFormData = {
-    assignedToId: '',
-    email: '',
-    description: '',
-    comments: '',
-    estado: 'abierto',
-    tipo: 'otro',
-    coverImageKey: '',
-    newComment: '',
-  };
+	const initialFormState = useMemo<TicketFormData>(() => ({
+		assignedToId: '',
+		email: '',
+		description: '',
+		comments: '',
+		estado: 'abierto',
+		tipo: 'otro',
+		coverImageKey: '',
+		newComment: '',
+	}), []);
 
-  const [formData, setFormData] = useState<TicketFormData>(initialFormState);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [admins, setAdmins] = useState<AdminUser[]>([]);
-  const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
+	const [formData, setFormData] = useState<TicketFormData>(initialFormState);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [admins, setAdmins] = useState<AdminUser[]>([]);
+	const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
+	const [comments, setComments] = useState<Comment[]>([]);
+	const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-  useEffect(() => {
-    const fetchAdmins = async () => {
-      try {
-        setIsLoadingAdmins(true);
-        const response = await fetch('/api/admin/users/admins');
-        const data: AdminUser[] = await response.json();
-        setAdmins(data);
-      } catch (error) {
-        console.error('Error loading admins:', error);
-      } finally {
-        setIsLoadingAdmins(false);
-      }
-    };
+	useEffect(() => {
+		const fetchAdmins = async () => {
+			try {
+				setIsLoadingAdmins(true);
+				const response = await fetch('/api/admin/users/admins');
+				if (!response.ok) throw new Error('Failed to fetch admins');
+				const data = (await response.json()) as AdminUser[];
+				setAdmins(data);
+			} catch (error) {
+				console.error('Error loading admins:', error);
+			} finally {
+				setIsLoadingAdmins(false);
+			}
+		};
 
-    if (isOpen) void fetchAdmins();
-  }, [isOpen]);
+		if (isOpen) void fetchAdmins();
+	}, [isOpen]);
 
-  useEffect(() => {
-    if (ticket) {
-      setFormData({
-        assignedToId: ticket.assignedToId ?? '',
-        email: ticket.email ?? '',
-        description: ticket.description ?? '',
-        comments: ticket.comments ?? '',
-        estado: ticket.estado ?? 'abierto',
-        tipo: ticket.tipo ?? 'otro',
-        coverImageKey: ticket.coverImageKey ?? '',
-        newComment: '',
-      });
-    } else {
-      setFormData(initialFormState);
-    }
-  }, [ticket]);
+	useEffect(() => {
+		if (ticket) {
+			setFormData({
+				assignedToId: ticket.assignedToId ?? '',
+				email: ticket.email ?? '',
+				description: ticket.description ?? '',
+				comments: ticket.comments ?? '',
+				estado: ticket.estado ?? 'abierto',
+				tipo: ticket.tipo ?? 'otro',
+				coverImageKey: ticket.coverImageKey ?? '',
+				newComment: '',
+			});
+		} else {
+			setFormData(initialFormState);
+		}
+	}, [ticket, initialFormState]);
 
-  useEffect(() => {
-    const fetchComments = async () => {
-      if (isOpen && ticket?.id) {
-        setIsLoadingComments(true);
-        try {
-          const response = await fetch(`/api/admin/tickets/${ticket.id}/comments`);
-          const data: Comment[] = await response.json();
-          setComments(data);
-        } catch (error) {
-          console.error('Error fetching comments:', error);
-        } finally {
-          setIsLoadingComments(false);
-        }
-      }
-    };
+	useEffect(() => {
+		const fetchComments = async () => {
+			if (isOpen && ticket?.id) {
+				setIsLoadingComments(true);
+				try {
+					const response = await fetch(
+						`/api/admin/tickets/${ticket.id}/comments`
+					);
+					if (!response.ok) throw new Error('Failed to fetch comments');
+					const data = (await response.json()) as Comment[];
+					setComments(data);
+				} catch (error) {
+					console.error('Error fetching comments:', error);
+				} finally {
+					setIsLoadingComments(false);
+				}
+			}
+		};
 
-    void fetchComments();
-  }, [isOpen, ticket?.id]);
+		void fetchComments();
+	}, [isOpen, ticket?.id]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!user) return;
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		if (!user) return;
+	
+		setIsSubmitting(true);
+	
+		const submitData = { ...formData };
+		if (!submitData.assignedToId) {
+			delete submitData.assignedToId;
+		}
+	
+		await Promise.resolve(onSubmit(submitData));
+	
+		setIsSubmitting(false);
+		onClose();
+	};
+	
 
-    setIsSubmitting(true);
-
-    const submitData = { ...formData };
-    if (!submitData.assignedToId) {
-      delete submitData.assignedToId;
-    }
-
-    await onSubmit(submitData);
-
-
-    setIsSubmitting(false);
-    onClose();
-  };
-
-  if (!isOpen) return null;
+	if (!isOpen) return null;
 
 	return (
 		<Modal

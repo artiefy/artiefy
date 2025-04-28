@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback  } from 'react';
 
-import { Loader2, Plus, Pencil, Trash2, Info } from 'lucide-react';
+import { Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import TicketModal from './TicketModal';
 import ChatList from '../chat/ChatList';
 import FloatingChat from '../chat/FloatingChat';
 
-// src/types/tickets.ts
 
+// Types
 export interface Ticket {
 	id: string;
 	email: string;
@@ -21,51 +21,67 @@ export interface Ticket {
 	creatorName?: string;
 	creatorEmail?: string;
 	comments?: string;
-	assignedToId?: string; // <- lo agregamos aquí también
+	assignedToId?: string;
 	coverImageKey?: string;
 	creatorId?: string;
-  }
-  
-  export interface TicketFormData {
+}
+
+export interface TicketFormData {
 	email: string;
 	description: string;
 	tipo: string;
 	estado: string;
-	assignedToId?: string; // <- y aquí también
+	assignedToId?: string;
 	comments?: string;
 	coverImageKey?: string;
 	newComment?: string;
-  }
-  export interface Comment {
+}
+
+export interface Comment {
 	id: number;
 	content: string;
 	createdAt: string;
 	user: {
-	  name: string;
+		name: string;
 	};
-  }
-  
+}
 
+interface RawTicket {
+	id: string;
+	email: string;
+	description: string;
+	tipo: string;
+	estado: string;
+	assigned_to_name?: string;
+	assigned_to_email?: string;
+	creator_name?: string;
+	creator_email?: string;
+	comments?: string;
+}
+
+// Component
 export default function TicketsPage() {
 	const [tickets, setTickets] = useState<Ticket[]>([]);
-	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 	const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState<boolean>(true);
 	const [activeTab, setActiveTab] = useState<
 		'created' | 'assigned' | 'logs' | 'chats'
 	>('created');
-	const [filterType, setFilterType] = useState('all');
-	const [filterStatus, setFilterStatus] = useState('all');
+	const [filterType, setFilterType] = useState<string>('all');
+	const [filterStatus, setFilterStatus] = useState<string>('all');
 	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 	const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
 
-	const fetchTickets = async () => {
+	const fetchTickets = useCallback(async (): Promise<void> => {
 		try {
 			setLoading(true);
 			const response = await fetch(`/api/admin/tickets?type=${activeTab}`);
-			const data = await response.json();
+			if (!response.ok)
+				throw new Error(`HTTP error! status: ${response.status}`);
+			const rawData = (await response.json()) as RawTicket[];
 
-			const mapped: Ticket[] = (data as any[]).map((ticket) => ({
+			const mapped: Ticket[] = rawData.map((ticket) => ({
 				id: ticket.id,
 				email: ticket.email,
 				description: ticket.description,
@@ -80,15 +96,18 @@ export default function TicketsPage() {
 
 			setTickets(mapped);
 		} catch (error) {
-			console.error('Error fetching tickets:', error);
+			console.error(
+				'Error fetching tickets:',
+				error instanceof Error ? error.message : error
+			);
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [activeTab]);
 
 	useEffect(() => {
 		void fetchTickets();
-	}, [activeTab]);
+	}, [fetchTickets]);
 
 	const filteredTickets = tickets.filter((ticket) => {
 		return (
@@ -97,8 +116,8 @@ export default function TicketsPage() {
 		);
 	});
 
-	const handleCreate = async (data: TicketFormData) => {
-				try {
+	const handleCreate = async (data: TicketFormData): Promise<void> => {
+		try {
 			await fetch('/api/admin/tickets', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -106,11 +125,14 @@ export default function TicketsPage() {
 			});
 			void fetchTickets();
 		} catch (error) {
-			console.error('Error creating ticket:', error);
+			console.error(
+				'Error creating ticket:',
+				error instanceof Error ? error.message : error
+			);
 		}
 	};
 
-	const handleUpdate = async (data: TicketFormData) => {
+	const handleUpdate = async (data: TicketFormData): Promise<void> => {
 		try {
 			if (!selectedTicket) return;
 			await fetch(`/api/admin/tickets/${selectedTicket.id}`, {
@@ -120,36 +142,41 @@ export default function TicketsPage() {
 			});
 			void fetchTickets();
 		} catch (error) {
-			console.error('Error updating ticket:', error);
+			console.error(
+				'Error updating ticket:',
+				error instanceof Error ? error.message : error
+			);
 		}
 	};
 
-	const handleDelete = async (id: string) => {
+	const handleDelete = async (id: string): Promise<void> => {
 		if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) return;
-
 		try {
 			await fetch(`/api/admin/tickets/${id}`, { method: 'DELETE' });
 			void fetchTickets();
 		} catch (error) {
-			console.error('Error deleting ticket:', error);
+			console.error(
+				'Error deleting ticket:',
+				error instanceof Error ? error.message : error
+			);
 		}
 	};
 
-	const handleCloseModal = () => {
+	const handleCloseModal = (): void => {
 		setIsModalOpen(false);
 		setSelectedTicket(null);
 	};
 
-	const handleOpenCreateModal = () => {
+	const handleOpenCreateModal = (): void => {
 		setSelectedTicket(null);
 		setIsModalOpen(true);
 	};
 
-	const handleSelectChat = (chatId: string) => {
+	const handleSelectChat = (chatId: string): void => {
 		setSelectedChatId(chatId);
 	};
 
-	const handleCloseChat = () => {
+	const handleCloseChat = (): void => {
 		setSelectedChatId(null);
 	};
 
@@ -212,7 +239,6 @@ export default function TicketsPage() {
 			</div>
 
 			{/* Action buttons */}
-
 			<div className="my-6 flex flex-wrap items-center justify-between gap-4">
 				<button
 					onClick={handleOpenCreateModal}
@@ -303,7 +329,7 @@ export default function TicketsPage() {
 										</td>
 									</tr>
 								) : (
-									filteredTickets.map((ticket: any) => (
+									filteredTickets.map((ticket) => (
 										<tr
 											key={ticket.id}
 											className="group transition-colors hover:bg-gray-700/50"
@@ -343,7 +369,7 @@ export default function TicketsPage() {
 												</span>
 											</td>
 											<td className="px-4 py-4">
-												{ticket.assignedToName || 'Sin asignar'}
+												{ticket.assignedToName ?? 'Sin asignar'}
 											</td>
 											<td className="px-4 py-4">
 												<div className="flex items-center justify-end gap-1 sm:gap-2">
@@ -365,7 +391,7 @@ export default function TicketsPage() {
 														<Pencil className="size-3.5 sm:size-4" />
 													</button>
 													<button
-														onClick={() => handleDelete(ticket.id)}
+														onClick={() => void handleDelete(ticket.id)}
 														className="rounded-md p-1 hover:bg-red-500/10 hover:text-red-500"
 														title="Eliminar"
 													>
@@ -385,7 +411,6 @@ export default function TicketsPage() {
 			{viewTicket && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-8">
 					<div className="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-gray-700 bg-gray-900 p-10 shadow-2xl">
-						{/* Botón de cierre */}
 						<button
 							onClick={() => setViewTicket(null)}
 							className="absolute top-4 right-4 text-xl text-gray-400 hover:text-white"
@@ -393,14 +418,11 @@ export default function TicketsPage() {
 							✕
 						</button>
 
-						{/* Título */}
 						<h2 className="mb-8 text-3xl font-extrabold tracking-tight text-white">
 							Detalles del Ticket #{viewTicket.id}
 						</h2>
 
-						{/* Grid de contenido */}
 						<div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-							{/* Columna izquierda */}
 							<div className="space-y-6 text-lg leading-relaxed text-white">
 								<div>
 									<h3 className="text-sm font-semibold text-gray-400 uppercase">
@@ -438,7 +460,6 @@ export default function TicketsPage() {
 								</div>
 							</div>
 
-							{/* Columna derecha */}
 							<div className="space-y-6 text-lg leading-relaxed text-white">
 								<div>
 									<h3 className="text-sm font-semibold text-gray-400 uppercase">
@@ -465,7 +486,7 @@ export default function TicketsPage() {
 									<h3 className="text-sm font-semibold text-gray-400 uppercase">
 										Asignado a
 									</h3>
-									<p>{viewTicket.assignedToName || 'Sin asignar'}</p>
+									<p>{viewTicket.assignedToName ?? 'Sin asignar'}</p>
 								</div>
 
 								<div>
@@ -473,7 +494,7 @@ export default function TicketsPage() {
 										Comentarios
 									</h3>
 									<p className="whitespace-pre-wrap">
-										{viewTicket.comments || '—'}
+										{viewTicket.comments ?? '—'}
 									</p>
 								</div>
 							</div>

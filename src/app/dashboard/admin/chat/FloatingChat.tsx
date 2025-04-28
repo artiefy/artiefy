@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
+import { Send, MessageSquare, X } from 'lucide-react';
 import { io, type Socket } from 'socket.io-client';
-import { Send, X, MessageSquare } from 'lucide-react';
 
+// Interfaces and types
 interface Message {
 	from: string;
 	text: string;
@@ -22,22 +23,22 @@ interface FloatingChatProps {
 	onClose: () => void;
 }
 
+// Socket instance
 let socket: Socket | null = null;
 
+// Component
 export default function FloatingChat({ chatId }: FloatingChatProps) {
 	const { user } = useUser();
-	const [message, setMessage] = useState('');
+	const [message, setMessage] = useState<string>('');
 	const [chats, setChats] = useState<Chat[]>([]);
 	const [activeChatId, setActiveChatId] = useState<string | null>(null);
 	const chatRef = useRef<HTMLDivElement>(null);
-	const [isOpen, setIsOpen] = useState(true); // chat comienza abierto
+	const [isOpen, setIsOpen] = useState<boolean>(true); // chat starts open
 
 	useEffect(() => {
 		if (!user || socket) return;
 
-		socket = io({
-			path: '/api/socketio',
-		});
+		socket = io({ path: '/api/socketio' });
 
 		socket.on('connect', () => {
 			console.log('🔌 Conectado');
@@ -78,7 +79,7 @@ export default function FloatingChat({ chatId }: FloatingChatProps) {
 		}
 	}, [chatId]);
 
-	const sendMessage = () => {
+	const sendMessage = (): void => {
 		if (!message.trim() || !user || !socket?.connected) return;
 
 		socket.emit('message', {
@@ -90,7 +91,7 @@ export default function FloatingChat({ chatId }: FloatingChatProps) {
 		setMessage('');
 	};
 
-	const scrollToBottom = () => {
+	const scrollToBottom = (): void => {
 		setTimeout(() => {
 			if (chatRef.current) {
 				chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -117,7 +118,7 @@ export default function FloatingChat({ chatId }: FloatingChatProps) {
 						</button>
 					</div>
 
-					{/* Lista de chats */}
+					{/* Chat list */}
 					<div className="flex gap-2 overflow-x-auto border-b border-gray-700 p-2">
 						{chats.map((chat) => (
 							<button
@@ -134,7 +135,7 @@ export default function FloatingChat({ chatId }: FloatingChatProps) {
 						))}
 					</div>
 
-					{/* Mensajes */}
+					{/* Messages */}
 					<div ref={chatRef} className="flex-1 space-y-2 overflow-y-auto p-4">
 						{activeChat?.messages.map((msg, idx) => (
 							<div

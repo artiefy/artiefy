@@ -1,54 +1,24 @@
-import { type NextApiRequest } from 'next';
-import { Server } from 'socket.io';
+import { Server, type Server as SocketIOServer } from 'socket.io';
 
-import { type NextApiResponseServerIO } from '~/types/socket';
+import type { Server as NetServer } from 'http';
+import type { Socket } from 'net';
 
-export const config = {
-	api: {
-		bodyParser: false,
-	},
+import type { NextApiRequest, NextApiResponse } from 'next';
+interface CustomNextApiResponse extends NextApiResponse {
+	socket: Socket & {
+		server: NetServer & {
+			io?: SocketIOServer;
+		};
+	};
+}
+
+const handler = (req: NextApiRequest, res: CustomNextApiResponse): void => {
+	if (!res.socket.server.io) {
+		void req;
+		const io = new Server(res.socket.server);
+		res.socket.server.io = io;
+	}
+	res.end();
 };
 
-export default function handler(
-	req: NextApiRequest,
-	res: NextApiResponseServerIO
-) {
-	if (!res.socket.server.io) {
-		console.log('🔌 Iniciando servidor Socket.IO');
-		void req;
-
-		const io = new Server(res.socket.server, {
-			path: '/api/socketio',
-			cors: {
-				origin: '*',
-				methods: ['GET', 'POST'],
-			},
-		});
-
-		res.socket.server.io = io;
-
-		io.on('connection', (socket) => {
-			console.log('✅ Nuevo cliente conectado:', socket.id);
-
-			socket.on('join', ({ userId, username }) => {
-				socket.join(userId);
-				socket.data.username = username;
-				console.log(`👤 Usuario ${username} unido a la sala ${userId}`);
-			});
-
-			socket.on('message', ({ to, from, text }) => {
-				const payload = { from, text };
-				if (to) {
-					io.to(to).emit('message', payload);
-				} else {
-					socket.broadcast.emit('message', payload);
-				}
-			});
-
-			socket.on('disconnect', () => {
-				console.log('❌ Cliente desconectado:', socket.id);
-			});
-		});
-	}
-	(res as any).end();
-}
+export default handler;

@@ -11,24 +11,33 @@ const transporter = nodemailer.createTransport({
 	},
 });
 
-interface EmailData {
+
+interface EmailError {
+	code: string;
+	command: string;
+	response: string;
+}
+
+export async function sendTicketEmail(emailData: {
 	to: string;
 	subject: string;
 	html: string;
-}
-
-export async function sendEmail({ to, subject, html }: EmailData) {
-	console.log('📧 Intentando enviar email a:', to);
-	console.log('📧 Asunto:', subject);
-
-	if (!process.env.PASS) {
-		console.warn(
-			'❌ Email no enviado: Falta contraseña en variables de entorno'
-		);
-		return { success: false, error: 'Email password not configured' };
-	}
-
+}): Promise<{ success: boolean; error?: EmailError }> {
 	try {
+		const { to, subject, html } = emailData;
+		console.log('📧 Intentando enviar email a:', to);
+		console.log('📧 Asunto:', subject);
+
+		if (!process.env.PASS) {
+			console.warn(
+				'❌ Email no enviado: Falta contraseña en variables de entorno'
+			);
+			return {
+				success: false,
+				error: { code: 'NO_PASSWORD', command: '', response: '' },
+			};
+		}
+
 		const mailOptions = {
 			from: '"Artiefy Support" <direcciongeneral@artiefy.com>',
 			to,
@@ -36,25 +45,25 @@ export async function sendEmail({ to, subject, html }: EmailData) {
 			html,
 		};
 
-		console.log('📧 Configuración del email:', {
-			from: mailOptions.from,
-			to: mailOptions.to,
-			subject: mailOptions.subject,
-		});
-
 		const info = await transporter.sendMail(mailOptions);
 		console.log('✅ Email enviado exitosamente');
 		console.log('📧 ID del mensaje:', info.messageId);
 		console.log('📧 Respuesta del servidor:', info.response);
-		return { success: true, messageId: info.messageId };
+		return { success: true };
 	} catch (error) {
-		console.error('❌ Error al enviar email:', error);
-		console.error('📧 Detalles del error:', {
-			code: (error as any).code,
-			command: (error as any).command,
-			response: (error as any).response,
-		});
-		return { success: false, error };
+		const emailError: EmailError = {
+			code: error instanceof Error ? error.message : 'Unknown error',
+			command:
+				typeof error === 'object' && error !== null && 'command' in error
+					? String(error.command)
+					: '',
+			response:
+				typeof error === 'object' && error !== null && 'response' in error
+					? String(error.response)
+					: '',
+		};
+
+		return { success: false, error: emailError };
 	}
 }
 
