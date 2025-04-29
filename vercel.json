@@ -31,6 +31,10 @@
     "app/api/**/*.ts": {
       "memory": 3009,
       "maxDuration": 60
+    },
+    "app/dashboard/super-admin/programs/**/*.ts": {
+      "memory": 3009,
+      "maxDuration": 60
     }
   },
   "crons": [

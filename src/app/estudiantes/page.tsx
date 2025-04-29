@@ -19,7 +19,7 @@ import type { Category, Course, Program } from '~/types';
 
 export const metadata: Metadata = {
 	title: 'Artiefy - Plataforma Educativa Digital Líder',
-	description: 'Accede a tus cursos y contenido educativo en Artiefy'
+	description: 'Accede a tus cursos y contenido educativo en Artiefy',
 };
 
 interface SearchParams {
@@ -115,18 +115,15 @@ async function fetchAllCourses(): Promise<Course[]> {
 }
 
 interface PageProps {
-	searchParams: Promise<SearchParams>;
+	searchParams: SearchParams; // Cambiado de Promise<SearchParams> a SearchParams
 }
 
 export default async function Page({ searchParams }: PageProps) {
 	try {
-		// Await searchParams before using its properties
-		const params = await searchParams;
-
 		const parsedParams: SearchParams = {
-			category: params?.category,
-			query: params?.query,
-			page: params?.page,
+			category: searchParams?.category,
+			query: searchParams?.query,
+			page: searchParams?.page,
 		};
 
 		const data = await fetchData(parsedParams);
