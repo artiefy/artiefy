@@ -167,7 +167,7 @@
     "glob": "11.0.1"
   },
   "engines": {
-    "node": ">=22.x"
+    "node": "22.x"
   },
   "ct3aMetadata": {
     "initVersion": "7.38.1"

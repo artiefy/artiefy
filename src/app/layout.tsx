@@ -1,21 +1,19 @@
 // 1. React/Next.js core imports
 import { Suspense } from 'react';
 
-// 2. Next.js specific imports
 import { Merriweather, Montserrat } from 'next/font/google';
 
+// 2. External libraries
 import { esMX } from '@clerk/localizations';
-
-// 3. External packages
 import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
-// 4. Global styles
+// 3. Global styles
 import '~/styles/globals.css';
 
-// 5. Internal components
+// 4. Internal components
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 
 import Loading from './loading';
@@ -113,6 +111,8 @@ export const metadata: Metadata = {
 		canonical: 'https://artiefy.com',
 	},
 };
+
+export const runtime = 'nodejs'; // Add this line to explicitly set runtime
 
 export default function RootLayout({
 	children,
