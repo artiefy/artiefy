@@ -16,10 +16,6 @@
       "memory": 2048,
       "maxDuration": 30
     },
-    "app/api/super-admin/programs/**/*.ts": {
-      "memory": 2048,
-      "maxDuration": 30
-    },
     "app/api/usersMasive/**/*.ts": {
       "memory": 2048,
       "maxDuration": 60
