@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 
 import { updateLesson } from '~/models/educatorsModels/lessonsModels';
 
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
 				console.error(
 					'[TRANSCRIPCIÓN] ❌ Error durante la transcripción o guardado en Redis:'
 				);
-				if (axios.isAxiosError(err)) {
+				if (isAxiosError(err)) {
 					console.error('Axios Error:', err.message);
 					console.error('Response data:', err.response?.data);
 				} else {
