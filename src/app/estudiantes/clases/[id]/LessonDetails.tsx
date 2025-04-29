@@ -406,32 +406,31 @@ export default function LessonDetails({
 
 	// Keep subscription check but remove the loading UI
 	useEffect(() => {
-		if (course.courseType?.requiredSubscriptionLevel === 'none') {
+		if (!user || course.courseType?.requiredSubscriptionLevel === 'none') {
 			return;
 		}
 
-		const metadata = user?.publicMetadata as Record<string, unknown>;
-		if (!metadata) {
+		const metadata = user.publicMetadata as {
+			planType?: string;
+			subscriptionStatus?: string;
+			subscriptionEndDate?: string;
+		};
+
+		if (!metadata.subscriptionStatus || !metadata.subscriptionEndDate) {
+			toast.error('Se requiere una suscripción activa para ver las clases');
 			void router.push('/planes');
 			return;
 		}
 
-		const status = metadata.subscriptionStatus as string;
-		const endDate = metadata.subscriptionEndDate as string;
+		const isActive = metadata.subscriptionStatus === 'active';
+		const endDate = new Date(metadata.subscriptionEndDate);
+		const isValid = endDate > new Date();
 
-		const isActive = status?.toLowerCase() === 'active';
-		const isValid = endDate ? new Date(endDate) > new Date() : false;
-		const hasValidSubscription = isActive && isValid;
-
-		if (!hasValidSubscription) {
+		if (!isActive || !isValid) {
 			toast.error('Se requiere una suscripción activa para ver las clases');
 			void router.push('/planes');
 		}
-	}, [
-		user?.publicMetadata,
-		course.courseType?.requiredSubscriptionLevel,
-		router,
-	]);
+	}, [user, course.courseType?.requiredSubscriptionLevel, router]);
 
 	// Add safety check for lesson
 	if (!lesson) {
