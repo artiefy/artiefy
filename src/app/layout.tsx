@@ -112,7 +112,9 @@ export const metadata: Metadata = {
 	},
 };
 
-export const runtime = 'nodejs'; // Add this line to explicitly set runtime
+// Add these configurations for better static/dynamic control:
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function RootLayout({
 	children,
