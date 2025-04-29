@@ -114,8 +114,16 @@ async function fetchAllCourses(): Promise<Course[]> {
 	return await getAllCourses();
 }
 
+// Agregar estas configuraciones al inicio del archivo, después de los imports
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 interface PageProps {
-	searchParams: SearchParams; // Cambiado de Promise<SearchParams> a SearchParams
+	searchParams: {
+		category?: string;
+		query?: string;
+		page?: string;
+	};
 }
 
 export default async function Page({ searchParams }: PageProps) {
