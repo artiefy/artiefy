@@ -8,6 +8,10 @@
   "public": true,
   "trailingSlash": false,
   "functions": {
+    "app/error.tsx": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
     "app/api/iahome/**/*.ts": {
       "memory": 3009,
       "maxDuration": 60
@@ -41,7 +45,7 @@
   ],
   "headers": [
     {
-      "source": "src/app/favicon.ico",
+      "source": "/favicon.ico",
       "headers": [
         {
           "key": "Cache-Control",

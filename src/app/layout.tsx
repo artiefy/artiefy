@@ -85,11 +85,11 @@ export const metadata: Metadata = {
 	},
 	icons: {
 		icon: [
-			{ url: '/src/app/favicon.ico', sizes: 'any' },
-			{ url: '/artiefy-icon.png', sizes: '32x32' },
+			{ url: '/favicon.ico', sizes: 'any' },
+			{ url: '/icon.png', type: 'image/png' },
 		],
-		shortcut: '/src/app/favicon.ico',
-		apple: [{ url: '/artiefy-icon.png', sizes: '180x180' }],
+		shortcut: '/favicon.ico',
+		apple: { url: '/apple-icon.png', sizes: '180x180' },
 	},
 	verification: {
 		google: 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
@@ -112,9 +112,7 @@ export const metadata: Metadata = {
 	},
 };
 
-// Add these configurations for better static/dynamic control:
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const runtime = 'nodejs';
 
 export default function RootLayout({
 	children,

@@ -21,7 +21,6 @@ export const metadata: Metadata = {
 };
 
 // Add these export configurations
-export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
