@@ -86,10 +86,10 @@ export const metadata: Metadata = {
 	icons: {
 		icon: [
 			{ url: '/favicon.ico', sizes: 'any' },
-			{ url: '/icon.png', type: 'image/png' },
+			{ url: '/artiefy-icon.png', type: 'image/png' },
 		],
 		shortcut: '/favicon.ico',
-		apple: { url: '/apple-icon.png', sizes: '180x180' },
+		apple: { url: '/artiefy-icon.png', sizes: '180x180' },
 	},
 	verification: {
 		google: 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
