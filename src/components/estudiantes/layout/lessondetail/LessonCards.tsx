@@ -301,7 +301,7 @@ const LessonCards = ({
 	if (!hasLessons) {
 		return (
 			<div className="lesson-cards-container relative z-10 space-y-2">
-				{[...Array(3)].map((_, i) => (
+				{Array.from({ length: 3 }).map((_, i) => (
 					<div
 						key={i}
 						className="h-32 animate-pulse rounded-lg bg-gray-100 p-4 shadow-sm"

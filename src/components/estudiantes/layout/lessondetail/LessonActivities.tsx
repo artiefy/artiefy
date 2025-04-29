@@ -430,7 +430,7 @@ const LessonActivities = ({
 			);
 		}
 
-		if (activityState?.isCompleted) {
+		if (activityState?.isCompleted && activityState?.savedResults) {
 			return (
 				<>
 					{activityState.isLoading && (
@@ -449,7 +449,7 @@ const LessonActivities = ({
 				{activityState?.isLoading && (
 					<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
 				)}
-				<span>{activity.typeid === 1 ? 'Ver Actividad' : 'Ver Actividad'}</span>
+				<span>Ver Actividad</span>
 			</>
 		);
 	};
@@ -556,7 +556,7 @@ const LessonActivities = ({
 		// Get next lesson
 		const nextLesson = sortedLessons[currentIndex + 1];
 		return nextLesson?.id;
-	}, [lessons, lessonId])
+	}, [lessons, lessonId]);
 
 	const renderActivityCard = (activity: Activity, index: number) => {
 		const activityState = activitiesState[activity.id];
