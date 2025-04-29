@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';

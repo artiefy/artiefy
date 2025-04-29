@@ -1,19 +1,19 @@
 // 1. React/Next.js core imports
 import { Suspense } from 'react';
 
-import { type Metadata } from 'next';
-
-// 2. Global styles
-import '~/styles/globals.css';
-
-// 3. Fonts
+// 2. Next.js specific imports
 import { Merriweather, Montserrat } from 'next/font/google';
 
-// 4. External libraries
 import { esMX } from '@clerk/localizations';
+
+// 3. External packages
 import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { type Metadata } from 'next';
+
+// 4. Global styles
+import '~/styles/globals.css';
 
 // 5. Internal components
 import { Toaster } from '~/components/estudiantes/ui/sonner';
