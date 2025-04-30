@@ -5,24 +5,20 @@ import { useState, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import {
-	SignInButton,
-	SignedIn,
-	SignedOut,
-	UserButton
-} from '@clerk/nextjs';
+import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import {
 	UserCircleIcon,
 	XMarkIcon as XMarkIconSolid,
 } from '@heroicons/react/24/solid';
+import { Award, Settings } from 'lucide-react';
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import '~/styles/barsicon.css';
 
 const LoadingSpinner = () => (
-	<div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+	<div className="flex h-9 w-9 items-center justify-center">
 		<Icons.spinner className="text-primary h-5 w-5 animate-spin" />
 	</div>
 );
@@ -47,7 +43,18 @@ const UserButtonWithLoading = () => (
 						labelIcon={<UserCircleIcon className="size-4" />}
 						href="/estudiantes/myaccount"
 					/>
+					<UserButton.Link
+						label="Mis Certificados"
+						labelIcon={<Award className="size-4" />}
+						href="/estudiantes/certificados"
+					/>
+					<UserButton.Link
+						label="Configuración"
+						labelIcon={<Settings className="size-4" />}
+						href="/estudiantes/settings"
+					/>
 					<UserButton.Action label="manageAccount" />
+					<UserButton.Action label="signOut" />
 				</UserButton.MenuItems>
 			</UserButton>
 		</Suspense>
