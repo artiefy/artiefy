@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '~/server/db';
 import { conversations, users } from '~/server/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 export async function GET() {
 	try {
@@ -11,18 +11,15 @@ export async function GET() {
 				senderId: conversations.senderId,
 				receiverId: conversations.receiverId,
 				status: conversations.status,
-				createdAt: conversations.createdAt,
-				senderName: users.name,
-				senderEmail: users.email,
+				userName: users.name,
 			})
 			.from(conversations)
-			.innerJoin(users, eq(conversations.senderId, users.id))
-			.where(eq(conversations.status, 'activo'))
-			.orderBy(desc(conversations.createdAt));
+			.leftJoin(users, eq(conversations.senderId, users.id))
+			.where(eq(conversations.status, 'activo'));
 
 		return NextResponse.json({ conversations: activeConversations });
 	} catch (error) {
-		console.error('❌ Error cargando lista de chats:', error);
+		console.error('Error fetching conversations:', error);
 		return NextResponse.json({ error: 'Error interno' }, { status: 500 });
 	}
 }

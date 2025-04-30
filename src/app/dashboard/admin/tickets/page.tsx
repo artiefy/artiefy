@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback  } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import TicketModal from './TicketModal';
 import ChatList from '../chat/ChatList';
 import FloatingChat from '../chat/FloatingChat';
-
 
 // Types
 export interface Ticket {
@@ -72,6 +71,20 @@ export default function TicketsPage() {
 	const [filterStatus, setFilterStatus] = useState<string>('all');
 	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 	const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
+	const [selectedChat, setSelectedChat] = useState<{
+		id: string;
+		userName: string;
+		receiverId: string;
+	} | null>(null);
+	useEffect(() => {
+		// Solo forzar la inicialización del socket si es necesario (opcional en la mayoría de casos)
+		if (typeof window !== 'undefined') {
+		  fetch('/api/socketio', {
+			method: 'POST',
+		  }).catch((err) => console.warn('Socket init error:', err));
+		}
+	  }, []);
+	  
 
 	const fetchTickets = useCallback(async (): Promise<void> => {
 		try {
@@ -172,12 +185,12 @@ export default function TicketsPage() {
 		setIsModalOpen(true);
 	};
 
-	const handleSelectChat = (chatId: string): void => {
-		setSelectedChatId(chatId);
+	const handleSelectChat = (chatId: string, receiverId: string): void => {
+		setSelectedChat({ id: chatId, receiverId, userName: 'Usuario' });
 	};
 
 	const handleCloseChat = (): void => {
-		setSelectedChatId(null);
+		setSelectedChat(null);
 	};
 
 	return (
@@ -284,7 +297,9 @@ export default function TicketsPage() {
 			{/* Tickets table */}
 			{activeTab === 'chats' ? (
 				<div className="mt-6">
-					<ChatList onSelectChat={handleSelectChat} />
+					<ChatList
+						onSelectChat={(id, receiverId) => handleSelectChat(id, receiverId)}
+					/>
 				</div>
 			) : (
 				<div className="mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl backdrop-blur-sm">
@@ -511,7 +526,12 @@ export default function TicketsPage() {
 				ticket={selectedTicket}
 			/>
 
-			<FloatingChat chatId={selectedChatId} onClose={handleCloseChat} />
+			<FloatingChat
+				chatId={selectedChat?.id ?? null}
+				receiverId={selectedChat?.receiverId ?? null}
+				userName={selectedChat?.userName}
+				onClose={handleCloseChat}
+			/>
 		</div>
 	);
 }

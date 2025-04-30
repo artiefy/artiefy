@@ -1,58 +1,66 @@
 'use client';
 
-// External libraries
 import { useEffect, useState } from 'react';
+import { MessageCircle } from 'lucide-react';
 
-// Interfaces and types
 interface ChatListProps {
-	onSelectChat: (chatId: string) => void;
+	onSelectChat: (chatId: string, receiverId: string) => void;
 }
 
-interface Chat {
+interface Conversation {
 	id: string;
-	messages: Message[];
+	senderId: string;
+	receiverId: string;
+	status: string;
+	userName: string;
 }
 
-interface Message {
-	from: string;
-	text: string;
-	timestamp: string;
-}
-
-// Component
 export default function ChatList({ onSelectChat }: ChatListProps) {
-	const [chats, setChats] = useState<Chat[]>([]);
-
+	const [conversations, setConversations] = useState<Conversation[]>([]);
 	useEffect(() => {
-		const fetchChats = async () => {
+		fetch('/api/socketio');
+	}, []);
+	
+	useEffect(() => {
+		const fetchConversations = async () => {
 			try {
-				const response = await fetch('/api/admin/chat/chatList');
-				if (!response.ok) throw new Error('Error fetching chats');
-				const data = (await response.json()) as { chats: Chat[] };
-				setChats(data.chats);
+				const response = await fetch('/api/admin/chat/conversations');
+				if (!response.ok) throw new Error('Error fetching conversations');
+				const data = await response.json();
+				setConversations(data.conversations);
 			} catch (error) {
 				console.error('Error:', error);
 			}
 		};
 
-		void fetchChats();
+		void fetchConversations();
 	}, []);
 
 	return (
 		<div className="rounded-lg border border-gray-700 bg-gray-800 p-4 text-white">
-			<h2 className="mb-4 text-xl font-bold">Chats Disponibles</h2>
-			<ul className="space-y-2">
-				{chats.map((chat) => (
-					<li key={chat.id}>
+			<h2 className="mb-4 text-xl font-bold">Conversaciones Activas</h2>
+			<div className="space-y-2">
+				{conversations.map((conv) => (
+					<div
+						key={conv.id}
+						className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-700/50 p-3 hover:bg-gray-700"
+					>
+						<div>
+							<h3 className="font-medium">{conv.userName}</h3>
+							<p className="text-sm text-gray-400">
+								{conv.status === 'activo' ? 'Conversación activa' : 'Cerrado'}
+							</p>
+						</div>
 						<button
-							onClick={() => onSelectChat(chat.id)}
-							className="w-full rounded bg-gray-700 px-4 py-2 text-left hover:bg-gray-600"
+							onClick={() =>onSelectChat(conv.id, conv.receiverId)							}
+							className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600"
+							title="Iniciar chat"
 						>
-							Chat #{chat.id}
+							<MessageCircle className="h-4 w-4" />
 						</button>
-					</li>
+					</div>
 				))}
-			</ul>
+			</div>
 		</div>
 	);
 }

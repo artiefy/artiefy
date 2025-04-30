@@ -787,13 +787,32 @@ export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
 	}),
 }));
 
-// Tabla de mensajes de chat
-export const chatMessages = pgTable('chat_messages', {
+// Tabla de conversaciones
+export const conversations = pgTable('conversations', {
 	id: serial('id').primaryKey(),
 	senderId: text('sender_id')
 		.references(() => users.id)
 		.notNull(),
-	receiverId: text('receiver_id').references(() => users.id), // Puede ser null (broadcast)
-	message: text('message').notNull(),
+	receiverId: text('receiver_id').references(() => users.id),
+	status: text('status', { enum: ['activo', 'cerrado'] })
+		.default('activo')
+		.notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Relación de mensajes con conversaciones
+export const chatMessagesWithConversation = pgTable(
+	'chat_messages_with_conversation',
+	{
+		id: serial('id').primaryKey(),
+		conversationId: integer('conversation_id')
+			.references(() => conversations.id)
+			.notNull(),
+		senderId: text('sender_id')
+			.references(() => users.id)
+			.notNull(),
+		message: text('message').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+	}
+);
