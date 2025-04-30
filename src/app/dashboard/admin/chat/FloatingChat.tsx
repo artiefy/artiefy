@@ -5,6 +5,9 @@ import { Send, X, MessageCircle } from 'lucide-react';
 import socket from '~/lib/socket';
 import { useAuth } from '@clerk/nextjs';
 
+import EmojiPicker from '@emoji-mart/react';
+import data from '@emoji-mart/data';
+
 interface Message {
 	id: number;
 	senderId: string;
@@ -12,12 +15,13 @@ interface Message {
 	createdAt: string;
 	senderName?: string;
 }
-
 interface FloatingChatProps {
 	chatId?: string | null;
-	receiverId?: string | null; // nuevo
+	receiverId?: string | null;
 	userName?: string;
 	onClose?: () => void;
+	unreadConversations: string[];
+	setUnreadConversations: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export default function FloatingChat({
@@ -25,7 +29,10 @@ export default function FloatingChat({
 	userName,
 	receiverId: propReceiverId,
 	onClose,
-}: FloatingChatProps) {
+	unreadConversations,
+	setUnreadConversations,
+  }: FloatingChatProps)
+   {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [newMessage, setNewMessage] = useState('');
 	const [isExpanded, setIsExpanded] = useState(false);
@@ -35,6 +42,8 @@ export default function FloatingChat({
 	const [receiverId, setReceiverId] = useState<string | null>(null);
 	const [hasNotification, setHasNotification] = useState(false);
 	const { userId } = useAuth();
+	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
 
 	useEffect(() => {
 		if (chatId) {
@@ -44,6 +53,11 @@ export default function FloatingChat({
 				setReceiverId(propReceiverId);
 			}
 			void fetchConversationHistory(chatId);
+
+			if (unreadConversations && setUnreadConversations) {
+				const updated = unreadConversations.filter((id) => id !== chatId);
+				setUnreadConversations(updated);
+			}
 		} else {
 			setReceiverId(propReceiverId ?? null);
 		}
@@ -54,24 +68,35 @@ export default function FloatingChat({
 			if (data.conversationId === currentConversationId) {
 				setMessages((prev) => [...prev, data]);
 			} else {
-				// Mensaje para otra conversación
 				setHasNotification(true);
+				setUnreadConversations((prev) =>
+					prev.includes(data.conversationId)
+						? prev
+						: [...prev, data.conversationId]
+				);
 			}
 		};
-
+	
 		const handleNotification = (data: any) => {
-			console.log('📢 Notificación recibida:', data);
-			setHasNotification(true);
+			if (data.conversationId) {
+				setUnreadConversations((prev) => {
+					if (!prev.includes(data.conversationId)) {
+						return [...prev, data.conversationId];
+					}
+					return prev;
+				});
+			}
 		};
-
+	
 		socket.on('message', handleNewMessage);
 		socket.on('notification', handleNotification);
-
+	
 		return () => {
 			socket.off('message', handleNewMessage);
 			socket.off('notification', handleNotification);
 		};
 	}, [currentConversationId]);
+	
 
 	const fetchConversationHistory = async (conversationId: string) => {
 		try {
@@ -124,9 +149,9 @@ export default function FloatingChat({
 			});
 
 			// Si el servidor devolvió el receiverId (por ejemplo, al crear nueva conversación)
-if (data.receiverId && !receiverId) {
-	setReceiverId(data.receiverId);
-}
+			if (data.receiverId && !receiverId) {
+				setReceiverId(data.receiverId);
+			}
 
 			// Determinar el destinatario
 			const targetReceiverId = receiverId || propReceiverId;
@@ -157,6 +182,15 @@ if (data.receiverId && !receiverId) {
 	const handleToggle = () => {
 		setIsExpanded(!isExpanded);
 		setHasNotification(false);
+
+		// Si hay mensajes no leídos, abrir el más reciente
+		if (unreadConversations.length > 0 && !currentConversationId) {
+			const latestUnreadId =
+				unreadConversations[unreadConversations.length - 1];
+			setCurrentConversationId(latestUnreadId);
+			setUnreadConversations([]);
+			void fetchConversationHistory(latestUnreadId);
+		}
 	};
 
 	const handleClose = () => {
@@ -226,21 +260,45 @@ if (data.receiverId && !receiverId) {
 						}}
 						className="flex-none border-t border-gray-700 p-4"
 					>
-						<div className="flex items-center gap-2">
-							<input
-								type="text"
-								value={newMessage}
-								onChange={(e) => setNewMessage(e.target.value)}
-								placeholder="Escribir mensaje..."
-								className="flex-1 rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-							/>
-							<button
-								type="submit"
-								className="rounded-md bg-blue-500 p-2 text-white hover:bg-blue-600"
-							>
-								<Send className="h-5 w-5" />
-							</button>
-						</div>
+						<div className="flex items-center gap-2 relative">
+  <button
+    type="button"
+    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+    className="text-2xl px-2 text-white hover:text-yellow-400"
+    title="Agregar emoji"
+  >
+    😊
+  </button>
+
+  <input
+    type="text"
+    value={newMessage}
+    onChange={(e) => setNewMessage(e.target.value)}
+    placeholder="Escribir mensaje..."
+    className="flex-1 rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+  />
+
+  <button
+    type="submit"
+    className="rounded-md bg-blue-500 p-2 text-white hover:bg-blue-600"
+  >
+    <Send className="h-5 w-5" />
+  </button>
+
+  {showEmojiPicker && (
+  <div className="absolute bottom-14 right-0 z-50">
+    <EmojiPicker
+      data={data}
+      onEmojiSelect={(emoji: any) =>
+        setNewMessage((prev) => prev + emoji.native)
+      }
+      theme="dark"
+    />
+  </div>
+)}
+
+</div>
+
 					</form>
 				</div>
 			)}

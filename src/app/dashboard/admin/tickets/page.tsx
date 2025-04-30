@@ -69,7 +69,7 @@ export default function TicketsPage() {
 	>('created');
 	const [filterType, setFilterType] = useState<string>('all');
 	const [filterStatus, setFilterStatus] = useState<string>('all');
-	const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+	const [unreadConversationIds, setUnreadConversationIds] = useState<string[]>([]);
 	const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
 	const [selectedChat, setSelectedChat] = useState<{
 		id: string;
@@ -79,12 +79,11 @@ export default function TicketsPage() {
 	useEffect(() => {
 		// Solo forzar la inicialización del socket si es necesario (opcional en la mayoría de casos)
 		if (typeof window !== 'undefined') {
-		  fetch('/api/socketio', {
-			method: 'POST',
-		  }).catch((err) => console.warn('Socket init error:', err));
+			fetch('/api/socketio', {
+				method: 'POST',
+			}).catch((err) => console.warn('Socket init error:', err));
 		}
-	  }, []);
-	  
+	}, []);
 
 	const fetchTickets = useCallback(async (): Promise<void> => {
 		try {
@@ -299,6 +298,7 @@ export default function TicketsPage() {
 				<div className="mt-6">
 					<ChatList
 						onSelectChat={(id, receiverId) => handleSelectChat(id, receiverId)}
+						unreadConversationIds={unreadConversationIds}
 					/>
 				</div>
 			) : (
@@ -531,6 +531,8 @@ export default function TicketsPage() {
 				receiverId={selectedChat?.receiverId ?? null}
 				userName={selectedChat?.userName}
 				onClose={handleCloseChat}
+				unreadConversations={unreadConversationIds}
+				setUnreadConversations={setUnreadConversationIds}
 			/>
 		</div>
 	);
