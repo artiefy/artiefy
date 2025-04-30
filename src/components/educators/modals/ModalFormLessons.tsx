@@ -40,11 +40,6 @@ interface LessonsFormProps {
 	};
 }
 
-interface LessonResponse {
-	id: number;
-	message: string;
-}
-
 interface UploadResponse {
 	uploadType: 'simple' | 'multipart' | 'put';
 	url: string;
