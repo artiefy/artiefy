@@ -63,3 +63,63 @@ FORZAR EL CRON
 curl -X GET https://artiefy.com/api/cron/check-subscriptions \
 -H "Authorization: Bearer 6a8cfb161629e387044a10761c6503639bec96a8e7c7dc7922b4982633fd5c4e"
 ---------------------------------------------------------
+	content: "⋮⋮";
+---------------------------------------------------------
+Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <Page>
+      <Script>
+      <div className="flex min-h..." style={{...}}>
+        <Header>
+          <header className="py-4">
+            <div className="container ...">
+              <div className="flex items...">
+                <div className="hidden w-f...">
+                  <div>
+                  <LinkComponent>
+                  <LinkComponent>
+                  <LinkComponent>
+                  <LinkComponent>
+                  <LinkComponent>
+                  <div>
+                    <SignedOut>
+                    <SignedIn>
+                      <ClerkLoading>
+                      <ClerkLoaded>
+                        <withClerk(UserButton) showName={true}>
+                          <UserButton showName={true} component="UserButton" clerk={{clerkjs:{...}, ...}}>
+                            <ClerkHostRenderer component="UserButton" mount={function} unmount={function} ...>
++                             <div ref={{current:null}} data-clerk-component="UserButton">
+                              ...
+                ...
+            ...
+        ...
+      ...
+    ...
+
+    at throwOnHydrationMismatch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:5037:56)
+    at beginWork (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8209:918)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:3073:74)
+    at performUnitOfWork (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10243:97)
+    at workLoopConcurrentByScheduler (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10239:58)
+    at renderRootConcurrent (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10221:71)
+    at performWorkOnRoot (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:9853:176)
+    at performWorkOnRootViaSchedulerTask (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10826:9)
+    at MessagePort.performWorkUntilDeadline (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:1982:64)
+    at div (<anonymous>)
+    at ClerkHostRenderer.render (http://localhost:3000/_next/static/chunks/node_modules_f26ba2de._.js:6587:609)
+    at push.[project]/node_modules/@clerk/clerk-react/dist/index.mjs [app-client] (ecmascript) <locals>._UserButton.component (http://localhost:3000/_next/static/chunks/node_modules_f26ba2de._.js:6724:241)
+    at HOC (http://localhost:3000/_next/static/chunks/node_modules_f26ba2de._.js:4796:201)
+    at Header (http://localhost:3000/_next/static/chunks/src_17d6d06f._.js:3335:265)
+    at Page (rsc://React/Server/C:%5CUsers%5CADMIN%5COneDrive%5CDocumentos%5CDOCUMENTOS%20DAVID%5CDEVELOPER%5CAPP%20WEB%20ARTIEFY%5Cartiefy%5C.next%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__02d5e6b4._.js?54:2918:276)

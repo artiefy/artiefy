@@ -5,7 +5,14 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import {
+	SignInButton,
+	SignedIn,
+	SignedOut,
+	UserButton,
+	ClerkLoaded,
+	ClerkLoading,
+} from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import {
 	UserCircleIcon,
@@ -60,7 +67,7 @@ export function Header() {
 							<Link
 								key={item.href}
 								href={item.href}
-								className="transition-colors text-shadow hover:text-orange-500 active:scale-95"
+								className="text-shadow transition-colors hover:text-orange-500 active:scale-95"
 							>
 								{item.label}
 							</Link>
@@ -71,7 +78,7 @@ export function Header() {
 							<SignedOut>
 								<SignInButton fallbackRedirectUrl="/estudiantes">
 									<Button
-										className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+										className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 										style={{
 											transition: '0.5s',
 											width: '180px',
@@ -92,16 +99,23 @@ export function Header() {
 								</SignInButton>
 							</SignedOut>
 							<SignedIn>
-								<UserButton showName>
-									<UserButton.MenuItems>
-										<UserButton.Link
-											label="Mis Cursos"
-											labelIcon={<UserCircleIcon className="size-4" />}
-											href="/estudiantes/myaccount"
-										/>
-										<UserButton.Action label="manageAccount" />
-									</UserButton.MenuItems>
-								</UserButton>
+								<ClerkLoading>
+									<div className="flex h-10 items-center justify-center">
+										<Icons.spinner className="size-6 animate-spin" />
+									</div>
+								</ClerkLoading>
+								<ClerkLoaded>
+									<UserButton showName>
+										<UserButton.MenuItems>
+											<UserButton.Link
+												label="Mis Cursos"
+												labelIcon={<UserCircleIcon className="size-4" />}
+												href="/estudiantes/myaccount"
+											/>
+											<UserButton.Action label="manageAccount" />
+										</UserButton.MenuItems>
+									</UserButton>
+								</ClerkLoaded>
 							</SignedIn>
 						</div>
 					</div>
@@ -193,7 +207,7 @@ export function Header() {
 						<SignedOut>
 							<SignInButton fallbackRedirectUrl="/estudiantes">
 								<Button
-									className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 focus:bg-background focus:text-primary focus:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+									className="border-primary bg-primary text-background focus:bg-background focus:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 focus:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
 									style={{
 										transition: '0.5s',
 										width: '180px',
@@ -215,16 +229,23 @@ export function Header() {
 						</SignedOut>
 						<SignedIn>
 							<div className="cl-userButton-root mr-6 flex w-full justify-center">
-								<UserButton showName>
-									<UserButton.MenuItems>
-										<UserButton.Link
-											label="Mis Cursos"
-											labelIcon={<UserCircleIcon className="size-4" />}
-											href="/estudiantes/myaccount"
-										/>
-										<UserButton.Action label="manageAccount" />
-									</UserButton.MenuItems>
-								</UserButton>
+								<ClerkLoading>
+									<div className="flex h-10 items-center justify-center">
+										<Icons.spinner className="size-6 animate-spin" />
+									</div>
+								</ClerkLoading>
+								<ClerkLoaded>
+									<UserButton showName>
+										<UserButton.MenuItems>
+											<UserButton.Link
+												label="Mis Cursos"
+												labelIcon={<UserCircleIcon className="size-4" />}
+												href="/estudiantes/myaccount"
+											/>
+											<UserButton.Action label="manageAccount" />
+										</UserButton.MenuItems>
+									</UserButton>
+								</ClerkLoaded>
 							</div>
 						</SignedIn>
 					</div>

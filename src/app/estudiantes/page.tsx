@@ -119,19 +119,22 @@ export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 
 interface PageProps {
-	searchParams: {
+	searchParams: Promise<{
 		category?: string;
 		query?: string;
 		page?: string;
-	};
+	}>;
 }
 
 export default async function Page({ searchParams }: PageProps) {
 	try {
+		// Await searchParams before accessing its properties
+		const params = await searchParams;
+
 		const parsedParams: SearchParams = {
-			category: searchParams?.category,
-			query: searchParams?.query,
-			page: searchParams?.page,
+			category: params?.category,
+			query: params?.query,
+			page: params?.page,
 		};
 
 		const data = await fetchData(parsedParams);

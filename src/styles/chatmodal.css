@@ -169,138 +169,12 @@
 	position: relative;
 	background: white;
 	border-radius: 0.5rem;
-	overflow: visible;
-	z-index: 100000 !important;
-	width: 400px;
-	height: 500px;
-}
-
-/* Custom resize handle styles for diagonals */
-.diagonal-handles {
-	position: absolute;
-	inset: 0;
-	pointer-events: none;
-}
-
-.edge-handles {
-	position: absolute;
-	inset: 0;
-	pointer-events: none;
-}
-
-/* Style for built-in Panel resize handle */
-[data-panel-resize-handle-id] {
-	background: rgba(0, 165, 192, 0.1);
-	transition: background-color 150ms ease;
-}
-
-[data-panel-resize-handle-id]:hover {
-	background: rgba(0, 165, 192, 0.2);
-}
-
-/* Custom handle styles */
-.react-resizable-handle {
-	position: absolute;
-	width: 20px;
-	height: 20px;
-	background: rgba(0, 165, 192, 0.1);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	z-index: 100001;
-	pointer-events: auto;
-}
-
-/* Diagonal handles */
-.react-resizable-handle-se,
-.react-resizable-handle-sw,
-.react-resizable-handle-ne,
-.react-resizable-handle-nw {
-	width: 20px;
-	height: 20px;
-	font-size: 18px;
-	letter-spacing: -2px;
-}
-
-.react-resizable-handle-se {
-	right: -10px;
-	bottom: -10px;
-	transform: rotate(-45deg);
-}
-.react-resizable-handle-sw {
-	left: -10px;
-	bottom: -10px;
-	transform: rotate(-45deg);
-}
-.react-resizable-handle-ne {
-	right: -10px;
-	top: -10px;
-	transform: rotate(-45deg);
-}
-.react-resizable-handle-nw {
-	left: -10px;
-	top: -10px;
-	transform: rotate(-45deg);
-}
-
-/* Top and bottom handles */
-.react-resizable-handle-n,
-.react-resizable-handle-s {
-	left: 50%;
-	transform: translateX(-50%);
-	width: 40px;
-	height: 20px;
-}
-
-.react-resizable-handle-n {
-	top: -10px;
-}
-.react-resizable-handle-s {
-	bottom: -10px;
-}
-
-.react-resizable-handle-n::after,
-.react-resizable-handle-s::after {
-	content: "⋮⋮";
-	transform: rotate(90deg);
-	font-size: 18px;
-	letter-spacing: -1px;
-}
-
-/* Hover effects */
-.react-resizable-handle:hover {
-	background-color: rgba(0, 165, 192, 0.2);
-}
-
-@keyframes bounce {
-	0%,
-	100% {
-		transform: translateY(0);
-	}
-	50% {
-		transform: translateY(-5px);
-	}
-}
-
-.loading-dot {
-	width: 8px;
-	height: 8px;
-	background-color: #00bdd8;
-	border-radius: 50%;
-	display: inline-block;
-	margin: 0 2px;
-}
-
-.loading-dot:nth-child(1) {
-	animation: bounce 0.8s infinite 0.1s;
-}
-
-.loading-dot:nth-child(2) {
-	animation: bounce 0.9s infinite 0.2s;
-}
-
-.loading-dot:nth-child(3) {
-	animation: bounce 1s infinite 0.3s;
+	overflow: hidden;
+	width: 400px !important;
+	height: 500px !important;
+	box-shadow:
+		0 20px 25px -5px rgba(0, 0, 0, 0.1),
+		0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* Loader styles */
@@ -433,14 +307,6 @@
 
 .chat-container-wrapper > * {
 	pointer-events: auto !important; /* Restaura la interactividad solo para el chat */
-}
-
-.pattern-grid {
-	display: grid;
-	grid-template-columns: repeat(5, 1fr);
-	grid-template-rows: repeat(5, 1fr);
-	opacity: 0.05;
-	pointer-events: none !important;
 }
 
 @keyframes sendButtonClick {
