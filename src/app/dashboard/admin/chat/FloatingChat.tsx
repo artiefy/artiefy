@@ -101,7 +101,7 @@ export default function FloatingChat({
 				`/api/admin/chat/messages/${conversationId}`
 			);
 			if (!response.ok) throw new Error('Error fetching messages');
-			const data: { messages: Message[] } = await response.json();
+			const data = (await response.json()) as { messages: Message[] };
 			setMessages(data.messages ?? []);
 		} catch (error) {
 			console.error('Error fetching messages:', error);
@@ -122,11 +122,11 @@ export default function FloatingChat({
 				}),
 			});
 
-			const data: {
+			const data = (await response.json()) as {
 				conversationId: string;
 				messageId: number;
 				receiverId?: string;
-			} = await response.json();
+			};
 
 			// Solo setear si era nueva
 			if (!currentConversationId && data.conversationId) {
