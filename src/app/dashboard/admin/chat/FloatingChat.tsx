@@ -127,7 +127,7 @@ export default function FloatingChat({
 				messageId: number;
 				receiverId?: string;
 			} = await response.json();
-			
+
 			// Solo setear si era nueva
 			if (!currentConversationId && data.conversationId) {
 				setCurrentConversationId(data.conversationId);

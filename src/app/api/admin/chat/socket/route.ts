@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Server } from 'socket.io';
 
 import type { Server as NetServer } from 'http';
+
 import type { NextApiResponseServerIO } from '~/types/socket';
 
 export const dynamic = 'force-dynamic';
