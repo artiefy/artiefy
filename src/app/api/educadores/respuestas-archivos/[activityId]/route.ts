@@ -23,6 +23,8 @@ interface RawSubmission {
 	status?: unknown;
 	fileContent?: unknown;
 	grade?: unknown;
+	uploadDate?: unknown; // Added the missing property
+	fileUrl?: unknown; // Added the missing property
 }
 
 interface Respuesta {
@@ -51,70 +53,51 @@ export async function GET(request: NextRequest) {
 		return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 	}
 
+	// ✅ Cargar preguntas (si existen)
 	let preguntas: Pregunta[] = [];
-
 	try {
 		const rawPreguntas = await redis.get(
 			`activity:${activityId}:questionsFilesSubida`
 		);
+		console.log('🧾 rawPreguntas:', rawPreguntas);
 
 		if (typeof rawPreguntas === 'string') {
-			preguntas = JSON.parse(rawPreguntas) as Pregunta[];
+			preguntas = JSON.parse(rawPreguntas);
 		} else if (Array.isArray(rawPreguntas)) {
-			preguntas = rawPreguntas as Pregunta[];
+			preguntas = rawPreguntas;
 		} else {
-			return NextResponse.json(
-				{ error: 'Preguntas no válidas' },
-				{ status: 500 }
-			);
+			console.warn('⚠️ No hay preguntas definidas para esta actividad.');
 		}
-
-		console.log('📋 Preguntas cargadas:', preguntas);
 	} catch (error) {
-		console.error('❌ Error parseando preguntas:', error);
-		return NextResponse.json(
-			{ error: 'Error en formato de preguntas' },
-			{ status: 500 }
-		);
+		console.error('❌ Error al cargar preguntas:', error);
+		// No se lanza error, continúa con respuestas
 	}
 
+	// ✅ Cargar respuestas
 	const respuestas: Record<string, Respuesta> = {};
 
 	try {
-		const allKeys = await redis.keys(`activity:${activityId}:user:*:submission`);
-		console.log('🗝️ Claves encontradas:', allKeys);
+		const allKeys = await redis.keys(
+			`activity:${activityId}:user:*:submission`
+		);
+		console.log('🗝️ Claves encontradas:', allKeys.length, allKeys);
 
 		for (const key of allKeys) {
-			console.log(`📂 Procesando clave: ${key}`);
-
 			const rawDoc = await redis.get<RawSubmission>(key);
 
 			if (!rawDoc || typeof rawDoc !== 'object' || Array.isArray(rawDoc)) {
-				console.log('📭 Documento vacío o no válido para clave:', key);
-				continue;
-			}
-
-			const questionIdInKey = preguntas[0]?.id.trim(); // solo si manejas una pregunta
-			console.log('🎯 ID de pregunta extraído:', questionIdInKey);
-
-			const match = preguntas.some((p) => p.id.trim() === questionIdInKey);
-			preguntas.forEach((p) => {
-				console.log(`🧪 Comparando: "${p.id.trim()}" === "${questionIdInKey}"`);
-			});
-
-			if (!match) {
-				console.log('❌ No matchea pregunta:', questionIdInKey);
+				console.log('📭 Documento vacío o inválido:', key);
 				continue;
 			}
 
 			const fileName =
 				typeof rawDoc.fileName === 'string' ? rawDoc.fileName : '';
 			const submittedAt =
-				typeof rawDoc.submittedAt === 'string'
-					? rawDoc.submittedAt
+				typeof rawDoc.uploadDate === 'string'
+					? rawDoc.uploadDate
 					: new Date().toISOString();
 			const fileContent =
-				typeof rawDoc.fileContent === 'string' ? rawDoc.fileContent : '';
+				typeof rawDoc.fileUrl === 'string' ? rawDoc.fileUrl : '';
 			const status =
 				typeof rawDoc.status === 'string' ? rawDoc.status : 'pendiente';
 			const userIdFromKey =
@@ -142,14 +125,17 @@ export async function GET(request: NextRequest) {
 				grade,
 			};
 		}
-	} catch (err) {
-		console.error('❌ Error procesando respuestas:', err);
+	} catch (error) {
+		console.error('❌ Error al cargar respuestas:', error);
+		return NextResponse.json(
+			{ error: 'Error interno al procesar las respuestas' },
+			{ status: 500 }
+		);
 	}
 
 	console.log(
 		'✅ Total respuestas encontradas:',
 		Object.keys(respuestas).length
 	);
-
-	return NextResponse.json({ respuestas });
+	return NextResponse.json({ respuestas, preguntas });
 }
