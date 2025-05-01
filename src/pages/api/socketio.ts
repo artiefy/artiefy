@@ -1,13 +1,8 @@
-// pages/api/socketio.ts
-
 import { Server } from 'socket.io';
 
-import type { Socket } from 'net';
 import type { Server as NetServer } from 'http';
-
+import type { Socket } from 'net';
 import type { NextApiRequest, NextApiResponse } from 'next';
-
-
 interface CustomNextApiResponse extends NextApiResponse {
 	socket: Socket & {
 		server: NetServer & {

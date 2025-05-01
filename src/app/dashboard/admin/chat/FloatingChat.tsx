@@ -59,7 +59,7 @@ export default function FloatingChat({
 		} else {
 			setReceiverId(propReceiverId ?? null);
 		}
-	}, [chatId, propReceiverId]);
+	}, [chatId, propReceiverId, unreadConversations, setUnreadConversations]);
 
 	useEffect(() => {
 		const handleNewMessage = (data: Message & { conversationId: string }) => {
@@ -95,14 +95,13 @@ export default function FloatingChat({
 		};
 	}, [currentConversationId, setUnreadConversations]);
 
-
 	const fetchConversationHistory = async (conversationId: string) => {
 		try {
 			const response = await fetch(
 				`/api/admin/chat/messages/${conversationId}`
 			);
 			if (!response.ok) throw new Error('Error fetching messages');
-			const data = await response.json();
+			const data: { messages: Message[] } = await response.json();
 			setMessages(data.messages ?? []);
 		} catch (error) {
 			console.error('Error fetching messages:', error);
@@ -123,8 +122,12 @@ export default function FloatingChat({
 				}),
 			});
 
-			const data = await response.json();
-
+			const data: {
+				conversationId: string;
+				messageId: number;
+				receiverId?: string;
+			} = await response.json();
+			
 			// Solo setear si era nueva
 			if (!currentConversationId && data.conversationId) {
 				setCurrentConversationId(data.conversationId);
@@ -152,7 +155,7 @@ export default function FloatingChat({
 			}
 
 			// Determinar el destinatario
-			const targetReceiverId = receiverId || propReceiverId;
+			const targetReceiverId = receiverId ?? propReceiverId;
 			if (!targetReceiverId) {
 				console.warn(
 					'⚠️ receiverId está vacío. No se podrá emitir correctamente.'

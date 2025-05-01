@@ -19,7 +19,6 @@ import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 import { Switch } from '~/components/educators/ui/switch';
 
-
 // Interfaz para los props del formulario de lecciones
 interface LessonsFormProps {
 	uploading: boolean;
@@ -40,7 +39,6 @@ interface LessonsFormProps {
 		resourceName?: string;
 	};
 }
-
 
 interface UploadResponse {
 	uploadType: 'simple' | 'multipart' | 'put';
@@ -432,7 +430,8 @@ const ModalFormLessons = ({
 				ok: response.ok,
 			});
 
-			const responseData: { message?: string } = await response.json();
+			const responseData = (await response.json()) as { message?: string };
+
 			console.log('Datos de respuesta:', responseData);
 
 			if (response.ok) {

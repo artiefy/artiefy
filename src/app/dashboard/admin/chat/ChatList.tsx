@@ -40,7 +40,7 @@ export default function ChatList({
 				const response = await fetch('/api/admin/chat/conversations');
 				if (!response.ok) throw new Error('Error fetching conversations');
 
-				const data: ApiResponse = await response.json();
+				const data = (await response.json()) as ApiResponse;
 
 				const sorted = data.conversations.sort(
 					(a, b) => Number(b.id) - Number(a.id)
