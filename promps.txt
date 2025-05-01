@@ -63,7 +63,7 @@ FORZAR EL CRON
 curl -X GET https://artiefy.com/api/cron/check-subscriptions \
 -H "Authorization: Bearer 6a8cfb161629e387044a10761c6503639bec96a8e7c7dc7922b4982633fd5c4e"
 ---------------------------------------------------------
-	content: "⋮⋮";
+	content: ⋮⋮ >
 ---------------------------------------------------------
 Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
 

@@ -1,6 +1,6 @@
 .button {
 	cursor: pointer;
-	border: 2px solid #2ecc71;
+	border: 2px solid #2ecc71; /* Light green border */
 	background: #00a5c0;
 	color: #fff;
 	width: 100px;
@@ -13,13 +13,10 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+	transition: all 300ms;
 	font-weight: 600;
-	z-index: 100000 !important; /* Valor más alto que cualquier otro elemento */
-	will-change: transform !important;
-	transform: scale(1) translateZ(0);
-	backface-visibility: hidden;
-	perspective: 1000px;
+	z-index: 1000;
+	box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); /* Subtle green glow */
 }
 
 .button__text {
@@ -28,18 +25,17 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	animation: text-rotation 12s linear infinite;
+	animation: text-rotation 8s linear infinite;
 	pointer-events: none;
-	text-transform: uppercase;
-	will-change: transform;
 }
 
 .button__text > span {
 	position: absolute !important;
-	transform: rotate(calc(15deg * var(--index)));
+	transform: rotate(calc(20deg * var(--index)));
 	inset: 4px;
-	font-size: 0.75rem;
+	font-size: 0.85rem;
 	letter-spacing: 1px;
+	text-transform: uppercase;
 }
 
 .button__circle {
@@ -71,8 +67,9 @@
 
 .button:hover {
 	background: #000;
-	transform: scale(1.1) translateZ(0) !important;
-	border: 2px solid #fff;
+	transform: scale(1.05);
+	border: 2px solid #fff; /* Keep white border on hover */
+	box-shadow: 0 0 15px rgba(46, 204, 113, 0.5); /* Enhanced glow on hover */
 }
 
 .button:hover .button__icon {
@@ -90,16 +87,13 @@
 }
 
 @keyframes text-rotation {
-	from {
-		transform: rotate(0deg);
-	}
 	to {
-		transform: rotate(360deg);
+		rotate: 360deg;
 	}
 }
 
 .button:active {
-	transform: scale(0.9) translateZ(0) !important;
+	transform: scale(0.95);
 }
 
 /* Estilos adicionales para el modal del chat */
@@ -107,8 +101,8 @@
 	background: rgba(0, 0, 0, 0.5);
 	position: fixed;
 	inset: 0;
-	z-index: 1000 !important;
-	display: flex !important;
+	z-index: 50;
+	display: flex;
 	align-items: center;
 	justify-content: center;
 	padding: 1rem;
@@ -138,10 +132,10 @@
 	box-shadow:
 		0 20px 25px -5px rgba(0, 0, 0, 0.1),
 		0 10px 10px -5px rgba(0, 0, 0, 0.04);
-	background-color: white !important;
+	background-color: white;
 	width: 320px;
 	height: 450px;
-	overflow: hidden !important;
+	overflow: hidden;
 }
 
 .chat-header {
@@ -153,8 +147,8 @@
 }
 
 .messages-container {
-	flex: 1 !important;
-	overflow-y: auto !important;
+	flex: 1;
+	overflow-y: auto;
 	padding: 1rem;
 	flex-grow: 1;
 }
@@ -164,182 +158,105 @@
 	padding: 1rem;
 }
 
-/* Panel styles */
-.chat-resizable {
+@keyframes bounce {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-5px);
+	}
+}
+
+.loading-dot {
+	width: 8px;
+	height: 8px;
+	background-color: #00bdd8;
+	border-radius: 50%;
+	display: inline-block;
+	margin: 0 2px;
+}
+
+.loading-dot:nth-child(1) {
+	animation: bounce 0.8s infinite 0.1s;
+}
+
+.loading-dot:nth-child(2) {
+	animation: bounce 0.9s infinite 0.2s;
+}
+
+.loading-dot:nth-child(3) {
+	animation: bounce 1s infinite 0.3s;
+}
+
+.react-resizable {
 	position: relative;
 	background: white;
 	border-radius: 0.5rem;
 	overflow: hidden;
-	width: 400px !important;
-	height: 500px !important;
-	box-shadow:
-		0 20px 25px -5px rgba(0, 0, 0, 0.1),
-		0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Loader styles */
-.loader {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	--color: #01142b;
-	--animation: 2s ease-in-out infinite;
-	padding: 0.5rem; /* Reduced from 1rem */
+/* Update resize handle styles */
+.react-resizable-handle {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	background: transparent !important;
+	opacity: 0.8;
+	transition: opacity 0.2s;
+	z-index: 10;
 }
 
-.loader .circle {
+.react-resizable-handle::before {
+	content: "⋮⋮";
+	position: absolute;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	position: relative;
-	width: 12px; /* Reduced from 20px */
-	height: 12px; /* Reduced from 20px */
-	border: solid 2px var(--color);
-	border-radius: 50%;
-	margin: 0 6px; /* Reduced from 10px */
-	background-color: transparent;
-	animation: circle-keys var(--animation);
+	width: 100%;
+	height: 100%;
+	color: #00a5c0;
+	font-size: 14px;
+	letter-spacing: -2px;
 }
 
-.loader .circle .dot {
-	position: absolute;
-	transform: translate(-50%, -50%);
-	width: 8px; /* Reduced from 16px */
-	height: 8px; /* Reduced from 16px */
-	border-radius: 50%;
-	background-color: var(--color);
-	animation: dot-keys var(--animation);
+/* Fix rotations for each handle */
+.react-resizable-handle-n::before,
+.react-resizable-handle-s::before {
+	transform: rotate(0deg); /* Horizontal dots */
 }
 
-.loader .circle .outline {
-	position: absolute;
-	transform: translate(-50%, -50%);
-	width: 12px; /* Reduced from 20px */
-	height: 12px; /* Reduced from 20px */
-	border-radius: 50%;
-	animation: outline-keys var(--animation);
+.react-resizable-handle-e::before,
+.react-resizable-handle-w::before {
+	transform: rotate(90deg); /* Vertical dots for sides */
 }
 
-.circle:nth-child(2) {
-	animation-delay: 0.3s;
+.react-resizable-handle-ne::before,
+ .react-resizable-handle-sw::before {
+	transform: rotate(-45deg); /* Diagonal dots */
 }
 
-.circle:nth-child(3) {
-	animation-delay: 0.6s;
+.react-resizable-handle-nw::before,
+.react-resizable-handle-se::before {
+	transform: rotate(-45deg); /* Diagonal dots */
 }
 
-.circle:nth-child(2) .dot {
-	animation-delay: 0.3s;
+/* Remove any extra pseudo-elements but keep our dots */
+.react-resizable-handle::after {
+	display: none !important;
 }
 
-.circle:nth-child(3) .dot {
-	animation-delay: 0.6s;
+.react-resizable-handle:hover {
+	opacity: 1;
 }
 
-.circle:nth-child(1) .outline {
-	animation-delay: 0.9s;
+.react-resizable-handle *,
+.react-resizable-handle::after {
+	display: none !important;
 }
 
-.circle:nth-child(2) .outline {
-	animation-delay: 1.2s;
-}
-
-.circle:nth-child(3) .outline {
-	animation-delay: 1.5s;
-}
-
-@keyframes circle-keys {
-	0% {
-		transform: scale(1);
-		opacity: 1;
-	}
-	50% {
-		transform: scale(1.5);
-		opacity: 0.5;
-	}
-	100% {
-		transform: scale(1);
-		opacity: 1;
-	}
-}
-
-@keyframes dot-keys {
-	0% {
-		transform: scale(1);
-	}
-	50% {
-		transform: scale(0);
-	}
-	100% {
-		transform: scale(1);
-	}
-}
-
-@keyframes outline-keys {
-	0% {
-		transform: scale(0);
-		outline: solid 20px var(--color);
-		outline-offset: 0;
-		opacity: 1;
-	}
-	100% {
-		transform: scale(1);
-		outline: solid 0 transparent;
-		outline-offset: 20px;
-		opacity: 0;
-	}
-}
-
-/* Aumentar el z-index del botón y del chat a un valor muy alto */
 .chat-resizable {
-	isolation: isolate !important;
-	z-index: 100000 !important; /* Mismo valor alto que el botón */
 	position: relative;
-}
-
-/* Añadir un nuevo contenedor para el chat */
-.chat-container-wrapper {
-	position: fixed;
-	inset: 0;
-	pointer-events: none !important; /* Permite hacer clic en elementos debajo */
-	z-index: 99999 !important; /* Justo debajo del botón y chat */
-}
-
-.chat-container-wrapper > * {
-	pointer-events: auto !important; /* Restaura la interactividad solo para el chat */
-}
-
-@keyframes sendButtonClick {
-	0% {
-		transform: scale(1);
-	}
-	50% {
-		transform: scale(0.85);
-	}
-	100% {
-		transform: scale(1);
-	}
-}
-
-.group:active svg {
-	animation: sendButtonClick 0.3s ease-in-out;
-}
-
-/* Estilos adicionales para el modal del chat */
-@media (max-width: 640px) {
-	.react-resizable {
-		width: 90% !important; /* O un valor fijo como 300px */
-		max-width: 320px !important;
-	}
-}
-
-/* Add styles for disabled search bar */
-.input:disabled {
-	background: linear-gradient(
-		135deg,
-		rgb(230, 230, 230) 0%,
-		rgb(240, 240, 240) 100%
-	) !important;
-	opacity: 0.7;
-	cursor: not-allowed;
+	border-radius: 0.5rem;
+	overflow: hidden;
 }

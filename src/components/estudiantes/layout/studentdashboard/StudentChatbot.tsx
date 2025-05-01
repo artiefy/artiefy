@@ -10,10 +10,12 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { BsPersonCircle } from 'react-icons/bs';
 import { IoMdClose } from 'react-icons/io';
+import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
 import '~/styles/chatmodal.css';
 import { Card } from '~/components/estudiantes/ui/card';
+import 'react-resizable/css/styles.css';
 
 interface StudentChatbotProps {
 	className?: string;
@@ -26,6 +28,14 @@ interface StudentChatbotProps {
 interface ChatResponse {
 	response: string;
 	courses: { id: number; title: string }[];
+}
+
+interface ResizeData {
+	size: {
+		width: number;
+		height: number;
+	};
+	handle: string;
 }
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
@@ -42,6 +52,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [processingQuery, setProcessingQuery] = useState(false);
+	const [dimensions, setDimensions] = useState({ width: 400, height: 500 });
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -224,6 +235,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		}
 	};
 
+	const handleResize = useCallback(
+		(_e: React.SyntheticEvent, data: ResizeData) => {
+			setDimensions(data.size);
+		},
+		[]
+	);
+
 	const renderMessage = (message: {
 		id: number;
 		text: string;
@@ -338,7 +356,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					ref={chatContainerRef}
 					style={{ zIndex: 100000 }}
 				>
-					<div className="chat-resizable">
+					<ResizableBox
+						width={dimensions.width}
+						height={dimensions.height}
+						onResize={handleResize}
+						minConstraints={[300, 400]}
+						maxConstraints={[800, window.innerHeight - 160]}
+						resizeHandles={['se', 'sw', 'ne', 'nw']} // Reduced to just corners
+						className="chat-resizable"
+					>
 						<div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
 							{/* Logo background */}
 							<div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
@@ -497,7 +523,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								</form>
 							</div>
 						</div>
-					</div>
+					</ResizableBox>
 				</div>
 			)}
 		</div>
