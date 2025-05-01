@@ -467,7 +467,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								))}
 								{isLoading && (
 									<div className="flex justify-start">
-										<div className="rounded-lg bg-gray-100 p-1">
+										<div className="rounded-lg bg-gray-100 p-3">
 											<div className="loader">
 												<div className="circle">
 													<div className="dot" />
