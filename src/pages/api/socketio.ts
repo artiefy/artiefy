@@ -2,7 +2,7 @@
 
 import { Server } from 'socket.io';
 
-}import type { Socket } from 'net';
+import type { Socket } from 'net';
 import type { Server as NetServer } from 'http';
 
 import type { NextApiRequest, NextApiResponse } from 'next';
