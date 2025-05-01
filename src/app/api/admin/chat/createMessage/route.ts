@@ -1,31 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { auth } from '@clerk/nextjs/server';
+import { eq, and, or } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import {
 	conversations,
 	chatMessagesWithConversation,
 } from '~/server/db/schema';
-import { eq, and, or } from 'drizzle-orm';
-import { auth } from '@clerk/nextjs/server';
+
+interface ChatRequestBody {
+	receiverId?: string;
+	message: string;
+	conversationId?: number;
+}
 
 export async function POST(req: NextRequest) {
 	try {
+		const body = (await req.json()) as ChatRequestBody;
+		const { receiverId, message, conversationId: clientConversationId } = body;
+
 		const { userId } = await auth();
 		if (!userId) {
 			return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 		}
 
-		const {
-			receiverId,
-			message,
-			conversationId: clientConversationId,
-		} = await req.json();
+		let conversationId: number;
 
-		let conversationId = clientConversationId;
-
-		// Solo si no nos mandaron conversationId, intentamos buscar o crear una
-		if (!conversationId) {
+		if (clientConversationId) {
+			conversationId = clientConversationId;
+		} else {
 			if (!receiverId || receiverId === 'new') {
-				// Chat consigo mismo
 				const result = await db
 					.insert(conversations)
 					.values({
@@ -36,7 +42,6 @@ export async function POST(req: NextRequest) {
 					.returning();
 				conversationId = result[0].id;
 			} else {
-				// Verificar si ya existe conversación entre user y receiver
 				const existing = await db
 					.select()
 					.from(conversations)
@@ -72,8 +77,17 @@ export async function POST(req: NextRequest) {
 			}
 		}
 
-		// Emitir notificación por socket si aplica
-		const io = (req as any)?.socket?.server?.io;
+		const typedReq = req as NextRequest & {
+			socket?: {
+				server?: {
+					io?: {
+						emit: (event: string, payload: unknown) => void;
+					};
+				};
+			};
+		};
+
+		const io = typedReq.socket?.server?.io;
 		if (io && receiverId && receiverId !== userId) {
 			io.emit('notification', {
 				type: 'new_message',
@@ -84,7 +98,6 @@ export async function POST(req: NextRequest) {
 			});
 		}
 
-		// Guardar mensaje
 		const newMessage = await db
 			.insert(chatMessagesWithConversation)
 			.values({

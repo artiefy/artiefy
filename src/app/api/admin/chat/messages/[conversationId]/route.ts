@@ -1,14 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+
+import { eq, asc } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { chatMessagesWithConversation, users } from '~/server/db/schema';
-import { eq, asc } from 'drizzle-orm';
 
 export async function GET(
 	req: NextRequest,
 	context: { params: { conversationId: string } }
 ) {
 	const { conversationId } = context.params;
-
+	void req;
 	if (!conversationId) {
 		return NextResponse.json(
 			{ error: 'ID de conversación requerido' },

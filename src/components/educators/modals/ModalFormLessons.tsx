@@ -15,9 +15,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
+import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 import { Switch } from '~/components/educators/ui/switch';
-import { Label } from '~/components/educators/ui/label';
+
 
 // Interfaz para los props del formulario de lecciones
 interface LessonsFormProps {
@@ -427,17 +428,18 @@ const ModalFormLessons = ({
 				ok: response.ok,
 			});
 
-			const responseData = await response.json();
+			const responseData: { message?: string } = await response.json();
 			console.log('Datos de respuesta:', responseData);
 
 			if (response.ok) {
 				toast.success(isEditing ? 'Lección actualizada' : 'Lección creada');
 				onCloseAction();
 				if (onUpdateSuccess) {
-					onUpdateSuccess();
+					onUpdateSuccess();throw new Error(responseData.message ?? 'Error al guardar la lección');
+
 				}
 			} else {
-				throw new Error(responseData.message || 'Error al guardar la lección');
+				throw new Error(responseData.message ?? 'Error al guardar la lección');
 			}
 		} catch (error) {
 			console.error('Error en handleSubmit:', error);

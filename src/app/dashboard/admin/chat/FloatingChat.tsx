@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Send, X, MessageCircle } from 'lucide-react';
-import socket from '~/lib/socket';
-import { useAuth } from '@clerk/nextjs';
 
-import EmojiPicker from '@emoji-mart/react';
-import data from '@emoji-mart/data';
+import { useAuth } from '@clerk/nextjs';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
+import { Send, X, MessageCircle } from 'lucide-react';
+
+import socket from '~/lib/socket';
 
 interface Message {
 	id: number;
@@ -31,8 +31,7 @@ export default function FloatingChat({
 	onClose,
 	unreadConversations,
 	setUnreadConversations,
-  }: FloatingChatProps)
-   {
+}: FloatingChatProps) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [newMessage, setNewMessage] = useState('');
 	const [isExpanded, setIsExpanded] = useState(false);
@@ -43,7 +42,6 @@ export default function FloatingChat({
 	const [hasNotification, setHasNotification] = useState(false);
 	const { userId } = useAuth();
 	const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
 
 	useEffect(() => {
 		if (chatId) {
@@ -64,7 +62,7 @@ export default function FloatingChat({
 	}, [chatId, propReceiverId]);
 
 	useEffect(() => {
-		const handleNewMessage = (data: any) => {
+		const handleNewMessage = (data: Message & { conversationId: string }) => {
 			if (data.conversationId === currentConversationId) {
 				setMessages((prev) => [...prev, data]);
 			} else {
@@ -76,8 +74,8 @@ export default function FloatingChat({
 				);
 			}
 		};
-	
-		const handleNotification = (data: any) => {
+
+		const handleNotification = (data: { conversationId: string }) => {
 			if (data.conversationId) {
 				setUnreadConversations((prev) => {
 					if (!prev.includes(data.conversationId)) {
@@ -87,16 +85,16 @@ export default function FloatingChat({
 				});
 			}
 		};
-	
+
 		socket.on('message', handleNewMessage);
 		socket.on('notification', handleNotification);
-	
+
 		return () => {
 			socket.off('message', handleNewMessage);
 			socket.off('notification', handleNotification);
 		};
-	}, [currentConversationId]);
-	
+	}, [currentConversationId, setUnreadConversations]);
+
 
 	const fetchConversationHistory = async (conversationId: string) => {
 		try {
@@ -105,7 +103,7 @@ export default function FloatingChat({
 			);
 			if (!response.ok) throw new Error('Error fetching messages');
 			const data = await response.json();
-			setMessages(data.messages || []);
+			setMessages(data.messages ?? []);
 		} catch (error) {
 			console.error('Error fetching messages:', error);
 		}
@@ -205,7 +203,7 @@ export default function FloatingChat({
 		<>
 			<button
 				onClick={handleToggle}
-				className="fixed relative right-4 bottom-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg hover:bg-blue-600"
+				className="fixed right-4 bottom-4 z-[9999] flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg hover:bg-blue-600"
 			>
 				<MessageCircle className="h-6 w-6" />
 				{hasNotification && (
@@ -260,45 +258,42 @@ export default function FloatingChat({
 						}}
 						className="flex-none border-t border-gray-700 p-4"
 					>
-						<div className="flex items-center gap-2 relative">
-  <button
-    type="button"
-    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-    className="text-2xl px-2 text-white hover:text-yellow-400"
-    title="Agregar emoji"
-  >
-    😊
-  </button>
+						<div className="relative flex items-center gap-2">
+							<button
+								type="button"
+								onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+								className="px-2 text-2xl text-white hover:text-yellow-400"
+								title="Agregar emoji"
+							>
+								😊
+							</button>
 
-  <input
-    type="text"
-    value={newMessage}
-    onChange={(e) => setNewMessage(e.target.value)}
-    placeholder="Escribir mensaje..."
-    className="flex-1 rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
-  />
+							<input
+								type="text"
+								value={newMessage}
+								onChange={(e) => setNewMessage(e.target.value)}
+								placeholder="Escribir mensaje..."
+								className="flex-1 rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white placeholder-gray-400 focus:border-blue-500 focus:outline-none"
+							/>
 
-  <button
-    type="submit"
-    className="rounded-md bg-blue-500 p-2 text-white hover:bg-blue-600"
-  >
-    <Send className="h-5 w-5" />
-  </button>
+							<button
+								type="submit"
+								className="rounded-md bg-blue-500 p-2 text-white hover:bg-blue-600"
+							>
+								<Send className="h-5 w-5" />
+							</button>
 
-  {showEmojiPicker && (
-  <div className="absolute bottom-14 right-0 z-50">
-    <EmojiPicker
-      data={data}
-      onEmojiSelect={(emoji: any) =>
-        setNewMessage((prev) => prev + emoji.native)
-      }
-      theme="dark"
-    />
-  </div>
-)}
-
-</div>
-
+							{showEmojiPicker && (
+								<div className="absolute right-0 bottom-14 z-50">
+									<EmojiPicker
+										onEmojiClick={(emojiData) =>
+											setNewMessage((prev) => prev + emojiData.emoji)
+										}
+										theme={Theme.DARK}
+									/>
+								</div>
+							)}
+						</div>
 					</form>
 				</div>
 			)}

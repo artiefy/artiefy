@@ -41,7 +41,7 @@ interface User {
 	lastName: string;
 	email: string;
 	lastConnection?: string;
-	enrolledAt?: string | Date; // ✅ <-- Añadir esta línea
+	enrolledAt?: string | Date | null; // ✅ Permitir null para evitar errores
 	lessonsProgress: LessonProgress[];
 	averageProgress: number;
 	tiempoEnCurso?: string; // ✅ si quieres tener tipado esto también
