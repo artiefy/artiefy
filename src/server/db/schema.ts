@@ -297,16 +297,37 @@ export const userActivitiesProgress = pgTable('user_activities_progress', {
 //Tabla de sistema de tickets
 export const tickets = pgTable('tickets', {
 	id: serial('id').primaryKey(),
-	userId: text('user_id')
+	creatorId: text('creator_id')
 		.references(() => users.id)
 		.notNull(),
+	assignedToId: text('assigned_to_id').references(() => users.id),
 	comments: varchar('comments', { length: 255 }).notNull(),
 	description: text('description').notNull(),
-	estado: boolean('estado').default(false).notNull(),
+	estado: text('estado', {
+		enum: ['abierto', 'en proceso', 'en revision', 'solucionado', 'cerrado'],
+	})
+		.default('abierto')
+		.notNull(),
+	tipo: text('tipo', {
+		enum: ['otro', 'bug', 'revision', 'logs'],
+	}).notNull(),
 	email: text('email').notNull(),
 	coverImageKey: text('cover_image_key'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+//Tabla de comentarios de tickets
+export const ticketComments = pgTable('ticket_comments', {
+	id: serial('id').primaryKey(),
+	ticketId: integer('ticket_id')
+		.references(() => tickets.id)
+		.notNull(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	content: text('content').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 //Tabla de parametros
@@ -395,6 +416,17 @@ export const parameterGrades = pgTable(
 	},
 	(table) => [unique('uniq_parameter_user').on(table.parameterId, table.userId)]
 );
+
+// Tabla de credenciales de usuario
+export const userCredentials = pgTable('user_credentials', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	password: text('password').notNull(),
+	clerkUserId: text('clerk_user_id').notNull(),
+	email: text('email').notNull(),
+});
 
 // Relaciones de programas
 export const programasRelations = relations(programas, ({ one, many }) => ({
@@ -731,3 +763,56 @@ export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
 		references: [users.id],
 	}),
 }));
+
+export const ticketsRelations = relations(tickets, ({ one, many }) => ({
+	creator: one(users, {
+		fields: [tickets.creatorId],
+		references: [users.id],
+	}),
+	assignedTo: one(users, {
+		fields: [tickets.assignedToId],
+		references: [users.id],
+	}),
+	comments: many(ticketComments),
+}));
+
+export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
+	ticket: one(tickets, {
+		fields: [ticketComments.ticketId],
+		references: [tickets.id],
+	}),
+	user: one(users, {
+		fields: [ticketComments.userId],
+		references: [users.id],
+	}),
+}));
+
+// Tabla de conversaciones
+export const conversations = pgTable('conversations', {
+	id: serial('id').primaryKey(),
+	senderId: text('sender_id')
+		.references(() => users.id)
+		.notNull(),
+	receiverId: text('receiver_id').references(() => users.id),
+	status: text('status', { enum: ['activo', 'cerrado'] })
+		.default('activo')
+		.notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Relación de mensajes con conversaciones
+export const chatMessagesWithConversation = pgTable(
+	'chat_messages_with_conversation',
+	{
+		id: serial('id').primaryKey(),
+		conversationId: integer('conversation_id')
+			.references(() => conversations.id)
+			.notNull(),
+		senderId: text('sender_id')
+			.references(() => users.id)
+			.notNull(),
+		message: text('message').notNull(),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+	}
+);

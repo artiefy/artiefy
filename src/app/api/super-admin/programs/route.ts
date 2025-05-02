@@ -11,7 +11,6 @@ import {
 import { db } from '~/server/db';
 import { materias, users } from '~/server/db/schema';
 
-
 export async function POST(req: NextRequest) {
 	try {
 		const { userId } = (await auth()) as { userId: string | null };

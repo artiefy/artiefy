@@ -207,7 +207,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setParametrosAction([
 				...parametros,
 				{
-					id: parametros.length + 1,
+					id: 0,
 					name: '',
 					description: '',
 					porcentaje: 0,
@@ -260,25 +260,37 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			return;
 		}
 
-		setParametrosAction(
-			updatedParametros.map((parametro, index) => ({
-				...parametro,
-				id: index + 1,
-			}))
-		);
+		setParametrosAction(updatedParametros);
 	};
 
 	// Función para manejar la eliminación de parámetros
-	const handleRemoveParametro = (index: number) => {
+	const handleRemoveParametro = async (index: number) => {
+		const parametroAEliminar = parametros[index];
+
+		// Si tiene ID, es un parámetro guardado → eliminarlo de la base de datos
+		if (parametroAEliminar.id) {
+			try {
+				const response = await fetch('/api/educadores/parametros', {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ id: parametroAEliminar.id }),
+				});
+
+				if (!response.ok) {
+					throw new Error('Error al eliminar el parámetro de la base de datos');
+				}
+			} catch (error) {
+				console.error('❌ Error al eliminar parámetro:', error);
+				toast.error('Error al eliminar el parámetro');
+				return;
+			}
+		}
+
+		// Actualiza el estado local (independientemente de si tenía id o no)
 		const updatedParametros = parametros.filter((_, i) => i !== index);
-		// Reasignar los valores de entrega
-		const reassignedParametros = updatedParametros.map((parametro) => ({
-			id: parametro.id,
-			name: parametro.name,
-			description: parametro.description,
-			porcentaje: parametro.porcentaje,
-		}));
-		setParametrosAction(reassignedParametros);
+		setParametrosAction(updatedParametros);
 	};
 
 	// Función para obtener los archivos de subida y enviarselo al componente padre donde se hace el metodo POST
@@ -605,8 +617,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							: 'Llena los detalles para crear un nuevo curso'}
 					</DialogDescription>
 				</DialogHeader>
-				<div className="rounded-lg bg-background px-6 text-black shadow-md">
-					<label htmlFor="title" className="text-lg font-medium text-primary">
+				<div className="bg-background rounded-lg px-6 text-black shadow-md">
+					<label htmlFor="title" className="text-primary text-lg font-medium">
 						Título
 					</label>
 					<input
@@ -621,7 +633,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					)}
 					<label
 						htmlFor="description"
-						className="text-lg font-medium text-primary"
+						className="text-primary text-lg font-medium"
 					>
 						Descripción
 					</label>
@@ -640,7 +652,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div className="mx-auto flex w-10/12 flex-col gap-2">
 							<label
 								htmlFor="nivelid"
-								className="text-left text-lg font-medium text-primary"
+								className="text-primary text-left text-lg font-medium"
 							>
 								Nivel
 							</label>
@@ -660,7 +672,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div className="mx-auto flex w-10/12 flex-col gap-2">
 							<label
 								htmlFor="categoryid"
-								className="text-left text-lg font-medium text-primary"
+								className="text-primary text-left text-lg font-medium"
 							>
 								Categoría
 							</label>
@@ -680,7 +692,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div className="mx-auto flex w-10/12 flex-col gap-2">
 							<label
 								htmlFor="modalidadesid"
-								className="text-left text-lg font-medium text-primary"
+								className="text-primary text-left text-lg font-medium"
 							>
 								Modalidad
 							</label>
@@ -700,13 +712,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div className="mx-auto flex w-10/12 flex-col gap-2">
 							<label
 								htmlFor="courseTypes"
-								className="text-left text-lg font-medium text-primary"
+								className="text-primary text-left text-lg font-medium"
 							>
 								Tipo de curso
 							</label>
 							<label
 								htmlFor="courseTypes"
-								className="text-left text-lg font-medium text-primary"
+								className="text-primary text-left text-lg font-medium"
 							>
 								Selecciona el tipo del curso
 							</label>
@@ -725,7 +737,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div className="mx-auto flex w-10/12 flex-col gap-2">
 							<label
 								htmlFor="courseTypes"
-								className="text-left text-lg font-medium text-primary"
+								className="text-primary text-left text-lg font-medium"
 							>
 								Esta activo?
 							</label>
@@ -736,7 +748,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					<div>
 						<label
 							htmlFor="rating"
-							className="text-lg font-medium text-primary"
+							className="text-primary text-lg font-medium"
 						>
 							Rating
 						</label>
@@ -746,7 +758,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							max="5"
 							step="0.1"
 							placeholder="0-5"
-							className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
+							className="border-primary mt-1 w-full rounded border p-2 text-white outline-none focus:no-underline"
 							value={rating}
 							onChange={(e) => setRating(Number(e.target.value))}
 						/>
@@ -754,7 +766,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					<div className="mb-4">
 						<label
 							htmlFor="instructor"
-							className="text-lg font-medium text-primary"
+							className="text-primary text-lg font-medium"
 						>
 							Instructor
 						</label>
@@ -762,7 +774,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							id="instructor"
 							value={instructor}
 							onChange={(e) => setInstructor(e.target.value)}
-							className="w-full rounded border border-primary bg-background p-2 text-white outline-none"
+							className="border-primary bg-background w-full rounded border p-2 text-white outline-none"
 						>
 							<option value="">Seleccionar instructor</option>
 							{educators.map((educator) => (
@@ -772,11 +784,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							))}
 						</select>
 					</div>
-					<label htmlFor="file" className="text-lg font-medium text-primary">
+					<label htmlFor="file" className="text-primary text-lg font-medium">
 						Imagen de portada
 					</label>
 					<div
-						className={`mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary p-8 lg:w-1/2 ${
+						className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${
 							isDragging
 								? 'border-blue-500 bg-blue-50'
 								: errors.file
@@ -908,14 +920,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div className="my-4 flex flex-col">
 							<label
 								htmlFor="totalParametros"
-								className="text-lg font-medium text-primary"
+								className="text-primary text-lg font-medium"
 							>
 								Parametros de evaluación
 							</label>
 							<Button
 								onClick={handleAddParametro}
 								disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
-								className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
+								className="bg-primary mt-2 w-10/12 text-white lg:w-1/2"
 							>
 								{editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
 								parametro
@@ -924,7 +936,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 							{parametros.map((parametro, index) => (
 								<div key={index} className="mt-4 rounded-lg border p-4">
 									<div className="flex items-center justify-between">
-										<h3 className="text-lg font-medium text-primary">
+										<h3 className="text-primary text-lg font-medium">
 											Parámetro {index + 1}
 										</h3>
 										<Button
@@ -934,7 +946,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 											Eliminar
 										</Button>
 									</div>
-									<label className="mt-2 text-lg font-medium text-primary">
+									<label className="text-primary mt-2 text-lg font-medium">
 										Nombre
 									</label>
 									<input
@@ -945,7 +957,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										}
 										className="mt-1 w-full rounded border p-2 text-white outline-none"
 									/>
-									<label className="mt-2 text-lg font-medium text-primary">
+									<label className="text-primary mt-2 text-lg font-medium">
 										Descripción
 									</label>
 									<textarea
@@ -959,7 +971,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 										}
 										className="mt-1 w-full rounded border p-2 text-white outline-none"
 									/>
-									<label className="mt-2 text-lg font-medium text-primary">
+									<label className="text-primary mt-2 text-lg font-medium">
 										Porcentaje %
 									</label>
 									<input
@@ -982,7 +994,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 						<div className="my-4 flex flex-col">
 							<label
 								htmlFor="subjects"
-								className="text-lg font-medium text-primary"
+								className="text-primary text-lg font-medium"
 							>
 								Asignar Materias
 							</label>

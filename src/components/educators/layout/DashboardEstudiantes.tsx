@@ -17,7 +17,7 @@ import { Bar } from 'react-chartjs-2';
 
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
 
-// Registro de los plugins de ChartJS que son para las estadísticas de los estudiantes 'No terminado' 
+// Registro de los plugins de ChartJS que son para las estadísticas de los estudiantes 'No terminado'
 ChartJS.register(
 	CategoryScale,
 	LinearScale,
@@ -40,9 +40,11 @@ interface User {
 	firstName: string;
 	lastName: string;
 	email: string;
-	lastConnection?: string; // Añadir última fecha de conexión
-	lessonsProgress: LessonProgress[]; // Add lessonsProgress property
-	averageProgress: number; // Add averageProgress property
+	lastConnection?: string;
+	enrolledAt?: string | Date | null; // ✅ Permitir null para evitar errores
+	lessonsProgress: LessonProgress[];
+	averageProgress: number;
+	tiempoEnCurso?: string; // ✅ si quieres tener tipado esto también
 }
 
 // Propiedades del componente para la lista de lecciones
@@ -93,6 +95,15 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 						? totalProgress / user.lessonsProgress.length
 						: 0;
 
+				let tiempoEnCurso = 'Desconocido';
+				if (user.enrolledAt) {
+					const enrolledDate = new Date(user.enrolledAt);
+					const now = new Date();
+					const diffMs = now.getTime() - enrolledDate.getTime();
+					const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+					tiempoEnCurso = `${diffDays} días`;
+				}
+
 				return {
 					...user,
 					firstName: user.firstName ?? 'Nombre no disponible',
@@ -103,8 +114,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 						typeof user.lastConnection === 'number'
 							? new Date(user.lastConnection).toLocaleDateString()
 							: (user.lastConnection ?? 'Fecha no disponible'),
+					tiempoEnCurso, // <-- NUEVO
 				};
 			});
+
 			setUsers(formattedUsers);
 			console.log('✅ Usuarios inscritos cargados:', users);
 		} catch (err) {
@@ -157,7 +170,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 			<Dialog
 				open={isModalOpen}
 				onClose={closeModal}
-				className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto"
+				className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
 			>
 				<div className="min-h-screen px-4 text-center">
 					<span
@@ -166,57 +179,66 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 					>
 						&#8203;
 					</span>
-					<div className="my-8 inline-block w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+					<div className="inline-block w-full max-w-2xl transform overflow-hidden rounded-xl bg-gray-900 p-6 text-left align-middle shadow-2xl transition-all">
 						<Dialog.Title
 							as="h3"
-							className="text-lg leading-6 font-medium text-gray-900"
+							className="mb-4 border-b border-gray-700 pb-3 text-2xl font-semibold text-white"
 						>
-							Detalles del Usuario
+							👤 Detalles del Estudiante
 						</Dialog.Title>
-						<div className="mt-4">
-							{selectedUser && (
-								<div className="space-y-2">
-									<p className="text-base">
-										<strong>Nombre:</strong> {selectedUser.firstName}{' '}
-										{selectedUser.lastName}
-									</p>
-									<p className="text-base">
-										<strong>Correo:</strong> {selectedUser.email}
-									</p>
-									<p className="text-base">
-										<strong>Progreso Promedio:</strong>{' '}
-										{selectedUser.averageProgress.toFixed(1)}%
-									</p>
-									<p className="text-base">
-										<strong>Última Conexión:</strong>{' '}
-										{selectedUser.lastConnection}
-									</p>
-									{/* Gráfico de progreso */}
-									<div className="mt-4">
+
+						{selectedUser && (
+							<div className="space-y-3 text-sm text-gray-300">
+								<div className="grid grid-cols-2 gap-4">
+									<div>
+										<p className="font-semibold text-gray-400">Nombre:</p>
+										<p>
+											{selectedUser.firstName} {selectedUser.lastName}
+										</p>
+									</div>
+									<div>
+										<p className="font-semibold text-gray-400">Correo:</p>
+										<p>{selectedUser.email}</p>
+									</div>
+									<div>
+										<p className="font-semibold text-gray-400">
+											Progreso Promedio:
+										</p>
+										<p>{selectedUser.averageProgress.toFixed(1)}%</p>
+									</div>
+									<div>
+										<p className="font-semibold text-gray-400">
+											Última Conexión:
+										</p>
+										<p>{selectedUser.lastConnection}</p>
+									</div>
+								</div>
+
+								<div className="mt-6">
+									<h4 className="text-md mb-2 font-semibold text-white">
+										📊 Progreso por Lección
+									</h4>
+									<div className="rounded-md border border-gray-700 bg-gray-800 p-3">
 										<Bar
 											data={getChartData(selectedUser)}
 											options={{
 												responsive: true,
 												plugins: {
-													legend: {
-														position: 'top',
-													},
-													title: {
-														display: true,
-														text: 'Progreso por Lección',
-													},
+													legend: { display: false },
+													title: { display: false },
 												},
 											}}
 										/>
 									</div>
 								</div>
-							)}
-						</div>
-						<div className="mt-4">
+							</div>
+						)}
+
+						<div className="mt-6 text-right">
 							<button
 								type="button"
-								className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
 								onClick={closeModal}
+								className="rounded-md bg-blue-600 px-5 py-2 text-sm text-white transition hover:bg-blue-700"
 							>
 								Cerrar
 							</button>
@@ -224,10 +246,11 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 					</div>
 				</div>
 			</Dialog>
+
 			{/* Fin del modal */}
 			<div className="group relative">
 				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-				<header className="relative z-20 flex justify-between rounded-lg bg-primary p-6 text-3xl font-bold text-[#01142B] shadow-md">
+				<header className="bg-primary relative z-20 flex justify-between rounded-lg p-6 text-3xl font-bold text-[#01142B] shadow-md">
 					<h1>Estadisticas de estudiantes</h1>
 				</header>
 
@@ -243,7 +266,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
 					{loading ? (
 						<div className="flex items-center justify-center p-8">
-							<Loader2 className="size-6 animate-spin text-primary" />
+							<Loader2 className="text-primary size-6 animate-spin" />
 							<span className="ml-2">Cargando usuarios...</span>
 						</div>
 					) : (
@@ -264,7 +287,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 								</div>
 								<div className="mt-6 overflow-x-auto rounded-lg bg-gray-700 p-4 shadow-md">
 									<table className="w-full text-white shadow-lg">
-										<thead className="rounded-lg bg-primary text-[#01142B]">
+										<thead className="bg-primary rounded-lg text-[#01142B]">
 											<tr className="space-x-5">
 												<th className="px-2 py-3 text-center text-xs font-semibold tracking-wider">
 													Nombre
@@ -304,7 +327,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 																<div
 																	className="h-2.5 w-10/12 rounded-full bg-blue-600"
 																	style={{ width: `${user.averageProgress}%` }}
-																 />
+																/>
 															</div>
 															<p>{user.averageProgress.toFixed(1)}%</p>
 														</td>
@@ -312,12 +335,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 															{user.lastConnection ?? 'Fecha no disponible'}
 														</td>
 														<td className="px-2 py-3 text-xs text-gray-400">
-															{user.lastConnection ?? 'Fecha no disponible'}
+															{user.tiempoEnCurso ?? 'N/D'}
 														</td>
+
 														<td className="flex space-x-2 px-2 py-3">
 															<button
 																onClick={() => openUserDetails(user)}
-																className="mx-auto flex items-center justify-center rounded-md bg-primary px-2 py-1 text-xs font-medium text-black shadow-md transition duration-300"
+																className="bg-primary mx-auto flex items-center justify-center rounded-md px-2 py-1 text-xs font-medium text-black shadow-md transition duration-300"
 															>
 																<Eye size={14} className="mr-1" /> Ver
 															</button>

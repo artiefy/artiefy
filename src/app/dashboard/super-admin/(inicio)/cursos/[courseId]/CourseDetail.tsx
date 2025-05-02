@@ -294,7 +294,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			}
 		}
 	}, [currentInstructor, educators]);
-	
 
 	// Obtener el curso y los parámetros al cargar la página
 	useEffect(() => {
@@ -429,14 +428,37 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			// Continue with parameters update if needed
 			if (addParametros) {
 				try {
-					// 1. Primero eliminar todos los parámetros existentes
-					await fetch(`/api/educadores/parametros?courseId=${courseIdNumber}`, {
-						method: 'DELETE',
-					});
+					// Filtra parámetros existentes (con ID)
+					const parametrosExistentes = editParametros.filter((p) => p.id);
 
-					// 2. Luego crear los nuevos parámetros
-					for (const parametro of editParametros) {
-						await fetch('/api/educadores/parametros', {
+					// Filtra parámetros nuevos (sin ID)
+					const nuevosParametros = editParametros.filter((p) => !p.id);
+					console.log('🛠️ Parámetros a actualizar:', parametrosExistentes);
+					console.log('🛠️ Nuevos parámetros a crear:', nuevosParametros);
+					// 1. Actualiza los existentes en un solo fetch
+					if (parametrosExistentes.length > 0) {
+						const putResponse = await fetch('/api/educadores/parametros', {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({
+								parametros: parametrosExistentes.map((parametro) => ({
+									id: parametro.id,
+									name: parametro.name,
+									description: parametro.description,
+									porcentaje: parametro.porcentaje,
+									courseId: courseIdNumber,
+								})),
+							}),
+						});
+
+						if (!putResponse.ok) {
+							throw new Error('Error al actualizar parámetros existentes');
+						}
+					}
+
+					// 2. Crea los nuevos individualmente
+					for (const parametro of nuevosParametros) {
+						const postResponse = await fetch('/api/educadores/parametros', {
 							method: 'POST',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({
@@ -446,12 +468,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 								courseId: courseIdNumber,
 							}),
 						});
+
+						if (!postResponse.ok) {
+							throw new Error('Error al crear un nuevo parámetro');
+						}
 					}
 
 					toast.success('Parámetros actualizados correctamente');
 				} catch (error) {
 					toast.error('Error al actualizar los parámetros');
-					console.error('Error con los parámetros:', error);
+					console.error('❌ Error con los parámetros:', error);
 				}
 			}
 

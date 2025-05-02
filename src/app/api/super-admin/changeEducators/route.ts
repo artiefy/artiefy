@@ -2,13 +2,9 @@ import { NextResponse } from 'next/server';
 
 import { eq } from 'drizzle-orm';
 
-import {
-	getAllEducators,
-} from '~/models/super-adminModels/courseModelsSuperAdmin';
+import { getAllEducators } from '~/models/super-adminModels/courseModelsSuperAdmin';
 import { db } from '~/server/db';
 import { courses } from '~/server/db/schema';
-
-
 
 // ✅ Obtener la lista de educadores
 export async function GET() {

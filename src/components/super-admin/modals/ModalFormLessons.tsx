@@ -15,7 +15,9 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '~/components/educators/ui/dialog';
+import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
+import { Switch } from '~/components/educators/ui/switch';
 
 // Interfaz para los props del formulario de lecciones
 interface LessonsFormProps {
@@ -36,11 +38,6 @@ interface LessonsFormProps {
 		resourceKey?: string;
 		resourceName?: string;
 	};
-}
-
-interface LessonResponse {
-	id: number;
-	message: string;
 }
 
 interface UploadResponse {
@@ -66,7 +63,6 @@ interface UploadResult {
 	fileName: string;
 }
 
-
 const ModalFormLessons = ({
 	uploading,
 	isOpen,
@@ -74,9 +70,10 @@ const ModalFormLessons = ({
 	courseId,
 	isEditing = false,
 	editingLesson,
-	modalClassName, // Use the same name as in interface
+	modalClassName,
 	onUpdateSuccess,
 }: LessonsFormProps) => {
+	const [needsVideo, setNeedsVideo] = useState(false);
 	const [formData, setFormData] = useState({
 		title: '',
 		description: '',
@@ -110,6 +107,10 @@ const ModalFormLessons = ({
 	// Modificar el useEffect para inicializar con datos de edición
 	useEffect(() => {
 		if (isEditing && editingLesson) {
+			const hasVideo =
+				editingLesson.coverVideoKey !== 'none' &&
+				editingLesson.coverVideoKey !== undefined;
+			setNeedsVideo(hasVideo);
 			setFormData({
 				title: editingLesson.title ?? '',
 				description: editingLesson.description ?? '',
@@ -347,33 +348,56 @@ const ModalFormLessons = ({
 
 	// Manejador del submit 'cabe recalcar que este un formulario autonomo que solo depende de la props del ID del curso'
 	const handleSubmit = async () => {
+		console.log('Iniciando handleSubmit');
 		const controller = new AbortController();
 		setUploadController(controller);
 		setIsUploading(true);
 		try {
 			const { coverimage, covervideo, resourcefiles } = formData;
+			console.log('Estado actual del formulario:', {
+				needsVideo,
+				coverimage: coverimage?.name,
+				covervideo: covervideo?.name,
+				resourcefiles: resourcefiles.map((f) => f.name),
+				formData,
+			});
+
 			const resourceKeys: string[] = [];
 			const fileNames: string[] = [];
 
 			let coverImageKey = formData.cover_image_key;
-			const coverVideoKey = formData.cover_video_key;
+			let coverVideoKey = formData.cover_video_key;
 
-			// Subir imagen primero si existe
-			if (coverimage) {
-				const result = await uploadFile(coverimage);
-				coverImageKey = result.key;
+			// Manejar el video según needsVideo
+			if (!needsVideo) {
+				console.log(
+					'No se necesita video, estableciendo coverVideoKey como "none"'
+				);
+				coverVideoKey = 'none';
+			} else if (covervideo) {
+				console.log('Subiendo video...');
+				const videoResult = await uploadFile(covervideo);
+				coverVideoKey = videoResult.key;
+				console.log('Video subido exitosamente:', coverVideoKey);
 			}
 
-			// Subir archivos de recursos con Promise.all para mejor manejo
+			if (coverimage) {
+				console.log('Subiendo imagen...');
+				const result = await uploadFile(coverimage);
+				coverImageKey = result.key;
+				console.log('Imagen subida exitosamente:', coverImageKey);
+			}
+
 			if (resourcefiles.length > 0) {
+				console.log('Subiendo archivos de recursos...');
 				const results = await Promise.all(resourcefiles.map(uploadFile));
 				results.forEach(({ key, fileName }) => {
 					resourceKeys.push(key);
 					fileNames.push(fileName);
 				});
+				console.log('Recursos subidos:', { resourceKeys, fileNames });
 			}
 
-			// Crear/actualizar la lección primero sin el video
 			const method = isEditing ? 'PUT' : 'POST';
 			const endpoint = '/api/educadores/lessons';
 
@@ -389,97 +413,41 @@ const ModalFormLessons = ({
 				courseId: Number(courseId),
 			};
 
+			console.log('Enviando petición al servidor:', {
+				method,
+				endpoint,
+				requestBody,
+			});
+
 			const response = await fetch(endpoint, {
 				method,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(requestBody),
 			});
 
-			const lessonId = isEditing
-				? editingLesson?.id
-				: ((await response.json()) as LessonResponse).id;
+			console.log('Respuesta del servidor:', {
+				status: response.status,
+				ok: response.ok,
+			});
+
+			const responseData = (await response.json()) as { message?: string };
+
+			console.log('Datos de respuesta:', responseData);
 
 			if (response.ok) {
 				toast.success(isEditing ? 'Lección actualizada' : 'Lección creada');
-				onCloseAction(); // Cerrar el modal inmediatamente después de la notificación
+				onCloseAction();
 				if (onUpdateSuccess) {
 					onUpdateSuccess();
 				}
-
-				// Si hay un nuevo video para subir, hacerlo en segundo plano
-				if (covervideo && lessonId) {
-					toast.info('Subiendo video en segundo plano...', {
-						duration: 0,
-						id: 'video-upload',
-					});
-
-					try {
-						// Step 1: Get presigned URL for video upload
-						const res = await fetch('/api/upload', {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({
-								contentType: covervideo.type,
-								fileSize: covervideo.size,
-								fileName: covervideo.name,
-							}),
-						});
-
-						if (!res.ok) throw new Error('Error al obtener la URL de subida');
-
-						const uploadData = (await res.json()) as UploadResponse;
-
-						// Step 2: Upload the file to S3
-						await new Promise<void>((resolve, reject) => {
-							const xhr = new XMLHttpRequest();
-							xhr.open(
-								uploadData.uploadType === 'put' ? 'PUT' : 'POST',
-								uploadData.url
-							);
-
-							if (uploadData.uploadType === 'put') {
-								xhr.setRequestHeader('Content-Type', covervideo.type);
-								xhr.send(covervideo);
-							} else {
-								const formData = new FormData();
-								Object.entries(uploadData.fields ?? {}).forEach(([key, val]) =>
-									formData.append(key, val)
-								);
-								formData.append('file', covervideo);
-								xhr.send(formData);
-							}
-
-							xhr.onload = () =>
-								xhr.status < 300
-									? resolve()
-									: reject(new Error('Fallo la carga'));
-							xhr.onerror = () => reject(new Error('Fallo la carga'));
-						});
-
-						// Step 3: Register the video key with the lesson
-						const regRes = await fetch('/api/video/register', {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ key: uploadData.key, lessonId }),
-						});
-
-						if (!regRes.ok) throw new Error('Error al registrar el video');
-
-						toast.success('Video subido exitosamente');
-						toast.dismiss('video-upload');
-					} catch (error) {
-						const errorMessage =
-							error instanceof Error ? error.message : 'Error desconocido';
-						console.error('Error al subir el video:', errorMessage);
-						toast.error(`Error al subir el video: ${errorMessage}`);
-						toast.dismiss('video-upload');
-					}
-				}
+			} else {
+				throw new Error(responseData.message ?? 'Error al guardar la lección');
 			}
 		} catch (error) {
+			console.error('Error en handleSubmit:', error);
 			if (error instanceof Error && error.name === 'AbortError') {
 				console.log('Upload cancelled');
-				return; // Salir de la función si se cancela la carga
+				return;
 			}
 			toast.error('Error', {
 				description:
@@ -487,6 +455,7 @@ const ModalFormLessons = ({
 			});
 		} finally {
 			setIsUploading(false);
+			console.log('HandleSubmit finalizado');
 		}
 	};
 
@@ -500,8 +469,8 @@ const ModalFormLessons = ({
 
 	// Añadir componente de progreso persistente
 	const UploadProgressDisplay = () => (
-		<div className="fixed right-4 bottom-4 z-50 w-96 rounded-lg bg-background p-4 shadow-lg">
-			<h3 className="mb-2 font-semibold text-primary">Progreso de carga</h3>
+		<div className="bg-background fixed right-4 bottom-4 z-50 w-96 rounded-lg p-4 shadow-lg">
+			<h3 className="text-primary mb-2 font-semibold">Progreso de carga</h3>
 			{Object.values(uploadProgresses).map((item) => (
 				<div key={item.fileName} className="mb-4">
 					<div className="flex justify-between text-sm">
@@ -524,7 +493,7 @@ const ModalFormLessons = ({
 		<>
 			<Dialog open={isOpen} onOpenChange={onCloseAction}>
 				<DialogContent
-					className={`max-h-[90vh] max-w-5xl overflow-y-auto ${modalClassName}`} // Use the same name
+					className={`max-h-[90vh] max-w-5xl overflow-y-auto ${modalClassName}`}
 				>
 					<DialogHeader className="mt-4">
 						<DialogTitle className="text-4xl">
@@ -535,8 +504,8 @@ const ModalFormLessons = ({
 							solo lectura.
 						</DialogDescription>
 					</DialogHeader>
-					<div className="rounded-lg bg-background px-6 shadow-md">
-						<label htmlFor="title" className="text-lg font-medium text-primary">
+					<div className="bg-background rounded-lg px-6 shadow-md">
+						<label htmlFor="title" className="text-primary text-lg font-medium">
 							Título
 						</label>
 						<input
@@ -554,7 +523,7 @@ const ModalFormLessons = ({
 
 						<label
 							htmlFor="description"
-							className="text-lg font-medium text-primary"
+							className="text-primary text-lg font-medium"
 						>
 							Descripción
 						</label>
@@ -571,7 +540,7 @@ const ModalFormLessons = ({
 						)}
 						<label
 							htmlFor="duration"
-							className="text-lg font-medium text-primary"
+							className="text-primary text-lg font-medium"
 						>
 							Duración (minutos)
 						</label>
@@ -588,11 +557,24 @@ const ModalFormLessons = ({
 						{errors.duration && (
 							<p className="text-sm text-red-500">Este campo es obligatorio.</p>
 						)}
+						<div className="mb-4 flex items-center space-x-2">
+							<Switch
+								id="needs-video"
+								checked={needsVideo}
+								onChange={(e) => setNeedsVideo(e.target.checked)}
+							/>
+							<Label
+								htmlFor="needs-video"
+								className="text-primary text-lg font-medium"
+							>
+								¿Esta clase necesita video?
+							</Label>
+						</div>
 						{isEditing && (
 							<div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 								{formData.cover_image_key && (
 									<div className="flex flex-col gap-2">
-										<label className="text-sm font-medium text-primary">
+										<label className="text-primary text-sm font-medium">
 											Imagen actual:
 										</label>
 										<Image
@@ -606,7 +588,7 @@ const ModalFormLessons = ({
 								)}
 								{formData.cover_video_key && (
 									<div className="flex flex-col gap-2">
-										<label className="text-sm font-medium text-primary">
+										<label className="text-primary text-sm font-medium">
 											Video actual:
 										</label>
 										<video
@@ -618,7 +600,7 @@ const ModalFormLessons = ({
 								)}
 								{formData.resource_keys.length > 0 && (
 									<div className="flex flex-col gap-2">
-										<label className="text-sm font-medium text-primary">
+										<label className="text-primary text-sm font-medium">
 											Archivos actuales:
 										</label>
 										{formData.resource_keys.map((key, index) => (
@@ -647,19 +629,21 @@ const ModalFormLessons = ({
 								onFileChange={(file) =>
 									handleFileChange('coverimage', file ?? null)
 								}
-								file={formData.coverimage} // Mostrar la imagen capturada
+								file={formData.coverimage}
 							/>
-							<FileUpload
-								key="covervideo"
-								type="video"
-								label="Video de la clase:"
-								accept="video/mp4"
-								maxSize={16000} // Aumentado a 16GB (16000MB)
-								tipo="Video"
-								onFileChange={(file) =>
-									handleFileChange('covervideo', file ?? null)
-								}
-							/>
+							{needsVideo && (
+								<FileUpload
+									key="covervideo"
+									type="video"
+									label="Video de la clase:"
+									accept="video/mp4"
+									maxSize={16000}
+									tipo="Video"
+									onFileChange={(file) =>
+										handleFileChange('covervideo', file ?? null)
+									}
+								/>
+							)}
 							<FileUpload
 								key="resourcefiles"
 								type="file"

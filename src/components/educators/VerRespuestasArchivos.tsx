@@ -61,7 +61,7 @@ export default function VerRespuestasArchivos({
 			setGrades(initialGrades);
 		} catch (error) {
 			console.error('Error al cargar respuestas:', error);
-			toast('Error', {
+			toast('Error', { 
 				description: 'No se pudieron cargar las respuestas',
 			});
 		} finally {

@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import { NextResponse } from 'next/server';
 
+import { eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import * as XLSX from 'xlsx';
 
 import { db } from '~/server/db';
-import { users } from '~/server/db/schema';
+import { users, userCredentials } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
 interface UserInput {
@@ -91,7 +92,14 @@ export async function POST(request: Request) {
 					userData.role ?? 'estudiante'
 				);
 
-				const generatedPassword = result?.generatedPassword ?? '12345678'; // Default password if not generated
+				if (!result?.user) {
+					console.log(
+						`User ${userData.email} already exists, skipping creation`
+					);
+					continue;
+				}
+
+				const { user: createdUser, generatedPassword } = result;
 
 				// Always send welcome email, regardless of user creation status
 				let emailSent = false;
@@ -113,34 +121,80 @@ export async function POST(request: Request) {
 					emailErrors.push(userData.email);
 				}
 
-				// Add to database and successful users only if the user was created
-				if (result?.user) {
-					const { user: createdUser } = result;
+				// Add user to database, update if exists
+				try {
+					await db
+						.insert(users)
+						.values({
+							id: createdUser.id,
+							name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
+							email: userData.email.trim(),
+							role: (userData.role ?? 'estudiante') as
+								| 'estudiante'
+								| 'educador'
+								| 'admin'
+								| 'super-admin',
+							createdAt: new Date(),
+							updatedAt: new Date(),
+						})
+						.onConflictDoUpdate({
+							target: [users.email, users.role],
+							set: {
+								id: createdUser.id,
+								name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
+								updatedAt: new Date(),
+							},
+						});
 
-					await db.insert(users).values({
-						id: createdUser.id,
-						name: `${userData.firstName.trim()} ${userData.lastName.trim()}`,
-						email: userData.email.trim(),
-						role: (userData.role ?? 'estudiante') as
-							| 'estudiante'
-							| 'educador'
-							| 'admin'
-							| 'super-admin',
-						createdAt: new Date(),
-						updatedAt: new Date(),
-					});
+					// Update or insert credentials
+					try {
+						const existingCredentials = await db
+							.select()
+							.from(userCredentials)
+							.where(eq(userCredentials.userId, createdUser.id))
+							.limit(1);
 
-					successfulUsers.push({
-						id: createdUser.id,
-						firstName: userData.firstName,
-						lastName: userData.lastName,
-						email: userData.email,
-						role: userData.role ?? 'estudiante',
-						status: 'activo',
-						isNew: true,
-					});
+						if (existingCredentials.length > 0) {
+							// Update existing credentials
+							await db
+								.update(userCredentials)
+								.set({
+									password: generatedPassword,
+									clerkUserId: createdUser.id,
+									email: userData.email.trim(),
+								})
+								.where(eq(userCredentials.userId, createdUser.id));
+						} else {
+							// Insert new credentials
+							await db.insert(userCredentials).values({
+								userId: createdUser.id,
+								password: generatedPassword,
+								clerkUserId: createdUser.id,
+								email: userData.email.trim(),
+							});
+						}
 
-					console.log(`✅ User ${userData.email} created successfully`);
+						successfulUsers.push({
+							id: createdUser.id,
+							firstName: userData.firstName,
+							lastName: userData.lastName,
+							email: userData.email,
+							role: userData.role ?? 'estudiante',
+							status: 'activo',
+							isNew: true,
+						});
+
+						console.log(`✅ User ${userData.email} created successfully`);
+					} catch (error) {
+						console.log(
+							`❌ Error updating or inserting user ${userData.email}:`,
+							error
+						);
+						continue;
+					}
+				} catch (error) {
+					console.log(`❌ Error creating user ${userData.email}:`, error);
+					continue;
 				}
 			} catch (error) {
 				console.log(`❌ Error creating user ${userData.email}:`, error);

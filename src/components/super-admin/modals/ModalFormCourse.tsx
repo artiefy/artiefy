@@ -206,7 +206,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setParametrosAction([
 				...parametros,
 				{
-					id: parametros.length + 1,
+					id: 0,
 					name: '',
 					description: '',
 					porcentaje: 0,
@@ -350,25 +350,37 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			return;
 		}
 
-		setParametrosAction(
-			updatedParametros.map((parametro, index) => ({
-				...parametro,
-				id: index + 1,
-			}))
-		);
+		setParametrosAction(updatedParametros);
 	};
 
 	// Función para manejar la eliminación de parámetros
-	const handleRemoveParametro = (index: number) => {
+	const handleRemoveParametro = async (index: number) => {
+		const parametroAEliminar = parametros[index];
+
+		// Si tiene ID, es un parámetro guardado → eliminarlo de la base de datos
+		if (parametroAEliminar.id) {
+			try {
+				const response = await fetch('/api/educadores/parametros', {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ id: parametroAEliminar.id }),
+				});
+
+				if (!response.ok) {
+					throw new Error('Error al eliminar el parámetro de la base de datos');
+				}
+			} catch (error) {
+				console.error('❌ Error al eliminar parámetro:', error);
+				toast.error('Error al eliminar el parámetro');
+				return;
+			}
+		}
+
+		// Actualiza el estado local (independientemente de si tenía id o no)
 		const updatedParametros = parametros.filter((_, i) => i !== index);
-		// Reasignar los valores de entrega
-		const reassignedParametros = updatedParametros.map((parametro) => ({
-			id: parametro.id,
-			name: parametro.name,
-			description: parametro.description,
-			porcentaje: parametro.porcentaje,
-		}));
-		setParametrosAction(reassignedParametros);
+		setParametrosAction(updatedParametros);
 	};
 
 	// Función para obtener los archivos de subida y enviarselo al componente padre donde se hace el metodo POST

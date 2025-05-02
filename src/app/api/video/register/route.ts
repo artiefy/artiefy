@@ -109,7 +109,8 @@ export async function POST(req: Request) {
 				if (isAxiosError(err)) {
 					console.error('Axios Error:', err.message);
 					console.error('Response data:', err.response?.data);
-				} else {
+				}
+				 else {
 					console.error('Error genérico:', err);
 				}
 			}
