@@ -71,8 +71,9 @@ export async function GET(request: NextRequest) {
 							item !== null &&
 							'id' in item &&
 							'text' in item &&
-							typeof (item as Record<string, unknown>)['id'] === 'string' &&
-							typeof (item as Record<string, unknown>)['text'] === 'string'
+							typeof (item as Record<string, unknown>).id === 'string' &&
+							typeof (item as Record<string, unknown>).text === 'string'
+							
 					);
 					if (valid) {
 						preguntas = parsed;
@@ -90,8 +91,9 @@ export async function GET(request: NextRequest) {
 					item !== null &&
 					'id' in item &&
 					'text' in item &&
-					typeof (item as Record<string, unknown>)['id'] === 'string' &&
-					typeof (item as Record<string, unknown>)['text'] === 'string'
+					typeof (item as Record<string, unknown>).id === 'string' &&
+					typeof (item as Record<string, unknown>).text === 'string'
+					
 			);
 			if (valid) {
 				preguntas = rawPreguntas;
