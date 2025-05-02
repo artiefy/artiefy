@@ -123,3 +123,5 @@ https://react.dev/link/hydration-mismatch
     at HOC (http://localhost:3000/_next/static/chunks/node_modules_f26ba2de._.js:4796:201)
     at Header (http://localhost:3000/_next/static/chunks/src_17d6d06f._.js:3335:265)
     at Page (rsc://React/Server/C:%5CUsers%5CADMIN%5COneDrive%5CDocumentos%5CDOCUMENTOS%20DAVID%5CDEVELOPER%5CAPP%20WEB%20ARTIEFY%5Cartiefy%5C.next%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__02d5e6b4._.js?54:2918:276)
+---------------------------------------------------------------------------------------
+corregir para que solo salga una session del chatbot y no aparezcan 2 chatbots ala vez
