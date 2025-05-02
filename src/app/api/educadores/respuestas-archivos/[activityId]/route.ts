@@ -62,9 +62,30 @@ export async function GET(request: NextRequest) {
 		console.log('🧾 rawPreguntas:', rawPreguntas);
 
 		if (typeof rawPreguntas === 'string') {
-			preguntas = JSON.parse(rawPreguntas);
+			try {
+				const parsed = JSON.parse(rawPreguntas);
+				if (Array.isArray(parsed)) {
+					const valid = parsed.every(
+						(p) => typeof p.id === 'string' && typeof p.text === 'string'
+					);
+					if (valid) {
+						preguntas = parsed as Pregunta[];
+					} else {
+						console.warn('⚠️ Preguntas parseadas no son válidas.');
+					}
+				}
+			} catch (err) {
+				console.warn('❌ No se pudo parsear rawPreguntas JSON:', err);
+			}
 		} else if (Array.isArray(rawPreguntas)) {
-			preguntas = rawPreguntas;
+			const valid = rawPreguntas.every(
+				(p) => typeof p.id === 'string' && typeof p.text === 'string'
+			);
+			if (valid) {
+				preguntas = rawPreguntas as Pregunta[];
+			} else {
+				console.warn('⚠️ Preguntas en Redis no son válidas.');
+			}
 		} else {
 			console.warn('⚠️ No hay preguntas definidas para esta actividad.');
 		}
