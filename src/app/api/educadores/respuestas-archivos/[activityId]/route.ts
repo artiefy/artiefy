@@ -91,7 +91,6 @@ export async function GET(request: NextRequest) {
 		}
 	} catch (error) {
 		console.error('❌ Error al cargar preguntas:', error);
-		// No se lanza error, continúa con respuestas
 	}
 
 	// ✅ Cargar respuestas
