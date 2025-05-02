@@ -11,12 +11,14 @@ export async function GET(
 ) {
 	const { conversationId } = context.params;
 	void req;
-	if (!conversationId) {
+	if (!conversationId || isNaN(Number(conversationId))) {
 		return NextResponse.json(
-			{ error: 'ID de conversación requerido' },
+			{ error: 'ID de conversación inválido' },
 			{ status: 400 }
 		);
 	}
+	
+	const numericId = Number(conversationId);
 
 	try {
 		const messages = await db
@@ -29,12 +31,7 @@ export async function GET(
 			})
 			.from(chatMessagesWithConversation)
 			.leftJoin(users, eq(chatMessagesWithConversation.senderId, users.id))
-			.where(
-				eq(
-					chatMessagesWithConversation.conversationId,
-					parseInt(conversationId)
-				)
-			)
+			.where(eq(chatMessagesWithConversation.conversationId, numericId))
 			.orderBy(asc(chatMessagesWithConversation.createdAt));
 
 		return NextResponse.json({ messages });
