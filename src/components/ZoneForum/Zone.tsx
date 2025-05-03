@@ -51,7 +51,7 @@ export const Zone = () => {
 			try {
 				const res = await fetch(`/api/forums?userId=${user.id}`);
 				if (!res.ok) throw new Error('Error al obtener los foros');
-				const data: ForumsModels[] = await res.json();
+				const data = (await res.json()) as ForumsModels[];
 				setForums(data);
 			} catch (err) {
 				setError('No se pudieron cargar los foros');

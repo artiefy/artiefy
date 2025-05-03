@@ -74,7 +74,7 @@ const ForumHome = () => {
 					`/api/educadores/courses?userId=${user.id}`
 				);
 				if (!response.ok) throw new Error('Error al obtener los cursos');
-				const data: CoursesModels[] = await response.json();
+				const data = (await response.json()) as CoursesModels[];
 				setCourses(data);
 			} catch (error) {
 				console.error('Error al obtener los cursos:', error);
