@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
+import { clerkClient } from '@clerk/nextjs/server';
 import { eq, inArray, and } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { enrollments, users, enrollmentPrograms } from '~/server/db/schema';
-
 
 export async function POST(request: Request) {
 	try {
@@ -15,9 +15,45 @@ export async function POST(request: Request) {
 				{ status: 400 }
 			);
 		}
-
-		const body = (await request.json()) as { courseId?: string; programId?: string; userIds: string[]; planType?: string };
+		const body = (await request.json()) as {
+			courseId?: string;
+			programId?: string;
+			userIds: string[];
+			planType?: string;
+		};
 		const { courseId, programId, userIds } = body;
+		for (const userId of userIds) {
+			const existing = await db
+				.select({ id: users.id })
+				.from(users)
+				.where(eq(users.id, userId))
+				.execute();
+
+			if (existing.length === 0) {
+				try {
+					const clerk = await clerkClient();
+					const clerkUser = await clerk.users.getUser(userId);
+
+					await db.insert(users).values({
+						id: clerkUser.id,
+						email:
+							clerkUser.emailAddresses?.[0]?.emailAddress ??
+							'sin-email@desconocido.com',
+						name:
+							clerkUser.firstName && clerkUser.lastName
+								? `${clerkUser.firstName} ${clerkUser.lastName}`
+								: (clerkUser.username ?? 'Usuario sin nombre'),
+						role: 'estudiante', // o lo que tenga sentido por defecto
+						createdAt: new Date(),
+						updatedAt: new Date(),
+					});
+
+					console.log(`✅ Usuario creado: ${clerkUser.id}`);
+				} catch (err) {
+					console.error(`❌ Error al obtener/crear el usuario ${userId}:`, err);
+				}
+			}
+		}
 
 		if (!Array.isArray(userIds) || userIds.length === 0) {
 			return NextResponse.json(
@@ -33,7 +69,10 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: 'Invalid courseId' }, { status: 400 });
 		}
 
-		if (programId && (parsedProgramId === undefined || isNaN(parsedProgramId))) {
+		if (
+			programId &&
+			(parsedProgramId === undefined || isNaN(parsedProgramId))
+		) {
 			return NextResponse.json({ error: 'Invalid programId' }, { status: 400 });
 		}
 
@@ -50,6 +89,7 @@ export async function POST(request: Request) {
 			.from(users)
 			.where(inArray(users.id, userIds))
 			.execute();
+		console.log('Usuarios encontrados en la base de datos:', existingUsers); // 👈 aquí lo ves en consola
 
 		const validUserIds = new Set(existingUsers.map((u) => u.id));
 		const filteredUserIds = userIds.filter((id) => validUserIds.has(id));
