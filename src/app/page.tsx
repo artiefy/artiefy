@@ -14,9 +14,6 @@ import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
-// Add these export configurations
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 export default function HomePage() {
 	const { user } = useUser();
