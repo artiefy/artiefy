@@ -132,7 +132,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			icon: <FiMessageSquare size={24} />,
 			title: 'Foro',
 			id: 'foro',
-			link: '/dashboard/admin2/app/foros',
+			link: '/dashboard/admin/foro',
 		},
 		{
 			icon: <FiMessageSquare size={24} />,

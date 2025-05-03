@@ -213,41 +213,37 @@ export async function getAllForums() {
 		const forumsRecords = await db
 			.select({
 				id: forums.id,
-				courseId: forums.courseId,
 				title: forums.title,
 				description: forums.description,
-				userId: forums.userId,
-				courseTitle: courses.title,
-				courseDescription: courses.description,
-				courseInstructor: courses.instructor,
-				courseCoverImageKey: courses.coverImageKey,
-				userName: users.name,
+				course: {
+					id: courses.id,
+					title: courses.title,
+					descripcion: courses.description,
+					instructor: courses.instructor,
+					coverImageKey: courses.coverImageKey,
+				},
+				user: {
+					id: users.id,
+					name: users.name,
+				},
 			})
 			.from(forums)
-			.leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
-			.leftJoin(users, eq(forums.userId, users.id)); // Unir con la tabla de usuarios
+			.leftJoin(courses, eq(forums.courseId, courses.id))
+			.leftJoin(users, eq(forums.userId, users.id));
 
 		return forumsRecords.map((forum) => ({
 			id: forum.id,
-			courseId: {
-				id: forum.courseId,
-				title: forum.courseTitle,
-				descripcion: forum.courseDescription,
-				instructor: forum.courseInstructor,
-				coverImageKey: forum.courseCoverImageKey,
-			},
-			userId: {
-				id: forum.userId,
-				name: forum.userName ?? '',
-			},
 			title: forum.title,
 			description: forum.description ?? '',
+			course: forum.course,
+			user: forum.user,
 		}));
 	} catch (error: unknown) {
 		console.error(error);
 		return [];
 	}
 }
+
 
 //delete forum by id
 export async function deleteForumById(forumId: number) {
