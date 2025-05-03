@@ -1,26 +1,57 @@
 import { NextResponse } from 'next/server';
 
+import { eq } from 'drizzle-orm';
+
 import {
 	createForum,
 	updateForumById,
 	deleteForumById,
-	//getForumByUserId,
-	getAllForums,
 } from '~/models/educatorsModels/forumAndPosts';
+import { db } from '~/server/db';
+import { forums, users, courses } from '~/server/db/schema';
 
-export async function GET() {
-// req: Request
-	//const { searchParams } = new URL(req.url);
-	//const userId = searchParams.get('userId');
 
+export async function GET(req: Request) {
 	try {
-		// if (userId) {
-		// 	const forum = await getForumByUserId(userId);
-		// 	return NextResponse.json(forum);
-		// } else {
-		const allForums = await getAllForums();
-		return NextResponse.json(allForums);
-		//}
+		const { searchParams } = new URL(req.url);
+		const userId = searchParams.get('userId');
+
+		const query = db
+			.select({
+				id: forums.id,
+				title: forums.title,
+				description: forums.description,
+				course: {
+					id: courses.id,
+					title: courses.title,
+					descripcion: courses.description,
+					instructor: courses.instructor,
+					coverImageKey: courses.coverImageKey,
+				},
+				user: {
+					id: users.id,
+					name: users.name,
+				},
+			})
+			.from(forums)
+			.leftJoin(courses, eq(forums.courseId, courses.id))
+			.leftJoin(users, eq(forums.userId, users.id));
+
+		const forumData = userId
+			? query.where(eq(forums.userId, userId))
+			: query;
+
+		const results = await forumData;
+
+		return NextResponse.json(
+			results.map((forum) => ({
+				id: forum.id,
+				title: forum.title,
+				description: forum.description ?? '',
+				course: forum.course,
+				user: forum.user,
+			}))
+		);
 	} catch (error) {
 		console.error('Error al obtener los foros:', error);
 		return NextResponse.json(
