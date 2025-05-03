@@ -8,7 +8,7 @@ import { enrollments, userLessonsProgress } from '~/server/db/schema';
 // Función para obtener usuarios inscritos en un curso específico
 export async function getUsersEnrolledInCourse(courseId: number) {
 	const client = await clerkClient();
-	const usersResponse = await client.users.getUserList({ limit: 100 });
+	const usersResponse = await client.users.getUserList({ limit: 500 });
 	const users = usersResponse.data;
 
 	const enrolledUsers = await db
