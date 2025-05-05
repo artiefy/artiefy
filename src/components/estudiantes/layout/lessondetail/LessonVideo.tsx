@@ -101,9 +101,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						}
 					}}
 					style={{
-						'--media-primary-color': '#3498db',
+						'--media-primary-color': '#ffff',
 						'--media-secondary-color': '#2ecc71',
-						'--media-accent-color': '#34495e',
+						'--media-accent-color': '#ffff',
 					}}
 				/>
 			)}
