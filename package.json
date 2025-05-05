@@ -38,6 +38,7 @@
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "@mantine/core": "^7.17.7",
     "@mantine/dropzone": "^7.17.7",
+    "@mux/mux-node": "^11.0.2",
     "@mux/mux-player-react": "^3.4.0",
     "@neondatabase/serverless": "^1.0.0",
     "@plaiceholder/next": "^3.0.0",

@@ -1,8 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 import Player from 'next-video/player';
-
-import { Icons } from '~/components/estudiantes/ui/icons';
 import '~/styles/videoloading.css';
 
 interface VideoPlayerProps {
@@ -20,79 +18,22 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	isVideoCompleted,
 	isLocked = false,
 }) => {
-	const [videoUrl, setVideoUrl] = useState('');
+	const [videoUrl, setVideoUrl] = useState<string>('');
 	const [isLoading, setIsLoading] = useState(true);
-	const [isVideoReady, setIsVideoReady] = useState(false);
-	const videoRef = useRef<HTMLVideoElement>(null);
-	const [posterUrl, setPosterUrl] = useState<string | undefined>(undefined);
-	const [isVideoAvailable, setIsVideoAvailable] = useState(false);
+	const [useNativePlayer, setUseNativePlayer] = useState(false);
 
 	useEffect(() => {
-		const checkVideoAvailability = async () => {
-			if (!videoKey || videoKey === 'null') {
-				setIsVideoAvailable(false);
-				setIsLoading(false);
-				return;
-			}
-
-			try {
-				const url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
-				const response = await fetch(url, { method: 'HEAD' });
-
-				if (response.ok) {
-					setIsVideoAvailable(true);
-					setVideoUrl(url); // Usar directamente la URL del video
-					setIsLoading(false);
-				} else {
-					setIsVideoAvailable(false);
-					setIsLoading(false);
-				}
-			} catch (err) {
-				console.error('Error checking video:', err);
-				setIsVideoAvailable(false);
-				setIsLoading(false);
-			}
-		};
-
-		void checkVideoAvailability();
-	}, [videoKey]);
-
-	useEffect(() => {
-		if (videoKey && isVideoReady) {
-			const checkPosterAvailability = async () => {
-				const posterPath = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey.replace('.mp4', '-poster.jpg')}`;
-				try {
-					const response = await fetch(posterPath, { method: 'HEAD' });
-					if (response.ok) {
-						setPosterUrl(posterPath);
-					} else {
-						setPosterUrl(undefined);
-					}
-				} catch {
-					setPosterUrl(undefined);
-				}
-			};
-			void checkPosterAvailability();
+		if (!videoKey || videoKey === 'null' || isLocked) {
+			setIsLoading(false);
+			return;
 		}
-	}, [videoKey, isVideoReady]);
+		setVideoUrl(`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`);
+		setIsLoading(false);
+	}, [videoKey, isLocked]);
 
-	const handleTimeUpdate = () => {
-		if (videoRef.current && !isVideoCompleted) {
-			const currentTime = videoRef.current.currentTime;
-			const duration = videoRef.current.duration;
-			if (duration > 0) {
-				const progress = Math.round((currentTime / duration) * 100);
-				onProgressUpdate(progress);
-			}
-		}
-	};
-
-	const handleVideoEnd = () => {
-		onVideoEnd();
-	};
-
-	const handleVideoCanPlay = () => {
-		setIsVideoReady(true);
+	const handlePlayerError = () => {
+		console.log('Next-video player failed, falling back to native player');
+		setUseNativePlayer(true);
 	};
 
 	const renderLoadingState = () => (
@@ -102,11 +43,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				<div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)] bg-[length:20px_20px] opacity-50" />
 			</div>
 			<div className="relative z-10 flex flex-col items-center justify-center space-y-6 text-center">
-				{!videoKey ||
-				videoKey === 'null' ||
-				videoKey === 'none' ||
-				!isVideoAvailable ||
-				isLocked ? (
+				{!videoKey || videoKey === 'null' || videoKey === 'none' || isLocked ? (
 					<>
 						<h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
 							Video de la Clase
@@ -146,43 +83,48 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		</div>
 	);
 
-	if (isLoading) {
-		return (
-			<div className="flex aspect-video w-full items-center justify-center bg-gray-900">
-				<div className="flex flex-col items-center">
-					<Icons.spinner className="mb-4 h-8 w-8 animate-spin text-blue-500" />
-					<p className="text-sm text-gray-400">Cargando video...</p>
-				</div>
-			</div>
-		);
-	}
-
 	return (
 		<div className="relative aspect-video w-full">
-			{videoUrl && (
+			{videoUrl && !useNativePlayer && (
 				<Player
-					ref={videoRef}
 					src={videoUrl}
-					className="h-full w-full rounded-lg"
-					onEnded={handleVideoEnd}
-					onTimeUpdate={handleTimeUpdate}
-					onCanPlay={handleVideoCanPlay}
 					controls
-					playsInline
-					poster={posterUrl}
-					style={{
-						'--media-primary-color': '#3AF4EF',
-						'--media-secondary-color': '#00BDD8',
-						'--media-accent-color': '#2ecc71',
-						visibility: isVideoReady ? 'visible' : 'hidden',
+					onEnded={onVideoEnd}
+					onError={handlePlayerError}
+					onTimeUpdate={(e) => {
+						const video = e.currentTarget;
+						if (video && !isVideoCompleted) {
+							const progress = Math.round(
+								(video.currentTime / video.duration) * 100
+							);
+							onProgressUpdate(progress);
+						}
 					}}
-					{...(!isVideoReady && {
-						'aria-busy': true,
-						'aria-label': 'Cargando video de la clase...',
-					})}
+					style={{
+						'--media-primary-color': '#3498db',
+						'--media-secondary-color': '#2ecc71',
+						'--media-accent-color': '#34495e',
+					}}
 				/>
 			)}
-			{(!videoUrl || !isVideoReady) && renderLoadingState()}
+			{videoUrl && useNativePlayer && (
+				<video
+					src={videoUrl}
+					className="h-full w-full"
+					controls
+					onEnded={onVideoEnd}
+					onTimeUpdate={(e) => {
+						const video = e.currentTarget;
+						if (video && !isVideoCompleted) {
+							const progress = Math.round(
+								(video.currentTime / video.duration) * 100
+							);
+							onProgressUpdate(progress);
+						}
+					}}
+				/>
+			)}
+			{(!videoUrl || isLoading) && renderLoadingState()}
 		</div>
 	);
 };
