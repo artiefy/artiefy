@@ -44,3 +44,20 @@
 	stroke-dasharray: 20 300;
 	stroke-dashoffset: -32.42;
 }
+
+/* Additional styles for desktop view */
+@media (min-width: 768px) {
+	.hamburger {
+		width: 45px;
+		height: 45px;
+	}
+
+	.hamburger svg {
+		width: 32px;
+		height: 32px;
+	}
+
+	.line {
+		stroke-width: 2;
+	}
+}

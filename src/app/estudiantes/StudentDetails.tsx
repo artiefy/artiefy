@@ -189,7 +189,7 @@ export default function StudentDetails({
 	return (
 		<div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
 			<main className="grow">
-				<div className="container mx-auto px-8 sm:px-12 lg:px-16">
+				<div className="container mx-auto">
 					<div className="flex flex-col space-y-12 sm:space-y-16">
 						<div className="animate-zoom-in mt-8 flex flex-col items-center space-y-4">
 							<div className="flex items-center">
