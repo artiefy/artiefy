@@ -113,25 +113,70 @@ export function Header() {
 
 					{/* Navigation items with increased spacing */}
 					{!isScrolled ? (
-						<nav className="flex items-center justify-center pl-12">
-							{' '}
-							{/* Added pl-12 for right padding */}
-							<div className="flex gap-24">
-								{navItems.map((item) => (
-									<Link
-										key={item.href}
-										href={item.href}
-										className="text-shadow text-lg font-light tracking-wide whitespace-nowrap transition-colors hover:text-orange-500 active:scale-95"
-									>
-										{item.label}
-									</Link>
-								))}
+						<div className="flex items-center gap-6">
+							<nav className="flex flex-1 items-center justify-center pr-25">
+								<div className="flex gap-24">
+									{navItems.map((item) => (
+										<Link
+											key={item.href}
+											href={item.href}
+											className="text-shadow text-lg font-light tracking-wide whitespace-nowrap transition-colors hover:text-orange-500 active:scale-95"
+										>
+											{item.label}
+										</Link>
+									))}
+								</div>
+							</nav>
+							{/* Auth Button for unscrolled position */}
+							<div className="flex justify-end">
+								<SignedOut>
+									<SignInButton fallbackRedirectUrl="/estudiantes">
+										<Button
+											className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+											style={{
+												transition: '0.5s',
+												width: '180px',
+											}}
+											onClick={handleSignInClick}
+										>
+											<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
+												{isLoading ? (
+													<Icons.spinner
+														className="animate-spin"
+														style={{ width: '25px', height: '25px' }}
+													/>
+												) : (
+													<>Iniciar Sesión</>
+												)}
+											</span>
+										</Button>
+									</SignInButton>
+								</SignedOut>
+								<SignedIn>
+									<ClerkLoading>
+										<div className="flex h-10 items-center justify-center">
+											<Icons.spinner className="size-6 animate-spin" />
+										</div>
+									</ClerkLoading>
+									<ClerkLoaded>
+										<UserButton showName>
+											<UserButton.MenuItems>
+												<UserButton.Link
+													label="Mis Cursos"
+													labelIcon={<UserCircleIcon className="size-4" />}
+													href="/estudiantes/myaccount"
+												/>
+												<UserButton.Action label="manageAccount" />
+											</UserButton.MenuItems>
+										</UserButton>
+									</ClerkLoaded>
+								</SignedIn>
 							</div>
-						</nav>
+						</div>
 					) : (
 						// Search bar and hamburger when scrolled
-						<div className="flex items-center gap-6">
-							<form onSubmit={handleSearch} className="w-[400px]">
+						<div className="flex flex-1 items-center gap-6">
+							<form onSubmit={handleSearch} className="w-[600px]">
 								<div className="header-search-container">
 									<input
 										type="search"
@@ -149,82 +194,86 @@ export function Header() {
 									</svg>
 								</div>
 							</form>
-							<div className="header-menu">
-								<button
-									className="menu-selected"
-									onClick={toggleDropdown}
-									type="button"
-								>
-									Menú
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 512 512"
-										className={`menu-arrow ${isDropdownOpen ? 'rotate' : ''}`}
+							<div className="ml-auto flex items-center gap-4">
+								<div className="header-menu">
+									<button
+										className="menu-selected"
+										onClick={toggleDropdown}
+										type="button"
 									>
-										<path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
-									</svg>
-								</button>
-								<div className={`menu-options ${isDropdownOpen ? 'show' : ''}`}>
-									{navItems.map((item) => (
-										<Link
-											key={item.href}
-											href={item.href}
-											className="menu-option"
-											onClick={toggleDropdown}
+										Menú
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 512 512"
+											className={`menu-arrow ${isDropdownOpen ? 'rotate' : ''}`}
 										>
-											{item.label}
-										</Link>
-									))}
+											<path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
+										</svg>
+									</button>
+									<div
+										className={`menu-options ${isDropdownOpen ? 'show' : ''}`}
+									>
+										{navItems.map((item) => (
+											<Link
+												key={item.href}
+												href={item.href}
+												className="menu-option"
+												onClick={toggleDropdown}
+											>
+												{item.label}
+											</Link>
+										))}
+									</div>
+								</div>
+
+								{/* Auth Button */}
+								<div className="flex justify-end">
+									<SignedOut>
+										<SignInButton fallbackRedirectUrl="/estudiantes">
+											<Button
+												className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+												style={{
+													transition: '0.5s',
+													width: '180px',
+												}}
+												onClick={handleSignInClick}
+											>
+												<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
+													{isLoading ? (
+														<Icons.spinner
+															className="animate-spin"
+															style={{ width: '25px', height: '25px' }}
+														/>
+													) : (
+														<>Iniciar Sesión</>
+													)}
+												</span>
+											</Button>
+										</SignInButton>
+									</SignedOut>
+									<SignedIn>
+										<ClerkLoading>
+											<div className="flex h-10 items-center justify-center">
+												<Icons.spinner className="size-6 animate-spin" />
+											</div>
+										</ClerkLoading>
+										<ClerkLoaded>
+											<UserButton showName>
+												<UserButton.MenuItems>
+													<UserButton.Link
+														label="Mis Cursos"
+														labelIcon={<UserCircleIcon className="size-4" />}
+														href="/estudiantes/myaccount"
+													/>
+													<UserButton.Action label="manageAccount" />
+												</UserButton.MenuItems>
+											</UserButton>
+										</ClerkLoaded>
+									</SignedIn>
 								</div>
 							</div>
 						</div>
 					)}
-
-					{/* Auth Button */}
-					<div className="flex w-[160px] justify-end">
-						<SignedOut>
-							<SignInButton fallbackRedirectUrl="/estudiantes">
-								<Button
-									className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
-									style={{
-										transition: '0.5s',
-										width: '180px',
-									}}
-									onClick={handleSignInClick}
-								>
-									<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
-										{isLoading ? (
-											<Icons.spinner
-												className="animate-spin"
-												style={{ width: '25px', height: '25px' }}
-											/>
-										) : (
-											<>Iniciar Sesión</>
-										)}
-									</span>
-								</Button>
-							</SignInButton>
-						</SignedOut>
-						<SignedIn>
-							<ClerkLoading>
-								<div className="flex h-10 items-center justify-center">
-									<Icons.spinner className="size-6 animate-spin" />
-								</div>
-							</ClerkLoading>
-							<ClerkLoaded>
-								<UserButton showName>
-									<UserButton.MenuItems>
-										<UserButton.Link
-											label="Mis Cursos"
-											labelIcon={<UserCircleIcon className="size-4" />}
-											href="/estudiantes/myaccount"
-										/>
-										<UserButton.Action label="manageAccount" />
-									</UserButton.MenuItems>
-								</UserButton>
-							</ClerkLoaded>
-						</SignedIn>
-					</div>
 				</div>
 
 				{/* Mobile view */}
