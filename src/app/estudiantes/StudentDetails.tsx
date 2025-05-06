@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import '~/styles/ia.css';
 import '~/styles/searchBar.css';
+import '~/styles/uiverse-button.css';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -138,7 +139,7 @@ export default function StudentDetails({
 			setCurrentSlide(
 				(prevSlide) => (prevSlide + 1) % Math.min(courses.length, 5)
 			);
-		}, 5000);
+		}, 20000); // Changed from 5000 to 8000 milliseconds (8 seconds)
 
 		return () => clearInterval(interval);
 	}, [courses.length]);
@@ -297,9 +298,15 @@ export default function StudentDetails({
 											blurDataURL={blurDataURL}
 										/>
 									</div>
-									<div className="text-primary absolute inset-0 flex flex-col items-center justify-center bg-black/50 p-4">
-										<div className="mx-auto w-[90%] max-w-4xl text-center">
-											<h2 className="mb-2 line-clamp-3 text-center text-3xl font-semibold sm:mb-4 sm:text-4xl md:text-6xl">
+									<div className="text-primary absolute inset-0 flex items-center justify-start bg-black/50 p-4">
+										<div
+											className="ml-8 w-[400px] max-w-[90%] rounded-xl bg-white/10 p-6 backdrop-blur-md transition-all hover:scale-105"
+											style={{
+												boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+												border: '1px solid rgba(255, 255, 255, 0.18)',
+											}}
+										>
+											<h2 className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl">
 												{course.title}
 											</h2>
 											<Badge
@@ -308,21 +315,40 @@ export default function StudentDetails({
 											>
 												{course.category?.name ?? 'Sin categoría'}
 											</Badge>
-											<p className="mb-2 line-clamp-2 hidden text-center text-sm sm:block sm:text-base md:text-lg lg:text-xl">
+											<p className="mb-2 line-clamp-2 text-sm sm:text-base">
 												{truncateDescription(course.description ?? '', 150)}
 											</p>
-											<p className="mb-1 hidden text-sm font-bold sm:block sm:text-base md:text-lg">
+											<p className="mb-1 text-sm font-bold sm:text-base">
 												Educador: {course.instructorName}
 											</p>
-											<p className="mb-1 hidden text-sm font-bold text-red-500 sm:block sm:text-base md:text-lg">
+											<p className="mb-1 text-sm font-bold text-red-500 sm:text-base">
 												{course.modalidad?.name ?? 'Modalidad no especificada'}
 											</p>
-											<div className="flex items-center justify-center">
+											<div className="mb-4 flex items-center">
 												<StarIcon className="size-4 text-yellow-500 sm:size-5" />
 												<span className="ml-1 text-sm text-yellow-500 sm:text-base">
 													{(course.rating ?? 0).toFixed(1)}
 												</span>
 											</div>
+											<Link href={`/estudiantes/cursos/${course.id}`}>
+												<button className="uiverse">
+													<div className="wrapper">
+														<span>Ir al curso</span>
+														<div className="circle circle-12" />
+														<div className="circle circle-11" />
+														<div className="circle circle-10" />
+														<div className="circle circle-9" />
+														<div className="circle circle-8" />
+														<div className="circle circle-7" />
+														<div className="circle circle-6" />
+														<div className="circle circle-5" />
+														<div className="circle circle-4" />
+														<div className="circle circle-3" />
+														<div className="circle circle-2" />
+														<div className="circle circle-1" />
+													</div>
+												</button>
+											</Link>
 										</div>
 									</div>
 								</div>
@@ -377,7 +403,7 @@ export default function StudentDetails({
 																{course.title}
 															</h3>
 														</Link>
-														<div className="-mb-1 mt-1 sm:mb-3 flex items-center justify-between gap-x-2 sm:mt-2">
+														<div className="mt-1 -mb-1 flex items-center justify-between gap-x-2 sm:mt-2 sm:mb-3">
 															<Badge
 																variant="outline"
 																className="border-primary bg-background text-primary line-clamp-1 max-w-[60%] text-[8px] sm:text-sm"
