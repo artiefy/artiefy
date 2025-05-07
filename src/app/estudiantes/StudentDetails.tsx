@@ -14,7 +14,15 @@ import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
+import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from '~/components/estudiantes/ui/card';
 import {
 	Carousel,
 	CarouselContent,
@@ -54,6 +62,8 @@ export default function StudentDetails({
 
 	const searchInitiated = useRef<boolean>(false);
 	const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+	const [isTransitioning, setIsTransitioning] = useState(false);
 
 	// Memoized values to prevent re-renders
 	const sortedCourses = useMemo(() => {
@@ -136,13 +146,22 @@ export default function StudentDetails({
 	// Slide interval effect with cleanup
 	useEffect(() => {
 		const interval = setInterval(() => {
-			setCurrentSlide(
-				(prevSlide) => (prevSlide + 1) % Math.min(courses.length, 5)
-			);
-		}, 20000); // Changed from 5000 to 8000 milliseconds (8 seconds)
+			if (!isTransitioning) {
+				setIsTransitioning(true);
+				setCurrentSlide((prevSlide) => {
+					const nextSlide = (prevSlide + 1) % latestFiveCourses.length;
+					return nextSlide;
+				});
+
+				// Reset transitioning state after animation completes
+				setTimeout(() => {
+					setIsTransitioning(false);
+				}, 500);
+			}
+		}, 8000);
 
 		return () => clearInterval(interval);
-	}, [courses.length]);
+	}, [latestFiveCourses.length, isTransitioning]);
 
 	// Cleanup effect for search state
 	useEffect(() => {
@@ -185,6 +204,14 @@ export default function StudentDetails({
 				: 'Que Deseas Crear? Escribe Tu Idea...';
 		}
 		return 'Que Deseas Crear? Escribe Tu Idea...';
+	};
+
+	const getImageUrl = (imageKey: string | null | undefined) => {
+		if (!imageKey || imageKey === 'NULL') {
+			return 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+		}
+		const s3Url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${imageKey}`;
+		return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
 	};
 
 	return (
@@ -277,30 +304,26 @@ export default function StudentDetails({
 							{latestFiveCourses.map((course, index) => (
 								<div
 									key={course.id}
-									className={`absolute inset-0 transition-opacity duration-500 ${
-										index === currentSlide ? 'opacity-100' : 'opacity-0'
+									className={`absolute inset-0 transform transition-all duration-500 ${
+										index === currentSlide
+											? 'translate-x-0 opacity-100'
+											: 'translate-x-full opacity-0'
 									}`}
 								>
 									<div className="relative size-full">
 										<Image
-											src={
-												course.coverImageKey && course.coverImageKey !== 'NULL'
-													? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-													: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-											}
+											src={getImageUrl(course.coverImageKey)}
 											alt={course.title}
 											fill
 											className="object-cover"
 											priority={index === currentSlide}
 											sizes="100vw"
-											quality={85}
-											placeholder="blur"
-											blurDataURL={blurDataURL}
+											quality={75}
 										/>
 									</div>
 									<div className="text-primary absolute inset-0 flex items-center justify-start bg-black/50 p-4">
 										<div
-											className="ml-8 w-[400px] max-w-[90%] rounded-xl bg-white/10 p-6 backdrop-blur-md transition-all hover:scale-105"
+											className="ml-8 w-[400px] max-w-[90%] rounded-xl bg-white/10 p-6 backdrop-blur-md"
 											style={{
 												boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
 												border: '1px solid rgba(255, 255, 255, 0.18)',
@@ -333,7 +356,7 @@ export default function StudentDetails({
 											<Link href={`/estudiantes/cursos/${course.id}`}>
 												<button className="uiverse">
 													<div className="wrapper">
-														<span>Ir al curso</span>
+														<span className='text-black'>Ir al Curso</span>
 														<div className="circle circle-12" />
 														<div className="circle circle-11" />
 														<div className="circle circle-10" />
@@ -375,58 +398,70 @@ export default function StudentDetails({
 							</div>
 							<div>
 								<Carousel className="w-full">
-									<CarouselContent className="">
+									<CarouselContent className="-ml-2 md:-ml-4">
 										{latestTenCourses.map((course) => (
 											<CarouselItem
 												key={course.id}
-												className="basis-full sm:basis-1/2 lg:basis-1/3"
+												className="basis-full pl-2 sm:basis-1/2 md:pl-4 lg:basis-1/3"
 											>
-												<div className="relative aspect-[4/3] w-full">
-													<Image
-														src={
-															course.coverImageKey &&
-															course.coverImageKey !== 'NULL'
-																? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-																: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-														}
-														alt={course.title}
-														fill
-														className="rounded-lg object-cover"
-														sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-														quality={85}
-														placeholder="blur"
-														blurDataURL={blurDataURL}
-													/>
-													<div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
-														<Link href={`/estudiantes/cursos/${course.id}`}>
-															<h3 className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
-																{course.title}
-															</h3>
-														</Link>
-														<div className="mt-1 -mb-1 flex items-center justify-between gap-x-2 sm:mt-2 sm:mb-3">
+												<Card className="overflow-hidden border-none bg-transparent shadow-none">
+													<div className="relative">
+														<AspectRatio ratio={4 / 3}>
+															<Image
+																src={getImageUrl(course.coverImageKey)}
+																alt={course.title}
+																fill
+																className="rounded-t-xl object-cover"
+																sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+																quality={85}
+																placeholder="blur"
+																blurDataURL={blurDataURL}
+																onError={(e) => {
+																	const img = e.target as HTMLImageElement;
+																	img.src =
+																		'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+																}}
+															/>
+														</AspectRatio>
+													</div>
+													<div className="relative rounded-b-xl bg-black/50 backdrop-blur-sm">
+														<CardHeader className="p-4">
+															<Link href={`/estudiantes/cursos/${course.id}`}>
+																<CardTitle className="line-clamp-2 min-h-[2.5rem] text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
+																	{course.title}
+																</CardTitle>
+															</Link>
 															<Badge
 																variant="outline"
-																className="border-primary bg-background text-primary line-clamp-1 max-w-[60%] text-[8px] sm:text-sm"
+																className="border-primary bg-background text-primary line-clamp-1 w-fit text-[8px] sm:text-sm"
 															>
 																{course.category?.name}
 															</Badge>
-															<span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
-																{course.modalidad?.name}
-															</span>
-														</div>
-														<div className="mt-2 flex items-center justify-between">
-															<p className="text-primary text-xs font-semibold italic sm:text-base">
-																Educador: <span>{course.instructorName}</span>
-															</p>
-															<div className="flex items-center">
-																<StarIcon className="size-4 text-yellow-500 sm:size-5" />
-																<span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
-																	{(course.rating ?? 0).toFixed(1)}
-																</span>
+														</CardHeader>
+														<CardContent className="p-4 pt-0">
+															<div className="flex items-center justify-between">
+																<p className="text-primary line-clamp-1 text-xs font-semibold italic sm:text-base">
+																	<span className="whitespace-nowrap">
+																		Educador: {course.instructorName}
+																	</span>
+																</p>
 															</div>
-														</div>
+														</CardContent>
+														<CardFooter className="p-4 pt-0">
+															<div className="flex w-full items-center justify-between">
+																<span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
+																	{course.modalidad?.name}
+																</span>
+																<div className="flex items-center">
+																	<StarIcon className="size-4 text-yellow-500 sm:size-5" />
+																	<span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
+																		{(course.rating ?? 0).toFixed(1)}
+																	</span>
+																</div>
+															</div>
+														</CardFooter>
 													</div>
-												</div>
+												</Card>
 											</CarouselItem>
 										))}
 									</CarouselContent>
