@@ -14,15 +14,7 @@ import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
-import {
-	Card,
-	CardContent,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from '~/components/estudiantes/ui/card';
 import {
 	Carousel,
 	CarouselContent,
