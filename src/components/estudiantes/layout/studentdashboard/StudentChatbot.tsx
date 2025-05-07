@@ -331,19 +331,19 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					</div>
 					<div className="button__circle">
 						<Image
-							src="/robot-face-svgrepo-com.svg"
+							src="/brain-9-svgrepo-com-blue.png"
 							alt="Robot"
 							width={24}
 							height={24}
-							className="button__icon"
+							className="button__icon fill-blue-500"
 							priority
 						/>
 						<Image
-							src="/robot-face-svgrepo-com.svg"
+							src="/brain-9-svgrepo-com-blue.png"
 							alt="Robot"
 							width={24}
 							height={24}
-							className="button__icon button__icon--copy"
+							className="button__icon button__icon--copy fill-blue-500"
 							priority
 						/>
 					</div>
@@ -382,11 +382,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							<div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
 								<div className="flex items-start justify-between">
 									<Image
-										src="/robot-face-svgrepo-com.svg"
+										src="/brain-9-svgrepo-com-blue.png"
 										alt="Robot"
 										width={40}
 										height={40}
-										className="text-secondary mt-1"
+										className="mt-1 fill-blue-500"
 										priority
 									/>
 
@@ -434,11 +434,11 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										>
 											{message.sender === 'bot' ? (
 												<Image
-													src="/robot-face-svgrepo-com.svg"
+													src="/brain-9-svgrepo-com-blue.png"
 													alt="Robot"
 													width={32}
 													height={32}
-													className="text-secondary mt-2"
+													className="mt-2 fill-blue-500"
 													priority
 												/>
 											) : user?.imageUrl ? (
