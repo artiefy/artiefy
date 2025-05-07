@@ -8,7 +8,7 @@ import { categories, courses } from '~/server/db/schema';
 import type { Category } from '~/types';
 
 // Opción 1: Sin caché
-export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
+export async function getFeaturedCategories(limit = 7): Promise<Category[]> {
 	try {
 		const featuredCategories = await db
 			.select({
@@ -36,16 +36,3 @@ export async function getFeaturedCategories(limit = 6): Promise<Category[]> {
 		);
 	}
 }
-
-/* 
-// Opción 2: Con caché pero con key dinámico
-import { unstable_cache } from 'next/cache';
-
-export const getFeaturedCategories = unstable_cache(
-  async (limit = 6): Promise<Category[]> => {
-    // ... mismo código de arriba ...
-  },
-  [`featuredCategories-${Date.now()}`], // Key dinámico que fuerza nueva caché
-  { revalidate: 0 } // 0 segundos = sin caché
-);
-*/

@@ -55,7 +55,7 @@ async function fetchData(
 		await Promise.all([
 			getAllCourses(),
 			getAllCategories(),
-			getFeaturedCategories(6),
+			getFeaturedCategories(7),
 			getAllPrograms(),
 		]);
 

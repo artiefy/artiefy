@@ -135,10 +135,10 @@ export default function StudentCategories({
 						</div>
 					</div>
 				</div>
-				<div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">
+				<div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
 					<div
-						className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-6 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 ${
-							loadingCategory === 'all' ? 'pr-6' : ''
+						className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-3 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 ${
+							loadingCategory === 'all' ? 'pr-4' : ''
 						}`}
 						onClick={() => handleCategorySelect(null)}
 						role="button"
@@ -149,19 +149,19 @@ export default function StudentCategories({
 							{loadingCategory === 'all' ? (
 								<>
 									<Icons.spinner
-										className="text-background size-10"
+										className="text-background size-8"
 										aria-hidden="true"
 									/>
-									<p className="text-background mt-2 text-sm">
+									<p className="text-background mt-2 text-xs">
 										Buscando Cursos...
 									</p>
 								</>
 							) : (
 								<>
-									<div className="mb-4 text-3xl text-blue-600">
-										<FiCode className="size-8" aria-hidden="true" />
+									<div className="mb-3 text-2xl text-blue-600">
+										<FiCode className="size-6" aria-hidden="true" />
 									</div>
-									<h3 className="text-background text-lg font-semibold sm:text-base md:text-lg lg:text-xl">
+									<h3 className="text-background text-sm font-semibold">
 										Todos los cursos
 									</h3>
 								</>
@@ -174,7 +174,7 @@ export default function StudentCategories({
 						.map((category: Category, index: number) => (
 							<div
 								key={category.id}
-								className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-6 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95"
+								className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-3 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95"
 								onClick={() => handleCategorySelect(category.id.toString())}
 								role="button"
 								tabIndex={0}
@@ -184,40 +184,44 @@ export default function StudentCategories({
 									{loadingCategory === category.id.toString() ? (
 										<>
 											<Icons.spinner
-												className="text-background size-10"
+												className="text-background size-8"
 												aria-hidden="true"
 											/>
-											<p className="text-background mt-2 text-sm">
+											<p className="text-background mt-2 text-xs">
 												Buscando Cursos...
 											</p>
 										</>
 									) : (
 										<>
-											<div className="mb-4 text-3xl text-blue-600">
+											<div className="mb-3 text-2xl text-blue-600">
 												<Image
 													src={`/${
 														index === 0
-															? 'alembic-svgrepo-com'
+															? 'alembic-svgrepo-com.svg'
 															: index === 1
-																? 'list-svgrepo-com'
+																? 'list-svgrepo-com.svg'
 																: index === 2
-																	? 'brush-svgrepo-com'
+																	? 'brush-svgrepo-com.svg'
 																	: index === 3
-																		? 'web-page-browser-analysis-screen-svgrepo-com'
+																		? 'web-page-browser-analysis-screen-svgrepo-com.svg'
 																		: index === 4
-																			? 'database-svgrepo-com'
-																			: 'code-svgrepo-com'
-													}.svg`}
+																			? 'database-svgrepo-com.svg'
+																			: index === 5
+																				? 'api-interface-svgrepo-com.png'
+																				: index === 6
+																					? 'cloud-computing-ai-svgrepo-com.png'
+																					: 'code-svgrepo-com.svg'
+													}`}
 													alt={category.name}
-													width={48}
-													height={48}
-													className="size-12"
+													width={36}
+													height={36}
+													className="size-9"
 												/>
 											</div>
-											<h3 className="text-background text-lg font-semibold sm:text-base md:text-lg lg:text-xl">
+											<h3 className="text-background text-sm font-semibold">
 												{category.name}
 											</h3>
-											<p className="mt-2 text-sm text-gray-500">
+											<p className="mt-1 text-xs text-gray-500">
 												{`${category.courses?.length ?? 0} curso${
 													category.courses?.length !== 1 ? 's' : ''
 												}`}

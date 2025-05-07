@@ -356,7 +356,7 @@ export default function StudentDetails({
 											<Link href={`/estudiantes/cursos/${course.id}`}>
 												<button className="uiverse">
 													<div className="wrapper">
-														<span className='text-black'>Ir al Curso</span>
+														<span className='text-white'>Ir al Curso</span>
 														<div className="circle circle-12" />
 														<div className="circle circle-11" />
 														<div className="circle circle-10" />
