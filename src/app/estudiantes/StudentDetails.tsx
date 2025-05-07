@@ -356,7 +356,7 @@ export default function StudentDetails({
 											<Link href={`/estudiantes/cursos/${course.id}`}>
 												<button className="uiverse">
 													<div className="wrapper">
-														<span className='text-white'>Ir al Curso</span>
+														<span className="text-white">Ir al Curso</span>
 														<div className="circle circle-12" />
 														<div className="circle circle-11" />
 														<div className="circle circle-10" />
@@ -398,75 +398,63 @@ export default function StudentDetails({
 							</div>
 							<div>
 								<Carousel className="w-full">
-									<CarouselContent className="-ml-2 md:-ml-4">
+									<CarouselContent className="">
 										{latestTenCourses.map((course) => (
 											<CarouselItem
 												key={course.id}
-												className="basis-full pl-2 sm:basis-1/2 md:pl-4 lg:basis-1/3"
+												className="basis-full sm:basis-1/2 lg:basis-1/3"
 											>
-												<Card className="overflow-hidden border-none bg-transparent shadow-none">
-													<div className="relative">
-														<AspectRatio ratio={4 / 3}>
-															<Image
-																src={getImageUrl(course.coverImageKey)}
-																alt={course.title}
-																fill
-																className="rounded-t-xl object-cover"
-																sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-																quality={85}
-																placeholder="blur"
-																blurDataURL={blurDataURL}
-																onError={(e) => {
-																	const img = e.target as HTMLImageElement;
-																	img.src =
-																		'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
-																}}
-															/>
-														</AspectRatio>
-													</div>
-													<div className="relative rounded-b-xl bg-black/50 backdrop-blur-sm">
-														<CardHeader className="p-4">
-															<Link href={`/estudiantes/cursos/${course.id}`}>
-																<CardTitle className="line-clamp-2 min-h-[2.5rem] text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
-																	{course.title}
-																</CardTitle>
-															</Link>
+												<div className="relative aspect-[4/3] w-full">
+													<Image
+														src={
+															course.coverImageKey &&
+															course.coverImageKey !== 'NULL'
+																? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+																: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+														}
+														alt={course.title}
+														fill
+														className="rounded-lg object-cover"
+														sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+														quality={85}
+														placeholder="blur"
+														blurDataURL={blurDataURL}
+													/>
+													<div className="absolute inset-x-0 bottom-0 bg-black/50 p-4 text-white">
+														<Link href={`/estudiantes/cursos/${course.id}`}>
+															<h3 className="line-clamp-3 text-sm font-bold text-white hover:underline active:scale-95 sm:text-lg">
+																{course.title}
+															</h3>
+														</Link>
+														<div className="mt-1 -mb-1 flex items-center justify-between gap-x-2 sm:mt-2 sm:mb-3">
 															<Badge
 																variant="outline"
-																className="border-primary bg-background text-primary line-clamp-1 w-fit text-[8px] sm:text-sm"
+																className="border-primary bg-background text-primary line-clamp-1 max-w-[60%] text-[8px] sm:text-sm"
 															>
 																{course.category?.name}
 															</Badge>
-														</CardHeader>
-														<CardContent className="p-4 pt-0">
-															<div className="flex items-center justify-between">
-																<p className="text-primary line-clamp-1 text-xs font-semibold italic sm:text-base">
-																	<span className="whitespace-nowrap">
-																		Educador: {course.instructorName}
-																	</span>
-																</p>
-															</div>
-														</CardContent>
-														<CardFooter className="p-4 pt-0">
-															<div className="flex w-full items-center justify-between">
-																<span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
-																	{course.modalidad?.name}
+															<span className="text-right text-[8px] font-bold whitespace-pre-line text-red-500 sm:text-base sm:whitespace-normal">
+																{course.modalidad?.name}
+															</span>
+														</div>
+														<div className="mt-2 flex items-center justify-between">
+															<p className="text-primary text-xs font-semibold italic sm:text-base">
+																Educador: <span>{course.instructorName}</span>
+															</p>
+															<div className="flex items-center">
+																<StarIcon className="size-4 text-yellow-500 sm:size-5" />
+																<span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
+																	{(course.rating ?? 0).toFixed(1)}
 																</span>
-																<div className="flex items-center">
-																	<StarIcon className="size-4 text-yellow-500 sm:size-5" />
-																	<span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
-																		{(course.rating ?? 0).toFixed(1)}
-																	</span>
-																</div>
 															</div>
-														</CardFooter>
+														</div>
 													</div>
-												</Card>
+												</div>
 											</CarouselItem>
 										))}
 									</CarouselContent>
-									<CarouselPrevious className="-left-15 size-12 bg-black/50 text-white sm:-left-20 sm:size-12" />
-									<CarouselNext className="-right-15 size-12 bg-black/50 text-white sm:-right-20 sm:size-12" />
+									<CarouselPrevious className="-left-9 size-8 bg-black/50 text-white sm:-left-20 sm:size-12" />
+									<CarouselNext className="-right-9 size-8 bg-black/50 text-white sm:-right-20 sm:size-12" />
 								</Carousel>
 							</div>
 						</div>
