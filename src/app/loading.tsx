@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
-
 import '~/styles/loading.css';
 
 // Añadir esta exportación para mejorar el SEO
@@ -15,10 +14,8 @@ const Loading: React.FC = () => {
 	const [launch, setLaunch] = useState(false);
 
 	useEffect(() => {
-		const timer = setTimeout(() => {
-			setLaunch(true);
-		}, 0);
-		return () => clearTimeout(timer);
+		setLaunch(true);
+		// Remove setTimeout as it's not necessary and can cause flickering
 	}, []);
 
 	return (
@@ -27,11 +24,6 @@ const Loading: React.FC = () => {
 				className={`loading-card flex-col ${launch ? 'loading-launch' : ''}`}
 				aria-label="Cargando contenido"
 			>
-				{/* Completamente eliminado cualquier texto visible */}
-				<div
-					className="loading-title mb-16 animate-pulse text-5xl sm:text-4xl md:text-4xl lg:text-4xl"
-					aria-hidden="true"
-				/>
 				<div className="flex flex-col items-center justify-center gap-8">
 					<Image
 						src="/artiefy-logo.svg"
@@ -40,6 +32,7 @@ const Loading: React.FC = () => {
 						height={60}
 						className="mb-4"
 						priority
+						loading="eager"
 					/>
 					<div className="flex items-center justify-center gap-8">
 						<Image
@@ -49,9 +42,14 @@ const Loading: React.FC = () => {
 							width={180}
 							height={180}
 							priority
+							loading="eager"
 							aria-hidden="true"
 						/>
-						<div className="loading-wrapper" aria-hidden="true">
+						<div
+							className="loading-wrapper"
+							aria-hidden="true"
+							style={{ transform: 'translateZ(0)' }} // Force GPU acceleration
+						>
 							<div className="loading-circle" />
 							<div className="loading-circle" />
 							<div className="loading-circle" />
