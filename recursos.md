@@ -139,7 +139,7 @@ Tutorial UPDATE DEPENDENCIES:
 10. `npm install -g [nombre-del-paquete]@latest` // Instala la última versión de un paquete global específico
 
 11. `npm install tailwindcss @tailwindcss/postcss postcss` // Instala las últimas versiones de TailwindCSS 4.0
-12. `npx @tailwindcss/upgrade@next` // Migrar tailwindcss 3 or 4
+12. `npm install tailwindcss@latest @tailwindcss/cli@latest` // Actualizar TailwindCss 4
 13. `npx @clerk/upgrade --from=core-1` // Instala la última versión de Clerk para Next.js 1
 14. `npx @clerk/upgrade -g` // Instala la última versión de Clerk para Next.js 2
 15. `npm install drizzle-orm@latest` // Instala la última versión de Drizzle ORM

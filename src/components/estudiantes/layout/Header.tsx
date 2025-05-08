@@ -132,7 +132,7 @@ export function Header() {
 									<Link
 										key={item.href}
 										href={item.href}
-										className="text-shadow text-lg font-light tracking-wide whitespace-nowrap transition-colors hover:text-orange-500 active:scale-95"
+										className="text-white text-lg font-light tracking-wide whitespace-nowrap transition-colors text-shadow-sm text-shadow-black/100 hover:text-orange-500 active:scale-95"
 									>
 										{item.label}
 									</Link>
@@ -264,7 +264,7 @@ export function Header() {
 											<Link
 												key={item.href}
 												href={item.href}
-												className="menu-option"
+												className="menu-option text-shadow-sm text-shadow-white/50 hover:text-shadow-md"
 												onClick={toggleDropdown}
 											>
 												{item.label}
