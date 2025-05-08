@@ -19,7 +19,11 @@ import type { Category, Course, Program } from '~/types';
 
 export const metadata: Metadata = {
 	title: 'Artiefy - Plataforma Educativa Digital Líder',
-	description: 'Accede a tus cursos y contenido educativo en Artiefy',
+	description:
+		'Accede a tus cursos y contenido educativo en Artiefy. Aprende desarrollo web, programación y más con expertos de la industria.',
+	alternates: {
+		canonical: 'https://artiefy.com/estudiantes',
+	},
 };
 
 interface SearchParams {

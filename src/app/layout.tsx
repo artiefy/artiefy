@@ -56,7 +56,7 @@ export const metadata: Metadata = {
 		url: 'https://artiefy.com',
 		title: 'Artiefy - Plataforma Educativa Digital Líder',
 		description: 'Artiefy es la plataforma de aprendizaje más innovadora.',
-		siteName: 'Artiefy - Plataforma de Educación Online',
+		siteName: 'Artiefy',
 		images: [
 			{
 				url: 'https://artiefy.com/opengraph-image',
@@ -96,15 +96,27 @@ export const metadata: Metadata = {
 	},
 	other: {
 		'google-site-verification': 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
-		'google-sitelinks-searchbox': JSON.stringify({
+		'google-sitelinks': JSON.stringify({
 			'@context': 'https://schema.org',
 			'@type': 'WebSite',
 			url: 'https://artiefy.com/',
-			potentialAction: {
-				'@type': 'SearchAction',
-				target: 'https://artiefy.com/search?q={search_term_string}',
-				'query-input': 'required name=search_term_string',
-			},
+			potentialAction: [
+				{
+					'@type': 'SearchAction',
+					target: 'https://artiefy.com/search?q={search_term_string}',
+					'query-input': 'required name=search_term_string',
+				},
+			],
+			siteLinks: [
+				{
+					url: 'https://artiefy.com/estudiantes',
+					name: 'Artiefy - Plataforma Educativa Digital Líder',
+				},
+				{
+					url: 'https://artiefy.com/planes',
+					name: 'Artiefy - Plataforma Educativa Digital Líder',
+				},
+			],
 		}),
 	},
 	alternates: {
