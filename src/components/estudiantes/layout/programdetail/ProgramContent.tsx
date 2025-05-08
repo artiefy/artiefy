@@ -299,7 +299,7 @@ export function ProgramContent({
 												disabled
 												className="group/button bg-background text-primary relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2"
 											>
-												<Icons.spinner className="mr-2 size-4 animate-spin" />
+												<Icons.spinner className="mr-2 size-4" />
 												<span className="font-bold">Cargando...</span>
 											</Button>
 										) : (

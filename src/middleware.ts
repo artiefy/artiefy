@@ -54,10 +54,12 @@ export default clerkMiddleware(async (auth, req) => {
 
 		// Handle unauthenticated users for protected routes
 		if (!userId) {
-			return NextResponse.redirect(new URL('/sign-in', req.url));
+			return NextResponse.redirect(
+				new URL(`/sign-in?redirect_url=${encodeURIComponent(req.url)}`, req.url)
+			);
 		}
 
-		// Role-based access control
+		// Role-based access control with dynamic redirect
 		if (routeMatchers.admin(req) && role !== 'admin') {
 			return NextResponse.redirect(new URL('/', req.url));
 		}
@@ -70,9 +72,11 @@ export default clerkMiddleware(async (auth, req) => {
 			return NextResponse.redirect(new URL('/', req.url));
 		}
 
-		// Student route protection
+		// Student route protection with dynamic redirect
 		if (routeMatchers.student(req) && !userId) {
-			return NextResponse.redirect(new URL('/sign-in', req.url));
+			return NextResponse.redirect(
+				new URL(`/sign-in?redirect_url=${encodeURIComponent(req.url)}`, req.url)
+			);
 		}
 
 		return NextResponse.next();

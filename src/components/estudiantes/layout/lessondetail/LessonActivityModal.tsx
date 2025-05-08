@@ -646,7 +646,7 @@ const LessonActivityModal = ({
 					disabled
 					className="mt-4 w-full cursor-not-allowed bg-gradient-to-r from-blue-400/70 to-blue-600/70"
 				>
-					<Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
+					<Icons.spinner className="mr-2 h-5 w-5" />
 					<span>Cargando resultados...</span>
 				</Button>
 			);
@@ -949,7 +949,7 @@ const LessonActivityModal = ({
 						{/* Add loading state here */}
 						{isLoadingDocument ? (
 							<div className="flex flex-col items-center justify-center space-y-3 p-8">
-								<Icons.spinner className="h-8 w-8 animate-spin text-blue-500" />
+								<Icons.spinner className="h-8 w-8 text-blue-500" />
 								<p className="text-base text-gray-600">Cargando documento...</p>
 							</div>
 						) : (
@@ -1176,7 +1176,7 @@ const LessonActivityModal = ({
 		if (isLoadingDocument) {
 			return (
 				<div className="mt-4 flex flex-col items-center justify-center space-y-2 p-4">
-					<Icons.spinner className="h-8 w-8 animate-spin text-blue-500" />
+					<Icons.spinner className="h-8 w-8 text-blue-500" />
 					<p className="text-sm text-gray-400">Cargando documento subido...</p>
 				</div>
 			);
@@ -1287,7 +1287,7 @@ const LessonActivityModal = ({
 									<span className="flex items-center justify-center gap-2">
 										{isUnlocking ? (
 											<>
-												<Icons.spinner className="h-4 w-4 animate-spin" />
+												<Icons.spinner className="h-4 w-4" />
 												Desbloqueando...
 											</>
 										) : (
@@ -1479,7 +1479,7 @@ const LessonActivityModal = ({
 									<span className="relative flex items-center justify-center gap-2 rounded-xl bg-slate-950/50 px-4 py-2 transition-colors group-hover/btn:bg-transparent">
 										{isUploading ? (
 											<>
-												<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+												<Icons.spinner className="mr-2 h-4 w-4" />
 												Subiendo...
 											</>
 										) : uploadedFileInfo ? (
@@ -1493,7 +1493,7 @@ const LessonActivityModal = ({
 								{/* Add loading indicator below upload button */}
 								{isLoadingDocument && (
 									<div className="mt-4 flex items-center justify-center space-x-2 text-center">
-										<Icons.spinner className="h-5 w-5 animate-spin text-cyan-500" />
+										<Icons.spinner className="h-5 w-5 text-cyan-500" />
 										<span className="text-sm text-gray-400">
 											Cargando documento...
 										</span>
@@ -1565,7 +1565,7 @@ const LessonActivityModal = ({
 						<DialogTitle>Actividad</DialogTitle>
 					</DialogHeader>
 					<div className="flex justify-center">
-						<Icons.spinner className="h-8 w-8 animate-spin" />
+						<Icons.spinner className="h-8 w-8" />
 					</div>
 				</DialogContent>
 			</Dialog>

@@ -198,7 +198,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+				<div className="border-primary size-32 rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -213,7 +213,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
 	// Render del componente
 	return (
-		<div className="h-auto w-full rounded-lg bg-background">
+		<div className="bg-background h-auto w-full rounded-lg">
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
@@ -258,7 +258,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 			<div className="group relative h-auto w-full">
 				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 				<Card
-					className={`relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out zoom-in`}
+					className={`zoom-in relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
 					style={{
 						backgroundColor: selectedColor,
 						color: getContrastYIQ(selectedColor),

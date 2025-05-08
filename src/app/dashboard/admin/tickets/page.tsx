@@ -338,7 +338,7 @@ export default function TicketsPage() {
 									{loading ? (
 										<tr>
 											<td colSpan={6} className="px-4 py-8 text-center">
-												<Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
+												<Loader2 className="mx-auto h-8 w-8 text-blue-500" />
 											</td>
 										</tr>
 									) : filteredTickets.length === 0 ? (

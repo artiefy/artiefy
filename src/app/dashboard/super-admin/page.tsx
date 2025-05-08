@@ -1441,16 +1441,15 @@ export default function AdminDashboard() {
 								const rawResult: unknown = await response.json();
 
 								if (
-								!rawResult ||
-								typeof rawResult !== 'object' ||
-								!('results' in rawResult) ||
-								!Array.isArray((rawResult as { results: unknown }).results)
+									!rawResult ||
+									typeof rawResult !== 'object' ||
+									!('results' in rawResult) ||
+									!Array.isArray((rawResult as { results: unknown }).results)
 								) {
-								throw new Error('Invalid email response');
+									throw new Error('Invalid email response');
 								}
 
 								const result = rawResult as EmailResponse;
-
 
 								const successCount = result.results.filter(
 									(r) => r.status === 'success'
@@ -1477,7 +1476,7 @@ export default function AdminDashboard() {
 						<span className="relative z-10 font-medium">
 							{sendingEmails ? (
 								<div className="flex items-center gap-2">
-									<Loader2 className="h-4 w-4 animate-spin" />
+									<Loader2 className="h-4 w-4" />
 									Enviando...
 								</div>
 							) : (
@@ -1828,11 +1827,7 @@ export default function AdminDashboard() {
 							className="bg-primary hover:bg-secondary mt-4 flex w-full justify-center rounded-md px-4 py-2 font-bold text-white"
 							disabled={creatingUser}
 						>
-							{creatingUser ? (
-								<Loader2 className="size-5 animate-spin" />
-							) : (
-								'Crear Usuario'
-							)}
+							{creatingUser ? <Loader2 className="size-5" /> : 'Crear Usuario'}
 						</button>
 					</div>
 				</div>
@@ -2497,7 +2492,7 @@ export default function AdminDashboard() {
 								disabled={loadingEmail}
 							>
 								{loadingEmail ? (
-									<Loader2 className="animate-spin text-white" />
+									<Loader2 className="text-white" />
 								) : (
 									'Enviar Correo'
 								)}

@@ -572,7 +572,7 @@ export function CourseHeader({
 								>
 									{isUnenrolling ? (
 										<Icons.spinner
-											className="animate-spin text-white"
+											className="text-white"
 											style={{ width: '35px', height: '35px' }}
 										/>
 									) : (
@@ -590,7 +590,7 @@ export function CourseHeader({
 									<div className="relative z-10 flex items-center justify-center space-x-2">
 										{isEnrolling || isEnrollClicked ? (
 											<Icons.spinner
-												className="animate-spin text-white"
+												className="text-white"
 												style={{ width: '25px', height: '25px' }}
 											/>
 										) : (

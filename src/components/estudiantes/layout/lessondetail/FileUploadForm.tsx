@@ -98,7 +98,7 @@ export function FileUploadForm({
 					>
 						{isUploading ? (
 							<>
-								<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+								<Icons.spinner className="mr-2 h-4 w-4" />
 								Subiendo...
 							</>
 						) : (

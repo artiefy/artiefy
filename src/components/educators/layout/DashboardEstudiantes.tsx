@@ -266,7 +266,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
 					{loading ? (
 						<div className="flex items-center justify-center p-8">
-							<Loader2 className="text-primary size-6 animate-spin" />
+							<Loader2 className="text-primary size-6" />
 							<span className="ml-2">Cargando usuarios...</span>
 						</div>
 					) : (

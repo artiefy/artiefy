@@ -93,7 +93,7 @@ const AnuncioPopup: React.FC<AnuncioPopupProps> = ({
 						disabled={loadingButton !== null}
 					>
 						{loadingButton === 'planes' ? (
-							<Loader2 className="size-5 animate-spin" />
+							<Loader2 className="size-5" />
 						) : (
 							<>Ver Planes</>
 						)}

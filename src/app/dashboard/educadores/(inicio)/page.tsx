@@ -149,7 +149,7 @@ export default function Home() {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+				<div className="border-primary size-32 rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -164,7 +164,7 @@ export default function Home() {
 					<p className="text-lg font-semibold text-red-500">{error}</p>
 					<button
 						onClick={fetchCourses}
-						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+						className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
 					>
 						Reintentar
 					</button>
@@ -190,10 +190,10 @@ export default function Home() {
 				</BreadcrumbList>
 			</Breadcrumb>
 			<div className="group relative">
-				<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+				<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 				<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 py-4 text-white transition-transform duration-300 ease-in-out">
 					<div className="flex w-full rounded-lg px-4 sm:px-6 lg:px-8">
-						<GraduationCap className="h-14 w-12 text-primary" />
+						<GraduationCap className="text-primary h-14 w-12" />
 						<div className="ml-4 flex flex-col">
 							<h1 className="text-2xl font-bold text-gray-200">
 								<span className="text-primary">Artiefy</span> panel de control
@@ -209,7 +209,7 @@ export default function Home() {
 				<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 					{/* Average Grade Card */}
 					<div className="group relative">
-						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 						<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
 							<div className="p-5">
 								<div className="flex items-center">
@@ -234,7 +234,7 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 						<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
 							<div className="p-5">
 								<div className="flex items-center">
@@ -259,7 +259,7 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 						<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
 							<div className="p-5">
 								<div className="flex items-center">
@@ -284,7 +284,7 @@ export default function Home() {
 					</div>
 
 					<div className="group relative">
-						<div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
 						<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
 							<div className="p-5">
 								<div className="flex items-center">

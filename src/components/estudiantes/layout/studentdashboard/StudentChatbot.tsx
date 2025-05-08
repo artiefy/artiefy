@@ -218,11 +218,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const handleClick = () => {
 		if (!isSignedIn) {
+			const currentUrl = encodeURIComponent(window.location.href);
 			toast.error('Acceso restringido', {
 				description: 'Debes iniciar sesión para usar el chatbot.',
 				action: {
 					label: 'Iniciar sesión',
-					onClick: () => router.push('/sign-in'),
+					onClick: () => router.push(`/sign-in?redirect_url=${currentUrl}`),
 				},
 				duration: 5000,
 			});
@@ -307,7 +308,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			{isAlwaysVisible && (
 				<button
 					onClick={handleClick}
-					className={`button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
+					className={`button ${!isSignedIn && 'cursor-not-allowed opacity-50'} ${
+						isOpen ? 'minimized' : ''
+					}`}
 					aria-label={
 						isSignedIn
 							? 'Abrir chat'

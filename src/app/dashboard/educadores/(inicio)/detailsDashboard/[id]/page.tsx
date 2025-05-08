@@ -193,7 +193,7 @@ function App() {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+				<div className="border-primary size-32 rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -209,7 +209,7 @@ function App() {
 					<p className="text-lg font-semibold text-red-500">{error}</p>
 					<button
 						onClick={fetchCourses}
-						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+						className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
 					>
 						Reintentar
 					</button>
@@ -254,11 +254,11 @@ function App() {
 				{/* Header */}
 				<div className="group relative">
 					<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-					<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out zoom-in" />
-					<div className="relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in">
+					<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out" />
+					<div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
 						<div className="flex items-center justify-between">
 							<div className="flex items-center">
-								<GraduationCap className="size-8 text-primary" />
+								<GraduationCap className="text-primary size-8" />
 								<h1 className="ml-2 text-2xl font-bold text-white">
 									<span className="text-primary">
 										Panel de control del curso:
@@ -273,7 +273,7 @@ function App() {
 				<main className="mx-auto max-w-7xl px-2 py-8">
 					<div className="group relative mb-4">
 						<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-						<div className="relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in">
+						<div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
 							<div>
 								<h2 className="justify-start text-2xl font-bold text-white">
 									Curso: {courses?.title ?? 'Selecciona un curso'}
@@ -318,7 +318,7 @@ function App() {
 							{/* Lessons List */}
 							<div className="group relative h-fit w-full">
 								<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-								<div className="relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in">
+								<div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
 									<h3 className="my-2 ml-4 text-xl font-semibold text-white">
 										Progreso de las Lecciones
 									</h3>
@@ -366,7 +366,7 @@ function App() {
 							{courses.modalidadesid && (
 								<div className="group relative h-fit w-1/3">
 									<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-									<div className="relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-gray-400 transition-transform duration-300 ease-in-out zoom-in">
+									<div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-gray-400 transition-transform duration-300 ease-in-out">
 										<div className="space-y-6">
 											<h3 className="mb-4 text-lg font-semibold text-white">
 												Sesiones del curso
@@ -404,9 +404,9 @@ function StatCard({ icon, title, value, trend }: StatCardProps) {
 	return (
 		<div className="group relative">
 			<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-			<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in">
+			<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
 				<div className="flex items-center">
-					<div className="rounded-lg bg-primary/10 p-2">
+					<div className="bg-primary/10 rounded-lg p-2">
 						{React.cloneElement(icon, { className: 'h-6 w-6 text-primary' })}
 					</div>
 					<div className="ml-4">
@@ -430,9 +430,9 @@ function UpcomingSession({ title, date, duration }: UpcomingSessionProps) {
 	return (
 		<div className="group relative">
 			<div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-			<div className="relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out zoom-in" />
+			<div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out" />
 			<div className="flex items-start space-x-4">
-				<Calendar className="size-5 shrink-0 text-primary" />
+				<Calendar className="text-primary size-5 shrink-0" />
 				<div>
 					<p className="text-sm font-medium text-gray-900">{title}</p>
 					<p className="text-sm text-gray-500">{date}</p>

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import '~/styles/ia.css';
 import '~/styles/searchBar.css';
 import '~/styles/uiverse-button.css';
+import '~/styles/headerSearchBar.css';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -206,6 +207,32 @@ export default function StudentDetails({
 		return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
 	};
 
+	// Add event listener in useEffect
+	useEffect(() => {
+		const handleGlobalSearch = (event: CustomEvent<{ query: string }>) => {
+			const query = event.detail.query;
+			// Add debug log
+			console.log('StudentDetails: Received search event with query:', query);
+
+			if (!query || searchInProgress) return;
+
+			setSearchQuery(query);
+			handleSearch();
+		};
+
+		window.addEventListener(
+			'artiefy-search',
+			handleGlobalSearch as EventListener
+		);
+
+		return () => {
+			window.removeEventListener(
+				'artiefy-search',
+				handleGlobalSearch as EventListener
+			);
+		};
+	}, [handleSearch, searchInProgress]);
+
 	return (
 		<div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
 			<main className="grow">
@@ -236,58 +263,30 @@ export default function StudentDetails({
 								}}
 								className="flex w-full flex-col items-center space-y-2"
 							>
-								<div className="input-container">
-									<div className="search-container">
-										<input
-											required
-											className={`input ${searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''}`}
-											name="search"
-											placeholder={
-												searchBarDisabled
-													? 'Procesando consulta...'
-													: getPlaceholderText()
-											}
-											type="search"
-											value={searchQuery}
-											onChange={handleSearchChange}
-											disabled={searchBarDisabled}
-										/>
-										<svg
-											viewBox="0 0 24 24"
-											className="search__icon"
-											onClick={handleSearchIconClick}
-											role="button"
-											aria-label="Buscar"
-											style={{
-												cursor: 'pointer',
-												outline: 'none',
-												transition: 'transform 0.2s ease',
-											}}
-											onMouseEnter={(e) => {
-												const path = e.currentTarget.querySelector('path');
-												if (path) path.style.fill = '#01142B';
-											}}
-											onMouseLeave={(e) => {
-												const path = e.currentTarget.querySelector('path');
-												if (path) path.style.fill = '';
-											}}
-											onMouseDown={(e) => {
-												e.currentTarget.style.transform = 'scale(1.1)';
-												const path = e.currentTarget.querySelector('path');
-												if (path) path.style.fill = '#01142B';
-											}}
-											onMouseUp={(e) => {
-												e.currentTarget.style.transform = 'scale(1)';
-											}}
-										>
-											<path
-												d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z"
-												style={{
-													transition: 'fill 0.2s ease',
-												}}
-											/>
-										</svg>
-									</div>
+								<div className="header-search-container">
+									<input
+										required
+										className={`header-input border-primary ${searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''}`}
+										name="search"
+										placeholder={
+											searchBarDisabled
+												? 'Procesando consulta...'
+												: getPlaceholderText()
+										}
+										type="search"
+										value={searchQuery}
+										onChange={handleSearchChange}
+										disabled={searchBarDisabled}
+									/>
+									<svg
+										viewBox="0 0 24 24"
+										className="header-search__icon"
+										onClick={handleSearchIconClick}
+										role="button"
+										aria-label="Buscar"
+									>
+										<path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+									</svg>
 								</div>
 							</form>
 						</div>

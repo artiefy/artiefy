@@ -411,7 +411,7 @@
 // 												<div className="relative z-10 flex items-center justify-center space-x-2">
 // 													{isEnrolling ? (
 // 														<Icons.spinner
-// 															className="animate-spin text-white"
+// 															className=" text-white"
 // 															style={{ width: '25px', height: '25px' }}
 // 														/>
 // 													) : (
@@ -459,7 +459,7 @@
 // 										>
 // 											{isUnenrolling ? (
 // 												<Icons.spinner
-// 													className="animate-spin text-white"
+// 													className=" text-white"
 // 													style={{ width: '25px', height: '25px' }}
 // 												/>
 // 											) : (

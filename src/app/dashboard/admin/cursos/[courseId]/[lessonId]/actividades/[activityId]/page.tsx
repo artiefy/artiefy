@@ -226,7 +226,7 @@ const Page: React.FC = () => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+				<div className="border-primary size-32 rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -244,7 +244,7 @@ const Page: React.FC = () => {
 					</p>
 					<button
 						onClick={fetchActividad}
-						className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+						className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
 					>
 						Reintentar
 					</button>
@@ -318,10 +318,10 @@ const Page: React.FC = () => {
 					style={{ backgroundColor: color, color: getContrastYIQ(color) }}
 				>
 					<div className="mb-3 grid grid-cols-1 items-center justify-between space-y-4 text-3xl font-semibold md:grid-cols-2">
-						<h2 className="flex flex-col text-4xl font-extrabold text-primary">
+						<h2 className="text-primary flex flex-col text-4xl font-extrabold">
 							Actividad: <b>{actividad.name}</b>
 						</h2>
-						<h3 className="text-xl text-primary md:mr-8 lg:mr-24">
+						<h3 className="text-primary text-xl md:mr-8 lg:mr-24">
 							Perteneciente a la clase: {actividad.lesson?.title}
 						</h3>
 					</div>
@@ -331,7 +331,7 @@ const Page: React.FC = () => {
 								Del docente:{' '}
 								<Badge
 									variant="outline"
-									className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+									className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
 								>
 									{actividad.lesson.courseInstructor}
 								</Badge>
@@ -351,7 +351,7 @@ const Page: React.FC = () => {
 								¿La actividad es calificable?:{' '}
 								<Badge
 									variant="outline"
-									className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+									className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
 								>
 									{actividad.revisada ? 'Si' : 'No'}.
 								</Badge>
@@ -360,7 +360,7 @@ const Page: React.FC = () => {
 								Fecha máxima de entrega:{' '}
 								<Badge
 									variant="outline"
-									className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+									className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
 								>
 									{actividad.fechaMaximaEntrega
 										? new Date(actividad.fechaMaximaEntrega).toLocaleString()

@@ -307,7 +307,7 @@ const PaginationControls = ({
 
 const LoaderComponent = () => (
 	<div className="mt-6 flex justify-center">
-		<Loader2 className="text-primary size-6 animate-spin" />
+		<Loader2 className="text-primary size-6" />
 	</div>
 );
 

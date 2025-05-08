@@ -581,11 +581,7 @@ export default function AdminDashboard() {
 							className="bg-primary hover:bg-secondary mt-4 flex w-full justify-center rounded-md px-4 py-2 font-bold text-white"
 							disabled={creatingUser}
 						>
-							{creatingUser ? (
-								<Loader2 className="size-5 animate-spin" />
-							) : (
-								'Crear Usuario'
-							)}
+							{creatingUser ? <Loader2 className="size-5" /> : 'Crear Usuario'}
 						</button>
 					</div>
 				</div>

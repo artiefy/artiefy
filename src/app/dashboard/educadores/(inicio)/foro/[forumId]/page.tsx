@@ -539,7 +539,7 @@ const ForumPage = () => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+				<div className="border-primary size-32 rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -615,7 +615,7 @@ const ForumPage = () => {
 										/>
 										<button
 											onClick={() => handlePostUpdate(post.id)}
-											className="mt-2 rounded bg-primary px-4 py-2 text-white"
+											className="bg-primary mt-2 rounded px-4 py-2 text-white"
 										>
 											Actualizar Post
 										</button>
@@ -699,7 +699,7 @@ const ForumPage = () => {
 												onChange={(e) => setReplyMessage(e.target.value)}
 											/>
 											<button
-												className="mt-2 mr-2 rounded bg-primary px-4 py-2 text-white"
+												className="bg-primary mt-2 mr-2 rounded px-4 py-2 text-white"
 												onClick={handleReplySubmit}
 											>
 												Enviar Respuesta
@@ -739,7 +739,7 @@ const ForumPage = () => {
 						onChange={(e) => setMessage(e.target.value)}
 					/>
 					<button
-						className="mt-2 rounded bg-primary px-4 py-2 font-light text-black"
+						className="bg-primary mt-2 rounded px-4 py-2 font-light text-black"
 						onClick={handlePostSubmit}
 					>
 						Enviar

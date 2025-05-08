@@ -309,7 +309,7 @@ export function ProgramHeader({
 									disabled={isUnenrolling}
 								>
 									{isUnenrolling ? (
-										<Icons.spinner className="size-9 animate-spin text-white" />
+										<Icons.spinner className="size-9 text-white" />
 									) : (
 										'Cancelar Suscripción'
 									)}
@@ -327,7 +327,7 @@ export function ProgramHeader({
 										{isCheckingEnrollment ? (
 											<>
 												<Icons.spinner
-													className="animate-spin text-white"
+													className="text-white"
 													style={{ width: '20px', height: '20px' }}
 												/>
 												<span>Cargando...</span>
@@ -335,7 +335,7 @@ export function ProgramHeader({
 										) : isEnrolling ? (
 											<>
 												<Icons.spinner
-													className="animate-spin text-white"
+													className="text-white"
 													style={{ width: '25px', height: '25px' }}
 												/>
 												<span>Inscribiendo...</span>

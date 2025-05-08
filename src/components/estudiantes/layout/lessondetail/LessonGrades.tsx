@@ -33,7 +33,7 @@ export function LessonGrades({
 
 			<div className="mb-4 flex min-h-[40px] items-center justify-center">
 				{isLoading ? (
-					<Icons.spinner className="h-6 w-6 animate-spin text-background" />
+					<Icons.spinner className="text-background h-6 w-6" />
 				) : (
 					<div className="flex items-center">
 						<StarIcon className="size-8 text-yellow-500" />

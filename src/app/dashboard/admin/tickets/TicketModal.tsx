@@ -67,16 +67,19 @@ export default function TicketModal({
 }: TicketModalProps) {
 	const { user } = useUser();
 
-	const initialFormState = useMemo<TicketFormData>(() => ({
-		assignedToId: '',
-		email: '',
-		description: '',
-		comments: '',
-		estado: 'abierto',
-		tipo: 'otro',
-		coverImageKey: '',
-		newComment: '',
-	}), []);
+	const initialFormState = useMemo<TicketFormData>(
+		() => ({
+			assignedToId: '',
+			email: '',
+			description: '',
+			comments: '',
+			estado: 'abierto',
+			tipo: 'otro',
+			coverImageKey: '',
+			newComment: '',
+		}),
+		[]
+	);
 
 	const [formData, setFormData] = useState<TicketFormData>(initialFormState);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,20 +148,19 @@ export default function TicketModal({
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!user) return;
-	
+
 		setIsSubmitting(true);
-	
+
 		const submitData = { ...formData };
 		if (!submitData.assignedToId) {
 			delete submitData.assignedToId;
 		}
-	
+
 		await Promise.resolve(onSubmit(submitData));
-	
+
 		setIsSubmitting(false);
 		onClose();
 	};
-	
 
 	if (!isOpen) return null;
 
@@ -337,7 +339,7 @@ export default function TicketModal({
 							<div className="max-h-60 space-y-3 overflow-y-auto rounded-md border border-gray-700 bg-gray-800/50 p-4">
 								{isLoadingComments ? (
 									<div className="flex items-center justify-center py-4">
-										<Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+										<Loader2 className="h-6 w-6 text-blue-500" />
 									</div>
 								) : comments.length > 0 ? (
 									comments.map((comment, index) => (
@@ -384,7 +386,7 @@ export default function TicketModal({
 					>
 						{isSubmitting ? (
 							<div className="flex items-center gap-2">
-								<Loader2 className="h-4 w-4 animate-spin" />
+								<Loader2 className="h-4 w-4" />
 								<span>Procesando...</span>
 							</div>
 						) : ticket ? (

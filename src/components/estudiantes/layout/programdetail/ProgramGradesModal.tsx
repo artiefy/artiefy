@@ -51,7 +51,7 @@ export function ProgramGradesModal({
 							Promedio General del Programa
 						</p>
 						{isLoading ? (
-							<Icons.spinner className="text-background mx-auto h-6 w-6 animate-spin" />
+							<Icons.spinner className="text-background mx-auto h-6 w-6" />
 						) : (
 							<span
 								className={`text-3xl font-bold ${
@@ -74,7 +74,7 @@ export function ProgramGradesModal({
 						<div className="divide-y">
 							{isLoading ? (
 								<div className="flex justify-center p-4">
-									<Icons.spinner className="text-background h-6 w-6 animate-spin" />
+									<Icons.spinner className="text-background h-6 w-6" />
 								</div>
 							) : coursesGrades.length > 0 ? (
 								coursesGrades.map((course, index) => (

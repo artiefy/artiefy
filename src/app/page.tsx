@@ -184,7 +184,7 @@ export default function HomePage() {
 										<div className="flex w-full items-center justify-center">
 											{loading ? (
 												<Icons.spinner
-													className="animate-spin"
+											
 													style={{ width: '35px', height: '35px' }}
 												/>
 											) : (

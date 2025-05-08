@@ -83,7 +83,7 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
 			<div className="rounded-lg bg-white p-4 shadow-lg">
 				{loading ? (
 					<div className="flex items-center justify-center p-4">
-						<Icons.spinner className="text-background h-8 w-8 animate-spin" />
+						<Icons.spinner className="text-background h-8 w-8" />
 					</div>
 				) : files.length > 0 ? (
 					<ul className="space-y-2">

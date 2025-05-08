@@ -424,7 +424,7 @@ const LessonActivities = ({
 		if (isButtonLoading) {
 			return (
 				<div className="flex items-center gap-2">
-					<Icons.spinner className="h-4 w-4 animate-spin text-gray-800" />
+					<Icons.spinner className="h-4 w-4 text-gray-800" />
 					<span className="font-semibold text-gray-800">Cargando...</span>
 				</div>
 			);
@@ -434,7 +434,7 @@ const LessonActivities = ({
 			return (
 				<>
 					{activityState.isLoading && (
-						<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+						<Icons.spinner className="mr-2 h-4 w-4" />
 					)}
 					<span className="font-semibold">
 						{activity.typeid === 1 ? 'Ver Documento' : 'Ver Resultados'}
@@ -446,9 +446,7 @@ const LessonActivities = ({
 
 		return (
 			<>
-				{activityState?.isLoading && (
-					<Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-				)}
+				{activityState?.isLoading && <Icons.spinner className="mr-2 h-4 w-4" />}
 				<span>Ver Actividad</span>
 			</>
 		);

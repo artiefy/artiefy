@@ -153,7 +153,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 				<div>
 					<label
 						htmlFor="content"
-						className="block text-sm font-medium text-primary"
+						className="text-primary block text-sm font-medium"
 					>
 						Comentario:
 					</label>
@@ -167,10 +167,10 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 						required
 						placeholder="Escribe tu comentario"
 						disabled={!isSignedIn}
-						className={`mt-1 block w-full rounded-md border text-primary shadow-xs placeholder:text-gray-400 focus:ring-primary sm:text-sm ${
+						className={`text-primary focus:ring-primary mt-1 block w-full rounded-md border shadow-xs placeholder:text-gray-400 sm:text-sm ${
 							!isSignedIn
 								? 'border-gray-300'
-								: 'focus:border-2 focus:border-secondary'
+								: 'focus:border-secondary focus:border-2'
 						}`}
 						style={{
 							height: '100px',
@@ -184,7 +184,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 				<div>
 					<label
 						htmlFor="rating"
-						className="block text-sm font-medium text-primary"
+						className="text-primary block text-sm font-medium"
 					>
 						Calificación:
 					</label>
@@ -201,13 +201,13 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 				<div className="flex items-center space-x-2">
 					<Button
 						type="submit"
-						className="inline-flex items-center justify-center rounded-md border border-transparent bg-secondary px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:outline-hidden active:scale-95"
+						className="bg-secondary focus:ring-secondary inline-flex items-center justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-hidden active:scale-95"
 						style={{ width: '100px', height: '38px' }}
 					>
 						{isSubmitting ? (
 							<div className="flex items-center">
 								<Icons.spinner
-									className="animate-spin text-white"
+									className="text-white"
 									style={{ width: '20px', height: '20px' }}
 								/>
 							</div>
@@ -234,9 +234,9 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 					<h3 className="flex items-center gap-2 text-xl font-semibold">
 						Comentarios ({comments.length})
 						{loading && (
-							<div className="flex items-center gap-2 text-primary">
+							<div className="text-primary flex items-center gap-2">
 								<Icons.spinner
-									className="inline-block animate-spin"
+									className="inline-block"
 									style={{ width: '20px', height: '20px' }}
 								/>
 								<span className="text-base text-gray-500">
@@ -275,7 +275,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 											>
 												{likingComment === comment.id ? (
 													<Icons.spinner
-														className="animate-spin text-blue-600"
+														className="text-blue-600"
 														style={{ width: '20px', height: '20px' }}
 													/>
 												) : (
@@ -299,7 +299,7 @@ const LessonComments: React.FC<ClassCommentProps> = ({ lessonId }) => {
 												>
 													{deletingComment === comment.id ? (
 														<Icons.spinner
-															className="animate-spin text-red-500"
+															className="text-red-500"
 															style={{ width: '20px', height: '20px' }}
 														/>
 													) : (

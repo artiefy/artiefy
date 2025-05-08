@@ -98,7 +98,7 @@ export function GradeModal({
 		if (isFirstLoad && isLoading) {
 			return (
 				<div className="flex justify-center py-4">
-					<Icons.spinner className="h-6 w-6 animate-spin text-primary" />
+					<Icons.spinner className="text-primary h-6 w-6" />
 				</div>
 			);
 		}
@@ -109,11 +109,11 @@ export function GradeModal({
 				key={materia.id}
 				className="flex items-center justify-between rounded-md bg-gray-50 p-3"
 			>
-				<span className="font-mediumt font-bold text-background">
+				<span className="font-mediumt text-background font-bold">
 					{materia.title}
 				</span>
 				{isLoading && !isFirstLoad ? (
-					<Icons.spinner className="h-4 w-4 animate-spin text-gray-600" />
+					<Icons.spinner className="h-4 w-4 text-gray-600" />
 				) : (
 					<span
 						className={`font-semibold ${
@@ -141,7 +141,7 @@ export function GradeModal({
 
 					<div className="mb-6 rounded-lg bg-gray-100 p-4 text-center">
 						{isLoading ? (
-							<Icons.spinner className="mx-auto h-6 w-6 animate-spin text-background" />
+							<Icons.spinner className="text-background mx-auto h-6 w-6" />
 						) : (
 							<span
 								className={`text-3xl font-bold ${
@@ -159,7 +159,7 @@ export function GradeModal({
 						<h4 className="font-semibold">Materias del curso:</h4>
 						{isFirstLoad && isLoading ? (
 							<div className="flex justify-center py-4">
-								<Icons.spinner className="h-6 w-6 animate-spin text-primary" />
+								<Icons.spinner className="text-primary h-6 w-6" />
 							</div>
 						) : (
 							<div className="space-y-2">{renderMaterias()}</div>

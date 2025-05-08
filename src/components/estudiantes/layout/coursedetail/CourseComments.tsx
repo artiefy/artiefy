@@ -226,7 +226,7 @@ export default function CourseComments({
 					<div>
 						<label
 							htmlFor="content"
-							className="block text-sm font-medium text-primary"
+							className="text-primary block text-sm font-medium"
 						>
 							Comentario:
 						</label>
@@ -245,7 +245,7 @@ export default function CourseComments({
 							}
 							required
 							placeholder="Escribe tu comentario"
-							className="mt-1 block w-full border-[1px] text-primary transition-colors duration-200 hover:border-secondary focus:border-[2px] focus:border-secondary"
+							className="text-primary hover:border-secondary focus:border-secondary mt-1 block w-full border-[1px] transition-colors duration-200 focus:border-[2px]"
 							style={{
 								height: '100px',
 								padding: '10px',
@@ -256,7 +256,7 @@ export default function CourseComments({
 					<div>
 						<label
 							htmlFor="rating"
-							className="m-1 block text-sm font-medium text-primary"
+							className="text-primary m-1 block text-sm font-medium"
 						>
 							Calificación:
 						</label>
@@ -273,13 +273,13 @@ export default function CourseComments({
 					<div className="mt-2 flex items-center">
 						<Button
 							type="submit"
-							className="inline-flex items-center justify-center rounded-md border border-transparent bg-secondary text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:outline-hidden active:scale-95"
+							className="bg-secondary focus:ring-secondary inline-flex items-center justify-center rounded-md border border-transparent text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-hidden active:scale-95"
 							style={{ width: '100px', height: '38px' }}
 						>
 							{isSubmitting ? (
 								<div className="flex items-center">
 									<Icons.spinner
-										className="animate-spin text-white"
+										className="text-white"
 										style={{ width: '20px', height: '20px' }}
 									/>
 								</div>
@@ -304,15 +304,17 @@ export default function CourseComments({
 			{message && <p className="mt-4 text-sm text-green-600">{message}</p>}
 			<div className="mt-8">
 				<div className="mb-4 flex items-center justify-between">
-					<h3 className="text-xl font-semibold flex items-center gap-2">
+					<h3 className="flex items-center gap-2 text-xl font-semibold">
 						Comentarios ({comments.length})
 						{loading && (
-							<div className="flex items-center gap-2 text-primary">
+							<div className="text-primary flex items-center gap-2">
 								<Icons.spinner
-									className="inline-block animate-spin"
+									className="inline-block"
 									style={{ width: '20px', height: '20px' }}
 								/>
-								<span className="text-base text-gray-500">Cargando comentarios...</span>
+								<span className="text-base text-gray-500">
+									Cargando comentarios...
+								</span>
 							</div>
 						)}
 					</h3>
@@ -346,7 +348,7 @@ export default function CourseComments({
 										>
 											{likingComment === comment.id ? (
 												<Icons.spinner
-													className="animate-spin text-secondary"
+													className="text-secondary"
 													style={{ width: '20px', height: '20px' }}
 												/>
 											) : (
@@ -370,7 +372,7 @@ export default function CourseComments({
 											>
 												{deletingComment === comment.id ? (
 													<Icons.spinner
-														className="animate-spin text-red-500"
+														className="text-red-500"
 														style={{ width: '20px', height: '20px' }}
 													/>
 												) : (

@@ -387,7 +387,7 @@ export default function Page() {
 	if (uploading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
+				<div className="border-primary size-32 rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>

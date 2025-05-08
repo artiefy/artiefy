@@ -340,7 +340,7 @@ export default function Page() {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+				<div className="border-primary size-32 rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -385,7 +385,7 @@ export default function Page() {
 							<p className="text-xl text-red-600">{error}</p>
 							<button
 								onClick={fetchCourses}
-								className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+								className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
 							>
 								Reintentar
 							</button>

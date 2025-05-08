@@ -71,6 +71,11 @@
 	--duration: 1400ms;
 }
 
+.uiverse:active {
+	transform: scale(0.95);
+	transition: transform 0.1s ease;
+}
+
 .uiverse .wrapper .circle {
 	position: absolute;
 	left: 0;

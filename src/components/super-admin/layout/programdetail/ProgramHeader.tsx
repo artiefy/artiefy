@@ -138,7 +138,7 @@ export function ProgramHeader({
 						{isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
 								<Button
-									className="h-12 w-64 justify-center border-white/20 bg-primary text-lg font-semibold text-background transition-colors hover:bg-primary/90 active:scale-95"
+									className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
 									disabled={true}
 								>
 									<FaCheck className="mr-2" /> Suscrito Al Programa
@@ -149,7 +149,7 @@ export function ProgramHeader({
 									disabled={isUnenrolling}
 								>
 									{isUnenrolling ? (
-										<Icons.spinner className="animate-spin text-white" />
+										<Icons.spinner className="text-white" />
 									) : (
 										'Cancelar Suscripción'
 									)}
@@ -166,7 +166,7 @@ export function ProgramHeader({
 									<div className="relative z-10 flex items-center justify-center space-x-2">
 										{isEnrolling ? (
 											<Icons.spinner
-												className="animate-spin text-white"
+												className="text-white"
 												style={{ width: '25px', height: '25px' }}
 											/>
 										) : (

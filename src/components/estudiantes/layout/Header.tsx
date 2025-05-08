@@ -16,6 +16,8 @@ import {
 import { Dialog, DialogPanel } from '@headlessui/react';
 import {
 	UserCircleIcon,
+	AcademicCapIcon,
+	BellIcon,
 	XMarkIcon as XMarkIconSolid,
 } from '@heroicons/react/24/solid';
 
@@ -32,6 +34,7 @@ export function Header() {
 	const [isScrolled, setIsScrolled] = useState(false);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
 
 	const navItems = [
 		{ href: '/', label: 'Inicio' },
@@ -74,13 +77,24 @@ export function Header() {
 
 	const handleSearch = (e?: React.FormEvent) => {
 		e?.preventDefault();
-		// Add your search logic here
-		if (searchQuery.trim()) {
-			// Implement search functionality
-			console.log('Searching:', searchQuery);
-			// Reset search query after search
-			setSearchQuery('');
-		}
+
+		if (!searchQuery.trim() || searchInProgress) return;
+
+		setSearchInProgress(true);
+
+		// Add debug log
+		console.log(
+			'Header: Emitting search event with query:',
+			searchQuery.trim()
+		);
+
+		const searchEvent = new CustomEvent('artiefy-search', {
+			detail: { query: searchQuery.trim() },
+		});
+		window.dispatchEvent(searchEvent);
+
+		setSearchQuery('');
+		setSearchInProgress(false);
 	};
 
 	return (
@@ -88,46 +102,44 @@ export function Header() {
 			className={`sticky top-0 z-50 w-full transition-all duration-300 ${
 				isScrolled
 					? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
-					: 'bg-transparent py-4'
+					: 'py-4'
 			}`}
 		>
 			<div className="container mx-auto max-w-7xl px-4">
 				<div className="hidden w-full items-center md:flex md:justify-between">
-					{/* Logo */}
-					<div
-						className={`transition-all duration-300 ${isScrolled ? 'mt-0' : 'mt-[-13px]'}`}
-					>
-						<Link href="/estudiantes">
-							<div className="relative size-[150px]">
-								<Image
-									src="/artiefy-logo.svg"
-									alt="Logo Artiefy"
-									fill
-									priority
-									className="object-contain"
-									sizes="(max-width: 768px) 150px, 150px"
-								/>
-							</div>
-						</Link>
-					</div>
-
-					{/* Navigation items with increased spacing */}
 					{!isScrolled ? (
-						<div className="flex items-center gap-6">
-							<nav className="flex flex-1 items-center justify-center pr-25">
-								<div className="flex gap-24">
-									{navItems.map((item) => (
-										<Link
-											key={item.href}
-											href={item.href}
-											className="text-shadow text-lg font-light tracking-wide whitespace-nowrap transition-colors hover:text-orange-500 active:scale-95"
-										>
-											{item.label}
-										</Link>
-									))}
-								</div>
-							</nav>
-							{/* Auth Button for unscrolled position */}
+						// Original position layout
+						<div className="flex w-full items-center justify-between">
+							{/* Logo */}
+							<div className="mt-[-13px] shrink-0">
+								<Link href="/estudiantes">
+									<div className="relative size-[150px]">
+										<Image
+											src="/artiefy-logo.svg"
+											alt="Logo Artiefy"
+											fill
+											priority
+											className="object-contain"
+											sizes="(max-width: 768px) 150px, 150px"
+										/>
+									</div>
+								</Link>
+							</div>
+
+							{/* Navigation items */}
+							<div className="flex gap-24">
+								{navItems.map((item) => (
+									<Link
+										key={item.href}
+										href={item.href}
+										className="text-shadow text-lg font-light tracking-wide whitespace-nowrap transition-colors hover:text-orange-500 active:scale-95"
+									>
+										{item.label}
+									</Link>
+								))}
+							</div>
+
+							{/* Auth Button */}
 							<div className="flex justify-end">
 								<SignedOut>
 									<SignInButton fallbackRedirectUrl="/estudiantes">
@@ -142,7 +154,7 @@ export function Header() {
 											<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
 												{isLoading ? (
 													<Icons.spinner
-														className="animate-spin"
+														className=""
 														style={{ width: '25px', height: '25px' }}
 													/>
 												) : (
@@ -155,7 +167,7 @@ export function Header() {
 								<SignedIn>
 									<ClerkLoading>
 										<div className="flex h-10 items-center justify-center">
-											<Icons.spinner className="size-6 animate-spin" />
+											<Icons.spinner className="size-6" />
 										</div>
 									</ClerkLoading>
 									<ClerkLoaded>
@@ -166,6 +178,20 @@ export function Header() {
 													labelIcon={<UserCircleIcon className="size-4" />}
 													href="/estudiantes/myaccount"
 												/>
+												<UserButton.Link
+													label="Mis Certificaciones"
+													labelIcon={<AcademicCapIcon className="size-4" />}
+													href="/estudiantes/certificados"
+												/>
+												<UserButton.Link
+													label="Notificaciones"
+													labelIcon={<BellIcon className="size-4" />}
+													href="/estudiantes/notificaciones"
+												>
+													<span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+														2
+													</span>
+												</UserButton.Link>
 												<UserButton.Action label="manageAccount" />
 											</UserButton.MenuItems>
 										</UserButton>
@@ -174,27 +200,48 @@ export function Header() {
 							</div>
 						</div>
 					) : (
-						// Search bar and hamburger when scrolled
-						<div className="flex flex-1 items-center gap-6">
-							<form onSubmit={handleSearch} className="w-[600px]">
-								<div className="header-search-container">
-									<input
-										type="search"
-										placeholder="Buscar..."
-										value={searchQuery}
-										onChange={(e) => setSearchQuery(e.target.value)}
-										className="header-input border-primary"
-									/>
-									<svg
-										viewBox="0 0 24 24"
-										className="header-search__icon"
-										onClick={handleSearch}
-									>
-										<path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-									</svg>
-								</div>
-							</form>
-							<div className="ml-auto flex items-center gap-4">
+						// Scrolled position layout
+						<div className="flex w-full items-center">
+							{/* Logo */}
+							<div className="mt-[-13px] shrink-0">
+								<Link href="/estudiantes">
+									<div className="relative size-[150px]">
+										<Image
+											src="/artiefy-logo.svg"
+											alt="Logo Artiefy"
+											fill
+											priority
+											className="object-contain"
+											sizes="(max-width: 768px) 150px, 150px"
+										/>
+									</div>
+								</Link>
+							</div>
+
+							{/* Centered search and menu */}
+							<div className="flex flex-1 justify-center gap-6">
+								<form onSubmit={handleSearch} className="w-[700px]">
+									<div className="header-search-container">
+										<input
+											type="search"
+											placeholder="Buscar..."
+											value={searchQuery}
+											onChange={(e) => setSearchQuery(e.target.value)}
+											className="header-input border-primary"
+										/>
+										<svg
+											viewBox="0 0 24 24"
+											className="header-search__icon"
+											onClick={handleSearch}
+										>
+											<path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+										</svg>
+									</div>
+								</form>
+							</div>
+
+							{/* Menu and Auth Button */}
+							<div className="flex items-center gap-4">
 								<div className="header-menu">
 									<button
 										className="menu-selected"
@@ -241,7 +288,7 @@ export function Header() {
 												<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
 													{isLoading ? (
 														<Icons.spinner
-															className="animate-spin"
+															className=""
 															style={{ width: '25px', height: '25px' }}
 														/>
 													) : (
@@ -254,7 +301,7 @@ export function Header() {
 									<SignedIn>
 										<ClerkLoading>
 											<div className="flex h-10 items-center justify-center">
-												<Icons.spinner className="size-6 animate-spin" />
+												<Icons.spinner className="size-6" />
 											</div>
 										</ClerkLoading>
 										<ClerkLoaded>
@@ -265,6 +312,20 @@ export function Header() {
 														labelIcon={<UserCircleIcon className="size-4" />}
 														href="/estudiantes/myaccount"
 													/>
+													<UserButton.Link
+														label="Mis Certificaciones"
+														labelIcon={<AcademicCapIcon className="size-4" />}
+														href="/estudiantes/certificados"
+													/>
+													<UserButton.Link
+														label="Notificaciones"
+														labelIcon={<BellIcon className="size-4" />}
+														href="/estudiantes/notificaciones"
+													>
+														<span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+															2
+														</span>
+													</UserButton.Link>
 													<UserButton.Action label="manageAccount" />
 												</UserButton.MenuItems>
 											</UserButton>
@@ -373,7 +434,7 @@ export function Header() {
 									<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
 										{isLoading ? (
 											<Icons.spinner
-												className="animate-spin"
+												className=""
 												style={{ width: '25px', height: '25px' }}
 											/>
 										) : (
@@ -387,7 +448,7 @@ export function Header() {
 							<div className="cl-userButton-root mr-6 flex w-full justify-center">
 								<ClerkLoading>
 									<div className="flex h-10 items-center justify-center">
-										<Icons.spinner className="size-6 animate-spin" />
+										<Icons.spinner className="size-6" />
 									</div>
 								</ClerkLoading>
 								<ClerkLoaded>
@@ -398,6 +459,20 @@ export function Header() {
 												labelIcon={<UserCircleIcon className="size-4" />}
 												href="/estudiantes/myaccount"
 											/>
+											<UserButton.Link
+												label="Mis Certificaciones"
+												labelIcon={<AcademicCapIcon className="size-4" />}
+												href="/estudiantes/certificados"
+											/>
+											<UserButton.Link
+												label="Notificaciones"
+												labelIcon={<BellIcon className="size-4" />}
+												href="/estudiantes/notificaciones"
+											>
+												<span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+													2
+												</span>
+											</UserButton.Link>
 											<UserButton.Action label="manageAccount" />
 										</UserButton.MenuItems>
 									</UserButton>

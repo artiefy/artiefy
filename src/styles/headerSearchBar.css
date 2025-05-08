@@ -1,7 +1,7 @@
 .header-search-container {
 	position: relative;
 	width: 100%;
-	max-width: 500px;
+	max-width: 700px;
 	margin: 0 auto;
 }
 
@@ -44,4 +44,17 @@
 .header-search__icon path {
 	fill: #3af4ef;
 	transition: fill 0.2s ease;
+}
+
+/* Add these media queries at the bottom of the file */
+@media (max-width: 1280px) {
+  .header-search-container {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .header-search-container {
+    max-width: 600px;
+  }
 }

@@ -19,6 +19,15 @@
 	box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); /* Subtle green glow */
 }
 
+.button.minimized {
+	transform: scale(0.7);
+	transition: all 0.3s ease;
+}
+
+.button {
+	transition: all 0.3s ease;
+}
+
 .button__text {
 	position: absolute;
 	inset: 0;
