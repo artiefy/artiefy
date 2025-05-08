@@ -10,8 +10,7 @@ import {
 	SignedIn,
 	SignedOut,
 	UserButton,
-	ClerkLoaded,
-	ClerkLoading,
+	useAuth,
 } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import {
@@ -35,6 +34,8 @@ export function Header() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
+
+	const { isLoaded: isAuthLoaded } = useAuth();
 
 	const navItems = [
 		{ href: '/', label: 'Inicio' },
@@ -97,6 +98,73 @@ export function Header() {
 		setSearchInProgress(false);
 	};
 
+	const renderAuthButton = () => {
+		if (!isAuthLoaded) return null;
+
+		return (
+			<>
+				<SignedOut>
+					<SignInButton>
+						<Button
+							className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+							style={{
+								transition: '0.5s',
+								width: '180px',
+							}}
+							onClick={handleSignInClick}
+						>
+							<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
+								{isLoading ? (
+									<Icons.spinner
+										className=""
+										style={{ width: '25px', height: '25px' }}
+									/>
+								) : (
+									<>Iniciar Sesión</>
+								)}
+							</span>
+						</Button>
+					</SignInButton>
+				</SignedOut>
+				<SignedIn>
+					<div className="cl-userButton-root">
+						<UserButton
+							showName
+							appearance={{
+								elements: {
+									rootBox: 'w-full flex justify-end',
+								},
+							}}
+						>
+							<UserButton.MenuItems>
+								<UserButton.Link
+									label="Mis Cursos"
+									labelIcon={<UserCircleIcon className="size-4" />}
+									href="/estudiantes/myaccount"
+								/>
+								<UserButton.Link
+									label="Mis Certificaciones"
+									labelIcon={<AcademicCapIcon className="size-4" />}
+									href="/estudiantes/certificados"
+								/>
+								<UserButton.Link
+									label="Notificaciones"
+									labelIcon={<BellIcon className="size-4" />}
+									href="/estudiantes/notificaciones"
+								>
+									<span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+										2
+									</span>
+								</UserButton.Link>
+								<UserButton.Action label="manageAccount" />
+							</UserButton.MenuItems>
+						</UserButton>
+					</div>
+				</SignedIn>
+			</>
+		);
+	};
+
 	return (
 		<header
 			className={`sticky top-0 z-50 w-full transition-all duration-300 ${
@@ -108,9 +176,7 @@ export function Header() {
 			<div className="container mx-auto max-w-7xl px-4">
 				<div className="hidden w-full items-center md:flex md:justify-between">
 					{!isScrolled ? (
-						// Original position layout
 						<div className="flex w-full items-center justify-between">
-							{/* Logo */}
 							<div className="mt-[-13px] shrink-0">
 								<Link href="/estudiantes">
 									<div className="relative size-[150px]">
@@ -125,84 +191,21 @@ export function Header() {
 									</div>
 								</Link>
 							</div>
-
-							{/* Navigation items */}
 							<div className="flex gap-24">
 								{navItems.map((item) => (
 									<Link
 										key={item.href}
 										href={item.href}
-										className="text-white text-lg font-light tracking-wide whitespace-nowrap transition-colors text-shadow-sm text-shadow-black/100 hover:text-orange-500 active:scale-95"
+										className="text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors text-shadow-black/100 text-shadow-sm hover:text-orange-500 active:scale-95"
 									>
 										{item.label}
 									</Link>
 								))}
 							</div>
-
-							{/* Auth Button */}
-							<div className="flex justify-end">
-								<SignedOut>
-									<SignInButton fallbackRedirectUrl="/estudiantes">
-										<Button
-											className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
-											style={{
-												transition: '0.5s',
-												width: '180px',
-											}}
-											onClick={handleSignInClick}
-										>
-											<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
-												{isLoading ? (
-													<Icons.spinner
-														className=""
-														style={{ width: '25px', height: '25px' }}
-													/>
-												) : (
-													<>Iniciar Sesión</>
-												)}
-											</span>
-										</Button>
-									</SignInButton>
-								</SignedOut>
-								<SignedIn>
-									<ClerkLoading>
-										<div className="flex h-10 items-center justify-center">
-											<Icons.spinner className="size-6" />
-										</div>
-									</ClerkLoading>
-									<ClerkLoaded>
-										<UserButton showName>
-											<UserButton.MenuItems>
-												<UserButton.Link
-													label="Mis Cursos"
-													labelIcon={<UserCircleIcon className="size-4" />}
-													href="/estudiantes/myaccount"
-												/>
-												<UserButton.Link
-													label="Mis Certificaciones"
-													labelIcon={<AcademicCapIcon className="size-4" />}
-													href="/estudiantes/certificados"
-												/>
-												<UserButton.Link
-													label="Notificaciones"
-													labelIcon={<BellIcon className="size-4" />}
-													href="/estudiantes/notificaciones"
-												>
-													<span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-														2
-													</span>
-												</UserButton.Link>
-												<UserButton.Action label="manageAccount" />
-											</UserButton.MenuItems>
-										</UserButton>
-									</ClerkLoaded>
-								</SignedIn>
-							</div>
+							<div className="flex justify-end">{renderAuthButton()}</div>
 						</div>
 					) : (
-						// Scrolled position layout
 						<div className="flex w-full items-center">
-							{/* Logo */}
 							<div className="mt-[-13px] shrink-0">
 								<Link href="/estudiantes">
 									<div className="relative size-[150px]">
@@ -217,8 +220,6 @@ export function Header() {
 									</div>
 								</Link>
 							</div>
-
-							{/* Centered search and menu */}
 							<div className="flex flex-1 justify-center gap-6">
 								<form onSubmit={handleSearch} className="w-[700px]">
 									<div className="header-search-container">
@@ -239,8 +240,6 @@ export function Header() {
 									</div>
 								</form>
 							</div>
-
-							{/* Menu and Auth Button */}
 							<div className="flex items-center gap-4">
 								<div className="header-menu">
 									<button
@@ -272,72 +271,11 @@ export function Header() {
 										))}
 									</div>
 								</div>
-
-								{/* Auth Button */}
-								<div className="flex justify-end">
-									<SignedOut>
-										<SignInButton fallbackRedirectUrl="/estudiantes">
-											<Button
-												className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
-												style={{
-													transition: '0.5s',
-													width: '180px',
-												}}
-												onClick={handleSignInClick}
-											>
-												<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
-													{isLoading ? (
-														<Icons.spinner
-															className=""
-															style={{ width: '25px', height: '25px' }}
-														/>
-													) : (
-														<>Iniciar Sesión</>
-													)}
-												</span>
-											</Button>
-										</SignInButton>
-									</SignedOut>
-									<SignedIn>
-										<ClerkLoading>
-											<div className="flex h-10 items-center justify-center">
-												<Icons.spinner className="size-6" />
-											</div>
-										</ClerkLoading>
-										<ClerkLoaded>
-											<UserButton showName>
-												<UserButton.MenuItems>
-													<UserButton.Link
-														label="Mis Cursos"
-														labelIcon={<UserCircleIcon className="size-4" />}
-														href="/estudiantes/myaccount"
-													/>
-													<UserButton.Link
-														label="Mis Certificaciones"
-														labelIcon={<AcademicCapIcon className="size-4" />}
-														href="/estudiantes/certificados"
-													/>
-													<UserButton.Link
-														label="Notificaciones"
-														labelIcon={<BellIcon className="size-4" />}
-														href="/estudiantes/notificaciones"
-													>
-														<span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-															2
-														</span>
-													</UserButton.Link>
-													<UserButton.Action label="manageAccount" />
-												</UserButton.MenuItems>
-											</UserButton>
-										</ClerkLoaded>
-									</SignedIn>
-								</div>
+								<div className="flex justify-end">{renderAuthButton()}</div>
 							</div>
 						</div>
 					)}
 				</div>
-
-				{/* Mobile view */}
 				<div className="flex w-full items-center justify-between md:hidden">
 					<div className="mt-[-8px] shrink-0">
 						<Link href="/estudiantes">
@@ -369,8 +307,6 @@ export function Header() {
 					</label>
 				</div>
 			</div>
-
-			{/* Mobile Menu */}
 			<Dialog
 				as="div"
 				open={mobileMenuOpen}
@@ -402,7 +338,6 @@ export function Header() {
 							<XMarkIconSolid className="size-8" />
 						</button>
 					</div>
-
 					<nav className="pb-7">
 						<ul className="space-y-12">
 							{navItems.map((item) => (
@@ -418,67 +353,8 @@ export function Header() {
 							))}
 						</ul>
 					</nav>
-
-					{/* Mobile Menu - Fix closing tags */}
 					<div className="mt-6 flex items-center justify-center">
-						<SignedOut>
-							<SignInButton fallbackRedirectUrl="/estudiantes">
-								<Button
-									className="border-primary bg-primary text-background focus:bg-background focus:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 focus:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
-									style={{
-										transition: '0.5s',
-										width: '180px',
-									}}
-									onClick={handleSignInClick}
-								>
-									<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
-										{isLoading ? (
-											<Icons.spinner
-												className=""
-												style={{ width: '25px', height: '25px' }}
-											/>
-										) : (
-											<>Iniciar Sesión</>
-										)}
-									</span>
-								</Button>
-							</SignInButton>
-						</SignedOut>
-						<SignedIn>
-							<div className="cl-userButton-root mr-6 flex w-full justify-center">
-								<ClerkLoading>
-									<div className="flex h-10 items-center justify-center">
-										<Icons.spinner className="size-6" />
-									</div>
-								</ClerkLoading>
-								<ClerkLoaded>
-									<UserButton showName>
-										<UserButton.MenuItems>
-											<UserButton.Link
-												label="Mis Cursos"
-												labelIcon={<UserCircleIcon className="size-4" />}
-												href="/estudiantes/myaccount"
-											/>
-											<UserButton.Link
-												label="Mis Certificaciones"
-												labelIcon={<AcademicCapIcon className="size-4" />}
-												href="/estudiantes/certificados"
-											/>
-											<UserButton.Link
-												label="Notificaciones"
-												labelIcon={<BellIcon className="size-4" />}
-												href="/estudiantes/notificaciones"
-											>
-												<span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-													2
-												</span>
-											</UserButton.Link>
-											<UserButton.Action label="manageAccount" />
-										</UserButton.MenuItems>
-									</UserButton>
-								</ClerkLoaded>
-							</div>
-						</SignedIn>
+						{renderAuthButton()}
 					</div>
 				</DialogPanel>
 			</Dialog>
