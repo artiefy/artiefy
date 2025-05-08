@@ -370,19 +370,22 @@ const ForumPage = () => {
 		return replies.map((reply) => (
 			<div
 				key={reply.id}
-				className="relative mt-3 ml-8 rounded-lg bg-gray-900 p-4 shadow-lg"
+				className="relative mt-6 ml-10 rounded-md border border-gray-700 bg-gray-900 px-6 py-4 shadow-md"
 			>
-				<div className="mb-2 flex items-center justify-between">
-					<span className="text-sm font-semibold text-gray-200">
-						{reply.userId.name}
-					</span>
+				<div className="flex items-center justify-between">
+					<div className="flex items-center gap-2">
+						<div className="h-8 w-8 rounded-full bg-gray-800" />
+						<span className="text-sm font-medium text-white">
+							{reply.userId.name}
+						</span>
+					</div>
 					<span className="text-xs text-gray-500">
 						{formatDate(reply.createdAt)}
 					</span>
 				</div>
 
 				{editingReplyId === reply.id ? (
-					<div>
+					<div className="mt-3">
 						<textarea
 							className="w-full rounded border border-gray-700 bg-gray-800 p-3 text-white"
 							value={editReplyContent}
@@ -404,10 +407,10 @@ const ForumPage = () => {
 						</div>
 					</div>
 				) : (
-					<p className="text-sm text-gray-300">{reply.content}</p>
+					<p className="mt-3 text-sm text-gray-300">{reply.content}</p>
 				)}
 
-				{/* Menú desplegable editar/eliminar respuesta */}
+				{/* Menú editar/eliminar */}
 				{reply.userId.id === user?.id && (
 					<Collapsible className="absolute top-2 right-2">
 						<CollapsibleTrigger>
@@ -515,28 +518,30 @@ const ForumPage = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			<div className="container mx-auto mt-5 rounded-lg bg-black/25 p-4 shadow-lg sm:px-6 lg:px-8">
-				<div className="mx-auto my-10 max-w-5xl rounded-lg bg-gradient-to-br from-gray-800 to-black px-4 py-6 shadow-xl sm:px-6 sm:py-8">
-					<div className="flex flex-col gap-4 border-b border-gray-700 pb-4 sm:flex-row sm:items-center sm:justify-between">
-						<div>
-							<h1 className="text-2xl font-semibold text-white sm:text-3xl">
-								{forumData?.title}
-							</h1>
-							<p className="mt-1 text-sm text-gray-300">
-								{forumData?.description}
-							</p>
-						</div>
-						<div className="flex items-center gap-2">
-							<span className="text-sm text-gray-400">Educador:</span>
-							<span className="rounded-full bg-blue-600 px-3 py-1 text-sm text-white">
-								{forumData?.userId.name}
-							</span>
+			<div className="bg-se mt-5 w-full rounded-lg p-4 shadow-lg sm:px-6 lg:px-8">
+				<div className="glow-pulse mt-5 mb-10 w-full rounded-lg">
+					<div className="bg-background w-full rounded-lg px-6 py-8 shadow-xl">
+						<div className="border-secondary flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+							<div>
+								<h1 className="text-primary text-2xl font-semibold sm:text-3xl">
+									{forumData?.title}
+								</h1>
+								<p className="text-secondary mt-1 text-sm">
+									{forumData?.description}
+								</p>
+							</div>
+							<div className="flex items-center gap-2">
+								<span className="text-secondary text-sm">Educador:</span>
+								<span className="bg-primary text-background rounded-full px-3 py-1 text-sm font-semibold">
+									<strong>{forumData?.userId.name}</strong>
+								</span>
+							</div>
 						</div>
 					</div>
 				</div>
 
 				{/* Renderizar Posts */}
-				<div className="mx-auto max-w-4xl space-y-6">
+				<div className="w-full space-y-6">
 					{loadingPosts ? (
 						<p className="text-center text-gray-400">Cargando posts...</p>
 					) : (
@@ -650,7 +655,7 @@ const ForumPage = () => {
 				</div>
 
 				{/* Crear nuevo post */}
-				<div className="mx-auto mt-6 max-w-4xl">
+				<div className="mx-full mt-6 max-w-4xl">
 					<textarea
 						className="w-full rounded-lg border-2 border-gray-700 bg-white p-3 text-black outline-none"
 						placeholder="Escribe un nuevo mesaje..."

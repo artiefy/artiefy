@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 @config "../../tailwind.config.js";
 
 /* Hover Media Query */
@@ -158,7 +158,7 @@
 	}
 
 	button:not(:disabled),
-	[role='button']:not(:disabled) {
+	[role="button"]:not(:disabled) {
 		cursor: pointer;
 	}
 }
@@ -235,7 +235,7 @@
 	/* Targeting all possible avatar selectors */
 	.cl-userButton-root .cl-userButtonAvatarImage,
 	.cl-userButton-root .cl-userButtonAvatarBox img,
-	.cl-userButton-root img[data-part='userButtonAvatarImage'] {
+	.cl-userButton-root img[data-part="userButtonAvatarImage"] {
 		width: 2rem !important;
 		height: 2rem !important;
 		max-width: none !important;
@@ -267,9 +267,9 @@
 	&:is(
 			:focus-within,
 			:active,
-			[aria-expanded='true'],
-			[data-open='true'],
-			[aria-selected='true']
+			[aria-expanded="true"],
+			[data-open="true"],
+			[aria-selected="true"]
 		) {
 		outline: 2px solid rgb(255 255 255 / 0.5);
 		outline-offset: 2px;
@@ -277,7 +277,41 @@
 		border-radius: var(--radius-sm);
 	}
 
-	&:is(:focus-within, :active, [aria-expanded='true']) {
+	&:is(:focus-within, :active, [aria-expanded="true"]) {
 		background-color: rgb(255 255 255 / 0.05);
+	}
+}
+
+@layer utilities {
+	.glow-pulse {
+		position: relative;
+		z-index: 0;
+	}
+
+	.glow-pulse::before {
+		content: "";
+		position: absolute;
+		top: -8px;
+		left: -8px;
+		right: -8px;
+		bottom: -8px;
+		border-radius: inherit;
+		background: var(--color-primary);
+		filter: blur(16px);
+		opacity: 0.4;
+		animation: pulse-glow 2s ease-in-out infinite;
+		z-index: -1;
+	}
+
+	@keyframes pulse-glow {
+		0%,
+		100% {
+			opacity: 0.3;
+			filter: blur(14px);
+		}
+		50% {
+			opacity: 0.6;
+			filter: blur(22px);
+		}
 	}
 }
