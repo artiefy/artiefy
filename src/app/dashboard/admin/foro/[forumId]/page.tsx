@@ -171,78 +171,12 @@ const ForumPage = () => {
 		}
 	}, [fetchPostReplays, posts]);
 
-	// Desbloquear y actualizar la función sendForumEmail 'Sin terminar'
-	const sendForumEmail = async (postContent: string, recipients: string[]) => {
-		try {
-			if (!forumData || !user) return;
-
-			// Verificar si el usuario tiene una cuenta de Google vinculada
-			const hasGoogleAccount = user.externalAccounts?.some(
-				(account) => account.provider === 'google'
-			);
-
-			if (!hasGoogleAccount) {
-				// Aquí puedes mostrar un modal o mensaje pidiendo al usuario que vincule su cuenta
-				alert(
-					'Por favor, vincula tu cuenta de Google para poder enviar correos'
-				);
-				// Puedes redirigir al usuario a la página de configuración de su cuenta
-				// window.location.href = '/user/settings';
-				return;
-			}
-
-			console.log('Sending email with data:', {
-				content: postContent,
-				recipients,
-				forumTitle: forumData.title,
-				authorName: user.fullName,
-			});
-
-			const response = await fetch('/api/educadores/send-email', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					// Authorization: `Bearer ${await (user.getToken ? user.getToken({ template: 'your-template-id' }) : '')}`,
-				},
-				body: JSON.stringify({
-					content: postContent,
-					recipients: recipients,
-					forumTitle: forumData.title,
-					authorName: user.fullName ?? 'Usuario',
-				}),
-			});
-
-			const result = (await response.json()) as {
-				success: boolean;
-				message: string;
-			};
-
-			if (!response.ok) {
-				console.error('Failed to send email. Status:', response.status);
-				console.error('Error details:', result);
-				return;
-			}
-
-			console.log('Email sent successfully:', result);
-		} catch (error) {
-			console.error('Error in sendForumEmail:', error);
-		}
-	};
-
-	// Modificar handlePostSubmit para enviar emails solo cuando el usuario es educador
 	const handlePostSubmit = async () => {
 		if (!message.trim() || !user) return;
 		try {
-			console.log('Starting handlePostSubmit...');
-			console.log('User role:', user.publicMetadata?.role);
-			console.log('User ID:', user.id);
-			console.log('Forum creator ID:', forumData?.userId.id);
-
 			const response = await fetch('/api/forums/posts', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					content: message,
 					foroId: ForumIdNumber,
@@ -256,31 +190,26 @@ const ForumPage = () => {
 				setMessage('');
 				await fetchPosts();
 
-				if (user.publicMetadata?.role === 'educador') {
-					const uniqueEmails = new Set<string>();
+				const role = user.publicMetadata?.role;
+				const userEmail = user.emailAddresses[0]?.emailAddress;
+				const uniqueEmails = new Set<string>();
 
-					// Añadir emails de los participantes del foro
+				if (role === 'educador') {
+					// Notificar estudiantes (todos los que participaron)
 					posts.forEach((post) => {
-						if (post.userId.email) {
+						if (post.userId.email && post.userId.email !== userEmail) {
 							uniqueEmails.add(post.userId.email);
 						}
 					});
-
-					// Añadir el email del creador del foro
-					if (forumData?.userId.email) {
+					postReplays.forEach((reply) => {
+						if (reply.userId.email && reply.userId.email !== userEmail) {
+							uniqueEmails.add(reply.userId.email);
+						}
+					});
+				} else {
+					// Notificar al instructor
+					if (forumData?.userId.email && forumData.userId.email !== userEmail) {
 						uniqueEmails.add(forumData.userId.email);
-					}
-
-					const emailList = Array.from(uniqueEmails);
-					const userEmail = user.emailAddresses[0]?.emailAddress;
-
-					// No enviar email al autor del post
-					const filteredEmails = emailList.filter(
-						(email) => email !== userEmail
-					);
-
-					if (filteredEmails.length > 0) {
-						await sendForumEmail(message, filteredEmails);
 					}
 				}
 			}
@@ -289,21 +218,13 @@ const ForumPage = () => {
 		}
 	};
 
-	// Modificar handleReplySubmit para enviar emails solo cuando el usuario es el dueño del pósts
 	const handleReplySubmit = async () => {
 		if (!replyMessage.trim() || !user || replyingToPostId === null) return;
 
 		try {
-			console.log('Starting handleReplySubmit...');
-			console.log('User role:', user.publicMetadata?.rol);
-			console.log('User ID:', user.id);
-			console.log('Forum creator ID:', forumData?.userId.id);
-
 			const response = await fetch('/api/forums/posts/postReplay', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					content: replyMessage,
 					postId: replyingToPostId,
@@ -316,31 +237,36 @@ const ForumPage = () => {
 				setReplyingToPostId(null);
 				await fetchPostReplays();
 
-				if (user.publicMetadata?.role === 'educador') {
-					const originalPost = posts.find((p) => p.id === replyingToPostId);
-					const postReplies = postReplays.filter(
-						(r) => r.postId === replyingToPostId
-					);
+				const role = user.publicMetadata?.role;
+				const userEmail = user.emailAddresses[0]?.emailAddress;
+				const uniqueEmails = new Set<string>();
 
-					const uniqueEmails = new Set<string>();
-					if (originalPost?.userId.email) {
+				const originalPost = posts.find((p) => p.id === replyingToPostId);
+
+				if (role === 'educador') {
+					// Notificar a estudiantes que comentaron en este hilo
+					if (
+						originalPost?.userId.email &&
+						originalPost.userId.email !== userEmail
+					) {
 						uniqueEmails.add(originalPost.userId.email);
 					}
-					postReplies.forEach((reply) => {
-						if (reply.userId.email) {
-							uniqueEmails.add(reply.userId.email);
-						}
-					});
-
-					const emailList = Array.from(uniqueEmails);
-					const userEmail = user.emailAddresses[0]?.emailAddress;
-					const filteredEmails = emailList.filter(
-						(email) => email !== userEmail
-					);
-
-					if (filteredEmails.length > 0) {
-						await sendForumEmail(replyMessage, filteredEmails);
+					postReplays
+						.filter((r) => r.postId === replyingToPostId)
+						.forEach((reply) => {
+							if (reply.userId.email && reply.userId.email !== userEmail) {
+								uniqueEmails.add(reply.userId.email);
+							}
+						});
+				} else {
+					// Notificar al instructor
+					if (forumData?.userId.email && forumData.userId.email !== userEmail) {
+						uniqueEmails.add(forumData.userId.email);
 					}
+				}
+
+				if (uniqueEmails.size > 0) {
+					await sendForumEmail(replyMessage, Array.from(uniqueEmails));
 				}
 			}
 		} catch (error) {
@@ -442,95 +368,70 @@ const ForumPage = () => {
 		const replies = postReplays.filter((reply) => reply.postId === postId);
 
 		return replies.map((reply) => (
-			<div className="mt-2 ml-6 space-y-2" key={reply.id}>
-				<div className="relative rounded-lg bg-gray-800 p-3">
-					<p className="mb-3 font-bold text-gray-200">
-						{reply.userId.name}, dijo:
-					</p>
-					{editingReplyId === reply.id ? (
-						<div>
-							{/* Editar respuesta */}
-							<textarea
-								className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
-								value={editReplyContent}
-								onChange={(e) => setEditReplyContent(e.target.value)}
-							/>
+			<div
+				key={reply.id}
+				className="relative mt-3 ml-8 rounded-lg bg-gray-900 p-4 shadow-lg"
+			>
+				<div className="mb-2 flex items-center justify-between">
+					<span className="text-sm font-semibold text-gray-200">
+						{reply.userId.name}
+					</span>
+					<span className="text-xs text-gray-500">
+						{formatDate(reply.createdAt)}
+					</span>
+				</div>
+
+				{editingReplyId === reply.id ? (
+					<div>
+						<textarea
+							className="w-full rounded border border-gray-700 bg-gray-800 p-3 text-white"
+							value={editReplyContent}
+							onChange={(e) => setEditReplyContent(e.target.value)}
+						/>
+						<div className="mt-2 flex justify-end gap-2">
 							<button
+								className="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
 								onClick={() => handleReplyUpdate(reply.id)}
-								className="mt-2 rounded bg-blue-500 px-4 py-2 text-white"
 							>
-								Actualizar Respuesta
+								Actualizar
 							</button>
 							<button
-								className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
+								className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
 								onClick={() => setEditingReplyId(null)}
 							>
 								Cancelar
 							</button>
 						</div>
-					) : (
-						<>
-							{/* Mostrar respuesta */}
-							<p className="text-justify text-gray-200">{reply.content}</p>
-						</>
-					)}
-					<p className="mt-4 text-xs text-gray-400">
-						Creado en: {formatDate(reply.createdAt)}
-						{reply.updatedAt !== reply.createdAt && (
-							<span className="ml-2 text-xs text-gray-500">(editado)</span>
-						)}
-					</p>
-					{reply.userId.id === user?.id && (
-						<div className="mt-4 space-x-2">
-							{editingReplyId === reply.id ? (
-								<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
-									{/* Cancelar edición menu collapsible*/}
-									<CollapsibleTrigger
-										asChild
-										className="absolute cursor-pointer"
-									>
-										<EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
-									</CollapsibleTrigger>
-									<CollapsibleContent>
-										<button
-											className="mt-2 text-sm text-red-400"
-											onClick={() => setEditingReplyId(null)}
-										>
-											Cancelar
-										</button>
-									</CollapsibleContent>
-								</Collapsible>
-							) : (
-								<Collapsible className="absolute top-4 right-3 flex w-[160px] flex-col">
-									{/* Editar y eliminar respuesta menu collapsible*/}
-									<CollapsibleTrigger
-										asChild
-										className="absolute cursor-pointer"
-									>
-										<EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
-									</CollapsibleTrigger>
-									<CollapsibleContent className="justify-start text-left">
-										<button
-											className="mt-2 text-sm text-green-400"
-											onClick={() => {
-												setEditingReplyId(reply.id);
-												setEditReplyContent(reply.content);
-											}}
-										>
-											Editar Respuesta
-										</button>
-										<button
-											className="mt-2 text-sm text-red-400"
-											onClick={() => handleDeleteReply(reply.id)}
-										>
-											Eliminar Respuesta
-										</button>
-									</CollapsibleContent>
-								</Collapsible>
-							)}
-						</div>
-					)}
-				</div>
+					</div>
+				) : (
+					<p className="text-sm text-gray-300">{reply.content}</p>
+				)}
+
+				{/* Menú desplegable editar/eliminar respuesta */}
+				{reply.userId.id === user?.id && (
+					<Collapsible className="absolute top-2 right-2">
+						<CollapsibleTrigger>
+							<EllipsisVertical className="cursor-pointer text-gray-500 hover:text-white" />
+						</CollapsibleTrigger>
+						<CollapsibleContent className="absolute right-0 mt-1 flex flex-col rounded border border-gray-700 bg-gray-800 shadow-lg">
+							<button
+								className="px-4 py-2 text-left text-sm text-green-400 hover:bg-gray-700"
+								onClick={() => {
+									setEditingReplyId(reply.id);
+									setEditReplyContent(reply.content);
+								}}
+							>
+								Editar
+							</button>
+							<button
+								className="px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
+								onClick={() => handleDeleteReply(reply.id)}
+							>
+								Eliminar
+							</button>
+						</CollapsibleContent>
+					</Collapsible>
+				)}
 			</div>
 		));
 	};
@@ -546,6 +447,40 @@ const ForumPage = () => {
 			</main>
 		);
 	}
+
+	const getEmailRecipients = (
+		role: string,
+		userEmail: string,
+		forumData: Foro,
+		posts: Post[],
+		postReplays: PostReplay[],
+		originalPost?: Post
+	): string[] => {
+		const emails = new Set<string>();
+
+		if (role === 'educador') {
+			posts.forEach((p) => {
+				if (p.userId.email && p.userId.email !== userEmail)
+					emails.add(p.userId.email);
+			});
+			postReplays.forEach((r) => {
+				if (r.userId.email && r.userId.email !== userEmail)
+					emails.add(r.userId.email);
+			});
+			if (
+				originalPost?.userId.email &&
+				originalPost.userId.email !== userEmail
+			) {
+				emails.add(originalPost.userId.email);
+			}
+		} else {
+			if (forumData?.userId.email && forumData.userId.email !== userEmail) {
+				emails.add(forumData.userId.email);
+			}
+		}
+
+		return Array.from(emails);
+	};
 
 	return (
 		<>
@@ -563,7 +498,7 @@ const ForumPage = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/educadores/foro`}
+							href={`/dashboard/admin/foro`}
 						>
 							Foros
 						</BreadcrumbLink>
@@ -572,7 +507,7 @@ const ForumPage = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/educadores/foro/${forumData?.id}`}
+							href={`/dashboard/admin/foro/${forumData?.id}`}
 						>
 							Foro: {forumData?.title}
 						</BreadcrumbLink>
@@ -580,149 +515,133 @@ const ForumPage = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			<div className="container mx-auto mt-5 rounded-lg bg-black/25 p-5 shadow-lg">
-				<div className="mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg md:w-11/12 lg:w-full">
-					<div className="flex justify-between">
-						<h1 className="mb-4 text-2xl font-bold text-white">
-							{forumData?.title}
-						</h1>
-						<p className="text-white">
-							Del instructor: {forumData?.userId.name}
-						</p>
+			<div className="container mx-auto mt-5 rounded-lg bg-black/25 p-4 shadow-lg sm:px-6 lg:px-8">
+				<div className="mx-auto my-10 max-w-5xl rounded-lg bg-gradient-to-br from-gray-800 to-black px-4 py-6 shadow-xl sm:px-6 sm:py-8">
+					<div className="flex flex-col gap-4 border-b border-gray-700 pb-4 sm:flex-row sm:items-center sm:justify-between">
+						<div>
+							<h1 className="text-2xl font-semibold text-white sm:text-3xl">
+								{forumData?.title}
+							</h1>
+							<p className="mt-1 text-sm text-gray-300">
+								{forumData?.description}
+							</p>
+						</div>
+						<div className="flex items-center gap-2">
+							<span className="text-sm text-gray-400">Educador:</span>
+							<span className="rounded-full bg-blue-600 px-3 py-1 text-sm text-white">
+								{forumData?.userId.name}
+							</span>
+						</div>
 					</div>
-					<p className="mb-4 text-white">{forumData?.description}</p>
 				</div>
 
 				{/* Renderizar Posts */}
-				<div className="mt-4 flex flex-col-reverse space-y-4">
+				<div className="mx-auto max-w-4xl space-y-6">
 					{loadingPosts ? (
-						<p>Cargando posts...</p>
+						<p className="text-center text-gray-400">Cargando posts...</p>
 					) : (
 						posts.map((post) => (
 							<div
-								className="relative rounded-lg bg-slate-500/20 p-3"
 								key={post.id}
+								className="relative rounded-lg bg-gray-800 p-5 shadow-lg transition-shadow duration-300 hover:shadow-2xl sm:p-6"
 							>
-								<p className="font-bold text-gray-200">
-									{post.userId.name}, dijo:
-								</p>
+								<div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+									<h2 className="text-lg font-semibold text-white">
+										{post.userId.name}
+									</h2>
+									<span className="text-xs text-gray-400">
+										{formatDate(post.createdAt)}
+									</span>
+								</div>
+
 								{editingPostId === post.id ? (
-									<div>
+									<div className="mb-3">
 										<textarea
-											className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
+											className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white"
 											value={editPostContent}
 											onChange={(e) => setEditPostContent(e.target.value)}
 										/>
-										<button
-											onClick={() => handlePostUpdate(post.id)}
-											className="bg-primary mt-2 rounded px-4 py-2 text-white"
-										>
-											Actualizar Post
-										</button>
-										<button
-											className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
-											onClick={() => setEditingPostId(null)}
-										>
-											Cancelar
-										</button>
-									</div>
-								) : (
-									<p className="text-justify text-gray-200">{post.content}</p>
-								)}
-								<p className="mt-4 text-xs text-gray-400">
-									Creado en: {formatDate(post.createdAt)}
-									{post.updatedAt !== post.createdAt && (
-										<span className="ml-2 text-xs text-gray-500">
-											(editado)
-										</span>
-									)}
-								</p>
-								{post.userId.id === user?.id && (
-									<div className="mt-4 space-x-2">
-										{editingPostId === post.id ? (
-											<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
-												{/* Cancelar edición menu collapsible*/}
-												<CollapsibleTrigger
-													asChild
-													className="absolute cursor-pointer"
-												>
-													<EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
-												</CollapsibleTrigger>
-												<CollapsibleContent>
-													<button
-														className="mt-2 text-sm text-red-400"
-														onClick={() => setEditingPostId(null)}
-													>
-														Cancelar
-													</button>
-												</CollapsibleContent>
-											</Collapsible>
-										) : (
-											<Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
-												{/* Editar y eliminar post menu collapsible*/}
-												<CollapsibleTrigger
-													asChild
-													className="absolute cursor-pointer"
-												>
-													<EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
-												</CollapsibleTrigger>
-												<CollapsibleContent className="justify-start text-left">
-													<button
-														className="mt-2 text-sm text-green-400"
-														onClick={() => {
-															setEditingPostId(post.id);
-															setEditPostContent(post.content);
-														}}
-													>
-														Editar Post
-													</button>
-
-													<button
-														className="mt-2 text-sm text-red-400"
-														onClick={() => handleDeletePost(post.id)}
-													>
-														Eliminar Post
-													</button>
-												</CollapsibleContent>
-											</Collapsible>
-										)}
-									</div>
-								)}
-								{/* Mostrar formulario de respuesta */}
-								<div>
-									{replyingToPostId === post.id ? (
-										<div className="my-3">
-											<textarea
-												className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
-												placeholder="Escribe tu respuesta..."
-												value={replyMessage}
-												onChange={(e) => setReplyMessage(e.target.value)}
-											/>
+										<div className="mt-2 flex justify-end gap-2">
 											<button
-												className="bg-primary mt-2 mr-2 rounded px-4 py-2 text-white"
-												onClick={handleReplySubmit}
+												onClick={() => handlePostUpdate(post.id)}
+												className="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
 											>
-												Enviar Respuesta
+												Actualizar
 											</button>
 											<button
-												className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
+												onClick={() => setEditingPostId(null)}
+												className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+											>
+												Cancelar
+											</button>
+										</div>
+									</div>
+								) : (
+									<p className="text-gray-300">{post.content}</p>
+								)}
+
+								{/* Menú editar/eliminar */}
+								{post.userId.id === user?.id && (
+									<Collapsible className="absolute top-2 right-2">
+										<CollapsibleTrigger>
+											<EllipsisVertical className="cursor-pointer text-gray-400 hover:text-white" />
+										</CollapsibleTrigger>
+										<CollapsibleContent className="absolute right-0 mt-1 flex flex-col rounded border border-gray-700 bg-gray-900 shadow-lg">
+											<button
+												className="px-4 py-2 text-left text-sm text-green-400 hover:bg-gray-700"
+												onClick={() => {
+													setEditingPostId(post.id);
+													setEditPostContent(post.content);
+												}}
+											>
+												Editar
+											</button>
+											<button
+												className="px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
+												onClick={() => handleDeletePost(post.id)}
+											>
+												Eliminar
+											</button>
+										</CollapsibleContent>
+									</Collapsible>
+								)}
+
+								{/* Botón responder */}
+								<button
+									className="mt-4 text-sm text-blue-400 hover:underline"
+									onClick={() => setReplyingToPostId(post.id)}
+								>
+									Responder
+								</button>
+
+								{/* Formulario de respuesta */}
+								{replyingToPostId === post.id && (
+									<div className="mt-3">
+										<textarea
+											className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white"
+											placeholder="Escribe tu respuesta..."
+											value={replyMessage}
+											onChange={(e) => setReplyMessage(e.target.value)}
+										/>
+										<div className="mt-2 flex justify-end gap-2">
+											<button
+												className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
+												onClick={handleReplySubmit}
+											>
+												Enviar
+											</button>
+											<button
+												className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
 												onClick={() => setReplyingToPostId(null)}
 											>
 												Cancelar
 											</button>
 										</div>
-									) : (
-										<button
-											className="mt-2 text-sm text-green-400"
-											onClick={() => setReplyingToPostId(post.id)}
-										>
-											Responder
-										</button>
-									)}
-								</div>
+									</div>
+								)}
 
-								<div className="flex flex-col-reverse">
-									{/* Renderizar Respuestas */}
+								{/* Respuestas */}
+								<div className="mt-4 border-t border-gray-700 pt-3">
 									{renderPostReplies(post.id)}
 								</div>
 							</div>
@@ -730,16 +649,16 @@ const ForumPage = () => {
 					)}
 				</div>
 
-				{/* Crear nuevo Post */}
-				<div className="mt-4">
+				{/* Crear nuevo post */}
+				<div className="mx-auto mt-6 max-w-4xl">
 					<textarea
-						className="w-full rounded-lg border-2 border-gray-700 bg-white p-2 text-black outline-none"
-						placeholder="Escribe un nuevo mensaje..."
+						className="w-full rounded-lg border-2 border-gray-700 bg-white p-3 text-black outline-none"
+						placeholder="Escribe un nuevo mesaje..."
 						value={message}
 						onChange={(e) => setMessage(e.target.value)}
 					/>
 					<button
-						className="bg-primary mt-2 rounded px-4 py-2 font-light text-black"
+						className="mt-2 rounded bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600"
 						onClick={handlePostSubmit}
 					>
 						Enviar

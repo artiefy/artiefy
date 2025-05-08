@@ -1,13 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-
 import { useUser } from '@clerk/nextjs';
 import { X, Loader2 } from 'lucide-react';
-
 import { Modal } from '~/components/shared/Modal';
-
-// src/types/tickets.ts
 
 export interface Ticket {
 	id: string;
@@ -20,7 +16,7 @@ export interface Ticket {
 	creatorName?: string;
 	creatorEmail?: string;
 	comments?: string;
-	assignedToId?: string; // <- lo agregamos aquí también
+	assignedToId?: string;
 	coverImageKey?: string;
 	creatorId?: string;
 }
@@ -30,7 +26,7 @@ export interface TicketFormData {
 	description: string;
 	tipo: string;
 	estado: string;
-	assignedToId?: string; // <- y aquí también
+	assignedToId?: string;
 	comments?: string;
 	coverImageKey?: string;
 	newComment?: string;
@@ -67,16 +63,19 @@ export default function TicketModal({
 }: TicketModalProps) {
 	const { user } = useUser();
 
-	const initialFormState = useMemo<TicketFormData>(() => ({
-		assignedToId: '',
-		email: '',
-		description: '',
-		comments: '',
-		estado: 'abierto',
-		tipo: 'otro',
-		coverImageKey: '',
-		newComment: '',
-	}), []);
+	const initialFormState = useMemo<TicketFormData>(
+		() => ({
+			assignedToId: '',
+			email: '',
+			description: '',
+			comments: '',
+			estado: 'abierto',
+			tipo: 'otro',
+			coverImageKey: '',
+			newComment: '',
+		}),
+		[]
+	);
 
 	const [formData, setFormData] = useState<TicketFormData>(initialFormState);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,6 +104,8 @@ export default function TicketModal({
 
 	useEffect(() => {
 		if (ticket) {
+			console.log('👤 Ticket recibido:', ticket); // 👈 AÑADE ESTA LÍNEA
+
 			setFormData({
 				assignedToId: ticket.assignedToId ?? '',
 				email: ticket.email ?? '',
@@ -145,20 +146,19 @@ export default function TicketModal({
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!user) return;
-	
+
 		setIsSubmitting(true);
-	
+
 		const submitData = { ...formData };
 		if (!submitData.assignedToId) {
 			delete submitData.assignedToId;
 		}
-	
+
 		await Promise.resolve(onSubmit(submitData));
-	
+
 		setIsSubmitting(false);
 		onClose();
 	};
-	
 
 	if (!isOpen) return null;
 
@@ -203,7 +203,7 @@ export default function TicketModal({
 							Asignar a
 						</label>
 						<select
-							value={formData.assignedToId}
+							value={formData.assignedToId || ''}
 							onChange={(e) =>
 								setFormData({ ...formData, assignedToId: e.target.value })
 							}
@@ -311,11 +311,11 @@ export default function TicketModal({
 					</div>
 				</div>
 
-				{/* New Comment Section */}
+				{/* Comentario nuevo */}
 				<div className="col-span-1 space-y-4 border-t border-gray-700 pt-4 md:col-span-2">
 					<div>
 						<label className="block text-sm font-medium text-gray-300">
-							Agregar Comentario
+							Agregar Comentario Principal
 						</label>
 						<textarea
 							value={formData.newComment}
@@ -328,7 +328,7 @@ export default function TicketModal({
 						/>
 					</div>
 
-					{/* Comment History */}
+					{/* Historial */}
 					{ticket && (
 						<div className="space-y-2">
 							<h3 className="text-sm font-medium text-gray-300">

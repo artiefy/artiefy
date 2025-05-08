@@ -172,60 +172,36 @@ const ForumPage = () => {
 	}, [fetchPostReplays, posts]);
 
 	// Desbloquear y actualizar la función sendForumEmail 'Sin terminar'
-	const sendForumEmail = async (postContent: string, recipients: string[]) => {
+	const sendForumEmail = async (
+		postContent: string,
+		forumId: number,
+		senderRole: string,
+		senderEmail: string
+	) => {
 		try {
-			if (!forumData || !user) return;
+			if (!forumId || !user) return;
 
-			// Verificar si el usuario tiene una cuenta de Google vinculada
-			const hasGoogleAccount = user.externalAccounts?.some(
-				(account) => account.provider === 'google'
-			);
-
-			if (!hasGoogleAccount) {
-				// Aquí puedes mostrar un modal o mensaje pidiendo al usuario que vincule su cuenta
-				alert(
-					'Por favor, vincula tu cuenta de Google para poder enviar correos'
-				);
-				// Puedes redirigir al usuario a la página de configuración de su cuenta
-				// window.location.href = '/user/settings';
-				return;
-			}
-
-			console.log('Sending email with data:', {
-				content: postContent,
-				recipients,
-				forumTitle: forumData.title,
-				authorName: user.fullName,
-			});
-
-			const response = await fetch('/api/educadores/send-email', {
+			const response = await fetch('/api/forums/send-email-dynamic', {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					// Authorization: `Bearer ${await (user.getToken ? user.getToken({ template: 'your-template-id' }) : '')}`,
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					content: postContent,
-					recipients: recipients,
-					forumTitle: forumData.title,
+					forumId,
+					senderRole,
+					senderEmail,
+					postContent,
+					forumTitle: forumData?.title,
 					authorName: user.fullName ?? 'Usuario',
 				}),
 			});
 
-			const result = (await response.json()) as {
-				success: boolean;
-				message: string;
-			};
-
+			const result = await response.json();
 			if (!response.ok) {
-				console.error('Failed to send email. Status:', response.status);
-				console.error('Error details:', result);
-				return;
+				console.error('❌ Error enviando correos:', result);
+			} else {
+				console.log('✅ Correos enviados:', result);
 			}
-
-			console.log('Email sent successfully:', result);
-		} catch (error) {
-			console.error('Error in sendForumEmail:', error);
+		} catch (err) {
+			console.error('Error en sendForumEmail:', err);
 		}
 	};
 
@@ -539,7 +515,7 @@ const ForumPage = () => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -615,7 +591,7 @@ const ForumPage = () => {
 										/>
 										<button
 											onClick={() => handlePostUpdate(post.id)}
-											className="mt-2 rounded bg-primary px-4 py-2 text-white"
+											className="bg-primary mt-2 rounded px-4 py-2 text-white"
 										>
 											Actualizar Post
 										</button>
@@ -699,7 +675,7 @@ const ForumPage = () => {
 												onChange={(e) => setReplyMessage(e.target.value)}
 											/>
 											<button
-												className="mt-2 mr-2 rounded bg-primary px-4 py-2 text-white"
+												className="bg-primary mt-2 mr-2 rounded px-4 py-2 text-white"
 												onClick={handleReplySubmit}
 											>
 												Enviar Respuesta
@@ -739,7 +715,7 @@ const ForumPage = () => {
 						onChange={(e) => setMessage(e.target.value)}
 					/>
 					<button
-						className="mt-2 rounded bg-primary px-4 py-2 font-light text-black"
+						className="bg-primary mt-2 rounded px-4 py-2 font-light text-black"
 						onClick={handlePostSubmit}
 					>
 						Enviar

@@ -7,23 +7,9 @@ import { Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import TicketModal from './TicketModal';
 import ChatList from '../chat/ChatList';
 import FloatingChat from '../chat/FloatingChat';
+import { FileText } from 'lucide-react';
 
 // Types
-export interface Ticket {
-	id: string;
-	email: string;
-	description: string;
-	tipo: string;
-	estado: string;
-	assignedToName?: string;
-	assignedToEmail?: string;
-	creatorName?: string;
-	creatorEmail?: string;
-	comments?: string;
-	assignedToId?: string;
-	coverImageKey?: string;
-	creatorId?: string;
-}
 
 export interface TicketFormData {
 	email: string;
@@ -54,8 +40,28 @@ interface RawTicket {
 	assigned_to_name?: string;
 	assigned_to_email?: string;
 	creator_name?: string;
+	assigned_to_id?: string;
 	creator_email?: string;
 	comments?: string;
+	created_at: string;
+	updated_at: string;
+	time_elapsed_ms: number;
+}
+
+export interface Ticket {
+	id: string;
+	email: string;
+	description: string;
+	tipo: string;
+	estado: string;
+	assignedToName?: string;
+	assignedToEmail?: string;
+	creatorName?: string;
+	creatorEmail?: string;
+	comments?: string;
+	createdAt: Date;
+	updatedAt: Date;
+	timeElapsedMs: number;
 }
 
 // Component
@@ -78,14 +84,58 @@ export default function TicketsPage() {
 		userName: string;
 		receiverId: string;
 	} | null>(null);
+	const [filterId, setFilterId] = useState('');
+	const [filterEmail, setFilterEmail] = useState('');
+	const [filterAssignedTo, setFilterAssignedTo] = useState('');
+	const [filterStartDate, setFilterStartDate] = useState<string>('');
+	const [filterEndDate, setFilterEndDate] = useState<string>('');
+	const [comments, setComments] = useState<Comment[]>([]);
+	const [isLoadingComments, setIsLoadingComments] = useState(false);
+
 	useEffect(() => {
-		// Solo forzar la inicialización del socket si es necesario (opcional en la mayoría de casos)
-		if (typeof window !== 'undefined') {
-			fetch('/api/socketio', {
-				method: 'POST',
-			}).catch((err) => console.warn('Socket init error:', err));
+		if (viewTicket?.id) {
+			const fetchComments = async () => {
+				try {
+					setIsLoadingComments(true);
+					const response = await fetch(
+						`/api/admin/tickets/${viewTicket.id}/comments`
+					);
+					if (!response.ok)
+						throw new Error('No se pudo obtener los comentarios');
+					const data = await response.json();
+					setComments(data);
+				} catch (error) {
+					console.error('Error cargando comentarios:', error);
+				} finally {
+					setIsLoadingComments(false);
+				}
+			};
+
+			void fetchComments();
 		}
+	}, [viewTicket?.id]);
+
+	useEffect(() => {
+		fetch('/api/socketio', {
+			method: 'POST',
+		}).catch((err) => console.warn('Socket init error:', err));
 	}, []);
+
+	function formatElapsedTime(ms: number): string {
+		const totalSeconds = Math.floor(ms / 1000);
+		const days = Math.floor(totalSeconds / 86400);
+		const hours = Math.floor((totalSeconds % 86400) / 3600);
+		const minutes = Math.floor((totalSeconds % 3600) / 60);
+		const seconds = totalSeconds % 60;
+
+		let result = '';
+		if (days > 0) result += `${days}d `;
+		if (hours > 0 || days > 0) result += `${hours}h `;
+		if (minutes > 0 || hours > 0 || days > 0) result += `${minutes}m `;
+		result += `${seconds}s`;
+
+		return result.trim();
+	}
 
 	const fetchTickets = useCallback(async (): Promise<void> => {
 		try {
@@ -103,9 +153,13 @@ export default function TicketsPage() {
 				estado: ticket.estado,
 				assignedToName: ticket.assigned_to_name ?? '',
 				assignedToEmail: ticket.assigned_to_email ?? '',
+				assignedToId: ticket.assigned_to_id ?? '', // ✅ CORREGIDO AQUÍ
 				creatorName: ticket.creator_name ?? '',
 				creatorEmail: ticket.creator_email ?? '',
 				comments: ticket.comments ?? '',
+				createdAt: new Date(ticket.created_at),
+				updatedAt: new Date(ticket.updated_at),
+				timeElapsedMs: ticket.time_elapsed_ms,
 			}));
 
 			setTickets(mapped);
@@ -124,11 +178,26 @@ export default function TicketsPage() {
 	}, [fetchTickets]);
 
 	const filteredTickets = tickets.filter((ticket) => {
+		const createdDateOnly = ticket.createdAt.toISOString().split('T')[0];
+
 		return (
 			(filterType === 'all' || ticket.tipo === filterType) &&
-			(filterStatus === 'all' || ticket.estado === filterStatus)
+			(filterStatus === 'all' || ticket.estado === filterStatus) &&
+			String(ticket.id).toLowerCase().includes(filterId.toLowerCase()) &&
+			(filterEmail === '' || ticket.email === filterEmail) &&
+			(filterAssignedTo === '' || ticket.assignedToName === filterAssignedTo) &&
+			(filterStartDate === '' || createdDateOnly >= filterStartDate) &&
+			(filterEndDate === '' || createdDateOnly <= filterEndDate)
 		);
 	});
+
+	const uniqueUsers = Array.from(new Set(tickets.map((t) => t.email))).filter(
+		Boolean
+	);
+
+	const uniqueAssignedTo = Array.from(
+		new Set(tickets.map((t) => t.assignedToName).filter(Boolean))
+	);
 
 	const handleCreate = async (data: TicketFormData): Promise<void> => {
 		try {
@@ -254,6 +323,7 @@ export default function TicketsPage() {
 				</div>
 
 				{/* Action buttons */}
+
 				<div className="my-6 flex flex-wrap items-center justify-between gap-4">
 					<button
 						onClick={handleOpenCreateModal}
@@ -266,34 +336,37 @@ export default function TicketsPage() {
 						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
 					</button>
 
-					<div className="flex flex-wrap gap-4">
-						<div className="min-w-[150px]">
-							<select
-								value={filterType}
-								onChange={(e) => setFilterType(e.target.value)}
-								className="w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-2 text-sm text-white"
-							>
-								<option value="all">Todos los tipos</option>
-								<option value="otro">Otro</option>
-								<option value="bug">Bug</option>
-								<option value="revision">Revisión</option>
-								<option value="logs">Logs</option>
-							</select>
+					<div className="flex flex-wrap items-center gap-4">
+						<div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-gradient-to-br from-gray-800/50 to-gray-900/50 p-4 shadow-md backdrop-blur-lg sm:flex-row sm:items-center">
+							<div className="flex flex-col">
+								<label className="mb-1 text-sm font-medium text-blue-300">
+									Desde
+								</label>
+								<input
+									type="date"
+									value={filterStartDate}
+									onChange={(e) => setFilterStartDate(e.target.value)}
+									className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 shadow-inner transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+								/>
+							</div>
+							<div className="flex flex-col">
+								<label className="mb-1 text-sm font-medium text-blue-300">
+									Hasta
+								</label>
+								<input
+									type="date"
+									value={filterEndDate}
+									onChange={(e) => setFilterEndDate(e.target.value)}
+									className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 shadow-inner transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+								/>
+							</div>
 						</div>
 
-						<div className="min-w-[150px]">
-							<select
-								value={filterStatus}
-								onChange={(e) => setFilterStatus(e.target.value)}
-								className="w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-2 text-sm text-white"
-							>
-								<option value="all">Todos los estados</option>
-								<option value="abierto">Abierto</option>
-								<option value="en proceso">En Proceso</option>
-								<option value="en revision">En Revisión</option>
-								<option value="solucionado">Solucionado</option>
-								<option value="cerrado">Cerrado</option>
-							</select>
+						<div className="inline-flex items-center gap-3 rounded-lg border border-blue-400/30 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4 text-lg font-semibold text-blue-100 shadow-lg backdrop-blur-sm">
+							<FileText className="h-6 w-6 animate-pulse text-blue-300 drop-shadow-md" />
+							<span className="tracking-wide">
+								{filteredTickets.length} ticket(s) encontrado(s)
+							</span>
 						</div>
 					</div>
 				</div>
@@ -313,27 +386,91 @@ export default function TicketsPage() {
 						<div className="overflow-x-auto">
 							<table className="min-w-full table-auto border-collapse">
 								<thead>
-									<tr className="border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] text-white">
-										<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-											ID
+									{/* Filtros */}
+									<tr className="border-b border-gray-700 bg-gray-900 text-xs text-white sm:text-sm">
+										<th className="px-4 py-2">
+											<input
+												type="text"
+												placeholder="Buscar ID"
+												value={filterId}
+												onChange={(e) => setFilterId(e.target.value)}
+												className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white placeholder-gray-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+											/>
 										</th>
-										<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-											Usuario
+										<th className="px-4 py-2">
+											<select
+												value={filterEmail}
+												onChange={(e) => setFilterEmail(e.target.value)}
+												className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+											>
+												<option value="">Todos</option>
+												{uniqueUsers.map((user) => (
+													<option key={user} value={user}>
+														{user}
+													</option>
+												))}
+											</select>
 										</th>
-										<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-											Tipo
+										<th className="px-4 py-2">
+											<select
+												value={filterType}
+												onChange={(e) => setFilterType(e.target.value)}
+												className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+											>
+												<option value="all">Todos</option>
+												<option value="bug">Bug</option>
+												<option value="revision">Revisión</option>
+												<option value="logs">Logs</option>
+												<option value="otro">Otro</option>
+											</select>
 										</th>
-										<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-											Estado
+										<th className="px-4 py-2">
+											<select
+												value={filterStatus}
+												onChange={(e) => setFilterStatus(e.target.value)}
+												className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+											>
+												<option value="all">Todos</option>
+												<option value="abierto">Abierto</option>
+												<option value="en proceso">En Proceso</option>
+												<option value="en revision">En Revisión</option>
+												<option value="solucionado">Solucionado</option>
+												<option value="cerrado">Cerrado</option>
+											</select>
 										</th>
-										<th className="px-4 py-3 text-left text-xs font-medium sm:text-sm">
-											Asignado a
+										<th className="px-4 py-2">
+											<select
+												value={filterAssignedTo}
+												onChange={(e) => setFilterAssignedTo(e.target.value)}
+												className="w-full rounded border border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+											>
+												<option value="">Todos</option>
+												{uniqueAssignedTo.map((name) => (
+													<option key={name} value={name}>
+														{name}
+													</option>
+												))}
+											</select>
 										</th>
-										<th className="px-4 py-3 text-right text-xs font-medium sm:text-sm">
-											Acciones
-										</th>
+										<th></th>
+										<th></th>
+										<th></th>
+									</tr>
+
+									{/* Títulos */}
+									<tr className="border-b border-gray-700 bg-gray-800 text-xs text-gray-300 sm:text-sm">
+										<th className="px-4 py-2 text-left">ID</th>
+										<th className="px-4 py-2 text-left">Email</th>
+										<th className="px-4 py-2 text-left">Tipo</th>
+										<th className="px-4 py-2 text-left">Estado</th>
+										<th className="px-4 py-2 text-left">Asignado a</th>
+										<th className="px-4 py-2 text-left">Fecha de Creación</th>
+										<th className="px-4 py-2 text-left">Tiempo Transcurrido</th>
+
+										<th className="px-4 py-2 text-left">Acciones</th>
 									</tr>
 								</thead>
+
 								<tbody className="divide-y divide-gray-700/50">
 									{loading ? (
 										<tr>
@@ -393,6 +530,13 @@ export default function TicketsPage() {
 												<td className="px-4 py-4">
 													{ticket.assignedToName ?? 'Sin asignar'}
 												</td>
+												<td className="px-4 py-4">
+													{ticket.createdAt.toLocaleString()}
+												</td>
+												<td className="px-4 py-4">
+													{formatElapsedTime(ticket.timeElapsedMs)}
+												</td>
+
 												<td className="px-4 py-4">
 													<div className="flex items-center justify-end gap-1 sm:gap-2">
 														<button
@@ -513,12 +657,49 @@ export default function TicketsPage() {
 
 									<div>
 										<h3 className="text-sm font-semibold text-gray-400 uppercase">
-											Comentarios
+											Comentario Principal
 										</h3>
 										<p className="whitespace-pre-wrap">
 											{viewTicket.comments ?? '—'}
 										</p>
 									</div>
+									{viewTicket && (
+										<div className="space-y-2">
+											<h3 className="text-sm font-medium text-gray-300">
+												Historial de Comentarios
+											</h3>
+											<div className="max-h-60 space-y-3 overflow-y-auto rounded-md border border-gray-700 bg-gray-800/50 p-4">
+												{isLoadingComments ? (
+													<div className="flex items-center justify-center py-4">
+														<Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+													</div>
+												) : comments.length > 0 ? (
+													comments.map((comment, index) => (
+														<div
+															key={index}
+															className="rounded-lg border border-gray-700 bg-gray-800 p-3"
+														>
+															<div className="flex items-center justify-between text-sm">
+																<span className="font-medium text-blue-400">
+																	{comment.user?.name || 'Usuario'}
+																</span>
+																<span className="text-gray-500">
+																	{new Date(comment.createdAt).toLocaleString()}
+																</span>
+															</div>
+															<p className="mt-2 text-sm text-gray-300">
+																{comment.content}
+															</p>
+														</div>
+													))
+												) : (
+													<p className="text-center text-sm text-gray-500">
+														No hay comentarios
+													</p>
+												)}
+											</div>
+										</div>
+									)}
 								</div>
 							</div>
 						</div>

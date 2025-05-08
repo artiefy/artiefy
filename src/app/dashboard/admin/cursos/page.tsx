@@ -6,7 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
 
-import CourseListAdmin from '~/app/dashboard/super-admin/components/CourseListAdmin';
+import CourseListAdmin from '~/app/dashboard/admin/components/CourseListAdmin';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
@@ -407,7 +407,7 @@ export default function Page() {
 	if (uploading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -420,9 +420,9 @@ export default function Page() {
 		<div className="p-4 sm:p-6">
 			{/* Header with gradient effect */}
 			<header className="group relative overflow-hidden rounded-lg p-[1px]">
-				<div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
+				<div className="animate-gradient absolute -inset-0.5 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
 				<div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
-					<h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
+					<h1 className="text-primary flex items-center gap-3 text-xl font-extrabold tracking-tight sm:text-2xl lg:text-3xl">
 						Gestión de Cursos
 					</h1>
 				</div>
@@ -479,7 +479,7 @@ export default function Page() {
 				<div className="col-span-1">
 					<button
 						onClick={handleCreateCourse}
-						className="group/button relative inline-flex h-full w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex h-full w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
 					>
 						<span className="relative z-10 font-medium">Crear Curso</span>
 						<FiPlus className="relative z-10 size-3.5 sm:size-4" />

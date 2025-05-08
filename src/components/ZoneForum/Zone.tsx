@@ -30,8 +30,11 @@ interface ForumsModels {
 		id: number;
 		title: string;
 		descripcion: string;
-		instructor: string;
 		coverImageKey: string;
+	};
+	instructor: {
+		id: string;
+		name: string;
 	};
 	user: {
 		id: string;
@@ -90,39 +93,42 @@ export const Zone = () => {
 			{forums.map((forum) => (
 				<div
 					key={forum.id}
-					className="relative overflow-hidden rounded-xl bg-[#0f0f0f] shadow-lg transition duration-300 hover:scale-[1.01] hover:shadow-xl"
+					className="group relative overflow-hidden rounded-xl bg-[#0f0f0f] shadow-sm transition-all duration-300 ease-in-out hover:scale-[1.01] hover:shadow-[0_4px_20px_rgba(0,189,216,0.25)]"
 				>
 					{/* Imagen de portada */}
 					<div className="relative h-48 w-full">
-						<AspectRatio ratio={16 / 9}>
-							<Image
-								src={
-									forum.course.coverImageKey
-										? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.course.coverImageKey}`
-										: '/login-fondo.webp'
-								}
-								alt={forum.title}
-								fill
-								className="rounded-t-xl object-cover"
-							/>
-						</AspectRatio>
+						<Image
+							src={
+								forum.course.coverImageKey
+									? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.course.coverImageKey}`
+									: '/login-fondo.webp'
+							}
+							alt={forum.title}
+							fill
+							className="object-cover"
+						/>
 						<div className="absolute inset-0 flex items-center justify-center bg-black/40">
-							<h2 className="px-4 text-center text-xl font-semibold text-white">
+							<h2 className="z-10 px-4 text-center text-xl font-semibold text-white">
 								{forum.title}
 							</h2>
 						</div>
 					</div>
 
-					{/* Información */}
+					{/* Contenido debajo de la imagen */}
 					<div className="space-y-2 p-4">
-						<div className="flex justify-between text-sm text-gray-300">
-							<div>
+						<div className="flex flex-col gap-2 text-sm text-gray-300 sm:flex-row sm:justify-between">
+							<div className="sm:w-1/2">
 								<p className="text-primary text-xs">Curso:</p>
 								<p className="font-medium">{forum.course.title}</p>
 							</div>
-							<div className="text-right">
+							<div className="sm:w-1/2">
 								<p className="text-primary text-xs">Instructor:</p>
-								<p className="font-medium">{forum.course.instructor}</p>
+								<p
+									className="truncate font-medium sm:whitespace-normal"
+									title={forum.instructor.name}
+								>
+									{forum.instructor.name}
+								</p>
 							</div>
 						</div>
 
@@ -137,7 +143,6 @@ export const Zone = () => {
 							>
 								Ver foro
 							</Link>
-
 							{forum.user.id === user?.id && (
 								<AlertDialog>
 									<AlertDialogTrigger asChild>

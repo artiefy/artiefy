@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
 				lessons,
 			};
 		} else if (userId) {
-			courses = await getCoursesByUserId(userId);
+			courses = await getAllCourses();
 			console.log('Courses for userId:', userId, courses);
 		} else {
 			courses = await getAllCourses();

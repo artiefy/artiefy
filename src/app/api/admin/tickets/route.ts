@@ -30,6 +30,7 @@ export const dynamic = 'force-dynamic';
 // ========================
 // GET /api/admin/tickets
 // ========================
+
 export async function GET(request: Request) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
 				t.tipo,
 				t.cover_image_key,
 				t.created_at,
+				t.updated_at,
 				c.name AS creator_name,
 				c.email AS creator_email,
 				a.name AS assigned_to_name,
@@ -73,7 +75,26 @@ export async function GET(request: Request) {
 
 		const result = await db.execute(query);
 
-		return NextResponse.json(result.rows ?? []);
+		const processed = result.rows.map((row) => {
+			const createdAt = new Date(row.created_at as string);
+			const updatedAt = new Date(row.updated_at as string);
+			const estado = row.estado as string;
+			const isClosed = estado === 'cerrado' || estado === 'solucionado';
+
+			const now = new Date(); // muévelo aquí
+			const timeElapsedMs = isClosed
+				? updatedAt.getTime() - createdAt.getTime()
+				: now.getTime() - createdAt.getTime();
+
+			return {
+				...row,
+				created_at: createdAt,
+				updated_at: updatedAt,
+				time_elapsed_ms: timeElapsedMs,
+			};
+		});
+
+		return NextResponse.json(processed);
 	} catch (error) {
 		console.error('❌ Error fetching tickets:', error);
 		return NextResponse.json(

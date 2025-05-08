@@ -29,7 +29,7 @@ interface CoursesModels {
 const ForumHome = () => {
 	const { user } = useUser();
 	const [searchQuery, setSearchQuery] = useState('');
-	const [courseId, setCourseId] = useState<number | ''>('');
+	const [courseId, setCourseId] = useState<number | null>(null);
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
 	const [courses, setCourses] = useState<CoursesModels[]>([]);
@@ -73,84 +73,114 @@ const ForumHome = () => {
 				const response = await fetch(
 					`/api/educadores/courses?userId=${user.id}`
 				);
-				if (!response.ok) throw new Error('Error al obtener los cursos');
-				const data = (await response.json()) as CoursesModels[];
+				const data = await response.json();
+
+				console.log('Datos recibidos:', data); // Importante verificar esto
+
 				setCourses(data);
 			} catch (error) {
-				console.error('Error al obtener los cursos:', error);
+				console.error('Error:', error);
 			} finally {
 				setLoadingCourses(false);
 			}
 		};
-		void fetchCourses();
+
+		fetchCourses();
 	}, [user]);
 
 	return (
-		<div className="bg-background min-h-screen px-4 py-8 sm:px-6 lg:px-8">
+		<div className="bg-background min-h-screen px-4 py-8 sm:px-6 lg:px-10">
 			<div className="mx-auto max-w-7xl space-y-8">
-				<header className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-					<h1 className="text-primary text-3xl font-bold">
+				<header className="mb-10 flex flex-col items-center justify-center gap-6 sm:flex-row sm:items-center sm:justify-between">
+					<h1 className="text-primary text-center text-3xl font-extrabold tracking-tight sm:text-left sm:text-4xl">
 						Zona de Foros Artiefy
 					</h1>
+
 					<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 						<DialogTrigger asChild>
-							<Button
-								className="bg-primary hover:bg-primary/90 flex items-center gap-2 text-black"
-								onClick={() => setIsDialogOpen(true)}
-							>
-								<FaPlus />
-								Nuevo Foro
+							<Button className="bg-primary hover:bg-primary/90 flex w-full max-w-xs items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-black shadow-md transition-all duration-200 sm:w-auto sm:max-w-none sm:text-base">
+								+ Nuevo Foro
 							</Button>
 						</DialogTrigger>
-						<DialogContent>
+
+						<DialogContent className="w-full max-w-md rounded-lg bg-[#111] text-white">
 							<DialogHeader>
-								<DialogTitle>Crear Nuevo Foro</DialogTitle>
-								<DialogDescription>
-									Completa los campos para iniciar una discusión.
+								<DialogTitle className="text-xl font-bold text-white">
+									Crear Nuevo Foro
+								</DialogTitle>
+								<DialogDescription className="text-sm text-gray-400">
+									Completa los campos para iniciar una nueva discusión.
 								</DialogDescription>
 							</DialogHeader>
 
-							<div className="mt-4 flex flex-col gap-4">
-								<label className="text-primary text-sm font-medium">
-									Curso asociado
-								</label>
-								{loadingCourses ? (
-									<p className="text-sm text-gray-400">Cargando cursos...</p>
-								) : (
-									<select
-										value={courseId}
-										onChange={(e) => setCourseId(Number(e.target.value))}
-										className="bg-background rounded border border-white p-2 text-gray-300"
-									>
-										<option value="">Selecciona un curso</option>
-										{courses.map((c) => (
-											<option key={c.id} value={c.id}>
-												{c.title}
-											</option>
-										))}
-									</select>
-								)}
+							<div className="mt-4 space-y-4">
+								{/* Curso asociado */}
+								<div className="space-y-2">
+									<label className="text-primary text-sm font-medium">
+										Curso asociado
+									</label>
+									{loadingCourses ? (
+										<p className="text-sm text-gray-400">Cargando cursos...</p>
+									) : courses.length > 0 ? (
+										<>
+											<input
+												type="text"
+												list="courses-list"
+												placeholder="Selecciona o escribe un curso"
+												onChange={(e) => {
+													const selected = courses.find(
+														(c) => c.title === e.target.value
+													);
+													setCourseId(selected ? selected.id : null);
+												}}
+												className="bg-background focus:ring-primary w-full rounded-md border border-white/20 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:ring-2 focus:outline-none"
+											/>
+											<datalist id="courses-list">
+												{courses.map((c) => (
+													<option key={c.id} value={c.title} />
+												))}
+											</datalist>
+										</>
+									) : (
+										<p className="text-sm text-red-500">
+											No tienes cursos disponibles.
+										</p>
+									)}
+								</div>
 
-								<Input
-									type="text"
-									placeholder="Título del foro"
-									value={title}
-									onChange={(e) => setTitle(e.target.value)}
-									className="text-gray-300"
-								/>
-								<Input
-									type="text"
-									placeholder="Descripción"
-									value={description}
-									onChange={(e) => setDescription(e.target.value)}
-									className="text-gray-300"
-								/>
+								{/* Título */}
+								<div className="space-y-1">
+									<label className="text-primary text-sm">
+										Título del foro
+									</label>
+									<Input
+										type="text"
+										placeholder="Ej. Debate sobre técnica"
+										value={title}
+										onChange={(e) => setTitle(e.target.value)}
+										className="text-white"
+									/>
+								</div>
 
-								<div className="border-primary text-primary rounded border p-2 text-sm">
+								{/* Descripción */}
+								<div className="space-y-1">
+									<label className="text-primary text-sm">Descripción</label>
+									<Input
+										type="text"
+										placeholder="Breve descripción del foro"
+										value={description}
+										onChange={(e) => setDescription(e.target.value)}
+										className="text-white"
+									/>
+								</div>
+
+								{/* Instructor info */}
+								<div className="border-primary text-primary rounded-md border bg-black/10 p-2 text-sm">
 									Instructor: {user?.fullName}
 								</div>
 							</div>
 
+							{/* Progress bar */}
 							{isUploading && (
 								<div className="mt-4">
 									<Progress value={uploadProgress} className="w-full" />
@@ -160,10 +190,10 @@ const ForumHome = () => {
 								</div>
 							)}
 
-							<DialogFooter>
+							<DialogFooter className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
 								<Button
 									variant="outline"
-									className="border-primary text-primary border hover:bg-gray-700/10"
+									className="w-full border border-white/20 text-white hover:bg-white/10 sm:w-auto"
 									onClick={() => {
 										setCourseId('');
 										setTitle('');
@@ -175,7 +205,7 @@ const ForumHome = () => {
 								</Button>
 								<Button
 									onClick={handleCreateForum}
-									className="bg-green-500 text-white hover:bg-green-600"
+									className="w-full bg-green-500 text-white hover:bg-green-600 sm:w-auto"
 								>
 									Crear Foro
 								</Button>
@@ -185,14 +215,12 @@ const ForumHome = () => {
 				</header>
 
 				<div className="relative w-full">
-					<Input
+					<input
 						type="text"
-						placeholder="Buscar una discusión..."
-						value={searchQuery}
-						onChange={(e) => setSearchQuery(e.target.value)}
-						className="bg-background focus:ring-primary w-full rounded-lg border border-gray-700 py-2 pr-4 pl-10 text-white placeholder:text-gray-400 focus:ring-2 focus:outline-none"
+						placeholder="Buscar foros o temas..."
+						className="focus:border-primary focus:ring-primary w-full rounded-md border border-gray-700 bg-[#111827] px-4 py-2 pl-10 text-base text-gray-100 shadow-sm transition placeholder:text-gray-400 focus:ring-1"
 					/>
-					<FaSearch className="absolute top-2.5 left-3 text-gray-400" />
+					<FaSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500" />
 				</div>
 
 				<Zone />
