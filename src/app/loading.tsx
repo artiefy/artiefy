@@ -6,8 +6,6 @@ import Image from 'next/image';
 
 import '~/styles/loading.css';
 
-export const dynamic = 'force-static';
-
 // Añadir esta exportación para mejorar el SEO
 export const metadata = {
 	robots: 'noindex',
