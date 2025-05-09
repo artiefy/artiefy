@@ -5,6 +5,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 
 import TicketModal from './TicketModal';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import ChatList from '../chat/ChatList';
 import FloatingChat from '../chat/FloatingChat';
 import { FileText } from 'lucide-react';
@@ -19,6 +22,8 @@ export interface TicketFormData {
 	assignedToId?: string;
 	comments?: string;
 	coverImageKey?: string;
+	videoKey?: string; // ✅ AÑADIR
+	documentKey?: string; // ✅ AÑADIR
 	newComment?: string;
 }
 
@@ -46,6 +51,9 @@ interface RawTicket {
 	created_at: string;
 	updated_at: string;
 	time_elapsed_ms: number;
+	cover_image_key?: string;
+	video_key?: string;
+	document_key?: string;
 }
 
 export interface Ticket {
@@ -62,6 +70,9 @@ export interface Ticket {
 	createdAt: Date;
 	updatedAt: Date;
 	timeElapsedMs: number;
+	coverImageKey?: string;
+	videoKey?: string;
+	documentKey?: string;
 }
 
 // Component
@@ -160,6 +171,9 @@ export default function TicketsPage() {
 				createdAt: new Date(ticket.created_at),
 				updatedAt: new Date(ticket.updated_at),
 				timeElapsedMs: ticket.time_elapsed_ms,
+				coverImageKey: ticket.cover_image_key ?? '',
+				videoKey: ticket.video_key ?? '',
+				documentKey: ticket.document_key ?? '',
 			}));
 
 			setTickets(mapped);
@@ -201,13 +215,40 @@ export default function TicketsPage() {
 
 	const handleCreate = async (data: TicketFormData): Promise<void> => {
 		try {
-			await fetch('/api/admin/tickets', {
+			console.log('🧾 Enviando ticket:', data);
+
+			// 1. Enviar el ticket base
+			const res = await fetch('/api/admin/tickets', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
 			});
+			const created = await res.json();
+
+			// 2. Si el video ya fue subido y hay un key, hacer PUT al endpoint
+			if (data.videoKey) {
+				const payload = JSON.stringify({ videoKey: data.videoKey });
+				const blob = new Blob([payload], { type: 'application/json' });
+				const sent = navigator.sendBeacon(
+					`/api/tickets/${created.id}/video`,
+					blob
+				);
+
+				if (!sent) {
+					await fetch(`/api/tickets/${created.id}/video`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: payload,
+					});
+				}
+			}
+
+			toast.success('✅ Ticket creado exitosamente');
+
 			void fetchTickets();
 		} catch (error) {
+			toast.error('❌ Error al crear el ticket');
+
 			console.error(
 				'Error creating ticket:',
 				error instanceof Error ? error.message : error
@@ -218,17 +259,96 @@ export default function TicketsPage() {
 	const handleUpdate = async (data: TicketFormData): Promise<void> => {
 		try {
 			if (!selectedTicket) return;
+			console.log('🧾 Enviando ticket:', data);
+
 			await fetch(`/api/admin/tickets/${selectedTicket.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
 			});
+			toast.success('✅ Ticket creado exitosamente');
+
 			void fetchTickets();
 		} catch (error) {
+			toast.error('❌ Error al crear el ticket');
+
 			console.error(
 				'Error updating ticket:',
 				error instanceof Error ? error.message : error
 			);
+		}
+	};
+
+	const handleFileUpload = async (
+		field: 'videoKey' | 'documentKey' | 'coverImageKey',
+		file: File,
+		ticketId?: number
+	): Promise<string | null> => {
+		console.log('📤 Upload start:', file.name, 'field:', field);
+
+		try {
+			const res = await fetch('/api/upload', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					fileName: file.name,
+					contentType: file.type,
+					fileSize: file.size,
+				}),
+			});
+
+			if (!res.ok) {
+				const errorText = await res.text();
+				console.error('❌ Upload failed with status', res.status, errorText);
+				return null;
+			}
+
+			const { url, fields, key, uploadType } = await res.json();
+			console.log('📤 S3 response:', { url, fields, key, uploadType });
+
+			if (!url || !key) {
+				console.error('❌ Faltan campos en la respuesta del servidor');
+				return null;
+			}
+
+			if (uploadType === 'simple') {
+				const formDataUpload = new FormData();
+				Object.entries(fields).forEach(([k, v]) => formDataUpload.append(k, v));
+				formDataUpload.append('file', file);
+				await fetch(url, { method: 'POST', body: formDataUpload });
+			} else {
+				await fetch(url, {
+					method: 'PUT',
+					headers: { 'Content-Type': file.type },
+					body: file,
+				});
+			}
+
+			// ✅ Enviar videoKey al backend en segundo plano (si aplica)
+			if (field === 'videoKey' && ticketId) {
+				const payload = JSON.stringify({ videoKey: key });
+				const blob = new Blob([payload], { type: 'application/json' });
+				const sent = navigator.sendBeacon(
+					`/api/tickets/${ticketId}/video`,
+					blob
+				);
+
+				if (!sent) {
+					await fetch(`/api/tickets/${ticketId}/video`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: payload,
+					});
+				}
+
+				console.log('🎥 El video se está subiendo en segundo plano.');
+				toast.info('🎥 El video se está subiendo en segundo plano.');
+			}
+
+			return key;
+		} catch (err) {
+			console.error('❌ Error subiendo archivo:', err);
+			return null;
 		}
 	};
 
@@ -575,39 +695,40 @@ export default function TicketsPage() {
 				)}
 
 				{viewTicket && (
-					<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-8">
-						<div className="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-gray-700 bg-gray-900 p-10 shadow-2xl">
+					<div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/60 p-4">
+						<div className="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-gray-700 bg-gray-900 p-4 shadow-2xl md:p-6 lg:p-10">
 							<button
 								onClick={() => setViewTicket(null)}
-								className="absolute top-4 right-4 text-xl text-gray-400 hover:text-white"
+								className="absolute top-4 right-4 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+								aria-label="Close modal"
 							>
 								✕
 							</button>
 
-							<h2 className="mb-8 text-3xl font-extrabold tracking-tight text-white">
+							<h2 className="mb-6 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
 								Detalles del Ticket #{viewTicket.id}
 							</h2>
 
-							<div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
-								<div className="space-y-6 text-lg leading-relaxed text-white">
-									<div>
-										<h3 className="text-sm font-semibold text-gray-400 uppercase">
+							<div className="grid gap-8 lg:grid-cols-2">
+								<div className="space-y-6">
+									<div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+										<h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
 											Usuario
 										</h3>
-										<p>{viewTicket.email}</p>
+										<p className="text-lg text-white">{viewTicket.email}</p>
 									</div>
 
-									<div>
-										<h3 className="text-sm font-semibold text-gray-400 uppercase">
+									<div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+										<h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
 											Descripción
 										</h3>
-										<p className="whitespace-pre-wrap">
+										<p className="text-lg whitespace-pre-wrap text-white">
 											{viewTicket.description}
 										</p>
 									</div>
 
-									<div>
-										<h3 className="text-sm font-semibold text-gray-400 uppercase">
+									<div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+										<h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
 											Tipo
 										</h3>
 										<span
@@ -626,9 +747,9 @@ export default function TicketsPage() {
 									</div>
 								</div>
 
-								<div className="space-y-6 text-lg leading-relaxed text-white">
-									<div>
-										<h3 className="text-sm font-semibold text-gray-400 uppercase">
+								<div className="space-y-6">
+									<div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+										<h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
 											Estado
 										</h3>
 										<span
@@ -648,58 +769,125 @@ export default function TicketsPage() {
 										</span>
 									</div>
 
-									<div>
-										<h3 className="text-sm font-semibold text-gray-400 uppercase">
+									<div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+										<h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
 											Asignado a
 										</h3>
-										<p>{viewTicket.assignedToName ?? 'Sin asignar'}</p>
+										<p className="text-lg text-white">
+											{viewTicket.assignedToName ?? 'Sin asignar'}
+										</p>
 									</div>
 
-									<div>
-										<h3 className="text-sm font-semibold text-gray-400 uppercase">
+									<div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+										<h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
 											Comentario Principal
 										</h3>
-										<p className="whitespace-pre-wrap">
+										<p className="text-lg whitespace-pre-wrap text-white">
 											{viewTicket.comments ?? '—'}
 										</p>
 									</div>
-									{viewTicket && (
-										<div className="space-y-2">
-											<h3 className="text-sm font-medium text-gray-300">
-												Historial de Comentarios
-											</h3>
-											<div className="max-h-60 space-y-3 overflow-y-auto rounded-md border border-gray-700 bg-gray-800/50 p-4">
-												{isLoadingComments ? (
-													<div className="flex items-center justify-center py-4">
-														<Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-													</div>
-												) : comments.length > 0 ? (
-													comments.map((comment, index) => (
-														<div
-															key={index}
-															className="rounded-lg border border-gray-700 bg-gray-800 p-3"
-														>
-															<div className="flex items-center justify-between text-sm">
-																<span className="font-medium text-blue-400">
-																	{comment.user?.name || 'Usuario'}
-																</span>
-																<span className="text-gray-500">
-																	{new Date(comment.createdAt).toLocaleString()}
-																</span>
-															</div>
-															<p className="mt-2 text-sm text-gray-300">
-																{comment.content}
-															</p>
-														</div>
-													))
-												) : (
-													<p className="text-center text-sm text-gray-500">
-														No hay comentarios
+								</div>
+
+								{/* Archivos Adjuntos */}
+								<div className="lg:col-span-2">
+									<div className="space-y-4 rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+										<h3 className="text-lg font-medium text-white">
+											Archivos Adjuntos
+										</h3>
+										<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+											{/* Imagen */}
+											{viewTicket.coverImageKey && (
+												<div className="space-y-2">
+													<p className="text-sm font-medium text-gray-300">
+														📷 Imagen
 													</p>
-												)}
-											</div>
+													<div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
+														<img
+															src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.coverImageKey}`}
+															alt="Imagen de soporte"
+															className="h-full w-full object-contain"
+														/>
+													</div>
+												</div>
+											)}
+
+											{/* Video */}
+											{viewTicket.videoKey && (
+												<div className="space-y-2">
+													<p className="text-sm font-medium text-gray-300">
+														🎥 Video
+													</p>
+													<div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
+														<video
+															controls
+															className="h-full w-full object-contain"
+														>
+															<source
+																src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.videoKey}`}
+																type="video/mp4"
+															/>
+														</video>
+													</div>
+												</div>
+											)}
+
+											{/* Documento */}
+											{viewTicket.documentKey && (
+												<div className="space-y-2">
+													<p className="text-sm font-medium text-gray-300">
+														📄 Documento
+													</p>
+													<a
+														href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.documentKey}`}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="inline-block rounded-lg bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/20"
+													>
+														📄 Ver Documento
+													</a>
+												</div>
+											)}
 										</div>
-									)}
+									</div>
+								</div>
+
+								{/* Comentarios */}
+								<div className="lg:col-span-2">
+									<div className="space-y-4 rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+										<h3 className="text-lg font-medium text-white">
+											Historial de Comentarios
+										</h3>
+										<div className="max-h-[40vh] space-y-3 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900/50 p-4">
+											{isLoadingComments ? (
+												<div className="flex items-center justify-center py-4">
+													<Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+												</div>
+											) : comments.length > 0 ? (
+												comments.map((comment, index) => (
+													<div
+														key={index}
+														className="rounded-lg border border-gray-700 bg-gray-800/80 p-4 backdrop-blur-sm"
+													>
+														<div className="flex flex-wrap items-center justify-between gap-2">
+															<span className="font-medium text-blue-400">
+																{comment.user?.name || 'Usuario'}
+															</span>
+															<span className="text-sm text-gray-500">
+																{new Date(comment.createdAt).toLocaleString()}
+															</span>
+														</div>
+														<p className="mt-2 text-gray-300">
+															{comment.content}
+														</p>
+													</div>
+												))
+											) : (
+												<p className="text-center text-gray-500">
+													No hay comentarios
+												</p>
+											)}
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -712,16 +900,10 @@ export default function TicketsPage() {
 					onClose={handleCloseModal}
 					onSubmit={selectedTicket ? handleUpdate : handleCreate}
 					ticket={selectedTicket}
+					onUploadFile={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
 				/>
 			</div>
-			<FloatingChat
-				chatId={selectedChat?.id ?? null}
-				receiverId={selectedChat?.receiverId ?? null}
-				userName={selectedChat?.userName}
-				onClose={handleCloseChat}
-				unreadConversations={unreadConversationIds}
-				setUnreadConversations={setUnreadConversationIds}
-			/>
+			<ToastContainer position="top-right" autoClose={3000} />
 		</>
 	);
 }

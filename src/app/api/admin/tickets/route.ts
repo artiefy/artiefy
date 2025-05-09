@@ -10,7 +10,6 @@ import {
 import { db } from '~/server/db';
 import { tickets, users, ticketComments } from '~/server/db/schema';
 
-// Tipos seguros
 interface CreateTicketBody {
 	email: string;
 	tipo: 'otro' | 'bug' | 'revision' | 'logs';
@@ -19,6 +18,8 @@ interface CreateTicketBody {
 	estado: 'abierto' | 'en proceso' | 'en revision' | 'solucionado' | 'cerrado';
 	assignedToId?: string;
 	coverImageKey?: string | null;
+	videoKey?: string | null;
+	documentKey?: string | null;
 }
 
 interface UpdateTicketBody extends Partial<CreateTicketBody> {
@@ -66,6 +67,8 @@ export async function GET(request: Request) {
 				c.name AS creator_name,
 				c.email AS creator_email,
 				a.name AS assigned_to_name,
+				t.video_key,
+t.document_key,
 				a.email AS assigned_to_email
 			FROM tickets t
 			LEFT JOIN users c ON t.creator_id = c.id
@@ -125,6 +128,7 @@ export async function POST(request: Request) {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		};
+		console.log('🧾 Datos que se van a guardar:', ticketData);
 
 		if (!ticketData.assignedToId) {
 			delete ticketData.assignedToId;
@@ -241,6 +245,46 @@ export async function DELETE(request: Request) {
 		console.error('❌ Error deleting ticket:', error);
 		return NextResponse.json(
 			{ error: 'Error deleting ticket' },
+			{ status: 500 }
+		);
+	}
+}
+
+// =============================
+// PUT /api/admin/tickets/:id/video
+// =============================
+export async function PUT_video(
+	req: Request,
+	context: { params: { id: string } }
+) {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!userId || (role !== 'admin' && role !== 'super-admin')) {
+		return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const ticketId = parseInt(context.params.id);
+	if (isNaN(ticketId)) {
+		return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
+	}
+
+	try {
+		const { videoKey } = await req.json();
+
+		await db
+			.update(tickets)
+			.set({
+				videoKey,
+				updatedAt: new Date(),
+			})
+			.where(eq(tickets.id, ticketId));
+
+		return NextResponse.json({ success: true });
+	} catch (error) {
+		console.error('❌ Error actualizando videoKey:', error);
+		return NextResponse.json(
+			{ error: 'Error updating videoKey' },
 			{ status: 500 }
 		);
 	}

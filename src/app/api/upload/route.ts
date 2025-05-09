@@ -46,6 +46,7 @@ export async function POST(request: Request) {
 		}
 
 		// Sanitize the file name
+		const ext = fileName.split('.').pop() ?? 'bin';
 		const sanitizedFileName = sanitizeFileName(fileName);
 		const key = `uploads/${sanitizedFileName}`;
 

@@ -313,6 +313,8 @@ export const tickets = pgTable('tickets', {
 	}).notNull(),
 	email: text('email').notNull(),
 	coverImageKey: text('cover_image_key'),
+	videoKey: text('video_key'),
+	documentKey: text('document_key'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
