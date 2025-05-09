@@ -264,10 +264,6 @@ const ForumPage = () => {
 						uniqueEmails.add(forumData.userId.email);
 					}
 				}
-
-				if (uniqueEmails.size > 0) {
-					await sendForumEmail(replyMessage, Array.from(uniqueEmails));
-				}
 			}
 		} catch (error) {
 			console.error('Error al enviar la respuesta:', error);
@@ -451,39 +447,6 @@ const ForumPage = () => {
 		);
 	}
 
-	const getEmailRecipients = (
-		role: string,
-		userEmail: string,
-		forumData: Foro,
-		posts: Post[],
-		postReplays: PostReplay[],
-		originalPost?: Post
-	): string[] => {
-		const emails = new Set<string>();
-
-		if (role === 'educador') {
-			posts.forEach((p) => {
-				if (p.userId.email && p.userId.email !== userEmail)
-					emails.add(p.userId.email);
-			});
-			postReplays.forEach((r) => {
-				if (r.userId.email && r.userId.email !== userEmail)
-					emails.add(r.userId.email);
-			});
-			if (
-				originalPost?.userId.email &&
-				originalPost.userId.email !== userEmail
-			) {
-				emails.add(originalPost.userId.email);
-			}
-		} else {
-			if (forumData?.userId.email && forumData.userId.email !== userEmail) {
-				emails.add(forumData.userId.email);
-			}
-		}
-
-		return Array.from(emails);
-	};
 
 	return (
 		<>

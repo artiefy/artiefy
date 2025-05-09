@@ -254,10 +254,6 @@ const ForumPage = () => {
 					const filteredEmails = emailList.filter(
 						(email) => email !== userEmail
 					);
-
-					if (filteredEmails.length > 0) {
-						await sendForumEmail(message, filteredEmails);
-					}
 				}
 			}
 		} catch (error) {
@@ -313,10 +309,6 @@ const ForumPage = () => {
 					const filteredEmails = emailList.filter(
 						(email) => email !== userEmail
 					);
-
-					if (filteredEmails.length > 0) {
-						await sendForumEmail(replyMessage, filteredEmails);
-					}
 				}
 			}
 		} catch (error) {
