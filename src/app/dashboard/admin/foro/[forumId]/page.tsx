@@ -379,7 +379,7 @@ const ForumPage = () => {
 							{reply.userId.name}
 						</span>
 					</div>
-					<span className="text-xs text-gray-500">
+					<span className="relative -left-3 text-xs text-gray-400">
 						{formatDate(reply.createdAt)}
 					</span>
 				</div>
@@ -412,7 +412,7 @@ const ForumPage = () => {
 
 				{/* Menú editar/eliminar */}
 				{reply.userId.id === user?.id && (
-					<Collapsible className="absolute top-2 right-2">
+					<Collapsible className="absolute top-5 right-2">
 						<CollapsibleTrigger>
 							<EllipsisVertical className="cursor-pointer text-gray-500 hover:text-white" />
 						</CollapsibleTrigger>
@@ -551,10 +551,10 @@ const ForumPage = () => {
 								className="relative rounded-lg bg-gray-800 p-5 shadow-lg transition-shadow duration-300 hover:shadow-2xl sm:p-6"
 							>
 								<div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-									<h2 className="text-lg font-semibold text-white">
-										{post.userId.name}
+									<h2 className="text-lg font-bold text-white">
+										{post.content}
 									</h2>
-									<span className="text-xs text-gray-400">
+									<span className="relative -left-3 text-xs text-gray-400">
 										{formatDate(post.createdAt)}
 									</span>
 								</div>
@@ -562,7 +562,7 @@ const ForumPage = () => {
 								{editingPostId === post.id ? (
 									<div className="mb-3">
 										<textarea
-											className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white"
+											className="w-full rounded border-gray-700 bg-gray-900 p-3 font-bold text-white"
 											value={editPostContent}
 											onChange={(e) => setEditPostContent(e.target.value)}
 										/>
@@ -582,12 +582,12 @@ const ForumPage = () => {
 										</div>
 									</div>
 								) : (
-									<p className="text-gray-300">{post.content}</p>
+									<p className="text-xs text-white">{post.userId.name}</p>
 								)}
 
 								{/* Menú editar/eliminar */}
 								{post.userId.id === user?.id && (
-									<Collapsible className="absolute top-2 right-2">
+									<Collapsible className="absolute top-6 right-2">
 										<CollapsibleTrigger>
 											<EllipsisVertical className="cursor-pointer text-gray-400 hover:text-white" />
 										</CollapsibleTrigger>
