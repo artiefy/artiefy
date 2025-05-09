@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { eq } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
+import nodemailer from 'nodemailer';
 
 import {
 	createForum,
@@ -9,8 +11,7 @@ import {
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
 import { forums, users, courses } from '~/server/db/schema';
-import nodemailer from 'nodemailer';
-import { alias } from 'drizzle-orm/pg-core';
+
 
 export async function GET(req: Request) {
 	try {

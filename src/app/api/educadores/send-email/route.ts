@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import nodemailer from 'nodemailer';
 
 // Tipado del cuerpo de la petición

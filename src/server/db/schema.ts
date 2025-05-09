@@ -709,6 +709,9 @@ export const userTimeTracking = pgTable('user_time_tracking', {
 	userId: text('user_id')
 		.references(() => users.id)
 		.notNull(),
+	courseId: integer('course_id')
+		.references(() => courses.id)
+		.notNull(),
 	date: date('date').defaultNow().notNull(),
 	timeSpent: integer('time_spent').default(0).notNull(),
 });

@@ -8,7 +8,6 @@ import {
 	deleteCourse,
 	getAllCourses,
 	getCourseById,
-	getCoursesByUserId,
 	updateCourse,
 	getTotalStudents,
 	getLessonsByCourseId,

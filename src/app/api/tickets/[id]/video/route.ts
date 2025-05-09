@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import { tickets } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
 	const { userId, sessionClaims } = await auth();

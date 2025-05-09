@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Info, Loader2, Pencil, Plus, Trash2 , FileText } from 'lucide-react';
+import { toast, ToastContainer } from 'react-toastify';
 
 import TicketModal from './TicketModal';
-import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import ChatList from '../chat/ChatList';
 import FloatingChat from '../chat/FloatingChat';
-import { FileText } from 'lucide-react';
+
 
 // Types
 
@@ -572,9 +572,9 @@ export default function TicketsPage() {
 												))}
 											</select>
 										</th>
-										<th></th>
-										<th></th>
-										<th></th>
+										<th />
+										<th />
+										<th />
 									</tr>
 
 									{/* Títulos */}

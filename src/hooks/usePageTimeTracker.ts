@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useRef } from 'react';
 
-const usePageTimeTracker = (userId: string | null) => {
+const usePageTimeTracker = (userId: string | null, courseId: number | null) => {
 	const [isInactivePopupOpen, setIsInactivePopupOpen] = useState(false);
 	const [isPaused, setIsPaused] = useState(false);
 	const [isPopupActive, setIsPopupActive] = useState(false); // Nuevo estado para evitar el reinicio automático
 	const intervalRef = useRef<NodeJS.Timeout | null>(null); // ⬅ Agregar esta línea antes
+	const isSending = useRef(false);
+
 	useEffect(() => {
 		if (!userId) return;
 
@@ -30,11 +32,12 @@ const usePageTimeTracker = (userId: string | null) => {
 		};
 
 		const sendTime = async () => {
-			if (isPaused) return; // Si está pausado, no enviar datos
+			if (isPaused || isSending.current) return;
 
 			const entryTime = parseInt(localStorage.getItem('entryTime') ?? '0', 10);
 			const now = Date.now();
 			const elapsedMinutes = Math.floor((now - entryTime) / 60000);
+			isSending.current = true;
 
 			if (elapsedMinutes > 0) {
 				try {
@@ -43,7 +46,7 @@ const usePageTimeTracker = (userId: string | null) => {
 						headers: {
 							'Content-Type': 'application/json',
 						},
-						body: JSON.stringify({ userId, elapsedMinutes }),
+						body: JSON.stringify({ userId, courseId, elapsedMinutes }),
 					});
 
 					if (!response.ok) {
@@ -58,6 +61,7 @@ const usePageTimeTracker = (userId: string | null) => {
 					console.error('❌ Error al enviar tiempo al backend:', error);
 				}
 			}
+			isSending.current = false;
 		};
 
 		localStorage.setItem('entryTime', Date.now().toString());
@@ -80,7 +84,7 @@ const usePageTimeTracker = (userId: string | null) => {
 			document.removeEventListener('keydown', resetTimer);
 			document.removeEventListener('click', resetTimer);
 		};
-	}, [userId, isPaused, isPopupActive]);
+	}, [userId, courseId, isPaused, isPopupActive]);
 
 	// ✅ Nueva función para cerrar el popup y reanudar el seguimiento
 	const handleContinue = () => {

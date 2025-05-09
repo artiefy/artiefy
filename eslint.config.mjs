@@ -176,7 +176,7 @@ const eslintConfig = [
 		settings: {
 			'import/resolver': {
 				alias: {
-					map: [['@', './src']],
+					map: [['./src']],
 					extensions: ['.js', '.jsx', '.ts', '.tsx'],
 				},
 				typescript: {

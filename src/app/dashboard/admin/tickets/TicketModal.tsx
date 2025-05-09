@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+
 import { useUser } from '@clerk/nextjs';
 import { X, Loader2 } from 'lucide-react';
+
 import { Modal } from '~/components/shared/Modal';
 
 export interface Ticket {

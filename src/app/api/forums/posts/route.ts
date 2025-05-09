@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { eq, inArray } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
 import {
 	createPost,
@@ -9,10 +11,7 @@ import {
 	getPostById,
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
-import { eq, inArray } from 'drizzle-orm';
-
 import { forums, enrollments, users } from '~/server/db/schema';
-import nodemailer from 'nodemailer';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 const respondWithError = (message: string, status: number) =>
