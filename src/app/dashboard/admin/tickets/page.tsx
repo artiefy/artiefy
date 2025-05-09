@@ -2,15 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { Info, Loader2, Pencil, Plus, Trash2 , FileText } from 'lucide-react';
+import { Info, Loader2, Pencil, Plus, Trash2, FileText } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 
 import TicketModal from './TicketModal';
 import 'react-toastify/dist/ReactToastify.css';
 
 import ChatList from '../chat/ChatList';
-import FloatingChat from '../chat/FloatingChat';
-
 
 // Types
 
