@@ -1,6 +1,7 @@
-.button {
+/* Renombrar y actualizar estilos del botón */
+.button-circular {
 	cursor: pointer;
-	border: 2px solid #2ecc71; /* Light green border */
+	border: 2px solid #2ecc71;
 	background: #00a5c0;
 	color: #fff;
 	width: 100px;
@@ -13,22 +14,18 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	transition: all 300ms;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	font-weight: 600;
 	z-index: 1000;
-	box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); /* Subtle green glow */
+	box-shadow: 0 0 10px rgba(46, 204, 113, 0.3);
 }
 
-.button.minimized {
-	transform: scale(0.7);
-	transition: all 0.3s ease;
+.button-circular.minimized {
+	transform: scale(0.6) translate(30px, -30px);
+	box-shadow: 0 0 5px rgba(46, 204, 113, 0.2);
 }
 
-.button {
-	transition: all 0.3s ease;
-}
-
-.button__text {
+.button-circular__text {
 	position: absolute;
 	inset: 0;
 	display: flex;
@@ -38,7 +35,7 @@
 	pointer-events: none;
 }
 
-.button__text > span {
+.button-circular__text > span {
 	position: absolute !important;
 	transform: rotate(calc(20deg * var(--index)));
 	inset: 4px;
@@ -47,7 +44,7 @@
 	text-transform: uppercase;
 }
 
-.button__circle {
+.button-circular__inner {
 	position: relative;
 	width: 40px;
 	height: 40px;
@@ -60,7 +57,7 @@
 	justify-content: center;
 }
 
-.button__icon {
+.button-circular__icon {
 	font-size: 20px;
 	position: relative;
 	z-index: 1;
@@ -69,28 +66,32 @@
 	justify-content: center;
 }
 
-.button__icon--copy {
+.button-circular__icon--copy {
 	position: absolute;
 	transform: translate(-150%, 150%);
 }
 
-.button:hover {
+.button-circular:hover {
 	background: #000;
 	transform: scale(1.05);
-	border: 2px solid #fff; /* Keep white border on hover */
-	box-shadow: 0 0 15px rgba(46, 204, 113, 0.5); /* Enhanced glow on hover */
+	border: 2px solid #fff;
+	box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
 }
 
-.button:hover .button__icon {
+.button-circular:hover.minimized {
+	transform: scale(0.65) translate(30px, -30px);
+}
+
+.button-circular:hover .button-circular__icon {
 	color: #fff;
 }
 
-.button:hover .button__icon:first-child {
+.button-circular:hover .button-circular__icon:first-child {
 	transition: transform 0.3s ease-in-out;
 	transform: translate(150%, -150%);
 }
 
-.button:hover .button__icon--copy {
+.button-circular:hover .button-circular__icon--copy {
 	transition: transform 0.3s ease-in-out 0.1s;
 	transform: translate(0);
 }
@@ -101,7 +102,7 @@
 	}
 }
 
-.button:active {
+.button-circular:active {
 	transform: scale(0.95);
 }
 

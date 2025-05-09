@@ -83,17 +83,13 @@ export function Header() {
 
 		setSearchInProgress(true);
 
-		// Add debug log
-		console.log(
-			'Header: Emitting search event with query:',
-			searchQuery.trim()
-		);
-
+		// Emit global search event
 		const searchEvent = new CustomEvent('artiefy-search', {
 			detail: { query: searchQuery.trim() },
 		});
 		window.dispatchEvent(searchEvent);
 
+		// Clear the search input
 		setSearchQuery('');
 		setSearchInProgress(false);
 	};
@@ -196,7 +192,7 @@ export function Header() {
 									<Link
 										key={item.href}
 										href={item.href}
-										className="text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors text-shadow-black/100 text-shadow-sm hover:text-orange-500 active:scale-95"
+										className="text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95"
 									>
 										{item.label}
 									</Link>
@@ -263,7 +259,7 @@ export function Header() {
 											<Link
 												key={item.href}
 												href={item.href}
-												className="menu-option text-shadow-sm text-shadow-white/50 hover:text-shadow-md"
+												className="menu-option hover:text-orange-500"
 												onClick={toggleDropdown}
 											>
 												{item.label}

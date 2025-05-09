@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import '~/styles/ia.css';
 import '~/styles/searchBar.css';
 import '~/styles/uiverse-button.css';
@@ -46,17 +46,13 @@ export default function StudentDetails({
 		});
 	});
 	const [currentSlide, setCurrentSlide] = useState<number>(0);
-	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [chatbotKey, setChatbotKey] = useState<number>(0);
 	const [showChatbot, setShowChatbot] = useState<boolean>(false);
+	const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
+	const [isTransitioning, setIsTransitioning] = useState(false);
+	const [searchQuery, setSearchQuery] = useState<string>('');
 	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
 	const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
-	const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
-
-	const searchInitiated = useRef<boolean>(false);
-	const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-	const [isTransitioning, setIsTransitioning] = useState(false);
 
 	// Memoized values to prevent re-renders
 	const sortedCourses = useMemo(() => {
@@ -75,66 +71,56 @@ export default function StudentDetails({
 		[sortedCourses]
 	);
 
-	// Modify the effect to properly handle search bar state
-	useEffect(() => {
-		setSearchBarDisabled(searchInProgress);
-	}, [searchInProgress]);
-
 	const handleSearchComplete = useCallback(() => {
-		setSearchInProgress(false);
+		setShowChatbot(false);
 	}, []);
 
-	// Update handleSearch to properly handle the query
 	const handleSearch = useCallback(
 		(e?: React.FormEvent) => {
 			e?.preventDefault();
 
-			const trimmedQuery = searchQuery.trim();
-
-			if (searchBarDisabled || !trimmedQuery || searchInitiated.current) return;
-
-			if (searchTimeoutRef.current) {
-				clearTimeout(searchTimeoutRef.current);
-				searchTimeoutRef.current = null;
-			}
+			if (!searchQuery.trim() || searchInProgress) return;
 
 			setSearchInProgress(true);
-			setShowChatbot(false);
-			searchInitiated.current = true;
+			setSearchBarDisabled(true);
 
-			const currentQuery = trimmedQuery; // Store the current query
+			// Emit global search event
+			const searchEvent = new CustomEvent('artiefy-search', {
+				detail: { query: searchQuery.trim() },
+			});
+			window.dispatchEvent(searchEvent);
 
-			searchTimeoutRef.current = setTimeout(() => {
-				setShowChatbot(true);
-				setChatbotKey((prev) => prev + 1);
-
-				// Use the stored query when showing the chatbot
-				setLastSearchQuery(currentQuery);
-
-				// Clear search bar after ensuring query is passed
-				setTimeout(() => {
-					setSearchQuery('');
-					setSearchInProgress(false);
-				}, 100);
-			}, 300);
+			// Clear the search input
+			setSearchQuery('');
+			setSearchInProgress(false);
+			setSearchBarDisabled(false);
 		},
-		[searchQuery, searchBarDisabled]
+		[searchQuery, searchInProgress]
 	);
 
-	// Update handleSearchChange to not clear chatbot when clearing searchbar
-	const handleSearchChange = useCallback(
-		(e: React.ChangeEvent<HTMLInputElement>) => {
-			const newValue = e.target.value;
-			setSearchQuery(newValue);
+	// Add event listener in useEffect
+	useEffect(() => {
+		const handleGlobalSearch = (event: CustomEvent<{ query: string }>) => {
+			const query = event.detail.query;
+			if (!query) return;
 
-			// Only reset search progress if there's no query
-			if (!newValue.trim()) {
-				setSearchInProgress(false);
-				searchInitiated.current = false;
-			}
-		},
-		[]
-	);
+			setLastSearchQuery(query);
+			setShowChatbot(true);
+			setChatbotKey((prev) => prev + 1);
+		};
+
+		window.addEventListener(
+			'artiefy-search',
+			handleGlobalSearch as EventListener
+		);
+
+		return () => {
+			window.removeEventListener(
+				'artiefy-search',
+				handleGlobalSearch as EventListener
+			);
+		};
+	}, []);
 
 	// Slide interval effect with cleanup
 	useEffect(() => {
@@ -156,47 +142,9 @@ export default function StudentDetails({
 		return () => clearInterval(interval);
 	}, [latestFiveCourses.length, isTransitioning]);
 
-	// Cleanup effect for search state
-	useEffect(() => {
-		return () => {
-			if (searchTimeoutRef.current) {
-				clearTimeout(searchTimeoutRef.current);
-				searchTimeoutRef.current = null;
-			}
-			searchInitiated.current = false;
-			setSearchInProgress(false);
-		};
-	}, [searchQuery]);
-
-	// Reset search state when chatbot visibility changes
-	useEffect(() => {
-		if (!showChatbot) {
-			searchInitiated.current = false;
-			setSearchInProgress(false);
-		}
-	}, [showChatbot]);
-
-	const handleSearchIconClick = useCallback(
-		(e: React.MouseEvent) => {
-			e.preventDefault();
-			if (!searchQuery.trim()) return;
-			handleSearch();
-		},
-		[searchQuery, handleSearch]
-	);
-
 	const truncateDescription = (description: string, maxLength: number) => {
 		if (description.length <= maxLength) return description;
 		return description.slice(0, maxLength) + '...';
-	};
-
-	const getPlaceholderText = () => {
-		if (typeof window !== 'undefined') {
-			return window.innerWidth <= 768
-				? 'Escribe tu Idea...?'
-				: 'Que Deseas Crear? Escribe Tu Idea...';
-		}
-		return 'Que Deseas Crear? Escribe Tu Idea...';
 	};
 
 	const getImageUrl = (imageKey: string | null | undefined) => {
@@ -206,32 +154,6 @@ export default function StudentDetails({
 		const s3Url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${imageKey}`;
 		return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
 	};
-
-	// Add event listener in useEffect
-	useEffect(() => {
-		const handleGlobalSearch = (event: CustomEvent<{ query: string }>) => {
-			const query = event.detail.query;
-			// Add debug log
-			console.log('StudentDetails: Received search event with query:', query);
-
-			if (!query || searchInProgress) return;
-
-			setSearchQuery(query);
-			handleSearch();
-		};
-
-		window.addEventListener(
-			'artiefy-search',
-			handleGlobalSearch as EventListener
-		);
-
-		return () => {
-			window.removeEventListener(
-				'artiefy-search',
-				handleGlobalSearch as EventListener
-			);
-		};
-	}, [handleSearch, searchInProgress]);
 
 	return (
 		<div className="-mb-8 flex min-h-screen flex-col sm:mb-0">
@@ -253,35 +175,36 @@ export default function StudentDetails({
 									<StudentArtieIa />
 								</div>
 							</div>
+
 							<form
-								onSubmit={(e) => {
-									e.preventDefault();
-									// Only handle search if not already in progress
-									if (!searchInProgress) {
-										handleSearch(e);
-									}
-								}}
+								onSubmit={handleSearch}
 								className="flex w-full flex-col items-center space-y-2"
 							>
 								<div className="header-search-container">
 									<input
 										required
-										className={`header-input border-primary ${searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''}`}
+										className={`header-input border-primary ${
+											searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''
+										}`}
 										name="search"
 										placeholder={
 											searchBarDisabled
 												? 'Procesando consulta...'
-												: getPlaceholderText()
+												: 'Que Deseas Crear? Escribe Tu Idea...'
 										}
 										type="search"
 										value={searchQuery}
-										onChange={handleSearchChange}
+										onChange={(e) => setSearchQuery(e.target.value)}
 										disabled={searchBarDisabled}
 									/>
 									<svg
 										viewBox="0 0 24 24"
 										className="header-search__icon"
-										onClick={handleSearchIconClick}
+										onClick={(e) => {
+											e.preventDefault();
+											if (!searchQuery.trim()) return;
+											handleSearch();
+										}}
 										role="button"
 										aria-label="Buscar"
 									>
@@ -481,8 +404,8 @@ export default function StudentDetails({
 				isAlwaysVisible={true}
 				showChat={showChatbot}
 				key={chatbotKey}
-				className="animation-delay-400 animate-zoom-in fixed"
-				initialSearchQuery={lastSearchQuery || searchQuery.trim()} // Use lastSearchQuery if available
+				className="animation-delay-400 animate-zoom-in"
+				initialSearchQuery={lastSearchQuery}
 				onSearchComplete={handleSearchComplete}
 			/>
 		</div>

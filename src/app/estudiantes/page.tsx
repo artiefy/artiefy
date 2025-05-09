@@ -6,7 +6,6 @@ import StudentDetails from '~/app/estudiantes/StudentDetails';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
-import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
@@ -201,15 +200,6 @@ export default async function Page({ searchParams }: PageProps) {
 						/>
 					</Suspense>
 					<Footer />
-				</div>
-				{/* Chat container con z-index más alto */}
-				<div className="chat-container-wrapper">
-					<StudentChatbot
-						isAlwaysVisible={true}
-						showChat={false} // Set default value to false
-						className="animation-delay-400 animate-zoom-in"
-						initialSearchQuery=""
-					/>
 				</div>
 			</>
 		);

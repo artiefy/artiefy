@@ -80,13 +80,28 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background:
-		radial-gradient(100% 100% at 85% 0%, #3af4ef66 0%, transparent 70%),
-		radial-gradient(100% 100% at 15% 100%, #00bdd866 0%, transparent 70%),
-		radial-gradient(100% 100% at 0% 100%, #2ecc71 0%, transparent 70%), #01142b;
+	background: #01142b;
 	background-blend-mode: screen, screen, normal;
 	overflow: hidden;
 	z-index: 9999;
+}
+
+.loading-fullscreen-background::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(
+			100% 100% at 85% 0%,
+			rgba(58, 244, 239, 0.4) 0%,
+			transparent 70%
+		),
+		radial-gradient(
+			100% 100% at 15% 100%,
+			rgba(0, 189, 216, 0.4) 0%,
+			transparent 70%
+		);
+	pointer-events: none;
 }
 
 .loading-card {
@@ -145,24 +160,27 @@
 	left: 15%;
 	transform-origin: 50%;
 	animation: loading-circle7124 0.5s alternate infinite ease;
+	will-change: transform;
+	backface-visibility: hidden;
+	transform: translateZ(0);
 }
 
 @keyframes loading-circle7124 {
-	0% {
-		top: 60px;
+	0%,
+	100% {
+		transform: translateY(60px) scaleX(1.7);
 		height: 5px;
 		border-radius: 50px 50px 25px 25px;
-		transform: scaleX(1.7);
 	}
 
 	40% {
+		transform: translateY(30px) scaleX(1);
 		height: 20px;
 		border-radius: 50%;
-		transform: scaleX(1);
 	}
 
 	100% {
-		top: 0%;
+		transform: translateY(0) scaleX(1);
 	}
 }
 
@@ -189,6 +207,9 @@
 	left: 15%;
 	filter: blur(1px);
 	animation: loading-shadow046 0.5s alternate infinite ease;
+	will-change: transform, opacity;
+	backface-visibility: hidden;
+	transform: translateZ(0);
 }
 
 @keyframes loading-shadow046 {

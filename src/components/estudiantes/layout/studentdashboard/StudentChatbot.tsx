@@ -308,7 +308,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			{isAlwaysVisible && (
 				<button
 					onClick={handleClick}
-					className={`button ${!isSignedIn && 'cursor-not-allowed opacity-50'} ${
+					className={`button-circular ${!isSignedIn && 'cursor-not-allowed opacity-50'} ${
 						isOpen ? 'minimized' : ''
 					}`}
 					aria-label={
@@ -317,7 +317,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							: 'Chat disponible solo para usuarios registrados'
 					}
 				>
-					<div className="button__text">
+					<div className="button-circular__text">
 						{Array.from('-ARTIE-IA').map((char, i) => (
 							<span key={i} style={{ '--index': i } as React.CSSProperties}>
 								{char}
@@ -332,13 +332,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							</span>
 						))}
 					</div>
-					<div className="button__circle">
+					<div className="button-circular__inner">
 						<Image
 							src="/brain-9-svgrepo-com-blue.png"
 							alt="Robot"
 							width={24}
 							height={24}
-							className="button__icon fill-blue-500"
+							className="button-circular__icon fill-blue-500"
 							priority
 						/>
 						<Image
@@ -346,13 +346,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							alt="Robot"
 							width={24}
 							height={24}
-							className="button__icon button__icon--copy fill-blue-500"
+							className="button-circular__icon button-circular__icon--copy fill-blue-500"
 							priority
 						/>
 					</div>
 				</button>
 			)}
 
+			{/* Mostrar el chat solo cuando isOpen es true */}
 			{isOpen && isSignedIn && (
 				<div
 					className="fixed right-24 bottom-32"
