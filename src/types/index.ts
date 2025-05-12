@@ -251,6 +251,7 @@ export interface Enrollment {
 	courseId: number;
 	enrolledAt: Date;
 	completed: boolean | null;
+	isPermanent: boolean; // Added this field
 }
 
 export interface Project {

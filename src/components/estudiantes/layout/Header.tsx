@@ -95,40 +95,40 @@ export function Header() {
 	};
 
 	const renderAuthButton = () => {
-		if (!isAuthLoaded) return null;
-
 		return (
-			<>
+			<div className="flex items-center justify-end">
 				<SignedOut>
-					<SignInButton>
-						<Button
-							className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
-							style={{
-								transition: '0.5s',
-								width: '180px',
-							}}
-							onClick={handleSignInClick}
-						>
-							<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
-								{isLoading ? (
-									<Icons.spinner
-										className=""
-										style={{ width: '25px', height: '25px' }}
-									/>
-								) : (
-									<>Iniciar Sesión</>
-								)}
-							</span>
-						</Button>
-					</SignInButton>
+					{isAuthLoaded ? (
+						<SignInButton>
+							<Button
+								className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+								style={{
+									transition: '0.5s',
+									width: '180px',
+								}}
+								onClick={handleSignInClick}
+							>
+								<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
+									{isLoading ? (
+										<Icons.spinner className="size-6" />
+									) : (
+										'Iniciar Sesión'
+									)}
+								</span>
+							</Button>
+						</SignInButton>
+					) : (
+						<div className="h-12 w-[180px] animate-pulse rounded-md bg-gray-200" />
+					)}
 				</SignedOut>
+
 				<SignedIn>
-					<div className="cl-userButton-root">
-						<UserButton
-							showName
+					<div className="flex items-center">
+						<UserButton showName
 							appearance={{
 								elements: {
-									rootBox: 'w-full flex justify-end',
+									rootBox: 'flex items-center justify-end',
+									userButtonTrigger: 'focus:shadow-none',
 								},
 							}}
 						>
@@ -152,12 +152,11 @@ export function Header() {
 										2
 									</span>
 								</UserButton.Link>
-								<UserButton.Action label="manageAccount" />
 							</UserButton.MenuItems>
 						</UserButton>
 					</div>
 				</SignedIn>
-			</>
+			</div>
 		);
 	};
 

@@ -291,7 +291,7 @@ export function ProgramHeader({
 							>
 								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
 									<div className="relative z-10 flex items-center justify-center space-x-2">
-										<span>Iniciar sesión para inscribirse</span>
+										<span>Iniciar sesión</span>
 									</div>
 								</span>
 							</Button>

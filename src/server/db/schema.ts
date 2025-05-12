@@ -128,6 +128,7 @@ export const enrollments = pgTable('enrollments', {
 		.notNull(),
 	enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
 	completed: boolean('completed').default(false),
+	isPermanent: boolean('is_permanent').default(false).notNull(),
 });
 
 // Tabla de preferencias

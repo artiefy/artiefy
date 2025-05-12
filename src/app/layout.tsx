@@ -1,5 +1,6 @@
 // 1. React/Next.js core imports
 import { Suspense } from 'react';
+
 // 2. Global styles
 import '~/styles/globals.css';
 import { Merriweather, Montserrat } from 'next/font/google';

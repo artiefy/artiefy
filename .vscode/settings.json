@@ -18,6 +18,7 @@
   "files.associations": {
     "*.css": "tailwindcss",
     "*.env": "env",
+    "*.env.production": "env",
     "*.tsx": "typescriptreact",
     "*.ts": "typescript",
     "*.mjs": "javascript",
@@ -56,6 +57,9 @@
   "[env]": {
     "editor.defaultFormatter": "IronGeek.vscode-env"
   },
+  "[env.production]": {
+    "editor.defaultFormatter": "IronGeek.vscode-env"
+  },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
@@ -75,9 +79,9 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 8192,
+  
   // ESLint Configuration
-  "eslint.runtime": "C:/Users/ADMIN/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node",
-  "eslint.nodePath": "C:/Users/ADMIN/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node",
+  "eslint.runtime": "C:/Users/ADMIN/AppData/Local/fnm_multishells/19380_1746813501134/node",
   "eslint.validate": [
     "javascript",
     "javascriptreact",

@@ -17,27 +17,10 @@ const nextConfig = {
 		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
 		minimumCacheTTL: 60,
 		remotePatterns: [
-			{
-				protocol: 'https',
-				hostname: 's3.us-east-2.amazonaws.com',
-				pathname: '/artiefy-upload/**',
-			},
-			{
-				protocol: 'https',
-				hostname: 'placehold.co',
-				pathname: '/**',
-				port: '',
-			},
-			{
-				protocol: 'https',
-				hostname: 'img.clerk.com',
-				pathname: '/**',
-			},
-			{
-				protocol: 'https',
-				hostname: 'assets.example.com',
-				pathname: '/**',
-			},
+			new URL('https://s3.us-east-2.amazonaws.com/artiefy-upload/**'),
+			new URL('https://placehold.co/**'),
+			new URL('https://img.clerk.com/**'),
+			new URL('https://assets.example.com/**'),
 		],
 	},
 	turbopack: {
