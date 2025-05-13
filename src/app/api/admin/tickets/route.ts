@@ -120,6 +120,10 @@ export async function POST(request: Request) {
 
 	try {
 		const body = (await request.json()) as CreateTicketBody;
+		if (!body.email || !body.tipo || !body.estado || !body.description) {
+			return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
+		}
+
 		console.log('📝 Creando nuevo ticket:', body);
 
 		const ticketData = {
@@ -270,7 +274,7 @@ export async function PUT_video(
 	}
 
 	try {
-		const { videoKey } = await req.json();
+		const { videoKey } = (await req.json()) as { videoKey: string };
 
 		await db
 			.update(tickets)

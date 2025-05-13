@@ -311,7 +311,7 @@ export default function TicketsPage() {
 
 			if (uploadType === 'simple') {
 				const formDataUpload = new FormData();
-				Object.entries(fields).forEach(([k, v]) => formDataUpload.append(k, v));
+				Object.entries(fields).forEach(([k, v]) => formDataUpload.append(k, v as string));
 				formDataUpload.append('file', file);
 				await fetch(url, { method: 'POST', body: formDataUpload });
 			} else {
@@ -895,10 +895,10 @@ export default function TicketsPage() {
 				<TicketModal
 					key={selectedTicket ? selectedTicket.id : 'new'}
 					isOpen={isModalOpen}
-					onClose={handleCloseModal}
-					onSubmit={selectedTicket ? handleUpdate : handleCreate}
+					onCloseAction={handleCloseModal}
+					onSubmitAction={selectedTicket ? handleUpdate : handleCreate}
 					ticket={selectedTicket}
-					onUploadFile={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
+					onUploadFileAction={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
 				/>
 			</div>
 			<ToastContainer position="top-right" autoClose={3000} />

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 
 import { useUser } from '@clerk/nextjs';
-import { X, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 import { Modal } from '~/components/shared/Modal';
 
@@ -57,10 +57,10 @@ export interface Comment {
 
 interface TicketModalProps {
 	isOpen: boolean;
-	onClose: () => void;
-	onSubmit: (data: TicketFormData) => void;
+	onCloseAction: () => void;
+	onSubmitAction: (data: TicketFormData) => void;
 	ticket?: Ticket | null;
-	onUploadFile: (
+	onUploadFileAction: (
 		field: 'coverImageKey' | 'videoKey' | 'documentKey',
 		file: File
 	) => Promise<string | null>;
@@ -68,10 +68,10 @@ interface TicketModalProps {
 
 export default function TicketModal({
 	isOpen,
-	onClose,
-	onSubmit,
+	onCloseAction,
+	onSubmitAction,
 	ticket,
-	onUploadFile,
+	onUploadFileAction,
 }: TicketModalProps) {
 	const { user } = useUser();
 
@@ -167,9 +167,9 @@ export default function TicketModal({
 
 		const submitData = {
 			...formData,
-			videoKey: formData.videoKey ?? null,
-			documentKey: formData.documentKey ?? null,
-			coverImageKey: formData.coverImageKey ?? null,
+			videoKey: formData.videoKey ?? undefined,
+			documentKey: formData.documentKey ?? undefined,
+			coverImageKey: formData.coverImageKey ?? undefined,
 		};
 		console.log('📤 Enviando desde el modal:', submitData);
 
@@ -177,10 +177,10 @@ export default function TicketModal({
 			delete submitData.assignedToId;
 		}
 
-		await Promise.resolve(onSubmit(submitData));
+		await Promise.resolve(onSubmitAction(submitData));
 
 		setIsSubmitting(false);
-		onClose();
+		onCloseAction();
 	};
 
 	const handleFileUpload =
@@ -204,7 +204,7 @@ export default function TicketModal({
 				if (uploadType === 'simple') {
 					const formDataUpload = new FormData();
 					Object.entries(fields).forEach(([k, v]) =>
-						formDataUpload.append(k, v)
+						formDataUpload.append(k, v as string)
 					);
 					formDataUpload.append('file', file);
 					await fetch(url, { method: 'POST', body: formDataUpload });
@@ -224,13 +224,14 @@ export default function TicketModal({
 				console.error('Error al subir archivo:', error);
 			}
 		};
-
+	void handleFileUpload;
+	void onUploadFileAction;
 	if (!isOpen) return null;
 
 	return (
 		<Modal
 			isOpen={isOpen}
-			onClose={onClose}
+			onClose={onCloseAction}
 			title={
 				<span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">
 					{ticket ? 'Editar Ticket' : 'Crear Nuevo Ticket'}
@@ -382,7 +383,7 @@ export default function TicketModal({
 										const file = e.target.files?.[0];
 										if (!file) return;
 										console.log('📁 Subiendo archivo:', file.name);
-										const key = await onUploadFile('coverImageKey', file);
+										const key = await onUploadFileAction('coverImageKey', file);
 										console.log('✅ Key recibido del upload:', key);
 										if (key) {
 											setFormData((prev) => ({ ...prev, coverImageKey: key }));
@@ -413,11 +414,11 @@ export default function TicketModal({
 									onChange={async (e) => {
 										const file = e.target.files?.[0];
 										if (!file) return;
-								
-										console.log("📁 Subiendo archivo:", file.name);
-										const key = await onUploadFile('videoKey', file);
-										console.log("✅ Key recibido del upload:", key);
-								
+
+										console.log('📁 Subiendo archivo:', file.name);
+										const key = await onUploadFileAction('videoKey', file);
+										console.log('✅ Key recibido del upload:', key);
+
 										if (key) {
 											setFormData((prev) => ({
 												...prev,
@@ -451,7 +452,7 @@ export default function TicketModal({
 									onChange={async (e) => {
 										const file = e.target.files?.[0];
 										if (!file) return;
-										const key = await onUploadFile('documentKey', file);
+										const key = await onUploadFileAction('documentKey', file);
 										if (key) {
 											setFormData((prev) => ({ ...prev, documentKey: key }));
 										}
@@ -534,7 +535,7 @@ export default function TicketModal({
 					<div className="sticky bottom-0 flex justify-end gap-3 border-t border-gray-700 bg-gray-900/80 pt-4 backdrop-blur">
 						<button
 							type="button"
-							onClick={onClose}
+							onClick={onCloseAction}
 							className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white"
 						>
 							Cancelar

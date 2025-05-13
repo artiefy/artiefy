@@ -6,7 +6,10 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { tickets } from '~/server/db/schema';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+	req: Request,
+	{ params }: { params: { id: string } }
+) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
 
@@ -20,7 +23,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 	}
 
 	try {
-		const { videoKey } = await req.json();
+		const { videoKey } = (await req.json()) as { videoKey: string };
 
 		await db
 			.update(tickets)

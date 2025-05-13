@@ -59,7 +59,7 @@ const ForumHome = () => {
 			console.error('Error al crear el foro:', error);
 		} finally {
 			setIsUploading(false);
-			setCourseId('');
+			setCourseId(null);
 			setTitle('');
 			setDescription('');
 		}
@@ -195,7 +195,7 @@ const ForumHome = () => {
 									variant="outline"
 									className="w-full border border-white/20 text-white hover:bg-white/10 sm:w-auto"
 									onClick={() => {
-										setCourseId('');
+										setCourseId(null);
 										setTitle('');
 										setDescription('');
 										setIsDialogOpen(false);

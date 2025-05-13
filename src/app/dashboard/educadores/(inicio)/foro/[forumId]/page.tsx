@@ -171,40 +171,6 @@ const ForumPage = () => {
 		}
 	}, [fetchPostReplays, posts]);
 
-	// Desbloquear y actualizar la función sendForumEmail 'Sin terminar'
-	const sendForumEmail = async (
-		postContent: string,
-		forumId: number,
-		senderRole: string,
-		senderEmail: string
-	) => {
-		try {
-			if (!forumId || !user) return;
-
-			const response = await fetch('/api/forums/send-email-dynamic', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					forumId,
-					senderRole,
-					senderEmail,
-					postContent,
-					forumTitle: forumData?.title,
-					authorName: user.fullName ?? 'Usuario',
-				}),
-			});
-
-			const result = await response.json();
-			if (!response.ok) {
-				console.error('❌ Error enviando correos:', result);
-			} else {
-				console.log('✅ Correos enviados:', result);
-			}
-		} catch (err) {
-			console.error('Error en sendForumEmail:', err);
-		}
-	};
-
 	// Modificar handlePostSubmit para enviar emails solo cuando el usuario es educador
 	const handlePostSubmit = async () => {
 		if (!message.trim() || !user) return;
@@ -246,14 +212,6 @@ const ForumPage = () => {
 					if (forumData?.userId.email) {
 						uniqueEmails.add(forumData.userId.email);
 					}
-
-					const emailList = Array.from(uniqueEmails);
-					const userEmail = user.emailAddresses[0]?.emailAddress;
-
-					// No enviar email al autor del post
-					const filteredEmails = emailList.filter(
-						(email) => email !== userEmail
-					);
 				}
 			}
 		} catch (error) {
@@ -303,12 +261,6 @@ const ForumPage = () => {
 							uniqueEmails.add(reply.userId.email);
 						}
 					});
-
-					const emailList = Array.from(uniqueEmails);
-					const userEmail = user.emailAddresses[0]?.emailAddress;
-					const filteredEmails = emailList.filter(
-						(email) => email !== userEmail
-					);
 				}
 			}
 		} catch (error) {
