@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { updateUserSubscription } from '~/server/actions/estudiantes/confirmation/updateUserSubscription';
+import { enrollUserInCourse } from '~/server/actions/estudiantes/courses/enrollIndividualCourse';
 import { verifySignature } from '~/utils/paygateway/verifySignature';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,8 @@ interface PaymentData {
 	value: string;
 	currency: string;
 	sign: string; // ✅ Ahora siempre es un string
+	transaction_id: string;
+	description: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -45,6 +48,8 @@ export async function POST(req: NextRequest) {
 			value: formData.get('value') as string,
 			currency: formData.get('currency') as string,
 			sign: sign, // ✅ Garantizamos que sign es `string`
+			transaction_id: formData.get('transaction_id') as string,
+			description: formData.get('description') as string,
 		};
 
 		console.log('✅ Datos recibidos de PayU:', paymentData);
@@ -58,8 +63,17 @@ export async function POST(req: NextRequest) {
 		}
 
 		if (paymentData.state_pol === '4') {
-			console.log('✅ Pago aprobado. Actualizando suscripción...');
-			await updateUserSubscription(paymentData);
+			// Verificar si es un curso individual por la descripción
+			if (paymentData.description?.startsWith('Curso:')) {
+				const courseId = extractCourseId(paymentData.reference_sale);
+				if (!courseId) {
+					throw new Error('Invalid course reference');
+				}
+				await enrollUserInCourse(paymentData.email_buyer, courseId);
+			} else {
+				// Es una suscripción normal
+				await updateUserSubscription(paymentData);
+			}
 		} else {
 			console.warn(
 				`⚠️ Pago con estado ${paymentData.state_pol}, no se actualiza suscripción.`
@@ -74,4 +88,10 @@ export async function POST(req: NextRequest) {
 			{ status: 500 }
 		);
 	}
+}
+
+// Función auxiliar para extraer el ID del curso
+function extractCourseId(reference: string): number {
+	const match = /curso_(\d+)/.exec(reference);
+	return match ? parseInt(match[1]) : 0;
 }
