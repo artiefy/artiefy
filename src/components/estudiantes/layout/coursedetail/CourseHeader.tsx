@@ -16,11 +16,13 @@ import {
 	FaTrophy,
 	FaCrown,
 	FaStar,
+	FaTimes,
 } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
+import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -34,6 +36,7 @@ import { blurDataURL } from '~/lib/blurDataUrl';
 import { cn } from '~/lib/utils';
 import { formatDate, type GradesApiResponse } from '~/lib/utils2';
 import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
+import { createProductFromCourse } from '~/utils/paygateway/products';
 
 import { CourseContent } from './CourseContent';
 import { GradeModal } from './CourseGradeModal';
@@ -104,6 +107,7 @@ export function CourseHeader({
 	const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
 	const [isLoadingGrade, setIsLoadingGrade] = useState(true);
 	const [isEnrollClicked, setIsEnrollClicked] = useState(false);
+	const [showPaymentModal, setShowPaymentModal] = useState(false);
 
 	// Replace useEffect with useSWR
 	// Improve error handling with proper types
@@ -293,6 +297,16 @@ export function CourseHeader({
 		setIsEnrollClicked(true); // Activar spinner inmediatamente
 
 		try {
+			// Handle individual course purchase
+			if (course.courseTypeId === 4) {
+				if (!course.individualPrice) {
+					toast.error('Error en el precio del curso');
+					return;
+				}
+				setShowPaymentModal(true);
+				return;
+			}
+
 			const userPlanType = user?.publicMetadata?.planType as string;
 			const isPremiumCourse =
 				course.courseType?.requiredSubscriptionLevel === 'premium';
@@ -360,6 +374,14 @@ export function CourseHeader({
 			setIsEnrollClicked(false); // Desactivar spinner al finalizar
 		}
 	};
+
+	// Create product object for individual course
+	const courseProduct = useMemo(() => {
+		if (course.courseTypeId === 4 && course.individualPrice) {
+			return createProductFromCourse(course);
+		}
+		return null;
+	}, [course]);
 
 	return (
 		<Card className="overflow-hidden p-0">
@@ -596,12 +618,14 @@ export function CourseHeader({
 										) : (
 											<>
 												<span>
-													{course.courseType?.requiredSubscriptionLevel ===
-													'none'
-														? 'Inscribirse Gratis'
-														: !isSubscriptionActive
-															? 'Obtener Suscripción'
-															: 'Inscribirse al Curso'}
+													{course.courseTypeId === 4
+														? `Comprar Curso ($${course.individualPrice?.toLocaleString()})`
+														: course.courseType?.requiredSubscriptionLevel ===
+															  'none'
+															? 'Inscribirse Gratis'
+															: !isSubscriptionActive
+																? 'Obtener Suscripción'
+																: 'Inscribirse al Curso'}
 												</span>
 											</>
 										)}
@@ -621,6 +645,27 @@ export function CourseHeader({
 					userId={user?.id ?? ''} // Pass dynamic user ID
 				/>
 			</CardContent>
+
+			{showPaymentModal && courseProduct && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+					<div className="w-full max-w-lg rounded-lg bg-white p-4">
+						<div className="relative mb-4 flex items-center justify-between">
+							<h3 className="w-full text-center text-xl font-semibold text-gray-900">
+								Comprar Curso
+								<br />
+								<span className="font-bold">{course.title}</span>
+							</h3>
+							<button
+								onClick={() => setShowPaymentModal(false)}
+								className="absolute top-0 right-0 mt-2 mr-2 text-gray-500 hover:text-gray-700"
+							>
+								<FaTimes className="h-6 w-6" />
+							</button>
+						</div>
+						<PaymentForm selectedProduct={courseProduct} />
+					</div>
+				</div>
+			)}
 		</Card>
 	);
 }

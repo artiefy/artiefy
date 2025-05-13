@@ -54,7 +54,7 @@ export interface Course extends BaseCourse {
 		isPurchasableIndividually: boolean | null; // Updated to allow null
 		price?: number | null; // Add price property
 	};
-	individualPrice?: number | null;
+	individualPrice: number | null; // Change from optional to required but nullable
 	requiresProgram: boolean;
 	isActive: boolean;
 }

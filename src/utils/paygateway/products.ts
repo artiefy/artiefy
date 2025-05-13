@@ -31,6 +31,20 @@ function createProduct(plan: Plan): Product {
 	};
 }
 
+// Add new function to create product from course
+export function createProductFromCourse(course: {
+	id: number;
+	title: string;
+	individualPrice: number | null;
+}): Product {
+	return {
+		id: course.id,
+		name: `Curso: ${course.title}`,
+		amount: course.individualPrice?.toFixed(2) ?? '0.00',
+		description: `Compra individual del curso ${course.title}`,
+	};
+}
+
 // ✅ Función para obtener un producto por su ID
 export function getProductById(productId: number): Product | undefined {
 	if (!productId || isNaN(productId)) return undefined; // ✅ Validación extra
