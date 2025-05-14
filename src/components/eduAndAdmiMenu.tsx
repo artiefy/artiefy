@@ -328,6 +328,19 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 													Materias
 												</Link>
 											</li>
+											<li>
+												<Link
+													href="/dashboard/super-admin/programs/enrolled_users"
+													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${
+														pathname ===
+														'/dashboard/super-admin/programs/enrolled_users'
+															? 'bg-primary text-[#01142B]'
+															: ''
+													}`}
+												>
+													Matricular Estudiantes
+												</Link>
+											</li>
 										</ul>
 									)}
 								</li>

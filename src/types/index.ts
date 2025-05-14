@@ -251,6 +251,7 @@ export interface Enrollment {
 	courseId: number;
 	enrolledAt: Date;
 	completed: boolean | null;
+	isPermanent: boolean | null; // Changed from optional to nullable
 }
 
 export interface Project {
