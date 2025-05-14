@@ -26,10 +26,12 @@ export function createFormData(
 	const formattedAmount = formatAmount(product.amount);
 	const currency = 'COP';
 
-	// Determinar URL de respuesta basada en el tipo de producto
-	const finalResponseUrl = product.name.startsWith('Curso:')
-		? `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${product.id}`
-		: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/myaccount`;
+	// Usar el responseUrl proporcionado o crear uno basado en el tipo de producto
+	const finalResponseUrl =
+		responseUrl ||
+		(product.name.startsWith('Curso:')
+			? `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${product.id}`
+			: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/myaccount`);
 
 	// ✅ Generar firma MD5 con el formato correcto
 	const signature = calculateSignature(
@@ -44,10 +46,10 @@ export function createFormData(
 		merchantId: auth.merchantId,
 		accountId: auth.accountId,
 		description: product.description,
-		referenceCode: referenceCode, // ✅ Se usa el referenceCode dinámico aquí
+		referenceCode: referenceCode,
 		amount: formattedAmount,
-		tax: '3193', // Ajustable según el producto
-		taxReturnBase: '16806', // Ajustable según el producto
+		tax: '3193',
+		taxReturnBase: '16806',
 		currency: currency,
 		signature: signature,
 		test: '1',

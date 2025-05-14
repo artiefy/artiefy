@@ -44,6 +44,8 @@ import { GradeModal } from './CourseGradeModal';
 
 import type { Course, CourseMateria } from '~/types';
 
+import '~/styles/buttonsuscription.css';
+
 export const revalidate = 3600;
 
 interface ExtendedCourse extends Course {
@@ -613,30 +615,24 @@ export function CourseHeader({
 							<Button
 								onClick={handleEnrollClick}
 								disabled={isEnrolling || isEnrollClicked}
-								className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
+								className="subscription-button"
 							>
-								<span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
-									<div className="relative z-10 flex items-center justify-center space-x-2">
-										{isEnrolling || isEnrollClicked ? (
-											<Icons.spinner
-												className="text-white"
-												style={{ width: '25px', height: '25px' }}
-											/>
-										) : (
-											<>
-												<span>
-													{course.courseTypeId === 4
-														? `Comprar Curso ($${course.individualPrice?.toLocaleString()})`
-														: course.courseType?.requiredSubscriptionLevel ===
-															  'none'
-															? 'Inscribirse Gratis'
-															: !isSubscriptionActive
-																? 'Obtener Suscripción'
-																: 'Inscribirse al Curso'}
-												</span>
-											</>
-										)}
-									</div>
+								<span>
+									{isEnrolling || isEnrollClicked ? (
+										<Icons.spinner
+											className="text-white"
+											style={{ width: '25px', height: '25px' }}
+										/>
+									) : course.courseTypeId === 4 ? (
+										`Comprar Curso ($${course.individualPrice?.toLocaleString()})`
+									) : course.courseType?.requiredSubscriptionLevel ===
+									  'none' ? (
+										'Inscribirse Gratis'
+									) : !isSubscriptionActive ? (
+										'Obtener Suscripción'
+									) : (
+										'Inscribirse al Curso'
+									)}
 								</span>
 							</Button>
 						)}
