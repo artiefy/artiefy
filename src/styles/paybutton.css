@@ -1,0 +1,413 @@
+/* From Uiverse.io by Ashon-G */
+.uiverse {
+	--duration: 7s;
+	--easing: linear;
+	--c-color-1: rgba(255, 163, 26, 0.7);
+	--c-color-2: #1a23ff;
+	--c-color-3: #e21bda;
+	--c-color-4: rgba(255, 232, 26, 0.7);
+	--c-shadow: rgba(255, 223, 87, 0.5);
+	--c-shadow-inset-top: rgba(255, 223, 52, 0.9);
+	--c-shadow-inset-bottom: rgba(255, 250, 215, 0.8);
+	--c-radial-inner: #ffd215;
+	--c-radial-outer: #fff172;
+	--c-color: #fff;
+	width: auto;
+	min-width: fit-content;
+	max-width: none;
+	margin: 0;
+	padding: 0 24px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 36px; /* Match the height of the other button */
+	-webkit-tap-highlight-color: transparent;
+	appearance: none;
+	-webkit-appearance: none;
+	outline: none;
+	position: relative;
+	cursor: pointer;
+	border: none;
+	border-radius: 24px;
+	text-align: center;
+	font-weight: 700;
+	font-size: 14px;
+	letter-spacing: 0.02em;
+	line-height: 1.5;
+	color: var(--c-color);
+	background: radial-gradient(
+		circle,
+		var(--c-radial-inner),
+		var(--c-radial-outer) 80%
+	);
+	box-shadow: 0 0 14px var(--c-shadow);
+}
+
+.uiverse:before {
+	content: '';
+	pointer-events: none;
+	position: absolute;
+	z-index: 3;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	border-radius: 24px;
+	box-shadow:
+		inset 0 3px 12px var(--c-shadow-inset-top),
+		inset 0 -3px 4px var(--c-shadow-inset-bottom);
+}
+
+.uiverse .wrapper {
+	-webkit-mask-image: -webkit-radial-gradient(white, black);
+	mask-image: radial-gradient(white, black);
+	overflow: hidden;
+	border-radius: 24px;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	min-width: 0;
+}
+
+.uiverse .wrapper span {
+	display: inline-block;
+	position: relative;
+	z-index: 1;
+}
+
+.uiverse:hover {
+	--duration: 1400ms;
+}
+
+.uiverse:active {
+	transform: scale(0.95);
+	transition: transform 0.1s ease;
+}
+
+.uiverse .wrapper .circle {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%; /* Changed from 40px to 100% */
+	height: 100%; /* Changed from 40px to 100% */
+	border-radius: 50%;
+	filter: blur(var(--blur, 8px));
+	background: var(--background, transparent);
+	transform: translate(var(--x, 0), var(--y, 0)) translateZ(0);
+	animation: var(--animation, none) var(--duration) var(--easing) infinite;
+}
+
+.uiverse .wrapper .circle.circle-1,
+.uiverse .wrapper .circle.circle-9,
+.uiverse .wrapper .circle.circle-10 {
+	--background: var(--c-color-4);
+}
+
+.uiverse .wrapper .circle.circle-3,
+.uiverse .wrapper .circle.circle-4 {
+	--background: var(--c-color-2);
+	--blur: 14px;
+}
+
+.uiverse .wrapper .circle.circle-5,
+.uiverse .wrapper .circle.circle-6 {
+	--background: var(--c-color-3);
+	--blur: 16px;
+}
+
+.uiverse .wrapper .circle.circle-2,
+.uiverse .wrapper .circle.circle-7,
+.uiverse .wrapper .circle.circle-8,
+.uiverse .wrapper .circle.circle-11,
+uiverse .wrapper .circle.circle-12 {
+	--background: var(--c-color-1);
+	--blur: 12px;
+}
+
+/* Circle Positions */
+.uiverse .wrapper .circle.circle-1 {
+	--x: 0%;
+	--y: -40%;
+	--animation: circle-1;
+}
+
+.uiverse .wrapper .circle.circle-2 {
+	--x: 92%;
+	--y: 8%;
+	--animation: circle-2;
+}
+
+.uiverse .wrapper .circle.circle-3 {
+	--x: -12px;
+	--y: -12px;
+	--animation: circle-3;
+}
+
+.uiverse .wrapper .circle.circle-4 {
+	--x: 80px;
+	--y: -12px;
+	--animation: circle-4;
+}
+
+.uiverse .wrapper .circle.circle-5 {
+	--x: 12px;
+	--y: -4px;
+	--animation: circle-5;
+}
+
+.uiverse .wrapper .circle.circle-6 {
+	--x: 56px;
+	--y: 16px;
+	--animation: circle-6;
+}
+
+.uiverse .wrapper .circle.circle-7 {
+	--x: 8px;
+	--y: 28px;
+	--animation: circle-7;
+}
+
+.uiverse .wrapper .circle.circle-8 {
+	--x: 28px;
+	--y: -4px;
+	--animation: circle-8;
+}
+
+.uiverse .wrapper .circle.circle-9 {
+	--x: 20px;
+	--y: -12px;
+	--animation: circle-9;
+}
+
+.uiverse .wrapper .circle.circle-10 {
+	--x: 64px;
+	--y: 16px;
+	--animation: circle-10;
+}
+
+.uiverse .wrapper .circle.circle-11 {
+	--x: 4px;
+	--y: 4px;
+	--animation: circle-11;
+}
+
+.uiverse .wrapper .circle.circle-12 {
+	--blur: 14px;
+	--x: 52px;
+	--y: 4px;
+	--animation: circle-12;
+}
+
+/* Circle Animations */
+@keyframes circle-1 {
+	33% {
+		transform: translate(0%, 16%) translateZ(0);
+	}
+	66% {
+		transform: translate(12%, 64%) translateZ(0);
+	}
+}
+
+@keyframes circle-2 {
+	33% {
+		transform: translate(80%, -10%) translateZ(0);
+	}
+	66% {
+		transform: translate(72%, -48%) translateZ(0);
+	}
+}
+
+@keyframes circle-3 {
+	33% {
+		transform: translate(20px, 12px) translateZ(0);
+	}
+	66% {
+		transform: translate(12px, 4px) translateZ(0);
+	}
+}
+
+@keyframes circle-4 {
+	33% {
+		transform: translate(76px, -12px) translateZ(0);
+	}
+	66% {
+		transform: translate(112px, -8px) translateZ(0);
+	}
+}
+
+@keyframes circle-5 {
+	33% {
+		transform: translate(84px, 28px) translateZ(0);
+	}
+	66% {
+		transform: translate(40px, -32px) translateZ(0);
+	}
+}
+
+@keyframes circle-6 {
+	33% {
+		transform: translate(28px, -16px) translateZ(0);
+	}
+	66% {
+		transform: translate(76px, -56px) translateZ(0);
+	}
+}
+
+@keyframes circle-7 {
+	33% {
+		transform: translate(8px, 28px) translateZ(0);
+	}
+	66% {
+		transform: translate(20px, -60px) translateZ(0);
+	}
+}
+
+@keyframes circle-8 {
+	33% {
+		transform: translate(32px, -4px) translateZ(0);
+	}
+	66% {
+		transform: translate(56px, -20px) translateZ(0);
+	}
+}
+
+@keyframes circle-9 {
+	33% {
+		transform: translate(20px, -12px) translateZ(0);
+	}
+	66% {
+		transform: translate(80px, -8px) translateZ(0);
+	}
+}
+
+@keyframes circle-10 {
+	33% {
+		transform: translate(68px, 20px) translateZ(0);
+	}
+	66% {
+		transform: translate(100px, 28px) translateZ(0);
+	}
+}
+
+@keyframes circle-11 {
+	33% {
+		transform: translate(4px, 4px) translateZ(0);
+	}
+	66% {
+		transform: translate(68px, 20px) translateZ(0);
+	}
+}
+
+@keyframes circle-12 {
+	33% {
+		transform: translate(56px, 0px) translateZ(0);
+	}
+	66% {
+		transform: translate(60px, -32px) translateZ(0);
+	}
+}
+
+.paybutton {
+	font-size: 1.4em;
+	padding: 0.6em 0.8em;
+	border-radius: 0.5em;
+	border: none;
+	background-color: #000;
+	color: #fff;
+	cursor: pointer;
+	box-shadow: 2px 2px 3px #000000b4;
+}
+
+.payment-btn-wrapper {
+	position: relative;
+	padding: 3px;
+	background: linear-gradient(90deg, #03a9f4, #f441a5);
+	border-radius: 0.9em;
+	transition: all 0.4s ease;
+}
+
+.payment-btn-wrapper::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	border-radius: 0.9em;
+	z-index: -10;
+	filter: blur(0);
+	transition: filter 0.4s ease;
+}
+
+.payment-btn-wrapper:hover::before {
+	background: linear-gradient(90deg, #03a9f4, #f441a5);
+	filter: blur(1.2em);
+}
+
+.payment-btn-wrapper:active::before {
+	filter: blur(0.2em);
+}
+
+/* Common button styles for all course buttons */
+.course-btn {
+	font-size: 1.4em;
+	font-weight: 700; /* Make font bolder */
+	padding: 0.6em 0.8em;
+	border-radius: 0.5em;
+	border: none;
+	background-color: #000;
+	color: #fff;
+	cursor: pointer;
+	box-shadow: 2px 2px 3px #000000b4;
+	transition: transform 0.2s ease; /* Add transition for smooth hover effect */
+}
+
+.course-btn:hover {
+	transform: scale(1.02); /* Slight scale up on hover */
+}
+
+.course-btn:disabled {
+	opacity: 0.7;
+	cursor: not-allowed;
+	transform: none; /* No transform when disabled */
+}
+
+.btn-wrapper {
+	position: relative;
+	padding: 3px;
+	background: linear-gradient(90deg, #03a9f4, #f441a5);
+	border-radius: 0.9em;
+	transition: all 0.4s ease;
+	display: inline-block;
+}
+
+.btn-wrapper::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	margin: auto;
+	border-radius: 0.9em;
+	z-index: -10;
+	filter: blur(0);
+	transition: filter 0.4s ease;
+}
+
+.btn-wrapper:hover::before {
+	background: linear-gradient(90deg, #03a9f4, #f441a5);
+	filter: blur(1.2em);
+}
+
+.btn-wrapper:active::before {
+	filter: blur(0.2em);
+}
+
+/* Add hover effect to button wrapper itself */
+.btn-wrapper:hover {
+	transform: translateY(-1px); /* Slight lift effect */
+	box-shadow: 0 5px 15px rgba(3, 169, 244, 0.3);
+}
+
+.btn-wrapper:active {
+	transform: translateY(0);
+}

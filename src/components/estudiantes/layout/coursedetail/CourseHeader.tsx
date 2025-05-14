@@ -44,7 +44,7 @@ import { GradeModal } from './CourseGradeModal';
 
 import type { Course, CourseMateria } from '~/types';
 
-import '~/styles/buttonsuscription.css';
+import '~/styles/paybutton.css';
 
 export const revalidate = 3600;
 
@@ -486,31 +486,54 @@ export function CourseHeader({
 								Educador
 							</em>
 						</div>
-						{/* Moved grade button here */}
-						<Button
-							onClick={() => setIsGradeModalOpen(true)}
-							disabled={!canAccessGrades}
-							className={cn(
-								'h-9 w-full shrink-0 px-4 font-semibold sm:w-auto',
-								canAccessGrades
-									? 'bg-blue-500 text-white hover:bg-blue-600'
-									: 'bg-gray-400/50 text-gray-700'
-							)}
-							aria-label={
-								!isEnrolled
-									? 'Debes inscribirte al curso'
-									: 'Completa todas las clases para ver tus calificaciones'
-							}
-						>
-							<FaTrophy className="mr-2 h-4 w-4" />
-							<span className="text-sm font-semibold">Mis Calificaciones</span>
-						</Button>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex flex-col items-end gap-4">
 						<Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
 							{course.modalidad?.name}
 						</Badge>
 					</div>
+				</div>
+
+				{/* New buttons container */}
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					{/* Grade button */}
+					<Button
+						onClick={() => setIsGradeModalOpen(true)}
+						disabled={!canAccessGrades}
+						className={cn(
+							'h-9 shrink-0 px-4 font-semibold sm:w-auto',
+							canAccessGrades
+								? 'bg-blue-500 text-white hover:bg-blue-600'
+								: 'bg-gray-400/50 text-gray-700'
+						)}
+						aria-label={
+							!isEnrolled
+								? 'Debes inscribirte al curso'
+								: 'Completa todas las clases para ver tus calificaciones'
+						}
+					>
+						<FaTrophy className="mr-2 h-4 w-4" />
+						<span className="text-sm font-semibold">Mis Calificaciones</span>
+					</Button>
+
+					{/* Purchase button */}
+					{course.courseTypeId === 4 && course.individualPrice && (
+						<div className="btn-wrapper whitespace-nowrap">
+							<button
+								className="course-btn"
+								onClick={handleEnrollClick}
+								disabled={isEnrolling || isEnrollClicked}
+							>
+								<span className="text-white">
+									{isEnrolling || isEnrollClicked ? (
+										<Icons.spinner className="text-white" />
+									) : (
+										'Comprar Curso'
+									)}
+								</span>
+							</button>
+						</div>
+					)}
 				</div>
 
 				{/* Course description y botones responsivos */}
@@ -585,56 +608,49 @@ export function CourseHeader({
 					isSignedIn={!!isSignedIn} // Convert to boolean with !! operator
 				/>
 
-				{/* Enrollment buttons - Simplificado sin skeleton */}
+				{/* Enrollment buttons */}
 				<div className="flex justify-center pt-4">
 					<div className="relative h-32 w-64">
 						{isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
-								<Button
-									className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
-									disabled={true}
-								>
-									<FaCheck className="mr-2" /> Suscrito Al Curso
-								</Button>
-								<Button
-									className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-									onClick={onUnenrollAction}
-									disabled={isUnenrolling}
-								>
-									{isUnenrolling ? (
-										<Icons.spinner
-											className="text-white"
-											style={{ width: '35px', height: '35px' }}
-										/>
-									) : (
-										'Cancelar Suscripción'
-									)}
-								</Button>
+								<div className="btn-wrapper">
+									<button className="course-btn" disabled={true}>
+										<FaCheck className="mr-2" /> Suscrito Al Curso
+									</button>
+								</div>
+								<div className="btn-wrapper">
+									<button
+										className="course-btn"
+										onClick={onUnenrollAction}
+										disabled={isUnenrolling}
+									>
+										{isUnenrolling ? (
+											<Icons.spinner
+												className="text-white"
+												style={{ width: '35px', height: '35px' }}
+											/>
+										) : (
+											'Cancelar Suscripción'
+										)}
+									</button>
+								</div>
 							</div>
 						) : (
-							<Button
-								onClick={handleEnrollClick}
-								disabled={isEnrolling || isEnrollClicked}
-								className="subscription-button"
-							>
-								<span>
-									{isEnrolling || isEnrollClicked ? (
-										<Icons.spinner
-											className="text-white"
-											style={{ width: '25px', height: '25px' }}
-										/>
-									) : course.courseTypeId === 4 ? (
-										`Comprar Curso ($${course.individualPrice?.toLocaleString()})`
-									) : course.courseType?.requiredSubscriptionLevel ===
-									  'none' ? (
-										'Inscribirse Gratis'
-									) : !isSubscriptionActive ? (
-										'Obtener Suscripción'
-									) : (
-										'Inscribirse al Curso'
-									)}
-								</span>
-							</Button>
+							<div className="btn-wrapper">
+								<button
+									className="course-btn"
+									onClick={handleEnrollClick}
+									disabled={isEnrolling || isEnrollClicked}
+								>
+									<span className="text-white">
+										{isEnrolling || isEnrollClicked ? (
+											<Icons.spinner className="text-white" />
+										) : (
+											'Comprar Curso'
+										)}
+									</span>
+								</button>
+							</div>
 						)}
 					</div>
 				</div>
