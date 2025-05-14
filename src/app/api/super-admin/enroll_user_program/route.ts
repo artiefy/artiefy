@@ -104,6 +104,12 @@ export async function GET(req: Request) {
 	}
 }
 
+interface EnrollmentData {
+	courseId: number;
+	userId: string;
+	programId: number;
+}
+
 type EnrollmentRequestBody = {
 	userIds: string[];
 	courseIds: string[];
