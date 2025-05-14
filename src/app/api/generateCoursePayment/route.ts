@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
 		const formData = createFormData(
 			auth,
 			{
-				id: body.productId,
-				name: 'Curso Individual',
+				id: body.productId, // Asegurarse que este es el ID del curso
+				name: `Curso: ${body.description}`,
 				amount: body.amount,
 				description: body.description,
 				referenceCode: `curso_${body.productId}_${Date.now()}`,
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 			body.buyerEmail,
 			body.buyerFullName,
 			body.telephone,
-			`${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/myaccount`,
+			`${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${body.productId}`, // URL específica del curso
 			`${process.env.NEXT_PUBLIC_BASE_URL}/api/confirmCoursePayment`
 		);
 

@@ -22,9 +22,14 @@ export function createFormData(
 	responseUrl: string,
 	confirmationUrl: string
 ): FormData {
-	const referenceCode = generateReferenceCode(); // ✅ Se genera aquí en cada compra
+	const referenceCode = product.referenceCode ?? generateReferenceCode();
 	const formattedAmount = formatAmount(product.amount);
 	const currency = 'COP';
+
+	// Determinar URL de respuesta basada en el tipo de producto
+	const finalResponseUrl = product.name.startsWith('Curso:')
+		? `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${product.id}`
+		: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/myaccount`;
 
 	// ✅ Generar firma MD5 con el formato correcto
 	const signature = calculateSignature(
@@ -49,7 +54,7 @@ export function createFormData(
 		buyerEmail: buyerEmail,
 		buyerFullName: buyerFullName,
 		telephone: telephone,
-		responseUrl: responseUrl,
+		responseUrl: finalResponseUrl,
 		confirmationUrl: confirmationUrl,
 	};
 }
