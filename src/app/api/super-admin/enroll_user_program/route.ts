@@ -117,7 +117,7 @@ export async function POST(req: Request) {
 			return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
 		}
 
-		const insertData: { userId: string; courseId: string }[] = [];
+		const insertData: { userId: string; courseId: number }[] = [];
 
 		for (const userId of userIds) {
 			for (const courseId of courseIds) {
@@ -127,13 +127,13 @@ export async function POST(req: Request) {
 					.where(
 						and(
 							eq(enrollments.userId, userId),
-							eq(enrollments.courseId, courseId)
+							eq(enrollments.courseId, parseInt(courseId, 10))
 						)
 					)
 					.limit(1);
 
 				if (existingEnrollment.length === 0) {
-					insertData.push({ userId, courseId });
+					insertData.push({ userId, courseId: Number(courseId) });
 				}
 			}
 		}
