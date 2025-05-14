@@ -35,6 +35,10 @@
     "app/dashboard/super-admin/programs/**/*.ts": {
       "memory": 3009,
       "maxDuration": 60
+    },
+    "app/api/generatePaymentData/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 10
     }
   },
   "crons": [

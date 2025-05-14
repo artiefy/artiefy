@@ -36,6 +36,7 @@ import { blurDataURL } from '~/lib/blurDataUrl';
 import { cn } from '~/lib/utils';
 import { formatDate, type GradesApiResponse } from '~/lib/utils2';
 import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
+import { type Product } from '~/types/payu';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
 import { CourseContent } from './CourseContent';
@@ -108,6 +109,7 @@ export function CourseHeader({
 	const [isLoadingGrade, setIsLoadingGrade] = useState(true);
 	const [isEnrollClicked, setIsEnrollClicked] = useState(false);
 	const [showPaymentModal, setShowPaymentModal] = useState(false);
+	const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
 	// Replace useEffect with useSWR
 	// Improve error handling with proper types
@@ -303,6 +305,9 @@ export function CourseHeader({
 					toast.error('Error en el precio del curso');
 					return;
 				}
+
+				const courseProduct = createProductFromCourse(course);
+				setSelectedProduct(courseProduct);
 				setShowPaymentModal(true);
 				return;
 			}
@@ -368,7 +373,9 @@ export function CourseHeader({
 
 			await onEnrollAction();
 		} catch (error) {
-			console.error('Error enrolling:', error);
+			const errorMessage =
+				error instanceof Error ? error.message : 'Error desconocido';
+			console.error('Error enrolling:', errorMessage);
 			toast.error('Error al inscribirse al curso');
 		} finally {
 			setIsEnrollClicked(false); // Desactivar spinner al finalizar
@@ -646,12 +653,12 @@ export function CourseHeader({
 				/>
 			</CardContent>
 
-			{showPaymentModal && courseProduct && (
+			{showPaymentModal && courseProduct && selectedProduct && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
 					<div className="w-full max-w-lg rounded-lg bg-white p-4">
 						<div className="relative mb-4 flex items-center justify-between">
 							<h3 className="w-full text-center text-xl font-semibold text-gray-900">
-								Comprar Curso
+								Llena este formulario
 								<br />
 								<span className="font-bold">{course.title}</span>
 							</h3>
@@ -662,7 +669,7 @@ export function CourseHeader({
 								<FaTimes className="h-6 w-6" />
 							</button>
 						</div>
-						<PaymentForm selectedProduct={courseProduct} />
+						<PaymentForm selectedProduct={selectedProduct} />
 					</div>
 				</div>
 			)}

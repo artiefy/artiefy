@@ -78,13 +78,17 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
 		setLoading(true);
 
 		try {
-			const response = await fetch('/api/generatePaymentData', {
+			const endpoint = selectedProduct.name.startsWith('Curso:')
+				? '/api/generateCoursePayment'
+				: '/api/generatePaymentData';
+
+			const response = await fetch(endpoint, {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
+				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					productId: selectedProduct.id,
+					amount: selectedProduct.amount,
+					description: selectedProduct.description,
 					buyerEmail,
 					buyerFullName,
 					telephone,

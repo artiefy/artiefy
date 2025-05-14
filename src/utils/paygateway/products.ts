@@ -31,7 +31,7 @@ function createProduct(plan: Plan): Product {
 	};
 }
 
-// Add new function to create product from course
+// Añadir función para crear producto de curso individual
 export function createProductFromCourse(course: {
 	id: number;
 	title: string;
@@ -40,9 +40,9 @@ export function createProductFromCourse(course: {
 	return {
 		id: course.id,
 		name: `Curso: ${course.title}`,
-		amount: course.individualPrice?.toFixed(2) ?? '0.00',
-		description: `Curso: ${course.title}`,
-		referenceCode: `curso_${course.id}_${Date.now()}`, // Agregar ID del curso
+		amount: (course.individualPrice ?? 0).toFixed(2),
+		description: `Curso Individual: ${course.title}`,
+		referenceCode: `curso_${course.id}_${Date.now()}`,
 	};
 }
 
