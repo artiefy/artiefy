@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server';
-import { db } from '~/server/db';
-import { users, courses, enrollments } from '~/server/db/schema';
+
 import { and, eq, sql } from 'drizzle-orm';
 
-import { enrollmentPrograms, programas } from '~/server/db/schema';
+import { db } from '~/server/db';
+import {
+	users,
+	courses,
+	enrollments,
+	enrollmentPrograms,
+	programas,
+} from '~/server/db/schema';
 
 export async function GET(req: Request) {
 	console.log('⏳ Iniciando GET de enrolled_user_program');
+	void req;
 
 	try {
 		// 1. Subquery para última fecha de inscripción por usuario
@@ -97,15 +104,20 @@ export async function GET(req: Request) {
 	}
 }
 
+type EnrollmentRequestBody = {
+	userIds: string[];
+	courseIds: string[];
+};
+
 export async function POST(req: Request) {
 	try {
-		const { userIds, courseIds } = await req.json();
+		const { userIds, courseIds }: EnrollmentRequestBody = await req.json();
 
 		if (!userIds || !courseIds) {
 			return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
 		}
 
-		const insertData = [];
+		const insertData: { userId: string; courseId: string }[] = [];
 
 		for (const userId of userIds) {
 			for (const courseId of courseIds) {

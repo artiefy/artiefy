@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 
 import { useUser } from '@clerk/nextjs';
-import { FaSearch, FaPlus } from 'react-icons/fa';
+import { FaSearch } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/educators/ui/button';
@@ -26,11 +26,8 @@ interface CoursesModels {
 	coverImageKey: string;
 }
 
-
-
 const ForumHome = () => {
 	const { user } = useUser();
-	const [searchQuery, setSearchQuery] = useState('');
 	const [courseId, setCourseId] = useState<number | null>(null);
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
@@ -65,6 +62,8 @@ const ForumHome = () => {
 		const userId = user.id;
 		let coverImageKey = '';
 		let documentKey = '';
+		void coverImageKey;
+		void documentKey;
 
 		try {
 			if (coverImage) {

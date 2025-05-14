@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { useUser } from '@clerk/nextjs';
-import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 import { toast } from 'sonner';
 
 import {

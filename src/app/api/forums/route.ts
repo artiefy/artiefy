@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
 import { eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import nodemailer from 'nodemailer';
+import { v4 as uuidv4 } from 'uuid';
+
 import { db } from '~/server/db';
 import { forums, users, courses } from '~/server/db/schema';
 import {
@@ -161,7 +162,7 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
 	try {
 		const { searchParams } = new URL(req.url);
-		const userId = searchParams.get('userId');
+		void searchParams.get('userId');
 
 		const instructorUser = alias(users, 'instructorUser');
 

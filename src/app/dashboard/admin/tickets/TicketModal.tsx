@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 
 import { useUser } from '@clerk/nextjs';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 import { Modal } from '~/components/shared/Modal';
 
@@ -199,12 +200,22 @@ export default function TicketModal({
 					}),
 					headers: { 'Content-Type': 'application/json' },
 				});
-				const { url, fields, key, uploadType } = await res.json();
+				const {
+					url,
+					fields,
+					key,
+					uploadType,
+				}: {
+					url: string;
+					fields: Record<string, string>;
+					key: string;
+					uploadType: 'simple' | 'put';
+				} = await res.json();
 
 				if (uploadType === 'simple') {
 					const formDataUpload = new FormData();
 					Object.entries(fields).forEach(([k, v]) =>
-						formDataUpload.append(k, v as string)
+						formDataUpload.append(k, v)
 					);
 					formDataUpload.append('file', file);
 					await fetch(url, { method: 'POST', body: formDataUpload });
@@ -261,7 +272,7 @@ export default function TicketModal({
 									Asignar a
 								</label>
 								<select
-									value={formData.assignedToId || ''}
+									value={formData.assignedToId ?? ''}
 									onChange={(e) =>
 										setFormData({ ...formData, assignedToId: e.target.value })
 									}
@@ -394,10 +405,11 @@ export default function TicketModal({
 
 								{formData.coverImageKey && (
 									<div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
-										<img
+										<Image
 											src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${formData.coverImageKey}`}
 											alt="Imagen subida"
-											className="h-full w-full object-contain"
+											fill
+											className="object-contain"
 										/>
 									</div>
 								)}

@@ -22,7 +22,7 @@ interface Post {
 	updatedAt: string | number | Date;
 }
 
-interface Foru {
+interface Foro {
 	id: number;
 	courseId: {
 		id: number;
@@ -38,6 +38,8 @@ interface Foru {
 		name: string;
 		email: string | null;
 	};
+	coverImageKey: string | null; // Added property
+	documentKey: string | null; // Added property
 }
 
 // Crear un nuevo foro para un curso específico

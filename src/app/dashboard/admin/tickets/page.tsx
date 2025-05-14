@@ -1,16 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-
-import { Info, Loader2, Pencil, Plus, Trash2, FileText } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
+import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
-
-import TicketModal from './TicketModal';
 import 'react-toastify/dist/ReactToastify.css';
 
-import ChatList from '../chat/ChatList';
-
-// Types
+import ChatList from '~/app/dashboard/admin/chat/ChatList';
+import TicketModal from './TicketModal';
 
 export interface TicketFormData {
 	email: string;
@@ -93,6 +90,8 @@ export default function TicketsPage() {
 		userName: string;
 		receiverId: string;
 	} | null>(null);
+	void setUnreadConversationIds([]);
+	void selectedChat;
 	const [filterId, setFilterId] = useState('');
 	const [filterEmail, setFilterEmail] = useState('');
 	const [filterAssignedTo, setFilterAssignedTo] = useState('');
@@ -111,7 +110,7 @@ export default function TicketsPage() {
 					);
 					if (!response.ok)
 						throw new Error('No se pudo obtener los comentarios');
-					const data = await response.json();
+					const data: Comment[] = await response.json();
 					setComments(data);
 				} catch (error) {
 					console.error('Error cargando comentarios:', error);
@@ -221,7 +220,7 @@ export default function TicketsPage() {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
 			});
-			const created = await res.json();
+			const created: { id: string } = await res.json();
 
 			// 2. Si el video ya fue subido y hay un key, hacer PUT al endpoint
 			if (data.videoKey) {
@@ -301,7 +300,17 @@ export default function TicketsPage() {
 				return null;
 			}
 
-			const { url, fields, key, uploadType } = await res.json();
+			const {
+				url,
+				fields,
+				key,
+				uploadType,
+			}: {
+				url: string;
+				fields: Record<string, string>;
+				key: string;
+				uploadType: 'simple' | 'put';
+			} = await res.json();
 			console.log('📤 S3 response:', { url, fields, key, uploadType });
 
 			if (!url || !key) {
@@ -311,7 +320,9 @@ export default function TicketsPage() {
 
 			if (uploadType === 'simple') {
 				const formDataUpload = new FormData();
-				Object.entries(fields).forEach(([k, v]) => formDataUpload.append(k, v as string));
+				Object.entries(fields).forEach(([k, v]) =>
+					formDataUpload.append(k, v as string)
+				);
 				formDataUpload.append('file', file);
 				await fetch(url, { method: 'POST', body: formDataUpload });
 			} else {
@@ -375,10 +386,6 @@ export default function TicketsPage() {
 
 	const handleSelectChat = (chatId: string, receiverId: string): void => {
 		setSelectedChat({ id: chatId, receiverId, userName: 'Usuario' });
-	};
-
-	const handleCloseChat = (): void => {
-		setSelectedChat(null);
 	};
 
 	return (
@@ -800,10 +807,11 @@ export default function TicketsPage() {
 														📷 Imagen
 													</p>
 													<div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
-														<img
+														<Image
 															src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.coverImageKey}`}
 															alt="Imagen de soporte"
-															className="h-full w-full object-contain"
+															fill
+															className="object-contain"
 														/>
 													</div>
 												</div>
