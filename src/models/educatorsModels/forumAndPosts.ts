@@ -45,19 +45,23 @@ export async function createForum(
 	courseId: number,
 	title: string,
 	description: string,
-	userId: string
+	userId: string,
+	coverImageKey: string,
+	documentKey: string
 ) {
 	const newForum = await db.insert(forums).values({
 		courseId,
 		title,
 		description,
 		userId,
+		coverImageKey,
+		documentKey,
 	});
 	return newForum;
 }
 
 // Obtener un foro por su id
-export async function getForumById(forumId: number): Promise<Foru | null> {
+export async function getForumById(forumId: number): Promise<Foro | null> {
 	try {
 		const forumRecord = await db
 			.select({
@@ -66,6 +70,8 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
 				title: forums.title,
 				description: forums.description,
 				userId: forums.userId,
+				coverImageKey: forums.coverImageKey, // <--- NUEVO
+				documentKey: forums.documentKey, // <--- NUEVO
 				courseTitle: courses.title,
 				courseDescription: courses.description,
 				courseInstructor: courses.instructor,
@@ -74,16 +80,12 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
 				courseCoverImageKey: courses.coverImageKey,
 			})
 			.from(forums)
-			.leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
-			.leftJoin(users, eq(forums.userId, users.id)) // Unir con la tabla de usuarios
+			.leftJoin(courses, eq(forums.courseId, courses.id))
+			.leftJoin(users, eq(forums.userId, users.id))
 			.where(eq(forums.id, forumId));
 
-		if (forumRecord.length === 0) return null;
-
+		if (!forumRecord.length) return null;
 		const forum = forumRecord[0];
-		if (!forum) {
-			return null;
-		}
 
 		return {
 			id: forum.id,
@@ -101,8 +103,10 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
 			},
 			title: forum.title,
 			description: forum.description ?? '',
+			coverImageKey: forum.coverImageKey ?? '', // <--- NUEVO
+			documentKey: forum.documentKey ?? '', // <--- NUEVO
 		};
-	} catch (error: unknown) {
+	} catch (error) {
 		console.error(error);
 		return null;
 	}
@@ -243,7 +247,6 @@ export async function getAllForums() {
 		return [];
 	}
 }
-
 
 //delete forum by id
 export async function deleteForumById(forumId: number) {

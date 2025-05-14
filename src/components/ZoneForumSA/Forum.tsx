@@ -17,7 +17,7 @@ import {
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
-import { Zone } from '~/components/ZoneForum/Zone';
+import { Zone } from '~/components/ZoneForumSA/Zone';
 
 interface CoursesModels {
 	id: number;
@@ -25,6 +25,8 @@ interface CoursesModels {
 	description: string;
 	coverImageKey: string;
 }
+
+
 
 const ForumHome = () => {
 	const { user } = useUser();

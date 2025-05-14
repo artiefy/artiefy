@@ -24,6 +24,8 @@ interface Foro {
 	id: number;
 	title: string;
 	description: string;
+	coverImageKey?: string; // <--- NUEVO
+	documentKey?: string; // <--- NUEVO
 	userId: {
 		id: string;
 		name: string;
@@ -34,6 +36,7 @@ interface Foro {
 		title: string;
 		descripcion: string;
 		instructor: string;
+		coverImageKey?: string;
 	};
 }
 
@@ -447,7 +450,6 @@ const ForumPage = () => {
 		);
 	}
 
-
 	return (
 		<>
 			<Breadcrumb>
@@ -464,7 +466,7 @@ const ForumPage = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/admin/foro`}
+							href={`/dashboard/super-admin/foro`}
 						>
 							Foros
 						</BreadcrumbLink>
@@ -473,7 +475,7 @@ const ForumPage = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/admin/foro/${forumData?.id}`}
+							href={`/dashboard/super-admin/foro/${forumData?.id}`}
 						>
 							Foro: {forumData?.title}
 						</BreadcrumbLink>
@@ -484,22 +486,59 @@ const ForumPage = () => {
 			<div className="bg-se mt-5 w-full rounded-lg p-4 shadow-lg sm:px-6 lg:px-8">
 				<div className="glow-pulse mt-5 mb-10 w-full rounded-lg">
 					<div className="bg-background w-full rounded-lg px-6 py-8 shadow-xl">
+						{/* Header */}
 						<div className="border-secondary flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
 							<div>
-								<h1 className="text-primary text-2xl font-semibold sm:text-3xl">
+								<h1 className="text-primary text-2xl font-bold sm:text-3xl">
 									{forumData?.title}
 								</h1>
-								<p className="text-secondary mt-1 text-sm">
+								<p className="text-secondary mt-1 text-base leading-relaxed">
 									{forumData?.description}
 								</p>
 							</div>
 							<div className="flex items-center gap-2">
 								<span className="text-secondary text-sm">Educador:</span>
-								<span className="bg-primary text-background rounded-full px-3 py-1 text-sm font-semibold">
-									<strong>{forumData?.userId.name}</strong>
+								<span className="bg-primary text-background rounded-full px-3 py-1 text-sm font-semibold shadow-sm">
+									{forumData?.userId.name}
 								</span>
 							</div>
 						</div>
+
+						{/* Imagen adjunta */}
+						{forumData?.coverImageKey && (
+							<div className="mt-6">
+								<p className="text-sm font-medium text-gray-300">
+									Imagen adjunta
+								</p>
+								<div className="mt-2 overflow-hidden rounded-lg border border-white/10 shadow-lg transition hover:shadow-xl">
+									<img
+										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
+										alt="Imagen adjunta"
+										className="w-full max-w-sm rounded object-cover"
+									/>
+								</div>
+							</div>
+						)}
+
+						{/* Documento adjunto */}
+						{forumData?.documentKey && (
+							<div className="mt-6">
+								<p className="text-sm font-medium text-gray-300">
+									ocumDento adjunto
+								</p>
+								<div className="mt-2 flex items-center gap-3 rounded-lg bg-white/5 p-4 text-sm text-green-300 shadow-inner">
+									<span className="text-xl">📄</span>
+									<a
+										href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.documentKey}`}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="underline hover:text-green-200"
+									>
+										Ver documento
+									</a>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 

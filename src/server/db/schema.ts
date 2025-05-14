@@ -244,6 +244,8 @@ export const forums = pgTable('forums', {
 		.references(() => users.id)
 		.notNull(), // El usuario que crea el foro
 	description: text('description'), // Descripción opcional del foro
+	coverImageKey: text('cover_image_key'), // NUEVO: para imagen
+	documentKey: text('document_key'), // NUEVO: para archivo PDF, Word, etc.
 	createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
 	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
 });
