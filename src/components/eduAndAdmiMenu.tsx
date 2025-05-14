@@ -55,6 +55,18 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			id: 'users',
 			link: '/dashboard/super-admin',
 		},
+		{
+			icon: <FiMessageSquare size={24} />,
+			title: 'Foro',
+			id: 'foro',
+			link: '/dashboard/super-admin/foro',
+		},
+		{
+			icon: <FiMessageSquare size={24} />,
+			title: 'Tickets',
+			id: 'tickets',
+			link: '/dashboard/super-admin/tickets',
+		},
 	];
 
 	const navItemsEducator = [

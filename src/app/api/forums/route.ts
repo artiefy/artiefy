@@ -12,7 +12,6 @@ import {
 import { db } from '~/server/db';
 import { forums, users, courses } from '~/server/db/schema';
 
-
 export async function GET(req: Request) {
 	try {
 		const { searchParams } = new URL(req.url);
@@ -45,7 +44,7 @@ export async function GET(req: Request) {
 			.leftJoin(users, eq(forums.userId, users.id)) // autor del foro
 			.leftJoin(instructorUser, eq(courses.instructor, instructorUser.id));
 
-		const forumData = userId ? query.where(eq(forums.userId, userId)) : query;
+		const forumData = query;
 
 		const results = await forumData;
 

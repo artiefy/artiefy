@@ -447,6 +447,7 @@ const ForumPage = () => {
 		);
 	}
 
+
 	return (
 		<>
 			<Breadcrumb>
@@ -463,7 +464,7 @@ const ForumPage = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/super-admin/foro`}
+							href={`/dashboard/admin/foro`}
 						>
 							Foros
 						</BreadcrumbLink>
@@ -472,7 +473,7 @@ const ForumPage = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/super-admin/foro/${forumData?.id}`}
+							href={`/dashboard/admin/foro/${forumData?.id}`}
 						>
 							Foro: {forumData?.title}
 						</BreadcrumbLink>

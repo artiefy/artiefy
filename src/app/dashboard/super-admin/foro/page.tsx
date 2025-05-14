@@ -25,7 +25,7 @@ export default function page() {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/super-admin/foro"
+							href="/dashboard/admin/foro"
 						>
 							Foros
 						</BreadcrumbLink>
