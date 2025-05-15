@@ -614,14 +614,16 @@ export function CourseHeader({
 					<div className="relative h-32 w-64">
 						{isEnrolled ? (
 							<div className="flex w-full flex-col space-y-4">
-								<div className="btn-wrapper">
-									<button className="course-btn" disabled={true}>
+								{/* Wrap both buttons in a fragment or a div */}
+								<>
+									<Button
+										className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+										disabled={true}
+									>
 										<FaCheck className="mr-2" /> Suscrito Al Curso
-									</button>
-								</div>
-								<div className="btn-wrapper">
-									<button
-										className="course-btn zoom-out-effect"
+									</Button>
+									<Button
+										className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
 										onClick={onUnenrollAction}
 										disabled={isUnenrolling}
 									>
@@ -633,8 +635,8 @@ export function CourseHeader({
 										) : (
 											'Cancelar Suscripción'
 										)}
-									</button>
-								</div>
+									</Button>
+								</>
 							</div>
 						) : (
 							<div className="btn-wrapper">
@@ -646,8 +648,16 @@ export function CourseHeader({
 									<span className="text-white">
 										{isEnrolling || isEnrollClicked ? (
 											<Icons.spinner className="text-white" />
-										) : (
+										) : // Mostrar el texto correcto según el tipo de curso
+										course.courseTypeId === 4 ? (
 											'Comprar Curso'
+										) : course.courseType?.requiredSubscriptionLevel ===
+										  'none' ? (
+											'Inscribirse Gratis'
+										) : !isSubscriptionActive ? (
+											'Obtener Suscripción'
+										) : (
+											'Inscribirse al Curso'
 										)}
 									</span>
 								</button>
