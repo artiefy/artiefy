@@ -19,9 +19,12 @@ export function createFormData(
 	const taxReturnBase = (amount - Number(tax)).toFixed(2);
 	const currency = 'COP';
 
-	// Generar referenceCode único
+	// Generar referenceCode único combinando ID del curso y timestamp
 	const timestamp = Date.now();
-	const referenceCode = `${timestamp}`;
+	const referenceCode =
+		paymentType === 'course'
+			? `C${product.id}T${timestamp}` // Format: C{courseId}T{timestamp}
+			: `${timestamp}`;
 
 	// Generar signature con formato correcto
 	const signature = calculateSignature(

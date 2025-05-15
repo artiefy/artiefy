@@ -56,12 +56,23 @@ export async function POST(req: NextRequest) {
 		}
 
 		if (paymentData.state_pol === '4') {
-			const courseId = parseInt(paymentData.reference_sale);
+			// Extraer courseId del reference_sale usando regex
+			const match = /^C(\d+)T/.exec(paymentData.reference_sale);
+			if (!match) {
+				console.error(
+					'❌ Invalid reference_sale format:',
+					paymentData.reference_sale
+				);
+				throw new Error('Invalid reference_sale format');
+			}
 
-			console.log('✅ Enrolling user in course:', {
-				courseId,
-				email: paymentData.email_buyer,
-			});
+			const courseId = parseInt(match[1], 10);
+			if (isNaN(courseId)) {
+				console.error('❌ Invalid courseId:', match[1]);
+				throw new Error('Invalid courseId');
+			}
+
+			console.log('✅ Extracted courseId:', courseId);
 
 			await enrollUserInCourse(paymentData.email_buyer, courseId);
 
