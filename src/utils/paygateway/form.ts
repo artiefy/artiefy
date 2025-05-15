@@ -5,11 +5,12 @@ import { calculateSignature } from './signature';
 
 // ✅ Función para formatear `amount` correctamente
 function formatAmount(amount: number | string): string {
-	const numAmount = Number(amount);
+	const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
 	if (isNaN(numAmount) || numAmount <= 0) {
 		throw new Error(`Invalid amount: ${amount}`);
 	}
-	return numAmount % 1 === 0 ? numAmount.toFixed(1) : numAmount.toFixed(2);
+	// Asegurar que siempre tenga 2 decimales para PayU
+	return numAmount.toFixed(2);
 }
 
 // ✅ Crear datos del formulario (genera referenceCode dinámico)

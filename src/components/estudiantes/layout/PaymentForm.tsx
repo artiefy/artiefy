@@ -105,7 +105,6 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
 			form.method = 'POST';
 			form.action =
 				'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/';
-			// Removed form.target = '_blank' to open in same window
 
 			for (const key in data) {
 				if (Object.prototype.hasOwnProperty.call(data, key)) {

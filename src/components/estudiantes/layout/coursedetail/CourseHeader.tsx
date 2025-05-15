@@ -45,6 +45,7 @@ import { GradeModal } from './CourseGradeModal';
 import type { Course, CourseMateria } from '~/types';
 
 import '~/styles/paybutton.css';
+import '~/styles/priceindividual.css';
 
 export const revalidate = 3600;
 
@@ -516,24 +517,23 @@ export function CourseHeader({
 						<span className="text-sm font-semibold">Mis Calificaciones</span>
 					</Button>
 
-					{/* Purchase button */}
-					{course.courseTypeId === 4 && course.individualPrice && (
-						<div className="btn-wrapper whitespace-nowrap">
+					{/* Price button with enhanced styling */}
+					{course.courseTypeId === 4 &&
+						course.individualPrice &&
+						!isEnrolled && (
 							<button
-								className="course-btn"
 								onClick={handleEnrollClick}
-								disabled={isEnrolling || isEnrollClicked}
+								data-text={`$${course.individualPrice.toLocaleString()}`}
+								className="priceindividual zoom-out-effect"
 							>
-								<span className="text-white">
-									{isEnrolling || isEnrollClicked ? (
-										<Icons.spinner className="text-white" />
-									) : (
-										'Comprar Curso'
-									)}
+								<span className="actual-text">
+									&nbsp;${course.individualPrice.toLocaleString()}&nbsp;
+								</span>
+								<span className="hover-text" aria-hidden="true">
+									&nbsp;${course.individualPrice.toLocaleString()}&nbsp;
 								</span>
 							</button>
-						</div>
-					)}
+						)}
 				</div>
 
 				{/* Course description y botones responsivos */}
@@ -543,6 +543,7 @@ export function CourseHeader({
 							{course.description ?? 'No hay descripción disponible.'}
 						</p>
 					</div>
+					{/* Eliminar el botón de compra de aquí */}
 				</div>
 
 				{/* Botón de certificado con texto descriptivo */}
@@ -620,7 +621,7 @@ export function CourseHeader({
 								</div>
 								<div className="btn-wrapper">
 									<button
-										className="course-btn"
+										className="course-btn zoom-out-effect"
 										onClick={onUnenrollAction}
 										disabled={isUnenrolling}
 									>
@@ -638,7 +639,7 @@ export function CourseHeader({
 						) : (
 							<div className="btn-wrapper">
 								<button
-									className="course-btn"
+									className="course-btn zoom-out-effect"
 									onClick={handleEnrollClick}
 									disabled={isEnrolling || isEnrollClicked}
 								>

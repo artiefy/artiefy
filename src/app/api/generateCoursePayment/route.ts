@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { env } from '~/env';
 import { getAuthConfig } from '~/utils/paygateway/auth';
 import { createFormData } from '~/utils/paygateway/form';
 
@@ -16,23 +17,29 @@ export async function POST(req: NextRequest) {
 	try {
 		const body = (await req.json()) as RequestBody;
 
+		// Asegurar que el monto se envía correctamente a PayU
+		const formattedAmount = Number(body.amount).toFixed(2);
+
 		const auth = getAuthConfig();
+		const referenceCode = `curso_${body.productId}_${Date.now()}`;
+
 		const formData = createFormData(
 			auth,
 			{
-				id: body.productId, // Asegurarse que este es el ID del curso
-				name: `Curso: ${body.description}`,
-				amount: body.amount,
-				description: body.description,
-				referenceCode: `curso_${body.productId}_${Date.now()}`,
+				id: body.productId,
+				name: body.description,
+				amount: formattedAmount, // Aquí ya está formateado correctamente
+				description: `Curso Individual: ${body.description}`,
+				referenceCode: referenceCode,
 			},
 			body.buyerEmail,
 			body.buyerFullName,
 			body.telephone,
-			`${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${body.productId}`, // URL específica del curso
-			`${process.env.NEXT_PUBLIC_BASE_URL}/api/confirmCoursePayment`
+			`${env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${body.productId}`,
+			`${env.NEXT_PUBLIC_BASE_URL}/api/confirmPayment` // Usar la misma ruta de confirmación que los planes
 		);
 
+		console.log('Generated payment data:', formData);
 		return NextResponse.json(formData);
 	} catch (error) {
 		console.error('Error generating payment data:', error);

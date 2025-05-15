@@ -13,33 +13,24 @@ interface PaymentData {
 	reference_sale: string;
 	value: string;
 	currency: string;
-	sign: string; // ✅ Ahora siempre es un string
+	sign: string;
 	transaction_id: string;
 	description: string;
 }
 
 export async function POST(req: NextRequest) {
-	if (req.method !== 'POST') {
-		return NextResponse.json(
-			{ message: 'Method not allowed' },
-			{ status: 405 }
-		);
-	}
-
 	try {
 		const formData = await req.formData();
 
-		// ✅ Verificar que `sign` existe antes de asignarlo
 		const sign = formData.get('sign');
 		if (!sign || typeof sign !== 'string') {
-			console.error('❌ Error: No se recibió la firma.');
+			console.error('❌ Error: No signature received');
 			return NextResponse.json(
 				{ message: 'Missing signature' },
 				{ status: 400 }
 			);
 		}
 
-		// ✅ Ahora `sign` nunca será undefined
 		const paymentData: PaymentData = {
 			email_buyer: formData.get('email_buyer') as string,
 			state_pol: formData.get('state_pol') as string,
@@ -47,42 +38,50 @@ export async function POST(req: NextRequest) {
 			reference_sale: formData.get('reference_sale') as string,
 			value: formData.get('value') as string,
 			currency: formData.get('currency') as string,
-			sign: sign, // ✅ Garantizamos que sign es `string`
+			sign: sign,
 			transaction_id: formData.get('transaction_id') as string,
 			description: formData.get('description') as string,
 		};
 
-		console.log('✅ Datos recibidos de PayU:', paymentData);
+		console.log('✅ Payment data received:', paymentData);
 
 		if (!verifySignature(paymentData)) {
-			console.error('❌ Firma inválida.');
+			console.error('❌ Invalid signature');
 			return NextResponse.json(
 				{ message: 'Invalid signature' },
 				{ status: 400 }
 			);
 		}
 
+		// Estado 4 significa "Aprobada"
 		if (paymentData.state_pol === '4') {
-			// Verificar si es un curso individual por la descripción
-			if (paymentData.description?.startsWith('Curso:')) {
+			// Verificar si es un curso individual
+			if (paymentData.reference_sale.startsWith('curso_')) {
 				const courseId = extractCourseId(paymentData.reference_sale);
 				if (!courseId) {
 					throw new Error('Invalid course reference');
 				}
+				console.log('✅ Enrolling user in course:', courseId);
 				await enrollUserInCourse(paymentData.email_buyer, courseId);
 			} else {
-				// Es una suscripción normal
+				// Es una suscripción
 				await updateUserSubscription(paymentData);
 			}
-		} else {
-			console.warn(
-				`⚠️ Pago con estado ${paymentData.state_pol}, no se actualiza suscripción.`
-			);
+
+			return NextResponse.json({
+				message: 'Payment confirmed',
+				status: 'APPROVED',
+				reference: paymentData.reference_sale,
+			});
 		}
 
-		return NextResponse.json({ message: 'Payment confirmed' });
+		console.warn(`⚠️ Payment status ${paymentData.state_pol} received`);
+		return NextResponse.json({
+			message: 'Payment not approved',
+			status: paymentData.state_pol,
+		});
 	} catch (error) {
-		console.error('❌ Error en el endpoint de confirmación:', error);
+		console.error('❌ Error in payment confirmation:', error);
 		return NextResponse.json(
 			{ error: 'Internal Server Error' },
 			{ status: 500 }
@@ -90,7 +89,6 @@ export async function POST(req: NextRequest) {
 	}
 }
 
-// Función auxiliar para extraer el ID del curso
 function extractCourseId(reference: string): number {
 	const match = /curso_(\d+)/.exec(reference);
 	return match ? parseInt(match[1]) : 0;
