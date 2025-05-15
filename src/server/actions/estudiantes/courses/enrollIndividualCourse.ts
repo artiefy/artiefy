@@ -32,6 +32,7 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
 		});
 
 		if (existingEnrollment) {
+			console.log('ℹ️ User already enrolled:', { userEmail, courseId });
 			return { success: true, message: 'Usuario ya inscrito' };
 		}
 
@@ -58,17 +59,27 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
 			);
 		});
 
-		// 3. Crear progreso para cada lección
+		// 3. Crear progreso para cada lección, verificando duplicados
 		for (const [index, lesson] of sortedLessons.entries()) {
-			await db.insert(userLessonsProgress).values({
-				userId: user.id,
-				lessonId: lesson.id,
-				progress: 0,
-				isCompleted: false,
-				isLocked: index !== 0,
-				isNew: true,
-				lastUpdated: new Date(),
+			// Verificar si ya existe un progreso para esta lección
+			const existingProgress = await db.query.userLessonsProgress.findFirst({
+				where: and(
+					eq(userLessonsProgress.userId, user.id),
+					eq(userLessonsProgress.lessonId, lesson.id)
+				),
 			});
+
+			if (!existingProgress) {
+				await db.insert(userLessonsProgress).values({
+					userId: user.id,
+					lessonId: lesson.id,
+					progress: 0,
+					isCompleted: false,
+					isLocked: index !== 0,
+					isNew: true,
+					lastUpdated: new Date(),
+				});
+			}
 		}
 
 		console.log('✅ Enrollment successful:', { userEmail, courseId });
