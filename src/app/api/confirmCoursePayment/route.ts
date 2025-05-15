@@ -56,31 +56,49 @@ export async function POST(req: NextRequest) {
 		}
 
 		if (paymentData.state_pol === '4') {
-			// Extraer courseId del reference_sale usando regex
 			const match = /^C(\d+)T/.exec(paymentData.reference_sale);
 			if (!match) {
 				console.error(
-					'❌ Invalid reference_sale format:',
+					'❌ Invalid reference format:',
 					paymentData.reference_sale
 				);
-				throw new Error('Invalid reference_sale format');
+				return NextResponse.json(
+					{ error: 'Invalid reference format' },
+					{ status: 400 }
+				);
 			}
 
 			const courseId = parseInt(match[1], 10);
-			if (isNaN(courseId)) {
-				console.error('❌ Invalid courseId:', match[1]);
-				throw new Error('Invalid courseId');
-			}
-
-			console.log('✅ Extracted courseId:', courseId);
-
-			await enrollUserInCourse(paymentData.email_buyer, courseId);
-
-			return NextResponse.json({
-				message: 'Course payment confirmed and enrollment successful',
-				status: 'APPROVED',
+			console.log('✅ Processing enrollment:', {
 				courseId,
+				email: paymentData.email_buyer,
 			});
+
+			try {
+				const result = await enrollUserInCourse(
+					paymentData.email_buyer,
+					courseId
+				);
+
+				return NextResponse.json({
+					message: 'Course payment confirmed and enrollment successful',
+					status: 'APPROVED',
+					courseId,
+					result,
+				});
+			} catch (enrollError) {
+				console.error('❌ Enrollment failed:', enrollError);
+				return NextResponse.json(
+					{
+						error: 'Enrollment failed',
+						details:
+							enrollError instanceof Error
+								? enrollError.message
+								: 'Unknown error',
+					},
+					{ status: 500 }
+				);
+			}
 		}
 
 		return NextResponse.json({
