@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 			body.buyerFullName,
 			body.telephone,
 			`${env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${body.productId}`,
-			`${env.NEXT_PUBLIC_BASE_URL}/api/confirmPayment`
+			`${env.NEXT_PUBLIC_BASE_URL}/api/confirmCoursePayment` // Cambiado a confirmCoursePayment
 		);
 
 		console.log('Generated payment data:', formData);

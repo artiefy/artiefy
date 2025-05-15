@@ -78,6 +78,7 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
 		setLoading(true);
 
 		try {
+			// Determinar el endpoint correcto
 			const endpoint = selectedProduct.name.startsWith('Curso:')
 				? '/api/generateCoursePayment'
 				: '/api/generatePaymentData';
