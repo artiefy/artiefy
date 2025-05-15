@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 			body.buyerFullName,
 			body.telephone,
 			env.RESPONSE_URL,
-			env.CONFIRMATION_URL
+			'plan' // Specify payment type as plan
 		);
 
 		return NextResponse.json(formData);

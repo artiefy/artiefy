@@ -33,13 +33,12 @@ export async function POST(req: NextRequest) {
 				name: cleanDescription,
 				amount: formattedAmount,
 				description: cleanDescription, // Usar la descripción limpia
-				// No incluir referenceCode aquí, dejar que se genere automáticamente
 			},
 			body.buyerEmail,
 			body.buyerFullName,
 			body.telephone,
 			`${env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${body.productId}`,
-			`${env.NEXT_PUBLIC_BASE_URL}/api/confirmCoursePayment` // Cambiado a confirmCoursePayment
+			'course' // Specify payment type as course
 		);
 
 		console.log('Generated payment data:', formData);

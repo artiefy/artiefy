@@ -1,3 +1,4 @@
+import { env } from '~/env';
 import { type FormData, type Auth, type Product } from '~/types/payu';
 
 import { calculateSignature } from './signature';
@@ -9,7 +10,7 @@ export function createFormData(
 	buyerFullName: string,
 	telephone: string,
 	responseUrl: string,
-	confirmationUrl: string
+	paymentType: 'course' | 'plan' // Changed from boolean to union type
 ): FormData {
 	// Calcular montos con precisión
 	const amount = Number(product.amount);
@@ -31,6 +32,18 @@ export function createFormData(
 		currency
 	);
 
+	// Select correct confirmation URL based on payment type
+	const confirmationUrl =
+		paymentType === 'course'
+			? env.CONFIRMATION_URL_COURSES
+			: env.CONFIRMATION_URL_PLANS;
+
+	console.log('🔄 Using confirmation URL:', {
+		type: paymentType,
+		url: confirmationUrl,
+		referenceCode,
+	});
+
 	return {
 		merchantId: auth.merchantId,
 		accountId: auth.accountId,
@@ -46,6 +59,6 @@ export function createFormData(
 		buyerFullName,
 		telephone,
 		responseUrl,
-		confirmationUrl,
-	};
+		confirmationUrl, // Esta URL determinará a qué endpoint se envía la confirmación
+	} satisfies FormData;
 }

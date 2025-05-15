@@ -58,10 +58,6 @@ export async function POST(req: NextRequest) {
 		if (paymentData.state_pol === '4') {
 			const courseId = parseInt(paymentData.reference_sale);
 
-			if (isNaN(courseId)) {
-				throw new Error('Invalid course reference');
-			}
-
 			console.log('✅ Enrolling user in course:', {
 				courseId,
 				email: paymentData.email_buyer,

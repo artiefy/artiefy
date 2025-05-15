@@ -55,7 +55,7 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
 				courseId: courseId,
 				enrolledAt: new Date(),
 				completed: false,
-				isPermanent: true,
+				isPermanent: true, // Importante para cursos individuales
 			});
 
 			// 2. Obtener y ordenar lecciones
