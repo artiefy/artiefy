@@ -17,26 +17,29 @@ export async function POST(req: NextRequest) {
 	try {
 		const body = (await req.json()) as RequestBody;
 
-		// Asegurar que el monto se envía correctamente a PayU
-		const formattedAmount = Number(body.amount).toFixed(2);
+		// Limpiar la descripción - quitar "Curso Individual:"
+		const cleanDescription = body.description.replace(
+			/^Curso Individual:\s*/i,
+			''
+		);
 
 		const auth = getAuthConfig();
-		const referenceCode = `curso_${body.productId}_${Date.now()}`;
+		const formattedAmount = Number(body.amount).toFixed(2);
 
 		const formData = createFormData(
 			auth,
 			{
 				id: body.productId,
-				name: body.description,
-				amount: formattedAmount, // Aquí ya está formateado correctamente
-				description: `Curso Individual: ${body.description}`,
-				referenceCode: referenceCode,
+				name: cleanDescription,
+				amount: formattedAmount,
+				description: cleanDescription, // Usar la descripción limpia
+				// No incluir referenceCode aquí, dejar que se genere automáticamente
 			},
 			body.buyerEmail,
 			body.buyerFullName,
 			body.telephone,
 			`${env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${body.productId}`,
-			`${env.NEXT_PUBLIC_BASE_URL}/api/confirmPayment` // Usar la misma ruta de confirmación que los planes
+			`${env.NEXT_PUBLIC_BASE_URL}/api/confirmPayment`
 		);
 
 		console.log('Generated payment data:', formData);

@@ -7,6 +7,12 @@ export function calculateSignature(
 	amount: string,
 	currency: string
 ): string {
-	const data = [apiKey, merchantId, referenceCode, amount, currency].join('~');
+	// Asegurar que amount tenga dos decimales
+	const formattedAmount = Number(amount).toFixed(2);
+
+	// Construir la cadena exactamente como especifica PayU
+	const data = `${apiKey}~${merchantId}~${referenceCode}~${formattedAmount}~${currency}`;
+
+	// Usar MD5 como especifica la documentación
 	return crypto.createHash('md5').update(data).digest('hex');
 }

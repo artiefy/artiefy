@@ -1,19 +1,7 @@
 import { type FormData, type Auth, type Product } from '~/types/payu';
 
-import { generateReferenceCode } from './referenceCode';
 import { calculateSignature } from './signature';
 
-// ✅ Función para formatear `amount` correctamente
-function formatAmount(amount: number | string): string {
-	const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-	if (isNaN(numAmount) || numAmount <= 0) {
-		throw new Error(`Invalid amount: ${amount}`);
-	}
-	// Asegurar que siempre tenga 2 decimales para PayU
-	return numAmount.toFixed(2);
-}
-
-// ✅ Crear datos del formulario (genera referenceCode dinámico)
 export function createFormData(
 	auth: Auth,
 	product: Product,
@@ -23,18 +11,18 @@ export function createFormData(
 	responseUrl: string,
 	confirmationUrl: string
 ): FormData {
-	const referenceCode = product.referenceCode ?? generateReferenceCode();
-	const formattedAmount = formatAmount(product.amount);
+	// Calcular montos con precisión
+	const amount = Number(product.amount);
+	const formattedAmount = amount.toFixed(2);
+	const tax = Math.round(amount * 0.19).toFixed(2); // 19% IVA
+	const taxReturnBase = (amount - Number(tax)).toFixed(2);
 	const currency = 'COP';
 
-	// Usar el responseUrl proporcionado o crear uno basado en el tipo de producto
-	const finalResponseUrl =
-		responseUrl ||
-		(product.name.startsWith('Curso:')
-			? `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/cursos/${product.id}`
-			: `${process.env.NEXT_PUBLIC_BASE_URL}/estudiantes/myaccount`);
+	// Generar referenceCode único
+	const timestamp = Date.now();
+	const referenceCode = `${timestamp}`;
 
-	// ✅ Generar firma MD5 con el formato correcto
+	// Generar signature con formato correcto
 	const signature = calculateSignature(
 		auth.apiKey,
 		auth.merchantId,
@@ -47,17 +35,17 @@ export function createFormData(
 		merchantId: auth.merchantId,
 		accountId: auth.accountId,
 		description: product.description,
-		referenceCode: referenceCode,
+		referenceCode,
 		amount: formattedAmount,
-		tax: '3193',
-		taxReturnBase: '16806',
-		currency: currency,
-		signature: signature,
+		tax,
+		taxReturnBase,
+		currency,
+		signature,
 		test: '1',
-		buyerEmail: buyerEmail,
-		buyerFullName: buyerFullName,
-		telephone: telephone,
-		responseUrl: finalResponseUrl,
-		confirmationUrl: confirmationUrl,
+		buyerEmail,
+		buyerFullName,
+		telephone,
+		responseUrl,
+		confirmationUrl,
 	};
 }

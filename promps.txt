@@ -78,35 +78,28 @@ It can also happen if the client has a browser extension installed which messes 
 https://react.dev/link/hydration-mismatch
 
   ...
-    <Page>
-      <Script>
-      <div className="flex min-h..." style={{...}}>
-        <Header>
-          <header className="py-4">
-            <div className="container ...">
-              <div className="flex items...">
-                <div className="hidden w-f...">
-                  <div>
-                  <LinkComponent>
-                  <LinkComponent>
-                  <LinkComponent>
-                  <LinkComponent>
-                  <LinkComponent>
-                  <div>
-                    <SignedOut>
-                    <SignedIn>
-                      <ClerkLoading>
-                      <ClerkLoaded>
-                        <withClerk(UserButton) showName={true}>
-                          <UserButton showName={true} component="UserButton" clerk={{clerkjs:{...}, ...}}>
-                            <ClerkHostRenderer component="UserButton" mount={function} unmount={function} ...>
-+                             <div ref={{current:null}} data-clerk-component="UserButton">
-                              ...
+    <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>
+      <RedirectBoundary>
+        <RedirectErrorBoundary router={{...}}>
+          <InnerLayoutRouter url="/estudiant..." tree={[...]} cacheNode={{lazyData:null, ...}} segmentPath={[...]}>
+            <Page>
+              <div>
+                <Header>
+                  <header className="sticky top...">
+                    <div className="container ...">
+                      <div className="hidden w-f...">
+                        <div className="flex w-ful...">
+                          <div>
+                          <div>
+                          <div className="flex justi...">
+                            <div className="flex items...">
+                              <SignedOut>
+                              <SignedIn>
++                               <div className="flex items-center">
+                      ...
+                    ...
                 ...
             ...
-        ...
-      ...
-    ...
 
     at throwOnHydrationMismatch (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:5037:56)
     at beginWork (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:8209:918)
@@ -118,10 +111,8 @@ https://react.dev/link/hydration-mismatch
     at performWorkOnRootViaSchedulerTask (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10826:9)
     at MessagePort.performWorkUntilDeadline (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:1982:64)
     at div (<anonymous>)
-    at ClerkHostRenderer.render (http://localhost:3000/_next/static/chunks/node_modules_f26ba2de._.js:6587:609)
-    at push.[project]/node_modules/@clerk/clerk-react/dist/index.mjs [app-client] (ecmascript) <locals>._UserButton.component (http://localhost:3000/_next/static/chunks/node_modules_f26ba2de._.js:6724:241)
-    at HOC (http://localhost:3000/_next/static/chunks/node_modules_f26ba2de._.js:4796:201)
-    at Header (http://localhost:3000/_next/static/chunks/src_17d6d06f._.js:3335:265)
-    at Page (rsc://React/Server/C:%5CUsers%5CADMIN%5COneDrive%5CDocumentos%5CDOCUMENTOS%20DAVID%5CDEVELOPER%5CAPP%20WEB%20ARTIEFY%5Cartiefy%5C.next%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__02d5e6b4._.js?54:2918:276)
+    at renderAuthButton (http://localhost:3000/_next/static/chunks/src_6ad10f82._.js:807:233)
+    at Header (http://localhost:3000/_next/static/chunks/src_6ad10f82._.js:962:47)
+    at Page (rsc://React/Server/C:%5CUsers%5CADMIN%5COneDrive%5CDocumentos%5CDOCUMENTOS%20DAVID%5CDEVELOPER%5CAPP%20WEB%20ARTIEFY%5Cartiefy%5C.next%5Cserver%5Cchunks%5Cssr%5C%5Broot-of-the-server%5D__07153d65._.js?55:2958:264)
 ---------------------------------------------------------------------------------------
 corregir para que solo salga una session del chatbot y no aparezcan 2 chatbots ala vez

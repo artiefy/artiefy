@@ -41,8 +41,7 @@ export function createProductFromCourse(course: {
 		id: course.id,
 		name: `Curso: ${course.title}`,
 		amount: (course.individualPrice ?? 0).toFixed(2),
-		description: `Curso Individual: ${course.title}`,
-		referenceCode: `curso_${course.id}_${Date.now()}`,
+		description: course.title,
 	};
 }
 
