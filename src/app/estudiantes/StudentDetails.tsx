@@ -237,55 +237,98 @@ export default function StudentDetails({
 									</div>
 									<div className="text-primary absolute inset-0 flex items-center justify-start bg-black/50 p-4">
 										<div
-											className="ml-8 w-[400px] max-w-[90%] rounded-xl bg-white/10 p-6 backdrop-blur-md"
+											className="ml-2 w-[350px] max-w-[90%] rounded-xl bg-white/10 p-4 backdrop-blur-md sm:ml-8 sm:w-[400px] sm:p-6"
 											style={{
 												boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
 												border: '1px solid rgba(255, 255, 255, 0.18)',
 											}}
 										>
-											<h2 className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl">
-												{course.title}
-											</h2>
-											<Badge
-												variant="outline"
-												className="border-primary text-primary mb-2"
-											>
-												{course.category?.name ?? 'Sin categoría'}
-											</Badge>
-											<p className="mb-2 line-clamp-2 text-sm sm:text-base">
-												{truncateDescription(course.description ?? '', 150)}
-											</p>
-											<p className="mb-1 text-sm font-bold sm:text-base">
-												Educador: {course.instructorName}
-											</p>
-											<p className="mb-1 text-sm font-bold text-red-500 sm:text-base">
-												{course.modalidad?.name ?? 'Modalidad no especificada'}
-											</p>
-											<div className="mb-4 flex items-center">
-												<StarIcon className="size-4 text-yellow-500 sm:size-5" />
-												<span className="ml-1 text-sm text-yellow-500 sm:text-base">
-													{(course.rating ?? 0).toFixed(1)}
-												</span>
-											</div>
-											<Link href={`/estudiantes/cursos/${course.id}`}>
-												<button className="uiverse">
-													<div className="wrapper">
-														<span className="text-white">Ir al Curso</span>
-														<div className="circle circle-12" />
-														<div className="circle circle-11" />
-														<div className="circle circle-10" />
-														<div className="circle circle-9" />
-														<div className="circle circle-8" />
-														<div className="circle circle-7" />
-														<div className="circle circle-6" />
-														<div className="circle circle-5" />
-														<div className="circle circle-4" />
-														<div className="circle circle-3" />
-														<div className="circle circle-2" />
-														<div className="circle circle-1" />
+											{/* Mobile view (sm:hidden) */}
+											<div className="flex flex-col space-y-2 sm:hidden">
+												<h2 className="line-clamp-2 text-xl font-semibold">
+													{course.title}
+												</h2>
+												<div className="flex items-center justify-between">
+													<div className="flex items-center">
+														<StarIcon className="size-4 text-yellow-500" />
+														<span className="ml-1 text-sm text-yellow-500">
+															{(course.rating ?? 0).toFixed(1)}
+														</span>
 													</div>
-												</button>
-											</Link>
+													<span className="text-xs font-bold text-red-500">
+														{course.modalidad?.name}
+													</span>
+												</div>
+												<div className="flex justify-center pt-2">
+													<Link href={`/estudiantes/cursos/${course.id}`}>
+														<button className="uiverse">
+															<div className="wrapper">
+																<span className="text-white">Ir al Curso</span>
+																<div className="circle circle-12" />
+																<div className="circle circle-11" />
+																<div className="circle circle-10" />
+																<div className="circle circle-9" />
+																<div className="circle circle-8" />
+																<div className="circle circle-7" />
+																<div className="circle circle-6" />
+																<div className="circle circle-5" />
+																<div className="circle circle-4" />
+																<div className="circle circle-3" />
+																<div className="circle circle-2" />
+																<div className="circle circle-1" />
+															</div>
+														</button>
+													</Link>
+												</div>
+											</div>
+
+											{/* Desktop view (hidden sm:block) */}
+											<div className="hidden sm:block">
+												<h2 className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl">
+													{course.title}
+												</h2>
+												<Badge
+													variant="outline"
+													className="border-primary text-primary mb-2"
+												>
+													{course.category?.name ?? 'Sin categoría'}
+												</Badge>
+												<p className="mb-2 line-clamp-2 text-sm sm:text-base">
+													{truncateDescription(course.description ?? '', 150)}
+												</p>
+												<p className="mb-1 text-sm font-bold sm:text-base">
+													Educador: {course.instructorName}
+												</p>
+												<p className="mb-1 text-sm font-bold text-red-500 sm:text-base">
+													{course.modalidad?.name ??
+														'Modalidad no especificada'}
+												</p>
+												<div className="mb-4 flex items-center">
+													<StarIcon className="size-4 text-yellow-500 sm:size-5" />
+													<span className="ml-1 text-sm text-yellow-500 sm:text-base">
+														{(course.rating ?? 0).toFixed(1)}
+													</span>
+												</div>
+												<Link href={`/estudiantes/cursos/${course.id}`}>
+													<button className="uiverse">
+														<div className="wrapper">
+															<span className="text-white">Ir al Curso</span>
+															<div className="circle circle-12" />
+															<div className="circle circle-11" />
+															<div className="circle circle-10" />
+															<div className="circle circle-9" />
+															<div className="circle circle-8" />
+															<div className="circle circle-7" />
+															<div className="circle circle-6" />
+															<div className="circle circle-5" />
+															<div className="circle circle-4" />
+															<div className="circle circle-3" />
+															<div className="circle circle-2" />
+															<div className="circle circle-1" />
+														</div>
+													</button>
+												</Link>
+											</div>
 										</div>
 									</div>
 								</div>
@@ -374,7 +417,7 @@ export default function StudentDetails({
 						</div>
 
 						{/* Programas section */}
-						<div className="animation-delay-300 animate-zoom-in relative px-4 sm:px-24">
+						<div className="animation-delay-300 animate-zoom-in relative px-12 sm:px-24">
 							<div className="flex justify-center">
 								<StudentGradientText className="text-3xl sm:text-5xl">
 									Programas
@@ -382,7 +425,7 @@ export default function StudentDetails({
 							</div>
 							<div>
 								<Carousel className="w-full">
-									<CarouselContent className="my-6 pl-4 sm:pl-0">
+									<CarouselContent className="my-6 pl-4 sm:pl-4">
 										{sortedPrograms.map((program) => (
 											<CarouselItem
 												key={program.id}
@@ -392,8 +435,8 @@ export default function StudentDetails({
 											</CarouselItem>
 										))}
 									</CarouselContent>
-									<CarouselPrevious className="-left-9 size-12 bg-black/50 text-white sm:-left-20 sm:size-12" />
-									<CarouselNext className="-right-9 size-12 bg-black/50 text-white sm:-right-20 sm:size-12" />
+									<CarouselPrevious className="-left-9 size-8 bg-black/50 text-white sm:-left-20 sm:size-12" />
+									<CarouselNext className="-right-9 size-8 bg-black/50 text-white sm:-right-20 sm:size-12" />
 								</Carousel>
 							</div>
 						</div>

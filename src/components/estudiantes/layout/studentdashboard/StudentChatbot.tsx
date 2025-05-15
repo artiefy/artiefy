@@ -52,7 +52,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [processingQuery, setProcessingQuery] = useState(false);
-	const [dimensions, setDimensions] = useState({ width: 400, height: 500 });
+	const [dimensions, setDimensions] = useState({
+		width: 400,
+		height: 500,
+	});
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -175,6 +178,28 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	useEffect(() => {
 		setIsOpen(showChat);
 	}, [showChat]);
+
+	useEffect(() => {
+		// Set initial dimensions based on window size
+		const initialDimensions = {
+			width: typeof window !== 'undefined' && window.innerWidth < 768 ? 300 : 400,
+			height: typeof window !== 'undefined' && window.innerWidth < 768 ? 400 : 500,
+		};
+		setDimensions(initialDimensions);
+
+		// Add resize handler
+		const handleResize = () => {
+			setDimensions({
+				width: window.innerWidth < 768 ? 300 : 400,
+				height: window.innerWidth < 768 ? 400 : 500,
+			});
+		};
+
+		if (typeof window !== 'undefined') {
+			window.addEventListener('resize', handleResize);
+			return () => window.removeEventListener('resize', handleResize);
+		}
+	}, []);
 
 	const scrollToBottom = () => {
 		void messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -356,7 +381,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			{/* Mostrar el chat solo cuando isOpen es true */}
 			{isOpen && isSignedIn && (
 				<div
-					className="fixed right-24 bottom-32"
+					className="fixed right-2 bottom-28 sm:right-24 sm:bottom-32" // Modificado bottom-28 para móviles
 					ref={chatContainerRef}
 					style={{ zIndex: 100000 }}
 				>
@@ -364,9 +389,14 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						width={dimensions.width}
 						height={dimensions.height}
 						onResize={handleResize}
-						minConstraints={[300, 400]}
-						maxConstraints={[800, window.innerHeight - 160]}
-						resizeHandles={['se', 'sw', 'ne', 'nw']} // Reduced to just corners
+						minConstraints={[280, 350]} // Smaller minimum size for mobile
+						maxConstraints={[
+							Math.min(800, window.innerWidth - 20),
+							window.innerHeight - 100,
+						]}
+						resizeHandles={
+							window.innerWidth < 768 ? [] : ['se', 'sw', 'ne', 'nw'] // Disable resize on mobile
+						}
 						className="chat-resizable"
 					>
 						<div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">

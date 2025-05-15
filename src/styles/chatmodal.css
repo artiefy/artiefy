@@ -27,7 +27,7 @@
 
 .button-circular__text {
 	position: absolute;
-	inset: 0;
+	inset: -1px; /* Ajustado para pantallas grandes */
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -38,9 +38,9 @@
 .button-circular__text > span {
 	position: absolute !important;
 	transform: rotate(calc(20deg * var(--index)));
-	inset: 4px;
+	inset: 2px;
 	font-size: 0.85rem;
-	letter-spacing: 1px;
+	letter-spacing: 0.5px; /* Reducido el espaciado entre letras */
 	text-transform: uppercase;
 }
 
@@ -385,5 +385,85 @@
 		outline: solid 0 transparent;
 		outline-offset: 20px;
 		opacity: 0;
+	}
+}
+
+/* Add responsive styles */
+@media (max-width: 767px) {
+	.button-circular {
+		width: 80px;
+		height: 80px;
+		right: 5px;
+		bottom: 15px;
+	}
+
+	.button-circular__text {
+		inset: -3px; /* Mantener el valor expandido para móviles */
+	}
+
+	.button-circular__text > span {
+		font-size: 0.75rem; /* Texto ligeramente más pequeño en móviles */
+		inset: 4px; /* Ajustado para móviles */
+		letter-spacing: 0.5px; /* Menos espacio entre letras para mejor ajuste */
+	}
+
+	/* Modify minimized state for mobile */
+	.button-circular.minimized {
+		transform: scale(0.7); /* Solo escala, sin traslación */
+		transform-origin: center; /* Asegura que la escala sea desde el centro */
+	}
+
+	.button-circular:hover.minimized {
+		transform: scale(0.75); /* Un poco más grande al hover */
+	}
+
+	.chat-container {
+		width: 100%;
+		max-width: calc(100vw - 20px);
+		height: calc(100vh - 120px);
+		margin: 10px;
+	}
+
+	.chat-resizable {
+		font-size: 14px; /* Smaller font for mobile */
+	}
+
+	/* Adjust message bubbles for mobile */
+	.messages-container {
+		padding: 0.75rem;
+	}
+
+	/* Adjust input area for mobile */
+	.input-container {
+		padding: 0.75rem;
+	}
+
+	/* Make header more compact on mobile */
+	.chat-header {
+		padding: 0.75rem;
+	}
+}
+
+@media (min-width: 768px) {
+
+	.button-circular__text {
+		inset: 0; /* Reducir la expansión del texto en desktop */
+	}
+
+	.button-circular__text > span {
+		font-size: 0.85rem;
+		letter-spacing: 0.5px;
+		inset: 3px;
+	}
+
+	.button-circular.minimized {
+		transform: scale(0.6); /* Solo escalar sin trasladar en desktop */
+		transform-origin: center; /* Asegurar que escale desde el centro */
+	}
+
+	.button-circular:hover.minimized {
+		transform: scale(
+			0.65
+		); /* Un poco más grande al hover pero sin traslación */
 	}
 }
