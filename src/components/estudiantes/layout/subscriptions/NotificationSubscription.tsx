@@ -73,13 +73,8 @@ export function NotificationSubscription() {
 								: 'text-yellow-700'
 						}`}
 					>
-						{notification.message}
-						{' · '}
-						<Link
-							href="/planes"
-							className="upgrade-link"
-							onClick={(e) => e.stopPropagation()}
-						>
+						<span className="alert-message-text">{notification.message}</span>
+						<Link href="/planes" className="upgrade-link">
 							Renovar suscripción
 						</Link>
 					</span>

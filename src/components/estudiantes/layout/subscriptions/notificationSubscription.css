@@ -125,32 +125,26 @@
 	.subscription-alert-content-inline {
 		padding: 0.75rem 1rem;
 		font-size: 0.8rem;
-		border-radius: 0.5rem;
 	}
 
 	.alert-message {
-		font-size: 0.75rem;
-		margin-left: 0.5rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		align-items: center;
+		gap: 0.25rem;
+		text-align: center;
 		white-space: normal;
 	}
 
-	.upgrade-link {
-		display: inline-block;
-		width: 100%;
-		text-align: center;
-		margin-top: 0.25rem;
-		font-size: 0.75rem;
-		font-weight: 600;
-		padding: 0.35rem 0;
-		border-radius: 0.25rem;
-		background-color: rgba(141, 56, 0, 0.1);
+	.alert-message-text {
+		font-size: 0.8rem;
+		line-height: 1.2;
 	}
 
-	.upgrade-link:hover {
-		background-color: rgba(202, 138, 4, 0.15);
+	.upgrade-link {
+		font-size: 0.8rem;
+		font-weight: 600;
+		padding-top: 0.25rem;
 	}
 }
 
