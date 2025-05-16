@@ -194,10 +194,11 @@ export default function EnrolledUsersPage() {
 		const workbook = XLSX.utils.book_new();
 		XLSX.utils.book_append_sheet(workbook, worksheet, 'Estudiantes');
 
-		const excelBuffer: ArrayBuffer = XLSX.write(workbook, {
+		const excelBuffer = XLSX.write(workbook, {
 			type: 'array',
 			bookType: 'xlsx',
-		});		
+		}) as ArrayBuffer;
+
 		const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
 
 		saveAs(blob, 'estudiantes_seleccionados.xlsx');
@@ -535,10 +536,8 @@ export default function EnrolledUsersPage() {
 										.map((col) => (
 											<td key={col.id} className="px-4 py-2">
 												{col.id === 'subscriptionEndDate' && student[col.id]
-													? new Date(
-															student[col.id]!
-														).toLocaleDateString()
-													: student[col.id as keyof typeof student] ?? 'N/A'}
+													? new Date(student[col.id]!).toLocaleDateString()
+													: (student[col.id as keyof typeof student] ?? 'N/A')}
 											</td>
 										))}
 								</tr>
