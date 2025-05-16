@@ -24,17 +24,19 @@ function getPlanAmount(planName: string): string {
 
 // ✅ Función para crear un producto correctamente (sin referenceCode)
 export function createProduct(plan: Plan): Product {
-	// Agregar identificador al nombre del producto
 	const identifier =
 		plan.name === 'Premium'
-			? PLAN_IDENTIFIERS.PREMIUM
+			? `${PLAN_IDENTIFIERS.PREMIUM}`
 			: plan.name === 'Enterprise'
-				? PLAN_IDENTIFIERS.ENTERPRISE
-				: PLAN_IDENTIFIERS.PRO;
+				? `${PLAN_IDENTIFIERS.ENTERPRISE}`
+				: `${PLAN_IDENTIFIERS.PRO}`;
+
+	const name = `${identifier}${plan.name}`;
+	console.log('Creating product with name:', name); // Debug log
 
 	return {
 		id: plan.id,
-		name: `${identifier}${plan.name}`, // Añadir identificador al nombre
+		name,
 		amount: getPlanAmount(plan.name), // ✅ Se obtiene el precio del plan
 		description: `Plan ${plan.name} mensual`,
 	};

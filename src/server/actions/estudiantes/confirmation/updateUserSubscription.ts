@@ -15,7 +15,8 @@ interface PaymentData {
 }
 
 export async function updateUserSubscription(paymentData: PaymentData) {
-	const { email_buyer, state_pol } = paymentData;
+	// Desestructuración directa para mayor claridad
+	const { email_buyer, state_pol, reference_sale } = paymentData;
 	console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
 
 	if (state_pol !== '4') {
@@ -25,18 +26,32 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		return;
 	}
 
-	// Mejorar la detección del tipo de plan
-	const planType = paymentData.reference_sale
-		.toLowerCase()
-		.includes('plan_premium_')
-		? 'Premium'
-		: paymentData.reference_sale.toLowerCase().includes('plan_enterprise_')
-			? 'Enterprise'
-			: 'Pro';
+	// Mejorada la detección del tipo de plan
+	const getPlanTypeFromReference = (
+		ref: string
+	): 'Pro' | 'Premium' | 'Enterprise' => {
+		console.log('🔍 Analyzing raw reference:', ref);
 
-	console.log('🔄 Analyzing reference_sale:', {
-		reference: paymentData.reference_sale,
+		const normalizedRef = ref.toLowerCase();
+		const matches = {
+			premium: normalizedRef.includes('plan_premium_'),
+			enterprise: normalizedRef.includes('plan_enterprise_'),
+			pro: normalizedRef.includes('plan_pro_'),
+		};
+
+		console.log('🔍 Reference matches:', matches);
+
+		if (matches.premium) return 'Premium';
+		if (matches.enterprise) return 'Enterprise';
+		return 'Pro';
+	};
+
+	const planType = getPlanTypeFromReference(reference_sale);
+
+	console.log('🔄 Plan detection:', {
+		reference: reference_sale,
 		detectedPlan: planType,
+		includes_premium: reference_sale.toLowerCase().includes('premium'),
 	});
 
 	// Obtener la fecha actual en Bogotá y calcular el fin de suscripción
@@ -65,49 +80,49 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		});
 
 		if (existingUser) {
-			// Actualizar explícitamente el planType con una consulta directa
+			console.log('👤 Updating user plan:', {
+				from: existingUser.planType,
+				to: planType,
+			});
+
 			const updateResult = await db
 				.update(users)
 				.set({
-					planType, // Asegurarse que sea exactamente 'Pro', 'Premium' o 'Enterprise'
+					planType,
 					subscriptionStatus: 'active',
 					subscriptionEndDate: new Date(subscriptionEndBogota),
 					purchaseDate: new Date(bogotaNow),
 					updatedAt: new Date(),
 				})
 				.where(eq(users.email, email_buyer))
-				.returning({ updatedPlanType: users.planType });
+				.returning();
 
-			console.log('✅ Database update result:', updateResult);
-		}
+			console.log('✅ Database update completed:', updateResult);
 
-		// Actualizar Clerk con una actualización completa
-		// If clerkClient is a function, do this:
-		const clerk = await clerkClient();
-		const clerkUsers = await clerk.users.getUserList({
-			emailAddress: [email_buyer],
-		});
-
-		if (clerkUsers.data.length > 0) {
-			const clerkUser = clerkUsers.data[0];
-
-			// Forzar la actualización completa de los metadatos
-			const updatedMetadata = await clerk.users.updateUserMetadata(
-				clerkUser.id,
-				{
-					publicMetadata: {
-						planType, // Asegurarse que sea exactamente 'Pro', 'Premium' o 'Enterprise'
-						subscriptionStatus: 'active',
-						subscriptionEndDate: subscriptionEndBogota,
-					},
-				}
-			);
-
-			console.log('✅ Clerk metadata update result:', {
-				oldPlan: clerkUser.publicMetadata?.planType,
-				newPlan: planType,
-				updatedMetadata,
+			// Actualización de Clerk con verificación explícita
+			const clerk = await clerkClient();
+			const clerkUsers = await clerk.users.getUserList({
+				emailAddress: [email_buyer],
 			});
+
+			if (clerkUsers.data.length > 0) {
+				const clerkUser = clerkUsers.data[0];
+
+				console.log('🔄 Current Clerk metadata:', clerkUser.publicMetadata);
+
+				const updatedMetadata = await clerk.users.updateUserMetadata(
+					clerkUser.id,
+					{
+						publicMetadata: {
+							planType, // Asegurar que se actualice explícitamente
+							subscriptionStatus: 'active',
+							subscriptionEndDate: subscriptionEndBogota,
+						},
+					}
+				);
+
+				console.log('✅ New Clerk metadata:', updatedMetadata.publicMetadata);
+			}
 		}
 
 		// Logs de depuración
