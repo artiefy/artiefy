@@ -232,7 +232,6 @@ const Page: React.FC = () => {
 				});
 		}
 	}, [actividadIdNumber]);
-	
 
 	useEffect(() => {
 		fetchPorcentajes();
@@ -553,10 +552,11 @@ const Page: React.FC = () => {
 								</p>
 								<hr className="my-2" />
 								<p>
-									🧮 Total usado: <strong>{porcentajeUsado}%</strong>
+									Total usado: <strong>{porcentajeUsado}%</strong>
 								</p>
 								<p>
-									✅ Disponible: <strong>{porcentajeDisponible}%</strong>
+									Porcentaje disponible:{' '}
+									<strong>{porcentajeDisponible}%</strong>
 								</p>
 							</div>
 
