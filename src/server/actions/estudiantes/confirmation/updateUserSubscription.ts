@@ -1,4 +1,4 @@
-import { clerkClient, type User } from '@clerk/nextjs/server';
+import { clerkClient } from '@clerk/nextjs/server';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,7 +15,9 @@ interface PaymentData {
 	reference_sale: string;
 }
 
-export async function updateUserSubscription(paymentData: PaymentData) {
+export async function updateUserSubscription(
+	paymentData: PaymentData
+): Promise<void> {
 	const { email_buyer, state_pol, reference_sale } = paymentData;
 	console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
 
@@ -26,7 +28,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		return;
 	}
 
-	// Extraer el tipo de plan de manera más robusta
+	// Extraer el tipo de plan de manera más robusta y convertir a formato correcto
 	const planType = reference_sale.toLowerCase().includes('premium')
 		? 'Premium'
 		: reference_sale.toLowerCase().includes('enterprise')
@@ -73,39 +75,43 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			});
 			console.log(`✅ Usuario creado en la base de datos: ${email_buyer}`);
 		} else {
+			// Actualizar usuario existente con el nuevo plan
 			await db
 				.update(users)
 				.set({
 					subscriptionStatus: 'active',
 					subscriptionEndDate: new Date(subscriptionEndBogota), // Guardamos en formato Bogotá
-					planType: planType, // Asegurarnos de que se actualice el planType
+					planType: planType, // Asegurarse que planType se actualice
 					purchaseDate: new Date(bogotaNow), // Guardamos en formato Bogotá
 					updatedAt: new Date(),
 				})
 				.where(eq(users.email, email_buyer));
 
-			console.log(`✅ Usuario existente actualizado a activo: ${email_buyer}`);
+			console.log('✅ Usuario actualizado con nuevo plan:', {
+				email: email_buyer,
+				newPlan: planType,
+			});
 		}
 
-		// Actualizar metadata en Clerk
-		const clerk = await clerkClient();
+		// Actualizar Clerk - Corregido el manejo de tipos
+		const clerk = await clerkClient(); // Await the function to get the client
 		const clerkUsers = await clerk.users.getUserList({
 			emailAddress: [email_buyer],
 		});
 
-		if (clerkUsers.data.length > 0) {
-			const clerkUser = clerkUsers.data[0] as User | undefined;
-			if (!clerkUser) {
-				console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
-				return;
-			}
+		const clerkUser = clerkUsers.data?.[0];
 
-			// Actualizar los metadatos incluyendo explícitamente el planType
+		if (clerkUser) {
+			// Obtener metadata actual de manera segura
+			const currentMetadata = await clerk.users.getUser(clerkUser.id);
+
+			// Actualizar metadata de manera segura
 			await clerk.users.updateUserMetadata(clerkUser.id, {
 				publicMetadata: {
+					...currentMetadata.publicMetadata,
 					subscriptionStatus: 'active',
-					subscriptionEndDate: subscriptionEndBogota, // Formateamos en Bogotá
-					planType: planType, // Asegurarnos de que se actualice el planType
+					subscriptionEndDate: subscriptionEndBogota,
+					planType: planType,
 				},
 			});
 
@@ -115,6 +121,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				status: 'active',
 				endDate: subscriptionEndBogota,
 			});
+		} else {
+			console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
+			return;
 		}
 
 		// Logs de depuración
@@ -124,9 +133,12 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			`🌍 Fin suscripción (UTC): ${subscriptionEndUtc.toISOString()}`
 		);
 	} catch (error) {
-		const errorMessage =
-			error instanceof Error ? error.message : 'Unknown error';
-		console.error('❌ Error:', errorMessage);
-		throw new Error(errorMessage);
+		if (error instanceof Error) {
+			console.error('❌ Error:', error.message);
+			throw new Error(error.message);
+		} else {
+			console.error('❌ Unknown error:', error);
+			throw new Error('Unknown error occurred');
+		}
 	}
 }

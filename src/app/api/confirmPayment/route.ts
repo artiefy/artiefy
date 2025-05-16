@@ -16,13 +16,6 @@ interface PaymentData {
 }
 
 export async function POST(req: NextRequest) {
-	// if (req.method !== 'POST') {
-	// 	return NextResponse.json(
-	// 		{ message: 'Method not allowed' },
-	// 		{ status: 405 }
-	// 	);
-	// }
-
 	try {
 		const formData = await req.formData();
 		const paymentData: PaymentData = {
@@ -45,15 +38,25 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		// Estado 4 significa "Aprobada"
 		if (paymentData.state_pol === '4') {
-			console.log('✅ Plan payment approved, updating subscription...');
+			console.log('✅ Plan payment approved, processing plan update...');
+
+			// Agregar headers para evitar caché
+			const headers = new Headers({
+				'Cache-Control': 'no-store, must-revalidate, private',
+				'Pragma': 'no-cache',
+				'Expires': '0',
+			});
+
 			await updateUserSubscription(paymentData);
 
-			return NextResponse.json({
-				message: 'Subscription payment confirmed and processed',
-				status: 'APPROVED',
-			});
+			return NextResponse.json(
+				{
+					message: 'Subscription payment confirmed and processed',
+					status: 'APPROVED',
+				},
+				{ headers }
+			);
 		}
 
 		// Si el estado no es 4, devolver estado actual
