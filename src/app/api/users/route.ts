@@ -38,6 +38,7 @@ async function sendWelcomeEmail(
 			from: `"Artiefy" <${process.env.EMAIL_USER}>`,
 			to,
 			subject: '🎨 Bienvenido a Artiefy - Tus Credenciales de Acceso',
+			replyTo: 'direcciongeneral@artiefy.com',
 			html: `
 				<h2>¡Bienvenido a Artiefy, ${username}!</h2>
 				<p>Estamos emocionados de tenerte con nosotros. A continuación, encontrarás tus credenciales de acceso:</p>
