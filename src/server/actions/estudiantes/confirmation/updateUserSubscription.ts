@@ -15,10 +15,8 @@ interface PaymentData {
 	reference_sale: string;
 }
 
-export async function updateUserSubscription(
-	paymentData: PaymentData
-): Promise<void> {
-	const { email_buyer, state_pol, reference_sale } = paymentData;
+export async function updateUserSubscription(paymentData: PaymentData) {
+	const { email_buyer, state_pol } = paymentData;
 	console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
 
 	if (state_pol !== '4') {
@@ -28,14 +26,19 @@ export async function updateUserSubscription(
 		return;
 	}
 
-	// Extraer el tipo de plan de manera más robusta y convertir a formato correcto
-	const planType = reference_sale.toLowerCase().includes('premium')
+	// Mejorar la detección del tipo de plan
+	const planType = paymentData.reference_sale
+		.toLowerCase()
+		.includes('plan_premium_')
 		? 'Premium'
-		: reference_sale.toLowerCase().includes('enterprise')
+		: paymentData.reference_sale.toLowerCase().includes('plan_enterprise_')
 			? 'Enterprise'
 			: 'Pro';
 
-	console.log('🔄 Updating subscription with plan:', planType);
+	console.log('🔄 Analyzing reference_sale:', {
+		reference: paymentData.reference_sale,
+		detectedPlan: planType,
+	});
 
 	// Obtener la fecha actual en Bogotá y calcular el fin de suscripción
 	const now = new Date();
@@ -52,16 +55,31 @@ export async function updateUserSubscription(
 	const subscriptionEndUtc = toZonedTime(subscriptionEndDate, TIME_ZONE);
 
 	try {
-		// Buscar usuario en la base de datos
+		// Buscar usuario existente
 		const existingUser = await db.query.users.findFirst({
 			where: eq(users.email, email_buyer),
 		});
 
-		let userId = existingUser?.id;
+		if (existingUser) {
+			// Actualizar explícitamente el planType
+			await db
+				.update(users)
+				.set({
+					planType: planType, // Asegurarse que esto se actualice
+					subscriptionStatus: 'active',
+					subscriptionEndDate: new Date(subscriptionEndBogota),
+					purchaseDate: new Date(bogotaNow),
+					updatedAt: new Date(),
+				})
+				.where(eq(users.email, email_buyer));
 
-		// Actualizar en base de datos
-		if (!existingUser) {
-			userId = uuidv4();
+			console.log('✅ Database updated with new plan:', {
+				email: email_buyer,
+				newPlan: planType,
+				previousPlan: existingUser.planType,
+			});
+		} else {
+			const userId = uuidv4();
 			await db.insert(users).values({
 				id: userId,
 				email: email_buyer,
@@ -74,56 +92,34 @@ export async function updateUserSubscription(
 				updatedAt: new Date(),
 			});
 			console.log(`✅ Usuario creado en la base de datos: ${email_buyer}`);
-		} else {
-			// Actualizar usuario existente con el nuevo plan
-			await db
-				.update(users)
-				.set({
-					subscriptionStatus: 'active',
-					subscriptionEndDate: new Date(subscriptionEndBogota), // Guardamos en formato Bogotá
-					planType: planType, // Asegurarse que planType se actualice
-					purchaseDate: new Date(bogotaNow), // Guardamos en formato Bogotá
-					updatedAt: new Date(),
-				})
-				.where(eq(users.email, email_buyer));
-
-			console.log('✅ Usuario actualizado con nuevo plan:', {
-				email: email_buyer,
-				newPlan: planType,
-			});
 		}
 
-		// Actualizar Clerk - Corregido el manejo de tipos
+		// Actualizar metadata en Clerk
 		const clerk = await clerkClient(); // Await the function to get the client
 		const clerkUsers = await clerk.users.getUserList({
 			emailAddress: [email_buyer],
 		});
 
-		const clerkUser = clerkUsers.data?.[0];
+		// Actualizar metadata de Clerk
+		if (clerkUsers.data.length > 0) {
+			const clerkUser = clerkUsers.data[0];
 
-		if (clerkUser) {
-			// Obtener metadata actual de manera segura
+			// Obtener metadata actual para logging
 			const currentMetadata = await clerk.users.getUser(clerkUser.id);
 
-			// Actualizar metadata de manera segura
 			await clerk.users.updateUserMetadata(clerkUser.id, {
 				publicMetadata: {
 					...currentMetadata.publicMetadata,
 					subscriptionStatus: 'active',
 					subscriptionEndDate: subscriptionEndBogota,
-					planType: planType,
+					planType: planType, // Asegurarse que esto se actualice
 				},
 			});
 
-			console.log('✅ Clerk metadata actualizado:', {
-				email: email_buyer,
-				plan: planType,
-				status: 'active',
-				endDate: subscriptionEndBogota,
+			console.log('✅ Clerk metadata updated:', {
+				previous: currentMetadata.publicMetadata.planType,
+				new: planType,
 			});
-		} else {
-			console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
-			return;
 		}
 
 		// Logs de depuración
@@ -132,13 +128,10 @@ export async function updateUserSubscription(
 		console.log(
 			`🌍 Fin suscripción (UTC): ${subscriptionEndUtc.toISOString()}`
 		);
-	} catch (error) {
-		if (error instanceof Error) {
-			console.error('❌ Error:', error.message);
-			throw new Error(error.message);
-		} else {
-			console.error('❌ Unknown error:', error);
-			throw new Error('Unknown error occurred');
-		}
+	} catch (error: unknown) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'Unknown error';
+		console.error('❌ Error:', errorMessage);
+		throw new Error(errorMessage);
 	}
 }

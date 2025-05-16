@@ -22,10 +22,24 @@ export const products: Product[] = [
 ];
 
 // ✅ Función para crear un producto correctamente (sin referenceCode)
-function createProduct(plan: Plan): Product {
+const PLAN_IDENTIFIERS = {
+	PRO: 'plan_pro_',
+	PREMIUM: 'plan_premium_',
+	ENTERPRISE: 'plan_enterprise_',
+} as const;
+
+export function createProduct(plan: Plan): Product {
+	// Agregar identificador al nombre del producto
+	const identifier =
+		plan.name === 'Premium'
+			? PLAN_IDENTIFIERS.PREMIUM
+			: plan.name === 'Enterprise'
+				? PLAN_IDENTIFIERS.ENTERPRISE
+				: PLAN_IDENTIFIERS.PRO;
+
 	return {
 		id: plan.id,
-		name: plan.name,
+		name: `${identifier}${plan.name}`, // Añadir identificador al nombre
 		amount: getPlanAmount(plan.name), // ✅ Se obtiene el precio del plan
 		description: `Plan ${plan.name} mensual`,
 	};
