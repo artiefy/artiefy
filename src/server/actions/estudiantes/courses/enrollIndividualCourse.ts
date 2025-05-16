@@ -1,6 +1,7 @@
 'use server';
 
 import { and, eq } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid'; // Add this import
 
 import { db } from '~/server/db';
 import {
@@ -14,16 +15,50 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
 	console.log('📝 Starting enrollment process:', { userEmail, courseId });
 
 	try {
-		// Verificar usuario
-		const user = await db.query.users.findFirst({
-			where: eq(users.email, userEmail),
+		// Buscar específicamente el usuario con rol 'estudiante'
+		let user = await db.query.users.findFirst({
+			where: and(eq(users.email, userEmail), eq(users.role, 'estudiante')),
 		});
 
+		// Si no existe el usuario, crearlo
 		if (!user) {
-			throw new Error(`Usuario no encontrado: ${userEmail}`);
+			console.log('👤 User not found, creating new user:', userEmail);
+			const userId = uuidv4();
+
+			try {
+				await db.insert(users).values({
+					id: userId,
+					email: userEmail,
+					name: userEmail.split('@')[0], // Usar la parte inicial del email como nombre
+					role: 'estudiante',
+					subscriptionStatus: 'inactive', // Siempre inactivo para cursos individuales
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				});
+
+				// Verificar que el usuario se creó correctamente
+				user = await db.query.users.findFirst({
+					where: and(eq(users.email, userEmail), eq(users.role, 'estudiante')),
+				});
+
+				if (!user) {
+					throw new Error('Error al crear el usuario en la base de datos');
+				}
+
+				console.log('✅ New user created:', { id: user.id, email: user.email });
+			} catch (error) {
+				console.error('❌ Error creating user:', error);
+				throw new Error('Error al crear el usuario en la base de datos');
+			}
 		}
 
-		// Verificar inscripción existente
+		console.log('✅ Found student user:', {
+			id: user.id,
+			email: user.email,
+			role: user.role,
+		});
+
+		// Verificar inscripción existente con el ID correcto
 		const existingEnrollment = await db.query.enrollments.findFirst({
 			where: and(
 				eq(enrollments.userId, user.id),
@@ -36,7 +71,7 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
 			return { success: true, message: 'Usuario ya inscrito' };
 		}
 
-		// 1. Crear inscripción
+		// Crear inscripción con el ID del usuario estudiante
 		await db.insert(enrollments).values({
 			userId: user.id,
 			courseId: courseId,
@@ -82,7 +117,12 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
 			}
 		}
 
-		console.log('✅ Enrollment successful:', { userEmail, courseId });
+		console.log('✅ Enrollment successful for student:', {
+			userId: user.id,
+			email: user.email,
+			courseId,
+		});
+
 		return { success: true, message: 'Inscripción exitosa' };
 	} catch (error) {
 		console.error('❌ Enrollment error:', error);
