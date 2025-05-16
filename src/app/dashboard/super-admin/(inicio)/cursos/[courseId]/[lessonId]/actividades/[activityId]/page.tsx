@@ -77,7 +77,17 @@ interface ActivityDetails {
 	fechaMaximaEntrega: string | null;
 }
 
-// Definir la interfaz de la actividad
+// Definir la interfaz de los porcentajes
+interface PorcentajeResponse {
+	usado: number;
+	disponible: number;
+	resumen: {
+		opcionMultiple: number;
+		verdaderoFalso: number;
+		completar: number;
+	};
+}
+
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
 	hexcolor = hexcolor.replace('#', '');
@@ -170,12 +180,22 @@ const Page: React.FC = () => {
 			fetch(
 				`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
 			)
-				.then((res) => res.json())
+				.then((res) => res.json() as Promise<PorcentajeResponse>)
 				.then((data) => {
-					setPorcentajeUsado(data.usado);
-					setPorcentajeDisponible(data.disponible);
-					if (data.resumen) {
-						setResumenPorTipo(data.resumen);
+					setPorcentajeUsado(Number(data.usado));
+					setPorcentajeDisponible(Number(data.disponible));
+					if (
+						typeof data.resumen === 'object' &&
+						data.resumen !== null &&
+						'opcionMultiple' in data.resumen &&
+						'verdaderoFalso' in data.resumen &&
+						'completar' in data.resumen
+					) {
+						setResumenPorTipo({
+							opcionMultiple: Number(data.resumen.opcionMultiple),
+							verdaderoFalso: Number(data.resumen.verdaderoFalso),
+							completar: Number(data.resumen.completar),
+						});
 					}
 				})
 				.catch((err) => {
@@ -197,19 +217,22 @@ const Page: React.FC = () => {
 			fetch(
 				`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
 			)
-				.then((res) => res.json())
+				.then((res) => res.json() as Promise<PorcentajeResponse>)
 				.then((data) => {
-					setPorcentajeUsado(data.usado);
-					setPorcentajeDisponible(data.disponible);
-					if (data.resumen) {
-						setResumenPorTipo(data.resumen);
-					}
+					setPorcentajeUsado(Number(data.usado));
+					setPorcentajeDisponible(Number(data.disponible));
+					setResumenPorTipo({
+						opcionMultiple: Number(data.resumen.opcionMultiple),
+						verdaderoFalso: Number(data.resumen.verdaderoFalso),
+						completar: Number(data.resumen.completar),
+					});
 				})
 				.catch((err) => {
 					console.error('Error obteniendo porcentajes por tipo:', err);
 				});
 		}
 	}, [actividadIdNumber]);
+	
 
 	useEffect(() => {
 		fetchPorcentajes();

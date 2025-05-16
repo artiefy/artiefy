@@ -1,10 +1,17 @@
 import { type NextRequest, NextResponse } from 'next/server';
+
 import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,
 	token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
+
+interface PreguntaBase {
+	id: string;
+	pesoPregunta?: string | number;
+	porcentaje?: string | number;
+}
 
 export async function GET(request: NextRequest) {
 	try {
@@ -29,65 +36,66 @@ export async function GET(request: NextRequest) {
 		};
 
 		// 🟡 Opción Múltiple
-		const preguntasOM = await redis.get(`activity:${activityId}:questionsOM`);
-		console.log('📦 preguntasOM desde Redis:', preguntasOM);
-		if (Array.isArray(preguntasOM)) {
+		const preguntasOMRaw = await redis.get(
+			`activity:${activityId}:questionsOM`
+		);
+		console.log('📦 preguntasOM desde Redis:', preguntasOMRaw);
+
+		const preguntasOM = Array.isArray(preguntasOMRaw)
+			? (preguntasOMRaw as PreguntaBase[])
+			: null;
+
+		if (preguntasOM) {
 			const sumaOM = preguntasOM.reduce((acc, p, i) => {
-				const valor = parseFloat(p.pesoPregunta ?? p.porcentaje ?? '0');
-				console.log(
-					`🔢 OM[${i}] pesoPregunta|porcentaje =`,
-					p.pesoPregunta ?? p.porcentaje,
-					'->',
-					valor
-				);
+				const raw = p.pesoPregunta ?? p.porcentaje ?? '0';
+				const valor = typeof raw === 'number' ? raw : parseFloat(raw);
+				console.log(`🔢 OM[${i}] = ${raw} -> ${valor}`);
 				return acc + (isNaN(valor) ? 0 : valor);
 			}, 0);
 			resumen.opcionMultiple = sumaOM;
 			totalUsado += sumaOM;
-		} else {
-			console.log('⚠️ preguntasOM no es un array');
 		}
 
 		// 🔵 Verdadero/Falso
-		const preguntasVOF = await redis.get(`activity:${activityId}:questionsVOF`);
-		console.log('📦 preguntasVOF desde Redis:', preguntasVOF);
-		if (Array.isArray(preguntasVOF)) {
+		const preguntasVOFRaw = await redis.get(
+			`activity:${activityId}:questionsVOF`
+		);
+		console.log('📦 preguntasVOF desde Redis:', preguntasVOFRaw);
+
+		const preguntasVOF = Array.isArray(preguntasVOFRaw)
+			? (preguntasVOFRaw as PreguntaBase[])
+			: null;
+
+		if (preguntasVOF) {
 			const sumaVOF = preguntasVOF.reduce((acc, p, i) => {
-				const valor = parseFloat(p.pesoPregunta ?? p.porcentaje ?? '0');
-				console.log(
-					`🔢 VOF[${i}] pesoPregunta|porcentaje =`,
-					p.pesoPregunta ?? p.porcentaje,
-					'->',
-					valor
-				);
+				const raw = p.pesoPregunta ?? p.porcentaje ?? '0';
+				const valor = typeof raw === 'number' ? raw : parseFloat(raw);
+				console.log(`🔢 VOF[${i}] = ${raw} -> ${valor}`);
 				return acc + (isNaN(valor) ? 0 : valor);
 			}, 0);
 			resumen.verdaderoFalso = sumaVOF;
 			totalUsado += sumaVOF;
-		} else {
-			console.log('⚠️ preguntasVOF no es un array');
 		}
 
 		// 🟢 Completar
-		const preguntasCompletar = await redis.get(
+		const preguntasCompletarRaw = await redis.get(
 			`activity:${activityId}:questionsACompletar`
 		);
-		console.log('📦 preguntasCompletar desde Redis:', preguntasCompletar);
-		if (Array.isArray(preguntasCompletar)) {
+		console.log('📦 preguntasCompletar desde Redis:', preguntasCompletarRaw);
+
+		const preguntasCompletar = Array.isArray(preguntasCompletarRaw)
+			? (preguntasCompletarRaw as PreguntaBase[])
+			: null;
+
+		if (preguntasCompletar) {
 			const sumaCompletar = preguntasCompletar.reduce((acc, p, i) => {
-				const valor = parseFloat(p.pesoPregunta ?? p.porcentaje ?? '0');
-				console.log(
-					`🔢 Completar[${i}] pesoPregunta|porcentaje =`,
-					p.pesoPregunta ?? p.porcentaje,
-					'->',
-					valor
-				);
+				const raw = p.pesoPregunta ?? p.porcentaje ?? '0';
+				const valor = typeof raw === 'number' ? raw : parseFloat(raw);
+				console.log(`🔢 Completar[${i}] = ${raw} -> ${valor}`);
 				return acc + (isNaN(valor) ? 0 : valor);
 			}, 0);
 			resumen.completar = sumaCompletar;
 			totalUsado += sumaCompletar;
-		} else {
-			console.log('⚠️ preguntasCompletar no es un array');
 		}
 
 		const disponible = Math.max(0, 100 - totalUsado);
