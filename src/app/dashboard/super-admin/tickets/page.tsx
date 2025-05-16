@@ -23,7 +23,7 @@ const uploadSchema = z.object({
 
 const rawTicketSchema = z.array(
 	z.object({
-		id: z.string(),
+		id: z.union([z.string(), z.number()]), // acepta string o number
 		email: z.string(),
 		description: z.string(),
 		tipo: z.string(),
@@ -38,8 +38,8 @@ const rawTicketSchema = z.array(
 		updated_at: z.string(),
 		time_elapsed_ms: z.number(),
 		cover_image_key: z.string().optional(),
-		video_key: z.string().optional(),
-		document_key: z.string().optional(),
+		video_key: z.union([z.string(), z.null()]).optional(),
+		document_key: z.union([z.string(), z.null()]).optional(),
 	})
 );
 
@@ -168,7 +168,7 @@ export default function TicketsPage() {
 			const rawData = rawTicketSchema.parse(json);
 
 			const mapped: Ticket[] = rawData.map((ticket) => ({
-				id: ticket.id,
+				id: String(ticket.id),
 				email: ticket.email,
 				description: ticket.description,
 				tipo: ticket.tipo,
