@@ -1,5 +1,3 @@
-import '~/styles/globals.css';
-
 import { Merriweather, Montserrat } from 'next/font/google';
 
 import { esMX } from '@clerk/localizations';
@@ -8,9 +6,14 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
-import { Toaster } from '~/components/estudiantes/ui/sonner';
-import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
+// 🌐 Estilos
+import '~/styles/globals.css';
 
+// 🧩 Componentes del proyecto
+import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
+import { Toaster } from '~/components/estudiantes/ui/sonner';
+
+// ⚙️ Configuración local
 import Providers from './providers';
 
 const montserrat = Montserrat({
