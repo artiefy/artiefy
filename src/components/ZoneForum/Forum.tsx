@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+import Image from 'next/image';
+
 import { useUser } from '@clerk/nextjs';
 import { FaSearch } from 'react-icons/fa';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -26,6 +29,10 @@ interface CoursesModels {
 	coverImageKey: string;
 }
 
+const uploadResponseSchema = z.object({
+	fileKey: z.string(),
+});
+
 const ForumHome = () => {
 	const { user } = useUser();
 	const [courseId, setCourseId] = useState<number | null>(null);
@@ -40,7 +47,10 @@ const ForumHome = () => {
 	const [coverImage, setCoverImage] = useState<File | null>(null);
 	const [documentFile, setDocumentFile] = useState<File | null>(null);
 
-	const uploadFileToServer = async (file: File, type: 'image' | 'document') => {
+	const uploadFileToServer = async (
+		file: File,
+		type: 'image' | 'document'
+	): Promise<string> => {
 		const formData = new FormData();
 		formData.append('file', file);
 		formData.append('type', type);
@@ -49,8 +59,9 @@ const ForumHome = () => {
 			method: 'POST',
 			body: formData,
 		});
-		const data = await res.json();
-		return data.fileKey; // Devuelve la clave del archivo (ej. S3)
+		const json: unknown = await res.json();
+		const data = uploadResponseSchema.parse(json);
+		return data.fileKey;
 	};
 
 	const handleCreateForum = async () => {
@@ -62,9 +73,6 @@ const ForumHome = () => {
 		const userId = user.id;
 		let coverImageKey = '';
 		let documentKey = '';
-
-		void coverImageKey;
-		void documentKey;
 
 		try {
 			if (coverImage) {
@@ -81,22 +89,32 @@ const ForumHome = () => {
 			formData.append('title', title);
 			formData.append('description', description);
 			formData.append('userId', userId);
-			if (coverImage) formData.append('coverImage', coverImage);
-			if (documentFile) formData.append('documentFile', documentFile);
+			formData.append('coverImageKey', coverImageKey);
+			formData.append('documentKey', documentKey);
 
 			const response = await fetch('/api/forums', {
 				method: 'POST',
-				body: formData, // ✅ sin headers, fetch los pone correctamente
+				body: formData,
 			});
 
 			setUploadProgress(100);
-			await response.json();
+			const json: unknown = await response.json();
+			const responseSchema = z.object({
+				success: z.boolean(),
+				message: z.string().optional(),
+			});
+			const result = responseSchema.parse(json);
 
-			toast.success('Foro creado exitosamente!');
-			setIsDialogOpen(false);
-			window.location.reload();
+			if (result.success) {
+				toast.success('Foro creado exitosamente!');
+				setIsDialogOpen(false);
+				window.location.reload();
+			} else {
+				toast.error(result.message ?? 'Error al crear el foro');
+			}
 		} catch (error) {
 			console.error('Error al crear el foro:', error);
+			toast.error('Error al crear el foro');
 		} finally {
 			setIsUploading(false);
 			setCourseId(null);
@@ -115,16 +133,26 @@ const ForumHome = () => {
 				const response = await fetch(
 					`/api/educadores/courses?userId=${user.id}`
 				);
-				const data = await response.json();
+				const json: unknown = await response.json();
+				const coursesSchema = z.array(
+					z.object({
+						id: z.number(),
+						title: z.string(),
+						description: z.string(),
+						coverImageKey: z.string(),
+					})
+				);
+				const data = coursesSchema.parse(json);
 				setCourses(data);
 			} catch (error) {
 				console.error('Error:', error);
+				toast.error('Error al cargar los cursos');
 			} finally {
 				setLoadingCourses(false);
 			}
 		};
 
-		fetchCourses();
+		void fetchCourses();
 	}, [user]);
 
 	return (
@@ -230,7 +258,7 @@ const ForumHome = () => {
 													type="file"
 													accept="image/*"
 													onChange={(e) =>
-														setCoverImage(e.target.files?.[0] || null)
+														setCoverImage(e.target.files?.[0] ?? null)
 													}
 													className="hidden"
 												/>
@@ -238,9 +266,11 @@ const ForumHome = () => {
 
 											{coverImage && (
 												<div className="relative">
-													<img
+													<Image
 														src={URL.createObjectURL(coverImage)}
 														alt="Vista previa"
+														width={96}
+														height={96}
 														className="h-24 w-24 rounded-md border border-white/20 object-cover"
 													/>
 													<button
@@ -266,7 +296,7 @@ const ForumHome = () => {
 													type="file"
 													accept=".pdf,.doc,.docx"
 													onChange={(e) =>
-														setDocumentFile(e.target.files?.[0] || null)
+														setDocumentFile(e.target.files?.[0] ?? null)
 													}
 													className="hidden"
 												/>

@@ -2,6 +2,38 @@
 
 import { useEffect, useState } from 'react';
 
+import { z } from 'zod';
+
+const studentSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	email: z.string(),
+	subscriptionStatus: z.string(),
+	subscriptionEndDate: z.string().nullable(),
+	role: z.string().optional(),
+	planType: z.string().optional(),
+});
+
+const courseSchema = z.object({
+	id: z.string(),
+	title: z.string(),
+});
+
+const enrolledUserSchema = z.object({
+	id: z.string(),
+	programTitle: z.string(),
+});
+
+const errorResponseSchema = z.object({
+	error: z.string(),
+});
+
+const apiResponseSchema = z.object({
+	students: z.array(studentSchema),
+	courses: z.array(courseSchema),
+	enrolledUsers: z.array(enrolledUserSchema),
+});
+
 interface Student {
 	id: string;
 	name: string;
@@ -40,30 +72,27 @@ export default function EnrolledUsersPage() {
 	);
 
 	useEffect(() => {
-		fetchData();
+		void fetchData();
 	}, []);
 
 	const fetchData = async () => {
 		try {
 			const res = await fetch('/api/super-admin/enroll_user_program');
-			const data = await res.json();
+			const data = apiResponseSchema.parse(await res.json());
 
 			const enrolledMap = new Map(
-				(data.enrolledUsers || []).map((u: any) => [u.id, u.programTitle])
+				data.enrolledUsers.map((u) => [u.id, u.programTitle])
 			);
 
-			// Filtrar estudiantes por rol
-			const studentsFilteredByRole = (
-				Array.isArray(data.students) ? data.students : []
-			)
-				.filter((s: Student) => s.role === 'estudiante')
-				.map((s: Student) => ({
+			const studentsFilteredByRole = data.students
+				.filter((s) => s.role === 'estudiante')
+				.map((s) => ({
 					...s,
-					programTitle: enrolledMap.get(s.id) || 'No inscrito',
+					programTitle: enrolledMap.get(s.id) ?? 'No inscrito',
 				}));
 
 			setStudents(studentsFilteredByRole);
-			setAvailableCourses(data.courses || []);
+			setAvailableCourses(data.courses);
 		} catch (err) {
 			console.error('Error fetching data:', err);
 		}
@@ -88,18 +117,18 @@ export default function EnrolledUsersPage() {
 			)
 			.filter((s) =>
 				filters.subscriptionEndDateFrom
-					? new Date(s.subscriptionEndDate || '') >=
+					? new Date(s.subscriptionEndDate ?? '') >=
 						new Date(filters.subscriptionEndDateFrom)
 					: true
 			)
 			.filter((s) =>
 				filters.subscriptionEndDateTo
-					? new Date(s.subscriptionEndDate || '') <=
+					? new Date(s.subscriptionEndDate ?? '') <=
 						new Date(filters.subscriptionEndDateTo)
 					: true
 			);
 
-		const pages = Math.ceil(totalFiltered.length / limit) || 1;
+		const pages = Math.ceil(totalFiltered.length / limit) ?? 1;
 		setTotalPages(pages);
 	}, [students, filters, limit]);
 
@@ -121,13 +150,13 @@ export default function EnrolledUsersPage() {
 		)
 		.filter((s) =>
 			filters.subscriptionEndDateFrom
-				? new Date(s.subscriptionEndDate || '') >=
+				? new Date(s.subscriptionEndDate ?? '') >=
 					new Date(filters.subscriptionEndDateFrom)
 				: true
 		)
 		.filter((s) =>
 			filters.subscriptionEndDateTo
-				? new Date(s.subscriptionEndDate || '') <=
+				? new Date(s.subscriptionEndDate ?? '') <=
 					new Date(filters.subscriptionEndDateTo)
 				: true
 		);
@@ -159,17 +188,20 @@ export default function EnrolledUsersPage() {
 					courseIds: selectedCourses,
 				}),
 			});
-			const data = await response.json();
+
+			const data = (await response.json()) as { error: string };
 			if (response.ok) {
 				alert('Estudiantes matriculados exitosamente');
 				setSelectedStudents([]);
 				setSelectedCourses([]);
 				setShowModal(false);
 			} else {
-				alert(`Error: ${data.error}`);
+				const errorData = errorResponseSchema.parse(data);
+				alert(`Error: ${errorData.error}`);
 			}
 		} catch (err) {
 			console.error('Error al matricular:', err);
+			alert('Error inesperado al matricular estudiantes');
 		}
 	};
 
@@ -285,8 +317,8 @@ export default function EnrolledUsersPage() {
 									<td>{s.email}</td>
 									<td>{s.subscriptionStatus}</td>
 									<td>{s.programTitle}</td>
-									<td>{s.role || 'Sin rol'}</td>
-									<td>{s.planType || 'Sin plan'}</td>
+									<td>{s.role ?? 'Sin rol'}</td>
+									<td>{s.planType ?? 'Sin plan'}</td>
 									<td>
 										{s.subscriptionEndDate
 											? new Date(s.subscriptionEndDate).toLocaleDateString()

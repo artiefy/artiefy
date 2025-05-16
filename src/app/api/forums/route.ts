@@ -6,13 +6,13 @@ import { alias } from 'drizzle-orm/pg-core';
 import nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
 
-import { db } from '~/server/db';
-import { forums, users, courses } from '~/server/db/schema';
 import {
 	createForum,
 	updateForumById,
 	deleteForumById,
 } from '~/models/educatorsModels/forumAndPosts';
+import { db } from '~/server/db';
+import { forums, users, courses } from '~/server/db/schema';
 
 const s3Client = new S3Client({
 	region: process.env.AWS_REGION,

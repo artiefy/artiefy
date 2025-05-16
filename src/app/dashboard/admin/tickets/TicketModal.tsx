@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useMemo } from 'react';
 
+import Image from 'next/image';
+
 import { useUser } from '@clerk/nextjs';
 import { Loader2 } from 'lucide-react';
-import Image from 'next/image';
+import { z } from 'zod';
 
 import { Modal } from '~/components/shared/Modal';
 
@@ -147,7 +149,19 @@ export default function TicketModal({
 						`/api/admin/tickets/${ticket.id}/comments`
 					);
 					if (!response.ok) throw new Error('Failed to fetch comments');
-					const data = (await response.json()) as Comment[];
+
+					const commentSchema = z.object({
+						id: z.number(),
+						content: z.string(),
+						createdAt: z.string(),
+						user: z.object({
+							name: z.string(),
+						}),
+					});
+					const commentArraySchema = z.array(commentSchema);
+
+					const json: unknown = await response.json();
+					const data = commentArraySchema.parse(json);
 					setComments(data);
 				} catch (error) {
 					console.error('Error fetching comments:', error);
@@ -200,17 +214,16 @@ export default function TicketModal({
 					}),
 					headers: { 'Content-Type': 'application/json' },
 				});
-				const {
-					url,
-					fields,
-					key,
-					uploadType,
-				}: {
-					url: string;
-					fields: Record<string, string>;
-					key: string;
-					uploadType: 'simple' | 'put';
-				} = await res.json();
+
+				const uploadSchema = z.object({
+					url: z.string().url(),
+					fields: z.record(z.string()),
+					key: z.string(),
+					uploadType: z.union([z.literal('simple'), z.literal('put')]),
+				});
+
+				const json: unknown = await res.json();
+				const { url, fields, key, uploadType } = uploadSchema.parse(json);
 
 				if (uploadType === 'simple') {
 					const formDataUpload = new FormData();

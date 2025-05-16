@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
@@ -511,11 +512,13 @@ const ForumPage = () => {
 									Imagen adjunta
 								</p>
 								<div className="mt-2 overflow-hidden rounded-lg border border-white/10 shadow-lg transition hover:shadow-xl">
-									<img
-										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
-										alt="Imagen adjunta"
-										className="w-full max-w-sm rounded object-cover"
-									/>
+								<Image
+  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
+  alt="Imagen adjunta"
+  width={400} // ⬅️ Ajusta según tu layout
+  height={300} // ⬅️ Ajusta según tu layout
+  className="w-full max-w-sm rounded object-cover"
+/>
 								</div>
 							</div>
 						)}

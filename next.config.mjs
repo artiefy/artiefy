@@ -1,6 +1,10 @@
 import './src/env.js';
 import withPlaiceholder from '@plaiceholder/next';
 import { withNextVideo } from 'next-video/process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // @ts-check
 
@@ -17,13 +21,14 @@ const nextConfig = {
 		imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
 		minimumCacheTTL: 60,
 		remotePatterns: [
-			new URL('https://s3.us-east-2.amazonaws.com/artiefy-upload/'),
-			new URL('https://placehold.co/'),
-			new URL('https://img.clerk.com/'),
-			new URL('https://assets.example.com/'),
+			new URL('https://s3.us-east-2.amazonaws.com/artiefy-upload/**'),
+			new URL('https://placehold.co/**'),
+			new URL('https://img.clerk.com/**'),
+			new URL('https://assets.example.com/**'),
 		],
 	},
 	turbopack: {
+		root: __dirname,
 		resolveAlias: {
 			underscore: 'lodash',
 			mocha: { browser: 'mocha/browser-entry.js' },
@@ -43,7 +48,7 @@ const nextConfig = {
 				loaders: ['@svgr/webpack'],
 				as: '*.js',
 			},
-			'/*.mp4': {
+			'**/*.mp4': {
 				loaders: ['next-video/webpack/video-loader'],
 				type: 'asset',
 			},

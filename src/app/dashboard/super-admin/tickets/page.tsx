@@ -1,14 +1,49 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+
 import Image from 'next/image';
-import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+
+import { Info, Loader2, Pencil, Plus, Trash2, FileText } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
+import { z } from 'zod';
 import 'react-toastify/dist/ReactToastify.css';
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
+
 import TicketModal from './TicketModal';
 
+// Schema definitions
+const uploadSchema = z.object({
+	url: z.string().url(),
+	fields: z.record(z.string()),
+	key: z.string(),
+	uploadType: z.union([z.literal('simple'), z.literal('put')]),
+});
+
+const rawTicketSchema = z.array(
+	z.object({
+		id: z.string(),
+		email: z.string(),
+		description: z.string(),
+		tipo: z.string(),
+		estado: z.string(),
+		assigned_to_name: z.string().optional(),
+		assigned_to_email: z.string().optional(),
+		assigned_to_id: z.string().optional(),
+		creator_name: z.string().optional(),
+		creator_email: z.string().optional(),
+		comments: z.string().optional(),
+		created_at: z.string(),
+		updated_at: z.string(),
+		time_elapsed_ms: z.number(),
+		cover_image_key: z.string().optional(),
+		video_key: z.string().optional(),
+		document_key: z.string().optional(),
+	})
+);
+
+// Types
 
 export interface TicketFormData {
 	email: string;
@@ -30,26 +65,6 @@ export interface Comment {
 	user: {
 		name: string;
 	};
-}
-
-interface RawTicket {
-	id: string;
-	email: string;
-	description: string;
-	tipo: string;
-	estado: string;
-	assigned_to_name?: string;
-	assigned_to_email?: string;
-	creator_name?: string;
-	assigned_to_id?: string;
-	creator_email?: string;
-	comments?: string;
-	created_at: string;
-	updated_at: string;
-	time_elapsed_ms: number;
-	cover_image_key?: string;
-	video_key?: string;
-	document_key?: string;
 }
 
 export interface Ticket {
@@ -82,17 +97,14 @@ export default function TicketsPage() {
 	>('created');
 	const [filterType, setFilterType] = useState<string>('all');
 	const [filterStatus, setFilterStatus] = useState<string>('all');
-	const [unreadConversationIds, setUnreadConversationIds] = useState<string[]>(
-		[]
-	);
+	const [unreadConversationIds] = useState<string[]>([]);
 	const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
 	const [selectedChat, setSelectedChat] = useState<{
 		id: string;
 		userName: string;
 		receiverId: string;
 	} | null>(null);
-	void setUnreadConversationIds([]);
-	void selectedChat;
+	void selectedChat?.id;
 	const [filterId, setFilterId] = useState('');
 	const [filterEmail, setFilterEmail] = useState('');
 	const [filterAssignedTo, setFilterAssignedTo] = useState('');
@@ -111,7 +123,7 @@ export default function TicketsPage() {
 					);
 					if (!response.ok)
 						throw new Error('No se pudo obtener los comentarios');
-					const data: Comment[] = await response.json();
+					const data = (await response.json()) as Comment[];
 					setComments(data);
 				} catch (error) {
 					console.error('Error cargando comentarios:', error);
@@ -152,7 +164,8 @@ export default function TicketsPage() {
 			const response = await fetch(`/api/admin/tickets?type=${activeTab}`);
 			if (!response.ok)
 				throw new Error(`HTTP error! status: ${response.status}`);
-			const rawData = (await response.json()) as RawTicket[];
+			const json = (await response.json()) as unknown;
+			const rawData = rawTicketSchema.parse(json);
 
 			const mapped: Ticket[] = rawData.map((ticket) => ({
 				id: ticket.id,
@@ -162,7 +175,7 @@ export default function TicketsPage() {
 				estado: ticket.estado,
 				assignedToName: ticket.assigned_to_name ?? '',
 				assignedToEmail: ticket.assigned_to_email ?? '',
-				assignedToId: ticket.assigned_to_id ?? '', // ✅ CORREGIDO AQUÍ
+				assignedToId: ticket.assigned_to_id ?? '',
 				creatorName: ticket.creator_name ?? '',
 				creatorEmail: ticket.creator_email ?? '',
 				comments: ticket.comments ?? '',
@@ -221,19 +234,19 @@ export default function TicketsPage() {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(data),
 			});
-			const created: { id: string } = await res.json();
+			const created = (await res.json()) as { id: string };
 
 			// 2. Si el video ya fue subido y hay un key, hacer PUT al endpoint
 			if (data.videoKey) {
 				const payload = JSON.stringify({ videoKey: data.videoKey });
 				const blob = new Blob([payload], { type: 'application/json' });
 				const sent = navigator.sendBeacon(
-					`/api/tickets/${created.id}/video`,
+					`/api/tickets/${(created as { id: string }).id}/video`,
 					blob
 				);
 
 				if (!sent) {
-					await fetch(`/api/tickets/${created.id}/video`, {
+					await fetch(`/api/tickets/${(created as { id: string }).id}/video`, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						body: payload,
@@ -301,29 +314,12 @@ export default function TicketsPage() {
 				return null;
 			}
 
-			const {
-				url,
-				fields,
-				key,
-				uploadType,
-			}: {
-				url: string;
-				fields: Record<string, string>;
-				key: string;
-				uploadType: 'simple' | 'put';
-			} = await res.json();
-			console.log('📤 S3 response:', { url, fields, key, uploadType });
-
-			if (!url || !key) {
-				console.error('❌ Faltan campos en la respuesta del servidor');
-				return null;
-			}
+			const json: unknown = await res.json();
+			const { url, fields, key, uploadType } = uploadSchema.parse(json);
 
 			if (uploadType === 'simple') {
 				const formDataUpload = new FormData();
-				Object.entries(fields).forEach(([k, v]) =>
-					formDataUpload.append(k, v as string)
-				);
+				Object.entries(fields).forEach(([k, v]) => formDataUpload.append(k, v));
 				formDataUpload.append('file', file);
 				await fetch(url, { method: 'POST', body: formDataUpload });
 			} else {

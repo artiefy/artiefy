@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+import Image from 'next/image';
+
 import { useUser } from '@clerk/nextjs';
 import { FaSearch } from 'react-icons/fa';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { Button } from '~/components/educators/ui/button';
 import {
@@ -17,14 +20,22 @@ import {
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
-import { Zone } from '~/components/ZoneForumSA/Zone';
+import { Zone } from '~/components/ZoneForum/Zone';
 
-interface CoursesModels {
-	id: number;
-	title: string;
-	description: string;
-	coverImageKey: string;
-}
+const coursesSchema = z.array(
+	z.object({
+		id: z.number(),
+		title: z.string(),
+		description: z.string(),
+		coverImageKey: z.string(),
+	})
+);
+
+const uploadResponseSchema = z.object({
+	fileKey: z.string(),
+});
+
+type CoursesModels = z.infer<typeof coursesSchema>[number];
 
 const ForumHome = () => {
 	const { user } = useUser();
@@ -36,7 +47,6 @@ const ForumHome = () => {
 	const [isUploading, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-
 	const [coverImage, setCoverImage] = useState<File | null>(null);
 	const [documentFile, setDocumentFile] = useState<File | null>(null);
 
@@ -49,8 +59,9 @@ const ForumHome = () => {
 			method: 'POST',
 			body: formData,
 		});
-		const data = await res.json();
-		return data.fileKey; // Devuelve la clave del archivo (ej. S3)
+		const json = (await res.json()) as unknown;
+		const { fileKey } = uploadResponseSchema.parse(json);
+		return fileKey;
 	};
 
 	const handleCreateForum = async () => {
@@ -60,17 +71,13 @@ const ForumHome = () => {
 		setUploadProgress(25);
 
 		const userId = user.id;
-		let coverImageKey = '';
-		let documentKey = '';
-		void coverImageKey;
-		void documentKey;
 
 		try {
 			if (coverImage) {
-				coverImageKey = await uploadFileToServer(coverImage, 'image');
+				await uploadFileToServer(coverImage, 'image');
 			}
 			if (documentFile) {
-				documentKey = await uploadFileToServer(documentFile, 'document');
+				await uploadFileToServer(documentFile, 'document');
 			}
 
 			setUploadProgress(60);
@@ -85,7 +92,7 @@ const ForumHome = () => {
 
 			const response = await fetch('/api/forums', {
 				method: 'POST',
-				body: formData, // ✅ sin headers, fetch los pone correctamente
+				body: formData,
 			});
 
 			setUploadProgress(100);
@@ -96,6 +103,7 @@ const ForumHome = () => {
 			window.location.reload();
 		} catch (error) {
 			console.error('Error al crear el foro:', error);
+			toast.error('Error al crear el foro');
 		} finally {
 			setIsUploading(false);
 			setCourseId(null);
@@ -114,16 +122,17 @@ const ForumHome = () => {
 				const response = await fetch(
 					`/api/educadores/courses?userId=${user.id}`
 				);
-				const data = await response.json();
-				setCourses(data);
+				const json = (await response.json()) as unknown;
+				const parsed = coursesSchema.parse(json);
+				setCourses(parsed);
 			} catch (error) {
-				console.error('Error:', error);
+				console.error('Error al obtener cursos:', error);
 			} finally {
 				setLoadingCourses(false);
 			}
 		};
 
-		fetchCourses();
+		void fetchCourses();
 	}, [user]);
 
 	return (
@@ -229,7 +238,7 @@ const ForumHome = () => {
 													type="file"
 													accept="image/*"
 													onChange={(e) =>
-														setCoverImage(e.target.files?.[0] || null)
+														setCoverImage(e.target.files?.[0] ?? null)
 													}
 													className="hidden"
 												/>
@@ -237,10 +246,12 @@ const ForumHome = () => {
 
 											{coverImage && (
 												<div className="relative">
-													<img
+													<Image
 														src={URL.createObjectURL(coverImage)}
 														alt="Vista previa"
-														className="h-24 w-24 rounded-md border border-white/20 object-cover"
+														width={96}
+														height={96}
+														className="rounded-md object-cover"
 													/>
 													<button
 														onClick={() => setCoverImage(null)}
@@ -265,7 +276,7 @@ const ForumHome = () => {
 													type="file"
 													accept=".pdf,.doc,.docx"
 													onChange={(e) =>
-														setDocumentFile(e.target.files?.[0] || null)
+														setDocumentFile(e.target.files?.[0] ?? null)
 													}
 													className="hidden"
 												/>

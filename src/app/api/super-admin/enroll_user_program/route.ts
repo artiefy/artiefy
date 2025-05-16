@@ -85,7 +85,7 @@ export async function GET(req: Request) {
 		// 5. EnrolledUsers (usado en frontend)
 		const enrolledUsers = students.map((s) => ({
 			id: s.id,
-			programTitle: s.programTitle!,
+			programTitle: s.programTitle,
 		}));
 
 		console.log(`📦 enrolledUsers listos: ${enrolledUsers.length}`);
@@ -104,20 +104,31 @@ export async function GET(req: Request) {
 	}
 }
 
-interface EnrollmentData {
-	courseId: number;
-	userId: string;
-	programId: number;
-}
-
-type EnrollmentRequestBody = {
+interface EnrollmentRequestBody {
 	userIds: string[];
 	courseIds: string[];
-};
+}
 
 export async function POST(req: Request) {
 	try {
-		const { userIds, courseIds }: EnrollmentRequestBody = await req.json();
+		const rawBody = (await req.json()) as unknown;
+
+		if (
+			!rawBody ||
+			typeof rawBody !== 'object' ||
+			!('userIds' in rawBody) ||
+			!('courseIds' in rawBody) ||
+			!Array.isArray((rawBody as EnrollmentRequestBody).userIds) ||
+			!Array.isArray((rawBody as EnrollmentRequestBody).courseIds)
+		) {
+			return NextResponse.json(
+				{ error: 'Parámetros inválidos' },
+				{ status: 400 }
+			);
+		}
+
+		const body = rawBody as EnrollmentRequestBody;
+		const { userIds, courseIds } = body;
 
 		if (!userIds || !courseIds) {
 			return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 });
