@@ -145,7 +145,7 @@ export default function TicketsPage() {
 				throw new Error(`HTTP error! status: ${response.status}`);
 
 			const rawTicketSchema = z.object({
-				id: z.string(),
+				id: z.union([z.string(), z.number()]), // acepta string o number
 				email: z.string(),
 				description: z.string(),
 				tipo: z.string(),
@@ -160,15 +160,15 @@ export default function TicketsPage() {
 				updated_at: z.string(),
 				time_elapsed_ms: z.number(),
 				cover_image_key: z.string().optional(),
-				video_key: z.string().optional(),
-				document_key: z.string().optional(),
+				video_key: z.union([z.string(), z.null()]).optional(),
+				document_key: z.union([z.string(), z.null()]).optional(),
 			});
 
 			const rawArraySchema = z.array(rawTicketSchema);
 			const rawData = rawArraySchema.parse(await response.json());
 
 			const mapped: Ticket[] = rawData.map((ticket) => ({
-				id: ticket.id,
+				id: String(ticket.id),
 				email: ticket.email,
 				description: ticket.description,
 				tipo: ticket.tipo,
@@ -899,7 +899,7 @@ export default function TicketsPage() {
 					</div>
 				)}
 
-<TicketModal
+				<TicketModal
 					key={selectedTicket ? selectedTicket.id : 'new'}
 					isOpen={isModalOpen}
 					onCloseAction={handleCloseModal}

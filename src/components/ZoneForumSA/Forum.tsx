@@ -20,7 +20,7 @@ import {
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
-import { Zone } from '~/components/ZoneForum/Zone';
+import { Zone } from '~/components/ZoneForumSA/Zone';
 
 const coursesSchema = z.array(
 	z.object({
