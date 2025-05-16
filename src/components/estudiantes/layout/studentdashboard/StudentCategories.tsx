@@ -135,7 +135,8 @@ export default function StudentCategories({
 						</div>
 					</div>
 				</div>
-				<div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+				<div className="hidden grid-cols-2 gap-3 sm:grid sm:grid-cols-4 lg:grid-cols-8">
+					{/* Botón "Todos los cursos" solo visible en desktop */}
 					<div
 						className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg bg-gray-50 p-3 text-center transition-transform hover:scale-105 hover:shadow-lg active:scale-95 ${
 							loadingCategory === 'all' ? 'pr-4' : ''
@@ -168,7 +169,8 @@ export default function StudentCategories({
 							)}
 						</div>
 					</div>
-					{/* Solo mostrar categorías que tengan is_featured en true */}
+
+					{/* Categorías destacadas solo visibles en desktop */}
 					{categoriesData?.featuredCategories
 						?.filter((category) => category.is_featured)
 						.map((category: Category, index: number) => (

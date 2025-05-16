@@ -16,16 +16,18 @@ import { Dialog, DialogPanel } from '@headlessui/react';
 import {
 	UserCircleIcon,
 	AcademicCapIcon,
-	BellIcon,
 	XMarkIcon as XMarkIconSolid,
 } from '@heroicons/react/24/solid';
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { NotificationSubscription } from './subscriptions/NotificationSubscription';
+
 import '~/styles/barsicon.css';
 import '~/styles/searchBar.css';
 import '~/styles/headerSearchBar.css';
 import '~/styles/headerMenu.css';
+import { NotificationHeader } from './NotificationHeader';
 
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -97,65 +99,63 @@ export function Header() {
 	const renderAuthButton = () => {
 		return (
 			<div className="flex items-center justify-end">
-				<SignedOut>
-					{isAuthLoaded ? (
-						<SignInButton>
-							<Button
-								className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
-								style={{
-									transition: '0.5s',
-									width: '180px',
-								}}
-								onClick={handleSignInClick}
-							>
-								<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
-									{isLoading ? (
-										<Icons.spinner className="size-6" />
-									) : (
-										'Iniciar Sesión'
-									)}
-								</span>
-							</Button>
-						</SignInButton>
-					) : (
-						<div className="h-12 w-[180px] animate-pulse rounded-md bg-gray-200" />
-					)}
-				</SignedOut>
-
-				<SignedIn>
-					<div className="flex items-center">
-						<UserButton showName
-							appearance={{
-								elements: {
-									rootBox: 'flex items-center justify-end',
-									userButtonTrigger: 'focus:shadow-none',
-								},
-							}}
-						>
-							<UserButton.MenuItems>
-								<UserButton.Link
-									label="Mis Cursos"
-									labelIcon={<UserCircleIcon className="size-4" />}
-									href="/estudiantes/myaccount"
-								/>
-								<UserButton.Link
-									label="Mis Certificaciones"
-									labelIcon={<AcademicCapIcon className="size-4" />}
-									href="/estudiantes/certificados"
-								/>
-								<UserButton.Link
-									label="Notificaciones"
-									labelIcon={<BellIcon className="size-4" />}
-									href="/estudiantes/notificaciones"
+				{!isAuthLoaded ? (
+					<div className="h-12 w-[180px] animate-pulse rounded-md bg-gray-200" />
+				) : (
+					<>
+						<SignedOut>
+							<SignInButton>
+								<Button
+									className="border-primary bg-primary text-background hover:bg-background hover:text-primary relative skew-x-[-15deg] cursor-pointer rounded-none border p-5 text-xl font-light italic transition-all duration-200 hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95"
+									style={{
+										transition: '0.5s',
+										width: '180px',
+									}}
+									onClick={handleSignInClick}
 								>
-									<span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-										2
+									<span className="relative skew-x-[15deg] overflow-hidden font-semibold">
+										{isLoading ? (
+											<Icons.spinner className="size-6" />
+										) : (
+											'Iniciar Sesión'
+										)}
 									</span>
-								</UserButton.Link>
-							</UserButton.MenuItems>
-						</UserButton>
-					</div>
-				</SignedIn>
+								</Button>
+							</SignInButton>
+						</SignedOut>
+
+						<SignedIn>
+							<div className="flex items-center gap-2">
+								<UserButton
+									showName
+									appearance={{
+										elements: {
+											rootBox: 'flex items-center justify-end',
+											userButtonTrigger: 'focus:shadow-none',
+											userButtonPopoverCard: 'z-[100]',
+										},
+									}}
+								>
+									<UserButton.MenuItems>
+										<UserButton.Link
+											label="Mis Cursos"
+											labelIcon={<UserCircleIcon className="size-4" />}
+											href="/estudiantes/myaccount"
+										/>
+										<UserButton.Link
+											label="Mis Certificaciones"
+											labelIcon={<AcademicCapIcon className="size-4" />}
+											href="/estudiantes/certificados"
+										/>
+									</UserButton.MenuItems>
+								</UserButton>
+								<div className="relative">
+									<NotificationHeader count={2} />
+								</div>
+							</div>
+						</SignedIn>
+					</>
+				)}
 			</div>
 		);
 	};
@@ -168,6 +168,9 @@ export function Header() {
 					: 'py-4'
 			}`}
 		>
+			<div className="absolute right-4 top-4 z-50">
+				<NotificationSubscription />
+			</div>
 			<div className="container mx-auto max-w-7xl px-4">
 				<div className="hidden w-full items-center md:flex md:justify-between">
 					{!isScrolled ? (
@@ -179,9 +182,10 @@ export function Header() {
 											src="/artiefy-logo.svg"
 											alt="Logo Artiefy"
 											fill
-											priority
+											priority={false} // Cambiado a false para evitar preload innecesario
 											className="object-contain"
-											sizes="(max-width: 768px) 150px, 150px"
+											sizes="150px" // Simplificado el sizes
+											loading="lazy" // Añadido lazy loading
 										/>
 									</div>
 								</Link>
@@ -208,9 +212,10 @@ export function Header() {
 											src="/artiefy-logo.svg"
 											alt="Logo Artiefy"
 											fill
-											priority
+											priority={false} // Cambiado a false para evitar preload innecesario
 											className="object-contain"
-											sizes="(max-width: 768px) 150px, 150px"
+											sizes="150px" // Simplificado el sizes
+											loading="lazy" // Añadido lazy loading
 										/>
 									</div>
 								</Link>

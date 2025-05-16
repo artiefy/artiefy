@@ -138,7 +138,7 @@ export default function RootLayout({
 				content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
 			/>
 			<body className="bg-background text-primary font-sans">
-				<ClerkProvider localization={esMX}>
+				<ClerkProvider localization={esMX} dynamic>
 					<Suspense fallback={<Loading />}>
 						<Providers>{children}</Providers>
 					</Suspense>
