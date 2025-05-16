@@ -9,9 +9,9 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
 import { Toaster } from '~/components/estudiantes/ui/sonner';
+import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 
 import Providers from './providers';
-
 
 const montserrat = Montserrat({
 	subsets: ['latin'],
@@ -108,7 +108,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<ClerkProvider localization={esMX} dynamic>
+		<ClerkProvider localization={esMX}>
 			<html
 				lang="es"
 				className={`${montserrat.variable} ${merriweather.variable}`}
@@ -118,7 +118,10 @@ export default function RootLayout({
 					content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
 				/>
 				<body className="bg-background text-primary font-sans">
-					<Providers>{children}</Providers>
+					<Providers>
+						{children}
+						<NotificationSubscription />
+					</Providers>
 					<SpeedInsights />
 					<Analytics />
 					<Toaster />

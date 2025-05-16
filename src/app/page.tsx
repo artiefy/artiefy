@@ -29,9 +29,11 @@ export default function HomePage() {
 	const dashboardRoute =
 		user?.publicMetadata?.role === 'super-admin'
 			? '/dashboard/super-admin'
-			: user?.publicMetadata?.role === 'educador'
-				? '/dashboard/educadores'
-				: '/estudiantes';
+			: user?.publicMetadata?.role === 'admin'
+				? '/dashboard/admin'
+				: user?.publicMetadata?.role === 'educador'
+					? '/dashboard/educadores'
+					: '/estudiantes';
 
 	useEffect(() => {
 		const fetchAnuncioActivo = async (userId: string) => {

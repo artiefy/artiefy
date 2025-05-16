@@ -43,41 +43,43 @@ export function NotificationSubscription() {
 	};
 
 	return (
-		<div
-			className={`subscription-alert-inline ${
-				isExpanded
-					? 'subscription-alert-expanded'
-					: 'subscription-alert-collapsed'
-			}`}
-			onClick={toggleExpand}
-		>
+		<div className="artiefy-subscription-notification">
 			<div
-				className={`subscription-alert-content-inline ${
-					notification.severity === 'high'
-						? 'border-red-500 bg-red-50'
-						: 'border-yellow-500 bg-yellow-50'
+				className={`subscription-alert-inline ${
+					isExpanded
+						? 'subscription-alert-expanded'
+						: 'subscription-alert-collapsed'
 				}`}
+				onClick={toggleExpand}
 			>
-				<div className="flex items-center gap-3">
-					<FaCrown
-						className={`size-5 ${
-							notification.severity === 'high'
-								? 'text-red-500'
-								: 'text-yellow-500'
-						}`}
-					/>
-					<span
-						className={`alert-message ${
-							notification.severity === 'high'
-								? 'text-red-700'
-								: 'text-yellow-700'
-						}`}
-					>
-						<span className="alert-message-text">{notification.message}</span>
-						<Link href="/planes" className="upgrade-link">
-							Renovar suscripción
-						</Link>
-					</span>
+				<div
+					className={`subscription-alert-content-inline ${
+						notification.severity === 'high'
+							? 'border-red-500 bg-red-50'
+							: 'border-yellow-500 bg-yellow-50'
+					}`}
+				>
+					<div className="flex items-center gap-3">
+						<FaCrown
+							className={`size-5 ${
+								notification.severity === 'high'
+									? 'text-red-500'
+									: 'text-yellow-500'
+							}`}
+						/>
+						<span
+							className={`alert-message ${
+								notification.severity === 'high'
+									? 'text-red-700'
+									: 'text-yellow-700'
+							}`}
+						>
+							<span className="alert-message-text">{notification.message}</span>
+							<Link href="/planes" className="upgrade-link">
+								Renovar suscripción
+							</Link>
+						</span>
+					</div>
 				</div>
 			</div>
 		</div>
