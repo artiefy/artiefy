@@ -16,6 +16,7 @@ export function NotificationSubscription() {
 		message: string;
 		severity: string;
 	} | null>(null);
+	const [isExpanded, setIsExpanded] = useState(false);
 
 	useEffect(() => {
 		if (!user) return;
@@ -37,18 +38,51 @@ export function NotificationSubscription() {
 
 	if (!notification) return null;
 
+	const toggleExpand = () => {
+		setIsExpanded(!isExpanded);
+	};
+
 	return (
-		<div className="subscription-alert-inline">
-			<div className="subscription-alert-content-inline">
-				<div className="flex items-center gap-2">
-					<FaCrown className={`alert-icon ${notification.severity}`} />
-					<p className={`alert-message ${notification.severity} m-0`}>
+		<div
+			className={`subscription-alert-inline ${
+				isExpanded
+					? 'subscription-alert-expanded'
+					: 'subscription-alert-collapsed'
+			}`}
+			onClick={toggleExpand}
+		>
+			<div
+				className={`subscription-alert-content-inline ${
+					notification.severity === 'high'
+						? 'border-red-500 bg-red-50'
+						: 'border-yellow-500 bg-yellow-50'
+				}`}
+			>
+				<div className="flex items-center gap-3">
+					<FaCrown
+						className={`size-5 ${
+							notification.severity === 'high'
+								? 'text-red-500'
+								: 'text-yellow-500'
+						}`}
+					/>
+					<span
+						className={`alert-message ${
+							notification.severity === 'high'
+								? 'text-red-700'
+								: 'text-yellow-700'
+						}`}
+					>
 						{notification.message}
 						{' · '}
-						<Link href="/planes" className="upgrade-link">
+						<Link
+							href="/planes"
+							className="upgrade-link"
+							onClick={(e) => e.stopPropagation()}
+						>
 							Renovar suscripción
 						</Link>
-					</p>
+					</span>
 				</div>
 			</div>
 		</div>

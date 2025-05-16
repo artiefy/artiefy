@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,13 +21,13 @@ import {
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import { NotificationSubscription } from './subscriptions/NotificationSubscription';
+
+import { NotificationHeader } from './NotificationHeader';
 
 import '~/styles/barsicon.css';
 import '~/styles/searchBar.css';
 import '~/styles/headerSearchBar.css';
 import '~/styles/headerMenu.css';
-import { NotificationHeader } from './NotificationHeader';
 
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -36,6 +36,7 @@ export function Header() {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 	const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
+	const [mounted, setMounted] = useState(false);
 
 	const { isLoaded: isAuthLoaded } = useAuth();
 
@@ -70,6 +71,10 @@ export function Header() {
 
 		document.addEventListener('mousedown', handleClickOutside);
 		return () => document.removeEventListener('mousedown', handleClickOutside);
+	}, []);
+
+	useEffect(() => {
+		setMounted(true);
 	}, []);
 
 	const handleSignInClick = () => {
@@ -160,6 +165,10 @@ export function Header() {
 		);
 	};
 
+	if (!mounted) {
+		return null; // O un skeleton/placeholder
+	}
+
 	return (
 		<header
 			className={`sticky top-0 z-50 w-full transition-all duration-300 ${
@@ -168,9 +177,6 @@ export function Header() {
 					: 'py-4'
 			}`}
 		>
-			<div className="absolute right-4 top-4 z-50">
-				<NotificationSubscription />
-			</div>
 			<div className="container mx-auto max-w-7xl px-4">
 				<div className="hidden w-full items-center md:flex md:justify-between">
 					{!isScrolled ? (

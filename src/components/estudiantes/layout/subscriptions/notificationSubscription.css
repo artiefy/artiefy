@@ -64,24 +64,29 @@
 
 .subscription-alert-inline {
 	position: fixed;
-	top: 1rem;
-	right: 1rem; /* Cambiado de 4rem a 1rem para estar más pegado al borde */
-	z-index: 50;
+	bottom: 2rem;
+	left: 2rem;
+	z-index: 99999;
 	max-width: 600px;
 	font-size: 0.875rem;
 	line-height: 1.25rem;
-	animation: slideIn 0.5s ease-out;
+	animation: slideInFromBottom 0.5s ease-out;
+	pointer-events: auto;
+	transform: translateZ(0);
+	will-change: transform;
 }
 
 .subscription-alert-content-inline {
+	position: relative;
 	display: flex;
 	align-items: center;
 	background-color: rgb(254 252 232);
 	border-left-width: 4px;
 	border-color: rgb(250 204 21);
 	border-radius: 0.375rem;
-	padding: 0.5rem 1rem;
-	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+	padding: 0.75rem 1.25rem;
+	box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.15);
+	isolation: isolate;
 }
 
 @keyframes slideIn {
@@ -92,5 +97,66 @@
 	to {
 		transform: translateX(0);
 		opacity: 1;
+	}
+}
+
+@keyframes slideInFromBottom {
+	from {
+		transform: translate(-50%, 100%);
+		opacity: 0;
+	}
+	to {
+		transform: translate(-50%, 0);
+		opacity: 1;
+	}
+}
+
+/* Estilos responsive */
+@media (max-width: 768px) {
+	.subscription-alert-inline {
+		bottom: 1rem;
+		left: 50%;
+		transform: translateX(-50%);
+		max-width: calc(100vw - 2rem);
+		width: auto;
+		margin: 0 auto;
+	}
+
+	.subscription-alert-content-inline {
+		padding: 0.75rem 1rem;
+		font-size: 0.8rem;
+		border-radius: 0.5rem;
+	}
+
+	.alert-message {
+		font-size: 0.75rem;
+		margin-left: 0.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		white-space: normal;
+	}
+
+	.upgrade-link {
+		display: inline-block;
+		width: 100%;
+		text-align: center;
+		margin-top: 0.25rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		padding: 0.35rem 0;
+		border-radius: 0.25rem;
+		background-color: rgba(141, 56, 0, 0.1);
+	}
+
+	.upgrade-link:hover {
+		background-color: rgba(202, 138, 4, 0.15);
+	}
+}
+
+/* Asegurar que la notificación siempre esté por encima de otros elementos */
+@layer utilities {
+	.z-notifications {
+		z-index: 9999;
 	}
 }

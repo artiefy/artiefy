@@ -14,6 +14,7 @@ import { type Metadata } from 'next';
 
 // 4. Internal components
 import { Toaster } from '~/components/estudiantes/ui/sonner';
+import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 
 import Loading from './loading';
 import Providers from './providers';
@@ -129,24 +130,31 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html
-			lang="es"
-			className={`${montserrat.variable} ${merriweather.variable}`}
-		>
-			<meta
-				name="google-site-verification"
-				content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
-			/>
-			<body className="bg-background text-primary font-sans">
-				<ClerkProvider localization={esMX} dynamic>
+		<ClerkProvider localization={esMX}>
+			<html
+				lang="es"
+				className={`${montserrat.variable} ${merriweather.variable}`}
+				suppressHydrationWarning
+			>
+				<meta
+					name="google-site-verification"
+					content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
+				/>
+				<body
+					className="bg-background text-primary font-sans"
+					suppressHydrationWarning
+				>
 					<Suspense fallback={<Loading />}>
 						<Providers>{children}</Providers>
 					</Suspense>
-				</ClerkProvider>
-				<SpeedInsights />
-				<Analytics />
-				<Toaster />
-			</body>
-		</html>
+					<div className="notification-wrapper">
+						<NotificationSubscription />
+					</div>
+					<SpeedInsights />
+					<Analytics />
+					<Toaster />
+				</body>
+			</html>
+		</ClerkProvider>
 	);
 }
