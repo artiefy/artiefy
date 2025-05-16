@@ -24,7 +24,7 @@ export const env = createEnv({
 		AWS_ACCESS_KEY_ID: z.string().min(1),
 		AWS_SECRET_ACCESS_KEY: z.string().min(1),
 
-		// PayU
+		// PayU Configuration
 		MERCHANT_ID: z.string().min(1),
 		ACCOUNT_ID: z.string().min(1),
 		API_LOGIN: z.string().min(1),
@@ -32,6 +32,8 @@ export const env = createEnv({
 		PAYU_API_URL: z.string().url(),
 		RESPONSE_URL: z.string().url(),
 		CONFIRMATION_URL: z.string().url(),
+		CONFIRMATION_URL_PLANS: z.string().url(),
+		CONFIRMATION_URL_COURSES: z.string().url(),
 
 		// SMTP
 		PASS: z.string().min(1),
@@ -93,6 +95,8 @@ export const env = createEnv({
 		PAYU_API_URL: process.env.PAYU_API_URL,
 		RESPONSE_URL: process.env.RESPONSE_URL,
 		CONFIRMATION_URL: process.env.CONFIRMATION_URL,
+		CONFIRMATION_URL_PLANS: process.env.CONFIRMATION_URL_PLANS,
+		CONFIRMATION_URL_COURSES: process.env.CONFIRMATION_URL_COURSES,
 
 		// SMTP
 		PASS: process.env.PASS,
@@ -104,6 +108,6 @@ export const env = createEnv({
 		SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION === 'true' || false,
 	},
 
-	skipValidation: process.env.SKIP_ENV_VALIDATION === 'true',
+	skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
 	emptyStringAsUndefined: true,
 });
