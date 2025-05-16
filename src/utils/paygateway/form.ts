@@ -21,16 +21,13 @@ export function createFormData(
 
 	// Generar referenceCode único combinando ID del curso y timestamp
 	const timestamp = Date.now();
+	const cleanProductName = product.name.replace(/\s*Premium\s*/g, '').trim();
+	const cleanDescription =
+		paymentType === 'plan' ? `Plan ${product.name}` : product.description;
 	const referenceCode =
 		paymentType === 'course'
 			? `C${product.id}T${timestamp}` // Format: C{courseId}T{timestamp}
-			: `${product.name.replace(/\s+/g, '_')}_${timestamp}`; // Incluir el nombre del plan en la referencia
-
-	console.log('Creating payment reference:', {
-		productName: product.name,
-		referenceCode,
-		timestamp,
-	});
+			: `${cleanProductName}_${timestamp}`; // Incluir el nombre del plan en la referencia
 
 	// Generar signature con formato correcto
 	const signature = calculateSignature(
@@ -47,16 +44,10 @@ export function createFormData(
 			? env.CONFIRMATION_URL_COURSES
 			: env.CONFIRMATION_URL_PLANS;
 
-	console.log('🔄 Using confirmation URL:', {
-		type: paymentType,
-		url: confirmationUrl,
-		referenceCode,
-	});
-
 	return {
 		merchantId: auth.merchantId,
 		accountId: auth.accountId,
-		description: product.description,
+		description: cleanDescription,
 		referenceCode,
 		amount: formattedAmount,
 		tax,

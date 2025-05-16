@@ -16,7 +16,6 @@ interface PaymentData {
 }
 
 export async function updateUserSubscription(paymentData: PaymentData) {
-	// Desestructuración directa para mayor claridad
 	const { email_buyer, state_pol, reference_sale } = paymentData;
 	console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
 
@@ -27,35 +26,21 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		return;
 	}
 
-	// Mejorar la detección del plan basada en el reference_sale
 	const getPlanTypeFromReference = (
 		ref: string
 	): 'Pro' | 'Premium' | 'Enterprise' => {
-		console.log('🔍 Analyzing reference:', ref);
-
-		// Primero intentar extraer el plan del reference_sale
 		const planMatch = /plan_(premium|pro|enterprise)_/i.exec(ref);
 		if (planMatch) {
 			const planName = planMatch[1].toLowerCase();
-			console.log('📌 Plan extracted from reference:', planName);
-
 			switch (planName) {
 				case 'premium':
 					return 'Premium';
 				case 'enterprise':
 					return 'Enterprise';
-				case 'pro':
+				default:
 					return 'Pro';
 			}
 		}
-
-		// Si no se encuentra en la referencia, usar el valor del pago
-		const amount = parseFloat(paymentData.value);
-		console.log('💰 Using amount for plan detection:', amount);
-
-		// Determinar plan por el monto pagado
-		if (amount === 150000) return 'Premium';
-		if (amount === 200000) return 'Enterprise';
 		return 'Pro';
 	};
 
@@ -87,11 +72,6 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			where: eq(users.email, email_buyer),
 		});
 
-		console.log('Current plan info:', {
-			existingPlan: existingUser?.planType,
-			newPlan: planType,
-		});
-
 		if (existingUser) {
 			console.log('👤 Updating user plan:', {
 				from: existingUser.planType,
@@ -102,7 +82,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			const updateResult = await db
 				.update(users)
 				.set({
-					planType: planType,
+					planType,
 					subscriptionStatus: 'active',
 					subscriptionEndDate: new Date(subscriptionEndBogota),
 					purchaseDate: new Date(bogotaNow),
@@ -135,13 +115,6 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 							subscriptionStatus: 'active',
 							subscriptionEndDate: subscriptionEndBogota,
 						},
-					});
-
-					// Verificar la actualización
-					const updatedUser = await clerk.users.getUser(clerkUser.id);
-					console.log('✅ Clerk metadata verified:', {
-						oldPlan: clerkUser.publicMetadata?.planType,
-						newPlan: updatedUser.publicMetadata?.planType,
 					});
 				}
 			}
