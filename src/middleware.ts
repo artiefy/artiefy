@@ -17,7 +17,12 @@ const routeMatchers = {
 	educador: createRouteMatcher(['/dashboard/educadores(.*)']) as (
 		req: Request
 	) => boolean,
-	student: createRouteMatcher(['/estudiantes/clases/:id']) as (
+	protectedStudent: createRouteMatcher([
+		'/estudiantes/clases/:id',
+		'/estudiantes/programas/:id',
+		'/estudiantes/cursos/:id',
+	]) as (req: Request) => boolean,
+	premiumPrograms: createRouteMatcher(['/estudiantes/programas/:id']) as (
 		req: Request
 	) => boolean,
 	protected: createRouteMatcher(['/dashboard(.*)']) as (
@@ -42,24 +47,27 @@ export default clerkMiddleware(async (auth, req) => {
 		const { userId, sessionClaims } = await auth();
 		const role = sessionClaims?.metadata?.role;
 
-		// Check for protected routes
-		const isProtectedRoute = Object.values(routeMatchers).some((matcher) =>
-			matcher(req)
-		);
-
-		// If not a protected route, allow access
-		if (!isProtectedRoute) {
-			return NextResponse.next();
+		// Prevent admin, super-admin and educador from accessing any student routes
+		if (
+			req.url.includes('/estudiantes') &&
+			['admin', 'super-admin', 'educador'].includes(role as string)
+		) {
+			return NextResponse.redirect(new URL('/', req.url));
 		}
 
-		// Handle unauthenticated users for protected routes
-		if (!userId) {
-			return NextResponse.redirect(
-				new URL(`/sign-in?redirect_url=${encodeURIComponent(req.url)}`, req.url)
-			);
+		// Check protected student routes (classes, programs, courses with ID)
+		if (routeMatchers.protectedStudent(req)) {
+			if (!userId) {
+				return NextResponse.redirect(
+					new URL(
+						`/sign-in?redirect_url=${encodeURIComponent(req.url)}`,
+						req.url
+					)
+				);
+			}
 		}
 
-		// Role-based access control with dynamic redirect
+		// Handle other protected routes (admin, super-admin, educador)
 		if (routeMatchers.admin(req) && role !== 'admin') {
 			return NextResponse.redirect(new URL('/', req.url));
 		}
@@ -70,13 +78,6 @@ export default clerkMiddleware(async (auth, req) => {
 
 		if (routeMatchers.educador(req) && role !== 'educador') {
 			return NextResponse.redirect(new URL('/', req.url));
-		}
-
-		// Student route protection with dynamic redirect
-		if (routeMatchers.student(req) && !userId) {
-			return NextResponse.redirect(
-				new URL(`/sign-in?redirect_url=${encodeURIComponent(req.url)}`, req.url)
-			);
 		}
 
 		return NextResponse.next();
