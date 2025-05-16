@@ -282,12 +282,6 @@
 	}
 }
 
-<<<<<<< HEAD
-.lesson-cards-container {
-	display: grid;
-	min-height: 100px; /* Ensures minimal height during loading */
-	content-visibility: auto; /* Optimizes rendering */
-=======
 @layer utilities {
 	.glow-pulse {
 		position: relative;
@@ -320,5 +314,4 @@
 			filter: blur(22px);
 		}
 	}
->>>>>>> dev/miguel
 }
