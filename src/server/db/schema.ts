@@ -38,7 +38,9 @@ export const users = pgTable(
 			withTimezone: true,
 			mode: 'date',
 		}),
-		planType: text('plan_type', { enum: ['Pro', 'Premium', 'Enterprise'] }),
+		planType: text('plan_type', {
+			enum: ['none', 'Pro', 'Premium', 'Enterprise'], // Actualizar los valores exactos
+		}),
 		purchaseDate: timestamp('purchase_date', {
 			withTimezone: true,
 			mode: 'date',

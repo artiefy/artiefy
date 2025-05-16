@@ -1,7 +1,6 @@
 import { clerkClient } from '@clerk/nextjs/server';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
@@ -60,65 +59,54 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 			where: eq(users.email, email_buyer),
 		});
 
+		console.log('Current plan info:', {
+			existingPlan: existingUser?.planType,
+			newPlan: planType,
+		});
+
 		if (existingUser) {
-			// Actualizar explícitamente el planType
-			await db
+			// Actualizar explícitamente el planType con una consulta directa
+			const updateResult = await db
 				.update(users)
 				.set({
-					planType: planType, // Asegurarse que esto se actualice
+					planType, // Asegurarse que sea exactamente 'Pro', 'Premium' o 'Enterprise'
 					subscriptionStatus: 'active',
 					subscriptionEndDate: new Date(subscriptionEndBogota),
 					purchaseDate: new Date(bogotaNow),
 					updatedAt: new Date(),
 				})
-				.where(eq(users.email, email_buyer));
+				.where(eq(users.email, email_buyer))
+				.returning({ updatedPlanType: users.planType });
 
-			console.log('✅ Database updated with new plan:', {
-				email: email_buyer,
-				newPlan: planType,
-				previousPlan: existingUser.planType,
-			});
-		} else {
-			const userId = uuidv4();
-			await db.insert(users).values({
-				id: userId,
-				email: email_buyer,
-				role: 'estudiante',
-				subscriptionStatus: 'active',
-				subscriptionEndDate: new Date(subscriptionEndBogota), // Guardamos en formato Bogotá
-				planType: planType,
-				purchaseDate: new Date(bogotaNow), // Guardamos en formato Bogotá
-				createdAt: new Date(),
-				updatedAt: new Date(),
-			});
-			console.log(`✅ Usuario creado en la base de datos: ${email_buyer}`);
+			console.log('✅ Database update result:', updateResult);
 		}
 
-		// Actualizar metadata en Clerk
-		const clerk = await clerkClient(); // Await the function to get the client
+		// Actualizar Clerk con una actualización completa
+		// If clerkClient is a function, do this:
+		const clerk = await clerkClient();
 		const clerkUsers = await clerk.users.getUserList({
 			emailAddress: [email_buyer],
 		});
 
-		// Actualizar metadata de Clerk
 		if (clerkUsers.data.length > 0) {
 			const clerkUser = clerkUsers.data[0];
 
-			// Obtener metadata actual para logging
-			const currentMetadata = await clerk.users.getUser(clerkUser.id);
+			// Forzar la actualización completa de los metadatos
+			const updatedMetadata = await clerk.users.updateUserMetadata(
+				clerkUser.id,
+				{
+					publicMetadata: {
+						planType, // Asegurarse que sea exactamente 'Pro', 'Premium' o 'Enterprise'
+						subscriptionStatus: 'active',
+						subscriptionEndDate: subscriptionEndBogota,
+					},
+				}
+			);
 
-			await clerk.users.updateUserMetadata(clerkUser.id, {
-				publicMetadata: {
-					...currentMetadata.publicMetadata,
-					subscriptionStatus: 'active',
-					subscriptionEndDate: subscriptionEndBogota,
-					planType: planType, // Asegurarse que esto se actualice
-				},
-			});
-
-			console.log('✅ Clerk metadata updated:', {
-				previous: currentMetadata.publicMetadata.planType,
-				new: planType,
+			console.log('✅ Clerk metadata update result:', {
+				oldPlan: clerkUser.publicMetadata?.planType,
+				newPlan: planType,
+				updatedMetadata,
 			});
 		}
 
