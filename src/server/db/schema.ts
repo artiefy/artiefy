@@ -246,6 +246,8 @@ export const forums = pgTable('forums', {
 		.references(() => users.id)
 		.notNull(), // El usuario que crea el foro
 	description: text('description'), // Descripción opcional del foro
+	coverImageKey: text('cover_image_key'), // NUEVO: para imagen
+	documentKey: text('document_key'), // NUEVO: para archivo PDF, Word, etc.
 	createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
 	updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
 });
@@ -316,6 +318,8 @@ export const tickets = pgTable('tickets', {
 	}).notNull(),
 	email: text('email').notNull(),
 	coverImageKey: text('cover_image_key'),
+	videoKey: text('video_key'),
+	documentKey: text('document_key'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -709,6 +713,9 @@ export const userTimeTracking = pgTable('user_time_tracking', {
 	id: serial('id').primaryKey(),
 	userId: text('user_id')
 		.references(() => users.id)
+		.notNull(),
+	courseId: integer('course_id')
+		.references(() => courses.id)
 		.notNull(),
 	date: date('date').defaultNow().notNull(),
 	timeSpent: integer('time_spent').default(0).notNull(),

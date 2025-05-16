@@ -55,6 +55,18 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			id: 'users',
 			link: '/dashboard/super-admin',
 		},
+		{
+			icon: <FiMessageSquare size={24} />,
+			title: 'Foro',
+			id: 'foro',
+			link: '/dashboard/super-admin/foro',
+		},
+		{
+			icon: <FiMessageSquare size={24} />,
+			title: 'Tickets',
+			id: 'tickets',
+			link: '/dashboard/super-admin/tickets',
+		},
 	];
 
 	const navItemsEducator = [
@@ -326,6 +338,19 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
 												>
 													Materias
+												</Link>
+											</li>
+											<li>
+												<Link
+													href="/dashboard/super-admin/programs/enrolled_users"
+													className={`hover:bg-secondary block rounded-lg p-2 text-gray-600 transition-all duration-300 hover:text-white ${
+														pathname ===
+														'/dashboard/super-admin/programs/enrolled_users'
+															? 'bg-primary text-[#01142B]'
+															: ''
+													}`}
+												>
+													Matricular Estudiantes
 												</Link>
 											</li>
 										</ul>

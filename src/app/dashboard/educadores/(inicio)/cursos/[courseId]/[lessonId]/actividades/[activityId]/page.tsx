@@ -77,7 +77,17 @@ interface ActivityDetails {
 	fechaMaximaEntrega: string | null;
 }
 
-// Definir la interfaz de la actividad
+// Definir la interfaz de los porcentajes
+interface PorcentajeResponse {
+	usado: number;
+	disponible: number;
+	resumen: {
+		opcionMultiple: number;
+		verdaderoFalso: number;
+		completar: number;
+	};
+}
+
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
 	hexcolor = hexcolor.replace('#', '');
@@ -114,6 +124,15 @@ const Page: React.FC = () => {
 	const lessonIdNumber = lessonIdString ? parseInt(lessonIdString) : null; // Convertir el id de la leccion a numero
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId; // Obtener el id del curso
 	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null; // Convertir el id del curso a numero
+	const [shouldRefresh, setShouldRefresh] = useState(false);
+	const [porcentajeUsado, setPorcentajeUsado] = useState(0);
+	const [porcentajeDisponible, setPorcentajeDisponible] = useState(100);
+
+	const [resumenPorTipo, setResumenPorTipo] = useState({
+		opcionMultiple: 0,
+		verdaderoFalso: 0,
+		completar: 0,
+	});
 
 	// Funcion para cargar la actividad
 	const fetchActividad = useCallback(async () => {
@@ -156,6 +175,35 @@ const Page: React.FC = () => {
 		);
 	}, [fetchActividad]);
 
+	const fetchPorcentajes = useCallback(() => {
+		if (actividadIdNumber !== null) {
+			fetch(
+				`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
+			)
+				.then((res) => res.json() as Promise<PorcentajeResponse>)
+				.then((data) => {
+					setPorcentajeUsado(Number(data.usado));
+					setPorcentajeDisponible(Number(data.disponible));
+					if (
+						typeof data.resumen === 'object' &&
+						data.resumen !== null &&
+						'opcionMultiple' in data.resumen &&
+						'verdaderoFalso' in data.resumen &&
+						'completar' in data.resumen
+					) {
+						setResumenPorTipo({
+							opcionMultiple: Number(data.resumen.opcionMultiple),
+							verdaderoFalso: Number(data.resumen.verdaderoFalso),
+							completar: Number(data.resumen.completar),
+						});
+					}
+				})
+				.catch((err) => {
+					console.error('Error obteniendo porcentajes por tipo:', err);
+				});
+		}
+	}, [actividadIdNumber]);
+
 	// Guardar el color seleccionado en el localStorage
 	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
@@ -163,6 +211,31 @@ const Page: React.FC = () => {
 			setColor(savedColor);
 		}
 	}, [courseIdNumber]);
+
+	useEffect(() => {
+		if (actividadIdNumber !== null) {
+			fetch(
+				`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
+			)
+				.then((res) => res.json() as Promise<PorcentajeResponse>)
+				.then((data) => {
+					setPorcentajeUsado(Number(data.usado));
+					setPorcentajeDisponible(Number(data.disponible));
+					setResumenPorTipo({
+						opcionMultiple: Number(data.resumen.opcionMultiple),
+						verdaderoFalso: Number(data.resumen.verdaderoFalso),
+						completar: Number(data.resumen.completar),
+					});
+				})
+				.catch((err) => {
+					console.error('Error obteniendo porcentajes por tipo:', err);
+				});
+		}
+	}, [actividadIdNumber]);
+
+	useEffect(() => {
+		fetchPorcentajes();
+	}, [shouldRefresh, fetchPorcentajes]);
 
 	// Funcion para eliminar la actividad
 	const handleDeleteAct = async () => {
@@ -214,6 +287,7 @@ const Page: React.FC = () => {
 	const handleFormSubmit = () => {
 		setEditingQuestion(null);
 		setQuestions([]);
+		setShouldRefresh((prev) => !prev);
 	};
 
 	// Funcion para cancelar la edicion de la pregunta
@@ -226,7 +300,7 @@ const Page: React.FC = () => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="border-primary size-32 rounded-full border-y-2">
+				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -465,6 +539,27 @@ const Page: React.FC = () => {
 								selectedColor={color}
 								onSelectChange={setSelectedActivityType}
 							/>
+							<div
+								className={`mt-2 text-center text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+							>
+								<p>
+									<strong>Porcentaje usado por tipo de pregunta:</strong>
+								</p>
+								<p>
+									🟡 Opción Múltiple: {resumenPorTipo.opcionMultiple}%, 🔵
+									Verdadero/Falso: {resumenPorTipo.verdaderoFalso}%, 🟢
+									Completar: {resumenPorTipo.completar}%
+								</p>
+								<hr className="my-2" />
+								<p>
+									Total usado: <strong>{porcentajeUsado}%</strong>
+								</p>
+								<p>
+									Porcentaje disponible:{' '}
+									<strong>{porcentajeDisponible}%</strong>
+								</p>
+							</div>
+
 							{selectedActivityType && (
 								<Button
 									className={`mx-auto mb-4 w-2/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
@@ -506,9 +601,18 @@ const Page: React.FC = () => {
 							))}
 							{actividadIdNumber !== null && (
 								<>
-									<QuestionVOFList activityId={actividadIdNumber} />
-									<QuestionList activityId={actividadIdNumber} />
-									<ListPreguntaAbierta activityId={actividadIdNumber} />
+									<QuestionVOFList
+										key={`vof-${shouldRefresh}`}
+										activityId={actividadIdNumber}
+									/>
+									<QuestionList
+										key={`om-${shouldRefresh}`}
+										activityId={actividadIdNumber}
+									/>
+									<ListPreguntaAbierta
+										key={`abierta-${shouldRefresh}`}
+										activityId={actividadIdNumber}
+									/>
 								</>
 							)}
 						</>

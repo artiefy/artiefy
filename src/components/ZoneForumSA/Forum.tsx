@@ -22,16 +22,20 @@ import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 import { Zone } from '~/components/ZoneForum/Zone';
 
-interface CoursesModels {
-	id: number;
-	title: string;
-	description: string;
-	coverImageKey: string;
-}
+const coursesSchema = z.array(
+	z.object({
+		id: z.number(),
+		title: z.string(),
+		description: z.string(),
+		coverImageKey: z.string(),
+	})
+);
 
 const uploadResponseSchema = z.object({
 	fileKey: z.string(),
 });
+
+type CoursesModels = z.infer<typeof coursesSchema>[number];
 
 const ForumHome = () => {
 	const { user } = useUser();
@@ -43,14 +47,10 @@ const ForumHome = () => {
 	const [isUploading, setIsUploading] = useState(false);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
-
 	const [coverImage, setCoverImage] = useState<File | null>(null);
 	const [documentFile, setDocumentFile] = useState<File | null>(null);
 
-	const uploadFileToServer = async (
-		file: File,
-		type: 'image' | 'document'
-	): Promise<string> => {
+	const uploadFileToServer = async (file: File, type: 'image' | 'document') => {
 		const formData = new FormData();
 		formData.append('file', file);
 		formData.append('type', type);
@@ -59,9 +59,9 @@ const ForumHome = () => {
 			method: 'POST',
 			body: formData,
 		});
-		const json: unknown = await res.json();
-		const data = uploadResponseSchema.parse(json);
-		return data.fileKey;
+		const json = (await res.json()) as unknown;
+		const { fileKey } = uploadResponseSchema.parse(json);
+		return fileKey;
 	};
 
 	const handleCreateForum = async () => {
@@ -71,15 +71,13 @@ const ForumHome = () => {
 		setUploadProgress(25);
 
 		const userId = user.id;
-		let coverImageKey = '';
-		let documentKey = '';
 
 		try {
 			if (coverImage) {
-				coverImageKey = await uploadFileToServer(coverImage, 'image');
+				await uploadFileToServer(coverImage, 'image');
 			}
 			if (documentFile) {
-				documentKey = await uploadFileToServer(documentFile, 'document');
+				await uploadFileToServer(documentFile, 'document');
 			}
 
 			setUploadProgress(60);
@@ -89,8 +87,8 @@ const ForumHome = () => {
 			formData.append('title', title);
 			formData.append('description', description);
 			formData.append('userId', userId);
-			formData.append('coverImageKey', coverImageKey);
-			formData.append('documentKey', documentKey);
+			if (coverImage) formData.append('coverImage', coverImage);
+			if (documentFile) formData.append('documentFile', documentFile);
 
 			const response = await fetch('/api/forums', {
 				method: 'POST',
@@ -98,20 +96,11 @@ const ForumHome = () => {
 			});
 
 			setUploadProgress(100);
-			const json: unknown = await response.json();
-			const responseSchema = z.object({
-				success: z.boolean(),
-				message: z.string().optional(),
-			});
-			const result = responseSchema.parse(json);
+			await response.json();
 
-			if (result.success) {
-				toast.success('Foro creado exitosamente!');
-				setIsDialogOpen(false);
-				window.location.reload();
-			} else {
-				toast.error(result.message ?? 'Error al crear el foro');
-			}
+			toast.success('Foro creado exitosamente!');
+			setIsDialogOpen(false);
+			window.location.reload();
 		} catch (error) {
 			console.error('Error al crear el foro:', error);
 			toast.error('Error al crear el foro');
@@ -133,20 +122,11 @@ const ForumHome = () => {
 				const response = await fetch(
 					`/api/educadores/courses?userId=${user.id}`
 				);
-				const json: unknown = await response.json();
-				const coursesSchema = z.array(
-					z.object({
-						id: z.number(),
-						title: z.string(),
-						description: z.string(),
-						coverImageKey: z.string(),
-					})
-				);
-				const data = coursesSchema.parse(json);
-				setCourses(data);
+				const json = (await response.json()) as unknown;
+				const parsed = coursesSchema.parse(json);
+				setCourses(parsed);
 			} catch (error) {
-				console.error('Error:', error);
-				toast.error('Error al cargar los cursos');
+				console.error('Error al obtener cursos:', error);
 			} finally {
 				setLoadingCourses(false);
 			}
@@ -271,7 +251,7 @@ const ForumHome = () => {
 														alt="Vista previa"
 														width={96}
 														height={96}
-														className="h-24 w-24 rounded-md border border-white/20 object-cover"
+														className="rounded-md object-cover"
 													/>
 													<button
 														onClick={() => setCoverImage(null)}

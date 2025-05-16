@@ -168,7 +168,7 @@ export const Zone = () => {
 
 						<div className="mt-4 flex items-center justify-between">
 							<Link
-								href={`/dashboard/admin/foro/${forum.id}`}
+								href={`/dashboard/super-admin/foro/${forum.id}`}
 								className="bg-primary hover:bg-primary/80 rounded-md px-4 py-2 text-sm font-semibold text-white"
 							>
 								Ver foro

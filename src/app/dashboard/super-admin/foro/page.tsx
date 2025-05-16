@@ -5,7 +5,7 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from '~/components/educators/ui/breadcrumb';
-import ForumHome from '~/components/ZoneForum/Forum';
+import ForumHome from '~/components/ZoneForumSA/Forum';
 
 export default function page() {
 	// Vista sencilla que muestra el componente and la lista de foros con detalles basicos y botones para ver el forto mas especifico

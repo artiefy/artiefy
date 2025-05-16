@@ -10,7 +10,6 @@ import {
 import { db } from '~/server/db';
 import { tickets, users, ticketComments } from '~/server/db/schema';
 
-// Tipos seguros
 interface CreateTicketBody {
 	email: string;
 	tipo: 'otro' | 'bug' | 'revision' | 'logs';
@@ -19,6 +18,8 @@ interface CreateTicketBody {
 	estado: 'abierto' | 'en proceso' | 'en revision' | 'solucionado' | 'cerrado';
 	assignedToId?: string;
 	coverImageKey?: string | null;
+	videoKey?: string | null;
+	documentKey?: string | null;
 }
 
 interface UpdateTicketBody extends Partial<CreateTicketBody> {
@@ -30,6 +31,7 @@ export const dynamic = 'force-dynamic';
 // ========================
 // GET /api/admin/tickets
 // ========================
+
 export async function GET(request: Request) {
 	const { userId, sessionClaims } = await auth();
 	const role = sessionClaims?.metadata.role;
@@ -61,9 +63,12 @@ export async function GET(request: Request) {
 				t.tipo,
 				t.cover_image_key,
 				t.created_at,
+				t.updated_at,
 				c.name AS creator_name,
 				c.email AS creator_email,
 				a.name AS assigned_to_name,
+				t.video_key,
+t.document_key,
 				a.email AS assigned_to_email
 			FROM tickets t
 			LEFT JOIN users c ON t.creator_id = c.id
@@ -73,7 +78,26 @@ export async function GET(request: Request) {
 
 		const result = await db.execute(query);
 
-		return NextResponse.json(result.rows ?? []);
+		const processed = result.rows.map((row) => {
+			const createdAt = new Date(row.created_at as string);
+			const updatedAt = new Date(row.updated_at as string);
+			const estado = row.estado as string;
+			const isClosed = estado === 'cerrado' || estado === 'solucionado';
+
+			const now = new Date(); // muévelo aquí
+			const timeElapsedMs = isClosed
+				? updatedAt.getTime() - createdAt.getTime()
+				: now.getTime() - createdAt.getTime();
+
+			return {
+				...row,
+				created_at: createdAt,
+				updated_at: updatedAt,
+				time_elapsed_ms: timeElapsedMs,
+			};
+		});
+
+		return NextResponse.json(processed);
 	} catch (error) {
 		console.error('❌ Error fetching tickets:', error);
 		return NextResponse.json(
@@ -96,6 +120,10 @@ export async function POST(request: Request) {
 
 	try {
 		const body = (await request.json()) as CreateTicketBody;
+		if (!body.email || !body.tipo || !body.estado || !body.description) {
+			return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
+		}
+
 		console.log('📝 Creando nuevo ticket:', body);
 
 		const ticketData = {
@@ -104,6 +132,7 @@ export async function POST(request: Request) {
 			createdAt: new Date(),
 			updatedAt: new Date(),
 		};
+		console.log('🧾 Datos que se van a guardar:', ticketData);
 
 		if (!ticketData.assignedToId) {
 			delete ticketData.assignedToId;
@@ -220,6 +249,46 @@ export async function DELETE(request: Request) {
 		console.error('❌ Error deleting ticket:', error);
 		return NextResponse.json(
 			{ error: 'Error deleting ticket' },
+			{ status: 500 }
+		);
+	}
+}
+
+// =============================
+// PUT /api/admin/tickets/:id/video
+// =============================
+export async function PUT_video(
+	req: Request,
+	context: { params: { id: string } }
+) {
+	const { userId, sessionClaims } = await auth();
+	const role = sessionClaims?.metadata.role;
+
+	if (!userId || (role !== 'admin' && role !== 'super-admin')) {
+		return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const ticketId = parseInt(context.params.id);
+	if (isNaN(ticketId)) {
+		return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
+	}
+
+	try {
+		const { videoKey } = (await req.json()) as { videoKey: string };
+
+		await db
+			.update(tickets)
+			.set({
+				videoKey,
+				updatedAt: new Date(),
+			})
+			.where(eq(tickets.id, ticketId));
+
+		return NextResponse.json({ success: true });
+	} catch (error) {
+		console.error('❌ Error actualizando videoKey:', error);
+		return NextResponse.json(
+			{ error: 'Error updating videoKey' },
 			{ status: 500 }
 		);
 	}

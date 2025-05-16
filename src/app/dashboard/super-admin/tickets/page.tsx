@@ -1,17 +1,49 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import Image from 'next/image';
 
-import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Info, Loader2, Pencil, Plus, Trash2, FileText } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
-
 import 'react-toastify/dist/ReactToastify.css';
+
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
 
 import TicketModal from './TicketModal';
+
+// Schema definitions
+const uploadSchema = z.object({
+	url: z.string().url(),
+	fields: z.record(z.string()),
+	key: z.string(),
+	uploadType: z.union([z.literal('simple'), z.literal('put')]),
+});
+
+const rawTicketSchema = z.array(
+	z.object({
+		id: z.string(),
+		email: z.string(),
+		description: z.string(),
+		tipo: z.string(),
+		estado: z.string(),
+		assigned_to_name: z.string().optional(),
+		assigned_to_email: z.string().optional(),
+		assigned_to_id: z.string().optional(),
+		creator_name: z.string().optional(),
+		creator_email: z.string().optional(),
+		comments: z.string().optional(),
+		created_at: z.string(),
+		updated_at: z.string(),
+		time_elapsed_ms: z.number(),
+		cover_image_key: z.string().optional(),
+		video_key: z.string().optional(),
+		document_key: z.string().optional(),
+	})
+);
+
+// Types
 
 export interface TicketFormData {
 	email: string;
@@ -21,8 +53,8 @@ export interface TicketFormData {
 	assignedToId?: string;
 	comments?: string;
 	coverImageKey?: string;
-	videoKey?: string;
-	documentKey?: string;
+	videoKey?: string; // ✅ AÑADIR
+	documentKey?: string; // ✅ AÑADIR
 	newComment?: string;
 }
 
@@ -57,14 +89,14 @@ export interface Ticket {
 // Component
 export default function TicketsPage() {
 	const [tickets, setTickets] = useState<Ticket[]>([]);
-	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 	const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState<boolean>(true);
 	const [activeTab, setActiveTab] = useState<
 		'created' | 'assigned' | 'logs' | 'chats'
 	>('created');
-	const [filterType, setFilterType] = useState('all');
-	const [filterStatus, setFilterStatus] = useState('all');
+	const [filterType, setFilterType] = useState<string>('all');
+	const [filterStatus, setFilterStatus] = useState<string>('all');
 	const [unreadConversationIds] = useState<string[]>([]);
 	const [viewTicket, setViewTicket] = useState<Ticket | null>(null);
 	const [selectedChat, setSelectedChat] = useState<{
@@ -72,12 +104,12 @@ export default function TicketsPage() {
 		userName: string;
 		receiverId: string;
 	} | null>(null);
-	void selectedChat;
+	void selectedChat?.id;
 	const [filterId, setFilterId] = useState('');
 	const [filterEmail, setFilterEmail] = useState('');
 	const [filterAssignedTo, setFilterAssignedTo] = useState('');
-	const [filterStartDate, setFilterStartDate] = useState('');
-	const [filterEndDate, setFilterEndDate] = useState('');
+	const [filterStartDate, setFilterStartDate] = useState<string>('');
+	const [filterEndDate, setFilterEndDate] = useState<string>('');
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [isLoadingComments, setIsLoadingComments] = useState(false);
 
@@ -91,19 +123,8 @@ export default function TicketsPage() {
 					);
 					if (!response.ok)
 						throw new Error('No se pudo obtener los comentarios');
-
-					const commentSchema = z.object({
-						id: z.number(),
-						content: z.string(),
-						createdAt: z.string(),
-						user: z.object({
-							name: z.string(),
-						}),
-					});
-
-					const commentArraySchema = z.array(commentSchema);
-					const parsed = commentArraySchema.parse(await response.json());
-					setComments(parsed);
+					const data = (await response.json()) as Comment[];
+					setComments(data);
 				} catch (error) {
 					console.error('Error cargando comentarios:', error);
 				} finally {
@@ -116,9 +137,9 @@ export default function TicketsPage() {
 	}, [viewTicket?.id]);
 
 	useEffect(() => {
-		fetch('/api/socketio', { method: 'POST' }).catch((err) =>
-			console.warn('Socket init error:', err)
-		);
+		fetch('/api/socketio', {
+			method: 'POST',
+		}).catch((err) => console.warn('Socket init error:', err));
 	}, []);
 
 	function formatElapsedTime(ms: number): string {
@@ -137,35 +158,14 @@ export default function TicketsPage() {
 		return result.trim();
 	}
 
-	const fetchTickets = useCallback(async () => {
+	const fetchTickets = useCallback(async (): Promise<void> => {
 		try {
 			setLoading(true);
 			const response = await fetch(`/api/admin/tickets?type=${activeTab}`);
 			if (!response.ok)
 				throw new Error(`HTTP error! status: ${response.status}`);
-
-			const rawTicketSchema = z.object({
-				id: z.string(),
-				email: z.string(),
-				description: z.string(),
-				tipo: z.string(),
-				estado: z.string(),
-				assigned_to_name: z.string().optional(),
-				assigned_to_email: z.string().optional(),
-				creator_name: z.string().optional(),
-				assigned_to_id: z.string().optional(),
-				creator_email: z.string().optional(),
-				comments: z.string().optional(),
-				created_at: z.string(),
-				updated_at: z.string(),
-				time_elapsed_ms: z.number(),
-				cover_image_key: z.string().optional(),
-				video_key: z.string().optional(),
-				document_key: z.string().optional(),
-			});
-
-			const rawArraySchema = z.array(rawTicketSchema);
-			const rawData = rawArraySchema.parse(await response.json());
+			const json = (await response.json()) as unknown;
+			const rawData = rawTicketSchema.parse(json);
 
 			const mapped: Ticket[] = rawData.map((ticket) => ({
 				id: ticket.id,
@@ -224,29 +224,29 @@ export default function TicketsPage() {
 		new Set(tickets.map((t) => t.assignedToName).filter(Boolean))
 	);
 
-	const handleCreate = async (data: TicketFormData) => {
+	const handleCreate = async (data: TicketFormData): Promise<void> => {
 		try {
 			console.log('🧾 Enviando ticket:', data);
 
-			const createdSchema = z.object({ id: z.string() });
-			const created = createdSchema.parse(
-				await fetch('/api/admin/tickets', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(data),
-				}).then((res) => res.json())
-			);
+			// 1. Enviar el ticket base
+			const res = await fetch('/api/admin/tickets', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(data),
+			});
+			const created = (await res.json()) as { id: string };
 
+			// 2. Si el video ya fue subido y hay un key, hacer PUT al endpoint
 			if (data.videoKey) {
 				const payload = JSON.stringify({ videoKey: data.videoKey });
 				const blob = new Blob([payload], { type: 'application/json' });
 				const sent = navigator.sendBeacon(
-					`/api/tickets/${created.id}/video`,
+					`/api/tickets/${(created as { id: string }).id}/video`,
 					blob
 				);
 
 				if (!sent) {
-					await fetch(`/api/tickets/${created.id}/video`, {
+					await fetch(`/api/tickets/${(created as { id: string }).id}/video`, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						body: payload,
@@ -255,9 +255,11 @@ export default function TicketsPage() {
 			}
 
 			toast.success('✅ Ticket creado exitosamente');
+
 			void fetchTickets();
 		} catch (error) {
 			toast.error('❌ Error al crear el ticket');
+
 			console.error(
 				'Error creating ticket:',
 				error instanceof Error ? error.message : error
@@ -296,29 +298,24 @@ export default function TicketsPage() {
 		console.log('📤 Upload start:', file.name, 'field:', field);
 
 		try {
-			const uploadSchema = z.object({
-				url: z.string().url(),
-				fields: z.record(z.string()),
-				key: z.string(),
-				uploadType: z.union([z.literal('simple'), z.literal('put')]),
+			const res = await fetch('/api/upload', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					fileName: file.name,
+					contentType: file.type,
+					fileSize: file.size,
+				}),
 			});
 
-			const { url, fields, key, uploadType } = uploadSchema.parse(
-				await fetch('/api/upload', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						fileName: file.name,
-						contentType: file.type,
-						fileSize: file.size,
-					}),
-				}).then((res) => res.json())
-			);
-
-			if (!url || !key) {
-				console.error('❌ Faltan campos en la respuesta del servidor');
+			if (!res.ok) {
+				const errorText = await res.text();
+				console.error('❌ Upload failed with status', res.status, errorText);
 				return null;
 			}
+
+			const json: unknown = await res.json();
+			const { url, fields, key, uploadType } = uploadSchema.parse(json);
 
 			if (uploadType === 'simple') {
 				const formDataUpload = new FormData();
@@ -333,6 +330,7 @@ export default function TicketsPage() {
 				});
 			}
 
+			// ✅ Enviar videoKey al backend en segundo plano (si aplica)
 			if (field === 'videoKey' && ticketId) {
 				const payload = JSON.stringify({ videoKey: key });
 				const blob = new Blob([payload], { type: 'application/json' });
@@ -599,7 +597,7 @@ export default function TicketsPage() {
 									{loading ? (
 										<tr>
 											<td colSpan={6} className="px-4 py-8 text-center">
-												<Loader2 className="mx-auto h-8 w-8 text-blue-500" />
+												<Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
 											</td>
 										</tr>
 									) : filteredTickets.length === 0 ? (
@@ -899,7 +897,7 @@ export default function TicketsPage() {
 					</div>
 				)}
 
-<TicketModal
+				<TicketModal
 					key={selectedTicket ? selectedTicket.id : 'new'}
 					isOpen={isModalOpen}
 					onCloseAction={handleCloseModal}
@@ -907,9 +905,8 @@ export default function TicketsPage() {
 					ticket={selectedTicket}
 					onUploadFileAction={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
 				/>
-
-				<ToastContainer position="bottom-right" theme="dark" />
 			</div>
+			<ToastContainer position="top-right" autoClose={3000} />
 		</>
 	);
 }

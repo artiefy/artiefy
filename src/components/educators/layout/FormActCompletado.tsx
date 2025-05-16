@@ -130,10 +130,10 @@ const FormActCompletado: React.FC<formSubida> = ({
 						onChange={handleChange}
 					/>
 
-					<label>Parametros de evaluacion</label>
+					<label>Criterios de evaluacion</label>
 					<textarea
 						className="w-full rounded-lg border border-slate-400 p-2 outline-none"
-						placeholder="Diguite en esta seccion los parametros que tendra para en cuenta para la calificacion"
+						placeholder="Digite en esta seccion los parametros que tendra para en cuenta para la calificacion"
 						name="parametros"
 						value={formData.parametros}
 						onChange={handleChange}

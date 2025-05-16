@@ -19,6 +19,8 @@ interface UpdateTicketBody {
 	tipo?: 'otro' | 'bug' | 'revision' | 'logs';
 	email?: string;
 	coverImageKey?: string | null;
+	videoKey?: string | null;
+	documentKey?: string | null;
 	comments?: string;
 }
 
@@ -61,11 +63,21 @@ export async function PUT(
 			});
 		}
 
-		const updateData = { ...body };
-		if (!updateData.assignedToId) {
-			delete updateData.assignedToId;
+		// ✅ CONSTRUCCIÓN SEGURA DE LOS CAMPOS PARA ACTUALIZAR
+		const updateData: Partial<UpdateTicketBody> = {
+			estado: body.estado,
+			tipo: body.tipo,
+			email: body.email,
+			description: body.description,
+			comments: body.comments,
+			coverImageKey: body.coverImageKey ?? null,
+			videoKey: body.videoKey ?? null,
+			documentKey: body.documentKey ?? null,
+		};
+
+		if (body.assignedToId) {
+			updateData.assignedToId = body.assignedToId;
 		}
-		delete updateData.newComment;
 
 		const updatedTicket = await db
 			.update(tickets)
@@ -118,6 +130,7 @@ export async function PUT(
 		);
 	}
 }
+
 
 export async function DELETE(
 	_request: Request,

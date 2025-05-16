@@ -282,8 +282,43 @@
 	}
 }
 
+<<<<<<< HEAD
 .lesson-cards-container {
 	display: grid;
 	min-height: 100px; /* Ensures minimal height during loading */
 	content-visibility: auto; /* Optimizes rendering */
+=======
+@layer utilities {
+	.glow-pulse {
+		position: relative;
+		z-index: 0;
+	}
+
+	.glow-pulse::before {
+		content: "";
+		position: absolute;
+		top: -8px;
+		left: -8px;
+		right: -8px;
+		bottom: -8px;
+		border-radius: inherit;
+		background: var(--color-primary);
+		filter: blur(16px);
+		opacity: 0.4;
+		animation: pulse-glow 2s ease-in-out infinite;
+		z-index: -1;
+	}
+
+	@keyframes pulse-glow {
+		0%,
+		100% {
+			opacity: 0.3;
+			filter: blur(14px);
+		}
+		50% {
+			opacity: 0.6;
+			filter: blur(22px);
+		}
+	}
+>>>>>>> dev/miguel
 }

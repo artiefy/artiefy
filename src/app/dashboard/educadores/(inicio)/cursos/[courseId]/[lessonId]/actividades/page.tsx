@@ -100,6 +100,10 @@ const Page: React.FC = () => {
 	const [fechaMaxima, setFechaMaxima] = useState(false); // Definir fechaMaxima
 	const [showLongevidadForm, setShowLongevidadForm] = useState(false); // Definir showLongevidadForm
 	const [parametros, setParametros] = useState<Parametros[]>([]); // Definir setParametros
+	const [porcentajeDisponible, setPorcentajeDisponible] = useState<
+		number | null
+	>(null);
+
 	console.log(parametros);
 
 	// Obtener los parámetros
@@ -287,12 +291,35 @@ const Page: React.FC = () => {
 		});
 	};
 
-	// Función para manejar el cambio del parámetro y seleccionar el porcentaje para la actividad
-	const handleParametroChange = (parametroId: number) => {
-		setFormData({
-			...formData,
+	const handleParametroChange = async (parametroId: number) => {
+		setFormData((prev) => ({
+			...prev,
 			parametro: parametroId,
-			porcentaje: 0, // Resetear el porcentaje cuando cambia el parámetro
+			porcentaje: 0,
+		}));
+
+		// Fetch de porcentaje disponible
+		const response = await fetch(
+			'/api/educadores/actividades/actividadesByLesson',
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ parametroId, porcentaje: 0 }),
+			}
+		);
+
+		if (!response.ok) return;
+
+		const data = (await response.json()) as {
+			totalActual: number;
+			disponible: number;
+		};
+
+		setPorcentajeDisponible(data.disponible);
+
+		// Opcional: Toast informativo
+		toast('Porcentaje disponible', {
+			description: `Ya usado: ${data.totalActual}%, Disponible: ${data.disponible}%`,
 		});
 	};
 
@@ -482,7 +509,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink className="text-primary hover:text-gray-300">
-							Creacion de actividad:
+							Creación de actividad:
 						</BreadcrumbLink>
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
@@ -528,8 +555,8 @@ const Page: React.FC = () => {
 												className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${isActive ? 'bg-gray-300' : 'bg-red-500'}`}
 											>
 												<span
-													className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
-												 />
+													className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${isActive ? 'translate-x-8' : 'translate-x-0'}`}
+												/>
 											</span>
 										</label>
 										<span className="mt-1 text-sm text-gray-400">
@@ -582,6 +609,14 @@ const Page: React.FC = () => {
 																handlePorcentajeChange(e.target.value)
 															}
 														/>
+														{porcentajeDisponible !== null && (
+															<p
+																className={`mt-1 text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+															>
+																Porcentage disponible:{' '}
+																<strong>{porcentajeDisponible}%</strong>
+															</p>
+														)}
 													</div>
 												</div>
 											</div>
@@ -608,8 +643,8 @@ const Page: React.FC = () => {
 												className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}`}
 											>
 												<span
-													className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
-												 />
+													className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}`}
+												/>
 											</span>
 										</label>
 										<span className="mt-1 text-sm text-gray-400">

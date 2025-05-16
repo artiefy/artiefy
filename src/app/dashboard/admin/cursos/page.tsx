@@ -6,7 +6,7 @@ import { useUser } from '@clerk/nextjs';
 import { FiPlus } from 'react-icons/fi';
 import { toast } from 'sonner';
 
-import CourseListAdmin from '~/app/dashboard/super-admin/components/CourseListAdmin';
+import CourseListAdmin from '~/app/dashboard/admin/components/CourseListAdmin';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
@@ -407,7 +407,7 @@ export default function Page() {
 	if (uploading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="border-primary size-32 rounded-full border-y-2">
+				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
