@@ -1,6 +1,13 @@
 import { type Product } from '~/types/payu';
 import { plansPersonas, plansEmpresas, type Plan } from '~/types/plans';
 
+// 1. Primero definir las constantes
+const PLAN_IDENTIFIERS = {
+	PRO: 'plan_pro_',
+	PREMIUM: 'plan_premium_',
+	ENTERPRISE: 'plan_enterprise_',
+} as const;
+
 // ✅ Función para definir el precio de cada plan
 function getPlanAmount(planName: string): string {
 	switch (planName) {
@@ -15,19 +22,7 @@ function getPlanAmount(planName: string): string {
 	}
 }
 
-// ✅ Creación de los productos (planes de suscripción)
-export const products: Product[] = [
-	...plansPersonas.map(createProduct),
-	...plansEmpresas.map(createProduct),
-];
-
 // ✅ Función para crear un producto correctamente (sin referenceCode)
-const PLAN_IDENTIFIERS = {
-	PRO: 'plan_pro_',
-	PREMIUM: 'plan_premium_',
-	ENTERPRISE: 'plan_enterprise_',
-} as const;
-
 export function createProduct(plan: Plan): Product {
 	// Agregar identificador al nombre del producto
 	const identifier =
@@ -44,6 +39,12 @@ export function createProduct(plan: Plan): Product {
 		description: `Plan ${plan.name} mensual`,
 	};
 }
+
+// ✅ Creación de los productos (planes de suscripción)
+export const products: Product[] = [
+	...plansPersonas.map(createProduct),
+	...plansEmpresas.map(createProduct),
+];
 
 // Añadir función para crear producto de curso individual
 export function createProductFromCourse(course: {
