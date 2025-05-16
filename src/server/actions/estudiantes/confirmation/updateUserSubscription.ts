@@ -3,10 +3,8 @@ import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
-import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
-import { sendEmail } from '~/utils/email/notifications';
 
 const SUBSCRIPTION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 const TIME_ZONE = 'America/Bogota';
@@ -28,14 +26,14 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		return;
 	}
 
-	// Extraer el tipo de plan
-	const planType = reference_sale.includes('pro')
-		? 'Pro'
-		: reference_sale.includes('premium')
-			? 'Premium'
-			: reference_sale.includes('enterprise')
-				? 'Enterprise'
-				: 'Pro';
+	// Extraer el tipo de plan de manera más robusta
+	const planType = reference_sale.toLowerCase().includes('premium')
+		? 'Premium'
+		: reference_sale.toLowerCase().includes('enterprise')
+			? 'Enterprise'
+			: 'Pro';
+
+	console.log('🔄 Updating subscription with plan:', planType);
 
 	// Obtener la fecha actual en Bogotá y calcular el fin de suscripción
 	const now = new Date();
@@ -59,6 +57,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 
 		let userId = existingUser?.id;
 
+		// Actualizar en base de datos
 		if (!existingUser) {
 			userId = uuidv4();
 			await db.insert(users).values({
@@ -79,7 +78,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				.set({
 					subscriptionStatus: 'active',
 					subscriptionEndDate: new Date(subscriptionEndBogota), // Guardamos en formato Bogotá
-					planType: planType,
+					planType: planType, // Asegurarnos de que se actualice el planType
 					purchaseDate: new Date(bogotaNow), // Guardamos en formato Bogotá
 					updatedAt: new Date(),
 				})
@@ -101,36 +100,22 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				return;
 			}
 
-			// Guardamos la fecha en formato de Bogotá en Clerk
+			// Actualizar los metadatos incluyendo explícitamente el planType
 			await clerk.users.updateUserMetadata(clerkUser.id, {
 				publicMetadata: {
 					subscriptionStatus: 'active',
 					subscriptionEndDate: subscriptionEndBogota, // Formateamos en Bogotá
-					planType: planType, // Incluimos el tipo de plan
+					planType: planType, // Asegurarnos de que se actualice el planType
 				},
 			});
 
-			console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
-		} else {
-			console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
+			console.log('✅ Clerk metadata actualizado:', {
+				email: email_buyer,
+				plan: planType,
+				status: 'active',
+				endDate: subscriptionEndBogota,
+			});
 		}
-
-		// Schedule email notification 2 minutes before subscription ends
-		const notificationTime = new Date(
-			subscriptionEndDate.getTime() - 2 * 60 * 1000
-		);
-		setTimeout(async () => {
-			const emailHtml = EmailTemplateSubscription({
-				userName: email_buyer,
-				expirationDate: subscriptionEndBogota,
-				timeLeft: '2 minutos',
-			});
-			await sendEmail({
-				to: email_buyer,
-				subject: 'Tu suscripción está por expirar',
-				html: emailHtml,
-			});
-		}, notificationTime.getTime() - now.getTime());
 
 		// Logs de depuración
 		console.log(`📅 Inicio suscripción (Bogotá): ${bogotaNow}`);
