@@ -1,4 +1,3 @@
-import './src/env.js';
 import withPlaiceholder from '@plaiceholder/next';
 import { withNextVideo } from 'next-video/process';
 import path from 'path';
