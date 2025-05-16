@@ -12,6 +12,7 @@ interface PaymentData {
 	email_buyer: string;
 	state_pol: string;
 	reference_sale: string;
+	value: string; // Added to fix type error
 }
 
 export async function updateUserSubscription(paymentData: PaymentData) {
@@ -26,32 +27,44 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 		return;
 	}
 
-	// Mejorada la detección del tipo de plan
+	// Mejorar la detección del plan basada en el reference_sale
 	const getPlanTypeFromReference = (
 		ref: string
 	): 'Pro' | 'Premium' | 'Enterprise' => {
-		console.log('🔍 Analyzing raw reference:', ref);
+		console.log('🔍 Analyzing reference:', ref);
 
-		const normalizedRef = ref.toLowerCase();
-		const matches = {
-			premium: normalizedRef.includes('plan_premium_'),
-			enterprise: normalizedRef.includes('plan_enterprise_'),
-			pro: normalizedRef.includes('plan_pro_'),
-		};
+		// Primero intentar extraer el plan del reference_sale
+		const planMatch = /plan_(premium|pro|enterprise)_/i.exec(ref);
+		if (planMatch) {
+			const planName = planMatch[1].toLowerCase();
+			console.log('📌 Plan extracted from reference:', planName);
 
-		console.log('🔍 Reference matches:', matches);
+			switch (planName) {
+				case 'premium':
+					return 'Premium';
+				case 'enterprise':
+					return 'Enterprise';
+				case 'pro':
+					return 'Pro';
+			}
+		}
 
-		if (matches.premium) return 'Premium';
-		if (matches.enterprise) return 'Enterprise';
+		// Si no se encuentra en la referencia, usar el valor del pago
+		const amount = parseFloat(paymentData.value);
+		console.log('💰 Using amount for plan detection:', amount);
+
+		// Determinar plan por el monto pagado
+		if (amount === 150000) return 'Premium';
+		if (amount === 200000) return 'Enterprise';
 		return 'Pro';
 	};
 
 	const planType = getPlanTypeFromReference(reference_sale);
 
-	console.log('🔄 Plan detection:', {
+	console.log('🔄 Plan detection result:', {
 		reference: reference_sale,
+		amount: paymentData.value,
 		detectedPlan: planType,
-		includes_premium: reference_sale.toLowerCase().includes('premium'),
 	});
 
 	// Obtener la fecha actual en Bogotá y calcular el fin de suscripción
@@ -85,10 +98,11 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 				to: planType,
 			});
 
+			// Forzar la actualización del planType en la base de datos
 			const updateResult = await db
 				.update(users)
 				.set({
-					planType,
+					planType: planType,
 					subscriptionStatus: 'active',
 					subscriptionEndDate: new Date(subscriptionEndBogota),
 					purchaseDate: new Date(bogotaNow),
@@ -110,18 +124,26 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 
 				console.log('🔄 Current Clerk metadata:', clerkUser.publicMetadata);
 
-				const updatedMetadata = await clerk.users.updateUserMetadata(
-					clerkUser.id,
-					{
+				// Forzar la actualización en Clerk
+				if (clerkUsers.data.length > 0) {
+					const clerkUser = clerkUsers.data[0];
+
+					// Actualizar metadata forzando el nuevo planType
+					await clerk.users.updateUserMetadata(clerkUser.id, {
 						publicMetadata: {
-							planType, // Asegurar que se actualice explícitamente
+							planType, // Asegurar que este valor se actualice
 							subscriptionStatus: 'active',
 							subscriptionEndDate: subscriptionEndBogota,
 						},
-					}
-				);
+					});
 
-				console.log('✅ New Clerk metadata:', updatedMetadata.publicMetadata);
+					// Verificar la actualización
+					const updatedUser = await clerk.users.getUser(clerkUser.id);
+					console.log('✅ Clerk metadata verified:', {
+						oldPlan: clerkUser.publicMetadata?.planType,
+						newPlan: updatedUser.publicMetadata?.planType,
+					});
+				}
 			}
 		}
 

@@ -24,7 +24,13 @@ export function createFormData(
 	const referenceCode =
 		paymentType === 'course'
 			? `C${product.id}T${timestamp}` // Format: C{courseId}T{timestamp}
-			: `${timestamp}`;
+			: `${product.name.replace(/\s+/g, '_')}_${timestamp}`; // Incluir el nombre del plan en la referencia
+
+	console.log('Creating payment reference:', {
+		productName: product.name,
+		referenceCode,
+		timestamp,
+	});
 
 	// Generar signature con formato correcto
 	const signature = calculateSignature(
