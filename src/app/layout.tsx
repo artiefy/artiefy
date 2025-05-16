@@ -9,7 +9,6 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
 import { Toaster } from '~/components/estudiantes/ui/sonner';
-import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 
 import Providers from './providers';
 
@@ -118,10 +117,7 @@ export default function RootLayout({
 					content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
 				/>
 				<body className="bg-background text-primary font-sans">
-					<Providers>
-						{children}
-						<NotificationSubscription />
-					</Providers>
+					<Providers>{children}</Providers>
 					<SpeedInsights />
 					<Analytics />
 					<Toaster />
