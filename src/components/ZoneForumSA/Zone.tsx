@@ -153,7 +153,7 @@ export const Zone = () => {
 							<div className="flex w-full items-center justify-between">
 								<Button asChild>
 									<Link
-										href={`/dashboard/admin/foro/${forum.id}`}
+										href={`/dashboard/super-admin/foro/${forum.id}`}
 										className="group/button bg-background text-primary relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 py-2 text-sm font-semibold active:scale-95"
 									>
 										<p className="font-bold">Ver foro</p>

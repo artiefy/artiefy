@@ -1,22 +1,17 @@
-// 1. React/Next.js core imports
-import { Suspense } from 'react';
-
-// 2. Global styles
 import '~/styles/globals.css';
+
 import { Merriweather, Montserrat } from 'next/font/google';
 
-// 3. External libraries
 import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type Metadata } from 'next';
 
-// 4. Internal components
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 
-import Loading from './loading';
 import Providers from './providers';
+
 
 const montserrat = Montserrat({
 	subsets: ['latin'],
@@ -40,7 +35,7 @@ export const metadata: Metadata = {
 	metadataBase: new URL('https://artiefy.com'),
 	title: {
 		template: '%s | Artiefy',
-		default: 'Artiefy - Plataforma Educativa Digital Líder',
+		default: 'Artiefy - Plataforma Educativa Digital',
 	},
 	description:
 		'Aprende desarrollo web, programación y más con expertos de la industria en Artiefy, la plataforma líder en educación digital.',
@@ -53,9 +48,9 @@ export const metadata: Metadata = {
 		type: 'website',
 		locale: 'es_ES',
 		url: 'https://artiefy.com',
-		title: 'Artiefy - Plataforma Educativa Digital Líder',
+		title: 'Artiefy - Aprende y Crea',
 		description: 'Artiefy es la plataforma de aprendizaje más innovadora.',
-		siteName: 'Artiefy',
+		siteName: 'Artiefy - Plataforma de Educación Online',
 		images: [
 			{
 				url: 'https://artiefy.com/opengraph-image',
@@ -83,39 +78,23 @@ export const metadata: Metadata = {
 		},
 	},
 	icons: {
-		icon: [
-			{ url: '/favicon.ico', sizes: 'any' },
-			{ url: '/artiefy-icon.png', type: 'image/png' },
-		],
-		shortcut: '/favicon.ico',
-		apple: { url: '/artiefy-icon.png', sizes: '180x180' },
+		icon: '/favicon.ico',
+		apple: '/artiefy-icon.png',
 	},
 	verification: {
 		google: 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
 	},
 	other: {
 		'google-site-verification': 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
-		'google-sitelinks': JSON.stringify({
+		'google-sitelinks-searchbox': JSON.stringify({
 			'@context': 'https://schema.org',
 			'@type': 'WebSite',
 			url: 'https://artiefy.com/',
-			potentialAction: [
-				{
-					'@type': 'SearchAction',
-					target: 'https://artiefy.com/search?q={search_term_string}',
-					'query-input': 'required name=search_term_string',
-				},
-			],
-			siteLinks: [
-				{
-					url: 'https://artiefy.com/estudiantes',
-					name: 'Artiefy - Plataforma Educativa Digital Líder',
-				},
-				{
-					url: 'https://artiefy.com/planes',
-					name: 'Artiefy - Plataforma Educativa Digital Líder',
-				},
-			],
+			potentialAction: {
+				'@type': 'SearchAction',
+				target: 'https://artiefy.com/search?q={search_term_string}',
+				'query-input': 'required name=search_term_string',
+			},
 		}),
 	},
 	alternates: {
@@ -129,24 +108,22 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<html
-			lang="es"
-			className={`${montserrat.variable} ${merriweather.variable}`}
-		>
-			<meta
-				name="google-site-verification"
-				content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
-			/>
-			<body className="bg-background text-primary font-sans">
-				<ClerkProvider localization={esMX} dynamic>
-					<Suspense fallback={<Loading />}>
-						<Providers>{children}</Providers>
-					</Suspense>
-				</ClerkProvider>
-				<SpeedInsights />
-				<Analytics />
-				<Toaster />
-			</body>
-		</html>
+		<ClerkProvider localization={esMX} dynamic>
+			<html
+				lang="es"
+				className={`${montserrat.variable} ${merriweather.variable}`}
+			>
+				<meta
+					name="google-site-verification"
+					content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
+				/>
+				<body className="bg-background text-primary font-sans">
+					<Providers>{children}</Providers>
+					<SpeedInsights />
+					<Analytics />
+					<Toaster />
+				</body>
+			</html>
+		</ClerkProvider>
 	);
 }
