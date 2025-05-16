@@ -174,7 +174,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 	return (
 		<div className="bg-background min-h-screen">
 			{/* Navbar */}
-			<nav className="bg-background fixed top-0 z-40 w-full border-b border-gray-200 shadow-xs">
+			<nav className="bg-background fixed top-0 z-20 w-full border-b border-gray-200 shadow-xs">
 				<div className="p-3 lg:px-5 lg:pl-3">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center">
@@ -216,7 +216,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			{/* Sidebar */}
 			<aside
 				className={cn(
-					'bg-background fixed top-0 left-0 z-30 h-screen w-64 border-r border-gray-200 pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
+					'bg-background fixed top-0 left-0 z-10 h-screen w-64 border-r border-gray-200 pt-20 transition-transform sm:translate-x-0 dark:border-gray-700 dark:bg-gray-800',
 					!isOpen && '-translate-x-full'
 				)}
 				aria-label="Sidebar"
@@ -363,10 +363,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			</aside>
 
 			{/* Main Content */}
-			<div
-				className={`pt-20 transition-all duration-300 ${isOpen ? 'sm:ml-64' : ''}`}
-			>
-				{children}
+			<div className={`p-4 ${isOpen ? 'sm:ml-64' : ''} pt-20`}>
+				<div>{children}</div>
 			</div>
 		</div>
 	);
