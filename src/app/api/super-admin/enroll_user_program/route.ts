@@ -12,11 +12,10 @@ import {
 } from '~/server/db/schema';
 
 export async function GET(req: Request) {
-	console.log('⏳ Iniciando GET de enrolled_user_program');
-	void req;
+	const url = new URL(req.url);
+	const programId = url.searchParams.get('programId');
 
 	try {
-		// 1. Subquery para última fecha de inscripción por usuario
 		const latestDates = db
 			.select({
 				userId: enrollmentPrograms.userId,
@@ -28,13 +27,11 @@ export async function GET(req: Request) {
 			.groupBy(enrollmentPrograms.userId)
 			.as('latest_dates');
 
-		console.log('✅ Subquery latestDates construida');
-
-		// 2. Subquery que trae userId y programaId para la última inscripción
 		const latestEnrollments = db
 			.select({
 				userId: enrollmentPrograms.userId,
 				programaId: enrollmentPrograms.programaId,
+				enrolledAt: enrollmentPrograms.enrolledAt,
 			})
 			.from(enrollmentPrograms)
 			.innerJoin(
@@ -46,59 +43,84 @@ export async function GET(req: Request) {
 			)
 			.as('latest_enrollments');
 
-		console.log('✅ Subquery latestEnrollments construida');
+		const allEnrollments = await db
+			.select({
+				userId: enrollmentPrograms.userId,
+				programTitle: programas.title,
+			})
+			.from(enrollmentPrograms)
+			.innerJoin(programas, eq(enrollmentPrograms.programaId, programas.id));
 
-		// 3. Traer solo los usuarios inscritos en algún programa (INNER JOIN)
+		// Agrupar programas por estudiante
+		const programsMap = new Map<string, string[]>();
+		for (const enrollment of allEnrollments) {
+			if (!programsMap.has(enrollment.userId)) {
+				programsMap.set(enrollment.userId, []);
+			}
+			programsMap.get(enrollment.userId)!.push(enrollment.programTitle);
+		}
+
 		const students = await db
 			.select({
 				id: users.id,
 				name: users.name,
 				email: users.email,
+				phone: users.phone,
+				address: users.address,
+				country: users.country,
+				city: users.city,
+				birthDate: users.birthDate,
 				subscriptionStatus: users.subscriptionStatus,
 				subscriptionEndDate: users.subscriptionEndDate,
-				role: users.role,
 				planType: users.planType,
+				role: users.role,
+				purchaseDate: users.purchaseDate,
 				programTitle: programas.title,
+				enrolledAt: latestEnrollments.enrolledAt,
+				nivelNombre: sql<string>`(SELECT n.name FROM nivel n
+			JOIN courses c ON c.nivelid = n.id
+			JOIN enrollments e ON e.course_id = c.id
+			WHERE e.user_id = ${users.id}
+			LIMIT 1)`.as('nivelNombre'),
 			})
 			.from(users)
-			.innerJoin(latestEnrollments, eq(users.id, latestEnrollments.userId)) // solo inscritos
-			.innerJoin(programas, eq(latestEnrollments.programaId, programas.id)) // y con programa válido
-			.where(eq(users.role, 'estudiante'));
+			.innerJoin(latestEnrollments, eq(users.id, latestEnrollments.userId))
+			.innerJoin(programas, eq(latestEnrollments.programaId, programas.id))
+			.where(
+				programId
+					? and(
+							eq(users.role, 'estudiante'),
+							eq(programas.id, Number(programId))
+						)
+					: eq(users.role, 'estudiante')
+			);
 
-		console.log(`🎓 Estudiantes inscritos encontrados: ${students.length}`);
-		if (students.length > 0) {
-			console.log('🧪 Ejemplo estudiante:', students[0]);
-		} else {
-			console.log('⚠️ Ningún estudiante inscrito encontrado.');
-		}
+		const enrichedStudents = students.map((student) => ({
+			...student,
+			programTitles: programsMap.get(student.id) ?? [],
+		}));
 
-		// 4. Cursos disponibles
 		const coursesList = await db
 			.select({
-				id: courses.id,
+				id: sql<string>`CAST(${courses.id} AS TEXT)`.as('id'),
 				title: courses.title,
 			})
 			.from(courses);
 
-		console.log(`📚 Cursos disponibles: ${coursesList.length}`);
-
-		// 5. EnrolledUsers (usado en frontend)
-		const enrolledUsers = students.map((s) => ({
+		const enrolledUsers = enrichedStudents.map((s) => ({
 			id: s.id,
 			programTitle: s.programTitle,
 		}));
 
-		console.log(`📦 enrolledUsers listos: ${enrolledUsers.length}`);
-
 		return NextResponse.json({
-			students,
+			students: enrichedStudents,
 			enrolledUsers,
 			courses: coursesList,
 		});
 	} catch (error) {
-		console.error('❌ Error en GET enrolled_user_program:', error);
+		console.error('❌ Error:', error);
 		return NextResponse.json(
-			{ error: 'Error interno del servidor' },
+			{ error: 'Internal Server Error' },
 			{ status: 500 }
 		);
 	}

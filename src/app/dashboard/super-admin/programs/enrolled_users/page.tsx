@@ -2,16 +2,26 @@
 
 import { useEffect, useState } from 'react';
 
+import { saveAs } from 'file-saver';
+import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
 const studentSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	email: z.string(),
+	phone: z.string().nullable(),
+	address: z.string().nullable(),
+	country: z.string().nullable(),
+	city: z.string().nullable(),
+	birthDate: z.string().nullable(),
 	subscriptionStatus: z.string(),
 	subscriptionEndDate: z.string().nullable(),
 	role: z.string().optional(),
-	planType: z.string().optional(),
+	planType: z.string().nullable().optional(),
+	programTitle: z.string().optional(),
+	programTitles: z.array(z.string()).optional(),
+	nivelNombre: z.string().nullable().optional(),
 });
 
 const courseSchema = z.object({
@@ -38,17 +48,61 @@ interface Student {
 	id: string;
 	name: string;
 	email: string;
+	phone?: string | null;
+	address?: string | null;
+	country?: string | null;
+	city?: string | null;
+	birthDate?: string | null;
 	subscriptionStatus: string;
 	subscriptionEndDate: string | null;
 	role?: string;
 	planType?: string;
-	programTitle?: string; // ✅ nuevo
+	programTitle?: string;
+	programTitles?: string[];
+	nivelNombre?: string | null;
 }
 
 interface Course {
 	id: string;
 	title: string;
 }
+
+const allColumns = [
+	{ id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
+	{ id: 'email', label: 'Correo', defaultVisible: true, type: 'text' },
+	{ id: 'phone', label: 'Teléfono', defaultVisible: false, type: 'text' },
+	{ id: 'address', label: 'Dirección', defaultVisible: false, type: 'text' },
+	{ id: 'country', label: 'País', defaultVisible: false, type: 'text' },
+	{ id: 'city', label: 'Ciudad', defaultVisible: false, type: 'text' },
+	{
+		id: 'birthDate',
+		label: 'Fecha de nacimiento',
+		defaultVisible: false,
+		type: 'date',
+	},
+	{
+		id: 'subscriptionStatus',
+		label: 'Estado',
+		defaultVisible: true,
+		type: 'select',
+		options: ['active', 'inactive'],
+	},
+	{
+		id: 'subscriptionEndDate',
+		label: 'Fin Suscripción',
+		defaultVisible: true,
+		type: 'date',
+	},
+	{ id: 'programTitle', label: 'Programa', defaultVisible: true, type: 'text' },
+	{
+		id: 'nivelNombre',
+		label: 'Nivel de educación',
+		defaultVisible: false,
+		type: 'text',
+	},
+	{ id: 'role', label: 'Rol', defaultVisible: false, type: 'text' },
+	{ id: 'planType', label: 'Plan', defaultVisible: false, type: 'text' },
+];
 
 export default function EnrolledUsersPage() {
 	const [students, setStudents] = useState<Student[]>([]);
@@ -70,6 +124,20 @@ export default function EnrolledUsersPage() {
 	const [filteredCourseResults, setFilteredCourseResults] = useState<Course[]>(
 		[]
 	);
+	const [visibleColumns, setVisibleColumns] = useState<string[]>(
+		allColumns.filter((c) => c.defaultVisible).map((c) => c.id)
+	);
+
+	const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
+		{}
+	);
+	const [showColumnSelector, setShowColumnSelector] = useState(false);
+	const [selectedProgram, setSelectedProgram] = useState('');
+
+	// Save visible columns to localStorage
+	useEffect(() => {
+		localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
+	}, [visibleColumns]);
 
 	useEffect(() => {
 		void fetchData();
@@ -89,6 +157,8 @@ export default function EnrolledUsersPage() {
 				.map((s) => ({
 					...s,
 					programTitle: enrolledMap.get(s.id) ?? 'No inscrito',
+					nivelNombre: s.nivelNombre ?? 'No definido',
+					planType: s.planType ?? undefined,
 				}));
 
 			setStudents(studentsFilteredByRole);
@@ -96,6 +166,41 @@ export default function EnrolledUsersPage() {
 		} catch (err) {
 			console.error('Error fetching data:', err);
 		}
+	};
+
+	const downloadSelectedAsExcel = () => {
+		const selectedData = students.filter((s) =>
+			selectedStudents.includes(s.id)
+		);
+
+		if (selectedData.length === 0) {
+			alert('No hay estudiantes seleccionados.');
+			return;
+		}
+
+		// Crea filas con las columnas visibles
+		const rows = selectedData.map((student) => {
+			const row: Record<string, string> = {};
+			visibleColumns.forEach((colId) => {
+				const value = student[colId as keyof Student];
+				row[allColumns.find((c) => c.id === colId)?.label ?? colId] = value
+					? value.toString()
+					: '';
+			});
+			return row;
+		});
+
+		const worksheet = XLSX.utils.json_to_sheet(rows);
+		const workbook = XLSX.utils.book_new();
+		XLSX.utils.book_append_sheet(workbook, worksheet, 'Estudiantes');
+
+		const excelBuffer: ArrayBuffer = XLSX.write(workbook, {
+			type: 'array',
+			bookType: 'xlsx',
+		});		
+		const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+
+		saveAs(blob, 'estudiantes_seleccionados.xlsx');
 	};
 
 	useEffect(() => {
@@ -133,6 +238,33 @@ export default function EnrolledUsersPage() {
 	}, [students, filters, limit]);
 
 	const filteredStudents = students
+		// Filtrar por programa seleccionado
+		.filter((student) =>
+			selectedProgram ? student.programTitles?.includes(selectedProgram) : true
+		)
+
+		// Filtros por columnas
+		.filter((student) => {
+			return Object.entries(columnFilters).every(([key, value]) => {
+				if (!value) return true;
+				const studentValue = student[key as keyof typeof student];
+				if (!studentValue) return false;
+
+				if (key === 'subscriptionEndDate') {
+					return (
+						new Date(studentValue.toString()).toISOString().split('T')[0] ===
+						value
+					);
+				}
+
+				return studentValue
+					.toString()
+					.toLowerCase()
+					.includes(value.toLowerCase());
+			});
+		})
+
+		// Filtros generales
 		.filter((s) =>
 			filters.name
 				? s.name.toLowerCase().includes(filters.name.toLowerCase())
@@ -160,6 +292,7 @@ export default function EnrolledUsersPage() {
 					new Date(filters.subscriptionEndDateTo)
 				: true
 		);
+
 	const sortedStudents = [...filteredStudents].sort((a, b) => {
 		if (a.subscriptionStatus === 'active' && b.subscriptionStatus !== 'active')
 			return -1;
@@ -207,7 +340,42 @@ export default function EnrolledUsersPage() {
 
 	return (
 		<div className="min-h-screen space-y-8 bg-gray-900 p-6 text-white">
-			<h1 className="text-2xl font-bold">Matricular Estudiantes</h1>
+			<div className="flex items-center justify-between">
+				<h1 className="text-2xl font-bold">Matricular Estudiantes</h1>
+
+				<div className="relative">
+					<button
+						onClick={() => setShowColumnSelector(!showColumnSelector)}
+						className="rounded-md bg-gray-700 px-4 py-2 hover:bg-gray-600"
+					>
+						⚙️ Columnas
+					</button>
+
+					{showColumnSelector && (
+						<div className="absolute right-0 z-50 mt-2 rounded-md bg-gray-800 p-4 shadow-lg">
+							<h3 className="mb-2 font-semibold">Mostrar columnas</h3>
+							<div className="space-y-2">
+								{allColumns.map((col) => (
+									<label key={col.id} className="flex items-center gap-2">
+										<input
+											type="checkbox"
+											checked={visibleColumns.includes(col.id)}
+											onChange={() => {
+												setVisibleColumns((prev) =>
+													prev.includes(col.id)
+														? prev.filter((id) => id !== col.id)
+														: [...prev, col.id]
+												);
+											}}
+										/>
+										{col.label}
+									</label>
+								))}
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
 
 			{/* Filtros */}
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -252,6 +420,21 @@ export default function EnrolledUsersPage() {
 					}
 					className="rounded border border-gray-700 bg-gray-800 p-2"
 				/>
+
+				<select
+					value={selectedProgram}
+					onChange={(e) => setSelectedProgram(e.target.value)}
+					className="rounded border border-gray-700 bg-gray-800 p-2"
+				>
+					<option value="">Todos los programas</option>
+					{Array.from(
+						new Set(students.flatMap((s) => s.programTitles ?? []))
+					).map((title) => (
+						<option key={title} value={title}>
+							{title}
+						</option>
+					))}
+				</select>
 			</div>
 
 			{/* Tabla de estudiantes */}
@@ -288,42 +471,76 @@ export default function EnrolledUsersPage() {
 										className="rounded border-white/20"
 									/>
 								</th>
-								<th>Nombre</th>
-								<th>Correo</th>
-								<th>Estado</th>
-								<th>Programa</th>
-								<th>Rol</th>
-								<th>Plan</th>
-								<th>Fin Suscripción</th>
+								{allColumns
+									.filter((col) => visibleColumns.includes(col.id))
+									.map((col) => (
+										<th key={col.id} className="px-4 py-2">
+											<div className="space-y-2">
+												<div>{col.label}</div>
+												{col.type === 'select' ? (
+													<select
+														value={columnFilters[col.id] || ''}
+														onChange={(e) =>
+															setColumnFilters((prev) => ({
+																...prev,
+																[col.id]: e.target.value,
+															}))
+														}
+														className="w-full rounded bg-gray-700 p-1 text-sm"
+													>
+														<option value="">Todos</option>
+														{col.options?.map((opt) => (
+															<option key={opt} value={opt}>
+																{opt}
+															</option>
+														))}
+													</select>
+												) : (
+													<input
+														type={col.type}
+														value={columnFilters[col.id] || ''}
+														onChange={(e) =>
+															setColumnFilters((prev) => ({
+																...prev,
+																[col.id]: e.target.value,
+															}))
+														}
+														className="w-full rounded bg-gray-700 p-1 text-sm"
+														placeholder={`Filtrar ${col.label.toLowerCase()}...`}
+													/>
+												)}
+											</div>
+										</th>
+									))}
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-gray-700/50">
-							{paginatedStudents.map((s) => (
-								<tr key={s.id} className="hover:bg-gray-800">
+							{paginatedStudents.map((student) => (
+								<tr key={student.id} className="hover:bg-gray-800">
 									<td className="px-2 py-2">
 										<input
 											type="checkbox"
-											checked={selectedStudents.includes(s.id)}
+											checked={selectedStudents.includes(student.id)}
 											onChange={() =>
 												setSelectedStudents((prev) =>
-													prev.includes(s.id)
-														? prev.filter((id) => id !== s.id)
-														: [...prev, s.id]
+													prev.includes(student.id)
+														? prev.filter((id) => id !== student.id)
+														: [...prev, student.id]
 												)
 											}
 										/>
 									</td>
-									<td>{s.name}</td>
-									<td>{s.email}</td>
-									<td>{s.subscriptionStatus}</td>
-									<td>{s.programTitle}</td>
-									<td>{s.role ?? 'Sin rol'}</td>
-									<td>{s.planType ?? 'Sin plan'}</td>
-									<td>
-										{s.subscriptionEndDate
-											? new Date(s.subscriptionEndDate).toLocaleDateString()
-											: 'N/A'}
-									</td>
+									{allColumns
+										.filter((col) => visibleColumns.includes(col.id))
+										.map((col) => (
+											<td key={col.id} className="px-4 py-2">
+												{col.id === 'subscriptionEndDate' && student[col.id]
+													? new Date(
+															student[col.id]!
+														).toLocaleDateString()
+													: student[col.id as keyof typeof student] ?? 'N/A'}
+											</td>
+										))}
 								</tr>
 							))}
 						</tbody>
@@ -347,7 +564,9 @@ export default function EnrolledUsersPage() {
 							{arr[i - 1] && n - arr[i - 1] > 1 && '...'}
 							<button
 								onClick={() => goToPage(n)}
-								className={`rounded px-2 py-1 ${page === n ? 'bg-blue-500' : 'bg-gray-700'}`}
+								className={`rounded px-2 py-1 ${
+									page === n ? 'bg-blue-500' : 'bg-gray-700'
+								}`}
 							>
 								{n}
 							</button>
@@ -382,6 +601,13 @@ export default function EnrolledUsersPage() {
 				className="mt-4 rounded bg-green-600 px-6 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
 			>
 				Matricular a curso
+			</button>
+			<button
+				onClick={downloadSelectedAsExcel}
+				className="rounded bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-700 disabled:opacity-50"
+				disabled={selectedStudents.length === 0}
+			>
+				Descargar seleccionados en Excel
 			</button>
 
 			{showModal && (
