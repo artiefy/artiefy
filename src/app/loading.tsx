@@ -25,15 +25,20 @@ const Loading: React.FC = () => {
 				aria-label="Cargando contenido"
 			>
 				<div className="flex flex-col items-center justify-center gap-8">
-					<Image
-						src="/artiefy-logo.svg"
-						alt="Logo de Artiefy"
-						width={200}
-						height={60}
-						className="mb-4"
-						priority
-						loading="eager"
-					/>
+					<div className="relative w-[200px]">
+						<Image
+							src="/artiefy-logo.svg"
+							alt="Logo de Artiefy"
+							width={200}
+							height={60}
+							priority
+							sizes="200px"
+							style={{
+								width: '100%',
+								height: 'auto',
+							}}
+						/>
+					</div>
 					<div className="flex items-center justify-center gap-8">
 						<Image
 							src="/cursor.png"
@@ -42,7 +47,6 @@ const Loading: React.FC = () => {
 							width={180}
 							height={180}
 							priority
-							loading="eager"
 							aria-hidden="true"
 						/>
 						<div
