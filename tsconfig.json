@@ -44,14 +44,15 @@
     ]
   },
   "include": [
+    "next-env.d.ts",
     "video.d.ts",
     "next-video.config.js",
-    "**/*",
-    ".*/**/*",
-    "./**/.*",
-    "video.d.ts",
-    "next-env.d.ts",
-    ".next/types/**/*.ts"
+    "src/**/*",
+    "*.ts",
+    "*.js",
+    "*.mjs",
+    "config/**/*",
+    "scripts/**/*"
   ],
   "exclude": [
     "node_modules",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,6 +23,7 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
 import { NotificationHeader } from './NotificationHeader';
+import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
 import '~/styles/barsicon.css';
 import '~/styles/searchBar.css';
@@ -102,10 +103,20 @@ export function Header() {
 	};
 
 	const renderAuthButton = () => {
+		if (!mounted) {
+			return (
+				<div className="flex w-[180px] items-center justify-start">
+					<Icons.spinner className="text-primary h-5 w-5" />
+				</div>
+			);
+		}
+
 		return (
-			<div className="flex items-center justify-end">
+			<div className="flex min-w-[180px] items-center justify-end">
 				{!isAuthLoaded ? (
-					<div className="h-12 w-[180px] animate-pulse rounded-md bg-gray-200" />
+					<div className="flex min-w-[180px] items-center justify-start">
+						<Icons.spinner className="text-primary h-5 w-5" />
+					</div>
 				) : (
 					<>
 						<SignedOut>
@@ -131,29 +142,15 @@ export function Header() {
 
 						<SignedIn>
 							<div className="flex items-center gap-2">
-								<UserButton
-									showName
-									appearance={{
-										elements: {
-											rootBox: 'flex items-center justify-end',
-											userButtonTrigger: 'focus:shadow-none',
-											userButtonPopoverCard: 'z-[100]',
-										},
-									}}
+								<Suspense
+									fallback={
+										<div className="flex min-w-[180px] items-center justify-start">
+											<Icons.spinner className="text-primary ml-2 h-5 w-5" />
+										</div>
+									}
 								>
-									<UserButton.MenuItems>
-										<UserButton.Link
-											label="Mis Cursos"
-											labelIcon={<UserCircleIcon className="size-4" />}
-											href="/estudiantes/myaccount"
-										/>
-										<UserButton.Link
-											label="Mis Certificaciones"
-											labelIcon={<AcademicCapIcon className="size-4" />}
-											href="/estudiantes/certificados"
-										/>
-									</UserButton.MenuItems>
-								</UserButton>
+									<UserButtonWrapper />
+								</Suspense>
 								<div className="relative">
 									<NotificationHeader count={2} />
 								</div>
@@ -164,10 +161,6 @@ export function Header() {
 			</div>
 		);
 	};
-
-	if (!mounted) {
-		return null; // O un skeleton/placeholder
-	}
 
 	return (
 		<header
@@ -188,10 +181,9 @@ export function Header() {
 											src="/artiefy-logo.svg"
 											alt="Logo Artiefy"
 											fill
-											priority={false} // Cambiado a false para evitar preload innecesario
+											unoptimized // Solo necesitamos unoptimized para SVGs
 											className="object-contain"
-											sizes="150px" // Simplificado el sizes
-											loading="lazy" // Añadido lazy loading
+											sizes="150px"
 										/>
 									</div>
 								</Link>
@@ -218,10 +210,9 @@ export function Header() {
 											src="/artiefy-logo.svg"
 											alt="Logo Artiefy"
 											fill
-											priority={false} // Cambiado a false para evitar preload innecesario
+											unoptimized // Solo necesitamos unoptimized para SVGs
 											className="object-contain"
-											sizes="150px" // Simplificado el sizes
-											loading="lazy" // Añadido lazy loading
+											sizes="150px"
 										/>
 									</div>
 								</Link>
@@ -329,7 +320,7 @@ export function Header() {
 										src="/artiefy-logo2.svg"
 										alt="Logo Artiefy Mobile"
 										fill
-										priority
+										unoptimized
 										className="object-contain"
 										sizes="150px"
 									/>
@@ -360,7 +351,15 @@ export function Header() {
 						</ul>
 					</nav>
 					<div className="mt-6 flex items-center justify-center">
-						{renderAuthButton()}
+						<Suspense
+							fallback={
+								<div className="flex min-w-[180px] items-center justify-start">
+									<Icons.spinner className="text-background h-5 w-5" />
+								</div>
+							}
+						>
+							{renderAuthButton()}
+						</Suspense>
 					</div>
 				</DialogPanel>
 			</Dialog>

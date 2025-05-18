@@ -1,27 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import Image from 'next/image';
 import '~/styles/loading.css';
 
-// Añadir esta exportación para mejorar el SEO
-export const metadata = {
-	robots: 'noindex',
-};
-
-const Loading: React.FC = () => {
-	const [launch, setLaunch] = useState(false);
-
-	useEffect(() => {
-		setLaunch(true);
-		// Remove setTimeout as it's not necessary and can cause flickering
-	}, []);
-
+export default function Loading() {
 	return (
 		<div className="loading-fullscreen-background">
 			<div
-				className={`loading-card flex-col ${launch ? 'loading-launch' : ''}`}
+				className="loading-card loading-launch flex-col"
 				aria-label="Cargando contenido"
 			>
 				<div className="flex flex-col items-center justify-center gap-8">
@@ -66,6 +52,4 @@ const Loading: React.FC = () => {
 			</div>
 		</div>
 	);
-};
-
-export default Loading;
+}
