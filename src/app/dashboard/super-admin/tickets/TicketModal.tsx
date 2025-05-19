@@ -6,6 +6,7 @@ import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { Loader2 } from 'lucide-react';
+import Select from 'react-select';
 
 import { Modal } from '~/components/shared/Modal';
 
@@ -15,12 +16,11 @@ export interface Ticket {
 	description: string;
 	tipo: string;
 	estado: string;
-	assignedToName?: string;
-	assignedToEmail?: string;
+	assignedToId?: string; // ← este puede quedarse si sigues mostrando un único nombre
+	assignedToIds?: string[]; // ✅ AGREGA ESTA LÍNEA
 	creatorName?: string;
 	creatorEmail?: string;
 	comments?: string;
-	assignedToId?: string;
 	coverImageKey?: string;
 	videoKey?: string;
 	documentKey?: string;
@@ -33,7 +33,7 @@ export interface TicketFormData {
 	description: string;
 	tipo: string;
 	estado: string;
-	assignedToId?: string;
+	assignedToIds?: string[];
 	comments?: string;
 	coverImageKey?: string;
 	videoKey?: string;
@@ -86,7 +86,7 @@ export default function TicketModal({
 
 	const initialFormState = useMemo<TicketFormData>(
 		() => ({
-			assignedToId: '',
+			assignedToIds: [],
 			email: '',
 			description: '',
 			comments: '',
@@ -130,7 +130,7 @@ export default function TicketModal({
 			console.log('👤 Ticket recibido:', ticket);
 
 			setFormData({
-				assignedToId: ticket.assignedToId ?? '',
+				assignedToIds: ticket.assignedToIds ?? [],
 				email: ticket.email ?? '',
 				description: ticket.description ?? '',
 				comments: ticket.comments ?? '',
@@ -145,6 +145,20 @@ export default function TicketModal({
 			setFormData(initialFormState);
 		}
 	}, [ticket, initialFormState]);
+	// 🧠 Asegura que los asignados se sincronicen correctamente cuando los admins se cargan
+	useEffect(() => {
+		if (!ticket) return;
+
+		const assigned = ticket.assignedToIds ?? [];
+
+		// Solo actualiza si hay datos y admins ya cargados
+		if (assigned.length > 0 && admins.length > 0) {
+			setFormData((prev) => ({
+				...prev,
+				assignedToIds: assigned,
+			}));
+		}
+	}, [admins, ticket]);
 
 	useEffect(() => {
 		const fetchComments = async () => {
@@ -182,8 +196,8 @@ export default function TicketModal({
 		};
 		console.log('📤 Enviando desde el modal:', submitData);
 
-		if (!submitData.assignedToId) {
-			delete submitData.assignedToId;
+		if (!submitData.assignedToIds || submitData.assignedToIds.length === 0) {
+			delete submitData.assignedToIds;
 		}
 
 		await Promise.resolve(onSubmitAction(submitData));
@@ -270,21 +284,76 @@ export default function TicketModal({
 								<label className="block text-sm font-medium text-gray-300">
 									Asignar a
 								</label>
-								<select
-									value={formData.assignedToId ?? ''}
-									onChange={(e) =>
-										setFormData({ ...formData, assignedToId: e.target.value })
+
+								<Select
+									isMulti
+									isLoading={isLoadingAdmins}
+									options={admins.map((admin) => ({
+										value: admin.id,
+										label: `${admin.name} - ${admin.email}`,
+									}))}
+									value={
+										admins.length > 0
+											? admins
+													.filter((a) => formData.assignedToIds?.includes(a.id))
+													.map((a) => ({
+														value: a.id,
+														label: `${a.name} - ${a.email}`,
+													}))
+											: []
 									}
-									className="w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white shadow-inner transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-									disabled={isLoadingAdmins}
-								>
-									<option value="">Sin asignar</option>
-									{admins.map((admin) => (
-										<option key={admin.id} value={admin.id}>
-											{admin.name} - {admin.email}
-										</option>
-									))}
-								</select>
+									onChange={(selectedOptions) =>
+										setFormData({
+											...formData,
+											assignedToIds: selectedOptions.map((opt) => opt.value),
+										})
+									}
+									styles={{
+										control: (base) => ({
+											...base,
+											backgroundColor: '#01142B', // -background
+											borderColor: '#00BDD8', // -secondary
+											color: '#3AF4EF', // -primary
+										}),
+										menu: (base) => ({
+											...base,
+											backgroundColor: '#01142B', // -background
+											color: '#3AF4EF', // -primary
+										}),
+										option: (base, state) => ({
+											...base,
+											backgroundColor: state.isFocused ? '#00A5C0' : '#01142B', // hover : normal
+											color: '#3AF4EF',
+											cursor: 'pointer',
+										}),
+										multiValue: (base) => ({
+											...base,
+											backgroundColor: '#00BDD8',
+										}),
+										multiValueLabel: (base) => ({
+											...base,
+											color: '#01142B', // fondo claro, texto oscuro
+											fontWeight: 600,
+										}),
+										multiValueRemove: (base) => ({
+											...base,
+											color: '#01142B',
+											':hover': {
+												backgroundColor: '#3AF4EF',
+												color: '#01142B',
+											},
+										}),
+										placeholder: (base) => ({
+											...base,
+											color: '#3AF4EF',
+											opacity: 0.6,
+										}),
+										singleValue: (base) => ({
+											...base,
+											color: '#3AF4EF',
+										}),
+									}}
+								/>
 							</div>
 
 							<div className="space-y-2">

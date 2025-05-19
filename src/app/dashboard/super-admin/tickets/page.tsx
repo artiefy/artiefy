@@ -28,8 +28,14 @@ const rawTicketSchema = z.array(
 		description: z.string(),
 		tipo: z.string(),
 		estado: z.string(),
-		assigned_to_name: z.string().optional(),
-		assigned_to_email: z.string().optional(),
+		assigned_users: z
+  .array(
+    z.object({
+      id: z.string(), // ✅ necesario para <Select />
+      name: z.string(),
+      email: z.string(),
+    })
+  ),
 		assigned_to_id: z.string().optional(),
 		creator_name: z.string().optional(),
 		creator_email: z.string().optional(),
@@ -50,7 +56,7 @@ export interface TicketFormData {
 	description: string;
 	tipo: string;
 	estado: string;
-	assignedToId?: string;
+	assignedToIds?: string[];
 	comments?: string;
 	coverImageKey?: string;
 	videoKey?: string; // ✅ AÑADIR
@@ -73,8 +79,7 @@ export interface Ticket {
 	description: string;
 	tipo: string;
 	estado: string;
-	assignedToName?: string;
-	assignedToEmail?: string;
+	assignedUsers?: { name: string; email: string }[]; // 👈 para múltiples asignados
 	creatorName?: string;
 	creatorEmail?: string;
 	comments?: string;
@@ -112,6 +117,7 @@ export default function TicketsPage() {
 	const [filterEndDate, setFilterEndDate] = useState<string>('');
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [isLoadingComments, setIsLoadingComments] = useState(false);
+	const [sortByIdAsc, setSortByIdAsc] = useState(false); // false = mayor a menor
 
 	useEffect(() => {
 		if (viewTicket?.id) {
@@ -173,8 +179,8 @@ export default function TicketsPage() {
 				description: ticket.description,
 				tipo: ticket.tipo,
 				estado: ticket.estado,
-				assignedToName: ticket.assigned_to_name ?? '',
-				assignedToEmail: ticket.assigned_to_email ?? '',
+				assignedUsers: ticket.assigned_users?.map(({ name, email }) => ({ name, email })) ?? [],
+assignedToIds: ticket.assigned_users?.map((u) => u.id) ?? [],
 				assignedToId: ticket.assigned_to_id ?? '',
 				creatorName: ticket.creator_name ?? '',
 				creatorEmail: ticket.creator_email ?? '',
@@ -210,7 +216,8 @@ export default function TicketsPage() {
 			(filterStatus === 'all' || ticket.estado === filterStatus) &&
 			String(ticket.id).toLowerCase().includes(filterId.toLowerCase()) &&
 			(filterEmail === '' || ticket.email === filterEmail) &&
-			(filterAssignedTo === '' || ticket.assignedToName === filterAssignedTo) &&
+			(filterAssignedTo === '' ||
+				ticket.assignedUsers?.some((user) => user.name === filterAssignedTo)) &&
 			(filterStartDate === '' || createdDateOnly >= filterStartDate) &&
 			(filterEndDate === '' || createdDateOnly <= filterEndDate)
 		);
@@ -221,7 +228,11 @@ export default function TicketsPage() {
 	);
 
 	const uniqueAssignedTo = Array.from(
-		new Set(tickets.map((t) => t.assignedToName).filter(Boolean))
+		new Set(
+			tickets
+				.flatMap((t) => t.assignedUsers?.map((u) => u.name) ?? [])
+				.filter(Boolean)
+		)
 	);
 
 	const handleCreate = async (data: TicketFormData): Promise<void> => {
@@ -270,11 +281,15 @@ export default function TicketsPage() {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [itemsPerPage, setItemsPerPage] = useState(10);
 
+	const sortedTickets = [...filteredTickets].sort((a, b) =>
+		sortByIdAsc ? Number(a.id) - Number(b.id) : Number(b.id) - Number(a.id)
+	);
+
 	const paginatedTickets = (() => {
 		const start = (currentPage - 1) * itemsPerPage;
 		const end =
-			itemsPerPage === -1 ? filteredTickets.length : start + itemsPerPage;
-		return filteredTickets.slice(start, end);
+			itemsPerPage === -1 ? sortedTickets.length : start + itemsPerPage;
+		return sortedTickets.slice(start, end);
 	})();
 
 	const handleUpdate = async (data: TicketFormData): Promise<void> => {
@@ -497,7 +512,6 @@ export default function TicketsPage() {
 											ids: selectedIds.map((id) => Number(id)), // 👈 convierte a número aquí
 										}),
 									});
-									
 
 									setSelectedIds([]);
 									toast.success('✅ Tickets eliminados');
@@ -663,7 +677,13 @@ export default function TicketsPage() {
 									{/* Títulos */}
 									<tr className="border-b border-gray-700 bg-gray-800 text-xs text-gray-300 sm:text-sm">
 										<th className="px-4 py-2 text-left" />
-										<th className="px-4 py-2 text-left">ID</th>
+										<th
+											className="cursor-pointer px-4 py-2 text-left"
+											onClick={() => setSortByIdAsc((prev) => !prev)}
+										>
+											ID {sortByIdAsc ? '↑' : '↓'}
+										</th>
+
 										<th className="px-4 py-2 text-left">Email</th>
 										<th className="px-4 py-2 text-left">Tipo</th>
 										<th className="px-4 py-2 text-left">Estado</th>
@@ -740,8 +760,12 @@ export default function TicketsPage() {
 													</span>
 												</td>
 												<td className="px-4 py-4">
-													{ticket.assignedToName ?? 'Sin asignar'}
+													{ticket.assignedUsers &&
+													ticket.assignedUsers.length > 0
+														? ticket.assignedUsers.map((u) => u.name).join(', ')
+														: 'Sin asignar'}
 												</td>
+
 												<td className="px-4 py-4">
 													{ticket.createdAt.toLocaleString()}
 												</td>
@@ -901,7 +925,10 @@ export default function TicketsPage() {
 											Asignado a
 										</h3>
 										<p className="text-lg text-white">
-											{viewTicket.assignedToName ?? 'Sin asignar'}
+											{viewTicket.assignedUsers &&
+											viewTicket.assignedUsers.length > 0
+												? viewTicket.assignedUsers.map((u) => u.name).join(', ')
+												: 'Sin asignar'}
 										</p>
 									</div>
 
