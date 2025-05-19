@@ -163,6 +163,7 @@ export default function AdminDashboard() {
 	const [loadingEmail, setLoadingEmail] = useState(false); // ✅ Estado de carga para el envío de correos
 	const [attachments, setAttachments] = useState<File[]>([]);
 	const [previewAttachments, setPreviewAttachments] = useState<string[]>([]);
+	const [usersPerPage, setUsersPerPage] = useState<number>(10);
 
 	const [newAnuncio, setNewAnuncio] = useState({
 		titulo: '',
@@ -441,10 +442,12 @@ export default function AdminDashboard() {
 
 	// 2️⃣ Definir la paginación
 	const [currentPage, setCurrentPage] = useState(1);
-	const usersPerPage = 10;
 	const indexOfLastUser = currentPage * usersPerPage;
 	const indexOfFirstUser = indexOfLastUser - usersPerPage;
-	const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+	const currentUsers =
+		usersPerPage === -1
+			? filteredUsers
+			: filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
 	const [showAssignModal, setShowAssignModal] = useState(false);
 	const handleSelectStudent = (userId: string) => {
@@ -1563,6 +1566,25 @@ export default function AdminDashboard() {
 					{/* Users table with improved styling */}
 					<div className="mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl backdrop-blur-sm">
 						<div className="overflow-x-auto">
+							<div className="mb-4 flex items-center gap-2 text-sm text-white">
+								<span>Mostrar:</span>
+								<select
+									value={usersPerPage}
+									onChange={(e) => {
+										const value = parseInt(e.target.value, 10);
+										setUsersPerPage(value);
+										setCurrentPage(1); // volver a página 1
+									}}
+									className="rounded bg-gray-700 px-2 py-1 text-sm text-white"
+								>
+									<option value={10}>10</option>
+									<option value={50}>50</option>
+									<option value={100}>100</option>
+									<option value={-1}>Todos</option>
+								</select>
+								<span>usuarios</span>
+							</div>
+
 							<table className="min-w-full table-auto border-collapse">
 								<thead>
 									<tr className="border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] text-white">

@@ -305,7 +305,6 @@ export const tickets = pgTable('tickets', {
 	creatorId: text('creator_id')
 		.references(() => users.id)
 		.notNull(),
-	assignedToId: text('assigned_to_id').references(() => users.id),
 	comments: varchar('comments', { length: 255 }).notNull(),
 	description: text('description').notNull(),
 	estado: text('estado', {
@@ -774,17 +773,38 @@ export const materiaGradesRelations = relations(materiaGrades, ({ one }) => ({
 	}),
 }));
 
+export const ticketAssignees = pgTable('ticket_assignees', {
+	id: serial('id').primaryKey(),
+	ticketId: integer('ticket_id')
+		.notNull()
+		.references(() => tickets.id, { onDelete: 'cascade' }),
+	userId: text('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at').defaultNow(),
+});
+
+
 export const ticketsRelations = relations(tickets, ({ one, many }) => ({
 	creator: one(users, {
 		fields: [tickets.creatorId],
 		references: [users.id],
 	}),
-	assignedTo: one(users, {
-		fields: [tickets.assignedToId],
-		references: [users.id],
-	}),
+	assignees: many(ticketAssignees),	
 	comments: many(ticketComments),
 }));
+
+export const ticketAssigneesRelations = relations(ticketAssignees, ({ one }) => ({
+	ticket: one(tickets, {
+		fields: [ticketAssignees.ticketId],
+		references: [tickets.id],
+	}),
+	user: one(users, {
+		fields: [ticketAssignees.userId],
+		references: [users.id],
+	}),
+}));
+
 
 export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
 	ticket: one(tickets, {
@@ -826,3 +846,5 @@ export const chatMessagesWithConversation = pgTable(
 		createdAt: timestamp('created_at').defaultNow().notNull(),
 	}
 );
+
+

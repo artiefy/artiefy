@@ -37,6 +37,7 @@ export async function POST(request: Request) {
 			from: '"Foros Artiefy" <direcciongeneral@artiefy.com>',
 			to: recipients.join(','),
 			subject: `📢 Nueva actividad en el foro: ${forumTitle}`,
+			replyTo: 'direcciongeneral@artiefy.com',
 			html: `
         <div style="font-family: Arial, sans-serif; padding: 20px;">
           <h2>Nueva actividad en el foro: ${forumTitle}</h2>

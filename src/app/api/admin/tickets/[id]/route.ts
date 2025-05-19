@@ -131,7 +131,6 @@ export async function PUT(
 	}
 }
 
-
 export async function DELETE(
 	_request: Request,
 	{ params }: { params: { id: string } }
@@ -149,6 +148,12 @@ export async function DELETE(
 			return NextResponse.json({ error: 'Invalid ticket ID' }, { status: 400 });
 		}
 
+		// ❗ Primero elimina los comentarios del ticket
+		await db
+			.delete(ticketComments)
+			.where(eq(ticketComments.ticketId, ticketId));
+
+		// ✅ Luego elimina el ticket
 		const deletedTicket = await db
 			.delete(tickets)
 			.where(eq(tickets.id, ticketId))

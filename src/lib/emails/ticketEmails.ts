@@ -11,7 +11,6 @@ const transporter = nodemailer.createTransport({
 	},
 });
 
-
 interface EmailError {
 	code: string;
 	command: string;
@@ -43,6 +42,7 @@ export async function sendTicketEmail(emailData: {
 			to,
 			subject,
 			html,
+			replyTo: 'direcciongeneral@artiefy.com',
 		};
 
 		const info = await transporter.sendMail(mailOptions);

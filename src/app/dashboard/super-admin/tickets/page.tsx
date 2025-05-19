@@ -28,8 +28,14 @@ const rawTicketSchema = z.array(
 		description: z.string(),
 		tipo: z.string(),
 		estado: z.string(),
-		assigned_to_name: z.string().optional(),
-		assigned_to_email: z.string().optional(),
+		assigned_users: z
+  .array(
+    z.object({
+      id: z.string(), // ✅ necesario para <Select />
+      name: z.string(),
+      email: z.string(),
+    })
+  ),
 		assigned_to_id: z.string().optional(),
 		creator_name: z.string().optional(),
 		creator_email: z.string().optional(),
@@ -50,7 +56,7 @@ export interface TicketFormData {
 	description: string;
 	tipo: string;
 	estado: string;
-	assignedToId?: string;
+	assignedToIds?: string[];
 	comments?: string;
 	coverImageKey?: string;
 	videoKey?: string; // ✅ AÑADIR
@@ -73,8 +79,7 @@ export interface Ticket {
 	description: string;
 	tipo: string;
 	estado: string;
-	assignedToName?: string;
-	assignedToEmail?: string;
+	assignedUsers?: { name: string; email: string }[]; // 👈 para múltiples asignados
 	creatorName?: string;
 	creatorEmail?: string;
 	comments?: string;
@@ -112,6 +117,7 @@ export default function TicketsPage() {
 	const [filterEndDate, setFilterEndDate] = useState<string>('');
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [isLoadingComments, setIsLoadingComments] = useState(false);
+	const [sortByIdAsc, setSortByIdAsc] = useState(false); // false = mayor a menor
 
 	useEffect(() => {
 		if (viewTicket?.id) {
@@ -173,8 +179,8 @@ export default function TicketsPage() {
 				description: ticket.description,
 				tipo: ticket.tipo,
 				estado: ticket.estado,
-				assignedToName: ticket.assigned_to_name ?? '',
-				assignedToEmail: ticket.assigned_to_email ?? '',
+				assignedUsers: ticket.assigned_users?.map(({ name, email }) => ({ name, email })) ?? [],
+assignedToIds: ticket.assigned_users?.map((u) => u.id) ?? [],
 				assignedToId: ticket.assigned_to_id ?? '',
 				creatorName: ticket.creator_name ?? '',
 				creatorEmail: ticket.creator_email ?? '',
@@ -210,7 +216,8 @@ export default function TicketsPage() {
 			(filterStatus === 'all' || ticket.estado === filterStatus) &&
 			String(ticket.id).toLowerCase().includes(filterId.toLowerCase()) &&
 			(filterEmail === '' || ticket.email === filterEmail) &&
-			(filterAssignedTo === '' || ticket.assignedToName === filterAssignedTo) &&
+			(filterAssignedTo === '' ||
+				ticket.assignedUsers?.some((user) => user.name === filterAssignedTo)) &&
 			(filterStartDate === '' || createdDateOnly >= filterStartDate) &&
 			(filterEndDate === '' || createdDateOnly <= filterEndDate)
 		);
@@ -221,7 +228,11 @@ export default function TicketsPage() {
 	);
 
 	const uniqueAssignedTo = Array.from(
-		new Set(tickets.map((t) => t.assignedToName).filter(Boolean))
+		new Set(
+			tickets
+				.flatMap((t) => t.assignedUsers?.map((u) => u.name) ?? [])
+				.filter(Boolean)
+		)
 	);
 
 	const handleCreate = async (data: TicketFormData): Promise<void> => {
@@ -266,6 +277,20 @@ export default function TicketsPage() {
 			);
 		}
 	};
+
+	const [currentPage, setCurrentPage] = useState(1);
+	const [itemsPerPage, setItemsPerPage] = useState(10);
+
+	const sortedTickets = [...filteredTickets].sort((a, b) =>
+		sortByIdAsc ? Number(a.id) - Number(b.id) : Number(b.id) - Number(a.id)
+	);
+
+	const paginatedTickets = (() => {
+		const start = (currentPage - 1) * itemsPerPage;
+		const end =
+			itemsPerPage === -1 ? sortedTickets.length : start + itemsPerPage;
+		return sortedTickets.slice(start, end);
+	})();
 
 	const handleUpdate = async (data: TicketFormData): Promise<void> => {
 		try {
@@ -357,6 +382,12 @@ export default function TicketsPage() {
 			return null;
 		}
 	};
+	const [selectedIds, setSelectedIds] = useState<string[]>([]);
+	const toggleSelectId = (id: string) => {
+		setSelectedIds((prev) =>
+			prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+		);
+	};
 
 	const handleDelete = async (id: string): Promise<void> => {
 		if (!confirm('¿Estás seguro de que quieres eliminar este ticket?')) return;
@@ -447,17 +478,61 @@ export default function TicketsPage() {
 				{/* Action buttons */}
 
 				<div className="my-6 flex flex-wrap items-center justify-between gap-4">
-					<button
-						onClick={handleOpenCreateModal}
-						className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
-					>
-						<span className="relative z-10 font-medium">
-							Crear Nuevo Ticket
-						</span>
-						<Plus className="relative z-10 size-3.5 sm:size-4" />
-						<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
-					</button>
+					{/* Botones a la izquierda */}
+					<div className="flex flex-wrap items-center gap-4">
+						<button
+							onClick={handleOpenCreateModal}
+							className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+						>
+							<span className="relative z-10 font-medium">
+								Crear Nuevo Ticket
+							</span>
+							<Plus className="relative z-10 size-3.5 sm:size-4" />
+							<div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+						</button>
 
+						<button
+							onClick={async () => {
+								if (
+									!confirm(
+										`¿Seguro que deseas eliminar ${selectedIds.length} ticket(s)?`
+									)
+								)
+									return;
+								try {
+									console.log(
+										'🧾 Enviando al backend para bulkDelete:',
+										selectedIds
+									);
+
+									await fetch('/api/admin/tickets/bulkDelete', {
+										method: 'DELETE',
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify({
+											ids: selectedIds.map((id) => Number(id)), // 👈 convierte a número aquí
+										}),
+									});
+
+									setSelectedIds([]);
+									toast.success('✅ Tickets eliminados');
+									void fetchTickets();
+								} catch (err) {
+									console.error(err);
+									toast.error('❌ Error al eliminar tickets');
+								}
+							}}
+							disabled={selectedIds.length === 0}
+							className={`rounded-md border px-4 py-2 text-sm transition ${
+								selectedIds.length === 0
+									? 'cursor-not-allowed bg-gray-700 text-gray-400'
+									: 'bg-red-600 text-white hover:bg-red-700'
+							}`}
+						>
+							Eliminar Seleccionados
+						</button>
+					</div>
+
+					{/* Filtros y contador a la derecha */}
 					<div className="flex flex-wrap items-center gap-4">
 						<div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-gradient-to-br from-gray-800/50 to-gray-900/50 p-4 shadow-md backdrop-blur-lg sm:flex-row sm:items-center">
 							<div className="flex flex-col">
@@ -510,6 +585,26 @@ export default function TicketsPage() {
 								<thead>
 									{/* Filtros */}
 									<tr className="border-b border-gray-700 bg-gray-900 text-xs text-white sm:text-sm">
+										<th>
+											{' '}
+											<div className="mt-1 flex items-center gap-2 text-sm text-white">
+												<span>Mostrar:</span>
+												<select
+													value={itemsPerPage}
+													onChange={(e) => {
+														const value = Number(e.target.value);
+														setItemsPerPage(value);
+														setCurrentPage(1); // reiniciar a primera página
+													}}
+													className="rounded-md border border-gray-600 bg-gray-800 px-2 py-1 text-white"
+												>
+													<option value={10}>10</option>
+													<option value={50}>50</option>
+													<option value={100}>100</option>
+													<option value={-1}>Todos</option>
+												</select>
+											</div>{' '}
+										</th>
 										<th className="px-4 py-2">
 											<input
 												type="text"
@@ -581,7 +676,14 @@ export default function TicketsPage() {
 
 									{/* Títulos */}
 									<tr className="border-b border-gray-700 bg-gray-800 text-xs text-gray-300 sm:text-sm">
-										<th className="px-4 py-2 text-left">ID</th>
+										<th className="px-4 py-2 text-left" />
+										<th
+											className="cursor-pointer px-4 py-2 text-left"
+											onClick={() => setSortByIdAsc((prev) => !prev)}
+										>
+											ID {sortByIdAsc ? '↑' : '↓'}
+										</th>
+
 										<th className="px-4 py-2 text-left">Email</th>
 										<th className="px-4 py-2 text-left">Tipo</th>
 										<th className="px-4 py-2 text-left">Estado</th>
@@ -610,11 +712,19 @@ export default function TicketsPage() {
 											</td>
 										</tr>
 									) : (
-										filteredTickets.map((ticket) => (
+										paginatedTickets.map((ticket) => (
 											<tr
 												key={ticket.id}
 												className="group transition-colors hover:bg-gray-700/50"
 											>
+												<td className="px-4 py-4">
+													<input
+														type="checkbox"
+														checked={selectedIds.includes(ticket.id)}
+														onChange={() => toggleSelectId(ticket.id)}
+														className="mr-2"
+													/>
+												</td>
 												<td className="px-4 py-4">#{ticket.id}</td>
 												<td className="px-4 py-4">{ticket.email}</td>
 												<td className="px-4 py-4">
@@ -650,8 +760,12 @@ export default function TicketsPage() {
 													</span>
 												</td>
 												<td className="px-4 py-4">
-													{ticket.assignedToName ?? 'Sin asignar'}
+													{ticket.assignedUsers &&
+													ticket.assignedUsers.length > 0
+														? ticket.assignedUsers.map((u) => u.name).join(', ')
+														: 'Sin asignar'}
 												</td>
+
 												<td className="px-4 py-4">
 													{ticket.createdAt.toLocaleString()}
 												</td>
@@ -692,6 +806,41 @@ export default function TicketsPage() {
 									)}
 								</tbody>
 							</table>
+							{itemsPerPage !== -1 && (
+								<div className="mt-4 flex items-center justify-center gap-2 text-sm text-white">
+									<button
+										onClick={() =>
+											setCurrentPage((prev) => Math.max(prev - 1, 1))
+										}
+										disabled={currentPage === 1}
+										className="rounded-md border border-gray-600 bg-gray-800 px-3 py-1 disabled:opacity-50"
+									>
+										Anterior
+									</button>
+
+									<span className="px-2">
+										Página {currentPage} de{' '}
+										{Math.ceil(filteredTickets.length / itemsPerPage)}
+									</span>
+
+									<button
+										onClick={() =>
+											setCurrentPage((prev) =>
+												prev < Math.ceil(filteredTickets.length / itemsPerPage)
+													? prev + 1
+													: prev
+											)
+										}
+										disabled={
+											currentPage >=
+											Math.ceil(filteredTickets.length / itemsPerPage)
+										}
+										className="rounded-md border border-gray-600 bg-gray-800 px-3 py-1 disabled:opacity-50"
+									>
+										Siguiente
+									</button>
+								</div>
+							)}
 						</div>
 					</div>
 				)}
@@ -776,7 +925,10 @@ export default function TicketsPage() {
 											Asignado a
 										</h3>
 										<p className="text-lg text-white">
-											{viewTicket.assignedToName ?? 'Sin asignar'}
+											{viewTicket.assignedUsers &&
+											viewTicket.assignedUsers.length > 0
+												? viewTicket.assignedUsers.map((u) => u.name).join(', ')
+												: 'Sin asignar'}
 										</p>
 									</div>
 
