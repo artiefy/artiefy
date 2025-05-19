@@ -136,9 +136,9 @@ export const Zone = () => {
 									<p className="text-primary text-xs">Instructor:</p>
 									<p
 										className="truncate font-medium sm:whitespace-normal"
-										title={forum.instructor.name}
+										title={forum.instructor?.name ?? 'Sin nombre'}
 									>
-										{forum.instructor.name}
+										{forum.instructor?.name ?? 'Sin nombre'}
 									</p>
 								</div>
 							</div>
