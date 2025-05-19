@@ -9,13 +9,10 @@ import {
 	SignInButton,
 	SignedIn,
 	SignedOut,
-	UserButton,
 	useAuth,
 } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import {
-	UserCircleIcon,
-	AcademicCapIcon,
 	XMarkIcon as XMarkIconSolid,
 } from '@heroicons/react/24/solid';
 
