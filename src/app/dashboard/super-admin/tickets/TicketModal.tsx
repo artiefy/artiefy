@@ -75,8 +75,6 @@ interface UploadResponse {
 	uploadType: 'simple' | 'put';
 }
 
-
-
 export default function TicketModal({
 	isOpen,
 	onCloseAction,
@@ -283,7 +281,7 @@ export default function TicketModal({
 									<option value="">Sin asignar</option>
 									{admins.map((admin) => (
 										<option key={admin.id} value={admin.id}>
-											{admin.name} ({admin.role})
+											{admin.name} - {admin.email}
 										</option>
 									))}
 								</select>
