@@ -38,107 +38,123 @@ export const dynamic = 'force-dynamic';
 // ========================
 // GET /api/admin/tickets
 // ========================
-
 export async function GET(request: Request) {
 	const { userId, sessionClaims } = await auth();
-	const role = sessionClaims?.metadata.role;
+	const role = sessionClaims?.metadata?.role;
 	const { searchParams } = new URL(request.url);
 	const type = searchParams.get('type');
+
+	console.log('🔐 User:', userId, '| Role:', role, '| Type:', type);
 
 	if (!userId || (role !== 'admin' && role !== 'super-admin')) {
 		return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
-	try {
-		let whereClause = sql``;
+	// Obtener asignaciones
+	const assignments = await db
+		.select({
+			ticketId: ticketAssignees.ticketId,
+			userId: ticketAssignees.userId,
+			userName: users.name,
+			userEmail: users.email,
+		})
+		.from(ticketAssignees)
+		.leftJoin(users, eq(ticketAssignees.userId, users.id));
 
-		if (type === 'logs') {
-			whereClause = sql`WHERE t.tipo = 'logs'`;
-		} else if (type === 'assigned') {
-			whereClause = sql`WHERE t.assigned_to_id = ${userId}`;
+	const assignedMap = new Map<
+		number,
+		{ id: string; name: string; email: string }[]
+	>();
+	const assignedTicketIds = new Set<number>();
+
+	for (const row of assignments) {
+		if (!assignedMap.has(row.ticketId)) {
+			assignedMap.set(row.ticketId, []);
 		}
-
-		const query = sql`
-	SELECT
-		t.id,
-		t.creator_id,
-		t.email,
-		t.description,
-		t.comments,
-		t.estado,
-		t.tipo,
-		t.cover_image_key,
-		t.created_at,
-		t.updated_at,
-		c.name AS creator_name,
-		c.email AS creator_email,
-		t.video_key,
-		t.document_key
-	FROM tickets t
-	LEFT JOIN users c ON t.creator_id = c.id
-	${whereClause}
-`;
-		console.log(ticketAssignees);
-		const assignedUsers = await db
-			.select({
-				ticketId: ticketAssignees.ticketId,
-				userId: users.id, // 👈 AÑADIDO
-				userName: users.name,
-				userEmail: users.email,
-			})
-
-			.from(ticketAssignees)
-			.leftJoin(users, eq(ticketAssignees.userId, users.id));
-
-		const assignedMap = new Map<
-			number,
-			{ id: string; name: string; email: string }[]
-		>();
-
-		for (const row of assignedUsers) {
-			if (!assignedMap.has(row.ticketId)) {
-				assignedMap.set(row.ticketId, []);
-			}
-			assignedMap.get(row.ticketId)?.push({
-				id: row.userId ?? '',
-				name: row.userName ?? '',
-				email: row.userEmail ?? '',
-			});
-		}
-
-		const result = await db.execute(query);
-
-		const processed = result.rows.map((row) => {
-			const createdAt = new Date(row.created_at as string);
-			const updatedAt = new Date(row.updated_at as string);
-			const estado = row.estado as string;
-			const isClosed = estado === 'cerrado' || estado === 'solucionado';
-
-			const now = new Date();
-			const timeElapsedMs = isClosed
-				? updatedAt.getTime() - createdAt.getTime()
-				: now.getTime() - createdAt.getTime();
-
-			const assigned = assignedMap.get(Number(row.id)) ?? [];
-
-			return {
-				...row,
-				created_at: createdAt,
-				updated_at: updatedAt,
-				time_elapsed_ms: timeElapsedMs,
-				assigned_users: assigned,
-				assignedToIds: assigned.map((u) => u.id), // ✅ necesario para que el <Select /> funcione
-			};
+		assignedMap.get(row.ticketId)?.push({
+			id: row.userId,
+			name: row.userName ?? '',
+			email: row.userEmail ?? '',
 		});
 
-		return NextResponse.json(processed);
-	} catch (error) {
-		console.error('❌ Error fetching tickets:', error);
-		return NextResponse.json(
-			{ error: 'Error fetching tickets' },
-			{ status: 500 }
+		if (row.userId === userId) {
+			assignedTicketIds.add(row.ticketId);
+		}
+	}
+
+	// Construir WHERE según rol y tipo
+	let whereClause = sql``;
+
+	if (type === 'assigned') {
+		console.log('📭  tickets asignados al usuario.', assignedTicketIds);
+
+		if (assignedTicketIds.size === 0) {
+			console.log('📭 No hay tickets asignados al usuario.');
+			return NextResponse.json([]);
+		}
+		const ids = Array.from(assignedTicketIds);
+		if (ids.length === 0) {
+			console.log('📭 No hay tickets asignados al usuario.');
+			return NextResponse.json([]);
+		}
+
+		whereClause = sql`WHERE t.id IN (${sql.join(ids, sql`, `)})`;
+	} else if (role === 'admin' && type === 'created') {
+		whereClause = sql`WHERE t.creator_id = ${userId}`;
+	} else if (role === 'admin' && !type) {
+		whereClause = sql`WHERE t.creator_id = ${userId}`;
+	} else {
+		// super-admin con cualquier type !== assigned
+		console.log(
+			'✅ Super-admin: sin filtro o "created", se muestran todos los tickets.'
 		);
 	}
+
+	const result = await db.execute(sql`
+		SELECT
+			t.id,
+			t.creator_id,
+			t.email,
+			t.description,
+			t.comments,
+			t.estado,
+			t.tipo,
+			t.cover_image_key,
+			t.video_key,
+			t.document_key,
+			t.created_at,
+			t.updated_at,
+			u.name AS creator_name,
+			u.email AS creator_email
+		FROM tickets t
+		LEFT JOIN users u ON t.creator_id = u.id
+		${whereClause}
+	`);
+
+	const now = new Date();
+
+	const ticketsFormatted = result.rows.map((row) => {
+		const createdAt = new Date(row.created_at as string);
+		const updatedAt = new Date(row.updated_at as string);
+		const isClosed = ['cerrado', 'solucionado'].includes(row.estado as string);
+		const timeElapsedMs = isClosed
+			? updatedAt.getTime() - createdAt.getTime()
+			: now.getTime() - createdAt.getTime();
+
+		const assignedUsers = assignedMap.get(row.id as number) ?? [];
+
+		return {
+			...row,
+			created_at: createdAt,
+			updated_at: updatedAt,
+			time_elapsed_ms: timeElapsedMs,
+			assigned_users: assignedUsers,
+			assignedToIds: assignedUsers.map((u) => u.id),
+		};
+	});
+
+	console.log('📦 Total tickets procesados:', ticketsFormatted.length);
+	return NextResponse.json(ticketsFormatted);
 }
 
 // ========================

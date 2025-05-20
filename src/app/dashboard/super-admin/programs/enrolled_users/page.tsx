@@ -22,6 +22,7 @@ const studentSchema = z.object({
 	programTitle: z.string().optional(),
 	programTitles: z.array(z.string()).optional(),
 	nivelNombre: z.string().nullable().optional(),
+	purchaseDate: z.string().nullable().optional(), // 👈 Agregado aquí
 });
 
 const courseSchema = z.object({
@@ -60,6 +61,7 @@ interface Student {
 	programTitle?: string;
 	programTitles?: string[];
 	nivelNombre?: string | null;
+	purchaseDate?: string | null;
 }
 
 interface Course {
@@ -88,6 +90,12 @@ const allColumns = [
 		options: ['active', 'inactive'],
 	},
 	{
+		id: 'purchaseDate',
+		label: 'Fecha de compra',
+		defaultVisible: true,
+		type: 'date',
+	},
+	{
 		id: 'subscriptionEndDate',
 		label: 'Fin Suscripción',
 		defaultVisible: true,
@@ -114,9 +122,10 @@ export default function EnrolledUsersPage() {
 		name: '',
 		email: '',
 		subscriptionStatus: '',
-		subscriptionEndDateFrom: '',
-		subscriptionEndDateTo: '',
+		purchaseDateFrom: '',
+		purchaseDateTo: '',
 	});
+
 	const [page, setPage] = useState(1);
 	const [limit] = useState(10);
 	const [totalPages, setTotalPages] = useState(1);
@@ -222,15 +231,15 @@ export default function EnrolledUsersPage() {
 					: true
 			)
 			.filter((s) =>
-				filters.subscriptionEndDateFrom
-					? new Date(s.subscriptionEndDate ?? '') >=
-						new Date(filters.subscriptionEndDateFrom)
+				filters.purchaseDateFrom
+					? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
+						filters.purchaseDateFrom
 					: true
 			)
 			.filter((s) =>
-				filters.subscriptionEndDateTo
-					? new Date(s.subscriptionEndDate ?? '') <=
-						new Date(filters.subscriptionEndDateTo)
+				filters.purchaseDateTo
+					? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
+						filters.purchaseDateTo
 					: true
 			);
 
@@ -282,15 +291,15 @@ export default function EnrolledUsersPage() {
 				: true
 		)
 		.filter((s) =>
-			filters.subscriptionEndDateFrom
-				? new Date(s.subscriptionEndDate ?? '') >=
-					new Date(filters.subscriptionEndDateFrom)
+			filters.purchaseDateFrom
+				? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
+					filters.purchaseDateFrom
 				: true
 		)
 		.filter((s) =>
-			filters.subscriptionEndDateTo
-				? new Date(s.subscriptionEndDate ?? '') <=
-					new Date(filters.subscriptionEndDateTo)
+			filters.purchaseDateTo
+				? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
+					filters.purchaseDateTo
 				: true
 		);
 
@@ -407,17 +416,18 @@ export default function EnrolledUsersPage() {
 				</select>
 				<input
 					type="date"
-					value={filters.subscriptionEndDateFrom}
+					value={filters.purchaseDateFrom}
 					onChange={(e) =>
-						setFilters({ ...filters, subscriptionEndDateFrom: e.target.value })
+						setFilters({ ...filters, purchaseDateFrom: e.target.value })
 					}
 					className="rounded border border-gray-700 bg-gray-800 p-2"
 				/>
+
 				<input
 					type="date"
-					value={filters.subscriptionEndDateTo}
+					value={filters.purchaseDateTo}
 					onChange={(e) =>
-						setFilters({ ...filters, subscriptionEndDateTo: e.target.value })
+						setFilters({ ...filters, purchaseDateTo: e.target.value })
 					}
 					className="rounded border border-gray-700 bg-gray-800 p-2"
 				/>
@@ -535,7 +545,9 @@ export default function EnrolledUsersPage() {
 										.filter((col) => visibleColumns.includes(col.id))
 										.map((col) => (
 											<td key={col.id} className="px-4 py-2">
-												{col.id === 'subscriptionEndDate' && student[col.id]
+												{(col.id === 'subscriptionEndDate' ||
+													col.id === 'purchaseDate') &&
+												student[col.id]
 													? new Date(student[col.id]!).toLocaleDateString()
 													: (student[col.id as keyof typeof student] ?? 'N/A')}
 											</td>
