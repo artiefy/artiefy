@@ -11,7 +11,6 @@ import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/g
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
-import type { Metadata } from 'next';
 import type { Category, Course, Program } from '~/types';
 
 interface SearchParams {

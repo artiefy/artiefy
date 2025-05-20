@@ -8,7 +8,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 
 import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 import { Toaster } from '~/components/estudiantes/ui/sonner';
-import { defaultMetadata } from '~/lib/metadata/config';
+import { getMetadataForRoute } from '~/lib/metadata/config';
 import {
 	getWebsiteSchema,
 	getSiteLinksSearchBoxSchema,
@@ -34,13 +34,20 @@ const merriweather = Merriweather({
 	adjustFontFallback: true,
 });
 
-export const metadata = defaultMetadata;
+export async function generateMetadata() {
+	return await getMetadataForRoute();
+}
 
 export default function RootLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
+	const jsonLd = {
+		'@context': 'https://schema.org',
+		'@graph': [getWebsiteSchema(), getSiteLinksSearchBoxSchema()],
+	};
+
 	return (
 		<ClerkProvider localization={esMX}>
 			<html
@@ -55,10 +62,7 @@ export default function RootLayout({
 					<script
 						type="application/ld+json"
 						dangerouslySetInnerHTML={{
-							__html: JSON.stringify([
-								getWebsiteSchema(),
-								getSiteLinksSearchBoxSchema(),
-							]),
+							__html: JSON.stringify(jsonLd, null, 2),
 						}}
 					/>
 				</head>

@@ -15,26 +15,6 @@ export const getWebsiteSchema = () => ({
 			url: `${BASE_URL}/artiefy-icon.png`,
 		},
 	},
-	potentialAction: [
-		{
-			'@type': 'SearchAction',
-			target: {
-				'@type': 'EntryPoint',
-				urlTemplate: `${BASE_URL}/search?q={search_term_string}`,
-			},
-			'query-input': 'required name=search_term_string',
-		},
-	],
-	sameAs: [
-		'https://twitter.com/artiefy',
-		// Add other social media URLs
-	],
-});
-
-export const getSiteLinksSearchBoxSchema = () => ({
-	'@context': 'https://schema.org',
-	'@type': 'WebSite',
-	url: BASE_URL,
 	potentialAction: {
 		'@type': 'SearchAction',
 		target: `${BASE_URL}/search?q={search_term_string}`,
@@ -42,15 +22,32 @@ export const getSiteLinksSearchBoxSchema = () => ({
 	},
 });
 
-export const getBreadcrumbSchema = (
-	items: { name: string; item: string }[]
-) => ({
-	'@context': 'https://schema.org',
-	'@type': 'BreadcrumbList',
-	itemListElement: items.map((item, index) => ({
-		'@type': 'ListItem',
-		position: index + 1,
-		name: item.name,
-		item: `${BASE_URL}${item.item}`,
-	})),
+export const getSiteLinksSearchBoxSchema = () => ({
+	'@type': 'WebSite',
+	url: BASE_URL,
+	potentialAction: {
+		'@type': 'SearchAction',
+		target: `${BASE_URL}/search?q={search_term_string}`,
+		'query-input': 'required name=search_term_string',
+	},
+	mainEntity: [
+		{
+			'@type': 'WebPage',
+			'@id': `${BASE_URL}/#homepage`,
+			url: BASE_URL,
+			name: 'Inicio',
+		},
+		{
+			'@type': 'WebPage',
+			'@id': `${BASE_URL}/estudiantes/#page`,
+			url: `${BASE_URL}/estudiantes`,
+			name: 'Cursos y Programas',
+		},
+		{
+			'@type': 'WebPage',
+			'@id': `${BASE_URL}/planes/#page`,
+			url: `${BASE_URL}/planes`,
+			name: 'Planes de Suscripción',
+		},
+	],
 });
