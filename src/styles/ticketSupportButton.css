@@ -74,9 +74,17 @@
 /* Chat container styles */
 .chat-container {
 	position: fixed;
-	bottom: 140px;
-	right: 20px;
+	bottom: 200px; /* Ajustado para bajar el chatbot */
+	right: 80px; /* Movido más a la izquierda */
 	z-index: 1000;
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 450px; /* Aumentado de 320px a 450px */
+	overflow: hidden;
 }
 
 .support-chat {
@@ -113,6 +121,23 @@
 	background: white;
 }
 
+.close-button {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	padding: 8px;
+	background: transparent;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	transition: background-color 0.2s;
+	z-index: 10;
+}
+
+.close-button:hover {
+	background-color: rgba(0, 0, 0, 0.1);
+}
+
 /* Loading dots animation */
 .loading-dot {
 	width: 8px;
@@ -142,6 +167,23 @@
 	}
 }
 
+/* Zoom out effect */
+.ticket-button.clicked {
+	animation: zoomOutEffect 0.3s ease forwards;
+}
+
+@keyframes zoomOutEffect {
+	0% {
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(0.8);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
 /* Responsive styles */
 @media (max-width: 767px) {
 	.ticket-button {
@@ -158,6 +200,8 @@
 	.chat-container {
 		bottom: 120px;
 		right: 10px;
-		max-width: calc(100vw - 20px);
+		width: calc(100vw - 20px);
+		max-width: 450px; /* Añadido max-width para móviles */
+		margin: 10px;
 	}
 }

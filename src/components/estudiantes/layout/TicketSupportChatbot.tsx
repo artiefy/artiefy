@@ -93,7 +93,12 @@ const TicketSupportChatbot = () => {
 			});
 			return;
 		}
-		setIsOpen(true);
+		const button = document.querySelector('.ticket-button');
+		button?.classList.add('clicked');
+		setTimeout(() => {
+			button?.classList.remove('clicked');
+			setIsOpen(!isOpen);
+		}, 300);
 	};
 
 	return (
@@ -101,11 +106,11 @@ const TicketSupportChatbot = () => {
 			<button
 				onClick={handleClick}
 				className={`ticket-button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
-				style={{ display: isOpen ? 'none' : 'flex' }}
 			>
 				<MdSupportAgent className="ticket-button__icon" />
 			</button>
 
+			{/* Chatbot */}
 			{isOpen && isSignedIn && (
 				<div className="chat-container">
 					<ResizableBox
@@ -115,6 +120,15 @@ const TicketSupportChatbot = () => {
 						maxConstraints={[600, 800]}
 					>
 						<div className="support-chat">
+							{/* Add close button */}
+							<button
+								onClick={() => setIsOpen(false)}
+								className="absolute top-2 right-2 z-50 rounded-full p-2 transition-colors hover:bg-gray-100"
+								aria-label="Cerrar chat"
+							>
+								<IoMdClose className="text-xl text-gray-500 hover:text-gray-700" />
+							</button>
+
 							<div className="support-chat-header">
 								<div className="flex items-center space-x-2">
 									<MdSupportAgent className="text-secondary text-2xl" />
@@ -122,12 +136,6 @@ const TicketSupportChatbot = () => {
 										Soporte Técnico
 									</h2>
 								</div>
-								<button
-									onClick={() => setIsOpen(false)}
-									className="rounded-full p-2 transition-colors hover:bg-gray-100"
-								>
-									<IoMdClose className="text-xl text-gray-500" />
-								</button>
 							</div>
 
 							<div className="support-chat-messages">
