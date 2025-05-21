@@ -32,11 +32,11 @@ export async function getCurrentPath() {
 // Common metadata that can be reused
 const defaultMetadata: Metadata = {
 	title: {
-		template: '%s | Artiefy',
-		default: 'Artiefy - Plataforma Educativa Digital',
+		template: '%s | Artiefy - Tu Plataforma Educativa',
+		default: 'Artiefy - Educación Online para Todos | Aprende a Tu Ritmo',
 	},
 	description:
-		'Aprende desarrollo web, programación y más con expertos de la industria en Artiefy, la plataforma líder en educación digital.',
+		'Descubre una nueva forma de aprender con Artiefy. Cursos online de calidad en múltiples disciplinas para impulsar tu futuro.',
 	metadataBase: new URL(BASE_URL),
 	openGraph: {
 		type: 'website',
@@ -89,9 +89,10 @@ export async function getMetadataForRoute(): Promise<Metadata> {
 		case '/':
 			return {
 				...baseMetadata,
-				title: 'Artiefy - Inicio',
+				title:
+					'Artiefy - Plataforma Líder en Educación Online | Impulsa tu Futuro Profesional',
 				description:
-					'Descubre una nueva forma de aprender con Artiefy. Cursos online de alta calidad.',
+					'Transforma tu futuro con Artiefy. Accede a cursos online de calidad en diferentes áreas del conocimiento.',
 				alternates: { canonical: BASE_URL },
 				openGraph: {
 					...baseMetadata.openGraph,
@@ -103,9 +104,10 @@ export async function getMetadataForRoute(): Promise<Metadata> {
 		case '/estudiantes':
 			return {
 				...baseMetadata,
-				title: 'Artiefy - Cursos y Programas',
+				title:
+					'Cursos y Programas Educativos Online | Formación Integral en Artiefy',
 				description:
-					'Accede a tus cursos y contenido educativo en Artiefy. Aprende con los mejores instructores.',
+					'Explora nuestra biblioteca de cursos y programas diseñados para potenciar tu desarrollo profesional.',
 				alternates: { canonical: `${BASE_URL}/estudiantes` },
 				openGraph: {
 					...baseMetadata.openGraph,
@@ -117,9 +119,10 @@ export async function getMetadataForRoute(): Promise<Metadata> {
 		case '/planes':
 			return {
 				...baseMetadata,
-				title: 'Artiefy - Planes de Suscripción',
+				title:
+					'Planes de Suscripción Educativos | Invierte en tu Futuro con Artiefy',
 				description:
-					'Explora nuestros planes y encuentra el que mejor se adapte a tus necesidades de aprendizaje.',
+					'Encuentra el plan perfecto para tu formación. Acceso ilimitado a contenido educativo de calidad.',
 				alternates: { canonical: `${BASE_URL}/planes` },
 				openGraph: {
 					...baseMetadata.openGraph,

@@ -1,0 +1,163 @@
+.ticket-button {
+	position: fixed;
+	bottom: 140px;
+	right: 20px;
+	width: 50px; /* Círculo exterior más pequeño */
+	height: 50px; /* Círculo exterior más pequeño */
+	border-radius: 50%;
+	background: #3b82f6;
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s;
+	z-index: 1000;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	border: 2px solid #60a5fa;
+}
+
+/* Update tooltip styles */
+.ticket-button::before {
+	content: 'Soporte Artiefy';
+	position: absolute;
+	top: 50%;
+	right: calc(100% + 10px); /* Position to the left of the button */
+	transform: translateY(-50%); /* Center vertically */
+	background: white;
+	color: black;
+	padding: 4px 8px; /* Reduced padding */
+	border-radius: 4px;
+	font-size: 12px; /* Smaller font size */
+	white-space: nowrap;
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.3s ease;
+}
+
+/* Update arrow position for left side */
+.ticket-button::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	right: calc(100% + 2px);
+	transform: translateY(-50%) rotate(-90deg); /* Rotate arrow to point right */
+	border: 4px solid transparent; /* Smaller arrow */
+	border-top-color: rgba(0, 0, 0, 0.8);
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.3s ease;
+}
+
+/* Show tooltip on hover */
+.ticket-button:hover::before,
+.ticket-button:hover::after {
+	opacity: 1;
+	visibility: visible;
+}
+
+.ticket-button__icon {
+	font-size: 35px; /* Icono más grande */
+	color: white;
+	transition: transform 0.3s;
+}
+
+.ticket-button:hover {
+	background: #2563eb;
+	transform: scale(1.05);
+}
+
+.ticket-button:hover .ticket-button__icon {
+	transform: rotate(360deg);
+}
+
+/* Chat container styles */
+.chat-container {
+	position: fixed;
+	bottom: 140px;
+	right: 20px;
+	z-index: 1000;
+}
+
+.support-chat {
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+}
+
+.support-chat-header {
+	padding: 1rem;
+	border-bottom: 1px solid #e5e7eb;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background: white;
+}
+
+.support-chat-messages {
+	flex: 1;
+	overflow-y: auto;
+	padding: 1rem;
+}
+
+.support-chat-input {
+	padding: 1rem;
+	border-top: 1px solid #e5e7eb;
+	display: flex;
+	gap: 0.5rem;
+	background: white;
+}
+
+/* Loading dots animation */
+.loading-dot {
+	width: 8px;
+	height: 8px;
+	background: #3b82f6;
+	border-radius: 50%;
+	display: inline-block;
+	margin: 0 2px;
+	animation: bounce 0.5s ease-in-out infinite;
+}
+
+.loading-dot:nth-child(2) {
+	animation-delay: 0.1s;
+}
+
+.loading-dot:nth-child(3) {
+	animation-delay: 0.2s;
+}
+
+@keyframes bounce {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-5px);
+	}
+}
+
+/* Responsive styles */
+@media (max-width: 767px) {
+	.ticket-button {
+		width: 45px;
+		height: 45px;
+		right: 5px;
+		bottom: 100px;
+	}
+
+	.ticket-button__icon {
+		font-size: 30px; /* Icono más grande en móvil pero proporcionado */
+	}
+
+	.chat-container {
+		bottom: 120px;
+		right: 10px;
+		max-width: calc(100vw - 20px);
+	}
+}
