@@ -11,7 +11,7 @@ import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { getMetadataForRoute } from '~/lib/metadata/config';
 import {
 	getWebsiteSchema,
-	getSiteLinksSearchBoxSchema,
+	getWebPagesSchema,
 } from '~/lib/metadata/structured-data';
 
 import Providers from './providers';
@@ -45,7 +45,7 @@ export default function RootLayout({
 }) {
 	const jsonLd = {
 		'@context': 'https://schema.org',
-		'@graph': [getWebsiteSchema(), getSiteLinksSearchBoxSchema()],
+		'@graph': [getWebsiteSchema(), getWebPagesSchema()],
 	};
 
 	return (
