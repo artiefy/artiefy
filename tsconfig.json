@@ -44,14 +44,11 @@
     ]
   },
   "include": [
-    "*.js",
-    "*.mjs",
-    "*.ts",
-    "config/**/*",
+    "**/*",
+    ".*/**/*",
+    "./**/.*",
     "next-env.d.ts",
     "next-video.config.js",
-    "scripts/**/*",
-    "src/**/*",
     "video.d.ts",
     ".next/types/**/*.ts"
   ],

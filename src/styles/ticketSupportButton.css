@@ -77,14 +77,8 @@
 	bottom: 200px; /* Ajustado para bajar el chatbot */
 	right: 80px; /* Movido más a la izquierda */
 	z-index: 1000;
-	background: white;
-	border-radius: 12px;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	width: 450px; /* Aumentado de 320px a 450px */
-	overflow: hidden;
+	width: 400px;
+	height: 500px;
 }
 
 .support-chat {
@@ -114,11 +108,21 @@
 }
 
 .support-chat-input {
-	padding: 1rem;
+	padding: 1rem 1.2rem; /* Aumentado el padding horizontal */
 	border-top: 1px solid #e5e7eb;
 	display: flex;
 	gap: 0.5rem;
 	background: white;
+	align-items: center;
+}
+
+.support-chat-input input {
+	width: calc(90% - 70px); /* Ajustado para dar más espacio al botón */
+}
+
+.support-chat-input button {
+	min-width: 70px; /* Ancho mínimo para el botón */
+	padding: 0.5rem 1rem; /* Padding aumentado */
 }
 
 .close-button {
@@ -198,10 +202,9 @@
 	}
 
 	.chat-container {
+		width: calc(100vw - 20px);
+		height: 450px;
 		bottom: 120px;
 		right: 10px;
-		width: calc(100vw - 20px);
-		max-width: 450px; /* Añadido max-width para móviles */
-		margin: 10px;
 	}
 }
