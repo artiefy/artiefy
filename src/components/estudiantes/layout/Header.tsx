@@ -5,9 +5,16 @@ import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { SignInButton, SignedIn, SignedOut, useAuth } from '@clerk/nextjs';
+import {
+	SignInButton,
+	SignedIn,
+	SignedOut,
+	useAuth,
+} from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
-import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
+import {
+	XMarkIcon as XMarkIconSolid,
+} from '@heroicons/react/24/solid';
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -19,7 +26,6 @@ import '~/styles/barsicon.css';
 import '~/styles/searchBar.css';
 import '~/styles/headerSearchBar.css';
 import '~/styles/headerMenu.css';
-import ArtiefyLogo from '../../../../public/artiefy-logo.svg';
 
 export function Header() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -96,7 +102,7 @@ export function Header() {
 	const renderAuthButton = () => {
 		if (!mounted) {
 			return (
-				<div className="mr-15 flex w-[180px] items-center justify-end">
+				<div className="flex w-[180px] items-center justify-start">
 					<Icons.spinner className="text-primary h-5 w-5" />
 				</div>
 			);
@@ -167,7 +173,16 @@ export function Header() {
 						<div className="flex w-full items-center justify-between">
 							<div className="mt-[-13px] shrink-0">
 								<Link href="/estudiantes">
-									<ArtiefyLogo className="size-[150px]" />
+									<div className="relative size-[150px]">
+										<Image
+											src="/artiefy-logo.svg"
+											alt="Logo Artiefy"
+											fill
+											unoptimized // Solo necesitamos unoptimized para SVGs
+											className="object-contain"
+											sizes="150px"
+										/>
+									</div>
 								</Link>
 							</div>
 							<div className="flex gap-24">
@@ -187,7 +202,16 @@ export function Header() {
 						<div className="flex w-full items-center">
 							<div className="mt-[-13px] shrink-0">
 								<Link href="/estudiantes">
-									<ArtiefyLogo className="size-[150px]" />
+									<div className="relative size-[150px]">
+										<Image
+											src="/artiefy-logo.svg"
+											alt="Logo Artiefy"
+											fill
+											unoptimized // Solo necesitamos unoptimized para SVGs
+											className="object-contain"
+											sizes="150px"
+										/>
+									</div>
 								</Link>
 							</div>
 							<div className="flex flex-1 justify-center gap-6">
