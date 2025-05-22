@@ -1,7 +1,10 @@
-import React from 'react';
+import dynamic from 'next/dynamic';
 
-import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
-import '~/styles/ticketSupportButton.css';
+// Importar el componente de forma dinámica sin SSR
+const TicketSupportChatbot = dynamic(
+	() => import('~/components/estudiantes/layout/TicketSupportChatbot'),
+	{ ssr: false }
+);
 
 export default function StudentLayout({
 	children,
