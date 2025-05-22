@@ -72,7 +72,7 @@
 }
 
 /* Chat container styles */
-.chat-container {
+.chat-support-container {
 	position: fixed;
 	bottom: 200px; /* Ajustado para bajar el chatbot */
 	right: 80px; /* Movido más a la izquierda */
@@ -191,20 +191,51 @@
 /* Responsive styles */
 @media (max-width: 767px) {
 	.ticket-button {
-		width: 45px;
-		height: 45px;
-		right: 5px;
-		bottom: 100px;
+		width: 40px;
+		height: 40px;
+		right: 90px;
+		bottom: 15px;
 	}
 
 	.ticket-button__icon {
-		font-size: 30px; /* Icono más grande en móvil pero proporcionado */
+		font-size: 22px;
 	}
 
-	.chat-container {
-		width: calc(100vw - 20px);
-		height: 450px;
-		bottom: 120px;
+	.chat-support-container {
+		position: fixed;
+		width: 90%;
+		height: 400px; /* Altura fija más pequeña */
+		max-height: 80vh; /* Límite máximo relativo a la ventana */
+		bottom: 70px;
 		right: 10px;
+		margin: 0;
+		transform-origin: bottom right;
+	}
+
+	.support-chat {
+		font-size: 13px;
+		height: 100%;
+		max-height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.support-chat-header {
+		padding: 0.5rem;
+		min-height: 40px;
+		flex-shrink: 0;
+	}
+
+	.support-chat-messages {
+		padding: 0.5rem;
+		flex: 1;
+		overflow-y: auto;
+		min-height: 0; /* Importante para permitir que flex funcione correctamente */
+	}
+
+	.support-chat-input {
+		padding: 0.5rem;
+		min-height: 40px;
+		flex-shrink: 0;
 	}
 }

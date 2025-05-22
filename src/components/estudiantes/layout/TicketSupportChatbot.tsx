@@ -111,17 +111,9 @@ const TicketSupportChatbot = () => {
 
 			{/* Chatbot */}
 			{isOpen && isSignedIn && (
-				<div className="chat-container">
+				<div className="chat-support-container">
 					<div className="support-chat">
-						{/* Add close button */}
-						<button
-							onClick={() => setIsOpen(false)}
-							className="absolute top-2 right-2 z-50 rounded-full p-1 transition-colors hover:bg-gray-100"
-							aria-label="Cerrar chat"
-						>
-							<IoMdClose className="text-xl text-gray-500" />
-						</button>
-
+						{/* Header */}
 						<div className="support-chat-header">
 							<div className="flex items-center space-x-2">
 								<MdSupportAgent className="text-secondary text-2xl" />
@@ -131,42 +123,47 @@ const TicketSupportChatbot = () => {
 							</div>
 						</div>
 
+						{/* Messages */}
 						<div className="support-chat-messages">
 							{messages.map((message) => (
-								<div
-									key={message.id}
-									className={`flex ${
-										message.sender === 'user' ? 'justify-end' : 'justify-start'
-									} mb-4`}
-								>
+								<div key={message.id}>
 									<div
-										className={`flex max-w-[80%] items-start space-x-2 ${
+										className={`flex ${
 											message.sender === 'user'
-												? 'flex-row-reverse space-x-reverse'
-												: 'flex-row'
-										}`}
+												? 'justify-end'
+												: 'justify-start'
+										} mb-4`}
 									>
-										{message.sender === 'support' ? (
-											<MdSupportAgent className="text-secondary mt-2 text-xl" />
-										) : user?.imageUrl ? (
-											<Image
-												src={user.imageUrl}
-												alt={user.fullName ?? 'User'}
-												width={24}
-												height={24}
-												className="mt-2 rounded-full"
-											/>
-										) : (
-											<BsPersonCircle className="mt-2 text-xl text-gray-500" />
-										)}
 										<div
-											className={`rounded-lg p-3 ${
+											className={`flex max-w-[80%] items-start space-x-2 ${
 												message.sender === 'user'
-													? 'bg-secondary text-white'
-													: 'bg-gray-100 text-gray-800'
+													? 'flex-row-reverse space-x-reverse'
+													: 'flex-row'
 											}`}
 										>
-											{message.text}
+											{message.sender === 'support' ? (
+												<MdSupportAgent className="text-secondary mt-2 text-xl" />
+											) : user?.imageUrl ? (
+												<Image
+													src={user.imageUrl}
+													alt={user.fullName ?? 'User'}
+													width={24}
+													height={24}
+													className="mt-2 rounded-full"
+													// Removido el priority ya que estas imágenes se cargan dinámicamente
+												/>
+											) : (
+												<BsPersonCircle className="mt-2 text-xl text-gray-500" />
+											)}
+											<div
+												className={`rounded-lg p-3 ${
+													message.sender === 'user'
+														? 'bg-secondary text-white'
+														: 'bg-gray-100 text-gray-800'
+												}`}
+											>
+												{message.text}
+											</div>
 										</div>
 									</div>
 								</div>
@@ -185,6 +182,7 @@ const TicketSupportChatbot = () => {
 							<div ref={messagesEndRef} />
 						</div>
 
+						{/* Input Form - Modificado para ser más compacto en móvil */}
 						<form onSubmit={handleSendMessage} className="support-chat-input">
 							<input
 								ref={inputRef}
@@ -192,12 +190,12 @@ const TicketSupportChatbot = () => {
 								value={inputText}
 								onChange={(e) => setInputText(e.target.value)}
 								placeholder="Describe el problema..."
-								className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
+								className="text-background focus:ring-secondary flex-1 rounded-lg border p-1 text-sm focus:ring-2 focus:outline-none sm:p-2 sm:text-base"
 							/>
 							<button
 								type="submit"
 								disabled={isLoading}
-								className="bg-secondary rounded-lg px-4 py-2 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
+								className="bg-secondary rounded-lg px-3 py-1 text-sm text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300 sm:px-4 sm:py-2 sm:text-base"
 							>
 								Enviar
 							</button>

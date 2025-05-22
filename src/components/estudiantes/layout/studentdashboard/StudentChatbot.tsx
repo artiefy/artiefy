@@ -364,7 +364,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							width={24}
 							height={24}
 							className="button-circular__icon fill-blue-500"
-							priority
 						/>
 						<Image
 							src="/brain-9-svgrepo-com-blue.png"
@@ -372,7 +371,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							width={24}
 							height={24}
 							className="button-circular__icon button-circular__icon--copy fill-blue-500"
-							priority
 						/>
 					</div>
 				</button>
