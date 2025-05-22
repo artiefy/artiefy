@@ -17,10 +17,5 @@ export default function StudentLayout({
 }: {
 	children: React.ReactNode;
 }) {
-	return (
-		<div className="relative min-h-screen">
-			{children}
-			<TicketSupportWrapper />
-		</div>
-	);
+	return <section className="relative min-h-screen">{children}</section>;
 }
