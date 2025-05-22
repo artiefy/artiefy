@@ -281,13 +281,14 @@ export default function SignInPage() {
 			<Image
 				src="/login-fondo.webp"
 				alt="Fondo de inicio de sesión"
-				placeholder="blur"
 				quality={100}
 				fill
 				sizes="100vw"
+         priority
 				style={{
 					objectFit: 'cover',
 				}}
+       
 			/>
 
 			{/* Contenedor principal */}
