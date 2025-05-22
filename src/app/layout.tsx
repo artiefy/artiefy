@@ -53,6 +53,7 @@ export default function RootLayout({
 			<html
 				lang="es"
 				className={`${montserrat.variable} ${merriweather.variable}`}
+				suppressHydrationWarning
 			>
 				<head>
 					<meta
@@ -66,7 +67,10 @@ export default function RootLayout({
 						}}
 					/>
 				</head>
-				<body className="bg-background text-primary font-sans">
+				<body
+					className="bg-background text-primary font-sans"
+					suppressHydrationWarning
+				>
 					<Providers>
 						{children}
 						<NotificationSubscription />
