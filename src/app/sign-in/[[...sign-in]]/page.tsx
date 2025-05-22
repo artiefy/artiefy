@@ -15,7 +15,7 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 
 import Loading from '../../loading';
 
-import fondoLogin from '~/public/login-fondo.webp';
+import fondoLogin from '../../../../public/login-fondo.webp';
 
 export default function SignInPage() {
 	const { isLoaded, isSignedIn } = useAuth();
