@@ -7,36 +7,6 @@
   "installCommand": "npm install",
   "public": true,
   "trailingSlash": false,
-  "functions": {
-    "app/error.tsx": {
-      "memory": 1024,
-      "maxDuration": 10
-    },
-    "app/api/iahome/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "app/api/grades/summary/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 30
-    },
-    "app/api/usersMasive/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "app/api/activities/saveAnswers/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 30
-    },
-    "app/api/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    },
-    "app/dashboard/super-admin/programs/**/*.ts": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
   "crons": [
     {
       "path": "/api/cron/check-subscriptions",
@@ -44,15 +14,6 @@
     }
   ],
   "headers": [
-    {
-      "source": "/favicon.ico",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ]
-    },
     {
       "source": "/api/(.*)",
       "headers": [
@@ -102,19 +63,6 @@
           "value": "true"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/favicon.ico",
-      "has": [
-        {
-          "type": "header",
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ],
-      "destination": "/favicon.ico"
     }
   ]
 }
