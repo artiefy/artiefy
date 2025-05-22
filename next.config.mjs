@@ -9,6 +9,8 @@ import { withNextVideo } from 'next-video/process';
 const nextConfig = {
 	reactStrictMode: true,
 	images: {
+		loader: 'custom',
+		loaderFile: './src/lib/image-loader.ts',
 		dangerouslyAllowSVG: true,
 		contentDispositionType: 'attachment',
 		contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",

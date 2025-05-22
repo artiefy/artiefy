@@ -52,16 +52,21 @@ async function optimizeImageBuffer(buffer: ArrayBuffer): Promise<Buffer> {
 		// Siempre optimizar imágenes para reducir el tamaño y mejorar la caché
 		const width = metadata.width ? Math.min(metadata.width, 1000) : 1000;
 
-		return await sharpImage
-			.resize(width, null, {
-				withoutEnlargement: true,
-				fit: 'inside',
-			})
-			.webp({
-				quality: 75, // Calidad reducida para mejor compresión
-				effort: 6, // Mayor esfuerzo de compresión
-			})
-			.toBuffer();
+		// Verificar si el tamaño del buffer es mayor que 1.5MB
+		if (buffer.byteLength > 1.5 * 1024 * 1024) {
+			return await sharpImage
+				.resize(width, null, {
+					withoutEnlargement: true,
+					fit: 'inside',
+				})
+				.webp({
+					quality: 75, // Calidad reducida para mejor compresión
+					effort: 6, // Mayor esfuerzo de compresión
+				})
+				.toBuffer();
+		}
+
+		return Buffer.from(buffer);
 	} catch (error) {
 		console.error('Error optimizing image:', error);
 		return Buffer.from(buffer);
