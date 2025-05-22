@@ -74,7 +74,7 @@
 /* Chat container styles */
 .chat-support-container {
 	position: fixed;
-	bottom: 200px; /* Ajustado para bajar el chatbot */
+	bottom: 160px; /* Ajustado de 200px a 160px para bajar más el chatbot */
 	right: 80px; /* Movido más a la izquierda */
 	z-index: 1000;
 	width: 400px;

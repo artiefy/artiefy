@@ -121,6 +121,12 @@ const TicketSupportChatbot = () => {
 									Soporte Técnico
 								</h2>
 							</div>
+							<button
+								onClick={() => setIsOpen(false)}
+								className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
+							>
+								<IoMdClose className="text-xl text-gray-500" />
+							</button>
 						</div>
 
 						{/* Messages */}
