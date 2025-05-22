@@ -13,27 +13,27 @@
       "maxDuration": 10
     },
     "app/api/iahome/**/*.ts": {
-      "memory": 3009,
+      "memory": 1024,
       "maxDuration": 60
     },
     "app/api/grades/summary/**/*.ts": {
-      "memory": 2048,
+      "memory": 1024,
       "maxDuration": 30
     },
     "app/api/usersMasive/**/*.ts": {
-      "memory": 2048,
+      "memory": 1024,
       "maxDuration": 60
     },
     "app/api/activities/saveAnswers/**/*.ts": {
-      "memory": 2048,
+      "memory": 1024,
       "maxDuration": 30
     },
     "app/api/**/*.ts": {
-      "memory": 3009,
+      "memory": 1024,
       "maxDuration": 60
     },
     "app/dashboard/super-admin/programs/**/*.ts": {
-      "memory": 3009,
+      "memory": 1024,
       "maxDuration": 60
     }
   },
