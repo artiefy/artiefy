@@ -18,11 +18,11 @@ export default function StudentLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="relative min-h-screen">
+		<section className="relative min-h-screen">
 			{children}
 			<div className="fixed right-0 bottom-0 z-50">
 				<TicketSupportWrapper />
 			</div>
-		</div>
+		</section>
 	);
 }
