@@ -49,20 +49,19 @@ async function optimizeImageBuffer(buffer: ArrayBuffer): Promise<Buffer> {
 		const sharpImage = sharp(Buffer.from(buffer));
 		const metadata = await sharpImage.metadata();
 
-		// Si la imagen es más grande que MAX_FILE_SIZE, la optimizamos
-		if (buffer.byteLength > MAX_FILE_SIZE) {
-			const width = metadata.width ? Math.min(metadata.width, 1200) : 1200;
+		// Siempre optimizar imágenes para reducir el tamaño y mejorar la caché
+		const width = metadata.width ? Math.min(metadata.width, 1000) : 1000;
 
-			return await sharpImage
-				.resize(width, null, {
-					withoutEnlargement: true,
-					fit: 'inside',
-				})
-				.webp({ quality: 80 }) // Convertir a WebP con calidad 80%
-				.toBuffer();
-		}
-
-		return Buffer.from(buffer);
+		return await sharpImage
+			.resize(width, null, {
+				withoutEnlargement: true,
+				fit: 'inside',
+			})
+			.webp({
+				quality: 75, // Calidad reducida para mejor compresión
+				effort: 6, // Mayor esfuerzo de compresión
+			})
+			.toBuffer();
 	} catch (error) {
 		console.error('Error optimizing image:', error);
 		return Buffer.from(buffer);
@@ -88,19 +87,11 @@ export async function GET(request: Request) {
 		const response = await fetchWithTimeout(imageUrl);
 		const buffer = await response.arrayBuffer();
 
-		// Optimizar imagen
+		// Siempre optimizar imágenes
 		const optimizedBuffer = await optimizeImageBuffer(buffer);
 
-		// Determinar el tipo de contenido
-		const contentType =
-			optimizedBuffer[0] === 0xff && optimizedBuffer[1] === 0xd8
-				? 'image/jpeg'
-				: optimizedBuffer[0] === 0x89 && optimizedBuffer[1] === 0x50
-					? 'image/png'
-					: 'image/webp';
-
 		const headers = new Headers({
-			'Content-Type': contentType,
+			'Content-Type': 'image/webp',
 			'Cache-Control': 'public, max-age=31536000, immutable',
 			'Content-Length': optimizedBuffer.length.toString(),
 			'Access-Control-Allow-Origin': '*',
