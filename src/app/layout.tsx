@@ -21,7 +21,7 @@ const montserrat = Montserrat({
 	display: 'swap',
 	variable: '--font-montserrat',
 	weight: ['100', '200', '300', '400', '500', '600', '700'],
-	preload: false,
+	preload: true,
 	adjustFontFallback: true,
 });
 
@@ -30,7 +30,7 @@ const merriweather = Merriweather({
 	display: 'swap',
 	variable: '--font-merriweather',
 	weight: ['300', '400', '700', '900'],
-	preload: false,
+	preload: true,
 	adjustFontFallback: true,
 });
 
@@ -53,7 +53,6 @@ export default function RootLayout({
 			<html
 				lang="es"
 				className={`${montserrat.variable} ${merriweather.variable}`}
-				suppressHydrationWarning
 			>
 				<head>
 					<meta
@@ -67,10 +66,7 @@ export default function RootLayout({
 						}}
 					/>
 				</head>
-				<body
-					className="bg-background text-primary font-sans"
-					suppressHydrationWarning
-				>
+				<body className="bg-background text-primary font-sans">
 					<Providers>
 						{children}
 						<NotificationSubscription />
