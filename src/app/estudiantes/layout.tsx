@@ -2,15 +2,10 @@
 
 import dynamic from 'next/dynamic';
 
-// Importar el wrapper del chat como un componente de cliente
-const TicketSupportWrapper = () => {
-	const TicketSupportChatbot = dynamic(
-		() => import('~/components/estudiantes/layout/TicketSupportChatbot'),
-		{ ssr: false }
-	);
-
-	return <TicketSupportChatbot />;
-};
+const TicketSupportChatbot = dynamic(
+	() => import('~/components/estudiantes/layout/TicketSupportChatbot'),
+	{ ssr: false }
+);
 
 export default function StudentLayout({
 	children,
@@ -21,7 +16,7 @@ export default function StudentLayout({
 		<section className="relative min-h-screen">
 			{children}
 			<div className="fixed right-0 bottom-0 z-50">
-				<TicketSupportWrapper />
+				<TicketSupportChatbot />
 			</div>
 		</section>
 	);
