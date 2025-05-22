@@ -21,7 +21,7 @@ const montserrat = Montserrat({
 	display: 'swap',
 	variable: '--font-montserrat',
 	weight: ['100', '200', '300', '400', '500', '600', '700'],
-	preload: true,
+	preload: false,
 	adjustFontFallback: true,
 });
 
@@ -30,7 +30,7 @@ const merriweather = Merriweather({
 	display: 'swap',
 	variable: '--font-merriweather',
 	weight: ['300', '400', '700', '900'],
-	preload: true,
+	preload: false,
 	adjustFontFallback: true,
 });
 

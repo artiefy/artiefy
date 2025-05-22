@@ -79,7 +79,7 @@ export default async function StudentListCourses({
 			{/* Add z-index-0 to push cards to background */}
 			<div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
 				{await Promise.all(
-					courses.map(async (course, index) => {
+					courses.map(async (course) => {
 						let imageUrl =
 							'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
 						let blurDataURL;
@@ -162,10 +162,8 @@ export default async function StudentListCourses({
 													alt={course.title || 'Imagen del curso'}
 													className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
 													fill
-													priority={index < 3} // Añadir priority solo a las primeras 3 imágenes
-													{...(blurDataURL
-														? { placeholder: 'blur', blurDataURL }
-														: {})}
+													blurDataURL={blurDataURL ?? undefined}
+													placeholder="blur"
 													sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 													quality={75}
 												/>

@@ -1,13 +1,16 @@
-/* eslint-disable @next/next/no-img-element */
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function NotFound() {
 	return (
 		<div className="bg-background flex h-screen flex-col items-center justify-center p-5 text-center text-gray-800">
-			<img
+			<Image
 				src="/error-404.png"
 				alt="Not Found"
+				width={400}
+				height={400}
 				className="mb-8 h-auto max-w-full"
+				priority
 			/>
 			<h1 className="mb-4 text-4xl font-bold text-orange-500">
 				404 - Página no encontrada

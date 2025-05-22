@@ -72,7 +72,7 @@ export function NotificationHeader({ count = 0 }: NotificationHeaderProps) {
 				aria-label="Notificaciones"
 				onClick={handleClick}
 			>
-				<span className="absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition-opacity group-hover:opacity-100 md:block">
+				<span className="absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded bg-white px-2 py-1 text-xs whitespace-nowrap text-black opacity-0 transition-opacity group-hover:opacity-100 md:block">
 					Notificaciones
 				</span>
 				{count > 0 ? (
