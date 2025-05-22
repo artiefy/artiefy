@@ -11,6 +11,7 @@ import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoMdClose } from 'react-icons/io';
+import { RiSendPlaneFill } from 'react-icons/ri';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
@@ -519,14 +520,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											disabled={isLoading}
 											className="bg-secondary group relative flex h-10 w-14 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
 										>
-											<Image
-												src="/send-svgrepo-com.svg"
-												alt="Send message"
-												width={24}
-												height={24}
-												className="size-6 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12"
-												priority
-											/>
+											<RiSendPlaneFill className="size-6 text-white transition-all duration-200 group-hover:scale-110 group-hover:rotate-12" />
 										</button>
 									</div>
 								</form>
