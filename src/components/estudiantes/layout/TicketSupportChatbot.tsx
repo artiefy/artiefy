@@ -26,6 +26,13 @@ const TicketSupportChatbot = () => {
 	const { user } = useUser();
 	const router = useRouter();
 
+	// Añadir verificación de window
+	const [isMounted, setIsMounted] = useState(false);
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+
 	useEffect(() => {
 		if (isOpen && inputRef.current) {
 			inputRef.current.focus();
@@ -99,6 +106,10 @@ const TicketSupportChatbot = () => {
 			setIsOpen(!isOpen);
 		}, 300);
 	};
+
+	if (!isMounted) {
+		return null;
+	}
 
 	return (
 		<>

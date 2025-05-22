@@ -2,27 +2,25 @@
 
 import dynamic from 'next/dynamic';
 
-// Importar el componente de forma dinámica sin SSR
-const TicketSupportChatbot = dynamic(
-	() => import('~/components/estudiantes/layout/TicketSupportChatbot'),
-	{ ssr: false }
-);
-
-// Wrapper para el layout que contendrá el chat
-const StudentLayoutWrapper = ({ children }: { children: React.ReactNode }) => {
-	return (
-		<div className="relative min-h-screen">
-			{children}
-			<TicketSupportChatbot />
-		</div>
+// Importar el wrapper del chat como un componente de cliente
+const TicketSupportWrapper = () => {
+	const TicketSupportChatbot = dynamic(
+		() => import('~/components/estudiantes/layout/TicketSupportChatbot'),
+		{ ssr: false }
 	);
+
+	return <TicketSupportChatbot />;
 };
 
-// Layout principal (Server Component)
 export default function StudentLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	return <StudentLayoutWrapper>{children}</StudentLayoutWrapper>;
+	return (
+		<div className="relative min-h-screen">
+			{children}
+			<TicketSupportWrapper />
+		</div>
+	);
 }
