@@ -15,6 +15,8 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 
 import Loading from '../../loading';
 
+import fondoLogin from '~/public/login-fondo.webp';
+
 export default function SignInPage() {
 	const { isLoaded, isSignedIn } = useAuth();
 	const { signIn, setActive } = useSignIn();
@@ -279,16 +281,16 @@ export default function SignInPage() {
 		<div className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
 			{/* Imagen de fondo */}
 			<Image
-				src="/login-fondo.webp"
+				src={fondoLogin}
 				alt="Fondo de inicio de sesión"
 				quality={100}
 				fill
 				sizes="100vw"
-         priority
+        priority
+				placeholder="blur"
 				style={{
 					objectFit: 'cover',
 				}}
-       
 			/>
 
 			{/* Contenedor principal */}

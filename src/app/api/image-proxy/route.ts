@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic';
 
 const TIMEOUT = 10000; // Reducido a 10 segundos
 const MAX_RETRIES = 2;
-const MAX_FILE_SIZE = 1.5 * 1024 * 1024; // 1.5MB límite
 
 async function fetchWithTimeout(
 	url: string,
@@ -48,25 +47,19 @@ async function optimizeImageBuffer(buffer: ArrayBuffer): Promise<Buffer> {
 	try {
 		const sharpImage = sharp(Buffer.from(buffer));
 		const metadata = await sharpImage.metadata();
-
-		// Siempre optimizar imágenes para reducir el tamaño y mejorar la caché
 		const width = metadata.width ? Math.min(metadata.width, 1000) : 1000;
 
-		// Verificar si el tamaño del buffer es mayor que 1.5MB
-		if (buffer.byteLength > 1.5 * 1024 * 1024) {
-			return await sharpImage
-				.resize(width, null, {
-					withoutEnlargement: true,
-					fit: 'inside',
-				})
-				.webp({
-					quality: 75, // Calidad reducida para mejor compresión
-					effort: 6, // Mayor esfuerzo de compresión
-				})
-				.toBuffer();
-		}
-
-		return Buffer.from(buffer);
+		// Siempre optimizar la imagen, sin importar el tamaño
+		return await sharpImage
+			.resize(width, null, {
+				withoutEnlargement: true,
+				fit: 'inside',
+			})
+			.webp({
+				quality: 75, // Calidad reducida para mejor compresión
+				effort: 6, // Mayor esfuerzo de compresión
+			})
+			.toBuffer();
 	} catch (error) {
 		console.error('Error optimizing image:', error);
 		return Buffer.from(buffer);
