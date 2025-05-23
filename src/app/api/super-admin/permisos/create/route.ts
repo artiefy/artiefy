@@ -3,18 +3,23 @@ import { NextResponse } from 'next/server';
 import { db } from '~/server/db';
 import { permisos } from '~/server/db/schema';
 
+const ACCIONES = [
+	'create',
+	'read',
+	'update',
+	'delete',
+	'approve',
+	'assign',
+	'publish',
+] as const;
+
+type Accion = (typeof ACCIONES)[number];
+
 interface PermisoBody {
 	name: string;
 	description?: string;
 	servicio: string;
-	accion:
-		| 'create'
-		| 'read'
-		| 'update'
-		| 'delete'
-		| 'approve'
-		| 'assign'
-		| 'publish';
+	accion: Accion;
 }
 
 export async function POST(req: Request) {
@@ -24,6 +29,14 @@ export async function POST(req: Request) {
 
 		if (!name.trim() || !body.servicio || !body.accion) {
 			return NextResponse.json({ error: 'Nombre requerido' }, { status: 400 });
+		}
+
+		if (
+			!name.trim() ||
+			!body.servicio.trim() ||
+			!ACCIONES.includes(body.accion)
+		) {
+			return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
 		}
 
 		const created = await db
