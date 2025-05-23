@@ -16,8 +16,19 @@ export const extractLessonOrder = (title: string): number => {
 };
 
 export const extractNumbersFromTitle = (title: string) => {
-	// First try to find "Sesion X - Clase Y" pattern
-	const sessionClassMatch = /Sesion\s*(\d+)\s*-\s*Clase\s*(\d+)/i.exec(title);
+	// Handle "Bienvenida" or "Clase - 1" case first
+	if (
+		title.toLowerCase().includes('bienvenida') ||
+		/clase\s*-\s*1/i.test(title)
+	) {
+		return {
+			session: 0, // Will sort before all sessions
+			class: 0,
+		};
+	}
+
+	// Then try to find "Sesion X - Clase Y" pattern
+	const sessionClassMatch = /sesion\s*(\d+)\s*-\s*clase\s*(\d+)/i.exec(title);
 	if (sessionClassMatch) {
 		return {
 			session: parseInt(sessionClassMatch[1]),
@@ -25,11 +36,11 @@ export const extractNumbersFromTitle = (title: string) => {
 		};
 	}
 
-	// Then try to find "Clase X" pattern
-	const classMatch = /Clase\s*-?\s*(\d+)/i.exec(title);
+	// Any other lesson number pattern
+	const classMatch = /clase\s*(\d+)/i.exec(title);
 	if (classMatch) {
 		return {
-			session: 0, // Bienvenida goes first
+			session: 999, // Sort to end if no session number
 			class: parseInt(classMatch[1]),
 		};
 	}
@@ -43,8 +54,15 @@ export const extractNumbersFromTitle = (title: string) => {
 
 export const sortLessons = <T extends { title: string }>(lessons: T[]): T[] => {
 	return [...lessons].sort((a, b) => {
-		const orderA = extractLessonOrder(a.title);
-		const orderB = extractLessonOrder(b.title);
-		return orderA === orderB ? a.title.localeCompare(b.title) : orderA - orderB;
+		const numbersA = extractNumbersFromTitle(a.title);
+		const numbersB = extractNumbersFromTitle(b.title);
+
+		// Compare sessions first
+		if (numbersA.session !== numbersB.session) {
+			return numbersA.session - numbersB.session;
+		}
+
+		// If same session, compare class numbers
+		return numbersA.class - numbersB.class;
 	});
 };

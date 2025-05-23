@@ -14,6 +14,7 @@ interface VideoPlayerProps {
 // Lista de videos que deben usar el reproductor nativo
 const FORCE_NATIVE_PLAYER_VIDEOS = [
 	'richard-1-1744669875805-fa3b69ce-7ac6-40be-b3e1-f843f27451f0.mp4',
+  'gesti-n-de-recursos-humanos-y-financieros-1744843970531-d6439703-8170-464f-8604-35883bf45b62.mp4'
 ];
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
