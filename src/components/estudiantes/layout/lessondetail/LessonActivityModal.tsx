@@ -1369,39 +1369,41 @@ export function LessonActivityModal({
 				<div className="max-h-[calc(90vh-10rem)] overflow-y-auto px-4">
 					<div className="group relative w-full">
 						<div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl">
-							{/* Fondo y contenido del encabezado */}
+							{/* Background gradients */}
 							<div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 							<div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 
 							<div className="relative p-6">
-								{/* Título y descripción */}
-								<div className="flex items-center justify-between">
-									<div>
-										<h3 className="text-lg font-semibold text-white">
-											{activity.name}
-										</h3>
-										<p className="text-sm text-slate-400">
-											{activity.description}
-										</p>
+								{/* Título y descripción - Modificado */}
+								<div className="mb-4">
+									<div className="flex items-center justify-between">
+										<div className="flex w-full items-center justify-between space-x-4">
+											<h3 className="text-lg font-semibold text-white">
+												{activity.name}
+											</h3>
+											<div className="rounded-lg bg-cyan-500/10 p-2">
+												<svg
+													className="h-6 w-6 text-cyan-500"
+													fill="none"
+													viewBox="0 0 24 24"
+													stroke="currentColor"
+												>
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth="2"
+														d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+													/>
+												</svg>
+											</div>
+										</div>
 									</div>
-									<div className="rounded-lg bg-cyan-500/10 p-2">
-										<svg
-											className="h-6 w-6 text-cyan-500"
-											fill="none"
-											viewBox="0 0 24 24"
-											stroke="currentColor"
-										>
-											<path
-												strokeLinecap="round"
-												strokeLinejoin="round"
-												strokeWidth="2"
-												d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-											/>
-										</svg>
-									</div>
+									<p className="mt-2 text-sm text-slate-400">
+										{activity.description}
+									</p>
 								</div>
 
-								{/* Zona de subida de archivos - Desactivada si ya hay un archivo subido */}
+								{/* Rest of the upload section */}
 								<div
 									className={`mt-6 ${
 										uploadedFileInfo ? 'pointer-events-none opacity-50' : ''

@@ -11,6 +11,11 @@ interface VideoPlayerProps {
 	isLocked?: boolean;
 }
 
+// Lista de videos que deben usar el reproductor nativo
+const FORCE_NATIVE_PLAYER_VIDEOS = [
+	'richard-1-1744669875805-fa3b69ce-7ac6-40be-b3e1-f843f27451f0.mp4',
+];
+
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	videoKey,
 	onVideoEnd,
@@ -28,11 +33,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			setIsLoading(false);
 			return;
 		}
+
+		// Forzar reproductor nativo para videos específicos
+		if (FORCE_NATIVE_PLAYER_VIDEOS.some((v) => videoKey.includes(v))) {
+			setUseNativePlayer(true);
+			setPlayerError('Usando reproductor nativo para mejor compatibilidad');
+		}
+
 		setVideoUrl(`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`);
 		setIsLoading(false);
-		// Reset error state when video changes
-		setPlayerError(null);
-		setUseNativePlayer(false);
+
+		if (!FORCE_NATIVE_PLAYER_VIDEOS.some((v) => videoKey.includes(v))) {
+			setPlayerError(null);
+			setUseNativePlayer(false);
+		}
 	}, [videoKey, isLocked]);
 
 	const handlePlayerError = (error?: unknown) => {
@@ -135,14 +149,23 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						'--media-primary-color': '#ffff',
 						'--media-secondary-color': '#2ecc71',
 						'--media-accent-color': '#ffff',
+						width: '100%',
+						height: '100%',
+						objectFit: 'contain',
+						maxHeight: '100vh',
+						position: 'absolute',
+						top: '0',
+						left: '0',
 					}}
 				/>
 			)}
 			{(videoUrl && useNativePlayer) || playerError ? (
 				<video
 					src={videoUrl}
-					className="h-full w-full"
+					className="absolute inset-0 h-full w-full bg-black object-contain"
 					controls
+					playsInline
+					controlsList="nodownload"
 					onEnded={onVideoEnd}
 					onError={(e) => console.error('Native player error:', e)}
 					onTimeUpdate={(e) => {
