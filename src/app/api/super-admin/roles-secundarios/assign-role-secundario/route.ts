@@ -51,7 +51,7 @@ export async function PATCH(req: Request) {
 		const permisoNames = permisoDetails.map((p) => p.name);
 
 		const clerk = await clerkClient();
-		const clerkUser = await clerk.users.updateUser(userId, {
+		await clerk.users.updateUser(userId, {
 			publicMetadata: {
 				role_secundario: role.name,
 				permisos_secundarios: permisoNames,
