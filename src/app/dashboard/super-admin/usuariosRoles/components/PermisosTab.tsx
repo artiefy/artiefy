@@ -60,7 +60,12 @@ export default function PermisosTab() {
 			if (!res.ok) throw new Error();
 			const created = (await res.json()) as Permiso;
 			setPermisos((prev) => [...prev, created]);
-			setNewPermiso({ name: '', description: '' });
+			setNewPermiso({
+				name: '',
+				description: '',
+				servicio: '',
+				accion: 'read',
+			});
 			setIsModalOpen(false);
 			toast.success('Permiso creado');
 		} catch {
