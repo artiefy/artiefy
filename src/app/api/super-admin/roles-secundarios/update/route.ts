@@ -1,22 +1,41 @@
 import { NextResponse } from 'next/server';
-
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { rolesSecundarios, roleSecundarioPermisos } from '~/server/db/schema';
+import { permisos } from '~/server/db/schema';
 
-interface UpdateRolBody {
+const ACCIONES = [
+	'create',
+	'read',
+	'update',
+	'delete',
+	'approve',
+	'assign',
+	'publish',
+] as const;
+
+type Accion = (typeof ACCIONES)[number];
+
+interface UpdatePermisoBody {
 	id: number;
 	name: string;
-	permisos?: number[];
+	description?: string;
+	servicio: string;
+	accion: Accion;
 }
 
 export async function PUT(req: Request) {
 	try {
-		const body = (await req.json()) as UpdateRolBody;
-		const { id, name, permisos } = body;
+		const body = (await req.json()) as UpdatePermisoBody;
+		const { id, name, description, servicio, accion } = body;
 
-		if (typeof id !== 'number' || !name?.trim()) {
+		// Validaciones de tipo
+		if (
+			typeof id !== 'number' ||
+			!name?.trim() ||
+			!servicio?.trim() ||
+			!ACCIONES.includes(accion)
+		) {
 			return NextResponse.json(
 				{ error: 'Datos incompletos o inválidos' },
 				{ status: 400 }
@@ -24,25 +43,18 @@ export async function PUT(req: Request) {
 		}
 
 		await db
-			.update(rolesSecundarios)
-			.set({ name })
-			.where(eq(rolesSecundarios.id, id));
-
-		await db
-			.delete(roleSecundarioPermisos)
-			.where(eq(roleSecundarioPermisos.roleId, id));
-
-		if (Array.isArray(permisos) && permisos.length > 0) {
-			const relaciones = permisos.map((permisoId) => ({
-				roleId: id,
-				permisoId,
-			}));
-			await db.insert(roleSecundarioPermisos).values(relaciones);
-		}
+			.update(permisos)
+			.set({
+				name,
+				description,
+				servicio,
+				accion,
+			})
+			.where(eq(permisos.id, id));
 
 		return NextResponse.json({ success: true });
 	} catch (error) {
-		console.error('Error al actualizar rol secundario:', error);
+		console.error('Error al actualizar permiso:', error);
 		return NextResponse.json({ error: 'Error interno' }, { status: 500 });
 	}
 }
