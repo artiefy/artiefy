@@ -1,8 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-
-import ArtiefyLogo from '../../public/artiefy-logo.svg';
 import '~/styles/loading.css';
 
 export default function Loading() {
@@ -14,7 +12,18 @@ export default function Loading() {
 			>
 				<div className="flex flex-col items-center justify-center gap-8">
 					<div className="relative w-[200px]">
-						<ArtiefyLogo className="h-auto w-full" />
+						<Image
+							src="/artiefy-logo.svg"
+							alt="Logo de Artiefy"
+							width={200}
+							height={60}
+							priority
+							sizes="200px"
+							style={{
+								width: '100%',
+								height: 'auto',
+							}}
+						/>
 					</div>
 					<div className="flex items-center justify-center gap-8">
 						<Image
