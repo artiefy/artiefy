@@ -1,31 +1,43 @@
 import { NextResponse } from 'next/server';
-
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { permisos } from '~/server/db/schema';
+
+const ACCIONES = [
+	'create',
+	'read',
+	'update',
+	'delete',
+	'approve',
+	'assign',
+	'publish',
+] as const;
+
+type Accion = (typeof ACCIONES)[number];
 
 interface UpdatePermisoBody {
 	id: number;
 	name: string;
 	description?: string;
 	servicio: string;
-	accion: string;
+	accion: Accion;
 }
 
 export async function PUT(req: Request) {
 	try {
 		const body = (await req.json()) as UpdatePermisoBody;
-		const { id, name, description } = body;
+		const { id, name, description, servicio, accion } = body;
 
+		// Validaciones de tipo
 		if (
 			typeof id !== 'number' ||
 			!name?.trim() ||
-			!body.servicio ||
-			!body.accion
+			!servicio?.trim() ||
+			!ACCIONES.includes(accion)
 		) {
 			return NextResponse.json(
-				{ error: 'Todos los campos son requeridos' },
+				{ error: 'Datos incompletos o inválidos' },
 				{ status: 400 }
 			);
 		}
@@ -35,8 +47,8 @@ export async function PUT(req: Request) {
 			.set({
 				name,
 				description,
-				servicio: body.servicio,
-				accion: body.accion,
+				servicio,
+				accion,
 			})
 			.where(eq(permisos.id, id));
 
