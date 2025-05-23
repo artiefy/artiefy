@@ -2,7 +2,6 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-// Image metadata
 export const alt = 'My Open Graph Image';
 export const size = {
 	width: 1200,
