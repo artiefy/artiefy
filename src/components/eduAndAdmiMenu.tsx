@@ -67,6 +67,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			id: 'tickets',
 			link: '/dashboard/super-admin/tickets',
 		},
+		{
+			icon: <FiShieldOff size={24} />,
+			title: 'Roles Secundarios',
+			id: 'roles-secundarios',
+			link: '/dashboard/super-admin/usuariosRoles',
+		},
 	];
 
 	const navItemsEducator = [

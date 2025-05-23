@@ -848,3 +848,25 @@ export const chatMessagesWithConversation = pgTable(
 );
 
 
+// Tabla de roles secundarios
+export const rolesSecundarios = pgTable('roles_secundarios', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	createdAt: timestamp('created_at').defaultNow(),
+  });
+  
+  // Tabla de permisos
+  export const permisos = pgTable('permisos', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	description: text('description'),
+  });
+  
+  // Relación N:M entre roles_secundarios y permisos
+  export const roleSecundarioPermisos = pgTable('role_secundario_permisos', {
+	roleId: integer('role_id').references(() => rolesSecundarios.id).notNull(),
+	permisoId: integer('permiso_id').references(() => permisos.id).notNull(),
+  }, (table) => ({
+	pk: primaryKey({ columns: [table.roleId, table.permisoId] }),
+  }));
+  
