@@ -9,7 +9,6 @@ export const size = {
 };
 export const contentType = 'image/png';
 
-// Image generation
 export default async function Image() {
 	// Load Montserrat font
 	const montserrat = fetch(
