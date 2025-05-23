@@ -21,6 +21,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const [videoUrl, setVideoUrl] = useState<string>('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [useNativePlayer, setUseNativePlayer] = useState(false);
+	const [playerError, setPlayerError] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!videoKey || videoKey === 'null' || isLocked) {
@@ -29,12 +30,42 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		}
 		setVideoUrl(`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`);
 		setIsLoading(false);
+		// Reset error state when video changes
+		setPlayerError(null);
+		setUseNativePlayer(false);
 	}, [videoKey, isLocked]);
 
-	const handlePlayerError = () => {
-		console.log('Next-video player failed, falling back to native player');
+	const handlePlayerError = (error?: unknown) => {
+		console.warn(
+			'Next-video player failed, falling back to native player:',
+			error
+		);
+		setPlayerError('Error loading video player');
 		setUseNativePlayer(true);
 	};
+
+	// Check video format compatibility
+	const checkVideoCompatibility = (url: string) => {
+		const video = document.createElement('video');
+		return new Promise<boolean>((resolve) => {
+			video.oncanplay = () => resolve(true);
+			video.onerror = () => {
+				console.warn('Video format not supported by next-video player');
+				resolve(false);
+			};
+			video.src = url;
+		});
+	};
+
+	useEffect(() => {
+		if (videoUrl) {
+			void checkVideoCompatibility(videoUrl).then((isCompatible) => {
+				if (!isCompatible) {
+					handlePlayerError('Format not supported');
+				}
+			});
+		}
+	}, [videoUrl]);
 
 	const renderLoadingState = () => (
 		<div className="absolute inset-0 z-50 flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg">
@@ -85,7 +116,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 	return (
 		<div className="relative aspect-video w-full">
-			{videoUrl && !useNativePlayer && (
+			{videoUrl && !useNativePlayer && !playerError && (
 				<Player
 					src={videoUrl}
 					controls
@@ -107,12 +138,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					}}
 				/>
 			)}
-			{videoUrl && useNativePlayer && (
+			{(videoUrl && useNativePlayer) || playerError ? (
 				<video
 					src={videoUrl}
 					className="h-full w-full"
 					controls
 					onEnded={onVideoEnd}
+					onError={(e) => console.error('Native player error:', e)}
 					onTimeUpdate={(e) => {
 						const video = e.currentTarget;
 						if (video && !isVideoCompleted) {
@@ -123,7 +155,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						}
 					}}
 				/>
-			)}
+			) : null}
 			{(!videoUrl || isLoading) && renderLoadingState()}
 		</div>
 	);

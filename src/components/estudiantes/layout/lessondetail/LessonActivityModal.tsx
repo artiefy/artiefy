@@ -41,24 +41,24 @@ import { FileUploadForm } from './FileUploadForm';
 
 interface ActivityModalProps {
 	isOpen: boolean;
-	onClose: () => void;
+	onCloseAction: () => void; // Renamed
 	activity: Activity;
 	userId: string;
-	onQuestionsAnswered: (allAnswered: boolean) => void;
-	markActivityAsCompleted: () => Promise<void>; // Update type to Promise<void>
-	onActivityCompleted: () => Promise<void>; // Add this new prop
+	onQuestionsAnsweredAction: (allAnswered: boolean) => void; // Renamed
+	markActivityAsCompletedAction: () => Promise<void>; // Renamed
+	onActivityCompletedAction: () => Promise<void>; // Renamed
 	savedResults?: {
 		score: number;
 		answers: Record<string, SavedAnswer>;
 		isAlreadyCompleted?: boolean;
 	} | null;
-	onLessonUnlocked: (lessonId: number) => void; // Add this new prop
-	isLastLesson: boolean; // Add this new prop
-	courseId: number; // Add courseId prop
-	isLastActivity: boolean; // Add this prop
-	onViewHistory: () => void; // Add this new prop
-	onActivityComplete: () => void; // Add this new prop
-	isLastActivityInLesson: boolean; // Add this prop
+	onLessonUnlockedAction: (lessonId: number) => void; // Renamed
+	isLastLesson: boolean;
+	courseId: number;
+	isLastActivity: boolean;
+	onViewHistoryAction: () => void; // Renamed
+	onActivityCompleteAction: () => void; // Renamed
+	isLastActivityInLesson: boolean;
 }
 
 interface UserAnswer {
@@ -150,23 +150,23 @@ const getFileIcon = (fileType: string) => {
 // Add a description ID constant
 const MODAL_DESCRIPTION_ID = 'activity-modal-description';
 
-const LessonActivityModal = ({
+export function LessonActivityModal({
 	isOpen,
-	onClose,
+	onCloseAction,
 	activity,
 	userId,
-	onQuestionsAnswered,
-	markActivityAsCompleted,
-	onActivityCompleted, // Add this new prop
+	onQuestionsAnsweredAction,
+	markActivityAsCompletedAction,
+	onActivityCompletedAction,
 	savedResults,
-	onLessonUnlocked, // Add this new prop
-	isLastLesson, // Add this new prop
+	onLessonUnlockedAction,
+	isLastLesson,
 	courseId,
 	isLastActivity,
-	onViewHistory,
-	onActivityComplete,
+	onViewHistoryAction,
+	onActivityCompleteAction,
 	isLastActivityInLesson,
-}: ActivityModalProps) => {
+}: ActivityModalProps) {
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [userAnswers, setUserAnswers] = useState<Record<string, UserAnswer>>(
 		{}
@@ -187,6 +187,8 @@ const LessonActivityModal = ({
 		useState<StoredFileInfo | null>(null);
 	const [filePreview, setFilePreview] = useState<FilePreview | null>(null);
 	const [isLoadingDocument, setIsLoadingDocument] = useState(false);
+	// Add new state to track if a document was just uploaded
+	const [isNewUpload, setIsNewUpload] = useState(false);
 
 	useEffect(() => {
 		if (activity?.content?.questions) {
@@ -459,24 +461,24 @@ const LessonActivityModal = ({
 			setIsUnlocking(true);
 
 			// First mark activity as completed
-			await markActivityAsCompleted();
+			await markActivityAsCompletedAction();
 
 			// Then run the activity completion handler
-			await onActivityCompleted();
+			await onActivityCompletedAction();
 
 			// Update the questions answered status
-			onQuestionsAnswered(true);
+			onQuestionsAnsweredAction(true);
 
 			// Finally try to unlock next lesson
 			const result = await unlockNextLesson(activity.lessonsId);
 
 			if (result?.success && result.nextLessonId) {
-				onLessonUnlocked(result.nextLessonId);
+				onLessonUnlockedAction(result.nextLessonId);
 				toast.success('¡Siguiente clase desbloqueada!');
-				onClose();
+				onCloseAction();
 			} else {
 				// Just close if it's the last lesson
-				onClose();
+				onCloseAction();
 			}
 		} catch (error) {
 			console.error('Error:', error);
@@ -657,7 +659,7 @@ const LessonActivityModal = ({
 			return (
 				<div className="space-y-3">
 					<Button
-						onClick={onViewHistory}
+						onClick={onViewHistoryAction}
 						className="w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]"
 					>
 						<span className="flex items-center justify-center gap-2">
@@ -668,8 +670,8 @@ const LessonActivityModal = ({
 					</Button>
 					<Button
 						onClick={() => {
-							onActivityComplete();
-							onClose();
+							onActivityCompleteAction();
+							onCloseAction();
 						}}
 						className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-[0.98]"
 					>
@@ -683,7 +685,7 @@ const LessonActivityModal = ({
 		if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
 			return (
 				<Button
-					onClick={onClose}
+					onClick={onCloseAction}
 					className="text-background mt-3 w-full bg-blue-500 font-bold transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 				>
 					CERRAR
@@ -733,7 +735,7 @@ const LessonActivityModal = ({
 			}
 			return (
 				<Button
-					onClick={onClose}
+					onClick={onCloseAction}
 					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
 				>
 					CERRAR
@@ -772,7 +774,7 @@ const LessonActivityModal = ({
 					) : (
 						!isLastActivityInLesson && (
 							<Button
-								onClick={onClose}
+								onClick={onCloseAction}
 								className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
 							>
 								CERRAR
@@ -800,7 +802,7 @@ const LessonActivityModal = ({
 			}
 			return (
 				<Button
-					onClick={onClose}
+					onClick={onCloseAction}
 					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
 				>
 					CERRAR
@@ -847,7 +849,7 @@ const LessonActivityModal = ({
 			}
 			return (
 				<Button
-					onClick={onClose}
+					onClick={onCloseAction}
 					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
 				>
 					CERRAR
@@ -889,7 +891,7 @@ const LessonActivityModal = ({
 					{/* Show close button if not last activity */}
 					{!isLastActivityInLesson && (
 						<Button
-							onClick={onClose}
+							onClick={onCloseAction}
 							className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
 						>
 							CERRAR
@@ -915,7 +917,7 @@ const LessonActivityModal = ({
 			}
 			return (
 				<Button
-					onClick={onClose}
+					onClick={onCloseAction}
 					className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
 				>
 					CERRAR
@@ -925,7 +927,7 @@ const LessonActivityModal = ({
 
 		return (
 			<Button
-				onClick={onClose}
+				onClick={onCloseAction}
 				className="w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
 			>
 				CERRAR
@@ -1302,10 +1304,15 @@ const LessonActivityModal = ({
 								<Button
 									onClick={async () => {
 										if (!isLastActivityInLesson && !activity.isCompleted) {
-											await markActivityAsCompleted();
-											await onActivityCompleted();
+											await markActivityAsCompletedAction();
+											await onActivityCompletedAction();
 										}
-										onClose();
+										// Only show success toast if this was a new upload
+										if (isNewUpload) {
+											toast.success('Actividad completada');
+											setIsNewUpload(false);
+										}
+										onCloseAction();
 									}}
 									className="w-full bg-blue-500 text-white hover:bg-blue-600"
 								>
@@ -1471,6 +1478,7 @@ const LessonActivityModal = ({
 											setUploadedFileInfo,
 											setShowResults,
 											setFilePreview,
+											setIsNewUpload, // Add this parameter
 										})
 									}
 									disabled={!selectedFile || isUploading || !!uploadedFileInfo}
@@ -1559,7 +1567,7 @@ const LessonActivityModal = ({
 
 	if (isLoading) {
 		return (
-			<Dialog open={isOpen} onOpenChange={onClose}>
+			<Dialog open={isOpen} onOpenChange={onCloseAction}>
 				<DialogContent>
 					<DialogHeader>
 						<DialogTitle>Actividad</DialogTitle>
@@ -1577,12 +1585,15 @@ const LessonActivityModal = ({
 			open={isOpen}
 			onOpenChange={(open) => {
 				if (!open) {
-					// Para actividades tipo documento, permitir cerrar sin restricciones
+					// Update close handler
 					if (activity.typeid === 1) {
-						onClose();
+						if (isNewUpload) {
+							toast.success('Actividad completada');
+							setIsNewUpload(false);
+						}
+						onCloseAction();
 						return;
 					}
-
 					if (!canCloseModal) {
 						if (activity.revisada) {
 							const intentosRestantes = attemptsLeft ?? 0;
@@ -1598,10 +1609,10 @@ const LessonActivityModal = ({
 					}
 
 					if (!open && finalScore >= 3 && isLastActivity) {
-						onActivityComplete();
+						onActivityCompleteAction();
 					}
 				}
-				onClose();
+				onCloseAction();
 			}}
 		>
 			<DialogContent
@@ -1634,7 +1645,7 @@ const LessonActivityModal = ({
 			</DialogContent>
 		</Dialog>
 	);
-};
+}
 
 interface UploadParams {
 	selectedFile: File | null;
@@ -1645,6 +1656,7 @@ interface UploadParams {
 	setUploadedFileInfo: (info: StoredFileInfo | null) => void;
 	setShowResults: (value: boolean) => void;
 	setFilePreview: (preview: FilePreview | null) => void;
+	setIsNewUpload: (value: boolean) => void; // Add this line
 }
 
 // Add custom error type
@@ -1665,6 +1677,7 @@ async function handleUpload({
 	setUploadedFileInfo,
 	setShowResults,
 	setFilePreview,
+	setIsNewUpload, // Add this parameter
 }: UploadParams): Promise<void> {
 	if (!selectedFile) return;
 
@@ -1757,6 +1770,7 @@ async function handleUpload({
 			status: result.status,
 		});
 
+		setIsNewUpload(true); // This will now work properly
 		toast.success('Documento subido correctamente');
 		setShowResults(true);
 	} catch (error) {
@@ -1764,12 +1778,18 @@ async function handleUpload({
 			error instanceof Error
 				? error.message
 				: 'Error desconocido al subir el archivo';
-		updateFilePreview(0, 'error');
-		console.error('Upload error:', errorMessage);
+		if (setFilePreview) {
+			setFilePreview({
+				file: selectedFile,
+				type: selectedFile.type.split('/')[1].toUpperCase(),
+				size: formatFileSize(selectedFile.size),
+				progress: 0,
+				status: 'error',
+			});
+		}
+		console.error('Error de subida:', errorMessage);
 		toast.error(`Error al subir el archivo: ${errorMessage}`);
 	} finally {
 		setIsUploading(false);
 	}
 }
-
-export default LessonActivityModal;
