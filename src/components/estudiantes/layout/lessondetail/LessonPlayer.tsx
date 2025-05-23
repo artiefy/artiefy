@@ -40,7 +40,7 @@ const LessonPlayer = ({
 
 	return (
 		<div className="mx-auto max-w-4xl">
-			<div className="relative mb-6 aspect-video overflow-hidden rounded-lg bg-black">
+			<div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg bg-black">
 				<VideoPlayer
 					videoKey={lesson.coverVideoKey}
 					onVideoEnd={handleVideoEnd}

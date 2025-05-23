@@ -5,16 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
-import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
 import LessonBreadcrumbs from '~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
-import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
 import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -512,14 +511,7 @@ export default function LessonDetails({
 				</div>
 
 				{/* Chatbot Button and Modal */}
-				<button
-					onClick={() => setIsChatOpen(!isChatOpen)}
-					className="fixed right-6 bottom-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
-				>
-					<FaRobot className="text-xl" />
-				</button>
-
-				<LessonChatBot />
+				<StudentChatbot isAlwaysVisible={true} />
 			</div>
 		</div>
 	);
