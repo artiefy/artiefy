@@ -7,7 +7,14 @@ interface PermisoBody {
 	name: string;
 	description?: string;
 	servicio: string;
-	accion: string;
+	accion:
+		| 'create'
+		| 'read'
+		| 'update'
+		| 'delete'
+		| 'approve'
+		| 'assign'
+		| 'publish';
 }
 
 export async function POST(req: Request) {
