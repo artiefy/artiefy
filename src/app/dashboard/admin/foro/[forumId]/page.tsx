@@ -513,41 +513,45 @@ const ForumPage = () => {
 							</div>
 						</div>
 
-						{/* Imagen adjunta */}
-						{forumData?.coverImageKey && (
-							<div className="mt-6">
-								<p className="text-sm font-medium text-gray-300">
-									Imagen adjunta
-								</p>
-								<div className="mt-2 w-full overflow-hidden rounded-lg border border-white/10 shadow-lg transition hover:shadow-xl">
-									<Image
-										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
-										alt="Imagen adjunta"
-										width={800}
-										height={400}
-										className="w-full rounded object-cover"
-									/>
-								</div>
-							</div>
-						)}
+						{(forumData?.coverImageKey || forumData?.documentKey) && (
+							<div className="mt-6 flex flex-col gap-4 sm:flex-row">
+								{/* Imagen */}
+								{forumData?.coverImageKey && (
+									<div className="w-full sm:w-1/2">
+										<p className="text-sm font-medium text-gray-300">
+											Imagen adjunta
+										</p>
+										<div className="mt-2 max-w-md overflow-hidden rounded-lg border border-white/10 shadow-md transition hover:shadow-xl">
+											<Image
+												src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
+												alt="Imagen adjunta"
+												width={400}
+												height={250}
+												className="h-auto w-full rounded object-cover"
+											/>
+										</div>
+									</div>
+								)}
 
-						{/* Documento adjunto */}
-						{forumData?.documentKey && (
-							<div className="mt-6">
-								<p className="text-sm font-medium text-gray-300">
-									Documento adjunto
-								</p>
-								<div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-white/5 p-4 text-sm text-green-300 shadow-inner">
-									<span className="text-xl">📄</span>
-									<a
-										href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.documentKey}`}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="break-all underline hover:text-green-200"
-									>
-										Ver documento
-									</a>
-								</div>
+								{/* Documento */}
+								{forumData?.documentKey && (
+									<div className="w-full sm:w-1/2">
+										<p className="text-sm font-medium text-gray-300">
+											Documento adjunto
+										</p>
+										<div className="mt-2 flex items-center gap-3 rounded-lg bg-white/5 p-4 text-sm text-green-300 shadow-inner">
+											<span className="text-xl">📄</span>
+											<a
+												href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.documentKey}`}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="break-all underline hover:text-green-200"
+											>
+												Ver documento
+											</a>
+										</div>
+									</div>
+								)}
 							</div>
 						)}
 					</div>
