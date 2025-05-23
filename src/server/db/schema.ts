@@ -858,9 +858,14 @@ export const rolesSecundarios = pgTable('roles_secundarios', {
   // Tabla de permisos
   export const permisos = pgTable('permisos', {
 	id: serial('id').primaryKey(),
-	name: varchar('name', { length: 255 }).notNull(),
+	name: varchar('name', { length: 255 }).notNull(), // Este puede mantenerse como identificador único si lo deseas
 	description: text('description'),
-  });
+	servicio: varchar('servicio', { length: 100 }).notNull(), // Ej: 'cursos', 'usuarios'
+	accion: text('accion', {
+		enum: ['create', 'read', 'update', 'delete', 'approve', 'assign', 'publish'],
+	}).notNull(), // Esto establece las acciones válidas
+});
+
   
   // Relación N:M entre roles_secundarios y permisos
   export const roleSecundarioPermisos = pgTable('role_secundario_permisos', {

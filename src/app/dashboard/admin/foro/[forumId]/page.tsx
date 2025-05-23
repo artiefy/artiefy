@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
@@ -24,6 +25,8 @@ interface Foro {
 	id: number;
 	title: string;
 	description: string;
+	coverImageKey?: string; // <--- NUEVO
+	documentKey?: string; // <--- NUEVO
 	userId: {
 		id: string;
 		name: string;
@@ -34,6 +37,7 @@ interface Foro {
 		title: string;
 		descripcion: string;
 		instructor: string;
+		coverImageKey?: string;
 	};
 }
 
@@ -366,11 +370,11 @@ const ForumPage = () => {
 		return replies.map((reply) => (
 			<div
 				key={reply.id}
-				className="relative mt-6 ml-10 rounded-md border border-gray-700 bg-gray-900 px-6 py-4 shadow-md"
+				className="relative mt-4 rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 shadow sm:ml-10 sm:px-6 sm:py-4"
 			>
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-2">
-						<div className="h-8 w-8 rounded-full bg-gray-800" />
+						<div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800" />
 						<span className="text-sm font-medium text-white">
 							{reply.userId.name}
 						</span>
@@ -383,7 +387,7 @@ const ForumPage = () => {
 				{editingReplyId === reply.id ? (
 					<div className="mt-3">
 						<textarea
-							className="w-full rounded border border-gray-700 bg-gray-800 p-3 text-white"
+							className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white"
 							value={editReplyContent}
 							onChange={(e) => setEditReplyContent(e.target.value)}
 						/>
@@ -395,7 +399,7 @@ const ForumPage = () => {
 								Actualizar
 							</button>
 							<button
-								className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+								className="rounded bg-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-600"
 								onClick={() => setEditingReplyId(null)}
 							>
 								Cancelar
@@ -439,7 +443,7 @@ const ForumPage = () => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="border-primary size-32 rounded-full border-y-2">
+				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -463,7 +467,7 @@ const ForumPage = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/super-admin/foro`}
+							href={`/dashboard/admin/foro`}
 						>
 							Foros
 						</BreadcrumbLink>
@@ -472,7 +476,7 @@ const ForumPage = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/super-admin/foro/${forumData?.id}`}
+							href={`/dashboard/admin/foro/${forumData?.id}`}
 						>
 							Foro: {forumData?.title}
 						</BreadcrumbLink>
@@ -480,25 +484,72 @@ const ForumPage = () => {
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			<div className="bg-se mt-5 w-full rounded-lg p-4 shadow-lg sm:px-6 lg:px-8">
+			<div className="mx-auto mt-6 w-full max-w-6xl space-y-8 px-4 sm:px-6 lg:px-8">
 				<div className="glow-pulse mt-5 mb-10 w-full rounded-lg">
-					<div className="bg-background w-full rounded-lg px-6 py-8 shadow-xl">
-						<div className="border-secondary flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
-							<div>
-								<h1 className="text-primary text-2xl font-semibold sm:text-3xl">
+					<div className="mx-auto w-full max-w-7xl rounded-xl border border-gray-700 bg-[#111827] px-6 py-6 shadow-md">
+						{/* Header */}
+						<div className="border-secondary flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8 sm:pb-4">
+							<div className="min-w-0 flex-1">
+								<h1 className="text-primary text-2xl font-bold break-words sm:text-3xl">
 									{forumData?.title}
 								</h1>
-								<p className="text-secondary mt-1 text-sm">
+								<p className="mt-2 text-base leading-relaxed whitespace-pre-wrap text-white">
 									{forumData?.description}
 								</p>
 							</div>
-							<div className="flex items-center gap-2">
-								<span className="text-secondary text-sm">Educador:</span>
-								<span className="bg-primary text-background rounded-full px-3 py-1 text-sm font-semibold">
-									<strong>{forumData?.userId.name}</strong>
-								</span>
+
+							<div className="mt-2 flex-shrink-0 sm:mt-0">
+								<div className="flex max-w-xs items-center gap-2 overflow-hidden">
+									<span className="text-secondary text-sm whitespace-nowrap">
+										Educador:
+									</span>
+									<span
+										title={forumData?.userId.name}
+										className="bg-primary text-background w-full truncate rounded-full px-3 py-1 text-sm font-semibold shadow-sm"
+									>
+										{forumData?.userId.name}
+									</span>
+								</div>
 							</div>
 						</div>
+
+						{/* Imagen adjunta */}
+						{forumData?.coverImageKey && (
+							<div className="mt-6">
+								<p className="text-sm font-medium text-gray-300">
+									Imagen adjunta
+								</p>
+								<div className="mt-2 w-full overflow-hidden rounded-lg border border-white/10 shadow-lg transition hover:shadow-xl">
+									<Image
+										src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
+										alt="Imagen adjunta"
+										width={800}
+										height={400}
+										className="w-full rounded object-cover"
+									/>
+								</div>
+							</div>
+						)}
+
+						{/* Documento adjunto */}
+						{forumData?.documentKey && (
+							<div className="mt-6">
+								<p className="text-sm font-medium text-gray-300">
+									Documento adjunto
+								</p>
+								<div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-white/5 p-4 text-sm text-green-300 shadow-inner">
+									<span className="text-xl">📄</span>
+									<a
+										href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.documentKey}`}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="break-all underline hover:text-green-200"
+									>
+										Ver documento
+									</a>
+								</div>
+							</div>
+						)}
 					</div>
 				</div>
 
@@ -510,7 +561,7 @@ const ForumPage = () => {
 						posts.map((post) => (
 							<div
 								key={post.id}
-								className="relative rounded-lg bg-gray-800 p-5 shadow-lg transition-shadow duration-300 hover:shadow-2xl sm:p-6"
+								className="relative rounded-2xl border border-gray-700 bg-gray-900 p-5 shadow-md transition duration-300 hover:shadow-xl sm:p-6"
 							>
 								<div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between">
 									<h2 className="text-lg font-bold text-white">
@@ -608,7 +659,7 @@ const ForumPage = () => {
 								)}
 
 								{/* Respuestas */}
-								<div className="mt-4 border-t border-gray-700 pt-3">
+								<div className="mt-6 space-y-4 border-t border-gray-700 pt-5">
 									{renderPostReplies(post.id)}
 								</div>
 							</div>
@@ -619,13 +670,13 @@ const ForumPage = () => {
 				{/* Crear nuevo post */}
 				<div className="mx-full mt-6 max-w-4xl">
 					<textarea
-						className="w-full rounded-lg border-2 border-gray-700 bg-white p-3 text-black outline-none"
+						className="min-h-[120px] w-full resize-none rounded-lg border border-gray-600 bg-white/10 p-4 text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300"
 						placeholder="Escribe un nuevo mesaje..."
 						value={message}
 						onChange={(e) => setMessage(e.target.value)}
 					/>
 					<button
-						className="mt-2 rounded bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600"
+						className="flex flex-col gap-4 border-b border-gray-700 pb-5 sm:flex-row sm:items-center sm:justify-between"
 						onClick={handlePostSubmit}
 					>
 						Enviar
