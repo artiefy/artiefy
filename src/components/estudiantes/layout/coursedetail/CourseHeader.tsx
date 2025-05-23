@@ -645,11 +645,10 @@ export function CourseHeader({
 									onClick={handleEnrollClick}
 									disabled={isEnrolling || isEnrollClicked}
 								>
-									<span className="text-white">
+									<span className="flex min-h-[24px] min-w-[200px] items-center justify-center text-white">
 										{isEnrolling || isEnrollClicked ? (
-											<Icons.spinner className="text-white" />
-										) : // Mostrar el texto correcto según el tipo de curso
-										course.courseTypeId === 4 ? (
+											<Icons.spinner className="h-6 w-6 text-white" />
+										) : course.courseTypeId === 4 ? (
 											'Comprar Curso'
 										) : course.courseType?.requiredSubscriptionLevel ===
 										  'none' ? (

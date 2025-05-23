@@ -13,13 +13,9 @@ import {
 	activities,
 	userActivitiesProgress,
 } from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 import type { EnrollmentResponse, SubscriptionLevel } from '~/types';
-
-function extractNumberFromTitle(title: string): number {
-	const match = /\d+/.exec(title);
-	return match ? parseInt(match[0], 10) : 0;
-}
 
 export async function enrollInCourse(
 	courseId: number
@@ -161,11 +157,8 @@ export async function enrollInCourse(
 			where: eq(lessons.courseId, courseId),
 		});
 
-		// Sort lessons by numeric value in title
-		const sortedLessons = courseLessons.sort(
-			(a, b) =>
-				extractNumberFromTitle(a.title) - extractNumberFromTitle(b.title)
-		);
+		// Sort lessons using our shared sorting utility instead of local sorting
+		const sortedLessons = sortLessons(courseLessons);
 
 		// Get lesson IDs in correct order
 		const lessonIds = sortedLessons.map((lesson) => lesson.id);

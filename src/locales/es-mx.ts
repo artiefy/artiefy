@@ -1,3 +1,0 @@
-export const esMX = {
-	// ...existing localization configuration...
-};

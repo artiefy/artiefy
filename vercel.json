@@ -104,17 +104,4 @@
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/favicon.ico",
-      "has": [
-        {
-          "type": "header",
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ],
-      "destination": "/favicon.ico"
-    }
-  ]
 }

@@ -12,7 +12,7 @@
 .payment-btn-wrapper {
 	position: relative;
 	padding: 3px;
-	background: linear-gradient(90deg, #00BDD8, #2ecc71);
+	background: linear-gradient(90deg, #00bdd8, #2ecc71);
 	border-radius: 0.9em;
 	transition: all 0.4s ease;
 }
@@ -29,12 +29,15 @@
 }
 
 .payment-btn-wrapper:hover::before {
-	background: linear-gradient(90deg, #00BDD8, #2ecc71);
+	background: linear-gradient(90deg, #00bdd8, #2ecc71);
 	filter: blur(1.2em);
 }
 
 /* Common button styles for all course buttons */
 .course-btn {
+	width: 100%;
+	min-width: 244px; /* Fixed minimum width */
+	min-height: 48px; /* Fixed minimum height */
 	font-size: 1.4em;
 	font-weight: 700; /* Make font bolder */
 	padding: 0.6em 0.8em;
@@ -45,6 +48,17 @@
 	cursor: pointer;
 	box-shadow: 2px 2px 3px #000000b4;
 	transition: transform 0.2s ease; /* Add transition for smooth hover effect */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.course-btn > span {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 24px;
+	width: 100%;
 }
 
 .course-btn:disabled {
@@ -56,10 +70,11 @@
 .btn-wrapper {
 	position: relative;
 	padding: 3px;
-	background: linear-gradient(90deg, #00BDD8, #2ecc71);
+	background: linear-gradient(90deg, #00bdd8, #2ecc71);
 	border-radius: 0.9em;
 	transition: all 0.4s ease;
 	display: inline-block;
+	width: 250px; /* Fixed width */
 }
 
 .btn-wrapper::before {
@@ -74,7 +89,7 @@
 }
 
 .btn-wrapper:hover::before {
-	background: linear-gradient(90deg, #00BDD8, #2ecc71);
+	background: linear-gradient(90deg, #00bdd8, #2ecc71);
 	filter: blur(1.2em);
 }
 

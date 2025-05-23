@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { BsPersonCircle } from 'react-icons/bs';
+import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoMdClose } from 'react-icons/io';
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
@@ -182,8 +183,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	useEffect(() => {
 		// Set initial dimensions based on window size
 		const initialDimensions = {
-			width: typeof window !== 'undefined' && window.innerWidth < 768 ? 300 : 400,
-			height: typeof window !== 'undefined' && window.innerWidth < 768 ? 400 : 500,
+			width:
+				typeof window !== 'undefined' && window.innerWidth < 768 ? 300 : 400,
+			height:
+				typeof window !== 'undefined' && window.innerWidth < 768 ? 400 : 500,
 		};
 		setDimensions(initialDimensions);
 
@@ -358,20 +361,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						))}
 					</div>
 					<div className="button-circular__inner">
-						<Image
-							src="/brain-9-svgrepo-com-blue.png"
-							alt="Robot"
-							width={24}
-							height={24}
-							className="button-circular__icon fill-blue-500"
-						/>
-						<Image
-							src="/brain-9-svgrepo-com-blue.png"
-							alt="Robot"
-							width={24}
-							height={24}
-							className="button-circular__icon button-circular__icon--copy fill-blue-500"
-						/>
+						<HiMiniCpuChip className="button-circular__icon fill-blue-500 text-2xl" />
+						<HiMiniCpuChip className="button-circular__icon button-circular__icon--copy fill-blue-500 text-2xl" />
 					</div>
 				</button>
 			)}
@@ -413,14 +404,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							{/* Header */}
 							<div className="relative z-[5] flex flex-col border-b bg-white/95 p-3 backdrop-blur-sm">
 								<div className="flex items-start justify-between">
-									<Image
-										src="/brain-9-svgrepo-com-blue.png"
-										alt="Robot"
-										width={40}
-										height={40}
-										className="mt-1 fill-blue-500"
-										priority
-									/>
+									<HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
 
 									<div className="-ml-6 flex flex-1 flex-col items-center">
 										<h2 className="mt-1 text-lg font-semibold text-gray-800">
@@ -465,14 +449,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											}`}
 										>
 											{message.sender === 'bot' ? (
-												<Image
-													src="/brain-9-svgrepo-com-blue.png"
-													alt="Robot"
-													width={32}
-													height={32}
-													className="mt-2 fill-blue-500"
-													priority
-												/>
+												<HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />
 											) : user?.imageUrl ? (
 												<Image
 													src={user.imageUrl}
