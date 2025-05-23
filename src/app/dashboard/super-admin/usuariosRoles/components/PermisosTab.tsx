@@ -8,13 +8,28 @@ interface Permiso {
 	id: number;
 	name: string;
 	description: string;
+	servicio: string;
+	accion:
+		| 'create'
+		| 'read'
+		| 'update'
+		| 'delete'
+		| 'approve'
+		| 'assign'
+		| 'publish';
 }
 
 export default function PermisosTab() {
 	const [permisos, setPermisos] = useState<Permiso[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [newPermiso, setNewPermiso] = useState({ name: '', description: '' });
+	const [newPermiso, setNewPermiso] = useState({
+		name: '',
+		description: '',
+		servicio: '',
+		accion: 'read',
+	});
+
 	const [updatingId, setUpdatingId] = useState<number | null>(null);
 	const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -118,6 +133,8 @@ export default function PermisosTab() {
 							<tr>
 								<th className="px-4 py-2">Nombre</th>
 								<th className="px-4 py-2">Descripción</th>
+								<th className="px-4 py-2">Servicio</th>
+								<th className="px-4 py-2">Acción</th>
 								<th className="px-4 py-2">Acciones</th>
 							</tr>
 						</thead>
@@ -158,6 +175,48 @@ export default function PermisosTab() {
 											}
 											className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
 										/>
+									</td>
+									<td className="px-4 py-2">
+										<input
+											type="text"
+											value={permiso.servicio}
+											onChange={(e) =>
+												setPermisos((prev) =>
+													prev.map((p) =>
+														p.id === permiso.id
+															? { ...p, servicio: e.target.value }
+															: p
+													)
+												)
+											}
+											className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+										/>
+									</td>
+									<td className="px-4 py-2">
+										<select
+											value={permiso.accion}
+											onChange={(e) =>
+												setPermisos((prev) =>
+													prev.map((p) =>
+														p.id === permiso.id
+															? {
+																	...p,
+																	accion: e.target.value as Permiso['accion'],
+																}
+															: p
+													)
+												)
+											}
+											className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+										>
+											<option value="create">Crear</option>
+											<option value="read">Leer</option>
+											<option value="update">Actualizar</option>
+											<option value="delete">Eliminar</option>
+											<option value="approve">Aprobar</option>
+											<option value="assign">Asignar</option>
+											<option value="publish">Publicar</option>
+										</select>
 									</td>
 									<td className="flex flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center">
 										<button
@@ -215,6 +274,35 @@ export default function PermisosTab() {
 								}
 								className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
 							/>
+							<input
+								type="text"
+								placeholder="Servicio (ej. cursos)"
+								value={newPermiso.servicio}
+								onChange={(e) =>
+									setNewPermiso({ ...newPermiso, servicio: e.target.value })
+								}
+								className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+							/>
+
+							<select
+								value={newPermiso.accion}
+								onChange={(e) =>
+									setNewPermiso({
+										...newPermiso,
+										accion: e.target.value as Permiso['accion'],
+									})
+								}
+								className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+							>
+								<option value="create">Crear</option>
+								<option value="read">Leer</option>
+								<option value="update">Actualizar</option>
+								<option value="delete">Eliminar</option>
+								<option value="approve">Aprobar</option>
+								<option value="assign">Asignar</option>
+								<option value="publish">Publicar</option>
+							</select>
+
 							<button
 								onClick={handleCreate}
 								className="self-end rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"

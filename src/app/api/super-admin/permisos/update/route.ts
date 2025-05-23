@@ -9,6 +9,8 @@ interface UpdatePermisoBody {
 	id: number;
 	name: string;
 	description?: string;
+	servicio: string;
+	accion: string;
 }
 
 export async function PUT(req: Request) {
@@ -16,16 +18,26 @@ export async function PUT(req: Request) {
 		const body = (await req.json()) as UpdatePermisoBody;
 		const { id, name, description } = body;
 
-		if (typeof id !== 'number' || !name?.trim()) {
+		if (
+			typeof id !== 'number' ||
+			!name?.trim() ||
+			!body.servicio ||
+			!body.accion
+		) {
 			return NextResponse.json(
-				{ error: 'ID y nombre son requeridos y deben ser válidos' },
+				{ error: 'Todos los campos son requeridos' },
 				{ status: 400 }
 			);
 		}
 
 		await db
 			.update(permisos)
-			.set({ name, description })
+			.set({
+				name,
+				description,
+				servicio: body.servicio,
+				accion: body.accion,
+			})
 			.where(eq(permisos.id, id));
 
 		return NextResponse.json({ success: true });

@@ -513,7 +513,7 @@ const ForumPage = () => {
 							</div>
 						</div>
 
-						{(forumData?.coverImageKey || forumData?.documentKey) && (
+						{(forumData?.coverImageKey ?? forumData?.documentKey) && (
 							<div className="mt-6 flex flex-col gap-4 sm:flex-row">
 								{/* Imagen */}
 								{forumData?.coverImageKey && (
