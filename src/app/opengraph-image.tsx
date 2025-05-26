@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-export const alt = 'My Open Graph Image';
+export const alt = 'Artiefy - Plataforma Educativa Digital';
 export const size = {
 	width: 1200,
 	height: 630,
