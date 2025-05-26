@@ -8,10 +8,10 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
 import { CourseBreadcrumb } from '~/components/estudiantes/layout/coursedetail/CourseBreadcrumb';
-import CourseChatbot from '~/components/estudiantes/layout/coursedetail/CourseChatbot';
 import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import { CourseHeader } from '~/components/estudiantes/layout/coursedetail/CourseHeader';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
@@ -261,7 +261,7 @@ export default function CourseDetails({
                         isEnrolled={isEnrolled}
                         onEnrollmentChange={handleEnrollmentChange}
                     />
-                    {isEnrolled && <CourseChatbot isEnrolled={isEnrolled} />}
+                    <StudentChatbot isAlwaysVisible={true} />
                 </div>
             </main>
         </div>

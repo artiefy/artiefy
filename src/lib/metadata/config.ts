@@ -37,6 +37,18 @@ const defaultMetadata: Metadata = {
 	},
 	description:
 		'Descubre una nueva forma de aprender con Artiefy. Cursos online de calidad en múltiples disciplinas para impulsar tu futuro.',
+	keywords: [
+		'artiefy',
+		'educación online',
+		'cursos online',
+		'plataforma educativa',
+		'aprendizaje digital',
+		'estudiar online',
+		'formación online',
+		'artiefy educación',
+		'artiefy cursos',
+		'artiefy online',
+	],
 	metadataBase: new URL(BASE_URL),
 	openGraph: {
 		type: 'website',
@@ -93,6 +105,16 @@ export async function getMetadataForRoute(): Promise<Metadata> {
 					'Artiefy - Plataforma Líder en Educación Online | Impulsa tu Futuro Profesional',
 				description:
 					'Transforma tu futuro con Artiefy. Accede a cursos online de calidad en diferentes áreas del conocimiento.',
+				keywords: [
+					'artiefy',
+					'artiefy plataforma',
+					'cursos artiefy',
+					'educación online artiefy',
+					'plataforma educativa',
+					'cursos online',
+					'educación digital',
+					'aprendizaje online',
+				],
 				alternates: { canonical: BASE_URL },
 				openGraph: {
 					...baseMetadata.openGraph,
@@ -108,6 +130,15 @@ export async function getMetadataForRoute(): Promise<Metadata> {
 					'Cursos y Programas Educativos Online | Formación Integral en Artiefy',
 				description:
 					'Explora nuestra biblioteca de cursos y programas diseñados para potenciar tu desarrollo profesional.',
+				keywords: [
+					'artiefy cursos',
+					'programas artiefy',
+					'cursos online artiefy',
+					'estudiantes artiefy',
+					'formación profesional',
+					'cursos digitales',
+					'programas educativos',
+				],
 				alternates: { canonical: `${BASE_URL}/estudiantes` },
 				openGraph: {
 					...baseMetadata.openGraph,
@@ -123,6 +154,15 @@ export async function getMetadataForRoute(): Promise<Metadata> {
 					'Planes de Suscripción Educativos | Invierte en tu Futuro con Artiefy',
 				description:
 					'Encuentra el plan perfecto para tu formación. Acceso ilimitado a contenido educativo de calidad.',
+				keywords: [
+					'planes artiefy',
+					'suscripción artiefy',
+					'precios artiefy',
+					'membresía artiefy',
+					'planes educativos',
+					'suscripción cursos online',
+					'planes de estudio',
+				],
 				alternates: { canonical: `${BASE_URL}/planes` },
 				openGraph: {
 					...baseMetadata.openGraph,
