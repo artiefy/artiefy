@@ -17,15 +17,18 @@ interface CalificacionPayload {
 	userId: string;
 	grade: number;
 	submissionKey: string;
+	comment?: string; // ✅ Agregado
 }
 
 export async function POST(request: Request) {
 	try {
 		const payload = (await request.json()) as CalificacionPayload;
-		const { activityId, questionId, userId, grade, submissionKey } = payload;
+		const { activityId, questionId, userId, grade, submissionKey, comment } =
+			payload;
 
 		console.log('📨 Payload recibido:', payload);
 
+		// Validaciones básicas
 		if (
 			!activityId?.trim() ||
 			!questionId?.trim() ||
@@ -52,15 +55,18 @@ export async function POST(request: Request) {
 			);
 		}
 
+		// Modificamos el objeto
 		const parsed = { ...raw } as Record<string, unknown>;
 		parsed.grade = grade;
 		parsed.status = 'reviewed';
 		parsed.lastUpdated = new Date().toISOString();
+		parsed.comment = comment ?? ''; // ✅ Guardamos el comentario
 
+		// Guardar en Redis
 		await redis.set(cleanedKey, parsed);
 		console.log('✅ Redis actualizado:', parsed);
 
-		// ✅ ACTUALIZAR revisada, nota, y fecha en userActivitiesProgress
+		// Actualizar progreso en la base de datos
 		await db
 			.update(userActivitiesProgress)
 			.set({
