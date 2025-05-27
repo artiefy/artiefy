@@ -187,14 +187,17 @@ export default function Page() {
 		id: string,
 		title: string,
 		description: string,
-		file: File | null,
+		file: File | null, // <-- FALTA
 		categoryid: number,
 		modalidadesid: number,
 		nivelid: number,
 		rating: number,
 		addParametros: boolean,
 		coverImageKey: string,
-		fileName: string
+		fileName: string, // <-- FALTA
+		courseTypeId: number | null, // <-- FALTA
+		isActive: boolean, // <-- FALTA
+		subjects: { id: number }[] // <-- FALTA
 	) => {
 		if (!user) return;
 
@@ -208,48 +211,7 @@ export default function Page() {
 
 		try {
 			setUploading(true);
-			if (file) {
-				const uploadResponse = await fetch('/api/upload', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						contentType: file.type,
-						fileSize: file.size,
-						fileName: file.name,
-					}),
-				});
 
-				if (!uploadResponse.ok) {
-					throw new Error(
-						`Error: al iniciar la carga: ${uploadResponse.statusText}`
-					);
-				}
-
-				const uploadData = (await uploadResponse.json()) as {
-					url: string;
-					fields: Record<string, string>;
-					key: string;
-					fileName: string;
-				};
-
-				const { url, fields, key, fileName: responseFileName } = uploadData;
-				coverImageKey = key;
-				fileName = responseFileName;
-				void fileName;
-
-				const formData = new FormData();
-				Object.entries(fields).forEach(([key, value]) => {
-					if (typeof value === 'string') {
-						formData.append(key, value);
-					}
-				});
-				formData.append('file', file);
-
-				await fetch(url, {
-					method: 'POST',
-					body: formData,
-				});
-			}
 			setUploading(false);
 		} catch (e: unknown) {
 			const errorMessage = e instanceof Error ? e.message : 'Unknown error';
@@ -291,8 +253,11 @@ export default function Page() {
 						modalidadesid,
 						nivelid,
 						rating,
-						instructor: instructorName, // Use instructor name instead of ID
+						instructor: instructorName,
 						subjects,
+						fileName, // <-- incluir si lo usas
+						courseTypeId, // <-- incluir si tu modelo lo soporta
+						isActive,
 					}),
 				});
 

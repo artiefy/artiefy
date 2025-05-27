@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-
 import {
 	DeleteObjectCommand,
 	S3Client,
@@ -10,18 +9,13 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 
 const MAX_SIMPLE_UPLOAD_SIZE = 500 * 1024 * 1024; // 500 MB
-const MAX_FILE_SIZE = 25 * 1024 * 1024 * 1024; // 25 GB for videos up to 5+ hours
+const MAX_FILE_SIZE = 25 * 1024 * 1024 * 1024; // 25 GB
 
-// Simplificamos la creación del cliente S3
 const client = new S3Client({ region: process.env.AWS_REGION });
 
-// Agregar función para sanitizar el nombre del archivo
 function sanitizeFileName(fileName: string): string {
-	// Obtener la extensión del archivo
 	const ext = fileName.split('.').pop() ?? '';
-	// Generar un timestamp
 	const timestamp = Date.now();
-	// Crear un nombre base sanitizado (eliminar espacios y caracteres especiales)
 	const baseName = fileName
 		.split('.')[0]
 		.toLowerCase()
@@ -29,7 +23,6 @@ function sanitizeFileName(fileName: string): string {
 		.replace(/-+/g, '-')
 		.trim();
 
-	// Combinar todo con un UUID para garantizar unicidad
 	return `${baseName}-${timestamp}-${uuidv4()}.${ext}`;
 }
 
@@ -45,21 +38,59 @@ export async function POST(request: Request) {
 			throw new Error('AWS_BUCKET_NAME no está definido');
 		}
 
-		// Sanitize the file name
-		const sanitizedFileName = sanitizeFileName(fileName);
-		const key = `uploads/${sanitizedFileName}`;
+		console.log('📦 Iniciando carga...');
+		console.log('➡️ Tipo:', contentType);
+		console.log('➡️ Tamaño:', fileSize);
+		console.log('➡️ Nombre original:', fileName);
 
-		if (fileSize > MAX_FILE_SIZE) {
-			throw new Error(
-				'El archivo es demasiado grande. El tamaño máximo permitido es 25 GB.'
-			);
+		const isVideo = contentType.startsWith('video/');
+		const isImage = contentType.startsWith('image/');
+
+		if (!isVideo && !isImage) {
+			throw new Error('❌ Tipo de archivo no permitido');
 		}
 
-		// Handle simple or multipart uploads
+		let finalKey = '';
+		let sanitizedBase = '';
+		let fileType: 'video' | 'image' = isVideo ? 'video' : 'image';
+		const extension = fileName.split('.').pop() ?? 'bin';
+
+		// Detectar si ya viene un path limpio como 'uploads/xyz.jpg'
+		const isPresanitized =
+			fileName.startsWith('uploads/') && !fileName.includes(' ');
+
+		if (isPresanitized) {
+			finalKey = fileName;
+			sanitizedBase = fileName
+				.replace(/^uploads\//, '')
+				.replace(/\.[^.]+$/, '');
+			console.log(`📝 Usando key ya formateado: ${finalKey}`);
+		} else {
+			const sanitizedFullName = sanitizeFileName(fileName);
+			sanitizedBase = sanitizedFullName.split('.')[0];
+
+			if (isVideo) {
+				finalKey = `uploads/${sanitizedBase}-video.${extension}`;
+				console.log(`🎬 Se subirá como video. Key: ${finalKey}`);
+			} else {
+				finalKey = `uploads/${sanitizedBase}.${extension}`;
+				console.log(`🖼️ Se subirá como imagen. Key: ${finalKey}`);
+			}
+		}
+
+		if (fileSize > MAX_FILE_SIZE) {
+			throw new Error('❌ Archivo demasiado grande (> 25GB)');
+		}
+
+		// coverImageKey a guardar (si es video, se apunta al JPG asociado)
+		const coverImageKey =
+			fileType === 'image' ? finalKey : `uploads/${sanitizedBase}.jpg`;
+
+		// Generar presigned POST o PUT
 		if (fileSize <= MAX_SIMPLE_UPLOAD_SIZE) {
 			const { url, fields } = await createPresignedPost(client, {
 				Bucket: process.env.AWS_BUCKET_NAME,
-				Key: key,
+				Key: finalKey,
 				Conditions: [
 					['content-length-range', 0, MAX_SIMPLE_UPLOAD_SIZE],
 					['starts-with', '$Content-Type', ''],
@@ -71,18 +102,24 @@ export async function POST(request: Request) {
 				Expires: 3600,
 			});
 
+			console.log('✅ Presigned POST generado correctamente');
+			console.log('🧠 Se guardará en BD:');
+			console.log('   - coverImageKey:', coverImageKey);
+			console.log('   - uploadedFileName:', finalKey);
+
 			return NextResponse.json({
 				url,
 				fields,
-				key,
-				fileName: sanitizedFileName,
+				key: finalKey,
+				fileName: finalKey,
 				uploadType: 'simple',
 				contentType,
+				coverImageKey,
 			});
 		} else {
 			const command = new PutObjectCommand({
 				Bucket: process.env.AWS_BUCKET_NAME,
-				Key: key,
+				Key: finalKey,
 				ContentType: contentType,
 				ContentLength: fileSize,
 				ACL: 'public-read',
@@ -92,16 +129,22 @@ export async function POST(request: Request) {
 				expiresIn: 3600,
 			});
 
+			console.log('✅ Presigned PUT generado correctamente');
+			console.log('🧠 Se guardará en BD:');
+			console.log('   - coverImageKey:', coverImageKey);
+			console.log('   - uploadedFileName:', finalKey);
+
 			return NextResponse.json({
 				url: signedUrl,
-				key,
-				fileName: sanitizedFileName,
+				key: finalKey,
+				fileName: finalKey,
 				uploadType: 'put',
 				contentType,
+				coverImageKey,
 			});
 		}
 	} catch (error) {
-		console.error('Error en la carga (POST):', error);
+		console.error('❌ Error en la carga (POST):', error);
 		return NextResponse.json(
 			{ error: (error as Error).message || 'Error desconocido' },
 			{ status: 500 }
@@ -125,7 +168,6 @@ export async function DELETE(request: Request) {
 			throw new Error('AWS_BUCKET_NAME no está definido');
 		}
 
-		// Eliminar el archivo específico
 		await client.send(
 			new DeleteObjectCommand({
 				Bucket: process.env.AWS_BUCKET_NAME,
@@ -133,11 +175,13 @@ export async function DELETE(request: Request) {
 			})
 		);
 
+		console.log('🗑️ Archivo eliminado de S3:', key);
+
 		return NextResponse.json({
 			message: 'Archivo eliminado con éxito',
 		});
 	} catch (error) {
-		console.error('Error al eliminar el archivo:', error);
+		console.error('❌ Error al eliminar el archivo:', error);
 		return NextResponse.json(
 			{
 				error:
