@@ -10,12 +10,17 @@ import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
-// Propiedades del componente para la lista de preguntas
 interface QuestionListProps {
 	activityId: number;
+	onEdit?: (question: QuestionFilesSubida & { tipo: 'ARCHIVO' }) => void;
+	shouldRefresh?: boolean; // ✅ agregar esta prop
 }
 
-const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
+const QuestionSubidaList: React.FC<QuestionListProps> = ({
+	activityId,
+	onEdit,
+	shouldRefresh,
+}) => {
 	const [questions, setQuestions] = useState<QuestionFilesSubida[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
 		QuestionFilesSubida | undefined
@@ -46,13 +51,19 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
-			toast('Error',{
+			toast('Error', {
 				description: 'Error al cargar las preguntas',
 			});
 		} finally {
 			setLoading(false);
 		}
 	}, [activityId, questions]);
+
+	useEffect(() => {
+		if (shouldRefresh) {
+			void fetchQuestions();
+		}
+	}, [shouldRefresh, fetchQuestions]);
 
 	// Efecto para obtener las preguntas al cargar el componente y hacer polling si estamos editando
 	useEffect(() => {
@@ -75,7 +86,11 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 
 	// Función para editar una pregunta
 	const handleEdit = (question: QuestionFilesSubida) => {
-		setEditingQuestion(question);
+		if (onEdit) {
+			onEdit({ ...question, tipo: 'ARCHIVO' }); // 👈 Pasar a padre con tipo
+		} else {
+			setEditingQuestion(question);
+		}
 	};
 
 	// Función para eliminar una pregunta
@@ -90,13 +105,13 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 			if (response.ok) {
 				// Actualizar el estado local en lugar de hacer fetch
 				setQuestions(questions.filter((q) => q.id !== questionId));
-				toast('Pregunta eliminada',{
+				toast('Pregunta eliminada', {
 					description: 'La pregunta se eliminó correctamente',
 				});
 			}
 		} catch (error) {
 			console.error('Error al eliminar la pregunta:', error);
-			toast('Error',{
+			toast('Error', {
 				description: 'Error al eliminar la pregunta',
 			});
 		}
@@ -121,7 +136,12 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 	// Retorno la vista del componente
 	return (
 		<div className="my-2 space-y-4">
-			<FormActCompletado activityId={activityId} onSubmit={handleFormSubmit} />
+			{!onEdit && (
+				<FormActCompletado
+					activityId={activityId}
+					onSubmit={handleFormSubmit}
+				/>
+			)}
 			{questions.length > 0 ? (
 				questions.map((question) => (
 					<Card key={question.id} className="border-none shadow-lg">

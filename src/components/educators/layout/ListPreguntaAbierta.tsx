@@ -14,9 +14,13 @@ import type { Completado } from '~/types/typesActi';
 // Propiedades del componente para la lista de preguntas
 interface QuestionListProps {
 	activityId: number;
+	onEdit?: (question: Completado & { tipo: 'COMPLETADO' }) => void;
 }
 
-const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
+const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
+	activityId,
+	onEdit,
+}) => {
 	const [questions, setQuestions] = useState<Completado[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
 		Completado | undefined
@@ -61,9 +65,12 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 	}, [fetchQuestions]);
 
-	// Función para editar una pregunta
 	const handleEdit = (question: Completado) => {
-		setEditingQuestion(question);
+		if (onEdit) {
+			onEdit({ ...question, tipo: 'COMPLETADO' }); // pasa al padre con tipo
+		} else {
+			setEditingQuestion(question); // local
+		}
 	};
 
 	// Función para eliminar una pregunta
@@ -121,7 +128,7 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({ activityId }) => {
 	// Retorno la vista del componente
 	return (
 		<div className="my-2 space-y-4">
-			{editingQuestion ? (
+			{!onEdit && editingQuestion ? (
 				<PreguntasAbiertas
 					activityId={activityId}
 					editingQuestion={editingQuestion}

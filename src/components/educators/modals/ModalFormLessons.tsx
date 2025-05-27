@@ -105,9 +105,16 @@ const ModalFormLessons = ({
 	const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referencia al canvas para capturar un frame
 	void setErrors;
 
-	// Modificar el useEffect para inicializar con datos de edición
 	useEffect(() => {
 		if (isEditing && editingLesson) {
+			const hasVideo =
+				!!editingLesson.coverVideoKey && editingLesson.coverVideoKey !== 'none';
+
+			console.log('editingLesson.coverVideoKey:', editingLesson.coverVideoKey);
+			console.log('hasVideo?', hasVideo);
+
+			setNeedsVideo(hasVideo);
+
 			setFormData({
 				title: editingLesson.title ?? '',
 				description: editingLesson.description ?? '',

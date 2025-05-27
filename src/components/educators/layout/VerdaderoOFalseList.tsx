@@ -10,12 +10,15 @@ import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
 import type { VerdaderoOFlaso } from '~/types/typesActi';
 
-// Propiedades del componente para la lista de preguntas
 interface QuestionListProps {
 	activityId: number;
+	onEdit?: (question: VerdaderoOFlaso & { tipo: 'FOV' }) => void;
 }
 
-const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
+const QuestionVOFList: React.FC<QuestionListProps> = ({
+	activityId,
+	onEdit,
+}) => {
 	const [questions, setQuestionsVOF] = useState<VerdaderoOFlaso[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
 		VerdaderoOFlaso | undefined
@@ -56,8 +59,13 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 	}, [fetchQuestions]);
 
 	// Función para editar una pregunta
-	const handleEdit = (questionVOF: VerdaderoOFlaso) => {
-		setEditingQuestion(questionVOF);
+
+	const handleEdit = (question: VerdaderoOFlaso) => {
+		if (onEdit) {
+			onEdit({ ...question, tipo: 'FOV' }); // pasa al padre con tipo
+		} else {
+			setEditingQuestion(question); // local
+		}
 	};
 
 	// Función para eliminar una pregunta
@@ -113,7 +121,7 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({ activityId }) => {
 
 	return (
 		<div className="my-2 space-y-4">
-			{editingQuestion ? (
+			{!onEdit && editingQuestion ? (
 				<QuestionVOFForm
 					activityId={activityId}
 					editingQuestion={editingQuestion}
