@@ -1,29 +1,18 @@
 /**
  * @see https://prettier.io/docs/configuration
- * @type {import("prettier").Config}
+ * @type {import("prettier").Config & import("prettier-plugin-tailwindcss").PluginOptions}
  */
 const config = {
-	// Plugins
-	plugins: ['prettier-plugin-tailwindcss'],
-
-	// Base configuration
-	printWidth: 80,
-	tabWidth: 2,
-	useTabs: true,
-	semi: true,
-	singleQuote: true,
-	trailingComma: 'es5',
-	bracketSpacing: true,
-	bracketSameLine: false,
-	arrowParens: 'always',
-	endOfLine: 'lf',
-	singleAttributePerLine: false,
-
-	// Language-specific settings
-	htmlWhitespaceSensitivity: 'css',
-	jsxSingleQuote: false,
-	proseWrap: 'preserve',
-	embeddedLanguageFormatting: 'auto',
+  plugins: ['prettier-plugin-tailwindcss'],
+  semi: true,
+  singleQuote: true,
+  tabWidth: 2,
+  trailingComma: 'all',
+  printWidth: 80,
+  trailingComma: "es5",
+  bracketSpacing: true,
+  arrowParens: 'always',
+  endOfLine: 'lf',
 };
 
 export default config;
