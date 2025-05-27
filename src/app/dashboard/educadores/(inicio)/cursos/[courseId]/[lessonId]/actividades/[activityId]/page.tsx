@@ -643,16 +643,6 @@ const Page: React.FC = () => {
 												editingQuestion={editingQuestion as VerdaderoOFlaso}
 											/>
 										)}
-									{editingQuestion.tipo === 'COMPLETADO' &&
-										actividadIdNumber !== null && (
-											<PreguntasAbiertas
-												activityId={actividadIdNumber}
-												onSubmit={handleFormSubmit}
-												onCancel={handleCancel}
-												isUploading={false}
-												editingQuestion={undefined} // <- ✅ Tipo correcto
-											/>
-										)}
 								</div>
 							)}
 
@@ -661,19 +651,19 @@ const Page: React.FC = () => {
 									<QuestionVOFList
 										key={`vof-${shouldRefresh}`}
 										activityId={actividadIdNumber}
-										onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
+										onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
+										shouldRefresh={shouldRefresh}
 									/>
+
 									<QuestionList
 										key={`om-${shouldRefresh}`}
 										activityId={actividadIdNumber}
-										onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
+										onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
 									/>
 									<ListPreguntaAbierta
 										key={`abierta-${shouldRefresh}`}
 										activityId={actividadIdNumber}
-										onEdit={(q) =>
-											setEditingQuestion({ ...q, tipo: 'COMPLETADO' })
-										}
+										shouldRefresh={shouldRefresh}
 									/>
 								</>
 							)}

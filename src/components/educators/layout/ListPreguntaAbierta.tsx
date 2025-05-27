@@ -11,15 +11,16 @@ import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
 import type { Completado } from '~/types/typesActi';
 
-// Propiedades del componente para la lista de preguntas
 interface QuestionListProps {
 	activityId: number;
 	onEdit?: (question: Completado & { tipo: 'COMPLETADO' }) => void;
+	shouldRefresh?: boolean; // ✅ NUEVA PROP
 }
 
 const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
 	activityId,
 	onEdit,
+	shouldRefresh,
 }) => {
 	const [questions, setQuestions] = useState<Completado[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
@@ -73,6 +74,12 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
 		}
 	};
 
+	useEffect(() => {
+		if (shouldRefresh) {
+			void fetchQuestions();
+		}
+	}, [shouldRefresh, fetchQuestions]);
+
 	// Función para eliminar una pregunta
 	const handleDelete = async (questionId: string) => {
 		try {
@@ -99,20 +106,14 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
 		}
 	};
 
-	// Función para manejar el envio del formulario
-	const handleFormSubmit = (question: Completado) => {
-		// Actualizamos el estado local inmediatamente
-		if (editingQuestion) {
-			// Si estamos editando, reemplazamos la pregunta existente
-			setQuestions((prevQuestions) =>
-				prevQuestions.map((q) => (q.id === question.id ? question : q))
-			);
-		} else {
-			// Si es una nueva pregunta, la añadimos al array
-			setQuestions((prevQuestions) => [...prevQuestions, question]);
+	// ✅ Arreglado: después de guardar, se limpia la edición y se actualiza la lista
+	const handleFormSubmit = async (question: Completado) => {
+		// Si no se usa onEdit (es controlado localmente)
+		void question; // Asegurarse de que el ID esté definid
+		if (!onEdit) {
+			setEditingQuestion(undefined);
 		}
-		// Hacemos fetch para asegurar sincronización con el servidor
-		void fetchQuestions();
+		await fetchQuestions();
 	};
 
 	// Función para cancelar la edición

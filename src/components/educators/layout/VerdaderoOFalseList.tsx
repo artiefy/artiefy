@@ -13,11 +13,13 @@ import type { VerdaderoOFlaso } from '~/types/typesActi';
 interface QuestionListProps {
 	activityId: number;
 	onEdit?: (question: VerdaderoOFlaso & { tipo: 'FOV' }) => void;
+	shouldRefresh?: boolean; // ⬅ Agregado
 }
 
 const QuestionVOFList: React.FC<QuestionListProps> = ({
 	activityId,
 	onEdit,
+	shouldRefresh,
 }) => {
 	const [questions, setQuestionsVOF] = useState<VerdaderoOFlaso[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
@@ -56,7 +58,7 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
 	// Efecto para obtener las preguntas al cargar el componente
 	useEffect(() => {
 		void fetchQuestions();
-	}, [fetchQuestions]);
+	}, [fetchQuestions, shouldRefresh]);
 
 	// Función para editar una pregunta
 
@@ -95,6 +97,8 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
 	// Función para manejar la submisión del formulario
 	const handleFormSubmit = (question: VerdaderoOFlaso) => {
 		setEditingQuestion(undefined);
+		onEdit?.({ ...question, tipo: 'FOV' }); // <-- si quieres volver a subirlo al padre
+
 		// Actualizamos el estado local inmediatamente
 		if (editingQuestion) {
 			// Si estamos editando, reemplazamos la pregunta existente

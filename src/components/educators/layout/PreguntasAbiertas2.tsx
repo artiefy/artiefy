@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-
 import { toast } from 'sonner';
 
 import { Button } from '~/components/educators/ui/button';
@@ -10,9 +9,6 @@ import { Progress } from '~/components/educators/ui/progress';
 
 import type { Completado2 } from '~/types/typesActi';
 
-//Componente de preguntas abiertas para la actividad de completado2 'No completada'
-
-// Propiedades del componente para las preguntas abiertas
 interface PreguntasAbiertasProps {
 	activityId: number;
 	editingQuestion?: Completado2;
@@ -24,7 +20,6 @@ interface PreguntasAbiertasProps {
 const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 	activityId,
 	editingQuestion,
-	onSubmit,
 	onCancel,
 	isUploading,
 }) => {
@@ -34,74 +29,60 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 		correctAnswer: '',
 		answer: '',
 		pesoPregunta: 0,
-	}); // Estado para los datos del formulario
-	const [uploadProgress, setUploadProgress] = useState<number>(0); // Estado para el progreso de carga
-	const [isVisible, setIsVisible] = useState<boolean>(true); // Estado para la visibilidad del formulario
+	});
 
-	// Efecto para cargar los datos de la pregunta
+	const [uploadProgress, setUploadProgress] = useState<number>(0);
+
 	useEffect(() => {
-		if (editingQuestion) {
-			setFormData(editingQuestion);
-		} else {
-			setFormData({
+		setFormData(
+			editingQuestion ?? {
 				id: '',
 				text: '',
 				correctAnswer: '',
 				answer: '',
 				pesoPregunta: 0,
-			});
-		}
+			}
+		);
 	}, [editingQuestion]);
 
-	// Maneja el cambio en los campos del formulario
 	const handleChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 	) => {
 		const { name, value } = e.target;
-		setFormData((prevData) => ({
-			...prevData,
+		setFormData((prev) => ({
+			...prev,
 			[name]: value,
 		}));
 	};
 
-	const validateTotalPercentage = async (newPesoPregunta: number) => {
-		const response = await fetch(
-			`/api/educadores/question/totalPercentage?activityId=${activityId}`
-		);
-		const data = (await response.json()) as { totalPercentage: number };
-	
-		// Calcula el nuevo total con el cambio (agregar o editar)
-		const totalWithNew = data.totalPercentage + newPesoPregunta - (editingQuestion?.pesoPregunta ?? 0);
-	
-		console.log('Total actual:', data.totalPercentage);
-		console.log('Peso nuevo:', newPesoPregunta);
-		console.log('Peso anterior (si aplica):', editingQuestion?.pesoPregunta ?? 0);
-		console.log('Nuevo total proyectado:', totalWithNew);
-	
-		// Devuelve true si SE EXCEDE el 100%
-		return totalWithNew > 100;
-	};
-	
+	const validateTotalPercentage = async (newPeso: number) => {
+		try {
+			const res = await fetch(
+				`/api/educadores/question/totalPercentage?activityId=${activityId}`
+			);
+			const { totalPercentage } = await res.json();
 
-	// Maneja el envio del formulario para guardar la pregunta
-	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-		event.preventDefault();
-		console.log('Form Data:', formData);
-		const excedeLimite = await validateTotalPercentage(formData.pesoPregunta);
-		if (excedeLimite) {
-			toast('Error', {
-				description: 'El porcentaje total de las preguntas no puede exceder el 100%',
-			});
+			const adjustedTotal =
+				totalPercentage + newPeso - (editingQuestion?.pesoPregunta ?? 0);
+
+			return adjustedTotal > 100;
+		} catch {
+			toast.error('Error validando el porcentaje');
+			return true;
+		}
+	};
+
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		if (await validateTotalPercentage(formData.pesoPregunta)) {
+			toast.error('El porcentaje total no puede superar el 100%');
 			return;
 		}
 
-		setIsVisible(false);
 		const method = editingQuestion ? 'PUT' : 'POST';
-		const questionId = editingQuestion
-			? editingQuestion.id
-			: crypto.randomUUID();
-		console.log('Method:', method);
-		console.log('Question ID:', questionId);
+		const questionId = editingQuestion?.id || crypto.randomUUID();
+
 		setUploadProgress(0);
 		const interval = setInterval(() => {
 			setUploadProgress((prev) => {
@@ -111,146 +92,116 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 				}
 				return prev + 10;
 			});
-		}, 500);
+		}, 300);
 
 		try {
-			const requestBody = {
-				activityId,
-				questionsACompletar2: { ...formData, id: questionId },
-			};
-			console.log('Request Body:', requestBody);
 			const response = await fetch('/api/educadores/question/completar2', {
 				method,
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(requestBody),
+				body: JSON.stringify({
+					activityId,
+					questionsACompletar2: { ...formData, id: questionId },
+				}),
 			});
-			console.log('Response:', response);
-			if (!response.ok) {
-				const errorText = await response.text();
-				throw new Error(`Error en la solicitud: ${errorText}`);
-			}
-			const data = (await response.json()) as {
-				success: boolean;
-				questions: Completado2[];
-			};
-			console.log('Data:', data);
+
+			if (!response.ok) throw new Error(await response.text());
+
+			const data = await response.json();
+
 			if (data.success) {
-				toast('Pregunta guardada', {
-					description: 'La pregunta se guardó correctamente',
-				});
-				onSubmit({ ...formData, id: questionId });
-			} else if (data.success === false) {
-				toast('Error', {
-					description: 'Error al guardar la pregunta',
-				});
+				toast.success('Pregunta guardada correctamente');
+				setTimeout(() => {
+					window.location.reload(); // ✅ Esto garantiza visibilidad inmediata
+				}, 500);
+			} else {
+				toast.error('No se pudo guardar la pregunta');
 			}
-		} catch (error) {
-			console.error('Error al guardar la pregunta:', error);
-			toast('Error', {
-				description: `Error al guardar la pregunta: ${(error as Error).message}`,
-			});
+		} catch (err) {
+			toast.error(`Error: ${(err as Error).message}`);
 		} finally {
 			clearInterval(interval);
 		}
 	};
 
-	// Maneja la cancelación del formulario
 	const handleCancel = () => {
-		if (onCancel) {
-			onCancel();
-		}
-		setIsVisible(false);
+		if (onCancel) onCancel();
+		window.location.reload(); // Cancelar también recarga
 	};
 
-	// Retorno la vista del componente
-	if (!isVisible) {
-		return null;
-	}
-
-	// Retorno la vista del componente
 	return (
-		<>
-			<div className="container my-2 rounded-lg bg-white p-3 text-black shadow-lg">
-				<form onSubmit={handleSubmit}>
-					<div className="flex-col space-y-4 md:flex md:flex-row md:space-x-4">
-						<div className="w-full md:w-3/4">
-							<Label
-								htmlFor="text"
-								className="block text-lg font-medium text-gray-700"
-							>
-								Pregunta
-							</Label>
-							<textarea
-								id="text"
-								name="text"
-								value={formData.text}
-								onChange={handleChange}
-								placeholder="Escribe tu pregunta aquí"
-								required
-								className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
-							/>
-						</div>
-						<div className="w-11/12 md:w-1/4">
-							<Label
-								htmlFor="pesoPregunta"
-								className="block text-lg font-medium text-gray-700"
-							>
-								Porcentaje de la pregunta
-							</Label>
-							<input
-								type="number"
-								id="pesoPregunta"
-								name="pesoPregunta"
-								value={formData.pesoPregunta}
-								onChange={handleChange}
-								min={1}
-								max={100}
-								required
-								className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
-							/>
-						</div>
-					</div>
-					<Label
-						htmlFor="correctAnswer"
-						className="block text-lg font-medium text-gray-700"
-					>
-						Palabra de completado
-					</Label>
-					<Input
-						id="correctAnswer"
-						name="correctAnswer"
-						value={formData.correctAnswer}
+		<div className="my-6 rounded-xl border bg-slate-50 p-6 shadow-lg">
+			<h2 className="mb-4 border-b pb-2 text-xl font-bold text-gray-800">
+				{editingQuestion ? 'Editar Pregunta' : 'Nueva Pregunta de Completado'}
+			</h2>
+
+			<form onSubmit={handleSubmit} className="space-y-6">
+				<div>
+					<Label htmlFor="text">Texto de la Pregunta</Label>
+					<textarea
+						id="text"
+						name="text"
+						value={formData.text}
 						onChange={handleChange}
-						placeholder="Digite aquí la palabra de completado"
-						className="w-full rounded-lg border border-slate-400 p-2 outline-none"
+						placeholder="Ej: La independencia fue en el año _____."
+						required
+						className="w-full rounded-lg border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500"
 					/>
-					{isUploading && (
-						<div className="my-1">
-							<Progress value={uploadProgress} className="w-full" />
-							<p className="mt-2 text-center text-sm text-gray-500">
-								{uploadProgress}% Completado2
-							</p>
-						</div>
-					)}
-					<div className="mt-3 flex justify-end space-x-2">
-						<Button
-							type="button"
-							variant="outline"
-							className="horver:bg-gray-500 text-gray-100 hover:text-gray-800"
-							onClick={handleCancel}
-						>
-							Cancelar
-						</Button>
-						<Button
-							type="submit"
-							className="border-none bg-green-400 text-white hover:bg-green-500"
-						>
-							Enviar
-						</Button>
+				</div>
+
+				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+					<div>
+						<Label htmlFor="correctAnswer">Palabra de Completado</Label>
+						<Input
+							id="correctAnswer"
+							name="correctAnswer"
+							value={formData.correctAnswer}
+							onChange={handleChange}
+							required
+							placeholder="Ej: 1810"
+						/>
 					</div>
-				</form>
-			</div>
-		</>
+					<div>
+						<Label htmlFor="pesoPregunta">Porcentaje</Label>
+						<Input
+							type="number"
+							id="pesoPregunta"
+							name="pesoPregunta"
+							value={formData.pesoPregunta}
+							onChange={handleChange}
+							min={1}
+							max={100}
+							required
+						/>
+					</div>
+				</div>
+
+				{isUploading && (
+					<div className="my-4">
+						<Progress value={uploadProgress} />
+						<p className="text-center text-sm text-gray-500">
+							{uploadProgress}% cargado
+						</p>
+					</div>
+				)}
+
+				<div className="flex justify-end space-x-4">
+					<Button
+						type="button"
+						variant="outline"
+						className="border-gray-300 text-gray-700 hover:bg-gray-100"
+						onClick={handleCancel}
+					>
+						Cancelar
+					</Button>
+					<Button
+						type="submit"
+						className="bg-green-600 text-white hover:bg-green-700"
+					>
+						{editingQuestion ? 'Actualizar' : 'Guardar'}
+					</Button>
+				</div>
+			</form>
+		</div>
 	);
 };
 
