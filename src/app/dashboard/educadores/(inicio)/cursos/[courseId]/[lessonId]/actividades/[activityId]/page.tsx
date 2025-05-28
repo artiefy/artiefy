@@ -223,6 +223,12 @@ const Page: React.FC = () => {
 	}, [courseIdNumber]);
 
 	useEffect(() => {
+		if (actividad?.type.id === 1) {
+			setQuestions(['ARCHIVO']);
+		}
+	}, [actividad]);
+
+	useEffect(() => {
 		if (actividadIdNumber !== null) {
 			fetch(
 				`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
@@ -529,6 +535,14 @@ const Page: React.FC = () => {
 													activityId={actividadIdNumber.toString()}
 												/>
 											</div>
+											{questions.includes('ARCHIVO') && (
+												<FormActCompletado
+													activityId={actividadIdNumber}
+													onSubmit={handleFormSubmit}
+													onCancel={handleCancel}
+												/>
+											)}
+
 											{editingQuestion?.tipo === 'ARCHIVO' &&
 												'parametros' in editingQuestion && (
 													<FormActCompletado
@@ -538,13 +552,25 @@ const Page: React.FC = () => {
 														onCancel={handleCancel}
 													/>
 												)}
+
 											<div className="rounded-lg border border-gray-200 bg-white p-6">
 												<QuestionSubidaList
 													key={`subida-${shouldRefresh}`}
 													activityId={actividadIdNumber}
-													onEdit={(q) =>
-														setEditingQuestion({ ...q, tipo: 'ARCHIVO' })
-													}
+													onEdit={(q) => {
+														if ('parametros' in q) {
+															console.log(
+																'[onEdit] Editando pregunta con parámetros:',
+																q
+															);
+															setEditingQuestion({ ...q, tipo: 'ARCHIVO' });
+														} else {
+															console.warn(
+																'[onEdit] La pregunta no tiene "parametros":',
+																q
+															);
+														}
+													}}
 												/>
 											</div>
 										</>

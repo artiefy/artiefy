@@ -77,7 +77,17 @@ interface ActivityDetails {
 	fechaMaximaEntrega: string | null;
 }
 
-// Definir la interfaz de la actividad
+// Definir la interfaz de los porcentajes
+interface PorcentajeResponse {
+	usado: number;
+	disponible: number;
+	resumen: {
+		opcionMultiple: number;
+		verdaderoFalso: number;
+		completar: number;
+	};
+}
+
 const getContrastYIQ = (hexcolor: string) => {
 	if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
 	hexcolor = hexcolor.replace('#', '');
@@ -99,9 +109,20 @@ const Page: React.FC = () => {
 	const [color, setColor] = useState<string>('#FFFFFF'); // Estado del color
 	const [selectedActivityType, setSelectedActivityType] = useState<string>(''); // Estado del tipo de actividad seleccionado
 	const [questions, setQuestions] = useState<string[]>([]); // Estado de las preguntas
-	const [editingQuestion, setEditingQuestion] = useState<
-		QuestionFilesSubida | Completado | VerdaderoOFlaso | Question | null
-	>(null); // Estado de la edicion de la pregunta
+
+	type TipoPregunta = 'OM' | 'FOV' | 'COMPLETADO' | 'ARCHIVO';
+
+	type EditableQuestion = (
+		| Question
+		| VerdaderoOFlaso
+		| Completado
+		| QuestionFilesSubida
+	) & {
+		tipo: TipoPregunta;
+	};
+
+	const [editingQuestion, setEditingQuestion] =
+		useState<EditableQuestion | null>(null);
 
 	// Convertir los parametros de la URL a numeros
 	const actividadIdString = Array.isArray(actividadIdUrl)
@@ -114,6 +135,15 @@ const Page: React.FC = () => {
 	const lessonIdNumber = lessonIdString ? parseInt(lessonIdString) : null; // Convertir el id de la leccion a numero
 	const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId; // Obtener el id del curso
 	const courseIdNumber = courseIdString ? parseInt(courseIdString) : null; // Convertir el id del curso a numero
+	const [shouldRefresh, setShouldRefresh] = useState(false);
+	const [porcentajeUsado, setPorcentajeUsado] = useState(0);
+	const [porcentajeDisponible, setPorcentajeDisponible] = useState(100);
+
+	const [resumenPorTipo, setResumenPorTipo] = useState({
+		opcionMultiple: 0,
+		verdaderoFalso: 0,
+		completar: 0,
+	});
 
 	// Funcion para cargar la actividad
 	const fetchActividad = useCallback(async () => {
@@ -156,6 +186,35 @@ const Page: React.FC = () => {
 		);
 	}, [fetchActividad]);
 
+	const fetchPorcentajes = useCallback(() => {
+		if (actividadIdNumber !== null) {
+			fetch(
+				`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
+			)
+				.then((res) => res.json() as Promise<PorcentajeResponse>)
+				.then((data) => {
+					setPorcentajeUsado(Number(data.usado));
+					setPorcentajeDisponible(Number(data.disponible));
+					if (
+						typeof data.resumen === 'object' &&
+						data.resumen !== null &&
+						'opcionMultiple' in data.resumen &&
+						'verdaderoFalso' in data.resumen &&
+						'completar' in data.resumen
+					) {
+						setResumenPorTipo({
+							opcionMultiple: Number(data.resumen.opcionMultiple),
+							verdaderoFalso: Number(data.resumen.verdaderoFalso),
+							completar: Number(data.resumen.completar),
+						});
+					}
+				})
+				.catch((err) => {
+					console.error('Error obteniendo porcentajes por tipo:', err);
+				});
+		}
+	}, [actividadIdNumber]);
+
 	// Guardar el color seleccionado en el localStorage
 	useEffect(() => {
 		const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
@@ -163,6 +222,37 @@ const Page: React.FC = () => {
 			setColor(savedColor);
 		}
 	}, [courseIdNumber]);
+
+	useEffect(() => {
+		if (actividad?.type.id === 1) {
+			setQuestions(['ARCHIVO']);
+		}
+	}, [actividad]);
+
+	useEffect(() => {
+		if (actividadIdNumber !== null) {
+			fetch(
+				`/api/educadores/actividades/porcentajes?activityId=${actividadIdNumber}`
+			)
+				.then((res) => res.json() as Promise<PorcentajeResponse>)
+				.then((data) => {
+					setPorcentajeUsado(Number(data.usado));
+					setPorcentajeDisponible(Number(data.disponible));
+					setResumenPorTipo({
+						opcionMultiple: Number(data.resumen.opcionMultiple),
+						verdaderoFalso: Number(data.resumen.verdaderoFalso),
+						completar: Number(data.resumen.completar),
+					});
+				})
+				.catch((err) => {
+					console.error('Error obteniendo porcentajes por tipo:', err);
+				});
+		}
+	}, [actividadIdNumber]);
+
+	useEffect(() => {
+		fetchPorcentajes();
+	}, [shouldRefresh, fetchPorcentajes]);
 
 	// Funcion para eliminar la actividad
 	const handleDeleteAct = async () => {
@@ -214,6 +304,7 @@ const Page: React.FC = () => {
 	const handleFormSubmit = () => {
 		setEditingQuestion(null);
 		setQuestions([]);
+		setShouldRefresh((prev) => !prev);
 	};
 
 	// Funcion para cancelar la edicion de la pregunta
@@ -226,7 +317,7 @@ const Page: React.FC = () => {
 	if (loading) {
 		return (
 			<main className="flex h-screen flex-col items-center justify-center">
-				<div className="border-primary size-32 rounded-full border-y-2">
+				<div className="border-primary size-32 animate-spin rounded-full border-y-2">
 					<span className="sr-only" />
 				</div>
 				<span className="text-primary">Cargando...</span>
@@ -259,7 +350,6 @@ const Page: React.FC = () => {
 			<div className="text-center text-xl">No se encontró la actividad.</div>
 		);
 
-	// Renderizar la pagina
 	return (
 		<>
 			<Breadcrumb>
@@ -267,7 +357,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href="/dashboard/super-admin"
+							href="/dashboard/admin"
 						>
 							Cursos
 						</BreadcrumbLink>
@@ -276,7 +366,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href="/dashboard/super-admin/cursos"
+							href="/dashboard/admin/cursos"
 						>
 							Lista de cursos
 						</BreadcrumbLink>
@@ -285,7 +375,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+							href={`/dashboard/admin/cursos/${courseIdNumber}`}
 						>
 							Detalles curso
 						</BreadcrumbLink>
@@ -293,7 +383,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
+							href={`/dashboard/admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
 						>
 							Lección
@@ -445,14 +535,43 @@ const Page: React.FC = () => {
 													activityId={actividadIdNumber.toString()}
 												/>
 											</div>
-											{editingQuestion && 'parametros' in editingQuestion && (
+											{questions.includes('ARCHIVO') && (
 												<FormActCompletado
 													activityId={actividadIdNumber}
-													editingQuestion={editingQuestion}
+													onSubmit={handleFormSubmit}
+													onCancel={handleCancel}
 												/>
 											)}
+
+											{editingQuestion?.tipo === 'ARCHIVO' &&
+												'parametros' in editingQuestion && (
+													<FormActCompletado
+														activityId={actividadIdNumber}
+														editingQuestion={editingQuestion}
+														onSubmit={handleFormSubmit}
+														onCancel={handleCancel}
+													/>
+												)}
+
 											<div className="rounded-lg border border-gray-200 bg-white p-6">
-												<QuestionSubidaList activityId={actividadIdNumber} />
+												<QuestionSubidaList
+													key={`subida-${shouldRefresh}`}
+													activityId={actividadIdNumber}
+													onEdit={(q) => {
+														if ('parametros' in q) {
+															console.log(
+																'[onEdit] Editando pregunta con parámetros:',
+																q
+															);
+															setEditingQuestion({ ...q, tipo: 'ARCHIVO' });
+														} else {
+															console.warn(
+																'[onEdit] La pregunta no tiene "parametros":',
+																q
+															);
+														}
+													}}
+												/>
 											</div>
 										</>
 									)}
@@ -465,6 +584,27 @@ const Page: React.FC = () => {
 								selectedColor={color}
 								onSelectChange={setSelectedActivityType}
 							/>
+							<div
+								className={`mt-2 text-center text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+							>
+								<p>
+									<strong>Porcentaje usado por tipo de pregunta:</strong>
+								</p>
+								<p>
+									🟡 Opción Múltiple: {resumenPorTipo.opcionMultiple}%, 🔵
+									Verdadero/Falso: {resumenPorTipo.verdaderoFalso}%, 🟢
+									Completar: {resumenPorTipo.completar}%
+								</p>
+								<hr className="my-2" />
+								<p>
+									Total usado: <strong>{porcentajeUsado}%</strong>
+								</p>
+								<p>
+									Porcentaje disponible:{' '}
+									<strong>{porcentajeDisponible}%</strong>
+								</p>
+							</div>
+
 							{selectedActivityType && (
 								<Button
 									className={`mx-auto mb-4 w-2/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 md:w-1/4 lg:w-1/4 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
@@ -473,6 +613,7 @@ const Page: React.FC = () => {
 									Agregar Pregunta
 								</Button>
 							)}
+							{/* Para agregar nuevas preguntas */}
 							{questions.map((questionType, index) => (
 								<div key={index}>
 									{questionType === 'OM' && actividadIdNumber !== null && (
@@ -481,7 +622,7 @@ const Page: React.FC = () => {
 											onSubmit={handleFormSubmit}
 											onCancel={handleCancel}
 											isUploading={false}
-											editingQuestion={editingQuestion as Question}
+											editingQuestion={undefined} // <- ✅ Tipo correcto
 										/>
 									)}
 									{questionType === 'FOV' && actividadIdNumber !== null && (
@@ -490,7 +631,7 @@ const Page: React.FC = () => {
 											onSubmit={handleFormSubmit}
 											onCancel={handleCancel}
 											isUploading={false}
-											editingQuestion={editingQuestion as VerdaderoOFlaso}
+											editingQuestion={undefined} // <- ✅ Tipo correcto
 										/>
 									)}
 									{questionType === 'COMPLETADO' &&
@@ -504,11 +645,52 @@ const Page: React.FC = () => {
 										)}
 								</div>
 							))}
+
+							{/* Para editar una pregunta existente */}
+							{editingQuestion && (
+								<div className="mt-4">
+									{editingQuestion.tipo === 'OM' &&
+										actividadIdNumber !== null && (
+											<QuestionForm
+												activityId={actividadIdNumber}
+												onSubmit={handleFormSubmit}
+												onCancel={handleCancel}
+												isUploading={false}
+												editingQuestion={editingQuestion as Question}
+											/>
+										)}
+									{editingQuestion.tipo === 'FOV' &&
+										actividadIdNumber !== null && (
+											<QuestionVOFForm
+												activityId={actividadIdNumber}
+												onSubmit={handleFormSubmit}
+												onCancel={handleCancel}
+												isUploading={false}
+												editingQuestion={editingQuestion as VerdaderoOFlaso}
+											/>
+										)}
+								</div>
+							)}
+
 							{actividadIdNumber !== null && (
 								<>
-									<QuestionVOFList activityId={actividadIdNumber} />
-									<QuestionList activityId={actividadIdNumber} />
-									<ListPreguntaAbierta activityId={actividadIdNumber} />
+									<QuestionVOFList
+										key={`vof-${shouldRefresh}`}
+										activityId={actividadIdNumber}
+										onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
+										shouldRefresh={shouldRefresh}
+									/>
+
+									<QuestionList
+										key={`om-${shouldRefresh}`}
+										activityId={actividadIdNumber}
+										onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
+									/>
+									<ListPreguntaAbierta
+										key={`abierta-${shouldRefresh}`}
+										activityId={actividadIdNumber}
+										shouldRefresh={shouldRefresh}
+									/>
 								</>
 							)}
 						</>

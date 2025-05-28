@@ -211,6 +211,7 @@ export default function Page() {
 
 		try {
 			setUploading(true);
+			void file;
 
 			setUploading(false);
 		} catch (e: unknown) {

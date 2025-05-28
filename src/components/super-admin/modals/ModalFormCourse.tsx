@@ -190,6 +190,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	void isLoadingModalidades;
 	const isVideo = file instanceof File && file.type.startsWith('video/');
 	const validFile = isFile(file) ? file : null;
+	void validFile;
 
 	const handleFrameImageChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];

@@ -95,7 +95,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 				toast('Pregunta guardada', {
 					description: 'La pregunta se guardó correctamente',
 				});
-				onSubmit?.();
+				window.location.reload(); // 🔁 recarga la página completamente
 			} else if (data.success === false) {
 				toast('Error', {
 					description: 'Error al guardar la pregunta',
