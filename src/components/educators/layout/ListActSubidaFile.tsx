@@ -154,15 +154,70 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
 							/>
 						) : (
 							<>
-								<CardContent className="pt-6">
-									<h3 className="mb-2 text-lg font-semibold">
+								<CardContent className="space-y-4 pt-6">
+									<h3 className="text-lg font-semibold text-gray-800">
 										Pregunta de subida de archivos
 									</h3>
-									<p>Pregunta actividad:</p>
-									<p className="font-bold">{question.text}</p>
-									<p>Parametros de evaluacion:</p>
-									<p className="font-bold">{question.parametros}</p>
+
+									<div>
+										<p className="text-sm text-gray-600">Pregunta:</p>
+										<p className="font-bold text-gray-900">{question.text}</p>
+									</div>
+
+									<div>
+										<p className="text-sm text-gray-600">
+											Criterios de evaluación:
+										</p>
+										<p className="font-bold text-gray-900">
+											{question.parametros}
+										</p>
+									</div>
+
+									{/* Imagen complementaria */}
+									{question.portadaKey && (
+										<div>
+											<p className="mb-1 text-sm text-gray-600">
+												Imagen complementaria:
+											</p>
+											<img
+												src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.portadaKey}`}
+												alt="Imagen complementaria"
+												className="max-h-60 w-full rounded-md border object-cover shadow"
+											/>
+										</div>
+									)}
+
+									{/* Archivo de ayuda */}
+									{question.archivoKey && (
+										<div>
+											<p className="mb-1 text-sm text-gray-600">
+												Archivo de ayuda:
+											</p>
+											{question.archivoKey.endsWith('.mp4') ? (
+												<video
+													controls
+													className="w-full rounded-md shadow"
+													src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}`}
+												/>
+											) : question.archivoKey.match(/\.(pdf|docx?|pptx?)$/i) ? (
+												<iframe
+													src={`https://docs.google.com/gview?url=${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}&embedded=true`}
+													className="h-60 w-full rounded-md border shadow"
+												/>
+											) : (
+												<a
+													href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+												>
+													Abrir archivo
+												</a>
+											)}
+										</div>
+									)}
 								</CardContent>
+
 								<CardFooter className="flex justify-end space-x-2">
 									<Button
 										onClick={() => handleEdit(question)}

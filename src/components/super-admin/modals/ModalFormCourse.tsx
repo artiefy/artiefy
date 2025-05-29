@@ -552,6 +552,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
 			// 3. Guardar en base de datos
 			console.log('🧠 Guardando en BD...');
+
+			
 			console.log('   - coverImageKey:', finalCoverImageKey);
 			console.log('   - uploadedFileName:', finalUploadedFileName);
 

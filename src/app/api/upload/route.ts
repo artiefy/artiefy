@@ -45,8 +45,14 @@ export async function POST(request: Request) {
 
 		const isVideo = contentType.startsWith('video/');
 		const isImage = contentType.startsWith('image/');
-
-		if (!isVideo && !isImage) {
+		const isDoc =
+		contentType === 'application/pdf' ||
+		contentType === 'application/msword' ||
+		contentType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+		contentType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+		contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+	
+	if (!isVideo && !isImage && !isDoc) {
 			throw new Error('❌ Tipo de archivo no permitido');
 		}
 
@@ -101,12 +107,6 @@ export async function POST(request: Request) {
 				},
 				Expires: 3600,
 			});
-
-			console.log('✅ Presigned POST generado correctamente');
-			console.log('🧠 Se guardará en BD:');
-			console.log('   - coverImageKey:', coverImageKey);
-			console.log('   - uploadedFileName:', finalKey);
-
 			return NextResponse.json({
 				url,
 				fields,
