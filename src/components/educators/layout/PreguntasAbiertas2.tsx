@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import { toast } from 'sonner';
 
 import { Button } from '~/components/educators/ui/button';
@@ -15,6 +16,14 @@ interface PreguntasAbiertasProps {
 	onSubmit: (question: Completado2) => void;
 	onCancel?: () => void;
 	isUploading: boolean;
+}
+
+interface TotalPercentageResponse {
+	totalPercentage: number;
+}
+
+interface SaveResponse {
+	success: boolean;
 }
 
 const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
@@ -60,7 +69,9 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 			const res = await fetch(
 				`/api/educadores/question/totalPercentage?activityId=${activityId}`
 			);
-			const { totalPercentage } = await res.json();
+
+			const percentageData = (await res.json()) as TotalPercentageResponse;
+			const { totalPercentage } = percentageData;
 
 			const adjustedTotal =
 				totalPercentage + newPeso - (editingQuestion?.pesoPregunta ?? 0);
@@ -81,7 +92,7 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 		}
 
 		const method = editingQuestion ? 'PUT' : 'POST';
-		const questionId = editingQuestion?.id || crypto.randomUUID();
+		const questionId = editingQuestion?.id ?? crypto.randomUUID();
 
 		setUploadProgress(0);
 		const interval = setInterval(() => {
@@ -106,8 +117,7 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 
 			if (!response.ok) throw new Error(await response.text());
 
-			const data = await response.json();
-
+			const data = (await response.json()) as SaveResponse;
 			if (data.success) {
 				toast.success('Pregunta guardada correctamente');
 				setTimeout(() => {

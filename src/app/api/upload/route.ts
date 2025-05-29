@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import {
 	DeleteObjectCommand,
 	S3Client,
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
 
 		let finalKey = '';
 		let sanitizedBase = '';
-		let fileType: 'video' | 'image' = isVideo ? 'video' : 'image';
+		const fileType: 'video' | 'image' = isVideo ? 'video' : 'image';
 		const extension = fileName.split('.').pop() ?? 'bin';
 
 		// Detectar si ya viene un path limpio como 'uploads/xyz.jpg'

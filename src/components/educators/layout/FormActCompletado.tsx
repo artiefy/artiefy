@@ -1,8 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+
 import { toast } from 'sonner';
+
 import { Button } from '~/components/educators/ui/button';
 import { Progress } from '~/components/educators/ui/progress';
+
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
 interface formSubida {
@@ -10,6 +13,16 @@ interface formSubida {
 	editingQuestion?: QuestionFilesSubida;
 	onSubmit?: () => void;
 	onCancel?: () => void;
+}
+
+interface UploadS3Response {
+	url: string;
+	fields: Record<string, string>;
+	key: string;
+}
+
+interface SaveResponse {
+	success: boolean;
 }
 
 const FormActCompletado: React.FC<formSubida> = ({
@@ -68,12 +81,12 @@ const FormActCompletado: React.FC<formSubida> = ({
 		});
 		if (!res.ok) throw new Error('Error al generar la URL de subida');
 
-		const { url, fields, key } = await res.json();
-
+		const responseJson = (await res.json()) as UploadS3Response;
+		const { url, fields, key } = responseJson;
 		const uploadForm = new FormData();
-		Object.entries(fields).forEach(([k, v]) =>
-			uploadForm.append(k, v as string)
-		);
+		Object.entries(fields).forEach(([k, v]) => {
+			uploadForm.append(k, v);
+		});
 		uploadForm.append('file', file);
 
 		const uploadRes = await fetch(url, {
@@ -125,7 +138,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 				throw new Error(`Error en la solicitud: ${errorText}`);
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as SaveResponse;
 			if (data.success) {
 				toast('Pregunta guardada', {
 					description: 'La pregunta se guardó correctamente',
@@ -178,7 +191,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 					</label>
 					<div className="relative flex items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2 shadow-sm">
 						<span className="truncate text-sm text-gray-500">
-							{file1?.name ||
+							{file1?.name ??
 								'Selecciona un archivo de ayuda (PDF, Word, video...)'}
 						</span>
 						<label className="cursor-pointer rounded-md bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600">
@@ -187,7 +200,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 								type="file"
 								accept=".pdf,.doc,.docx,.ppt,.pptx,video/*,application/*"
 								required={!editingQuestion}
-								onChange={(e) => setFile1(e.target.files?.[0] || null)}
+								onChange={(e) => setFile1(e.target.files?.[0] ?? null)}
 								className="hidden"
 							/>
 						</label>
@@ -201,7 +214,7 @@ const FormActCompletado: React.FC<formSubida> = ({
 					</label>
 					<div className="relative flex items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-2 shadow-sm">
 						<span className="truncate text-sm text-gray-500">
-							{file2?.name || 'Selecciona una imagen complementaria'}
+							{file2?.name ?? 'Selecciona una imagen complementaria'}
 						</span>
 						<label className="cursor-pointer rounded-md bg-purple-500 px-3 py-1 text-sm text-white hover:bg-purple-600">
 							Seleccionar
@@ -209,13 +222,12 @@ const FormActCompletado: React.FC<formSubida> = ({
 								type="file"
 								accept="image/*"
 								required={!editingQuestion}
-								onChange={(e) => setFile2(e.target.files?.[0] || null)}
+								onChange={(e) => setFile2(e.target.files?.[0] ?? null)}
 								className="hidden"
 							/>
 						</label>
 					</div>
 				</div>
-
 
 				{isUploading && (
 					<div className="my-1">

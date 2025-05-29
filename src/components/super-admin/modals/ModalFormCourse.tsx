@@ -108,6 +108,13 @@ interface Modalidad {
 	description: string;
 }
 
+interface UploadResponse {
+	url: string;
+	fields: Record<string, string>;
+	fileName: string;
+	key: string;
+}
+
 function isFile(val: unknown): val is File {
 	return val instanceof File;
 }
@@ -485,7 +492,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					);
 				}
 
-				const uploadData = await uploadResponse.json();
+				const uploadData = (await uploadResponse.json()) as UploadResponse;
 				finalUploadedFileName = uploadData.fileName;
 
 				const formData = new FormData();
@@ -531,7 +538,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 					throw new Error('❌ Error al generar URL para el frame');
 				}
 
-				const frameUploadData = await frameUploadResp.json();
+				const frameUploadData =
+					(await frameUploadResp.json()) as UploadResponse;
 				const frameFormData = new FormData();
 				Object.entries(frameUploadData.fields).forEach(([key, value]) => {
 					frameFormData.append(key, value as string | Blob);
@@ -553,7 +561,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			// 3. Guardar en base de datos
 			console.log('🧠 Guardando en BD...');
 
-			
 			console.log('   - coverImageKey:', finalCoverImageKey);
 			console.log('   - uploadedFileName:', finalUploadedFileName);
 

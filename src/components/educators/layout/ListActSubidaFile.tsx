@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 
+import Image from 'next/image';
+
 import { Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -179,10 +181,13 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
 											<p className="mb-1 text-sm text-gray-600">
 												Imagen complementaria:
 											</p>
-											<img
+											<Image
 												src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.portadaKey}`}
 												alt="Imagen complementaria"
+												width={800} // Ajusta según tu diseño
+												height={450}
 												className="max-h-60 w-full rounded-md border object-cover shadow"
+												style={{ objectFit: 'cover' }}
 											/>
 										</div>
 									)}
@@ -199,7 +204,7 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
 													className="w-full rounded-md shadow"
 													src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}`}
 												/>
-											) : question.archivoKey.match(/\.(pdf|docx?|pptx?)$/i) ? (
+											) : /\.(pdf|docx?|pptx?)$/i.exec(question.archivoKey) ? (
 												<iframe
 													src={`https://docs.google.com/gview?url=${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}&embedded=true`}
 													className="h-60 w-full rounded-md border shadow"
