@@ -20,7 +20,7 @@ const routeMatchers = {
   protectedStudent: createRouteMatcher(['/estudiantes/clases/:id']) as (
     req: Request
   ) => boolean,
-  publicRoutes: createRouteMatcher(['/cursos/:id', '/programas/:id']) as (
+  publicRoutes: createRouteMatcher(['/cursos/:id*', '/programas/:id*']) as (
     req: Request
   ) => boolean,
   protected: createRouteMatcher(['/dashboard(.*)']) as (
