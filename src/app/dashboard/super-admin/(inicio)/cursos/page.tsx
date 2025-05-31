@@ -30,6 +30,9 @@ export interface CourseModel {
 	nivelid: string;
 	totalParametros: number;
 	rating: number;
+	fileName: string;
+	setFileName: (fileName: string) => void;
+	coverVideoCourseKey?: string;
 }
 
 // Define el modelo de datos de los parámetros de evaluación
@@ -87,7 +90,12 @@ export default function Page() {
 					page: 1,
 					limit: initialData.total, // Get all remaining courses
 				});
-				setCourses(allData.data);
+				setCourses(
+					allData.data.map((course) => ({
+						...course,
+						coverVideoCourseKey: course.coverVideoCourseKey ?? null,
+					}))
+				);
 				setIsLoadingMore(false);
 
 				// Get other data in parallel
@@ -187,18 +195,30 @@ export default function Page() {
 		id: string,
 		title: string,
 		description: string,
-		file: File | null, // <-- FALTA
+		file: File | null,
 		categoryid: number,
 		modalidadesid: number,
 		nivelid: number,
 		rating: number,
 		addParametros: boolean,
 		coverImageKey: string,
-		fileName: string, // <-- FALTA
-		courseTypeId: number | null, // <-- FALTA
-		isActive: boolean, // <-- FALTA
-		subjects: { id: number }[] // <-- FALTA
+		fileName: string,
+		courseTypeId: number | null,
+		isActive: boolean,
+		subjects: { id: number }[],
+		coverVideoCourseKey: string | null
 	) => {
+		console.log('🧪 Enviando datos a updateCourse:', {
+			id: Number(id),
+			title,
+			description: description ?? '',
+			coverImageKey,
+			coverVideoCourseKey,
+			categoryid: Number(categoryid),
+			modalidadesid: Number(modalidadesid),
+			nivelid: Number(nivelid),
+			rating,
+		});
 		if (!user) return;
 
 		// Validar que haya al menos un parámetro si addParametros es true
@@ -219,6 +239,18 @@ export default function Page() {
 			throw new Error(`Error to upload the file type ${errorMessage}`);
 		}
 
+		console.log('🧪 Enviando datos a updateCourse:', {
+			id: Number(id),
+			title,
+			description: description ?? '',
+			coverImageKey,
+			coverVideoCourseKey,
+			categoryid: Number(categoryid),
+			modalidadesid: Number(modalidadesid),
+			nivelid: Number(nivelid),
+			rating,
+		});
+
 		try {
 			let response;
 			let responseData: { id: number } | null = null;
@@ -229,20 +261,33 @@ export default function Page() {
 			);
 			const instructorName = selectedEducator?.name ?? '';
 
-			if (id) {
+			if (Number(id)) {
 				response = await updateCourse(Number(id), {
 					title,
 					description: description ?? '',
 					coverImageKey: coverImageKey ?? '',
+					coverVideoCourseKey,
 					categoryid: Number(categoryid),
 					modalidadesid: Number(modalidadesid),
 					nivelid: Number(nivelid),
 					rating,
-					instructor: instructorName, // Use instructor name instead of ID
+					instructor: instructorName,
 				} as CourseData);
 
-				responseData = { id: Number(id) }; // Como es una actualización, el ID ya es conocido
+				responseData = { id: Number(id) };
 			} else {
+				console.log('🧪 Enviando datos a sin id:', {
+					id: Number(id),
+					title,
+					description: description ?? '',
+					coverImageKey: coverImageKey ?? '',
+					coverVideoCourseKey: coverVideoCourseKey ?? '',
+					categoryid: Number(categoryid),
+					modalidadesid: Number(modalidadesid),
+					nivelid: Number(nivelid),
+					rating,
+					instructor: instructorName,
+				});
 				response = await fetch('/api/educadores/courses', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -250,13 +295,13 @@ export default function Page() {
 						title,
 						description,
 						coverImageKey,
+						coverVideoCourseKey,
 						categoryid,
 						modalidadesid,
 						nivelid,
 						rating,
 						instructor: instructorName,
 						subjects,
-						fileName, // <-- incluir si lo usas
 						courseTypeId, // <-- incluir si tu modelo lo soporta
 						isActive,
 					}),
@@ -344,6 +389,7 @@ export default function Page() {
 			nivelid: 0,
 			rating: 0,
 		});
+
 		setParametrosList([]);
 		setIsModalOpen(true);
 	};
@@ -527,7 +573,10 @@ export default function Page() {
 				<ModalFormCourse
 					isOpen={isModalOpen}
 					onCloseAction={handleCloseModal}
-					onSubmitAction={handleCreateOrUpdateCourse}
+					onSubmitAction={(...args) => {
+						console.log('🔥 Modal llamó onSubmitAction', args);
+						return handleCreateOrUpdateCourse(...args);
+					}}
 					uploading={uploading}
 					editingCourseId={editingCourse?.id ?? null}
 					title={editingCourse?.title ?? ''}
@@ -576,6 +625,12 @@ export default function Page() {
 					educators={educators}
 					subjects={subjects}
 					setSubjects={setSubjects}
+					coverVideoCourseKey={editingCourse?.coverVideoCourseKey ?? null}
+					setCoverVideoCourseKey={(val) => {
+						setEditingCourse((prev) =>
+							prev ? { ...prev, coverVideoCourseKey: val } : null
+						);
+					}}
 				/>
 			)}
 		</div>

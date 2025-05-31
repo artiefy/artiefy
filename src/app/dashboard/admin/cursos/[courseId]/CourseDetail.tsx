@@ -54,6 +54,7 @@ interface Course {
 	courseTypeName?: string;
 	isActive: boolean;
 	instructorName: string;
+	coverVideoCourseKey?: string;
 }
 interface Materia {
 	id: number;
@@ -212,6 +213,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [selectedInstructor, setSelectedInstructor] = useState<string>('');
 	const [isUpdating, setIsUpdating] = useState(false);
 	const [currentInstructor, setCurrentInstructor] = useState('');
+	const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<string | null>(null);
+
 
 	// Agregar este nuevo estado
 	const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
@@ -249,6 +252,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					setCourseTypeId(data.courseTypeId ?? null);
 					setCurrentInstructor(data.instructor); // Set current instructor when course loads
 					setSelectedInstructor(data.instructor); // Set selected instructor when course loads
+					setEditCoverVideoCourseKey(data.coverVideoCourseKey ?? null); // 🔧 <-- agregamos esto
+
 
 					const dataParametros =
 						(await responseParametros.json()) as Parametros[]; // Obtener los parámetros
@@ -1031,6 +1036,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				educators={educators}
 				subjects={currentSubjects}
 				setSubjects={setCurrentSubjects}
+				coverVideoCourseKey={editCoverVideoCourseKey}
+				setCoverVideoCourseKey={setEditCoverVideoCourseKey}
 			/>
 		</div>
 	);

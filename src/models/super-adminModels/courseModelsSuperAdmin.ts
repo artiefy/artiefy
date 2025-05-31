@@ -306,7 +306,6 @@ export const updateCourseInstructor = async (
 				updatedInstructor: courses.instructor,
 			});
 
-		console.log('✅ Resultado de la actualización:', result);
 		return result[0];
 	} catch (error) {
 		console.error('❌ Error en updateCourseInstructor:', error);

@@ -371,6 +371,7 @@ export interface CourseData {
 	requiresProgram?: boolean | null;
 	programas?: { id: number; title: string }[];
 	instructorName?: string; // Add instructorName as an optional property
+	coverVideoCourseKey?: string | null;
 }
 
 export interface Materia {
@@ -554,6 +555,8 @@ export async function createCourse(courseData: CourseData) {
 					: new Date(),
 				courseTypeId: courseData.courseTypeId ?? 1, // <-- Aquí colocas un valor seguro por defecto
 				isActive: courseData.isActive ?? true,
+				coverImageKey: courseData.coverImageKey ?? null,
+				coverVideoCourseKey: courseData.coverVideoCourseKey ?? null,
 			})
 			.returning();
 	} catch (error) {
@@ -565,6 +568,14 @@ export async function createCourse(courseData: CourseData) {
 // ✅ Función corregida con `courseId: number`
 export async function updateCourse(courseId: number, courseData: CourseData) {
 	try {
+		console.log('📝 Actualizando curso:');
+		console.log('ID:', courseId);
+		console.log('coverImageKey recibido:', courseData.coverImageKey);
+		console.log(
+			'coverVideoCourseKey recibido:',
+			courseData.coverVideoCourseKey
+		);
+
 		return await db
 			.update(courses)
 			.set({
@@ -573,6 +584,8 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
 				updatedAt: courseData.updatedAt
 					? new Date(courseData.updatedAt)
 					: undefined,
+				coverImageKey: courseData.coverImageKey ?? null,
+				coverVideoCourseKey: courseData.coverVideoCourseKey ?? null,
 			})
 			.where(eq(courses.id, courseId))
 			.returning();

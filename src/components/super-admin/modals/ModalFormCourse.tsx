@@ -42,7 +42,8 @@ interface CourseFormProps {
 		fileName: string,
 		courseTypeId: number | null,
 		isActive: boolean,
-		subjects: { id: number }[]
+		subjects: { id: number }[],
+		coverVideoCourseKey: string | null
 	) => Promise<void>;
 	uploading: boolean;
 	editingCourseId: number | null;
@@ -58,6 +59,8 @@ interface CourseFormProps {
 	setNivelid: (nivelid: number) => void;
 	coverImageKey: string;
 	setCoverImageKey: (coverImageKey: string) => void;
+	coverVideoCourseKey: string | null;
+	setCoverVideoCourseKey: (val: string | null) => void;
 	parametros: {
 		id: number;
 		name: string;
@@ -113,13 +116,13 @@ interface UploadResponse {
 	fields: Record<string, string>;
 	fileName: string;
 	key: string;
+	coverImageKey?: string; // Added this property
 }
 
 function isFile(val: unknown): val is File {
 	return val instanceof File;
 }
 
-// Componente ModalFormCourse
 const ModalFormCourse: React.FC<CourseFormProps> = ({
 	onSubmitAction,
 	uploading,
@@ -137,20 +140,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	nivelid,
 	setNivelid,
 	coverImageKey,
-	parametros = [],
+	coverVideoCourseKey,
+	setCoverVideoCourseKey, // <-- AQUI EL FALTANTE 🔧
+	parametros,
 	setParametrosAction,
 	isOpen,
 	onCloseAction,
 	courseTypeId,
 	setCourseTypeId,
-	isActive, // <-- agrega esto
+	isActive,
 	setIsActive,
 	setInstructor,
 	educators = [],
 	instructor,
 	subjects,
 	setSubjects,
-	defaultAddParametros = false, // Agregar este prop con valor por defecto
+	defaultAddParametros = false,
 }) => {
 	const [file, setFile] = useState<File | null>(null as File | null); // Estado para el archivo
 	const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
@@ -180,7 +185,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 	const [uploadProgress, setUploadProgress] = useState(0); // Estado para el progreso de subida
 	const [isUploading, setIsUploading] = useState(false); // Estado para la subida
 	const [modifiedFields, setModifiedFields] = useState<Set<string>>(new Set()); // Estado para los campos modificados
-	const [currentCoverImageKey] = useState(coverImageKey); // Estado para la imagen de portada
 	const [uploadController, setUploadController] =
 		useState<AbortController | null>(null); // Estado para el controlador de subida
 	const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
@@ -422,7 +426,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		console.log('📦 Iniciando envío del formulario');
 		console.log('🎓 Instructor seleccionado:', instructor);
 
-		// Validaciones de campos
 		const newErrors = {
 			title: !editingCourseId && !title,
 			description: !editingCourseId && !description,
@@ -432,7 +435,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			nivelid: !editingCourseId && !nivelid,
 			nivel: false,
 			rating: !editingCourseId && !rating,
-			file: !editingCourseId && !file && !currentCoverImageKey,
+			file: !editingCourseId && !file && !coverImageKey,
 			modalidad: false,
 		};
 
@@ -448,7 +451,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			newErrors.rating = modifiedFields.has('rating') && !rating;
 		}
 
-		// Validar suma de porcentajes
 		const sumaPorcentajes = parametros.reduce(
 			(acc, parametro) => acc + parametro.porcentaje,
 			0
@@ -469,13 +471,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 		setIsEditing(true);
 		setIsUploading(true);
 
-		try {
-			let finalCoverImageKey = currentCoverImageKey ?? '';
-			let finalUploadedFileName = fileName ?? '';
+		let finalVideoKey: string | null = null;
+		let finalCoverImageKey = coverImageKey ?? '';
+		let finalUploadedFileName = fileName ?? '';
 
-			// 1. Subir archivo principal (video o imagen)
+		try {
 			if (file) {
-				console.log('📂 Subiendo archivo principal:', file.name);
 				const uploadResponse = await fetch('/api/upload', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
@@ -496,26 +497,29 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				finalUploadedFileName = uploadData.fileName;
 
 				const formData = new FormData();
+				if (!uploadData.fields) {
+					throw new Error(
+						'La respuesta de /api/upload no contiene los fields esperados'
+					);
+				}
 				Object.entries(uploadData.fields).forEach(([key, value]) => {
 					formData.append(key, value as string | Blob);
 				});
 				formData.append('file', file);
 
-				await fetch(uploadData.url, {
-					method: 'POST',
-					body: formData,
-				});
+				await fetch(uploadData.url, { method: 'POST', body: formData });
 
-				console.log('✅ Archivo principal subido:', uploadData.fileName);
-
-				// Si no es video, se usa este archivo como imagen de portada
-				if (!isVideo) {
+				if (isVideo) {
+					finalVideoKey = uploadData.key;
+					setCoverVideoCourseKey(uploadData.key);
+					finalCoverImageKey = uploadData.coverImageKey ?? '';
+				} else {
 					finalCoverImageKey = uploadData.key;
-					console.log('🖼️ Imagen usada como portada:', finalCoverImageKey);
+					setCoverImage(uploadData.key);
 				}
 			}
 
-			// 2. Si es video y hay frame, subir frame y usarlo como portada
+			// Subida de frame si es video
 			if (isVideo && frameImageFile && finalUploadedFileName) {
 				console.log('🎬 Video detectado, subiendo frame...');
 				const baseName = finalUploadedFileName
@@ -558,11 +562,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				);
 			}
 
-			// 3. Guardar en base de datos
 			console.log('🧠 Guardando en BD...');
-
-			console.log('   - coverImageKey:', finalCoverImageKey);
+			console.log('   - coverImageKey:', coverImageKey);
 			console.log('   - uploadedFileName:', finalUploadedFileName);
+			console.log('   - videoKey:', finalVideoKey);
 
 			await onSubmitAction(
 				editingCourseId ? editingCourseId.toString() : '',
@@ -574,11 +577,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 				nivelid,
 				rating,
 				addParametros,
-				finalCoverImageKey,
+				finalCoverImageKey, // ✅
 				finalUploadedFileName,
 				courseTypeId,
 				isActive,
-				subjects
+				subjects,
+				finalVideoKey
 			);
 
 			if (controller.signal.aborted) {
@@ -719,6 +723,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			setCoverImage(coverImageKey);
 			setCourseTypeId(courseTypeId ?? null);
 			setIsActive(isActive);
+			if (setCoverVideoCourseKey) {
+				setCoverVideoCourseKey(coverVideoCourseKey);
+			}
 		}
 	}, [editingCourseId]);
 
@@ -956,18 +963,27 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 								}`}
 							>
 								<div className="text-center text-white">
-									{!file && coverImage ? (
+									{!file && (coverVideoCourseKey || coverImage) ? (
 										<div className="relative overflow-hidden rounded-lg bg-gray-800">
-											<Image
-												src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImage}`}
-												alt="current cover"
-												width={500}
-												height={200}
-												className="h-48 w-full object-cover"
-											/>
+											{coverVideoCourseKey ? (
+												<video
+													src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverVideoCourseKey}`}
+													controls
+													className="h-48 w-full object-cover"
+												/>
+											) : (
+												<Image
+													src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImage}`}
+													alt="current cover"
+													width={500}
+													height={200}
+													className="h-48 w-full object-cover"
+												/>
+											)}
 											<button
 												onClick={() => {
 													setCoverImage(null);
+													setCoverVideoCourseKey(null);
 													setErrors((prev) => ({ ...prev, file: true }));
 												}}
 												className="absolute top-2 right-2 z-20 rounded-full bg-red-600 p-1 text-white hover:bg-red-400"
@@ -1019,14 +1035,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 															Portada del video
 														</label>
 														<div className="flex flex-col items-start gap-3 md:flex-row md:items-center">
-															{/* Subida manual */}
 															<input
 																type="file"
 																accept="image/*"
 																onChange={handleFrameImageChange}
 																className="text-sm text-white"
 															/>
-															{/* Captura automática */}
 															<button
 																type="button"
 																onClick={() => {
@@ -1052,9 +1066,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 																				const captured = new File(
 																					[blob],
 																					'captura.jpg',
-																					{
-																						type: 'image/jpeg',
-																					}
+																					{ type: 'image/jpeg' }
 																				);
 																				setFrameImageFile(captured);
 																				toast.success(
@@ -1070,7 +1082,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 															</button>
 														</div>
 
-														{/* Miniatura */}
 														{frameImageFile && (
 															<div className="mt-3 flex flex-col items-start gap-2">
 																<p className="text-sm text-gray-300">
@@ -1097,7 +1108,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 												/>
 											)}
 
-											{/* Botón eliminar archivo */}
 											<button
 												onClick={() => {
 													setFile(null);
@@ -1110,7 +1120,6 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 												<MdClose className="z-20 size-5" />
 											</button>
 
-											{/* Nombre y tamaño */}
 											<div className="flex justify-between px-2 pt-2 text-sm text-gray-400">
 												<p className="truncate">{fileName}</p>
 												<p>{((fileSize ?? 0) / 1024).toFixed(2)} KB</p>

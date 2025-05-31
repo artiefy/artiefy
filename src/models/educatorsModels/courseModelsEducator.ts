@@ -63,6 +63,7 @@ interface CreateCourseData {
 	title: string;
 	description: string;
 	coverImageKey: string;
+	coverVideoCourseKey?: string; // ✅ Agrega esto
 	categoryid: number;
 	modalidadesid: number;
 	nivelid: number;
@@ -99,6 +100,7 @@ export async function createCourse(data: CreateCourseData) {
 				title: data.title,
 				description: data.description,
 				coverImageKey: data.coverImageKey,
+				coverVideoCourseKey: data.coverVideoCourseKey, // ✅ aquí
 				categoryid: data.categoryid,
 				modalidadesid: data.modalidadesid,
 				nivelid: data.nivelid,
@@ -197,6 +199,7 @@ export const getCourseById = async (courseId: number) => {
 				isActive: courses.isActive,
 				instructorName: users.name, // Fetch instructor name
 				instructorEmail: users.email, // Fetch instructor email
+				coverVideoCourseKey: courses.coverVideoCourseKey, // 👈 AGREGA ESTA LÍNEA
 			})
 			.from(courses)
 			.leftJoin(users, eq(courses.instructor, users.id)) // Properly join the users table
@@ -299,6 +302,7 @@ export const updateCourse = async (
 		rating?: number;
 		courseTypeId?: number;
 		isActive?: boolean;
+		coverVideoCourseKey?: string;
 	}
 ) => {
 	console.log('🔄 Actualizando curso:', courseId, 'con datos:', updateData);

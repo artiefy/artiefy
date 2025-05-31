@@ -121,16 +121,19 @@ export async function POST(request: NextRequest) {
 			title: string;
 			description: string;
 			coverImageKey?: string;
+			coverVideoCourseKey?: string; // ✅ nuevo
 			categoryid: number;
 			modalidadesid: number;
 			nivelid: number;
 			instructorId?: string;
 		};
+		console.log('📦 Datos recibidos en el backend:', body);
 
 		const {
 			title,
 			description,
 			coverImageKey = '',
+			coverVideoCourseKey = undefined,
 			categoryid,
 			modalidadesid,
 			nivelid,
@@ -153,6 +156,7 @@ export async function POST(request: NextRequest) {
 			description,
 			creatorId: userId,
 			coverImageKey,
+			coverVideoCourseKey, // ✅ nuevo
 			categoryid,
 			modalidadesid,
 			nivelid,
