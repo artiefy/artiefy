@@ -220,6 +220,7 @@ export default function Page() {
 			rating,
 		});
 		if (!user) return;
+		void fileName;
 
 		// Validar que haya al menos un parámetro si addParametros es true
 		if (addParametros && parametrosList.length === 0) {
