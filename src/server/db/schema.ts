@@ -70,6 +70,7 @@ export const courses = pgTable('courses', {
 	title: varchar('title', { length: 255 }).notNull(),
 	description: text('description'),
 	coverImageKey: text('cover_image_key').default(sql`NULL`), // Changed from .default(null)
+	coverVideoCourseKey: text('cover_video_course_key').default(sql`NULL`),
 	categoryid: integer('categoryid')
 		.references(() => categories.id)
 		.notNull(),
@@ -784,27 +785,28 @@ export const ticketAssignees = pgTable('ticket_assignees', {
 	createdAt: timestamp('created_at').defaultNow(),
 });
 
-
 export const ticketsRelations = relations(tickets, ({ one, many }) => ({
 	creator: one(users, {
 		fields: [tickets.creatorId],
 		references: [users.id],
 	}),
-	assignees: many(ticketAssignees),	
+	assignees: many(ticketAssignees),
 	comments: many(ticketComments),
 }));
 
-export const ticketAssigneesRelations = relations(ticketAssignees, ({ one }) => ({
-	ticket: one(tickets, {
-		fields: [ticketAssignees.ticketId],
-		references: [tickets.id],
-	}),
-	user: one(users, {
-		fields: [ticketAssignees.userId],
-		references: [users.id],
-	}),
-}));
-
+export const ticketAssigneesRelations = relations(
+	ticketAssignees,
+	({ one }) => ({
+		ticket: one(tickets, {
+			fields: [ticketAssignees.ticketId],
+			references: [tickets.id],
+		}),
+		user: one(users, {
+			fields: [ticketAssignees.userId],
+			references: [users.id],
+		}),
+	})
+);
 
 export const ticketCommentsRelations = relations(ticketComments, ({ one }) => ({
 	ticket: one(tickets, {
@@ -847,4 +849,44 @@ export const chatMessagesWithConversation = pgTable(
 	}
 );
 
+// Tabla de roles secundarios
+export const rolesSecundarios = pgTable('roles_secundarios', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(),
+	createdAt: timestamp('created_at').defaultNow(),
+});
 
+// Tabla de permisos
+export const permisos = pgTable('permisos', {
+	id: serial('id').primaryKey(),
+	name: varchar('name', { length: 255 }).notNull(), // Este puede mantenerse como identificador único si lo deseas
+	description: text('description'),
+	servicio: varchar('servicio', { length: 100 }).notNull(), // Ej: 'cursos', 'usuarios'
+	accion: text('accion', {
+		enum: [
+			'create',
+			'read',
+			'update',
+			'delete',
+			'approve',
+			'assign',
+			'publish',
+		],
+	}).notNull(), // Esto establece las acciones válidas
+});
+
+// Relación N:M entre roles_secundarios y permisos
+export const roleSecundarioPermisos = pgTable(
+	'role_secundario_permisos',
+	{
+		roleId: integer('role_id')
+			.references(() => rolesSecundarios.id)
+			.notNull(),
+		permisoId: integer('permiso_id')
+			.references(() => permisos.id)
+			.notNull(),
+	},
+	(table) => ({
+		pk: primaryKey({ columns: [table.roleId, table.permisoId] }),
+	})
+);

@@ -102,7 +102,7 @@
     },
     {
       "rule": "@typescript-eslint/no-unused-vars",
-      "severity": "warn"
+      "severity": "off"
     }
   ],
   // Tailwind CSS Configuration

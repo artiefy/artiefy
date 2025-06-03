@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState, type MouseEvent } from 'react';
+
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -20,7 +21,6 @@ import {
   FaFileWord,
   FaLink,
   FaTrophy,
-  FaGoogleDrive,
 } from 'react-icons/fa';
 import { FaRegFileImage } from 'react-icons/fa6';
 import { toast } from 'sonner';
@@ -108,6 +108,12 @@ interface FilePreview {
   status: 'uploading' | 'complete' | 'error';
 }
 
+// Add this interface near the other interfaces at the top of the file
+interface UrlSubmissionState {
+  isUploading: boolean;
+  setIsUploading: (value: boolean) => void;
+}
+
 // Add this interface near the other interfaces
 interface FileSubmissionResponse {
   submission: StoredFileInfo | null;
@@ -160,25 +166,28 @@ interface SubmissionTab {
   icon: React.JSX.Element;
 }
 
-// Add submissionTabs constant
+// Update submissionTabs constant
 const submissionTabs: SubmissionTab[] = [
   {
     id: 'local',
     label: 'Archivo Local',
-    icon: <Icons.arrowUpTray className="h-4 w-4" />, // Use arrowUpTray instead of upload
+    icon: <Icons.arrowUpTray className="h-4 w-4" />,
   },
   {
-    id: 'drive',
-    label: 'Google Drive',
-    icon: <FaGoogleDrive className="h-4 w-4" />,
+    id: 'drive', // Keep the id the same for compatibility
+    label: 'Archivo URL',
+    icon: <FaLink className="h-4 w-4" />, // Changed from FaGoogleDrive to FaLink
   },
 ];
 
-// Add validateDriveUrl function
-const validateDriveUrl = (url: string): boolean => {
-  const drivePattern =
-    /^https:\/\/drive\.google\.com\/(file\/d\/|drive\/u\/\d+\/folders\/|open\?id=)[\w-]+/;
-  return drivePattern.test(url);
+// Replace the validateDriveUrl function with this more generic one
+const validateUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 export function LessonActivityModal({
@@ -223,6 +232,8 @@ export function LessonActivityModal({
   const [activeTab, setActiveTab] = useState<'local' | 'drive'>('local');
   const [driveUrl, setDriveUrl] = useState('');
   const [isUrlValid, setIsUrlValid] = useState(false);
+  // Add new state for URL uploading
+  const [isUploadingUrl, setIsUploadingUrl] = useState(false);
 
   useEffect(() => {
     if (activity?.content?.questions) {
@@ -1222,7 +1233,7 @@ export function LessonActivityModal({
 
     const isFirstSubmission = !activity.isCompleted;
     const shouldShowUnlockButton =
-      isFirstSubmission && isLastActivityInLesson && !isLastLesson;
+      (isFirstSubmission || isNewUpload) && (isLastActivityInLesson && !isLastLesson);
 
     return (
       <div className="mt-4">
@@ -1316,7 +1327,7 @@ export function LessonActivityModal({
             <div className="border-t border-gray-700 bg-slate-900/95 p-6">
               {shouldShowUnlockButton ? (
                 <Button
-                  onClick={handleFinishAndNavigate} // Changed to directly use handleFinishAndNavigate
+                  onClick={handleFinishAndNavigate}
                   disabled={isUnlocking}
                   className="w-full bg-green-500 text-white hover:bg-green-600"
                 >
@@ -1341,7 +1352,6 @@ export function LessonActivityModal({
                       await markActivityAsCompletedAction();
                       await onActivityCompletedAction();
                     }
-                    // Only show success toast if this was a new upload
                     if (isNewUpload) {
                       toast.success('Actividad completada');
                       setIsNewUpload(false);
@@ -1353,6 +1363,7 @@ export function LessonActivityModal({
                   Cerrar
                 </Button>
               )}
+              
               <Button
                 onClick={() => {
                   // Mostrar confirmación antes de reiniciar
@@ -1436,7 +1447,7 @@ export function LessonActivityModal({
                     {activity.description}
                   </p>
                 </div>
-                
+
                 {/* Tabs for submission type selection */}
                 <div className="mb-6 flex space-x-2">
                   {submissionTabs.map((tab) => (
@@ -1575,33 +1586,186 @@ export function LessonActivityModal({
                     <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
                       <input
                         type="url"
-                        placeholder="Pega la URL de Google Drive aquí"
+                        placeholder="Pega cualquier URL aquí"
                         value={driveUrl}
                         onChange={(e) => {
-                          setDriveUrl(e.target.value);
-                          setIsUrlValid(validateDriveUrl(e.target.value));
+                          const url = e.target.value;
+                          setDriveUrl(url);
+                          setIsUrlValid(validateUrl(url));
                         }}
-                        className="w-full bg-transparent text-white placeholder:text-gray-400 focus:outline-none"
+                        disabled={!!uploadedFileInfo || isUploadingUrl}
+                        className={`w-full bg-transparent text-white placeholder:text-gray-400 focus:outline-none ${
+                          uploadedFileInfo || isUploadingUrl
+                            ? 'cursor-not-allowed opacity-50'
+                            : ''
+                        }`}
                       />
                     </div>
-                    <button
-                      onClick={handleDriveSubmit(
-                        driveUrl,
-                        activity,
-                        userId,
-                        setUploadedFileInfo,
-                        setIsNewUpload,
-                        setShowResults
+                    {driveUrl &&
+                      !isUrlValid &&
+                      !uploadedFileInfo &&
+                      !isUploadingUrl && (
+                        <p className="text-sm text-red-500">
+                          Por favor ingresa una URL válida
+                        </p>
                       )}
-                      disabled={!isUrlValid}
-                      className={`w-full rounded-lg px-4 py-2 transition-all ${
-                        isUrlValid
-                          ? 'bg-cyan-500 text-white hover:bg-cyan-600'
-                          : 'cursor-not-allowed bg-gray-700 text-gray-400'
-                      }`}
-                    >
-                      Guardar URL
-                    </button>
+                    {!uploadedFileInfo ? (
+                      <button
+                        onClick={handleDriveSubmit(
+                          driveUrl,
+                          activity,
+                          userId,
+                          setUploadedFileInfo,
+                          setIsNewUpload,
+                          setShowResults,
+                          {
+                            isUploading: isUploadingUrl,
+                            setIsUploading: setIsUploadingUrl,
+                          }
+                        )}
+                        disabled={!isUrlValid || isUploadingUrl}
+                        className={`w-full rounded-lg px-4 py-2 transition-all ${
+                          isUrlValid && !isUploadingUrl
+                            ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+                            : 'cursor-not-allowed bg-gray-700 text-gray-400'
+                        }`}
+                      >
+                        {isUploadingUrl ? (
+                          <div className="flex items-center justify-center">
+                            <Icons.spinner className="mr-2 h-4 w-4" />
+                            <span>Guardando URL...</span>
+                          </div>
+                        ) : (
+                          'Guardar URL'
+                        )}
+                      </button>
+                    ) : (
+                      // Show submission status for URL
+                      <div className="mt-4">
+                        <div className="rounded-xl bg-slate-900/50">
+                          <div className="flex flex-col">
+                            <div className="p-6">
+                              <div className="mb-6 flex items-center justify-between">
+                                <div className="flex flex-col">
+                                  <h3 className="text-lg font-semibold text-white">
+                                    Subido
+                                  </h3>
+                                </div>
+                                <span className="rounded-full bg-yellow-100 px-4 py-2 text-sm font-medium text-yellow-800">
+                                  En Revisión
+                                </span>
+                              </div>
+
+                              <div className="overflow-hidden rounded-lg">
+                                <div className="space-y-4">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between px-4">
+                                      <span className="text-sm font-semibold text-gray-200">
+                                        Archivo
+                                      </span>
+                                      <Image
+                                        src="/contract-pending-line-svgrepo-com.png"
+                                        alt="En revisión"
+                                        width={40}
+                                        height={40}
+                                        className="text-yellow-500"
+                                      />
+                                    </div>
+                                    <div className="px-4">
+                                      <span className="text-sm text-gray-300">
+                                        {uploadedFileInfo.fileName}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-between px-4 py-2">
+                                    <span className="text-sm font-medium text-white">
+                                      Fecha De Subida:
+                                    </span>
+                                    <span className="text-sm text-gray-400">
+                                      {new Date(
+                                        uploadedFileInfo.uploadDate
+                                      ).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="mt-6 border-t border-gray-700 pt-4">
+                                <div className="flex items-center justify-between px-4">
+                                  <span className="text-sm text-gray-300">
+                                    Calificación del Educador:
+                                  </span>
+                                  <span className="text-lg font-bold text-white">
+                                    {uploadedFileInfo?.grade
+                                      ? formatScore(uploadedFileInfo.grade)
+                                      : '0.0'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Action buttons */}
+                            <div className="border-t border-gray-700 bg-slate-900/95 p-6">
+                              <Button
+                                onClick={async () => {
+                                  if (
+                                    !isLastActivityInLesson &&
+                                    !activity.isCompleted
+                                  ) {
+                                    await markActivityAsCompletedAction();
+                                    await onActivityCompletedAction();
+                                  }
+                                  // Only show success toast if this was a new upload
+                                  if (isNewUpload) {
+                                    toast.success('Actividad completada');
+                                    setIsNewUpload(false);
+                                  }
+                                  onCloseAction();
+                                }}
+                                className="w-full bg-blue-500 text-white hover:bg-blue-600"
+                              >
+                                Cerrar
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  // Mostrar confirmación antes de reiniciar
+                                  if (uploadedFileInfo?.status === 'reviewed') {
+                                    const confirmed = window.confirm(
+                                      'Al subir una nueva URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
+                                    );
+                                    if (!confirmed) return;
+                                  }
+
+                                  setUploadedFileInfo(null);
+                                  setDriveUrl('');
+                                  setIsUrlValid(false);
+                                  setShowResults(false);
+                                }}
+                                className="mt-2 w-full bg-yellow-500 text-white hover:bg-yellow-600"
+                              >
+                                <span className="flex items-center justify-center gap-2">
+                                  Subir Documento Nuevamente
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                    />
+                                  </svg>
+                                </span>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1678,8 +1842,13 @@ export function LessonActivityModal({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
+        // Prevent closing if it's a document upload activity
+        if (!open && activity.typeid === 1) {
+          return; // This prevents the modal from closing
+        }
+
+        // For other activity types, use existing logic
         if (!open) {
-          // Update close handler
           if (activity.typeid === 1) {
             if (isNewUpload) {
               toast.success('Actividad completada');
@@ -1889,7 +2058,15 @@ async function handleUpload({
   }
 }
 
-// Add handleDriveSubmit function
+// Add interface for API response
+interface UrlSubmissionApiResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+  submission?: StoredFileInfo;
+}
+
+// Update handleDriveSubmit function with proper error handling
 const handleDriveSubmit =
   (
     driveUrl: string,
@@ -1897,13 +2074,16 @@ const handleDriveSubmit =
     userId: string,
     setUploadedFileInfo: (info: StoredFileInfo | null) => void,
     setIsNewUpload: (value: boolean) => void,
-    setShowResults: (value: boolean) => void
+    setShowResults: (value: boolean) => void,
+    uploadState: UrlSubmissionState
   ) =>
-  async (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  async () => {
+    const { setIsUploading } = uploadState;
+    setIsUploading(true);
+
     try {
       const submission = {
-        fileName: 'Google Drive Document',
+        fileName: 'URL Document',
         fileUrl: driveUrl,
         uploadDate: new Date().toISOString(),
         status: 'pending' as const,
@@ -1921,14 +2101,31 @@ const handleDriveSubmit =
         }),
       });
 
-      if (!response.ok) throw new Error('Error al guardar la URL');
+      const apiResponse = (await response.json()) as UrlSubmissionApiResponse;
 
-      setUploadedFileInfo(submission);
+      if (!response.ok) {
+        throw new Error(apiResponse.error ?? 'Error al guardar la URL');
+      }
+
+      setUploadedFileInfo({
+        fileName: 'URL Document',
+        fileUrl: driveUrl,
+        uploadDate: new Date().toISOString(),
+        status: 'pending',
+        submissionType: 'url',
+        url: driveUrl,
+        grade: 0.0,
+      });
       setIsNewUpload(true);
       setShowResults(true);
-      toast.success('URL de Google Drive guardada correctamente');
+      toast.success('URL guardada correctamente');
     } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al guardar la URL');
+      // Proper error handling
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error al guardar la URL';
+      console.error('Error:', errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsUploading(false);
     }
   };

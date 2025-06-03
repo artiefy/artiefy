@@ -11,44 +11,44 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-interface UrlSubmissionRequest {
+interface SubmissionData {
+  fileName: string;
+  fileUrl: string;
+  uploadDate: string;
+  status: 'pending' | 'reviewed';
+  submissionType: 'url';
+  url: string;
+}
+
+interface RequestBody {
   activityId: number;
   userId: string;
-  submissionData: {
-    url: string;
-    type: 'drive';
-    uploadDate: string;
-    status: 'pending' | 'reviewed';
-  };
+  submissionData: SubmissionData;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const rawBody: unknown = await request.json();
+    const body = (await request.json()) as RequestBody;
+    const { activityId, userId, submissionData } = body;
 
-    if (!isValidUrlSubmission(rawBody)) {
+    if (!activityId || !userId || !submissionData?.url) {
       return NextResponse.json(
-        { success: false, error: 'Invalid request format' },
+        { success: false, error: 'Invalid request data' },
         { status: 400 }
       );
     }
 
-    const { activityId, userId, submissionData } = rawBody;
+    // Save in Upstash with the same structure as file submissions
+    const submissionKey = `activity:${activityId}:user:${userId}:submission`;
+    const submission = {
+      ...submissionData,
+      grade: 0.0,
+      feedback: null,
+    };
 
-    // Save in Upstash with reset values
-    const submissionKey = `activity:${activityId}:user:${userId}:urlsubmission`;
-    await redis.set(
-      submissionKey,
-      {
-        ...submissionData,
-        grade: 0.0,
-        status: 'pending',
-        feedback: null,
-      },
-      { ex: 2592000 } // 30 days expiration
-    );
+    await redis.set(submissionKey, submission, { ex: 2592000 }); // 30 days expiration
 
-    // Update database progress
+    // Update activity progress in the database
     await db
       .insert(userActivitiesProgress)
       .values({
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'URL guardada correctamente',
-      url: submissionData.url,
+      submission,
     });
   } catch (error) {
     console.error('Error saving URL submission:', error);
@@ -88,28 +88,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function isValidUrlSubmission(data: unknown): data is UrlSubmissionRequest {
-  if (!data || typeof data !== 'object') return false;
-
-  const submission = data as Partial<UrlSubmissionRequest>;
-
-  const hasValidTypes = Boolean(
-    typeof submission.activityId === 'number' &&
-      typeof submission.userId === 'string' &&
-      submission.submissionData &&
-      typeof submission.submissionData === 'object' &&
-      typeof submission.submissionData.url === 'string' &&
-      submission.submissionData.type === 'drive' &&
-      typeof submission.submissionData.uploadDate === 'string'
-  );
-
-  const hasValidStatus = Boolean(
-    submission.submissionData &&
-      (submission.submissionData.status === 'pending' ||
-        submission.submissionData.status === 'reviewed')
-  );
-
-  return hasValidTypes && hasValidStatus;
 }
