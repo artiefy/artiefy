@@ -1,5 +1,4 @@
 import { parseISO } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { toDate } from 'date-fns-tz';
 
 const TIMEZONE = 'America/Bogota';
