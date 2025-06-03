@@ -34,27 +34,33 @@ export function checkSubscriptionStatus(subscriptionData: SubscriptionData) {
 
   if (subscriptionData.subscriptionStatus === 'active') {
     if (diffDays <= 7 && diffDays > 3) {
-      const hours = Math.round(
-        (endDate.getTime() - bogotaNow.getTime()) / (1000 * 60 * 60)
-      );
       return {
         shouldNotify: true,
-        message: `Tu suscripción ${planName} expirará en ${hours} horas`,
+        message: `Tu suscripción ${planName} expirará en ${diffDays} días`,
         severity: 'medium',
         daysLeft: diffDays,
       };
     }
 
     if (diffDays <= 3 && diffDays > 0) {
-      const hours = Math.round(
-        (endDate.getTime() - bogotaNow.getTime()) / (1000 * 60 * 60)
-      );
-      return {
-        shouldNotify: true,
-        message: `¡ATENCIÓN! Tu suscripción ${planName} expirará en ${hours} horas`,
-        severity: 'high',
-        daysLeft: diffDays,
-      };
+      if (diffDays >= 1) {
+        return {
+          shouldNotify: true,
+          message: `¡ATENCIÓN! Tu suscripción ${planName} expirará en ${diffDays} días`,
+          severity: 'high',
+          daysLeft: diffDays,
+        };
+      } else {
+        const hours = Math.round(
+          (endDate.getTime() - bogotaNow.getTime()) / (1000 * 60 * 60)
+        );
+        return {
+          shouldNotify: true,
+          message: `¡ATENCIÓN! Tu suscripción ${planName} expirará en ${hours} horas`,
+          severity: 'high',
+          daysLeft: diffDays,
+        };
+      }
     }
   }
 
