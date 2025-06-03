@@ -1611,40 +1611,44 @@ export function LessonActivityModal({
                           Por favor ingresa una URL válida
                         </p>
                       )}
-                    {!uploadedFileInfo ? (
-                      <button
-                        onClick={handleDriveSubmit(
-                          driveUrl,
-                          activity,
-                          userId,
-                          setUploadedFileInfo,
-                          setIsNewUpload,
-                          setShowResults,
-                          {
-                            isUploading: isUploadingUrl,
-                            setIsUploading: setIsUploadingUrl,
-                          }
-                        )}
-                        disabled={!isUrlValid || isUploadingUrl}
-                        className={`w-full rounded-lg px-4 py-2 transition-all ${
-                          isUrlValid && !isUploadingUrl
-                            ? 'bg-cyan-500 text-white hover:bg-cyan-600'
-                            : 'cursor-not-allowed bg-gray-700 text-gray-400'
-                        }`}
-                      >
-                        {isUploadingUrl ? (
-                          <div className="flex items-center justify-center">
-                            <Icons.spinner className="mr-2 h-4 w-4" />
-                            <span>Guardando URL...</span>
-                          </div>
-                        ) : (
-                          'Guardar URL'
-                        )}
-                      </button>
-                    ) : (
-                      // Use the same renderSubmissionStatus for URL submissions
-                      renderSubmissionStatus()
-                    )}
+                    <button
+                      onClick={
+                        !uploadedFileInfo
+                          ? handleDriveSubmit(
+                              driveUrl,
+                              activity,
+                              userId,
+                              setUploadedFileInfo,
+                              setIsNewUpload,
+                              setShowResults,
+                              {
+                                isUploading: isUploadingUrl,
+                                setIsUploading: setIsUploadingUrl,
+                              }
+                            )
+                          : undefined
+                      }
+                      disabled={
+                        !isUrlValid || isUploadingUrl || !!uploadedFileInfo
+                      }
+                      className={`w-full rounded-lg px-4 py-2 transition-all ${
+                        !uploadedFileInfo && isUrlValid && !isUploadingUrl
+                          ? 'bg-cyan-500 text-white hover:bg-cyan-600'
+                          : 'cursor-not-allowed bg-gray-700 text-gray-400'
+                      }`}
+                    >
+                      {isUploadingUrl ? (
+                        <div className="flex items-center justify-center">
+                          <Icons.spinner className="mr-2 h-4 w-4" />
+                          <span>Guardando URL...</span>
+                        </div>
+                      ) : uploadedFileInfo ? (
+                        'URL ya subida'
+                      ) : (
+                        'Guardar URL'
+                      )}
+                    </button>
+                    {uploadedFileInfo && renderSubmissionStatus()}
                   </div>
                 )}
               </div>
