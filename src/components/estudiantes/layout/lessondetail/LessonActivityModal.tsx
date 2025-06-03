@@ -1233,7 +1233,9 @@ export function LessonActivityModal({
 
     const isFirstSubmission = !activity.isCompleted;
     const shouldShowUnlockButton =
-      (isFirstSubmission || isNewUpload) && (isLastActivityInLesson && !isLastLesson);
+      (isFirstSubmission || isNewUpload) &&
+      isLastActivityInLesson &&
+      !isLastLesson;
 
     return (
       <div className="mt-4">
@@ -1363,7 +1365,7 @@ export function LessonActivityModal({
                   Cerrar
                 </Button>
               )}
-              
+
               <Button
                 onClick={() => {
                   // Mostrar confirmación antes de reiniciar
@@ -1640,131 +1642,8 @@ export function LessonActivityModal({
                         )}
                       </button>
                     ) : (
-                      // Show submission status for URL
-                      <div className="mt-4">
-                        <div className="rounded-xl bg-slate-900/50">
-                          <div className="flex flex-col">
-                            <div className="p-6">
-                              <div className="mb-6 flex items-center justify-between">
-                                <div className="flex flex-col">
-                                  <h3 className="text-lg font-semibold text-white">
-                                    Subido
-                                  </h3>
-                                </div>
-                                <span className="rounded-full bg-yellow-100 px-4 py-2 text-sm font-medium text-yellow-800">
-                                  En Revisión
-                                </span>
-                              </div>
-
-                              <div className="overflow-hidden rounded-lg">
-                                <div className="space-y-4">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center justify-between px-4">
-                                      <span className="text-sm font-semibold text-gray-200">
-                                        Archivo
-                                      </span>
-                                      <Image
-                                        src="/contract-pending-line-svgrepo-com.png"
-                                        alt="En revisión"
-                                        width={40}
-                                        height={40}
-                                        className="text-yellow-500"
-                                      />
-                                    </div>
-                                    <div className="px-4">
-                                      <span className="text-sm text-gray-300">
-                                        {uploadedFileInfo.fileName}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center justify-between px-4 py-2">
-                                    <span className="text-sm font-medium text-white">
-                                      Fecha De Subida:
-                                    </span>
-                                    <span className="text-sm text-gray-400">
-                                      {new Date(
-                                        uploadedFileInfo.uploadDate
-                                      ).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="mt-6 border-t border-gray-700 pt-4">
-                                <div className="flex items-center justify-between px-4">
-                                  <span className="text-sm text-gray-300">
-                                    Calificación del Educador:
-                                  </span>
-                                  <span className="text-lg font-bold text-white">
-                                    {uploadedFileInfo?.grade
-                                      ? formatScore(uploadedFileInfo.grade)
-                                      : '0.0'}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Action buttons */}
-                            <div className="border-t border-gray-700 bg-slate-900/95 p-6">
-                              <Button
-                                onClick={async () => {
-                                  if (
-                                    !isLastActivityInLesson &&
-                                    !activity.isCompleted
-                                  ) {
-                                    await markActivityAsCompletedAction();
-                                    await onActivityCompletedAction();
-                                  }
-                                  // Only show success toast if this was a new upload
-                                  if (isNewUpload) {
-                                    toast.success('Actividad completada');
-                                    setIsNewUpload(false);
-                                  }
-                                  onCloseAction();
-                                }}
-                                className="w-full bg-blue-500 text-white hover:bg-blue-600"
-                              >
-                                Cerrar
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  // Mostrar confirmación antes de reiniciar
-                                  if (uploadedFileInfo?.status === 'reviewed') {
-                                    const confirmed = window.confirm(
-                                      'Al subir una nueva URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
-                                    );
-                                    if (!confirmed) return;
-                                  }
-
-                                  setUploadedFileInfo(null);
-                                  setDriveUrl('');
-                                  setIsUrlValid(false);
-                                  setShowResults(false);
-                                }}
-                                className="mt-2 w-full bg-yellow-500 text-white hover:bg-yellow-600"
-                              >
-                                <span className="flex items-center justify-center gap-2">
-                                  Subir Documento Nuevamente
-                                  <svg
-                                    className="h-4 w-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                    />
-                                  </svg>
-                                </span>
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      // Use the same renderSubmissionStatus for URL submissions
+                      renderSubmissionStatus()
                     )}
                   </div>
                 )}
