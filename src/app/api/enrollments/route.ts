@@ -31,6 +31,11 @@ export async function POST(request: Request) {
 			userIds: string[];
 			planType?: string;
 		};
+		const normalizedPlanType: 'Pro' | 'Premium' | 'Enterprise' | 'none' =
+			planType && ['Pro', 'Premium', 'Enterprise'].includes(planType)
+				? (planType as 'Pro' | 'Premium' | 'Enterprise')
+				: 'none';
+
 		const { courseId, programId, userIds, planType } = body;
 		// Validación opcional de planType
 		if (planType && !['Pro', 'Premium', 'Enterprise'].includes(planType)) {
@@ -45,7 +50,7 @@ export async function POST(request: Request) {
 			await db
 				.update(users)
 				.set({
-					planType: planType ?? 'none',
+					planType: normalizedPlanType,
 					subscriptionStatus: 'active',
 					subscriptionEndDate: subscriptionEndDate,
 				})
@@ -56,7 +61,7 @@ export async function POST(request: Request) {
 			const clerk = await clerkClient();
 			await clerk.users.updateUserMetadata(userId, {
 				publicMetadata: {
-					planType: planType ?? 'none',
+					planType: normalizedPlanType,
 					subscriptionStatus: 'active',
 					subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
 				},
