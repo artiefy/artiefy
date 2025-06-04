@@ -18,31 +18,24 @@ function formatDateToClerk(date: Date): string {
 
 export async function POST(request: Request) {
 	try {
-		// Validate request body
 		if (!request.body) {
-			return NextResponse.json(
-				{ error: 'Missing request body' },
-				{ status: 400 }
-			);
+			return NextResponse.json({ error: 'Missing request body' }, { status: 400 });
 		}
+
 		const body = (await request.json()) as {
 			courseId?: string;
 			programId?: string;
 			userIds: string[];
 			planType?: string;
 		};
+
+		const { courseId, programId, userIds, planType } = body;
+		const allowedPlans = ['Pro', 'Premium', 'Enterprise'];
 		const normalizedPlanType: 'Pro' | 'Premium' | 'Enterprise' | 'none' =
-			planType && ['Pro', 'Premium', 'Enterprise'].includes(planType)
+			planType && allowedPlans.includes(planType)
 				? (planType as 'Pro' | 'Premium' | 'Enterprise')
 				: 'none';
 
-		const { courseId, programId, userIds, planType } = body;
-		// Validación opcional de planType
-		if (planType && !['Pro', 'Premium', 'Enterprise'].includes(planType)) {
-			return NextResponse.json({ error: 'Invalid planType' }, { status: 400 });
-		}
-
-		// Calculamos la fecha de expiración: 1 mes desde ahora
 		const subscriptionEndDate = new Date();
 		subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
 
