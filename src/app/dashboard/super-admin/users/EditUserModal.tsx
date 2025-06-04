@@ -202,7 +202,7 @@ export default function EditUserModal({
 										<input
 											type="date"
 											value={
-												editedUser.subscriptionEndDate?.substring(0, 10) || ''
+												editedUser.subscriptionEndDate?.substring(0, 10) ?? ''
 											}
 											onChange={(e) =>
 												setEditedUser({

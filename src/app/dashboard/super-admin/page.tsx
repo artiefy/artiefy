@@ -2364,7 +2364,7 @@ export default function AdminDashboard() {
 									role: updatedUser.role,
 									status: updatedUser.status,
 									permissions: updatedPermissions,
-									subscriptionEndDate: updatedUser.subscriptionEndDate || null,
+									subscriptionEndDate: updatedUser.subscriptionEndDate ?? null,
 								}),
 							});
 
