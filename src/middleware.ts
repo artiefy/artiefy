@@ -50,10 +50,10 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.next();
     }
 
-    // Prevent admin, super-admin and educador from accessing any student routes
+    // Prevent admin and educador from accessing student routes (but allow super-admin)
     if (
       req.url.includes('/estudiantes') &&
-      ['admin', 'super-admin', 'educador'].includes(role as string)
+      ['admin', 'educador'].includes(role as string)
     ) {
       return NextResponse.redirect(new URL('/', req.url));
     }

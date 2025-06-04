@@ -1,8 +1,9 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and, inArray } from 'drizzle-orm'; // Add inArray import
+import { eq, and, inArray } from 'drizzle-orm';
 
+import { createNotification } from '~/server/actions/notifications/createNotification';
 import { db } from '~/server/db';
 import {
   users,
@@ -18,7 +19,7 @@ import type { EnrollmentResponse, SubscriptionLevel } from '~/types';
 export async function enrollInCourse(
   courseId: number
 ): Promise<EnrollmentResponse> {
-  let course = null; // Declare course variable in function scope
+  let course = null;
 
   try {
     const user = await currentUser();
@@ -32,7 +33,7 @@ export async function enrollInCourse(
 
     const userId = user.id;
 
-    // Get course information first to determine subscription status
+    // Get course information first
     course = await db.query.courses.findFirst({
       where: eq(courses.id, courseId),
       with: {
@@ -142,13 +143,27 @@ export async function enrollInCourse(
       };
     }
 
-    // Crear inscripción y configurar lecciones
+    // Create enrollment
     await db.insert(enrollments).values({
       userId: userId,
       courseId: courseId,
       enrolledAt: new Date(),
       completed: false,
     });
+
+    // Create notification for course enrollment
+    try {
+      await createNotification({
+        userId,
+        type: 'COURSE_ENROLLMENT',
+        title: '¡Inscripción exitosa!',
+        message: `Te has inscrito al curso ${course.title}`,
+        metadata: { courseId },
+      });
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      // Continue execution even if notification fails
+    }
 
     // Configure lesson progress with progressive unlocking
     const courseLessons = await db.query.lessons.findMany({
