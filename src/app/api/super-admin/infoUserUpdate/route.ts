@@ -8,8 +8,12 @@ interface ClerkUserResponse {
 	email_addresses: { email_address: string }[];
 	created_at: string; // La fecha de creación en formato string
 	profile_image_url: string; // URL de la imagen de perfil
-	public_metadata?: { role?: string; status?: string; permissions?: string[] }; // Los metadatos públicos, que pueden incluir el rol, estado y permisos
-}
+	public_metadata?: {
+		role?: string;
+		status?: string;
+		permissions?: string[];
+		subscriptionEndDate?: string;
+	};}
 
 const getUser = async (userId: string) => {
 	try {
@@ -42,6 +46,9 @@ const getUser = async (userId: string) => {
 			? userData.public_metadata.permissions
 			: [];
 
+		const subscriptionEndDate = userData.public_metadata?.subscriptionEndDate ?? null;
+
+
 		const user = {
 			id: userData.id,
 			firstName, // ✅ Ahora enviamos `firstName` correctamente
@@ -53,6 +60,7 @@ const getUser = async (userId: string) => {
 			status,
 			password: 'No disponible', // Clerk no expone la contraseña
 			permissions, // Ahora es seguro y correctamente tipado
+			subscriptionEndDate,
 		};
 
 		return user;

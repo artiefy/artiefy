@@ -622,6 +622,7 @@ export async function updateUserInClerk({
 	role,
 	status,
 	permissions,
+	subscriptionEndDate,
 }: {
 	userId: string;
 	firstName: string;
@@ -629,6 +630,7 @@ export async function updateUserInClerk({
 	role: string;
 	status: string;
 	permissions: string[];
+	subscriptionEndDate?: string;
 }) {
 	try {
 		const client = await clerkClient();
@@ -645,6 +647,7 @@ export async function updateUserInClerk({
 					| 'estudiante',
 				status: status || 'activo',
 				permissions: Array.isArray(permissions) ? permissions : [],
+				subscriptionEndDate: subscriptionEndDate ?? null,
 			},
 		});
 
@@ -659,6 +662,9 @@ export async function updateUserInClerk({
 					| 'admin'
 					| 'super-admin',
 				subscriptionStatus: status || 'activo',
+				subscriptionEndDate: subscriptionEndDate
+					? new Date(subscriptionEndDate)
+					: null,
 				updatedAt: new Date(),
 			})
 			.where(eq(users.id, userId));

@@ -13,6 +13,7 @@ interface User {
 	status: string;
 	profileImage?: string;
 	permissions?: string[];
+	subscriptionEndDate?: string | null;
 }
 
 interface EditUserModalProps {
@@ -186,6 +187,31 @@ export default function EditUserModal({
 											<option value="inactivo">Inactivo</option>
 											<option value="suspendido">Suspendido</option>
 										</select>
+									</div>
+								</div>
+							</div>
+							<div className="rounded-lg bg-white/5 p-6">
+								<h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
+									Suscripción
+								</h3>
+								<div className="grid gap-4">
+									<div>
+										<label className="mb-2 block text-sm text-gray-400">
+											Fin de la Suscripción
+										</label>
+										<input
+											type="date"
+											value={
+												editedUser.subscriptionEndDate?.substring(0, 10) || ''
+											}
+											onChange={(e) =>
+												setEditedUser({
+													...editedUser,
+													subscriptionEndDate: e.target.value,
+												})
+											}
+											className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+										/>
 									</div>
 								</div>
 							</div>

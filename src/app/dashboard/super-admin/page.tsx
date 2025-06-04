@@ -36,6 +36,8 @@ interface User {
 	status: string;
 	selected?: boolean;
 	isNew?: boolean;
+	permissions?: string[]; // 👈 AGREGA ESTO
+	subscriptionEndDate?: string | null;
 }
 
 interface Course {
@@ -82,6 +84,7 @@ interface UserData {
 	status?: string;
 	password?: string;
 	permissions?: string[]; // Asegurar que siempre sea un array
+	subscriptionEndDate?: string;
 }
 
 interface Course {
@@ -1166,9 +1169,15 @@ export default function AdminDashboard() {
 
 			// ✅ Guardar el usuario en el estado para abrir el modal con la info actualizada
 			setEditingUser({
-				...userWithPermissions,
-				role: userWithPermissions.role ?? 'sin-role',
-				status: userWithPermissions.status ?? 'sin-status',
+				...userData,
+				firstName,
+				lastName,
+				permissions: Array.isArray(userData.permissions)
+					? userData.permissions
+					: [],
+				subscriptionEndDate: userData.subscriptionEndDate ?? null,
+				role: userData.role ?? 'sin-role',
+				status: userData.status ?? 'sin-status',
 			});
 
 			// ✅ Asegurar que los campos de edición se actualicen con `firstName` y `lastName`
@@ -2355,6 +2364,7 @@ export default function AdminDashboard() {
 									role: updatedUser.role,
 									status: updatedUser.status,
 									permissions: updatedPermissions,
+									subscriptionEndDate: updatedUser.subscriptionEndDate || null,
 								}),
 							});
 
