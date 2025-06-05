@@ -10,7 +10,7 @@ import useSWR from 'swr';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 
-import LessonActivityModal from './LessonActivityModal';
+import { LessonActivityModal } from './LessonActivityModal';
 import { GradeHistory } from './LessonGradeHistory';
 import { LessonGrades } from './LessonGrades';
 import LessonResource from './LessonResource';
@@ -447,7 +447,7 @@ const LessonActivities = ({
 		return (
 			<>
 				{activityState?.isLoading && <Icons.spinner className="mr-2 h-4 w-4" />}
-				<span>Ver Actividad</span>
+				<span className="font-semibold">Ver Actividad</span>
 			</>
 		);
 	};
@@ -663,7 +663,7 @@ const LessonActivities = ({
 																viewBox="0 0 46 40"
 																xmlns="http://www.w3.org/2000/svg"
 															>
-																<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
+																<path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
 															</svg>
 														</span>
 														<span className="arrow-button-elem">
@@ -720,22 +720,23 @@ const LessonActivities = ({
 			{selectedActivity && (
 				<LessonActivityModal
 					isOpen={isModalOpen}
-					onClose={handleModalClose}
+					onCloseAction={handleModalClose}
 					activity={selectedActivity}
-					onQuestionsAnswered={handleQuestionsAnswered}
+					onQuestionsAnsweredAction={handleQuestionsAnswered} // Updated
 					userId={userId}
-					markActivityAsCompleted={markActivityAsCompleted}
-					onActivityCompleted={handleActivityCompletion}
+					markActivityAsCompletedAction={markActivityAsCompleted} // Updated
+					onActivityCompletedAction={handleActivityCompletion} // Updated
 					courseId={courseId}
 					savedResults={activitiesState[selectedActivity.id]?.savedResults}
-					onLessonUnlocked={onLessonUnlocked}
+					onLessonUnlockedAction={onLessonUnlocked} // Updated
 					isLastLesson={isLastLesson}
 					isLastActivity={isLastActivity}
-					onViewHistory={() => setIsGradeHistoryOpen(true)}
-					onActivityComplete={handleActivityCompletion}
+					onViewHistoryAction={() => setIsGradeHistoryOpen(true)} // Updated
+					onActivityCompleteAction={handleActivityCompletion} // Updated
 					isLastActivityInLesson={isLastActivityInLesson(selectedActivity)}
 				/>
 			)}
+
 			<GradeHistory
 				isOpen={isGradeHistoryOpen}
 				onClose={() => setIsGradeHistoryOpen(false)}

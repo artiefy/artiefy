@@ -3,12 +3,10 @@
 import { useState, useEffect, createElement } from 'react';
 
 import { useRouter, usePathname } from 'next/navigation';
-import Script from 'next/script';
 
 import { useAuth } from '@clerk/nextjs';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimesCircle, FaTimes } from 'react-icons/fa';
-import { type WithContext, type Product } from 'schema-dts';
 import { toast } from 'sonner';
 
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -18,45 +16,6 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { plansPersonas, plansEmpresas, type Plan } from '~/types/plans';
 import '~/styles/buttonPlanes.css';
 import { getProductById } from '~/utils/paygateway/products';
-
-const plansJsonLd: WithContext<Product> = {
-	'@context': 'https://schema.org',
-	'@type': 'Product',
-	'@id': 'https://artiefy.com/planes#product',
-	name: 'Planes de Suscripción Artiefy',
-	description:
-		'Planes de suscripción para acceder a cursos y programas en Artiefy',
-	offers: {
-		'@type': 'AggregateOffer',
-		priceCurrency: 'COP',
-		lowPrice: '100000',
-		highPrice: '200000',
-		offerCount: '3',
-		offers: [
-			{
-				'@type': 'Offer',
-				name: 'Plan Pro',
-				price: '100000',
-				priceCurrency: 'COP',
-				availability: 'https://schema.org/InStock',
-			},
-			{
-				'@type': 'Offer',
-				name: 'Plan Premium',
-				price: '150000',
-				priceCurrency: 'COP',
-				availability: 'https://schema.org/InStock',
-			},
-			{
-				'@type': 'Offer',
-				name: 'Plan Enterprise',
-				price: '200000',
-				priceCurrency: 'COP',
-				availability: 'https://schema.org/InStock',
-			},
-		],
-	},
-};
 
 const PlansPage: React.FC = () => {
 	const { isSignedIn } = useAuth();
@@ -103,26 +62,21 @@ const PlansPage: React.FC = () => {
 	const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
 
 	return (
-		<div className="min-h-screen bg-background">
+		<div className="bg-background min-h-screen">
 			<Header />
-			<Script
-				id="plans-jsonld"
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: JSON.stringify(plansJsonLd) }}
-			/>
 			<div className="mb-12 px-4 py-12 sm:px-6 lg:px-8">
 				<div className="mx-auto max-w-7xl">
 					<div className="text-center">
 						<h2 className="text-3xl font-extrabold text-white sm:text-4xl">
 							Planes Artiefy
 						</h2>
-						<p className="mt-4 text-xl text-primary">
+						<p className="text-primary mt-4 text-xl">
 							Elige el plan perfecto para tu viaje de aprendizaje
 						</p>
 					</div>
 					<div className="mt-8 flex justify-center space-x-4">
 						<button
-							className={`button-rounded ${activeTab === 'personas' ? 'bg-primary text-white' : 'bg-white text-primary'}`}
+							className={`button-rounded ${activeTab === 'personas' ? 'bg-primary text-white' : 'text-primary bg-white'}`}
 							onClick={() => setActiveTab('personas')}
 						>
 							Personas
@@ -131,7 +85,7 @@ const PlansPage: React.FC = () => {
 							</div>
 						</button>
 						<button
-							className={`button-rounded ${activeTab === 'empresas' ? 'bg-primary text-white' : 'bg-white text-primary'}`}
+							className={`button-rounded ${activeTab === 'empresas' ? 'bg-primary text-white' : 'text-primary bg-white'}`}
 							onClick={() => setActiveTab('empresas')}
 						>
 							Empresas
@@ -148,7 +102,7 @@ const PlansPage: React.FC = () => {
 								(plan) => (
 									<div
 										key={plan.id}
-										className="relative flex w-full max-w-md flex-col items-center justify-between rounded-lg bg-linear-to-r from-primary to-secondary p-2 shadow-lg transition-all duration-200"
+										className="from-primary to-secondary relative flex w-full max-w-md flex-col items-center justify-between rounded-lg bg-linear-to-r p-2 shadow-lg transition-all duration-200"
 									>
 										{plan.name === 'Pro' && (
 											<div className="absolute top-6 -right-5 rotate-45 transform bg-red-500 px-5 py-1 text-xs font-bold text-white">
@@ -157,7 +111,7 @@ const PlansPage: React.FC = () => {
 										)}
 										<div className="my-6">
 											<div className="flex items-center justify-between">
-												<h3 className="text-2xl font-bold text-background">
+												<h3 className="text-background text-2xl font-bold">
 													{plan.name}
 												</h3>
 												{createElement(
@@ -168,7 +122,7 @@ const PlansPage: React.FC = () => {
 												)}
 											</div>
 											<div className="m-4 flex flex-col items-center">
-												<span className="text-4xl font-extrabold text-background">
+												<span className="text-background text-4xl font-extrabold">
 													${plan.price.toLocaleString('es-CO')}
 													<span className="text-lg font-normal">/mes</span>
 												</span>
@@ -177,7 +131,7 @@ const PlansPage: React.FC = () => {
 													<span className="text-lg font-normal">/month</span>
 												</span>
 											</div>
-											<div className="text-left text-background">
+											<div className="text-background text-left">
 												<p>
 													Cursos disponibles:{' '}
 													<span className="text-2xl font-semibold">
@@ -201,7 +155,7 @@ const PlansPage: React.FC = () => {
 														) : (
 															<FaTimesCircle className="size-6 text-red-600" />
 														)}
-														<span className="ml-3 text-background">
+														<span className="text-background ml-3">
 															{feature.text}
 														</span>
 													</li>
@@ -211,7 +165,7 @@ const PlansPage: React.FC = () => {
 										<div className="mb-5 flex justify-center">
 											<Button
 												onClick={() => handlePlanSelect(plan)} // Activa el modal y selecciona el plan
-												className="group relative h-full overflow-hidden rounded-md border border-b-4 border-white bg-background px-4 py-3 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b hover:bg-background hover:brightness-150 active:scale-95 active:opacity-75"
+												className="group bg-background hover:bg-background relative h-full overflow-hidden rounded-md border border-b-4 border-white px-4 py-3 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b hover:brightness-150 active:scale-95 active:opacity-75"
 											>
 												<span className="absolute top-[-150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]" />
 												Seleccionar Plan {plan.name}

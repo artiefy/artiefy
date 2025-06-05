@@ -11,6 +11,12 @@ interface VideoPlayerProps {
 	isLocked?: boolean;
 }
 
+// Lista de videos que deben usar el reproductor nativo
+const FORCE_NATIVE_PLAYER_VIDEOS = [
+	'richard-1-1744669875805-fa3b69ce-7ac6-40be-b3e1-f843f27451f0.mp4',
+  'gesti-n-de-recursos-humanos-y-financieros-1744843970531-d6439703-8170-464f-8604-35883bf45b62.mp4'
+];
+
 const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	videoKey,
 	onVideoEnd,
@@ -21,20 +27,60 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const [videoUrl, setVideoUrl] = useState<string>('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [useNativePlayer, setUseNativePlayer] = useState(false);
+	const [playerError, setPlayerError] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!videoKey || videoKey === 'null' || isLocked) {
 			setIsLoading(false);
 			return;
 		}
+
+		// Forzar reproductor nativo para videos específicos
+		if (FORCE_NATIVE_PLAYER_VIDEOS.some((v) => videoKey.includes(v))) {
+			setUseNativePlayer(true);
+			setPlayerError('Usando reproductor nativo para mejor compatibilidad');
+		}
+
 		setVideoUrl(`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`);
 		setIsLoading(false);
+
+		if (!FORCE_NATIVE_PLAYER_VIDEOS.some((v) => videoKey.includes(v))) {
+			setPlayerError(null);
+			setUseNativePlayer(false);
+		}
 	}, [videoKey, isLocked]);
 
-	const handlePlayerError = () => {
-		console.log('Next-video player failed, falling back to native player');
+	const handlePlayerError = (error?: unknown) => {
+		console.warn(
+			'Next-video player failed, falling back to native player:',
+			error
+		);
+		setPlayerError('Error loading video player');
 		setUseNativePlayer(true);
 	};
+
+	// Check video format compatibility
+	const checkVideoCompatibility = (url: string) => {
+		const video = document.createElement('video');
+		return new Promise<boolean>((resolve) => {
+			video.oncanplay = () => resolve(true);
+			video.onerror = () => {
+				console.warn('Video format not supported by next-video player');
+				resolve(false);
+			};
+			video.src = url;
+		});
+	};
+
+	useEffect(() => {
+		if (videoUrl) {
+			void checkVideoCompatibility(videoUrl).then((isCompatible) => {
+				if (!isCompatible) {
+					handlePlayerError('Format not supported');
+				}
+			});
+		}
+	}, [videoUrl]);
 
 	const renderLoadingState = () => (
 		<div className="absolute inset-0 z-50 flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg">
@@ -85,7 +131,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 	return (
 		<div className="relative aspect-video w-full">
-			{videoUrl && !useNativePlayer && (
+			{videoUrl && !useNativePlayer && !playerError && (
 				<Player
 					src={videoUrl}
 					controls
@@ -104,15 +150,25 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						'--media-primary-color': '#ffff',
 						'--media-secondary-color': '#2ecc71',
 						'--media-accent-color': '#ffff',
+						width: '100%',
+						height: '100%',
+						objectFit: 'contain',
+						maxHeight: '100vh',
+						position: 'absolute',
+						top: '0',
+						left: '0',
 					}}
 				/>
 			)}
-			{videoUrl && useNativePlayer && (
+			{(videoUrl && useNativePlayer) || playerError ? (
 				<video
 					src={videoUrl}
-					className="h-full w-full"
+					className="absolute inset-0 h-full w-full bg-black object-contain"
 					controls
+					playsInline
+					controlsList="nodownload"
 					onEnded={onVideoEnd}
+					onError={(e) => console.error('Native player error:', e)}
 					onTimeUpdate={(e) => {
 						const video = e.currentTarget;
 						if (video && !isVideoCompleted) {
@@ -123,7 +179,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						}
 					}}
 				/>
-			)}
+			) : null}
 			{(!videoUrl || isLoading) && renderLoadingState()}
 		</div>
 	);

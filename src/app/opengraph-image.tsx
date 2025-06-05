@@ -2,15 +2,13 @@ import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
 
-// Image metadata
-export const alt = 'My Open Graph Image';
+export const alt = 'Artiefy - Plataforma Educativa Digital';
 export const size = {
 	width: 1200,
 	height: 630,
 };
 export const contentType = 'image/png';
 
-// Image generation
 export default async function Image() {
 	// Load Montserrat font
 	const montserrat = fetch(

@@ -1,39 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import Image from 'next/image';
 import '~/styles/loading.css';
 
-// Añadir esta exportación para mejorar el SEO
-export const metadata = {
-	robots: 'noindex',
-};
-
-const Loading: React.FC = () => {
-	const [launch, setLaunch] = useState(false);
-
-	useEffect(() => {
-		setLaunch(true);
-		// Remove setTimeout as it's not necessary and can cause flickering
-	}, []);
-
+export default function Loading() {
 	return (
 		<div className="loading-fullscreen-background">
 			<div
-				className={`loading-card flex-col ${launch ? 'loading-launch' : ''}`}
+				className="loading-card loading-launch flex-col"
 				aria-label="Cargando contenido"
 			>
 				<div className="flex flex-col items-center justify-center gap-8">
-					<Image
-						src="/artiefy-logo.svg"
-						alt="Logo de Artiefy"
-						width={200}
-						height={60}
-						className="mb-4"
-						priority
-						loading="eager"
-					/>
+					<div className="relative w-[200px]">
+						<Image
+							src="/artiefy-logo.svg"
+							alt="Logo de Artiefy"
+							width={200}
+							height={60}
+							priority
+							sizes="200px"
+							style={{
+								width: '100%',
+								height: 'auto',
+							}}
+						/>
+					</div>
 					<div className="flex items-center justify-center gap-8">
 						<Image
 							src="/cursor.png"
@@ -42,7 +33,6 @@ const Loading: React.FC = () => {
 							width={180}
 							height={180}
 							priority
-							loading="eager"
 							aria-hidden="true"
 						/>
 						<div
@@ -62,6 +52,4 @@ const Loading: React.FC = () => {
 			</div>
 		</div>
 	);
-};
-
-export default Loading;
+}

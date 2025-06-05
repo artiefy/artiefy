@@ -162,9 +162,8 @@ export default async function StudentListCourses({
 													alt={course.title || 'Imagen del curso'}
 													className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
 													fill
-													{...(blurDataURL
-														? { placeholder: 'blur', blurDataURL }
-														: {})}
+													blurDataURL={blurDataURL ?? undefined}
+													placeholder="blur"
 													sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 													quality={75}
 												/>

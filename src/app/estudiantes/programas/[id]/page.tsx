@@ -11,41 +11,9 @@ import { getProgramById } from '~/server/actions/estudiantes/programs/getProgram
 
 import ProgramDetails from './ProgramDetails';
 
-interface Program {
-	id: string;
-	title: string;
-	description: string | null;
-	coverImageKey: string | null;
-	createdAt: Date | null;
-	updatedAt: Date | null;
-	creatorId?: string;
-	rating?: number | null;
-	categoryid?: number;
-}
-
 interface PageProps {
 	params: Promise<{ id: string }>;
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
-}
-
-// Función para generar el JSON-LD para SEO
-function generateJsonLd(program: Program): object {
-	return {
-		'@context': 'https://schema.org',
-		'@type': 'Course',
-		name: program.title,
-		description: program.description ?? 'No hay descripción disponible.',
-		provider: {
-			'@type': 'Organization',
-			name: 'Artiefy',
-			sameAs: process.env.NEXT_PUBLIC_BASE_URL ?? '',
-		},
-		dateCreated: program.createdAt?.toISOString() ?? '',
-		dateModified: program.updatedAt?.toISOString() ?? '',
-		image: program.coverImageKey
-			? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
-			: 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT',
-	};
 }
 
 export async function generateMetadata(
@@ -129,17 +97,5 @@ async function ProgramContent({ params }: { params: Promise<{ id: string }> }) {
 		notFound();
 	}
 
-	const jsonLd = generateJsonLd(program);
-
-	return (
-		<>
-			<ProgramDetails program={program} />
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{
-					__html: JSON.stringify(jsonLd),
-				}}
-			/>
-		</>
-	);
+	return <ProgramDetails program={program} />;
 }

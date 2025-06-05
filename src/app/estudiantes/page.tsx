@@ -1,7 +1,5 @@
 import { Suspense } from 'react';
 
-import Script from 'next/script';
-
 import StudentDetails from '~/app/estudiantes/StudentDetails';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -13,17 +11,7 @@ import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/g
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
-import type { Metadata } from 'next';
 import type { Category, Course, Program } from '~/types';
-
-export const metadata: Metadata = {
-	title: 'Artiefy - Plataforma Educativa Digital Líder',
-	description:
-		'Accede a tus cursos y contenido educativo en Artiefy. Aprende desarrollo web, programación y más con expertos de la industria.',
-	alternates: {
-		canonical: 'https://artiefy.com/estudiantes',
-	},
-};
 
 interface SearchParams {
 	category?: string;
@@ -131,7 +119,6 @@ interface PageProps {
 
 export default async function Page({ searchParams }: PageProps) {
 	try {
-		// Await searchParams before accessing its properties
 		const params = await searchParams;
 
 		const parsedParams: SearchParams = {
@@ -145,20 +132,6 @@ export default async function Page({ searchParams }: PageProps) {
 
 		return (
 			<>
-				<Script id="learning-platform-schema" type="application/ld+json">
-					{JSON.stringify({
-						'@context': 'https://schema.org',
-						'@type': 'WebPage',
-						name: 'Artiefy - Plataforma Educativa Digital Líder',
-						description: 'Accede a tus cursos y contenido educativo en Artiefy',
-						url: 'https://artiefy.com/estudiantes',
-						isPartOf: {
-							'@type': 'WebSite',
-							'@id': 'https://artiefy.com/#website',
-						},
-					})}
-				</Script>
-
 				<div
 					className="flex min-h-screen flex-col"
 					style={{ isolation: 'isolate', zIndex: 1 }}

@@ -1,182 +1,179 @@
-.subscription-alert {
-	position: fixed;
-	top: 1rem;
-	right: 1rem;
-	z-index: 50;
-	width: 320px;
-	font-size: 0.875rem;
-	line-height: 1.25rem;
-	animation: slideIn 0.5s ease-out;
+/* Reset all previous styles */
+.artiefy-subscription-root {
+  all: initial;
 }
 
-.subscription-alert-content {
-	display: flex;
-	background-color: rgb(254 252 232);
-	border-left-width: 4px;
-	border-color: rgb(250 204 21);
-	border-radius: 0.375rem;
-	padding: 1rem;
-	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.artiefy-subscription-root * {
+  box-sizing: border-box;
 }
 
-.subscription-alert.high {
-	border-color: rgb(220 38 38);
-	background-color: rgb(254 242 242);
+.artiefy-subscription-root .subscription-alert-inline {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  right: auto;
+  z-index: 99999;
+  max-width: 600px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  animation: artiefy-subscription-slide-in 0.5s ease-out;
+  pointer-events: auto;
 }
 
-.subscription-alert.expired {
-	border-color: rgb(220 38 38);
-	background-color: rgb(254 226 226);
+.artiefy-subscription-root .subscription-alert-content-inline {
+  display: flex;
+  align-items: center;
+  border-left-width: 4px;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1.25rem;
+  box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.15);
 }
 
-.alert-icon {
-	flex-shrink: 0;
-	height: 1.25rem;
-	width: 1.25rem;
-	color: rgb(250 204 21);
+.artiefy-subscription-root .alert-message {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.alert-icon.high {
-	color: rgb(220 38 38);
+.artiefy-subscription-root .alert-message-text {
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
-.alert-message {
-	margin-left: 0.75rem;
-	color: rgb(202 138 4);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+.artiefy-subscription-root .upgrade-link {
+  font-weight: 500;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
-.alert-message.high {
-	color: rgb(185 28 28);
+.artiefy-subscription-root .mobile-toggle-button {
+  display: none;
 }
 
-.upgrade-link {
-	font-weight: 500;
-	color: rgb(141, 56, 0);
-	text-decoration: underline;
-}
-
-.upgrade-link:hover {
-	color: rgb(202 138 4);
-}
-
-.subscription-alert-inline {
-	position: fixed;
-	bottom: 2rem;
-	left: 2rem;
-	z-index: 99999;
-	max-width: 600px;
-	font-size: 0.875rem;
-	line-height: 1.25rem;
-	animation: slideInFromBottom 0.5s ease-out;
-	pointer-events: auto;
-	transform: translateZ(0);
-	will-change: transform;
-}
-
-.subscription-alert-content-inline {
-	position: relative;
-	display: flex;
-	align-items: center;
-	background-color: rgb(254 252 232);
-	border-left-width: 4px;
-	border-color: rgb(250 204 21);
-	border-radius: 0.375rem;
-	padding: 0.75rem 1.25rem;
-	box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.15);
-	isolation: isolate;
-}
-
-@keyframes slideIn {
-	from {
-		transform: translateX(100%);
-		opacity: 0;
-	}
-	to {
-		transform: translateX(0);
-		opacity: 1;
-	}
-}
-
-@keyframes slideInFromBottom {
-	from {
-		transform: translate(-50%, 100%);
-		opacity: 0;
-	}
-	to {
-		transform: translate(-50%, 0);
-		opacity: 1;
-	}
-}
-
-/* Contenedor principal con namespace */
-.artiefy-subscription-notification .subscription-alert-inline {
-	position: fixed;
-	bottom: 2rem;
-	left: 2rem;
-	z-index: 99999;
-	max-width: 600px;
-	font-size: 0.875rem;
-	line-height: 1.25rem;
-	animation: subscription-slide-in 0.5s ease-out;
-	pointer-events: auto;
-}
-
-.artiefy-subscription-notification .subscription-alert-content-inline {
-	display: flex;
-	align-items: center;
-	background-color: rgb(254 252 232);
-	border-left-width: 4px;
-	border-color: rgb(250 204 21);
-	border-radius: 0.375rem;
-	padding: 0.75rem 1.25rem;
-	box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.15);
-}
-
-/* Estilos responsive */
 @media (max-width: 768px) {
-	.artiefy-subscription-notification .subscription-alert-inline {
-		bottom: 1rem;
-		left: 50%;
-		transform: translateX(-50%);
-		max-width: calc(100vw - 2rem);
-	}
+  .artiefy-subscription-root .subscription-alert-inline {
+    top: 150px;
+    bottom: auto;
+    left: 0;
+    right: auto;
+    max-width: 400px; /* Wider notification */
+    width: auto;
+    transition: all 0.3s ease;
+  }
 
-	.artiefy-subscription-notification .alert-message {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.5rem;
-	}
+  .artiefy-subscription-root .subscription-alert-content-inline {
+    padding: 0.5rem 32px 0.5rem 1rem;
+    position: relative;
+    transition: transform 0.3s ease;
+  }
 
-	.artiefy-subscription-notification .alert-message-text {
-		text-align: center;
-	}
+  .artiefy-subscription-root .mobile-toggle-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    background: inherit;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.3s ease;
+    z-index: 2;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  }
 
-	.artiefy-subscription-notification .upgrade-link {
-		display: block;
-		text-align: center;
-		width: 100%;
-	}
+  .artiefy-subscription-root .subscription-alert-inline.collapsed {
+    transform: translateX(calc(-100% + 28px));
+  }
+
+  .artiefy-subscription-root .subscription-alert-content-inline {
+    padding: 0.5rem 32px 0.5rem 1rem;
+    position: relative;
+  }
+
+  .artiefy-subscription-root .alert-message {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .artiefy-subscription-root .alert-message > span {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .artiefy-subscription-root .alert-message-text {
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
+  }
+
+  .artiefy-subscription-root .upgrade-link {
+    margin: 0.25rem 0 0 0;
+    display: block;
+    text-align: center;
+    width: 100%;
+  }
+
+  .artiefy-subscription-root .mobile-toggle-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 100%;
+    background: inherit;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.3s ease;
+    z-index: 2;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .artiefy-subscription-root
+    .subscription-alert-inline.collapsed
+    .mobile-toggle-button {
+    background: inherit;
+    border-radius: 4px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .artiefy-subscription-root .alert-message-text {
+    white-space: normal; /* Allow text to wrap */
+    overflow: visible;
+  }
 }
 
-/* Animaciones con namespace */
-@keyframes subscription-slide-in {
-	from {
-		transform: translateY(100%);
-		opacity: 0;
-	}
-	to {
-		transform: translateY(0);
-		opacity: 1;
-	}
-}
-
-/* Asegurar que la notificación siempre esté por encima de otros elementos */
-@layer utilities {
-	.z-notifications {
-		z-index: 9999;
-	}
+@keyframes artiefy-subscription-slide-in {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }

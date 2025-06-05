@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 
 import { notFound } from 'next/navigation';
-import Script from 'next/script';
 
 import { auth } from '@clerk/nextjs/server';
 import { type Metadata, type ResolvingMetadata } from 'next';
@@ -9,7 +8,6 @@ import { type Metadata, type ResolvingMetadata } from 'next';
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import { generateCourseStructuredData } from '~/lib/structuredData/courseStructuredData';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 import CourseDetails from './CourseDetails';
@@ -158,30 +156,6 @@ async function CourseContent({ id }: { id: string }) {
 		return (
 			<section>
 				<CourseDetails course={courseForDetails} />
-				<Script
-					id="course-structured-data"
-					type="application/ld+json"
-					dangerouslySetInnerHTML={{
-						__html: JSON.stringify(
-							generateCourseStructuredData(
-								course,
-								// Add example reviews - you should replace this with real reviews from your database
-								[
-									{
-										author: 'Estudiante Ejemplo',
-										reviewRating: {
-											ratingValue: 5,
-											worstRating: 1,
-											bestRating: 5,
-										},
-										reviewBody: 'Excelente curso, muy bien explicado',
-										datePublished: new Date().toISOString(),
-									},
-								]
-							)
-						),
-					}}
-				/>
 			</section>
 		);
 	} catch (error) {

@@ -40,14 +40,16 @@ const LessonPlayer = ({
 
 	return (
 		<div className="mx-auto max-w-4xl">
-			<div className="relative mb-6 aspect-video overflow-hidden rounded-lg bg-black">
-				<VideoPlayer
-					videoKey={lesson.coverVideoKey}
-					onVideoEnd={handleVideoEnd}
-					onProgressUpdate={handleProgressUpdate}
-					isVideoCompleted={progress === 100}
-					isLocked={isLocked}
-				/>
+			<div className="relative mb-6 aspect-video w-full overflow-hidden rounded-lg bg-black">
+				<div className="absolute inset-0 flex items-center justify-center">
+					<VideoPlayer
+						videoKey={lesson.coverVideoKey}
+						onVideoEnd={handleVideoEnd}
+						onProgressUpdate={handleProgressUpdate}
+						isVideoCompleted={progress === 100}
+						isLocked={isLocked}
+					/>
+				</div>
 			</div>
 			<div className="rounded-lg bg-white p-6 shadow-xs">
 				<h1 className="mb-4 text-2xl font-bold text-gray-900">

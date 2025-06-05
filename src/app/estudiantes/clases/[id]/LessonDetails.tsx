@@ -5,16 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
-import { FaRobot } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
 import LessonBreadcrumbs from '~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
-import LessonChatBot from '~/components/estudiantes/layout/lessondetail/LessonChatbot';
 import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
 import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -72,15 +71,11 @@ export default function LessonDetails({
 	userId,
 	course,
 }: LessonDetailsProps) {
-	// Add new state
 	const [isNavigating, setIsNavigating] = useState(false);
-	// State and hooks initialization
 	const { user } = useUser();
 	const router = useRouter();
-	const [isChatOpen, setIsChatOpen] = useState(false);
-	const [selectedLessonId, setSelectedLessonId] = useState<number | null>(
-		lesson?.id ?? null
-	);
+	// Add selectedLessonId state
+	const [selectedLessonId, setSelectedLessonId] = useState<number>(lesson?.id);
 	const [progress, setProgress] = useState(lesson?.porcentajecompletado ?? 0);
 	const [isVideoCompleted, setIsVideoCompleted] = useState(
 		lesson?.porcentajecompletado === 100
@@ -282,8 +277,11 @@ export default function LessonDetails({
 						)
 					);
 
+					// Use Promise.resolve for state updates
+					await Promise.resolve();
+
 					// Update database
-					await updateLessonProgress(lesson.id, roundedProgress);
+					return updateLessonProgress(lesson.id, roundedProgress);
 				} catch (error) {
 					console.error('Error al actualizar el progreso:', error);
 					toast.error('Error al sincronizar el progreso');
@@ -334,7 +332,7 @@ export default function LessonDetails({
 		}
 	}, [lesson, isVideoCompleted]);
 
-	// Function to handle navigation
+	// Update handleNavigationClick to use await
 	const handleNavigationClick = async (direction: 'prev' | 'next') => {
 		if (isNavigating) return;
 		const sortedLessons = [...lessonsState].sort((a, b) =>
@@ -357,17 +355,18 @@ export default function LessonDetails({
 		}
 	};
 
+	// Update handleCardClick to use await
+	const handleCardClick = async (targetId: number) => {
+		if (!isNavigating && targetId !== selectedLessonId) {
+			// Convert to Promise
+			await Promise.resolve(navigateWithProgress(targetId));
+		}
+	};
+
 	// Handle progress bar on route changes
 	useEffect(() => {
 		stop();
 	}, [searchParams, stop]);
-
-	// Handle lesson card click
-	const handleCardClick = async (targetId: number) => {
-		if (!isNavigating && targetId !== selectedLessonId) {
-			await navigateWithProgress(targetId);
-		}
-	};
 
 	// Helper function for navigation with progress
 	const navigateWithProgress = async (targetId: number) => {
@@ -378,26 +377,19 @@ export default function LessonDetails({
 
 		try {
 			saveScrollPosition();
-			const navigationElement = document.querySelector('.navigation-buttons');
-			const yOffset = navigationElement?.getBoundingClientRect().top ?? 0;
-			const scrollPosition = yOffset + window.scrollY + 40;
-
-			await Promise.all([
-				new Promise((resolve) => setTimeout(resolve, 300)),
-				router.push(`/estudiantes/clases/${targetId}`, { scroll: false }),
-			]);
-			restoreScrollPosition();
-			window.scrollTo({
-				top: scrollPosition,
-				behavior: 'smooth',
-			});
-
-			await new Promise((resolve) => setTimeout(resolve, 200));
-
+			const navigationPromise = router.push(`/estudiantes/clases/${targetId}`);
 			setSelectedLessonId(targetId);
-			setProgress(0);
-			setIsVideoCompleted(false);
-			setIsActivityCompleted(false);
+
+			// Create and resolve a Promise for state updates
+			await Promise.all([
+				navigationPromise,
+				new Promise<void>((resolve) => {
+					setProgress(0);
+					setIsVideoCompleted(false);
+					setIsActivityCompleted(false);
+					resolve();
+				}),
+			]);
 		} finally {
 			stop();
 			setIsNavigating(false);
@@ -512,14 +504,7 @@ export default function LessonDetails({
 				</div>
 
 				{/* Chatbot Button and Modal */}
-				<button
-					onClick={() => setIsChatOpen(!isChatOpen)}
-					className="fixed right-6 bottom-6 rounded-full bg-blue-500 p-4 text-white shadow-lg transition-colors hover:bg-blue-600"
-				>
-					<FaRobot className="text-xl" />
-				</button>
-
-				<LessonChatBot />
+				<StudentChatbot isAlwaysVisible={true} />
 			</div>
 		</div>
 	);

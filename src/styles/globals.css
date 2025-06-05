@@ -194,11 +194,11 @@
 .cl-formButtonPrimary {
 	font-size: 0.875rem; /* 14px */
 	text-transform: none;
-	background-color: var(--color-primary);
+	background-color: var(--color-secondary);
 	transition: background-color 0.2s ease;
 
 	&:is(:hover, :focus, :active) {
-		background-color: var(--color-secondary);
+		background-color: var(--color-background);
 	}
 }
 

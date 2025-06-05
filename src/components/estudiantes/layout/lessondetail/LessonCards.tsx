@@ -10,7 +10,7 @@ import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { type LessonWithProgress } from '~/types';
-import { sortLessons } from '~/utils/lessonSorting';
+import { sortLessons, extractNumbersFromTitle } from '~/utils/lessonSorting';
 
 interface LessonCardsProps {
 	lessonsState: LessonWithProgress[];
@@ -26,7 +26,6 @@ interface NextLessonStatus {
 	isUnlocked: boolean;
 }
 
-// Remove unused ApiResponse interface
 interface UnlockResponse {
 	success: boolean;
 	error?: string;
@@ -53,7 +52,7 @@ const LessonCards = ({
 					const data = (await response.json()) as NextLessonStatus;
 
 					if (data.isUnlocked && data.lessonId) {
-						setLessonsState((prev) =>
+						setLessonsState((prev: LessonWithProgress[]) =>
 							prev.map((lesson) =>
 								lesson.id === data.lessonId
 									? { ...lesson, isLocked: false, isNew: true }
@@ -90,11 +89,27 @@ const LessonCards = ({
 				(l) => l.id === selectedLessonId
 			);
 
-			// Verificar el progreso real de la base de datos, no el progreso local
 			if (!currentLesson || currentLesson.porcentajecompletado < 100) return;
 
-			const currentIndex = sortedLessons.indexOf(currentLesson);
-			const nextLesson = sortedLessons[currentIndex + 1];
+			// Encontrar la siguiente lección en secuencia
+			const currentNumbers = extractNumbersFromTitle(currentLesson.title);
+			let nextLesson: LessonWithProgress | undefined;
+
+			// Buscar la siguiente lección en orden
+			for (const lesson of sortedLessons) {
+				const lessonNumbers = extractNumbersFromTitle(lesson.title);
+
+				// Verificar si es la siguiente lección en secuencia
+				if (
+					(lessonNumbers.session === currentNumbers.session &&
+						lessonNumbers.class === currentNumbers.class + 1) ||
+					(lessonNumbers.session === currentNumbers.session + 1 &&
+						lessonNumbers.class === 1)
+				) {
+					nextLesson = lesson;
+					break;
+				}
+			}
 
 			if (!nextLesson?.isLocked) return;
 
@@ -102,7 +117,7 @@ const LessonCards = ({
 			const hasActivities = activities.length > 0;
 			const shouldUnlock = hasActivities
 				? activities.every((activity) => activity.isCompleted) &&
-					currentLesson.porcentajecompletado === 100 // Usar el progreso de la base de datos
+					currentLesson.porcentajecompletado === 100
 				: currentLesson.porcentajecompletado === 100;
 
 			if (shouldUnlock) {
@@ -126,7 +141,7 @@ const LessonCards = ({
 					if (result.success) {
 						setLessonsState((prev) =>
 							prev.map((lesson) =>
-								lesson.id === nextLesson.id
+								nextLesson && lesson.id === nextLesson.id
 									? { ...lesson, isLocked: false, isNew: true }
 									: lesson
 							)
@@ -143,9 +158,7 @@ const LessonCards = ({
 					}
 				} catch (error) {
 					console.error('Error unlocking next lesson:', error);
-					toast.error('Error al desbloquear la siguiente clase', {
-						id: 'lesson-unlock-error',
-					});
+					toast.error('Error al desbloquear la siguiente clase');
 				}
 			}
 		};
