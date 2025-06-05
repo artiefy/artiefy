@@ -439,7 +439,8 @@ export type NotificationType =
   | 'TICKET_CREATED'
   | 'TICKET_UPDATED'
   | 'TICKET_ASSIGNED'
-  | 'NEW_COURSE_ADDED';
+  | 'NEW_COURSE_ADDED'
+  | 'ACTIVITY_COMPLETED';
 
 export interface NotificationMetadata {
   programId?: number;
@@ -448,6 +449,7 @@ export interface NotificationMetadata {
   planId?: string;
   ticketId?: number;
   creatorId?: string;
+  activityId?: number; // Add this line
 }
 
 export interface Notification {

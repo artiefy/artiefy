@@ -135,9 +135,10 @@ export const completeActivity = async (activityId: number, userId: string) => {
 				FROM parameter_grades
 			`);
 
-      const finalGrade =
-        gradeSummary.rows[0]?.final_grade ?? rawData.finalGrade;
-      console.log('Course final grade:', finalGrade);
+      const currentFinalGrade = Number(
+        gradeSummary.rows[0]?.final_grade ?? rawData.finalGrade
+      );
+      console.log('Course final grade:', currentFinalGrade);
 
       // Update materia grades with course final grade
       if (activity.lesson?.course?.id) {
@@ -146,26 +147,40 @@ export const completeActivity = async (activityId: number, userId: string) => {
 						SELECT id FROM materias WHERE courseid = ${activity.lesson.course.id}
 					)
 					INSERT INTO materia_grades (materia_id, user_id, grade, updated_at)
-					SELECT id, ${userId}, ${finalGrade}, NOW()
+					SELECT id, ${userId}, ${currentFinalGrade}, NOW()
 					FROM course_materias
 					ON CONFLICT (materia_id, user_id) 
 					DO UPDATE SET grade = EXCLUDED.grade, updated_at = EXCLUDED.updated_at
 				`);
       }
-    }
 
-    // After successfully completing activity
-    await createNotification({
-      userId,
-      type: 'ACTIVITY_COMPLETED',
-      title: '¡Actividad Completada!',
-      message: `Has completado la actividad: ${activity.name}`,
-      metadata: {
-        activityId,
-        lessonId: activity.lessonsId,
-        courseId: activity.lesson?.courseId,
-      },
-    });
+      // Create notification with properly formatted grade
+      await createNotification({
+        userId,
+        type: 'ACTIVITY_COMPLETED',
+        title: '¡Actividad completada!',
+        message: `Has completado la actividad con una calificación de ${currentFinalGrade.toFixed(1)}%`,
+        metadata: {
+          lessonId: activity.lessonsId,
+          courseId: activity.lesson?.courseId,
+          activityId: activity.id,
+        },
+      });
+    } else {
+      // If no parameter grade, use the raw data final grade (ensure it's a number)
+      const finalGrade = Number(rawData.finalGrade);
+      await createNotification({
+        userId,
+        type: 'ACTIVITY_COMPLETED',
+        title: '¡Actividad completada!',
+        message: `Has completado la actividad con una calificación de ${finalGrade.toFixed(1)}%`,
+        metadata: {
+          lessonId: activity.lessonsId,
+          courseId: activity.lesson?.courseId,
+          activityId: activity.id,
+        },
+      });
+    }
 
     return { success: true, message: 'Actividad completada exitosamente' };
   } catch (error) {
