@@ -659,6 +659,7 @@
 						<BreadcrumbItem>
 							<BreadcrumbLink className="text-primary hover:text-gray-300">
 								Detalles del curso 
+								
 							</BreadcrumbLink>
 						</BreadcrumbItem>
 					</BreadcrumbList>
