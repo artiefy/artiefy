@@ -11,6 +11,7 @@ import {
 	date,
 	unique,
 	primaryKey,
+	jsonb
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -900,4 +901,15 @@ export const userCustomFields = pgTable('user_custom_fields', {
 	fieldValue: text('field_value').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const notifications = pgTable('notifications', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id').notNull(),
+	type: text('type').notNull(),
+	title: text('title').notNull(),
+	message: text('message').notNull(),
+	isRead: boolean('is_read').default(false),
+	createdAt: timestamp('created_at').defaultNow(),
+	metadata: jsonb('metadata'),
 });

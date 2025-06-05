@@ -595,7 +595,7 @@ export default function EnrolledUsersPage() {
 														className="w-full rounded bg-gray-700 p-1 text-sm"
 													>
 														<option value="">Todos</option>
-														{col.options?.map((opt) => (
+														{col.options?.map((opt: string) => (
 															<option key={opt} value={opt}>
 																{opt}
 															</option>
