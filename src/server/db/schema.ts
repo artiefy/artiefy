@@ -890,3 +890,14 @@ export const roleSecundarioPermisos = pgTable(
 		pk: primaryKey({ columns: [table.roleId, table.permisoId] }),
 	})
 );
+
+export const userCustomFields = pgTable('user_custom_fields', {
+	id: serial('id').primaryKey(),
+	userId: text('user_id')
+		.references(() => users.id)
+		.notNull(),
+	fieldKey: varchar('field_key', { length: 255 }).notNull(),
+	fieldValue: text('field_value').notNull(),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

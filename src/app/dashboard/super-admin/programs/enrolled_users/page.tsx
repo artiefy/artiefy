@@ -22,7 +22,8 @@ const studentSchema = z.object({
 	programTitle: z.string().optional(),
 	programTitles: z.array(z.string()).optional(),
 	nivelNombre: z.string().nullable().optional(),
-	purchaseDate: z.string().nullable().optional(), // 👈 Agregado aquí
+	purchaseDate: z.string().nullable().optional(),
+	customFields: z.record(z.string()).optional(),
 });
 
 const courseSchema = z.object({
@@ -62,6 +63,7 @@ interface Student {
 	programTitles?: string[];
 	nivelNombre?: string | null;
 	purchaseDate?: string | null;
+	customFields?: Record<string, string>;
 }
 
 interface Course {
@@ -110,6 +112,12 @@ const allColumns = [
 	},
 	{ id: 'role', label: 'Rol', defaultVisible: false, type: 'text' },
 	{ id: 'planType', label: 'Plan', defaultVisible: false, type: 'text' },
+	{
+		id: 'customFields',
+		label: 'Campos Personalizados',
+		defaultVisible: true,
+		type: 'text',
+	},
 ];
 
 export default function EnrolledUsersPage() {
@@ -117,6 +125,7 @@ export default function EnrolledUsersPage() {
 	const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
 	const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 	const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+	const [dynamicColumns, setDynamicColumns] = useState<any[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [filters, setFilters] = useState({
 		name: '',
@@ -142,6 +151,7 @@ export default function EnrolledUsersPage() {
 	);
 	const [showColumnSelector, setShowColumnSelector] = useState(false);
 	const [selectedProgram, setSelectedProgram] = useState('');
+	const totalColumns = [...allColumns, ...dynamicColumns];
 
 	// Save visible columns to localStorage
 	useEffect(() => {
@@ -172,6 +182,27 @@ export default function EnrolledUsersPage() {
 
 			setStudents(studentsFilteredByRole);
 			setAvailableCourses(data.courses);
+
+			// NUEVO: detectar las claves de los campos personalizados
+			const allCustomKeys = new Set<string>();
+			studentsFilteredByRole.forEach((student) => {
+				if (student.customFields) {
+					Object.keys(student.customFields).forEach((key) =>
+						allCustomKeys.add(key)
+					);
+				}
+			});
+
+			// Generar dinámicamente las columnas de customFields
+			const dynamicCustomColumns = Array.from(allCustomKeys).map((key) => ({
+				id: `customFields.${key}`,
+				label: key,
+				defaultVisible: true,
+				type: 'text',
+			}));
+
+			// Agregamos al state las columnas dinámicas
+			setDynamicColumns(dynamicCustomColumns);
 		} catch (err) {
 			console.error('Error fetching data:', err);
 		}
@@ -316,6 +347,70 @@ export default function EnrolledUsersPage() {
 		page * limit
 	);
 
+	function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
+		const [fieldKey, setFieldKey] = useState('');
+		const [fieldValue, setFieldValue] = useState('');
+		const [loading, setLoading] = useState(false);
+
+		const handleSubmit = async () => {
+			setLoading(true);
+			try {
+				const res = await fetch(
+					'/api/super-admin/enroll_user_program/newTable',
+					{
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({
+							userId: selectedUserId,
+							fieldKey,
+							fieldValue,
+						}),
+					}
+				);
+
+				if (res.ok) {
+					alert('Campo personalizado agregado');
+					setFieldKey('');
+					setFieldValue('');
+				} else {
+					const error = await res.json();
+					alert('Error: ' + error.error);
+				}
+			} catch (err) {
+				console.error(err);
+				alert('Error inesperado');
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		return (
+			<div className="flex items-center gap-2">
+				<input
+					type="text"
+					placeholder="Clave"
+					value={fieldKey}
+					onChange={(e) => setFieldKey(e.target.value)}
+					className="rounded border border-gray-700 bg-gray-800 p-2"
+				/>
+				<input
+					type="text"
+					placeholder="Valor"
+					value={fieldValue}
+					onChange={(e) => setFieldValue(e.target.value)}
+					className="rounded border border-gray-700 bg-gray-800 p-2"
+				/>
+				<button
+					disabled={loading || !fieldKey || !fieldValue}
+					onClick={handleSubmit}
+					className="rounded bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-700 disabled:opacity-50"
+				>
+					{loading ? 'Guardando...' : 'Agregar'}
+				</button>
+			</div>
+		);
+	}
+
 	const goToPage = (p: number) => {
 		if (p < 1 || p > totalPages) return;
 		setPage(p);
@@ -365,7 +460,7 @@ export default function EnrolledUsersPage() {
 						<div className="absolute right-0 z-50 mt-2 rounded-md bg-gray-800 p-4 shadow-lg">
 							<h3 className="mb-2 font-semibold">Mostrar columnas</h3>
 							<div className="space-y-2">
-								{allColumns.map((col) => (
+								{totalColumns.map((col) => (
 									<label key={col.id} className="flex items-center gap-2">
 										<input
 											type="checkbox"
@@ -482,7 +577,7 @@ export default function EnrolledUsersPage() {
 										className="rounded border-white/20"
 									/>
 								</th>
-								{allColumns
+								{totalColumns
 									.filter((col) => visibleColumns.includes(col.id))
 									.map((col) => (
 										<th key={col.id} className="px-4 py-2">
@@ -541,17 +636,34 @@ export default function EnrolledUsersPage() {
 											}
 										/>
 									</td>
-									{allColumns
+									{totalColumns
 										.filter((col) => visibleColumns.includes(col.id))
-										.map((col) => (
-											<td key={col.id} className="px-4 py-2">
-												{(col.id === 'subscriptionEndDate' ||
-													col.id === 'purchaseDate') &&
-												student[col.id]
-													? new Date(student[col.id]!).toLocaleDateString()
-													: (student[col.id as keyof typeof student] ?? 'N/A')}
-											</td>
-										))}
+										.map((col) => {
+											let cellValue: string | null = null;
+
+											if (col.id.startsWith('customFields.')) {
+												const fieldKey = col.id.split('.')[1];
+												cellValue = student.customFields?.[fieldKey] ?? 'N/A';
+											} else if (
+												col.id === 'subscriptionEndDate' ||
+												col.id === 'purchaseDate'
+											) {
+												const dateValue =
+													student[col.id as keyof typeof student];
+												cellValue = dateValue
+													? new Date(dateValue as string).toLocaleDateString()
+													: 'N/A';
+											} else {
+												const value = student[col.id as keyof typeof student];
+												cellValue = value ? String(value) : 'N/A';
+											}
+
+											return (
+												<td key={col.id} className="px-4 py-2">
+													{cellValue}
+												</td>
+											);
+										})}
 								</tr>
 							))}
 						</tbody>
@@ -601,6 +713,12 @@ export default function EnrolledUsersPage() {
 					Ir
 				</button>
 			</div>
+			{selectedStudents.length === 1 && (
+				<div className="mt-6">
+					<h2 className="text-lg font-semibold">Añadir campo personalizado</h2>
+					<CustomFieldForm selectedUserId={selectedStudents[0]} />
+				</div>
+			)}
 
 			{/* Botón de modal */}
 			<button
@@ -698,6 +816,7 @@ export default function EnrolledUsersPage() {
 							</button>
 						</div>
 					</div>
+					{/* Modal para agregar campos personalizados */}
 				</div>
 			)}
 		</div>

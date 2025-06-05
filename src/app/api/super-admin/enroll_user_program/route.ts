@@ -9,6 +9,7 @@ import {
 	enrollments,
 	enrollmentPrograms,
 	programas,
+	userCustomFields,
 } from '~/server/db/schema';
 
 export async function GET(req: Request) {
@@ -19,9 +20,7 @@ export async function GET(req: Request) {
 		const latestDates = db
 			.select({
 				userId: enrollmentPrograms.userId,
-				latestEnrolledAt: sql`MAX(${enrollmentPrograms.enrolledAt})`.as(
-					'latestEnrolledAt'
-				),
+				latestEnrolledAt: sql`MAX(${enrollmentPrograms.enrolledAt})`.as('latestEnrolledAt'),
 			})
 			.from(enrollmentPrograms)
 			.groupBy(enrollmentPrograms.userId)
@@ -60,6 +59,23 @@ export async function GET(req: Request) {
 			programsMap.get(enrollment.userId)!.push(enrollment.programTitle);
 		}
 
+		// Traer los campos dinámicos
+		const customFields = await db
+			.select({
+				userId: userCustomFields.userId,
+				fieldKey: userCustomFields.fieldKey,
+				fieldValue: userCustomFields.fieldValue
+			})
+			.from(userCustomFields);
+
+		const customFieldsMap = new Map<string, Record<string, string>>();
+		for (const row of customFields) {
+			if (!customFieldsMap.has(row.userId)) {
+				customFieldsMap.set(row.userId, {});
+			}
+			customFieldsMap.get(row.userId)![row.fieldKey] = row.fieldValue;
+		}
+
 		const students = await db
 			.select({
 				id: users.id,
@@ -88,16 +104,15 @@ export async function GET(req: Request) {
 			.innerJoin(programas, eq(latestEnrollments.programaId, programas.id))
 			.where(
 				programId
-					? and(
-							eq(users.role, 'estudiante'),
-							eq(programas.id, Number(programId))
-						)
+					? and(eq(users.role, 'estudiante'), eq(programas.id, Number(programId)))
 					: eq(users.role, 'estudiante')
 			);
 
+		// Agregar los campos dinámicos a cada estudiante
 		const enrichedStudents = students.map((student) => ({
 			...student,
 			programTitles: programsMap.get(student.id) ?? [],
+			customFields: customFieldsMap.get(student.id) ?? {}
 		}));
 
 		const coursesList = await db
@@ -119,10 +134,7 @@ export async function GET(req: Request) {
 		});
 	} catch (error) {
 		console.error('❌ Error:', error);
-		return NextResponse.json(
-			{ error: 'Internal Server Error' },
-			{ status: 500 }
-		);
+		return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
 	}
 }
 
