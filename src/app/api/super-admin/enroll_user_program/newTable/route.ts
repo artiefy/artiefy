@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+
+import { z } from 'zod';
+
 import { db } from '~/server/db';
 import { userCustomFields } from '~/server/db/schema';
-import { z } from 'zod';
 
 // Validación de entrada
 const requestBodySchema = z.object({
@@ -12,8 +14,9 @@ const requestBodySchema = z.object({
 
 export async function POST(req: Request) {
 	try {
-		const body = await req.json();
-		const { userId, fieldKey, fieldValue } = requestBodySchema.parse(body);
+		const body = requestBodySchema.parse(await req.json());
+		const { userId, fieldKey, fieldValue } = body;
+
 
 		// Insertar el nuevo campo personalizado
 		await db.insert(userCustomFields).values({

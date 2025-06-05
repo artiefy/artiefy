@@ -71,7 +71,17 @@ interface Course {
 	title: string;
 }
 
-const allColumns = [
+type ColumnType = 'text' | 'date' | 'select';
+
+interface Column {
+	id: string;
+	label: string;
+	defaultVisible: boolean;
+	type: ColumnType;
+	options?: string[];
+}
+
+const allColumns: Column[] = [
 	{ id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
 	{ id: 'email', label: 'Correo', defaultVisible: true, type: 'text' },
 	{ id: 'phone', label: 'Teléfono', defaultVisible: false, type: 'text' },
@@ -120,12 +130,21 @@ const allColumns = [
 	},
 ];
 
+// Helper function for safe string conversion
+function safeToString(value: unknown): string {
+	if (value === null || value === undefined) return '';
+	if (typeof value === 'string') return value;
+	if (typeof value === 'number' || typeof value === 'boolean')
+		return value.toString();
+	return JSON.stringify(value);
+}
+
 export default function EnrolledUsersPage() {
 	const [students, setStudents] = useState<Student[]>([]);
 	const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
 	const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 	const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
-	const [dynamicColumns, setDynamicColumns] = useState<any[]>([]);
+	const [dynamicColumns, setDynamicColumns] = useState<Column[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [filters, setFilters] = useState({
 		name: '',
@@ -151,7 +170,7 @@ export default function EnrolledUsersPage() {
 	);
 	const [showColumnSelector, setShowColumnSelector] = useState(false);
 	const [selectedProgram, setSelectedProgram] = useState('');
-	const totalColumns = [...allColumns, ...dynamicColumns];
+	const totalColumns: Column[] = [...allColumns, ...dynamicColumns];
 
 	// Save visible columns to localStorage
 	useEffect(() => {
@@ -165,7 +184,8 @@ export default function EnrolledUsersPage() {
 	const fetchData = async () => {
 		try {
 			const res = await fetch('/api/super-admin/enroll_user_program');
-			const data = apiResponseSchema.parse(await res.json());
+			const json: unknown = await res.json();
+			const data = apiResponseSchema.parse(json);
 
 			const enrolledMap = new Map(
 				data.enrolledUsers.map((u) => [u.id, u.programTitle])
@@ -198,7 +218,7 @@ export default function EnrolledUsersPage() {
 				id: `customFields.${key}`,
 				label: key,
 				defaultVisible: true,
-				type: 'text',
+				type: 'text' as ColumnType,
 			}));
 
 			// Agregamos al state las columnas dinámicas
@@ -218,14 +238,13 @@ export default function EnrolledUsersPage() {
 			return;
 		}
 
-		// Crea filas con las columnas visibles
+		// Crea filas with las columnas visibles
 		const rows = selectedData.map((student) => {
 			const row: Record<string, string> = {};
 			visibleColumns.forEach((colId) => {
 				const value = student[colId as keyof Student];
-				row[allColumns.find((c) => c.id === colId)?.label ?? colId] = value
-					? value.toString()
-					: '';
+				const safeValue = safeToString(value);
+				row[allColumns.find((c) => c.id === colId)?.label ?? colId] = safeValue;
 			});
 			return row;
 		});
@@ -288,20 +307,18 @@ export default function EnrolledUsersPage() {
 		.filter((student) => {
 			return Object.entries(columnFilters).every(([key, value]) => {
 				if (!value) return true;
-				const studentValue = student[key as keyof typeof student];
+				const studentValue = key.startsWith('customFields.')
+					? student.customFields?.[key.split('.')[1]]
+					: student[key as keyof Student];
 				if (!studentValue) return false;
 
 				if (key === 'subscriptionEndDate') {
-					return (
-						new Date(studentValue.toString()).toISOString().split('T')[0] ===
-						value
-					);
+					const dateStr = safeToString(studentValue);
+					return new Date(dateStr).toISOString().split('T')[0] === value;
 				}
 
-				return studentValue
-					.toString()
-					.toLowerCase()
-					.includes(value.toLowerCase());
+				const safeStudentValue = safeToString(studentValue);
+				return safeStudentValue.toLowerCase().includes(value.toLowerCase());
 			});
 		})
 
@@ -373,8 +390,9 @@ export default function EnrolledUsersPage() {
 					setFieldKey('');
 					setFieldValue('');
 				} else {
-					const error = await res.json();
-					alert('Error: ' + error.error);
+					const json: unknown = await res.json();
+const errorData = errorResponseSchema.parse(json);
+alert('Error: ' + errorData.error);
 				}
 			} catch (err) {
 				console.error(err);
@@ -427,14 +445,15 @@ export default function EnrolledUsersPage() {
 				}),
 			});
 
-			const data = (await response.json()) as { error: string };
+			const json: unknown = await response.json();
+
 			if (response.ok) {
 				alert('Estudiantes matriculados exitosamente');
 				setSelectedStudents([]);
 				setSelectedCourses([]);
 				setShowModal(false);
 			} else {
-				const errorData = errorResponseSchema.parse(data);
+				const errorData = errorResponseSchema.parse(json);
 				alert(`Error: ${errorData.error}`);
 			}
 		} catch (err) {
@@ -595,7 +614,7 @@ export default function EnrolledUsersPage() {
 														className="w-full rounded bg-gray-700 p-1 text-sm"
 													>
 														<option value="">Todos</option>
-														{col.options?.map((opt: string) => (
+														{col.options?.map((opt) => (
 															<option key={opt} value={opt}>
 																{opt}
 															</option>
@@ -648,14 +667,14 @@ export default function EnrolledUsersPage() {
 												col.id === 'subscriptionEndDate' ||
 												col.id === 'purchaseDate'
 											) {
-												const dateValue =
-													student[col.id as keyof typeof student];
+												const dateValue = student[col.id as keyof Student];
 												cellValue = dateValue
 													? new Date(dateValue as string).toLocaleDateString()
 													: 'N/A';
 											} else {
-												const value = student[col.id as keyof typeof student];
-												cellValue = value ? String(value) : 'N/A';
+												const key = col.id as keyof Student;
+												const value = student[key];
+												cellValue = value ? safeToString(value) : 'N/A';
 											}
 
 											return (
