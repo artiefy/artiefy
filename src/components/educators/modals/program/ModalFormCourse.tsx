@@ -609,7 +609,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
 				<DialogHeader className="mt-4">
 					<DialogTitle className="text-4xl">
-						{editingCourseId ? 'Editar Curso' : 'Crear Curso'}
+						{editingCourseId ? 'Editar Curso 2' : 'Crear Curso'}
 					</DialogTitle>
 					<DialogDescription className="text-xl text-white">
 						{editingCourseId

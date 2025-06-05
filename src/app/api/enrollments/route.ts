@@ -6,22 +6,61 @@ import { eq, inArray, and } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { enrollments, users, enrollmentPrograms } from '~/server/db/schema';
 
+function formatDateToClerk(date: Date): string {
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, '0'); // getMonth es 0-based
+	const day = String(date.getDate()).padStart(2, '0');
+	const hours = String(date.getHours()).padStart(2, '0');
+	const minutes = String(date.getMinutes()).padStart(2, '0');
+	const seconds = String(date.getSeconds()).padStart(2, '0');
+	return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 export async function POST(request: Request) {
 	try {
-		// Validate request body
 		if (!request.body) {
-			return NextResponse.json(
-				{ error: 'Missing request body' },
-				{ status: 400 }
-			);
+			return NextResponse.json({ error: 'Missing request body' }, { status: 400 });
 		}
+
 		const body = (await request.json()) as {
 			courseId?: string;
 			programId?: string;
 			userIds: string[];
 			planType?: string;
 		};
-		const { courseId, programId, userIds } = body;
+
+		const { courseId, programId, userIds, planType } = body;
+		const allowedPlans = ['Pro', 'Premium', 'Enterprise'];
+		const normalizedPlanType: 'Pro' | 'Premium' | 'Enterprise' | 'none' =
+			planType && allowedPlans.includes(planType)
+				? (planType as 'Pro' | 'Premium' | 'Enterprise')
+				: 'none';
+
+		const subscriptionEndDate = new Date();
+		subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+
+		for (const userId of userIds) {
+			await db
+				.update(users)
+				.set({
+					planType: normalizedPlanType,
+					subscriptionStatus: 'active',
+					subscriptionEndDate: subscriptionEndDate,
+				})
+				.where(eq(users.id, userId))
+				.execute();
+		}
+		for (const userId of userIds) {
+			const clerk = await clerkClient();
+			await clerk.users.updateUserMetadata(userId, {
+				publicMetadata: {
+					planType: normalizedPlanType,
+					subscriptionStatus: 'active',
+					subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
+				},
+			});
+		}
+
 		for (const userId of userIds) {
 			const existing = await db
 				.select({ id: users.id })

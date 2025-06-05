@@ -6,15 +6,23 @@ import { updateUserInClerk } from '~/server/queries/queries';
 export async function PATCH(req: Request) {
 	try {
 		// 🔹 Extraemos los datos del cuerpo de la solicitud
-		const { userId, firstName, lastName, role, status, permissions } =
-			(await req.json()) as {
-				userId: string;
-				firstName: string;
-				lastName: string;
-				role: string;
-				status: string;
-				permissions: string[];
-			};
+		const {
+			userId,
+			firstName,
+			lastName,
+			role,
+			status,
+			permissions,
+			subscriptionEndDate,
+		} = (await req.json()) as {
+			userId: string;
+			firstName: string;
+			lastName: string;
+			role: string;
+			status: string;
+			permissions: string[];
+			subscriptionEndDate?: string;
+		};
 
 		// 🔍 Validaciones básicas
 		if (!userId || !firstName?.trim() || !lastName?.trim()) {
@@ -32,6 +40,7 @@ export async function PATCH(req: Request) {
 			role,
 			status,
 			permissions,
+			subscriptionEndDate,
 		});
 
 		if (!updateSuccess) {
@@ -52,6 +61,7 @@ export async function PATCH(req: Request) {
 				role,
 				status,
 				permissions,
+				subscriptionEndDate,
 			},
 		});
 	} catch (error: unknown) {

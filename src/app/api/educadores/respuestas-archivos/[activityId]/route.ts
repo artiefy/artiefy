@@ -25,6 +25,7 @@ interface RawSubmission {
 	grade?: unknown;
 	uploadDate?: unknown; // Added the missing property
 	fileUrl?: unknown; // Added the missing property
+	comment?: unknown; // ✅ AGREGADO AQUÍ
 }
 
 interface Respuesta {
@@ -35,6 +36,7 @@ interface Respuesta {
 	status: string;
 	fileContent: string;
 	grade: number | null;
+	comment?: string; // ✅ Agregado aquí
 }
 
 export async function GET(request: NextRequest) {
@@ -73,7 +75,6 @@ export async function GET(request: NextRequest) {
 							'text' in item &&
 							typeof (item as Record<string, unknown>).id === 'string' &&
 							typeof (item as Record<string, unknown>).text === 'string'
-							
 					);
 					if (valid) {
 						preguntas = parsed;
@@ -93,7 +94,6 @@ export async function GET(request: NextRequest) {
 					'text' in item &&
 					typeof (item as Record<string, unknown>).id === 'string' &&
 					typeof (item as Record<string, unknown>).text === 'string'
-					
 			);
 			if (valid) {
 				preguntas = rawPreguntas;
@@ -146,6 +146,7 @@ export async function GET(request: NextRequest) {
 			) {
 				grade = Number(rawDoc.grade);
 			}
+			const comment = typeof rawDoc.comment === 'string' ? rawDoc.comment : '';
 
 			respuestas[key] = {
 				fileName,
@@ -155,6 +156,7 @@ export async function GET(request: NextRequest) {
 				status,
 				fileContent,
 				grade,
+				comment, // ✅ Agregado aquí
 			};
 		}
 	} catch (error) {

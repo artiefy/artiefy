@@ -243,7 +243,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				description: `La clase ${lessons?.title} ha sido eliminada exitosamente.`,
 			});
 
-			router.push(`/dashboard/super-admin/cursos/${courseIdNumber}`);
+			router.push(`/dashboard/educadores/cursos/${courseIdNumber}`);
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error', {

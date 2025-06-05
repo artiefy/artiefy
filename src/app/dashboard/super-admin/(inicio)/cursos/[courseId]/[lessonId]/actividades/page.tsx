@@ -613,7 +613,7 @@ const Page: React.FC = () => {
 															<p
 																className={`mt-1 text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 															>
-																Porcentage disponible:{' '}
+																Porcentaje disponible:{' '}
 																<strong>{porcentajeDisponible}%</strong>
 															</p>
 														)}

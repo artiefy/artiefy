@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 
+import Image from 'next/image';
+
 import { Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -10,12 +12,17 @@ import { Card, CardContent, CardFooter } from '~/components/educators/ui/card';
 
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
-// Propiedades del componente para la lista de preguntas
 interface QuestionListProps {
 	activityId: number;
+	onEdit?: (question: QuestionFilesSubida & { tipo: 'ARCHIVO' }) => void;
+	shouldRefresh?: boolean; // ✅ agregar esta prop
 }
 
-const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
+const QuestionSubidaList: React.FC<QuestionListProps> = ({
+	activityId,
+	onEdit,
+	shouldRefresh,
+}) => {
 	const [questions, setQuestions] = useState<QuestionFilesSubida[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<
 		QuestionFilesSubida | undefined
@@ -46,13 +53,19 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 			}
 		} catch (error) {
 			console.error('Error al cargar las preguntas:', error);
-			toast('Error',{
+			toast('Error', {
 				description: 'Error al cargar las preguntas',
 			});
 		} finally {
 			setLoading(false);
 		}
 	}, [activityId, questions]);
+
+	useEffect(() => {
+		if (shouldRefresh) {
+			void fetchQuestions();
+		}
+	}, [shouldRefresh, fetchQuestions]);
 
 	// Efecto para obtener las preguntas al cargar el componente y hacer polling si estamos editando
 	useEffect(() => {
@@ -75,7 +88,11 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 
 	// Función para editar una pregunta
 	const handleEdit = (question: QuestionFilesSubida) => {
-		setEditingQuestion(question);
+		if (onEdit) {
+			onEdit({ ...question, tipo: 'ARCHIVO' }); // 👈 Pasar a padre con tipo
+		} else {
+			setEditingQuestion(question);
+		}
 	};
 
 	// Función para eliminar una pregunta
@@ -90,13 +107,13 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 			if (response.ok) {
 				// Actualizar el estado local en lugar de hacer fetch
 				setQuestions(questions.filter((q) => q.id !== questionId));
-				toast('Pregunta eliminada',{
+				toast('Pregunta eliminada', {
 					description: 'La pregunta se eliminó correctamente',
 				});
 			}
 		} catch (error) {
 			console.error('Error al eliminar la pregunta:', error);
-			toast('Error',{
+			toast('Error', {
 				description: 'Error al eliminar la pregunta',
 			});
 		}
@@ -121,7 +138,12 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 	// Retorno la vista del componente
 	return (
 		<div className="my-2 space-y-4">
-			<FormActCompletado activityId={activityId} onSubmit={handleFormSubmit} />
+			{!onEdit && (
+				<FormActCompletado
+					activityId={activityId}
+					onSubmit={handleFormSubmit}
+				/>
+			)}
 			{questions.length > 0 ? (
 				questions.map((question) => (
 					<Card key={question.id} className="border-none shadow-lg">
@@ -134,15 +156,73 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({ activityId }) => {
 							/>
 						) : (
 							<>
-								<CardContent className="pt-6">
-									<h3 className="mb-2 text-lg font-semibold">
+								<CardContent className="space-y-4 pt-6">
+									<h3 className="text-lg font-semibold text-gray-800">
 										Pregunta de subida de archivos
 									</h3>
-									<p>Pregunta actividad:</p>
-									<p className="font-bold">{question.text}</p>
-									<p>Parametros de evaluacion:</p>
-									<p className="font-bold">{question.parametros}</p>
+
+									<div>
+										<p className="text-sm text-gray-600">Pregunta:</p>
+										<p className="font-bold text-gray-900">{question.text}</p>
+									</div>
+
+									<div>
+										<p className="text-sm text-gray-600">
+											Criterios de evaluación:
+										</p>
+										<p className="font-bold text-gray-900">
+											{question.parametros}
+										</p>
+									</div>
+
+									{/* Imagen complementaria */}
+									{question.portadaKey && (
+										<div>
+											<p className="mb-1 text-sm text-gray-600">
+												Imagen complementaria:
+											</p>
+											<Image
+												src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.portadaKey}`}
+												alt="Imagen complementaria"
+												width={800} // Ajusta según tu diseño
+												height={450}
+												className="max-h-60 w-full rounded-md border object-cover shadow"
+												style={{ objectFit: 'cover' }}
+											/>
+										</div>
+									)}
+
+									{/* Archivo de ayuda */}
+									{question.archivoKey && (
+										<div>
+											<p className="mb-1 text-sm text-gray-600">
+												Archivo de ayuda:
+											</p>
+											{question.archivoKey.endsWith('.mp4') ? (
+												<video
+													controls
+													className="w-full rounded-md shadow"
+													src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}`}
+												/>
+											) : /\.(pdf|docx?|pptx?)$/i.exec(question.archivoKey) ? (
+												<iframe
+													src={`https://docs.google.com/gview?url=${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}&embedded=true`}
+													className="h-60 w-full rounded-md border shadow"
+												/>
+											) : (
+												<a
+													href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+												>
+													Abrir archivo
+												</a>
+											)}
+										</div>
+									)}
 								</CardContent>
+
 								<CardFooter className="flex justify-end space-x-2">
 									<Button
 										onClick={() => handleEdit(question)}

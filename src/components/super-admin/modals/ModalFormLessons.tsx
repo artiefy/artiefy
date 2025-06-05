@@ -108,9 +108,11 @@ const ModalFormLessons = ({
 	useEffect(() => {
 		if (isEditing && editingLesson) {
 			const hasVideo =
-				editingLesson.coverVideoKey !== 'none' &&
-				editingLesson.coverVideoKey !== undefined;
+				!!editingLesson.coverVideoKey && editingLesson.coverVideoKey !== 'none';
 			setNeedsVideo(hasVideo);
+			console.log('editingLesson.coverVideoKey:', editingLesson.coverVideoKey);
+			console.log('hasVideo?', hasVideo);
+
 			setFormData({
 				title: editingLesson.title ?? '',
 				description: editingLesson.description ?? '',

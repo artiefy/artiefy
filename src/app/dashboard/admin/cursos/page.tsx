@@ -66,6 +66,8 @@ export default function Page() {
 	const [showProgramCourses, setShowProgramCourses] = useState(false);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const coursesPerPage = 6;
+	const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<string | null>(null);
+
 
 	// ✅ Obtener cursos, totales y categorías con lazy loading
 	useEffect(() => {
@@ -379,6 +381,7 @@ export default function Page() {
 		});
 		setParametrosList([]);
 		setIsModalOpen(true);
+		setEditCoverVideoCourseKey(null);
 	};
 
 	// Función para cerrar el modal de creación de cursos
@@ -609,6 +612,8 @@ export default function Page() {
 					educators={educators}
 					subjects={subjects}
 					setSubjects={setSubjects}
+					coverVideoCourseKey={editCoverVideoCourseKey}
+					setCoverVideoCourseKey={setEditCoverVideoCourseKey}
 				/>
 			)}
 		</div>

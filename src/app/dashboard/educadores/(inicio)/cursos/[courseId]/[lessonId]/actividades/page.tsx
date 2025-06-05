@@ -434,7 +434,7 @@ const Page: React.FC = () => {
 			});
 
 			router.push(
-				`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonsId}/actividades/${actividadId}`
+				`/dashboard/educadores/cursos/${courseIdNumber}/${lessonsId}/actividades/${actividadId}`
 			);
 		} catch (error) {
 			console.error('Error detallado:', error);
@@ -473,7 +473,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/super-admin"
+							href="/dashboard/educadores"
 						>
 							Inicio
 						</BreadcrumbLink>
@@ -482,7 +482,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href="/dashboard/super-admin/cursos"
+							href="/dashboard/educadores/cursos"
 						>
 							Lista de cursos
 						</BreadcrumbLink>
@@ -491,7 +491,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary hover:text-gray-300"
-							href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+							href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 						>
 							Detalles curso
 						</BreadcrumbLink>
@@ -613,7 +613,7 @@ const Page: React.FC = () => {
 															<p
 																className={`mt-1 text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
 															>
-																Porcentage disponible:{' '}
+																Porcentaje disponible:{' '}
 																<strong>{porcentajeDisponible}%</strong>
 															</p>
 														)}

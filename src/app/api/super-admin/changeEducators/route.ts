@@ -67,8 +67,6 @@ export async function PUT(req: Request) {
 			.where(eq(courses.id, body.courseId))
 			.returning();
 
-		console.log('✅ Resultado de la actualización:', result);
-
 		if (!result.length) {
 			return NextResponse.json(
 				{ error: 'No se encontró el curso' },

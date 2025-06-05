@@ -31,15 +31,15 @@ import {
 	AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
-import { Button } from '~/components/educators/ui/button';
-import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 import {
 	Breadcrumb,
 	BreadcrumbItem,
 	BreadcrumbLink,
 	BreadcrumbList,
 	BreadcrumbSeparator,
-} from '~/components/super-admin/ui/breadcrumb';
+} from '~/components/educators/ui/breadcrumb';
+import { Button } from '~/components/educators/ui/button';
+import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 
 import type {
 	QuestionFilesSubida,
@@ -109,9 +109,19 @@ const Page: React.FC = () => {
 	const [color, setColor] = useState<string>('#FFFFFF'); // Estado del color
 	const [selectedActivityType, setSelectedActivityType] = useState<string>(''); // Estado del tipo de actividad seleccionado
 	const [questions, setQuestions] = useState<string[]>([]); // Estado de las preguntas
-	const [editingQuestion, setEditingQuestion] = useState<
-		QuestionFilesSubida | Completado | VerdaderoOFlaso | Question | null
-	>(null); // Estado de la edicion de la pregunta
+	type TipoPregunta = 'OM' | 'FOV' | 'COMPLETADO' | 'ARCHIVO';
+
+	type EditableQuestion = (
+		| Question
+		| VerdaderoOFlaso
+		| Completado
+		| QuestionFilesSubida
+	) & {
+		tipo: TipoPregunta;
+	};
+
+	const [editingQuestion, setEditingQuestion] =
+		useState<EditableQuestion | null>(null);
 
 	// Convertir los parametros de la URL a numeros
 	const actividadIdString = Array.isArray(actividadIdUrl)
@@ -211,6 +221,12 @@ const Page: React.FC = () => {
 			setColor(savedColor);
 		}
 	}, [courseIdNumber]);
+
+	useEffect(() => {
+		if (actividad?.type.id === 1) {
+			setQuestions(['ARCHIVO']);
+		}
+	}, [actividad]);
 
 	useEffect(() => {
 		if (actividadIdNumber !== null) {
@@ -341,7 +357,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href="/dashboard/super-admin"
+							href="/dashboard/educadores"
 						>
 							Cursos
 						</BreadcrumbLink>
@@ -350,7 +366,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href="/dashboard/super-admin/cursos"
+							href="/dashboard/educadores/cursos"
 						>
 							Lista de cursos
 						</BreadcrumbLink>
@@ -359,7 +375,7 @@ const Page: React.FC = () => {
 					<BreadcrumbItem>
 						<BreadcrumbLink
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
-							href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+							href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 						>
 							Detalles curso
 						</BreadcrumbLink>
@@ -367,7 +383,7 @@ const Page: React.FC = () => {
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
 						<BreadcrumbLink
-							href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
+							href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}`}
 							className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
 						>
 							Lección
@@ -519,14 +535,43 @@ const Page: React.FC = () => {
 													activityId={actividadIdNumber.toString()}
 												/>
 											</div>
-											{editingQuestion && 'parametros' in editingQuestion && (
+											{questions.includes('ARCHIVO') && (
 												<FormActCompletado
 													activityId={actividadIdNumber}
-													editingQuestion={editingQuestion}
+													onSubmit={handleFormSubmit}
+													onCancel={handleCancel}
 												/>
 											)}
+
+											{editingQuestion?.tipo === 'ARCHIVO' &&
+												'parametros' in editingQuestion && (
+													<FormActCompletado
+														activityId={actividadIdNumber}
+														editingQuestion={editingQuestion}
+														onSubmit={handleFormSubmit}
+														onCancel={handleCancel}
+													/>
+												)}
+
 											<div className="rounded-lg border border-gray-200 bg-white p-6">
-												<QuestionSubidaList activityId={actividadIdNumber} />
+												<QuestionSubidaList
+													key={`subida-${shouldRefresh}`}
+													activityId={actividadIdNumber}
+													onEdit={(q) => {
+														if ('parametros' in q) {
+															console.log(
+																'[onEdit] Editando pregunta con parámetros:',
+																q
+															);
+															setEditingQuestion({ ...q, tipo: 'ARCHIVO' });
+														} else {
+															console.warn(
+																'[onEdit] La pregunta no tiene "parametros":',
+																q
+															);
+														}
+													}}
+												/>
 											</div>
 										</>
 									)}
@@ -568,6 +613,7 @@ const Page: React.FC = () => {
 									Agregar Pregunta
 								</Button>
 							)}
+							{/* Para agregar nuevas preguntas */}
 							{questions.map((questionType, index) => (
 								<div key={index}>
 									{questionType === 'OM' && actividadIdNumber !== null && (
@@ -576,7 +622,7 @@ const Page: React.FC = () => {
 											onSubmit={handleFormSubmit}
 											onCancel={handleCancel}
 											isUploading={false}
-											editingQuestion={editingQuestion as Question}
+											editingQuestion={undefined} // <- ✅ Tipo correcto
 										/>
 									)}
 									{questionType === 'FOV' && actividadIdNumber !== null && (
@@ -585,7 +631,7 @@ const Page: React.FC = () => {
 											onSubmit={handleFormSubmit}
 											onCancel={handleCancel}
 											isUploading={false}
-											editingQuestion={editingQuestion as VerdaderoOFlaso}
+											editingQuestion={undefined} // <- ✅ Tipo correcto
 										/>
 									)}
 									{questionType === 'COMPLETADO' &&
@@ -599,19 +645,51 @@ const Page: React.FC = () => {
 										)}
 								</div>
 							))}
+
+							{/* Para editar una pregunta existente */}
+							{editingQuestion && (
+								<div className="mt-4">
+									{editingQuestion.tipo === 'OM' &&
+										actividadIdNumber !== null && (
+											<QuestionForm
+												activityId={actividadIdNumber}
+												onSubmit={handleFormSubmit}
+												onCancel={handleCancel}
+												isUploading={false}
+												editingQuestion={editingQuestion as Question}
+											/>
+										)}
+									{editingQuestion.tipo === 'FOV' &&
+										actividadIdNumber !== null && (
+											<QuestionVOFForm
+												activityId={actividadIdNumber}
+												onSubmit={handleFormSubmit}
+												onCancel={handleCancel}
+												isUploading={false}
+												editingQuestion={editingQuestion as VerdaderoOFlaso}
+											/>
+										)}
+								</div>
+							)}
+
 							{actividadIdNumber !== null && (
 								<>
 									<QuestionVOFList
 										key={`vof-${shouldRefresh}`}
 										activityId={actividadIdNumber}
+										onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
+										shouldRefresh={shouldRefresh}
 									/>
+
 									<QuestionList
 										key={`om-${shouldRefresh}`}
 										activityId={actividadIdNumber}
+										onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
 									/>
 									<ListPreguntaAbierta
 										key={`abierta-${shouldRefresh}`}
 										activityId={actividadIdNumber}
+										shouldRefresh={shouldRefresh}
 									/>
 								</>
 							)}

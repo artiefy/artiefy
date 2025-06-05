@@ -19,6 +19,7 @@ interface PutRequestBody {
 	title?: string;
 	description?: string;
 	coverImageKey?: string;
+	coverVideoCourseKey?: string;
 	categoryid?: number;
 	modalidadesid?: number;
 	nivelid?: number;
@@ -89,12 +90,14 @@ export async function PUT(
 		}
 
 		const data = (await request.json()) as PutRequestBody;
-
+		console.log('📦 Datos recibidos en el request PUT:');
+		console.log(JSON.stringify(data, null, 2));
 		// Create update data object with type checking
 		const updateData = {
 			title: data.title,
 			description: data.description,
 			coverImageKey: data.coverImageKey,
+			coverVideoCourseKey: data.coverVideoCourseKey,
 			categoryid: data.categoryid ? Number(data.categoryid) : undefined,
 			modalidadesid: data.modalidadesid
 				? Number(data.modalidadesid)

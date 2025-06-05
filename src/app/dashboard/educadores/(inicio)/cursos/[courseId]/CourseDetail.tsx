@@ -51,6 +51,7 @@ interface Course {
 	courseTypeId?: number | null; // ✅ Agrega esto
 	courseTypeName?: string;
 	isActive: boolean;
+	coverVideoCourseKey?: string;
 }
 interface Materia {
 	id: number;
@@ -103,6 +104,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 	const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
 	void parametros;
 	void materias;
+	const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<
+		string | null
+	>(null);
 
 	const [isActive, setIsActive] = useState<boolean>(true);
 
@@ -153,6 +157,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 					const data = (await response.json()) as Course;
 					setCourse(data);
 					setCourseTypeId(data.courseTypeId ?? null);
+					setEditCoverVideoCourseKey(data.coverVideoCourseKey ?? null); // 🔧 <-- agregamos esto
 
 					const dataParametros =
 						(await responseParametros.json()) as Parametros[]; // Obtener los parámetros
@@ -773,6 +778,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 				setInstructor={() => undefined}
 				subjects={[]} // Si no estás usando subjects en edición, puedes pasar array vacío o mapear si los tienes.
 				setSubjects={() => undefined} // Mismo caso, una función vacía si no editas materias desde ahí.
+				coverVideoCourseKey={editCoverVideoCourseKey}
+				setCoverVideoCourseKey={setEditCoverVideoCourseKey}
 			/>
 		</div>
 	);

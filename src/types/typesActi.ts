@@ -17,7 +17,7 @@ export interface Materia {
 	description: string;
 	courseId?: number;
 	programaId?: number;
-  }
+}
 
 // Representa una pregunta de opción múltiple
 export interface Question {
@@ -62,4 +62,6 @@ export interface QuestionFilesSubida {
 	text: string; // Texto de la pregunta
 	parametros: string; // Parámetros adicionales de la pregunta
 	pesoPregunta: number; // ✅ nuevo campo
+	archivoKey?: string;
+	portadaKey?: string;
 }
