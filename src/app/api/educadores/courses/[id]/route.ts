@@ -354,12 +354,12 @@ export async function POST(request: Request) {
       isActive?: boolean; // ✅ Opcional
     };
     if (
-      (courseTypeId === 3 || courseTypeId === 4) &&
-      (individualPrice === null || individualPrice <= 0)
+      (data.courseTypeId === 3 || data.courseTypeId === 4) &&
+      (data.individualPrice === null || data.individualPrice <= 0)
     ) {
-      return respondWithError(
-        'Debe ingresar un precio válido para cursos individuales.',
-        400
+      return NextResponse.json(
+        { error: 'Debe ingresar un precio válido para cursos individuales.' },
+        { status: 400 }
       );
     }
 
