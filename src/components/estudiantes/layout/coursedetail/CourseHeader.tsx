@@ -44,7 +44,7 @@ import { GradeModal } from './CourseGradeModal';
 
 import type { Course, CourseMateria } from '~/types';
 
-import '~/styles/paybutton.css';
+import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
 
 export const revalidate = 3600;
@@ -587,25 +587,25 @@ export function CourseHeader({
             <span className="text-sm font-semibold">Mis Calificaciones</span>
           </Button>
 
-          {/* Price button with enhanced styling */}
+          {/* Price button with space theme */}
           {course.courseTypeId === 4 &&
             course.individualPrice &&
             !isEnrolled && (
-              <button
-                onClick={handleEnrollClick}
-                data-text={`$${course.individualPrice.toLocaleString()}`}
-                className="priceindividual zoom-out-effect flex flex-col items-center"
-              >
-                <span className="actual-text">
-                  &nbsp;${course.individualPrice.toLocaleString()}&nbsp;
-                </span>
-                <span className="hover-text" aria-hidden="true">
-                  &nbsp;${course.individualPrice.toLocaleString()}&nbsp;
-                </span>
-                <span className="mt-2 text-sm font-semibold text-gray-600">
-                  Comprar ahora
-                </span>
-              </button>
+              <div className="flex flex-col items-center gap-4">
+                <button onClick={handleEnrollClick} className="btn">
+                  <strong>
+                    <span>${course.individualPrice.toLocaleString()}</span>
+                    <span>Comprar Curso</span>
+                  </strong>
+                  <div id="container-stars">
+                    <div id="stars" />
+                  </div>
+                  <div id="glow">
+                    <div className="circle" />
+                    <div className="circle" />
+                  </div>
+                </button>
+              </div>
             )}
         </div>
 
@@ -682,58 +682,65 @@ export function CourseHeader({
           isSignedIn={!!isSignedIn} // Convert to boolean with !! operator
         />
 
-        {/* Enrollment buttons */}
+        {/* Enrollment buttons with space theme */}
         <div className="flex justify-center pt-4">
-          <div className="relative h-32 w-64">
+          <div className="relative h-32">
             {isEnrolled ? (
-              <div className="flex w-full flex-col space-y-4">
-                {/* Wrap both buttons in a fragment or a div */}
-                <>
-                  <Button
-                    className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
-                    disabled={true}
-                  >
+              <div className="flex flex-col space-y-4">
+                <button className="btn" disabled>
+                  <strong>
                     <FaCheck className="mr-2" /> Suscrito Al Curso
-                  </Button>
-                  <Button
-                    className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-                    onClick={onUnenrollAction}
-                    disabled={isUnenrolling}
-                  >
+                  </strong>
+                  <div id="container-stars">
+                    <div id="stars" />
+                  </div>
+                  <div id="glow">
+                    <div className="circle" />
+                    <div className="circle" />
+                  </div>
+                </button>
+                <button
+                  className="btn"
+                  onClick={onUnenrollAction}
+                  disabled={isUnenrolling}
+                >
+                  <strong>
                     {isUnenrolling ? (
-                      <Icons.spinner
-                        className="text-white"
-                        style={{ width: '35px', height: '35px' }}
-                      />
+                      <Icons.spinner className="h-6 w-6" />
                     ) : (
                       'Cancelar Suscripción'
                     )}
-                  </Button>
-                </>
-              </div>
-            ) : (
-              <div className="btn-wrapper">
-                <button
-                  className="course-btn zoom-out-effect"
-                  onClick={handleEnrollClick}
-                  disabled={isEnrolling || isEnrollClicked}
-                >
-                  <span className="flex min-h-[24px] min-w-[200px] items-center justify-center text-white">
-                    {isEnrolling || isEnrollClicked ? (
-                      <Icons.spinner className="h-6 w-6 text-white" />
-                    ) : course.courseTypeId === 4 ? (
-                      'Comprar Curso'
-                    ) : course.courseType?.requiredSubscriptionLevel ===
-                      'none' ? (
-                      'Inscribirse Gratis'
-                    ) : !isSubscriptionActive ? (
-                      'Obtener Suscripción'
-                    ) : (
-                      'Inscribirse al Curso'
-                    )}
-                  </span>
+                  </strong>
+                  <div id="container-stars">
+                    <div id="stars" />
+                  </div>
+                  <div id="glow">
+                    <div className="circle" />
+                    <div className="circle" />
+                  </div>
                 </button>
               </div>
+            ) : (
+              <button
+                className="btn"
+                onClick={handleEnrollClick}
+                disabled={isEnrolling || isEnrollClicked}
+              >
+                <strong>
+                  {isEnrolling || isEnrollClicked ? (
+                    <Icons.spinner className="h-6 w-6" />
+                  ) : (
+                    'Comprar Curso'
+                  )}
+                </strong>
+                <div id="container-stars">
+                  <div id="stars" />
+                </div>
+                <div id="glow">
+                  <div className="circle" />
+                  <div className="circle" />
+                </div>
+              </button>
             )}
           </div>
         </div>
@@ -753,7 +760,7 @@ export function CourseHeader({
           <div className="w-full max-w-lg rounded-lg bg-white p-4">
             <div className="relative mb-4 flex items-center justify-between">
               <h3 className="w-full text-center text-xl font-semibold text-gray-900">
-                Llena este formulario
+                Datos de Facturacion
                 <br />
                 <span className="font-bold">{course.title}</span>
               </h3>
