@@ -60,12 +60,10 @@ export async function GET(req: NextRequest) {
 	const userId = searchParams.get('userId');
 	const fetchSubjects = searchParams.get('fetchSubjects');
 
-	console.log('GET Request Parameters:', { courseId, userId, fetchSubjects });
 
 	try {
 		if (fetchSubjects) {
 			const subjects = await getSubjects();
-			console.log('Subjects:', subjects);
 			return NextResponse.json(subjects);
 		}
 		let courses;
@@ -86,7 +84,6 @@ export async function GET(req: NextRequest) {
 			};
 		} else if (userId) {
 			courses = await getAllCourses();
-			console.log('Courses for userId:', userId, courses);
 		} else {
 			courses = await getAllCourses();
 			// Filter out duplicate titles
@@ -94,7 +91,6 @@ export async function GET(req: NextRequest) {
 				new Map(courses.map((course) => [course.title, course])).values()
 			);
 			courses = uniqueCourses;
-			console.log('All courses:', courses);
 		}
 		return NextResponse.json(courses);
 	} catch (error) {
@@ -121,13 +117,15 @@ export async function POST(request: NextRequest) {
 			title: string;
 			description: string;
 			coverImageKey?: string;
-			coverVideoCourseKey?: string; // ✅ nuevo
+			coverVideoCourseKey?: string;
 			categoryid: number;
 			modalidadesid: number;
 			nivelid: number;
 			instructorId?: string;
-		};
-		console.log('📦 Datos recibidos en el backend:', body);
+			courseTypeId?: number | null; // <-- AGREGAR ESTO
+			individualPrice?: number | null; // <-- AGREGAR ESTO
+		  };
+		  
 
 		const {
 			title,
@@ -137,35 +135,29 @@ export async function POST(request: NextRequest) {
 			categoryid,
 			modalidadesid,
 			nivelid,
-			instructorId = userId, // Default to current user if not provided
+			instructorId = userId, 
+			courseTypeId = null,      
+			individualPrice = null    
 		} = body;
 
-		console.log('Creating course with data:', {
-			title,
-			description,
-			coverImageKey,
-			categoryid,
-			modalidadesid,
-			nivelid,
-			instructor: instructorId, // Log to verify instructor ID
-			creatorId: userId,
-		});
+	
 
 		const course = await createCourse({
 			title,
 			description,
 			creatorId: userId,
 			coverImageKey,
-			coverVideoCourseKey, // ✅ nuevo
+			coverVideoCourseKey,
 			categoryid,
 			modalidadesid,
 			nivelid,
-			instructor: instructorId, // Make sure to pass instructor ID
+			instructor: instructorId, 
+			courseTypeId,           
+			individualPrice
 		});
 
 		return NextResponse.json({ message: 'Curso creado exitosamente', course });
 	} catch (error) {
-		console.error('Error creating course:', error);
 		return respondWithError(
 			`Error al crear el curso: ${
 				error instanceof Error ? error.message : 'Unknown error'
@@ -193,6 +185,8 @@ export async function PUT(request: NextRequest) {
 			nivelid: number;
 			instructorId: string; // Changed from instructor to instructorId
 			subjects?: { id: number }[];
+			courseTypeId?: number | null;   // <-- nuevo
+			individualPrice?: number | null;
 		};
 
 		const {
@@ -205,6 +199,8 @@ export async function PUT(request: NextRequest) {
 			categoryid,
 			instructorId, // Updated from instructor
 			subjects = [],
+			courseTypeId = null,       // <-- nuevo
+			individualPrice = null 
 		} = body;
 
 		const course = await getCourseById(id);
@@ -220,13 +216,13 @@ export async function PUT(request: NextRequest) {
 			categoryid,
 			modalidadesid,
 			instructor: instructorId, // Map instructorId to instructor
-			nivelid,
+			nivelid, courseTypeId,         // <-- nuevo
+			individualPrice
 		});
 
 		// Manejar las materias
 		if (subjects.length > 0) {
 			const materiasAntes = await db.select().from(materias);
-			console.log('📊 Estado inicial de materias:', materiasAntes);
 
 			for (const subject of subjects) {
 				const existingMateria = await db
@@ -236,7 +232,6 @@ export async function PUT(request: NextRequest) {
 					.then((res) => res[0]);
 
 				if (existingMateria) {
-					console.log('🔍 Procesando materia:', existingMateria);
 
 					if (existingMateria.courseid) {
 						// Ya tiene curso, se crea una nueva
@@ -250,7 +245,6 @@ export async function PUT(request: NextRequest) {
 							})
 							.returning();
 
-						console.log('✨ Nueva materia creada:', newMateria[0]);
 					} else {
 						// Se actualiza la existente
 						const updatedMateria = await db
@@ -259,7 +253,6 @@ export async function PUT(request: NextRequest) {
 							.where(eq(materias.id, subject.id))
 							.returning();
 
-						console.log('📝 Materia actualizada:', updatedMateria[0]);
 					}
 
 					// 🔁 Buscar otras materias iguales por título en otros programas (excepto la actual)
@@ -285,7 +278,6 @@ export async function PUT(request: NextRequest) {
 								.where(eq(materias.id, materia.id))
 								.returning();
 
-							console.log('🔄 Materia igual actualizada:', updated[0]);
 						} else {
 							// Si ya tiene curso, se clona con el nuevo curso
 							const newMateria = await db
@@ -298,17 +290,12 @@ export async function PUT(request: NextRequest) {
 								})
 								.returning();
 
-							console.log(
-								'📚 Materia duplicada para nuevo curso:',
-								newMateria[0]
-							);
 						}
 					}
 				}
 			}
 
 			const materiasDespues = await db.select().from(materias);
-			console.log('🏁 Estado final de materias:', materiasDespues);
 
 			const nuevasMaterias = materiasDespues.filter(
 				(materiaFinal) =>
@@ -317,9 +304,6 @@ export async function PUT(request: NextRequest) {
 					)
 			);
 
-			if (nuevasMaterias.length > 0) {
-				console.log('🎯 Materias nuevas creadas:', nuevasMaterias);
-			}
 		}
 
 		return NextResponse.json({
@@ -330,7 +314,6 @@ export async function PUT(request: NextRequest) {
 					: id,
 		});
 	} catch (error) {
-		console.error('Error al actualizar el curso:', error);
 		return respondWithError('Error al actualizar el curso', 500);
 	}
 }
@@ -352,7 +335,6 @@ export async function DELETE(request: NextRequest) {
 		await deleteCourse(parsedCourseId);
 		return NextResponse.json({ message: 'Curso eliminado exitosamente' });
 	} catch (error) {
-		console.error('Error al eliminar el curso:', error);
 		return NextResponse.json(
 			{ error: 'Error al eliminar el curso' },
 			{ status: 500 }
