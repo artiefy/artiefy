@@ -283,7 +283,7 @@ export async function PUT(request: NextRequest) {
 
       const materiasDespues = await db.select().from(materias);
 
-      const nuevasMaterias = materiasDespues.filter(
+      materiasDespues.filter(
         (materiaFinal) =>
           !materiasAntes.some(
             (materiaInicial) => materiaInicial.id === materiaFinal.id
