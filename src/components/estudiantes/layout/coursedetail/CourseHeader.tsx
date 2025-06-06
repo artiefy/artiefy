@@ -286,6 +286,18 @@ export function CourseHeader({
 
   const handleEnrollClick = async () => {
     if (!isSignedIn) {
+      // Store purchase intent in localStorage before redirecting
+      if (course.courseTypeId === 4) {
+        const pendingPurchase: PendingPurchase = {
+          courseId: course.id,
+          type: 'individual',
+        };
+        localStorage.setItem(
+          'pendingPurchase',
+          JSON.stringify(pendingPurchase)
+        );
+      }
+
       // Show toast first
       toast.error('Inicio de sesión requerido', {
         description: 'Debes iniciar sesión para inscribirte en este curso',
@@ -396,6 +408,39 @@ export function CourseHeader({
     }
     return null;
   }, [course]);
+
+  // Add this interface near the top of the file with other interfaces
+  interface PendingPurchase {
+    courseId: number;
+    type: 'individual';
+  }
+
+  // Update the useEffect that checks for pending purchase
+  useEffect(() => {
+    // Check for pending purchase after login
+    const pendingPurchaseStr = localStorage.getItem('pendingPurchase');
+    if (pendingPurchaseStr && isSignedIn) {
+      try {
+        const pendingPurchase = JSON.parse(
+          pendingPurchaseStr
+        ) as PendingPurchase;
+        if (
+          pendingPurchase.courseId === course.id &&
+          pendingPurchase.type === 'individual'
+        ) {
+          // Clear the pending purchase
+          localStorage.removeItem('pendingPurchase');
+          // Show payment modal
+          if (courseProduct) {
+            setSelectedProduct(courseProduct);
+            setShowPaymentModal(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error processing pending purchase:', error);
+      }
+    }
+  }, [isSignedIn, course.id, courseProduct]);
 
   return (
     <Card className="overflow-hidden p-0">
@@ -549,13 +594,16 @@ export function CourseHeader({
               <button
                 onClick={handleEnrollClick}
                 data-text={`$${course.individualPrice.toLocaleString()}`}
-                className="priceindividual zoom-out-effect"
+                className="priceindividual zoom-out-effect flex flex-col items-center"
               >
                 <span className="actual-text">
                   &nbsp;${course.individualPrice.toLocaleString()}&nbsp;
                 </span>
                 <span className="hover-text" aria-hidden="true">
                   &nbsp;${course.individualPrice.toLocaleString()}&nbsp;
+                </span>
+                <span className="mt-2 text-sm font-semibold text-gray-600">
+                  Comprar ahora
                 </span>
               </button>
             )}
