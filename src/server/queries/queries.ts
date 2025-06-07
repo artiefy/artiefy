@@ -360,7 +360,7 @@ export async function updateMultipleUserStatus(
     for (const id of userIds) {
 	
 
-		const existingMetadata = metadataMap.get(id) || {};
+		const existingMetadata = metadataMap.get(id) ?? {};
 
 			// Fusionar los metadatos existentes con el nuevo estado.
 			const newMetadata = {
