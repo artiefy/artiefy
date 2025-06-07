@@ -687,38 +687,29 @@ export function CourseHeader({
           <div className="relative h-32">
             {isEnrolled ? (
               <div className="flex flex-col space-y-4">
-                <button className="btn" disabled>
-                  <strong>
+                {/* Wrap both buttons in a fragment or a div */}
+                <>
+                  <Button
+                    className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+                    disabled={true}
+                  >
                     <FaCheck className="mr-2" /> Suscrito Al Curso
-                  </strong>
-                  <div id="container-stars">
-                    <div id="stars" />
-                  </div>
-                  <div id="glow">
-                    <div className="circle" />
-                    <div className="circle" />
-                  </div>
-                </button>
-                <button
-                  className="btn"
-                  onClick={onUnenrollAction}
-                  disabled={isUnenrolling}
-                >
-                  <strong>
+                  </Button>
+                  <Button
+                    className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+                    onClick={onUnenrollAction}
+                    disabled={isUnenrolling}
+                  >
                     {isUnenrolling ? (
-                      <Icons.spinner className="h-6 w-6" />
+                      <Icons.spinner
+                        className="text-white"
+                        style={{ width: '35px', height: '35px' }}
+                      />
                     ) : (
                       'Cancelar Suscripción'
                     )}
-                  </strong>
-                  <div id="container-stars">
-                    <div id="stars" />
-                  </div>
-                  <div id="glow">
-                    <div className="circle" />
-                    <div className="circle" />
-                  </div>
-                </button>
+                  </Button>
+                </>
               </div>
             ) : (
               <button
@@ -728,9 +719,20 @@ export function CourseHeader({
               >
                 <strong>
                   {isEnrolling || isEnrollClicked ? (
-                    <Icons.spinner className="h-6 w-6" />
+                    <span>
+                      <Icons.spinner className="h-6 w-6" />
+                    </span>
                   ) : (
-                    'Comprar Curso'
+                    <span>
+                      {course.courseTypeId === 4
+                        ? 'Comprar Curso'
+                        : course.courseType?.requiredSubscriptionLevel ===
+                            'none'
+                          ? 'Inscribirse Gratis'
+                          : !isSubscriptionActive
+                            ? 'Obtener Suscripción'
+                            : 'Inscribirse al Curso'}
+                    </span>
                   )}
                 </strong>
                 <div id="container-stars">
