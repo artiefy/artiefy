@@ -442,17 +442,17 @@ export default function Page() {
               subjects={subjects}
               setSubjects={setSubjects}
               // ⬇ Agregar estos valores por ahora (null o default)
-              coverVideoCourseKey={null}
-              setCoverVideoCourseKey={undefined}
-              individualPrice={null}
-              setIndividualPrice={undefined}
-              courseTypeId={null}
-              setCourseTypeId={undefined}
-              isActive={true}
-              setIsActive={undefined}
-              instructor=""
-              setInstructor={undefined}
-              educators={[]}
+			  coverVideoCourseKey={null}
+setCoverVideoCourseKey={(_val) => null}
+individualPrice={null}
+setIndividualPrice={(_val) => null}
+courseTypeId={null}
+setCourseTypeId={(_val) => null}
+isActive={true}
+setIsActive={(_val) => null}
+instructor=""
+setInstructor={(_val) => null}
+educators={[]}	  
             />
           )}
         </div>

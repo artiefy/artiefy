@@ -13,7 +13,7 @@ export async function GET() {
     const totalStudents = await getTotalStudents();
 
     return NextResponse.json({ totalCourses, totalStudents });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al obtener totales' },
       { status: 500 }
