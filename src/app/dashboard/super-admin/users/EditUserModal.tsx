@@ -4,6 +4,19 @@ import Image from 'next/image';
 
 import { X } from 'lucide-react';
 
+function formatDateForBackend(dateString: string): string {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const hours = '00';
+    const minutes = '00';
+    const seconds = '00';
+
+    return `${year}-${day}-${month} ${hours}:${minutes}:${seconds}`;
+}
+
+
 interface User {
 	id: string;
 	firstName: string;
@@ -30,6 +43,8 @@ const availablePermissions = [
 	{ id: 'manage_users', label: 'Gestionar Usuarios' },
 	{ id: 'view_reports', label: 'Ver Reportes' },
 ];
+
+
 
 export default function EditUserModal({
 	isOpen,
@@ -260,11 +275,20 @@ export default function EditUserModal({
 							Cancelar
 						</button>
 						<button
-							onClick={() => onSave(editedUser, selectedPermissions)}
-							className="rounded-lg bg-[#3AF4EF] px-4 py-2 text-black hover:bg-[#3AF4EF]/90"
-						>
-							Guardar Cambios
-						</button>
+    onClick={() => {
+        const formattedUser = {
+            ...editedUser,
+            subscriptionEndDate: editedUser.subscriptionEndDate 
+                ? formatDateForBackend(editedUser.subscriptionEndDate) 
+                : null,
+        };
+        onSave(formattedUser, selectedPermissions);
+    }}
+    className="rounded-lg bg-[#3AF4EF] px-4 py-2 text-black hover:bg-[#3AF4EF]/90"
+>
+    Guardar Cambios
+</button>
+
 					</div>
 				</div>
 			</div>
