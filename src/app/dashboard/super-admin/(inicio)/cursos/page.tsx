@@ -16,6 +16,12 @@ import {
 
 import CourseListAdmin from './../../components/CourseListAdmin';
 
+type ExtendedCourseData = CourseData & {
+  individualPrice?: number;
+  courseTypeId?: number;
+  isActive?: boolean;
+};
+
 // Define el modelo de datos del curso
 export interface CourseModel {
   id: number;
@@ -49,7 +55,9 @@ export function LoadingCourses() {
 export default function Page() {
   const { user } = useUser();
   const [courses, setCourses] = useState<CourseData[]>([]);
-  const [editingCourse, setEditingCourse] = useState<CourseData | null>(null);
+  const [editingCourse, setEditingCourse] = useState<ExtendedCourseData | null>(
+    null
+  );
   const [uploading, setUploading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -402,8 +410,8 @@ export default function Page() {
       creatorId: '',
       nivelid: 0,
       rating: 0,
-      individualPrice: null,
-      courseTypeId: null,
+      individualPrice: undefined, // <-- en vez de null
+      courseTypeId: undefined,
       isActive: true,
     });
 
@@ -554,7 +562,9 @@ export default function Page() {
       {/* Course List with Loading Indicator */}
       <CourseListAdmin
         courses={displayedCourses}
-        onEditCourse={(course) => setEditingCourse(course)}
+        onEditCourse={(course) =>
+          setEditingCourse(course as ExtendedCourseData)
+        }
         onDeleteCourse={(courseId) => {
           console.log(`Course with id ${courseId} deleted`);
         }}
@@ -630,14 +640,13 @@ export default function Page() {
             id: index,
           }))}
           setParametrosAction={setParametrosList}
-          // 🔥 Este bloque es la corrección
           courseTypeId={
             editingCourse ? (editingCourse.courseTypeId ?? null) : courseTypeId
           }
           setCourseTypeId={(newTypeId: number | null) => {
             if (editingCourse) {
               setEditingCourse((prev) =>
-                prev ? { ...prev, courseTypeId: newTypeId } : null
+                prev ? { ...prev, courseTypeId: newTypeId ?? undefined } : null
               );
             } else {
               setCourseTypeId(newTypeId);
@@ -654,14 +663,14 @@ export default function Page() {
             }
           }}
           individualPrice={
-            editingCourse
-              ? (editingCourse.individualPrice ?? null)
-              : individualPrice
-          }
+			editingCourse
+			  ? (editingCourse.individualPrice ?? null)
+			  : individualPrice
+		  }		  
           setIndividualPrice={(price: number | null) => {
             if (editingCourse) {
               setEditingCourse((prev) =>
-                prev ? { ...prev, individualPrice: price } : null
+                prev ? { ...prev, individualPrice: price ?? undefined } : null
               );
             } else {
               setIndividualPrice(price);

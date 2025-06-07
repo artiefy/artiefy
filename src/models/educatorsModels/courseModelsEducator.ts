@@ -95,8 +95,8 @@ export async function createCourse(data: CreateCourseData) {
 
     const sanitizedData = {
       ...data,
-      courseTypeId: data.courseTypeId ?? null,
-      individualPrice: (data.individualPrice ?? null) as number | null,
+      courseTypeId: data.courseTypeId ?? 0,
+      individualPrice: (data.individualPrice ?? 0) as number | null,
     };
 
     const result = await db

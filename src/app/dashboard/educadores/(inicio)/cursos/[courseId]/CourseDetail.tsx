@@ -55,6 +55,7 @@ interface Course {
   isActive: boolean;
   instructorName: string;
   coverVideoCourseKey?: string;
+  individualPrice?: number | null;
 }
 interface Materia {
   id: number;
@@ -344,6 +345,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
       let finalCoverImageKey = coverImageKey;
       let finalFileName = fileName;
+      if (addParametros) {
+        console.log('Se agregarán parámetros adicionales');
+      }
 
       // Si viene un nuevo archivo, subimos el archivo
       if (file) {

@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const result = await db.select().from(categories);
     return NextResponse.json(result);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al obtener categorías' },
       { status: 500 }

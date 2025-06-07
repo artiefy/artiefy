@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     const parametros = await getParametrosByCourseId(parsedCourseId);
     return NextResponse.json(parametros);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al obtener los parámetros' },
       { status: 500 }
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(parametroCreado);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al crear el parámetro' },
       { status: 500 }
@@ -98,7 +98,7 @@ export async function DELETE(request: NextRequest) {
       await deleteParametro(Number(id));
       return NextResponse.json({ message: 'Parámetro eliminado' });
     }
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al eliminar parámetros' },
       { status: 500 }
@@ -127,7 +127,7 @@ export async function PUT(request: Request) {
     );
 
     return NextResponse.json(updatedParametros);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Error al actualizar los parámetros' },
       { status: 500 }

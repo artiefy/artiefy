@@ -298,9 +298,10 @@ export async function PUT(request: NextRequest) {
           ? course.id
           : id,
     });
-  } catch (error) {
-    return respondWithError('Error al actualizar el curso', 500);
+} catch {
+	return respondWithError('Error al actualizar el curso', 500);
   }
+  
 }
 
 // Eliminar un curso
@@ -319,10 +320,10 @@ export async function DELETE(request: NextRequest) {
     const parsedCourseId = parseInt(courseId);
     await deleteCourse(parsedCourseId);
     return NextResponse.json({ message: 'Curso eliminado exitosamente' });
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Error al eliminar el curso' },
-      { status: 500 }
-    );
-  }
+} catch {
+	return NextResponse.json(
+	  { error: 'Error al eliminar el curso' },
+	  { status: 500 }
+	);
+  }  
 }
