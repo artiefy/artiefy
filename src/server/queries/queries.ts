@@ -696,36 +696,23 @@ export async function updateUserInClerk({
       publicMetadata: newMetadata,
     });
 
-    // 🧠 También actualizar en Drizzle (esta parte ya era correcta)
-    // 🔧 Función auxiliar para corregir el formato
-    function parseSubscriptionEndDate(dateStr: string): Date | null {
-      if (!dateStr) return null;
-
-      // Suponemos que llega en formato: YYYY-DD-MM HH:mm:ss
-      const [datePart, timePart] = dateStr.split(' ');
-
-      const [year, day, month] = datePart.split('-');
-
-      // Armamos la fecha en el formato correcto YYYY-MM-DD
-      const correctedDateStr = `${year}-${month}-${day}T${timePart || '00:00:00'}`;
-
-      const dateObj = new Date(correctedDateStr);
-
-      return isNaN(dateObj.getTime()) ? null : dateObj;
+    function convertToBDFormat(dateStr: string): string {
+      const [year, day, month] = dateStr.split('-');
+      return `${year}-${month}-${day}T00:00:00`; // Formato que entiende new Date()
     }
 
     await db
       .update(users)
       .set({
         name: `${firstName} ${lastName}`,
-        role: (role || 'estudiante') as
-          | 'estudiante'
-          | 'educador'
-          | 'admin'
-          | 'super-admin',
-        subscriptionStatus: status || 'activo',
+		role: (role || 'estudiante') as
+		| 'estudiante'
+		| 'educador'
+		| 'admin'
+		| 'super-admin',
+		subscriptionStatus: status || 'activo',
         subscriptionEndDate: subscriptionEndDate
-          ? parseSubscriptionEndDate(subscriptionEndDate)
+          ? new Date(convertToBDFormat(subscriptionEndDate))
           : null,
         updatedAt: new Date(),
       })
