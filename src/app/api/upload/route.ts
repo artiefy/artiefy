@@ -130,10 +130,6 @@ export async function POST(request: Request) {
 				expiresIn: 3600,
 			});
 
-			console.log('✅ Presigned PUT generado correctamente');
-			console.log('🧠 Se guardará en BD:');
-			console.log('   - coverImageKey:', coverImageKey);
-			console.log('   - uploadedFileName:', finalKey);
 
 			return NextResponse.json({
 				url: signedUrl,

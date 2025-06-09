@@ -1,9 +1,10 @@
 'use server';
 
+import { eq } from 'drizzle-orm';
+
+import { createNotification } from '~/server/actions/notifications/createNotification';
 import { db } from '~/server/db';
 import { courses, users } from '~/server/db/schema';
-import { createNotification } from '~/server/actions/notifications/createNotification';
-import { eq } from 'drizzle-orm';
 
 interface CreateCourseInput {
   title: string;

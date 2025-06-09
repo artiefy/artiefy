@@ -312,7 +312,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/educators"
+								href="/dashboard/educadores"
 							>
 								Cursos
 							</BreadcrumbLink>
@@ -321,7 +321,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/educators/cursos"
+								href="/dashboard/educadores/cursos"
 							>
 								Lista de cursos
 							</BreadcrumbLink>
@@ -330,7 +330,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href={`/dashboard/educators/cursos/${courseIdNumber}`}
+								href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 							>
 								Detalles curso
 							</BreadcrumbLink>
