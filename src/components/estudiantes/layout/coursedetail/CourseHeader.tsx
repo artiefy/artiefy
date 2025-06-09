@@ -44,7 +44,7 @@ import { GradeModal } from './CourseGradeModal';
 
 import type { Course, CourseMateria } from '~/types';
 
-import '~/styles/paybutton.css';
+import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
 
 export const revalidate = 3600;
@@ -286,6 +286,18 @@ export function CourseHeader({
 
   const handleEnrollClick = async () => {
     if (!isSignedIn) {
+      // Store purchase intent in localStorage before redirecting
+      if (course.courseTypeId === 4) {
+        const pendingPurchase: PendingPurchase = {
+          courseId: course.id,
+          type: 'individual',
+        };
+        localStorage.setItem(
+          'pendingPurchase',
+          JSON.stringify(pendingPurchase)
+        );
+      }
+
       // Show toast first
       toast.error('Inicio de sesión requerido', {
         description: 'Debes iniciar sesión para inscribirte en este curso',
@@ -396,6 +408,39 @@ export function CourseHeader({
     }
     return null;
   }, [course]);
+
+  // Add this interface near the top of the file with other interfaces
+  interface PendingPurchase {
+    courseId: number;
+    type: 'individual';
+  }
+
+  // Update the useEffect that checks for pending purchase
+  useEffect(() => {
+    // Check for pending purchase after login
+    const pendingPurchaseStr = localStorage.getItem('pendingPurchase');
+    if (pendingPurchaseStr && isSignedIn) {
+      try {
+        const pendingPurchase = JSON.parse(
+          pendingPurchaseStr
+        ) as PendingPurchase;
+        if (
+          pendingPurchase.courseId === course.id &&
+          pendingPurchase.type === 'individual'
+        ) {
+          // Clear the pending purchase
+          localStorage.removeItem('pendingPurchase');
+          // Show payment modal
+          if (courseProduct) {
+            setSelectedProduct(courseProduct);
+            setShowPaymentModal(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error processing pending purchase:', error);
+      }
+    }
+  }, [isSignedIn, course.id, courseProduct]);
 
   return (
     <Card className="overflow-hidden p-0">
@@ -542,22 +587,25 @@ export function CourseHeader({
             <span className="text-sm font-semibold">Mis Calificaciones</span>
           </Button>
 
-          {/* Price button with enhanced styling */}
+          {/* Price button with space theme */}
           {course.courseTypeId === 4 &&
             course.individualPrice &&
             !isEnrolled && (
-              <button
-                onClick={handleEnrollClick}
-                data-text={`$${course.individualPrice.toLocaleString()}`}
-                className="priceindividual zoom-out-effect"
-              >
-                <span className="actual-text">
-                  &nbsp;${course.individualPrice.toLocaleString()}&nbsp;
-                </span>
-                <span className="hover-text" aria-hidden="true">
-                  &nbsp;${course.individualPrice.toLocaleString()}&nbsp;
-                </span>
-              </button>
+              <div className="flex flex-col items-center gap-4">
+                <button onClick={handleEnrollClick} className="btn">
+                  <strong>
+                    <span>${course.individualPrice.toLocaleString()}</span>
+                    <span>Comprar Curso</span>
+                  </strong>
+                  <div id="container-stars">
+                    <div id="stars" />
+                  </div>
+                  <div id="glow">
+                    <div className="circle" />
+                    <div className="circle" />
+                  </div>
+                </button>
+              </div>
             )}
         </div>
 
@@ -634,11 +682,11 @@ export function CourseHeader({
           isSignedIn={!!isSignedIn} // Convert to boolean with !! operator
         />
 
-        {/* Enrollment buttons */}
+        {/* Enrollment buttons with space theme */}
         <div className="flex justify-center pt-4">
-          <div className="relative h-32 w-64">
+          <div className="relative h-32">
             {isEnrolled ? (
-              <div className="flex w-full flex-col space-y-4">
+              <div className="flex flex-col space-y-4">
                 {/* Wrap both buttons in a fragment or a div */}
                 <>
                   <Button
@@ -664,28 +712,37 @@ export function CourseHeader({
                 </>
               </div>
             ) : (
-              <div className="btn-wrapper">
-                <button
-                  className="course-btn zoom-out-effect"
-                  onClick={handleEnrollClick}
-                  disabled={isEnrolling || isEnrollClicked}
-                >
-                  <span className="flex min-h-[24px] min-w-[200px] items-center justify-center text-white">
-                    {isEnrolling || isEnrollClicked ? (
-                      <Icons.spinner className="h-6 w-6 text-white" />
-                    ) : course.courseTypeId === 4 ? (
-                      'Comprar Curso'
-                    ) : course.courseType?.requiredSubscriptionLevel ===
-                      'none' ? (
-                      'Inscribirse Gratis'
-                    ) : !isSubscriptionActive ? (
-                      'Obtener Suscripción'
-                    ) : (
-                      'Inscribirse al Curso'
-                    )}
-                  </span>
-                </button>
-              </div>
+              <button
+                className="btn"
+                onClick={handleEnrollClick}
+                disabled={isEnrolling || isEnrollClicked}
+              >
+                <strong>
+                  {isEnrolling || isEnrollClicked ? (
+                    <span>
+                      <Icons.spinner className="h-6 w-6" />
+                    </span>
+                  ) : (
+                    <span>
+                      {course.courseTypeId === 4
+                        ? 'Comprar Curso'
+                        : course.courseType?.requiredSubscriptionLevel ===
+                            'none'
+                          ? 'Inscribirse Gratis'
+                          : !isSubscriptionActive
+                            ? 'Obtener Suscripción'
+                            : 'Inscribirse al Curso'}
+                    </span>
+                  )}
+                </strong>
+                <div id="container-stars">
+                  <div id="stars" />
+                </div>
+                <div id="glow">
+                  <div className="circle" />
+                  <div className="circle" />
+                </div>
+              </button>
             )}
           </div>
         </div>
@@ -705,7 +762,7 @@ export function CourseHeader({
           <div className="w-full max-w-lg rounded-lg bg-white p-4">
             <div className="relative mb-4 flex items-center justify-between">
               <h3 className="w-full text-center text-xl font-semibold text-gray-900">
-                Llena este formulario
+                Datos de Facturacion
                 <br />
                 <span className="font-bold">{course.title}</span>
               </h3>

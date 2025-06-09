@@ -73,7 +73,7 @@ export default function BuyerInfoForm({
 					<input
 						type="tel"
 						name="telephone"
-						placeholder="+00 0000000000"
+						placeholder="+000000000000"
 						value={formData.telephone}
 						onChange={onChangeAction}
 						maxLength={14}
