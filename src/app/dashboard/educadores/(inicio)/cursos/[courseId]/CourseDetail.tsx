@@ -26,7 +26,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
-import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
+import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
   Breadcrumb,

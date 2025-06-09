@@ -310,19 +310,19 @@ export async function updateUserStatus(id: string, status: string) {
     // Update in Clerk
     const client = await clerkClient();
 
-		// 1. Leer el usuario para obtener sus metadatos públicos actuales
-		const user = await client.users.getUser(id);
+    // 1. Leer el usuario para obtener sus metadatos públicos actuales
+    const user = await client.users.getUser(id);
 
-		// 2. Fusionar los metadatos existentes con el nuevo estado
-		const newMetadata = {
-			...user.publicMetadata,
-			status: status, // Actualizar/añadir solo la clave 'status'
-		};
+    // 2. Fusionar los metadatos existentes con el nuevo estado
+    const newMetadata = {
+      ...user.publicMetadata,
+      status: status, // Actualizar/añadir solo la clave 'status'
+    };
 
-		// 3. Escribir el objeto completo de metadatos de vuelta a Clerk
-		await client.users.updateUser(id, {
-			publicMetadata: newMetadata,
-		});
+    // 3. Escribir el objeto completo de metadatos de vuelta a Clerk
+    await client.users.updateUser(id, {
+      publicMetadata: newMetadata,
+    });
 
     // Update in database
     await db
@@ -347,31 +347,29 @@ export async function updateMultipleUserStatus(
   status: string
 ) {
   try {
-	const client = await clerkClient();
+    const client = await clerkClient();
 
-		// 1. Obtener los datos de todos los usuarios en una sola llamada a la API.
-		const userList = await client.users.getUserList({ userId: userIds });
+    // 1. Obtener los datos de todos los usuarios en una sola llamada a la API.
+    const userList = await client.users.getUserList({ userId: userIds });
 
-		// 2. Crear un mapa para acceder fácilmente a los metadatos de cada usuario.
-		const metadataMap = new Map(
-			userList.data.map((user) => [user.id, user.publicMetadata])
-		);
+    // 2. Crear un mapa para acceder fácilmente a los metadatos de cada usuario.
+    const metadataMap = new Map(
+      userList.data.map((user) => [user.id, user.publicMetadata])
+    );
     // Update both Clerk and database for each user
     for (const id of userIds) {
-	
+      const existingMetadata = metadataMap.get(id) ?? {};
 
-		const existingMetadata = metadataMap.get(id) ?? {};
+      // Fusionar los metadatos existentes con el nuevo estado.
+      const newMetadata = {
+        ...existingMetadata,
+        status: status,
+      };
 
-			// Fusionar los metadatos existentes con el nuevo estado.
-			const newMetadata = {
-				...existingMetadata,
-				status: status,
-			};
-
-			// Escribir el objeto de metadatos completo y actualizado en Clerk.
-			await client.users.updateUser(id, {
-				publicMetadata: newMetadata,
-			});
+      // Escribir el objeto de metadatos completo y actualizado en Clerk.
+      await client.users.updateUser(id, {
+        publicMetadata: newMetadata,
+      });
 
       // Update in database
       await db
@@ -656,87 +654,76 @@ export async function getNivel() {
 }
 
 export async function updateUserInClerk({
-	userId,
-	firstName,
-	lastName,
-	role,
-	status,
-	permissions,
-	subscriptionEndDate,
+  userId,
+  firstName,
+  lastName,
+  role,
+  status,
+  permissions,
+  subscriptionEndDate,
 }: {
-	userId: string;
-	firstName: string;
-	lastName: string;
-	role: string;
-	status: string;
-	permissions: string[];
-	subscriptionEndDate?: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  status: string;
+  permissions: string[];
+  subscriptionEndDate?: string;
 }) {
-	try {
-		const client = await clerkClient();
+  try {
+    const client = await clerkClient();
 
-		// 1. Leer el usuario para obtener los metadatos existentes
-		const user = await client.users.getUser(userId);
+    // 1. Leer el usuario para obtener los metadatos existentes
+    const user = await client.users.getUser(userId);
 
-		// 2. Fusionar los metadatos existentes con los nuevos valores
-		const newMetadata = {
-			...user.publicMetadata, // Preserva todos los campos existentes
-			role: (role || 'estudiante') as
-				| 'admin'
-				| 'educador'
-				| 'super-admin'
-				| 'estudiante',
-			status: status || 'activo',
-			permissions: Array.isArray(permissions) ? permissions : [],
-			subscriptionEndDate: subscriptionEndDate ?? null,
-		};
-		
-		// 3. Actualizar en Clerk con el objeto completo y fusionado
-		await client.users.updateUser(userId, {
-			firstName,
-			lastName,
-			publicMetadata: newMetadata,
-		});
+    // 2. Fusionar los metadatos existentes con los nuevos valores
+    const newMetadata = {
+      ...user.publicMetadata, // Preserva todos los campos existentes
+      role: (role || 'estudiante') as
+        | 'admin'
+        | 'educador'
+        | 'super-admin'
+        | 'estudiante',
+      status: status || 'activo',
+      permissions: Array.isArray(permissions) ? permissions : [],
+      subscriptionEndDate: subscriptionEndDate ?? null,
+    };
 
-		function parseSubscriptionEndDate(dateStr: string): Date | null {
-			if (!dateStr) return null;
-	  
-			// Suponemos que llega en formato: YYYY-DD-MM HH:mm:ss
-			const [datePart, timePart] = dateStr.split(' ');
-	  
-			const [year, day, month] = datePart.split('-');
-	  
-			// Armamos la fecha en el formato correcto YYYY-MM-DD
-			const correctedDateStr = `${year}-${month}-${day}T${timePart || '00:00:00'}`;
-	  
-			const dateObj = new Date(correctedDateStr);
-	  
-			return isNaN(dateObj.getTime()) ? null : dateObj;
-		  }
-	  
-		  await db
-			.update(users)
-			.set({
-			  name: `${firstName} ${lastName}`,
-			  role: (role || 'estudiante') as
-				| 'estudiante'
-				| 'educador'
-				| 'admin'
-				| 'super-admin',
-			  subscriptionStatus: status || 'activo',
-			  subscriptionEndDate: subscriptionEndDate
-				? parseSubscriptionEndDate(subscriptionEndDate)
-				: null,
-			  updatedAt: new Date(),
-			})
-			.where(eq(users.id, userId));
+    // 3. Actualizar en Clerk con el objeto completo y fusionado
+    await client.users.updateUser(userId, {
+      firstName,
+      lastName,
+      publicMetadata: newMetadata,
+    });
 
-		console.log(`✅ Usuario ${userId} actualizado en Clerk y BD`);
-		return true;
-	} catch (error) {
-		console.error('❌ Error al actualizar usuario:', error);
-		return false;
-	}
+    function convertToBDFormat(dateStr: string): string {
+      const [year, day, month] = dateStr.split('-');
+      return `${year}-${month}-${day}T00:00:00`; // Formato que entiende new Date()
+    }
+
+    await db
+      .update(users)
+      .set({
+        name: `${firstName} ${lastName}`,
+        role: (role || 'estudiante') as
+          | 'estudiante'
+          | 'educador'
+          | 'admin'
+          | 'super-admin',
+        subscriptionStatus: status || 'activo',
+        subscriptionEndDate: subscriptionEndDate
+          ? new Date(convertToBDFormat(subscriptionEndDate))
+          : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    console.log(`✅ Usuario ${userId} actualizado en Clerk y BD`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error al actualizar usuario:', error);
+    return false;
+  }
 }
 
 export async function getMateriasByCourseId(
