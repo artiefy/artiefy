@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { updateUserInClerk } from '~/server/queries/queries';
 
 export async function PATCH(req: Request) {

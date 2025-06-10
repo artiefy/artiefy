@@ -27,6 +27,9 @@ export interface Materia {
   curso: BaseCourse | undefined;
 }
 
+type UserRole = 'admin' | 'educador' | 'super-admin' | 'estudiante';
+
+
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query: string | undefined) {
   console.log('DEBUG: Ejecutando getAdminUsers con query ->', query);
@@ -566,7 +569,7 @@ export async function deleteProgram(programId: number): Promise<void> {
 
 export {};
 
-interface FullUserUpdateInput {
+export interface FullUserUpdateInput {
   userId: string;
   firstName: string;
   lastName: string;
@@ -629,7 +632,7 @@ export async function updateFullUser(
         | 'educador'
         | 'super-admin'
         | 'estudiante',
-      planType: planType || 'none', // ✅ Nuevo
+      planType: planType ?? 'none', // ✅ Nuevo
       subscriptionStatus: status || 'activo', // ✅ Nuevo
       subscriptionEndDate: formatDateForClerk(subscriptionEndDate), // ✅ Nuevo
       permissions: Array.isArray(permissions) ? permissions : [],
@@ -647,7 +650,7 @@ export async function updateFullUser(
       .update(users)
       .set({
         name: `${firstName} ${lastName}`,
-        role: role as any,
+        role: role as UserRole,
         subscriptionStatus: status,
         planType: ['none', 'Pro', 'Premium', 'Enterprise'].includes(
           planType ?? ''

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { updateFullUser } from '~/server/queries/queriesSuperAdmin';
+
+import { updateFullUser, type FullUserUpdateInput } from '~/server/queries/queriesSuperAdmin';
 
 export async function PATCH(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as FullUserUpdateInput;
 
     const result = await updateFullUser(body);
 

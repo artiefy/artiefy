@@ -472,7 +472,9 @@ export default function EnrolledUsersPage() {
         [key]: value,
       };
     } else {
-      (updatedStudent as any)[field] = value;
+      if (field in updatedStudent) {
+        (updatedStudent as Record<string, unknown>)[field] = value;
+      }
     }
 
     const [firstName, ...lastNameParts] = updatedStudent.name.split(' ');
@@ -485,7 +487,7 @@ export default function EnrolledUsersPage() {
         userId: updatedStudent.id,
         firstName: firstName || '',
         lastName: lastName || '',
-        role: updatedStudent.role || 'estudiante',
+        role: updatedStudent.role ?? 'estudiante',
         status: updatedStudent.subscriptionStatus,
         permissions: [],
         phone: updatedStudent.phone,
@@ -500,13 +502,16 @@ export default function EnrolledUsersPage() {
               .toISOString()
               .split('T')[0]
           : null,
-        customFields: updatedStudent.customFields || {},
+        customFields: updatedStudent.customFields ?? {},
       }),
     });
 
     if (!res.ok) {
-      const data = await res.json();
-      alert(`❌ Error al guardar: ${data.error}`);
+      const data: unknown = await res.json();
+      if (!res.ok) {
+        const errorData = errorResponseSchema.parse(data);
+        alert(`❌ Error al guardar: ${errorData.error}`);
+      }
     } else {
       setStudents((prev) =>
         prev.map((s) => (s.id === userId ? updatedStudent : s))
@@ -709,7 +714,7 @@ export default function EnrolledUsersPage() {
                   {totalColumns
                     .filter((col) => visibleColumns.includes(col.id))
                     .map((col) => {
-                      let value: string = '';
+                      let value = '';
 
                       if (col.id.startsWith('customFields.')) {
                         const key = col.id.split('.')[1];
@@ -740,7 +745,7 @@ export default function EnrolledUsersPage() {
                               }
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                  updateStudentField(
+                                  void updateStudentField(
                                     student.id,
                                     col.id,
                                     (e.target as HTMLSelectElement).value
@@ -761,7 +766,7 @@ export default function EnrolledUsersPage() {
                               type={col.type === 'date' ? 'date' : 'text'}
                               defaultValue={value}
                               onBlur={(e) =>
-                                updateStudentField(
+                                void updateStudentField(
                                   student.id,
                                   col.id,
                                   e.target.value
@@ -769,10 +774,10 @@ export default function EnrolledUsersPage() {
                               }
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
-                                  updateStudentField(
+                                  void updateStudentField(
                                     student.id,
                                     col.id,
-                                    (e.target as HTMLInputElement).value
+                                    e.currentTarget.value
                                   );
                                   e.currentTarget.blur();
                                 }

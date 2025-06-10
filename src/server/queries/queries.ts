@@ -691,7 +691,7 @@ export async function updateUserInClerk({
         | 'educador'
         | 'super-admin'
         | 'estudiante',
-      planType: planType || 'none', // ✅ Agregado
+      planType: planType ?? 'none', // ✅ Agregado
       subscriptionStatus: status || 'activo', // ✅ Usar clave exacta como en imagen
       subscriptionEndDate: formattedEndDate, // ✅ Formato correcto
       permissions: Array.isArray(permissions) ? permissions : [],
