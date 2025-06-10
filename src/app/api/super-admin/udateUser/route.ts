@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 
 import { updateUserInClerk } from '~/server/queries/queries';
 
-// ✅ API Route para actualizar usuario en Clerk
 export async function PATCH(req: Request) {
   try {
     const {
@@ -13,6 +12,7 @@ export async function PATCH(req: Request) {
       status,
       permissions,
       subscriptionEndDate,
+      planType, // ✅ Añadido aquí
     } = (await req.json()) as {
       userId: string;
       firstName: string;
@@ -21,10 +21,10 @@ export async function PATCH(req: Request) {
       status: string;
       permissions: string[];
       subscriptionEndDate?: string;
+      planType?: string; // ✅ Añadido aquí
     };
 
-    // 🔎 Agregamos este console para ver qué datos llegan
-    console.log('Datos recibidos en PATCH /api/super-admin/udateUser:', {
+    console.log('📦 Datos recibidos en PATCH /api/super-admin/udateUser:', {
       userId,
       firstName,
       lastName,
@@ -32,9 +32,9 @@ export async function PATCH(req: Request) {
       status,
       permissions,
       subscriptionEndDate,
+      planType, // ✅ Confirmar que llega
     });
 
-    // 🔍 Validaciones básicas
     if (!userId || !firstName?.trim() || !lastName?.trim()) {
       return NextResponse.json(
         { error: 'Faltan datos obligatorios: userId, firstName o lastName' },
@@ -50,6 +50,7 @@ export async function PATCH(req: Request) {
       status,
       permissions,
       subscriptionEndDate,
+      planType, // ✅ Ahora sí se pasa correctamente
     });
 
     if (!updateSuccess) {
@@ -70,6 +71,7 @@ export async function PATCH(req: Request) {
         status,
         permissions,
         subscriptionEndDate,
+        planType, // ✅ Incluido en la respuesta también
       },
     });
   } catch (error: unknown) {

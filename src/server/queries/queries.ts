@@ -652,6 +652,12 @@ export async function getNivel() {
     return [];
   }
 }
+function formatDateToClerk(date?: string | null): string | null {
+  if (!date) return null;
+  const parsed = new Date(date);
+  if (isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().slice(0, 19).replace('T', ' ');
+}
 
 export async function updateUserInClerk({
   userId,
@@ -661,6 +667,7 @@ export async function updateUserInClerk({
   status,
   permissions,
   subscriptionEndDate,
+  planType,
 }: {
   userId: string;
   firstName: string;
@@ -669,37 +676,32 @@ export async function updateUserInClerk({
   status: string;
   permissions: string[];
   subscriptionEndDate?: string;
+  planType?: string;
 }) {
   try {
     const client = await clerkClient();
-
-    // 1. Leer el usuario para obtener los metadatos existentes
     const user = await client.users.getUser(userId);
 
-    // 2. Fusionar los metadatos existentes con los nuevos valores
+    const formattedEndDate = formatDateToClerk(subscriptionEndDate);
+
     const newMetadata = {
-      ...user.publicMetadata, // Preserva todos los campos existentes
+      ...user.publicMetadata,
       role: (role || 'estudiante') as
         | 'admin'
         | 'educador'
         | 'super-admin'
         | 'estudiante',
-      status: status || 'activo',
+      planType: planType ?? 'none', // ✅ Agregado
+      subscriptionStatus: status || 'activo', // ✅ Usar clave exacta como en imagen
+      subscriptionEndDate: formattedEndDate, // ✅ Formato correcto
       permissions: Array.isArray(permissions) ? permissions : [],
-      subscriptionEndDate: subscriptionEndDate ?? null,
     };
 
-    // 3. Actualizar en Clerk con el objeto completo y fusionado
     await client.users.updateUser(userId, {
       firstName,
       lastName,
       publicMetadata: newMetadata,
     });
-
-    function convertToBDFormat(dateStr: string): string {
-      const [year, day, month] = dateStr.split('-');
-      return `${year}-${month}-${day}T00:00:00`; // Formato que entiende new Date()
-    }
 
     await db
       .update(users)
@@ -711,8 +713,13 @@ export async function updateUserInClerk({
           | 'admin'
           | 'super-admin',
         subscriptionStatus: status || 'activo',
+        planType:
+          planType &&
+          ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
+            ? (planType as 'Pro' | 'Premium' | 'Enterprise' | 'none')
+            : 'none',
         subscriptionEndDate: subscriptionEndDate
-          ? new Date(convertToBDFormat(subscriptionEndDate))
+          ? new Date(subscriptionEndDate)
           : null,
         updatedAt: new Date(),
       })

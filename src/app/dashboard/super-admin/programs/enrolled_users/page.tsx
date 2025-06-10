@@ -120,8 +120,20 @@ const allColumns: Column[] = [
     defaultVisible: false,
     type: 'text',
   },
-  { id: 'role', label: 'Rol', defaultVisible: false, type: 'text' },
-  { id: 'planType', label: 'Plan', defaultVisible: false, type: 'text' },
+  {
+    id: 'role',
+    label: 'Rol',
+    defaultVisible: false,
+    type: 'select', // ✅ CAMBIA a 'select'
+    options: ['estudiante', 'educador', 'admin', 'super-admin'], // ✅ AÑADE opciones
+  },
+  {
+    id: 'planType',
+    label: 'Plan',
+    defaultVisible: false,
+    type: 'select', // ✅ CAMBIA a 'select'
+    options: ['none', 'Pro', 'Premium', 'Enterprise'], // ✅ AÑADE opciones
+  },
 ];
 
 // Helper function for safe string conversion
@@ -257,101 +269,88 @@ export default function EnrolledUsersPage() {
     saveAs(blob, 'estudiantes_seleccionados.xlsx');
   };
 
-  useEffect(() => {
-    const totalFiltered = students
-      .filter((s) =>
-        filters.name
-          ? s.name.toLowerCase().includes(filters.name.toLowerCase())
-          : true
-      )
-      .filter((s) =>
-        filters.email
-          ? s.email.toLowerCase().includes(filters.email.toLowerCase())
-          : true
-      )
-      .filter((s) =>
-        filters.subscriptionStatus
-          ? s.subscriptionStatus === filters.subscriptionStatus
-          : true
-      )
-      .filter((s) =>
-        filters.purchaseDateFrom
-          ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
-            filters.purchaseDateFrom
-          : true
-      )
-      .filter((s) =>
-        filters.purchaseDateTo
-          ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
-            filters.purchaseDateTo
-          : true
-      );
+  const getFilteredSortedStudents = () => {
+    return (
+      [...students]
+        // Filtro por programa seleccionado
+        .filter((student) =>
+          selectedProgram
+            ? student.programTitles?.includes(selectedProgram)
+            : true
+        )
 
-    const pages = Math.ceil(totalFiltered.length / limit) ?? 1;
-    setTotalPages(pages);
-  }, [students, filters, limit]);
+        // Filtros por columnas dinámicas (incluye customFields)
+        .filter((student) =>
+          Object.entries(columnFilters).every(([key, value]) => {
+            if (!value) return true;
 
-  const filteredStudents = students
-    // Filtrar por programa seleccionado
-    .filter((student) =>
-      selectedProgram ? student.programTitles?.includes(selectedProgram) : true
-    )
+            const studentValue = key.startsWith('customFields.')
+              ? student.customFields?.[key.split('.')[1]]
+              : student[key as keyof Student];
 
-    // Filtros por columnas
-    .filter((student) => {
-      return Object.entries(columnFilters).every(([key, value]) => {
-        if (!value) return true;
-        const studentValue = key.startsWith('customFields.')
-          ? student.customFields?.[key.split('.')[1]]
-          : student[key as keyof Student];
-        if (!studentValue) return false;
+            if (!studentValue) return false;
 
-        if (key === 'subscriptionEndDate') {
-          const dateStr = safeToString(studentValue);
-          return new Date(dateStr).toISOString().split('T')[0] === value;
-        }
+            if (key === 'subscriptionEndDate') {
+              const dateStr = safeToString(studentValue);
+              return new Date(dateStr).toISOString().split('T')[0] === value;
+            }
 
-        const safeStudentValue = safeToString(studentValue);
-        return safeStudentValue.toLowerCase().includes(value.toLowerCase());
-      });
-    })
+            const safeStudentValue = safeToString(studentValue);
+            return safeStudentValue.toLowerCase().includes(value.toLowerCase());
+          })
+        )
 
-    // Filtros generales
-    .filter((s) =>
-      filters.name
-        ? s.name.toLowerCase().includes(filters.name.toLowerCase())
-        : true
-    )
-    .filter((s) =>
-      filters.email
-        ? s.email.toLowerCase().includes(filters.email.toLowerCase())
-        : true
-    )
-    .filter((s) =>
-      filters.subscriptionStatus
-        ? s.subscriptionStatus === filters.subscriptionStatus
-        : true
-    )
-    .filter((s) =>
-      filters.purchaseDateFrom
-        ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
+        // Filtros generales (nombre, email, estado, fechas)
+        .filter((s) =>
+          filters.name
+            ? s.name.toLowerCase().includes(filters.name.toLowerCase())
+            : true
+        )
+        .filter((s) =>
+          filters.email
+            ? s.email.toLowerCase().includes(filters.email.toLowerCase())
+            : true
+        )
+        .filter((s) =>
+          filters.subscriptionStatus
+            ? s.subscriptionStatus === filters.subscriptionStatus
+            : true
+        )
+        .filter((s) =>
           filters.purchaseDateFrom
-        : true
-    )
-    .filter((s) =>
-      filters.purchaseDateTo
-        ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
+            ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
+              filters.purchaseDateFrom
+            : true
+        )
+        .filter((s) =>
           filters.purchaseDateTo
-        : true
-    );
+            ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
+              filters.purchaseDateTo
+            : true
+        )
 
-  const sortedStudents = [...filteredStudents].sort((a, b) => {
-    if (a.subscriptionStatus === 'active' && b.subscriptionStatus !== 'active')
-      return -1;
-    if (a.subscriptionStatus !== 'active' && b.subscriptionStatus === 'active')
-      return 1;
-    return 0;
-  });
+        // Ordenar activos primero
+        .sort((a, b) => {
+          if (
+            a.subscriptionStatus === 'active' &&
+            b.subscriptionStatus !== 'active'
+          )
+            return -1;
+          if (
+            a.subscriptionStatus !== 'active' &&
+            b.subscriptionStatus === 'active'
+          )
+            return 1;
+          return 0;
+        })
+    );
+  };
+
+  const sortedStudents = getFilteredSortedStudents();
+
+  useEffect(() => {
+    setTotalPages(Math.max(1, Math.ceil(sortedStudents.length / limit)));
+  }, [sortedStudents, limit]);
 
   const paginatedStudents = sortedStudents.slice(
     (page - 1) * limit,
@@ -456,6 +455,69 @@ export default function EnrolledUsersPage() {
     }
   };
 
+  const updateStudentField = async (
+    userId: string,
+    field: string,
+    value: string
+  ) => {
+    const student = students.find((s) => s.id === userId);
+    if (!student) return;
+
+    const updatedStudent = { ...student };
+
+    if (field.startsWith('customFields.')) {
+      const key = field.split('.')[1];
+      updatedStudent.customFields = {
+        ...updatedStudent.customFields,
+        [key]: value,
+      };
+    } else {
+      if (field in updatedStudent) {
+        (updatedStudent as Record<string, unknown>)[field] = value;
+      }
+    }
+
+    const [firstName, ...lastNameParts] = updatedStudent.name.split(' ');
+    const lastName = lastNameParts.join(' ');
+
+    const res = await fetch('/api/super-admin/udateUser/updateUserDinamic', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: updatedStudent.id,
+        firstName: firstName || '',
+        lastName: lastName || '',
+        role: updatedStudent.role ?? 'estudiante',
+        status: updatedStudent.subscriptionStatus,
+        permissions: [],
+        phone: updatedStudent.phone,
+        address: updatedStudent.address,
+        city: updatedStudent.city,
+        country: updatedStudent.country,
+        birthDate: updatedStudent.birthDate,
+        planType: updatedStudent.planType,
+        purchaseDate: updatedStudent.purchaseDate,
+        subscriptionEndDate: updatedStudent.subscriptionEndDate
+          ? new Date(updatedStudent.subscriptionEndDate)
+              .toISOString()
+              .split('T')[0]
+          : null,
+        customFields: updatedStudent.customFields ?? {},
+      }),
+    });
+
+    if (!res.ok) {
+      const data: unknown = await res.json();
+      if (!res.ok) {
+        const errorData = errorResponseSchema.parse(data);
+        alert(`❌ Error al guardar: ${errorData.error}`);
+      }
+    } else {
+      setStudents((prev) =>
+        prev.map((s) => (s.id === userId ? updatedStudent : s))
+      );
+    }
+  };
   return (
     <div className="min-h-screen space-y-8 bg-gray-900 p-6 text-white">
       <div className="flex items-center justify-between">
@@ -652,28 +714,77 @@ export default function EnrolledUsersPage() {
                   {totalColumns
                     .filter((col) => visibleColumns.includes(col.id))
                     .map((col) => {
-                      let cellValue: string | null = null;
+                      let value = '';
 
                       if (col.id.startsWith('customFields.')) {
-                        const fieldKey = col.id.split('.')[1];
-                        cellValue = student.customFields?.[fieldKey] ?? 'N/A';
-                      } else if (
-                        col.id === 'subscriptionEndDate' ||
-                        col.id === 'purchaseDate'
-                      ) {
-                        const dateValue = student[col.id as keyof Student];
-                        cellValue = dateValue
-                          ? new Date(dateValue as string).toLocaleDateString()
-                          : 'N/A';
+                        const key = col.id.split('.')[1];
+                        value = student.customFields?.[key] ?? '';
                       } else {
-                        const key = col.id as keyof Student;
-                        const value = student[key];
-                        cellValue = value ? safeToString(value) : 'N/A';
+                        const fieldValue = student[col.id as keyof Student];
+                        value = fieldValue ? safeToString(fieldValue) : '';
+                      }
+
+                      if (col.type === 'date' && value) {
+                        const parsedDate = new Date(value);
+                        if (!isNaN(parsedDate.getTime())) {
+                          value = parsedDate.toISOString().split('T')[0];
+                        }
                       }
 
                       return (
                         <td key={col.id} className="px-4 py-2">
-                          {cellValue}
+                          {col.type === 'select' && col.options ? (
+                            <select
+                              defaultValue={value}
+                              onBlur={(e) =>
+                                updateStudentField(
+                                  student.id,
+                                  col.id,
+                                  e.target.value
+                                )
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  void updateStudentField(
+                                    student.id,
+                                    col.id,
+                                    (e.target as HTMLSelectElement).value
+                                  );
+                                  e.currentTarget.blur();
+                                }
+                              }}
+                              className="w-full rounded bg-gray-800 p-1 text-white"
+                            >
+                              {col.options.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type={col.type === 'date' ? 'date' : 'text'}
+                              defaultValue={value}
+                              onBlur={(e) =>
+                                void updateStudentField(
+                                  student.id,
+                                  col.id,
+                                  e.target.value
+                                )
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  void updateStudentField(
+                                    student.id,
+                                    col.id,
+                                    e.currentTarget.value
+                                  );
+                                  e.currentTarget.blur();
+                                }
+                              }}
+                              className="w-full rounded bg-gray-800 p-1 text-white"
+                            />
+                          )}
                         </td>
                       );
                     })}
