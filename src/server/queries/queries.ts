@@ -702,6 +702,7 @@ export async function updateUserInClerk({
       lastName,
       publicMetadata: newMetadata,
     });
+    
 
     await db
       .update(users)
