@@ -5,14 +5,9 @@ import Image from 'next/image';
 import { X } from 'lucide-react';
 
 function formatDateForBackend(dateString: string): string {
-	if (!dateString) return '';
-  
-	const [year, month, day] = dateString.split('-');
-  
-	// Para Clerk → YYYY-DD-MM
-	return `${year}-${day}-${month}`;
-  }
-  
+  if (!dateString) return '';
+  return dateString; // El input[type="date"] ya da formato 'YYYY-MM-DD'
+}
 
 interface User {
   id: string;
@@ -24,6 +19,7 @@ interface User {
   profileImage?: string;
   permissions?: string[];
   subscriptionEndDate?: string | null;
+  planType?: 'none' | 'Pro' | 'Premium' | 'Enterprise';
 }
 
 interface EditUserModalProps {
@@ -63,11 +59,25 @@ export default function EditUserModal({
     subscriptionEndDate: parseSubscriptionEndDateForInput(
       user.subscriptionEndDate
     ),
+    planType: user.planType ?? 'none',
   });
 
   const [selectedPermissions, setSelectedPermissions] = React.useState<
     string[]
   >(user.permissions ?? []);
+  console.log('sosa planes:', user.planType);
+
+  React.useEffect(() => {
+    setEditedUser({
+      ...user,
+      subscriptionEndDate: parseSubscriptionEndDateForInput(
+        user.subscriptionEndDate
+      ),
+      planType: user.planType ?? 'none',
+    });
+
+    setSelectedPermissions(user.permissions ?? []);
+  }, [user]);
 
   if (!isOpen) return null;
   console.log('User data:', user);
@@ -149,7 +159,7 @@ export default function EditUserModal({
                           firstName: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     />
                   </div>
                   <div>
@@ -165,7 +175,7 @@ export default function EditUserModal({
                           lastName: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -189,7 +199,7 @@ export default function EditUserModal({
                           role: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     >
                       <option value="estudiante">Estudiante</option>
                       <option value="educador">Educador</option>
@@ -209,7 +219,7 @@ export default function EditUserModal({
                           status: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     >
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
@@ -222,7 +232,7 @@ export default function EditUserModal({
                 <h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
                   Suscripción
                 </h3>
-                <div className="grid gap-4">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div>
                     <label className="mb-2 block text-sm text-gray-400">
                       Fin de la Suscripción
@@ -238,8 +248,39 @@ export default function EditUserModal({
                           subscriptionEndDate: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm text-gray-400">
+                      Tipo de Plan
+                    </label>
+                    <select
+                      value={editedUser.planType}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (
+                          ['none', 'Pro', 'Premium', 'Enterprise'].includes(
+                            value
+                          )
+                        ) {
+                          setEditedUser({
+                            ...editedUser,
+                            planType: value as
+                              | 'none'
+                              | 'Pro'
+                              | 'Premium'
+                              | 'Enterprise',
+                          });
+                        }
+                      }}
+                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                    >
+                      <option value="none">Ninguno</option>
+                      <option value="Pro">Pro</option>
+                      <option value="Premium">Premium</option>
+                      <option value="Enterprise">Enterprise</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -294,6 +335,7 @@ export default function EditUserModal({
                   subscriptionEndDate: editedUser.subscriptionEndDate
                     ? formatDateForBackend(editedUser.subscriptionEndDate)
                     : null,
+                  planType: editedUser.planType ?? 'none', // ✅ AÑADIDO AQUÍ
                 };
                 onSave(formattedUser, selectedPermissions);
               }}

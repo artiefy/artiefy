@@ -1,0 +1,25 @@
+import { NextResponse } from 'next/server';
+import { updateFullUser } from '~/server/queries/queriesSuperAdmin';
+
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json();
+
+    const result = await updateFullUser(body);
+
+    if (!result) {
+      return NextResponse.json(
+        { error: 'Error al actualizar usuario' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('❌ Error en el endpoint dinámico:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
+}
