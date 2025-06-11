@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { useUser } from '@clerk/nextjs';
 import { Bell, BellRing } from 'lucide-react';
 
@@ -30,6 +32,7 @@ function formatRelativeTime(date: Date) {
 }
 
 export function NotificationHeader() {
+  const router = useRouter();
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -78,6 +81,46 @@ export function NotificationHeader() {
     }
   };
 
+  const handleNotificationClick = (notification: Notification) => {
+    // Cerrar el menú de notificaciones
+    setIsOpen(false);
+
+    // Navegar según el tipo de notificación y metadata
+    switch (notification.type) {
+      case 'LESSON_UNLOCKED':
+        if (notification.metadata?.lessonId) {
+          void router.push(
+            `/estudiantes/clases/${notification.metadata.lessonId}`
+          );
+        }
+        break;
+      case 'COURSE_ENROLLMENT':
+      case 'NEW_COURSE_ADDED':
+        if (notification.metadata?.courseId) {
+          void router.push(
+            `/estudiantes/cursos/${notification.metadata.courseId}`
+          );
+        }
+        break;
+      case 'PROGRAM_ENROLLMENT':
+        if (notification.metadata?.programId) {
+          void router.push(
+            `/estudiantes/programas/${notification.metadata.programId}`
+          );
+        }
+        break;
+      case 'ACTIVITY_COMPLETED':
+        if (notification.metadata?.lessonId) {
+          void router.push(
+            `/estudiantes/clases/${notification.metadata.lessonId}`
+          );
+        }
+        break;
+      default:
+        console.log('Tipo de notificación no manejado:', notification.type);
+    }
+  };
+
   return (
     <div className="notification-menu">
       <button
@@ -106,7 +149,18 @@ export function NotificationHeader() {
       <div className={`notification-options ${isOpen ? 'show' : ''}`}>
         {notifications.length > 0 ? (
           notifications.map((notification) => (
-            <div key={notification.id} className="notification-item">
+            <div
+              key={notification.id}
+              className="notification-item"
+              onClick={() => handleNotificationClick(notification)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleNotificationClick(notification);
+                }
+              }}
+            >
               <div className="notification-content">
                 <div className="notification-title">{notification.title}</div>
                 <div className="notification-description">

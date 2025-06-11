@@ -142,8 +142,6 @@
     "@types/react-modal": "^3.16.3",
     "@types/react-resizable": "^3.0.8",
     "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.33.1",
-    "@typescript-eslint/parser": "^8.33.1",
     "drizzle-kit": "^0.31.1",
     "drizzle-orm": "^0.44.2",
     "eslint": "^9.28.0",
@@ -166,19 +164,10 @@
     "tailwindcss": "^4.1.8",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.33.1"
+    "typescript-eslint": "^8.34.0"
   },
   "overrides": {
-    "esbuild": {
-      "*": "0.25.2"
-    },
-    "drizzle-kit": {
-      "esbuild": "0.25.2"
-    },
-    "glob": "11.0.1"
-  },
-  "engines": {
-    "node": "22.x"
+    "esbuild": "^0.25.5"
   },
   "ct3aMetadata": {
     "initVersion": "7.38.1"

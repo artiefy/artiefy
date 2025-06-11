@@ -719,20 +719,23 @@ export function CourseHeader({
               >
                 <strong>
                   {isEnrolling || isEnrollClicked ? (
-                    <span>
-                      <Icons.spinner className="h-6 w-6" />
-                    </span>
+                    <Icons.spinner className="h-6 w-6" />
                   ) : (
-                    <span>
-                      {course.courseTypeId === 4
-                        ? 'Comprar Curso'
-                        : course.courseType?.requiredSubscriptionLevel ===
-                            'none'
-                          ? 'Inscribirse Gratis'
-                          : !isSubscriptionActive
-                            ? 'Obtener Suscripción'
-                            : 'Inscribirse al Curso'}
-                    </span>
+                    <>
+                      {course.courseTypeId === 4 && (
+                        <span>${course.individualPrice?.toLocaleString()}</span>
+                      )}
+                      <span>
+                        {course.courseTypeId === 4
+                          ? 'Comprar Curso'
+                          : course.courseType?.requiredSubscriptionLevel ===
+                              'none'
+                            ? 'Inscribirse Gratis'
+                            : !isSubscriptionActive
+                              ? 'Obtener Suscripción'
+                              : 'Inscribirse al Curso'}
+                      </span>
+                    </>
                   )}
                 </strong>
                 <div id="container-stars">

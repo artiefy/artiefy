@@ -2,9 +2,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 13rem;
+  min-width: 13rem;
+  width: auto; /* Cambiar de width fijo a auto */
+  padding: 0 2rem; /* Agregar padding horizontal */
   overflow: hidden;
-  height: 4.5rem; /* Increased height */
+  height: 3.5rem; /* Reducir altura */
   background-size: 300% 300%;
   cursor: pointer;
   backdrop-filter: blur(1rem);
@@ -33,9 +35,14 @@
   color: #ffffff;
   text-shadow: 0 0 4px white;
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* Cambiar a row */
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem; /* Aumentar gap */
+  white-space: nowrap; /* Evitar saltos de línea */
+}
+
+.btn strong span {
+  font-size: 1rem; /* Mismo tamaño para todo el texto */
 }
 
 .btn strong span:first-child {
