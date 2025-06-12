@@ -652,11 +652,18 @@ export async function getNivel() {
     return [];
   }
 }
+
 function formatDateToClerk(date?: string | null): string | null {
   if (!date) return null;
-  const parsed = new Date(date);
-  if (isNaN(parsed.getTime())) return null;
-  return parsed.toISOString().slice(0, 19).replace('T', ' ');
+
+  const baseDate = new Date(date);
+  if (isNaN(baseDate.getTime())) return null;
+
+  // Obtener hora actual
+  const now = new Date();
+  baseDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+
+  return baseDate.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 export async function updateUserInClerk({
@@ -682,7 +689,22 @@ export async function updateUserInClerk({
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
 
+    console.log('📥 Fecha original recibida:', subscriptionEndDate);
     const formattedEndDate = formatDateToClerk(subscriptionEndDate);
+    console.log('📤 Fecha formateada para Clerk:', formattedEndDate);
+    // Normalizar status: convertir "Activo" (u otros similares) a "active"
+
+    const hasSubscriptionDate = !!subscriptionEndDate;
+
+    let normalizedStatus =
+      status?.toLowerCase() === 'activo'
+        ? 'active'
+        : (status?.toLowerCase() ?? 'active');
+
+    // Si hay fecha de suscripción y el status es "inactive", forzamos a "active"
+    if (hasSubscriptionDate && normalizedStatus === 'inactive') {
+      normalizedStatus = 'active';
+    }
 
     const newMetadata = {
       ...user.publicMetadata,
@@ -692,7 +714,7 @@ export async function updateUserInClerk({
         | 'super-admin'
         | 'estudiante',
       planType: planType ?? 'none', // ✅ Agregado
-      subscriptionStatus: status || 'activo', // ✅ Usar clave exacta como en imagen
+      subscriptionStatus: normalizedStatus, // ✅ Usar clave exacta como en imagen
       subscriptionEndDate: formattedEndDate, // ✅ Formato correcto
       permissions: Array.isArray(permissions) ? permissions : [],
     };
@@ -713,14 +735,14 @@ export async function updateUserInClerk({
           | 'educador'
           | 'admin'
           | 'super-admin',
-        subscriptionStatus: status || 'activo',
+        subscriptionStatus: normalizedStatus,
         planType:
           planType &&
           ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
             ? (planType as 'Pro' | 'Premium' | 'Enterprise' | 'none')
             : 'none',
-        subscriptionEndDate: subscriptionEndDate
-          ? new Date(subscriptionEndDate)
+        subscriptionEndDate: formattedEndDate
+          ? new Date(formattedEndDate)
           : null,
         updatedAt: new Date(),
       })
