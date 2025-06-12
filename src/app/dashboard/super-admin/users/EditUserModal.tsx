@@ -47,11 +47,8 @@ export default function EditUserModal({
     dateStr: string | null | undefined
   ): string {
     if (!dateStr) return '';
-
-    const [datePart] = dateStr.split(' ');
-    const [year, day, month] = datePart.split('-');
-
-    return `${year}-${month}-${day}`;
+    const [datePart] = dateStr.split(' '); // por si viene con hora
+    return datePart; // asumir que ya viene en formato 'YYYY-MM-DD'
   }
 
   const [editedUser, setEditedUser] = React.useState({

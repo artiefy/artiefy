@@ -29,7 +29,6 @@ export interface Materia {
 
 type UserRole = 'admin' | 'educador' | 'super-admin' | 'estudiante';
 
-
 // Función para verificar el rol de admin y obtener usuarios
 export async function getAdminUsers(query: string | undefined) {
   console.log('DEBUG: Ejecutando getAdminUsers con query ->', query);
@@ -589,13 +588,15 @@ export interface FullUserUpdateInput {
 function formatDateForClerk(date?: string | null): string | null {
   if (!date) return null;
 
-  const parsed = new Date(date);
-  if (isNaN(parsed.getTime())) return null;
+  const baseDate = new Date(date);
+  if (isNaN(baseDate.getTime())) return null;
 
-  // Formato: YYYY-MM-DD HH:mm:ss
-  return parsed.toISOString().slice(0, 19).replace('T', ' ');
+  // Obtener hora actual
+  const now = new Date();
+  baseDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+
+  return baseDate.toISOString().slice(0, 19).replace('T', ' ');
 }
-
 export async function updateFullUser(
   input: FullUserUpdateInput
 ): Promise<boolean> {
@@ -624,6 +625,19 @@ export async function updateFullUser(
     const user = await client.users.getUser(userId);
     const existingMetadata = user.publicMetadata || {};
 
+    const hasSubscriptionDate = !!subscriptionEndDate;
+
+    let normalizedStatus =
+      status?.toLowerCase() === 'activo'
+        ? 'active'
+        : (status?.toLowerCase() ?? 'active');
+
+    // Si hay fecha de suscripción y el status es "inactive", forzamos a "active"
+    if (hasSubscriptionDate && normalizedStatus === 'inactive') {
+      normalizedStatus = 'active';
+    }
+    const formattedEndDate = formatDateForClerk(subscriptionEndDate);
+
     // 🧠 Merge de metadata con los 3 campos requeridos
     const newMetadata = {
       ...existingMetadata,
@@ -633,7 +647,7 @@ export async function updateFullUser(
         | 'super-admin'
         | 'estudiante',
       planType: planType ?? 'none', // ✅ Nuevo
-      subscriptionStatus: status || 'activo', // ✅ Nuevo
+      subscriptionStatus: normalizedStatus, // ✅ Nuevo
       subscriptionEndDate: formatDateForClerk(subscriptionEndDate), // ✅ Nuevo
       permissions: Array.isArray(permissions) ? permissions : [],
     };
@@ -663,8 +677,8 @@ export async function updateFullUser(
         country: country ?? null,
         birthDate: birthDate ? formatDateForClerk(birthDate) : null,
         purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
-        subscriptionEndDate: subscriptionEndDate
-          ? new Date(subscriptionEndDate)
+        subscriptionEndDate: formattedEndDate
+          ? new Date(formattedEndDate)
           : null,
         updatedAt: new Date(),
       })
