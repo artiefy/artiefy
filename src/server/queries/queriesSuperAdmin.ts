@@ -625,12 +625,12 @@ export async function updateFullUser(
   try {
     const user = await client.users.getUser(userId);
     existingMetadata = user.publicMetadata || {};
-  } catch (err: any) {
-    // Si no existe en Clerk, continuamos silenciosamente
-    if (err?.errors?.[0]?.code === 'not_found' || err?.status === 404) {
+  } catch (err: unknown) {
+    const error = err as { errors?: { code?: string }[]; status?: number };
+
+    if (error.errors?.[0]?.code === 'not_found' || error.status === 404) {
       userExistsInClerk = false;
     } else {
-      // Si es otro error (no de not_found), registramos y salimos
       console.error('❌ Error obteniendo usuario de Clerk:', err);
       return false;
     }
