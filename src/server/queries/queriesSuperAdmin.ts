@@ -618,48 +618,58 @@ export async function updateFullUser(
     customFields,
   } = input;
 
+  const client = await clerkClient();
+  let userExistsInClerk = true;
+  let existingMetadata = {};
+
   try {
-    const client = await clerkClient();
-
-    // 🔍 Obtener metadata actual del usuario Clerk
     const user = await client.users.getUser(userId);
-    const existingMetadata = user.publicMetadata || {};
-
-    const hasSubscriptionDate = !!subscriptionEndDate;
-
-    let normalizedStatus =
-      status?.toLowerCase() === 'activo'
-        ? 'active'
-        : (status?.toLowerCase() ?? 'active');
-
-    // Si hay fecha de suscripción y el status es "inactive", forzamos a "active"
-    if (hasSubscriptionDate && normalizedStatus === 'inactive') {
-      normalizedStatus = 'active';
+    existingMetadata = user.publicMetadata || {};
+  } catch (err: any) {
+    // Si no existe en Clerk, continuamos silenciosamente
+    if (err?.errors?.[0]?.code === 'not_found' || err?.status === 404) {
+      userExistsInClerk = false;
+    } else {
+      // Si es otro error (no de not_found), registramos y salimos
+      console.error('❌ Error obteniendo usuario de Clerk:', err);
+      return false;
     }
-    const formattedEndDate = formatDateForClerk(subscriptionEndDate);
+  }
 
-    // 🧠 Merge de metadata con los 3 campos requeridos
-    const newMetadata = {
-      ...existingMetadata,
-      role: (role || 'estudiante') as
-        | 'admin'
-        | 'educador'
-        | 'super-admin'
-        | 'estudiante',
-      planType: planType ?? 'none', // ✅ Nuevo
-      subscriptionStatus: normalizedStatus, // ✅ Nuevo
-      subscriptionEndDate: formatDateForClerk(subscriptionEndDate), // ✅ Nuevo
-      permissions: Array.isArray(permissions) ? permissions : [],
-    };
+  const hasSubscriptionDate = !!subscriptionEndDate;
+  let normalizedStatus =
+    status?.toLowerCase() === 'activo'
+      ? 'active'
+      : (status?.toLowerCase() ?? 'active');
 
-    // ✅ Actualizar en Clerk
-    await client.users.updateUser(userId, {
-      firstName,
-      lastName,
-      publicMetadata: newMetadata,
-    });
+  if (hasSubscriptionDate && normalizedStatus === 'inactive') {
+    normalizedStatus = 'active';
+  }
 
-    // ✅ Guardar en la base de datos
+  const formattedEndDate = formatDateForClerk(subscriptionEndDate);
+
+  const newMetadata = {
+    ...existingMetadata,
+    role: (role || 'estudiante') as
+      | 'admin'
+      | 'educador'
+      | 'super-admin'
+      | 'estudiante',
+    planType: planType ?? 'none',
+    subscriptionStatus: normalizedStatus,
+    subscriptionEndDate: formattedEndDate,
+    permissions: Array.isArray(permissions) ? permissions : [],
+  };
+
+  try {
+    if (userExistsInClerk) {
+      await client.users.updateUser(userId, {
+        firstName,
+        lastName,
+        publicMetadata: newMetadata,
+      });
+    }
+
     await db
       .update(users)
       .set({
@@ -684,7 +694,6 @@ export async function updateFullUser(
       })
       .where(eq(users.id, userId));
 
-    // ✅ Guardar campos personalizados
     if (customFields && Object.keys(customFields).length > 0) {
       for (const [key, value] of Object.entries(customFields)) {
         const existing = await db
@@ -716,10 +725,9 @@ export async function updateFullUser(
       }
     }
 
-    console.log(`✅ Usuario ${userId} actualizado correctamente`);
     return true;
   } catch (error) {
-    console.error('❌ Error actualizando usuario completo:', error);
+    console.error('❌ Error actualizando datos en BD:', error);
     return false;
   }
 }
