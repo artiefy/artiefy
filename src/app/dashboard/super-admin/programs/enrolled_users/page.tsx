@@ -177,6 +177,7 @@ export default function EnrolledUsersPage() {
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState('');
   const totalColumns: Column[] = [...allColumns, ...dynamicColumns];
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Save visible columns to localStorage
   useEffect(() => {
@@ -516,12 +517,20 @@ export default function EnrolledUsersPage() {
       setStudents((prev) =>
         prev.map((s) => (s.id === userId ? updatedStudent : s))
       );
+      setSuccessMessage(`✅ Campo "${field}" guardado correctamente`);
+      setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
   return (
     <div className="min-h-screen space-y-8 bg-gray-900 p-6 text-white">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Matricular Estudiantes</h1>
+        {successMessage && (
+          <div className="fixed bottom-4 right-4 z-50 rounded bg-green-600 px-4 py-2 text-white shadow-lg animate-fade-in-out">
+            {successMessage}
+          </div>
+        )}
+
 
         <div className="relative">
           <button
