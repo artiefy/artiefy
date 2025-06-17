@@ -43,6 +43,11 @@ export default tseslint.config(
       '.vercel/**',
       'coverage/**',
       '.turbo/**',
+      // 🔽 Ignorar carpetas de UI específicas
+      'src/components/estudiantes/ui/**',
+      'src/components/educadores/ui/**',
+      'src/components/admin/ui/**',
+      'src/components/super-admin/ui/**',
     ],
   },
 
@@ -102,14 +107,6 @@ export default tseslint.config(
         },
       ],
       '@typescript-eslint/consistent-type-definitions': ['warn', 'interface'],
-      '@typescript-eslint/consistent-type-imports': [
-        'warn',
-        {
-          prefer: 'type-imports',
-          fixStyle: 'inline-type-imports',
-          disallowTypeAnnotations: false,
-        },
-      ],
       '@typescript-eslint/no-misused-promises': [
         'warn',
         {
