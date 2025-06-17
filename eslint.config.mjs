@@ -192,7 +192,7 @@ export default tseslint.config(
           ],
         },
       ],
-      'simple-import-sort/exports': 'error',
+      'simple-import-sort/exports': 'warn',
 
       // Additional import rules for better organization
       'import/newline-after-import': 'error',

@@ -87,7 +87,7 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 7. `npx tsc`: Ejecuta el compilador TypeScript localmente.
 8. `tsc`: Ejecuta el compilador TypeScript globalmente.
 9. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
-10. `npm install --save-dev eslint @eslint/eslintrc typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier @types/react @eslint/js @types/node dotenv`: Dependencias para que funcione el archivo eslint.config.mjs
+10. `npm install --save-dev eslint @eslint/eslintrc typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier @types/react @eslint/js @types/node eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-simple-import-sort globals dotenv`: Dependencias para que funcione el archivo eslint.config.mjs
 11. `npx eslint --debug .` : Debugear Eslint para cuando no quiera detectar errores
 12. `npm install eslint --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
 
