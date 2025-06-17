@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
 
+import { type Metadata, type ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
-import { type Metadata, type ResolvingMetadata } from 'next';
 
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';

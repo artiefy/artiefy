@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
-import { userLessonsProgress, lessons } from '~/server/db/schema';
+import { lessons,userLessonsProgress } from '~/server/db/schema';
 
 interface LessonNumbers {
   session: number;

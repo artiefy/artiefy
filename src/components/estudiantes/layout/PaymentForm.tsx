@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
 
-import '~/styles/form.css';
 import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
 import { validateFormData } from '~/utils/paygateway/validation';
 
 import type { FormData, Product } from '~/types/payu';
+
+import '~/styles/form.css';
 
 const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
 	selectedProduct,

@@ -1,12 +1,11 @@
 'use client';
 
-import type * as React from 'react';
-
-import { FaLock, FaPhone, FaEnvelope, FaUser } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaPhone, FaUser } from 'react-icons/fa';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 
 import type { FormData } from '~/types/payu';
+import type * as React from 'react';
 
 interface BuyerInfoFormProps {
 	formData: Pick<FormData, 'buyerEmail' | 'buyerFullName' | 'telephone'>;

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, inArray, and } from 'drizzle-orm';
+import { and,eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollments, users, enrollmentPrograms } from '~/server/db/schema';
+import { enrollmentPrograms,enrollments, users } from '~/server/db/schema';
 
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();

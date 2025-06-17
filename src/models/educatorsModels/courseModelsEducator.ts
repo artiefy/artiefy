@@ -1,16 +1,16 @@
-import { eq, count, sum, and, ne as neq, isNotNull } from 'drizzle-orm';
+import { and, count, eq, isNotNull,ne as neq, sum } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
-  courses,
   categories,
-  modalidades,
+  courses,
+  courseTypes,
   enrollments,
-  nivel,
   lessons,
   materias,
+  modalidades,
+  nivel,
   users,
-  courseTypes,
 } from '~/server/db/schema';
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros

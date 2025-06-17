@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
 
-import { notFound } from 'next/navigation';
-
 import { type Metadata, type ResolvingMetadata } from 'next';
+import { notFound } from 'next/navigation';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';

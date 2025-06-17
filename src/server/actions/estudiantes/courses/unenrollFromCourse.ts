@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and, or, gt } from 'drizzle-orm';
+import { and, eq, gt,or } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { enrollments, userLessonsProgress } from '~/server/db/schema';

@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
+	createMateria,
+	deleteMateria,
 	getAllMateriasFull,
 	getMateriaById,
-	createMateria,
 	updateMateria,
-	deleteMateria,
 } from '~/models/super-adminModels/materiaModels';
 
 export async function GET(req: NextRequest) {

@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import { ChevronRightIcon } from '@heroicons/react/24/solid';
 import { SquarePlay } from 'lucide-react';
-import { FaHome, FaUserGraduate, FaBook } from 'react-icons/fa';
+import { FaBook,FaHome, FaUserGraduate } from 'react-icons/fa';
 
 interface LessonBreadcrumbsProps {
 	courseTitle: string;

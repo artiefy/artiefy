@@ -1,17 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { Info, Loader2, Pencil, Plus, Trash2, FileText } from 'lucide-react';
+import { FileText,Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
-import 'react-toastify/dist/ReactToastify.css';
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
 
 import TicketModal from './TicketModal';
+
+import 'react-toastify/dist/ReactToastify.css';
 
 // Schema definitions
 const uploadSchema = z.object({

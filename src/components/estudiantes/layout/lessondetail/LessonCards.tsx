@@ -1,16 +1,16 @@
 'use client';
 import {
-	useEffect,
-	useCallback,
 	type Dispatch,
 	type SetStateAction,
+	useCallback,
+	useEffect,
 } from 'react';
 
-import { FaCheckCircle, FaLock, FaClock } from 'react-icons/fa';
+import { FaCheckCircle, FaClock,FaLock } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { type LessonWithProgress } from '~/types';
-import { sortLessons, extractNumbersFromTitle } from '~/utils/lessonSorting';
+import { extractNumbersFromTitle,sortLessons } from '~/utils/lessonSorting';
 
 interface LessonCardsProps {
 	lessonsState: LessonWithProgress[];

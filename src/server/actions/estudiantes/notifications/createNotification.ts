@@ -3,7 +3,7 @@
 import { db } from '~/server/db';
 import { notifications } from '~/server/db/schema';
 
-import type { NotificationType, NotificationMetadata } from '~/types';
+import type { NotificationMetadata,NotificationType } from '~/types';
 
 export async function createNotification({
   userId,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef,useState } from 'react';
 
 const usePageTimeTracker = (userId: string | null, courseId: number | null) => {
 	const [isInactivePopupOpen, setIsInactivePopupOpen] = useState(false);

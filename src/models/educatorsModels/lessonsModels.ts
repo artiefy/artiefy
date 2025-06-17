@@ -1,16 +1,16 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, inArray, and, desc, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
+	activities,
 	categories,
 	courses,
 	lessons,
 	modalidades,
-	users,
-	activities,
-	userLessonsProgress,
 	userActivitiesProgress,
+	userLessonsProgress,
+	users,
 } from '~/server/db/schema';
 
 export interface Lesson {

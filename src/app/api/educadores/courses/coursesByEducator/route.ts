@@ -4,9 +4,9 @@ import {
 	getAllCourses,
 	getCourseById,
 	getCoursesByUser,
-	getTotalStudents,
 	getLessonsByCourseId,
 	getTotalDuration,
+	getTotalStudents,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 

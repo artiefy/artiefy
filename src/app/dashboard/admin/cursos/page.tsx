@@ -10,9 +10,9 @@ import CourseListAdmin from '~/app/dashboard/admin/components/CourseListAdmin';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
+  type CourseData,
   getCourses,
   updateCourse,
-  type CourseData,
 } from '~/server/queries/queries';
 
 // Define el modelo de datos del curso

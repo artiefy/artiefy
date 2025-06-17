@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo,useState } from 'react';
 
 import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
-import { FaUserGraduate, FaCalendar, FaCheck, FaTrophy } from 'react-icons/fa';
+import { FaCalendar, FaCheck, FaTrophy,FaUserGraduate } from 'react-icons/fa';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 

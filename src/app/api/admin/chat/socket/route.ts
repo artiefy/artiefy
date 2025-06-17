@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 
 import { Server } from 'socket.io';
 
-import type { Server as NetServer } from 'http';
 import type { NextApiResponseServerIO } from '~/types/socket';
+import type { Server as NetServer } from 'http';
 
 export const dynamic = 'force-dynamic';
 

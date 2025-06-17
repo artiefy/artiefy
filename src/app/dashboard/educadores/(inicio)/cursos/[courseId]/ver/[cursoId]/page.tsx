@@ -19,8 +19,8 @@ import {
 	BreadcrumbItem,
 	BreadcrumbLink,
 	BreadcrumbList,
-	BreadcrumbSeparator,
 	BreadcrumbPage,
+	BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
 
 // Consideraciones de diseño: validar con los contratadores si al pulsar ver course se debe abrir directamente en la vista de estudiante o en la vista de educador

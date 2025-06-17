@@ -2,11 +2,11 @@ import { eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	programas,
+	categories,
+	courses,
 	enrollmentPrograms,
 	materias,
-	courses,
-	categories,
+	programas,
 } from '~/server/db/schema';
 
 import type { Program } from '~/types';

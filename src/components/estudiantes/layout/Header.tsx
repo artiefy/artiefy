@@ -5,15 +5,16 @@ import { Suspense, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { SignInButton, SignedIn, SignedOut, useAuth } from '@clerk/nextjs';
+import { SignedIn, SignedOut, SignInButton, useAuth } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
-import { NotificationHeader } from './NotificationHeader';
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
+
+import { NotificationHeader } from './NotificationHeader';
 
 import '~/styles/barsicon.css';
 import '~/styles/searchBar.css';

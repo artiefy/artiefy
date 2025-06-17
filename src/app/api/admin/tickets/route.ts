@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { sql, eq } from 'drizzle-orm';
+import { eq,sql } from 'drizzle-orm';
 
 import {
-  sendTicketEmail,
   getNewTicketAssignmentEmail,
+  sendTicketEmail,
 } from '~/lib/emails/ticketEmails';
 import { db } from '~/server/db';
 import {
+  ticketAssignees,
+  ticketComments,
   tickets,
   users,
-  ticketComments,
-  ticketAssignees,
 } from '~/server/db/schema';
 
 interface CreateTicketBody {

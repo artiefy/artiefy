@@ -4,11 +4,11 @@ import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import {
-	sendTicketEmail,
 	getTicketStatusChangeEmail,
+	sendTicketEmail,
 } from '~/lib/emails/ticketEmails';
 import { db } from '~/server/db';
-import { tickets, ticketComments } from '~/server/db/schema';
+import { ticketComments,tickets } from '~/server/db/schema';
 
 // Tipos seguros
 interface UpdateTicketBody {

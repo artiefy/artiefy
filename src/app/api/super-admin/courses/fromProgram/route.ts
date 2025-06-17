@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { materias, courses } from '~/server/db/schema';
+import { courses,materias } from '~/server/db/schema';
 
 export async function GET(request: Request) {
 	const { searchParams } = new URL(request.url);

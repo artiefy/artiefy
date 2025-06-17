@@ -1,12 +1,12 @@
 'use server';
 
-import { eq, asc } from 'drizzle-orm';
+import { asc,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
   lessons,
-  userLessonsProgress,
   userActivitiesProgress,
+  userLessonsProgress,
 } from '~/server/db/schema';
 
 import type { Lesson } from '~/types';

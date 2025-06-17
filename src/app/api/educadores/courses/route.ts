@@ -1,20 +1,20 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq, and, ne } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 
 import {
   createCourse,
   deleteCourse,
   getAllCourses,
   getCourseById,
-  updateCourse,
-  getTotalStudents,
   getLessonsByCourseId,
   getTotalDuration,
+  getTotalStudents,
+  updateCourse,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
-import { getUserById, createUser } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
+import { createUser,getUserById } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';
 

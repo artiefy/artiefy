@@ -4,16 +4,16 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	courses,
-	userLessonsProgress,
 	categories,
+	courses,
+	courseTypes,
 	modalidades,
 	nivel,
-	courseTypes,
+	userLessonsProgress,
 	users,
 } from '~/server/db/schema';
 
-import type { Course, Activity, Lesson } from '~/types';
+import type { Activity, Course, Lesson } from '~/types';
 
 // Update interface with all required fields
 interface CourseDetailQueryResult {

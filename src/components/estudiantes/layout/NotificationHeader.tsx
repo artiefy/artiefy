@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -14,6 +14,7 @@ import {
 import { markNotificationsAsRead } from '~/server/actions/estudiantes/notifications/markNotificationsAsRead';
 
 import type { Notification } from '~/types';
+
 import '~/styles/menuNotification.css';
 
 function formatRelativeTime(date: Date) {

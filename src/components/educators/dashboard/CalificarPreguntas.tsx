@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import { toast } from 'sonner';
 
@@ -8,9 +8,9 @@ import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import {
 	Modal,
-	ModalHeader,
 	ModalBody,
 	ModalFooter,
+	ModalHeader,
 } from '~/components/educators/ui/modal';
 
 // OJO: ESTA INTERFAZ NO ESTA TERMINADA POR TEMAS DE TIEMPO

@@ -6,8 +6,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import {
 	enrollments,
-	userLessonsProgress,
 	lessons,
+	userLessonsProgress,
 	users,
 } from '~/server/db/schema';
 

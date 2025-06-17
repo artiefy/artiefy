@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { updateFullUser, type FullUserUpdateInput } from '~/server/queries/queriesSuperAdmin';
+import { type FullUserUpdateInput,updateFullUser } from '~/server/queries/queriesSuperAdmin';
 
 export async function PATCH(req: Request) {
   try {

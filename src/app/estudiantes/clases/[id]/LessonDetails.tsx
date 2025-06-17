@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef,useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -19,16 +19,16 @@ import { completeActivity } from '~/server/actions/estudiantes/progress/complete
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
 import {
 	type Activity,
-	type UserLessonsProgress,
+	type Course,
 	type Lesson,
 	type LessonWithProgress,
 	type UserActivitiesProgress,
-	type Course,
+	type UserLessonsProgress,
 } from '~/types';
 import { sortLessons } from '~/utils/lessonSorting';
 import {
-	saveScrollPosition,
 	restoreScrollPosition,
+	saveScrollPosition,
 } from '~/utils/scrollPosition';
 
 interface LessonDetailsProps {

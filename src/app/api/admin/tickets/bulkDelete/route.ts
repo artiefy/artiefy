@@ -4,7 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { tickets, ticketComments } from '~/server/db/schema';
+import { ticketComments,tickets } from '~/server/db/schema';
 
 // Define el tipo esperado para el body
 interface BulkDeleteRequestBody {

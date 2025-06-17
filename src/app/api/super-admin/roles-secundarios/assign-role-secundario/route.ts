@@ -5,9 +5,9 @@ import { eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	rolesSecundarios,
-	roleSecundarioPermisos,
 	permisos,
+	roleSecundarioPermisos,
+	rolesSecundarios,
 	users,
 } from '~/server/db/schema';
 

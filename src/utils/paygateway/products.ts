@@ -1,5 +1,5 @@
 import { type Product } from '~/types/payu';
-import { plansPersonas, plansEmpresas, type Plan } from '~/types/plans';
+import { type Plan,plansEmpresas, plansPersonas } from '~/types/plans';
 
 // 1. Primero definir las constantes
 const PLAN_IDENTIFIERS = {

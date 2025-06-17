@@ -5,10 +5,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '~/server/db';
 import {
-  users,
   enrollments,
   lessons,
   userLessonsProgress,
+  users,
 } from '~/server/db/schema';
 import { sortLessons } from '~/utils/lessonSorting';
 

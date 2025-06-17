@@ -37,8 +37,9 @@ import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNex
 import { type Activity, type Question, type SavedAnswer } from '~/types';
 import { formatScoreNumber } from '~/utils/formatScore';
 
-import '~/styles/arrowactivity.css';
 import { FileUploadForm } from './FileUploadForm';
+
+import '~/styles/arrowactivity.css';
 
 interface ActivityModalProps {
   isOpen: boolean;

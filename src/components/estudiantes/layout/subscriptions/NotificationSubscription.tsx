@@ -6,13 +6,14 @@ import Link from 'next/link';
 
 import { useUser } from '@clerk/nextjs';
 import {
-  FaCrown,
   FaChevronLeft,
   FaChevronRight,
+  FaCrown,
   FaExclamationTriangle,
 } from 'react-icons/fa';
 
 import { checkSubscriptionStatus } from '~/server/actions/estudiantes/subscriptions/checkSubscriptionStatus';
+
 import './notificationSubscription.css';
 
 export function NotificationSubscription() {

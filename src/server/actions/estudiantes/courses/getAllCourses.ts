@@ -1,14 +1,14 @@
 'use server';
 
-import { eq, desc } from 'drizzle-orm';
+import { desc,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	courses,
 	categories,
+	courses,
+	courseTypes,
 	modalidades,
 	nivel,
-	courseTypes,
 	users,
 } from '~/server/db/schema';
 

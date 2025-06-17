@@ -1,18 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import { Dialog } from '@headlessui/react';
 import {
-	Chart as ChartJS,
-	CategoryScale,
-	LinearScale,
 	BarElement,
+	CategoryScale,
+	Chart as ChartJS,
+	Legend,
+	LinearScale,
 	Title,
 	Tooltip,
-	Legend,
 } from 'chart.js';
-import { Loader2, Eye } from 'lucide-react';
+import { Eye,Loader2 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
 
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';

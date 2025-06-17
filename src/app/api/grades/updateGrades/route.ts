@@ -4,9 +4,9 @@ import { eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	userActivitiesProgress,
-	materias,
 	activities,
+	materias,
+	userActivitiesProgress,
 } from '~/server/db/schema';
 
 interface UpdateGradesRequest {

@@ -4,17 +4,17 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
+	activities,
+	courses,
 	enrollments,
-	userLessonsProgress,
-	userActivitiesProgress,
+	nivel,
+	parametros,
 	posts,
 	scores,
+	userActivitiesProgress,
+	userLessonsProgress,
 	users,
-	courses,
-	nivel,
-	activities,
 	userTimeTracking,
-	parametros,
 } from '~/server/db/schema';
 
 export async function GET(

@@ -1,10 +1,10 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and } from 'drizzle-orm';
+import { and,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { userLessonsProgress, lessons, activities } from '~/server/db/schema';
+import { activities,lessons, userLessonsProgress } from '~/server/db/schema';
 
 const unlockNextLesson = async (lessonId: number, userId: string) => {
   // Obtener información de la lección actual

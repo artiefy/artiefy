@@ -1,23 +1,23 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo,useState } from 'react';
 
 import Image from 'next/image';
 
 import { useRouter } from '@bprogress/next/app';
 import { useAuth } from '@clerk/nextjs';
 import {
-	StarIcon,
 	ArrowRightCircleIcon,
 	CheckCircleIcon,
+	StarIcon,
 } from '@heroicons/react/24/solid';
-import { FaCrown, FaCheck } from 'react-icons/fa';
+import { FaCheck,FaCrown } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import {
 	Alert,
-	AlertTitle,
 	AlertDescription,
+	AlertTitle,
 } from '~/components/estudiantes/ui/alert';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -31,7 +31,7 @@ import {
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
-import type { Program, MateriaWithCourse, Course } from '~/types';
+import type { Course,MateriaWithCourse, Program } from '~/types';
 
 interface ProgramContentProps {
 	program: Program;

@@ -4,12 +4,12 @@ import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	users,
 	courses,
-	enrollments,
 	enrollmentPrograms,
+	enrollments,
 	programas,
 	userCustomFields,
+	users,
 } from '~/server/db/schema';
 
 export async function GET(req: Request) {

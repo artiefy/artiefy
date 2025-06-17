@@ -1,20 +1,18 @@
 'use client';
 
-import '~/styles/buttonclass.css';
-import '~/styles/check.css';
-import { useState, useMemo, useCallback } from 'react';
+import { useCallback,useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { PencilRuler } from 'lucide-react';
 import {
+	FaCheck,
+	FaCheckCircle,
 	FaChevronDown,
 	FaChevronUp,
-	FaLock,
-	FaCheckCircle,
 	FaCrown,
-	FaCheck,
+	FaLock,
 } from 'react-icons/fa';
 
 import {
@@ -28,6 +26,9 @@ import { cn } from '~/lib/utils';
 import { sortLessons } from '~/utils/lessonSorting';
 
 import type { Course } from '~/types';
+
+import '~/styles/buttonclass.css';
+import '~/styles/check.css';
 
 interface CourseContentProps {
 	course: Course;

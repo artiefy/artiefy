@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+
 import nodemailer from 'nodemailer';
+
 import { type EmailTemplateProps } from '~/components/estudiantes/layout/EmailTemplateSubscription';
 import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
 

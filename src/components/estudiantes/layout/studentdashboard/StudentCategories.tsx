@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import Image from 'next/image';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { usePathname,useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
 import { FunnelIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
@@ -13,8 +13,8 @@ import useSWR from 'swr';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { Input } from '~/components/estudiantes/ui/input';
 import {
-	saveScrollPosition,
 	restoreScrollPosition,
+	saveScrollPosition,
 } from '~/utils/scrollPosition';
 
 import type { Category } from '~/types';

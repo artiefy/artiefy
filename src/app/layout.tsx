@@ -1,6 +1,5 @@
 import { Merriweather, Montserrat } from 'next/font/google';
 
-import '~/styles/globals.css';
 import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
@@ -10,11 +9,13 @@ import { NotificationSubscription } from '~/components/estudiantes/layout/subscr
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { getMetadataForRoute } from '~/lib/metadata/config';
 import {
-	getWebsiteSchema,
 	getWebPagesSchema,
+	getWebsiteSchema,
 } from '~/lib/metadata/structured-data';
 
 import Providers from './providers';
+
+import '~/styles/globals.css';
 
 const montserrat = Montserrat({
 	subsets: ['latin'],

@@ -1,6 +1,6 @@
 import { db } from '~/server/db';
 
-import type { GradeReport, ParameterGrade, Activity } from '~/types';
+import type { Activity,GradeReport, ParameterGrade } from '~/types';
 
 export function calculateWeightedGrade(
 	grades: { grade: number; weight: number }[]

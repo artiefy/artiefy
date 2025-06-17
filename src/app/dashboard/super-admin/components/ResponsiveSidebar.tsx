@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,14 +8,14 @@ import { usePathname } from 'next/navigation';
 
 import { UserButton } from '@clerk/clerk-react';
 import {
-	FiHome,
-	FiBook,
-	FiSettings,
 	FiArchive,
-	FiMenu,
-	FiX,
+	FiBook,
 	FiChevronDown,
 	FiChevronRight,
+	FiHome,
+	FiMenu,
+	FiSettings,
+	FiX,
 } from 'react-icons/fi';
 
 interface ResponsiveSidebarProps {

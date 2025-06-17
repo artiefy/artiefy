@@ -1,15 +1,15 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback,useEffect, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
-import { Loader2, X, Edit, Trash2, UserPlus } from 'lucide-react';
+import { Edit, Loader2, Trash2, UserPlus,X } from 'lucide-react';
 
 import BulkUploadUsers from '~/app/dashboard/super-admin/components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
 import { ConfirmDialog } from '~/app/dashboard/super-admin/components/ConfirmDialog';
 import { InfoDialog } from '~/app/dashboard/super-admin/components/InfoDialog';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
-import { setRoleWrapper, deleteUser } from '~/server/queries/queries';
+import { deleteUser,setRoleWrapper } from '~/server/queries/queries';
 
 interface User {
 	id: string;

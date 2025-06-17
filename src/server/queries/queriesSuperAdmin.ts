@@ -1,21 +1,21 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { and,desc, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-  courses,
   categories,
+  courses,
+  enrollmentPrograms,
   modalidades,
   nivel as nivel,
   programas,
-  enrollmentPrograms,
-  users,
   userCustomFields,
+  users,
 } from '~/server/db/schema';
 
-import type { Program, BaseCourse } from '~/types';
+import type { BaseCourse,Program } from '~/types';
 
 export interface Materia {
   id: number;
