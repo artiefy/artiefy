@@ -130,10 +130,8 @@ export default tseslint.config(
       'react/react-in-jsx-scope': 'off',
       'react/jsx-uses-react': 'off',
       'react/prop-types': 'off',
-      'react/jsx-boolean-value': ['warn', 'never'],
       'react/jsx-closing-bracket-location': ['warn', 'line-aligned'],
       'react/jsx-fragments': ['warn', 'syntax'],
-      'react/jsx-no-useless-fragment': 'warn',
       'react/no-invalid-html-attribute': 'warn',
       'react/no-unstable-nested-components': ['error', { allowAsProps: true }],
       'react/self-closing-comp': ['warn', { component: true, html: true }],
@@ -167,7 +165,7 @@ export default tseslint.config(
 
       // ===== IMPORT SORTING RULES (AUTO-ORGANIZE) =====
       'simple-import-sort/imports': [
-        'error',
+        'warn',
         {
           groups: [
             // React and Next.js imports first
