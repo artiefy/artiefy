@@ -95,7 +95,7 @@ interface FetchError {
   message?: string;
 }
 
-const isVideoMedia = (coverImageKey: string | null | undefined): boolean => {
+const _isVideoMedia = (coverImageKey: string | null | undefined): boolean => {
   return !!coverImageKey?.toLowerCase().endsWith('.mp4');
 };
 

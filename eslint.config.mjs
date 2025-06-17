@@ -133,7 +133,6 @@ export default tseslint.config(
       'react/jsx-closing-bracket-location': ['warn', 'line-aligned'],
       'react/jsx-fragments': ['warn', 'syntax'],
       'react/no-invalid-html-attribute': 'warn',
-      'react/no-unstable-nested-components': ['error', { allowAsProps: true }],
       'react/self-closing-comp': ['warn', { component: true, html: true }],
       'react/jsx-key': 'error',
       'react/no-unescaped-entities': 'warn',

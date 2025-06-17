@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 
 import nodemailer from 'nodemailer';
 
-import { type EmailTemplateProps } from '~/components/estudiantes/layout/EmailTemplateSubscription';
-import { EmailTemplateSubscription } from '~/components/estudiantes/layout/EmailTemplateSubscription';
+import {
+  type EmailTemplateProps,
+  EmailTemplateSubscription,
+} from '~/components/estudiantes/layout/EmailTemplateSubscription';
 
 const transporter = nodemailer.createTransport({
   service: 'Gmail',
@@ -28,7 +30,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const html = EmailTemplateSubscription({ userName, expirationDate, timeLeft });
+    const html = EmailTemplateSubscription({
+      userName,
+      expirationDate,
+      timeLeft,
+    });
 
     const mailOptions = {
       from: '"Artiefy" <direcciongeneral@artiefy.com>',
@@ -40,8 +46,8 @@ export async function POST(request: Request) {
 
     await transporter.sendMail(mailOptions);
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error sending email:', error);
+  } catch (error: unknown) {
+    console.error('Error sending email:', (error as Error)?.message ?? error);
     return NextResponse.json(
       { error: 'Error enviando el correo' },
       { status: 500 }

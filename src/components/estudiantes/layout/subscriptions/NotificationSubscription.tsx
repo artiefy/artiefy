@@ -46,7 +46,7 @@ export function NotificationSubscription() {
       }
     };
 
-    checkStatus();
+    void checkStatus();
   }, [user]);
 
   if (!notification) return null;
