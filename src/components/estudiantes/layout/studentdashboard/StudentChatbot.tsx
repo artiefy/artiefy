@@ -11,6 +11,7 @@ import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoMdClose } from 'react-icons/io';
+import { SlArrowDown } from "react-icons/sl";
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 
@@ -18,12 +19,23 @@ import '~/styles/chatmodal.css';
 import { Card } from '~/components/estudiantes/ui/card';
 import 'react-resizable/css/styles.css';
 
+// Importar StudentChatList.tsx
+import {ChatList} from './StudentChatList';
+// Importar StudentChat
+import { ChatMessages } from './StudentChat';
+
+import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
+
+
 interface StudentChatbotProps {
 	className?: string;
 	initialSearchQuery?: string;
 	isAlwaysVisible?: boolean;
 	showChat?: boolean;
+	courseTitle?: string;
 	onSearchComplete?: () => void;
+	courseId?: number;
+	isEnrolled?: boolean;
 }
 
 interface ChatResponse {
@@ -45,10 +57,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	isAlwaysVisible = false,
 	showChat = false,
 	onSearchComplete,
+	courseTitle,
+	courseId,
+	isEnrolled, // Añadido para manejar el estado de inscripción
 }) => {
 	const [isOpen, setIsOpen] = useState(showChat);
 	const [messages, setMessages] = useState([
-		{ id: Date.now(), text: 'Hola ¿En qué puedo ayudarte hoy?', sender: 'bot' },
+		{ id: Date.now(), text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎', sender: 'bot' }
 	]);
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
@@ -58,7 +73,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		height: 500,
 	});
 	const messagesEndRef = useRef<HTMLDivElement>(null);
-	const inputRef = useRef<HTMLInputElement>(null);
+	const inputRef = useRef<HTMLInputElement>(null); // <-- Soluciona el error inputRef
 	const chatContainerRef = useRef<HTMLDivElement>(null);
 	const searchRequestInProgress = useRef(false);
 
@@ -68,21 +83,61 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const initialSearchDone = useRef(false);
 
+	// Pruebas para varios chats
+	const [chatMode, setChatMode] = useState<{ idChat: number | null; status: boolean }>({ idChat: null ,status: true});
+
+	const chatModeRef = useRef(chatMode);
+
+	useEffect(() => {
+	chatModeRef.current = chatMode;
+	}, [chatMode]);
+
+	const saveBotMessage = (trimmedInput: string) => {
+		const currentChatId = chatModeRef.current.idChat;
+		console.log('Mensaje bot prueba con ref' + chatModeRef.current.idChat);
+		console.log('Mensaje bot prueba chatId' + chatMode.idChat);
+		if (currentChatId) {
+			console.log('Guardando mensaje del bot:', trimmedInput, 'en chat ID:', currentChatId);
+			void saveMessages(
+				'bot', // senderId
+				currentChatId, // cursoId
+				[
+					{
+						text: trimmedInput,
+						sender: 'bot',
+						sender_id: 'bot',
+					},
+				]
+			);
+		} else {
+			console.log('No está entrando al chat ', currentChatId);
+		}
+	};
+
 	const handleBotResponse = useCallback(
+		
 		async (query: string) => {
+		
 			if (processingQuery || searchRequestInProgress.current) return;
+
+			console.log('Procesando consulta:', query);
 
 			searchRequestInProgress.current = true;
 			setProcessingQuery(true);
 			setIsLoading(true);
 
+			// Url para la petición según si hay courseTitle
+			const urlDefault = {url: '/api/iahome', body: {prompt: query} };
+			const urlCourses = {url: '/chat', body: {user_id: user?.id, curso: courseTitle, user_message: query}};
+			const fetchConfig = courseTitle ? urlCourses : urlDefault;
+
 			try {
-				const response = await fetch('/api/iahome', {
+				const response = await fetch(fetchConfig.url, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 					},
-					body: JSON.stringify({ prompt: query }),
+					body: JSON.stringify(fetchConfig.body),
 				});
 
 				const data = (await response.json()) as ChatResponse;
@@ -95,8 +150,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						sender: 'bot' as const,
 					},
 				]);
+
+				saveBotMessage(data.response); // Guarda la respuesta real del bot
+
 			} catch (error) {
 				console.error('Error getting bot response:', error);
+			
 				setMessages((prev) => [
 					...prev,
 					{
@@ -105,14 +164,18 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						sender: 'bot' as const,
 					},
 				]);
+
+				saveBotMessage('Lo siento, ocurrió un error al procesar tu solicitud.'); // Guarda el error como mensaje del bot
 			} finally {
+				
 				setIsLoading(false);
 				setProcessingQuery(false);
 				searchRequestInProgress.current = false;
 				onSearchComplete?.();
+				
 			}
 		},
-		[processingQuery, onSearchComplete]
+		[processingQuery, onSearchComplete, courseTitle]
 	);
 
 	useEffect(() => {
@@ -184,16 +247,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		// Set initial dimensions based on window size
 		const initialDimensions = {
 			width:
-				typeof window !== 'undefined' && window.innerWidth < 768 ? 300 : 400,
+				typeof window !== 'undefined' && window.innerWidth < 768 ? 350 : 500,
 			height:
-				typeof window !== 'undefined' && window.innerWidth < 768 ? 400 : 500,
+				typeof window !== 'undefined' && window.innerWidth < 768 ? 500 : window.innerHeight,
 		};
 		setDimensions(initialDimensions);
 
 		// Add resize handler
 		const handleResize = () => {
 			setDimensions({
-				width: window.innerWidth < 768 ? 300 : 400,
+				width: window.innerWidth < 768 ? 200 : 400,
 				height: window.innerWidth < 768 ? 400 : 500,
 			});
 		};
@@ -206,6 +269,28 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const scrollToBottom = () => {
 		void messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+	};
+
+	const saveUserMessage = (trimmedInput: string, sender: string) => {
+		const currentChatId = chatMode.idChat;
+		console.log('Mensaje usuario prueba con ref' + chatModeRef.current.idChat);
+		console.log('Mensaje usuario prueba chatId' + chatMode.idChat);
+		if (currentChatId) {
+			console.log('Guardando mensaje del usuario:', trimmedInput, 'en chat ID:', currentChatId);
+			void saveMessages(
+				user?.id ?? '', // senderId
+				currentChatId, // cursoId
+				[
+					{
+						text: trimmedInput,
+						sender: sender,
+						sender_id: user?.id ?? '',
+					}
+				]
+			);
+		}else{
+			console.log('No está entrando al chat para guardar el mensaje del usuario');
+		}
 	};
 
 	const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -223,6 +308,9 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			text: trimmedInput,
 			sender: 'user' as const,
 		};
+
+		// Lógica para almacenar el mensaje del usuario en la base de datos
+		saveUserMessage(trimmedInput, 'user');
 
 		setMessages((prev) => [...prev, newUserMessage]);
 		setInputText('');
@@ -275,7 +363,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		id: number;
 		text: string;
 		sender: string;
-	}) => {
+	}, index?: number) => {
+		// Detectar si es el mensaje inicial
+		const isInitialMessage = index === 0 && message.sender === 'bot';
+
 		if (message.sender === 'bot') {
 			const parts = message.text.split('\n\n');
 			const introText = parts[0];
@@ -299,6 +390,22 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			return (
 				<div className="flex flex-col space-y-4">
 					<p className="font-medium text-gray-800">{introText}</p>
+					{isInitialMessage && (
+						<div className="flex gap-2 mt-2">
+							<button
+								onClick={() => isEnrolled == true ? handleBotResponse('Más información sobre el curso ' + courseTitle): handleBotResponse('Más información')}
+								className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 text-sm"
+							>
+								Más información
+							</button>
+							<button
+								onClick={() => window.dispatchEvent(new Event('start-tour'))}
+								className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600 text-sm"
+							>
+								Tour por la aplicación
+							</button>
+						</div>
+					)}
 					{courses.length > 0 && (
 						<div className="grid gap-4">
 							{courses.map((course) => (
@@ -330,6 +437,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		}
 		return message.text;
 	};
+
+	// Emitir eventos globales para ocultar/mostrar el botón de soporte
+	useEffect(() => {
+		if (isOpen) {
+			window.dispatchEvent(new CustomEvent('student-chat-open'));
+		} else {
+			window.dispatchEvent(new CustomEvent('student-chat-close'));
+		}
+	}, [isOpen]);
 
 	return (
 		<div className={`${className} fixed`} style={{ zIndex: 99999 }}>
@@ -370,26 +486,27 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			{/* Mostrar el chat solo cuando isOpen es true */}
 			{isOpen && isSignedIn && (
 				<div
-					className="fixed right-2 bottom-28 sm:right-24 sm:bottom-32" // Modificado bottom-28 para móviles
+					className="fixed right-2 bottom-28 sm:right-0 sm:bottom-0" // Modificado bottom-28 para móviles
 					ref={chatContainerRef}
-					style={{ zIndex: 100000 }}
+					style={{ zIndex: 110000 }} // Aumenta el z-index para que esté por encima del botón de soporte
 				>
 					<ResizableBox
 						width={dimensions.width}
 						height={dimensions.height}
 						onResize={handleResize}
-						minConstraints={[280, 350]} // Smaller minimum size for mobile
+						minConstraints={[400, window.innerHeight]} // Smaller minimum size for mobile
 						maxConstraints={[
-							Math.min(800, window.innerWidth - 20),
-							window.innerHeight - 100,
+							Math.min((window.innerWidth / 2), window.innerWidth - 20),
+							window.innerHeight,
 						]}
 						resizeHandles={
-							window.innerWidth < 768 ? [] : ['se', 'sw', 'ne', 'nw'] // Disable resize on mobile
+							window.innerWidth < 768 ? [] : ['sw'] // Solo permite redimensionar hacia la izquierda abajo en escritorio
 						}
 						className="chat-resizable"
 					>
 						<div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
 							{/* Logo background */}
+							
 							<div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
 								<Image
 									src="/artiefy-logo2.svg"
@@ -421,18 +538,56 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										</div>
 									</div>
 
-									<button
-										onClick={() => setIsOpen(false)}
-										className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
-									>
-										<IoMdClose className="text-xl text-gray-500" />
-									</button>
+									<div className="flex">
+										<button
+											
+											className="rounded-full p-1.5 ml-2 transition-colors hover:bg-gray-100"
+											aria-label="Minimizar chatbot"
+										>
+											{chatMode.status ? <SlArrowDown className='text-xl text-gray-500' onClick={() => {setChatMode({idChat: null, status: false})}}/>: ''}
+											
+										</button>
+										<button
+											onClick={() => setIsOpen(false)}
+											className="rounded-full p-1.5 transition-colors hover:bg-gray-100"
+											aria-label="Cerrar chatbot"
+										>
+											<IoMdClose className="text-xl text-gray-500" />
+										</button>
+										
+									</div>
 								</div>
 							</div>
 
+							{chatMode.status ? (
+								<ChatMessages
+									courseId={courseId}
+									isEnrolled={isEnrolled}
+									courseTitle={courseTitle}
+									messages={messages}
+									setMessages={setMessages}
+									chatMode={chatMode}
+									setChatMode={setChatMode}
+									inputText={inputText}
+									setInputText={setInputText}
+									handleSendMessage={handleSendMessage}
+									isLoading={isLoading}
+									user={user as any}
+									messagesEndRef={messagesEndRef as React.RefObject<HTMLDivElement>}
+									isSignedIn={isSignedIn}
+									inputRef={inputRef as React.RefObject<HTMLInputElement>}
+									renderMessage={renderMessage}
+								/>
+							) : (
+								<ChatList setChatMode={setChatMode} />
+							)}
+							
+							
 							{/* Messages */}
+							{/*
 							<div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
-								{messages.map((message) => (
+								
+								{messages.map((message, idx) => (
 									<div
 										key={message.id}
 										className={`flex ${
@@ -469,7 +624,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 														: 'bg-gray-300 text-gray-800'
 												}`}
 											>
-												{renderMessage(message)}
+												{renderMessage(message, idx)}
 											</div>
 										</div>
 									</div>
@@ -497,7 +652,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								<div ref={messagesEndRef} />
 							</div>
 
-							{/* Input */}
+							{/* Input 
 							<div className="relative z-[5] border-t bg-white/95 p-4 backdrop-blur-sm">
 								<form onSubmit={handleSendMessage}>
 									<div className="flex gap-2">
@@ -531,6 +686,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									</div>
 								</form>
 							</div>
+							*/}
 						</div>
 					</ResizableBox>
 				</div>

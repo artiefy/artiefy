@@ -15,6 +15,8 @@ import {
 } from '~/lib/metadata/structured-data';
 
 import Providers from './providers';
+import TourManager from '~/components/tour/tourManager';
+
 
 const montserrat = Montserrat({
 	subsets: ['latin'],
@@ -68,6 +70,7 @@ export default function RootLayout({
 				</head>
 				<body className="bg-background text-primary font-sans">
 					<Providers>
+						<TourManager />
 						{children}
 						<NotificationSubscription />
 					</Providers>

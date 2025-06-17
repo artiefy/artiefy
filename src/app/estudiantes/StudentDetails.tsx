@@ -214,7 +214,7 @@ export default function StudentDetails({
 							</form>
 						</div>
 
-						<div className="animation-delay-100 animate-zoom-in relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
+						<div className="animation-delay-100 animate-zoom-in relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px] div-main">
 							{latestFiveCourses.map((course, index) => (
 								<div
 									key={course.id}
@@ -354,7 +354,7 @@ export default function StudentDetails({
 								</StudentGradientText>
 							</div>
 							<div>
-								<Carousel className="w-full">
+								<Carousel className="w-full div-courses">
 									<CarouselContent className="">
 										{latestTenCourses.map((course) => (
 											<CarouselItem
@@ -424,7 +424,7 @@ export default function StudentDetails({
 								</StudentGradientText>
 							</div>
 							<div>
-								<Carousel className="w-full">
+								<Carousel className="w-full div-programs">
 									<CarouselContent className="my-6 pl-4 sm:pl-4">
 										{sortedPrograms.map((program) => (
 											<CarouselItem

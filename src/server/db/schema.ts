@@ -825,27 +825,31 @@ export const conversations = pgTable('conversations', {
 	senderId: text('sender_id')
 		.references(() => users.id)
 		.notNull(),
-	receiverId: text('receiver_id').references(() => users.id),
 	status: text('status', { enum: ['activo', 'cerrado'] })
 		.default('activo')
 		.notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	title: text('title').notNull(),
+	curso_id: integer('curso_id')
+		.references(() => courses.id).unique()
+		.notNull(), // Relación con el curso
 });
 
 // Relación de mensajes con conversaciones
-export const chatMessagesWithConversation = pgTable(
-	'chat_messages_with_conversation',
+export const chat_messages = pgTable(
+	'chat_messages',
 	{
 		id: serial('id').primaryKey(),
-		conversationId: integer('conversation_id')
+		conversation_id: integer('conversation_id')
 			.references(() => conversations.id)
 			.notNull(),
+		sender: text('sender')
+			.notNull(), // Este campo puede ser el ID del usuario o su nombre
 		senderId: text('sender_id')
-			.references(() => users.id)
-			.notNull(),
+			.references(() => users.id),
 		message: text('message').notNull(),
-		createdAt: timestamp('created_at').defaultNow().notNull(),
+		created_at: timestamp('created_at').defaultNow().notNull(),
 	}
 );
 

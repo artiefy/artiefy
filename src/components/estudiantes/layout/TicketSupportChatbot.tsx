@@ -20,6 +20,7 @@ const TicketSupportChatbot = () => {
 	]);
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
+	const [hideButton, setHideButton] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const { isSignedIn } = useAuth();
@@ -35,6 +36,17 @@ const TicketSupportChatbot = () => {
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
+
+	useEffect(() => {
+		const handleOpen = () => setHideButton(true);
+		const handleClose = () => setHideButton(false);
+		window.addEventListener('student-chat-open', handleOpen);
+		window.addEventListener('student-chat-close', handleClose);
+		return () => {
+			window.removeEventListener('student-chat-open', handleOpen);
+			window.removeEventListener('student-chat-close', handleClose);
+		};
+	}, []);
 
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -102,12 +114,14 @@ const TicketSupportChatbot = () => {
 
 	return (
 		<>
-			<button
-				onClick={handleClick}
-				className={`ticket-button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
-			>
-				<MdSupportAgent className="ticket-button__icon" />
-			</button>
+			{!hideButton && (
+				<button
+					onClick={handleClick}
+					className={`ticket-button ${!isSignedIn && 'cursor-not-allowed opacity-50'}`}
+				>
+					<MdSupportAgent className="ticket-button__icon" />
+				</button>
+			)}
 
 			{/* Chatbot */}
 			{isOpen && isSignedIn && (

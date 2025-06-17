@@ -37,13 +37,14 @@ export function Header() {
 	const [mounted, setMounted] = useState(false);
 
 	const { isLoaded: isAuthLoaded } = useAuth();
+	
 
 	const navItems = [
 		{ href: '/', label: 'Inicio' },
-		{ href: '/estudiantes', label: 'Cursos' },
-		{ href: '/proyectos', label: 'Proyectos' },
-		{ href: '/comunidad', label: 'Espacios' },
-		{ href: '/planes', label: 'Planes' },
+		{ href: '/estudiantes', label: 'Cursos'},
+		{ href: '/proyectos', label: 'Proyectos'},
+		{ href: '/comunidad', label: 'Espacios'},
+		{ href: '/planes', label: 'Planes'},
 	];
 
 	const toggleDropdown = () => {
@@ -165,7 +166,7 @@ export function Header() {
 				isScrolled
 					? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
 					: 'py-4'
-			}`}
+			} div-header-nav`}
 		>
 			<div className="container mx-auto max-w-7xl px-4">
 				<div className="hidden w-full items-center md:flex md:justify-between">
@@ -185,18 +186,21 @@ export function Header() {
 									</div>
 								</Link>
 							</div>
-							<div className="flex gap-24">
-								{navItems.map((item) => (
-									<Link
+							<div className="flex gap-24 div-header-nav">
+								{navItems.map((item) => {
+									const extraClass = `div-header-${item.label.toLowerCase()}`; 
+									return (
+										<Link
 										key={item.href}
 										href={item.href}
-										className="text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95"
-									>
+										className={`text-lg font-light tracking-wide whitespace-nowrap text-white transition-colors hover:text-orange-500 active:scale-95 ${extraClass}`}
+										>
 										{item.label}
-									</Link>
-								))}
+										</Link>
+									);
+								})}
 							</div>
-							<div className="flex justify-end">{renderAuthButton()}</div>
+							<div className="flex justify-end test">{renderAuthButton()}</div>
 						</div>
 					) : (
 						<div className="flex w-full items-center">
@@ -347,7 +351,7 @@ export function Header() {
 							))}
 						</ul>
 					</nav>
-					<div className="mt-6 flex items-center justify-center">
+					<div className="mt-6 flex items-center justify-center div-auth">
 						<Suspense
 							fallback={
 								<div className="flex min-w-[180px] items-center justify-start">

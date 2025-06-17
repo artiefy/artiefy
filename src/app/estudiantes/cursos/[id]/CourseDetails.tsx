@@ -261,7 +261,7 @@ export default function CourseDetails({
                         isEnrolled={isEnrolled}
                         onEnrollmentChange={handleEnrollmentChange}
                     />
-                    <StudentChatbot isAlwaysVisible={true} />
+                    <StudentChatbot isAlwaysVisible={true} courseTitle={course.title} courseId={course.id} isEnrolled={isEnrolled}/>
                 </div>
             </main>
         </div>
