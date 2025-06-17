@@ -132,10 +132,6 @@ export default tseslint.config(
       'react/prop-types': 'off',
       'react/jsx-boolean-value': ['warn', 'never'],
       'react/jsx-closing-bracket-location': ['warn', 'line-aligned'],
-      'react/jsx-curly-brace-presence': [
-        'warn',
-        { props: 'never', children: 'never' },
-      ],
       'react/jsx-fragments': ['warn', 'syntax'],
       'react/jsx-no-useless-fragment': 'warn',
       'react/hook-use-state': 'error',
