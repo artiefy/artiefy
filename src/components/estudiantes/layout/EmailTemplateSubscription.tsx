@@ -1,15 +1,22 @@
+export interface EmailTemplateProps {
+  to: string;
+  userName: string;
+  expirationDate: string;
+  timeLeft: string;
+}
+
 interface TemplateProps {
-	userName: string;
-	expirationDate: string;
-	timeLeft: string;
+  userName: string;
+  expirationDate: string;
+  timeLeft: string;
 }
 
 export function EmailTemplateSubscription({
-	userName,
-	expirationDate,
-	timeLeft,
+  userName,
+  expirationDate,
+  timeLeft,
 }: TemplateProps): string {
-	return `
+  return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background-color: #fff; border-radius: 10px; border: 2px solid #00BDD8;">
       <div style="text-align: center; margin-bottom: 20px;">
         <img src="cid:logo@artiefy.com" alt="Artiefy Logo" style="max-width: 150px;"/>

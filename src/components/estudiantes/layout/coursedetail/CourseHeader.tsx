@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,13 +10,13 @@ import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
 import {
   FaCalendar,
-  FaClock,
-  FaUserGraduate,
   FaCheck,
-  FaTrophy,
+  FaClock,
   FaCrown,
   FaStar,
   FaTimes,
+  FaTrophy,
+  FaUserGraduate,
 } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import { toast } from 'sonner';
@@ -442,33 +442,44 @@ export function CourseHeader({
     }
   }, [isSignedIn, course.id, courseProduct]);
 
+  // Añade aquí la obtención de las keys
+  const coverImageKey = course.coverImageKey;
+  const coverVideoCourseKey =
+    typeof course === 'object' && 'coverVideoCourseKey' in course
+      ? (course as { coverVideoCourseKey?: string }).coverVideoCourseKey
+      : undefined;
+
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="px-0">
         <AspectRatio ratio={16 / 6}>
-          {course.coverImageKey ? (
-            isVideoMedia(course.coverImageKey) ? (
-              <video
-                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
-                className="h-full w-full object-cover"
-                controls
-                autoPlay
-                muted
-                loop
-                playsInline
-              />
-            ) : (
-              <Image
-                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd()}
-                alt={course.title}
-                fill
-                className="object-cover"
-                priority
-                sizes="100vw"
-                placeholder="blur"
-                blurDataURL={blurDataURL}
-              />
-            )
+          {/* Nueva lógica de portada/video */}
+          {coverVideoCourseKey ? (
+            <video
+              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
+              className="h-full w-full object-cover"
+              controls
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster={
+                coverImageKey
+                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
+                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+              }
+            />
+          ) : coverImageKey ? (
+            <Image
+              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
+              alt={course.title}
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
+              placeholder="blur"
+              blurDataURL={blurDataURL}
+            />
           ) : (
             <Image
               src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
@@ -688,28 +699,26 @@ export function CourseHeader({
             {isEnrolled ? (
               <div className="flex flex-col space-y-4">
                 {/* Wrap both buttons in a fragment or a div */}
-                <>
-                  <Button
-                    className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
-                    disabled={true}
-                  >
-                    <FaCheck className="mr-2" /> Suscrito Al Curso
-                  </Button>
-                  <Button
-                    className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
-                    onClick={onUnenrollAction}
-                    disabled={isUnenrolling}
-                  >
-                    {isUnenrolling ? (
-                      <Icons.spinner
-                        className="text-white"
-                        style={{ width: '35px', height: '35px' }}
-                      />
-                    ) : (
-                      'Cancelar Suscripción'
-                    )}
-                  </Button>
-                </>
+                <Button
+                  className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+                  disabled
+                >
+                  <FaCheck className="mr-2" /> Suscrito Al Curso
+                </Button>
+                <Button
+                  className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+                  onClick={onUnenrollAction}
+                  disabled={isUnenrolling}
+                >
+                  {isUnenrolling ? (
+                    <Icons.spinner
+                      className="text-white"
+                      style={{ width: '35px', height: '35px' }}
+                    />
+                  ) : (
+                    'Cancelar Suscripción'
+                  )}
+                </Button>
               </div>
             ) : (
               <button

@@ -3,7 +3,7 @@
 import { currentUser } from '@clerk/nextjs/server';
 import { eq, and } from 'drizzle-orm';
 
-import { createNotification } from '~/server/actions/notifications/createNotification';
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { users, enrollmentPrograms, programas } from '~/server/db/schema';
 

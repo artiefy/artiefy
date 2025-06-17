@@ -4,7 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { createNotification } from '~/server/actions/notifications/createNotification';
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { userLessonsProgress, lessons } from '~/server/db/schema';
 

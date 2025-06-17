@@ -1,4 +1,4 @@
-import { parseISO } from 'date-fns';
+import { parseISO, format } from 'date-fns';
 import { toDate } from 'date-fns-tz';
 
 const TIMEZONE = 'America/Bogota';
@@ -9,7 +9,31 @@ type SubscriptionData = {
   planType?: string | null;
 } | null;
 
-export function checkSubscriptionStatus(subscriptionData: SubscriptionData) {
+async function sendEmailNotification(data: {
+  to: string;
+  userName: string;
+  expirationDate: string;
+  timeLeft: string;
+}) {
+  try {
+    const response = await fetch('/api/email/subscription', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return false;
+  }
+}
+
+export async function checkSubscriptionStatus(
+  subscriptionData: SubscriptionData,
+  userEmail?: string
+) {
   if (
     !subscriptionData?.subscriptionEndDate ||
     !subscriptionData.subscriptionStatus
@@ -34,12 +58,23 @@ export function checkSubscriptionStatus(subscriptionData: SubscriptionData) {
 
   if (subscriptionData.subscriptionStatus === 'active') {
     if (diffDays <= 7 && diffDays > 3) {
-      return {
+      const result = {
         shouldNotify: true,
         message: `Tu suscripción ${planName} expirará en ${diffDays} días`,
         severity: 'medium',
         daysLeft: diffDays,
       };
+
+      if (userEmail) {
+        await sendEmailNotification({
+          to: userEmail,
+          userName: '',
+          expirationDate: format(endDate, 'dd/MM/yyyy'),
+          timeLeft: `${diffDays} días`,
+        });
+      }
+
+      return result;
     }
 
     if (diffDays <= 3 && diffDays > 0) {

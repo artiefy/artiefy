@@ -32,13 +32,20 @@ export function NotificationSubscription() {
       planType: user.publicMetadata.planType as string,
     };
 
-    const status = checkSubscriptionStatus(subscriptionData);
-    if (status?.shouldNotify) {
-      setNotification({
-        message: status.message,
-        severity: status.severity,
-      });
-    }
+    const checkStatus = async () => {
+      const status = await checkSubscriptionStatus(
+        subscriptionData,
+        user.primaryEmailAddress?.emailAddress
+      );
+      if (status?.shouldNotify) {
+        setNotification({
+          message: status.message,
+          severity: status.severity,
+        });
+      }
+    };
+
+    checkStatus();
   }, [user]);
 
   if (!notification) return null;

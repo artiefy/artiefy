@@ -10,8 +10,8 @@ import { Bell, BellRing } from 'lucide-react';
 import {
   getNotifications,
   getUnreadCount,
-} from '~/server/actions/notifications/getNotifications';
-import { markNotificationsAsRead } from '~/server/actions/notifications/markNotificationsAsRead';
+} from '~/server/actions/estudiantes/notifications/getNotifications';
+import { markNotificationsAsRead } from '~/server/actions/estudiantes/notifications/markNotificationsAsRead';
 
 import type { Notification } from '~/types';
 import '~/styles/menuNotification.css';

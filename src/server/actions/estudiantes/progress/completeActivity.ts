@@ -4,7 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { eq, sql } from 'drizzle-orm';
 
-import { createNotification } from '~/server/actions/notifications/createNotification';
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { userActivitiesProgress } from '~/server/db/schema';
 
