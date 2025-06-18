@@ -278,30 +278,53 @@ export function CourseContent({
     return `${year}/${day}/${month}`;
   };
 
-  // Helper to parse both ISO and yyyy/dd/MM formats
+  // Helper to parse ISO, yyyy/dd/MM, yyyy-dd-MM, yyyy-dd-MM HH:mm:ss
   const parseSubscriptionDate = (dateString: string | null): Date | null => {
     if (!dateString) return null;
     // Try ISO first
     const isoDate = new Date(dateString);
     if (!isNaN(isoDate.getTime())) return isoDate;
-    // Try yyyy/dd/MM
-    const match = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(dateString);
-    if (match) {
-      const [, year, day, month] = match;
-      // JS months are 0-based
+    // yyyy/dd/MM
+    const matchSlash = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(dateString);
+    if (matchSlash) {
+      const [, year, day, month] = matchSlash;
       return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+    // yyyy-dd-MM or yyyy-dd-MM HH:mm:ss
+    const matchDash = /^(\d{4})-(\d{2})-(\d{2})(?:\s+\d{2}:\d{2}:\d{2})?$/.exec(
+      dateString
+    );
+    if (matchDash) {
+      const [, year, day, month] = matchDash;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+    // yyyy-MM-dd or yyyy-MM-dd HH:mm:ss
+    const matchDash2 =
+      /^(\d{4})-(\d{2})-(\d{2})(?:T|\s)?(\d{2})?:?(\d{2})?:?(\d{2})?/.exec(
+        dateString
+      );
+    if (matchDash2) {
+      const [, year, month, day, hour = '0', min = '0', sec = '0'] = matchDash2;
+      return new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hour),
+        Number(min),
+        Number(sec)
+      );
     }
     return null;
   };
 
   // Use this for subscription active logic
   const isSubscriptionReallyActive = useMemo(() => {
-    if (!isSubscriptionActive) return false;
-    if (!subscriptionEndDate) return true;
+    if (!isEnrolled) return false;
+    if (!subscriptionEndDate) return isSubscriptionActive;
     const endDate = parseSubscriptionDate(subscriptionEndDate);
     if (!endDate) return false;
     return endDate > new Date();
-  }, [isSubscriptionActive, subscriptionEndDate]);
+  }, [isEnrolled, isSubscriptionActive, subscriptionEndDate]);
 
   return (
     <div className="relative rounded-lg border bg-white p-6 shadow-sm">
@@ -312,7 +335,7 @@ export function CourseContent({
           </h2>
           {isSignedIn && isSubscriptionReallyActive && (
             <div className="flex flex-col items-end gap-1">
-              <div className="mt-0 flex items-center gap-2 text-green-500 sm:mt-4">
+              <div className="mt-0 flex items-center gap-2 text-green-500 sm:mt-6">
                 <FaCheck className="size-4" />
                 <span className="font-medium">Suscripción Activa</span>
               </div>

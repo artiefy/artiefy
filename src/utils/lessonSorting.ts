@@ -16,37 +16,55 @@ export const extractLessonOrder = (title: string): number => {
 };
 
 export const extractNumbersFromTitle = (title: string) => {
-  // First check for "Bienvenida" pattern
-  if (title.toLowerCase().includes('bienvenida')) {
+  const lower = title.toLowerCase().trim();
+
+  // Bienvenida/presentación siempre primero
+  if (
+    /^bienvenida\b/.test(lower) ||
+    /^presentacion\b/.test(lower) ||
+    /^presentación\b/.test(lower)
+  ) {
+    return { session: -1, class: -1 };
+  }
+
+  // SESIÓN X: Clase Y: ...
+  const sessionClassColon = /sesión\s*(\d+)\s*:\s*clase\s*(\d+)/i.exec(title);
+  if (sessionClassColon) {
     return {
-      session: -1, // Ensures it comes first
-      class: -1,
+      session: parseInt(sessionClassColon[1], 10),
+      class: parseInt(sessionClassColon[2], 10),
     };
   }
 
-  // Check for "Clase 1" pattern without session
-  const simpleClassMatch = /^clase\s*(\d+)/i.exec(title);
-  if (simpleClassMatch) {
+  // SESION X - Clase Y
+  const sessionClassDash = /sesion\s*(\d+)\s*-\s*clase\s*(\d+)/i.exec(title);
+  if (sessionClassDash) {
+    return {
+      session: parseInt(sessionClassDash[1], 10),
+      class: parseInt(sessionClassDash[2], 10),
+    };
+  }
+
+  // SESION X: ...
+  const sessionOnly = /sesión\s*(\d+)/i.exec(title);
+  if (sessionOnly) {
+    return {
+      session: parseInt(sessionOnly[1], 10),
+      class: 0,
+    };
+  }
+
+  // Clase Y: ...
+  const classOnly = /clase\s*(\d+)/i.exec(title);
+  if (classOnly) {
     return {
       session: 0,
-      class: parseInt(simpleClassMatch[1]),
+      class: parseInt(classOnly[1], 10),
     };
   }
 
-  // Check for "Sesion X - Clase Y" pattern
-  const sessionClassMatch = /sesion\s*(\d+)\s*-\s*clase\s*(\d+)/i.exec(title);
-  if (sessionClassMatch) {
-    return {
-      session: parseInt(sessionClassMatch[1]),
-      class: parseInt(sessionClassMatch[2]),
-    };
-  }
-
-  // Default case for unmatched patterns
-  return {
-    session: 999,
-    class: 999,
-  };
+  // Default: put at the end
+  return { session: 999, class: 999 };
 };
 
 export const sortLessons = <T extends { title: string }>(lessons: T[]): T[] => {
@@ -54,12 +72,9 @@ export const sortLessons = <T extends { title: string }>(lessons: T[]): T[] => {
     const numbersA = extractNumbersFromTitle(a.title);
     const numbersB = extractNumbersFromTitle(b.title);
 
-    // Compare sessions first
     if (numbersA.session !== numbersB.session) {
       return numbersA.session - numbersB.session;
     }
-
-    // If same session, compare class numbers
     return numbersA.class - numbersB.class;
   });
 };
