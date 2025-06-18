@@ -126,8 +126,10 @@ export function CourseHeader({
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      // play() puede fallar por políticas del navegador, así que ignoramos el error
-      video.play().catch(() => {});
+      // play() puede fallar por políticas del navegador, así que ignoramos el error con un handler vacío que no es una función vacía
+      video.play().catch((e) => {
+        console.warn('Video play() error:', e);
+      });
     } else {
       video.pause();
     }
