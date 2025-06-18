@@ -34,7 +34,7 @@ import {
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { cn } from '~/lib/utils';
-import { formatDate, type GradesApiResponse } from '~/lib/utils2';
+import { type GradesApiResponse } from '~/lib/utils2';
 import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
 import { type Product } from '~/types/payu';
 import { createProductFromCourse } from '~/utils/paygateway/products';
