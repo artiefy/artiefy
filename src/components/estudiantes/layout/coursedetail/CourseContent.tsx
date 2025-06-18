@@ -278,6 +278,31 @@ export function CourseContent({
     return `${year}/${day}/${month}`;
   };
 
+  // Helper to parse both ISO and yyyy/dd/MM formats
+  const parseSubscriptionDate = (dateString: string | null): Date | null => {
+    if (!dateString) return null;
+    // Try ISO first
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) return isoDate;
+    // Try yyyy/dd/MM
+    const match = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(dateString);
+    if (match) {
+      const [, year, day, month] = match;
+      // JS months are 0-based
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+    return null;
+  };
+
+  // Use this for subscription active logic
+  const isSubscriptionReallyActive = useMemo(() => {
+    if (!isSubscriptionActive) return false;
+    if (!subscriptionEndDate) return true;
+    const endDate = parseSubscriptionDate(subscriptionEndDate);
+    if (!endDate) return false;
+    return endDate > new Date();
+  }, [isSubscriptionActive, subscriptionEndDate]);
+
   return (
     <div className="relative rounded-lg border bg-white p-6 shadow-sm">
       <div className="mb-6 flex flex-col gap-4">
@@ -285,7 +310,7 @@ export function CourseContent({
           <h2 className="text-background mt-2 text-2xl font-bold sm:mt-0">
             Contenido del curso
           </h2>
-          {isSignedIn && isSubscriptionActive && (
+          {isSignedIn && isSubscriptionReallyActive && (
             <div className="flex flex-col items-end gap-1">
               <div className="mt-0 flex items-center gap-2 text-green-500 sm:mt-4">
                 <FaCheck className="size-4" />
@@ -315,34 +340,36 @@ export function CourseContent({
           expandedLesson !== null ? 'text-orange-500' : 'text-gray-400'
         }`}
       />
-      {shouldShowSubscriptionAlert && (
-        <Alert
-          variant="destructive"
-          className="mb-6 border-2 border-red-500 bg-red-50"
-        >
-          <div className="flex items-center gap-3">
-            <FaCrown className="size-8 text-red-500" />
-            <div className="flex-1">
-              <AlertTitle className="mb-2 text-xl font-bold text-red-700">
-                ¡Tu suscripción ha expirado!
-              </AlertTitle>
-              <AlertDescription className="text-base text-red-600">
-                <p className="mb-4">
-                  Para seguir disfrutando de todo el contenido premium y
-                  continuar tu aprendizaje, necesitas renovar tu suscripción.
-                </p>
-                <Button
-                  onClick={handleSubscriptionRedirect}
-                  className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
-                >
-                  <FaCrown className="mr-2" />
-                  Renovar Suscripción Ahora
-                </Button>
-              </AlertDescription>
+      {isEnrolled &&
+        !isSubscriptionReallyActive &&
+        shouldShowSubscriptionAlert && (
+          <Alert
+            variant="destructive"
+            className="mb-6 border-2 border-red-500 bg-red-50"
+          >
+            <div className="flex items-center gap-3">
+              <FaCrown className="size-8 text-red-500" />
+              <div className="flex-1">
+                <AlertTitle className="mb-2 text-xl font-bold text-red-700">
+                  ¡Tu suscripción ha expirado!
+                </AlertTitle>
+                <AlertDescription className="text-base text-red-600">
+                  <p className="mb-4">
+                    Para seguir disfrutando de todo el contenido premium y
+                    continuar tu aprendizaje, necesitas renovar tu suscripción.
+                  </p>
+                  <Button
+                    onClick={handleSubscriptionRedirect}
+                    className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
+                  >
+                    <FaCrown className="mr-2" />
+                    Renovar Suscripción Ahora
+                  </Button>
+                </AlertDescription>
+              </div>
             </div>
-          </div>
-        </Alert>
-      )}
+          </Alert>
+        )}
 
       <div
         className={cn(
