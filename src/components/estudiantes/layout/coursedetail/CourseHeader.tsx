@@ -228,7 +228,12 @@ export function CourseHeader({
 
   // Helper function to format dates
   const formatDateString = (date: string | number | Date): string => {
-    return formatDate(new Date(date));
+    // Cambiar a formato año/día/mes
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}/${day}/${month}`;
   };
 
   const areAllLessonsCompleted = useMemo(() => {
