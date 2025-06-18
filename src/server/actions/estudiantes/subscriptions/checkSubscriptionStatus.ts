@@ -1,4 +1,4 @@
-import { format,parseISO } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { toDate } from 'date-fns-tz';
 
 const TIMEZONE = 'America/Bogota';
@@ -32,7 +32,8 @@ async function sendEmailNotification(data: {
 
 export async function checkSubscriptionStatus(
   subscriptionData: SubscriptionData,
-  userEmail?: string
+  userEmail?: string,
+  userName?: string // Nuevo: para personalizar el correo
 ) {
   if (
     !subscriptionData?.subscriptionEndDate ||
@@ -56,25 +57,29 @@ export async function checkSubscriptionStatus(
 
   const planName = subscriptionData.planType ?? 'Plan actual';
 
+  // Notificación por correo para 7 días, 3 días y el mismo día
   if (subscriptionData.subscriptionStatus === 'active') {
+    if ([7, 3, 1, 0].includes(diffDays)) {
+      if (userEmail) {
+        await sendEmailNotification({
+          to: userEmail,
+          userName: userName ?? '',
+          expirationDate: format(endDate, 'dd/MM/yyyy'),
+          timeLeft:
+            diffDays > 0
+              ? `${diffDays} día${diffDays === 1 ? '' : 's'}`
+              : 'hoy',
+        });
+      }
+    }
+
     if (diffDays <= 7 && diffDays > 3) {
-      const result = {
+      return {
         shouldNotify: true,
         message: `Tu suscripción ${planName} expirará en ${diffDays} días`,
         severity: 'medium',
         daysLeft: diffDays,
       };
-
-      if (userEmail) {
-        await sendEmailNotification({
-          to: userEmail,
-          userName: '',
-          expirationDate: format(endDate, 'dd/MM/yyyy'),
-          timeLeft: `${diffDays} días`,
-        });
-      }
-
-      return result;
     }
 
     if (diffDays <= 3 && diffDays > 0) {
@@ -100,6 +105,14 @@ export async function checkSubscriptionStatus(
   }
 
   if (diffDays <= 0) {
+    if (userEmail) {
+      await sendEmailNotification({
+        to: userEmail,
+        userName: userName ?? '',
+        expirationDate: format(endDate, 'dd/MM/yyyy'),
+        timeLeft: 'hoy',
+      });
+    }
     return {
       shouldNotify: true,
       message: `Tu suscripción ${planName} ha expirado`,
