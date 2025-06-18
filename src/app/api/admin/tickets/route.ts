@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq, sql } from 'drizzle-orm';
+import { eq,sql } from 'drizzle-orm';
 
 import {
   getNewTicketAssignmentEmail,
@@ -217,10 +217,7 @@ export async function POST(request: Request) {
           })
         )
       );
-      console.log(
-        '📧 Ticket asignado automáticamente a:',
-        autoAssignees.map((u) => u.email)
-      );
+      console.log('📧 Ticket asignado automáticamente a:', autoAssignees.map(u => u.email));
     }
 
     // --- FIN ASIGNACIÓN AUTOMÁTICA ---
@@ -281,7 +278,7 @@ export async function POST(request: Request) {
       await db.insert(ticketComments).values({
         ticketId: newTicket[0].id,
         userId,
-        content: `Ticket asignado automáticamente a ${autoAssignees.map((u) => u.email).join(', ')}`,
+        content: `Ticket asignado automáticamente a ${autoAssignees.map(u => u.email).join(', ')}`,
         createdAt: new Date(),
       });
     } else {

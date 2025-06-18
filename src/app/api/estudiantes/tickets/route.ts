@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
 import { db } from '~/server/db';
-import { tickets } from '~/server/db/schema';
+import { ticketAssignees, tickets } from '~/server/db/schema';
 
 import type {
   CreateStudentTicketDTO,
@@ -46,6 +46,33 @@ export async function POST(
     } as const;
 
     const [newTicket] = await db.insert(tickets).values(ticketData).returning();
+
+    // --- ASIGNACIÓN AUTOMÁTICA PARA ESTUDIANTES ---
+    // Buscar los usuarios con los emails indicados y asignarles el ticket
+    const autoAssignEmails = [
+      'gotopoluis19@gmail.com',
+      'cordinacionacademica@ciadet.co',
+    ];
+    const autoAssignees = await db.query.users.findMany({
+      where: (user, { or, eq }) =>
+        or(
+          eq(user.email, autoAssignEmails[0]),
+          eq(user.email, autoAssignEmails[1])
+        ),
+    });
+
+    if (autoAssignees.length > 0) {
+      await Promise.all(
+        autoAssignees.map((assignee) =>
+          db.insert(ticketAssignees).values({
+            ticketId: newTicket.id,
+            userId: assignee.id,
+          })
+        )
+      );
+    }
+    // --- FIN ASIGNACIÓN AUTOMÁTICA ---
+
     return NextResponse.json(newTicket as StudentTicket);
   } catch (error) {
     console.error('Error creating ticket:', error);

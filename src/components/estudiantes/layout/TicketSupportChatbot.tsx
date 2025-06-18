@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect,useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -32,6 +32,7 @@ const TicketSupportChatbot = () => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [ticketId, setTicketId] = useState<number | null>(null);
+  const [ticketCreated, setTicketCreated] = useState(false); // Nuevo estado
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { isSignedIn } = useAuth();
@@ -98,30 +99,45 @@ const TicketSupportChatbot = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/estudiantes/tickets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: user.emailAddresses[0]?.emailAddress,
-          description: inputText,
-          tipo: 'otro' as const,
-          estado: 'abierto' as const,
-        } satisfies CreateStudentTicketDTO),
-      });
+      // Solo crear ticket si aún no se ha creado uno en esta sesión de chat
+      if (!ticketCreated) {
+        const response = await fetch('/api/estudiantes/tickets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: user.emailAddresses[0]?.emailAddress,
+            description: inputText,
+            tipo: 'otro' as const,
+            estado: 'abierto' as const,
+          } satisfies CreateStudentTicketDTO),
+        });
 
-      const data = (await response.json()) as StudentTicket;
-      setTicketId(data.id);
+        const data = (await response.json()) as StudentTicket;
+        setTicketId(data.id);
+        setTicketCreated(true);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: prev.length + 1,
-          text: `Gracias por reportar el problema. Tu ticket #${data.id} ha sido creado y será revisado pronto. Te notificaremos cuando haya una respuesta.`,
-          sender: 'support' as const,
-        },
-      ]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            text: `Gracias por reportar el problema. Tu ticket #${data.id} ha sido creado y será revisado pronto. Te notificaremos cuando haya una respuesta.`,
+            sender: 'support' as const,
+          },
+        ]);
+      }
+      // Si ya hay un ticket creado, solo responder como soporte
+      else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: prev.length + 1,
+            text: '¡Gracias! Hemos recibido tu mensaje y lo sumaremos a tu ticket abierto. Pronto recibirás una respuesta.',
+            sender: 'support' as const,
+          },
+        ]);
+      }
     } catch (error) {
       console.error('Error al enviar el ticket:', error);
       toast.error('Error al enviar el ticket');
