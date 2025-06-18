@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 
+import {
+  getNewTicketAssignmentEmail,
+  sendTicketEmail,
+} from '~/lib/emails/ticketEmails';
 import { db } from '~/server/db';
 import { ticketAssignees, tickets } from '~/server/db/schema';
 
@@ -63,12 +67,29 @@ export async function POST(
 
     if (autoAssignees.length > 0) {
       await Promise.all(
-        autoAssignees.map((assignee) =>
-          db.insert(ticketAssignees).values({
+        autoAssignees.map(async (assignee) => {
+          await db.insert(ticketAssignees).values({
             ticketId: newTicket.id,
             userId: assignee.id,
-          })
-        )
+          });
+          // Enviar correo de notificación a cada asignado
+          if (assignee.email) {
+            try {
+              await sendTicketEmail({
+                to: assignee.email,
+                subject: `Nuevo Ticket Asignado #${newTicket.id}`,
+                html: getNewTicketAssignmentEmail(
+                  newTicket.id,
+                  body.description
+                ),
+              });
+            } catch (error) {
+              // No lanzar error, solo loguear
+
+              console.error('Error enviando email de ticket:', error);
+            }
+          }
+        })
       );
     }
     // --- FIN ASIGNACIÓN AUTOMÁTICA ---
