@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -117,6 +117,21 @@ export function CourseHeader({
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Ref para controlar el video
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Handler para pausar/reproducir con click
+  const handleVideoClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      // play() puede fallar por políticas del navegador, así que ignoramos el error
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  };
 
   // Replace useEffect with useSWR
   // Improve error handling with proper types
@@ -461,18 +476,20 @@ export function CourseHeader({
           {/* Nueva lógica de portada/video */}
           {coverVideoCourseKey ? (
             <video
+              ref={videoRef}
               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
-              className="h-full w-full object-cover"
-              controls
+              className="h-full w-full cursor-pointer object-cover"
               autoPlay
               muted
               loop
               playsInline
+              controls={false}
               poster={
                 coverImageKey
                   ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
                   : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
               }
+              onClick={handleVideoClick}
             />
           ) : coverImageKey ? (
             <Image
