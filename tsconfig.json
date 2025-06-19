@@ -20,6 +20,8 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": false,
     "baseUrl": ".",
     "paths": {
       "~/*": [
@@ -30,7 +32,7 @@
       {
         "name": "next"
       }
-    ],
+    ]
   },
   "include": [
     "**/*",
@@ -47,6 +49,8 @@
     "node_modules",
     ".next",
     "build",
-    ".vercel"
+    "dist",
+    ".vercel",
+    "coverage"
   ]
 }
