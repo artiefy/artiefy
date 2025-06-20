@@ -46,10 +46,37 @@ export async function checkSubscriptionStatus(
   const bogotaNow = toDate(nowUTC, { timeZone: TIMEZONE });
 
   // Handle both string and Date types for subscriptionEndDate
-  const endDate =
-    typeof subscriptionData.subscriptionEndDate === 'string'
-      ? parseISO(subscriptionData.subscriptionEndDate)
-      : toDate(subscriptionData.subscriptionEndDate, { timeZone: TIMEZONE });
+  let endDate: Date;
+  if (typeof subscriptionData.subscriptionEndDate === 'string') {
+    // Soporta yyyy-MM-dd, yyyy/MM/dd y ISO
+    const isoTry = parseISO(subscriptionData.subscriptionEndDate);
+    if (!isNaN(isoTry.getTime())) {
+      endDate = isoTry;
+    } else {
+      // yyyy/MM/dd
+      const matchSlash = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(
+        subscriptionData.subscriptionEndDate
+      );
+      if (matchSlash) {
+        const [, year, month, day] = matchSlash;
+        endDate = new Date(Number(year), Number(month) - 1, Number(day));
+      } else {
+        // yyyy-MM-dd
+        const matchDash = /^(\d{4})-(\d{2})-(\d{2})/.exec(
+          subscriptionData.subscriptionEndDate
+        );
+        if (matchDash) {
+          const [, year, month, day] = matchDash;
+          endDate = new Date(Number(year), Number(month) - 1, Number(day));
+        } else {
+          // fallback: fecha inválida
+          endDate = new Date('2100-01-01');
+        }
+      }
+    }
+  } else {
+    endDate = toDate(subscriptionData.subscriptionEndDate, { timeZone: TIMEZONE });
+  }
 
   const diffDays = Math.ceil(
     (endDate.getTime() - bogotaNow.getTime()) / (1000 * 60 * 60 * 24)

@@ -408,6 +408,82 @@ export default function LessonDetails({
   }, [user, course.courseType?.requiredSubscriptionLevel, router]);
 
   // Add safety check for lesson
+  // (Mover el return al final para no romper el orden de hooks)
+
+  // Helper para parsear fechas en formato yyyy/MM/dd y yyyy-MM-dd
+  const parseSubscriptionDate = (dateString: string | null): Date | null => {
+    if (!dateString) return null;
+    // Try ISO first
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) return isoDate;
+    // yyyy/MM/dd
+    const matchSlash = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(dateString);
+    if (matchSlash) {
+      const [, year, month, day] = matchSlash;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+    // yyyy-MM-dd
+    const matchDash = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateString);
+    if (matchDash) {
+      const [, year, month, day] = matchDash;
+      return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+    return null;
+  };
+
+  // Verificar acceso a la lección según el tipo de curso
+  useEffect(() => {
+    if (!user || !course.courseType) return;
+
+    const metadata = user.publicMetadata as {
+      planType?: string;
+      subscriptionStatus?: string;
+      subscriptionEndDate?: string;
+    };
+
+    const courseTypeName = course.courseType.name;
+    const requiredLevel = course.courseType.requiredSubscriptionLevel;
+    const isIndividual = courseTypeName === 'Individual';
+    const isFree = courseTypeName === 'Free';
+    const isSubscription =
+      requiredLevel === 'pro' || requiredLevel === 'premium';
+
+    // Si es Free, dejar pasar
+    if (isFree) return;
+
+    // Si es Individual, verificar inscripción individual
+    if (isIndividual) {
+      // Tipar enrollments correctamente
+      const enrollmentsArr = Array.isArray(course.enrollments)
+        ? (course.enrollments as { userId: string; isPermanent: boolean }[])
+        : [];
+      const hasIndividualEnrollment = enrollmentsArr.some(
+        (e) => e.userId === user.id && e.isPermanent
+      );
+      if (!hasIndividualEnrollment) {
+        toast.error('Debes comprar este curso para acceder a las clases.');
+        void router.push(`/estudiantes/cursos/${course.id}`);
+      }
+      return;
+    }
+
+    // Si es de suscripción (pro/premium), verificar suscripción activa y fecha
+    if (isSubscription) {
+      if (!metadata.subscriptionStatus || !metadata.subscriptionEndDate) {
+        toast.error('Se requiere una suscripción activa para ver las clases');
+        void router.push('/planes');
+        return;
+      }
+      const isActive = metadata.subscriptionStatus === 'active';
+      const endDate = parseSubscriptionDate(metadata.subscriptionEndDate);
+      const isValid = endDate ? endDate > new Date() : false;
+      if (!isActive || !isValid) {
+        toast.error('Se requiere una suscripción activa para ver las clases');
+        void router.push('/planes');
+      }
+    }
+  }, [user, course, router]);
+
   if (!lesson) {
     return (
       <div className="flex h-screen items-center justify-center">

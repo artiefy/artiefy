@@ -19,6 +19,7 @@
     "*.css": "tailwindcss",
     "*.env": "env",
     "*.env.production": "env",
+    "*.jsx": "javascriptreact",
     "*.tsx": "typescriptreact",
     "*.ts": "typescript",
     "*.mjs": "javascript",

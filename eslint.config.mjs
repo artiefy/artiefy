@@ -60,7 +60,7 @@ export default [
       'simple-import-sort': simpleImportSort,
       '@next/next': eslintPluginNext,
       import: importPlugin,
-      drizzle: drizzlePlugin, // <-- Agrega el plugin Drizzle aquí
+      drizzle: drizzlePlugin,
     },
     settings: {
       react: {
