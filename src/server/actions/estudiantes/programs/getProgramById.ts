@@ -5,10 +5,10 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { programas } from '~/server/db/schema';
 import {
-	type Program,
-	type MateriaWithCourse,
 	type BaseCourse,
 	type Category,
+	type MateriaWithCourse,
+	type Program,
 } from '~/types';
 
 // Define types for the query result

@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
 import { FaCheckCircle, FaLock } from 'react-icons/fa';
 import { MdKeyboardDoubleArrowDown } from 'react-icons/md';
-import { TbReportAnalytics, TbClockFilled } from 'react-icons/tb';
+import { TbClockFilled,TbReportAnalytics } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 

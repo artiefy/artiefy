@@ -1,18 +1,18 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { eq, desc, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-  courses,
   categories,
+  courses,
+  materias,
   modalidades,
   nivel as nivel,
-  materias,
-  users,
   programas,
   userCredentials,
+  users,
 } from '~/server/db/schema';
 
 // Add this cache object at module level
@@ -724,6 +724,7 @@ export async function updateUserInClerk({
       lastName,
       publicMetadata: newMetadata,
     });
+    
 
     await db
       .update(users)

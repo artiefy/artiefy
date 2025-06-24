@@ -1,5 +1,5 @@
 import { env } from '~/env';
-import { type FormData, type Auth, type Product } from '~/types/payu';
+import { type Auth, type FormData, type Product } from '~/types/payu';
 
 import { calculateSignature } from './signature';
 

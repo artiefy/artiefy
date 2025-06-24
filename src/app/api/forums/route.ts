@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand,S3Client } from '@aws-sdk/client-s3';
 import { eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import nodemailer from 'nodemailer';
@@ -8,11 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import {
 	createForum,
-	updateForumById,
 	deleteForumById,
+	updateForumById,
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
-import { forums, users, courses } from '~/server/db/schema';
+import { courses,forums, users } from '~/server/db/schema';
 
 const s3Client = new S3Client({
 	region: process.env.AWS_REGION,

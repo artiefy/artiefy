@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import Player from 'next-video/player';
+
 import '~/styles/videoloading.css';
 
 interface VideoPlayerProps {

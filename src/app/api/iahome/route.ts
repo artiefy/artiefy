@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { type SQL, like, or } from 'drizzle-orm';
+import { like, or,type SQL } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courses } from '~/server/db/schema';

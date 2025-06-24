@@ -1,10 +1,10 @@
 import {
-	FiCode,
-	FiPenTool,
 	FiBarChart,
 	FiCamera,
-	FiMusic,
+	FiCode,
 	FiDatabase,
+	FiMusic,
+	FiPenTool,
 } from 'react-icons/fi';
 
 const categories = [

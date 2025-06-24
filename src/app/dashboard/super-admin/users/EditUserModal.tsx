@@ -84,6 +84,7 @@ export default function EditUserModal({
       className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80"
       onClick={onClose}
     >
+      
       <div
         className="relative mx-auto my-4 h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-[#01142B] shadow-2xl"
         onClick={(e) => e.stopPropagation()}

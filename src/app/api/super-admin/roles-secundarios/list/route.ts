@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { rolesSecundarios, roleSecundarioPermisos } from '~/server/db/schema';
+import { roleSecundarioPermisos,rolesSecundarios } from '~/server/db/schema';
 
 export async function GET() {
 	try {

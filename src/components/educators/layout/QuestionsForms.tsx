@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import { Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
@@ -9,7 +9,7 @@ import { Input } from '~/components/educators/ui/input';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 
-import type { Question, OptionOM } from '~/types/typesActi';
+import type { OptionOM,Question } from '~/types/typesActi';
 
 //La validacion del porcentaje no se encuentra implementada
 

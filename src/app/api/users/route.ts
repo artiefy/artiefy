@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import { db } from '~/server/db';
-import { users, userCredentials } from '~/server/db/schema';
+import { userCredentials,users } from '~/server/db/schema';
 import {
   createUser,
   getAdminUsers,

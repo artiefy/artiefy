@@ -19,6 +19,7 @@
     "*.css": "tailwindcss",
     "*.env": "env",
     "*.env.production": "env",
+    "*.jsx": "javascriptreact",
     "*.tsx": "typescriptreact",
     "*.ts": "typescript",
     "*.mjs": "javascript",
@@ -98,12 +99,20 @@
     },
     {
       "rule": "no-unused-vars",
+      "severity": "warn"
+    },
+     {
+      "rule": "simple-import-sort/imports",
+      "severity": "off"
+    },
+    {
+      "rule": "simple-import-sort/exports",
       "severity": "off"
     },
     {
       "rule": "@typescript-eslint/no-unused-vars",
-      "severity": "off"
-    }
+      "severity": "warn"
+    },
   ],
   // Tailwind CSS Configuration
   "tailwindCSS.includeLanguages": {

@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq, and, or } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	conversations,
 	chatMessagesWithConversation,
+	conversations,
 } from '~/server/db/schema';
 
 interface ChatRequestBody {

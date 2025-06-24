@@ -1,22 +1,21 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { and,desc, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-  courses,
   categories,
+  courses,
+  enrollmentPrograms,
   modalidades,
   nivel as nivel,
   programas,
-  enrollmentPrograms,
-  users,
   userCustomFields,
   enrollments,
 } from '~/server/db/schema';
 
-import type { Program, BaseCourse } from '~/types';
+import type { BaseCourse,Program } from '~/types';
 
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();

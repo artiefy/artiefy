@@ -1,14 +1,14 @@
-import { eq, inArray, and } from 'drizzle-orm';
+import { and,eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
+	activities,
 	categories,
 	courses,
 	lessons,
 	modalidades,
-	users,
-	activities,
 	userLessonsProgress,
+	users,
 } from '~/server/db/schema';
 
 export interface Lesson {

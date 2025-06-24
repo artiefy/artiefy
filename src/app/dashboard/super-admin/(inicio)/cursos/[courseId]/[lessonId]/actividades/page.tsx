@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import Image from 'next/image';
-import { useRouter, useSearchParams, useParams } from 'next/navigation'; // Cambiar la importación de useRouter
+import { useParams,useRouter, useSearchParams } from 'next/navigation'; // Cambiar la importación de useRouter
 
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';

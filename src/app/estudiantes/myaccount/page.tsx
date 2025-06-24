@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/nextjs';
+import { RedirectToSignIn,SignedIn, SignedOut } from '@clerk/nextjs';
 
 import { CourseCardSkeleton } from '~/components/estudiantes/layout/CourseCardSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { and, eq, desc } from 'drizzle-orm';
+import { and, desc,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollments, anunciosCursos, anuncios } from '~/server/db/schema';
+import { anuncios,anunciosCursos, enrollments } from '~/server/db/schema';
 
 export async function GET(req: Request) {
 	try {

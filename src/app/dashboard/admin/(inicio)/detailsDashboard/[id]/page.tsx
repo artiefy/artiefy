@@ -1,18 +1,18 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback,useEffect, useState } from 'react';
 
 import { useParams } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 import {
-	Users,
+	Calendar,
 	Clock,
 	GraduationCap,
-	Calendar,
-	Trophy,
 	Star,
+	Trophy,
+	Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 

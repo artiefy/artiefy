@@ -2,19 +2,19 @@
 
 import { useEffect, useState } from 'react';
 
-import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { useParams, useRouter,useSearchParams } from 'next/navigation';
 
 import {
-	BookOpen,
+	ArrowLeft,
 	Award,
 	BarChart,
-	MessageSquare,
-	FileText,
-	Users,
-	User,
-	GraduationCap,
+	BookOpen,
 	Calendar,
-	ArrowLeft,
+	FileText,
+	GraduationCap,
+	MessageSquare,
+	User,
+	Users,
 } from 'lucide-react';
 
 interface Stats {

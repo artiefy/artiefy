@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { type ChangeEvent,useEffect, useState } from 'react';
 
 import Image from 'next/image';
 

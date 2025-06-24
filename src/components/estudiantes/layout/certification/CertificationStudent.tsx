@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import '~/styles/confetti.css';
 
 import { useUser } from '@clerk/nextjs';
 import { FaDownload } from 'react-icons/fa';
@@ -11,6 +10,8 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { formatDate } from '~/lib/utils2';
 
 import type { Course } from '~/types';
+
+import '~/styles/confetti.css';
 
 interface StudentCertificationProps {
 	course: Course;

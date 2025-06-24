@@ -4,10 +4,10 @@ import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { userActivitiesProgress, activities } from '~/server/db/schema';
+import { activities,userActivitiesProgress } from '~/server/db/schema';
 import { formatScoreNumber } from '~/utils/formatScore';
 
-import type { SavedAnswer, ActivityResults } from '~/types';
+import type { ActivityResults,SavedAnswer } from '~/types';
 
 export const dynamic = 'force-dynamic';
 

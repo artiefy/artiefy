@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { eq, asc } from 'drizzle-orm';
+import { asc,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { chatMessagesWithConversation, users } from '~/server/db/schema';

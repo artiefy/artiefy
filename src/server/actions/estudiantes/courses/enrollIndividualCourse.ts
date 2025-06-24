@@ -1,15 +1,16 @@
 'use server';
 
-import { and, eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid'; // Add this import
+import { and, eq, inArray } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '~/server/db';
 import {
-  users,
   enrollments,
   lessons,
   userLessonsProgress,
+  users,
 } from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 export async function enrollUserInCourse(userEmail: string, courseId: number) {
   console.log('📝 Starting enrollment process:', { userEmail, courseId });
@@ -80,37 +81,45 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
       isPermanent: true,
     });
 
-    // 2. Obtener lecciones
+    // Obtener lecciones
     const courseLessons = await db.query.lessons.findMany({
       where: eq(lessons.courseId, courseId),
     });
 
-    const sortedLessons = courseLessons.sort((a, b) => {
-      const match1 = /\d+/.exec(a.title);
-      const match2 = /\d+/.exec(b.title);
-      return (
-        (match1 ? parseInt(match1[0], 10) : 0) -
-        (match2 ? parseInt(match2[0], 10) : 0)
-      );
+    // Ordenar lecciones usando nuestra utilidad de ordenamiento compartida
+    const sortedLessons = sortLessons(courseLessons);
+
+    // Obtener IDs de lecciones en el orden correcto
+    const lessonIds = sortedLessons.map((lesson) => lesson.id);
+
+    // Obtener registros de progreso existentes para este usuario y estas lecciones específicas
+    const existingProgress = await db.query.userLessonsProgress.findMany({
+      where: and(
+        eq(userLessonsProgress.userId, user.id),
+        inArray(userLessonsProgress.lessonId, lessonIds)
+      ),
     });
 
-    // 3. Crear progreso para cada lección, verificando duplicados
-    for (const [index, lesson] of sortedLessons.entries()) {
-      // Verificar si ya existe un progreso para esta lección
-      const existingProgress = await db.query.userLessonsProgress.findFirst({
-        where: and(
-          eq(userLessonsProgress.userId, user.id),
-          eq(userLessonsProgress.lessonId, lesson.id)
-        ),
-      });
+    // Crear un conjunto de progreso de lecciones existentes para una búsqueda más rápida
+    const existingProgressSet = new Set(
+      existingProgress.map((progress) => progress.lessonId)
+    );
 
-      if (!existingProgress) {
+    // Insertar progreso solo para lecciones que no tienen progreso
+    for (const [index, lesson] of sortedLessons.entries()) {
+      if (!existingProgressSet.has(lesson.id)) {
+        // Verificar si es la primera lección O tiene "Bienvenida" en el título
+        const isFirstOrWelcome =
+          index === 0 ||
+          lesson.title.toLowerCase().includes('bienvenida') ||
+          lesson.title.toLowerCase().includes('clase 1');
+
         await db.insert(userLessonsProgress).values({
           userId: user.id,
           lessonId: lesson.id,
           progress: 0,
           isCompleted: false,
-          isLocked: index !== 0,
+          isLocked: !isFirstOrWelcome, // Desbloquear solo la primera lección o la lección de bienvenida
           isNew: true,
           lastUpdated: new Date(),
         });

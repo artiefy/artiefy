@@ -1,10 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import '~/styles/ia.css';
-import '~/styles/searchBar.css';
-import '~/styles/uiverse-button.css';
-import '~/styles/headerSearchBar.css';
+import { useCallback,useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,6 +21,11 @@ import {
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Course, type Program } from '~/types';
+
+import '~/styles/ia.css';
+import '~/styles/searchBar.css';
+import '~/styles/uiverse-button.css';
+import '~/styles/headerSearchBar.css';
 
 export default function StudentDetails({
 	initialCourses,

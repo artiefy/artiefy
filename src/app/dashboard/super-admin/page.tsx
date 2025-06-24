@@ -1,30 +1,31 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback,useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 
 import {
-  Loader2,
-  X,
-  XCircle,
+  Check,
   Edit,
+  Eye,
+  Loader2,
+  Paperclip,
   Trash2,
   UserPlus,
-  Check,
-  Eye,
-  Paperclip,
+  X,
+  XCircle,
 } from 'lucide-react';
 import SunEditor from 'suneditor-react';
 
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
-import { setRoleWrapper, deleteUser } from '~/server/queries/queries';
+import { deleteUser,setRoleWrapper } from '~/server/queries/queries';
 
 import BulkUploadUsers from './components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
+
 import 'suneditor/dist/css/suneditor.min.css';
 
 interface User {

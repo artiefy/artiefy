@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, inArray, and } from 'drizzle-orm';
+import { and,eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollmentPrograms, users, programas } from '~/server/db/schema';
+import { enrollmentPrograms, programas,users } from '~/server/db/schema';
 
 const BATCH_SIZE = 100;
 

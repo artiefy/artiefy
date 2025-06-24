@@ -2,9 +2,9 @@
 import { eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { programas, enrollmentPrograms } from '~/server/db/schema';
+import { enrollmentPrograms,programas } from '~/server/db/schema';
 
-import type { Course, Program, Materia } from '~/types/super-admin';
+import type { Course, Materia,Program } from '~/types/super-admin';
 
 export interface ProgramDetails {
 	id: number;

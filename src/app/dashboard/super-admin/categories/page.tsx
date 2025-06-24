@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 
 import {
-	Loader2,
-	X,
-	Edit,
-	Trash2,
-	Plus,
 	ChevronLeft,
 	ChevronRight,
+	Edit,
+	Loader2,
+	Plus,
+	Trash2,
+	X,
 } from 'lucide-react';
 
 interface Category {

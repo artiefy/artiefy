@@ -5,8 +5,8 @@ import { currentUser } from '@clerk/nextjs/server';
 import { BookOpenIcon } from '@heroicons/react/24/outline';
 import {
 	ArrowRightCircleIcon,
-	StarIcon,
 	CheckCircleIcon,
+	StarIcon,
 } from '@heroicons/react/24/solid';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';

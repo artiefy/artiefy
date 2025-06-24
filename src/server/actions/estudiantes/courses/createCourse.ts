@@ -2,7 +2,7 @@
 
 import { eq } from 'drizzle-orm';
 
-import { createNotification } from '~/server/actions/notifications/createNotification';
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { courses, users } from '~/server/db/schema';
 
@@ -20,10 +20,13 @@ interface CreateCourseInput {
 export async function createCourse(input: CreateCourseInput) {
   try {
     // Create the course first
-    const [newCourse] = await db.insert(courses).values({
-      ...input,
-      courseTypeId: 1, // Default course type
-    }).returning();
+    const [newCourse] = await db
+      .insert(courses)
+      .values({
+        ...input,
+        courseTypeId: 1, // Default course type
+      })
+      .returning();
 
     // Get all students to notify them
     const students = await db.query.users.findMany({
@@ -31,15 +34,15 @@ export async function createCourse(input: CreateCourseInput) {
     });
 
     // Create notifications for all students
-    const notificationPromises = students.map(student =>
+    const notificationPromises = students.map((student) =>
       createNotification({
         userId: student.id,
         type: 'NEW_COURSE_ADDED',
         title: '¡Nuevo Curso Disponible!',
         message: `Se ha agregado un nuevo curso: ${input.title}`,
         metadata: {
-          courseId: newCourse.id
-        }
+          courseId: newCourse.id,
+        },
       })
     );
 
@@ -48,7 +51,7 @@ export async function createCourse(input: CreateCourseInput) {
     return {
       success: true,
       courseId: newCourse.id,
-      message: 'Curso creado exitosamente'
+      message: 'Curso creado exitosamente',
     };
   } catch (error) {
     console.error('Error creating course:', error);

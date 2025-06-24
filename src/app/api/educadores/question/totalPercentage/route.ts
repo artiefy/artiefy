@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
 
-import type { Completado, VerdaderoOFlaso, Question } from '~/types/typesActi';
+import type { Completado, Question,VerdaderoOFlaso } from '~/types/typesActi';
 
 const redis = new Redis({
 	url: process.env.UPSTASH_REDIS_REST_URL!,

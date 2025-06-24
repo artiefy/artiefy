@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import { toast } from 'sonner';
 
@@ -8,7 +8,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Label } from '~/components/educators/ui/label';
 import { Progress } from '~/components/educators/ui/progress';
 
-import type { VerdaderoOFlaso, OptionVOF } from '~/types/typesActi';
+import type { OptionVOF,VerdaderoOFlaso } from '~/types/typesActi';
 
 //La validacion del porcentaje no se encuentra implementada
 

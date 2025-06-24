@@ -4,9 +4,9 @@ import { eq } from 'drizzle-orm';
 
 import {
   createParametros,
+  deleteParametro,
   getParametrosByCourseId,
   updateParametro,
-  deleteParametro,
 } from '~/models/educatorsModels/parametrosModels';
 import { db } from '~/server/db';
 import { parametros } from '~/server/db/schema';

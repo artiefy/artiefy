@@ -7,8 +7,8 @@ import { notifications } from '~/server/db/schema';
 
 import type {
   Notification,
-  NotificationType,
   NotificationMetadata,
+  NotificationType,
 } from '~/types';
 
 interface DbNotification {

@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 
 import {
   clerkMiddleware,
-  createRouteMatcher,
   type ClerkMiddlewareOptions,
+  createRouteMatcher,
 } from '@clerk/nextjs/server';
 
 // Protected route matchers with documentation

@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq, and, ne as neq } from 'drizzle-orm';
+import { and, eq, ne as neq } from 'drizzle-orm';
 
 import {
-  getAllCourses,
   createCourse,
   deleteCourse,
+  getAllCourses,
   getCourseById,
-  updateCourse,
   getModalidadById,
+  updateCourse,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { db } from '~/server/db';
 import { materias } from '~/server/db/schema';

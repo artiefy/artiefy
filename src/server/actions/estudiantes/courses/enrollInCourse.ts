@@ -1,16 +1,16 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { eq, and, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
-import { createNotification } from '~/server/actions/notifications/createNotification';
+import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import {
-  users,
+  courses,
   enrollments,
   lessons,
   userLessonsProgress,
-  courses,
+  users,
 } from '~/server/db/schema';
 import { sortLessons } from '~/utils/lessonSorting';
 

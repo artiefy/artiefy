@@ -50,6 +50,7 @@ export interface Course extends BaseCourse {
   requiresSubscription?: boolean;
   courseTypeId: number; // Add this field
   courseType?: {
+    name: string; // <-- Agregado para permitir acceso a course.courseType.name
     requiredSubscriptionLevel: SubscriptionLevel;
     isPurchasableIndividually: boolean | null; // Updated to allow null
     price?: number | null; // Add price property
