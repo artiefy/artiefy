@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect,useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -477,23 +477,24 @@ const Page: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="justify-items-centerer mx-auto flex w-fit justify-evenly space-x-10">
+          <div className="mx-auto flex flex-wrap justify-center gap-4 sm:justify-evenly md:gap-6">
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-              className="w-fit rounded-lg bg-blue-500 py-1.5 text-white hover:bg-blue-600"
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
             >
               Realizar Actividad
             </Link>
+
             <Link
               href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
-              className="w-fit rounded-lg bg-blue-500 py-1.5 text-white hover:bg-blue-600"
+              className="rounded-lg bg-blue-500 px-4 py-2 text-white transition-colors duration-200 hover:bg-blue-600"
             >
               Editar Actividad
             </Link>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button className="mx-auto w-1/3 border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
+                <Button className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-white hover:text-red-600">
                   Eliminar
                 </Button>
               </AlertDialogTrigger>
@@ -514,7 +515,7 @@ const Page: React.FC = () => {
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteAct}
-                    className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                    className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:border-red-700 hover:bg-transparent hover:text-red-700"
                   >
                     Eliminar
                   </AlertDialogAction>
@@ -522,6 +523,7 @@ const Page: React.FC = () => {
               </AlertDialogContent>
             </AlertDialog>
           </div>
+
           {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
           {actividad?.type.id === 1 ? (
             <div className="mt-8 space-y-6">
