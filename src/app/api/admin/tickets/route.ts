@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { sql, eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 import {
-  sendTicketEmail,
   getNewTicketAssignmentEmail,
+  sendTicketEmail,
 } from '~/lib/emails/ticketEmails';
 import { db } from '~/server/db';
 import {
+  ticketAssignees,
+  ticketComments,
   tickets,
   users,
-  ticketComments,
-  ticketAssignees,
 } from '~/server/db/schema';
 
 interface CreateTicketBody {
@@ -193,6 +193,38 @@ export async function POST(request: Request) {
 
     const newTicket = await db.insert(tickets).values(ticketData).returning();
     console.log('✅ Ticket creado:', newTicket[0]);
+
+    // --- ASIGNACIÓN AUTOMÁTICA PARA ESTUDIANTES ---
+    // Buscar los usuarios con los emails indicados y asignarles el ticket
+    const autoAssignEmails = [
+      'gotopoluis19@gmail.com',
+      'cordinacionacademica@ciadet.co',
+    ];
+    const autoAssignees = await db.query.users.findMany({
+      where: (user, { or, eq }) =>
+        or(
+          eq(user.email, autoAssignEmails[0]),
+          eq(user.email, autoAssignEmails[1])
+        ),
+    });
+
+    if (autoAssignees.length > 0) {
+      await Promise.all(
+        autoAssignees.map((assignee) =>
+          db.insert(ticketAssignees).values({
+            ticketId: newTicket[0].id,
+            userId: assignee.id,
+          })
+        )
+      );
+      console.log(
+        '📧 Ticket asignado automáticamente a:',
+        autoAssignees.map((u) => u.email)
+      );
+    }
+
+    // --- FIN ASIGNACIÓN AUTOMÁTICA ---
+
     if (body.assignedToIds && body.assignedToIds.length > 0) {
       await Promise.all(
         body.assignedToIds.map((assignedUserId) =>
@@ -244,6 +276,14 @@ export async function POST(request: Request) {
         createdAt: new Date(),
       });
       console.log('✅ Comentario de asignación agregado');
+    } else if (autoAssignees.length > 0) {
+      // Si solo se asignó automáticamente, agregar comentario también
+      await db.insert(ticketComments).values({
+        ticketId: newTicket[0].id,
+        userId,
+        content: `Ticket asignado automáticamente a ${autoAssignees.map((u) => u.email).join(', ')}`,
+        createdAt: new Date(),
+      });
     } else {
       console.log('ℹ️ Ticket creado sin asignación');
     }

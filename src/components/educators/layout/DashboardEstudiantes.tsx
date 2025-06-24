@@ -12,7 +12,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Loader2, Eye } from 'lucide-react';
+import { Loader2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
 
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
@@ -73,19 +73,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const [error, setError] = useState<string | null>(null); // Estado de error
   const [isModalOpen, setIsModalOpen] = useState(false); // Estado del modal
   const [selectedUser, setSelectedUser] = useState<User | null>(null); // Usuario seleccionado
-
-  // 1️⃣ Filtrar usuarios
-  const filteredUsers = users.filter(
-    (user) =>
-      searchQuery === '' ||
-      user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  // justo arriba de los filtros y la paginación
+  const [activeTab, setActiveTab] = useState<'actuales' | 'completos'>(
+    'actuales'
   );
 
-  // 2️⃣ Definir la paginación
-  const [currentPage, setCurrentPage] = useState(1);
-
+  // 2️⃣ Grades y activities (mantener aquí)
   const [grades, setGrades] = useState<Record<string, Record<number, number>>>(
     {}
   );
@@ -93,10 +86,44 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
     { id: number; name: string; parametro: string }[]
   >([]);
 
+  // 3️⃣ Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // 3️⃣ Paginación
   const usersPerPage = 12;
+
+  // ———————— Helper para “completos” ————————
+  const isStudentCompleted = (user: User): boolean => {
+    const avg100 = user.averageProgress === 100;
+    const userGrades = grades[user.id] ?? {};
+    const hasAllGrades = activities.every(
+      (act) => typeof userGrades[act.id] === 'number'
+    );
+    return avg100 && hasAllGrades;
+  };
+
+  // ———————— Filtrado en 3 pasos ————————
+  // 1) Por pestaña
+  const tabFilteredUsers = users.filter((user) =>
+    activeTab === 'completos'
+      ? isStudentCompleted(user)
+      : !isStudentCompleted(user)
+  );
+
+  // 2) Por búsqueda
+  const searchedUsers = tabFilteredUsers.filter(
+    (user) =>
+      searchQuery === '' ||
+      user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // 3️⃣ Calcular paginación
+  const totalPages = Math.ceil(searchedUsers.length / usersPerPage);
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const currentUsers = searchedUsers.slice(indexOfFirstUser, indexOfLastUser);
 
   const handleGradeChange = (
     userId: string,
@@ -330,11 +357,40 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
 
       {/* Fin del modal */}
       <div className="group relative">
-        <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+        <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] opacity-0 blur-sm transition duration-500" />
 
         <header className="bg-primary relative z-20 flex flex-col rounded-lg p-6 text-center text-2xl font-bold text-[#01142B] shadow-md sm:flex-row sm:items-center sm:justify-between sm:text-left sm:text-3xl">
           <h1>📊 Estadísticas de Estudiantes</h1>
         </header>
+        <div className="relative z-20 mt-4 flex justify-center space-x-4">
+          {' '}
+          <button
+            onClick={() => {
+              setActiveTab('actuales');
+              setCurrentPage(1);
+            }}
+            className={`rounded-lg px-4 py-2 ${
+              activeTab === 'actuales'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Estudiantes Actuales
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('completos');
+              setCurrentPage(1);
+            }}
+            className={`rounded-lg px-4 py-2 ${
+              activeTab === 'completos'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            Estudiantes calificación al 100%
+          </button>
+        </div>
 
         <div className="relative z-20 mt-4 rounded-lg bg-gray-800 p-6">
           {error && currentUsers.length <= 0 && (
@@ -364,89 +420,208 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                 />
               </div>
 
-              {/* 🧾 Tabla responsive */}
-              <div className="overflow-auto rounded-lg border border-gray-600 shadow-md">
-                <table className="w-full min-w-[900px] text-white">
-                  <thead className="bg-[#1f2937]">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-bold">
-                        Nombre
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-bold">
-                        Correo
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-bold">
-                        Progreso
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-bold">
-                        Última conexión
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-bold">
-                        Tiempo
-                      </th>
-                      {activities.map((activity) => (
-                        <th
-                          key={activity.id}
-                          className="px-4 py-3 text-center text-xs font-bold"
-                        >
-                          {activity.name}
-                          <br />
-                          <span className="text-xs text-blue-400 italic">
-                            {activity.parametro}
-                          </span>
-                        </th>
-                      ))}
-                      <th className="px-4 py-3 text-center text-xs font-bold">
-                        Nota Final
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-bold">
-                        Acciones
-                      </th>
-                    </tr>
-                  </thead>
+              <div className="space-y-4">
+                {/* ─── Versión móvil compacta ─── */}
+                <div className="block space-y-3 bg-gray-800 p-2 sm:hidden">
+                  {currentUsers.map((user) => {
+                    // Cálculo nota final
+                    const notasArray = Object.values(grades[user.id] ?? {});
+                    const notaFinal =
+                      notasArray.length > 0
+                        ? (
+                            notasArray.reduce((a, b) => a + b, 0) /
+                            notasArray.length
+                          ).toFixed(2)
+                        : 'N/D';
 
-                  <tbody>
-                    {currentUsers.length > 0 ? (
-                      currentUsers.map((user) => (
-                        <tr
-                          key={user.id}
-                          className="border-t border-gray-600 transition hover:bg-gray-700"
-                        >
-                          <td className="px-4 py-2 text-sm">
+                    return (
+                      <div
+                        key={user.id}
+                        className="rounded-lg border border-gray-600 bg-gray-700 p-3 shadow-sm"
+                      >
+                        {/* Nombre y correo en una línea */}
+                        <div className="flex justify-between text-sm font-medium">
+                          <span className="truncate">
                             {user.firstName} {user.lastName}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-300">
+                          </span>
+                          <span className="truncate text-gray-300">
                             {user.email}
-                          </td>
-                          <td className="flex items-center gap-2 px-4 py-2 text-sm">
-                            <div className="h-2.5 w-full rounded-full bg-gray-500">
-                              <div
-                                className="h-2.5 rounded-full bg-blue-500"
-                                style={{ width: `${user.averageProgress}%` }}
+                          </span>
+                        </div>
+
+                        {/* Progreso con barra fina */}
+                        <div className="mt-2">
+                          <div className="flex justify-between text-xs font-medium">
+                            <span>Progreso</span>
+                            <span>{user.averageProgress.toFixed(1)}%</span>
+                          </div>
+                          <div className="mt-1 h-1 w-full rounded-full bg-gray-600">
+                            <div
+                              className="h-1 rounded-full bg-blue-500"
+                              style={{ width: `${user.averageProgress}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Última conexión y tiempo en grid 2 cols */}
+                        <div className="mt-2 grid grid-cols-2 gap-x-2 text-[11px] text-gray-400">
+                          <div className="truncate">
+                            Última:{' '}
+                            <span className="text-white">
+                              {user.lastConnection ?? 'N/D'}
+                            </span>
+                          </div>
+                          <div className="truncate">
+                            Tiempo:{' '}
+                            <span className="text-white">
+                              {user.tiempoEnCurso ?? 'N/D'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Notas por actividad en listado compacto */}
+                        <div className="mt-2 text-xs font-medium">Notas:</div>
+                        <div className="mt-1 space-y-1 text-[11px]">
+                          {activities.map((activity) => (
+                            <div
+                              key={`${user.id}-${activity.id}`}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="truncate">{activity.name}</span>
+                              <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                step={0.5}
+                                className="w-12 rounded bg-gray-600 p-[2px] text-center text-xs text-white"
+                                value={grades[user.id]?.[activity.id] ?? ''}
+                                placeholder="--"
+                                onChange={(e) =>
+                                  handleGradeChange(
+                                    user.id,
+                                    activity.id,
+                                    parseFloat(e.target.value)
+                                  )
+                                }
+                                onBlur={() =>
+                                  saveGrade(
+                                    user.id,
+                                    activity.id,
+                                    grades[user.id]?.[activity.id] ?? 0
+                                  )
+                                }
                               />
                             </div>
-                            <span className="text-xs">
-                              {user.averageProgress.toFixed(1)}%
+                          ))}
+                        </div>
+
+                        {/* Nota final y botón */}
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-xs font-medium">Final</span>
+                          <span className="text-xs font-semibold text-green-300">
+                            {notaFinal}
+                          </span>
+                        </div>
+                        <div className="mt-2 text-right">
+                          <button
+                            onClick={() => openUserDetails(user)}
+                            className="inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                          >
+                            <Eye size={14} />
+                            Ver
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 2️⃣ – Tabla para desktop */}
+                <div className="hidden overflow-x-auto rounded-lg border border-gray-600 shadow-md sm:block">
+                  <table className="w-full divide-y divide-gray-700 text-white">
+                    <thead className="sticky top-0 bg-gray-900">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">
+                          Nombre
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase">
+                          Correo
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold whitespace-nowrap uppercase">
+                          Progreso
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold whitespace-nowrap uppercase">
+                          Última conexión
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold whitespace-nowrap uppercase">
+                          Tiempo
+                        </th>
+
+                        {activities.map((activity) => (
+                          <th
+                            key={activity.id}
+                            className="hidden px-4 py-3 text-center text-xs font-semibold whitespace-nowrap uppercase lg:table-cell"
+                          >
+                            {activity.name}
+                            <br />
+                            <span className="text-[10px] text-blue-400 italic">
+                              {activity.parametro}
                             </span>
+                          </th>
+                        ))}
+
+                        <th className="px-4 py-3 text-center text-xs font-semibold whitespace-nowrap uppercase">
+                          Nota Final
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-semibold whitespace-nowrap uppercase">
+                          Acciones
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-gray-700">
+                      {currentUsers.map((user) => (
+                        <tr
+                          key={user.id}
+                          className="transition-colors hover:bg-gray-700"
+                        >
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            {user.firstName} {user.lastName}
                           </td>
-                          <td className="px-4 py-2 text-xs text-gray-400">
+                          <td className="px-4 py-2 whitespace-nowrap text-gray-300">
+                            {user.email}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2.5 w-full rounded-full bg-gray-700">
+                                <div
+                                  className="h-2.5 rounded-full bg-blue-500"
+                                  style={{ width: `${user.averageProgress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs">
+                                {user.averageProgress.toFixed(1)}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 text-xs whitespace-nowrap text-gray-400">
                             {user.lastConnection ?? 'N/D'}
                           </td>
-                          <td className="px-4 py-2 text-xs text-gray-400">
+                          <td className="px-4 py-2 text-xs whitespace-nowrap text-gray-400">
                             {user.tiempoEnCurso ?? 'N/D'}
                           </td>
 
                           {activities.map((activity) => (
                             <td
                               key={`${user.id}-${activity.id}`}
-                              className="px-2 py-2 text-center text-xs"
+                              className="hidden px-4 py-2 text-center text-xs whitespace-nowrap lg:table-cell"
                             >
                               <input
                                 type="number"
                                 min={0}
                                 max={100}
                                 step={0.5}
-                                className="w-16 rounded bg-gray-600 p-1 text-center text-white"
+                                className="w-16 rounded bg-gray-700 p-1 text-center text-white"
                                 value={grades[user.id]?.[activity.id] ?? 0}
                                 onChange={(e) =>
                                   handleGradeChange(
@@ -466,7 +641,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                             </td>
                           ))}
 
-                          <td className="px-4 py-2 text-center text-sm font-semibold text-green-300">
+                          <td className="px-4 py-2 text-center text-sm font-semibold whitespace-nowrap text-green-300">
                             {(() => {
                               const notas = Object.values(
                                 grades[user.id] ?? {}
@@ -478,63 +653,56 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                             })()}
                           </td>
 
-                          <td className="px-4 py-2 text-center">
+                          <td className="px-4 py-2 text-center whitespace-nowrap">
                             <button
                               onClick={() => openUserDetails(user)}
-                              className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
+                              className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
                             >
-                              <Eye size={14} className="mr-1 inline-block" />
+                              <Eye size={14} />
                               Ver
                             </button>
                           </td>
                         </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan={activities.length + 6}
-                          className="py-4 text-center text-gray-400"
-                        >
-                          No hay usuarios inscritos.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-
-              {/* ⏮⏭ Paginación */}
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {/* ─── Paginación con números ─── */}
+              <div className="mt-4 flex items-center justify-center gap-2">
+                {/* Botón «Anterior» */}
                 <button
                   onClick={() =>
                     setCurrentPage((prev) => Math.max(prev - 1, 1))
                   }
                   disabled={currentPage === 1}
-                  className="rounded bg-gray-700 px-4 py-2 text-white disabled:opacity-50"
+                  aria-label="Página anterior"
+                  className="flex h-8 w-8 items-center justify-center rounded bg-gray-700 text-white transition hover:bg-gray-600 disabled:opacity-50"
                 >
-                  Anterior
+                  <ChevronLeft className="h-4 w-4" />
                 </button>
 
-                <span className="rounded bg-gray-800 px-4 py-2 text-white">
-                  Página {currentPage} de{' '}
-                  {Math.ceil(filteredUsers.length / usersPerPage)}
+                {/* Indicador de página */}
+                <span className="rounded bg-gray-800 px-3 py-1 text-sm font-medium text-white">
+                  {/* En móvil: “1 / 10” | en sm+: “Página 1 de 10” */}
+                  <span className="sm:hidden">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <span className="hidden sm:inline">
+                    Página {currentPage} de {totalPages}
+                  </span>
                 </span>
 
+                {/* Botón «Siguiente» */}
                 <button
                   onClick={() =>
-                    setCurrentPage((prev) =>
-                      prev < Math.ceil(filteredUsers.length / usersPerPage)
-                        ? prev + 1
-                        : prev
-                    )
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                   }
-                  disabled={
-                    currentPage ===
-                    Math.ceil(filteredUsers.length / usersPerPage)
-                  }
-                  className="rounded bg-gray-700 px-4 py-2 text-white disabled:opacity-50"
+                  disabled={currentPage === totalPages}
+                  aria-label="Página siguiente"
+                  className="flex h-8 w-8 items-center justify-center rounded bg-gray-700 text-white transition hover:bg-gray-600 disabled:opacity-50"
                 >
-                  Siguiente
+                  <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
             </>

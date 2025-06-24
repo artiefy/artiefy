@@ -13,10 +13,20 @@ import {
   enrollmentPrograms,
   users,
   userCustomFields,
+  enrollments,
 } from '~/server/db/schema';
 
 import type { Program, BaseCourse } from '~/types';
 
+function formatDateToClerk(date: Date): string {
+  const year = date.getFullYear();
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${day}-${month} ${hours}:${minutes}:${seconds}`;
+}
 export interface Materia {
   id: number;
   title: string;
@@ -584,7 +594,10 @@ export interface FullUserUpdateInput {
   purchaseDate?: string | null;
   subscriptionEndDate?: string | null;
   customFields?: Record<string, string>;
+  programId?: number;
+  courseId?: number;
 }
+
 function formatDateForClerk(date?: string | null): string | null {
   if (!date) return null;
 
@@ -723,6 +736,75 @@ export async function updateFullUser(
           });
         }
       }
+    }
+    console.log(
+      `usuario en programa: userId=${userId}, programaId=${input.programId}`
+    );
+
+    if (input.programId != null) {
+      console.log(
+        `📝 Matriculando usuario en programa: userId=${userId}, programaId=${input.programId}`
+      );
+      await db.insert(enrollmentPrograms).values({
+        userId,
+        programaId: input.programId,
+        enrolledAt: new Date(),
+        completed: false,
+      });
+    }
+
+    // 2) Matricular en curso
+    if (input.courseId != null) {
+      console.log(
+        `📝 Matriculando usuario en curso: userId=${userId}, courseId=${input.courseId}`
+      );
+      // Evitar duplicados
+      const exists = await db
+        .select()
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.userId, userId),
+            eq(enrollments.courseId, input.courseId)
+          )
+        )
+        .limit(1);
+
+      if (exists.length === 0) {
+        await db.insert(enrollments).values({
+          userId,
+          courseId: input.courseId,
+          enrolledAt: new Date(),
+          completed: false,
+        });
+      }
+
+      // 3) Actualiza en tu base de datos
+      await db
+        .update(users)
+        .set({
+          planType: 'Premium',
+          subscriptionStatus: 'active',
+          // Si `subscriptionEndDate` viene como string, pásalo a Date:
+          subscriptionEndDate: subscriptionEndDate
+            ? new Date(subscriptionEndDate)
+            : null,
+        })
+        .where(eq(users.id, userId))
+        .execute();
+
+      // 4) Actualiza el metadata en Clerk
+      const clerk = await clerkClient();
+      const formattedEndDateStr = input.subscriptionEndDate
+        ? formatDateToClerk(new Date(input.subscriptionEndDate))
+        : null;
+      await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          planType: 'Premium',
+          subscriptionStatus: 'active',
+          subscriptionEndDate: formattedEndDateStr,
+        },
+      });
     }
 
     return true;
