@@ -3,11 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 
 import { saveAs } from 'file-saver';
-import {
-  Loader2,
-  X,
-  UserPlus
-} from 'lucide-react';
+import { Loader2, X, UserPlus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
@@ -223,7 +219,6 @@ export default function EnrolledUsersPage() {
   );
   const [showColumnSelector, setShowColumnSelector] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState('');
-<<<<<<< HEAD
   const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
   const [userPrograms, setUserPrograms] = useState<
     { id: string; title: string }[]
@@ -321,10 +316,8 @@ export default function EnrolledUsersPage() {
   }, [programs, availableCourses]);
 
   const totalColumns: Column[] = [...columnsWithOptions, ...dynamicColumns];
-=======
-  const totalColumns: Column[] = [...allColumns, ...dynamicColumns];
   const [successMessage, setSuccessMessage] = useState('');
->>>>>>> main
+  void successMessage;
 
   // Save visible columns to localStorage
   useEffect(() => {
@@ -798,7 +791,6 @@ export default function EnrolledUsersPage() {
   }, [showColumnSelector]);
 
   return (
-<<<<<<< HEAD
     <>
       {/* Este InfoDialog SÍ quedará “montado” y React lo mostrará cuando isOpen===true */}
       <InfoDialog
@@ -813,17 +805,6 @@ export default function EnrolledUsersPage() {
           className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
         >
           <h1 className="text-2xl font-bold">Matricular Estudiantes</h1>
-=======
-    <div className="min-h-screen space-y-8 bg-gray-900 p-6 text-white">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Matricular Estudiantes</h1>
-        {successMessage && (
-          <div className="fixed bottom-4 right-4 z-50 rounded bg-green-600 px-4 py-2 text-white shadow-lg animate-fade-in-out">
-            {successMessage}
-          </div>
-        )}
-
->>>>>>> main
 
           <div className="relative w-full sm:w-auto">
             <div className="flex items-center gap-2">
