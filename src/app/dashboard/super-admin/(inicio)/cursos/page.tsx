@@ -233,7 +233,7 @@ export default function Page() {
       rating,
     });
     if (
-      (courseTypeId === 3 || courseTypeId === 4) &&
+      ( courseTypeId === 4) &&
       (!individualPrice || individualPrice <= 0)
     ) {
       toast.error('El precio individual es obligatorio y debe ser mayor a 0.');

@@ -572,7 +572,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       console.log('   - uploadedFileName:', finalUploadedFileName);
       console.log('   - videoKey:', finalVideoKey);
       if (
-        (courseTypeId === 3 || courseTypeId === 4) &&
+        ( courseTypeId === 4) &&
         (!individualPrice || individualPrice <= 0)
       ) {
         toast.error('Debe ingresar un precio válido para cursos individuales.');
@@ -911,7 +911,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       setCourseTypeId={setCourseTypeId}
                     />
                   </div>
-                  {(courseTypeId === 3 || courseTypeId === 4) && (
+                  {( courseTypeId === 4) && (
                     <div className="w-full">
                       <label className="text-primary text-sm font-medium md:text-lg">
                         Precio Individual

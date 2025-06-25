@@ -354,7 +354,7 @@ export async function POST(request: Request) {
       isActive?: boolean; // ✅ Opcional
     };
     if (
-      (data.courseTypeId === 3 || data.courseTypeId === 4) &&
+      data.courseTypeId === 4 &&
       (data.individualPrice === null || data.individualPrice <= 0)
     ) {
       return NextResponse.json(
