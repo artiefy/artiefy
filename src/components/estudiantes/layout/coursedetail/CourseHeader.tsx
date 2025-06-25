@@ -140,11 +140,24 @@ export function CourseHeader({
     const video = videoRef.current;
     if (!video) return;
     if (video.requestFullscreen) {
-      video.requestFullscreen();
-    } else if ((video as any).webkitRequestFullscreen) {
-      (video as any).webkitRequestFullscreen();
-    } else if ((video as any).msRequestFullscreen) {
-      (video as any).msRequestFullscreen();
+      void video.requestFullscreen();
+    } else if (
+      'webkitRequestFullscreen' in video &&
+      typeof (
+        video as unknown as { webkitRequestFullscreen: () => Promise<void> }
+      ).webkitRequestFullscreen === 'function'
+    ) {
+      void (
+        video as unknown as { webkitRequestFullscreen: () => Promise<void> }
+      ).webkitRequestFullscreen();
+    } else if (
+      'msRequestFullscreen' in video &&
+      typeof (video as unknown as { msRequestFullscreen: () => Promise<void> })
+        .msRequestFullscreen === 'function'
+    ) {
+      void (
+        video as unknown as { msRequestFullscreen: () => Promise<void> }
+      ).msRequestFullscreen();
     }
   };
 
