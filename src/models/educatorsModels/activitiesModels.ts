@@ -3,8 +3,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/server/db/index';
 import {
   activities,
-  lessons,
   courses,
+  lessons,
   typeActi,
   userActivitiesProgress,
 } from '~/server/db/schema';

@@ -99,6 +99,11 @@ export async function createCourse(data: CreateCourseData) {
       individualPrice: (data.individualPrice ?? 0) as number | null,
     };
 
+    if (sanitizedData.courseTypeId === 4 && sanitizedData.individualPrice !== null && sanitizedData.individualPrice < 0) {
+      throw new Error('Individual price must be a non-negative number for course type 4');
+    }
+
+    // Inserción de datos en la base de datos
     const result = await db
       .insert(courses)
       .values({
@@ -112,7 +117,7 @@ export async function createCourse(data: CreateCourseData) {
         instructor: sanitizedData.instructor,
         creatorId: sanitizedData.creatorId,
         courseTypeId: sanitizedData.courseTypeId,
-        individualPrice: sanitizedData.individualPrice,
+        individualPrice: sanitizedData.courseTypeId === 4 ? sanitizedData.individualPrice : null, // Solo asignamos el precio si el tipo de curso es 4
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -125,6 +130,7 @@ export async function createCourse(data: CreateCourseData) {
     throw error;
   }
 }
+
 
 // Obtener todos los cursos de un profesor
 export const getCoursesByUserId = async (userId: string) => {

@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
-import { eq, and } from 'drizzle-orm';
+import { and,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { userActivitiesProgress, activities } from '~/server/db/schema';
+import { activities,userActivitiesProgress } from '~/server/db/schema';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,

@@ -8,11 +8,11 @@ import {
   categories,
   courses,
   enrollmentPrograms,
+  enrollments,
   modalidades,
   nivel as nivel,
   programas,
   userCustomFields,
-  enrollments,
   users,
 } from '~/server/db/schema';
 

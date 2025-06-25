@@ -4,14 +4,14 @@ import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import {
-  sendTicketEmail,
   getNewTicketAssignmentEmail,
+  sendTicketEmail,
 } from '~/lib/emails/ticketEmails';
 import { db } from '~/server/db';
 import {
-  tickets,
-  ticketComments,
   ticketAssignees,
+  ticketComments,
+  tickets,
   users,
 } from '~/server/db/schema';
 // Tipos seguros

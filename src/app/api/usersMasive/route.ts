@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+ 
 import { NextResponse } from 'next/server';
 
 import { eq } from 'drizzle-orm';

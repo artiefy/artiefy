@@ -42,10 +42,10 @@ import {
 } from '~/components/super-admin/ui/breadcrumb';
 
 import type {
-  QuestionFilesSubida,
   Completado,
-  VerdaderoOFlaso,
   Question,
+  QuestionFilesSubida,
+  VerdaderoOFlaso,
 } from '~/types/typesActi';
 
 //Renderizar la creacion y configuracion de la actividad segun su id

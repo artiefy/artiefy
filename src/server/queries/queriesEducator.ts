@@ -1,14 +1,14 @@
 'use server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, and, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
+  activities,
   enrollments,
   parametros,
   userActivitiesProgress,
-  activities,
   userLessonsProgress,
 } from '~/server/db/schema';
 
