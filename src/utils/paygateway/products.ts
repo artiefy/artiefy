@@ -12,13 +12,13 @@ const PLAN_IDENTIFIERS = {
 function getPlanAmount(planName: string): string {
 	switch (planName) {
 		case 'Pro':
-			return '100000.00';
+			return '99800.00';
 		case 'Premium':
-			return '150000.00';
+			return '149800.00';
 		case 'Enterprise':
 			return '200000.00';
 		default:
-			return '100000.00'; // Default en caso de un plan desconocido
+			return '99800.00'; // Default en caso de un plan desconocido
 	}
 }
 

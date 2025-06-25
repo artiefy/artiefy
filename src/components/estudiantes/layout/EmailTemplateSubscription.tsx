@@ -25,14 +25,28 @@ export function EmailTemplateSubscription({
         </style>
       </head>
       <body style="margin:0;padding:0;background:#01142B;font-family:'Montserrat',Arial,sans-serif;">
-        <div style="min-height:100vh;width:100vw;padding:0;margin:0;position:relative;background:
-          radial-gradient(100% 100% at 85% 0%, #3AF4EF66 0%, transparent 70%),
-          radial-gradient(100% 100% at 15% 100%, #00BDD866 0%, transparent 70%),
-          radial-gradient(100% 100% at 0% 100%, #2ecc71 0%, transparent 70%),
-          #01142B;
-          background-blend-mode:screen,screen,normal;">
-          <div style="max-width:480px;margin:0 auto;padding:40px 24px;text-align:center;">
-            <img src="cid:logo@artiefy.com" alt="Artiefy Logo" style="width:120px;margin-bottom:32px;" />
+        <div style="
+          min-height:100vh;
+          width:100vw;
+          padding:0;
+          margin:0;
+          position:relative;
+          background: #01142B url('https://artiefy.com/backcorreo.jpg') no-repeat center center;
+          background-size: cover;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <div style="
+            max-width:480px;
+            width:100%;
+            margin:0 auto;
+            padding:40px 24px;
+            text-align:center;
+            background: rgba(1, 20, 43, 0.85);
+            border-radius: 16px;
+          ">
+            <!-- Logo eliminado -->
             <h1 style="color:#fff;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>
             <p style="color:#fff;font-size:1.3rem;font-weight:600;margin-bottom:24px;">Tu suscripción <span style="color:#3AF4EF;">Artiefy</span> está por vencer.</p>
             <p style="color:#fff;font-size:1.1rem;margin-bottom:24px;">${timeLeft === 'hoy' ? '¡Hoy es el último día!' : `Quedan <span style='color:#3AF4EF;'>${timeLeft}</span> para renovar tu acceso.`}</p>

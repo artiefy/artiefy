@@ -13,6 +13,7 @@ import {
   FaCheck,
   FaClock,
   FaCrown,
+  FaExpand,
   FaStar,
   FaTimes,
   FaTrophy,
@@ -126,12 +127,24 @@ export function CourseHeader({
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
-      // play() puede fallar por políticas del navegador, así que ignoramos el error con un handler vacío que no es una función vacía
       video.play().catch((e) => {
         console.warn('Video play() error:', e);
       });
     } else {
       video.pause();
+    }
+  };
+
+  // Handler para pantalla completa
+  const handleFullscreenClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.requestFullscreen) {
+      video.requestFullscreen();
+    } else if ((video as any).webkitRequestFullscreen) {
+      (video as any).webkitRequestFullscreen();
+    } else if ((video as any).msRequestFullscreen) {
+      (video as any).msRequestFullscreen();
     }
   };
 
@@ -477,22 +490,46 @@ export function CourseHeader({
         <AspectRatio ratio={16 / 6}>
           {/* Nueva lógica de portada/video */}
           {coverVideoCourseKey ? (
-            <video
-              ref={videoRef}
-              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
-              className="h-full w-full cursor-pointer object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls={false}
-              poster={
-                coverImageKey
-                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
-                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-              }
-              onClick={handleVideoClick}
-            />
+            <div className="relative h-full w-full">
+              <video
+                ref={videoRef}
+                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
+                className="h-full w-full cursor-pointer object-cover"
+                autoPlay
+                loop
+                playsInline
+                controls={false}
+                poster={
+                  coverImageKey
+                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
+                    : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                }
+                onClick={handleVideoClick}
+              />
+              {/* Botón personalizado de pantalla completa */}
+              <button
+                type="button"
+                aria-label="Pantalla completa"
+                onClick={handleFullscreenClick}
+                style={{
+                  position: 'absolute',
+                  bottom: 16,
+                  right: 16,
+                  background: 'rgba(0,0,0,0.6)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  padding: 8,
+                  cursor: 'pointer',
+                  zIndex: 10,
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FaExpand size={20} />
+              </button>
+            </div>
           ) : coverImageKey ? (
             <Image
               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
