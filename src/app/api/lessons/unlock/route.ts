@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
-import { lessons,userLessonsProgress } from '~/server/db/schema';
+import { lessons, userLessonsProgress } from '~/server/db/schema';
 
 // Update the schema to remove currentLessonId
 const unlockRequestSchema = z.object({
