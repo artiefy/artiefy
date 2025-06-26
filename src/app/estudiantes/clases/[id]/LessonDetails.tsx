@@ -520,7 +520,9 @@ export default function LessonDetails({
             onLessonClick={handleCardClick}
             progress={progress}
             isNavigating={isNavigating}
-            setLessonsState={setLessonsState} // Add this prop
+            setLessonsState={setLessonsState}
+            courseId={lesson.courseId} // <-- Añadir
+            userId={userId} // <-- Añadir
           />
         </div>
 

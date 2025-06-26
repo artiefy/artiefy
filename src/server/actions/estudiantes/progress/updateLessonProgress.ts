@@ -1,10 +1,11 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { and,eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { activities,lessons, userLessonsProgress } from '~/server/db/schema';
+import { activities, lessons, userLessonsProgress } from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 const unlockNextLesson = async (lessonId: number, userId: string) => {
   // Obtener información de la lección actual
@@ -14,15 +15,17 @@ const unlockNextLesson = async (lessonId: number, userId: string) => {
 
   if (!currentLesson) return;
 
-  // Obtener todas las lecciones del curso ordenadas por título
+  // Obtener todas las lecciones del curso
   const courseLessons = await db.query.lessons.findMany({
     where: eq(lessons.courseId, currentLesson.courseId),
-    orderBy: (lessons, { asc }) => [asc(lessons.title)],
   });
 
-  // Encontrar la siguiente lección
-  const currentIndex = courseLessons.findIndex((l) => l.id === lessonId);
-  const nextLesson = courseLessons[currentIndex + 1];
+  // Ordenar las lecciones usando sortLessons
+  const sortedLessons = sortLessons(courseLessons);
+
+  // Encontrar la siguiente lección en el orden correcto
+  const currentIndex = sortedLessons.findIndex((l) => l.id === lessonId);
+  const nextLesson = sortedLessons[currentIndex + 1];
 
   if (!nextLesson) return;
 

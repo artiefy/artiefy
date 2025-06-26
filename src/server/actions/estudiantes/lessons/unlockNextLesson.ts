@@ -7,59 +7,8 @@ import { eq } from 'drizzle-orm';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
-import { lessons,userLessonsProgress } from '~/server/db/schema';
-
-interface LessonNumbers {
-  session: number;
-  class: number;
-}
-
-function extractNumbersFromTitle(title: string): LessonNumbers {
-  // Handle "Bienvenida" case
-  if (title.toLowerCase().includes('bienvenida')) {
-    return { session: 0, class: 0 };
-  }
-
-  const sessionMatch = /sesion (\d+)/i.exec(title);
-  const classMatch = /clase (\d+)/i.exec(title);
-
-  return {
-    session: sessionMatch ? parseInt(sessionMatch[1], 10) : 0,
-    class: classMatch ? parseInt(classMatch[1], 10) : 0,
-  };
-}
-
-function findNextLesson(
-  currentLesson: { title: string },
-  lessons: { title: string; id: number }[]
-): { title: string; id: number } | undefined {
-  const current = extractNumbersFromTitle(currentLesson.title);
-
-  // Handle "Bienvenida" as a special case
-  if (current.session === 0 && current.class === 0) {
-    return lessons.find((l) => {
-      const nums = extractNumbersFromTitle(l.title);
-      return nums.session === 1 && nums.class === 1;
-    });
-  }
-
-  // Find the next logical lesson
-  return lessons.find((l) => {
-    const nums = extractNumbersFromTitle(l.title);
-
-    // Same session, next class
-    if (nums.session === current.session && nums.class === current.class + 1) {
-      return true;
-    }
-
-    // Next session, first class
-    if (nums.session === current.session + 1 && nums.class === 1) {
-      return true;
-    }
-
-    return false;
-  });
-}
+import { lessons, userLessonsProgress } from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 export async function unlockNextLesson(
   currentLessonId: number
@@ -85,8 +34,16 @@ export async function unlockNextLesson(
       where: eq(lessons.courseId, currentLesson.courseId),
     });
 
-    // Find next lesson using the new logic
-    const nextLesson = findNextLesson(currentLesson, courseLessons);
+    // Ordenar las lecciones usando sortLessons
+    const sortedLessons = sortLessons(courseLessons);
+
+    // Buscar el índice de la lección actual
+    const currentIndex = sortedLessons.findIndex(
+      (l) => l.id === currentLessonId
+    );
+    // La siguiente lección en orden
+    const nextLesson =
+      currentIndex !== -1 ? sortedLessons[currentIndex + 1] : undefined;
 
     if (!nextLesson) {
       return { success: false };

@@ -1,6 +1,6 @@
 'use server';
 
-import { asc,eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -8,6 +8,7 @@ import {
 	userActivitiesProgress,
 	userLessonsProgress,
 } from '~/server/db/schema';
+import { sortLessons } from '~/utils/lessonSorting';
 
 import type { Lesson } from '~/types';
 
@@ -17,7 +18,6 @@ export async function getLessonsByCourseId(
 ): Promise<Lesson[]> {
 	const lessonsData = await db.query.lessons.findMany({
 		where: eq(lessons.courseId, courseId),
-		orderBy: [asc(lessons.title)],
 		with: {
 			activities: true,
 		},
@@ -32,12 +32,8 @@ export async function getLessonsByCourseId(
 			where: eq(userActivitiesProgress.userId, userId),
 		});
 
-	// 🔥 Extra: Normalizar los títulos antes de ordenarlos
-	const sortedLessons = lessonsData.sort((a, b) => {
-		return a.title.trim().localeCompare(b.title.trim(), 'es', {
-			numeric: true,
-		});
-	});
+	// Ordenar usando sortLessons
+	const sortedLessons = sortLessons(lessonsData);
 
 	const transformedLessons = sortedLessons.map((lesson) => {
 		const lessonProgress = userLessonsProgressData.find(
@@ -68,6 +64,5 @@ export async function getLessonsByCourseId(
 				}) ?? [],
 		} as Lesson; // Add type assertion here
 	});
-
 	return transformedLessons;
 }

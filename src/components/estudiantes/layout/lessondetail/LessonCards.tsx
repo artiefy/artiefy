@@ -8,6 +8,7 @@ import {
 
 import { FaCheckCircle, FaClock, FaLock } from 'react-icons/fa';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 
 import { type LessonWithProgress } from '~/types';
 import { extractNumbersFromTitle, sortLessons } from '~/utils/lessonSorting';
@@ -18,7 +19,10 @@ interface LessonCardsProps {
   onLessonClick: (id: number) => void;
   progress: number;
   isNavigating: boolean;
-  setLessonsState: Dispatch<SetStateAction<LessonWithProgress[]>>; // Add this prop
+  setLessonsState: Dispatch<SetStateAction<LessonWithProgress[]>>;
+  // Añadir estos props para SWR
+  courseId?: number;
+  userId?: string;
 }
 
 interface NextLessonStatus {
@@ -38,7 +42,32 @@ const LessonCards = ({
   progress,
   isNavigating,
   setLessonsState,
+  courseId,
+  userId,
 }: LessonCardsProps) => {
+  // SWR para refrescar el estado de las lecciones en tiempo real
+  const { data: swrLessons } = useSWR(
+    courseId && userId
+      ? `/api/lessons/by-course?courseId=${courseId}&userId=${userId}`
+      : null,
+    async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Error al obtener lecciones');
+      return (await res.json()) as LessonWithProgress[];
+    },
+    {
+      refreshInterval: 3000, // refresca cada 3 segundos
+      revalidateOnFocus: true,
+    }
+  );
+
+  // Actualiza el estado local cuando SWR obtiene nuevas lecciones
+  useEffect(() => {
+    if (swrLessons && swrLessons.length > 0) {
+      setLessonsState(swrLessons);
+    }
+  }, [swrLessons, setLessonsState]);
+
   const checkLessonStatus = useCallback(
     async (lessonId: number) => {
       if (selectedLessonId && progress === 100) {
