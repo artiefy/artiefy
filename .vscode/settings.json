@@ -81,7 +81,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 8192,
   // ESLint Configuration
-  "eslint.runtime": "C:/Users/miguel sosa/AppData/Local/.fnm_multishells/14980_1750427972362/node",
+  "eslint.runtime": "C:/Users/ADMIN/AppData/Local/fnm_multishells/5500_1750298199911/node",
   "eslint.validate": [
     "javascript",
     "javascriptreact",
