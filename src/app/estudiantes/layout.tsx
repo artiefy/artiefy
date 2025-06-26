@@ -1,6 +1,7 @@
 import React from 'react';
 
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
+import {TourComponent} from '~/components/estudiantes/layout/TourComponent';
 import '~/styles/ticketSupportButton.css';
 
 export default function StudentLayout({
@@ -12,6 +13,7 @@ export default function StudentLayout({
 		<div className="relative min-h-screen">
 			{children}
 			<TicketSupportChatbot />
+			<TourComponent />
 		</div>
 	);
 }

@@ -8,12 +8,12 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
-import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoMdClose } from 'react-icons/io';
-import { SlArrowDown } from "react-icons/sl";
+import { GoArrowLeft } from "react-icons/go";
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
+import { usePathname } from 'next/navigation';
 
 import '~/styles/chatmodal.css';
 import { Card } from '~/components/estudiantes/ui/card';
@@ -91,6 +91,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	useEffect(() => {
 	chatModeRef.current = chatMode;
 	}, [chatMode]);
+
+	const pathname = usePathname();
+	const isChatPage = pathname === '/'
+	console.log('Ruta actual:', pathname, '¿Es página de chat?', isChatPage);
 
 	const saveBotMessage = (trimmedInput: string) => {
 		const currentChatId = chatModeRef.current.idChat;
@@ -295,7 +299,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		if (!isSignedIn) {
+		if (!isSignedIn && pathname !== '/') {
 			toast.error('Debes iniciar sesión para usar el chat');
 			return;
 		}
@@ -333,7 +337,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	};
 
 	const handleClick = () => {
-		if (!isSignedIn) {
+		if (!isSignedIn  && pathname !== '/') {
 			const currentUrl = encodeURIComponent(window.location.href);
 			toast.error('Acceso restringido', {
 				description: 'Debes iniciar sesión para usar el chatbot.',
@@ -365,7 +369,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		sender: string;
 	}, index?: number) => {
 		// Detectar si es el mensaje inicial
-		const isInitialMessage = index === 0 && message.sender === 'bot';
+		
 
 		if (message.sender === 'bot') {
 			const parts = message.text.split('\n\n');
@@ -390,22 +394,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			return (
 				<div className="flex flex-col space-y-4">
 					<p className="font-medium text-gray-800">{introText}</p>
-					{isInitialMessage && (
-						<div className="flex gap-2 mt-2">
-							<button
-								onClick={() => isEnrolled == true ? handleBotResponse('Más información sobre el curso ' + courseTitle): handleBotResponse('Más información')}
-								className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 text-sm"
-							>
-								Más información
-							</button>
-							<button
-								onClick={() => window.dispatchEvent(new Event('start-tour'))}
-								className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600 text-sm"
-							>
-								Tour por la aplicación
-							</button>
-						</div>
-					)}
+					
 					{courses.length > 0 && (
 						<div className="grid gap-4">
 							{courses.map((course) => (
@@ -452,7 +441,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			{isAlwaysVisible && (
 				<button
 					onClick={handleClick}
-					className={`button-circular ${!isSignedIn && 'cursor-not-allowed opacity-50'} ${
+					className={`button-circular ${!isSignedIn && pathname !== '/' && 'cursor-not-allowed opacity-50'} ${
 						isOpen ? 'minimized' : ''
 					}`}
 					aria-label={
@@ -484,7 +473,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			)}
 
 			{/* Mostrar el chat solo cuando isOpen es true */}
-			{isOpen && isSignedIn && (
+			{isOpen && (isSignedIn || pathname === '/') && (
 				<div
 					className="fixed right-2 bottom-28 sm:right-0 sm:bottom-0" // Modificado bottom-28 para móviles
 					ref={chatContainerRef}
@@ -496,7 +485,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						onResize={handleResize}
 						minConstraints={[400, window.innerHeight]} // Smaller minimum size for mobile
 						maxConstraints={[
-							Math.min((window.innerWidth / 2), window.innerWidth - 20),
+							Math.min((window.innerWidth), window.innerWidth - 20),
 							window.innerHeight,
 						]}
 						resizeHandles={
@@ -544,7 +533,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 											className="rounded-full p-1.5 ml-2 transition-colors hover:bg-gray-100"
 											aria-label="Minimizar chatbot"
 										>
-											{chatMode.status ? <SlArrowDown className='text-xl text-gray-500' onClick={() => {setChatMode({idChat: null, status: false})}}/>: ''}
+											{chatMode.status && !isChatPage? <GoArrowLeft className='text-xl text-gray-500' onClick={() => {setChatMode({idChat: null, status: false})}}/>: ''}
 											
 										</button>
 										<button

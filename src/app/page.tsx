@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
 
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
@@ -12,12 +12,22 @@ import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
+import { useCallback } from 'react';
+import { FaRobot } from "react-icons/fa";
+import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 
 export default function HomePage() {
 	const { user } = useUser();
 	const [loading, setLoading] = useState(false);
 	const [showAnuncio, setShowAnuncio] = useState(false);
+	const [isClient, setIsClient] = useState(false);
+	const [chatbotKey, setChatbotKey] = useState<number>(0);
+	const [showChatbot, setShowChatbot] = useState<boolean>(false);
+	const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
 	void showAnuncio;
+	const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
+	const { isSignedIn } = useAuth();
 	const [anuncios, setAnuncios] = useState<
 		{
 			titulo: string;
@@ -25,6 +35,10 @@ export default function HomePage() {
 			coverImageKey: string;
 		}[]
 	>([]);
+
+	const handleSearchComplete = useCallback(() => {
+			setShowChatbot(false);
+		}, []);
 
 	const dashboardRoute =
 		user?.publicMetadata?.role === 'super-admin'
@@ -68,6 +82,11 @@ export default function HomePage() {
 			void fetchAnuncioActivo(user.id);
 		}
 	}, [user]);
+
+	useEffect(() => {
+		// Solo se ejecuta en el cliente
+		setIsClient(true);
+	}, []);
 
 	return (
 		<div className="relative flex min-h-screen flex-col">
@@ -120,6 +139,37 @@ export default function HomePage() {
 					</section>
 				</main>
 			</div>
+			{!isSignedIn && (
+				<>
+					<div className="fixed bottom-10 sm:bottom-20 right-35 sm:right-32 translate-x-1/2 sm:translate-x-0 z-10">
+					<button
+						className="relative bottom-[70px] left-1/2 translate-x-[-15%] sm:left-auto transform -translate-x-1/2 sm:translate-x-24 bg-blue-500 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-lg"
+					>
+						<FaRobot className="text-sm" />
+						<span className="font-small ">
+						{isClient && windowWidth >= 640
+							? '¿Preguntas?, Artie está aquí para ayudarte!'
+							: '¿Preguntas?'}
+						</span>
+					</button>
+					{/* Triángulo tipo burbuja */}
+					<span className="absolute bottom-[63px] sm:bottom-[63px] left-1/2 transform translate-x-[75px] sm:translate-x-[250px] rotate-[360deg] w-0 h-0 border-l-[6px] border-r-[6px] border-t-[8px] border-l-transparent border-r-transparent border-t-blue-500 inline" />
+					</div>
+
+					<TourComponent />
+
+					<StudentChatbot
+					isAlwaysVisible={true}
+					showChat={showChatbot}
+					key={chatbotKey}
+					className="animation-delay-400 animate-zoom-in"
+					initialSearchQuery={lastSearchQuery}
+					onSearchComplete={handleSearchComplete}
+					/>
+				</>
+				)}
+
+			
 		</div>
 	);
 }

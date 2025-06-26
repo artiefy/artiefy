@@ -306,7 +306,7 @@ export const tickets = pgTable('tickets', {
 	creatorId: text('creator_id')
 		.references(() => users.id)
 		.notNull(),
-	comments: varchar('comments', { length: 255 }).notNull(),
+	comments: varchar('comments', { length: 255 }),
 	description: text('description').notNull(),
 	estado: text('estado', {
 		enum: ['abierto', 'en proceso', 'en revision', 'solucionado', 'cerrado'],
@@ -322,6 +322,7 @@ export const tickets = pgTable('tickets', {
 	documentKey: text('document_key'),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
+	
 });
 
 //Tabla de comentarios de tickets
@@ -335,6 +336,7 @@ export const ticketComments = pgTable('ticket_comments', {
 		.notNull(),
 	content: text('content').notNull(),
 	createdAt: timestamp('created_at').defaultNow().notNull(),
+	sender: text('sender').notNull().default('support'), // Puede ser 'user' o 'admin'
 });
 
 //Tabla de parametros

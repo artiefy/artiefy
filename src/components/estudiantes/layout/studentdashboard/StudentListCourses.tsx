@@ -48,7 +48,17 @@ export default async function StudentListCourses({
 	category,
 	searchTerm,
 }: CourseListStudentProps) {
-	const user = await currentUser();
+
+	let user = null;
+	
+	try{
+		 user = await currentUser();
+	} catch (error) {
+  		console.error('Error fetching current user:', error);
+
+    	throw new Error("Ocurrió un error al cargar los cursos.");
+	}
+
 	const userId = user?.id;
 
 	if (!courses || courses.length === 0) {

@@ -16,7 +16,12 @@ interface ChatProps {
     courseId?: number | null;
     courseTitle?: string;
     isEnrolled?: boolean;
-    messages: { id: number; text: string; sender: string }[];
+    messages: {
+    id: number;
+    text: string;
+    sender: string;
+    buttons?: { label: string; action: string }[]; // <- Nuevo campo opcional
+    }[];
     setMessages: React.Dispatch<React.SetStateAction<{ id: number; text: string; sender: string }[]>>;
     chatMode: {
         idChat: number | null;
@@ -57,14 +62,29 @@ export const ChatMessages: React.FC<ChatProps> = ({
         </div>
     ),
 
+
 }) => {
 
     const [conversation] = useState<{ id: number }>({ id: (chatMode.idChat ?? courseId ?? 0) });
     console.log('Chat mode:', chatMode);
 
+    function handleBotButtonClick(action: string) {
+    switch (action) {
+        case 'show_toc':
+        console.log('Mostrar temario');
+        break;
+        case 'go_forum':
+        console.log('Ir al foro');
+        break;
+        case 'contact_support':
+            window.dispatchEvent(new CustomEvent('support-open-chat'));
+        break;
+        default:
+        console.log('Acción no reconocida:', action);
+    }
+    }
+
     
-
-
     useEffect(() => {
         console.log(conversation);
         console.log('Problems');
@@ -93,7 +113,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
                     const botMessage = {
                         id: -1,
                         text: isEnrolled == true ?  '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' + courseTitle + ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎' : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
-                        sender: 'bot'
+                        sender: 'bot',
+                        buttons: [
+                        { label: '📚 Crear Proyecto', action: 'show_toc' },
+                        { label: '💬 Nueva Idea', action: 'go_forum' },
+                        { label: '🛠 Soporte Técnico', action: 'contact_support' },
+                        ],
                     };
 
                     const alreadyHasBot = loadedMessages.some(msg => msg.sender === 'bot' && msg.text === botMessage.text);
@@ -185,6 +210,20 @@ export const ChatMessages: React.FC<ChatProps> = ({
                                     }`}
                             >
                                 {renderMessage(message, idx)}
+                                {/* Renderizar botones si existen */}
+                                {message.sender === 'bot' && message.buttons && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                    {message.buttons.map((btn, index) => (
+                                        <button
+                                        key={index}
+                                        onClick={() => handleBotButtonClick(btn.action)}
+                                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-all"
+                                        >
+                                        {btn.label}
+                                        </button>
+                                    ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
