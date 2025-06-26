@@ -48,7 +48,7 @@ export async function checkSubscriptionStatus(
   // Handle both string and Date types for subscriptionEndDate
   let endDate: Date;
   if (typeof subscriptionData.subscriptionEndDate === 'string') {
-    // Soporta yyyy-MM-dd, yyyy/MM/dd, yyyy-dd-MM y ISO
+    // Soporta yyyy-MM-dd, yyyy/MM/dd y ISO
     const isoTry = parseISO(subscriptionData.subscriptionEndDate);
     if (!isNaN(isoTry.getTime())) {
       endDate = isoTry;
@@ -69,24 +69,13 @@ export async function checkSubscriptionStatus(
           const [, year, month, day] = matchDash;
           endDate = new Date(Number(year), Number(month) - 1, Number(day));
         } else {
-          // yyyy-dd-MM (año-día-mes)
-          const matchDayMonth = /^(\d{4})-(\d{2})-(\d{2}) /.exec(
-            subscriptionData.subscriptionEndDate
-          );
-          if (matchDayMonth) {
-            const [, year, day, month] = matchDayMonth;
-            endDate = new Date(Number(year), Number(month) - 1, Number(day));
-          } else {
-            // fallback: fecha inválida
-            endDate = new Date('2100-01-01');
-          }
+          // fallback: fecha inválida
+          endDate = new Date('2100-01-01');
         }
       }
     }
   } else {
-    endDate = toDate(subscriptionData.subscriptionEndDate, {
-      timeZone: TIMEZONE,
-    });
+    endDate = toDate(subscriptionData.subscriptionEndDate, { timeZone: TIMEZONE });
   }
 
   const diffDays = Math.ceil(

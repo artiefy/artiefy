@@ -54,14 +54,12 @@ export async function updateUserSubscription(paymentData: PaymentData) {
 
   // Obtener la fecha actual en Bogotá y calcular el fin de suscripción
   const now = new Date();
-  // Cambiar formato a año/día/mes
-  const bogotaNow = formatInTimeZone(now, TIME_ZONE, 'yyyy-dd-MM HH:mm:ss');
-
+  const bogotaNow = formatInTimeZone(now, TIME_ZONE, 'yyyy-MM-dd HH:mm:ss');
   const subscriptionEndDate = new Date(now.getTime() + SUBSCRIPTION_DURATION);
   const subscriptionEndBogota = formatInTimeZone(
     subscriptionEndDate,
     TIME_ZONE,
-    'yyyy-dd-MM HH:mm:ss'
+    'yyyy-MM-dd HH:mm:ss'
   );
 
   // Convertir a UTC antes de guardar en la base de datos
@@ -85,8 +83,8 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         .set({
           planType,
           subscriptionStatus: 'active',
-          subscriptionEndDate: new Date(subscriptionEndBogota),
-          purchaseDate: new Date(bogotaNow),
+          subscriptionEndDate: new Date(subscriptionEndBogota), // <-- string, no Date
+          purchaseDate: new Date(bogotaNow), // <-- string, no Date
           updatedAt: new Date(),
         })
         .where(eq(users.email, email_buyer))
@@ -109,12 +107,12 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         if (clerkUsers.data.length > 0) {
           const clerkUser = clerkUsers.data[0];
 
-          // Actualizar metadata forzando el nuevo planType
+          // Actualizar metadata forzando el nuevo planType y la fecha como string
           await clerk.users.updateUserMetadata(clerkUser.id, {
             publicMetadata: {
-              planType, // Asegurar que este valor se actualice
+              planType,
               subscriptionStatus: 'active',
-              subscriptionEndDate: subscriptionEndBogota, // Formato año/día/mes
+              subscriptionEndDate: subscriptionEndBogota, // <-- string, no Date
             },
           });
         }

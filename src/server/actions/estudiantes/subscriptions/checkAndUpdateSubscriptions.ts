@@ -1,5 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { isBefore, parseISO } from 'date-fns';
+import { isBefore } from 'date-fns';
 import { formatInTimeZone, toDate } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 
@@ -35,44 +35,25 @@ export async function checkAndUpdateSubscriptions() {
 
       let endDate: Date;
       if (typeof user.subscriptionEndDate === 'string') {
-        // Soporta yyyy-MM-dd, yyyy/MM/dd, yyyy-dd-MM y ISO
-        const isoTry = parseISO(user.subscriptionEndDate);
-        if (!isNaN(isoTry.getTime())) {
-          endDate = isoTry;
-        } else {
-          // yyyy/MM/dd (año/mes/día)
-          const matchSlash = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(
+        // Solo soporta yyyy-MM-dd o yyyy-MM-dd HH:mm:ss
+        const matchDash =
+          /^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/.exec(
             user.subscriptionEndDate
           );
-          if (matchSlash) {
-            const [, year, month, day] = matchSlash;
-            endDate = new Date(Number(year), Number(month) - 1, Number(day));
-          } else {
-            // yyyy-MM-dd (año-mes-día)
-            const matchDash = /^(\d{4})-(\d{2})-(\d{2})/.exec(
-              user.subscriptionEndDate
-            );
-            if (matchDash) {
-              const [, year, month, day] = matchDash;
-              endDate = new Date(Number(year), Number(month) - 1, Number(day));
-            } else {
-              // yyyy-dd-MM (año-día-mes)
-              const matchDayMonth = /^(\d{4})-(\d{2})-(\d{2}) /.exec(
-                user.subscriptionEndDate
-              );
-              if (matchDayMonth) {
-                const [, year, day, month] = matchDayMonth;
-                endDate = new Date(
-                  Number(year),
-                  Number(month) - 1,
-                  Number(day)
-                );
-              } else {
-                // fallback: fecha inválida
-                endDate = new Date('2100-01-01');
-              }
-            }
-          }
+        if (matchDash) {
+          const [, year, month, day, hour = '0', min = '0', sec = '0'] =
+            matchDash;
+          endDate = new Date(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(min),
+            Number(sec)
+          );
+        } else {
+          // fallback: fecha inválida
+          endDate = new Date('2100-01-01');
         }
       } else {
         endDate = toDate(user.subscriptionEndDate, { timeZone: TIMEZONE });
@@ -90,16 +71,17 @@ export async function checkAndUpdateSubscriptions() {
         console.log(`🔄 Deactivating subscription for ${user.email}`);
 
         try {
-          // 1. Update Database
+          // 1. Update Database: NO borres ni modifiques subscriptionEndDate
           await db
             .update(users)
             .set({
               subscriptionStatus: 'inactive',
               updatedAt: nowUTC,
+              // subscriptionEndDate: user.subscriptionEndDate, // No modificar ni borrar
             })
             .where(eq(users.id, user.id));
 
-          // 2. Update Clerk
+          // 2. Update Clerk: NO borres ni modifiques subscriptionEndDate
           const clerk = await clerkClient();
           const clerkUser = await clerk.users.getUserList({
             emailAddress: [user.email],
@@ -109,12 +91,8 @@ export async function checkAndUpdateSubscriptions() {
             await clerk.users.updateUser(clerkUser.data[0].id, {
               publicMetadata: {
                 subscriptionStatus: 'inactive',
-                planType: user.planType, // Maintain existing plan type
-                subscriptionEndDate: formatInTimeZone(
-                  endDate,
-                  TIMEZONE,
-                  'yyyy-MM-dd HH:mm:ss'
-                ),
+                planType: user.planType,
+                subscriptionEndDate: user.subscriptionEndDate, // Mantener la fecha original (string)
               },
             });
 
