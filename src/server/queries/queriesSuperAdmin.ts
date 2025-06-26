@@ -37,6 +37,17 @@ export interface Materia {
   curso: BaseCourse | undefined;
 }
 
+export interface MassiveUserUpdateInput {
+  userIds: string[];
+  subscriptionEndDate?: string | null;
+  planType?: 'none' | 'Pro' | 'Premium' | 'Enterprise';
+  status?: string;
+  permissions?: string[];
+  programId?: number;
+  courseId?: number;
+  customFields?: Record<string, string>;
+}
+
 type UserRole = 'admin' | 'educador' | 'super-admin' | 'estudiante';
 
 // Función para verificar el rol de admin y obtener usuarios
@@ -812,4 +823,50 @@ export async function updateFullUser(
     console.error('❌ Error actualizando datos en BD:', error);
     return false;
   }
+}
+
+export async function updateMultipleUsers(
+  input: MassiveUserUpdateInput
+): Promise<{ success: string[]; failed: string[] }> {
+  const success: string[] = [];
+  const failed: string[] = [];
+
+  for (const userId of input.userIds) {
+    // Obtener datos actuales del usuario desde la base de datos
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (!user) {
+      failed.push(userId);
+      continue;
+    }
+
+    const result = await updateFullUser({
+      userId,
+      firstName: user.name?.split(' ')[0] ?? 'Usuario',
+      lastName: user.name?.split(' ').slice(1).join(' ') ?? 'Desconocido',
+      role: user.role ?? 'estudiante',
+      status: input.status ?? user.subscriptionStatus ?? 'active',
+      permissions: input.permissions ?? [],
+      phone: user.phone ?? null,
+      address: user.address ?? null,
+      city: user.city ?? null,
+      country: user.country ?? null,
+      birthDate: user.birthDate ?? null,
+      planType: input.planType ?? user.planType ?? 'none',
+      purchaseDate: user.purchaseDate?.toISOString() ?? null,
+      subscriptionEndDate:
+        input.subscriptionEndDate ??
+        user.subscriptionEndDate?.toISOString() ??
+        null,
+      customFields: input.customFields ?? {},
+      programId: input.programId,
+      courseId: input.courseId,
+    });
+    if (result) success.push(userId);
+    else failed.push(userId);
+  }
+
+  return { success, failed };
 }
