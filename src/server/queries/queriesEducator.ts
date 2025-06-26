@@ -24,6 +24,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
       userId: enrollments.userId,
       courseId: enrollments.courseId,
       enrolledAt: enrollments.enrolledAt,
+      completed: enrollments.completed,
     })
     .from(enrollments)
     .where(eq(enrollments.courseId, courseId));
@@ -138,6 +139,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
           isCompleted: l.isCompleted,
         })),
         parameterGrades,
+        completed: enrollment?.completed ?? false,
         activitiesWithGrades: actividadNotas.map((a) => ({
           activityId: a.activityId,
           activityName: a.activityName,

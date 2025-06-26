@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Dialog } from '@headlessui/react';
 import {
@@ -12,7 +12,7 @@ import {
   Title,
   Tooltip,
 } from 'chart.js';
-import { ChevronLeft, ChevronRight,Eye, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, Loader2 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
 
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
@@ -57,6 +57,7 @@ interface User {
     parametroName: string;
     grade: number;
   }[];
+  completed: boolean; // 👈 AGREGA ESTA LÍNEA
 }
 
 // Propiedades del componente para la lista de lecciones
@@ -77,6 +78,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const [activeTab, setActiveTab] = useState<'actuales' | 'completos'>(
     'actuales'
   );
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // 2️⃣ Grades y activities (mantener aquí)
   const [grades, setGrades] = useState<Record<string, Record<number, number>>>(
@@ -92,14 +94,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   // 3️⃣ Paginación
   const usersPerPage = 12;
 
-  // ———————— Helper para “completos” ————————
   const isStudentCompleted = (user: User): boolean => {
-    const avg100 = user.averageProgress === 100;
     const userGrades = grades[user.id] ?? {};
     const hasAllGrades = activities.every(
       (act) => typeof userGrades[act.id] === 'number'
     );
-    return avg100 && hasAllGrades;
+    return user.completed || (user.averageProgress === 100 && hasAllGrades);
   };
 
   // ———————— Filtrado en 3 pasos ————————
@@ -535,12 +535,70 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                     );
                   })}
                 </div>
+                {activeTab === 'actuales' && (
+                  <button
+                    disabled={!selectedIds.length}
+                    onClick={async () => {
+                      const res = await fetch('/api/enrollments/markComplete', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          userIds: selectedIds,
+                          courseId,
+                        }),
+                      });
+                      if (res.ok) {
+                        setSelectedIds([]);
+                        void fetchEnrolledUsers(courseId); // 🔄 refrescar
+                      }
+                    }}
+                    className="mb-4 rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Marcar como completos
+                  </button>
+                )}
+                {activeTab === 'completos' && (
+                  <button
+                    disabled={!selectedIds.length}
+                    onClick={async () => {
+                      await fetch('/api/enrollments/markIncomplete', {
+                        method: 'PATCH',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          userIds: selectedIds,
+                          courseId,
+                        }),
+                      });
+
+                      void fetchEnrolledUsers(courseId); // 🔄 recargar lista
+                    }}
+                    className="mb-4 rounded bg-red-700 px-4 py-2 text-sm text-white hover:bg-red-950 disabled:opacity-50"
+                  >
+                    Desmarcar como completo
+                  </button>
+                )}
 
                 {/* 2️⃣ – Tabla para desktop */}
                 <div className="hidden overflow-x-auto rounded-lg border border-gray-600 shadow-md sm:block">
                   <table className="w-full divide-y divide-gray-700 text-white">
                     <thead className="sticky top-0 bg-gray-900">
                       <tr>
+                        <th className="px-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.length === currentUsers.length}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedIds(currentUsers.map((u) => u.id));
+                              } else {
+                                setSelectedIds([]);
+                              }
+                            }}
+                          />
+                        </th>
+
                         <th className="px-4 py-3 text-left text-xs font-semibold uppercase">
                           Nombre
                         </th>
@@ -585,6 +643,20 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                           key={user.id}
                           className="transition-colors hover:bg-gray-700"
                         >
+                          <td className="px-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(user.id)}
+                              onChange={(e) => {
+                                setSelectedIds((prev) =>
+                                  e.target.checked
+                                    ? [...prev, user.id]
+                                    : prev.filter((id) => id !== user.id)
+                                );
+                              }}
+                            />
+                          </td>
+
                           <td className="px-4 py-2 whitespace-nowrap">
                             {user.firstName} {user.lastName}
                           </td>
@@ -660,6 +732,24 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                             >
                               <Eye size={14} />
                               Ver
+                            </button>
+                            <button
+                              onClick={async () => {
+                                await fetch('/api/enrollments/markComplete', {
+                                  method: 'PATCH',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    userIds: [user.id],
+                                    courseId,
+                                  }),
+                                });
+                                void fetchEnrolledUsers(courseId); // Recargar usuarios
+                              }}
+                              className="text-xs text-green-400 hover:underline"
+                            >
+                              Completar
                             </button>
                           </td>
                         </tr>

@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef,useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { saveAs } from 'file-saver';
-import { Loader2, UserPlus,X } from 'lucide-react';
+import { Loader2, UserPlus, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
@@ -254,6 +254,11 @@ export default function EnrolledUsersPage() {
   const [infoDialogTitle, setInfoDialogTitle] = useState('');
   const [infoDialogMessage, setInfoDialogMessage] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
+  const [massiveEditData, setMassiveEditData] = useState({
+    subscriptionEndDate: '',
+    planType: 'none',
+  });
 
   async function fetchUserCourses(userId: string) {
     const res = await fetch(
@@ -1257,6 +1262,13 @@ export default function EnrolledUsersPage() {
           >
             Descargar seleccionados en Excel
           </button>
+          <button
+            disabled={selectedStudents.length === 0}
+            onClick={() => setShowMassiveEditModal(true)}
+            className="w-full rounded bg-yellow-600 px-4 py-2 font-semibold text-white transition hover:bg-yellow-700 disabled:opacity-50 sm:flex-1"
+          >
+            Editar masivamente
+          </button>
         </div>
 
         {showUserProgramsModal && (
@@ -1392,6 +1404,95 @@ export default function EnrolledUsersPage() {
                   'Crear Usuario'
                 )}
               </button>
+            </div>
+          </div>
+        )}
+
+        {showMassiveEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="w-full max-w-md space-y-4 rounded-lg bg-gray-800 p-6 text-white">
+              <h2 className="text-lg font-semibold">Editar masivamente</h2>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">
+                  Fecha fin de suscripción
+                </label>
+                <input
+                  type="date"
+                  value={massiveEditData.subscriptionEndDate}
+                  onChange={(e) =>
+                    setMassiveEditData({
+                      ...massiveEditData,
+                      subscriptionEndDate: e.target.value,
+                    })
+                  }
+                  className="w-full rounded bg-gray-700 p-2"
+                />
+
+                <label className="block text-sm font-medium">Plan</label>
+                <select
+                  value={massiveEditData.planType}
+                  onChange={(e) =>
+                    setMassiveEditData({
+                      ...massiveEditData,
+                      planType: e.target.value,
+                    })
+                  }
+                  className="w-full rounded bg-gray-700 p-2"
+                >
+                  <option value="none">Sin plan</option>
+                  <option value="Pro">Pro</option>
+                  <option value="Premium">Premium</option>
+                  <option value="Enterprise">Enterprise</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setShowMassiveEditModal(false)}
+                  className="rounded bg-gray-600 px-4 py-2 hover:bg-gray-500"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(
+                        '/api/super-admin/udateUser/updateMassive',
+                        {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            userIds: selectedStudents,
+                            subscriptionEndDate:
+                              massiveEditData.subscriptionEndDate || null,
+                            planType: massiveEditData.planType,
+                          }),
+                        }
+                      );
+
+                      const json: { success: string[]; failed: string[] } =
+                        await res.json();
+                      if (res.ok) {
+                        alert(
+                          `✅ Actualizados: ${json.success.length}, Fallidos: ${json.failed.length}`
+                        );
+
+                        setShowMassiveEditModal(false);
+                        void fetchData(); // Recargar datos
+                      } else {
+                        alert('❌ Error al actualizar');
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      alert('❌ Error inesperado');
+                    }
+                  }}
+                  className="rounded bg-yellow-600 px-4 py-2 font-semibold text-white hover:bg-yellow-700"
+                >
+                  Guardar Cambios
+                </button>
+              </div>
             </div>
           </div>
         )}
