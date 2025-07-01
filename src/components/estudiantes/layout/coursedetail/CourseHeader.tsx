@@ -18,6 +18,8 @@ import {
   FaTimes,
   FaTrophy,
   FaUserGraduate,
+  FaVolumeMute,
+  FaVolumeUp,
 } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import { toast } from 'sonner';
@@ -497,6 +499,65 @@ export function CourseHeader({
       ? (course as { coverVideoCourseKey?: string }).coverVideoCourseKey
       : undefined;
 
+  // Estado para el volumen y mute
+  const [videoVolume, setVideoVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(true);
+
+  // Efecto para reproducir automáticamente el video al cargar la portada
+  useEffect(() => {
+    if (coverVideoCourseKey && videoRef.current) {
+      videoRef.current.muted = isMuted;
+      videoRef.current.volume = videoVolume;
+      videoRef.current.play().catch(() => {
+        // Si autoplay falla, intenta de nuevo al primer gesto del usuario
+        const onUserGesture = () => {
+          if (videoRef.current) {
+            videoRef.current.play().catch(() => {
+              // intentionally empty: autoplay fallback
+            });
+          }
+          window.removeEventListener('pointerdown', onUserGesture);
+          window.removeEventListener('keydown', onUserGesture);
+        };
+        window.addEventListener('pointerdown', onUserGesture, { once: true });
+        window.addEventListener('keydown', onUserGesture, { once: true });
+      });
+    }
+  }, [coverVideoCourseKey, videoVolume, isMuted]);
+
+  // Handler para cambiar el volumen y mute
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    setVideoVolume(value);
+    if (videoRef.current) {
+      videoRef.current.volume = value;
+      if (value === 0) {
+        setIsMuted(true);
+        videoRef.current.muted = true;
+      } else {
+        setIsMuted(false);
+        videoRef.current.muted = false;
+      }
+    }
+  };
+
+  // Handler para alternar mute con el icono
+  const handleToggleMute = () => {
+    if (videoRef.current) {
+      if (isMuted) {
+        setIsMuted(false);
+        videoRef.current.muted = false;
+        if (videoRef.current.volume === 0) {
+          setVideoVolume(1);
+          videoRef.current.volume = 1;
+        }
+      } else {
+        setIsMuted(true);
+        videoRef.current.muted = true;
+      }
+    }
+  };
+
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="px-0">
@@ -512,6 +573,7 @@ export function CourseHeader({
                 loop
                 playsInline
                 controls={false}
+                muted={isMuted}
                 poster={
                   coverImageKey
                     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
@@ -519,29 +581,76 @@ export function CourseHeader({
                 }
                 onClick={handleVideoClick}
               />
-              {/* Botón personalizado de pantalla completa */}
-              <button
-                type="button"
-                aria-label="Pantalla completa"
-                onClick={handleFullscreenClick}
+              {/* Botón de volumen y pantalla completa */}
+              <div
                 style={{
                   position: 'absolute',
                   bottom: 16,
                   right: 16,
-                  background: 'rgba(0,0,0,0.6)',
-                  border: 'none',
-                  borderRadius: '50%',
-                  padding: 8,
-                  cursor: 'pointer',
-                  zIndex: 10,
-                  color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
+                  zIndex: 10,
+                  gap: 8,
                 }}
               >
-                <FaExpand size={20} />
-              </button>
+                {/* Botón mute/unmute */}
+                <button
+                  type="button"
+                  aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
+                  onClick={handleToggleMute}
+                  style={{
+                    background: 'rgba(0,0,0,0.6)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    padding: 8,
+                    cursor: 'pointer',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {isMuted ? (
+                    <FaVolumeMute size={20} />
+                  ) : (
+                    <FaVolumeUp size={20} />
+                  )}
+                </button>
+                {/* Volumen */}
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={videoVolume}
+                  onChange={handleVolumeChange}
+                  style={{
+                    width: 80,
+                    accentColor: '#3AF4EF',
+                    marginRight: 8,
+                  }}
+                  title="Volumen"
+                />
+                {/* Botón pantalla completa */}
+                <button
+                  type="button"
+                  aria-label="Pantalla completa"
+                  onClick={handleFullscreenClick}
+                  style={{
+                    background: 'rgba(0,0,0,0.6)',
+                    border: 'none',
+                    borderRadius: '50%',
+                    padding: 8,
+                    cursor: 'pointer',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <FaExpand size={20} />
+                </button>
+              </div>
             </div>
           ) : coverImageKey ? (
             <Image
