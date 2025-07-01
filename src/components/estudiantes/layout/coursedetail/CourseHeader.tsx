@@ -506,22 +506,40 @@ export function CourseHeader({
   // Efecto para reproducir automáticamente el video al cargar la portada
   useEffect(() => {
     if (coverVideoCourseKey && videoRef.current) {
-      videoRef.current.muted = isMuted;
-      videoRef.current.volume = videoVolume;
-      videoRef.current.play().catch(() => {
-        // Si autoplay falla, intenta de nuevo al primer gesto del usuario
-        const onUserGesture = () => {
-          if (videoRef.current) {
-            videoRef.current.play().catch(() => {
-              // intentionally empty: autoplay fallback
-            });
-          }
-          window.removeEventListener('pointerdown', onUserGesture);
-          window.removeEventListener('keydown', onUserGesture);
-        };
-        window.addEventListener('pointerdown', onUserGesture, { once: true });
-        window.addEventListener('keydown', onUserGesture, { once: true });
-      });
+      // Forzar recarga rápida del video y reproducir apenas esté listo
+      const video = videoRef.current;
+      video.muted = isMuted;
+      video.volume = videoVolume;
+      // Intenta cargar el video lo antes posible
+      video.preload = 'auto';
+      video.load();
+      const tryPlay = () => {
+        video.play().catch(() => {
+          // Si autoplay falla, intenta de nuevo al primer gesto del usuario
+          const onUserGesture = () => {
+            if (videoRef.current) {
+              videoRef.current.play().catch(() => {
+                // intentionally empty: autoplay fallback
+              });
+            }
+            window.removeEventListener('pointerdown', onUserGesture);
+            window.removeEventListener('keydown', onUserGesture);
+          };
+          window.addEventListener('pointerdown', onUserGesture, { once: true });
+          window.addEventListener('keydown', onUserGesture, { once: true });
+        });
+      };
+      // Si el video ya está listo, reproduce de inmediato
+      if (video.readyState >= 2) {
+        tryPlay();
+      } else {
+        // Espera a que el video esté listo para reproducir
+        video.addEventListener('canplay', tryPlay, { once: true });
+      }
+      // Limpieza del event listener
+      return () => {
+        video.removeEventListener('canplay', tryPlay);
+      };
     }
   }, [coverVideoCourseKey, videoVolume, isMuted]);
 
@@ -574,6 +592,7 @@ export function CourseHeader({
                 playsInline
                 controls={false}
                 muted={isMuted}
+                preload="auto"
                 poster={
                   coverImageKey
                     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
