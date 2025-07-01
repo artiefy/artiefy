@@ -1,15 +1,6 @@
 const numberPattern = /\d+/;
 
 export const extractLessonOrder = (title: string): number => {
-  // Presentación siempre va primero
-  if (
-    title.toLowerCase().includes('presentacion') ||
-    title.toLowerCase().includes('presentación') ||
-    title.toLowerCase().includes('bienvenida')
-  ) {
-    return -1;
-  }
-
   // Use RegExp.exec() instead of String.match()
   const match = numberPattern.exec(title);
   return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
@@ -18,14 +9,8 @@ export const extractLessonOrder = (title: string): number => {
 export const extractNumbersFromTitle = (title: string) => {
   const lower = title.toLowerCase().trim();
 
-  // Bienvenida/presentación siempre primero
-  if (
-    /^bienvenida\b/.test(lower) ||
-    /^presentacion\b/.test(lower) ||
-    /^presentación\b/.test(lower)
-  ) {
-    return { session: -1, class: -1 };
-  }
+  // Eliminar lógica especial para bienvenida/presentación
+  // Solo usar el orden numérico
 
   // SESIÓN X: Clase Y: ...
   const sessionClassColon = /sesión\s*(\d+)\s*:\s*clase\s*(\d+)/i.exec(title);

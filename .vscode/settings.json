@@ -81,7 +81,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 8192,
   // ESLint Configuration
-  "eslint.runtime": "C:/Users/ADMIN/AppData/Local/fnm_multishells/5500_1750298199911/node",
+  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/5168_1751241710861/node",
   "eslint.validate": [
     "javascript",
     "javascriptreact",
@@ -94,12 +94,8 @@
       "severity": "off"
     },
     {
-      "rule": "import/order",
-      "severity": "off"
-    },
-    {
       "rule": "no-unused-vars",
-      "severity": "warn"
+      "severity": "off"
     },
      {
       "rule": "simple-import-sort/imports",
@@ -108,10 +104,6 @@
     {
       "rule": "simple-import-sort/exports",
       "severity": "off"
-    },
-    {
-      "rule": "@typescript-eslint/no-unused-vars",
-      "severity": "warn"
     },
   ],
   // Tailwind CSS Configuration

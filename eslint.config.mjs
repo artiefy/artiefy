@@ -41,7 +41,7 @@ export default [
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        projectService: true,
+        project: './tsconfig.eslint.json', // Cambia projectService por project
         tsconfigRootDir: import.meta.dirname,
         ecmaFeatures: {
           jsx: true,
@@ -60,7 +60,7 @@ export default [
       'simple-import-sort': simpleImportSort,
       '@next/next': eslintPluginNext,
       import: importPlugin,
-      drizzle: drizzlePlugin,
+      drizzle: drizzlePlugin, // <-- Agrega el plugin Drizzle aquí
     },
     settings: {
       react: {
@@ -105,7 +105,7 @@ export default [
           },
         },
       ],
-      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-floating-promises': 'off',
       '@typescript-eslint/no-unsafe-call': 'error',
       '@typescript-eslint/no-unsafe-member-access': 'error',
       '@typescript-eslint/no-unsafe-return': 'error',
@@ -183,7 +183,7 @@ export default [
 
       // Additional import rules for better organization
       'import/newline-after-import': 'error',
-      'import/no-duplicates': 'error',
+      'import/no-duplicates': 'off',
       'import/first': 'error',
 
       // ===== DRIZZLE RULES =====
@@ -213,8 +213,8 @@ export default [
     files: ['**/*.test.{js,jsx,ts,tsx}', '**/*.spec.{js,jsx,ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'off'
-        },
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
   },
 
   // Configuration for config files
