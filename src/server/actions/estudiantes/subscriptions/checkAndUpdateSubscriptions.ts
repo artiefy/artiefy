@@ -3,10 +3,28 @@ import { isBefore } from 'date-fns';
 import { formatInTimeZone, toDate } from 'date-fns-tz';
 import { eq } from 'drizzle-orm';
 
+import { sendSubscriptionEmail } from '~/server/actions/estudiantes/email/sendSubscriptionEmail';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 
 const TIMEZONE = 'America/Bogota';
+
+// Añade el campo lastSubscriptionEmailSentAt al tipo de usuario localmente
+interface UserWithSubscription {
+  address: string | null;
+  id: string;
+  name: string | null;
+  role: 'estudiante' | 'educador' | 'admin' | 'super-admin';
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+  phone: string | null;
+  subscriptionStatus: string;
+  subscriptionEndDate: string | Date | null;
+  planType: string | null;
+  purchaseDate: Date | null;
+  lastSubscriptionEmailSentAt?: Date | string | null; // <-- Añadido
+}
 
 export async function checkAndUpdateSubscriptions() {
   const nowUTC = new Date();
@@ -14,9 +32,10 @@ export async function checkAndUpdateSubscriptions() {
 
   try {
     // Get all active users
-    const activeUsers = await db.query.users.findMany({
+    // Forzar el tipado correcto para los usuarios
+    const activeUsers = (await db.query.users.findMany({
       where: eq(users.subscriptionStatus, 'active'),
-    });
+    })) as UserWithSubscription[];
 
     console.log('🔍 Checking subscriptions:', {
       totalActiveUsers: activeUsers.length,
@@ -61,10 +80,57 @@ export async function checkAndUpdateSubscriptions() {
 
       const hasExpired = isBefore(endDate, nowBogota);
 
-      console.log(`\n📊 Checking user ${user.email}:`, {
-        endDate: formatInTimeZone(endDate, TIMEZONE, 'yyyy-MM-dd HH:mm:ss zzz'),
-        hasExpired,
-      });
+      // --- NUEVO: Lógica para aviso de expiración ---
+      // Calcular días restantes
+      const msPerDay = 1000 * 60 * 60 * 24;
+      const daysLeft = Math.ceil(
+        (endDate.getTime() - nowBogota.getTime()) / msPerDay
+      );
+
+      // Solo enviar si faltan 7, 3, 1 o 0 días
+      const shouldNotify =
+        daysLeft === 7 || daysLeft === 3 || daysLeft === 1 || daysLeft === 0;
+
+      // Verificar si ya se envió correo hoy
+      let lastSent: Date | null = null;
+      if (user.lastSubscriptionEmailSentAt) {
+        lastSent =
+          typeof user.lastSubscriptionEmailSentAt === 'string'
+            ? new Date(user.lastSubscriptionEmailSentAt)
+            : user.lastSubscriptionEmailSentAt;
+      }
+      const alreadySentToday =
+        lastSent &&
+        nowBogota.getFullYear() === lastSent.getFullYear() &&
+        nowBogota.getMonth() === lastSent.getMonth() &&
+        nowBogota.getDate() === lastSent.getDate();
+
+      if (shouldNotify && !alreadySentToday) {
+        // Determinar texto para timeLeft
+        let timeLeftText = '';
+        if (daysLeft === 0) timeLeftText = 'hoy';
+        else if (daysLeft === 1) timeLeftText = '1 día';
+        else timeLeftText = `${daysLeft} días`;
+
+        try {
+          await sendSubscriptionEmail({
+            to: user.email,
+            userName: user.name ?? '',
+            expirationDate: formatInTimeZone(endDate, TIMEZONE, 'yyyy-MM-dd'),
+            timeLeft: timeLeftText,
+          });
+
+          console.log(
+            `📧 Notificación de suscripción enviada a ${user.email} (faltan ${timeLeftText})`
+          );
+        } catch (error) {
+          console.error(
+            '❌ Error enviando notificación de suscripción:',
+            error
+          );
+        }
+      }
+      // --- FIN NUEVO ---
 
       if (hasExpired) {
         deactivatedCount++;

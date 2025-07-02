@@ -346,7 +346,7 @@ const LessonCards = ({
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="h-32 animate-pulse rounded-lg bg-gray-100 p-4 shadow-sm"
+            className="h-28 animate-pulse rounded-lg bg-gray-100 p-3 shadow-sm md:h-32 md:p-4"
           >
             <div className="mb-2 h-4 w-3/4 rounded bg-gray-200" />
             <div className="mb-4 h-3 w-1/2 rounded bg-gray-200" />
@@ -358,7 +358,7 @@ const LessonCards = ({
   }
 
   return (
-    <div className="lesson-cards-container relative z-10 space-y-2">
+    <div className="lesson-cards-container relative z-10 max-h-[60vh] space-y-2 overflow-y-auto md:max-h-none md:overflow-visible">
       {sortedLessons.map((lesson) => (
         <div
           key={lesson.id}

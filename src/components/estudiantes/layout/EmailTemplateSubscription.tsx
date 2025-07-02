@@ -24,15 +24,14 @@ export function EmailTemplateSubscription({
           @import url('https://fonts.googleapis.com/css?family=Montserrat:700,400&display=swap');
         </style>
       </head>
-      <body style="margin:0;padding:0;background:#01142B;font-family:'Montserrat',Arial,sans-serif;">
+      <body style="margin:0;padding:0;background:#fff;font-family:'Montserrat',Arial,sans-serif;">
         <div style="
           min-height:100vh;
           width:100vw;
           padding:0;
           margin:0;
           position:relative;
-          background: #01142B url('https://artiefy.com/backcorreo.jpg') no-repeat center center;
-          background-size: cover;
+          background: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -43,14 +42,15 @@ export function EmailTemplateSubscription({
             margin:0 auto;
             padding:40px 24px;
             text-align:center;
-            background: rgba(1, 20, 43, 0.85);
+            background: #fff;
             border-radius: 16px;
+            box-shadow: 0 2px 16px rgba(1,20,43,0.08);
           ">
-            <!-- Logo eliminado -->
-            <h1 style="color:#fff;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>
-            <p style="color:#fff;font-size:1.3rem;font-weight:600;margin-bottom:24px;">Tu suscripción <span style="color:#3AF4EF;">Artiefy</span> está por vencer.</p>
-            <p style="color:#fff;font-size:1.1rem;margin-bottom:24px;">${timeLeft === 'hoy' ? '¡Hoy es el último día!' : `Quedan <span style='color:#3AF4EF;'>${timeLeft}</span> para renovar tu acceso.`}</p>
-            <p style="color:#fff;font-size:1rem;margin-bottom:32px;">Fecha de expiración: <span style="color:#3AF4EF;">${expirationDate}</span></p>
+            <img src="https://artiefy.com/artiefy-logo2.png" alt="Artiefy Logo" style="width:120px; margin-bottom:32px;" />
+            <h1 style="color:#01142B;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>
+            <p style="color:#01142B;font-size:1.3rem;font-weight:600;margin-bottom:24px;">Tu suscripción <span style="color:#3AF4EF;">Artiefy</span> está por vencer.</p>
+            <p style="color:#01142B;font-size:1.1rem;margin-bottom:24px;">${timeLeft === 'hoy' ? '¡Hoy es el último día!' : `Quedan <span style='color:#3AF4EF;'>${timeLeft}</span> para renovar tu acceso.`}</p>
+            <p style="color:#01142B;font-size:1rem;margin-bottom:32px;">Fecha de expiración: <span style="color:#3AF4EF;">${expirationDate}</span></p>
             <a href="https://artiefy.com/planes" style="
               display:inline-block;
               width:100%;
@@ -69,7 +69,7 @@ export function EmailTemplateSubscription({
             ">
               Renovar suscripción
             </a>
-            <p style="color:#fff;font-size:0.95rem;margin-top:32px;">Si ya renovaste, puedes ignorar este mensaje.</p>
+            <p style="color:#01142B;font-size:0.95rem;margin-top:32px;">Si ya renovaste, puedes ignorar este mensaje.</p>
           </div>
         </div>
       </body>
