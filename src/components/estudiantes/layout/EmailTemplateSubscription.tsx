@@ -24,22 +24,22 @@ export function EmailTemplateSubscription({
           @import url('https://fonts.googleapis.com/css?family=Montserrat:700,400&display=swap');
         </style>
       </head>
-      <body style="margin:0;padding:0;background:#f3f4f6;font-family:'Montserrat',Arial,sans-serif;">
+      <body style="margin:0;padding:0;background:#fff;font-family:'Montserrat',Arial,sans-serif;">
         <div style="
           min-height:100vh;
           width:100vw;
           padding:0;
           margin:0;
           position:relative;
-          background: #f3f4f6;
+          background: #fff;
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           justify-content: flex-start;
         ">
           <div style="
             max-width:480px;
             width:100%;
-            margin:48px 0 0 8vw;
+            margin:0 0 0 8vw;
             padding:0;
             background:transparent;
             border:none;
@@ -61,7 +61,7 @@ export function EmailTemplateSubscription({
               />
               <h1 style="color:#01142B;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>
               <p style="color:#01142B;font-size:1.3rem;font-weight:600;margin-bottom:24px;">
-                Tu suscripción <span style="color:#3B82F6;">Artiefy</span> está por vencer.
+                Tu suscripción de <span style="color:#3B82F6;">Artiefy</span> está por vencer.
               </p>
               <p style="color:#01142B;font-size:1.1rem;margin-bottom:24px;">
                 ${
