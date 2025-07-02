@@ -41,16 +41,26 @@ export function EmailTemplateSubscription({
             width:100%;
             margin:0 auto;
             padding:40px 24px;
-            text-align:center;
+            text-align:left;
             background: #fff;
             border-radius: 16px;
             box-shadow: 0 2px 16px rgba(1,20,43,0.08);
           ">
-            <img src="https://artiefy.com/artiefy-logo2.png" alt="Artiefy Logo" style="width:120px; margin-bottom:32px;" />
+            <img src="cid:logo@artiefy.com" alt="Artiefy Logo" style="width:120px; margin-bottom:32px;" />
             <h1 style="color:#01142B;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>
-            <p style="color:#01142B;font-size:1.3rem;font-weight:600;margin-bottom:24px;">Tu suscripción <span style="color:#3AF4EF;">Artiefy</span> está por vencer.</p>
-            <p style="color:#01142B;font-size:1.1rem;margin-bottom:24px;">${timeLeft === 'hoy' ? '¡Hoy es el último día!' : `Quedan <span style='color:#3AF4EF;'>${timeLeft}</span> para renovar tu acceso.`}</p>
-            <p style="color:#01142B;font-size:1rem;margin-bottom:32px;">Fecha de expiración: <span style="color:#3AF4EF;">${expirationDate}</span></p>
+            <p style="color:#01142B;font-size:1.3rem;font-weight:600;margin-bottom:24px;">
+              Tu suscripción <span style="color:#3B82F6;">Artiefy</span> está por vencer.
+            </p>
+            <p style="color:#01142B;font-size:1.1rem;margin-bottom:24px;">
+              ${
+                timeLeft === 'hoy'
+                  ? '<span style="color:#3B82F6;font-weight:600;">¡Hoy es el último día!</span>'
+                  : `Quedan <span style='color:#3B82F6;font-weight:600;'>${timeLeft}</span> para renovar tu acceso.`
+              }
+            </p>
+            <p style="color:#01142B;font-size:1rem;margin-bottom:32px;">
+              Fecha de expiración: <span style="color:#3B82F6;font-weight:600;">${expirationDate}</span>
+            </p>
             <a href="https://artiefy.com/planes" style="
               display:inline-block;
               width:100%;
@@ -66,6 +76,7 @@ export function EmailTemplateSubscription({
               box-shadow:0 2px 8px rgba(0,0,0,0.12);
               letter-spacing:1px;
               transition:background 0.3s;
+              text-align:center;
             ">
               Renovar suscripción
             </a>
