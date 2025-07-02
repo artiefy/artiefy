@@ -28,6 +28,7 @@ interface ChatProps {
         status: boolean;
     };
     setChatMode: React.Dispatch<React.SetStateAction<{ idChat: number | null; status: boolean }>>;
+    setShowChatList: React.Dispatch<React.SetStateAction<boolean>>;
     inputText: string;
     setInputText: (text: string) => void;
     handleSendMessage: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -37,10 +38,15 @@ interface ChatProps {
     isSignedIn?: boolean;
     inputRef?: React.RefObject<HTMLInputElement>;
     renderMessage: (message: { id: number; text: string; sender: string }, idx: number) => React.ReactNode;
+    idea?: { selected: boolean; idea: string };
+    setIdea?: React.Dispatch<React.SetStateAction<{ selected: boolean; idea: string }>>;
 
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
+    idea,
+    setIdea,
+    setShowChatList,
     courseId,
     courseTitle,
     isEnrolled,
@@ -68,13 +74,24 @@ export const ChatMessages: React.FC<ChatProps> = ({
     const [conversation] = useState<{ id: number }>({ id: (chatMode.idChat ?? courseId ?? 0) });
     console.log('Chat mode:', chatMode);
 
+    setShowChatList(false);
+
     function handleBotButtonClick(action: string) {
     switch (action) {
         case 'show_toc':
         console.log('Mostrar temario');
         break;
-        case 'go_forum':
-        console.log('Ir al foro');
+        case 'new_idea':
+            window.dispatchEvent(new CustomEvent('new-idea'));
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                {
+                    id: Date.now(),
+                    text: '¡Genial! ¿Cuál es tu idea? 📝',
+                    sender: 'bot',
+                },
+            ]);
+
         break;
         case 'contact_support':
             window.dispatchEvent(new CustomEvent('support-open-chat'));
@@ -84,7 +101,6 @@ export const ChatMessages: React.FC<ChatProps> = ({
     }
     }
 
-    
     useEffect(() => {
         console.log(conversation);
         console.log('Problems');
@@ -115,8 +131,8 @@ export const ChatMessages: React.FC<ChatProps> = ({
                         text: isEnrolled == true ?  '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' + courseTitle + ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎' : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
                         sender: 'bot',
                         buttons: [
-                        { label: '📚 Crear Proyecto', action: 'show_toc' },
-                        { label: '💬 Nueva Idea', action: 'go_forum' },
+                        { label: '📚 Crear Proyecto', action: 'new_project' },
+                        { label: '💬 Nueva Idea', action: 'new_idea' },
                         { label: '🛠 Soporte Técnico', action: 'contact_support' },
                         ],
                     };

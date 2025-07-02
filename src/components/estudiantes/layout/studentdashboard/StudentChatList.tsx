@@ -13,18 +13,27 @@ import {getConversationByUserId} from '~/server/actions/estudiantes/chats/saveCh
 import React, { useEffect, useState } from "react";
 
 interface ChatListProps {
-    setChatMode: (mode: { idChat: number | null; status: boolean }) => void;
+    setChatMode: (mode: { idChat: number | null; status: boolean }) => void
+    setShowChatList: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const ChatList = ({ setChatMode }: ChatListProps) => {
+export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
+
     const [chats, setChats] = useState<{ id: number; title: string; curso_id: number }[]>([]);
     const { user } = useUser();
+    
 
     console.log('User id:', user?.id);
 
     useEffect(() => {
         
         if (!user || !user.id) return;
+
+
+
+        // Cambiamos el status a true en setChatMode para 
+        setShowChatList(true);
+        
 
         const fetchChats = async () => {
             try {
@@ -68,6 +77,8 @@ export const ChatList = ({ setChatMode }: ChatListProps) => {
         };
 
         fetchChats();
+
+        
     }, [user]);
 
 

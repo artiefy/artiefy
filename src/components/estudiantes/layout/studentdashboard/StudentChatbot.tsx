@@ -11,6 +11,7 @@ import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoMdClose } from 'react-icons/io';
 import { GoArrowLeft } from "react-icons/go";
+import { BiMessageAltAdd } from "react-icons/bi";
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 import { usePathname } from 'next/navigation';
@@ -20,7 +21,7 @@ import { Card } from '~/components/estudiantes/ui/card';
 import 'react-resizable/css/styles.css';
 
 // Importar StudentChatList.tsx
-import {ChatList} from './StudentChatList';
+import { ChatList } from './StudentChatList';
 // Importar StudentChat
 import { ChatMessages } from './StudentChat';
 
@@ -49,6 +50,11 @@ interface ResizeData {
 		height: number;
 	};
 	handle: string;
+}
+
+interface Curso {
+	id: number;
+	title: string;
 }
 
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
@@ -84,17 +90,45 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const initialSearchDone = useRef(false);
 
 	// Pruebas para varios chats
-	const [chatMode, setChatMode] = useState<{ idChat: number | null; status: boolean }>({ idChat: null ,status: true});
+	const [chatMode, setChatMode] = useState<{ idChat: number | null; status: boolean }>({ idChat: null, status: true });
+
+	// Saber si el chatlist esta abierto
+
+	const [showChatList, setShowChatList] = useState(false);
 
 	const chatModeRef = useRef(chatMode);
 
+	const [idea, setIdea] = useState<{ selected: boolean; idea: string }>({
+		selected: false,
+		idea: '',
+	})
+
+	const ideaRef = useRef(idea);
+
 	useEffect(() => {
-	chatModeRef.current = chatMode;
+		ideaRef.current = idea;
+	}, [idea]);
+
+	useEffect(() => {
+		const handleNewIdea = () => {
+		
+			setIdea({ selected: true, idea: '' });
+		};
+
+		window.addEventListener('new-idea', handleNewIdea);
+
+		return () => {
+			window.removeEventListener('new-idea', handleNewIdea);
+		};
+	}, []);
+
+	useEffect(() => {
+		chatModeRef.current = chatMode;
 	}, [chatMode]);
 
 	const pathname = usePathname();
 	const isChatPage = pathname === '/'
-	console.log('Ruta actual:', pathname, '¿Es página de chat?', isChatPage);
+
 
 	const saveBotMessage = (trimmedInput: string) => {
 		const currentChatId = chatModeRef.current.idChat;
@@ -119,24 +153,26 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	};
 
 	const handleBotResponse = useCallback(
-		
+
 		async (query: string) => {
-		
+
 			if (processingQuery || searchRequestInProgress.current) return;
 
-			console.log('Procesando consulta:', query);
+
 
 			searchRequestInProgress.current = true;
 			setProcessingQuery(true);
 			setIsLoading(true);
 
+		
+
 			// Url para la petición según si hay courseTitle
-			const urlDefault = {url: '/api/iahome', body: {prompt: query} };
-			const urlCourses = {url: '/chat', body: {user_id: user?.id, curso: courseTitle, user_message: query}};
+			const urlDefault = { url: 'http://3.131.99.140:5000/root_courses', body: { prompt: query } };
+			const urlCourses = { url: 'http://3.131.99.140:5000/root_courses', body: { user_id: user?.id, curso: courseTitle, user_message: query } };
 			const fetchConfig = courseTitle ? urlCourses : urlDefault;
 
 			try {
-				const response = await fetch(fetchConfig.url, {
+				const result = await fetch(fetchConfig.url, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -144,22 +180,32 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					body: JSON.stringify(fetchConfig.body),
 				});
 
-				const data = (await response.json()) as ChatResponse;
+				const data = (await result.json());
+
+				console.log('respuesta del bot:', data.result);
+
+				const cursos: Curso[] = data.result;
+
+				const cursosTexto = cursos
+					.map((curso, index) => `${index + 1}. ${curso.title} | ${curso.id}`)
+					.join('\n\n');
+
+				const introText = cursosTexto.length !== 0 ? 'Aquí tienes algunos cursos recomendados:': 'No se encontraron cursos recomendados. Intenta con otra consulta.';
 
 				setMessages((prev) => [
 					...prev,
 					{
 						id: Date.now() + Math.random(),
-						text: data.response,
+						text: `${introText}\n\n${cursosTexto}`,
 						sender: 'bot' as const,
 					},
 				]);
 
-				saveBotMessage(data.response); // Guarda la respuesta real del bot
+				saveBotMessage(data.result); // Guarda la respuesta real del bot
 
 			} catch (error) {
 				console.error('Error getting bot response:', error);
-			
+
 				setMessages((prev) => [
 					...prev,
 					{
@@ -171,12 +217,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 				saveBotMessage('Lo siento, ocurrió un error al procesar tu solicitud.'); // Guarda el error como mensaje del bot
 			} finally {
-				
+
 				setIsLoading(false);
 				setProcessingQuery(false);
 				searchRequestInProgress.current = false;
 				onSearchComplete?.();
-				
+
 			}
 		},
 		[processingQuery, onSearchComplete, courseTitle]
@@ -280,7 +326,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		console.log('Mensaje usuario prueba con ref' + chatModeRef.current.idChat);
 		console.log('Mensaje usuario prueba chatId' + chatMode.idChat);
 		if (currentChatId) {
-			console.log('Guardando mensaje del usuario:', trimmedInput, 'en chat ID:', currentChatId);
+		
 			void saveMessages(
 				user?.id ?? '', // senderId
 				currentChatId, // cursoId
@@ -292,7 +338,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					}
 				]
 			);
-		}else{
+		} else {
 			console.log('No está entrando al chat para guardar el mensaje del usuario');
 		}
 	};
@@ -318,6 +364,15 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 		setMessages((prev) => [...prev, newUserMessage]);
 		setInputText('');
+
+
+
+		if (ideaRef.current.selected) {
+			// Si se está esperando una idea, se guarda el mensaje del usuario como idea
+			setIdea({ selected: false, idea: trimmedInput });
+
+
+		}
 		await handleBotResponse(trimmedInput);
 	};
 
@@ -337,7 +392,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	};
 
 	const handleClick = () => {
-		if (!isSignedIn  && pathname !== '/') {
+		if (!isSignedIn && pathname !== '/') {
 			const currentUrl = encodeURIComponent(window.location.href);
 			toast.error('Acceso restringido', {
 				description: 'Debes iniciar sesión para usar el chatbot.',
@@ -367,19 +422,24 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		id: number;
 		text: string;
 		sender: string;
-	}, index?: number) => {
-		// Detectar si es el mensaje inicial
-		
-
+	}) => {
 		if (message.sender === 'bot') {
+			console.log('Mensaje del bot:', message);
+
 			const parts = message.text.split('\n\n');
 			const introText = parts[0];
 			const courseTexts = parts.slice(1);
 
+			console.log('Texto intro:', introText);
+			console.log('Cursos en texto:', courseTexts);
+
 			const courses = courseTexts
 				.map((text) => {
-					const match = /(\d+)\.\s+(.*?)\|(\d+)/.exec(text);
-					if (!match) return null;
+					const match = text.match(/^(\d+)\.\s+(.*?)\s+\|\s+(\d+)$/);
+					if (!match) {
+						console.warn('No match para curso:', text);
+						return null;
+					}
 					return {
 						number: parseInt(match[1]),
 						title: match[2].trim(),
@@ -391,10 +451,12 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						Boolean(course)
 				);
 
+				console.log('Cursos procesados:', courses);
+
 			return (
 				<div className="flex flex-col space-y-4">
 					<p className="font-medium text-gray-800">{introText}</p>
-					
+
 					{courses.length > 0 && (
 						<div className="grid gap-4">
 							{courses.map((course) => (
@@ -402,30 +464,39 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									key={course.id}
 									className="text-primary overflow-hidden bg-gray-800 transition-all hover:scale-[1.02]"
 								>
-									<div className="px-4">
-										<h4 className="mb-3 font-bold text-white">
-											{course.number}. {course.title}
-										</h4>
-										<Link
-											href={`/estudiantes/cursos/${course.id}`}
-											className="group/button bg-background text-primary relative inline-flex h-9 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
-										>
-											<span className="font-bold">Ver Curso</span>
-											<ArrowRightCircleIcon className="animate-bounce-right ml-2 h-5 w-5" />
-											<div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-												<div className="relative h-full w-10 bg-white/30" />
-											</div>
-										</Link>
+									<div className="px-4 py-3">
+									<h4 className="mb-3 font-bold text-white text-base tracking-wide">
+										{course.number}. {course.title}
+									</h4>
+									<Link
+										href={`/estudiantes/cursos/${course.id}`}
+										className="group/button relative inline-flex items-center justify-between w-full h-11 px-4 rounded-lg border border-cyan-400 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-400/20 transition-all duration-300 ease-in-out shadow-md backdrop-blur-sm"
+									>
+										<span className="font-semibold tracking-wide">Ver Curso</span>
+										<ArrowRightCircleIcon className="ml-2 h-5 w-5 text-cyan-300 group-hover/button:translate-x-1 transition-transform duration-300 ease-in-out" />
+									</Link>
 									</div>
 								</Card>
 							))}
-						</div>
+							<button
+							className="group relative mt-3 w-full overflow-hidden rounded-lg border border-cyan-500 bg-gradient-to-br from-cyan-600 via-cyan-500 to-cyan-400 text-white py-2 text-sm font-semibold shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-cyan-500/50"
+							onClick={() => {
+								// lógica del proyecto
+							}}
+							>
+							<span className="relative z-10">+ Agregar proyecto</span>
+							<span className="absolute inset-0 bg-cyan-400/10 blur-md group-hover:blur-lg transition-all duration-500 ease-in-out" />
+							<span className="absolute left-0 top-0 h-full w-1 bg-cyan-500 animate-pulse" />
+							</button>
+						</div> 
 					)}
 				</div>
 			);
 		}
-		return message.text;
+
+		return <p>{message.text}</p>;
 	};
+
 
 	// Emitir eventos globales para ocultar/mostrar el botón de soporte
 	useEffect(() => {
@@ -441,9 +512,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			{isAlwaysVisible && (
 				<button
 					onClick={handleClick}
-					className={`button-circular ${!isSignedIn && pathname !== '/' && 'cursor-not-allowed opacity-50'} ${
-						isOpen ? 'minimized' : ''
-					}`}
+					className={`button-circular ${!isSignedIn && pathname !== '/' && 'cursor-not-allowed opacity-50'} ${isOpen ? 'minimized' : ''
+						}`}
 					aria-label={
 						isSignedIn
 							? 'Abrir chat'
@@ -495,7 +565,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					>
 						<div className="relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
 							{/* Logo background */}
-							
+
 							<div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center opacity-5">
 								<Image
 									src="/artiefy-logo2.svg"
@@ -529,12 +599,23 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 									<div className="flex">
 										<button
-											
+
 											className="rounded-full p-1.5 ml-2 transition-colors hover:bg-gray-100"
 											aria-label="Minimizar chatbot"
 										>
-											{chatMode.status && !isChatPage? <GoArrowLeft className='text-xl text-gray-500' onClick={() => {setChatMode({idChat: null, status: false})}}/>: ''}
-											
+											{!isChatPage && (
+												chatMode.status ? (
+													<GoArrowLeft
+														className="text-xl text-gray-500"
+														onClick={() => setChatMode({ idChat: null, status: showChatList ? true : false })}
+													/>
+												) : showChatList ? (
+													<BiMessageAltAdd
+														className="text-xl text-gray-500"
+														onClick={() => setChatMode({ idChat: null, status: true })}
+													/>
+												) : null
+											)}
 										</button>
 										<button
 											onClick={() => setIsOpen(false)}
@@ -543,13 +624,16 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 										>
 											<IoMdClose className="text-xl text-gray-500" />
 										</button>
-										
+
 									</div>
 								</div>
 							</div>
 
 							{chatMode.status ? (
 								<ChatMessages
+									idea={idea}
+									setIdea={setIdea}
+									setShowChatList={setShowChatList}
 									courseId={courseId}
 									isEnrolled={isEnrolled}
 									courseTitle={courseTitle}
@@ -568,10 +652,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									renderMessage={renderMessage}
 								/>
 							) : (
-								<ChatList setChatMode={setChatMode} />
+								<ChatList setChatMode={setChatMode} setShowChatList={setShowChatList} />
 							)}
-							
-							
+
+
 							{/* Messages */}
 							{/*
 							<div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
