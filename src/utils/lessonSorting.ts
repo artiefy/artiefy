@@ -7,8 +7,6 @@ export const extractLessonOrder = (title: string): number => {
 };
 
 export const extractNumbersFromTitle = (title: string) => {
-  const lower = title.toLowerCase().trim();
-
   // Eliminar lógica especial para bienvenida/presentación
   // Solo usar el orden numérico
 
