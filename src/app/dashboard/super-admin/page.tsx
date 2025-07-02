@@ -1,5 +1,5 @@
 'use client';
-import React, { useCallback,useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -20,7 +20,7 @@ import SunEditor from 'suneditor-react';
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal'; // Ajusta la ruta según la ubicación de tu componente
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
-import { deleteUser,setRoleWrapper } from '~/server/queries/queries';
+import { deleteUser, setRoleWrapper } from '~/server/queries/queries';
 
 import BulkUploadUsers from './components/BulkUploadUsers'; // Ajusta la ruta según la ubicación de tu componente
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -166,6 +166,10 @@ export default function AdminDashboard() {
   const [message, setMessage] = useState(''); // ✅ Mensaje del correo
   const [loadingEmail, setLoadingEmail] = useState(false); // ✅ Estado de carga para el envío de correos
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [sendWhatsapp, setSendWhatsapp] = useState(false);
+const [numerosLocales, setNumerosLocales] = useState('');
+const [codigoPais, setCodigoPais] = useState('+57');
+
   const [previewAttachments, setPreviewAttachments] = useState<string[]>([]);
   const [usersPerPage, setUsersPerPage] = useState<number>(10);
 
@@ -494,67 +498,93 @@ export default function AdminDashboard() {
     }
   };
 
-  const sendEmail = async () => {
-    console.log('📩 Enviando correo...');
-    if (
-      !subject ||
-      !message ||
-      (selectedEmails.length === 0 && !customEmails.trim())
-    ) {
-      setNotification({
-        message: 'Todos los campos son obligatorios',
-        type: 'error',
-      });
-      console.error('❌ Error: Faltan datos obligatorios');
-      return;
+ const sendEmail = async () => {
+  console.log('📩 Enviando correo...');
+  if (
+    !subject ||
+    !message ||
+    (selectedEmails.length === 0 && !customEmails.trim() && (!numerosLocales.trim() || !sendWhatsapp))
+  ) {
+    setNotification({
+      message: 'Todos los campos son obligatorios',
+      type: 'error',
+    });
+    console.error('❌ Error: Faltan datos obligatorios');
+    return;
+  }
+
+  setLoadingEmail(true);
+
+  const emails = Array.from(
+    new Set([
+      ...selectedEmails,
+      ...customEmails.split(',').map((e) => e.trim()).filter(Boolean),
+    ])
+  );
+
+  // ⚡ procesar los números para whatsapp
+let whatsappNumbers: string[] = [];
+  if (sendWhatsapp && numerosLocales.trim()) {
+    whatsappNumbers = numerosLocales
+      .split(',')
+      .map(num => num.trim())
+      .filter(Boolean)
+      .map(num => `${codigoPais}${num}`);
+  }
+
+  try {
+    const formData = new FormData();
+    formData.append('subject', subject);
+    formData.append('message', message);
+    emails.forEach((email) => formData.append('emails[]', email));
+    attachments.forEach((file) => formData.append('attachments', file));
+
+    const response = await fetch('/api/super-admin/emails', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (sendWhatsapp) {
+      for (const number of whatsappNumbers) {
+        console.log('📲 Enviando WhatsApp a:', number);
+
+        await fetch('/api/super-admin/whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: number,
+            message: `${subject}\n\n${message.replace(/<[^>]+>/g, '')}`,
+          }),
+        });
+      }
     }
 
-    setLoadingEmail(true);
+    if (!response.ok) throw new Error('Error al enviar el correo');
 
-    const emails = Array.from(
-      new Set([
-        ...selectedEmails,
-        ...customEmails.split(',').map((e) => e.trim()),
-      ])
-    );
+    console.log('✅ Correo enviado con éxito');
+    setNotification({
+      message: 'Correo enviado correctamente',
+      type: 'success',
+    });
 
-    try {
-      const formData = new FormData();
-      formData.append('subject', subject);
-      formData.append('message', message);
-      emails.forEach((email) => formData.append('emails[]', email));
+    setSubject('');
+    setMessage('');
+    setSelectedEmails([]);
+    setCustomEmails('');
+    setAttachments([]);
+    setPreviewAttachments([]);
+    setNumerosLocales('');
+    setCodigoPais('+57');
+    setSendWhatsapp(false);
+    setShowEmailModal(false);
+  } catch (error) {
+    console.error('❌ Error al enviar el correo:', error);
+    setNotification({ message: 'Error al enviar el correo', type: 'error' });
+  } finally {
+    setLoadingEmail(false);
+  }
+};
 
-      // Adjuntar archivos
-      attachments.forEach((file) => formData.append('attachments', file));
-
-      const response = await fetch('/api/super-admin/emails', {
-        method: 'POST',
-        body: formData, // ✅ Enviamos como FormData
-      });
-
-      if (!response.ok) throw new Error('Error al enviar el correo');
-
-      console.log('✅ Correo enviado con éxito');
-      setNotification({
-        message: 'Correo enviado correctamente',
-        type: 'success',
-      });
-
-      // Resetear los campos después del envío
-      setSubject('');
-      setMessage('');
-      setSelectedEmails([]);
-      setCustomEmails('');
-      setAttachments([]);
-      setPreviewAttachments([]);
-      setShowEmailModal(false);
-    } catch (error) {
-      console.error('❌ Error al enviar el correo:', error);
-      setNotification({ message: 'Error al enviar el correo', type: 'error' });
-    } finally {
-      setLoadingEmail(false);
-    }
-  };
 
   // Llamar la función cuando el componente se monta si hay un usuario autenticado
   useEffect(() => {
@@ -2411,130 +2441,167 @@ export default function AdminDashboard() {
         message={infoDialogMessage}
         onClose={() => setInfoDialogOpen(false)}
       />
-      {showEmailModal && (
-        <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
-            {/* ❌ Botón de cierre */}
-            <button
-              onClick={() => setShowEmailModal(false)}
-              className="absolute top-4 right-4 text-white hover:text-red-500"
-            >
-              <X size={24} />
-            </button>
+        {showEmailModal && (
+          <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+            <div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+              {/* ❌ Botón de cierre */}
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="absolute top-4 right-4 text-white hover:text-red-500"
+              >
+                <X size={24} />
+              </button>
 
-            <h2 className="mb-6 text-center text-3xl font-bold">
-              Enviar Correo
-            </h2>
+              <h2 className="mb-6 text-center text-3xl font-bold">
+                Enviar Correo
+              </h2>
 
-            {/* 📌 Campo de Asunto */}
-            <input
-              type="text"
-              placeholder="Asunto del correo"
-              className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-            />
+              {/* 📌 Campo de Asunto */}
+              <input
+                type="text"
+                placeholder="Asunto del correo"
+                className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              />
 
-            <div className="mb-4 flex flex-wrap gap-2">
-              {selectedEmails.map((email) => (
-                <span
-                  key={email}
-                  className="flex items-center rounded-full bg-blue-600 px-4 py-2 text-white"
-                >
-                  {email}
-                  <button
-                    onClick={() =>
-                      setSelectedEmails((prev) =>
-                        prev.filter((e) => e !== email)
-                      )
-                    }
-                    className="ml-2 text-lg text-white"
+              <div className="mb-4 flex flex-wrap gap-2">
+                {selectedEmails.map((email) => (
+                  <span
+                    key={email}
+                    className="flex items-center rounded-full bg-blue-600 px-4 py-2 text-white"
                   >
-                    ✕
-                  </button>
-                </span>
-              ))}
-            </div>
-
-            {/* 📌 Agregar correos manualmente */}
-            <input
-              type="text"
-              placeholder="Agregar correos manualmente y presiona Enter"
-              className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              value={customEmails}
-              onChange={(e) => setCustomEmails(e.target.value)}
-              onKeyDown={handleManualEmailAdd} // ✅ Captura la tecla Enter
-            />
-
-            {/* 📌 Editor de texto con SunEditor */}
-            <SunEditor
-              setContents={message}
-              onChange={(content) => setMessage(content)}
-              setOptions={{
-                height: '200',
-                buttonList: [
-                  ['bold', 'italic', 'underline', 'strike'],
-                  ['fontSize', 'fontColor', 'hiliteColor'],
-                  ['align', 'list', 'table'],
-                  ['link', 'image', 'video'],
-                  ['removeFormat'],
-                ],
-              }}
-            />
-
-            {/* 📌 Adjuntar archivos con vista previa */}
-            <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-white">
-                Adjuntar Archivos
-              </label>
-
-              {/* Previsualización de archivos adjuntos */}
-              <div className="mb-4 flex flex-wrap gap-4">
-                {previewAttachments.map((src, index) => (
-                  <div key={index} className="relative h-24 w-24">
-                    <Image
-                      src={src}
-                      alt={`preview-${index}`}
-                      layout="fill"
-                      objectFit="cover"
-                      className="rounded-lg"
-                    />
+                    {email}
                     <button
-                      onClick={() => removeAttachment(index)}
-                      className="absolute top-0 right-0 rounded-full bg-red-600 p-2 text-xs text-white"
+                      onClick={() =>
+                        setSelectedEmails((prev) =>
+                          prev.filter((e) => e !== email)
+                        )
+                      }
+                      className="ml-2 text-lg text-white"
                     >
                       ✕
                     </button>
-                  </div>
+                  </span>
                 ))}
               </div>
 
-              {/* Input para agregar archivos adjuntos */}
+              {/* 📌 Agregar correos manualmente */}
               <input
-                type="file"
-                multiple
-                onChange={handleAttachmentChange} // ✅ Cambiamos el nombre aquí
-                className="rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                type="text"
+                placeholder="Agregar correos manualmente y presiona Enter"
+                className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                value={customEmails}
+                onChange={(e) => setCustomEmails(e.target.value)}
+                onKeyDown={handleManualEmailAdd}
               />
-            </div>
 
-            {/* 📌 Botón de envío */}
-            <div className="mt-4 flex justify-center">
-              <button
-                onClick={sendEmail}
-                className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                disabled={loadingEmail}
-              >
-                {loadingEmail ? (
-                  <Loader2 className="text-white" />
-                ) : (
-                  'Enviar Correo'
-                )}
-              </button>
+              {/* 📌 Editor de texto con SunEditor */}
+              <SunEditor
+                setContents={message}
+                onChange={(content) => setMessage(content)}
+                setOptions={{
+                  height: '200',
+                  buttonList: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['fontSize', 'fontColor', 'hiliteColor'],
+                    ['align', 'list', 'table'],
+                    ['link', 'image', 'video'],
+                    ['removeFormat'],
+                  ],
+                }}
+              />
+
+              {/* 📌 Adjuntar archivos con vista previa */}
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-medium text-white">
+                  Adjuntar Archivos
+                </label>
+
+                <div className="mb-4 flex flex-wrap gap-4">
+                  {previewAttachments.map((src, index) => (
+                    <div key={index} className="relative h-24 w-24">
+                      <Image
+                        src={src}
+                        alt={`preview-${index}`}
+                        layout="fill"
+                        objectFit="cover"
+                        className="rounded-lg"
+                      />
+                      <button
+                        onClick={() => removeAttachment(index)}
+                        className="absolute top-0 right-0 rounded-full bg-red-600 p-2 text-xs text-white"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleAttachmentChange}
+                  className="rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
+              {/* 📌 WhatsApp */}
+              <div className="mb-4 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={sendWhatsapp}
+                  onChange={(e) => setSendWhatsapp(e.target.checked)}
+                  className="form-checkbox h-5 w-5 text-green-500"
+                />
+                <label className="text-white">Enviar también por WhatsApp</label>
+              </div>
+
+              {sendWhatsapp && (
+                <>
+                  <div className="mb-3">
+                    <label className="mb-1 block text-sm">
+                      Código de país para WhatsApp
+                    </label>
+                    <select
+                      value={codigoPais}
+                      onChange={(e) => setCodigoPais(e.target.value)}
+                      className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                    >
+                      <option value="+57">🇨🇴 Colombia (+57)</option>
+                      <option value="+52">🇲🇽 México (+52)</option>
+                      <option value="+1">🇺🇸 USA (+1)</option>
+                      <option value="+34">🇪🇸 España (+34)</option>
+                      <option value="+51">🇵🇪 Perú (+51)</option>
+                      <option value="+54">🇦🇷 Argentina (+54)</option>
+                      <option value="+55">🇧🇷 Brasil (+55)</option>
+                      <option value="+593">🇪🇨 Ecuador (+593)</option>
+                      <option value="+506">🇨🇷 Costa Rica (+506)</option>
+                      <option value="+58">🇻🇪 Venezuela (+58)</option>
+                    </select>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Números locales separados por coma, ej: 3001234567,3012345678"
+                    value={numerosLocales}
+                    onChange={(e) => setNumerosLocales(e.target.value)}
+                    className="mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white"
+                  />
+                </>
+              )}
+
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={sendEmail}
+                  className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  disabled={loadingEmail}
+                >
+                  {loadingEmail ? <Loader2 className="text-white" /> : 'Enviar'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </>
   );
 }

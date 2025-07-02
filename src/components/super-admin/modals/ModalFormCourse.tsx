@@ -1287,7 +1287,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   htmlFor="subjects"
                   className="text-primary text-sm font-medium md:text-lg"
                 >
-                  Asignar Mateias
+                  Asignar Materias
                 </label>
                 <Select
                   isMulti

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { saveAs } from 'file-saver';
-import { Loader2, UserPlus, X } from 'lucide-react';
+import { Loader2, Mail,UserPlus, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
@@ -197,6 +197,20 @@ export default function EnrolledUsersPage() {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [dynamicColumns, setDynamicColumns] = useState<Column[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [codigoPais, setCodigoPais] = useState('+57');
+  const [manualPhones, setManualPhones] = useState<string[]>([]);
+  const [manualEmails, setManualEmails] = useState<string[]>([]);
+  const [newManualPhone, setNewManualPhone] = useState('');
+  const [newManualEmail, setNewManualEmail] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [sendWhatsapp, setSendWhatsapp] = useState(false);
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  void setCodigoPais;
+
+
   const [filters, setFilters] = useState({
     name: '',
     email: '',
@@ -319,6 +333,105 @@ export default function EnrolledUsersPage() {
       return col;
     });
   }, [programs, availableCourses]);
+
+  const sendEmail = async () => {
+    console.log('📩 Enviando correo...');
+    if (
+      !subject ||
+      !message ||
+      ([
+        ...students
+          .filter((s) => selectedStudents.includes(s.id))
+          .map((s) => s.email),
+        ...manualEmails,
+      ].length === 0 &&
+        [
+          ...students
+            .filter((s) => selectedStudents.includes(s.id) && s.phone)
+            .map((s) => `${codigoPais}${s.phone}`),
+          ...manualPhones,
+        ].length === 0 &&
+        !sendWhatsapp)
+    ) {
+      setNotification({
+        message: 'Todos los campos son obligatorios',
+        type: 'error',
+      });
+      console.error('❌ Error: Faltan datos obligatorios');
+      return;
+    }
+
+    setLoadingEmail(true);
+
+    const emails = Array.from(
+      new Set([
+        ...students
+          .filter((s) => selectedStudents.includes(s.id))
+          .map((s) => s.email),
+        ...manualEmails,
+      ])
+    );
+
+    const whatsappNumbers = sendWhatsapp
+      ? Array.from(
+          new Set([
+            ...students
+              .filter((s) => selectedStudents.includes(s.id) && s.phone)
+              .map((s) => `${codigoPais}${s.phone}`),
+            ...manualPhones.map((p) => `${codigoPais}${p}`),
+          ])
+        )
+      : [];
+
+    try {
+      const formData = new FormData();
+      formData.append('subject', subject);
+      formData.append('message', message);
+      emails.forEach((email) => formData.append('emails[]', email));
+      attachments.forEach((file) => formData.append('attachments', file));
+
+      const response = await fetch('/api/super-admin/emails', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Error al enviar el correo');
+
+      // Enviar whatsapp
+      if (sendWhatsapp) {
+        for (const number of whatsappNumbers) {
+          console.log('📲 Enviando WhatsApp a:', number);
+
+          await fetch('/api/super-admin/whatsapp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: number,
+              message: `${subject}\n\n${message.replace(/<[^>]+>/g, '')}`,
+            }),
+          });
+        }
+      }
+
+      console.log('✅ Mensajes enviados con éxito');
+      setNotification({
+        message: 'Correo y/o WhatsApp enviados correctamente',
+        type: 'success',
+      });
+
+      setSubject('');
+      setMessage('');
+      setAttachments([]);
+      setManualPhones([]);
+      setManualEmails([]);
+      setShowPhoneModal(false);
+    } catch (err) {
+      console.error('❌ Error al enviar:', err);
+      setNotification({ message: 'Error al enviar', type: 'error' });
+    } finally {
+      setLoadingEmail(false);
+    }
+  };
 
   const totalColumns: Column[] = [...columnsWithOptions, ...dynamicColumns];
   const [successMessage, setSuccessMessage] = useState('');
@@ -813,6 +926,17 @@ export default function EnrolledUsersPage() {
 
           <div className="relative w-full sm:w-auto">
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowPhoneModal(true)}
+                className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+              >
+                <span className="relative z-10 font-medium">
+                  Enviar correo y/o whatsapp
+                </span>
+                <Mail className="relative z-10 size-3.5 sm:size-4" />
+                <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+              </button>
+
               <button
                 onClick={() => setShowCreateForm(true)}
                 className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
@@ -1404,6 +1528,187 @@ export default function EnrolledUsersPage() {
                   'Crear Usuario'
                 )}
               </button>
+            </div>
+          </div>
+        )}
+        {showPhoneModal && (
+          <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+            <div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+              <button
+                onClick={() => setShowPhoneModal(false)}
+                className="absolute top-4 right-4 text-white hover:text-red-500"
+              >
+                <X size={24} />
+              </button>
+
+              <h2 className="mb-6 text-center text-3xl font-bold">
+                Enviar Correo y/o WhatsApp
+              </h2>
+
+              {/* Inputs manuales */}
+              <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Agregar teléfono manual"
+                    value={newManualPhone}
+                    onChange={(e) => setNewManualPhone(e.target.value)}
+                    className="w-full rounded border bg-gray-800 p-2"
+                  />
+                  <button
+                    onClick={() => {
+                      if (newManualPhone.trim()) {
+                        setManualPhones([
+                          ...manualPhones,
+                          newManualPhone.trim(),
+                        ]);
+                        setNewManualPhone('');
+                      }
+                    }}
+                    className="mt-2 w-full rounded bg-green-600 px-3 py-1"
+                  >
+                    ➕ Agregar Teléfono
+                  </button>
+                </div>
+                <div>
+                  <input
+                    type="email"
+                    placeholder="Agregar correo manual"
+                    value={newManualEmail}
+                    onChange={(e) => setNewManualEmail(e.target.value)}
+                    className="w-full rounded border bg-gray-800 p-2"
+                  />
+                  <button
+                    onClick={() => {
+                      if (newManualEmail.trim()) {
+                        setManualEmails([
+                          ...manualEmails,
+                          newManualEmail.trim(),
+                        ]);
+                        setNewManualEmail('');
+                      }
+                    }}
+                    className="mt-2 w-full rounded bg-blue-600 px-3 py-1"
+                  >
+                    ➕ Agregar Correo
+                  </button>
+                </div>
+              </div>
+
+              {/* Teléfonos finales */}
+              <h3 className="mt-4 text-lg font-semibold">Teléfonos:</h3>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ...students
+                    .filter((s) => selectedStudents.includes(s.id) && s.phone)
+                    .map((s) => `${codigoPais}${s.phone}`),
+                  ...manualPhones,
+                ].map((phone, idx) => (
+                  <span
+                    key={idx}
+                    className="flex items-center rounded-full bg-green-600 px-3 py-1"
+                  >
+                    {phone}
+                    <button
+                      onClick={() =>
+                        setManualPhones((prev) =>
+                          prev.filter((p) => p !== phone)
+                        )
+                      }
+                      className="ml-2"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+                {manualPhones.length +
+                  students.filter(
+                    (s) => selectedStudents.includes(s.id) && s.phone
+                  ).length ===
+                  0 && <div className="text-gray-400">Sin teléfonos</div>}
+              </div>
+
+              {/* Correos finales */}
+              <h3 className="mt-4 text-lg font-semibold">Correos:</h3>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  ...students
+                    .filter((s) => selectedStudents.includes(s.id))
+                    .map((s) => s.email),
+                  ...manualEmails,
+                ].map((email, idx) => (
+                  <span
+                    key={idx}
+                    className="flex items-center rounded-full bg-blue-600 px-3 py-1"
+                  >
+                    {email}
+                    <button
+                      onClick={() =>
+                        setManualEmails((prev) =>
+                          prev.filter((e) => e !== email)
+                        )
+                      }
+                      className="ml-2"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+                {manualEmails.length +
+                  students.filter((s) => selectedStudents.includes(s.id))
+                    .length ===
+                  0 && <div className="text-gray-400">Sin correos</div>}
+              </div>
+
+              {/* Formulario mensaje */}
+              <div className="mt-4">
+                <input
+                  type="text"
+                  placeholder="Asunto"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="mb-2 w-full rounded bg-gray-800 p-2"
+                />
+                <textarea
+                  placeholder="Mensaje"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full rounded bg-gray-800 p-2"
+                  rows={5}
+                />
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="file"
+                    multiple
+                    onChange={(e) => {
+                      setAttachments([
+                        ...attachments,
+                        ...Array.from(e.target.files ?? []),
+                      ]);
+                    }}
+                    className="text-sm text-gray-300"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={sendWhatsapp}
+                  onChange={() => setSendWhatsapp(!sendWhatsapp)}
+                />
+                <label>Enviar también por WhatsApp</label>
+              </div>
+
+              <div className="mt-6 flex justify-center">
+                <button
+                  onClick={sendEmail}
+                  className="rounded bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
+                  disabled={loadingEmail}
+                >
+                  {loadingEmail ? 'Enviando...' : 'Enviar'}
+                </button>
+              </div>
             </div>
           </div>
         )}
