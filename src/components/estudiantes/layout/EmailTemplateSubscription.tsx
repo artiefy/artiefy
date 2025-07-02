@@ -47,13 +47,13 @@ export function EmailTemplateSubscription({
             box-shadow: 0 2px 16px rgba(1,20,43,0.08);
           ">
             <div style="
-              width:120px;
-              height:48px;
+              width:100%;
+              height:80px;
               margin-bottom:32px;
               background-image: url('http://localhost:3000/artiefy-logo2.svg');
               background-size: contain;
               background-repeat: no-repeat;
-              background-position: center;
+              background-position: center top;
               display: block;
             "></div>
             <h1 style="color:#01142B;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>

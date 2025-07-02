@@ -56,10 +56,3 @@ export async function sendSubscriptionEmail(
     return { success: false, error };
   }
 }
-    console.log('✅ Email de suscripción enviado:', info.messageId);
-    return { success: true };
-  } catch (error) {
-    console.error('❌ Error enviando email de suscripción:', error);
-    return { success: false, error };
-  }
-}
