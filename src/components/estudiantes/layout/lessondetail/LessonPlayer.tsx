@@ -39,7 +39,7 @@ const LessonPlayer = ({
   }
 
   return (
-    <div className="mx-auto max-w-full md:max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl">
       <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-lg bg-black md:mb-6">
         <div className="absolute inset-0 flex items-center justify-center">
           <VideoPlayer
