@@ -44,32 +44,7 @@ export async function sendSubscriptionEmail(
       to,
       cc: ['secretaríaacademica@ciadet.co', 'cordinadoracademico@ciadet.co'],
       subject: `Tu suscripción está por vencer${userName ? ` - ${userName}` : ''}`,
-      html: `
-        <div style="
-          min-height:100vh;
-          width:100vw;
-          padding:0;
-          margin:0;
-          position:relative;
-          background: #01142B url('https://artiefy.com/backcorreo.jpg') no-repeat center center;
-          background-size: cover;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-direction: column;
-        ">
-          <div style="width:100%;max-width:600px;margin:0 auto;">
-            ${html}
-            <div style="margin-top:32px;font-size:0.95rem;color:#888;text-align:center;">
-              <hr style="margin:24px 0;border:0;border-top:1px solid #3AF4EF33;" />
-              <p>Este correo también fue notificado a administración.<br/>
-              <strong>Estudiante:</strong> ${userName || 'Sin nombre'}<br/>
-              <strong>Email:</strong> ${to}
-              </p>
-            </div>
-          </div>
-        </div>
-      `,
+      html, // Usa solo el HTML de la plantilla
       replyTo: 'direcciongeneral@artiefy.com',
       attachments: [
         {

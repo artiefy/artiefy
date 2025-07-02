@@ -510,10 +510,12 @@ export default function LessonDetails({
         courseId={lesson.courseId}
         lessonTitle={lesson.title}
       />
-      <div className="flex flex-1 px-4 py-6">
+      <div className="bg-background flex flex-1 flex-col gap-4 px-2 py-2 md:flex-row md:px-4 md:py-6">
         {/* Left Sidebar */}
-        <div className="bg-background w-80 p-4">
-          <h2 className="text-primary mb-4 text-2xl font-bold">Clases</h2>
+        <div className="bg-background mb-2 w-full flex-shrink-0 overflow-x-auto rounded-lg p-2 shadow-none md:mb-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-80">
+          <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
+            Clases
+          </h2>
           <LessonCards
             lessonsState={lessonsState}
             selectedLessonId={selectedLessonId}
@@ -521,15 +523,15 @@ export default function LessonDetails({
             progress={progress}
             isNavigating={isNavigating}
             setLessonsState={setLessonsState}
-            courseId={lesson.courseId} // <-- Añadir
-            userId={userId} // <-- Añadir
+            courseId={lesson.courseId}
+            userId={userId}
           />
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6">
+        <div className="flex w-full max-w-full min-w-0 flex-1 flex-col p-0 md:p-6">
           <div className="navigation-buttons">
-            <div className="mb-4">
+            <div className="mb-2 md:mb-4">
               <LessonNavigation
                 onNavigate={handleNavigationClick}
                 lessonsState={lessonsState}
@@ -548,19 +550,19 @@ export default function LessonDetails({
         </div>
 
         {/* Right Sidebar */}
-        <div className="flex flex-col">
+        <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-72">
           <LessonActivities
-            activities={activities} // Pass full array
+            activities={activities}
             isVideoCompleted={isVideoCompleted}
             isActivityCompleted={isActivityCompleted}
             handleActivityCompletion={handleActivityCompletion}
             userId={userId}
             onLessonUnlocked={handleLessonUnlocked}
             courseId={lesson.courseId}
-            lessonId={lesson.id} // Add this line
+            lessonId={lesson.id}
             isLastLesson={isLastLesson(lessonsState, lesson.id)}
             isLastActivity={isLastActivity(lessonsState, activities, lesson)}
-            lessons={lessonsState} // Add this prop
+            lessons={lessonsState}
           />
         </div>
 

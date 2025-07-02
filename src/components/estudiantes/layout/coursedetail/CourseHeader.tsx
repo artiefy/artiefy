@@ -506,16 +506,14 @@ export function CourseHeader({
   // Efecto para reproducir automáticamente el video al cargar la portada
   useEffect(() => {
     if (coverVideoCourseKey && videoRef.current) {
-      // Forzar recarga rápida del video y reproducir apenas esté listo
       const video = videoRef.current;
       video.muted = isMuted;
       video.volume = videoVolume;
-      // Intenta cargar el video lo antes posible
-      video.preload = 'auto';
-      video.load();
+      // Quitar video.load() para evitar reinicio del video
+      // video.preload = 'auto';
+      // video.load();
       const tryPlay = () => {
         video.play().catch(() => {
-          // Si autoplay falla, intenta de nuevo al primer gesto del usuario
           const onUserGesture = () => {
             if (videoRef.current) {
               videoRef.current.play().catch(() => {
@@ -529,14 +527,11 @@ export function CourseHeader({
           window.addEventListener('keydown', onUserGesture, { once: true });
         });
       };
-      // Si el video ya está listo, reproduce de inmediato
       if (video.readyState >= 2) {
         tryPlay();
       } else {
-        // Espera a que el video esté listo para reproducir
         video.addEventListener('canplay', tryPlay, { once: true });
       }
-      // Limpieza del event listener
       return () => {
         video.removeEventListener('canplay', tryPlay);
       };
@@ -568,6 +563,12 @@ export function CourseHeader({
         if (videoRef.current.volume === 0) {
           setVideoVolume(1);
           videoRef.current.volume = 1;
+        }
+        // Si el video está pausado, intenta reproducirlo
+        if (videoRef.current.paused) {
+          videoRef.current.play().catch(() => {
+            // fallback: no hacer nada si falla
+          });
         }
       } else {
         setIsMuted(true);
