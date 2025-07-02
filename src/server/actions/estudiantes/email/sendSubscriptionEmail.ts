@@ -46,13 +46,6 @@ export async function sendSubscriptionEmail(
       subject: `Tu suscripción está por vencer${userName ? ` - ${userName}` : ''}`,
       html, // Usa solo el HTML de la plantilla
       replyTo: 'direcciongeneral@artiefy.com',
-      attachments: [
-        {
-          filename: 'artiefy-logo2.png',
-          path: `${process.cwd()}/public/artiefy-logo2.png`,
-          cid: 'logo@artiefy.com',
-        },
-      ],
     };
 
     const info = await transporter.sendMail(mailOptions);
