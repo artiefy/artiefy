@@ -196,3 +196,9 @@ Instalar dependencias globales en una sola :
 `npm install -g npm-check-updates@latest npm@latest eslint@latest typescript@latest`
 
 ---
+
+Pasos en Vim:
+
+Presiona `:wq` y luego Enter para guardar y salir.
+
+---
