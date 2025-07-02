@@ -34,19 +34,28 @@ export function EmailTemplateSubscription({
           background: #fff;
           display: flex;
           align-items: center;
-          justify-content: center;
+          justify-content: flex-start;
         ">
           <div style="
             max-width:480px;
             width:100%;
-            margin:0 auto;
+            margin:0 0 0 8vw;
             padding:40px 24px;
-            text-align:left;
+            text-align:center;
             background: #fff;
             border-radius: 16px;
             box-shadow: 0 2px 16px rgba(1,20,43,0.08);
           ">
-            <img src="cid:logo@artiefy.com" alt="Artiefy Logo" style="width:120px; margin-bottom:32px;" />
+            <div style="
+              width:120px;
+              height:48px;
+              margin-bottom:32px;
+              background-image: url('http://localhost:3000/artiefy-logo2.svg');
+              background-size: contain;
+              background-repeat: no-repeat;
+              background-position: center;
+              display: block;
+            "></div>
             <h1 style="color:#01142B;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>
             <p style="color:#01142B;font-size:1.3rem;font-weight:600;margin-bottom:24px;">
               Tu suscripción <span style="color:#3B82F6;">Artiefy</span> está por vencer.
