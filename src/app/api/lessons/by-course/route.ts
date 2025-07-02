@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+
 import { z } from 'zod';
 
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
