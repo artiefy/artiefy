@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
-import { getProjectById } from '~/server/actions/estudiantes/project/getProjectById';
+//import { getProjectById } from '~/server/actions/estudiantes/project/getProjectById';
 
 import type { Project } from '~/types';
 
@@ -13,7 +13,7 @@ const ProjectDetail = () => {
 
 	useEffect(() => {
 		if (id) {
-			getProjectById(Number(id)).then(setProject).catch(console.error);
+//			getProjectById(Number(id)).then(setProject).catch(console.error);
 		}
 	}, [id]);
 

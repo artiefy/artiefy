@@ -1,5 +1,5 @@
 import { UserButton } from '@clerk/nextjs';
-import { UserCircleIcon, AcademicCapIcon } from '@heroicons/react/24/solid';
+import { UserCircleIcon, AcademicCapIcon, FolderIcon } from '@heroicons/react/24/solid';
 
 export function UserButtonWrapper() {
 	return (
@@ -23,6 +23,11 @@ export function UserButtonWrapper() {
 					label="Mis Certificaciones"
 					labelIcon={<AcademicCapIcon className="size-4" />}
 					href="/estudiantes/certificados"
+				/>
+				<UserButton.Link
+					label="Mis Proyectos"
+					labelIcon={<FolderIcon className="size-4" />}
+					href="/proyectos/MisProyectos"
 				/>
 			</UserButton.MenuItems>
 		</UserButton>

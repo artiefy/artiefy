@@ -1,4 +1,4 @@
-'use server';
+/* 'use server';
 
 import { eq } from 'drizzle-orm';
 
@@ -18,3 +18,4 @@ export async function getUserProjectsTaken(
 		},
 	});
 }
+ */
