@@ -338,7 +338,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
-    individualPrice: number | null
+    individualPrice: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+    }[],
+    courseTypeName?: string
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -348,6 +355,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       if (addParametros) {
         console.log('Se agregarán parámetros adicionales');
       }
+      void courseTypeName; // Use void operator to explicitly ignore the promise
 
       // Si viene un nuevo archivo, subimos el archivo
       if (file) {
@@ -412,6 +420,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         isActive,
         subjects: subjects.length ? subjects : currentSubjects,
         individualPrice,
+        parametros,
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -424,6 +433,58 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           body: JSON.stringify(payload),
         }
       );
+      if (addParametros && parametros.length) {
+        console.log('📝 Se actualizarán o crearán parámetros...');
+
+        for (const parametro of parametros) {
+          if (parametro.id && parametro.id !== 0) {
+            console.log(`➡️ Actualizando parámetro ID: ${parametro.id}`);
+
+            const updateResponse = await fetch(
+              `/api/educadores/parametros/${parametro.id}`,
+              {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  name: parametro.name,
+                  description: parametro.description,
+                  porcentaje: parametro.porcentaje,
+                  courseId: Number(courseIdString2),
+                }),
+              }
+            );
+
+            if (!updateResponse.ok) {
+              console.error(
+                `🔴 Error al actualizar parámetro ID ${parametro.id}`
+              );
+            } else {
+              console.log(
+                `✅ Parámetro ID ${parametro.id} actualizado correctamente`
+              );
+            }
+          } else {
+            console.log(`➕ Creando nuevo parámetro`);
+
+            const createResponse = await fetch(`/api/educadores/parametros`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: parametro.name,
+                description: parametro.description,
+                porcentaje: parametro.porcentaje,
+                courseId: Number(courseIdString2),
+              }),
+            });
+
+            if (!createResponse.ok) {
+              console.error('🔴 Error al crear nuevo parámetro');
+            } else {
+              console.log('✅ Nuevo parámetro creado correctamente');
+            }
+          }
+        }
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -988,7 +1049,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           courseTypeId,
           isActive,
           subjects,
-          coverVideoCourseKey
+          coverVideoCourseKey,
+          individualPrice,
+          parametros
         ) =>
           handleUpdateCourse(
             id,
@@ -1006,7 +1069,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             isActive,
             subjects,
             coverVideoCourseKey,
-            individualPrice
+            individualPrice,
+            parametros
           )
         }
         editingCourseId={course.id}

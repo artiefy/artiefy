@@ -2,7 +2,7 @@
 /* editar curso en super admin*/
 'use client';
 
-import { type ChangeEvent,useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -44,7 +44,13 @@ interface CourseFormProps {
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
-    individualPrice: number | null
+    individualPrice: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+    }[]
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -585,10 +591,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       console.log('   - coverImageKey:', coverImageKey);
       console.log('   - uploadedFileName:', finalUploadedFileName);
       console.log('   - videoKey:', finalVideoKey);
-      if (
-        ( courseTypeId === 4) &&
-        (!individualPrice || individualPrice <= 0)
-      ) {
+      if (courseTypeId === 4 && (!individualPrice || individualPrice <= 0)) {
         toast.error('Debe ingresar un precio válido para cursos individuales.');
         return;
       }
@@ -603,13 +606,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         nivelid,
         rating,
         addParametros,
-        finalCoverImageKey, // ✅
+        finalCoverImageKey,
         finalUploadedFileName,
         courseTypeId,
         isActive,
         subjects,
         finalVideoKey,
-        individualPrice
+        individualPrice,
+        parametros // 👈 AÑADIDO AQUÍ
       );
 
       if (controller.signal.aborted) {
@@ -927,7 +931,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     setCourseTypeId={setCourseTypeId}
                   />
                 </div>
-                {( courseTypeId === 4) && (
+                {courseTypeId === 4 && (
                   <div className="w-full">
                     <label className="text-primary text-sm font-medium md:text-lg">
                       Precio Individual

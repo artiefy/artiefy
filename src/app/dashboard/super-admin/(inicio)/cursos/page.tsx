@@ -219,7 +219,13 @@ export default function Page() {
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
-    individualPrice: number | null
+    individualPrice: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+    }[] // ← 👈 nuevo
   ) => {
     console.log('🧪 Enviando datos a updateCourse:', {
       id: Number(id),
@@ -232,16 +238,13 @@ export default function Page() {
       nivelid: Number(nivelid),
       rating,
     });
-    if (
-      ( courseTypeId === 4) &&
-      (!individualPrice || individualPrice <= 0)
-    ) {
+    if (courseTypeId === 4 && (!individualPrice || individualPrice <= 0)) {
       toast.error('El precio individual es obligatorio y debe ser mayor a 0.');
       return;
     }
     if (!user) return;
     void fileName;
-
+    void parametros;
     // Validar que haya al menos un parámetro si addParametros es true
     if (addParametros && parametrosList.length === 0) {
       toast.error('Error', {
@@ -663,10 +666,10 @@ export default function Page() {
             }
           }}
           individualPrice={
-			editingCourse
-			  ? (editingCourse.individualPrice ?? null)
-			  : individualPrice
-		  }		  
+            editingCourse
+              ? (editingCourse.individualPrice ?? null)
+              : individualPrice
+          }
           setIndividualPrice={(price: number | null) => {
             if (editingCourse) {
               setEditingCourse((prev) =>

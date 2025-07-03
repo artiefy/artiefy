@@ -44,7 +44,13 @@ interface CourseFormProps {
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
-    individualPrice: number | null
+    individualPrice: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+    }[]
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -595,7 +601,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         isActive,
         subjects,
         finalVideoKey,
-        individualPrice
+        individualPrice,
+        parametros // 👈 AÑADIDO AQUÍ
       );
 
       if (controller.signal.aborted) {
