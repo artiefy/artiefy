@@ -745,21 +745,43 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Efecto para manejar la carga de los inputs
   useEffect(() => {
     if (editingCourseId) {
+      console.log('📝 Cargando datos del curso para editar', {
+        title,
+        description,
+        categoryid,
+        modalidadesid,
+        nivelid,
+        coverImageKey,
+        courseTypeId,
+        isActive,
+        individualPrice,
+        coverVideoCourseKey,
+      });
+
       setTitle(title);
       setDescription(description);
       setCategoryid(categoryid);
-      setRating(rating); // Añadir esta línea
       setModalidadesid(modalidadesid);
-      setNivelid(Number(nivelid)); // Asegúrate de convertir a número
-      setCoverImage(coverImageKey);
+      setNivelid(nivelid);
+      setCoverImage(coverImageKey ?? null);
       setCourseTypeId(courseTypeId ?? null);
       setIsActive(isActive);
       setIndividualPrice(individualPrice ?? null);
-      if (setCoverVideoCourseKey) {
-        setCoverVideoCourseKey(coverVideoCourseKey);
-      }
+      setCoverVideoCourseKey(coverVideoCourseKey ?? null);
     }
-  }, [editingCourseId]);
+  }, [
+    editingCourseId,
+    title,
+    description,
+    categoryid,
+    modalidadesid,
+    nivelid,
+    coverImageKey,
+    courseTypeId,
+    isActive,
+    individualPrice,
+    coverVideoCourseKey,
+  ]);
 
   // Efecto para manejar la creacion o edicion de parametros
   const handleToggleParametro = () => {
@@ -782,6 +804,25 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setIsActive(true);
     }
   }, [isOpen, editingCourseId]);
+
+  useEffect(() => {
+    if (isOpen && editingCourseId) {
+      console.log('🔍 Modal abierto para editar curso', {
+        editingCourseId,
+        title,
+        description,
+        categoryid,
+        modalidadesid,
+        nivelid,
+        coverImageKey,
+        courseTypeId,
+        isActive,
+        individualPrice,
+        coverVideoCourseKey,
+      });
+    }
+  }, [isOpen, editingCourseId]);
+ 
 
   // Agregar este useEffect para manejar la imagen existente cuando se edita
   useEffect(() => {
