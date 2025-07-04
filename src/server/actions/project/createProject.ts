@@ -1,6 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm'; // <-- importa eq
 
 import { db } from '~/server/db';
 import {
@@ -8,6 +9,7 @@ import {
   projects,
   projectSchedule,
   specificObjectives,
+  users,
 } from '~/server/db/schema';
 
 interface ProjectData {
@@ -24,6 +26,7 @@ interface ProjectData {
   coverImageKey?: string;
   type_project: string;
   categoryId: number;
+  isPublic?: boolean; // <-- nuevo campo opcional
 }
 
 // Crear proyecto, objetivos específicos, actividades y cronograma
@@ -35,6 +38,48 @@ export async function createProject(projectData: ProjectData): Promise<void> {
   }
   const UserId = user.id;
   console.log('🟡 Datos recibidos:', UserId);
+
+  // Verificar si el usuario existe en la base de datos, si no, crearlo (igual que enrollInCourse)
+  let dbUser = await db.query.users.findFirst({
+    where: eq(users.id, UserId),
+  });
+
+  if (!dbUser) {
+    const primaryEmail = user.emailAddresses.find(
+      (email) => email.id === user.primaryEmailAddressId
+    );
+
+    if (!primaryEmail?.emailAddress) {
+      throw new Error('No se pudo obtener el email del usuario');
+    }
+
+    try {
+      await db.insert(users).values({
+        id: UserId,
+        name:
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : (user.firstName ?? 'Usuario'),
+        email: primaryEmail.emailAddress,
+        role: 'estudiante',
+        subscriptionStatus: 'inactive', // o 'active' si aplica lógica de suscripción
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Verificar que el usuario se creó correctamente
+      dbUser = await db.query.users.findFirst({
+        where: eq(users.id, UserId),
+      });
+
+      if (!dbUser) {
+        throw new Error('Error al crear el usuario en la base de datos');
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw new Error('Error al crear el usuario en la base de datos');
+    }
+  }
 
   // 1. Crear el proyecto
   const insertedProjects = await db
@@ -48,6 +93,7 @@ export async function createProject(projectData: ProjectData): Promise<void> {
       type_project: projectData.type_project,
       userId: UserId,
       categoryId: projectData.categoryId,
+      isPublic: projectData.isPublic ?? false, // <-- por defecto false
     })
     .returning({ id: projects.id });
 

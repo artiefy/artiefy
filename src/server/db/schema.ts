@@ -1,17 +1,17 @@
 import { relations, sql } from 'drizzle-orm';
 import {
   boolean,
+  date,
   integer,
+  jsonb,
   pgTable,
+  primaryKey,
   real,
   serial,
   text,
   timestamp,
-  varchar,
-  date,
   unique,
-  primaryKey,
-  jsonb,
+  varchar,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -210,6 +210,7 @@ export const projects = pgTable('projects', {
   categoryId: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
+  isPublic: boolean('is_public').default(false).notNull(), // <-- nuevo campo
 });
 
 // Tabla de objetivos especificos proyectos

@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+
+import { typeProjects } from '~/server/actions/project/typeProject';
 import { type Category } from '~/types';
 
 interface ModalResumenProps {
@@ -41,6 +43,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [nuevaActividad, setNuevaActividad] = useState('');
   const [cronograma, setCronograma] = useState<Record<string, number[]>>({});
   const [numMeses, setNumMeses] = useState(1);
+  const [tipoProyecto, setTipoProyecto] = useState<string>(
+    typeProjects[0]?.value || ''
+  );
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'auto';
@@ -151,20 +156,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
 
     const proyecto = {
-  name: titulo,
-  categoryId: parseInt(categoria),
-  planteamiento: planteamientoEditado,
-  justificacion: justificacionEditada,
-  objetivo_general: objetivoGenEditado,
-  objetivos_especificos: objetivosEspEditado,
-  actividades: actividadEditada.map((descripcion) => ({
-    descripcion,
-    meses: cronograma[descripcion] || [],
-  })),
-  coverImageKey: null,
-  type_project: 'tipoProyecto',
-};
-
+      name: titulo,
+      categoryId: parseInt(categoria),
+      planteamiento: planteamientoEditado,
+      justificacion: justificacionEditada,
+      objetivo_general: objetivoGenEditado,
+      objetivos_especificos: objetivosEspEditado,
+      actividades: actividadEditada.map((descripcion) => ({
+        descripcion,
+        meses: cronograma[descripcion] || [],
+      })),
+      coverImageKey: null,
+      type_project: tipoProyecto, // <-- usar el valor seleccionado
+    };
 
     try {
       const response = await fetch('/api/projects', {
@@ -321,6 +325,23 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               {categorias.map((categoria) => (
                 <option key={categoria.id} value={categoria.id}>
                   {categoria.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Selector para el tipo de proyecto */}
+          <div className="flex flex-col">
+            <label>Tipo de Proyecto</label>
+            <select
+              value={tipoProyecto}
+              onChange={(e) => setTipoProyecto(e.target.value)}
+              className="mt-1 rounded border bg-gray-400 p-2 text-black"
+              required
+            >
+              {typeProjects.map((tp) => (
+                <option key={tp.value} value={tp.value}>
+                  {tp.label}
                 </option>
               ))}
             </select>
