@@ -580,127 +580,102 @@ export function CourseHeader({
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="px-0">
-        <AspectRatio ratio={16 / 6}>
-          {/* Nueva lógica de portada/video */}
-          {coverVideoCourseKey ? (
-            <div className="relative h-full w-full">
-              <video
-                ref={videoRef}
-                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
-                className="h-full w-full cursor-pointer object-cover"
-                autoPlay
-                loop
-                playsInline
-                controls={false}
-                muted={isMuted}
-                preload="auto"
-                poster={
-                  coverImageKey
-                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
-                    : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                }
-                onClick={handleVideoClick}
-              />
-              {/* Botón de volumen y pantalla completa */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 16,
-                  right: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  zIndex: 10,
-                  gap: 8,
-                }}
-              >
-                {/* Botón mute/unmute */}
-                <button
-                  type="button"
-                  aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
-                  onClick={handleToggleMute}
-                  style={{
-                    background: 'rgba(0,0,0,0.6)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    padding: 8,
-                    cursor: 'pointer',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {isMuted ? (
-                    <FaVolumeMute size={20} />
-                  ) : (
-                    <FaVolumeUp size={20} />
-                  )}
-                </button>
-                {/* Volumen */}
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={videoVolume}
-                  onChange={handleVolumeChange}
-                  style={{
-                    width: 80,
-                    accentColor: '#3AF4EF',
-                    marginRight: 8,
-                  }}
-                  title="Volumen"
+        {/* Título encima de la portada SOLO en mobile, en desktop dentro de la portada */}
+        <div className="block w-full px-4 pt-4 pb-1 sm:hidden">
+          <h1 className="line-clamp-2 text-base font-bold text-gray-900">
+            {course.title}
+          </h1>
+        </div>
+        <div className="relative h-30 w-full transition-all duration-200 sm:h-auto">
+          <AspectRatio ratio={16 / 6}>
+            {/* Nueva lógica de portada/video */}
+            {coverVideoCourseKey ? (
+              <div className="relative h-full w-full">
+                <video
+                  ref={videoRef}
+                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
+                  className="h-full w-full cursor-pointer object-cover"
+                  autoPlay
+                  loop
+                  playsInline
+                  controls={false}
+                  muted={isMuted}
+                  preload="auto"
+                  poster={
+                    coverImageKey
+                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
+                      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                  }
+                  onClick={handleVideoClick}
                 />
-                {/* Botón pantalla completa */}
-                <button
-                  type="button"
-                  aria-label="Pantalla completa"
-                  onClick={handleFullscreenClick}
-                  style={{
-                    background: 'rgba(0,0,0,0.6)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    padding: 8,
-                    cursor: 'pointer',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FaExpand size={20} />
-                </button>
+                {/* Botón de volumen y pantalla completa */}
+                <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
+                  {/* Botón mute/unmute */}
+                  <button
+                    type="button"
+                    aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
+                    onClick={handleToggleMute}
+                    className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                  >
+                    {isMuted ? (
+                      <FaVolumeMute className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                    ) : (
+                      <FaVolumeUp className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                    )}
+                  </button>
+                  {/* Volumen */}
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={videoVolume}
+                    onChange={handleVolumeChange}
+                    className="mr-1 h-2 w-10 accent-cyan-300 sm:mr-2 sm:h-3 sm:w-20"
+                    title="Volumen"
+                  />
+                  {/* Botón pantalla completa */}
+                  <button
+                    type="button"
+                    aria-label="Pantalla completa"
+                    onClick={handleFullscreenClick}
+                    className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                  >
+                    <FaExpand className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : coverImageKey ? (
-            <Image
-              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
-              alt={course.title}
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-              placeholder="blur"
-              blurDataURL={blurDataURL}
-            />
-          ) : (
-            <Image
-              src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
-              alt={course.title}
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-              placeholder="blur"
-              blurDataURL={blurDataURL}
-            />
-          )}
-          <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/50 to-transparent p-4 md:p-6">
+            ) : coverImageKey ? (
+              <Image
+                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
+                alt={course.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+                placeholder="blur"
+                blurDataURL={blurDataURL}
+              />
+            ) : (
+              <Image
+                src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
+                alt={course.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="100vw"
+                placeholder="blur"
+                blurDataURL={blurDataURL}
+              />
+            )}
+          </AspectRatio>
+          {/* Título dentro de la portada SOLO en desktop */}
+          <div className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/70 via-black/50 to-transparent p-4 sm:block md:p-6">
             <h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
               {course.title}
             </h1>
           </div>
-        </AspectRatio>
+        </div>
       </CardHeader>
 
       <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
@@ -762,17 +737,26 @@ export function CourseHeader({
 
         {/* Course type and instructor info */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-background text-base font-extrabold sm:text-lg">
-                {course.instructorName ?? 'Instructor no encontrado'}
-              </h3>
-              <em className="text-sm font-bold text-gray-600 sm:text-base">
-                Educador
-              </em>
+          <div className="w-full space-y-4">
+            <div className="flex w-full items-center justify-between">
+              <div>
+                <h3 className="text-background text-base font-extrabold sm:text-lg">
+                  {course.instructorName ?? 'Instructor no encontrado'}
+                </h3>
+                <em className="text-sm font-bold text-gray-600 sm:text-base">
+                  Educador
+                </em>
+              </div>
+              {/* Modalidad badge a la derecha en mobile, abajo en desktop */}
+              <div className="ml-2 block sm:hidden">
+                <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
+                  {course.modalidad?.name}
+                </Badge>
+              </div>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-4">
+          {/* Modalidad badge solo visible en desktop */}
+          <div className="hidden flex-col items-end gap-4 sm:flex">
             <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
               {course.modalidad?.name}
             </Badge>
