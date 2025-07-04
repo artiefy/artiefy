@@ -2,13 +2,21 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
-import { FaCheckCircle, FaLock } from 'react-icons/fa';
+import {
+  FaCheckCircle,
+  FaChevronDown,
+  FaChevronLeft,
+  FaChevronRight,
+  FaChevronUp,
+  FaLock,
+} from 'react-icons/fa';
 import { MdKeyboardDoubleArrowDown } from 'react-icons/md';
 import { TbClockFilled, TbReportAnalytics } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { useMediaQuery } from '~/utils/useMediaQuery';
 
 import { LessonActivityModal } from './LessonActivityModal';
 import { GradeHistory } from './LessonGradeHistory';
@@ -154,6 +162,9 @@ const LessonActivities = ({
   const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
     null
   );
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [showAll, setShowAll] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -688,27 +699,101 @@ const LessonActivities = ({
   };
 
   return (
-    <div className="max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:w-72 md:overflow-visible md:p-4">
-      <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
-        Actividades
-      </h2>
-      {/* Activities section */}
-      {activities.length > 0 ? (
-        <div className="space-y-4">
-          {activities
-            .slice(0, 3)
-            .map((activity, index) => renderActivityCard(activity, index))}
-        </div>
-      ) : (
-        <div className="rounded-lg bg-white p-4 shadow-lg">
-          <p className="text-gray-600">No hay actividades disponibles</p>
+    <div
+      className={
+        isMobile
+          ? 'm-0 w-full rounded-none bg-transparent p-0'
+          : 'max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:w-72 md:overflow-visible md:p-4'
+      }
+      style={
+        isMobile
+          ? {
+              maxHeight: 'none',
+              overflow: 'visible',
+              boxShadow: 'none',
+              borderRadius: 0,
+              background: 'transparent',
+            }
+          : undefined
+      }
+    >
+      <div className="flex items-center justify-between">
+        <h2
+          className={`text-primary mb-4 font-bold ${
+            isMobile ? 'px-2 text-lg' : 'text-xl md:text-2xl'
+          }`}
+        >
+          Actividades
+        </h2>
+        {/* Botón de retraer/expandir solo en móvil */}
+        {isMobile && (
+          <button
+            className="mr-2 -mt-5 flex items-center rounded px-2 py-1 text-blue-600 hover:bg-blue-50 active:scale-95"
+            onClick={() => setCollapsed((prev) => !prev)}
+            aria-label={
+              collapsed ? 'Expandir actividades' : 'Ocultar actividades'
+            }
+          >
+            {collapsed ? (
+              <>
+                <FaChevronDown className="inline" />
+                <span className="ml-1 text-md font-bold text-blue-500">Mostrar</span>
+              </>
+            ) : (
+              <>
+                <FaChevronUp className="inline" />
+                <span className="ml-1 text-md font-bold text-blue-500">Ocultar</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
+      {/* Botón para expandir/retraer tarjetas (solo si no está colapsado) */}
+      {!collapsed && activities.length > 3 && (
+        <div className="mb-2 flex justify-end px-1">
+          <button
+            className="flex items-center gap-1 rounded px-2 py-1 text-sm font-semibold text-blue-600 hover:bg-blue-50 active:scale-95"
+            onClick={() => setShowAll((prev) => !prev)}
+            aria-expanded={showAll}
+            aria-label={
+              showAll ? 'Mostrar menos actividades' : 'Mostrar más actividades'
+            }
+          >
+            {showAll ? (
+              <>
+                Mostrar menos <FaChevronLeft className="inline" />
+              </>
+            ) : (
+              <>
+                Mostrar más <FaChevronRight className="inline" />
+              </>
+            )}
+          </button>
         </div>
       )}
+      {/* Activities section */}
+      {!collapsed ? (
+        activities.length > 0 ? (
+          <div className={`space-y-4 ${isMobile ? 'space-y-2' : ''}`}>
+            {(showAll ? activities : activities.slice(0, 3)).map(
+              (activity, index) => renderActivityCard(activity, index)
+            )}
+          </div>
+        ) : (
+          <div className="rounded-lg bg-white p-4 shadow-lg">
+            <p className="text-gray-600">No hay actividades disponibles</p>
+          </div>
+        )
+      ) : null}
 
       {/* Rest of the component */}
       {/* Grades section */}
-      <div className="mt-4">
-        <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
+      <div className={`mt-4 ${isMobile ? 'mb-2' : ''}`}>
+        <h2
+          className={`text-primary mb-4 font-bold ${
+            isMobile ? 'px-2 text-lg' : 'text-xl md:text-2xl'
+          }`}
+        >
           Calificaciones
         </h2>
         <LessonGrades

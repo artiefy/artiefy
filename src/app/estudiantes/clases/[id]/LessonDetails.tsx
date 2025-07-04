@@ -570,25 +570,49 @@ export default function LessonDetails({
             handleVideoEnd={handleVideoEnd}
             handleProgressUpdate={handleProgressUpdate}
           />
+          {/* ACTIVIDADES ARRIBA DE COMENTARIOS EN MOBILE */}
+          {isMobile && (
+            <div className="mt-4">
+              <LessonActivities
+                activities={activities}
+                isVideoCompleted={isVideoCompleted}
+                isActivityCompleted={isActivityCompleted}
+                handleActivityCompletion={handleActivityCompletion}
+                userId={userId}
+                onLessonUnlocked={handleLessonUnlocked}
+                courseId={lesson.courseId}
+                lessonId={lesson.id}
+                isLastLesson={isLastLesson(lessonsState, lesson.id)}
+                isLastActivity={isLastActivity(
+                  lessonsState,
+                  activities,
+                  lesson
+                )}
+                lessons={lessonsState}
+              />
+            </div>
+          )}
           <LessonComments lessonId={lesson.id} />
         </div>
 
         {/* Right Sidebar */}
-        <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-72">
-          <LessonActivities
-            activities={activities}
-            isVideoCompleted={isVideoCompleted}
-            isActivityCompleted={isActivityCompleted}
-            handleActivityCompletion={handleActivityCompletion}
-            userId={userId}
-            onLessonUnlocked={handleLessonUnlocked}
-            courseId={lesson.courseId}
-            lessonId={lesson.id}
-            isLastLesson={isLastLesson(lessonsState, lesson.id)}
-            isLastActivity={isLastActivity(lessonsState, activities, lesson)}
-            lessons={lessonsState}
-          />
-        </div>
+        {!isMobile && (
+          <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-0 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-72">
+            <LessonActivities
+              activities={activities}
+              isVideoCompleted={isVideoCompleted}
+              isActivityCompleted={isActivityCompleted}
+              handleActivityCompletion={handleActivityCompletion}
+              userId={userId}
+              onLessonUnlocked={handleLessonUnlocked}
+              courseId={lesson.courseId}
+              lessonId={lesson.id}
+              isLastLesson={isLastLesson(lessonsState, lesson.id)}
+              isLastActivity={isLastActivity(lessonsState, activities, lesson)}
+              lessons={lessonsState}
+            />
+          </div>
+        )}
 
         {/* Chatbot Button and Modal */}
         <StudentChatbot isAlwaysVisible={true} />
