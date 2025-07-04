@@ -2,7 +2,7 @@
 /* editar curso en super admin*/
 'use client';
 
-import { type ChangeEvent,useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -44,7 +44,13 @@ interface CourseFormProps {
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
-    individualPrice: number | null
+    individualPrice: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+    }[]
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -585,10 +591,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       console.log('   - coverImageKey:', coverImageKey);
       console.log('   - uploadedFileName:', finalUploadedFileName);
       console.log('   - videoKey:', finalVideoKey);
-      if (
-        ( courseTypeId === 4) &&
-        (!individualPrice || individualPrice <= 0)
-      ) {
+      if (courseTypeId === 4 && (!individualPrice || individualPrice <= 0)) {
         toast.error('Debe ingresar un precio válido para cursos individuales.');
         return;
       }
@@ -603,13 +606,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         nivelid,
         rating,
         addParametros,
-        finalCoverImageKey, // ✅
+        finalCoverImageKey,
         finalUploadedFileName,
         courseTypeId,
         isActive,
         subjects,
         finalVideoKey,
-        individualPrice
+        individualPrice,
+        parametros // 👈 AÑADIDO AQUÍ
       );
 
       if (controller.signal.aborted) {
@@ -741,21 +745,43 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Efecto para manejar la carga de los inputs
   useEffect(() => {
     if (editingCourseId) {
+      console.log('📝 Cargando datos del curso para editar', {
+        title,
+        description,
+        categoryid,
+        modalidadesid,
+        nivelid,
+        coverImageKey,
+        courseTypeId,
+        isActive,
+        individualPrice,
+        coverVideoCourseKey,
+      });
+
       setTitle(title);
       setDescription(description);
       setCategoryid(categoryid);
-      setRating(rating); // Añadir esta línea
       setModalidadesid(modalidadesid);
-      setNivelid(Number(nivelid)); // Asegúrate de convertir a número
-      setCoverImage(coverImageKey);
+      setNivelid(nivelid);
+      setCoverImage(coverImageKey ?? null);
       setCourseTypeId(courseTypeId ?? null);
       setIsActive(isActive);
       setIndividualPrice(individualPrice ?? null);
-      if (setCoverVideoCourseKey) {
-        setCoverVideoCourseKey(coverVideoCourseKey);
-      }
+      setCoverVideoCourseKey(coverVideoCourseKey ?? null);
     }
-  }, [editingCourseId]);
+  }, [
+    editingCourseId,
+    title,
+    description,
+    categoryid,
+    modalidadesid,
+    nivelid,
+    coverImageKey,
+    courseTypeId,
+    isActive,
+    individualPrice,
+    coverVideoCourseKey,
+  ]);
 
   // Efecto para manejar la creacion o edicion de parametros
   const handleToggleParametro = () => {
@@ -778,6 +804,25 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setIsActive(true);
     }
   }, [isOpen, editingCourseId]);
+
+  useEffect(() => {
+    if (isOpen && editingCourseId) {
+      console.log('🔍 Modal abierto para editar curso', {
+        editingCourseId,
+        title,
+        description,
+        categoryid,
+        modalidadesid,
+        nivelid,
+        coverImageKey,
+        courseTypeId,
+        isActive,
+        individualPrice,
+        coverVideoCourseKey,
+      });
+    }
+  }, [isOpen, editingCourseId]);
+ 
 
   // Agregar este useEffect para manejar la imagen existente cuando se edita
   useEffect(() => {
@@ -927,7 +972,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     setCourseTypeId={setCourseTypeId}
                   />
                 </div>
-                {( courseTypeId === 4) && (
+                {courseTypeId === 4 && (
                   <div className="w-full">
                     <label className="text-primary text-sm font-medium md:text-lg">
                       Precio Individual
