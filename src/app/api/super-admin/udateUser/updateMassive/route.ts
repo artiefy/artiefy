@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server';
+
+import { clerkClient } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
+
 import { db } from '~/server/db';
 import {
-  users,
-  userCustomFields,
   enrollmentPrograms,
   enrollments,
+  userCustomFields,
+  users,
 } from '~/server/db/schema';
-import { eq, and } from 'drizzle-orm';
-import { clerkClient } from '@clerk/nextjs/server';
 
 const updateSchema = z.object({
   userIds: z.array(z.string()),
-  fields: z.record(z.any()),
+  fields: z.record(z.unknown()),
 });
 
 export async function PATCH(req: Request) {
@@ -36,11 +38,9 @@ export async function PATCH(req: Request) {
     for (const userId of userIds) {
       console.log(`\n🔄 Procesando usuario: ${userId}`);
 
-      // Desestructuramos
-      let {
+      // Desestructuramos y usamos const para que no dé prefer-const
+      const {
         name,
-        firstName,
-        lastName,
         role,
         status,
         permissions,
@@ -57,28 +57,11 @@ export async function PATCH(req: Request) {
         ...customFields
       } = fields;
 
-      console.log('📝 Datos recibidos para este usuario:', {
-        name,
-        firstName,
-        lastName,
-        role,
-        status,
-        permissions,
-        phone,
-        address,
-        city,
-        country,
-        birthDate,
-        planType,
-        purchaseDate,
-        subscriptionEndDate,
-        programId,
-        courseId,
-        customFields,
-      });
+      let firstName: string | undefined;
+      let lastName: string | undefined;
 
-      // Si solo mandaron `name`, divídelo en firstName + lastName
-      if (!firstName && !lastName && name) {
+      // Si hay solo name, dividirlo
+      if (typeof name === 'string' && name.trim() !== '') {
         const split = name.trim().split(' ');
         firstName = split[0];
         lastName = split.slice(1).join(' ') || '';
@@ -89,13 +72,14 @@ export async function PATCH(req: Request) {
 
       const client = await clerkClient();
       let userExistsInClerk = true;
-      let existingMetadata = {};
+      let existingMetadata: Record<string, unknown> = {};
 
       try {
         const clerkUser = await client.users.getUser(userId);
-        existingMetadata = clerkUser.publicMetadata || {};
-      } catch (err: any) {
-        if (err?.errors?.[0]?.code === 'not_found' || err?.status === 404) {
+        existingMetadata = clerkUser.publicMetadata ?? {};
+      } catch (err) {
+        const e = err as { errors?: { code: string }[]; status?: number };
+        if (e?.errors?.[0]?.code === 'not_found' || e?.status === 404) {
           userExistsInClerk = false;
         } else {
           console.error('❌ Clerk err:', err);
@@ -106,25 +90,23 @@ export async function PATCH(req: Request) {
         }
       }
 
-      let normalizedStatus =
-        status?.toLowerCase() === 'activo'
+      const normalizedStatus =
+        typeof status === 'string' && status.toLowerCase() === 'activo'
           ? 'active'
-          : (status?.toLowerCase() ?? 'active');
+          : typeof status === 'string'
+            ? status.toLowerCase()
+            : 'active';
 
-      if (subscriptionEndDate && normalizedStatus === 'inactive') {
-        normalizedStatus = 'active';
-      }
-
-      const formattedEndDate = subscriptionEndDate
-        ? new Date(subscriptionEndDate).toISOString().split('T')[0]
+      const endDateIso = subscriptionEndDate
+        ? new Date(subscriptionEndDate as string).toISOString().split('T')[0]
         : null;
 
       const newMetadata = {
         ...existingMetadata,
-        role: role || 'estudiante',
-        planType: planType ?? 'none',
+        role: typeof role === 'string' ? role : 'estudiante',
+        planType: typeof planType === 'string' ? planType : 'none',
         subscriptionStatus: normalizedStatus,
-        subscriptionEndDate: formattedEndDate,
+        subscriptionEndDate: endDateIso,
         permissions: Array.isArray(permissions) ? permissions : [],
         fullName: `${firstName ?? ''} ${lastName ?? ''}`.trim(),
       };
@@ -142,43 +124,47 @@ export async function PATCH(req: Request) {
         });
       }
 
-      // Preparamos SET dinámico
+      // SET dinámico para DB
       const validPlanTypes = ['none', 'Pro', 'Premium', 'Enterprise'];
-      const resolvedPlanType = planType
-        ? validPlanTypes.includes(planType)
+      const resolvedPlanType =
+        typeof planType === 'string' && validPlanTypes.includes(planType)
           ? planType
-          : 'Premium'
-        : 'Premium';
+          : 'Premium';
 
-      const userUpdateFields: Record<string, any> = { updatedAt: new Date() };
+      const userUpdateFields: Record<string, unknown> = {
+        updatedAt: new Date(),
+      };
 
-      if (name) {
+      if (typeof name === 'string') {
         userUpdateFields.name = name;
       } else if (firstName || lastName) {
         userUpdateFields.name = `${firstName ?? ''} ${lastName ?? ''}`.trim();
       }
 
-      if (role !== undefined) userUpdateFields.role = role;
-      if (status !== undefined) userUpdateFields.subscriptionStatus = status;
+      if (typeof role === 'string') userUpdateFields.role = role;
+      if (typeof status === 'string')
+        userUpdateFields.subscriptionStatus = status;
       if (planType !== undefined) userUpdateFields.planType = resolvedPlanType;
-      if (phone !== undefined) userUpdateFields.phone = phone;
-      if (address !== undefined) userUpdateFields.address = address;
-      if (city !== undefined) userUpdateFields.city = city;
-      if (country !== undefined) userUpdateFields.country = country;
+      if (typeof phone === 'string') userUpdateFields.phone = phone;
+      if (typeof address === 'string') userUpdateFields.address = address;
+      if (typeof city === 'string') userUpdateFields.city = city;
+      if (typeof country === 'string') userUpdateFields.country = country;
       if (birthDate !== undefined)
-        userUpdateFields.birthDate = new Date(birthDate);
+        userUpdateFields.birthDate = new Date(birthDate as string);
       if (purchaseDate !== undefined)
-        userUpdateFields.purchaseDate = new Date(purchaseDate);
+        userUpdateFields.purchaseDate = new Date(purchaseDate as string);
       if (subscriptionEndDate !== undefined)
-        userUpdateFields.subscriptionEndDate = new Date(subscriptionEndDate);
+        userUpdateFields.subscriptionEndDate = new Date(
+          subscriptionEndDate as string
+        );
 
       console.log(`🚀 Campos SET para UPDATE en DB:`, userUpdateFields);
 
       await db.update(users).set(userUpdateFields).where(eq(users.id, userId));
       console.log(`✅ DB users actualizado para ${userId}`);
 
+      // Custom fields
       for (const [key, value] of Object.entries(customFields)) {
-        console.log(`💾 Guardando custom field: ${key} = ${value}`);
         await db
           .insert(userCustomFields)
           .values({
@@ -193,24 +179,22 @@ export async function PATCH(req: Request) {
       }
 
       if (programId != null) {
-        console.log(`🎓 Matriculando en programa ID: ${programId}`);
         await db.insert(enrollmentPrograms).values({
           userId,
-          programaId: programId,
+          programaId: programId as number,
           enrolledAt: new Date(),
           completed: false,
         });
       }
 
       if (courseId != null) {
-        console.log(`📚 Matriculando en curso ID: ${courseId}`);
         const exists = await db
           .select()
           .from(enrollments)
           .where(
             and(
               eq(enrollments.userId, userId),
-              eq(enrollments.courseId, courseId)
+              eq(enrollments.courseId, courseId as number)
             )
           )
           .limit(1);
@@ -219,7 +203,7 @@ export async function PATCH(req: Request) {
           console.log(`➕ Inscribiendo en nuevo curso`);
           await db.insert(enrollments).values({
             userId,
-            courseId,
+            courseId: courseId as number,
             enrolledAt: new Date(),
             completed: false,
           });
@@ -230,7 +214,7 @@ export async function PATCH(req: Request) {
           publicMetadata: {
             planType: 'Premium',
             subscriptionStatus: 'active',
-            subscriptionEndDate: formattedEndDate,
+            subscriptionEndDate: endDateIso,
           },
         });
 
@@ -240,7 +224,7 @@ export async function PATCH(req: Request) {
             planType: 'Premium',
             subscriptionStatus: 'active',
             subscriptionEndDate: subscriptionEndDate
-              ? new Date(subscriptionEndDate)
+              ? new Date(subscriptionEndDate as string)
               : null,
           })
           .where(eq(users.id, userId));

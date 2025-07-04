@@ -268,9 +268,7 @@ export default function EnrolledUsersPage() {
   const [infoDialogMessage, setInfoDialogMessage] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
-  const [massiveEditFields, setMassiveEditFields] = useState<{
-    [field: string]: string;
-  }>({});
+  const [massiveEditFields, setMassiveEditFields] = useState<Record<string, string>>({});
   const [selectedMassiveFields, setSelectedMassiveFields] = useState<string[]>(
     []
   );
