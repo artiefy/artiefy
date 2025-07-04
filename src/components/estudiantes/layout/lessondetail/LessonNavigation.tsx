@@ -14,6 +14,7 @@ interface LessonNavigationProps {
   lessonsState: LessonWithProgress[];
   lessonOrder: number;
   isNavigating: boolean; // Add new prop
+  isMobile?: boolean; // <-- nuevo prop
 }
 
 const LessonNavigation = ({

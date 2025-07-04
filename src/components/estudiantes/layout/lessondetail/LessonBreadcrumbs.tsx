@@ -18,10 +18,13 @@ const LessonBreadcrumbs = ({
   lessonTitle,
 }: LessonBreadcrumbsProps) => {
   return (
-    <nav className="w-full max-w-full overflow-x-auto px-2 md:px-0">
-      <ol className="flex items-center space-x-2 text-sm whitespace-nowrap text-gray-400">
+    <nav className="w-full max-w-full overflow-x-auto px-2 md:px-8">
+      <ol className="flex items-center space-x-2 pr-2 text-sm whitespace-nowrap text-gray-400">
         <li>
-          <Link href="/" className="flex items-center hover:underline">
+          <Link
+            href="/"
+            className="flex items-center hover:underline focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
             <FaHome className="mr-1" /> Inicio
           </Link>
         </li>
@@ -31,7 +34,7 @@ const LessonBreadcrumbs = ({
         <li>
           <Link
             href="/estudiantes"
-            className="flex items-center hover:underline"
+            className="flex items-center hover:underline focus:ring-2 focus:ring-blue-500 focus:outline-none"
           >
             <FaUserGraduate className="mr-1" /> Cursos
           </Link>
@@ -42,7 +45,7 @@ const LessonBreadcrumbs = ({
         <li>
           <Link
             href={`/estudiantes/cursos/${courseId}`}
-            className="flex max-w-[120px] items-center truncate hover:underline md:max-w-xs"
+            className="flex max-w-[120px] items-center truncate hover:underline focus:ring-2 focus:ring-blue-500 focus:outline-none md:max-w-xs"
             title={courseTitle}
           >
             <FaBook className="mr-1" /> {courseTitle}
@@ -52,7 +55,7 @@ const LessonBreadcrumbs = ({
           <ChevronRightIcon className="h-4 w-4" />
         </li>
         <li
-          className="text-primary flex max-w-[120px] items-center truncate font-bold md:max-w-xs"
+          className="text-primary flex max-w-[120px] items-center truncate pr-2 font-bold md:max-w-xs"
           title={lessonTitle}
         >
           <SquarePlay className="mr-1 size-5" /> {lessonTitle}

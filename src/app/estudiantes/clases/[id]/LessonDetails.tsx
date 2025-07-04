@@ -30,6 +30,7 @@ import {
   restoreScrollPosition,
   saveScrollPosition,
 } from '~/utils/scrollPosition';
+import { useMediaQuery } from '~/utils/useMediaQuery';
 
 interface LessonDetailsProps {
   lesson: LessonWithProgress;
@@ -484,6 +485,9 @@ export default function LessonDetails({
     }
   }, [user, course, router]);
 
+  // Detectar si es móvil (pantalla <= 768px) - MOVER ARRIBA
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
   if (!lesson) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -512,21 +516,24 @@ export default function LessonDetails({
       />
       <div className="bg-background flex flex-1 flex-col gap-4 px-2 py-2 md:flex-row md:px-4 md:py-6">
         {/* Left Sidebar */}
-        <div className="bg-background mb-2 w-full flex-shrink-0 overflow-x-auto rounded-lg p-2 shadow-none md:mb-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-80">
-          <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
-            Clases
-          </h2>
-          <LessonCards
-            lessonsState={lessonsState}
-            selectedLessonId={selectedLessonId}
-            onLessonClick={handleCardClick}
-            progress={progress}
-            isNavigating={isNavigating}
-            setLessonsState={setLessonsState}
-            courseId={lesson.courseId}
-            userId={userId}
-          />
-        </div>
+        {!isMobile && (
+          <div className="bg-background mb-2 w-full flex-shrink-0 overflow-x-auto rounded-lg p-2 shadow-none md:mb-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-80">
+            <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
+              Clases
+            </h2>
+            <LessonCards
+              lessonsState={lessonsState}
+              selectedLessonId={selectedLessonId}
+              onLessonClick={handleCardClick}
+              progress={progress}
+              isNavigating={isNavigating}
+              setLessonsState={setLessonsState}
+              courseId={lesson.courseId}
+              userId={userId}
+              isMobile={false}
+            />
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="flex w-full max-w-full min-w-0 flex-1 flex-col p-0 md:p-6">
@@ -537,8 +544,25 @@ export default function LessonDetails({
                 lessonsState={lessonsState}
                 lessonOrder={new Date(lesson.createdAt).getTime()}
                 isNavigating={isNavigating}
+                isMobile={isMobile}
               />
             </div>
+            {/* Mostrar el select de clases debajo de los botones de navegación en móvil */}
+            {isMobile && (
+              <div className="mb-4">
+                <LessonCards
+                  lessonsState={lessonsState}
+                  selectedLessonId={selectedLessonId}
+                  onLessonClick={handleCardClick}
+                  progress={progress}
+                  isNavigating={isNavigating}
+                  setLessonsState={setLessonsState}
+                  courseId={lesson.courseId}
+                  userId={userId}
+                  isMobile={true}
+                />
+              </div>
+            )}
           </div>
           <LessonPlayer
             lesson={lesson}

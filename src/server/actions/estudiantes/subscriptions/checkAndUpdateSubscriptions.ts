@@ -138,6 +138,42 @@ export async function checkAndUpdateSubscriptions() {
 
         try {
           // 1. Update Database: NO borres ni modifiques subscriptionEndDate
+          // Formatea la fecha de expiración a zona Bogotá y formato deseado
+          let formattedEndDate = user.subscriptionEndDate;
+          if (user.subscriptionEndDate) {
+            let endDateObj: Date;
+            if (typeof user.subscriptionEndDate === 'string') {
+              // Soporta yyyy-MM-dd o yyyy-MM-dd HH:mm:ss
+              const matchDash =
+                /^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2}):(\d{2}))?$/.exec(
+                  user.subscriptionEndDate
+                );
+              if (matchDash) {
+                const [, year, month, day, hour = '0', min = '0', sec = '0'] =
+                  matchDash;
+                endDateObj = new Date(
+                  Number(year),
+                  Number(month) - 1,
+                  Number(day),
+                  Number(hour),
+                  Number(min),
+                  Number(sec)
+                );
+              } else {
+                endDateObj = new Date(user.subscriptionEndDate);
+              }
+            } else {
+              endDateObj = toDate(user.subscriptionEndDate, {
+                timeZone: TIMEZONE,
+              });
+            }
+            formattedEndDate = formatInTimeZone(
+              endDateObj,
+              TIMEZONE,
+              'yyyy-MM-dd HH:mm:ss'
+            );
+          }
+
           await db
             .update(users)
             .set({
@@ -158,7 +194,7 @@ export async function checkAndUpdateSubscriptions() {
               publicMetadata: {
                 subscriptionStatus: 'inactive',
                 planType: user.planType,
-                subscriptionEndDate: user.subscriptionEndDate, // Mantener la fecha original (string)
+                subscriptionEndDate: formattedEndDate, // <-- formato Bogotá
               },
             });
 
@@ -168,6 +204,7 @@ export async function checkAndUpdateSubscriptions() {
               planType: user.planType,
               metadata: 'Clerk metadata updated',
               updatedAt: nowUTC.toISOString(),
+              subscriptionEndDate: formattedEndDate,
             });
           }
         } catch (error) {

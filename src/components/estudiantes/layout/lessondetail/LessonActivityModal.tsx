@@ -36,6 +36,7 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { type Activity, type Question, type SavedAnswer } from '~/types';
 import { formatScoreNumber } from '~/utils/formatScore';
+import { useMediaQuery } from '~/utils/useMediaQuery'; // <-- crea este hook util
 
 import { FileUploadForm } from './FileUploadForm';
 
@@ -235,6 +236,8 @@ export function LessonActivityModal({
   const [isUrlValid, setIsUrlValid] = useState(false);
   // Add new state for URL uploading
   const [isUploadingUrl, setIsUploadingUrl] = useState(false);
+
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
     if (activity?.content?.questions) {
@@ -1764,7 +1767,11 @@ export function LessonActivityModal({
       }}
     >
       <DialogContent
-        className="[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex max-h-[90vh] flex-col overflow-hidden sm:max-w-[500px]"
+        className={`[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex flex-col overflow-hidden ${
+          isMobile
+            ? 'w-full max-w-full rounded-none p-1'
+            : 'max-h-[90vh] sm:max-w-[500px]'
+        }`}
         aria-describedby={MODAL_DESCRIPTION_ID}
       >
         <DialogHeader className="bg-background sticky top-0 z-50">
