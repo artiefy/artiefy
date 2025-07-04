@@ -1,5 +1,7 @@
 'use server';
 
+import { currentUser } from '@clerk/nextjs/server';
+
 import { db } from '~/server/db';
 import {
   projects,
@@ -25,7 +27,17 @@ interface ProjectData {
 }
 
 // Crear proyecto, objetivos específicos, actividades y cronograma
-export async function createProject(userId: string, projectData: ProjectData): Promise<void> {
+export async function createProject(
+  projectData: ProjectData
+): Promise<void> {
+  const user = await currentUser();
+
+  if (!user?.id) {
+    throw new Error('Usuario no autenticado');
+  }
+  const UserId = user.id;
+  console.log('🟡 Datos recibidos:', UserId);
+
   // 1. Crear el proyecto
   const insertedProjects = await db
     .insert(projects)
@@ -36,7 +48,7 @@ export async function createProject(userId: string, projectData: ProjectData): P
       objetivo_general: projectData.objetivo_general,
       coverImageKey: projectData.coverImageKey ?? null,
       type_project: projectData.type_project,
-      userId,
+      userId: UserId,
       categoryId: projectData.categoryId,
     })
     .returning({ id: projects.id });

@@ -1,6 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
-import { createProject } from '~/server/actions/project/createProject';
 import { NextResponse } from 'next/server';
+
+import { auth } from '@clerk/nextjs/server';
+
+import { createProject } from '~/server/actions/project/createProject';
 
 export async function POST(req: Request) {
   try {
@@ -8,10 +10,12 @@ export async function POST(req: Request) {
     if (!userId)
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
-    const body = await req.json();
-    console.log("🟡 Datos recibidos:", body);
+    const body = (await req.json()) as unknown as Parameters<
+      typeof createProject
+    >[0];
+    console.log('🟡 Datos recibidos:', body);
 
-    await createProject(userId, body);
+    await createProject(body);
 
     return NextResponse.json({ message: 'Proyecto creado correctamente' });
   } catch (error) {

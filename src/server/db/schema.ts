@@ -230,7 +230,7 @@ export const specificObjectivesRelations = relations(
     }),
   })
 );
-// Tabla de actividades
+// Tabla de actividades proyectos
 export const projectActivities = pgTable('project_activities', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id')
