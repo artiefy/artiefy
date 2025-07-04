@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { saveAs } from 'file-saver';
-import { Loader2, Mail,UserPlus, X } from 'lucide-react';
+import { Loader2, Mail, UserPlus, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
@@ -210,7 +210,6 @@ export default function EnrolledUsersPage() {
   const [loadingEmail, setLoadingEmail] = useState(false);
   void setCodigoPais;
 
-
   const [filters, setFilters] = useState({
     name: '',
     email: '',
@@ -269,10 +268,12 @@ export default function EnrolledUsersPage() {
   const [infoDialogMessage, setInfoDialogMessage] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
-  const [massiveEditData, setMassiveEditData] = useState({
-    subscriptionEndDate: '',
-    planType: 'none',
-  });
+  const [massiveEditFields, setMassiveEditFields] = useState<{
+    [field: string]: string;
+  }>({});
+  const [selectedMassiveFields, setSelectedMassiveFields] = useState<string[]>(
+    []
+  );
 
   async function fetchUserCourses(userId: string) {
     const res = await fetch(
@@ -1718,41 +1719,101 @@ export default function EnrolledUsersPage() {
             <div className="w-full max-w-md space-y-4 rounded-lg bg-gray-800 p-6 text-white">
               <h2 className="text-lg font-semibold">Editar masivamente</h2>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">
-                  Fecha fin de suscripción
-                </label>
-                <input
-                  type="date"
-                  value={massiveEditData.subscriptionEndDate}
-                  onChange={(e) =>
-                    setMassiveEditData({
-                      ...massiveEditData,
-                      subscriptionEndDate: e.target.value,
-                    })
-                  }
-                  className="w-full rounded bg-gray-700 p-2"
-                />
+              {/* Seleccionar campos a editar */}
+              <label className="mb-2 block text-sm font-medium">
+                Campos a editar
+              </label>
+              <select
+                multiple
+                className="w-full rounded bg-gray-700 p-2"
+                value={selectedMassiveFields}
+                onChange={(e) => {
+                  const values = Array.from(e.target.selectedOptions).map(
+                    (opt) => opt.value
+                  );
+                  setSelectedMassiveFields(values);
+                }}
+              >
+                {allColumns.map((col) => (
+                  <option key={col.id} value={col.id}>
+                    {col.label}
+                  </option>
+                ))}
+              </select>
 
-                <label className="block text-sm font-medium">Plan</label>
-                <select
-                  value={massiveEditData.planType}
-                  onChange={(e) =>
-                    setMassiveEditData({
-                      ...massiveEditData,
-                      planType: e.target.value,
-                    })
+              {/* Inputs dinámicos según selección */}
+              <div className="mt-4 space-y-2">
+                {selectedMassiveFields.map((field) => {
+                  const col = allColumns.find((c) => c.id === field);
+                  if (!col) return null;
+
+                  if (col.type === 'select' && col.options) {
+                    return (
+                      <div key={field}>
+                        <label className="block text-sm font-medium">
+                          {col.label}
+                        </label>
+                        <select
+                          className="w-full rounded bg-gray-700 p-2"
+                          onChange={(e) =>
+                            setMassiveEditFields((prev) => ({
+                              ...prev,
+                              [field]: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">--</option>
+                          {col.options.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
                   }
-                  className="w-full rounded bg-gray-700 p-2"
-                >
-                  <option value="none">Sin plan</option>
-                  <option value="Pro">Pro</option>
-                  <option value="Premium">Premium</option>
-                  <option value="Enterprise">Enterprise</option>
-                </select>
+
+                  if (col.type === 'date') {
+                    return (
+                      <div key={field}>
+                        <label className="block text-sm font-medium">
+                          {col.label}
+                        </label>
+                        <input
+                          type="date"
+                          className="w-full rounded bg-gray-700 p-2"
+                          onChange={(e) =>
+                            setMassiveEditFields((prev) => ({
+                              ...prev,
+                              [field]: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={field}>
+                      <label className="block text-sm font-medium">
+                        {col.label}
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full rounded bg-gray-700 p-2"
+                        onChange={(e) =>
+                          setMassiveEditFields((prev) => ({
+                            ...prev,
+                            [field]: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="flex justify-end gap-2">
+              <div className="mt-6 flex justify-end gap-2">
                 <button
                   onClick={() => setShowMassiveEditModal(false)}
                   className="rounded bg-gray-600 px-4 py-2 hover:bg-gray-500"
@@ -1769,22 +1830,14 @@ export default function EnrolledUsersPage() {
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
                             userIds: selectedStudents,
-                            subscriptionEndDate:
-                              massiveEditData.subscriptionEndDate || null,
-                            planType: massiveEditData.planType,
+                            fields: massiveEditFields,
                           }),
                         }
                       );
-
-                      const json: { success: string[]; failed: string[] } =
-                        await res.json();
                       if (res.ok) {
-                        alert(
-                          `✅ Actualizados: ${json.success.length}, Fallidos: ${json.failed.length}`
-                        );
-
+                        alert('✅ Cambios guardados');
                         setShowMassiveEditModal(false);
-                        void fetchData(); // Recargar datos
+                        void fetchData();
                       } else {
                         alert('❌ Error al actualizar');
                       }

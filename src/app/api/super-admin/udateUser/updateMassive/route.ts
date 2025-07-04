@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 
 import { z } from 'zod';
+import { db } from '~/server/db';
+import { users, userCustomFields } from '~/server/db/schema';
+import { eq } from 'drizzle-orm';
 
 import { updateMultipleUsers } from '~/server/queries/queriesSuperAdmin';
 
@@ -15,19 +18,47 @@ const updateSchema = z.object({
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const parsed = updateSchema.parse(body);
-    const status = parsed.status ?? 'activo';
-    const permissions = parsed.permissions ?? [];
+    const { userIds, fields } = body;
 
-    const result = await updateMultipleUsers({
-      userIds: parsed.userIds,
-      status,
-      permissions,
-      subscriptionEndDate: parsed.subscriptionEndDate,
-      planType: parsed.planType,
-    });
+    if (!Array.isArray(userIds) || typeof fields !== 'object') {
+      return NextResponse.json(
+        { error: 'Parámetros inválidos' },
+        { status: 400 }
+      );
+    }
 
-    return NextResponse.json(result);
+    for (const userId of userIds) {
+      const updateFields: Record<string, any> = {};
+      const customFields: Record<string, string> = {};
+
+      for (const [key, value] of Object.entries(fields)) {
+        if (key.startsWith('customFields.')) {
+          customFields[key.split('.')[1]] = String(value);
+        } else {
+          updateFields[key] = value;
+        }
+      }
+
+      if (Object.keys(updateFields).length > 0) {
+        await db.update(users).set(updateFields).where(eq(users.id, userId));
+      }
+
+      for (const [fieldKey, fieldValue] of Object.entries(customFields)) {
+        await db
+          .insert(userCustomFields)
+          .values({
+            userId,
+            fieldKey,
+            fieldValue,
+          })
+          .onConflictDoUpdate({
+            target: [userCustomFields.userId, userCustomFields.fieldKey],
+            set: { fieldValue },
+          });
+      }
+    }
+
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error('❌ Error en updateMassive:', err);
     return NextResponse.json(
