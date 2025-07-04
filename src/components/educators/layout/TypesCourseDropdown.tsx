@@ -56,12 +56,6 @@ const TypesCourseDropdown: React.FC<TypesCourseDropdownProps> = ({
 
 	return (
 		<div className="flex flex-col gap-2">
-			<label
-				htmlFor="type-course-select"
-				className="text-lg font-medium text-primary"
-			>
-				Selecciona el tipo de curso:
-			</label>
 			{isLoading ? (
 				<p className="text-primary">Cargando tipos de curso...</p>
 			) : (

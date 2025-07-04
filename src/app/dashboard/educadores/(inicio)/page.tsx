@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { GraduationCap } from 'lucide-react';
 import {
-	FaGraduationCap,
 	FaBook,
-	FaClock,
 	FaChalkboardTeacher,
+	FaClock,
+	FaGraduationCap,
 } from 'react-icons/fa';
 import { toast } from 'sonner';
 

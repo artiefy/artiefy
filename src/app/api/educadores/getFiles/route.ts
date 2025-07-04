@@ -1,7 +1,7 @@
 // src/app/api/getFiles/route.ts
 import { NextResponse } from 'next/server';
 
-import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { HeadObjectCommand,S3Client } from '@aws-sdk/client-s3';
 import { Pool } from 'pg';
 
 // Configura tu conexión a la base de datos

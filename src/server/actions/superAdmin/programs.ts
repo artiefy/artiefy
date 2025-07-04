@@ -2,9 +2,9 @@
 import { desc, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { programas, enrollmentPrograms } from '~/server/db/schema';
+import { enrollmentPrograms,programas } from '~/server/db/schema';
 
-import type { Program, MateriaWithCourse } from '~/types';
+import type { MateriaWithCourse,Program } from '~/types';
 
 interface CreateProgramInput {
 	title: string;

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { eq, count } from "drizzle-orm";
+import { count,eq } from "drizzle-orm";
 
 import { db } from "~/server/db/index";
-import { userTimeTracking, enrollments, users, userLessonsProgress, lessons } from "~/server/db/schema";
+import { enrollments, lessons,userLessonsProgress, users, userTimeTracking } from "~/server/db/schema";
 
 export async function GET(req: Request) {
   try {

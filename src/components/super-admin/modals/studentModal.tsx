@@ -4,10 +4,10 @@ import { Button } from '~/components/educators/ui/button';
 import {
 	Dialog,
 	DialogContent,
-	DialogTitle,
 	DialogDescription,
-	DialogHeader,
 	DialogFooter,
+	DialogHeader,
+	DialogTitle,
 } from '~/components/educators/ui/dialog';
 
 interface Student {
@@ -176,7 +176,7 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
 													<div
 														className="absolute top-0 left-0 h-6 rounded-full bg-green-500"
 														style={{ width: `${student.progress}%` }}
-													 />
+													/>
 													<p className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
 														{student.progress}%
 													</p>

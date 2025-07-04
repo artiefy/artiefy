@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import { Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
@@ -12,9 +12,10 @@ import type { Question } from '~/types/typesActi';
 
 interface QuestionListProps {
 	activityId: number;
+	onEdit?: (question: Question & { tipo: 'OM' }) => void;
 }
 
-const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
+const QuestionList: React.FC<QuestionListProps> = ({ activityId, onEdit }) => {
 	const [questions, setQuestions] = useState<Question[]>([]); // Estado para las preguntas
 	const [editingQuestion, setEditingQuestion] = useState<Question | undefined>(
 		undefined
@@ -56,9 +57,12 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 		void fetchQuestions();
 	}, [fetchQuestions]);
 
-	// Función para editar una pregunta
 	const handleEdit = (question: Question) => {
-		setEditingQuestion(question);
+		if (onEdit) {
+			onEdit({ ...question, tipo: 'OM' });
+		} else {
+			setEditingQuestion(question);
+		}
 	};
 
 	// Función para eliminar una pregunta
@@ -103,7 +107,7 @@ const QuestionList: React.FC<QuestionListProps> = ({ activityId }) => {
 
 	return (
 		<div className="my-2 space-y-4">
-			{editingQuestion ? (
+			{!onEdit && editingQuestion ? (
 				<QuestionForm
 					activityId={activityId}
 					editingQuestion={editingQuestion}

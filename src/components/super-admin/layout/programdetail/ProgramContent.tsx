@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { StarIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
+import { ArrowRightCircleIcon,StarIcon } from '@heroicons/react/24/solid';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -11,12 +11,12 @@ import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
 	CardContent,
-	CardHeader,
 	CardFooter,
+	CardHeader,
 	CardTitle,
 } from '~/components/estudiantes/ui/card';
 
-import type { Program, MateriaWithCourse, Course } from '~/types';
+import type { Course,MateriaWithCourse, Program } from '~/types';
 
 interface ProgramContentProps {
 	program: Program;

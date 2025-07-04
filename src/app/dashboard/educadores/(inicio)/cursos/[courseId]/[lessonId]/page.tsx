@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -243,7 +243,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 				description: `La clase ${lessons?.title} ha sido eliminada exitosamente.`,
 			});
 
-			router.push(`/dashboard/super-admin/cursos/${courseIdNumber}`);
+			router.push(`/dashboard/educadores/cursos/${courseIdNumber}`);
 		} catch (error) {
 			console.error('Error:', error);
 			toast.error('Error', {
@@ -312,7 +312,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/educators"
+								href="/dashboard/educadores"
 							>
 								Cursos
 							</BreadcrumbLink>
@@ -321,7 +321,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href="/dashboard/educators/cursos"
+								href="/dashboard/educadores/cursos"
 							>
 								Lista de cursos
 							</BreadcrumbLink>
@@ -330,7 +330,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 						<BreadcrumbItem>
 							<BreadcrumbLink
 								className="text-primary hover:text-gray-300"
-								href={`/dashboard/educators/cursos/${courseIdNumber}`}
+								href={`/dashboard/educadores/cursos/${courseIdNumber}`}
 							>
 								Detalles curso
 							</BreadcrumbLink>

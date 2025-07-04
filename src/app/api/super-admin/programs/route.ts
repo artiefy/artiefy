@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, clerkClient } from '@clerk/nextjs/server';
-import { eq, inArray, and, isNotNull, ne } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, ne } from 'drizzle-orm';
 import { z } from 'zod';
 
 import {

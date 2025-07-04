@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import { toast } from 'sonner';
 
@@ -15,6 +15,7 @@ interface RespuestaArchivo {
 	status: string;
 	grade: number | null;
 	fileContent: string; // ✅ Agregar esto
+	comment?: string;
 }
 
 /**
@@ -34,6 +35,7 @@ export default function VerRespuestasArchivos({
 	>({});
 	const [loading, setLoading] = useState(true);
 	const [grades, setGrades] = useState<Record<string, string>>({});
+	const [comments, setComments] = useState<Record<string, string>>({});
 
 	/**
 	 * Función para obtener las respuestas de los estudiantes desde la API.
@@ -51,17 +53,21 @@ export default function VerRespuestasArchivos({
 
 			// Inicializar las calificaciones con los valores de la base de datos
 			const initialGrades: Record<string, string> = {};
+			const initialComments: Record<string, string> = {};
+
 			Object.entries(data.respuestas).forEach(([key, respuesta]) => {
 				const grade = respuesta.grade;
-				// Si grade es null o undefined, establecemos un string vacío
+				initialComments[key] = respuesta.comment ?? '';
 				initialGrades[key] = grade !== null ? grade.toString() : '';
 			});
+
+			setComments(initialComments); // ✅ AGREGA ESTA LÍNEA
 
 			setRespuestas(data.respuestas);
 			setGrades(initialGrades);
 		} catch (error) {
 			console.error('Error al cargar respuestas:', error);
-			toast('Error', { 
+			toast('Error', {
 				description: 'No se pudieron cargar las respuestas',
 			});
 		} finally {
@@ -96,6 +102,7 @@ export default function VerRespuestasArchivos({
 					questionId,
 					userId,
 					grade,
+					comment: comments[submissionKey] ?? '', // ✅ Enviar comentario
 					submissionKey,
 				}),
 			});
@@ -228,72 +235,94 @@ export default function VerRespuestasArchivos({
 							key={key}
 							className="border-slate-200 transition-all hover:shadow-lg"
 						>
-							<CardContent className="p-6">
-								<div className="space-y-4">
-									<div className="flex items-start justify-between">
-										<div className="space-y-1">
-											<h3 className="text-lg font-semibold">
-												Estudiante: {respuesta.userName}
-											</h3>
-											<p className="text-sm text-gray-500">
-												Archivo: <b>{respuesta.fileName}</b>
-											</p>
-											<p className="text-sm text-gray-500">
-												Enviado:{' '}
-												{new Date(respuesta.submittedAt).toLocaleString()}
-											</p>
-											<span
-												className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-													respuesta.status === 'pendiente'
-														? 'bg-yellow-100 text-yellow-800'
-														: 'bg-green-100 text-green-800'
-												}`}
-											>
-												{respuesta.status === 'calificado'
-													? 'Calificado'
-													: 'Pendiente'}
-											</span>
-										</div>
-										<div className="flex flex-col items-end gap-2">
-											<div className="space-y-2">
-												<div className="flex items-center gap-2">
-													<label className="text-sm font-medium">
-														Calificación:
-													</label>
-													<Input
-														type="number"
-														min="0"
-														max="5"
-														step="0.1"
-														placeholder="0-5"
-														className="w-20 border-slate-300 text-center"
-														value={grades[key] ?? ''}
-														onChange={(e) =>
-															handleGradeChange(key, e.target.value)
-														}
-													/>
-												</div>
-												<Button
-													onClick={() => handleSubmitGrade(key)}
-													className={`w-full transition-colors ${
-														respuesta.status === 'calificado'
-															? 'border-blue-500 bg-blue-500 text-white hover:bg-blue-600'
-															: 'border-green-500 bg-green-500 text-white hover:bg-green-600'
-													}`}
-												>
-													{respuesta.status === 'calificado'
-														? '✏️ Actualizar Nota'
-														: '✓ Enviar Nota'}
-												</Button>
-											</div>
-											<Button
-												onClick={() => descargarArchivo(key)}
-												className="mt-2 w-full border-slate-300 text-black transition-colors hover:bg-blue-50"
-											>
-												<span className="mr-2">📥</span>
-												Descargar
-											</Button>
-										</div>
+							<CardContent className="space-y-6 p-6">
+								{/* Encabezado con datos del estudiante */}
+								<div className="space-y-1">
+									<h3 className="text-lg font-semibold text-gray-800">
+										Estudiante: {respuesta.userName}
+									</h3>
+									<p className="text-sm text-gray-500">
+										Archivo: <b>{respuesta.fileName}</b>
+									</p>
+									<p className="text-sm text-gray-500">
+										Enviado: {new Date(respuesta.submittedAt).toLocaleString()}
+									</p>
+									<span
+										className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
+											respuesta.status === 'pendiente'
+												? 'bg-yellow-100 text-yellow-800'
+												: 'bg-green-100 text-green-800'
+										}`}
+									>
+										{respuesta.status === 'calificado'
+											? '✅ Calificado'
+											: '⏳ Pendiente'}
+									</span>
+								</div>
+
+								{/* Comentario del docente */}
+								<div>
+									<label className="mb-1 block text-sm font-medium text-gray-700">
+										Comentario para el estudiante:
+									</label>
+									<textarea
+										rows={3}
+										className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+										value={comments[key] ?? ''}
+										onChange={(e) =>
+											setComments((prev) => ({
+												...prev,
+												[key]: e.target.value,
+											}))
+										}
+										placeholder="Escribe un comentario..."
+									/>
+								</div>
+								{respuesta.comment && (
+									<p className="mt-1 text-sm text-gray-500">
+										Último comentario guardado: <i>{respuesta.comment}</i>
+									</p>
+								)}
+
+								{/* Zona de calificación y acciones */}
+								<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+									{/* Calificación */}
+									<div className="space-y-2 md:w-1/3">
+										<label className="block text-sm font-medium text-gray-700">
+											Calificación (0 - 5):
+										</label>
+										<Input
+											type="number"
+											min="0"
+											max="5"
+											step="0.1"
+											placeholder="0-5"
+											className="w-full border-slate-300 text-center"
+											value={grades[key] ?? ''}
+											onChange={(e) => handleGradeChange(key, e.target.value)}
+										/>
+										<Button
+											onClick={() => handleSubmitGrade(key)}
+											className={`w-full transition-colors ${
+												respuesta.status === 'calificado'
+													? 'bg-blue-500 text-white hover:bg-blue-600'
+													: 'bg-green-500 text-white hover:bg-green-600'
+											}`}
+										>
+											{respuesta.status === 'calificado'
+												? 'Actualizar Nota'
+												: '✓ Enviar Nota'}
+										</Button>
+									</div>
+
+									{/* Acción de descarga */}
+									<div className="md:w-1/3">
+										<Button
+											onClick={() => descargarArchivo(key)}
+											className="w-full border-slate-300 bg-gray-100 text-black hover:bg-blue-50"
+										>
+											Descargar archivo
+										</Button>
 									</div>
 								</div>
 							</CardContent>

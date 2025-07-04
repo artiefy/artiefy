@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 
-import { FiUpload, FiDownload, FiX } from 'react-icons/fi';
+import { FiDownload, FiUpload, FiX } from 'react-icons/fi';
 
 interface User {
 	id: string;

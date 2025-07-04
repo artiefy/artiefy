@@ -1,105 +1,187 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
+import { useUser } from '@clerk/nextjs';
 import { Bell, BellRing } from 'lucide-react';
+
+import {
+  getNotifications,
+  getUnreadCount,
+} from '~/server/actions/estudiantes/notifications/getNotifications';
+import { markNotificationsAsRead } from '~/server/actions/estudiantes/notifications/markNotificationsAsRead';
+
+import type { Notification } from '~/types';
+
 import '~/styles/menuNotification.css';
 
-interface NotificationHeaderProps {
-	count?: number;
+function formatRelativeTime(date: Date) {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `Hace ${days} ${days === 1 ? 'día' : 'días'}`;
+  if (hours > 0) return `Hace ${hours} ${hours === 1 ? 'hora' : 'horas'}`;
+  if (minutes > 0)
+    return `Hace ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
+  return 'Hace un momento';
 }
 
-export function NotificationHeader({ count = 0 }: NotificationHeaderProps) {
-	const [isOpen, setIsOpen] = useState(false);
-	const [isAnimating, setIsAnimating] = useState(false);
+export function NotificationHeader() {
+  const router = useRouter();
+  const { user } = useUser();
+  const [isOpen, setIsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-	// Datos de ejemplo para las notificaciones
-	const notifications = [
-		{
-			id: 1,
-			title: 'Nuevo curso disponible',
-			description: '¡El curso de React Avanzado ya está disponible!',
-			time: 'Hace 5 minutos',
-		},
-		{
-			id: 2,
-			title: 'Certificación completada',
-			description: 'Has completado la certificación de JavaScript',
-			time: 'Hace 1 hora',
-		},
-		{
-			id: 3,
-			title: 'Recordatorio de clase',
-			description: 'Tu próxima clase comienza en 30 minutos',
-			time: 'Hace 2 horas',
-		},
-		{
-			id: 4,
-			title: 'Nueva insignia desbloqueada',
-			description: '¡Has desbloqueado la insignia de Desarrollador Full Stack!',
-			time: 'Hace 1 día',
-		},
-	];
+  useEffect(() => {
+    if (user?.id) {
+      void getNotifications(user.id).then(setNotifications);
+      void getUnreadCount(user.id).then(setUnreadCount);
+    }
+  }, [user?.id]);
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as HTMLElement;
-			if (!target.closest('.notification-menu')) {
-				setIsOpen(false);
-			}
-		};
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.notification-menu')) {
+        setIsOpen(false);
+      }
+    };
 
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => document.removeEventListener('mousedown', handleClickOutside);
-	}, []);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-	const handleClick = () => {
-		setIsOpen(!isOpen);
-		// Solo aplicar animación en pantallas grandes
-		if (window.innerWidth >= 768) {
-			setIsAnimating(true);
-			setTimeout(() => setIsAnimating(false), 300); // Duración de la animación
-		}
-	};
+  const handleClick = async () => {
+    setIsOpen(!isOpen);
 
-	return (
-		<div className="notification-menu">
-			<button
-				className={`group md:hover:bg-primary notification-button relative ml-2 rounded-full p-2 transition-colors hover:bg-gray-800 ${
-					isAnimating ? 'active' : ''
-				}`}
-				type="button"
-				aria-label="Notificaciones"
-				onClick={handleClick}
-			>
-				<span className="absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded bg-white px-2 py-1 text-xs whitespace-nowrap text-black opacity-0 transition-opacity group-hover:opacity-100 md:block">
-					Notificaciones
-				</span>
-				{count > 0 ? (
-					<>
-						<BellRing className="notification-icon md:text-primary text-background md:group-hover:text-background group-hover:text-primary size-6 transition-colors" />
-						<span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-							{count}
-						</span>
-					</>
-				) : (
-					<Bell className="notification-icon text-background md:group-hover:text-background group-hover:text-primary size-6 transition-colors md:text-gray-600" />
-				)}
-			</button>
+    // Mark notifications as read when opening the menu
+    if (!isOpen && user?.id && unreadCount > 0) {
+      try {
+        await markNotificationsAsRead(user.id);
+        setUnreadCount(0); // Update local state immediately
+        // Refresh notifications to get updated read status
+        const updatedNotifications = await getNotifications(user.id);
+        setNotifications(updatedNotifications);
+      } catch (error) {
+        console.error('Error marking notifications as read:', error);
+      }
+    }
 
-			<div className={`notification-options ${isOpen ? 'show' : ''}`}>
-				{notifications.map((notification) => (
-					<div key={notification.id} className="notification-item">
-						<div className="notification-content">
-							<div className="notification-title">{notification.title}</div>
-							<div className="notification-description">
-								{notification.description}
-							</div>
-							<div className="notification-time">{notification.time}</div>
-						</div>
-					</div>
-				))}
-			</div>
-		</div>
-	);
+    // Solo aplicar animación en pantallas grandes
+    if (window.innerWidth >= 768) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 300); // Duración de la animación
+    }
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Cerrar el menú de notificaciones
+    setIsOpen(false);
+
+    // Navegar según el tipo de notificación y metadata
+    switch (notification.type) {
+      case 'LESSON_UNLOCKED':
+        if (notification.metadata?.lessonId) {
+          void router.push(
+            `/estudiantes/clases/${notification.metadata.lessonId}`
+          );
+        }
+        break;
+      case 'COURSE_ENROLLMENT':
+      case 'NEW_COURSE_ADDED':
+        if (notification.metadata?.courseId) {
+          void router.push(
+            `/estudiantes/cursos/${notification.metadata.courseId}`
+          );
+        }
+        break;
+      case 'PROGRAM_ENROLLMENT':
+        if (notification.metadata?.programId) {
+          void router.push(
+            `/estudiantes/programas/${notification.metadata.programId}`
+          );
+        }
+        break;
+      case 'ACTIVITY_COMPLETED':
+        if (notification.metadata?.lessonId) {
+          void router.push(
+            `/estudiantes/clases/${notification.metadata.lessonId}`
+          );
+        }
+        break;
+      default:
+        console.log('Tipo de notificación no manejado:', notification.type);
+    }
+  };
+
+  return (
+    <div className="notification-menu">
+      <button
+        className={`group md:hover:bg-primary notification-button relative ml-2 rounded-full p-2 transition-colors hover:bg-gray-800 ${
+          isAnimating ? 'active' : ''
+        }`}
+        type="button"
+        aria-label="Notificaciones"
+        onClick={handleClick}
+      >
+        <span className="absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded bg-white px-2 py-1 text-xs whitespace-nowrap text-black opacity-0 transition-opacity group-hover:opacity-100 md:block">
+          Notificaciones
+        </span>
+        {unreadCount > 0 ? (
+          <>
+            <BellRing className="text-primary group-hover:text-background size-6 transition-colors" />
+            <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+              {unreadCount}
+            </span>
+          </>
+        ) : (
+          <Bell className="text-primary group-hover:text-background size-6 transition-colors" />
+        )}
+      </button>
+
+      <div className={`notification-options ${isOpen ? 'show' : ''}`}>
+        {notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className="notification-item"
+              onClick={() => handleNotificationClick(notification)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleNotificationClick(notification);
+                }
+              }}
+            >
+              <div className="notification-content">
+                <div className="notification-title">{notification.title}</div>
+                <div className="notification-description">
+                  {notification.message}
+                </div>
+                <div className="notification-time">
+                  {formatRelativeTime(notification.createdAt)}
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="flex min-h-[100px] items-center justify-center p-4">
+            <div className="text-center">
+              <Bell className="mx-auto mb-2 size-6 text-gray-400" />
+              <p className="text-sm text-gray-500">No tienes notificaciones</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }

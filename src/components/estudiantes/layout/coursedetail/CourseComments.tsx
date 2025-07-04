@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback,useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@clerk/nextjs';
 import {
-	StarIcon,
-	PencilIcon,
-	TrashIcon,
 	HandThumbUpIcon,
+	PencilIcon,
+	StarIcon,
+	TrashIcon,
 	XMarkIcon,
 } from '@heroicons/react/24/solid';
 
@@ -16,9 +16,9 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { Textarea } from '~/components/estudiantes/ui/textarea';
 import {
 	addComment,
-	getCommentsByCourseId,
-	editComment,
 	deleteComment,
+	editComment,
+	getCommentsByCourseId,
 	likeComment,
 } from '~/server/actions/estudiantes/comment/courseCommentActions';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';

@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
-import { courses, categories } from '~/server/db/schema';
+import { categories,courses } from '~/server/db/schema';
 
 const updateSchema = z.object({
   courseId: z.number(),

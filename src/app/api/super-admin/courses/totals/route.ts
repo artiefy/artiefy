@@ -4,20 +4,19 @@ import { getAllCourses } from '~/models/super-adminModels/courseModelsSuperAdmin
 import { getTotalStudents } from '~/models/super-adminModels/studentModelSuperAdmin';
 
 export async function GET() {
-    try {
-        // Obtener total de cursos
-        const courses = await getAllCourses();
-        const totalCourses = courses.length;
+  try {
+    // Obtener total de cursos
+    const courses = await getAllCourses();
+    const totalCourses = courses.length;
 
-        // Obtener total de estudiantes inscritos en todos los cursos
-        const totalStudents = await getTotalStudents();
+    // Obtener total de estudiantes inscritos en todos los cursos
+    const totalStudents = await getTotalStudents();
 
-        return NextResponse.json({ totalCourses, totalStudents });
-    } catch (error) {
-        console.error('❌ Error al obtener totales:', error);
-        return NextResponse.json(
-            { error: 'Error al obtener totales' },
-            { status: 500 }
-        );
-    }
+    return NextResponse.json({ totalCourses, totalStudents });
+  } catch {
+    return NextResponse.json(
+      { error: 'Error al obtener totales' },
+      { status: 500 }
+    );
+  }
 }

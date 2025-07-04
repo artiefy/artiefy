@@ -1,16 +1,16 @@
 'use server';
 
-import { eq, and } from 'drizzle-orm';
+import { and,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	lessons,
-	userLessonsProgress,
-	userActivitiesProgress,
 	enrollments,
+	lessons,
+	userActivitiesProgress,
+	userLessonsProgress,
 } from '~/server/db/schema';
 
-import type { Lesson, Activity, Course } from '~/types';
+import type { Activity, Course,Lesson } from '~/types';
 
 export async function getLessonById(
 	lessonId: number,

@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback,useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
 import { FaCheckCircle, FaLock } from 'react-icons/fa';
 import { MdKeyboardDoubleArrowDown } from 'react-icons/md';
-import { TbReportAnalytics, TbClockFilled } from 'react-icons/tb';
+import { TbClockFilled,TbReportAnalytics } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
@@ -554,7 +554,7 @@ const LessonActivities = ({
 		// Get next lesson
 		const nextLesson = sortedLessons[currentIndex + 1];
 		return nextLesson?.id;
-	}, [lessons, lessonId]);
+	}, [lessons, lessonId])
 
 	const renderActivityCard = (activity: Activity, index: number) => {
 		const activityState = activitiesState[activity.id];
@@ -688,8 +688,8 @@ const LessonActivities = ({
 	};
 
 	return (
-		<div className="w-72 p-4">
-			<h2 className="text-primary mb-4 text-2xl font-bold">Actividades</h2>
+		<div className="w-full md:w-72 p-2 md:p-4 max-h-[70vh] md:max-h-none overflow-y-auto md:overflow-visible">
+			<h2 className="text-primary mb-4 text-xl md:text-2xl font-bold">Actividades</h2>
 			{/* Activities section */}
 			{activities.length > 0 ? (
 				<div className="space-y-4">
@@ -706,7 +706,7 @@ const LessonActivities = ({
 			{/* Rest of the component */}
 			{/* Grades section */}
 			<div className="mt-4">
-				<h2 className="text-primary mb-4 text-2xl font-bold">Calificaciones</h2>
+				<h2 className="text-primary mb-4 text-xl md:text-2xl font-bold">Calificaciones</h2>
 				<LessonGrades
 					finalGrade={gradeSummary?.finalGrade ?? null}
 					onViewHistoryAction={() => setIsGradeHistoryOpen(true)}

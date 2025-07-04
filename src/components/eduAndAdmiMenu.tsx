@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, type JSX } from 'react';
+import { type JSX,useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,17 +7,17 @@ import { usePathname } from 'next/navigation';
 
 import { UserButton, useUser } from '@clerk/clerk-react';
 import {
-	FiHome,
 	FiBook,
-	FiFileText,
-	FiUser,
-	FiSettings,
-	FiMenu,
-	FiX,
-	FiMessageSquare,
-	FiShieldOff,
 	FiChevronDown,
 	FiChevronRight,
+	FiFileText,
+	FiHome,
+	FiMenu,
+	FiMessageSquare,
+	FiSettings,
+	FiShieldOff,
+	FiUser,
+	FiX,
 } from 'react-icons/fi';
 
 import { cn } from '~/lib/utils'; // Asegúrate de tener la función 'cn' para clases condicionales.
@@ -66,6 +66,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 			title: 'Tickets',
 			id: 'tickets',
 			link: '/dashboard/super-admin/tickets',
+		},
+		{
+			icon: <FiShieldOff size={24} />,
+			title: 'Roles Secundarios',
+			id: 'roles-secundarios',
+			link: '/dashboard/super-admin/usuariosRoles',
 		},
 	];
 

@@ -2,67 +2,87 @@ import { NextResponse } from 'next/server';
 
 import { updateUserInClerk } from '~/server/queries/queries';
 
-// ✅ API Route para actualizar usuario en Clerk
 export async function PATCH(req: Request) {
-	try {
-		// 🔹 Extraemos los datos del cuerpo de la solicitud
-		const { userId, firstName, lastName, role, status, permissions } =
-			(await req.json()) as {
-				userId: string;
-				firstName: string;
-				lastName: string;
-				role: string;
-				status: string;
-				permissions: string[];
-			};
+  try {
+    const {
+      userId,
+      firstName,
+      lastName,
+      role,
+      status,
+      permissions,
+      subscriptionEndDate,
+      planType, // ✅ Añadido aquí
+    } = (await req.json()) as {
+      userId: string;
+      firstName: string;
+      lastName: string;
+      role: string;
+      status: string;
+      permissions: string[];
+      subscriptionEndDate?: string;
+      planType?: string; // ✅ Añadido aquí
+    };
 
-		// 🔍 Validaciones básicas
-		if (!userId || !firstName?.trim() || !lastName?.trim()) {
-			return NextResponse.json(
-				{ error: 'Faltan datos obligatorios: userId, firstName o lastName' },
-				{ status: 400 }
-			);
-		}
+    console.log('📦 Datos recibidos en PATCH /api/super-admin/udateUser:', {
+      userId,
+      firstName,
+      lastName,
+      role,
+      status,
+      permissions,
+      subscriptionEndDate,
+      planType, // ✅ Confirmar que llega
+    });
 
-		// 🔹 Llamamos a nuestra función para actualizar en Clerk
-		const updateSuccess = await updateUserInClerk({
-			userId,
-			firstName,
-			lastName,
-			role,
-			status,
-			permissions,
-		});
+    if (!userId || !firstName?.trim() || !lastName?.trim()) {
+      return NextResponse.json(
+        { error: 'Faltan datos obligatorios: userId, firstName o lastName' },
+        { status: 400 }
+      );
+    }
 
-		if (!updateSuccess) {
-			return NextResponse.json(
-				{ error: 'Error al actualizar usuario en Clerk' },
-				{ status: 500 }
-			);
-		}
+    const updateSuccess = await updateUserInClerk({
+      userId,
+      firstName,
+      lastName,
+      role,
+      status,
+      permissions,
+      subscriptionEndDate,
+      planType, // ✅ Ahora sí se pasa correctamente
+    });
 
-		// ✅ Si todo sale bien, respondemos con los datos actualizados
-		return NextResponse.json({
-			success: true,
-			message: 'Usuario actualizado correctamente en Clerk',
-			updatedUser: {
-				userId,
-				firstName,
-				lastName,
-				role,
-				status,
-				permissions,
-			},
-		});
-	} catch (error: unknown) {
-		const errorMessage =
-			error instanceof Error ? error.message : 'Error desconocido';
+    if (!updateSuccess) {
+      return NextResponse.json(
+        { error: 'Error al actualizar usuario en Clerk' },
+        { status: 500 }
+      );
+    }
 
-		console.error('❌ Error en la API de actualización:', errorMessage);
+    return NextResponse.json({
+      success: true,
+      message: 'Usuario actualizado correctamente en Clerk',
+      updatedUser: {
+        userId,
+        firstName,
+        lastName,
+        role,
+        status,
+        permissions,
+        subscriptionEndDate,
+        planType, // ✅ Incluido en la respuesta también
+      },
+    });
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error desconocido';
 
-		return NextResponse.json(
-			{ error: `Error interno del servidor: ${errorMessage}` },
-			{ status: 500 }
-		);
-	}
+    console.error('❌ Error en la API de actualización:', errorMessage);
+
+    return NextResponse.json(
+      { error: `Error interno del servidor: ${errorMessage}` },
+      { status: 500 }
+    );
+  }
 }

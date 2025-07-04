@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
-import { X, Loader2 } from 'lucide-react';
+import { Loader2,X } from 'lucide-react';
 
 interface AnuncioPopupProps {
 	onClose: () => void;

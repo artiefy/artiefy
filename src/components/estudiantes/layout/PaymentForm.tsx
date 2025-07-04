@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect,useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
 
-import '~/styles/form.css';
 import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
 import { validateFormData } from '~/utils/paygateway/validation';
 
 import type { FormData, Product } from '~/types/payu';
+
+import '~/styles/form.css';
 
 const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
 	selectedProduct,
@@ -105,7 +106,7 @@ const PaymentForm: React.FC<{ selectedProduct: Product }> = ({
 			const form = document.createElement('form');
 			form.method = 'POST';
 			form.action =
-				'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/';
+				'https://checkout.payulatam.com/ppp-web-gateway-payu/';
 
 			for (const key in data) {
 				if (Object.prototype.hasOwnProperty.call(data, key)) {

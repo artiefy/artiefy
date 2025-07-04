@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '~/server/db';
-import { type Program, type MateriaWithCourse, type BaseCourse } from '~/types';
+import { type BaseCourse,type MateriaWithCourse, type Program } from '~/types';
 
 export async function getAllPrograms(): Promise<Program[]> {
 	try {

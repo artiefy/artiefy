@@ -1,16 +1,16 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { eq, inArray, and, desc, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
+	activities,
 	categories,
 	courses,
 	lessons,
 	modalidades,
-	users,
-	activities,
-	userLessonsProgress,
 	userActivitiesProgress,
+	userLessonsProgress,
+	users,
 } from '~/server/db/schema';
 
 export interface Lesson {
@@ -56,19 +56,19 @@ export async function createLesson({
 }): Promise<{ id: number }> {
 	try {
 		// 1. Crear la nueva lección primero
-		const [newLesson] = await db
-			.insert(lessons)
-			.values({
-				title,
-				description: description ?? '',
-				duration,
-				coverImageKey: coverImageKey ?? '',
-				coverVideoKey: coverVideoKey ?? '',
-				courseId,
-				resourceKey: resourceKey ?? '',
-				resourceNames: resourceNames ?? '',
-			})
-			.returning({ id: lessons.id });
+		  const [newLesson] = await db
+    .insert(lessons)
+    .values({
+      title,
+      description,
+      duration,
+      coverImageKey: coverImageKey ?? '',
+      coverVideoKey: coverVideoKey ?? '',
+      courseId,
+      resourceKey: resourceKey ?? '',
+      resourceNames: resourceNames ?? '',
+    })
+    .returning({ id: lessons.id });
 
 		// 2. Buscar la lección anterior (la última creada antes de esta)
 		const previousLesson = await db

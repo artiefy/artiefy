@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { StarIcon, ArrowRightCircleIcon } from '@heroicons/react/24/solid';
+import { ArrowRightCircleIcon,StarIcon } from '@heroicons/react/24/solid';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
 import { Badge } from '~/components/estudiantes/ui/badge';
@@ -11,8 +11,8 @@ import { Button } from '~/components/estudiantes/ui/button';
 import {
 	Card,
 	CardContent,
-	CardHeader,
 	CardFooter,
+	CardHeader,
 } from '~/components/estudiantes/ui/card';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Program } from '~/types';

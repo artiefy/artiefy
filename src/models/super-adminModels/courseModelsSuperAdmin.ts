@@ -1,13 +1,13 @@
-import { eq, count } from 'drizzle-orm';
+import { count,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	courses,
-	users,
 	categories,
-	modalidades,
+	courses,
 	enrollments,
+	modalidades,
 	nivel as nivel,
+	users,
 } from '~/server/db/schema';
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
@@ -306,7 +306,6 @@ export const updateCourseInstructor = async (
 				updatedInstructor: courses.instructor,
 			});
 
-		console.log('✅ Resultado de la actualización:', result);
 		return result[0];
 	} catch (error) {
 		console.error('❌ Error en updateCourseInstructor:', error);

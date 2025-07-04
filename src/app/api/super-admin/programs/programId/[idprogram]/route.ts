@@ -1,17 +1,17 @@
 
-import { eq, sql, and } from 'drizzle-orm';
+import { and,eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
-	programas,
+	categories,
+	courses,
 	enrollmentPrograms,
 	materias,
-	courses,
-	categories,
+	programas,
 } from '~/server/db/schema';
 
-import type { NextApiRequest, NextApiResponse } from 'next';
 import type { Program } from '~/types';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
 	req: NextApiRequest,

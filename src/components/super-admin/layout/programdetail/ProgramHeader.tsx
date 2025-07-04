@@ -4,7 +4,7 @@ import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { StarIcon } from '@heroicons/react/24/solid';
-import { FaUserGraduate, FaCalendar, FaCheck } from 'react-icons/fa';
+import { FaCalendar, FaCheck,FaUserGraduate } from 'react-icons/fa';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Badge } from '~/components/estudiantes/ui/badge';

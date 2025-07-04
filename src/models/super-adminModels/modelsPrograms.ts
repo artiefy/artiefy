@@ -1,15 +1,14 @@
-import { eq, count } from 'drizzle-orm';
+import { count,eq } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
-    programas,
-    materias,
-    users,
-    enrollmentPrograms,
+    categories,
     courses,
+    enrollmentPrograms,
+    materias,
     notas,
-    categories
-} from '~/server/db/schema';
+    programas,
+    users} from '~/server/db/schema';
 
 // Interfaz para representar un Programa
 export interface Program {

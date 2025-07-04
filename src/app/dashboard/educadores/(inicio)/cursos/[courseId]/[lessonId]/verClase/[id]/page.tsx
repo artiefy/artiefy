@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
-import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon,ArrowRightIcon } from '@heroicons/react/24/solid';
 import { toast } from 'sonner';
 
 import ListActividadesLookStudent from '~/components/educators/layout/ListActividadesByStudent';

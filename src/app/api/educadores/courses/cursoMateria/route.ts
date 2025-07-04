@@ -7,10 +7,10 @@ import {
 	getAllCourses,
 	getCourseById,
 	getCoursesByUserId,
-	updateCourse,
-	getTotalStudents,
 	getLessonsByCourseId,
 	getTotalDuration,
+	getTotalStudents,
+	updateCourse,
 	updateMateria,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects

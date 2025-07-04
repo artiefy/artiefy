@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
+ 
 import { NextResponse } from 'next/server';
 
 import { eq } from 'drizzle-orm';
@@ -6,7 +6,7 @@ import nodemailer from 'nodemailer';
 import * as XLSX from 'xlsx';
 
 import { db } from '~/server/db';
-import { users, userCredentials } from '~/server/db/schema';
+import { userCredentials,users } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
 interface UserInput {

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
+
 import '~/styles/ticketSupportButton.css';
 
 export default function StudentLayout({

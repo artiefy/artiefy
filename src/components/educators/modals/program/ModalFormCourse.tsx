@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { type ChangeEvent,useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -26,6 +26,7 @@ import {
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 import ModalidadDropdown from '~/components/super-admin/layout/ModalidadDropdown';
+
 import '~/styles/toggler.css';
 
 // Interfaz para los parámetros del formulario del course
@@ -609,7 +610,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 			<DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
 				<DialogHeader className="mt-4">
 					<DialogTitle className="text-4xl">
-						{editingCourseId ? 'Editar Curso' : 'Crear Curso'}
+						{editingCourseId ? 'Editar Curso 2' : 'Crear Curso'}
 					</DialogTitle>
 					<DialogDescription className="text-xl text-white">
 						{editingCourseId

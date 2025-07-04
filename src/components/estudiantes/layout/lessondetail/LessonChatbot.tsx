@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect,useRef, useState } from 'react';
 
-import { FaTimes, FaRobot } from 'react-icons/fa';
+import { FaRobot,FaTimes } from 'react-icons/fa';
+
 import '~/styles/chatmodal.css'; // Import the CSS file
 
 const LessonChatBot: React.FC = () => {
