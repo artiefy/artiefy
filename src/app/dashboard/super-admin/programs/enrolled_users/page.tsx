@@ -437,6 +437,10 @@ export default function EnrolledUsersPage() {
   const totalColumns: Column[] = [...columnsWithOptions, ...dynamicColumns];
   const [successMessage, setSuccessMessage] = useState('');
   void successMessage;
+  const [searchFieldTerm, setSearchFieldTerm] = useState('');
+  const filteredColumns = totalColumns.filter((col) =>
+    col.label.toLowerCase().includes(searchFieldTerm.toLowerCase())
+  );
 
   // Save visible columns to localStorage
   useEffect(() => {
@@ -893,6 +897,63 @@ export default function EnrolledUsersPage() {
       setTimeout(() => setSuccessMessage(''), 3000);
     }
   };
+
+  const updateStudentsMassiveField = async (fields: Record<string, string>) => {
+    const payload: {
+      userIds: string[];
+      fields: Record<string, unknown>;
+    } = {
+      userIds: selectedStudents,
+      fields: {},
+    };
+
+    for (const [field, value] of Object.entries(fields)) {
+      if (!value) continue;
+
+      if (field === 'programTitle') {
+        const prog = programs.find((p) => p.title === value);
+        if (prog) {
+          payload.fields.programId = Number(prog.id);
+        } else {
+          payload.fields[field] = value;
+        }
+      } else if (field === 'courseTitle') {
+        const curso = availableCourses.find((c) => c.title === value);
+        if (curso) {
+          payload.fields.courseId = Number(curso.id);
+        } else {
+          payload.fields[field] = value;
+        }
+      } else {
+        payload.fields[field] = value;
+      }
+    }
+
+    try {
+      const res = await fetch('/api/super-admin/udateUser/updateMassive', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data: unknown = await res.json();
+        const errorData = errorResponseSchema.parse(data);
+        alert(`❌ Error masivo: ${errorData.error}`);
+      } else {
+        await fetchData();
+        setShowMassiveEditModal(false);
+        setSuccessMessage(
+          `✅ Cambios aplicados a ${selectedStudents.length} usuarios`
+        );
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (err) {
+      console.error('❌ Error inesperado:', err);
+      alert('❌ Error inesperado al actualizar masivamente');
+    }
+  };
+
   const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1715,46 +1776,133 @@ export default function EnrolledUsersPage() {
         )}
 
         {showMassiveEditModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="w-full max-w-md space-y-4 rounded-lg bg-gray-800 p-6 text-white">
-              <h2 className="text-lg font-semibold">Editar masivamente</h2>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="animate-fadeIn w-full max-w-lg rounded-xl bg-gray-800 p-6 text-white shadow-2xl transition-transform duration-300">
+              <h2 className="mb-4 text-center text-2xl font-bold tracking-wide text-white">
+                Editar Masivamente
+              </h2>
 
-              {/* Seleccionar campos a editar */}
-              <label className="mb-2 block text-sm font-medium">
-                Campos a editar
-              </label>
-              <select
-                multiple
-                className="w-full rounded bg-gray-700 p-2"
-                value={selectedMassiveFields}
-                onChange={(e) => {
-                  const values = Array.from(e.target.selectedOptions).map(
-                    (opt) => opt.value
-                  );
-                  setSelectedMassiveFields(values);
-                }}
-              >
-                {allColumns.map((col) => (
-                  <option key={col.id} value={col.id}>
-                    {col.label}
-                  </option>
-                ))}
-              </select>
+              {/* Mostrar estudiantes seleccionados */}
+              <div className="mb-6 max-h-28 overflow-y-auto rounded-md border border-gray-700 bg-gray-900 p-3 shadow-inner">
+                {selectedStudents.length === 0 ? (
+                  <p className="text-center text-gray-400">
+                    No hay estudiantes seleccionados
+                  </p>
+                ) : (
+                  students
+                    .filter((s) => selectedStudents.includes(s.id))
+                    .map((s) => (
+                      <div
+                        key={s.id}
+                        className="mb-1 rounded bg-gray-700 px-3 py-1 text-sm hover:bg-gray-600"
+                      >
+                        {s.name}
+                      </div>
+                    ))
+                )}
+              </div>
 
-              {/* Inputs dinámicos según selección */}
-              <div className="mt-4 space-y-2">
+              <div className="mb-6">
+                <label className="mb-2 block text-sm font-semibold text-gray-300">
+                  Campos a editar
+                </label>
+
+                <div className="relative w-full rounded-lg border border-gray-600 bg-gray-800 p-2 shadow-inner">
+                  <input
+                    type="text"
+                    placeholder="Buscar campo..."
+                    className="mb-2 w-full rounded bg-gray-700 p-2 text-sm text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    value={searchFieldTerm}
+                    onChange={(e) => setSearchFieldTerm(e.target.value)}
+                  />
+
+                  <div className="max-h-40 space-y-1 overflow-y-auto">
+                    {filteredColumns.length > 0 ? (
+                      filteredColumns.map((col) => {
+                        const isSelected = selectedMassiveFields.includes(
+                          col.id
+                        );
+                        return (
+                          <div
+                            key={col.id}
+                            onClick={() =>
+                              setSelectedMassiveFields((prev) =>
+                                isSelected
+                                  ? prev.filter((id) => id !== col.id)
+                                  : [...prev, col.id]
+                              )
+                            }
+                            className={`cursor-pointer rounded px-3 py-2 text-sm transition ${
+                              isSelected
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-300 hover:bg-gray-600'
+                            }`}
+                          >
+                            {col.label}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center text-sm text-gray-400">
+                        No se encontraron campos
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Inputs dinámicos */}
+              <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
                 {selectedMassiveFields.map((field) => {
-                  const col = allColumns.find((c) => c.id === field);
+                  const col = totalColumns.find((c) => c.id === field);
                   if (!col) return null;
 
-                  if (col.type === 'select' && col.options) {
-                    return (
-                      <div key={field}>
-                        <label className="block text-sm font-medium">
-                          {col.label}
-                        </label>
+                  return (
+                    <div
+                      key={field}
+                      className="rounded-lg bg-gray-700 p-4 shadow-inner"
+                    >
+                      <label className="mb-1 block text-sm font-semibold text-gray-200">
+                        {col.label}
+                      </label>
+
+                      {field === 'programTitle' ? (
                         <select
-                          className="w-full rounded bg-gray-700 p-2"
+                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) =>
+                            setMassiveEditFields((prev) => ({
+                              ...prev,
+                              [field]: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">--</option>
+                          {programs.map((prog) => (
+                            <option key={prog.id} value={prog.title}>
+                              {prog.title}
+                            </option>
+                          ))}
+                        </select>
+                      ) : field === 'courseTitle' ? (
+                        <select
+                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) =>
+                            setMassiveEditFields((prev) => ({
+                              ...prev,
+                              [field]: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">--</option>
+                          {availableCourses.map((course) => (
+                            <option key={course.id} value={course.title}>
+                              {course.title}
+                            </option>
+                          ))}
+                        </select>
+                      ) : col.type === 'select' && col.options ? (
+                        <select
+                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                           onChange={(e) =>
                             setMassiveEditFields((prev) => ({
                               ...prev,
@@ -1769,19 +1917,10 @@ export default function EnrolledUsersPage() {
                             </option>
                           ))}
                         </select>
-                      </div>
-                    );
-                  }
-
-                  if (col.type === 'date') {
-                    return (
-                      <div key={field}>
-                        <label className="block text-sm font-medium">
-                          {col.label}
-                        </label>
+                      ) : col.type === 'date' ? (
                         <input
                           type="date"
-                          className="w-full rounded bg-gray-700 p-2"
+                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                           onChange={(e) =>
                             setMassiveEditFields((prev) => ({
                               ...prev,
@@ -1789,64 +1928,47 @@ export default function EnrolledUsersPage() {
                             }))
                           }
                         />
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div key={field}>
-                      <label className="block text-sm font-medium">
-                        {col.label}
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full rounded bg-gray-700 p-2"
-                        onChange={(e) =>
-                          setMassiveEditFields((prev) => ({
-                            ...prev,
-                            [field]: e.target.value,
-                          }))
-                        }
-                      />
+                      ) : (
+                        <input
+                          type="text"
+                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) =>
+                            setMassiveEditFields((prev) => ({
+                              ...prev,
+                              [field]: e.target.value,
+                            }))
+                          }
+                        />
+                      )}
                     </div>
                   );
                 })}
               </div>
 
-              <div className="mt-6 flex justify-end gap-2">
+              {/* Acciones */}
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button
                   onClick={() => setShowMassiveEditModal(false)}
-                  className="rounded bg-gray-600 px-4 py-2 hover:bg-gray-500"
+                  className="w-full rounded bg-gray-600 px-4 py-2 transition hover:bg-gray-500 focus:ring-2 focus:ring-gray-400 focus:outline-none sm:w-auto"
                 >
                   Cancelar
                 </button>
                 <button
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(
-                        '/api/super-admin/udateUser/updateMassive',
-                        {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            userIds: selectedStudents,
-                            fields: massiveEditFields,
-                          }),
-                        }
-                      );
-                      if (res.ok) {
-                        alert('✅ Cambios guardados');
+                  onClick={() => {
+                    updateStudentsMassiveField(massiveEditFields)
+                      .then(() => {
                         setShowMassiveEditModal(false);
-                        void fetchData();
-                      } else {
-                        alert('❌ Error al actualizar');
-                      }
-                    } catch (err) {
-                      console.error(err);
-                      alert('❌ Error inesperado');
-                    }
+                        setSuccessMessage(
+                          `✅ Cambios aplicados a ${selectedStudents.length} usuarios`
+                        );
+                        setTimeout(() => setSuccessMessage(''), 3000);
+                      })
+                      .catch((err) => {
+                        console.error('❌ Error masivo:', err);
+                        alert('❌ Ocurrió un error al actualizar masivamente');
+                      });
                   }}
-                  className="rounded bg-yellow-600 px-4 py-2 font-semibold text-white hover:bg-yellow-700"
+                  className="bg-primary hover:bg-primary-700 focus:ring-primary-400 w-full rounded px-4 py-2 font-semibold text-white transition focus:ring-2 focus:outline-none sm:w-auto"
                 >
                   Guardar Cambios
                 </button>
@@ -1856,30 +1978,41 @@ export default function EnrolledUsersPage() {
         )}
 
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <div className="w-full max-w-md space-y-4 rounded-lg bg-gray-800 p-6">
-              <h3 className="text-lg font-semibold">
-                Matricular {selectedStudents.length} estudiante(s)
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="animate-fadeIn w-full max-w-md scale-100 rounded-lg bg-gray-800 p-6 shadow-xl transition-transform duration-300">
+              <h3 className="mb-4 text-center text-xl font-bold text-white">
+                Matricular {selectedStudents.length} estudiante
+                {selectedStudents.length !== 1 && 's'}
               </h3>
 
               {/* Lista de estudiantes seleccionados */}
-              <div className="max-h-32 overflow-y-auto rounded border border-gray-600 p-2 text-sm text-gray-300">
+              <div className="mb-4 max-h-40 overflow-y-auto rounded-md border border-gray-600 bg-gray-700 p-3 shadow-inner">
                 {students
                   .filter((s) => selectedStudents.includes(s.id))
                   .map((s) => (
-                    <div key={s.id}>{s.name}</div>
+                    <div
+                      key={s.id}
+                      className="mb-2 rounded bg-gray-900 p-2 text-sm text-gray-200 shadow hover:bg-gray-700"
+                    >
+                      {s.name}
+                    </div>
                   ))}
+                {selectedStudents.length === 0 && (
+                  <p className="text-center text-gray-400">
+                    No hay estudiantes seleccionados
+                  </p>
+                )}
               </div>
 
               {/* Selector de cursos con búsqueda */}
-              <div>
-                <label className="mb-1 block text-sm font-medium">
+              <div className="mb-4">
+                <label className="mb-1 block text-sm font-medium text-gray-300">
                   Seleccionar Cursos
                 </label>
                 <input
                   type="text"
                   placeholder="Buscar curso..."
-                  className="mb-2 w-full rounded bg-gray-700 p-2 text-white"
+                  className="mb-3 w-full rounded border border-gray-600 bg-gray-700 p-2 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                   onChange={(e) => {
                     const term = e.target.value.toLowerCase();
                     const filtered = availableCourses.filter((c) =>
@@ -1889,50 +2022,54 @@ export default function EnrolledUsersPage() {
                   }}
                 />
 
-                <div className="max-h-40 space-y-1 overflow-y-auto rounded border border-gray-600 bg-gray-700 p-2">
+                <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-gray-600 bg-gray-700 p-2 shadow-inner">
                   {(filteredCourseResults.length > 0
                     ? filteredCourseResults
                     : availableCourses
-                  ).map((c) => (
-                    <div
-                      key={c.id}
-                      className={`cursor-pointer rounded px-2 py-1 ${
-                        selectedCourses.includes(c.id)
-                          ? 'bg-blue-600 text-white'
-                          : 'hover:bg-gray-600'
-                      }`}
-                      onClick={() =>
-                        setSelectedCourses((prev) =>
-                          prev.includes(c.id)
-                            ? prev.filter((id) => id !== c.id)
-                            : [...prev, c.id]
-                        )
-                      }
-                    >
-                      {c.title}
-                    </div>
-                  ))}
+                  ).map((c) => {
+                    const isSelected = selectedCourses.includes(c.id);
+                    return (
+                      <div
+                        key={c.id}
+                        onClick={() =>
+                          setSelectedCourses((prev) =>
+                            isSelected
+                              ? prev.filter((id) => id !== c.id)
+                              : [...prev, c.id]
+                          )
+                        }
+                        className={`flex cursor-pointer items-center justify-between rounded px-3 py-2 transition ${isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-gray-600'}`}
+                      >
+                        <span>{c.title}</span>
+                        {isSelected && <span className="ml-2">✅</span>}
+                      </div>
+                    );
+                  })}
+                  {availableCourses.length === 0 && (
+                    <p className="text-center text-gray-400">
+                      No hay cursos disponibles
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Acciones */}
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="rounded bg-gray-700 px-4 py-2"
+                  className="w-full rounded bg-gray-600 px-4 py-2 text-white transition hover:bg-gray-500 focus:ring-2 focus:ring-gray-400 focus:outline-none sm:w-auto"
                 >
                   Cancelar
                 </button>
                 <button
                   disabled={selectedCourses.length === 0}
                   onClick={handleEnroll}
-                  className="rounded bg-blue-600 px-4 py-2 font-semibold disabled:opacity-40"
+                  className={`w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto`}
                 >
                   Matricular
                 </button>
               </div>
             </div>
-            {/* Modal para agregar campos personalizados */}
           </div>
         )}
       </div>
