@@ -728,7 +728,7 @@ const LessonActivities = ({
         {/* Botón de retraer/expandir solo en móvil */}
         {isMobile && (
           <button
-            className="mr-2 -mt-5 flex items-center rounded px-2 py-1 text-blue-600 hover:bg-blue-50 active:scale-95"
+            className="-mt-5 mr-2 flex items-center rounded px-2 py-1 text-blue-600 hover:bg-blue-50 active:scale-95"
             onClick={() => setCollapsed((prev) => !prev)}
             aria-label={
               collapsed ? 'Expandir actividades' : 'Ocultar actividades'
@@ -737,12 +737,16 @@ const LessonActivities = ({
             {collapsed ? (
               <>
                 <FaChevronDown className="inline" />
-                <span className="ml-1 text-md font-bold text-blue-500">Mostrar</span>
+                <span className="text-md ml-1 font-bold text-blue-500">
+                  Mostrar
+                </span>
               </>
             ) : (
               <>
                 <FaChevronUp className="inline" />
-                <span className="ml-1 text-md font-bold text-blue-500">Ocultar</span>
+                <span className="text-md ml-1 font-bold text-blue-500">
+                  Ocultar
+                </span>
               </>
             )}
           </button>
@@ -788,7 +792,11 @@ const LessonActivities = ({
 
       {/* Rest of the component */}
       {/* Grades section */}
-      <div className={`mt-4 ${isMobile ? 'mb-2' : ''}`}>
+      <div
+        className={`${
+          isMobile ? (collapsed ? 'mt-1 mb-2' : 'mt-4 mb-2') : 'mt-4'
+        }`}
+      >
         <h2
           className={`text-primary mb-4 font-bold ${
             isMobile ? 'px-2 text-lg' : 'text-xl md:text-2xl'

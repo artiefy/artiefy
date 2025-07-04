@@ -607,7 +607,17 @@ export function CourseHeader({
                       : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
                   }
                   onClick={handleVideoClick}
+                  // Forzar el navegador a usar el tamaño y renderizado óptimo
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    imageRendering: 'auto', // No afecta mucho a video, pero asegura que no haya suavizado innecesario
+                  }}
                 />
+                {/* Nota: La calidad del video depende del archivo fuente subido a S3. 
+                    Para máxima calidad, asegúrate de subir un video de alta resolución (idealmente 1920x720 o superior para 16:6). 
+                    El navegador reproducirá el archivo tal cual, no hay atributo HTML para "calidad máxima" en <video> con archivos .mp4 directos. */}
                 {/* Botón de volumen y pantalla completa */}
                 <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
                   {/* Botón mute/unmute */}
