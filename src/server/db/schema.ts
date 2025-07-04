@@ -1,16 +1,17 @@
 import { relations, sql } from 'drizzle-orm';
 import {
-	boolean,
-	integer,
-	pgTable,
-	real,
-	serial,
-	text,
-	timestamp,
-	varchar,
-	date,
-	unique,
-	primaryKey,
+  boolean,
+  integer,
+  pgTable,
+  real,
+  serial,
+  text,
+  timestamp,
+  varchar,
+  date,
+  unique,
+  primaryKey,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -196,18 +197,19 @@ export const coursesTaken = pgTable('courses_taken', {
 
 // Tabla de proyectos
 export const projects = pgTable('projects', {
-	id: serial('id').primaryKey(),
-	name: varchar('name', { length: 255 }).notNull(),
-	description: text('description'),
-	coverImageKey: text('cover_image_key'),
-	coverVideoKey: text('cover_video_key'),
-	type_project: varchar('type_project', { length: 255 }).notNull(),
-	userId: text('user_id')
-		.references(() => users.id)
-		.notNull(),
-	categoryid: integer('categoryid')
-		.references(() => categories.id)
-		.notNull(),
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  planteamiento: text('planteamiento').notNull(),
+  justificacion: text('justificacion').notNull(),
+  objetivo_general: text('objetivo_general').notNull(),
+  coverImageKey: text('cover_image_key'),
+  type_project: varchar('type_project', { length: 255 }).notNull(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  categoryId: integer('categoryid')
+    .references(() => categories.id)
+    .notNull(),
 });
 
 // Tabla de objetivos especificos proyectos
@@ -270,13 +272,15 @@ export const projectScheduleRelations = relations(
 
 // Tabla de proyectos tomados
 export const projectsTaken = pgTable('projects_taken', {
-	id: serial('id').primaryKey(),
-	userId: text('user_id')
-		.references(() => users.id)
-		.notNull(),
-	projectId: integer('project_id')
-		.references(() => projects.id)
-		.notNull(),
+  id: serial('id').primaryKey(),
+
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+
+  projectId: integer('project_id')
+    .references(() => projects.id)
+    .notNull(),
 });
 
 // Tabla de progreso de lecciones por usuario
@@ -697,15 +701,16 @@ export const coursesTakenRelations = relations(coursesTaken, ({ one }) => ({
 }));
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
-	user: one(users, {
-		fields: [projects.userId],
-		references: [users.id],
-	}),
-	category: one(categories, {
-		fields: [projects.categoryid],
-		references: [categories.id],
-	}),
-	projectsTaken: many(projectsTaken),
+  user: one(users, {
+    fields: [projects.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [projects.categoryId],
+    references: [categories.id],
+  }),
+  projectsTaken: many(projectsTaken),
+  specificObjectives: many(specificObjectives),
 }));
 
 export const projectsTakenRelations = relations(projectsTaken, ({ one }) => ({
@@ -948,3 +953,25 @@ export const roleSecundarioPermisos = pgTable(
     pk: primaryKey({ columns: [table.roleId, table.permisoId] }),
   })
 );
+
+export const userCustomFields = pgTable('user_custom_fields', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  fieldKey: varchar('field_key', { length: 255 }).notNull(),
+  fieldValue: text('field_value').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  type: text('type').notNull(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  isRead: boolean('is_read').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  metadata: jsonb('metadata'),
+});

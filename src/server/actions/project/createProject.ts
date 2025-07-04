@@ -4,10 +4,10 @@ import { currentUser } from '@clerk/nextjs/server';
 
 import { db } from '~/server/db';
 import {
-  projects,
-  specificObjectives,
   projectActivities,
+  projects,
   projectSchedule,
+  specificObjectives,
 } from '~/server/db/schema';
 
 interface ProjectData {
@@ -27,9 +27,7 @@ interface ProjectData {
 }
 
 // Crear proyecto, objetivos específicos, actividades y cronograma
-export async function createProject(
-  projectData: ProjectData
-): Promise<void> {
+export async function createProject(projectData: ProjectData): Promise<void> {
   const user = await currentUser();
 
   if (!user?.id) {
