@@ -634,11 +634,13 @@ const LessonActivities = ({
                   : () => handleOpenActivity(activity)
               }
               disabled={
-                (!hasNoVideo && !isVideoCompleted) ||
-                isButtonLoading ||
-                !canAccess
+                // Solo deshabilitar si NO está completada y no se puede acceder o está cargando
+                !activityState?.isCompleted &&
+                ((!hasNoVideo && !isVideoCompleted) ||
+                  isButtonLoading ||
+                  !canAccess)
               }
-              className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
+              className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading && !activityState?.isCompleted ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
             >
               {/* Animated gradient background */}
               {(hasNoVideo || isVideoCompleted) &&
