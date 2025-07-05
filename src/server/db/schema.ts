@@ -210,7 +210,9 @@ export const projects = pgTable('projects', {
   categoryId: integer('categoryid')
     .references(() => categories.id)
     .notNull(),
-  isPublic: boolean('is_public').default(false).notNull(), // <-- nuevo campo
+  isPublic: boolean('is_public').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 // Tabla de objetivos especificos proyectos

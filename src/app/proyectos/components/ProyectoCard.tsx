@@ -20,7 +20,7 @@ export default function ProyectoCard() {
           # Integrantes
         </span>
         <button className="font-semibold rounded bg-cyan-300 px-3 py-1 text-black hover:bg-cyan-200">
-          <a href="/proyectos/DetallesProyectos"> Ver más</a>
+          <a href=""> Ver más</a>
         </button>
       </div>
     </div>

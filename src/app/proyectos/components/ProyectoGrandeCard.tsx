@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { FaUsers, FaHashtag } from 'react-icons/fa';
 
 import ModalProyecto from './Modals/ModalProyecto';
-import ModalRamaInvestigacion from './Modals/ModalRamaInvestigacion';
+import ModalRamaInvestigacion from './Modals/ModalCategoria';
 
 export default function ProyectoGrandeCard() {
   const [isModalOpen, setIsModalOpen] = useState(false);

@@ -3,7 +3,7 @@ import React from 'react';
 import { FaUsers, FaHashtag } from 'react-icons/fa';
 
 import ModalConfirmacionRegistro from './ModalConfirmacionIscripcion';
-import ModalRamaInvestigacion from './ModalRamaInvestigacion';
+import ModalRamaInvestigacion from './ModalCategoria';
 
 interface ModalProyectoProps {
   isOpen: boolean;
@@ -65,7 +65,7 @@ const ModalProyecto: React.FC<ModalProyectoProps> = ({ isOpen, onClose }) => {
           <p className="mb-45 text-2xl">Planteamiento</p>
           <p className="mb-45 text-2xl">Objetivo</p>
 
-          <div className="font-semibold mb-4 flex gap-4">
+          <div className="mb-4 flex gap-4 font-semibold">
             <div className="text-2x1 flex items-center gap-1 rounded bg-[#1F3246] px-3 py-1 text-cyan-300 hover:scale-105">
               <button onClick={() => setRamaInvestigacionOpen(true)}>
                 Rama de investigación
@@ -81,7 +81,7 @@ const ModalProyecto: React.FC<ModalProyectoProps> = ({ isOpen, onClose }) => {
           </div>
 
           <button
-            className=" w-full rounded bg-cyan-700 px-4 py-2 text-lg font-semibold text-white hover:bg-cyan-600"
+            className="w-full rounded bg-cyan-700 px-4 py-2 text-lg font-semibold text-white hover:bg-cyan-600"
             onClick={() => setConfirmOpen(true)}
           >
             Inscribirse

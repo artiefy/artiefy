@@ -2,17 +2,23 @@
 
 import React, { useEffect, useState } from 'react';
 
+//import { useRouter } from 'next/navigation';
+
 import { typeProjects } from '~/server/actions/project/typeProject';
 import { type Category } from '~/types';
 
 interface ModalResumenProps {
   isOpen: boolean;
   onClose: () => void;
+  titulo?: string;
   planteamiento: string;
   justificacion: string;
   objetivoGen: string;
   objetivosEsp: string[];
   actividad: string[];
+  cronograma?: Record<string, number[]>;
+  categoriaId?: number; // <-- Agrega esta prop
+  numMeses?: number; // <-- agrega esta prop
   setObjetivosEsp: (value: string[]) => void;
   setActividades: (value: string[]) => void;
 }
@@ -20,17 +26,21 @@ interface ModalResumenProps {
 const ModalResumen: React.FC<ModalResumenProps> = ({
   isOpen,
   onClose,
+  titulo = '',
   planteamiento,
   justificacion,
   objetivoGen,
   objetivosEsp,
   actividad,
+  cronograma = {},
+  categoriaId,
+  numMeses: numMesesProp,
   setObjetivosEsp,
   setActividades,
 }) => {
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [categoria, setCategoria] = useState<string>('');
-  const [titulo, setTitulo] = useState('');
+  const [tituloState, setTitulo] = useState(titulo);
   const [planteamientoEditado, setPlanteamientoEditado] =
     useState(planteamiento);
   const [justificacionEditada, setJustificacionEditada] =
@@ -41,11 +51,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [actividadEditada, setActividadEditada] = useState<string[]>(actividad);
   const [nuevoObjetivo, setNuevoObjetivo] = useState('');
   const [nuevaActividad, setNuevaActividad] = useState('');
-  const [cronograma, setCronograma] = useState<Record<string, number[]>>({});
-  const [numMeses, setNumMeses] = useState(1);
+  const [cronogramaState, setCronograma] =
+    useState<Record<string, number[]>>(cronograma);
+  const [numMeses, setNumMeses] = useState<number>(numMesesProp ?? 1);
   const [tipoProyecto, setTipoProyecto] = useState<string>(
     typeProjects[0]?.value || ''
   );
+  //const router = useRouter();
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'auto';
@@ -82,10 +94,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   useEffect(() => {
     const nuevo: Record<string, number[]> = {};
     actividadEditada.forEach((act) => {
-      nuevo[act] = cronograma[act] || [];
+      nuevo[act] = cronogramaState[act] || [];
     });
     setCronograma(nuevo);
-  }, [actividadEditada, cronograma]);
+  }, [actividadEditada, cronogramaState]);
 
   const toggleMesActividad = (actividad: string, mesIndex: number) => {
     setCronograma((prev) => {
@@ -140,7 +152,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   const handleGuardarProyecto = async () => {
     if (
-      !titulo ||
+      !tituloState ||
       !categoria ||
       !planteamientoEditado ||
       !justificacionEditada ||
@@ -156,7 +168,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
 
     const proyecto = {
-      name: titulo,
+      name: tituloState,
       categoryId: parseInt(categoria),
       planteamiento: planteamientoEditado,
       justificacion: justificacionEditada,
@@ -164,7 +176,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       objetivos_especificos: objetivosEspEditado,
       actividades: actividadEditada.map((descripcion) => ({
         descripcion,
-        meses: cronograma[descripcion] || [],
+        meses: cronogramaState[descripcion] || [],
       })),
       coverImageKey: null,
       type_project: tipoProyecto, // <-- usar el valor seleccionado
@@ -179,15 +191,41 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         body: JSON.stringify(proyecto),
       });
 
+      interface ProyectoResponse {
+        id?: number;
+      }
+      const data: ProyectoResponse = await response.json();
+
       if (!response.ok) throw new Error('Error al guardar el proyecto');
 
-      alert('Proyecto creado con éxito');
-      onClose();
+      // Usa router.push fuera de cualquier callback/cierre del modal
+      if (data.id) {
+        window.location.href = `/proyectos/DetallesProyectos/${data.id}`;
+      } else {
+        onClose();
+      }
     } catch (error) {
       console.error('Error al crear el proyecto:', error);
       alert('Hubo un problema al guardar el proyecto');
     }
   };
+
+  // Sincroniza la categoría seleccionada si viene de edición
+  useEffect(() => {
+    if (categoriaId !== undefined && categoriaId !== null && isOpen) {
+      setCategoria(String(categoriaId));
+    }
+  }, [categoriaId, isOpen]);
+
+  useEffect(() => {
+    if (typeof numMesesProp === 'number' && numMesesProp > 0) {
+      setNumMeses(numMesesProp);
+    }
+  }, [numMesesProp]);
+
+  // Sincroniza los props con el estado cuando cambian
+  useEffect(() => setTitulo(titulo), [titulo]);
+  useEffect(() => setCronograma(cronograma), [cronograma]);
 
   if (!isOpen) return null;
 
@@ -207,7 +245,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         <br />
         <br />
         <input
-          value={titulo}
+          value={tituloState}
           onChange={(e) => setTitulo(e.target.value)}
           className="mb-6 w-full rounded p-2 text-center text-3xl font-semibold text-cyan-300"
           placeholder="Título del Proyecto"
@@ -339,6 +377,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               className="mt-1 rounded border bg-gray-400 p-2 text-black"
               required
             >
+              <option value="">-- Seleccione un Tipo de Proyecto--</option>
               {typeProjects.map((tp) => (
                 <option key={tp.value} value={tp.value}>
                   {tp.label}
@@ -394,7 +433,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         key={i}
                         onClick={() => toggleMesActividad(act, i)}
                         className={`cursor-pointer border px-2 py-2 ${
-                          cronograma[act]?.includes(i)
+                          cronogramaState[act]?.includes(i)
                             ? 'bg-cyan-300 font-bold text-white'
                             : 'bg-white'
                         }`}

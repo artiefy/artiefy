@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm'; // <-- importa eq
+import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -30,7 +30,9 @@ interface ProjectData {
 }
 
 // Crear proyecto, objetivos específicos, actividades y cronograma
-export async function createProject(projectData: ProjectData): Promise<void> {
+export async function createProject(
+  projectData: ProjectData
+): Promise<{ id: number }> {
   const user = await currentUser();
 
   if (!user?.id) {
@@ -94,6 +96,8 @@ export async function createProject(projectData: ProjectData): Promise<void> {
       userId: UserId,
       categoryId: projectData.categoryId,
       isPublic: projectData.isPublic ?? false, // <-- por defecto false
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
     .returning({ id: projects.id });
 
@@ -110,6 +114,7 @@ export async function createProject(projectData: ProjectData): Promise<void> {
     const objetivosData = projectData.objetivos_especificos.map((desc) => ({
       projectId,
       description: desc,
+      createdAt: new Date(),
     }));
     await db.insert(specificObjectives).values(objetivosData);
   }
@@ -138,4 +143,6 @@ export async function createProject(projectData: ProjectData): Promise<void> {
       }
     }
   }
+
+  return { id: projectId };
 }

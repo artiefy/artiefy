@@ -15,9 +15,13 @@ export async function POST(req: Request) {
     >[0];
     console.log('🟡 Datos recibidos:', body);
 
-    await createProject(body);
+    const result = await createProject(body);
 
-    return NextResponse.json({ message: 'Proyecto creado correctamente' });
+    // Si createProject retorna el id, úsalo. Si no, modifícalo para que lo retorne.
+    return NextResponse.json({
+      message: 'Proyecto creado correctamente',
+      id: result?.id,
+    });
   } catch (error) {
     console.error('Error al crear proyecto:', error);
     return NextResponse.json(

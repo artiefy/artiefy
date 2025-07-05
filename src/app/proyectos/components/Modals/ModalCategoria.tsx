@@ -1,11 +1,15 @@
+import { Category } from '~/types';
+
 interface ModalRamaInvestigacionProps {
   isOpen: boolean;
   onClose: () => void;
+  categoria?: Category | null;
 }
 
 const ModalRamaInvestigacion: React.FC<ModalRamaInvestigacionProps> = ({
   isOpen,
   onClose,
+  categoria,
 }) => {
   if (!isOpen) return null;
 
@@ -17,12 +21,14 @@ const ModalRamaInvestigacion: React.FC<ModalRamaInvestigacionProps> = ({
       }}
     >
       <div />
-      <div className="bg-[#0F2940] rounded-lg p-6 w-[60%] h-[50%] shadow-lg">
+      <div className="h-[50%] w-[60%] rounded-lg bg-[#0F2940] p-6 shadow-lg">
         <div className="text-cyan-400">
-           <h1 className="text-4xl text-center font-semibold mb-4">Rama de Investigación</h1>
+          <h1 className="mb-4 text-center text-4xl font-semibold">
+            Categoria {categoria?.name ?? 'Sin categoría'}
+          </h1>
         </div>
-        <div className="flex justify-center items-center text-2xl bg-[#6c7883] rounded-lg h-[80%]">
-          <h1>Decripcion</h1>
+        <div className="flex h-[80%] items-center justify-center rounded-lg bg-[#6c7883] text-2xl">
+          <span>{categoria?.description ?? 'Sin descripción disponible'}</span>
         </div>
       </div>
     </div>
