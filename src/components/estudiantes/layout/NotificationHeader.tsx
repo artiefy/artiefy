@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -147,7 +147,13 @@ export function NotificationHeader() {
         )}
       </button>
 
-      <div className={`notification-options ${isOpen ? 'show' : ''}`}>
+      <div
+        className={`notification-options ${isOpen ? 'show' : ''}`}
+        style={{
+          maxHeight: '350px',
+          overflowY: 'auto',
+        }}
+      >
         {notifications.length > 0 ? (
           notifications.map((notification) => (
             <div
@@ -163,9 +169,11 @@ export function NotificationHeader() {
               }}
             >
               <div className="notification-content">
-                <div className="notification-title">{notification.title}</div>
+                <div className="notification-title">
+                  {notification.title.replace('lección', 'clase')}
+                </div>
                 <div className="notification-description">
-                  {notification.message}
+                  {notification.message.replace('lección', 'clase')}
                 </div>
                 <div className="notification-time">
                   {formatRelativeTime(notification.createdAt)}

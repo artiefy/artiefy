@@ -9,157 +9,169 @@ import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedet
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 
 import CourseDetails from './CourseDetails';
 
 import type { Course } from '~/types';
 
 interface PageParams {
-	id: string;
+  id: string;
 }
 
 // Función para generar metadata dinámica
 export async function generateMetadata(
-	{ params }: { params: { id: string } },
-	parent: ResolvingMetadata
+  { params }: { params: { id: string } },
+  parent: ResolvingMetadata
 ): Promise<Metadata> {
-	try {
-		// Await params to ensure it's resolved
-		const { id } = await Promise.resolve(params);
-		const courseId = Number(id);
+  try {
+    // Await params to ensure it's resolved
+    const { id } = await Promise.resolve(params);
+    const courseId = Number(id);
 
-		if (isNaN(courseId)) {
-			return {
-				title: 'Curso no encontrado',
-				description: 'ID de curso inválido',
-			};
-		}
+    if (isNaN(courseId)) {
+      return {
+        title: 'Curso no encontrado',
+        description: 'ID de curso inválido',
+      };
+    }
 
-		const { userId } = await auth();
-		const course = await getCourseById(courseId, userId);
+    const { userId } = await auth();
+    const course = await getCourseById(courseId, userId);
 
-		if (!course) {
-			return {
-				title: 'Curso no encontrado',
-				description: 'El curso solicitado no pudo ser encontrado.',
-			};
-		}
+    if (!course) {
+      return {
+        title: 'Curso no encontrado',
+        description: 'El curso solicitado no pudo ser encontrado.',
+      };
+    }
 
-		// Asegurar que tengamos una URL base válida
-		const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
-		const metadataBase = new URL(baseUrl);
+    // Asegurar que tengamos una URL base válida
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
+    const metadataBase = new URL(baseUrl);
 
-		// Construir URL absoluta para la imagen
-		const coverImageUrl = new URL(
-			course.coverImageKey
-				? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-				: 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-		).toString();
+    // Construir URL absoluta para la imagen
+    const coverImageUrl = new URL(
+      course.coverImageKey
+        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+        : 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+    ).toString();
 
-		// Obtener imágenes del padre
-		const previousImages = (await parent).openGraph?.images ?? [];
+    // Obtener imágenes del padre
+    const previousImages = (await parent).openGraph?.images ?? [];
 
-		return {
-			metadataBase,
-			title: `${course.title} | Artiefy`,
-			description: course.description ?? 'No hay descripción disponible.',
-			openGraph: {
-				type: 'website',
-				locale: 'es_ES',
-				url: new URL(`/estudiantes/cursos/${courseId}`, baseUrl).toString(),
-				siteName: 'Artiefy',
-				title: `${course.title} | Artiefy`,
-				description: course.description ?? 'No hay descripción disponible.',
-				images: [
-					{
-						url: coverImageUrl,
-						width: 1200,
-						height: 630,
-						alt: `Portada del curso: ${course.title}`,
-						type: course.coverImageKey?.endsWith('.png')
-							? 'image/png'
-							: 'image/jpeg',
-					},
-					...previousImages,
-				],
-			},
-			twitter: {
-				card: 'summary_large_image',
-				title: `${course.title} | Artiefy`,
-				description: course.description ?? 'No hay descripción disponible.',
-				images: [coverImageUrl],
-				creator: '@artiefy',
-				site: '@artiefy',
-			},
-		};
-	} catch (error) {
-		console.error('Error generating metadata:', error);
-		return {
-			title: 'Error',
-			description: 'Error al cargar el curso',
-		};
-	}
+    return {
+      metadataBase,
+      title: `${course.title} | Artiefy`,
+      description: course.description ?? 'No hay descripción disponible.',
+      openGraph: {
+        type: 'website',
+        locale: 'es_ES',
+        url: new URL(`/estudiantes/cursos/${courseId}`, baseUrl).toString(),
+        siteName: 'Artiefy',
+        title: `${course.title} | Artiefy`,
+        description: course.description ?? 'No hay descripción disponible.',
+        images: [
+          {
+            url: coverImageUrl,
+            width: 1200,
+            height: 630,
+            alt: `Portada del curso: ${course.title}`,
+            type: course.coverImageKey?.endsWith('.png')
+              ? 'image/png'
+              : 'image/jpeg',
+          },
+          ...previousImages,
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `${course.title} | Artiefy`,
+        description: course.description ?? 'No hay descripción disponible.',
+        images: [coverImageUrl],
+        creator: '@artiefy',
+        site: '@artiefy',
+      },
+    };
+  } catch (error) {
+    console.error('Error generating metadata:', error);
+    return {
+      title: 'Error',
+      description: 'Error al cargar el curso',
+    };
+  }
 }
 
 // Componente principal de la página del curso
 export default async function Page({ params }: { params: PageParams }) {
-	// Already awaiting params here, keep this as is
-	const { id } = await Promise.resolve(params);
+  // Already awaiting params here, keep this as is
+  const { id } = await Promise.resolve(params);
 
-	return (
-		<div>
-			<Header />
-			<Suspense fallback={<CourseDetailsSkeleton />}>
-				<CourseContent id={id} />
-			</Suspense>
-			<Footer />
-		</div>
-	);
+  return (
+    <div>
+      <Header />
+      <Suspense fallback={<CourseDetailsSkeleton />}>
+        <CourseContent id={id} />
+      </Suspense>
+      <Footer />
+    </div>
+  );
 }
 
 // Componente para renderizar los detalles del curso
 async function CourseContent({ id }: { id: string }) {
-	try {
-		const courseId = Number(id);
-		if (isNaN(courseId)) {
-			notFound();
-		}
+  try {
+    const courseId = Number(id);
+    if (isNaN(courseId)) {
+      notFound();
+    }
 
-		const { userId } = await auth();
-		const course = await getCourseById(courseId, userId);
+    const { userId } = await auth();
+    const course = await getCourseById(courseId, userId);
 
-		if (!course) {
-			notFound();
-		}
+    if (!course) {
+      notFound();
+    }
 
-		const courseForDetails: Course = {
-			...course,
-			totalStudents: course.enrollments?.length ?? 0,
-			lessons:
-				course.lessons?.sort((a, b) => a.title.localeCompare(b.title)) ?? [], // Ordenar por título
-			category: course.category
-				? {
-						id: course.category.id,
-						name: course.category.name,
-						description: course.category.description,
-						is_featured: course.category.is_featured,
-					}
-				: undefined,
-			modalidad: course.modalidad
-				? {
-						name: course.modalidad.name,
-					}
-				: undefined,
-			enrollments: course.enrollments,
-		};
+    // Asegura que userId es string (no null)
+    const safeUserId = userId ?? '';
 
-		return (
-			<section>
-				<CourseDetails course={courseForDetails} />
-			</section>
-		);
-	} catch (error) {
-		console.error('Error in CourseContent:', error);
-		throw error;
-	}
+    // Obtener lecciones sincronizadas con progreso real del usuario
+    const lessons =
+      (await getLessonsByCourseId(courseId, safeUserId))?.map((lesson) => ({
+        ...lesson,
+        isLocked: lesson.isLocked,
+        porcentajecompletado: lesson.userProgress,
+        isNew: lesson.isNew,
+      })) ?? [];
+
+    const courseForDetails: Course = {
+      ...course,
+      totalStudents: course.enrollments?.length ?? 0,
+      lessons, // Usar las lecciones sincronizadas con progreso real
+      category: course.category
+        ? {
+            id: course.category.id,
+            name: course.category.name,
+            description: course.category.description,
+            is_featured: course.category.is_featured,
+          }
+        : undefined,
+      modalidad: course.modalidad
+        ? {
+            name: course.modalidad.name,
+          }
+        : undefined,
+      enrollments: course.enrollments,
+    };
+
+    return (
+      <section>
+        <CourseDetails course={courseForDetails} />
+      </section>
+    );
+  } catch (error) {
+    console.error('Error in CourseContent:', error);
+    throw error;
+  }
 }

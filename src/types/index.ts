@@ -441,7 +441,8 @@ export type NotificationType =
   | 'TICKET_UPDATED'
   | 'TICKET_ASSIGNED'
   | 'NEW_COURSE_ADDED'
-  | 'ACTIVITY_COMPLETED';
+  | 'ACTIVITY_COMPLETED'
+  | 'COURSE_UNENROLLMENT'; // <-- Agregado
 
 export interface NotificationMetadata {
   programId?: number;

@@ -72,7 +72,7 @@ export default function CourseDetails({
               new Date(subscriptionEndDate) > new Date());
           setIsSubscriptionActive(isSubscriptionActive);
 
-          // Si está inscrito, cargar progreso
+          // Si está inscrito, cargar progreso real desde la BD
           if (isUserEnrolled) {
             const lessons = await getLessonsByCourseId(
               initialCourse.id,
@@ -127,22 +127,39 @@ export default function CourseDetails({
           setIsEnrolled(true);
           toast.success('¡Te has inscrito exitosamente!');
 
-          // Actualizar curso
+          // Actualizar curso y progreso desde la BD
           const updatedCourse = await getCourseById(course.id, userId);
+          const lessons = updatedCourse
+            ? await getLessonsByCourseId(course.id, userId)
+            : [];
           if (updatedCourse) {
             setCourse({
               ...updatedCourse,
-              lessons: updatedCourse.lessons ?? [],
+              lessons:
+                lessons?.map((lesson) => ({
+                  ...lesson,
+                  isLocked: lesson.isLocked,
+                  porcentajecompletado: lesson.userProgress,
+                  isNew: lesson.isNew,
+                })) ?? [],
             });
           }
         } else if (result.message === 'Ya estás inscrito en este curso') {
-          // Si ya está inscrito, actualizar el estado local
           setIsEnrolled(true);
           const updatedCourse = await getCourseById(course.id, userId);
+          const lessons = updatedCourse
+            ? await getLessonsByCourseId(course.id, userId)
+            : [];
           if (updatedCourse) {
             setCourse({
               ...updatedCourse,
-              lessons: updatedCourse.lessons ?? [],
+              lessons:
+                lessons?.map((lesson) => ({
+                  ...lesson,
+                  isLocked: lesson.isLocked,
+                  porcentajecompletado: lesson.userProgress,
+                  isNew: lesson.isNew,
+                })) ?? [],
             });
           }
         }
@@ -176,10 +193,19 @@ export default function CourseDetails({
         toast.success('¡Te has inscrito exitosamente!');
 
         const updatedCourse = await getCourseById(course.id, userId);
+        const lessons = updatedCourse
+          ? await getLessonsByCourseId(course.id, userId)
+          : [];
         if (updatedCourse) {
           setCourse({
             ...updatedCourse,
-            lessons: updatedCourse.lessons ?? [],
+            lessons:
+              lessons?.map((lesson) => ({
+                ...lesson,
+                isLocked: lesson.isLocked,
+                porcentajecompletado: lesson.userProgress,
+                isNew: lesson.isNew,
+              })) ?? [],
           });
         }
       }
@@ -199,6 +225,8 @@ export default function CourseDetails({
       if (result.success) {
         setIsEnrolled(false);
         setTotalStudents((prev) => prev - 1);
+        // Recargar lecciones desde la BD para reflejar el estado actualizado
+        const lessons = await getLessonsByCourseId(course.id, userId);
         setCourse((prev) => ({
           ...prev,
           enrollments: Array.isArray(prev.enrollments)
@@ -206,11 +234,13 @@ export default function CourseDetails({
                 (enrollment: Enrollment) => enrollment.userId !== userId
               )
             : [],
-          lessons: prev.lessons?.map((lesson) => ({
-            ...lesson,
-            userProgress: 0,
-            isLocked: true,
-          })),
+          lessons:
+            lessons?.map((lesson) => ({
+              ...lesson,
+              isLocked: lesson.isLocked,
+              porcentajecompletado: lesson.userProgress,
+              isNew: lesson.isNew,
+            })) ?? [],
         }));
         toast.success('Has cancelado tu inscripción al curso correctamente');
       }

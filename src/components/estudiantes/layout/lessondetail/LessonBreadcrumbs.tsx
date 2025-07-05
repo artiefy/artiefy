@@ -23,7 +23,7 @@ const LessonBreadcrumbs = ({
         <li>
           <Link
             href="/"
-            className="flex items-center hover:underline focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="hover:text-primary flex items-center hover:underline focus:ring-0 focus:outline-none"
           >
             <FaHome className="mr-1" /> Inicio
           </Link>
@@ -34,7 +34,7 @@ const LessonBreadcrumbs = ({
         <li>
           <Link
             href="/estudiantes"
-            className="flex items-center hover:underline focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            className="hover:text-primary flex items-center hover:underline focus:ring-0 focus:outline-none"
           >
             <FaUserGraduate className="mr-1" /> Cursos
           </Link>
@@ -45,7 +45,7 @@ const LessonBreadcrumbs = ({
         <li>
           <Link
             href={`/estudiantes/cursos/${courseId}`}
-            className="flex max-w-[120px] items-center truncate hover:underline focus:ring-2 focus:ring-blue-500 focus:outline-none md:max-w-xs"
+            className="hover:text-primary flex max-w-[120px] items-center truncate hover:underline focus:ring-0 focus:outline-none md:max-w-xs"
             title={courseTitle}
           >
             <FaBook className="mr-1" /> {courseTitle}
