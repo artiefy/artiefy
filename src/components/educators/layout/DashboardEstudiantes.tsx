@@ -775,7 +775,19 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                             {(() => {
                               if (!user) return 'N/D';
 
-                              const actividadesPorParametro = {};
+                              type ActivityType = {
+                                id: number;
+                                name: string;
+                                parametro: string;
+                                parametroPeso: number;
+                                actividadPeso: number;
+                              };
+
+                              const actividadesPorParametro: Record<
+                                string,
+                                ActivityType[]
+                              > = {};
+
                               activities.forEach((act) => {
                                 if (!actividadesPorParametro[act.parametro]) {
                                   actividadesPorParametro[act.parametro] = [];
