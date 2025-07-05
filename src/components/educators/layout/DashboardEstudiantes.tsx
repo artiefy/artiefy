@@ -85,7 +85,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
     {}
   );
   const [activities, setActivities] = useState<
-    { id: number; name: string; parametro: string }[]
+    {
+      id: number;
+      name: string;
+      parametro: string;
+      parametroPeso: number;
+      actividadPeso: number;
+    }[]
   >([]);
 
   // 3️⃣ Paginación
@@ -191,15 +197,18 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
               ? new Date(user.lastConnection).toLocaleDateString()
               : (user.lastConnection ?? 'Fecha no disponible'),
           tiempoEnCurso,
-          /* ⬇ mantenemos las notas por parámetro tal como llegan */
           parameterGrades: user.parameterGrades,
         };
       });
 
-      // ←← Extraer lecciones únicas y mapa de promedios
       const activityMap = new Map<
         number,
-        { name: string; parametro: string }
+        {
+          name: string;
+          parametro: string;
+          parametroPeso: number;
+          actividadPeso: number;
+        }
       >();
       const gradesMap: Record<string, Record<number, number>> = {};
 
@@ -209,25 +218,61 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
           activityMap.set(a.activityId, {
             name: a.activityName,
             parametro: a.parametroName,
+            parametroPeso: a.parametroPeso ?? 0,
+            actividadPeso: a.actividadPeso ?? 0,
           });
           g[a.activityId] = a.grade;
         });
         gradesMap[u.id] = g;
       });
 
+      // Extraer parámetros aunque no tengan actividades
+      const parametroMap = new Map<
+        number,
+        { parametroName: string; parametroPeso: number }
+      >();
+
+      rawUsers.forEach((u) => {
+        u.parameterGrades.forEach((p) => {
+          if (!parametroMap.has(p.parametroId)) {
+            parametroMap.set(p.parametroId, {
+              parametroName: p.parametroName,
+              parametroPeso: p.parametroPeso ?? 0,
+            });
+          }
+        });
+      });
+
+      // Crear actividades + columnas fake para los parámetros sin actividades
       const allActivities = Array.from(activityMap.entries()).map(
         ([id, data]) => ({
           id,
           name: data.name,
           parametro: data.parametro,
+          parametroPeso: data.parametroPeso,
+          actividadPeso: data.actividadPeso,
         })
       );
 
+      parametroMap.forEach((param, parametroId) => {
+        const yaExiste = allActivities.some(
+          (act) => act.parametro === param.parametroName
+        );
+        if (!yaExiste) {
+          allActivities.push({
+            id: -parametroId, // ids negativos para distinguir
+            name: 'Sin actividad',
+            parametro: param.parametroName,
+            parametroPeso: param.parametroPeso,
+            actividadPeso: 0,
+          });
+        }
+      });
+
       setActivities(allActivities);
       setGrades(gradesMap);
-
       setUsers(formattedUsers);
-      console.log('✅ Usuarios con actividades:', formattedUsers);
+      console.log('✅ Usuarios con actividades + parámetros:', formattedUsers);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
       console.error('Error fetching enrolled users:', err);
@@ -617,14 +662,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
 
                         {activities.map((activity) => (
                           <th
-                            key={activity.id}
+                            key={`${activity.parametro}-${activity.id}`}
                             className="hidden px-4 py-3 text-center text-xs font-semibold whitespace-nowrap uppercase lg:table-cell"
                           >
-                            {activity.name}
-                            <br />
-                            <span className="text-[10px] text-blue-400 italic">
-                              {activity.parametro}
+                            <span className="mb-1 block text-[10px] text-blue-400 italic">
+                              {activity.parametro} ({activity.parametroPeso}%)
                             </span>
+                            {activity.name} ({activity.actividadPeso}%)
                           </th>
                         ))}
 
@@ -688,40 +732,91 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                               key={`${user.id}-${activity.id}`}
                               className="hidden px-4 py-2 text-center text-xs whitespace-nowrap lg:table-cell"
                             >
-                              <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                step={0.5}
-                                className="w-16 rounded bg-gray-700 p-1 text-center text-white"
-                                value={grades[user.id]?.[activity.id] ?? 0}
-                                onChange={(e) =>
-                                  handleGradeChange(
-                                    user.id,
-                                    activity.id,
-                                    parseFloat(e.target.value)
-                                  )
-                                }
-                                onBlur={() =>
-                                  saveGrade(
-                                    user.id,
-                                    activity.id,
-                                    grades[user.id]?.[activity.id] ?? 0
-                                  )
-                                }
-                              />
+                              {activity.name === 'Sin actividad' ? (
+                                <input
+                                  type="number"
+                                  value={
+                                    user.parameterGrades.find(
+                                      (p) =>
+                                        p.parametroName === activity.parametro
+                                    )?.grade ?? 0
+                                  }
+                                  disabled
+                                  className="w-16 cursor-not-allowed rounded bg-gray-700 p-1 text-center text-white opacity-50"
+                                />
+                              ) : (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  step={0.5}
+                                  className="w-16 rounded bg-gray-700 p-1 text-center text-white"
+                                  value={grades[user.id]?.[activity.id] ?? ''}
+                                  onChange={(e) =>
+                                    handleGradeChange(
+                                      user.id,
+                                      activity.id,
+                                      parseFloat(e.target.value)
+                                    )
+                                  }
+                                  onBlur={() =>
+                                    saveGrade(
+                                      user.id,
+                                      activity.id,
+                                      grades[user.id]?.[activity.id] ?? 0
+                                    )
+                                  }
+                                />
+                              )}
                             </td>
                           ))}
 
                           <td className="px-4 py-2 text-center text-sm font-semibold whitespace-nowrap text-green-300">
                             {(() => {
-                              const notas = Object.values(
-                                grades[user.id] ?? {}
-                              );
-                              if (!notas.length) return 'N/D';
-                              const promedio =
-                                notas.reduce((a, b) => a + b, 0) / notas.length;
-                              return promedio.toFixed(2);
+                              if (!user) return 'N/D';
+
+                              const actividadesPorParametro = {};
+                              activities.forEach((act) => {
+                                if (!actividadesPorParametro[act.parametro]) {
+                                  actividadesPorParametro[act.parametro] = [];
+                                }
+                                actividadesPorParametro[act.parametro].push(
+                                  act
+                                );
+                              });
+
+                              const notasParametros = Object.entries(
+                                actividadesPorParametro
+                              ).map(([parametroName, acts]) => {
+                                let sumNotas = 0;
+                                let sumPesos = 0;
+                                acts.forEach((act) => {
+                                  const notaAct =
+                                    grades[user.id]?.[act.id] ?? 0;
+                                  sumNotas +=
+                                    notaAct * (act.actividadPeso / 100);
+                                  sumPesos += act.actividadPeso / 100;
+                                });
+                                const promedio =
+                                  sumPesos > 0 ? sumNotas / sumPesos : 0;
+                                const pesoParametro =
+                                  acts[0]?.parametroPeso ?? 0;
+                                return { promedio, pesoParametro };
+                              });
+
+                              let sumaFinal = 0;
+                              let sumaPesosParametros = 0;
+                              notasParametros.forEach((np) => {
+                                sumaFinal +=
+                                  np.promedio * (np.pesoParametro / 100);
+                                sumaPesosParametros += np.pesoParametro / 100;
+                              });
+
+                              const notaFinal =
+                                sumaPesosParametros > 0
+                                  ? sumaFinal / sumaPesosParametros
+                                  : 0;
+                              return notaFinal.toFixed(2);
                             })()}
                           </td>
 
