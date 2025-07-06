@@ -580,15 +580,21 @@ export function CourseHeader({
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="px-0">
-        {/* Título encima de la portada SOLO en mobile, en desktop dentro de la portada */}
+        {/* Título encima de la portada SOLO en mobile, en desktop encima de la portada */}
         <div className="block w-full px-4 pt-4 pb-1 sm:hidden">
           <h1 className="line-clamp-2 text-base font-bold text-gray-900">
             {course.title}
           </h1>
         </div>
-        <div className="relative w-full transition-all duration-200 sm:h-auto">
+        {/* Título encima de la portada SOLO en desktop */}
+        <div className="hidden w-full px-4 pt-4 sm:block">
+          <h1 className="line-clamp-2 text-xl font-bold text-gray-900 md:text-2xl lg:text-3xl">
+            {course.title}
+          </h1>
+        </div>
+        <div className="relative mb-4 w-full transition-all duration-200 sm:-mb-40 sm:h-auto">
           {/* Cambia el aspect ratio de 16/7 a 16/7 solo en pantallas sm+ y reduce en móviles */}
-          <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7]">
+          <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7] ">
             {/* Nueva lógica de portada/video */}
             {coverVideoCourseKey ? (
               <div className="relative h-full w-full">
@@ -680,15 +686,15 @@ export function CourseHeader({
               />
             )}
           </AspectRatio>
-          {/* Título dentro de la portada SOLO en desktop */}
-          <div className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/70 via-black/50 to-transparent p-4 sm:block md:p-6">
+          {/* Eliminar el título dentro de la portada SOLO en desktop */}
+          {/* <div className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/70 via-black/50 to-transparent p-4 sm:block md:p-6">
             <h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
               {course.title}
             </h1>
-          </div>
+          </div> */}
         </div>
         {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
-        <div className="relative z-10 -mb-4 block w-full px-4 pt-1 sm:hidden">
+        <div className="relative z-10 -mb-4 block w-full px-4 -mt-1 sm:hidden">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant="outline"
@@ -732,7 +738,7 @@ export function CourseHeader({
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center justify-between gap-4 sm:gap-6 -mt-1">
             <div className="flex items-center">
               <FaUserGraduate className="mr-2 text-blue-600" />
               <span className="text-sm font-semibold text-blue-600 sm:text-base">
@@ -761,7 +767,7 @@ export function CourseHeader({
         {/* Course type and instructor info */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-4">
-            <div className="flex w-full items-center justify-between sm:-mt-2 sm:-mb-2">
+            <div className="flex w-full items-center justify-between sm:-mt-2 sm:-mb-2 -mt-2">
               <div>
                 <h3 className="text-background text-base font-extrabold sm:text-lg">
                   {course.instructorName ?? 'Instructor no encontrado'}
@@ -771,7 +777,7 @@ export function CourseHeader({
                 </em>
               </div>
               {/* Modalidad badge a la derecha en mobile, abajo en desktop */}
-              <div className="ml-2 block sm:hidden">
+              <div className="ml-2 block sm:hidden mt-4">
                 <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
                   {course.modalidad?.name}
                 </Badge>
