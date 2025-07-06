@@ -587,7 +587,8 @@ export function CourseHeader({
           </h1>
         </div>
         <div className="relative w-full transition-all duration-200 sm:h-auto">
-          <AspectRatio ratio={16 / 6}>
+          {/* Cambia el aspect ratio de 16/7 a 16/7 solo en pantallas sm+ y reduce en móviles */}
+          <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7]">
             {/* Nueva lógica de portada/video */}
             {coverVideoCourseKey ? (
               <div className="relative h-full w-full">
@@ -660,7 +661,7 @@ export function CourseHeader({
                 src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
                 alt={course.title}
                 fill
-                className="object-cover"
+                className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
                 priority
                 sizes="100vw"
                 placeholder="blur"
@@ -671,7 +672,7 @@ export function CourseHeader({
                 src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
                 alt={course.title}
                 fill
-                className="object-cover"
+                className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
                 priority
                 sizes="100vw"
                 placeholder="blur"
@@ -687,7 +688,7 @@ export function CourseHeader({
           </div>
         </div>
         {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
-        <div className="-mb-4 block w-full px-4 pt-1 sm:hidden">
+        <div className="relative z-10 -mb-4 block w-full px-4 pt-1 sm:hidden">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant="outline"
