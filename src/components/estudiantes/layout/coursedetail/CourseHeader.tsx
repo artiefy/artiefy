@@ -687,7 +687,7 @@ export function CourseHeader({
           </div>
         </div>
         {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
-        <div className="block w-full px-4 pt-1 -mb-4 sm:hidden">
+        <div className="-mb-4 block w-full px-4 pt-1 sm:hidden">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant="outline"
@@ -760,7 +760,7 @@ export function CourseHeader({
         {/* Course type and instructor info */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-4">
-            <div className="flex w-full items-center justify-between">
+            <div className="flex w-full items-center justify-between sm:-mt-2 sm:-mb-2">
               <div>
                 <h3 className="text-background text-base font-extrabold sm:text-lg">
                   {course.instructorName ?? 'Instructor no encontrado'}
