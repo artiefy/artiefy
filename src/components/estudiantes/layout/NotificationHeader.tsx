@@ -39,11 +39,15 @@ export function NotificationHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [hasMarkedAsRead, setHasMarkedAsRead] = useState(false); // Nuevo estado
 
   useEffect(() => {
     if (user?.id) {
       void getNotifications(user.id).then(setNotifications);
-      void getUnreadCount(user.id).then(setUnreadCount);
+      void getUnreadCount(user.id).then((count) => {
+        setUnreadCount(count);
+        setHasMarkedAsRead(false); // Resetear cuando cambia el usuario
+      });
     }
   }, [user?.id]);
 
@@ -62,12 +66,13 @@ export function NotificationHeader() {
   const handleClick = async () => {
     setIsOpen(!isOpen);
 
-    // Mark notifications as read when opening the menu
-    if (!isOpen && user?.id && unreadCount > 0) {
+    // Marcar como leídas solo la primera vez que se abre el menú
+    if (!isOpen && user?.id && unreadCount > 0 && !hasMarkedAsRead) {
       try {
         await markNotificationsAsRead(user.id);
-        setUnreadCount(0); // Update local state immediately
-        // Refresh notifications to get updated read status
+        setUnreadCount(0); // Actualizar localmente
+        setHasMarkedAsRead(true); // Evitar volver a mostrar el contador
+        // Refrescar notificaciones
         const updatedNotifications = await getNotifications(user.id);
         setNotifications(updatedNotifications);
       } catch (error) {
@@ -135,7 +140,7 @@ export function NotificationHeader() {
         <span className="absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded bg-white px-2 py-1 text-xs whitespace-nowrap text-black opacity-0 transition-opacity group-hover:opacity-100 md:block">
           Notificaciones
         </span>
-        {unreadCount > 0 ? (
+        {unreadCount > 0 && !hasMarkedAsRead ? (
           <>
             <BellRing className="text-primary group-hover:text-background size-6 transition-colors" />
             <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
