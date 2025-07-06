@@ -586,7 +586,7 @@ export function CourseHeader({
             {course.title}
           </h1>
         </div>
-        <div className="relative h-30 w-full transition-all duration-200 sm:h-auto">
+        <div className="relative w-full transition-all duration-200 sm:h-auto">
           <AspectRatio ratio={16 / 6}>
             {/* Nueva lógica de portada/video */}
             {coverVideoCourseKey ? (
@@ -686,36 +686,48 @@ export function CourseHeader({
             </h1>
           </div>
         </div>
+        {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
+        <div className="block w-full px-4 pt-1 -mb-4 sm:hidden">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+            >
+              {course.category?.name}
+            </Badge>
+            {getCourseTypeLabel()}
+          </div>
+        </div>
       </CardHeader>
 
       <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
         {/* Course metadata */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-              <div className="flex flex-wrap items-center gap-2">
+          {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2">
+              <div className="hidden flex-wrap items-center gap-2 sm:flex">
                 <Badge
                   variant="outline"
                   className="border-primary bg-background text-primary w-fit hover:bg-black/70"
                 >
                   {course.category?.name}
                 </Badge>
-                {/* Moved course type label here */}
                 {getCourseTypeLabel()}
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex items-center">
-                  <FaCalendar className="mr-2 text-gray-600" />
-                  <span className="text-xs text-gray-600 sm:text-sm">
-                    Creado: {formatDateString(course.createdAt)}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <FaClock className="mr-2 text-gray-600" />
-                  <span className="text-xs text-gray-600 sm:text-sm">
-                    Actualizado: {formatDateString(course.updatedAt)}
-                  </span>
-                </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex items-center">
+                <FaCalendar className="mr-2 text-gray-600" />
+                <span className="text-xs text-gray-600 sm:text-sm">
+                  Creado: {formatDateString(course.createdAt)}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <FaClock className="mr-2 text-gray-600" />
+                <span className="text-xs text-gray-600 sm:text-sm">
+                  Actualizado: {formatDateString(course.updatedAt)}
+                </span>
               </div>
             </div>
           </div>
