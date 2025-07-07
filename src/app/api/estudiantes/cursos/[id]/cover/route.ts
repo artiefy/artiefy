@@ -4,10 +4,11 @@ import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseByI
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const courseId = Number(params.id);
+    const { id } = await params;
+    const courseId = Number(id);
     if (isNaN(courseId)) {
       return NextResponse.json(
         { error: 'ID de curso inválido' },
@@ -30,7 +31,7 @@ export async function GET(
       : 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
 
     return NextResponse.json({ coverImageUrl });
-  } catch (_error) {
+  } catch (error) {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }
