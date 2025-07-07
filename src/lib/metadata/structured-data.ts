@@ -42,14 +42,7 @@ export const getWebPagesSchema = () => [
     '@id': 'https://artiefy.com/estudiantes/#page',
     url: 'https://artiefy.com/estudiantes',
     name: 'Cursos',
-    hasPart: [
-      {
-        '@type': 'WebPage',
-        '@id': 'https://artiefy.com/planes/#page',
-        url: 'https://artiefy.com/planes',
-        name: 'Planes',
-      },
-    ],
+    description: 'Cursos',
   },
   {
     '@context': 'https://schema.org',
@@ -57,5 +50,6 @@ export const getWebPagesSchema = () => [
     '@id': 'https://artiefy.com/planes/#page',
     url: 'https://artiefy.com/planes',
     name: 'Planes',
+    description: 'Descubre los planes de suscripción de Artiefy.',
   },
 ];
