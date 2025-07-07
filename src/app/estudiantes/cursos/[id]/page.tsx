@@ -22,7 +22,7 @@ interface PageParams {
 // Función para generar metadata dinámica
 export async function generateMetadata(
   { params }: { params: { id: string } },
-  parent: ResolvingMetadata
+  _parent: ResolvingMetadata // Renombrado para evitar warning de ESLint
 ): Promise<Metadata> {
   try {
     // Await params to ensure it's resolved
@@ -50,16 +50,12 @@ export async function generateMetadata(
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
     const metadataBase = new URL(baseUrl);
 
-    // Construir URL absoluta para la imagen
-    const coverImageUrl = new URL(
-      course.coverImageKey
-        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-        : 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-    ).toString();
+    // Construir URL absoluta para la imagen de portada
+    const coverImageUrl = course.coverImageKey
+      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
+      : 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
 
-    // Obtener imágenes del padre
-    const previousImages = (await parent).openGraph?.images ?? [];
-
+    // No incluir imágenes previas para que la portada sea la principal
     return {
       metadataBase,
       title: `${course.title} | Artiefy`,
@@ -81,7 +77,6 @@ export async function generateMetadata(
               ? 'image/png'
               : 'image/jpeg',
           },
-          ...previousImages,
         ],
       },
       twitter: {

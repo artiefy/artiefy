@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 
 import type { Metadata } from 'next';
 
+// sharedOpenGraph solo debe usarse en páginas generales, no en cursos dinámicos
 const sharedOpenGraph = {
   images: [
     {
