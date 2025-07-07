@@ -2,12 +2,10 @@ import { headers } from 'next/headers';
 
 import type { Metadata } from 'next';
 
-const BASE_URL = 'https://artiefy.com';
-
 const sharedOpenGraph = {
   images: [
     {
-      url: `${BASE_URL}/opengraph-image`,
+      url: 'https://artiefy.com/opengraph-image',
       width: 1200,
       height: 630,
       alt: 'Unete a nosotros y transforma tus ideas en realidades con el poder del conocimiento',
@@ -48,15 +46,15 @@ const defaultMetadata: Metadata = {
     'artiefy cursos',
     'artiefy online',
   ],
-  metadataBase: new URL(BASE_URL),
+  metadataBase: new URL('https://artiefy.com'),
   openGraph: {
     type: 'website',
     locale: 'es_ES',
-    url: BASE_URL,
+    url: 'https://artiefy.com',
     siteName: 'Artiefy - Plataforma de Educación Online',
     images: [
       {
-        url: `${BASE_URL}/opengraph-image`,
+        url: 'https://artiefy.com/opengraph-image',
         width: 1200,
         height: 630,
         alt: 'Artiefy - App Web Educativa de Cursos Online',
@@ -113,11 +111,11 @@ export async function getMetadataForRoute(): Promise<Metadata> {
           'educación digital',
           'aprendizaje online',
         ],
-        alternates: { canonical: BASE_URL },
+        alternates: { canonical: 'https://artiefy.com' },
         openGraph: {
           ...baseMetadata.openGraph,
           title: 'Artiefy - Cursos Online',
-          url: BASE_URL,
+          url: 'https://artiefy.com',
         },
       };
 
@@ -136,11 +134,11 @@ export async function getMetadataForRoute(): Promise<Metadata> {
           'cursos digitales',
           'programas educativos',
         ],
-        alternates: { canonical: `${BASE_URL}/estudiantes` },
+        alternates: { canonical: 'https://artiefy.com/estudiantes' },
         openGraph: {
           ...baseMetadata.openGraph,
           title: 'Artiefy - Cursos',
-          url: `${BASE_URL}/estudiantes`,
+          url: 'https://artiefy.com/estudiantes',
         },
       };
 
@@ -160,11 +158,11 @@ export async function getMetadataForRoute(): Promise<Metadata> {
           'suscripción cursos online',
           'planes de estudio',
         ],
-        alternates: { canonical: `${BASE_URL}/planes` },
+        alternates: { canonical: 'https://artiefy.com/planes' },
         openGraph: {
           ...baseMetadata.openGraph,
           title: 'Artiefy - Planes de Suscripción',
-          url: `${BASE_URL}/planes`,
+          url: 'https://artiefy.com/planes',
         },
       };
 
