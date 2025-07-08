@@ -23,7 +23,7 @@ interface ProjectData {
     meses: number[]; // Ej: [0, 1, 2] para Ene-Feb-Mar
   }[];
   integrantes?: number[]; // Aún no usados
-  coverImageKey?: string;
+  coverImageKey?: string; // ya está incluido
   type_project: string;
   categoryId: number;
   isPublic?: boolean; // <-- nuevo campo opcional
@@ -91,7 +91,7 @@ export async function createProject(
       planteamiento: projectData.planteamiento,
       justificacion: projectData.justificacion,
       objetivo_general: projectData.objetivo_general,
-      coverImageKey: projectData.coverImageKey ?? null,
+      coverImageKey: projectData.coverImageKey ?? null, // <-- asegúrate de usar este campo
       type_project: projectData.type_project,
       userId: UserId,
       categoryId: projectData.categoryId,

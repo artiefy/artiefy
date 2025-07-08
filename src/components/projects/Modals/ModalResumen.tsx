@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-//import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 import { typeProjects } from '~/server/actions/project/typeProject';
 import { type Category } from '~/types';
@@ -17,10 +17,12 @@ interface ModalResumenProps {
   objetivosEsp: string[];
   actividad: string[];
   cronograma?: Record<string, number[]>;
-  categoriaId?: number; // <-- Agrega esta prop
-  numMeses?: number; // <-- agrega esta prop
+  categoriaId?: number;
+  numMeses?: number;
   setObjetivosEsp: (value: string[]) => void;
   setActividades: (value: string[]) => void;
+  projectId?: number; // <-- NUEVO: si está presente, es edición
+  coverImageKey?: string; // <-- para mantener la imagen si no se cambia
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -37,6 +39,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   numMeses: numMesesProp,
   setObjetivosEsp,
   setActividades,
+  projectId,
+  coverImageKey: coverImageKeyProp,
 }) => {
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [categoria, setCategoria] = useState<string>('');
@@ -57,6 +61,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [tipoProyecto, setTipoProyecto] = useState<string>(
     typeProjects[0]?.value || ''
   );
+  const [imagenProyecto, setImagenProyecto] = useState<File | null>(null);
+  const [previewImagen, setPreviewImagen] = useState<string | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const isEditMode = !!projectId; // <-- AÑADE ESTA LÍNEA
   //const router = useRouter();
 
   useEffect(() => {
@@ -167,48 +175,135 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       return;
     }
 
-    const proyecto = {
-      name: tituloState,
-      categoryId: parseInt(categoria),
-      planteamiento: planteamientoEditado,
-      justificacion: justificacionEditada,
-      objetivo_general: objetivoGenEditado,
-      objetivos_especificos: objetivosEspEditado,
-      actividades: actividadEditada.map((descripcion) => ({
-        descripcion,
-        meses: cronogramaState[descripcion] || [],
-      })),
-      coverImageKey: null,
-      type_project: tipoProyecto, // <-- usar el valor seleccionado
-    };
+    const actividadesMapped = actividadEditada.map((descripcion) => ({
+      descripcion,
+      meses: cronogramaState[descripcion] || [],
+    }));
+
+    let coverImageKey: string | undefined = coverImageKeyProp;
 
     try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(proyecto),
-      });
+      if (imagenProyecto) {
+        // 1. Solicita presigned POST a /api/upload
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contentType: imagenProyecto.type,
+            fileSize: imagenProyecto.size,
+            fileName: imagenProyecto.name,
+          }),
+        });
 
-      interface ProyectoResponse {
-        id?: number;
+        if (!uploadResponse.ok) {
+          throw new Error(
+            `Error al iniciar la carga: ${uploadResponse.statusText}`
+          );
+        }
+
+        const uploadData = (await uploadResponse.json()) as {
+          url: string;
+          fields: Record<string, string>;
+          key: string;
+          fileName: string;
+          coverImageKey: string;
+        };
+
+        const {
+          url,
+          fields,
+          key,
+          coverImageKey: responseCoverImageKey,
+        } = uploadData;
+        coverImageKey = responseCoverImageKey ?? key;
+
+        // 2. Sube la imagen a S3 usando el presigned POST
+        const formData = new FormData();
+        Object.entries(fields).forEach(([k, v]) => {
+          if (typeof v === 'string') {
+            formData.append(k, v);
+          }
+        });
+        formData.append('file', imagenProyecto);
+
+        const s3Upload = await fetch(url, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!s3Upload.ok) {
+          throw new Error('Error al subir la imagen a S3');
+        }
       }
-      const data: ProyectoResponse = await response.json();
 
-      if (!response.ok) throw new Error('Error al guardar el proyecto');
+      // Construye el objeto del proyecto
+      const proyecto = {
+        name: tituloState,
+        categoryId: parseInt(categoria),
+        planteamiento: planteamientoEditado,
+        justificacion: justificacionEditada,
+        objetivo_general: objetivoGenEditado,
+        objetivos_especificos: objetivosEspEditado,
+        actividades: actividadesMapped,
+        type_project: tipoProyecto,
+        coverImageKey,
+      };
 
-      // Usa router.push fuera de cualquier callback/cierre del modal
-      if (data.id) {
-        window.location.href = `/proyectos/DetallesProyectos/${data.id}`;
+      setIsUpdating(true);
+
+      if (isEditMode) {
+        // ACTUALIZAR PROYECTO EXISTENTE
+        const response = await fetch(`/api/projects/${projectId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(proyecto),
+        });
+
+        if (!response.ok) throw new Error('Error al actualizar el proyecto');
+        window.location.reload();
       } else {
-        onClose();
+        // CREAR NUEVO PROYECTO
+        const response = await fetch('/api/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(proyecto),
+        });
+
+        interface ProyectoResponse {
+          id?: number;
+        }
+        const data: ProyectoResponse = await response.json();
+
+        if (!response.ok) throw new Error('Error al guardar el proyecto');
+
+        if (data.id) {
+          window.location.href = `/proyectos/DetallesProyectos/${data.id}`;
+        } else {
+          onClose();
+        }
       }
     } catch (error) {
-      console.error('Error al crear el proyecto:', error);
+      console.error('Error al guardar el proyecto:', error);
       alert('Hubo un problema al guardar el proyecto');
+    } finally {
+      setIsUpdating(false);
     }
   };
+
+  // Previsualización de la imagen seleccionada
+  useEffect(() => {
+    if (imagenProyecto) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPreviewImagen(reader.result as string);
+      reader.readAsDataURL(imagenProyecto);
+    } else {
+      setPreviewImagen(null);
+    }
+  }, [imagenProyecto]);
 
   // Sincroniza la categoría seleccionada si viene de edición
   useEffect(() => {
@@ -241,6 +336,36 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         >
           ✕
         </button>
+
+        {/* Espacio para la imagen del proyecto */}
+        <div className="mb-6 flex flex-col items-center">
+          <div className="mb-2 flex h-40 w-40 items-center justify-center overflow-hidden rounded-lg bg-gray-200">
+            {previewImagen ? (
+              <Image
+                src={previewImagen}
+                alt="Imagen del proyecto"
+                width={160}
+                height={160}
+                className="h-full w-full object-cover"
+                style={{ objectFit: 'cover' }}
+              />
+            ) : (
+              <span className="text-gray-500">Sin imagen</span>
+            )}
+          </div>
+          <label className="cursor-pointer rounded bg-cyan-700 px-4 py-2 text-white hover:bg-cyan-800">
+            Seleccionar imagen
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setImagenProyecto(file);
+              }}
+            />
+          </label>
+        </div>
 
         <br />
         <br />
@@ -450,13 +575,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <button
             onClick={handleGuardarProyecto}
             className="rounded bg-green-700 px-6 py-2 text-lg font-bold text-white hover:bg-green-600"
+            disabled={isUpdating}
           >
-            Crear Proyecto
+            {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="rounded bg-red-700 px-6 py-2 text-lg font-bold text-white hover:bg-red-600"
+            disabled={isUpdating}
           >
             Cancelar
           </button>

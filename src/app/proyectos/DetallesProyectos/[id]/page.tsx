@@ -14,10 +14,10 @@ import {
 } from '~/server/actions/project/getProjectById';
 import { Category } from '~/types';
 
-import ModalCategoria from '../../components/Modals/ModalCategoria';
-import ModalConfirmacionEliminacion from '../../components/Modals/ModalConfirmacionEliminacion';
-import ModalIntegrantesProyectoInfo from '../../components/Modals/ModalIntegrantesProyectoInfo';
-import ModalResumen from '../../components/Modals/ModalResumen';
+import ModalCategoria from '../../../../components/projects/Modals/ModalCategoria';
+import ModalConfirmacionEliminacion from '../../../../components/projects/Modals/ModalConfirmacionEliminacion';
+import ModalIntegrantesProyectoInfo from '../../../../components/projects/Modals/ModalIntegrantesProyectoInfo';
+import ModalResumen from '../../../../components/projects/Modals/ModalResumen';
 
 export default function DetalleProyectoPage() {
   const params = useParams();
@@ -95,6 +95,29 @@ export default function DetalleProyectoPage() {
     }
     return meses;
   }, [maxMes]);
+
+  // Publicar o despublicar proyecto
+  const handleTogglePublicarProyecto = async () => {
+    if (!projectId) return;
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isPublic: !project?.isPublic }),
+      });
+      if (res.ok) {
+        setProject((prev) =>
+          prev ? { ...prev, isPublic: !prev.isPublic } : prev
+        );
+      } else {
+        alert('No se pudo actualizar el estado público del proyecto');
+      }
+    } catch {
+      alert('Error al actualizar el estado público del proyecto');
+    }
+  };
 
   if (loading) {
     return (
@@ -196,8 +219,15 @@ export default function DetalleProyectoPage() {
           <p className="text-lg">{project.planteamiento}</p>
         </div>
         <div className="flex flex-col gap-2">
-          <button className="rounded bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700">
-            {project.isPublic ? 'Proyecto Público' : 'Publicar Proyecto'}
+          <button
+            className={
+              project.isPublic
+                ? 'rounded bg-yellow-600 px-4 py-2 font-semibold text-white hover:bg-yellow-700'
+                : 'rounded bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700'
+            }
+            onClick={handleTogglePublicarProyecto}
+          >
+            {project.isPublic ? 'Despublicar Proyecto' : 'Publicar Proyecto'}
           </button>
           <button
             className="rounded bg-cyan-600 px-4 py-2 font-semibold text-white hover:bg-cyan-700"
@@ -215,6 +245,7 @@ export default function DetalleProyectoPage() {
           <ModalConfirmacionEliminacion
             isOpen={confirmOpen}
             onClose={() => setConfirmOpen(false)}
+            projectId={projectId}
           />
         </div>
       </section>
@@ -340,14 +371,15 @@ export default function DetalleProyectoPage() {
             : {}
         }
         categoriaId={project.categoryId}
-        numMeses={maxMes} // <-- pasa la cantidad de meses calculada
+        numMeses={maxMes}
         setActividades={() => {
           /* función vacía para cumplir con la prop, sin error de eslint */
         }}
         setObjetivosEsp={() => {
           /* función vacía para cumplir con la prop, sin error de eslint */
         }}
-        // Puedes agregar más props si tu ModalResumen lo requiere
+        projectId={project.id} // <-- AÑADE ESTA LÍNEA
+        coverImageKey={project.coverImageKey ?? undefined} // <-- Y ESTA
       />
     </div>
   );
