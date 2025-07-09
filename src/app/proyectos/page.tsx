@@ -5,14 +5,14 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import {
-//  Bookmark,
+  Bookmark,
   Filter,
-//  Heart,
+  Heart,
   ImageIcon,
-//  MessageCircle,
+  MessageCircle,
   MoreHorizontal,
   Search,
-//  Share2,
+  Share2,
   TrendingUp,
   Users,
 } from 'lucide-react';
@@ -29,7 +29,7 @@ import { Button } from '~/components/projects/ui/button';
 import {
   Card,
   CardContent,
-//  CardFooter,
+  CardFooter,
   CardHeader,
 } from '~/components/projects/ui/card';
 import { Input } from '~/components/projects/ui/input';
