@@ -687,7 +687,7 @@ export default function ProyectosPage() {
                             : 'border-orange-400/30 bg-slate-700 text-orange-400'
                         }
                       >
-                        {project.isPublic ? 'Publicado' : 'Privado'}
+                        {project.isPublic ? 'Publico' : 'Privado'}
                       </Badge>
                       <Badge
                         variant="secondary"

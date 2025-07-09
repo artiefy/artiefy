@@ -34,6 +34,7 @@ export interface ProjectDetail {
 export async function getProjectById(
   projectId: number
 ): Promise<ProjectDetail | null> {
+  console.info(`[getProjectById] Called with projectId: ${projectId}`);
   const result = await db
     .select()
     .from(projects)
@@ -66,7 +67,7 @@ export async function getProjectById(
     })
   );
 
-  return {
+  const projectDetail: ProjectDetail = {
     id: project.id,
     name: project.name ?? 'Untitled Project',
     planteamiento: project.planteamiento,
@@ -88,12 +89,17 @@ export async function getProjectById(
       descripcion: a.description,
       meses: a.meses,
     })),
+    // Devuelve fechas en formato YYYY-MM-DD para inputs tipo date y lógica de días
     fecha_inicio: project.fecha_inicio
-      ? new Date(project.fecha_inicio).toISOString()
+      ? new Date(project.fecha_inicio).toISOString().split('T')[0]
       : undefined,
     fecha_fin: project.fecha_fin
-      ? new Date(project.fecha_fin).toISOString()
+      ? new Date(project.fecha_fin).toISOString().split('T')[0]
       : undefined,
     tipo_visualizacion: project.tipo_visualizacion ?? undefined,
   };
+
+  console.info(`[getProjectById] Returning project:`, projectDetail);
+
+  return projectDetail;
 }
