@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { ChevronLeft, ChevronRight, Eye, Loader2 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+import { useRouter } from 'next/navigation';
 
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
 
@@ -89,6 +90,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
       id: number;
       name: string;
       parametro: string;
+      parametroId: number; // 👈 AÑADE ESTO
       parametroPeso: number;
       actividadPeso: number;
     }[]
@@ -98,7 +100,8 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // 3️⃣ Paginación
-  const usersPerPage = 12;
+  const usersPerPage = 10;
+  const router = useRouter();
 
   const isStudentCompleted = (user: User): boolean => {
     const userGrades = grades[user.id] ?? {};
@@ -206,6 +209,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
         {
           name: string;
           parametro: string;
+          parametroId: number;
           parametroPeso: number;
           actividadPeso: number;
         }
@@ -218,6 +222,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
           activityMap.set(a.activityId, {
             name: a.activityName,
             parametro: a.parametroName,
+            parametroId: a.parametroId,
             parametroPeso: a.parametroPeso ?? 0,
             actividadPeso: a.actividadPeso ?? 0,
           });
@@ -249,6 +254,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
           id,
           name: data.name,
           parametro: data.parametro,
+          parametroId: data.parametroId,
           parametroPeso: data.parametroPeso,
           actividadPeso: data.actividadPeso,
         })
@@ -262,6 +268,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
           allActivities.push({
             id: -parametroId, // ids negativos para distinguir
             name: 'Sin actividad',
+            parametroId,
             parametro: param.parametroName,
             parametroPeso: param.parametroPeso,
             actividadPeso: 0,
@@ -733,17 +740,28 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                               className="hidden px-4 py-2 text-center text-xs whitespace-nowrap lg:table-cell"
                             >
                               {activity.name === 'Sin actividad' ? (
-                                <input
-                                  type="number"
-                                  value={
-                                    user.parameterGrades.find(
-                                      (p) =>
-                                        p.parametroName === activity.parametro
-                                    )?.grade ?? 0
-                                  }
-                                  disabled
-                                  className="w-16 cursor-not-allowed rounded bg-gray-700 p-1 text-center text-white opacity-50"
-                                />
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="number"
+                                    value={
+                                      user.parameterGrades.find(
+                                        (p) =>
+                                          p.parametroName === activity.parametro
+                                      )?.grade ?? 0
+                                    }
+                                    disabled
+                                    className="w-16 cursor-not-allowed rounded bg-gray-700 p-1 text-center text-white opacity-50"
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      // Redirigir a la nueva página para crear actividad
+                                      window.location.href = `/dashboard/super-admin/cursos/${courseId}/newActivity?parametroId=${activity.parametroId}`;
+                                    }}
+                                    className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
+                                  >
+                                    Crear
+                                  </button>
+                                </div>
                               ) : (
                                 <input
                                   type="number"
