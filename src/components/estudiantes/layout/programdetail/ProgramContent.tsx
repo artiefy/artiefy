@@ -61,6 +61,13 @@ export function ProgramContent({
   const [enrollmentCache, setEnrollmentCache] = useState<
     Record<number, boolean>
   >({});
+  // Add a state to track if client-side rendering has occurred
+  const [isClient, setIsClient] = useState(false);
+
+  // Set isClient to true on first render
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const courses = useMemo(() => {
     const safeMateriasWithCursos =
@@ -94,7 +101,7 @@ export function ProgramContent({
   useEffect(() => {
     let isSubscribed = true;
     const checkTimeout = setTimeout(async () => {
-      if (!userId) return;
+      if (!userId || !isClient) return;
 
       try {
         const checksNeeded = courses.filter(
@@ -128,7 +135,7 @@ export function ProgramContent({
       isSubscribed = false;
       clearTimeout(checkTimeout);
     };
-  }, [userId, courses, enrollmentCache]);
+  }, [userId, courses, enrollmentCache, isClient]);
 
   const handleCourseClick = useCallback(
     (courseId: number, isActive: boolean) => {
@@ -200,7 +207,7 @@ export function ProgramContent({
           <h2 className="text-background text-2xl font-bold">
             Cursos Del Programa
           </h2>
-          {isSignedIn && isSubscriptionActive && (
+          {isClient && isSignedIn && isSubscriptionActive && (
             <div className="flex flex-col items-end gap-1">
               <div className="flex items-center gap-2 text-green-500">
                 <FaCheck className="size-4" />
@@ -258,7 +265,7 @@ export function ProgramContent({
                         {course.title}
                       </div>
                     </CardTitle>
-                    {courseEnrollments[course.id] && (
+                    {isClient && courseEnrollments[course.id] && (
                       <div className="flex items-center text-green-500">
                         <CheckCircleIcon className="size-5" />
                         <span className="ml-1 text-sm font-bold">Inscrito</span>
@@ -294,17 +301,25 @@ export function ProgramContent({
                     </div>
                   </div>
                   <div className="mt-2 w-full">
-                    {isCheckingEnrollment && isSignedIn ? (
+                    {/* Use isClient to prevent hydration mismatch with dynamic content */}
+                    {!isClient ? (
+                      <Button
+                        disabled
+                        className="group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-gray-600 text-gray-400"
+                      >
+                        <span className="font-bold">Cargando...</span>
+                      </Button>
+                    ) : isCheckingEnrollment && isSignedIn ? (
                       <Button
                         disabled
                         className="group/button bg-background text-primary relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2"
                       >
+                        {/* Usar Icons.spinner en lugar del spinner personalizado */}
                         <Icons.spinner className="mr-2 size-4" />
                         <span className="font-bold">Cargando...</span>
                       </Button>
                     ) : (
                       <Button
-                        data-course-id={course.id}
                         onClick={() =>
                           handleCourseClick(course.id, course.isActive ?? false)
                         }

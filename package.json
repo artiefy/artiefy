@@ -166,8 +166,7 @@
     "typescript-eslint": "^8.35.1"
   },
   "overrides": {
-    "esbuild": "^0.25.6",
-    "brace-expansion": "^4.0.1"
+    "esbuild": "^0.25.6"
   },
   "ct3aMetadata": {
     "initVersion": "7.38.1"
