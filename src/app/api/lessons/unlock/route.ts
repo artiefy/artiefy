@@ -97,8 +97,8 @@ export async function POST(request: Request) {
     await createNotification({
       userId: user.id,
       type: 'LESSON_UNLOCKED',
-      title: '¡Nueva lección desbloqueada!',
-      message: `Se ha desbloqueado la lección: ${nextLesson.title}`,
+      title: '¡Nueva clase desbloqueada!',
+      message: `Se ha desbloqueado la clase: ${nextLesson.title}`,
       metadata: {
         lessonId: nextLesson.id,
         courseId: nextLesson.courseId,

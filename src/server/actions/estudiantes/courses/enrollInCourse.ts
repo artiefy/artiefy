@@ -173,33 +173,32 @@ export async function enrollInCourse(
     // Sort lessons using our shared sorting utility
     const sortedLessons = sortLessons(courseLessons);
 
-    // Prepara los valores para todas las lecciones
-    const progressValues = sortedLessons.map((lesson, index) => ({
-      userId: userId,
-      lessonId: lesson.id,
-      progress: 0,
-      isCompleted: false,
-      isLocked: index !== 0, // Solo la primera desbloqueada
-      isNew: index === 0, // Solo la primera es nueva
-      lastUpdated: new Date(),
-    }));
+    // Obtén los IDs de las lecciones que ya tienen progreso
+    const existingProgress = await db.query.userLessonsProgress.findMany({
+      where: eq(userLessonsProgress.userId, userId),
+    });
+    const existingLessonIds = new Set(existingProgress.map((p) => p.lessonId));
 
-    // Inserta todas las lecciones de una vez, actualizando si ya existen
+    // Solo crea progreso para las lecciones que no existen aún
+    const progressValues = sortedLessons
+      .filter((lesson) => !existingLessonIds.has(lesson.id))
+      .map((lesson, index) => ({
+        userId: userId,
+        lessonId: lesson.id,
+        progress: 0,
+        isCompleted: false,
+        isLocked: index !== 0, // Solo la primera desbloqueada si es nueva
+        isNew: index === 0, // Solo la primera es nueva si es nueva
+        lastUpdated: new Date(),
+      }));
+
+    // Inserta solo las nuevas lecciones de una vez
     await Promise.all(
       progressValues.map((values) =>
         db
           .insert(userLessonsProgress)
           .values(values)
-          .onConflictDoUpdate({
-            target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
-            set: {
-              progress: 0,
-              isCompleted: false,
-              isLocked: values.isLocked,
-              isNew: values.isNew,
-              lastUpdated: values.lastUpdated,
-            },
-          })
+          .onConflictDoNothing()
       )
     );
 

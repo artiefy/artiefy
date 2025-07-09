@@ -1,4 +1,4 @@
-import { and, count, eq, isNotNull,ne as neq, sum } from 'drizzle-orm';
+import { and, count, eq, isNotNull, ne as neq, sum } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
 import {
@@ -99,8 +99,14 @@ export async function createCourse(data: CreateCourseData) {
       individualPrice: (data.individualPrice ?? 0) as number | null,
     };
 
-    if (sanitizedData.courseTypeId === 4 && sanitizedData.individualPrice !== null && sanitizedData.individualPrice < 0) {
-      throw new Error('Individual price must be a non-negative number for course type 4');
+    if (
+      sanitizedData.courseTypeId === 4 &&
+      sanitizedData.individualPrice !== null &&
+      sanitizedData.individualPrice < 0
+    ) {
+      throw new Error(
+        'Individual price must be a non-negative number for course type 4'
+      );
     }
 
     // Inserción de datos en la base de datos
@@ -117,7 +123,10 @@ export async function createCourse(data: CreateCourseData) {
         instructor: sanitizedData.instructor,
         creatorId: sanitizedData.creatorId,
         courseTypeId: sanitizedData.courseTypeId,
-        individualPrice: sanitizedData.courseTypeId === 4 ? sanitizedData.individualPrice : null, // Solo asignamos el precio si el tipo de curso es 4
+        individualPrice:
+          sanitizedData.courseTypeId === 4
+            ? sanitizedData.individualPrice
+            : null, // Solo asignamos el precio si el tipo de curso es 4
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -130,7 +139,6 @@ export async function createCourse(data: CreateCourseData) {
     throw error;
   }
 }
-
 
 // Obtener todos los cursos de un profesor
 export const getCoursesByUserId = async (userId: string) => {
@@ -210,12 +218,12 @@ export const getCourseById = async (courseId: number) => {
         courseTypeId: courses.courseTypeId,
         isActive: courses.isActive,
         individualPrice: courses.individualPrice,
-        instructorName: users.name, // Fetch instructor name
-        instructorEmail: users.email, // Fetch instructor email
-        coverVideoCourseKey: courses.coverVideoCourseKey, // 👈 AGREGA ESTA LÍNEA
+        instructorName: users.name,
+        instructorEmail: users.email,
+        coverVideoCourseKey: courses.coverVideoCourseKey,
       })
       .from(courses)
-      .leftJoin(users, eq(courses.instructor, users.id)) // Properly join the users table
+      .leftJoin(users, eq(courses.instructor, users.id))
       .where(eq(courses.id, courseId))
       .then((rows) => rows[0]);
 
@@ -224,13 +232,13 @@ export const getCourseById = async (courseId: number) => {
       return null;
     }
 
-    // Obtener los nombres de las relaciones por separado
+    // Obtener los nombres adicionales
     const category = course.categoryid
       ? await db
           .select({ name: categories.name })
           .from(categories)
           .where(eq(categories.id, course.categoryid))
-          .then((rows) => rows[0])
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const modalidad = course.modalidadesid
@@ -238,7 +246,7 @@ export const getCourseById = async (courseId: number) => {
           .select({ name: modalidades.name })
           .from(modalidades)
           .where(eq(modalidades.id, course.modalidadesid))
-          .then((rows) => rows[0])
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const nivelName = course.nivelid
@@ -263,9 +271,9 @@ export const getCourseById = async (courseId: number) => {
       ...course,
       instructor: course.instructorName ?? 'Sin nombre',
       instructorEmail: course.instructorEmail ?? 'No disponible',
-      categoryid: category?.name ?? course.categoryid,
-      modalidadesid: modalidad?.name ?? course.modalidadesid,
-      nivelid: nivelName ?? course.nivelid,
+      categoryName: category,
+      modalidadName: modalidad,
+      nivelName,
       courseTypeName,
       totalStudents,
     };

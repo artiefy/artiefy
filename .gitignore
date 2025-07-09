@@ -51,7 +51,7 @@ src/config/credenciales-gmail.json
 
 # Cache directories
 .eslintcache
-.prettiercache 
+.prettiercache
 .cache
 .swc/
 .turbo

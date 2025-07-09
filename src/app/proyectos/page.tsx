@@ -5,14 +5,14 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 import {
-  Bookmark,
+//  Bookmark,
   Filter,
-  Heart,
+//  Heart,
   ImageIcon,
-  MessageCircle,
+//  MessageCircle,
   MoreHorizontal,
   Search,
-  Share2,
+//  Share2,
   TrendingUp,
   Users,
 } from 'lucide-react';
@@ -29,7 +29,7 @@ import { Button } from '~/components/projects/ui/button';
 import {
   Card,
   CardContent,
-  CardFooter,
+//  CardFooter,
   CardHeader,
 } from '~/components/projects/ui/card';
 import { Input } from '~/components/projects/ui/input';
@@ -713,7 +713,7 @@ export default function Component() {
                         </div>
                       </CardContent>
 
-                      <CardFooter className="pt-0">
+                      {/* <CardFooter className="pt-0">
                         <div className="flex w-full items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <Button
@@ -749,7 +749,7 @@ export default function Component() {
                             <Bookmark className="h-4 w-4" />
                           </Button>
                         </div>
-                      </CardFooter>
+                      </CardFooter> */}
                     </Card>
                   ))
                 ) : (

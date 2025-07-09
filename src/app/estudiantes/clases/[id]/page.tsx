@@ -74,33 +74,16 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
       return notFound();
     }
 
-    // Now create lesson with course data and ensure all properties are initialized
-    const lesson: LessonWithProgress = {
-      ...lessonData,
-      isLocked: lessonData.isLocked ?? false,
-      courseTitle: course.title,
-      activities: lessonData.activities ?? [], // Initialize activities array
-      porcentajecompletado: lessonData.porcentajecompletado ?? 0,
-      isCompleted: lessonData.isCompleted ?? false,
-      isNew: lessonData.isNew ?? true,
-    };
-
-    const activityContent = await getActivityContent(lessonId, userId);
-    const activitiesWithProgress = (activityContent ?? []).map((activity) => ({
-      ...activity,
-      isCompleted: activity.isCompleted ?? false,
-      userProgress: activity.userProgress ?? 0,
-    }));
-
+    // Obtener progreso real de todas las lecciones del curso
     const [lessons, userProgress] = await Promise.all([
-      getLessonsByCourseId(lesson.courseId, userId),
+      getLessonsByCourseId(lessonData.courseId, userId),
       getUserLessonsProgress(userId),
     ]);
 
     const { lessonsProgress = [], activitiesProgress = [] } =
       userProgress ?? {};
 
-    // Add null checks here
+    // Mapear progreso real a cada lección
     const lessonsWithProgress = (lessons ?? []).map((lessonItem) => {
       const lessonProgress = lessonsProgress.find(
         (progress) => progress.lessonId === lessonItem.id
@@ -112,12 +95,39 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
         porcentajecompletado: lessonProgress?.progress ?? 0,
         isLocked: lessonProgress?.isLocked ?? true,
         isCompleted: lessonProgress?.isCompleted ?? false,
-        activities: lessonItem.activities ?? [], // Ensure activities is initialized
+        isNew: lessonProgress?.isNew ?? true,
+        activities: lessonItem.activities ?? [],
       };
     });
 
     // Ordenar las lecciones antes de pasarlas al componente
     const sortedLessonsWithProgress = sortLessons(lessonsWithProgress);
+
+    // Now create lesson with course data and ensure all properties are initialized
+    const lesson: LessonWithProgress = {
+      ...lessonData,
+      isLocked:
+        lessonsProgress.find((p) => p.lessonId === lessonData.id)?.isLocked ??
+        false,
+      courseTitle: course.title,
+      activities: lessonData.activities ?? [],
+      porcentajecompletado:
+        lessonsProgress.find((p) => p.lessonId === lessonData.id)?.progress ??
+        0,
+      isCompleted:
+        lessonsProgress.find((p) => p.lessonId === lessonData.id)
+          ?.isCompleted ?? false,
+      isNew:
+        lessonsProgress.find((p) => p.lessonId === lessonData.id)?.isNew ??
+        true,
+    };
+
+    const activityContent = await getActivityContent(lessonId, userId);
+    const activitiesWithProgress = (activityContent ?? []).map((activity) => ({
+      ...activity,
+      isCompleted: activity.isCompleted ?? false,
+      userProgress: activity.userProgress ?? 0,
+    }));
 
     return (
       <LessonDetails

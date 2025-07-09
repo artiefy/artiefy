@@ -1,19 +1,17 @@
-const BASE_URL = 'https://artiefy.com';
-
 export const getWebsiteSchema = () => ({
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  '@id': `${BASE_URL}/#website`,
-  url: BASE_URL,
+  '@id': 'https://artiefy.com/#website',
+  url: 'https://artiefy.com',
   name: 'artiefy',
   alternateName: ['Artiefy Educación', 'Artiefy Learning Platform'],
-  description: 'Plataforma Educativa Digital Líder en Latinoamérica',
+  description: 'Cursos online de calidad en diferentes áreas del conocimiento',
   publisher: {
     '@type': 'Organization',
     name: 'Artiefy',
     logo: {
       '@type': 'ImageObject',
-      url: `${BASE_URL}/artiefy-icon.png`,
+      url: 'https://artiefy.com/artiefy-icon.png',
     },
     sameAs: [
       'https://facebook.com/artiefy',
@@ -25,7 +23,7 @@ export const getWebsiteSchema = () => ({
     '@type': 'EducationalOrganization',
     name: 'Artiefy',
     description:
-      'Plataforma de educación online líder en cursos y programas digitales',
+      'Cursos online de calidad en diferentes áreas del conocimiento',
     email: 'artiefy4@gmail.com',
   },
 });
@@ -34,22 +32,24 @@ export const getWebPagesSchema = () => [
   {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    '@id': `${BASE_URL}/#homepage`,
-    url: BASE_URL,
+    '@id': 'https://artiefy.com/#homepage',
+    url: 'https://artiefy.com',
     name: 'Inicio',
   },
   {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    '@id': `${BASE_URL}/estudiantes/#page`,
-    url: `${BASE_URL}/estudiantes`,
-    name: 'Cursos y Programas',
+    '@id': 'https://artiefy.com/estudiantes/#page',
+    url: 'https://artiefy.com/estudiantes',
+    name: 'Cursos',
+    description: 'Cursos',
   },
   {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    '@id': `${BASE_URL}/planes/#page`,
-    url: `${BASE_URL}/planes`,
-    name: 'Planes de Suscripción',
+    '@id': 'https://artiefy.com/planes/#page',
+    url: 'https://artiefy.com/planes',
+    name: 'Planes',
+    description: 'Descubre los planes de suscripción de Artiefy.',
   },
 ];
