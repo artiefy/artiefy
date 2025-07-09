@@ -141,7 +141,7 @@ export default function DetalleProyectoPage() {
       }
     } else {
       // fallback: usar heurística anterior
-      const allValues = project.actividades.flatMap((a) => a.meses ?? [])
+      const allValues = project.actividades.flatMap((a) => a.meses ?? []);
       maxUnidades = allValues.length ? Math.max(...allValues) + 1 : 0;
     }
 
