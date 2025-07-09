@@ -120,6 +120,8 @@ export function CourseHeader({
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  // Add a new state to track if program enrollment toast has been shown
+  const [programToastShown, setProgramToastShown] = useState(false);
 
   // Ref para controlar el video
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -256,8 +258,12 @@ export function CourseHeader({
             user.id
           );
 
-          if (!isProgramEnrolled) {
-            toast.warning('Este curso requiere inscripción al programa', {});
+          if (!isProgramEnrolled && !programToastShown) {
+            // Only show toast if we haven't shown it yet
+            setProgramToastShown(true); // Update state to prevent duplicate toasts
+            toast.warning('Este curso requiere inscripción al programa', {
+              id: 'program-enrollment', // Add an ID to prevent duplicates
+            });
             router.push(`/estudiantes/programas/${programMateria.programaId}`);
           }
         } catch (error) {
@@ -269,7 +275,7 @@ export function CourseHeader({
     };
 
     void checkProgramEnrollment();
-  }, [course.materias, user?.id, isEnrolled, router]);
+  }, [course.materias, user?.id, isEnrolled, router, programToastShown]);
 
   // Helper function to format dates
   const formatDateString = (date: string | number | Date): string => {
@@ -407,13 +413,15 @@ export function CourseHeader({
           );
 
           if (!isProgramEnrolled) {
-            // Show toast first
+            // Show toast first and mark as shown to prevent duplicates
+            setProgramToastShown(true);
             toast.warning(
               `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
               {
                 description:
                   'Serás redirigido a la página del programa para inscribirte.',
                 duration: 4000,
+                id: 'program-enrollment', // Use the same ID to prevent duplicates
               }
             );
 
@@ -594,7 +602,7 @@ export function CourseHeader({
         </div>
         <div className="relative mb-4 w-full transition-all duration-200 sm:-mb-40 sm:h-auto">
           {/* Cambia el aspect ratio de 16/7 a 16/7 solo en pantallas sm+ y reduce en móviles */}
-          <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7] ">
+          <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7]">
             {/* Nueva lógica de portada/video */}
             {coverVideoCourseKey ? (
               <div className="relative h-full w-full">
@@ -694,7 +702,7 @@ export function CourseHeader({
           </div> */}
         </div>
         {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
-        <div className="relative z-10 -mb-4 block w-full px-4 -mt-1 sm:hidden">
+        <div className="relative z-10 -mt-1 -mb-4 block w-full px-4 sm:hidden">
           <div className="flex flex-wrap items-center gap-2">
             <Badge
               variant="outline"
@@ -738,7 +746,7 @@ export function CourseHeader({
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-between gap-4 sm:gap-6 -mt-1">
+          <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
             <div className="flex items-center">
               <FaUserGraduate className="mr-2 text-blue-600" />
               <span className="text-sm font-semibold text-blue-600 sm:text-base">
@@ -767,7 +775,7 @@ export function CourseHeader({
         {/* Course type and instructor info */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-4">
-            <div className="flex w-full items-center justify-between sm:-mt-2 sm:-mb-2 -mt-2">
+            <div className="-mt-2 flex w-full items-center justify-between sm:-mt-2 sm:-mb-2">
               <div>
                 <h3 className="text-background text-base font-extrabold sm:text-lg">
                   {course.instructorName ?? 'Instructor no encontrado'}
@@ -777,7 +785,7 @@ export function CourseHeader({
                 </em>
               </div>
               {/* Modalidad badge a la derecha en mobile, abajo en desktop */}
-              <div className="ml-2 block sm:hidden mt-4">
+              <div className="mt-4 ml-2 block sm:hidden">
                 <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
                   {course.modalidad?.name}
                 </Badge>
