@@ -97,7 +97,7 @@
       "rule": "no-unused-vars",
       "severity": "off"
     },
-     {
+    {
       "rule": "simple-import-sort/imports",
       "severity": "off"
     },
@@ -126,4 +126,7 @@
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "svg.preview.background": "editor",
   "workbench.colorTheme": "GitHub Dark Default",
+  "[ignore]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
 }
