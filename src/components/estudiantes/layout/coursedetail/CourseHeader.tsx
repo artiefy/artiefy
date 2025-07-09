@@ -580,161 +580,165 @@ export function CourseHeader({
   return (
     <Card className="overflow-hidden p-0">
       <CardHeader className="px-0">
-        <AspectRatio ratio={16 / 6}>
-          {/* Nueva lógica de portada/video */}
-          {coverVideoCourseKey ? (
-            <div className="relative h-full w-full">
-              <video
-                ref={videoRef}
-                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
-                className="h-full w-full cursor-pointer object-cover"
-                autoPlay
-                loop
-                playsInline
-                controls={false}
-                muted={isMuted}
-                preload="auto"
-                poster={
-                  coverImageKey
-                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
-                    : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                }
-                onClick={handleVideoClick}
-              />
-              {/* Botón de volumen y pantalla completa */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: 16,
-                  right: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  zIndex: 10,
-                  gap: 8,
-                }}
-              >
-                {/* Botón mute/unmute */}
-                <button
-                  type="button"
-                  aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
-                  onClick={handleToggleMute}
+        {/* Título encima de la portada SOLO en mobile, en desktop encima de la portada */}
+        <div className="block w-full px-4 pt-4 pb-1 sm:hidden">
+          <h1 className="line-clamp-2 text-base font-bold text-gray-900">
+            {course.title}
+          </h1>
+        </div>
+        {/* Título encima de la portada SOLO en desktop */}
+        <div className="hidden w-full px-4 pt-4 sm:block">
+          <h1 className="line-clamp-2 text-xl font-bold text-gray-900 md:text-2xl lg:text-3xl">
+            {course.title}
+          </h1>
+        </div>
+        <div className="relative mb-4 w-full transition-all duration-200 sm:-mb-40 sm:h-auto">
+          {/* Cambia el aspect ratio de 16/7 a 16/7 solo en pantallas sm+ y reduce en móviles */}
+          <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7] ">
+            {/* Nueva lógica de portada/video */}
+            {coverVideoCourseKey ? (
+              <div className="relative h-full w-full">
+                <video
+                  ref={videoRef}
+                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
+                  className="h-full w-full cursor-pointer object-cover"
+                  autoPlay
+                  loop
+                  playsInline
+                  controls={false}
+                  muted={isMuted}
+                  preload="auto"
+                  poster={
+                    coverImageKey
+                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
+                      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+                  }
+                  onClick={handleVideoClick}
+                  // Forzar el navegador a usar el tamaño y renderizado óptimo
                   style={{
-                    background: 'rgba(0,0,0,0.6)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    padding: 8,
-                    cursor: 'pointer',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    imageRendering: 'auto', // No afecta mucho a video, pero asegura que no haya suavizado innecesario
                   }}
-                >
-                  {isMuted ? (
-                    <FaVolumeMute size={20} />
-                  ) : (
-                    <FaVolumeUp size={20} />
-                  )}
-                </button>
-                {/* Volumen */}
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={videoVolume}
-                  onChange={handleVolumeChange}
-                  style={{
-                    width: 80,
-                    accentColor: '#3AF4EF',
-                    marginRight: 8,
-                  }}
-                  title="Volumen"
                 />
-                {/* Botón pantalla completa */}
-                <button
-                  type="button"
-                  aria-label="Pantalla completa"
-                  onClick={handleFullscreenClick}
-                  style={{
-                    background: 'rgba(0,0,0,0.6)',
-                    border: 'none',
-                    borderRadius: '50%',
-                    padding: 8,
-                    cursor: 'pointer',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FaExpand size={20} />
-                </button>
+                {/* Nota: La calidad del video depende del archivo fuente subido a S3. 
+                    Para máxima calidad, asegúrate de subir un video de alta resolución (idealmente 1920x720 o superior para 16:6). 
+                    El navegador reproducirá el archivo tal cual, no hay atributo HTML para "calidad máxima" en <video> con archivos .mp4 directos. */}
+                {/* Botón de volumen y pantalla completa */}
+                <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
+                  {/* Botón mute/unmute */}
+                  <button
+                    type="button"
+                    aria-label={isMuted ? 'Activar sonido' : 'Silenciar'}
+                    onClick={handleToggleMute}
+                    className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                  >
+                    {isMuted ? (
+                      <FaVolumeMute className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                    ) : (
+                      <FaVolumeUp className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                    )}
+                  </button>
+                  {/* Volumen */}
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={videoVolume}
+                    onChange={handleVolumeChange}
+                    className="mr-1 h-2 w-10 accent-cyan-300 sm:mr-2 sm:h-3 sm:w-20"
+                    title="Volumen"
+                  />
+                  {/* Botón pantalla completa */}
+                  <button
+                    type="button"
+                    aria-label="Pantalla completa"
+                    onClick={handleFullscreenClick}
+                    className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                  >
+                    <FaExpand className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : coverImageKey ? (
-            <Image
-              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
-              alt={course.title}
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-              placeholder="blur"
-              blurDataURL={blurDataURL}
-            />
-          ) : (
-            <Image
-              src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
-              alt={course.title}
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-              placeholder="blur"
-              blurDataURL={blurDataURL}
-            />
-          )}
-          <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 via-black/50 to-transparent p-4 md:p-6">
+            ) : coverImageKey ? (
+              <Image
+                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
+                alt={course.title}
+                fill
+                className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                priority
+                sizes="100vw"
+                placeholder="blur"
+                blurDataURL={blurDataURL}
+              />
+            ) : (
+              <Image
+                src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
+                alt={course.title}
+                fill
+                className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                priority
+                sizes="100vw"
+                placeholder="blur"
+                blurDataURL={blurDataURL}
+              />
+            )}
+          </AspectRatio>
+          {/* Eliminar el título dentro de la portada SOLO en desktop */}
+          {/* <div className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/70 via-black/50 to-transparent p-4 sm:block md:p-6">
             <h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
               {course.title}
             </h1>
+          </div> */}
+        </div>
+        {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
+        <div className="relative z-10 -mb-4 block w-full px-4 -mt-1 sm:hidden">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+            >
+              {course.category?.name}
+            </Badge>
+            {getCourseTypeLabel()}
           </div>
-        </AspectRatio>
+        </div>
       </CardHeader>
 
       <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
         {/* Course metadata */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-              <div className="flex flex-wrap items-center gap-2">
+          {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2">
+              <div className="hidden flex-wrap items-center gap-2 sm:flex">
                 <Badge
                   variant="outline"
                   className="border-primary bg-background text-primary w-fit hover:bg-black/70"
                 >
                   {course.category?.name}
                 </Badge>
-                {/* Moved course type label here */}
                 {getCourseTypeLabel()}
               </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex items-center">
-                  <FaCalendar className="mr-2 text-gray-600" />
-                  <span className="text-xs text-gray-600 sm:text-sm">
-                    Creado: {formatDateString(course.createdAt)}
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <FaClock className="mr-2 text-gray-600" />
-                  <span className="text-xs text-gray-600 sm:text-sm">
-                    Actualizado: {formatDateString(course.updatedAt)}
-                  </span>
-                </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex items-center">
+                <FaCalendar className="mr-2 text-gray-600" />
+                <span className="text-xs text-gray-600 sm:text-sm">
+                  Creado: {formatDateString(course.createdAt)}
+                </span>
+              </div>
+              <div className="flex items-center">
+                <FaClock className="mr-2 text-gray-600" />
+                <span className="text-xs text-gray-600 sm:text-sm">
+                  Actualizado: {formatDateString(course.updatedAt)}
+                </span>
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-between gap-4 sm:gap-6">
+          <div className="flex items-center justify-between gap-4 sm:gap-6 -mt-1">
             <div className="flex items-center">
               <FaUserGraduate className="mr-2 text-blue-600" />
               <span className="text-sm font-semibold text-blue-600 sm:text-base">
@@ -762,17 +766,26 @@ export function CourseHeader({
 
         {/* Course type and instructor info */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-background text-base font-extrabold sm:text-lg">
-                {course.instructorName ?? 'Instructor no encontrado'}
-              </h3>
-              <em className="text-sm font-bold text-gray-600 sm:text-base">
-                Educador
-              </em>
+          <div className="w-full space-y-4">
+            <div className="flex w-full items-center justify-between sm:-mt-2 sm:-mb-2 -mt-2">
+              <div>
+                <h3 className="text-background text-base font-extrabold sm:text-lg">
+                  {course.instructorName ?? 'Instructor no encontrado'}
+                </h3>
+                <em className="text-sm font-bold text-gray-600 sm:text-base">
+                  Educador
+                </em>
+              </div>
+              {/* Modalidad badge a la derecha en mobile, abajo en desktop */}
+              <div className="ml-2 block sm:hidden mt-4">
+                <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
+                  {course.modalidad?.name}
+                </Badge>
+              </div>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-4">
+          {/* Modalidad badge solo visible en desktop */}
+          <div className="hidden flex-col items-end gap-4 sm:flex">
             <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
               {course.modalidad?.name}
             </Badge>

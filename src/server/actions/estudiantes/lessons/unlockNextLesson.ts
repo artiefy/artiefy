@@ -74,8 +74,8 @@ export async function unlockNextLesson(
     await createNotification({
       userId: user.id,
       type: 'LESSON_UNLOCKED',
-      title: '¡Nueva lección desbloqueada!',
-      message: `Se ha desbloqueado la lección: ${nextLesson.title}`,
+      title: '¡Nueva clase desbloqueada!',
+      message: `Se ha desbloqueado la clase: ${nextLesson.title}`,
       metadata: {
         lessonId: nextLesson.id,
         courseId: currentLesson.courseId,

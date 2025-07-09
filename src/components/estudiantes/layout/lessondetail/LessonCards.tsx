@@ -10,6 +10,13 @@ import { FaCheckCircle, FaClock, FaLock } from 'react-icons/fa';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/estudiantes/ui/select';
 import { type LessonWithProgress } from '~/types';
 import { extractNumbersFromTitle, sortLessons } from '~/utils/lessonSorting';
 
@@ -23,6 +30,7 @@ interface LessonCardsProps {
   // Añadir estos props para SWR
   courseId?: number;
   userId?: string;
+  isMobile?: boolean; // <-- nuevo prop
 }
 
 interface NextLessonStatus {
@@ -44,6 +52,7 @@ const LessonCards = ({
   setLessonsState,
   courseId,
   userId,
+  isMobile = false,
 }: LessonCardsProps) => {
   // SWR para refrescar el estado de las lecciones en tiempo real
   const { data: swrLessons } = useSWR(
@@ -353,6 +362,58 @@ const LessonCards = ({
             <div className="h-2 w-full rounded bg-gray-200" />
           </div>
         ))}
+      </div>
+    );
+  }
+
+  // Renderizar select en móvil
+  if (isMobile) {
+    return (
+      <div className="mb-4">
+        <Select
+          value={selectedLessonId ? String(selectedLessonId) : undefined}
+          onValueChange={(val) => {
+            const id = Number(val);
+            if (!isNaN(id)) onLessonClick(id);
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecciona una clase" />
+          </SelectTrigger>
+          <SelectContent>
+            {sortedLessons.map((lesson) => {
+              const isCurrentLesson = lesson.id === selectedLessonId;
+              const shouldShowNew =
+                lesson.isLocked === false &&
+                lesson.isNew &&
+                (isCurrentLesson
+                  ? progress === 0
+                  : lesson.porcentajecompletado === 0);
+
+              return (
+                <SelectItem key={lesson.id} value={String(lesson.id)}>
+                  <span className="flex items-center gap-2">
+                    {/* Candado si está bloqueada */}
+                    {lesson.isLocked ? (
+                      <FaLock className="text-gray-400" />
+                    ) : lesson.porcentajecompletado === 100 ? (
+                      <FaCheckCircle className="text-green-500" />
+                    ) : (
+                      <FaClock className="text-gray-400" />
+                    )}
+                    <span className="truncate">{lesson.title}</span>
+                    {/* Badge Nueva */}
+                    {shouldShowNew && (
+                      <span className="ml-2 rounded bg-green-500 px-2 py-0.5 text-xs text-white">
+                        Nueva
+                      </span>
+                    )}
+                  </span>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
       </div>
     );
   }

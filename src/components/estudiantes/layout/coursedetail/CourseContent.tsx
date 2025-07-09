@@ -406,3 +406,5 @@ export function CourseContent({
     </div>
   );
 }
+
+// No se requieren cambios aquí si el prop course.lessons ya viene sincronizado desde la BD.

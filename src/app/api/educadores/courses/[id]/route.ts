@@ -340,81 +340,102 @@ interface CourseData {
 
 export async function POST(request: Request) {
   try {
+    console.log('Iniciando creación de curso...');
+
+    // Autenticación
     const { userId } = await auth();
+    console.log('Resultado auth:', { userId });
+
     if (!userId) {
       console.log('Usuario no autorizado');
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    // Parsear los datos del cuerpo de la solicitud
-
+    // Parsear datos del body
     const data = (await request.json()) as CourseData & {
       modalidadesid: number[];
-      courseTypeId: number; // ✅ Agrega esto
-      isActive?: boolean; // ✅ Opcional
+      courseTypeId: number;
+      isActive?: boolean;
     };
+
+    console.log('Datos recibidos del body:', JSON.stringify(data, null, 2));
+
+    // Validación precio individual
     if (
       data.courseTypeId === 4 &&
       (data.individualPrice === null || data.individualPrice <= 0)
     ) {
+      console.log('Validación de precio individual fallida', {
+        courseTypeId: data.courseTypeId,
+        individualPrice: data.individualPrice,
+      });
       return NextResponse.json(
         { error: 'Debe ingresar un precio válido para cursos individuales.' },
         { status: 400 }
       );
     }
 
-    // Validar los datos recibidos
+    // Validación general
     if (
       !data.title ||
       !data.description ||
       !data.modalidadesid ||
       data.modalidadesid.length === 0
     ) {
+      console.log('Validación de datos fallida', {
+        title: data.title,
+        description: data.description,
+        modalidadesid: data.modalidadesid,
+      });
       return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
     const createdCourses = [];
 
-    // Iterar sobre cada modalidadId y crear un curso
+    // Crear cursos por cada modalidad
     for (const modalidadId of data.modalidadesid) {
       console.log(`Procesando modalidadId: ${modalidadId}`);
 
-      // Obtener la modalidad por ID
+      // Obtener modalidad
       const modalidad = await getModalidadById(modalidadId);
-      console.log(
-        `Modalidad obtenida para modalidadId ${modalidadId}:`,
-        modalidad
-      );
+      console.log(`Modalidad obtenida:`, modalidad);
 
-      // Concatenar el nombre de la modalidad al título
+      // Preparar nuevo título
       const newTitle = modalidad
         ? `${data.title} - ${modalidad.name}`
         : data.title;
+      console.log(`Título final para modalidad ${modalidadId}: ${newTitle}`);
+
+      // Preparar payload para creación
+      const coursePayload = {
+        ...data,
+        title: newTitle,
+        modalidadesid: modalidadId, // importante para este curso
+        instructor: data.instructorId, // asegúrate que instructorId existe en data
+      };
+
       console.log(
-        `Título modificado para modalidadId ${modalidadId}: ${newTitle}`
+        'Payload final para crearCourse:',
+        JSON.stringify(coursePayload, null, 2)
       );
 
-      // Crear el curso con el título modificado
-      const newCourse = await createCourse({
-        ...data,
-        title: newTitle, // Usar el título modificado
-        modalidadesid: modalidadId, // Asignar el ID de la modalidad actual
-        instructor: data.instructorId, // Use consistent property name
-      });
-      console.log(`Curso creado para modalidadId ${modalidadId}:`, newCourse);
+      // Crear el curso
+      const newCourse = await createCourse(coursePayload);
+      console.log(`Curso creado para modalidad ${modalidadId}:`, newCourse);
 
-      // Agregar el curso creado a la lista
       createdCourses.push(newCourse);
     }
 
-    console.log('Cursos creados:', createdCourses);
+    console.log('Todos los cursos creados:', createdCourses);
 
-    // Devolver todos los cursos creados
     return NextResponse.json(createdCourses, { status: 201 });
   } catch (error) {
     console.error('Error al crear el curso:', error);
     return NextResponse.json(
-      { error: 'Error al crear el curso' },
+      {
+        error: 'Error al crear el curso',
+        details: error instanceof Error ? error.message : error,
+      },
       { status: 500 }
     );
   }

@@ -97,7 +97,7 @@
       "rule": "no-unused-vars",
       "severity": "off"
     },
-     {
+    {
       "rule": "simple-import-sort/imports",
       "severity": "off"
     },
@@ -125,5 +125,8 @@
   "javascript.suggest.completeFunctionCalls": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "svg.preview.background": "editor",
-  "workbench.colorTheme": "GitHub Dark Colorblind (Beta)",
+  "workbench.colorTheme": "GitHub Dark Default",
+  "[ignore]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
 }
