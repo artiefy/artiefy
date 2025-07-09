@@ -713,7 +713,7 @@ export default function Component() {
                         </div>
                       </CardContent>
 
-                      <CardFooter className="pt-0">
+                      {/* <CardFooter className="pt-0">
                         <div className="flex w-full items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <Button
@@ -749,7 +749,7 @@ export default function Component() {
                             <Bookmark className="h-4 w-4" />
                           </Button>
                         </div>
-                      </CardFooter>
+                      </CardFooter> */}
                     </Card>
                   ))
                 ) : (
