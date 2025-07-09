@@ -114,11 +114,17 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
     const instructorIds = Array.from(
       new Set(
         program.materias
-          .map((materia) =>
-            materia.curso && 'instructor' in materia.curso
-              ? (materia.curso as any).instructor
-              : undefined
-          )
+          .map((materia) => {
+            // Safe access to instructor property
+            if (
+              materia.curso &&
+              typeof materia.curso === 'object' &&
+              'instructor' in materia.curso
+            ) {
+              return (materia.curso as { instructor?: string }).instructor;
+            }
+            return undefined;
+          })
           .filter((id): id is string => !!id)
       )
     );
@@ -136,32 +142,55 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
     }
 
     const transformedMaterias: MateriaWithCourse[] = program.materias.map(
-      (materia) => ({
-        ...materia,
-        curso: materia.curso
-          ? ({
-              id: materia.curso.id,
-              title: materia.curso.title,
-              description: materia.curso.description,
-              coverImageKey: materia.curso.coverImageKey,
-              categoryid: materia.curso.categoryid,
-              instructor: (materia.curso as any).instructor ?? '',
-              instructorName:
-                instructorsMap[(materia.curso as any).instructor ?? ''] ??
-                materia.curso.creator?.name ??
-                'No disponible',
-              createdAt: materia.curso.createdAt ?? null, // <-- usa el valor real
-              updatedAt: materia.curso.updatedAt ?? null, // <-- usa el valor real
-              creatorId: materia.curso.creatorId,
-              rating: 0,
-              modalidadesid: 1,
-              nivelid: 1,
-              modalidad: materia.curso.modalidad ?? undefined,
-              category: materia.curso.category,
-              isActive: materia.curso.isActive ?? true,
-            } as BaseCourse)
-          : undefined,
-      })
+      (materia) => {
+        let instructorId = '';
+        if (
+          materia.curso &&
+          typeof materia.curso === 'object' &&
+          'instructor' in materia.curso
+        ) {
+          instructorId =
+            (materia.curso as { instructor?: string }).instructor ?? '';
+        }
+        let instructorName = 'No disponible';
+        if (instructorId && instructorsMap[instructorId]) {
+          instructorName = instructorsMap[instructorId];
+        } else if (
+          materia.curso &&
+          typeof materia.curso === 'object' &&
+          'creator' in materia.curso &&
+          materia.curso.creator &&
+          'name' in materia.curso.creator
+        ) {
+          instructorName =
+            (materia.curso.creator as { name?: string }).name ??
+            'No disponible';
+        }
+
+        return {
+          ...materia,
+          curso: materia.curso
+            ? ({
+                id: materia.curso.id,
+                title: materia.curso.title,
+                description: materia.curso.description,
+                coverImageKey: materia.curso.coverImageKey,
+                categoryid: materia.curso.categoryid,
+                instructor: instructorId,
+                instructorName: instructorName,
+                createdAt: materia.curso.createdAt ?? null,
+                updatedAt: materia.curso.updatedAt ?? null,
+                creatorId: materia.curso.creatorId,
+                rating: 0,
+                modalidadesid: 1,
+                nivelid: 1,
+                modalidad: materia.curso.modalidad ?? undefined,
+                category: materia.curso.category,
+                isActive: materia.curso.isActive ?? true,
+              } as BaseCourse)
+            : undefined,
+        };
+      }
     );
 
     const transformedCategory: Category | undefined = program.category
