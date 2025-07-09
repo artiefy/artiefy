@@ -141,7 +141,6 @@ export default function DetalleProyectoPage() {
   // Genera las cabeceras según el tipo detectado y las fechas reales del proyecto
   const unidadesHeader = React.useMemo(() => {
     const unidades = [];
-    // Usar fechas reales si existen y el tipo es días
     if (
       cronogramaInfo.tipo === 'dias' &&
       project?.fecha_inicio &&
@@ -188,37 +187,24 @@ export default function DetalleProyectoPage() {
         fechaActual.setMonth(fechaActual.getMonth() + 1);
         i++;
       }
-    } else {
-      // Fallback: lógica anterior
-      const startDate = new Date();
-      for (let i = 0; i < cronogramaInfo.maxUnidades; i++) {
-        if (cronogramaInfo.tipo === 'dias') {
-          const fecha = new Date(startDate);
-          fecha.setDate(startDate.getDate() + i);
-          unidades.push({
-            indice: i,
-            etiqueta: `Día ${i + 1}`,
-            fecha: fecha.toLocaleDateString('es-ES', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-            }),
-          });
-        } else {
-          const fecha = new Date(startDate);
-          fecha.setMonth(startDate.getMonth() + i);
-          unidades.push({
-            indice: i,
-            etiqueta: `Mes ${i + 1}`,
-            fecha: fecha
-              .toLocaleString('es-ES', { month: 'long', year: 'numeric' })
-              .toUpperCase(),
-          });
-        }
+    } else if (project?.actividades && project.actividades.length > 0) {
+      // Fallback: mostrar tantas columnas como el mayor índice de meses/días en actividades
+      const maxIndex = Math.max(
+        ...project.actividades.flatMap((a) => a.meses ?? [0])
+      );
+      for (let i = 0; i <= maxIndex; i++) {
+        unidades.push({
+          indice: i,
+          etiqueta:
+            cronogramaInfo.tipo === 'dias'
+              ? `Día ${i + 1}`
+              : `Mes ${i + 1}`,
+          fecha: '',
+        });
       }
     }
     return unidades;
-  }, [cronogramaInfo, project?.fecha_inicio, project?.fecha_fin]);
+  }, [cronogramaInfo, project?.fecha_inicio, project?.fecha_fin, project?.actividades]);
 
   // Publicar o despublicar proyecto
   const handleTogglePublicarProyecto = async () => {
@@ -545,7 +531,7 @@ export default function DetalleProyectoPage() {
 
         {project.actividades &&
         project.actividades.length > 0 &&
-        cronogramaInfo.maxUnidades > 0 ? (
+        unidadesHeader.length > 0 ? (
           <div className="max-h-64 overflow-y-auto">
             <table className="w-full table-auto border-collapse text-sm text-white">
               <thead className="sticky top-0 z-10 bg-gray-300 text-black">
