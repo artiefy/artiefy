@@ -110,25 +110,35 @@ export default function DetalleProyectoPage() {
 
     // Calcular maxUnidades según tipo y fechas
     let maxUnidades = 0;
-    if (tipo === 'dias' && project.fecha_inicio && project.fecha_fin) {
-      const [y1, m1, d1] = project.fecha_inicio.split('-').map(Number);
-      const [y2, m2, d2] = project.fecha_fin.split('-').map(Number);
-      const fechaInicio = new Date(Date.UTC(y1, m1 - 1, d1));
-      const fechaFin = new Date(Date.UTC(y2, m2 - 1, d2));
-      maxUnidades =
-        Math.floor(
-          (fechaFin.getTime() - fechaInicio.getTime()) / (1000 * 3600 * 24)
-        ) + 1;
-    } else if (tipo === 'meses' && project.fecha_inicio && project.fecha_fin) {
-      const fechaInicio = new Date(project.fecha_inicio);
-      const fechaFin = new Date(project.fecha_fin);
-      let count = 0;
-      const fechaActual = new Date(fechaInicio);
-      while (fechaActual <= fechaFin) {
-        count++;
-        fechaActual.setMonth(fechaActual.getMonth() + 1);
+    if (
+      (tipo === 'dias' || tipo === 'meses') &&
+      project.fecha_inicio &&
+      project.fecha_fin
+    ) {
+      // Normaliza fechas a solo YYYY-MM-DD si vienen en formato ISO
+      const fechaInicioStr = project.fecha_inicio.split('T')[0];
+      const fechaFinStr = project.fecha_fin.split('T')[0];
+
+      if (tipo === 'dias') {
+        const [y1, m1, d1] = fechaInicioStr.split('-').map(Number);
+        const [y2, m2, d2] = fechaFinStr.split('-').map(Number);
+        const fechaInicio = new Date(Date.UTC(y1, m1 - 1, d1));
+        const fechaFin = new Date(Date.UTC(y2, m2 - 1, d2));
+        maxUnidades =
+          Math.floor(
+            (fechaFin.getTime() - fechaInicio.getTime()) / (1000 * 3600 * 24)
+          ) + 1;
+      } else {
+        const fechaInicio = new Date(fechaInicioStr);
+        const fechaFin = new Date(fechaFinStr);
+        let count = 0;
+        const fechaActual = new Date(fechaInicio);
+        while (fechaActual <= fechaFin) {
+          count++;
+          fechaActual.setMonth(fechaActual.getMonth() + 1);
+        }
+        maxUnidades = count;
       }
-      maxUnidades = count;
     } else {
       // fallback: usar heurística anterior
       const allValues = project.actividades.flatMap((a) => a.meses ?? []);
@@ -146,9 +156,11 @@ export default function DetalleProyectoPage() {
       project?.fecha_inicio &&
       project?.fecha_fin
     ) {
-      // Generar días exactos entre fecha_inicio y fecha_fin
-      const [y1, m1, d1] = project.fecha_inicio.split('-').map(Number);
-      const [y2, m2, d2] = project.fecha_fin.split('-').map(Number);
+      // Normaliza fechas a solo YYYY-MM-DD si vienen en formato ISO
+      const fechaInicioStr = project.fecha_inicio.split('T')[0];
+      const fechaFinStr = project.fecha_fin.split('T')[0];
+      const [y1, m1, d1] = fechaInicioStr.split('-').map(Number);
+      const [y2, m2, d2] = fechaFinStr.split('-').map(Number);
       let fechaActual = new Date(Date.UTC(y1, m1 - 1, d1));
       const fechaFin = new Date(Date.UTC(y2, m2 - 1, d2));
       let i = 0;
@@ -171,9 +183,10 @@ export default function DetalleProyectoPage() {
       project?.fecha_inicio &&
       project?.fecha_fin
     ) {
-      // Generar meses exactos entre fecha_inicio y fecha_fin
-      const fechaInicio = new Date(project.fecha_inicio);
-      const fechaFin = new Date(project.fecha_fin);
+      const fechaInicioStr = project.fecha_inicio.split('T')[0];
+      const fechaFinStr = project.fecha_fin.split('T')[0];
+      const fechaInicio = new Date(fechaInicioStr);
+      const fechaFin = new Date(fechaFinStr);
       let i = 0;
       const fechaActual = new Date(fechaInicio);
       while (fechaActual <= fechaFin) {
@@ -188,7 +201,6 @@ export default function DetalleProyectoPage() {
         i++;
       }
     } else if (project?.actividades && project.actividades.length > 0) {
-      // Fallback: mostrar tantas columnas como el mayor índice de meses/días en actividades
       const maxIndex = Math.max(
         ...project.actividades.flatMap((a) => a.meses ?? [0])
       );
@@ -196,15 +208,18 @@ export default function DetalleProyectoPage() {
         unidades.push({
           indice: i,
           etiqueta:
-            cronogramaInfo.tipo === 'dias'
-              ? `Día ${i + 1}`
-              : `Mes ${i + 1}`,
+            cronogramaInfo.tipo === 'dias' ? `Día ${i + 1}` : `Mes ${i + 1}`,
           fecha: '',
         });
       }
     }
     return unidades;
-  }, [cronogramaInfo, project?.fecha_inicio, project?.fecha_fin, project?.actividades]);
+  }, [
+    cronogramaInfo,
+    project?.fecha_inicio,
+    project?.fecha_fin,
+    project?.actividades,
+  ]);
 
   // Publicar o despublicar proyecto
   const handleTogglePublicarProyecto = async () => {
@@ -526,7 +541,12 @@ export default function DetalleProyectoPage() {
       <section className="relative mx-auto mt-6 max-w-3xl rounded bg-[#1F3246] p-4">
         <h3 className="mb-2 text-center font-semibold">
           Cronograma (
-          {cronogramaInfo.tipo === 'dias' ? 'Por Días' : 'Por Meses'})
+          {cronogramaInfo.tipo === 'dias'
+            ? 'Por Días'
+            : cronogramaInfo.tipo === 'meses'
+              ? 'Por Meses'
+              : 'Sin datos'}
+          )
         </h3>
 
         {project.actividades &&
