@@ -293,7 +293,9 @@ export function ProgramHeader({
   };
 
   return (
-    <Card className="overflow-hidden p-0">
+    <Card className="overflow-hidden bg-gray-800 p-0 text-white">
+      {' '}
+      {/* Cambiado a fondo oscuro */}
       <CardHeader className="px-0">
         <AspectRatio ratio={16 / 6}>
           <Image
@@ -317,7 +319,6 @@ export function ProgramHeader({
           </div>
         </AspectRatio>
       </CardHeader>
-
       <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
         {/* Program metadata */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -331,14 +332,16 @@ export function ProgramHeader({
               </Badge>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="flex items-center">
-                  <FaCalendar className="mr-2 text-gray-600" />
-                  <span className="text-xs text-gray-600 sm:text-sm">
+                  <FaCalendar className="mr-2 text-white" />{' '}
+                  {/* icono blanco */}
+                  <span className="text-xs text-white sm:text-sm">
                     Creado: {formatDate(program.createdAt?.toString() ?? '')}
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <FaCalendar className="mr-2 text-gray-600" />
-                  <span className="text-xs text-gray-600 sm:text-sm">
+                  <FaCalendar className="mr-2 text-white" />{' '}
+                  {/* icono blanco */}
+                  <span className="text-xs text-white sm:text-sm">
                     Actualizado:{' '}
                     {formatDate(program.updatedAt?.toString() ?? '')}
                   </span>
@@ -372,7 +375,8 @@ export function ProgramHeader({
         {/* Program description */}
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
           <div className="prose max-w-none">
-            <p className="text-sm leading-relaxed text-gray-700 sm:text-base">
+            <p className="text-sm leading-relaxed text-white sm:text-base">
+              {/* Cambiado a blanco */}
               {program.description ?? 'No hay descripción disponible.'}
             </p>
           </div>

@@ -586,7 +586,9 @@ export function CourseHeader({
   };
 
   return (
-    <Card className="overflow-hidden p-0">
+    <Card className="overflow-hidden bg-gray-800 p-0 text-white">
+      {' '}
+      {/* Cambiado a fondo oscuro */}
       <CardHeader className="px-0">
         {/* Título encima de la portada SOLO en mobile, en desktop encima de la portada */}
         <div className="block w-full px-4 pt-4 pb-1 sm:hidden">
@@ -714,7 +716,6 @@ export function CourseHeader({
           </div>
         </div>
       </CardHeader>
-
       <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
         {/* Course metadata */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -733,14 +734,14 @@ export function CourseHeader({
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="flex items-center">
-                <FaCalendar className="mr-2 text-gray-600" />
-                <span className="text-xs text-gray-600 sm:text-sm">
+                <FaCalendar className="mr-2 text-white" /> {/* icono blanco */}
+                <span className="text-xs text-white sm:text-sm">
                   Creado: {formatDateString(course.createdAt)}
                 </span>
               </div>
               <div className="flex items-center">
-                <FaClock className="mr-2 text-gray-600" />
-                <span className="text-xs text-gray-600 sm:text-sm">
+                <FaClock className="mr-2 text-white" /> {/* icono blanco */}
+                <span className="text-xs text-white sm:text-sm">
                   Actualizado: {formatDateString(course.updatedAt)}
                 </span>
               </div>
@@ -777,10 +778,12 @@ export function CourseHeader({
           <div className="w-full space-y-4">
             <div className="-mt-2 flex w-full items-center justify-between sm:-mt-2 sm:-mb-2">
               <div>
-                <h3 className="text-background text-base font-extrabold sm:text-lg">
+                <h3 className="text-base font-extrabold text-white sm:text-lg">
+                  {/* Cambiado a blanco */}
                   {course.instructorName ?? 'Instructor no encontrado'}
                 </h3>
-                <em className="text-sm font-bold text-gray-600 sm:text-base">
+                <em className="text-sm font-bold text-cyan-300 sm:text-base">
+                  {/* Color brillante para "Educador" */}
                   Educador
                 </em>
               </div>
@@ -847,7 +850,8 @@ export function CourseHeader({
         {/* Course description y botones responsivos */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="prose flex-1">
-            <p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-gray-700 sm:text-base">
+            <p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-white sm:text-base">
+              {/* Cambiado a blanco */}
               {course.description ?? 'No hay descripción disponible.'}
             </p>
           </div>
@@ -992,19 +996,20 @@ export function CourseHeader({
           userId={user?.id ?? ''} // Pass dynamic user ID
         />
       </CardContent>
-
       {showPaymentModal && courseProduct && selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-lg bg-white p-4">
+          <div className="w-full max-w-lg rounded-lg bg-gray-800 p-4 text-white">
+            {' '}
+            {/* Cambiado a fondo oscuro */}
             <div className="relative mb-4 flex items-center justify-between">
-              <h3 className="w-full text-center text-xl font-semibold text-gray-900">
+              <h3 className="w-full text-center text-xl font-semibold text-white">
                 Datos de Facturacion
                 <br />
                 <span className="font-bold">{course.title}</span>
               </h3>
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className="absolute top-0 right-0 mt-2 mr-2 text-gray-500 hover:text-gray-700"
+                className="absolute top-0 right-0 mt-2 mr-2 text-gray-300 hover:text-white"
               >
                 <FaTimes className="h-6 w-6" />
               </button>
