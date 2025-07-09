@@ -1,11 +1,26 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
 import { typeProjects } from '~/server/actions/project/typeProject';
 import { type Category } from '~/types';
+
+interface UpdatedProjectData {
+  name?: string;
+  planteamiento?: string;
+  justificacion?: string;
+  objetivo_general?: string;
+  objetivos_especificos?: string[];
+  actividades?: { descripcion: string; meses: number[] }[];
+  type_project?: string;
+  categoryId?: number;
+  coverImageKey?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  tipoVisualizacion?: 'meses' | 'dias';
+}
 
 interface ModalResumenProps {
   isOpen: boolean;
@@ -21,8 +36,13 @@ interface ModalResumenProps {
   numMeses?: number;
   setObjetivosEsp: (value: string[]) => void;
   setActividades: (value: string[]) => void;
-  projectId?: number; // <-- NUEVO: si está presente, es edición
-  coverImageKey?: string; // <-- para mantener la imagen si no se cambia
+  projectId?: number;
+  coverImageKey?: string;
+  tipoProyecto?: string;
+  onUpdateProject?: (updatedProject: UpdatedProjectData) => void;
+  fechaInicio?: string;
+  fechaFin?: string;
+  tipoVisualizacion?: 'meses' | 'dias';
 }
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -41,6 +61,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   setActividades,
   projectId,
   coverImageKey: coverImageKeyProp,
+  tipoProyecto: tipoProyectoProp,
+  onUpdateProject,
+  fechaInicio: fechaInicioProp,
+  fechaFin: fechaFinProp,
+  tipoVisualizacion: tipoVisualizacionProp,
 }) => {
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [categoria, setCategoria] = useState<string>('');
@@ -57,7 +82,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [nuevaActividad, setNuevaActividad] = useState('');
   const [cronogramaState, setCronograma] =
     useState<Record<string, number[]>>(cronograma);
+  const [fechaInicio, setFechaInicio] = useState<string>(fechaInicioProp ?? '');
+  const [fechaFin, setFechaFin] = useState<string>(fechaFinProp ?? '');
   const [numMeses, setNumMeses] = useState<number>(numMesesProp ?? 1);
+  const [duracionDias, setDuracionDias] = useState<number>(0);
+  const [tipoVisualizacion, setTipoVisualizacion] = useState<'meses' | 'dias'>(
+    tipoVisualizacionProp ?? 'meses'
+  );
   const [tipoProyecto, setTipoProyecto] = useState<string>(
     typeProjects[0]?.value || ''
   );
@@ -66,6 +97,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const isEditMode = !!projectId; // <-- AÑADE ESTA LÍNEA
   //const router = useRouter();
+
+  const cronogramaRef = useRef<Record<string, number[]>>(cronograma);
+  const tituloRef = useRef<string>(titulo);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'auto';
@@ -93,19 +127,185 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   useEffect(() => setObjetivosEspEditado(objetivosEsp), [objetivosEsp]);
   useEffect(() => setActividadEditada(actividad), [actividad]);
 
-  const meses: string[] = Array.from({ length: numMeses }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() + i);
-    return date.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
-  });
+  // Función para calcular los meses entre dos fechas
+  const calcularMesesEntreFechas = (inicio: string, fin: string): string[] => {
+    if (!inicio || !fin) return [];
 
+    const fechaInicio = new Date(inicio);
+    const fechaFin = new Date(fin);
+
+    if (fechaInicio > fechaFin) return [];
+
+    const meses: string[] = [];
+    const fechaActual = new Date(fechaInicio);
+
+    while (fechaActual <= fechaFin) {
+      meses.push(
+        fechaActual
+          .toLocaleString('es-ES', { month: 'long', year: 'numeric' })
+          .toUpperCase()
+      );
+      fechaActual.setMonth(fechaActual.getMonth() + 1);
+    }
+
+    return meses;
+  };
+
+  // Función para calcular los días entre dos fechas (devuelve array de fechas)
+  const calcularDiasEntreFechas = (inicio: string, fin: string): string[] => {
+    if (!inicio || !fin) return [];
+
+    const fechaInicio = new Date(inicio);
+    const fechaFin = new Date(fin);
+
+    if (fechaInicio > fechaFin) return [];
+
+    const dias: string[] = [];
+    const fechaActual = new Date(fechaInicio);
+
+    while (fechaActual <= fechaFin) {
+      dias.push(fechaActual.toLocaleDateString('es-ES'));
+      fechaActual.setDate(fechaActual.getDate() + 1);
+    }
+
+    return dias;
+  };
+
+  // Función para calcular la duración en días (número)
+  const calcularDuracionDias = (inicio: string, fin: string): number => {
+    if (!inicio || !fin) return 0;
+
+    const fechaInicio = new Date(inicio);
+    const fechaFin = new Date(fin);
+
+    if (fechaInicio > fechaFin) return 0;
+
+    const diferenciaTiempo = fechaFin.getTime() - fechaInicio.getTime();
+    const diferenciaDias = Math.ceil(diferenciaTiempo / (1000 * 3600 * 24)) + 1;
+
+    return diferenciaDias;
+  };
+
+  // Función para formatear la duración
+  const formatearDuracion = (dias: number): string => {
+    if (dias === 0) return '';
+
+    if (dias < 30) {
+      return `${dias} día${dias !== 1 ? 's' : ''}`;
+    } else {
+      const meses = Math.floor(dias / 30);
+      const diasRestantes = dias % 30;
+
+      if (diasRestantes === 0) {
+        return `${meses} mes${meses !== 1 ? 'es' : ''}`;
+      } else {
+        return `${meses} mes${meses !== 1 ? 'es' : ''} y ${diasRestantes} día${diasRestantes !== 1 ? 's' : ''}`;
+      }
+    }
+  };
+
+  // Función para detectar el tipo de cronograma cuando estamos en modo edición
+  const detectarTipoCronograma = React.useMemo(() => {
+    if (!isEditMode || !cronograma || Object.keys(cronograma).length === 0) {
+      return { tipo: 'meses', maxUnidades: numMeses };
+    }
+
+    const allValues = Object.values(cronograma).flat();
+    if (!allValues.length) return { tipo: 'meses', maxUnidades: numMeses };
+
+    const maxValue = Math.max(...allValues);
+    const esProbablementeDias = maxValue >= 10;
+
+    let maxUnidades = maxValue + 1;
+    if (esProbablementeDias) {
+      maxUnidades = Math.max(maxUnidades, 24);
+    }
+
+    return {
+      tipo: esProbablementeDias ? 'dias' : 'meses',
+      maxUnidades,
+    };
+  }, [isEditMode, cronograma, numMeses]);
+
+  // Generar cronograma basado en fechas o en detección automática
+  const generarCronogramaAutomatico = React.useMemo(() => {
+    // Asegura que tipoVisualizacion siempre sea 'meses' o 'dias'
+    const tipo =
+      tipoVisualizacion === 'dias'
+        ? 'dias'
+        : tipoVisualizacion === 'meses'
+          ? 'meses'
+          : 'meses';
+
+    if (fechaInicio && fechaFin) {
+      const mesesCalculados = calcularMesesEntreFechas(fechaInicio, fechaFin);
+      const diasCalculados = calcularDiasEntreFechas(fechaInicio, fechaFin);
+
+      return {
+        meses: tipo === 'meses' ? mesesCalculados : diasCalculados,
+        unidades:
+          tipo === 'meses' ? mesesCalculados.length : diasCalculados.length,
+      };
+    } else if (isEditMode && cronograma && Object.keys(cronograma).length > 0) {
+      const detected = detectarTipoCronograma;
+      const unidades = Array.from({ length: detected.maxUnidades }, (_, i) => {
+        if (detected.tipo === 'dias') {
+          const fecha = new Date();
+          fecha.setDate(fecha.getDate() + i);
+          return fecha.toLocaleDateString('es-ES');
+        } else {
+          const fecha = new Date();
+          fecha.setMonth(fecha.getMonth() + i);
+          return fecha
+            .toLocaleString('es-ES', { month: 'long', year: 'numeric' })
+            .toUpperCase();
+        }
+      });
+
+      return {
+        meses: unidades,
+        unidades: detected.maxUnidades,
+      };
+    } else {
+      return {
+        meses: Array.from({ length: numMeses }, (_, i) => {
+          const date = new Date();
+          date.setMonth(date.getMonth() + i);
+          return date.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
+        }),
+        unidades: numMeses,
+      };
+    }
+  }, [
+    fechaInicio,
+    fechaFin,
+    tipoVisualizacion,
+    isEditMode,
+    cronograma,
+    numMeses,
+    detectarTipoCronograma,
+  ]);
+
+  // Actualizar el cálculo de períodos según la visualización seleccionada
+  const periodosVisualizacion: string[] = generarCronogramaAutomatico.meses;
+
+  // Mantener compatibilidad con el código existente
+  const meses: string[] = periodosVisualizacion;
+
+  // Actualizar numMeses cuando cambien las fechas
   useEffect(() => {
-    const nuevo: Record<string, number[]> = {};
-    actividadEditada.forEach((act) => {
-      nuevo[act] = cronogramaState[act] || [];
-    });
-    setCronograma(nuevo);
-  }, [actividadEditada, cronogramaState]);
+    if (fechaInicio && fechaFin) {
+      const fechaInicioObj = new Date(fechaInicio);
+      const fechaFinObj = new Date(fechaFin);
+
+      if (fechaInicioObj <= fechaFinObj) {
+        const mesesCalculados = calcularMesesEntreFechas(fechaInicio, fechaFin);
+        const diasCalculados = calcularDuracionDias(fechaInicio, fechaFin);
+        setNumMeses(mesesCalculados.length);
+        setDuracionDias(diasCalculados);
+      }
+    }
+  }, [fechaInicio, fechaFin]);
 
   const toggleMesActividad = (actividad: string, mesIndex: number) => {
     setCronograma((prev) => {
@@ -113,9 +313,28 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       const nuevos = meses.includes(mesIndex)
         ? meses.filter((m) => m !== mesIndex)
         : [...meses, mesIndex];
-      return { ...prev, [actividad]: nuevos };
+
+      const nuevoCronograma = { ...prev, [actividad]: nuevos };
+      // Actualizar también la referencia
+      cronogramaRef.current = nuevoCronograma;
+      return nuevoCronograma;
     });
   };
+
+  // Simplificar el useEffect del cronograma
+  useEffect(() => {
+    if (actividadEditada.length > 0) {
+      setCronograma((prev) => {
+        const nuevo: Record<string, number[]> = {};
+        actividadEditada.forEach((act) => {
+          // Mantener los meses existentes o inicializar como array vacío
+          nuevo[act] = prev[act] || [];
+        });
+        cronogramaRef.current = nuevo;
+        return nuevo;
+      });
+    }
+  }, [actividadEditada]);
 
   const handleAgregarObjetivo = () => {
     if (nuevoObjetivo.trim()) {
@@ -164,14 +383,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       !categoria ||
       !planteamientoEditado ||
       !justificacionEditada ||
-      !objetivoGenEditado
+      !objetivoGenEditado ||
+      !fechaInicio ||
+      !fechaFin
     ) {
-      alert('Por favor completa todos los campos requeridos.');
+      alert(
+        'Por favor completa todos los campos requeridos, incluyendo las fechas del proyecto.'
+      );
       return;
     }
 
-    if (objetivosEspEditado.length === 0 || actividadEditada.length === 0) {
-      alert('Debes ingresar al menos un objetivo específico y una actividad.');
+    if (new Date(fechaInicio) > new Date(fechaFin)) {
+      alert('La fecha de inicio no puede ser posterior a la fecha de fin.');
       return;
     }
 
@@ -247,6 +470,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         actividades: actividadesMapped,
         type_project: tipoProyecto,
         coverImageKey,
+        fechaInicio,
+        fechaFin,
+        tipoVisualizacion,
       };
 
       setIsUpdating(true);
@@ -262,7 +488,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         });
 
         if (!response.ok) throw new Error('Error al actualizar el proyecto');
-        window.location.reload();
+
+        // Llamar callback para actualizar el estado del componente padre con los datos actuales
+        if (onUpdateProject) {
+          onUpdateProject({
+            name: tituloState,
+            planteamiento: planteamientoEditado,
+            justificacion: justificacionEditada,
+            objetivo_general: objetivoGenEditado,
+            objetivos_especificos: objetivosEspEditado,
+            actividades: actividadesMapped,
+            type_project: tipoProyecto,
+            categoryId: parseInt(categoria),
+            coverImageKey,
+            fechaInicio,
+            fechaFin,
+            tipoVisualizacion,
+          });
+        }
+
+        onClose();
       } else {
         // CREAR NUEVO PROYECTO
         const response = await fetch('/api/projects', {
@@ -305,6 +550,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [imagenProyecto]);
 
+  // Calcular la URL de la imagen existente usando useMemo
+  const imagenExistente = React.useMemo(() => {
+    if (!isEditMode || !coverImageKeyProp) return null;
+    const s3Url = process.env.NEXT_PUBLIC_AWS_S3_URL;
+    if (!s3Url) {
+      console.warn('NEXT_PUBLIC_AWS_S3_URL no está configurada');
+      return null;
+    }
+    const fullUrl = `${s3Url}/${coverImageKeyProp}`;
+    console.log('Imagen existente URL:', fullUrl);
+    return fullUrl;
+  }, [isEditMode, coverImageKeyProp]);
+
+  // Sincronizar el tipo de proyecto en modo edición
+  useEffect(() => {
+    if (isEditMode && tipoProyectoProp && isOpen) {
+      setTipoProyecto(tipoProyectoProp);
+    }
+  }, [isEditMode, tipoProyectoProp, isOpen]);
+
   // Sincroniza la categoría seleccionada si viene de edición
   useEffect(() => {
     if (categoriaId !== undefined && categoriaId !== null && isOpen) {
@@ -318,9 +583,67 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   }, [numMesesProp]);
 
-  // Sincroniza los props con el estado cuando cambian
-  useEffect(() => setTitulo(titulo), [titulo]);
-  useEffect(() => setCronograma(cronograma), [cronograma]);
+  // Sincronizar el título solo cuando se abre el modal en modo edición
+  useEffect(() => {
+    if (isEditMode && isOpen && titulo) {
+      setTitulo(titulo);
+    } else if (!isEditMode && isOpen) {
+      // En modo crear, limpiar el título
+      setTitulo('');
+    }
+  }, [isEditMode, isOpen, titulo]);
+
+  // Limpiar campos específicos cuando está en modo crear
+  useEffect(() => {
+    if (!isEditMode && isOpen) {
+      // Limpiar campos que no vienen de otros modales
+      setCategoria('');
+      setNumMeses(1);
+      setTipoProyecto(typeProjects[0]?.value || '');
+      setImagenProyecto(null);
+      setPreviewImagen(null);
+      setFechaInicio('');
+      setFechaFin('');
+      setTipoVisualizacion('meses');
+    }
+  }, [isEditMode, isOpen]);
+
+  // Sincronizar cronograma con props de forma segura
+  useEffect(() => {
+    if (isOpen && Object.keys(cronograma).length > 0) {
+      cronogramaRef.current = cronograma;
+      setCronograma(cronograma);
+    }
+  }, [isOpen, cronograma]);
+
+  // Sincronizar título de forma segura
+  useEffect(() => {
+    if (isOpen && titulo !== tituloRef.current) {
+      tituloRef.current = titulo;
+      setTitulo(titulo);
+    }
+  }, [isOpen, titulo]);
+
+  // Sincronizar fechas en modo edición
+  useEffect(() => {
+    if (isEditMode && isOpen) {
+      if (fechaInicioProp) {
+        // Si la fecha viene en formato ISO, extrae solo la parte de la fecha
+        const fInicio =
+          fechaInicioProp.length > 10 && fechaInicioProp.includes('T')
+            ? fechaInicioProp.split('T')[0]
+            : fechaInicioProp;
+        setFechaInicio(fInicio);
+      }
+      if (fechaFinProp) {
+        const fFin =
+          fechaFinProp.length > 10 && fechaFinProp.includes('T')
+            ? fechaFinProp.split('T')[0]
+            : fechaFinProp;
+        setFechaFin(fFin);
+      }
+    }
+  }, [isEditMode, isOpen, fechaInicioProp, fechaFinProp]);
 
   if (!isOpen) return null;
 
@@ -349,19 +672,31 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 className="h-full w-full object-cover"
                 style={{ objectFit: 'cover' }}
               />
+            ) : imagenExistente ? (
+              <Image
+                src={imagenExistente}
+                alt="Imagen del proyecto"
+                width={160}
+                height={160}
+                className="h-full w-full object-cover"
+                style={{ objectFit: 'cover' }}
+                unoptimized
+              />
             ) : (
               <span className="text-gray-500">Sin imagen</span>
             )}
           </div>
           <label className="cursor-pointer rounded bg-cyan-700 px-4 py-2 text-white hover:bg-cyan-800">
-            Seleccionar imagen
+            {isEditMode ? 'Cambiar imagen' : 'Seleccionar imagen'}
             <input
               type="file"
               accept="image/*"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) setImagenProyecto(file);
+                if (file) {
+                  setImagenProyecto(file);
+                }
               }}
             />
           </label>
@@ -511,64 +846,141 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </select>
           </div>
 
-          {/* Selector de cantidad de meses para el cronograma */}
+          {/* Reemplazar el selector de meses con selectores de fechas */}
           <div className="mb-4">
             <label className="mb-1 block font-medium">
-              ¿Cuántos meses dura el proyecto?
+              Fecha de Inicio del Proyecto
             </label>
             <input
-              type="number"
-              min={1}
-              max={24}
-              value={numMeses}
-              onChange={(e) => setNumMeses(Number(e.target.value))}
-              className="w-24 rounded bg-gray-400 p-1 text-black"
+              type="date"
+              value={fechaInicio}
+              onChange={(e) => setFechaInicio(e.target.value)}
+              className="w-full rounded bg-gray-400 p-2 text-black"
+              required
             />
           </div>
+
+          <div className="mb-4">
+            <label className="mb-1 block font-medium">
+              Fecha de Fin del Proyecto
+            </label>
+            <input
+              type="date"
+              value={fechaFin}
+              onChange={(e) => setFechaFin(e.target.value)}
+              min={fechaInicio}
+              className="w-full rounded bg-gray-400 p-2 text-black"
+              required
+            />
+          </div>
+
+          {fechaInicio && fechaFin && (
+            <div className="col-span-2 mb-4">
+              <span className="text-sm text-gray-300">
+                Duración: {formatearDuracion(duracionDias)} ({duracionDias} días
+                en total)
+              </span>
+              <br />
+              <span className="text-xs text-gray-400">
+                Cronograma:{' '}
+                {tipoVisualizacion === 'meses'
+                  ? `${calcularMesesEntreFechas(fechaInicio, fechaFin).length} mes${calcularMesesEntreFechas(fechaInicio, fechaFin).length !== 1 ? 'es' : ''}`
+                  : `${duracionDias} día${duracionDias !== 1 ? 's' : ''}`}
+              </span>
+            </div>
+          )}
+
+          {/* Selector para tipo de visualización del cronograma */}
+          {fechaInicio && fechaFin && (
+            <div className="col-span-2 mb-4">
+              <label className="mb-2 block font-medium">
+                Visualización del Cronograma
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="meses"
+                    checked={tipoVisualizacion === 'meses'}
+                    onChange={(e) =>
+                      setTipoVisualizacion(e.target.value as 'meses' | 'dias')
+                    }
+                    className="text-cyan-500"
+                  />
+                  <span>Por Meses</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    value="dias"
+                    checked={tipoVisualizacion === 'dias'}
+                    onChange={(e) =>
+                      setTipoVisualizacion(e.target.value as 'meses' | 'dias')
+                    }
+                    className="text-cyan-500"
+                  />
+                  <span>Por Días</span>
+                </label>
+              </div>
+            </div>
+          )}
         </form>
 
         {/* Cronograma dinámico con celdas coloreadas */}
         <div className="mt-6 overflow-x-auto">
-          <h3 className="mb-2 text-lg font-semibold text-white">Cronograma</h3>
-          <div className="max-h-64 overflow-y-auto">
-            <table className="w-full table-auto border-collapse text-sm text-black">
-              <thead className="sticky top-0 z-10 bg-gray-300">
-                <tr>
-                  <th className="border px-2 py-2 text-left break-words">
-                    Actividad
-                  </th>
-                  {meses.map((mes, i) => (
-                    <th
-                      key={i}
-                      className="border px-2 py-2 text-left break-words whitespace-normal"
-                    >
-                      {mes}
+          <h3 className="mb-2 text-lg font-semibold text-white">
+            Cronograma{' '}
+            {tipoVisualizacion === 'meses' ? 'por Meses' : 'por Días'}
+          </h3>
+          {meses.length > 0 ? (
+            <div className="max-h-64 overflow-y-auto">
+              <table className="w-full table-auto border-collapse text-sm text-black">
+                <thead className="sticky top-0 z-10 bg-gray-300">
+                  <tr>
+                    <th className="border px-2 py-2 text-left break-words">
+                      Actividad
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {actividadEditada.map((act, idx) => (
-                  <tr key={idx}>
-                    <td className="border bg-white px-2 py-2 font-medium break-words">
-                      {act}
-                    </td>
-                    {meses.map((_, i) => (
-                      <td
+                    {meses.map((periodo, i) => (
+                      <th
                         key={i}
-                        onClick={() => toggleMesActividad(act, i)}
-                        className={`cursor-pointer border px-2 py-2 ${
-                          cronogramaState[act]?.includes(i)
-                            ? 'bg-cyan-300 font-bold text-white'
-                            : 'bg-white'
-                        }`}
-                      />
+                        className="border px-2 py-2 text-left break-words whitespace-normal"
+                        style={{
+                          minWidth:
+                            tipoVisualizacion === 'dias' ? '80px' : '120px',
+                        }}
+                      >
+                        {periodo}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {actividadEditada.map((act, idx) => (
+                    <tr key={idx}>
+                      <td className="border bg-white px-2 py-2 font-medium break-words">
+                        {act}
+                      </td>
+                      {meses.map((_, i) => (
+                        <td
+                          key={i}
+                          onClick={() => toggleMesActividad(act, i)}
+                          className={`cursor-pointer border px-2 py-2 ${
+                            cronogramaState[act]?.includes(i)
+                              ? 'bg-cyan-300 font-bold text-white'
+                              : 'bg-white'
+                          }`}
+                        />
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-300">
+              Selecciona las fechas de inicio y fin para ver el cronograma
+            </p>
+          )}
         </div>
 
         <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">

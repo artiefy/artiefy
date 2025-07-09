@@ -207,10 +207,16 @@ export const projects = pgTable('projects', {
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
-  categoryId: integer('categoryid')
+  categoryId: integer('category_id')
     .references(() => categories.id)
     .notNull(),
   isPublic: boolean('is_public').default(false).notNull(),
+  // Cambia estos campos a snake_case para que Drizzle los mapee correctamente
+  fecha_inicio: date('fecha_inicio'),
+  fecha_fin: date('fecha_fin'),
+  tipo_visualizacion: text('tipo_visualizacion', {
+    enum: ['meses', 'dias'],
+  }).default('meses'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -284,6 +290,7 @@ export const projectsTaken = pgTable('projects_taken', {
   projectId: integer('project_id')
     .references(() => projects.id)
     .notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Tabla de progreso de lecciones por usuario

@@ -25,6 +25,9 @@ export interface ProjectDetail {
   updatedAt: string;
   objetivos_especificos: string[];
   actividades: { descripcion: string; meses: number[] }[];
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  tipo_visualizacion?: 'meses' | 'dias';
 }
 
 // Obtener un proyecto específico por ID, incluyendo objetivos y actividades
@@ -85,5 +88,12 @@ export async function getProjectById(
       descripcion: a.description,
       meses: a.meses,
     })),
+    fecha_inicio: project.fecha_inicio
+      ? new Date(project.fecha_inicio).toISOString()
+      : undefined,
+    fecha_fin: project.fecha_fin
+      ? new Date(project.fecha_fin).toISOString()
+      : undefined,
+    tipo_visualizacion: project.tipo_visualizacion ?? undefined,
   };
 }

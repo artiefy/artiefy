@@ -1,5 +1,6 @@
 'use server';
 
+import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -10,45 +11,107 @@ import {
   specificObjectives,
 } from '~/server/db/schema';
 
+interface UpdateProjectData {
+  name?: string;
+  planteamiento?: string;
+  justificacion?: string;
+  objetivo_general?: string;
+  objetivos_especificos?: string[];
+  actividades?: {
+    descripcion: string;
+    meses: number[];
+  }[];
+  coverImageKey?: string;
+  type_project?: string;
+  categoryId?: number;
+  isPublic?: boolean;
+  fechaInicio?: string;
+  fechaFin?: string;
+  tipoVisualizacion?: 'meses' | 'dias';
+}
+
 export async function updateProject(
   projectId: number,
-  fields: Partial<{
-    name: string;
-    planteamiento: string;
-    justificacion: string;
-    objetivo_general: string;
-    coverImageKey: string | null;
-    type_project: string;
-    categoryId: number;
-    isPublic: boolean;
-    objetivos_especificos?: string[];
-    actividades?: {
-      descripcion: string;
-      meses: number[];
-    }[];
-  }>
-): Promise<boolean> {
-  const { objetivos_especificos, actividades, ...projectFields } = fields;
+  projectData: UpdateProjectData
+): Promise<{ success: boolean }> {
+  const user = await currentUser();
 
-  // Actualizar campos del proyecto
-  const updated = await db
-    .update(projects)
-    .set({
-      ...projectFields,
-      updatedAt: new Date(),
-    })
-    .where(eq(projects.id, projectId));
+  if (!user?.id) {
+    throw new Error('Usuario no autenticado');
+  }
+
+  // Verificar que el proyecto existe y pertenece al usuario
+  const existingProject = await db.query.projects.findFirst({
+    where: eq(projects.id, projectId),
+  });
+
+  if (!existingProject) {
+    throw new Error('Proyecto no encontrado');
+  }
+
+  if (existingProject.userId !== user.id) {
+    throw new Error('No tienes permisos para actualizar este proyecto');
+  }
+
+  // Preparar datos de actualización con tipos correctos
+  const updateData: {
+    name?: string;
+    planteamiento?: string;
+    justificacion?: string;
+    objetivo_general?: string;
+    coverImageKey?: string;
+    type_project?: string;
+    categoryId?: number;
+    isPublic?: boolean;
+    fecha_inicio?: string | null;
+    fecha_fin?: string | null;
+    tipo_visualizacion?: 'meses' | 'dias';
+    updatedAt: Date;
+  } = {
+    updatedAt: new Date(),
+  };
+
+  if (projectData.name !== undefined) updateData.name = projectData.name;
+  if (projectData.planteamiento !== undefined)
+    updateData.planteamiento = projectData.planteamiento;
+  if (projectData.justificacion !== undefined)
+    updateData.justificacion = projectData.justificacion;
+  if (projectData.objetivo_general !== undefined)
+    updateData.objetivo_general = projectData.objetivo_general;
+  if (projectData.coverImageKey !== undefined)
+    updateData.coverImageKey = projectData.coverImageKey;
+  if (projectData.type_project !== undefined)
+    updateData.type_project = projectData.type_project;
+  if (projectData.categoryId !== undefined)
+    updateData.categoryId = projectData.categoryId;
+  if (projectData.isPublic !== undefined)
+    updateData.isPublic = projectData.isPublic;
+  if (projectData.fechaInicio !== undefined && projectData.fechaInicio !== '') {
+    updateData.fecha_inicio = projectData.fechaInicio;
+  }
+  if (projectData.fechaFin !== undefined && projectData.fechaFin !== '') {
+    updateData.fecha_fin = projectData.fechaFin;
+  }
+  if (projectData.tipoVisualizacion !== undefined) {
+    updateData.tipo_visualizacion = projectData.tipoVisualizacion;
+  }
+
+  // DEBUG: Verifica los datos que se van a actualizar
+  console.log('updateData:', updateData);
+
+  // Actualizar el proyecto
+  await db.update(projects).set(updateData).where(eq(projects.id, projectId));
 
   // Actualizar objetivos específicos si se proporcionan
-  if (objetivos_especificos) {
+  if (projectData.objetivos_especificos) {
     // Eliminar objetivos existentes
     await db
       .delete(specificObjectives)
       .where(eq(specificObjectives.projectId, projectId));
 
     // Insertar nuevos objetivos
-    if (objetivos_especificos.length > 0) {
-      const objetivosData = objetivos_especificos.map((desc) => ({
+    if (projectData.objetivos_especificos.length > 0) {
+      const objetivosData = projectData.objetivos_especificos.map((desc) => ({
         projectId,
         description: desc,
         createdAt: new Date(),
@@ -58,14 +121,14 @@ export async function updateProject(
   }
 
   // Actualizar actividades y cronograma si se proporcionan
-  if (actividades) {
-    // Obtener actividades existentes para limpiar cronograma
-    const existingActivities = await db
-      .select()
-      .from(projectActivities)
-      .where(eq(projectActivities.projectId, projectId));
+  if (projectData.actividades) {
+    // Obtener IDs de actividades existentes
+    const existingActivities = await db.query.projectActivities.findMany({
+      where: eq(projectActivities.projectId, projectId),
+      columns: { id: true },
+    });
 
-    // Eliminar cronograma de actividades existentes
+    // Eliminar cronograma existente
     for (const activity of existingActivities) {
       await db
         .delete(projectSchedule)
@@ -78,8 +141,8 @@ export async function updateProject(
       .where(eq(projectActivities.projectId, projectId));
 
     // Insertar nuevas actividades y cronograma
-    if (actividades.length > 0) {
-      for (const actividad of actividades) {
+    if (projectData.actividades.length > 0) {
+      for (const actividad of projectData.actividades) {
         // Insertar actividad
         const [insertedActividad] = await db
           .insert(projectActivities)
@@ -91,7 +154,7 @@ export async function updateProject(
 
         const actividadId = insertedActividad?.id;
 
-        // Insertar meses del cronograma
+        // Insertar cronograma
         if (actividadId && actividad.meses.length > 0) {
           const scheduleData = actividad.meses.map((mes) => ({
             activityId: actividadId,
@@ -103,5 +166,5 @@ export async function updateProject(
     }
   }
 
-  return !!updated;
+  return { success: true };
 }

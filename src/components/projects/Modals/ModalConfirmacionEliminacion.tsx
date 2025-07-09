@@ -5,33 +5,39 @@ import { useRouter } from 'next/navigation';
 interface ModalConfirmacionEliminacionProps {
   isOpen: boolean;
   onClose: () => void;
-  projectId: number | string | undefined;
+  projectId: number;
+  onProjectDeleted?: (projectId: number) => void;
 }
 
 const ModalConfirmacionEliminacion: React.FC<
   ModalConfirmacionEliminacionProps
-> = ({ isOpen, onClose, projectId }) => {
+> = ({ isOpen, onClose, projectId, onProjectDeleted }) => {
   const router = useRouter();
 
   // Eliminar proyecto
   const handleEliminarProyecto = async () => {
-    if (!projectId) return;
     try {
-      const res = await fetch(`/api/projects/${projectId}`, {
+      const response = await fetch(`/api/projects/${projectId}`, {
         method: 'DELETE',
       });
-      if (res.ok) {
+
+      if (response.ok) {
+        // Llamar al callback si existe
+        if (onProjectDeleted) {
+          onProjectDeleted(projectId);
+        }
+
         onClose();
-        // Usa router.push y fuerza recarga para asegurar la navegación
-        setTimeout(() => {
-          router.push('/proyectos/MisProyectos');
-          router.refresh?.(); // Si usas Next.js 13+ con app router
-          window.location.href = '/proyectos/MisProyectos'; // Fallback para forzar navegación
-        }, 50);
+
+        // Si no hay callback, redirigir (comportamiento original)
+        if (!onProjectDeleted) {
+          router.push('/proyectos');
+        }
       } else {
-        alert('No se pudo eliminar el proyecto');
+        alert('Error al eliminar el proyecto');
       }
-    } catch {
+    } catch (error) {
+      console.error('Error:', error);
       alert('Error al eliminar el proyecto');
     }
   };

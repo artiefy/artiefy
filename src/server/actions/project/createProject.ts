@@ -26,7 +26,10 @@ interface ProjectData {
   coverImageKey?: string; // ya está incluido
   type_project: string;
   categoryId: number;
-  isPublic?: boolean; // <-- nuevo campo opcional
+  isPublic?: boolean;
+  fechaInicio?: string;
+  fechaFin?: string;
+  tipoVisualizacion?: 'meses' | 'dias';
 }
 
 // Crear proyecto, objetivos específicos, actividades y cronograma
@@ -91,11 +94,14 @@ export async function createProject(
       planteamiento: projectData.planteamiento,
       justificacion: projectData.justificacion,
       objetivo_general: projectData.objetivo_general,
-      coverImageKey: projectData.coverImageKey ?? null, // <-- asegúrate de usar este campo
+      coverImageKey: projectData.coverImageKey ?? null,
       type_project: projectData.type_project,
       userId: UserId,
       categoryId: projectData.categoryId,
-      isPublic: projectData.isPublic ?? false, // <-- por defecto false
+      isPublic: projectData.isPublic ?? false,
+      fecha_inicio: projectData.fechaInicio ?? null, // NO fechaInicio
+      fecha_fin: projectData.fechaFin ?? null, // NO fechaFin
+      tipo_visualizacion: projectData.tipoVisualizacion ?? 'meses', // NO tipoVisualizacion
       createdAt: new Date(),
       updatedAt: new Date(),
     })
