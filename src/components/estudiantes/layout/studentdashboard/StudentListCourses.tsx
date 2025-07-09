@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
+import { MdOutlineLockClock } from 'react-icons/md';
 
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -233,12 +234,17 @@ export default async function StudentListCourses({
                         href={`/estudiantes/cursos/${course.id}`}
                         className={`group/button relative inline-flex h-10 w-full items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 ${
                           !course.isActive
-                            ? 'pointer-events-none bg-gray-600 text-gray-400'
+                            ? 'pointer-events-none bg-gray-600 text-white' /* Changed from text-gray-400 to text-white */
                             : 'bg-background text-primary active:scale-95'
                         }`}
                       >
                         <span className="font-bold">
-                          {!course.isActive ? 'Muy pronto' : 'Ver Curso'}
+                          {!course.isActive ? (
+                            <span className="flex items-center justify-center text-white"> {/* Added text-white here */}
+                              <MdOutlineLockClock className="mr-1.5 size-5" />
+                              Muy pronto
+                            </span>
+                          ) : 'Ver Curso'}
                         </span>
                         {course.isActive && (
                           <>

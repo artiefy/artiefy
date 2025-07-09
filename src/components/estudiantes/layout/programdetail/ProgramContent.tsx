@@ -12,6 +12,7 @@ import {
   StarIcon,
 } from '@heroicons/react/24/solid';
 import { FaCheck, FaCrown } from 'react-icons/fa';
+import { MdOutlineLockClock } from 'react-icons/md';
 import { toast } from 'sonner';
 
 import {
@@ -234,11 +235,13 @@ export function ProgramContent({
           {courses.map((course, index) => (
             <div key={`${course.id}-${index}`} className="group relative">
               <div className="animate-gradient absolute -inset-2 rounded-xl bg-linear-to-r from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px] transition-all duration-500 group-hover:opacity-100" />
-              <Card
-                className={`zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02] ${
-                  !course.isActive ? 'opacity-50' : ''
-                }`}
-              >
+              <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+                {/* Añadir Badge "Muy pronto" para cursos desactivados */}
+                {!course.isActive && (
+                  <div className="absolute top-2 right-2 z-10 rounded bg-yellow-400 px-2 py-1 text-xs font-bold text-gray-900 shadow">
+                    Muy pronto
+                  </div>
+                )}
                 <CardHeader className="px-6">
                   <AspectRatio ratio={16 / 9}>
                     <div className="relative size-full">
@@ -335,20 +338,25 @@ export function ProgramContent({
                             : ''
                         } group/button relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 ${
                           !course.isActive || !isSignedIn || !isEnrolled
-                            ? 'pointer-events-none bg-gray-600 text-gray-400'
+                            ? 'pointer-events-none bg-gray-600 !text-[#fff] !font-extrabold !opacity-100' // Fuerza blanco puro y sin opacidad
                             : 'bg-background text-primary active:scale-95'
                         }`}
                       >
                         <span className="font-bold">
-                          {!course.isActive
-                            ? 'No Disponible'
-                            : !isSignedIn
-                              ? 'Iniciar Sesión'
-                              : !isEnrolled
-                                ? 'Requiere Inscripción'
-                                : courseEnrollments[course.id]
-                                  ? 'Continuar Curso'
-                                  : 'Ver Curso'}
+                          {!course.isActive ? (
+                            <span className="flex items-center justify-center !text-[#fff] !font-extrabold !opacity-100">
+                              <MdOutlineLockClock className="mr-1.5 size-5 !text-[#fff] !opacity-100" />
+                              Muy pronto
+                            </span>
+                          ) : !isSignedIn ? (
+                            'Iniciar Sesión'
+                          ) : !isEnrolled ? (
+                            'Requiere Inscripción'
+                          ) : courseEnrollments[course.id] ? (
+                            'Continuar Curso'
+                          ) : (
+                            'Ver Curso'
+                          )}
                         </span>
                         {course.isActive && isEnrolled && (
                           <>
