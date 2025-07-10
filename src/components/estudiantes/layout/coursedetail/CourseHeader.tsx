@@ -813,7 +813,7 @@ export function CourseHeader({
               'h-9 shrink-0 px-4 font-semibold sm:w-auto',
               canAccessGrades
                 ? 'bg-blue-500 text-white hover:bg-blue-600'
-                : 'bg-gray-400/50 text-gray-700'
+                : 'bg-gray-400 text-white'
             )}
             aria-label={
               !isEnrolled
@@ -821,8 +821,20 @@ export function CourseHeader({
                 : 'Completa todas las clases para ver tus calificaciones'
             }
           >
-            <FaTrophy className="mr-2 h-4 w-4" />
-            <span className="text-sm font-semibold">Mis Calificaciones</span>
+            <FaTrophy
+              className={cn(
+                'mr-2 h-4 w-4',
+                !canAccessGrades ? 'text-black' : ''
+              )}
+            />
+            <span
+              className={cn(
+                'text-sm font-bold',
+                !canAccessGrades ? 'text-black' : ''
+              )}
+            >
+              Mis Calificaciones
+            </span>
           </Button>
 
           {/* Price button with space theme */}
