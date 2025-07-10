@@ -591,14 +591,14 @@ export function CourseHeader({
       {/* Cambiado a fondo oscuro */}
       <CardHeader className="px-0">
         {/* Título encima de la portada SOLO en mobile, en desktop encima de la portada */}
-        <div className="block w-full px-4 pt-4 pb-1 sm:hidden">
-          <h1 className="line-clamp-2 text-base font-bold text-gray-900">
+        <div className="block w-full px-4 pt-2 pb-2 sm:hidden">
+          <h1 className="line-clamp-2 text-base font-bold text-cyan-300">
             {course.title}
           </h1>
         </div>
         {/* Título encima de la portada SOLO en desktop */}
-        <div className="hidden w-full px-4 pt-4 sm:block">
-          <h1 className="line-clamp-2 text-xl font-bold text-gray-900 md:text-2xl lg:text-3xl">
+        <div className="hidden w-full px-4 pt-2 pb-2 sm:block">
+          <h1 className="line-clamp-2 text-xl font-bold text-cyan-300 md:text-2xl lg:text-3xl">
             {course.title}
           </h1>
         </div>
@@ -896,7 +896,7 @@ export function CourseHeader({
 
         {/* Add Materias section below description */}
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-gray-600">
+          <h3 className="text-sm font-semibold text-cyan-300">
             Materias asociadas:
           </h3>
           <div className="flex flex-wrap gap-2">
