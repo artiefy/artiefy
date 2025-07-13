@@ -29,7 +29,7 @@ Si deseas aplicar estilos a un rango específico de pantalla, Tailwind CSS 4 per
 ```html
 <!-- Aplicar flex solo entre md y xl -->
 <div class="md:max-xl:flex">
-<!-- ... -->
+  <!-- ... -->
 </div>
 ```
 
@@ -195,6 +195,8 @@ Instalar dependencias globales en una sola :
 
 `npm install -g npm-check-updates@latest npm@latest eslint@latest typescript@latest`
 
+`npm list -g --depth=0` /Chekear las versiones de tus paquetes globales
+
 ---
 
 Pasos en Vim:
@@ -202,3 +204,10 @@ Pasos en Vim:
 Presiona `:wq` y luego Enter para guardar y salir.
 
 ---
+
+Configurar localmente tu cuenta de github en tu proyecto
+
+```bash
+git config user.name "artiefy"
+git config user.email "artiefy4@gmail.com"
+```
