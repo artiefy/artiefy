@@ -29,7 +29,8 @@ const defaultMetadata: Metadata = {
     template: '%s | Artiefy - Tu Plataforma Educativa',
     default: 'Artiefy - Cursos Online | Aprende a Tu Ritmo',
   },
-  description: 'Cursos online de calidad en diferentes áreas del conocimiento.',
+  description:
+    'Explora Artiefy, tu plataforma de aprendizaje online con cursos de alta calidad impartidos por profesionales. Desarrolla nuevas habilidades, avanza en tu carrera y expande tus horizontes con contenido educativo actualizado y accesible desde cualquier lugar. Únete a nuestra comunidad de estudiantes y transforma tu futuro profesional.',
   keywords: [
     'artiefy',
     'cursos online',
@@ -102,7 +103,7 @@ export async function getMetadataForRoute(): Promise<Metadata> {
         ...baseMetadata,
         title: 'Artiefy - Cursos Online | Impulsa tu Futuro Profesional',
         description:
-          'Cursos online de calidad en diferentes áreas del conocimiento.',
+          'Descubre Artiefy, la plataforma educativa líder que ofrece cursos online de calidad impartidos por expertos del sector. Aprende a tu ritmo, accede a contenidos actualizados y desarrolla habilidades relevantes para el mercado laboral actual. Transforma tu potencial profesional con nuestra metodología innovadora.',
         keywords: [
           'artiefy',
           'artiefy plataforma',
@@ -126,7 +127,7 @@ export async function getMetadataForRoute(): Promise<Metadata> {
         ...baseMetadata,
         title: 'Cursos Online | Formación Integral en Artiefy',
         description:
-          'Explora nuestra biblioteca de cursos y programas diseñados para potenciar tu desarrollo profesional.',
+          'Explora nuestra completa biblioteca de cursos y programas diseñados para potenciar tu desarrollo profesional. Con más de 100 cursos especializados, encuentras formación actualizada en tecnología, negocios, marketing digital, idiomas y muchas áreas más. Aprende con metodologías prácticas y certificados reconocidos en el mercado.',
         keywords: [
           'artiefy cursos',
           'programas artiefy',
@@ -150,7 +151,7 @@ export async function getMetadataForRoute(): Promise<Metadata> {
         title:
           'Planes de Suscripción Educativos | Invierte en tu Futuro con Artiefy',
         description:
-          'Encuentra el plan perfecto para tu formación. Acceso ilimitado a contenido educativo de calidad.',
+          'Encuentra el plan perfecto para tu formación en Artiefy. Desde suscripciones básicas hasta planes premium con acceso ilimitado a cursos, proyectos prácticos, mentoría personalizada y certificados digitales. Invierte en tu educación continua con precios accesibles y contenido de calidad que impulsa tu carrera profesional.',
         keywords: [
           'planes artiefy',
           'suscripción artiefy',

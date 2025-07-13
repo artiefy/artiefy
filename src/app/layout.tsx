@@ -1,4 +1,5 @@
 import { Merriweather, Montserrat } from 'next/font/google';
+import Script from 'next/script';
 
 import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
@@ -9,6 +10,9 @@ import { NotificationSubscription } from '~/components/estudiantes/layout/subscr
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { getMetadataForRoute } from '~/lib/metadata/config';
 import {
+  getBreadcrumbSchema,
+  getOrganizationSchema,
+  getSiteNavigationSchema,
   getWebPagesSchema,
   getWebsiteSchema,
 } from '~/lib/metadata/structured-data';
@@ -57,13 +61,14 @@ export default async function RootLayout({
     } else if (alt instanceof URL) {
       canonical = alt.toString();
     }
-    // Si es otro tipo (AlternateLinkDescriptor), puedes agregar lógica si lo necesitas
   }
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@graph': [getWebsiteSchema(), getWebPagesSchema()],
-  };
+  // Prepare schema data
+  const websiteSchema = getWebsiteSchema();
+  const webPagesSchema = getWebPagesSchema();
+  const siteNavigationSchema = getSiteNavigationSchema();
+  const breadcrumbSchema = getBreadcrumbSchema();
+  const organizationSchema = getOrganizationSchema();
 
   return (
     <ClerkProvider localization={esMX}>
@@ -71,20 +76,54 @@ export default async function RootLayout({
         lang="es"
         className={`${montserrat.variable} ${merriweather.variable}`}
       >
-        <head>
-          <meta
-            name="google-site-verification"
-            content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
-          />
-          <link rel="canonical" href={canonical} />
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{
-              __html: JSON.stringify(jsonLd, null, 2).replace(/</g, '\\u003c'),
-            }}
-          />
-        </head>
+        {/* Canonical URL en los metadatos de la página */}
+        <link rel="canonical" href={canonical} />
+
+        {/* Verificación de Google */}
+        <meta
+          name="google-site-verification"
+          content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
+        />
+
+        {/* Schema.org con componentes Script de Next.js */}
+        <Script id="schema-website" type="application/ld+json">
+          {JSON.stringify(websiteSchema).replace(/</g, '\\u003c')}
+        </Script>
+
+        <Script id="schema-webpages" type="application/ld+json">
+          {JSON.stringify(webPagesSchema).replace(/</g, '\\u003c')}
+        </Script>
+
+        <Script id="schema-navigation" type="application/ld+json">
+          {JSON.stringify(siteNavigationSchema).replace(/</g, '\\u003c')}
+        </Script>
+
+        <Script id="schema-breadcrumb" type="application/ld+json">
+          {JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c')}
+        </Script>
+
+        <Script id="schema-organization" type="application/ld+json">
+          {JSON.stringify(organizationSchema).replace(/</g, '\\u003c')}
+        </Script>
+
         <body className="bg-background text-primary font-sans">
+          {/* Microformatos para información de contacto */}
+          <div className="h-card" style={{ display: 'none' }}>
+            <a className="p-name u-url" href="https://artiefy.com">
+              Artiefy
+            </a>
+            <span className="p-org">Artiefy Educación</span>
+            <a className="u-email" href="mailto:artiefy4@gmail.com">
+              artiefy4@gmail.com
+            </a>
+            {/* eslint-disable @next/next/no-img-element */}
+            <img
+              className="u-photo"
+              src="https://artiefy.com/artiefy-icon.png"
+              alt="Logo de Artiefy"
+            />
+          </div>
+
           <Providers>
             {children}
             <NotificationSubscription />
