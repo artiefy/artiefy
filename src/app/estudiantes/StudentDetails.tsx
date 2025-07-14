@@ -6,6 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
+import { FaCrown, FaStar } from 'react-icons/fa';
+import { IoGiftOutline } from 'react-icons/io5';
 
 import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
@@ -154,6 +156,88 @@ export default function StudentDetails({
     }
     const s3Url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${imageKey}`;
     return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
+  };
+
+  // Rename to _getCourseTypeIcon to mark as unused
+  const _getCourseTypeIcon = (course: Course) => {
+    // Usamos un valor fijo para pruebas, en producción debería usar la info real del usuario
+    const userPlanType = localStorage.getItem('userPlanType') ?? ''; // Changed to nullish coalescing
+    const hasActiveSubscription =
+      userPlanType === 'Pro' || userPlanType === 'Premium';
+
+    // Si tiene múltiples tipos
+    if (course.courseTypes && course.courseTypes.length > 0) {
+      // Verificar cada tipo por orden de prioridad
+      const hasPurchasable = course.courseTypes.some(
+        (type) => type.isPurchasableIndividually
+      );
+      const hasPremium = course.courseTypes.some(
+        (type) => type.requiredSubscriptionLevel === 'premium'
+      );
+      const hasPro = course.courseTypes.some(
+        (type) => type.requiredSubscriptionLevel === 'pro'
+      );
+      const _hasFree = course.courseTypes.some(
+        // Prefix with underscore
+        (type) =>
+          type.requiredSubscriptionLevel === 'none' &&
+          !type.isPurchasableIndividually
+      );
+
+      // Si el usuario no tiene suscripción, mostrar según prioridad
+      if (!hasActiveSubscription) {
+        // 1. Individual (si existe)
+        if (hasPurchasable) {
+          return (
+            <div className="flex items-center gap-1 text-blue-500">
+              <FaStar className="text-lg" />
+              <span className="text-xs font-bold">
+                ${course.individualPrice?.toLocaleString() ?? 'COMPRA'}
+              </span>
+            </div>
+          );
+        }
+
+        // 2. Premium (si existe)
+        if (hasPremium) {
+          return (
+            <div className="flex items-center gap-1 text-purple-500">
+              <FaCrown className="text-lg" />
+              <span className="text-xs font-bold">PREMIUM</span>
+            </div>
+          );
+        }
+
+        // 3. Pro (si existe)
+        if (hasPro) {
+          return (
+            <div className="flex items-center gap-1 text-orange-500">
+              <FaCrown className="text-lg" />
+              <span className="text-xs font-bold">PRO</span>
+            </div>
+          );
+        }
+      }
+
+      // Para usuarios con suscripción o si es gratuito
+      if (
+        course.courseTypes.some(
+          (type) =>
+            type.requiredSubscriptionLevel === 'none' &&
+            !type.isPurchasableIndividually
+        )
+      ) {
+        return (
+          <div className="flex items-center gap-1 text-green-500">
+            <IoGiftOutline className="text-lg" />
+            <span className="text-xs font-bold">GRATUITO</span>
+          </div>
+        );
+      }
+    }
+
+    // Fallback a la implementación original
+    return null;
   };
 
   return (
