@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import {
   categories,
+  courseCourseTypes,
   courses,
   courseTypes,
   modalidades,
@@ -117,6 +118,14 @@ export async function getCourseById(
       return null;
     }
 
+    // Fetch all associated course types for this course
+    const associatedCourseTypes = await db.query.courseCourseTypes.findMany({
+      where: eq(courseCourseTypes.courseId, parsedCourseId),
+      with: {
+        courseType: true,
+      },
+    });
+
     // If userId exists, get progress data
     const userLessonsProgressData = userId
       ? await db.query.userLessonsProgress.findMany({
@@ -194,9 +203,12 @@ export async function getCourseById(
             is_featured: course.category.is_featured ?? null,
           }
         : undefined,
-      isFree: course.courseType?.requiredSubscriptionLevel === 'none',
-      requiresSubscription:
-        course.courseType?.requiredSubscriptionLevel !== 'none',
+      isFree: associatedCourseTypes.some(
+        (ct) => ct.courseType?.requiredSubscriptionLevel === 'none'
+      ),
+      requiresSubscription: associatedCourseTypes.some(
+        (ct) => ct.courseType?.requiredSubscriptionLevel !== 'none'
+      ),
       courseType: course.courseType
         ? {
             name: course.courseType.name, // Asegura que se incluya el nombre
@@ -207,6 +219,14 @@ export async function getCourseById(
             price: course.courseType.price ?? null,
           }
         : undefined,
+      courseTypes: associatedCourseTypes.map((ct) => ({
+        id: ct.courseType.id,
+        name: ct.courseType.name,
+        description: ct.courseType.description,
+        requiredSubscriptionLevel: ct.courseType.requiredSubscriptionLevel,
+        isPurchasableIndividually: ct.courseType.isPurchasableIndividually,
+        price: ct.courseType.price,
+      })),
       requiresProgram: Boolean(course.requiresProgram), // Ensure it's always boolean
       isActive: Boolean(course.isActive), // Also ensure isActive is always boolean
       instructor: courseData.instructor,

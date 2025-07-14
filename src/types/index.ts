@@ -36,6 +36,23 @@ export interface BaseCourse {
 // Add this type
 export type SubscriptionLevel = 'none' | 'pro' | 'premium';
 
+// Add this interface for course-course type relationship
+export interface CourseCourseType {
+  courseId: number;
+  courseTypeId: number;
+  courseType?: CourseType;
+}
+
+// Add this interface to represent a CourseType
+export interface CourseType {
+  id?: number;
+  name: string;
+  description?: string | null;
+  requiredSubscriptionLevel: SubscriptionLevel;
+  isPurchasableIndividually: boolean | null;
+  price?: number | null;
+}
+
 // Keep the full Course interface for other uses
 export interface Course extends BaseCourse {
   totalStudents: number;
@@ -48,13 +65,9 @@ export interface Course extends BaseCourse {
   materias?: CourseMateria[];
   isFree?: boolean;
   requiresSubscription?: boolean;
-  courseTypeId: number; // Add this field
-  courseType?: {
-    name: string; // <-- Agregado para permitir acceso a course.courseType.name
-    requiredSubscriptionLevel: SubscriptionLevel;
-    isPurchasableIndividually: boolean | null; // Updated to allow null
-    price?: number | null; // Add price property
-  };
+  courseTypeId: number | null; // Changed to nullable
+  courseType?: CourseType; // Updated to match CourseType interface
+  courseTypes?: CourseType[]; // Add this to support multiple course types
   individualPrice: number | null; // Change from optional to required but nullable
   requiresProgram: boolean;
   isActive: boolean;

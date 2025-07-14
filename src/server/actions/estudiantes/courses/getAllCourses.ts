@@ -1,10 +1,11 @@
 'use server';
 
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
   categories,
+  courseCourseTypes,
   courses,
   courseTypes,
   modalidades,
@@ -12,37 +13,7 @@ import {
   users,
 } from '~/server/db/schema';
 
-import type { Course, SubscriptionLevel } from '~/types';
-
-// Interfaces separadas
-interface CourseQueryResult {
-  id: number;
-  title: string | null;
-  description: string | null;
-  coverImageKey: string | null;
-  categoryid: number;
-  instructor: string;
-  instructorName: string | null; // Add this field
-  createdAt: Date;
-  updatedAt: Date;
-  creatorId: string;
-  rating: number | null;
-  modalidadesid: number;
-  nivelid: number;
-  categoryName: string | null;
-  categoryDescription: string | null;
-  modalidadName: string | null;
-  nivelName: string | null;
-  isFeatured: boolean | null;
-  courseTypeId: number | null;
-  courseTypeName: string | null;
-  requiredSubscriptionLevel: string | null;
-  isPurchasableIndividually: boolean | null;
-  price: number | null;
-  requiresProgram: boolean | null;
-  isActive: boolean | null;
-  individualPrice: number | null;
-}
+import type { Course, CourseType, SubscriptionLevel } from '~/types';
 
 // Consulta base separada
 const baseCoursesQuery = {
@@ -52,7 +23,7 @@ const baseCoursesQuery = {
   coverImageKey: courses.coverImageKey,
   categoryid: courses.categoryid,
   instructor: courses.instructor,
-  instructorName: users.name, // Add this field
+  instructorName: users.name,
   createdAt: courses.createdAt,
   updatedAt: courses.updatedAt,
   creatorId: courses.creatorId,
@@ -74,52 +45,9 @@ const baseCoursesQuery = {
   individualPrice: courses.individualPrice,
 };
 
-// Función de transformación separada
-const transformCourseData = (coursesData: CourseQueryResult[]): Course[] => {
-  return coursesData.map((course) => ({
-    id: course.id,
-    title: course.title ?? '',
-    description: course.description ?? '',
-    coverImageKey: course.coverImageKey ?? '',
-    categoryid: course.categoryid,
-    instructor: course.instructor ?? '',
-    instructorName: course.instructorName ?? 'no encontrado',
-    createdAt: course.createdAt,
-    updatedAt: course.updatedAt,
-    creatorId: course.creatorId,
-    rating: Number(course.rating ?? 0),
-    modalidadesid: course.modalidadesid,
-    nivelid: course.nivelid,
-    totalStudents: 0,
-    lessons: [],
-    category: {
-      id: course.categoryid,
-      name: course.categoryName ?? '',
-      description: course.categoryDescription ?? '',
-      is_featured: course.isFeatured ?? false,
-    },
-    modalidad: { name: course.modalidadName ?? '' },
-    nivel: { name: course.nivelName ?? '' },
-    isFeatured: course.isFeatured ?? false,
-    requerimientos: [] as string[],
-    courseTypeId: course.courseTypeId ?? 0, // Add this line
-    courseType: course.courseTypeId
-      ? {
-          name: course.courseTypeName ?? '',
-          requiredSubscriptionLevel:
-            (course.requiredSubscriptionLevel as SubscriptionLevel) ?? 'none',
-          isPurchasableIndividually: Boolean(course.isPurchasableIndividually),
-          price: course.courseTypeId === 4 ? course.individualPrice : null,
-        }
-      : undefined,
-    individualPrice: course.individualPrice ?? null, // Add this line if needed
-    isActive: Boolean(course.isActive),
-    requiresProgram: Boolean(course.requiresProgram),
-  }));
-};
-
 export async function getAllCourses(): Promise<Course[]> {
   try {
+    // Fetch basic course data
     const coursesData = await db
       .select(baseCoursesQuery)
       .from(courses)
@@ -127,15 +55,89 @@ export async function getAllCourses(): Promise<Course[]> {
       .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
       .leftJoin(nivel, eq(courses.nivelid, nivel.id))
       .leftJoin(courseTypes, eq(courses.courseTypeId, courseTypes.id))
-      .leftJoin(users, eq(courses.instructor, users.id)) // Add this join
-      .where(eq(courses.requiresProgram, false)) // Removido el filtro de isActive
+      .leftJoin(users, eq(courses.instructor, users.id))
+      .where(eq(courses.requiresProgram, false))
       .orderBy(desc(courses.createdAt))
       .limit(100);
 
-    return transformCourseData(coursesData);
+    // Fetch all course types for all courses in one query
+    const allCourseIds = coursesData.map((course) => course.id);
+
+    // Only fetch course types if we have courses
+    let courseTypesMap: Record<number, CourseType[]> = {};
+
+    if (allCourseIds.length > 0) {
+      const allCourseTypeRelations = await db.query.courseCourseTypes.findMany({
+        where: inArray(courseCourseTypes.courseId, allCourseIds),
+        with: {
+          courseType: true,
+        },
+      });
+
+      // Group course types by course ID for easier access
+      courseTypesMap = {};
+      allCourseTypeRelations.forEach((relation) => {
+        const courseId = relation.courseId;
+        if (!courseTypesMap[courseId]) {
+          courseTypesMap[courseId] = [];
+        }
+        courseTypesMap[courseId].push({
+          id: relation.courseType.id,
+          name: relation.courseType.name,
+          description: relation.courseType.description,
+          requiredSubscriptionLevel: relation.courseType.requiredSubscriptionLevel as SubscriptionLevel,
+          isPurchasableIndividually: relation.courseType.isPurchasableIndividually,
+          price: relation.courseType.price,
+        });
+      });
+    }
+
+    // Transform course data synchronously now that we have all needed data
+    const transformedCourses: Course[] = coursesData.map((course) => ({
+      id: course.id,
+      title: course.title ?? '',
+      description: course.description ?? '',
+      coverImageKey: course.coverImageKey ?? '',
+      categoryid: course.categoryid,
+      instructor: course.instructor ?? '',
+      instructorName: course.instructorName ?? 'no encontrado',
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt,
+      creatorId: course.creatorId,
+      rating: Number(course.rating ?? 0),
+      modalidadesid: course.modalidadesid,
+      nivelid: course.nivelid,
+      totalStudents: 0,
+      lessons: [],
+      category: {
+        id: course.categoryid,
+        name: course.categoryName ?? '',
+        description: course.categoryDescription ?? '',
+        is_featured: course.isFeatured ?? false,
+      },
+      modalidad: { name: course.modalidadName ?? '' },
+      nivel: { name: course.nivelName ?? '' },
+      isFeatured: course.isFeatured ?? false,
+      requerimientos: [] as string[],
+      courseTypeId: course.courseTypeId ?? null,
+      courseType: course.courseTypeId
+        ? {
+            name: course.courseTypeName ?? '',
+            requiredSubscriptionLevel: course.requiredSubscriptionLevel! || 'none',
+            isPurchasableIndividually: Boolean(course.isPurchasableIndividually),
+            price: course.courseTypeId === 4 ? course.individualPrice : null,
+          }
+        : undefined,
+      courseTypes: courseTypesMap[course.id] ?? [],
+      individualPrice: course.individualPrice ?? null,
+      isActive: Boolean(course.isActive),
+      requiresProgram: Boolean(course.requiresProgram),
+    }));
+
+    return transformedCourses;
   } catch (err) {
-    const error = err as Error;
-    throw new Error(`Error al obtener todos los cursos: ${error.message}`);
+    console.error('Error al obtener todos los cursos:', err);
+    throw new Error(`Error al obtener todos los cursos: ${err instanceof Error ? err.message : 'Error desconocido'}`);
   }
 }
 

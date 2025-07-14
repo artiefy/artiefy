@@ -298,14 +298,7 @@ export function CourseHeader({
   const canAccessCertificate = canAccessGrades && currentFinalGrade >= 3;
 
   const getCourseTypeLabel = () => {
-    const courseType = course.courseType;
-    if (!courseType) {
-      return null;
-    }
-
-    const { requiredSubscriptionLevel } = courseType;
-
-    // Mostrar el precio individual cuando el curso es tipo 4
+    // Handle individual price display first (highest priority)
     if (course.courseTypeId === 4 && course.individualPrice) {
       return (
         <div className="flex items-center gap-1">
@@ -316,6 +309,53 @@ export function CourseHeader({
         </div>
       );
     }
+
+    // If course has multiple types, show them all
+    if (course.courseTypes && course.courseTypes.length > 0) {
+      return (
+        <div className="flex flex-wrap items-center gap-1">
+          {course.courseTypes.map((type, index) => {
+            // Free course type (1)
+            if (type.id === 1 || type.requiredSubscriptionLevel === 'none') {
+              return (
+                <div key={type.id} className="mr-2 flex items-center gap-1">
+                  <IoGiftOutline className="text-lg text-green-500" />
+                  <span className="text-base font-bold text-green-500">
+                    GRATUITO
+                  </span>
+                </div>
+              );
+            }
+
+            // Subscription-based types (Pro:2, Premium:3)
+            const color =
+              type.requiredSubscriptionLevel === 'premium'
+                ? 'text-purple-500'
+                : 'text-orange-500';
+
+            return (
+              <div
+                key={type.id}
+                className={`mr-2 flex items-center gap-1 ${color}`}
+              >
+                <FaCrown className="text-lg" />
+                <span className="text-base font-bold">
+                  {type.requiredSubscriptionLevel.toUpperCase()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Fallback to single course type
+    const courseType = course.courseType;
+    if (!courseType) {
+      return null;
+    }
+
+    const { requiredSubscriptionLevel } = courseType;
 
     if (requiredSubscriptionLevel === 'none') {
       return (
