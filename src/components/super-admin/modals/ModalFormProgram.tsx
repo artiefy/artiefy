@@ -572,13 +572,11 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             )}
           </div>
 
-          {false && (
-            <div className="border-primary mb-4 w-full rounded border p-2">
-              <h3 className="text-primary text-lg font-medium">
-                Instructor: {user?.fullName}
-              </h3>
-            </div>
-          )}
+          <div className="border-primary mb-4 hidden w-full rounded border p-2">
+            <h3 className="text-primary text-lg font-medium">
+              Instructor: {user?.fullName}
+            </h3>
+          </div>
 
           {/* Rating */}
           <div>
