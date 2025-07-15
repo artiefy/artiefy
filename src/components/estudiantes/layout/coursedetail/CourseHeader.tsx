@@ -1315,13 +1315,7 @@ export function CourseHeader({
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       <CardHeader className="px-0">
-        {/* Título encima de la portada SOLO en mobile */}
-        <div className="block w-full px-4 pt-2 pb-2 sm:hidden">
-          <h1 className="line-clamp-2 text-base font-bold text-cyan-300">
-            {course.title}
-          </h1>
-        </div>
-        {/* Eliminado: título encima de la portada en desktop */}
+        {/* Removed: Mobile title above cover image */}
         <div className="relative mb-4 w-full transition-all duration-200 sm:-mb-40 sm:h-auto">
           {/* Cambia el aspect ratio de 16/7 a 16/7 solo en pantallas sm+ y reduce en móviles */}
           <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7]">
@@ -1352,9 +1346,6 @@ export function CourseHeader({
                     imageRendering: 'auto', // No afecta mucho a video, pero asegura que no haya suavizado innecesario
                   }}
                 />
-                {/* Nota: La calidad del video depende del archivo fuente subido a S3. 
-                    Para máxima calidad, asegúrate de subir un video de alta resolución (idealmente 1920x720 o superior para 16:6). 
-                    El navegador reproducirá el archivo tal cual, no hay atributo HTML para "calidad máxima" en <video> con archivos .mp4 directos. */}
                 {/* Botón de volumen y pantalla completa */}
                 <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
                   {/* Botón mute/unmute */}
@@ -1417,8 +1408,24 @@ export function CourseHeader({
             )}
           </AspectRatio>
         </div>
-        {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
-        <div className="relative z-10 -mt-1 -mb-4 block w-full px-4 sm:hidden">
+        {/* Removed mobile metadata section from here */}
+      </CardHeader>
+      <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
+        {/* Course titles - desktop and mobile */}
+        <div className="w-full">
+          {/* Título en móviles */}
+          <h1 className="-mt-7 mb-2 line-clamp-2 text-lg font-bold text-cyan-300 sm:hidden">
+            {course.title}
+          </h1>
+
+          {/* Título en desktop (mantener como estaba) */}
+          <h1 className="mt-36 mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-2 sm:block md:text-2xl lg:text-3xl">
+            {course.title}
+          </h1>
+        </div>
+
+        {/* MOVED: Mobile metadata section - now below title in mobile view */}
+        <div className="relative z-10 -mt-2 mb-2 block w-full sm:hidden">
           <div className="flex items-center justify-between gap-2">
             {/* Categoría alineada a la izquierda */}
             <Badge
@@ -1530,15 +1537,6 @@ export function CourseHeader({
               })()}
             </div>
           </div>
-        </div>
-        {/* ...existing code...*/}
-      </CardHeader>
-      <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
-        {/* NUEVO: Título del curso en desktop debajo de la portada */}
-        <div className="hidden w-full sm:block">
-          <h1 className="mt-36 sm:-mt-2 mb-2 line-clamp-2 text-xl font-bold text-cyan-300 md:text-2xl lg:text-3xl">
-            {course.title}
-          </h1>
         </div>
 
         {/* Course metadata */}
