@@ -1181,7 +1181,77 @@ export function CourseHeader({
 
   // Extraer el botón de compra individual para reutilizarlo
   const renderBuyButton = () => {
-    if (course.courseTypeId === 4 && course.individualPrice && !isEnrolled) {
+    // Obtener información del usuario y suscripción
+    const userPlanType = user?.publicMetadata?.planType as string;
+    const userHasActiveSubscription =
+      isSignedIn &&
+      isSubscriptionActive &&
+      (userPlanType === 'Pro' || userPlanType === 'Premium');
+
+    // Verificar si el curso tiene tipos que coinciden con la suscripción del usuario
+    const hasPremiumType = course.courseTypes?.some(
+      (type) => type.requiredSubscriptionLevel === 'premium'
+    );
+    const hasProType = course.courseTypes?.some(
+      (type) => type.requiredSubscriptionLevel === 'pro'
+    );
+    const hasFreeType = course.courseTypes?.some(
+      (type) =>
+        type.requiredSubscriptionLevel === 'none' &&
+        !type.isPurchasableIndividually
+    );
+
+    const userCanAccessWithSubscription =
+      (userPlanType === 'Premium' && hasPremiumType) ??
+      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+
+    // Si el usuario ya está inscrito, no mostrar botón
+    if (isEnrolled) {
+      return null;
+    }
+
+    // NUEVO: Si el usuario tiene acceso por suscripción, mostrar botón de inscripción
+    if (userHasActiveSubscription && userCanAccessWithSubscription) {
+      return (
+        <div className="flex flex-col items-center gap-4">
+          <button onClick={handleEnrollClick} className="btn">
+            <strong>
+              <span>Inscribirse al Curso</span>
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      );
+    }
+
+    // NUEVO: Si es un curso gratuito, mostrar botón de inscripción gratuita
+    if (hasFreeType && !hasPremiumType && !hasProType) {
+      return (
+        <div className="flex flex-col items-center gap-4">
+          <button onClick={handleEnrollClick} className="btn">
+            <strong>
+              <span>Inscribirse Gratis</span>
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      );
+    }
+
+    // Verificar si es un curso tipo 4 (sistema tradicional)
+    if (course.courseTypeId === 4 && course.individualPrice) {
       return (
         <div className="flex flex-col items-center gap-4">
           <button onClick={handleEnrollClick} className="btn">
@@ -1206,15 +1276,13 @@ export function CourseHeader({
         </div>
       );
     }
-    // Para el nuevo sistema de tipos individuales
+
+    // Verificar si es un curso con tipo individual (sistema nuevo)
     const purchasableType = course.courseTypes?.find(
       (type) => type.isPurchasableIndividually
     );
-    if (
-      purchasableType &&
-      (course.individualPrice || purchasableType.price) &&
-      !isEnrolled
-    ) {
+
+    if (purchasableType && (course.individualPrice || purchasableType.price)) {
       const price = course.individualPrice ?? purchasableType.price;
       return (
         <div className="flex flex-col items-center gap-4">
@@ -1240,6 +1308,7 @@ export function CourseHeader({
         </div>
       );
     }
+
     return null;
   };
 
@@ -1446,7 +1515,7 @@ export function CourseHeader({
                       {/* Badge con "Incluido en:" similar al desktop */}
                       {includedTypes.length > 0 && (
                         <div className="ml-1">
-                          <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500 px-1 py-0.5">
+                          <Badge className="bg-yellow-400 px-1 py-0.5 text-[10px] text-gray-900 hover:bg-yellow-500">
                             Incluido en:{' '}
                             <span className="font-bold">
                               {includedTypes.join(', ')}
