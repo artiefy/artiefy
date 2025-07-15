@@ -1314,21 +1314,14 @@ export function CourseHeader({
 
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
-      {' '}
-      {/* Cambiado a fondo oscuro */}
       <CardHeader className="px-0">
-        {/* Título encima de la portada SOLO en mobile, en desktop encima de la portada */}
+        {/* Título encima de la portada SOLO en mobile */}
         <div className="block w-full px-4 pt-2 pb-2 sm:hidden">
           <h1 className="line-clamp-2 text-base font-bold text-cyan-300">
             {course.title}
           </h1>
         </div>
-        {/* Título encima de la portada SOLO en desktop */}
-        <div className="hidden w-full px-4 pt-2 pb-2 sm:block">
-          <h1 className="line-clamp-2 text-xl font-bold text-cyan-300 md:text-2xl lg:text-3xl">
-            {course.title}
-          </h1>
-        </div>
+        {/* Eliminado: título encima de la portada en desktop */}
         <div className="relative mb-4 w-full transition-all duration-200 sm:-mb-40 sm:h-auto">
           {/* Cambia el aspect ratio de 16/7 a 16/7 solo en pantallas sm+ y reduce en móviles */}
           <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7]">
@@ -1423,12 +1416,6 @@ export function CourseHeader({
               />
             )}
           </AspectRatio>
-          {/* Eliminar el título dentro de la portada SOLO en desktop */}
-          {/* <div className="absolute inset-x-0 bottom-0 hidden bg-gradient-to-t from-black/70 via-black/50 to-transparent p-4 sm:block md:p-6">
-            <h1 className="line-clamp-2 text-xl font-bold text-white md:text-2xl lg:text-3xl">
-              {course.title}
-            </h1>
-          </div> */}
         </div>
         {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
         <div className="relative z-10 -mt-1 -mb-4 block w-full px-4 sm:hidden">
@@ -1547,6 +1534,13 @@ export function CourseHeader({
         {/* ...existing code...*/}
       </CardHeader>
       <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
+        {/* NUEVO: Título del curso en desktop debajo de la portada */}
+        <div className="hidden w-full sm:block">
+          <h1 className="mt-36 sm:-mt-2 mb-2 line-clamp-2 text-xl font-bold text-cyan-300 md:text-2xl lg:text-3xl">
+            {course.title}
+          </h1>
+        </div>
+
         {/* Course metadata */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
