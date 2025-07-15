@@ -424,12 +424,15 @@ export function CourseHeader({
               <div className="flex items-center gap-1">
                 <FaStar className="text-lg text-blue-500" />
                 <span className="text-base font-bold text-blue-500">
-                  $
-                  {course.individualPrice
-                    ? course.individualPrice.toLocaleString('es-ES')
-                    : purchasableType?.price
-                      ? purchasableType.price.toLocaleString('es-ES')
-                      : 'Comprar'}
+                  ${' '}
+                  {(
+                    course.individualPrice ??
+                    purchasableType?.price ??
+                    0
+                  ).toLocaleString('es-CO', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
                 </span>
               </div>
               {includedInPlans.length > 0 && (
@@ -474,12 +477,15 @@ export function CourseHeader({
               <div className="flex items-center gap-1">
                 <FaStar className="text-lg text-blue-500" />
                 <span className="text-base font-bold text-blue-500">
-                  $
-                  {course.individualPrice
-                    ? course.individualPrice.toLocaleString('es-ES')
-                    : purchasableType?.price
-                      ? purchasableType.price.toLocaleString('es-ES')
-                      : 'Comprar'}
+                  ${' '}
+                  {(
+                    course.individualPrice ??
+                    purchasableType?.price ??
+                    0
+                  ).toLocaleString('es-CO', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
                 </span>
               </div>
               {includedInPlans.length > 0 && (
@@ -1497,7 +1503,7 @@ export function CourseHeader({
                 <button onClick={handleEnrollClick} className="btn">
                   <strong>
                     <span>
-                      $
+                      ${' '}
                       {course.individualPrice.toLocaleString('es-CO', {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0,
