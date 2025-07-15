@@ -301,7 +301,9 @@ export function CourseHeader({
     // Obtener el tipo de suscripción del usuario actual
     const userPlanType = user?.publicMetadata?.planType as string;
     const hasActiveSubscription =
-      userPlanType === 'Pro' || userPlanType === 'Premium';
+      isSignedIn &&
+      (userPlanType === 'Pro' || userPlanType === 'Premium') &&
+      isSubscriptionActive;
 
     // Si el curso tiene múltiples tipos, determinar cuál mostrar según la suscripción
     if (course.courseTypes && course.courseTypes.length > 0) {
@@ -330,8 +332,105 @@ export function CourseHeader({
         if (hasFree) includedInPlans.push('GRATUITO');
       }
 
-      // Si el usuario no tiene suscripción, mostrar según prioridad
-      if (!hasActiveSubscription) {
+      // LÓGICA PARA USUARIO CON SESIÓN Y SUSCRIPCIÓN ACTIVA
+      if (hasActiveSubscription) {
+        // Mostrar el tipo de acuerdo a la suscripción del usuario
+        if (userPlanType === 'Premium' && hasPremium) {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <FaCrown className="text-lg text-purple-500" />
+                <span className="text-base font-bold text-purple-500">
+                  PREMIUM
+                </span>
+              </div>
+              {includedInPlans.length > 0 &&
+                includedInPlans.filter((p) => p !== 'PREMIUM').length > 0 && (
+                  <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                    Incluido en:{' '}
+                    {includedInPlans.filter((p) => p !== 'PREMIUM').join(', ')}
+                  </Badge>
+                )}
+            </div>
+          );
+        }
+
+        if ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasPro) {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <FaCrown className="text-lg text-orange-500" />
+                <span className="text-base font-bold text-orange-500">PRO</span>
+              </div>
+              {includedInPlans.length > 0 &&
+                includedInPlans.filter((p) => p !== 'PRO').length > 0 && (
+                  <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                    Incluido en:{' '}
+                    {includedInPlans.filter((p) => p !== 'PRO').join(', ')}
+                  </Badge>
+                )}
+            </div>
+          );
+        }
+
+        if (hasFree) {
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <IoGiftOutline className="text-lg text-green-500" />
+                <span className="text-base font-bold text-green-500">
+                  GRATUITO
+                </span>
+              </div>
+              {includedInPlans.length > 0 &&
+                includedInPlans.filter((p) => p !== 'GRATUITO').length > 0 && (
+                  <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                    Incluido en:{' '}
+                    {includedInPlans.filter((p) => p !== 'GRATUITO').join(', ')}
+                  </Badge>
+                )}
+            </div>
+          );
+        }
+
+        // Si tiene suscripción pero ningún tipo coincide, mostrar opción de compra individual si está disponible
+        if (hasPurchasable) {
+          const purchasableType = course.courseTypes.find(
+            (type) => type.isPurchasableIndividually
+          );
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <FaStar className="text-lg text-blue-500" />
+                <span className="text-base font-bold text-blue-500">
+                  $
+                  {course.individualPrice
+                    ? course.individualPrice.toLocaleString('es-ES')
+                    : purchasableType?.price
+                      ? purchasableType.price.toLocaleString('es-ES')
+                      : 'Comprar'}
+                </span>
+              </div>
+              {includedInPlans.length > 0 && (
+                <>
+                  {/* Mobile view */}
+                  <div className="block text-xs text-gray-300 italic sm:hidden">
+                    Incluido en: {includedInPlans.join(', ')}
+                  </div>
+                  {/* Desktop view as badge */}
+                  <div className="hidden sm:block">
+                    <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                      Incluido en: {includedInPlans.join(', ')}
+                    </Badge>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        }
+      }
+      // LÓGICA PARA USUARIO SIN SESIÓN O SIN SUSCRIPCIÓN ACTIVA
+      else {
         // 1. Individual (si existe)
         if (hasPurchasable) {
           const purchasableType = course.courseTypes.find(
@@ -423,43 +522,80 @@ export function CourseHeader({
             </div>
           );
         }
-      } else {
-        // Para usuarios con suscripción, mantener la lógica existente
-        // ...existing code for users with subscription...
-      }
 
-      // Para cursos gratuitos (visible para todos)
-      if (hasFree) {
-        const otherPlans = includedInPlans.filter((p) => p !== 'GRATUITO');
-        return (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <IoGiftOutline className="text-lg text-green-500" />
-              <span className="text-base font-bold text-green-500">
-                GRATUITO
-              </span>
-            </div>
-            {otherPlans.length > 0 && (
-              <>
-                {/* Mobile view */}
-                <div className="block text-xs text-gray-300 italic sm:hidden">
-                  Incluido en: {otherPlans.join(', ')}
-                </div>
-                {/* Desktop view as badge */}
-                <div className="hidden sm:block">
-                  <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+        // 4. Free (si existe)
+        if (hasFree) {
+          const otherPlans = includedInPlans.filter((p) => p !== 'GRATUITO');
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <IoGiftOutline className="text-lg text-green-500" />
+                <span className="text-base font-bold text-green-500">
+                  GRATUITO
+                </span>
+              </div>
+              {otherPlans.length > 0 && (
+                <>
+                  {/* Mobile view */}
+                  <div className="block text-xs text-gray-300 italic sm:hidden">
                     Incluido en: {otherPlans.join(', ')}
-                  </Badge>
-                </div>
-              </>
-            )}
-          </div>
-        );
+                  </div>
+                  {/* Desktop view as badge */}
+                  <div className="hidden sm:block">
+                    <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                      Incluido en: {otherPlans.join(', ')}
+                    </Badge>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        }
       }
     }
 
-    // Fallback a la lógica original para compatibilidad
-    // ...existing code...
+    // Fallback para compatibilidad con cursos que solo usan courseType
+    const courseType = course.courseType;
+    if (!courseType) {
+      return null;
+    }
+
+    // Mostrar el precio individual cuando el curso es tipo 4
+    if (course.courseTypeId === 4 && course.individualPrice) {
+      return (
+        <div className="flex items-center gap-1">
+          <FaStar className="text-lg text-blue-500" />
+          <span className="text-base font-bold text-blue-500">
+            ${course.individualPrice.toLocaleString('es-ES')}
+          </span>
+        </div>
+      );
+    }
+
+    const { requiredSubscriptionLevel } = courseType;
+
+    if (requiredSubscriptionLevel === 'none') {
+      return (
+        <div className="flex items-center gap-1">
+          <IoGiftOutline className="text-lg text-green-500" />
+          <span className="text-base font-bold text-green-500">GRATUITO</span>
+        </div>
+      );
+    }
+
+    const color =
+      requiredSubscriptionLevel === 'premium'
+        ? 'text-purple-500'
+        : 'text-orange-500';
+
+    return (
+      <div className={`flex items-center gap-1 ${color}`}>
+        <FaCrown className="text-lg" />
+        <span className="text-base font-bold">
+          {requiredSubscriptionLevel.toUpperCase()}
+        </span>
+      </div>
+    );
   };
 
   const handleEnrollClick = async () => {
@@ -782,36 +918,58 @@ export function CourseHeader({
     }
   };
 
-  // Update the getEnrollButtonText function to better identify purchase courses
+  // Update the getEnrollButtonText function to show appropriate text based on subscription status
   const getEnrollButtonText = (): string => {
-    // Always show "Comprar Curso" for individual courses, regardless of login state
-    if (course.courseTypeId === 4) {
+    const userPlanType = user?.publicMetadata?.planType as string;
+    const userHasActiveSubscription =
+      isSignedIn &&
+      isSubscriptionActive &&
+      (userPlanType === 'Pro' || userPlanType === 'Premium');
+
+    // For individually purchasable courses
+    const isPurchasableIndividually =
+      course.courseTypeId === 4 ||
+      course.courseTypes?.some((type) => type.isPurchasableIndividually);
+
+    // Check if the user's subscription covers this course
+    const hasPremiumType = course.courseTypes?.some(
+      (type) => type.requiredSubscriptionLevel === 'premium'
+    );
+    const hasProType = course.courseTypes?.some(
+      (type) => type.requiredSubscriptionLevel === 'pro'
+    );
+
+    const userCanAccessWithSubscription =
+      (userPlanType === 'Premium' && hasPremiumType) ??
+      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+
+    // Always show "Comprar Curso" for individual courses without active subscription
+    if (isPurchasableIndividually && !userCanAccessWithSubscription) {
       return 'Comprar Curso';
     }
 
-    // For individually purchasable courses via courseTypes
-    if (course.courseTypes?.some((type) => type.isPurchasableIndividually)) {
-      return 'Comprar Curso';
+    // For logged-in users with subscription that covers this course
+    if (
+      isSignedIn &&
+      userHasActiveSubscription &&
+      userCanAccessWithSubscription
+    ) {
+      return 'Inscribirse al Curso';
     }
 
     // For users without a session, show appropriate text based on course type
     if (!isSignedIn) {
       if (course.courseTypes && course.courseTypes.length > 0) {
-        const hasPremium = course.courseTypes.some(
-          (type) => type.requiredSubscriptionLevel === 'premium'
-        );
-        const hasPro = course.courseTypes.some(
-          (type) => type.requiredSubscriptionLevel === 'pro'
-        );
-        const hasFree = course.courseTypes.some(
-          (type) =>
-            type.requiredSubscriptionLevel === 'none' &&
-            !type.isPurchasableIndividually
-        );
-
-        if (hasPremium) return 'Plan Premium';
-        if (hasPro) return 'Plan Pro';
-        if (hasFree) return 'Inscribirse Gratis';
+        if (hasPremiumType) return 'Plan Premium';
+        if (hasProType) return 'Plan Pro';
+        if (
+          course.courseTypes.some(
+            (type) =>
+              type.requiredSubscriptionLevel === 'none' &&
+              !type.isPurchasableIndividually
+          )
+        )
+          return 'Inscribirse Gratis';
       }
 
       // Fallback to course.courseType
@@ -824,7 +982,7 @@ export function CourseHeader({
           return 'Inscribirse Gratis';
       }
 
-      return 'Iniciar Sesión'; // Default fallback for users without a session
+      return 'Iniciar Sesión';
     }
 
     // For logged in users
@@ -839,8 +997,31 @@ export function CourseHeader({
     return 'Inscribirse al Curso';
   };
 
-  // Get price display function
+  // Get price display function - update to respect subscription status
   const getButtonPrice = (): string | null => {
+    const userPlanType = user?.publicMetadata?.planType as string;
+    const userHasActiveSubscription =
+      isSignedIn &&
+      isSubscriptionActive &&
+      (userPlanType === 'Pro' || userPlanType === 'Premium');
+
+    // Check if the user's subscription covers this course
+    const hasPremiumType = course.courseTypes?.some(
+      (type) => type.requiredSubscriptionLevel === 'premium'
+    );
+    const hasProType = course.courseTypes?.some(
+      (type) => type.requiredSubscriptionLevel === 'pro'
+    );
+
+    const userCanAccessWithSubscription =
+      (userPlanType === 'Premium' && hasPremiumType) ??
+      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+
+    // Don't show price if user has subscription access
+    if (userHasActiveSubscription && userCanAccessWithSubscription) {
+      return null;
+    }
+
     // Show price for purchase type courses
     if (course.courseTypeId === 4 && course.individualPrice) {
       return `$${course.individualPrice.toLocaleString('es-ES')}`;
