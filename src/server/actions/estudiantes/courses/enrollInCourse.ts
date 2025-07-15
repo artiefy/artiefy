@@ -14,7 +14,7 @@ import {
 } from '~/server/db/schema';
 import { sortLessons } from '~/utils/lessonSorting';
 
-import type { EnrollmentResponse, SubscriptionLevel } from '~/types';
+import type { EnrollmentResponse } from '~/types';
 
 export async function enrollInCourse(
   courseId: number
@@ -46,8 +46,7 @@ export async function enrollInCourse(
     }
 
     // Determine subscription status based on course type
-    const subscriptionLevel = course.courseType
-      ?.requiredSubscriptionLevel as SubscriptionLevel;
+    const subscriptionLevel = course.courseType?.requiredSubscriptionLevel ?? 'none';
     const shouldBeActive = subscriptionLevel !== 'none';
 
     // Check if user exists
