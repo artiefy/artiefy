@@ -28,7 +28,7 @@ const studentSchema = z.object({
   courseTitles: z.array(z.string()).optional(),
   nivelNombre: z.string().nullable().optional(),
   purchaseDate: z.string().nullable().optional(),
-  customFields: z.record(z.string()).optional(),
+  customFields: z.record(z.string(), z.string()).optional(),
 });
 
 const courseSchema = z.object({
@@ -268,7 +268,9 @@ export default function EnrolledUsersPage() {
   const [infoDialogMessage, setInfoDialogMessage] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
-  const [massiveEditFields, setMassiveEditFields] = useState<Record<string, string>>({});
+  const [massiveEditFields, setMassiveEditFields] = useState<
+    Record<string, string>
+  >({});
   const [selectedMassiveFields, setSelectedMassiveFields] = useState<string[]>(
     []
   );
@@ -466,6 +468,11 @@ export default function EnrolledUsersPage() {
           programTitle: enrolledMap.get(s.id) ?? 'No inscrito',
           nivelNombre: s.nivelNombre ?? 'No definido',
           planType: s.planType ?? undefined,
+          customFields: s.customFields
+            ? Object.fromEntries(
+                Object.entries(s.customFields).map(([k, v]) => [k, String(v)])
+              )
+            : undefined,
         }));
 
       setStudents(studentsFilteredByRole);

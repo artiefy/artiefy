@@ -1,10 +1,10 @@
 'use client';
 
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { FileText,Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
 
@@ -17,7 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Schema definitions
 const uploadSchema = z.object({
   url: z.string().url(),
-  fields: z.record(z.string()),
+  fields: z.record(z.string(), z.string()),
   key: z.string(),
   uploadType: z.union([z.literal('simple'), z.literal('put')]),
 });
@@ -1057,7 +1057,7 @@ export default function TicketsPage() {
           onCloseAction={handleCloseModal}
           onSubmitAction={selectedTicket ? handleUpdate : handleCreate}
           ticket={selectedTicket}
-          onUploadFileAction={handleFileUpload} // ✅ ESTA ES LA CLAVE QUE FALTABA
+          onUploadFileAction={handleFileUpload}
         />
       </div>
       <ToastContainer position="top-right" autoClose={3000} />

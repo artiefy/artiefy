@@ -887,9 +887,7 @@ export const roleSecundarioPermisos = pgTable(
       .references(() => permisos.id)
       .notNull(),
   },
-  (table) => ({
-    pk: primaryKey({ columns: [table.roleId, table.permisoId] }),
-  })
+  (table) => [primaryKey({ columns: [table.roleId, table.permisoId] })]
 );
 
 export const userCustomFields = pgTable('user_custom_fields', {

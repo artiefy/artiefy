@@ -1363,16 +1363,119 @@ export function CourseHeader({
         </div>
         {/* NUEVO: Metadatos principales debajo de la portada en mobile */}
         <div className="relative z-10 -mt-1 -mb-4 block w-full px-4 sm:hidden">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
+            {/* Categoría alineada a la izquierda */}
             <Badge
               variant="outline"
-              className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+              className="border-primary bg-background text-primary w-fit flex-shrink-0 hover:bg-black/70"
             >
               {course.category?.name}
             </Badge>
-            {getCourseTypeLabel()}
+
+            {/* Tipo principal + incluidos alineados a la derecha */}
+            <div className="ml-auto flex items-center gap-1 text-xs">
+              {(() => {
+                // Lógica para mostrar el tipo principal y los incluidos
+                if (course.courseTypes && course.courseTypes.length > 0) {
+                  // Determinar el tipo predominante
+                  const hasPremium = course.courseTypes.some(
+                    (type) => type.requiredSubscriptionLevel === 'premium'
+                  );
+                  const hasPro = course.courseTypes.some(
+                    (type) => type.requiredSubscriptionLevel === 'pro'
+                  );
+                  const hasFree = course.courseTypes.some(
+                    (type) =>
+                      type.requiredSubscriptionLevel === 'none' &&
+                      !type.isPurchasableIndividually
+                  );
+                  const hasPurchasable = course.courseTypes.some(
+                    (type) => type.isPurchasableIndividually
+                  );
+
+                  // Determinar tipo principal
+                  let mainType = '';
+                  let mainIcon = null;
+                  let mainColor = '';
+
+                  if (hasPurchasable) {
+                    const purchasableType = course.courseTypes.find(
+                      (type) => type.isPurchasableIndividually
+                    );
+                    const price =
+                      course.individualPrice ?? purchasableType?.price ?? 0;
+                    mainType = `$${price.toLocaleString('es-CO')}`;
+                    mainIcon = <FaStar className="text-xs text-blue-500" />;
+                    mainColor = 'text-blue-500';
+                  } else if (hasPremium) {
+                    mainType = 'PREMIUM';
+                    mainIcon = <FaCrown className="text-xs text-purple-500" />;
+                    mainColor = 'text-purple-500';
+                  } else if (hasPro) {
+                    mainType = 'PRO';
+                    mainIcon = <FaCrown className="text-xs text-orange-500" />;
+                    mainColor = 'text-orange-500';
+                  } else if (hasFree) {
+                    mainType = 'GRATUITO';
+                    mainIcon = (
+                      <IoGiftOutline className="text-xs text-green-500" />
+                    );
+                    mainColor = 'text-green-500';
+                  }
+
+                  // Crear lista de tipos incluidos (excluyendo el principal)
+                  const includedTypes = [];
+                  if (hasPremium && mainType !== 'PREMIUM')
+                    includedTypes.push('PREMIUM');
+                  if (hasPro && mainType !== 'PRO') includedTypes.push('PRO');
+                  if (hasFree && mainType !== 'GRATUITO')
+                    includedTypes.push('GRATUITO');
+
+                  return (
+                    <div className="flex flex-wrap items-center gap-1">
+                      {/* Tipo principal */}
+                      <div
+                        className={`flex items-center gap-0.5 ${mainColor} font-bold`}
+                      >
+                        {mainIcon}
+                        <span className="text-xs whitespace-nowrap">
+                          {mainType}
+                        </span>
+                      </div>
+
+                      {/* Badge con "Incluido en:" similar al desktop */}
+                      {includedTypes.length > 0 && (
+                        <div className="ml-1">
+                          <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500 px-1 py-0.5">
+                            Incluido en:{' '}
+                            <span className="font-bold">
+                              {includedTypes.join(', ')}
+                            </span>
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // Fallback para cursos con courseType tradicional
+                if (course.courseTypeId === 4 && course.individualPrice) {
+                  return (
+                    <div className="flex items-center gap-0.5 font-bold text-blue-500">
+                      <FaStar className="text-xs" />
+                      <span className="text-xs">
+                        ${course.individualPrice.toLocaleString('es-CO')}
+                      </span>
+                    </div>
+                  );
+                }
+
+                return null;
+              })()}
+            </div>
           </div>
         </div>
+        {/* ...existing code...*/}
       </CardHeader>
       <CardContent className="mx-auto w-full max-w-7xl space-y-4 px-4 sm:px-6">
         {/* Course metadata */}

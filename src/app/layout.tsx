@@ -19,6 +19,8 @@ import {
 
 import Providers from './providers';
 
+import type { Metadata } from 'next';
+
 import '~/styles/globals.css';
 
 const montserrat = Montserrat({
@@ -39,7 +41,7 @@ const merriweather = Merriweather({
   adjustFontFallback: true,
 });
 
-export async function generateMetadata() {
+export async function generateMetadata(): Promise<Metadata> {
   return await getMetadataForRoute();
 }
 
