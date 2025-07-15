@@ -1315,10 +1315,10 @@ export function CourseHeader({
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       <CardHeader className="px-0">
-        {/* Removed: Mobile title above cover image */}
-        <div className="relative mb-4 w-full transition-all duration-200 sm:-mb-40 sm:h-auto">
-          {/* Cambia el aspect ratio de 16/7 a 16/7 solo en pantallas sm+ y reduce en móviles */}
-          <AspectRatio ratio={16 / 9} className="sm:aspect-[16/7]">
+        {/* Removed negative margin to show full cover image on all screen sizes */}
+        <div className="relative mb-4 w-full transition-all duration-200">
+          {/* Use consistent aspect ratio on all screen sizes */}
+          <AspectRatio ratio={16 / 9} className="w-full">
             {/* Nueva lógica de portada/video */}
             {coverVideoCourseKey ? (
               <div className="relative h-full w-full">
@@ -1418,8 +1418,8 @@ export function CourseHeader({
             {course.title}
           </h1>
 
-          {/* Título en desktop (mantener como estaba) */}
-          <h1 className="mt-36 mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-2 sm:block md:text-2xl lg:text-3xl">
+          {/* Título en desktop - adjusted top margin */}
+          <h1 className="mb-2 sm:-mt-6 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:block md:text-2xl lg:text-3xl">
             {course.title}
           </h1>
         </div>
@@ -1570,14 +1570,14 @@ export function CourseHeader({
             </div>
           </div>
           <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
-            <div className="flex items-center">
+            <div className="sm:-mt-1 flex items-center">
               <FaUserGraduate className="mr-2 text-blue-600" />
               <span className="text-sm font-semibold text-blue-600 sm:text-base">
                 {Math.max(0, totalStudents)}{' '}
                 {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
               </span>
             </div>
-            <div className="flex items-center">
+            <div className="sm:-mt-1 flex items-center">
               {Array.from({ length: 5 }).map((_, index) => (
                 <StarIcon
                   key={index}
@@ -1598,7 +1598,7 @@ export function CourseHeader({
         {/* Course type and instructor info */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="w-full space-y-4">
-            <div className="-mt-2 flex w-full items-center justify-between sm:-mt-2 sm:-mb-2">
+            <div className="-mt-2 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
               <div>
                 <h3 className="text-base font-extrabold text-white sm:text-lg">
                   {/* Cambiado a blanco */}
