@@ -346,7 +346,10 @@ export function CourseHeader({
               </div>
               {includedInPlans.length > 0 &&
                 includedInPlans.filter((p) => p !== 'PREMIUM').length > 0 && (
-                  <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                  <Badge
+                    className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                    onClick={handlePlanBadgeClick}
+                  >
                     Incluido en:{' '}
                     {includedInPlans
                       .filter((p) => p !== 'PREMIUM')
@@ -371,7 +374,10 @@ export function CourseHeader({
               </div>
               {includedInPlans.length > 0 &&
                 includedInPlans.filter((p) => p !== 'PRO').length > 0 && (
-                  <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                  <Badge
+                    className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                    onClick={handlePlanBadgeClick}
+                  >
                     Incluido en:{' '}
                     {includedInPlans
                       .filter((p) => p !== 'PRO')
@@ -398,7 +404,10 @@ export function CourseHeader({
               </div>
               {includedInPlans.length > 0 &&
                 includedInPlans.filter((p) => p !== 'GRATUITO').length > 0 && (
-                  <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                  <Badge
+                    className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                    onClick={handlePlanBadgeClick}
+                  >
                     Incluido en:{' '}
                     {includedInPlans
                       .filter((p) => p !== 'GRATUITO')
@@ -438,7 +447,10 @@ export function CourseHeader({
               {includedInPlans.length > 0 && (
                 <>
                   {/* Mobile view */}
-                  <div className="block text-xs text-gray-300 italic sm:hidden">
+                  <div
+                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    onClick={handlePlanBadgeClick}
+                  >
                     Incluido en:{' '}
                     {includedInPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
@@ -449,7 +461,10 @@ export function CourseHeader({
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
-                    <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                    <Badge
+                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      onClick={handlePlanBadgeClick}
+                    >
                       Incluido en:{' '}
                       {includedInPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
@@ -491,7 +506,10 @@ export function CourseHeader({
               {includedInPlans.length > 0 && (
                 <>
                   {/* Mobile view */}
-                  <div className="block text-xs text-gray-300 italic sm:hidden">
+                  <div
+                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    onClick={handlePlanBadgeClick}
+                  >
                     Incluido en:{' '}
                     {includedInPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
@@ -502,7 +520,10 @@ export function CourseHeader({
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
-                    <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                    <Badge
+                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      onClick={handlePlanBadgeClick}
+                    >
                       Incluido en:{' '}
                       {includedInPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
@@ -532,7 +553,10 @@ export function CourseHeader({
               {otherPlans.length > 0 && (
                 <>
                   {/* Mobile view */}
-                  <div className="block text-xs text-gray-300 italic sm:hidden">
+                  <div
+                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    onClick={handlePlanBadgeClick}
+                  >
                     Incluido en:{' '}
                     {otherPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
@@ -543,7 +567,10 @@ export function CourseHeader({
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
-                    <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                    <Badge
+                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      onClick={handlePlanBadgeClick}
+                    >
                       Incluido en:{' '}
                       {otherPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
@@ -571,7 +598,10 @@ export function CourseHeader({
               {otherPlans.length > 0 && (
                 <>
                   {/* Mobile view */}
-                  <div className="block text-xs text-gray-300 italic sm:hidden">
+                  <div
+                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    onClick={handlePlanBadgeClick}
+                  >
                     Incluido en:{' '}
                     {otherPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
@@ -582,7 +612,10 @@ export function CourseHeader({
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
-                    <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                    <Badge
+                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      onClick={handlePlanBadgeClick}
+                    >
                       Incluido en:{' '}
                       {otherPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
@@ -612,7 +645,10 @@ export function CourseHeader({
               {otherPlans.length > 0 && (
                 <>
                   {/* Mobile view */}
-                  <div className="block text-xs text-gray-300 italic sm:hidden">
+                  <div
+                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    onClick={handlePlanBadgeClick}
+                  >
                     Incluido en:{' '}
                     {otherPlans.map((p, idx, arr) => (
                       <span key={p} className="font-bold">
@@ -623,7 +659,10 @@ export function CourseHeader({
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
-                    <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
+                    <Badge
+                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      onClick={handlePlanBadgeClick}
+                    >
                       Incluido en:{' '}
                       {otherPlans.map((p, idx, arr) => (
                         <span key={p} className="font-bold">
@@ -1312,6 +1351,11 @@ export function CourseHeader({
     return null;
   };
 
+  // Add a function to handle plan badge click
+  const handlePlanBadgeClick = () => {
+    window.open('/planes', '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       <CardHeader className="px-0">
@@ -1419,7 +1463,7 @@ export function CourseHeader({
           </h1>
 
           {/* Título en desktop - adjusted top margin */}
-          <h1 className="mb-2 sm:-mt-6 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:block md:text-2xl lg:text-3xl">
+          <h1 className="mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-6 sm:block md:text-2xl lg:text-3xl">
             {course.title}
           </h1>
         </div>
@@ -1509,7 +1553,10 @@ export function CourseHeader({
                       {/* Badge con "Incluido en:" similar al desktop */}
                       {includedTypes.length > 0 && (
                         <div className="ml-1">
-                          <Badge className="bg-yellow-400 px-1 py-0.5 text-[10px] text-gray-900 hover:bg-yellow-500">
+                          <Badge
+                            className="cursor-pointer bg-yellow-400 px-1 py-0.5 text-[10px] text-gray-900 hover:bg-yellow-500"
+                            onClick={handlePlanBadgeClick}
+                          >
                             Incluido en:{' '}
                             <span className="font-bold">
                               {includedTypes.join(', ')}
@@ -1570,14 +1617,14 @@ export function CourseHeader({
             </div>
           </div>
           <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
-            <div className="sm:-mt-1 flex items-center">
+            <div className="flex items-center sm:-mt-1">
               <FaUserGraduate className="mr-2 text-blue-600" />
               <span className="text-sm font-semibold text-blue-600 sm:text-base">
                 {Math.max(0, totalStudents)}{' '}
                 {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
               </span>
             </div>
-            <div className="sm:-mt-1 flex items-center">
+            <div className="flex items-center sm:-mt-1">
               {Array.from({ length: 5 }).map((_, index) => (
                 <StarIcon
                   key={index}
