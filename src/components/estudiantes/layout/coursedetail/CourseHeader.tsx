@@ -348,7 +348,14 @@ export function CourseHeader({
                 includedInPlans.filter((p) => p !== 'PREMIUM').length > 0 && (
                   <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
-                    {includedInPlans.filter((p) => p !== 'PREMIUM').join(', ')}
+                    {includedInPlans
+                      .filter((p) => p !== 'PREMIUM')
+                      .map((p, idx, arr) => (
+                        <span key={p} className="font-bold">
+                          {p}
+                          {idx < arr.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                   </Badge>
                 )}
             </div>
@@ -366,7 +373,14 @@ export function CourseHeader({
                 includedInPlans.filter((p) => p !== 'PRO').length > 0 && (
                   <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
-                    {includedInPlans.filter((p) => p !== 'PRO').join(', ')}
+                    {includedInPlans
+                      .filter((p) => p !== 'PRO')
+                      .map((p, idx, arr) => (
+                        <span key={p} className="font-bold">
+                          {p}
+                          {idx < arr.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                   </Badge>
                 )}
             </div>
@@ -386,7 +400,14 @@ export function CourseHeader({
                 includedInPlans.filter((p) => p !== 'GRATUITO').length > 0 && (
                   <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
                     Incluido en:{' '}
-                    {includedInPlans.filter((p) => p !== 'GRATUITO').join(', ')}
+                    {includedInPlans
+                      .filter((p) => p !== 'GRATUITO')
+                      .map((p, idx, arr) => (
+                        <span key={p} className="font-bold">
+                          {p}
+                          {idx < arr.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                   </Badge>
                 )}
             </div>
@@ -415,12 +436,24 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div className="block text-xs text-gray-300 italic sm:hidden">
-                    Incluido en: {includedInPlans.join(', ')}
+                    Incluido en:{' '}
+                    {includedInPlans.map((p, idx, arr) => (
+                      <span key={p} className="font-bold">
+                        {p}
+                        {idx < arr.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
                     <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
-                      Incluido en: {includedInPlans.join(', ')}
+                      Incluido en:{' '}
+                      {includedInPlans.map((p, idx, arr) => (
+                        <span key={p} className="font-bold">
+                          {p}
+                          {idx < arr.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                     </Badge>
                   </div>
                 </>
@@ -453,12 +486,24 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div className="block text-xs text-gray-300 italic sm:hidden">
-                    Incluido en: {includedInPlans.join(', ')}
+                    Incluido en:{' '}
+                    {includedInPlans.map((p, idx, arr) => (
+                      <span key={p} className="font-bold">
+                        {p}
+                        {idx < arr.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
                     <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
-                      Incluido en: {includedInPlans.join(', ')}
+                      Incluido en:{' '}
+                      {includedInPlans.map((p, idx, arr) => (
+                        <span key={p} className="font-bold">
+                          {p}
+                          {idx < arr.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                     </Badge>
                   </div>
                 </>
@@ -482,12 +527,24 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div className="block text-xs text-gray-300 italic sm:hidden">
-                    Incluido en: {otherPlans.join(', ')}
+                    Incluido en:{' '}
+                    {otherPlans.map((p, idx, arr) => (
+                      <span key={p} className="font-bold">
+                        {p}
+                        {idx < arr.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
                     <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
-                      Incluido en: {otherPlans.join(', ')}
+                      Incluido en:{' '}
+                      {otherPlans.map((p, idx, arr) => (
+                        <span key={p} className="font-bold">
+                          {p}
+                          {idx < arr.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                     </Badge>
                   </div>
                 </>
@@ -509,12 +566,24 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div className="block text-xs text-gray-300 italic sm:hidden">
-                    Incluido en: {otherPlans.join(', ')}
+                    Incluido en:{' '}
+                    {otherPlans.map((p, idx, arr) => (
+                      <span key={p} className="font-bold">
+                        {p}
+                        {idx < arr.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
                     <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
-                      Incluido en: {otherPlans.join(', ')}
+                      Incluido en:{' '}
+                      {otherPlans.map((p, idx, arr) => (
+                        <span key={p} className="font-bold">
+                          {p}
+                          {idx < arr.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                     </Badge>
                   </div>
                 </>
@@ -538,12 +607,24 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div className="block text-xs text-gray-300 italic sm:hidden">
-                    Incluido en: {otherPlans.join(', ')}
+                    Incluido en:{' '}
+                    {otherPlans.map((p, idx, arr) => (
+                      <span key={p} className="font-bold">
+                        {p}
+                        {idx < arr.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
                   </div>
                   {/* Desktop view as badge */}
                   <div className="hidden sm:block">
                     <Badge className="bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500">
-                      Incluido en: {otherPlans.join(', ')}
+                      Incluido en:{' '}
+                      {otherPlans.map((p, idx, arr) => (
+                        <span key={p} className="font-bold">
+                          {p}
+                          {idx < arr.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
                     </Badge>
                   </div>
                 </>
@@ -1075,6 +1156,58 @@ export function CourseHeader({
     return null;
   };
 
+  // Extraer el botón de compra individual para reutilizarlo
+  const renderBuyButton = () => {
+    if (course.courseTypeId === 4 && course.individualPrice && !isEnrolled) {
+      return (
+        <div className="flex flex-col items-center gap-4">
+          <button onClick={handleEnrollClick} className="btn">
+            <strong>
+              <span>${course.individualPrice.toLocaleString('es-ES')}</span>
+              <span>Comprar Curso</span>
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      );
+    }
+    // Para el nuevo sistema de tipos individuales
+    const purchasableType = course.courseTypes?.find(
+      (type) => type.isPurchasableIndividually
+    );
+    if (
+      purchasableType &&
+      (course.individualPrice || purchasableType.price) &&
+      !isEnrolled
+    ) {
+      const price = course.individualPrice ?? purchasableType.price;
+      return (
+        <div className="flex flex-col items-center gap-4">
+          <button onClick={handleEnrollClick} className="btn">
+            <strong>
+              <span>${price?.toLocaleString('es-ES')}</span>
+              <span>Comprar Curso</span>
+            </strong>
+            <div id="container-stars">
+              <div id="stars" />
+            </div>
+            <div id="glow">
+              <div className="circle" />
+              <div className="circle" />
+            </div>
+          </button>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
       {' '}
@@ -1351,6 +1484,14 @@ export function CourseHeader({
             )}
         </div>
 
+        {/* --- NUEVO: Botón de compra individual arriba de la descripción --- */}
+        {/* Pantallas grandes: mostrar arriba de la descripción y debajo de modalidad */}
+        <div className="hidden sm:flex sm:justify-center sm:pt-2">
+          {renderBuyButton()}
+        </div>
+        {/* Pantallas pequeñas: mostrar arriba de la descripción */}
+        <div className="block pt-2 sm:hidden">{renderBuyButton()}</div>
+
         {/* Course description y botones responsivos */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="prose flex-1">
@@ -1422,8 +1563,14 @@ export function CourseHeader({
           isEnrolled={isEnrolled}
           isSubscriptionActive={isSubscriptionActive}
           subscriptionEndDate={subscriptionEndDate}
-          isSignedIn={!!isSignedIn} // Convert to boolean with !! operator
+          isSignedIn={!!isSignedIn}
         />
+
+        {/* --- Botón de compra individual en la parte inferior (como antes) --- */}
+        {/* Eliminar la siguiente línea para evitar el botón duplicado en desktop */}
+        {/* <div className="hidden pt-4 sm:flex sm:justify-center">
+          {renderBuyButton()}
+        </div> */}
 
         {/* Enrollment buttons with space theme */}
         <div className="flex justify-center pt-4">
