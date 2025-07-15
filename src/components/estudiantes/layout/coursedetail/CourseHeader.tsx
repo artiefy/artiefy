@@ -343,8 +343,8 @@ export function CourseHeader({
                 <FaStar className="text-lg text-blue-500" />
                 <span className="text-base font-bold text-blue-500">
                   $
-                  {course.individualPrice?.toLocaleString('es-ES') ??
-                    purchasableType?.price?.toLocaleString('es-ES') ??
+                  {course.individualPrice?.toLocaleString() ??
+                    purchasableType?.price?.toLocaleString() ??
                     'Comprar'}
                 </span>
               </div>
@@ -1031,9 +1031,7 @@ export function CourseHeader({
               <div className="flex flex-col items-center gap-4">
                 <button onClick={handleEnrollClick} className="btn">
                   <strong>
-                    <span>
-                      ${course.individualPrice.toLocaleString('es-ES')}
-                    </span>
+                    <span>${course.individualPrice.toLocaleString()}</span>
                     <span>Comprar Curso</span>
                   </strong>
                   <div id="container-stars">
@@ -1161,9 +1159,7 @@ export function CourseHeader({
                   ) : (
                     <>
                       {course.courseTypeId === 4 && (
-                        <span>
-                          ${course.individualPrice?.toLocaleString('es-ES')}
-                        </span>
+                        <span>${course.individualPrice?.toLocaleString()}</span>
                       )}
                       <span>
                         {course.courseTypeId === 4
