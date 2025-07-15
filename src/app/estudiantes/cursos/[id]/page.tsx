@@ -50,10 +50,33 @@ export async function generateMetadata(
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
     const metadataBase = new URL(baseUrl);
 
-    // Construir URL absoluta para la imagen de portada
-    const coverImageUrl = course.coverImageKey
-      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-      : 'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+    // Fetch cover image from the API endpoint
+    let coverImageUrl =
+      'https://placehold.co/1200x630/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+
+    try {
+      const coverResponse = await fetch(
+        `${baseUrl}/api/estudiantes/cursos/${courseId}/cover`,
+        {
+          next: { revalidate: 3600 },
+        }
+      );
+
+      if (coverResponse.ok) {
+        const coverData = (await coverResponse.json()) as {
+          coverImageUrl?: string;
+        };
+        if (coverData.coverImageUrl) {
+          coverImageUrl = coverData.coverImageUrl;
+        }
+      }
+    } catch (error) {
+      console.warn('Error fetching cover image from API:', error);
+      // Fallback to direct course cover if API fails
+      if (course.coverImageKey) {
+        coverImageUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`;
+      }
+    }
 
     // Solo la imagen de portada del curso, sin imágenes generales ni previas
     return {
