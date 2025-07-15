@@ -647,7 +647,11 @@ export function CourseHeader({
         <div className="flex items-center gap-1">
           <FaStar className="text-lg text-blue-500" />
           <span className="text-base font-bold text-blue-500">
-            ${course.individualPrice.toLocaleString('es-ES')}
+            ${' '}
+            {course.individualPrice.toLocaleString('es-CO', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
           </span>
         </div>
       );
@@ -1142,7 +1146,13 @@ export function CourseHeader({
 
     // Show price for purchase type courses
     if (course.courseTypeId === 4 && course.individualPrice) {
-      return `$${course.individualPrice.toLocaleString('es-ES')}`;
+      return (
+        '$ ' +
+        course.individualPrice.toLocaleString('es-CO', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })
+      );
     }
 
     // For individually purchasable courses via courseTypes
@@ -1150,7 +1160,14 @@ export function CourseHeader({
       (type) => type.isPurchasableIndividually
     );
     if (purchasableType?.price || course.individualPrice) {
-      return `$${(course.individualPrice ?? purchasableType?.price)?.toLocaleString('es-ES')}`;
+      const price = course.individualPrice ?? purchasableType?.price ?? 0;
+      return (
+        '$ ' +
+        price.toLocaleString('es-CO', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        })
+      );
     }
 
     return null;
@@ -1163,7 +1180,13 @@ export function CourseHeader({
         <div className="flex flex-col items-center gap-4">
           <button onClick={handleEnrollClick} className="btn">
             <strong>
-              <span>${course.individualPrice.toLocaleString('es-ES')}</span>
+              <span>
+                ${' '}
+                {course.individualPrice.toLocaleString('es-CO', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+              </span>
               <span>Comprar Curso</span>
             </strong>
             <div id="container-stars">
@@ -1191,7 +1214,13 @@ export function CourseHeader({
         <div className="flex flex-col items-center gap-4">
           <button onClick={handleEnrollClick} className="btn">
             <strong>
-              <span>${price?.toLocaleString('es-ES')}</span>
+              <span>
+                ${' '}
+                {price?.toLocaleString('es-CO', {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+              </span>
               <span>Comprar Curso</span>
             </strong>
             <div id="container-stars">
@@ -1468,7 +1497,11 @@ export function CourseHeader({
                 <button onClick={handleEnrollClick} className="btn">
                   <strong>
                     <span>
-                      ${course.individualPrice.toLocaleString('es-ES')}
+                      $
+                      {course.individualPrice.toLocaleString('es-CO', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      })}
                     </span>
                     <span>Comprar Curso</span>
                   </strong>
