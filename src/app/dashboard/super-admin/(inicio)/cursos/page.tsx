@@ -338,10 +338,10 @@ export default function Page() {
         });
 
         if (response.ok) {
-          const json = await response.json();
-          console.log('📦 Respuesta del backend:', json);
+          interface CreateCourseResponse { id?: number; course?: { id: number } }
 
-          const courseId = json?.id ?? json?.course?.id;
+        const json: CreateCourseResponse = await response.json();
+        const courseId = json?.id ?? json?.course?.id;
 
           if (!courseId || typeof courseId !== 'number') {
             throw new Error('El backend no devolvió un ID válido del curso');

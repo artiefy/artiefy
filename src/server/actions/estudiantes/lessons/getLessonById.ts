@@ -61,6 +61,7 @@ export async function getLessonById(
 		// Transform raw course data to match Course interface
 		const transformedCourse: Course = {
 			...lesson.course,
+			courseTypeId: lesson.course.courseTypeId ?? 0, // Ensure courseTypeId is a number
 			totalStudents: courseEnrollments.length,
 			lessons: transformedLessons,
 			enrollments: courseEnrollments,
@@ -68,8 +69,10 @@ export async function getLessonById(
 			requiresProgram: false,
 			isFree: lesson.course.courseType?.requiredSubscriptionLevel === 'none',
 			courseType: lesson.course.courseType ?? {
+				name: 'Free',
 				requiredSubscriptionLevel: 'none',
 				isPurchasableIndividually: false,
+				price: null,
 			},
 		};
 

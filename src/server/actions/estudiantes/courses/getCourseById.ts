@@ -211,6 +211,7 @@ export async function getCourseById(
       isActive: Boolean(course.isActive), // Also ensure isActive is always boolean
       instructor: courseData.instructor,
       instructorName: courseData.instructorName ?? 'Instructor no encontrado',
+      courseTypeId: courseData.courseTypeId ?? 0, // Ensure courseTypeId is always a number
     };
 
     return transformedCourse;

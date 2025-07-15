@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import Select, { type MultiValue } from 'react-select';
+
+import Select from 'react-select';
 
 // Interfaz para los tipos de curso
 interface CourseType {
@@ -20,7 +21,6 @@ interface TypesCourseDropdownProps {
 const TypesCourseDropdown: React.FC<TypesCourseDropdownProps> = ({
 	courseTypeId,
 	setCourseTypeId,
-	errors,
 }) => {
 	const [types, setTypes] = useState<CourseType[]>([]);
 	const [isLoading, setIsLoading] = useState(true);

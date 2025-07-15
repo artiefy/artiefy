@@ -13,10 +13,10 @@ import {
 } from '~/models/educatorsModels/courseModelsEducator';
 import { db } from '~/server/db';
 import {
-  materias,
-  courses,
   courseCourseTypes,
+  courses,
   courseTypes,
+  materias,
 } from '~/server/db/schema';
 
 // Agregamos una interfaz para el cuerpo de la solicitud PUT

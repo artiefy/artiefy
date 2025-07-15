@@ -210,7 +210,8 @@ export default function Page() {
     }[]
   ) => {
     if (!user) return;
-
+    void individualPrice;
+    void parametros;
     // Validar que haya al menos un parámetro si addParametros es true
     if (addParametros && parametrosList.length === 0) {
       toast.error('Error', {
@@ -281,9 +282,10 @@ export default function Page() {
 
       // Declare individualPrice from editingCourse or set to null
       const individualPrice =
-        editingCourse && 'individualPrice' in editingCourse
-          ? (editingCourse as any).individualPrice
-          : null;
+  editingCourse && Object.prototype.hasOwnProperty.call(editingCourse, 'individualPrice')
+    ? editingCourse.individualPrice
+    : null;
+
 
       if (id) {
         response = await updateCourse(Number(id), {

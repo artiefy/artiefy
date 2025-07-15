@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { Dialog } from '@headlessui/react';
 import {
   BarElement,
@@ -14,7 +16,6 @@ import {
 } from 'chart.js';
 import { ChevronLeft, ChevronRight, Eye, Loader2 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
-import { useRouter } from 'next/navigation';
 
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
 
@@ -102,6 +103,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
   // 3️⃣ Paginación
   const usersPerPage = 10;
   const router = useRouter();
+  void router;
 
   const isStudentCompleted = (user: User): boolean => {
     const userGrades = grades[user.id] ?? {};
@@ -793,13 +795,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                             {(() => {
                               if (!user) return 'N/D';
 
-                              type ActivityType = {
+                              interface ActivityType {
                                 id: number;
                                 name: string;
                                 parametro: string;
                                 parametroPeso: number;
                                 actividadPeso: number;
-                              };
+                              }
 
                               const actividadesPorParametro: Record<
                                 string,
@@ -820,6 +822,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                               ).map(([parametroName, acts]) => {
                                 let sumNotas = 0;
                                 let sumPesos = 0;
+                                void parametroName;
                                 acts.forEach((act) => {
                                   const notaAct =
                                     grades[user.id]?.[act.id] ?? 0;
@@ -833,7 +836,6 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({ courseId }) => {
                                   acts[0]?.parametroPeso ?? 0;
                                 return { promedio, pesoParametro };
                               });
-
                               let sumaFinal = 0;
                               let sumaPesosParametros = 0;
                               notasParametros.forEach((np) => {

@@ -4,7 +4,6 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { and, eq, ne } from 'drizzle-orm';
 
 import {
-  createCourse,
   deleteCourse,
   getAllCourses,
   getCourseById,
@@ -17,7 +16,7 @@ import {
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { createUser, getUserById } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { db } from '~/server/db';
-import { materias, courses, courseCourseTypes } from '~/server/db/schema';
+import { courseCourseTypes,courses, materias } from '~/server/db/schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -158,20 +157,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const courseValues: any = {
-      title,
-      description,
-      coverImageKey,
-      coverVideoCourseKey,
-      categoryid,
-      modalidadesid,
-      nivelid,
-      instructor: instructorId,
-      creatorId: userId,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+   const courseValues = {
+  title,
+  description,
+  coverImageKey,
+  coverVideoCourseKey,
+  categoryid,
+  modalidadesid,
+  nivelid,
+  instructor: instructorId,
+  creatorId: userId,
+  isActive: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  courseTypeId: finalCourseTypeId ?? null,
+  individualPrice: normalizedTypes.includes(4) ? finalPrice : null,
+};
+
+const createdCourse = await db
+  .insert(courses)
+  .values(courseValues as typeof courses.$inferInsert)
+  .returning()
+  .then((res) => res[0]);
+
 
     if (finalCourseTypeId !== null && finalCourseTypeId !== undefined) {
       courseValues.courseTypeId = finalCourseTypeId;
@@ -186,11 +194,7 @@ export async function POST(request: NextRequest) {
 
 console.log('🧪 Recibiendo payload en backend:', body);
 
-    const createdCourse = await db
-      .insert(courses)
-      .values(courseValues)
-      .returning()
-      .then((res) => res[0]);
+   
 
     // 🔥 Insertar en tabla intermedia courseCourseTypes si hay varios
     if (normalizedTypes.length > 1) {

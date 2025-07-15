@@ -86,6 +86,11 @@ interface Parametros {
   isUsed?: boolean;
 }
 
+interface LessonsResponse {
+  lessons: { id: number; name: string }[];
+}
+
+
 const Page: React.FC = () => {
   const { user } = useUser(); // Usar useUser de Clerk
   const params = useParams(); // Usar useParams de next/navigation
@@ -144,9 +149,8 @@ const Page: React.FC = () => {
         const res = await fetch(
           `/api/super-admin/courses/lessonsCourse?courseId=${courseIdNumber}`
         );
-        const data = await res.json();
-        console.log('📚 Lessons API:', data);
-        setLessons(Array.isArray(data.lessons) ? data.lessons : []);
+  const data = (await res.json()) as LessonsResponse;
+  setLessons(Array.isArray(data.lessons) ? data.lessons : []);
       } catch (err) {
         console.error('❌ Error al cargar clases:', err);
         setLessons([]); // fallback seguro

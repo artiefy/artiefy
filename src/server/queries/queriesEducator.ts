@@ -2,6 +2,7 @@
 
 import { clerkClient } from '@clerk/nextjs/server';
 import { and, eq, sql } from 'drizzle-orm';
+
 import { db } from '~/server/db';
 import {
   activities,

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, clerkClient } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
 import {
   deleteCourse,
@@ -16,8 +17,7 @@ import {
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
 import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAdmin';
 import { db } from '~/server/db';
-import { courses, users, courseCourseTypes } from '~/server/db/schema'; // Add users import
-import { eq } from 'drizzle-orm';
+import { courseCourseTypes,courses, users } from '~/server/db/schema'; // Add users import
 
 export const dynamic = 'force-dynamic';
 
