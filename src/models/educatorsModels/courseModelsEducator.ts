@@ -534,7 +534,12 @@ export const deleteCourse = async (courseId: number) => {
   await deleteForumByCourseId(courseId);
   // Luego elimina las lecciones asociadas al curso
   await deleteLessonsByCourseId(courseId);
+  await db
+    .delete(courseCourseTypes)
+    .where(eq(courseCourseTypes.courseId, courseId));
+
   // Finalmente, elimina el curso
+
   return db.delete(courses).where(eq(courses.id, courseId));
 };
 

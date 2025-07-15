@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
   isActive: true,
   createdAt: new Date(),
   updatedAt: new Date(),
-  courseTypeId: finalCourseTypeId ?? null,
+  courseTypeId: null, // <-- SIEMPRE null
   individualPrice: normalizedTypes.includes(4) ? finalPrice : null,
 };
 
@@ -181,9 +181,7 @@ const createdCourse = await db
   .then((res) => res[0]);
 
 
-    if (finalCourseTypeId !== null && finalCourseTypeId !== undefined) {
-      courseValues.courseTypeId = finalCourseTypeId;
-    }
+   
     if (
       normalizedTypes.includes(4) &&
       finalPrice !== null &&
@@ -196,15 +194,14 @@ console.log('🧪 Recibiendo payload en backend:', body);
 
    
 
-    // 🔥 Insertar en tabla intermedia courseCourseTypes si hay varios
-    if (normalizedTypes.length > 1) {
-      for (const typeId of normalizedTypes) {
-        await db.insert(courseCourseTypes).values({
-          courseId: createdCourse.id,
-          courseTypeId: typeId,
-        });
-      }
-    }
+   // 🔥 Insertar SIEMPRE en tabla intermedia courseCourseTypes
+for (const typeId of normalizedTypes) {
+  await db.insert(courseCourseTypes).values({
+    courseId: createdCourse.id,
+    courseTypeId: typeId,
+  });
+}
+
 
     // 🔥 Asociar materias actualizando courseid en materia
     if (subjects.length > 0) {
@@ -265,9 +262,15 @@ export async function PUT(request: NextRequest) {
       categoryid,
       instructorId, // Updated from instructor
       subjects = [],
-      courseTypeId = null, // <-- nuevo
+courseTypeId = null as number | number[] | null, // para ser explícitos
       individualPrice = null,
     } = body;
+    const normalizedTypes = Array.isArray(courseTypeId)
+  ? courseTypeId
+  : courseTypeId !== null && courseTypeId !== undefined
+    ? [courseTypeId]
+    : [];
+
 
     const course = await getCourseById(id);
     if (!course) {
@@ -283,12 +286,8 @@ export async function PUT(request: NextRequest) {
       modalidadesid,
       instructor: instructorId, // Map instructorId to instructor
       nivelid,
-      courseTypeId: Array.isArray(courseTypeId)
-        ? courseTypeId
-        : courseTypeId !== null && courseTypeId !== undefined
-          ? [courseTypeId]
-          : [],
-      individualPrice,
+      courseTypeId: normalizedTypes,
+  individualPrice,
     });
 
     // Manejar las materias
