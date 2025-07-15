@@ -124,6 +124,15 @@ export default async function StudentListCourses({
           !type.isPurchasableIndividually
       );
 
+      // Crear un array con los tipos adicionales para la etiqueta "Incluido en"
+      const includedInPlans: string[] = [];
+
+      if (course.courseTypes.length > 1) {
+        if (hasPremium) includedInPlans.push('PREMIUM');
+        if (hasPro) includedInPlans.push('PRO');
+        if (hasFree) includedInPlans.push('GRATUITO');
+      }
+
       // Si el usuario no tiene suscripción, mostrar según prioridad
       if (!hasActiveSubscription) {
         // 1. Individual (si existe)
@@ -132,34 +141,86 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaStar className="text-lg text-blue-500" />
-              <span className="text-sm font-bold text-blue-500">
-                $
-                {course.individualPrice?.toLocaleString() ??
-                  purchasableType?.price?.toLocaleString() ??
-                  'Comprar'}
-              </span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <div className="mt-1 flex items-center gap-1">
+                <FaStar className="text-lg text-blue-500" />
+                <span className="text-sm font-bold text-blue-500">
+                  $
+                  {course.individualPrice?.toLocaleString('es-ES') ??
+                    purchasableType?.price?.toLocaleString('es-ES') ??
+                    'Comprar'}
+                </span>
+              </div>
+              {includedInPlans.length > 0 && (
+                <>
+                  {/* Mobile view */}
+                  <div className="mt-0.5 text-[10px] text-gray-300 italic sm:hidden">
+                    Incluido en: {includedInPlans.join(', ')}
+                  </div>
+                  {/* Desktop view as badge */}
+                  <div className="hidden sm:block">
+                    <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                      Incluido en: {includedInPlans.join(', ')}
+                    </Badge>
+                  </div>
+                </>
+              )}
             </div>
           );
         }
 
         // 2. Premium (si existe)
         if (hasPremium) {
+          const otherPlans = includedInPlans.filter((p) => p !== 'PREMIUM');
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-purple-500" />
-              <span className="text-sm font-bold text-purple-500">PREMIUM</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <div className="mt-1 flex items-center gap-1">
+                <FaCrown className="text-lg text-purple-500" />
+                <span className="text-sm font-bold text-purple-500">
+                  PREMIUM
+                </span>
+              </div>
+              {otherPlans.length > 0 && (
+                <>
+                  {/* Mobile view */}
+                  <div className="mt-0.5 text-[10px] text-gray-300 italic sm:hidden">
+                    Incluido en: {otherPlans.join(', ')}
+                  </div>
+                  {/* Desktop view as badge */}
+                  <div className="hidden sm:block">
+                    <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                      Incluido en: {otherPlans.join(', ')}
+                    </Badge>
+                  </div>
+                </>
+              )}
             </div>
           );
         }
 
         // 3. Pro (si existe)
         if (hasPro) {
+          const otherPlans = includedInPlans.filter((p) => p !== 'PRO');
           return (
-            <div className="mt-1 flex items-center gap-1">
-              <FaCrown className="text-lg text-orange-500" />
-              <span className="text-sm font-bold text-orange-500">PRO</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+              <div className="mt-1 flex items-center gap-1">
+                <FaCrown className="text-lg text-orange-500" />
+                <span className="text-sm font-bold text-orange-500">PRO</span>
+              </div>
+              {otherPlans.length > 0 && (
+                <>
+                  {/* Mobile view */}
+                  <div className="mt-0.5 text-[10px] text-gray-300 italic sm:hidden">
+                    Incluido en: {otherPlans.join(', ')}
+                  </div>
+                  {/* Desktop view as badge */}
+                  <div className="hidden sm:block">
+                    <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                      Incluido en: {otherPlans.join(', ')}
+                    </Badge>
+                  </div>
+                </>
+              )}
             </div>
           );
         }
@@ -199,10 +260,27 @@ export default async function StudentListCourses({
 
       // Para cursos gratuitos (visible para todos)
       if (hasFree) {
+        const otherPlans = includedInPlans.filter((p) => p !== 'GRATUITO');
         return (
-          <div className="mt-1 flex items-center gap-1">
-            <IoGiftOutline className="text-lg text-green-500" />
-            <span className="text-sm font-bold text-green-500">GRATUITO</span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+            <div className="mt-1 flex items-center gap-1">
+              <IoGiftOutline className="text-lg text-green-500" />
+              <span className="text-sm font-bold text-green-500">GRATUITO</span>
+            </div>
+            {otherPlans.length > 0 && (
+              <>
+                {/* Mobile view */}
+                <div className="mt-0.5 text-[10px] text-gray-300 italic sm:hidden">
+                  Incluido en: {otherPlans.join(', ')}
+                </div>
+                {/* Desktop view as badge */}
+                <div className="hidden sm:block">
+                  <Badge className="bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                    Incluido en: {otherPlans.join(', ')}
+                  </Badge>
+                </div>
+              </>
+            )}
           </div>
         );
       }
@@ -229,8 +307,8 @@ export default async function StudentListCourses({
               <FaStar className="text-lg text-blue-500" />
               <span className="text-sm font-bold text-blue-500">
                 $
-                {course.individualPrice?.toLocaleString() ??
-                  purchasableType.price?.toLocaleString()}
+                {course.individualPrice?.toLocaleString('es-ES') ??
+                  purchasableType.price?.toLocaleString('es-ES')}
               </span>
             </div>
           );
@@ -250,7 +328,7 @@ export default async function StudentListCourses({
         <div className="mt-1 flex items-center gap-1">
           <FaStar className="text-lg text-blue-500" />
           <span className="text-sm font-bold text-blue-500">
-            ${course.individualPrice.toLocaleString()}
+            ${course.individualPrice.toLocaleString('es-ES')}
           </span>
         </div>
       );
