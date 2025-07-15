@@ -116,6 +116,25 @@ export default function CourseDetails({
     }
 
     if (isEnrolling) return;
+
+    // IMPORTANTE: Esta es la clave para arreglar el problema
+    // Si el curso es de tipo individual (tanto por courseTypeId como por courseTypes),
+    // NO hacemos nada aquí y dejamos que CourseHeader maneje el flujo de pago
+    if (
+      course.courseTypeId === 4 ||
+      course.courseTypes?.some((type) => type.isPurchasableIndividually)
+    ) {
+      // No hacemos nada, solo activamos el spinner para que se vea coherente
+      setIsEnrolling(true);
+      try {
+        // Simplemente llamamos a onEnrollAction que será manejado por CourseHeader
+        await onEnrollAction();
+      } finally {
+        setIsEnrolling(false);
+      }
+      return;
+    }
+
     setIsEnrolling(true);
 
     try {
@@ -216,6 +235,25 @@ export default function CourseDetails({
     }
   };
 
+  const onEnrollAction = async () => {
+    try {
+      // Este es un punto de extensión para permitir que CourseHeader
+      // maneje completamente el flujo de cursos individuales
+      if (
+        course.courseTypeId === 4 ||
+        course.courseTypes?.some((type) => type.isPurchasableIndividually)
+      ) {
+        // No hacemos nada, permitimos que el CourseHeader maneje esto
+        return;
+      }
+
+      // Solo ejecutamos la acción normal para cursos no individuales
+      await handleEnroll();
+    } catch (error) {
+      console.error('Error en onEnrollAction:', error);
+    }
+  };
+
   const handleUnenroll = async () => {
     if (!isSignedIn || isUnenrolling) return;
     setIsUnenrolling(true);
@@ -283,7 +321,7 @@ export default function CourseDetails({
           subscriptionEndDate={
             user?.publicMetadata?.subscriptionEndDate as string | null
           }
-          onEnrollAction={handleEnroll}
+          onEnrollAction={onEnrollAction}
           onUnenrollAction={handleUnenroll}
           isCheckingEnrollment={isCheckingEnrollment}
         />

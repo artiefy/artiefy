@@ -146,9 +146,11 @@ export default async function StudentListCourses({
                 <FaStar className="text-lg text-blue-500" />
                 <span className="text-sm font-bold text-blue-500">
                   $
-                  {course.individualPrice?.toLocaleString('es-ES') ??
-                    purchasableType?.price?.toLocaleString('es-ES') ??
-                    'Comprar'}
+                  {course.individualPrice
+                    ? course.individualPrice.toLocaleString('es-ES')
+                    : purchasableType?.price
+                      ? purchasableType.price.toLocaleString('es-ES')
+                      : 'Comprar'}
                 </span>
               </div>
               {includedInPlans.length > 0 && (

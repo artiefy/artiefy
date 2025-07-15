@@ -343,9 +343,11 @@ export function CourseHeader({
                 <FaStar className="text-lg text-blue-500" />
                 <span className="text-base font-bold text-blue-500">
                   $
-                  {course.individualPrice?.toLocaleString() ??
-                    purchasableType?.price?.toLocaleString() ??
-                    'Comprar'}
+                  {course.individualPrice
+                    ? course.individualPrice.toLocaleString('es-ES')
+                    : purchasableType?.price
+                      ? purchasableType.price.toLocaleString('es-ES')
+                      : 'Comprar'}
                 </span>
               </div>
               {includedInPlans.length > 0 && (
@@ -463,7 +465,10 @@ export function CourseHeader({
   const handleEnrollClick = async () => {
     if (!isSignedIn) {
       // Store purchase intent in localStorage before redirecting
-      if (course.courseTypeId === 4) {
+      if (
+        course.courseTypeId === 4 ||
+        course.courseTypes?.some((type) => type.isPurchasableIndividually)
+      ) {
         const pendingPurchase: PendingPurchase = {
           courseId: course.id,
           type: 'individual',
@@ -491,98 +496,107 @@ export function CourseHeader({
       return;
     }
 
+    // *** DEBUGGING - Log what's happening at this point ***
+    console.log('Button clicked, course details:', {
+      courseTypeId: course.courseTypeId,
+      individualPrice: course.individualPrice,
+      hasPurchasableType: course.courseTypes?.some(
+        (type) => type.isPurchasableIndividually
+      ),
+      isPurchasable:
+        course.courseTypeId === 4 ||
+        course.courseTypes?.some((type) => type.isPurchasableIndividually),
+    });
+
     setIsEnrollClicked(true);
 
     try {
-      const userPlanType = user?.publicMetadata?.planType as string;
-
-      // Determine el tipo de curso más adecuado para este usuario
-      let requiresPayment = false;
-      let isPremiumRequired = false;
-      let requiresUpgrade = false;
-
-      if (course.courseTypes && course.courseTypes.length > 0) {
-        // Verificar si el usuario tiene acceso según su suscripción
-        const hasPremiumType = course.courseTypes.some(
-          (type) => type.requiredSubscriptionLevel === 'premium'
-        );
-        const hasProType = course.courseTypes.some(
-          (type) => type.requiredSubscriptionLevel === 'pro'
-        );
-        const hasFreeType = course.courseTypes.some(
-          (type) =>
-            type.requiredSubscriptionLevel === 'none' &&
-            !type.isPurchasableIndividually
-        );
-        const hasPurchasableType = course.courseTypes.some(
-          (type) => type.isPurchasableIndividually
-        );
-
-        // Lógica de acceso según la suscripción
-        if (userPlanType === 'Premium') {
-          // Usuario Premium tiene acceso a todos los cursos con suscripción
-          requiresPayment =
-            !hasPremiumType &&
-            !hasProType &&
-            !hasFreeType &&
-            hasPurchasableType;
-        } else if (userPlanType === 'Pro') {
-          // Usuario Pro necesita actualizar para cursos Premium
-          isPremiumRequired = hasPremiumType && !hasProType && !hasFreeType;
-          requiresPayment =
-            !hasProType &&
-            !hasFreeType &&
-            hasPurchasableType &&
-            !isPremiumRequired;
-          requiresUpgrade = isPremiumRequired;
-        } else {
-          // Usuario sin suscripción necesita pagar por cursos no gratuitos
-          isPremiumRequired = hasPremiumType && !hasFreeType;
-          requiresUpgrade = hasPremiumType || hasProType;
-          requiresPayment = hasPurchasableType && !hasFreeType;
-        }
-
-        // Si requiere pago individual
-        if (requiresPayment) {
-          const purchasableType = course.courseTypes.find(
-            (type) => type.isPurchasableIndividually
-          );
-          if (purchasableType) {
-            const courseProduct = createProductFromCourse(course);
-            setSelectedProduct(courseProduct);
-            setShowPaymentModal(true);
-            return;
-          }
-        }
-
-        // Si requiere actualización a Premium
-        if (requiresUpgrade) {
-          toast.error('Este curso requiere una suscripción superior', {
-            description: isPremiumRequired
-              ? 'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.'
-              : 'Este curso requiere una suscripción. Actualiza tu plan para acceder.',
-          });
-          window.open('/planes', '_blank', 'noopener,noreferrer');
-          return;
-        }
-      } else if (course.courseTypeId === 4) {
-        // Mantener la lógica existente para cursos individuales
+      // HANDLE INDIVIDUAL PURCHASE (HIGHEST PRIORITY)
+      // Always prioritize direct purchase regardless of subscription status
+      if (course.courseTypeId === 4) {
+        console.log('Processing Type 4 course purchase');
         if (!course.individualPrice) {
           toast.error('Error en el precio del curso');
           return;
         }
 
+        // Generate a product from the course
         const courseProduct = createProductFromCourse(course);
+        console.log('Created course product:', courseProduct);
+
+        // Set the product and show the modal
         setSelectedProduct(courseProduct);
         setShowPaymentModal(true);
-        return;
+        return; // Early return to prevent enrollment logic
       }
 
-      // Lógica para manejo de programas
+      // Check for purchasable course types (new system)
+      const purchasableType = course.courseTypes?.find(
+        (type) => type.isPurchasableIndividually
+      );
+
+      if (purchasableType) {
+        console.log('Processing purchasable course type:', purchasableType);
+        // Use either individual price from course or from the course type
+        const price = course.individualPrice ?? purchasableType.price;
+
+        if (!price) {
+          toast.error('Error en el precio del curso');
+          return;
+        }
+
+        // Create product with correct price
+        const courseProduct = createProductFromCourse({
+          ...course,
+          individualPrice: price,
+        });
+
+        console.log('Created course product from type:', courseProduct);
+
+        // Set the product and show the modal
+        setSelectedProduct(courseProduct);
+        setShowPaymentModal(true);
+        return; // Early return to prevent enrollment logic
+      }
+
+      // Rest of enrollment logic for subscription-based courses
+      const userPlanType = user?.publicMetadata?.planType as string;
+
+      // Only continue checking for non-purchasable course types
+      // Verificar si el usuario tiene acceso según su suscripción
+      const hasPremiumType = course.courseTypes?.some(
+        (type) => type.requiredSubscriptionLevel === 'premium'
+      );
+      const hasProType = course.courseTypes?.some(
+        (type) => type.requiredSubscriptionLevel === 'pro'
+      );
+      const hasFreeType = course.courseTypes?.some(
+        (type) =>
+          type.requiredSubscriptionLevel === 'none' &&
+          !type.isPurchasableIndividually
+      );
+
+      // Check for program requirement
       const programMateria = course.materias?.find(
         (materia) => materia.programaId !== null
       );
 
+      // First check: If Pro user trying to access Premium course
+      if (
+        userPlanType === 'Pro' &&
+        hasPremiumType &&
+        !hasFreeType &&
+        !hasProType
+      ) {
+        toast.error('Acceso Restringido', {
+          description:
+            'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
+        });
+        window.open('/planes', '_blank', 'noopener,noreferrer');
+        return;
+      }
+
+      // Second check: If needs program enrollment
       if (programMateria?.programaId && isSubscriptionActive) {
         try {
           const isProgramEnrolled = await isUserEnrolledInProgram(
@@ -599,7 +613,7 @@ export function CourseHeader({
                 description:
                   'Serás redirigido a la página del programa para inscribirte.',
                 duration: 4000,
-                id: 'program-enrollment', // Use the same ID to prevent duplicates
+                id: 'program-enrollment',
               }
             );
 
@@ -617,30 +631,26 @@ export function CourseHeader({
         }
       }
 
-      // Verificar si necesita suscripción
-      const hasFreeType =
-        course.courseTypes?.some(
-          (type) =>
-            type.requiredSubscriptionLevel === 'none' &&
-            !type.isPurchasableIndividually
-        ) ?? false;
-
-      if (
+      // Check if subscription is required for non-free courses
+      const requiresSubscription =
+        (hasPremiumType ?? hasProType) &&
         !hasFreeType &&
-        course.courseType?.requiredSubscriptionLevel !== 'none' &&
-        !isSubscriptionActive
-      ) {
+        !course.courseTypes?.some((type) => type.isPurchasableIndividually);
+
+      if (requiresSubscription && !isSubscriptionActive) {
         window.open('/planes', '_blank', 'noopener,noreferrer');
         return;
       }
 
-      // Si llega hasta aquí, proceder con la inscripción
+      // If we got here, proceed with enrollment
       await onEnrollAction();
     } catch (error) {
+      console.error('Error in handleEnrollClick:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Error desconocido';
-      console.error('Error enrolling:', errorMessage);
-      toast.error('Error al inscribirse al curso');
+      toast.error('Error al procesar la acción', {
+        description: errorMessage,
+      });
     } finally {
       setIsEnrollClicked(false);
     }
@@ -770,6 +780,81 @@ export function CourseHeader({
         videoRef.current.muted = true;
       }
     }
+  };
+
+  // Update the getEnrollButtonText function to better identify purchase courses
+  const getEnrollButtonText = (): string => {
+    // Always show "Comprar Curso" for individual courses, regardless of login state
+    if (course.courseTypeId === 4) {
+      return 'Comprar Curso';
+    }
+
+    // For individually purchasable courses via courseTypes
+    if (course.courseTypes?.some((type) => type.isPurchasableIndividually)) {
+      return 'Comprar Curso';
+    }
+
+    // For users without a session, show appropriate text based on course type
+    if (!isSignedIn) {
+      if (course.courseTypes && course.courseTypes.length > 0) {
+        const hasPremium = course.courseTypes.some(
+          (type) => type.requiredSubscriptionLevel === 'premium'
+        );
+        const hasPro = course.courseTypes.some(
+          (type) => type.requiredSubscriptionLevel === 'pro'
+        );
+        const hasFree = course.courseTypes.some(
+          (type) =>
+            type.requiredSubscriptionLevel === 'none' &&
+            !type.isPurchasableIndividually
+        );
+
+        if (hasPremium) return 'Plan Premium';
+        if (hasPro) return 'Plan Pro';
+        if (hasFree) return 'Inscribirse Gratis';
+      }
+
+      // Fallback to course.courseType
+      if (course.courseType) {
+        if (course.courseType.requiredSubscriptionLevel === 'premium')
+          return 'Plan Premium';
+        if (course.courseType.requiredSubscriptionLevel === 'pro')
+          return 'Plan Pro';
+        if (course.courseType.requiredSubscriptionLevel === 'none')
+          return 'Inscribirse Gratis';
+      }
+
+      return 'Iniciar Sesión'; // Default fallback for users without a session
+    }
+
+    // For logged in users
+    if (course.courseType?.requiredSubscriptionLevel === 'none') {
+      return 'Inscribirse Gratis';
+    }
+
+    if (!isSubscriptionActive) {
+      return 'Obtener Suscripción';
+    }
+
+    return 'Inscribirse al Curso';
+  };
+
+  // Get price display function
+  const getButtonPrice = (): string | null => {
+    // Show price for purchase type courses
+    if (course.courseTypeId === 4 && course.individualPrice) {
+      return `$${course.individualPrice.toLocaleString('es-ES')}`;
+    }
+
+    // For individually purchasable courses via courseTypes
+    const purchasableType = course.courseTypes?.find(
+      (type) => type.isPurchasableIndividually
+    );
+    if (purchasableType?.price || course.individualPrice) {
+      return `$${(course.individualPrice ?? purchasableType?.price)?.toLocaleString('es-ES')}`;
+    }
+
+    return null;
   };
 
   return (
@@ -1031,7 +1116,9 @@ export function CourseHeader({
               <div className="flex flex-col items-center gap-4">
                 <button onClick={handleEnrollClick} className="btn">
                   <strong>
-                    <span>${course.individualPrice.toLocaleString()}</span>
+                    <span>
+                      ${course.individualPrice.toLocaleString('es-ES')}
+                    </span>
                     <span>Comprar Curso</span>
                   </strong>
                   <div id="container-stars">
@@ -1158,19 +1245,8 @@ export function CourseHeader({
                     <Icons.spinner className="h-6 w-6" />
                   ) : (
                     <>
-                      {course.courseTypeId === 4 && (
-                        <span>${course.individualPrice?.toLocaleString()}</span>
-                      )}
-                      <span>
-                        {course.courseTypeId === 4
-                          ? 'Comprar Curso'
-                          : course.courseType?.requiredSubscriptionLevel ===
-                              'none'
-                            ? 'Inscribirse Gratis'
-                            : !isSubscriptionActive
-                              ? 'Obtener Suscripción'
-                              : 'Inscribirse al Curso'}
-                      </span>
+                      {getButtonPrice() && <span>{getButtonPrice()}</span>}
+                      <span>{getEnrollButtonText()}</span>
                     </>
                   )}
                 </strong>
@@ -1195,7 +1271,7 @@ export function CourseHeader({
           userId={user?.id ?? ''} // Pass dynamic user ID
         />
       </CardContent>
-      {showPaymentModal && courseProduct && selectedProduct && (
+      {showPaymentModal && (courseProduct ?? selectedProduct) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-lg rounded-lg bg-gray-800 p-4 text-white">
             {' '}
@@ -1207,13 +1283,21 @@ export function CourseHeader({
                 <span className="font-bold">{course.title}</span>
               </h3>
               <button
-                onClick={() => setShowPaymentModal(false)}
+                onClick={() => {
+                  console.log('Closing payment modal');
+                  setShowPaymentModal(false);
+                }}
                 className="absolute top-0 right-0 mt-2 mr-2 text-gray-300 hover:text-white"
               >
                 <FaTimes className="h-6 w-6" />
               </button>
             </div>
-            <PaymentForm selectedProduct={selectedProduct} />
+            {/* Fix for TypeScript error - ensure we have a non-null product */}
+            {(selectedProduct ?? courseProduct) && (
+              <PaymentForm
+                selectedProduct={selectedProduct ?? courseProduct!}
+              />
+            )}
           </div>
         </div>
       )}
