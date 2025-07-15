@@ -70,6 +70,7 @@ export async function getLessonById(
     // Transform raw course data to match Course interface
     const transformedCourse: Course = {
       ...lesson.course,
+      courseTypeId: lesson.course.courseTypeId ?? 0,
       totalStudents: courseEnrollments.length,
       lessons: transformedLessons,
       enrollments: courseEnrollments,
@@ -89,14 +90,6 @@ export async function getLessonById(
               price: lesson.course.courseType.price ?? null,
             }
           : undefined,
-      courseTypes: courseTypeRelations.map((ct) => ({
-        id: ct.courseType.id,
-        name: ct.courseType.name,
-        description: ct.courseType.description,
-        requiredSubscriptionLevel: ct.courseType.requiredSubscriptionLevel,
-        isPurchasableIndividually: ct.courseType.isPurchasableIndividually,
-        price: ct.courseType.price,
-      })),
     };
 
     const lessonProgress = await db.query.userLessonsProgress.findFirst({
