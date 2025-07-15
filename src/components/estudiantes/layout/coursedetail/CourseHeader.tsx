@@ -600,11 +600,12 @@ export function CourseHeader({
 
   const handleEnrollClick = async () => {
     if (!isSignedIn) {
-      // Store purchase intent in localStorage before redirecting
+      // Store purchase intent in localStorage before redirecting for ALL purchasable courses
       if (
         course.courseTypeId === 4 ||
         course.courseTypes?.some((type) => type.isPurchasableIndividually)
       ) {
+        console.log('Storing pending purchase before login redirect');
         const pendingPurchase: PendingPurchase = {
           courseId: course.id,
           type: 'individual',
@@ -794,9 +795,25 @@ export function CourseHeader({
 
   // Create product object for individual course
   const courseProduct = useMemo(() => {
+    // Handle traditional Type 4 courses
     if (course.courseTypeId === 4 && course.individualPrice) {
       return createProductFromCourse(course);
     }
+
+    // Also handle courses with purchasable types in the new system
+    const purchasableType = course.courseTypes?.find(
+      (type) => type.isPurchasableIndividually
+    );
+    if (purchasableType && (course.individualPrice || purchasableType.price)) {
+      const price = course.individualPrice ?? purchasableType.price;
+      if (price) {
+        return createProductFromCourse({
+          ...course,
+          individualPrice: price,
+        });
+      }
+    }
+
     return null;
   }, [course]);
 
@@ -806,7 +823,7 @@ export function CourseHeader({
     type: 'individual';
   }
 
-  // Update the useEffect that checks for pending purchase
+  // Update the useEffect that checks for pending purchase to log more details
   useEffect(() => {
     // Check for pending purchase after login
     const pendingPurchaseStr = localStorage.getItem('pendingPurchase');
@@ -815,15 +832,35 @@ export function CourseHeader({
         const pendingPurchase = JSON.parse(
           pendingPurchaseStr
         ) as PendingPurchase;
+
+        console.log('Found pending purchase after login:', {
+          pendingPurchase,
+          currentCourseId: course.id,
+          hasCourseProduct: !!courseProduct,
+          coursePrice: course.individualPrice,
+          isPurchasable:
+            course.courseTypeId === 4 ||
+            course.courseTypes?.some((t) => t.isPurchasableIndividually),
+        });
+
         if (
           pendingPurchase.courseId === course.id &&
           pendingPurchase.type === 'individual'
         ) {
           // Clear the pending purchase
           localStorage.removeItem('pendingPurchase');
-          // Show payment modal
+          console.log('Removed pending purchase, opening payment modal');
+
+          // Generate product if needed and show the modal
           if (courseProduct) {
+            console.log('Using course product from useMemo');
             setSelectedProduct(courseProduct);
+            setShowPaymentModal(true);
+          } else {
+            // Fallback to create product directly if useMemo didn't work
+            console.log('Creating product directly as fallback');
+            const fallbackProduct = createProductFromCourse(course);
+            setSelectedProduct(fallbackProduct);
             setShowPaymentModal(true);
           }
         }
@@ -831,7 +868,7 @@ export function CourseHeader({
         console.error('Error processing pending purchase:', error);
       }
     }
-  }, [isSignedIn, course.id, courseProduct]);
+  }, [isSignedIn, course.id, courseProduct, course]);
 
   // Añade aquí la obtención de las keys
   const coverImageKey = course.coverImageKey;
@@ -1473,12 +1510,7 @@ export function CourseHeader({
                 <FaTimes className="h-6 w-6" />
               </button>
             </div>
-            {/* Fix for TypeScript error - ensure we have a non-null product */}
-            {(selectedProduct ?? courseProduct) && (
-              <PaymentForm
-                selectedProduct={selectedProduct ?? courseProduct!}
-              />
-            )}
+            <PaymentForm selectedProduct={selectedProduct ?? courseProduct!} />
           </div>
         </div>
       )}
