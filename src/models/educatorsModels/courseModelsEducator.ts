@@ -11,6 +11,7 @@ import {
   modalidades,
   nivel,
   users,
+  courseCourseTypes,
 } from '~/server/db/schema';
 
 import { deleteForumByCourseId } from './forumAndPosts'; // Importar la función para eliminar foros
@@ -93,49 +94,69 @@ export async function createCourse(data: CreateCourseData) {
       throw new Error('Instructor ID is required');
     }
 
-    const sanitizedData = {
-      ...data,
-      courseTypeId: data.courseTypeId ?? 0,
-      individualPrice: (data.individualPrice ?? 0) as number | null,
-    };
+    // 👇 le damos tipo explícito
+    const normalizedTypes: number[] = Array.isArray(data.courseTypeId)
+      ? data.courseTypeId
+      : [];
 
-    if (
-      sanitizedData.courseTypeId === 4 &&
-      sanitizedData.individualPrice !== null &&
-      sanitizedData.individualPrice < 0
-    ) {
+    let finalCourseTypeId: number | null = null;
+    let finalPrice: number | null = null;
+
+    if (normalizedTypes.length === 1) {
+      finalCourseTypeId = normalizedTypes[0];
+      if (finalCourseTypeId === 4) {
+        finalPrice = data.individualPrice ?? 0;
+      }
+    } else if (normalizedTypes.length > 1) {
+      finalCourseTypeId = null; // Para tabla intermedia
+      if (normalizedTypes.includes(4)) {
+        finalPrice = data.individualPrice ?? 0;
+      }
+    }
+
+    if (normalizedTypes.includes(4) && finalPrice !== null && finalPrice < 0) {
       throw new Error(
         'Individual price must be a non-negative number for course type 4'
       );
     }
 
-    // Inserción de datos en la base de datos
-    const result = await db
+    const createdCourse = await db
       .insert(courses)
       .values({
-        title: sanitizedData.title,
-        description: sanitizedData.description,
-        coverImageKey: sanitizedData.coverImageKey,
-        coverVideoCourseKey: sanitizedData.coverVideoCourseKey,
-        categoryid: sanitizedData.categoryid,
-        modalidadesid: sanitizedData.modalidadesid,
-        nivelid: sanitizedData.nivelid,
-        instructor: sanitizedData.instructor,
-        creatorId: sanitizedData.creatorId,
-        courseTypeId: sanitizedData.courseTypeId,
-        individualPrice:
-          sanitizedData.courseTypeId === 4
-            ? sanitizedData.individualPrice
-            : null, // Solo asignamos el precio si el tipo de curso es 4
+        title: data.title,
+        description: data.description,
+        coverImageKey: data.coverImageKey,
+        coverVideoCourseKey: data.coverVideoCourseKey,
+        categoryid: data.categoryid,
+        modalidadesid: data.modalidadesid,
+        nivelid: data.nivelid,
+        instructor: data.instructor,
+        creatorId: data.creatorId,
+        courseTypeId: finalCourseTypeId,
+        individualPrice: normalizedTypes.includes(4) ? finalPrice : null,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
-      .returning();
+      .returning()
+      .then((res) => res[0]);
 
-    return result[0];
+    console.log('✅ Curso creado:', createdCourse);
+
+    // Si hay múltiples tipos, insertamos en tabla intermedia
+    if (normalizedTypes.length > 1 && createdCourse?.id) {
+      for (const typeId of normalizedTypes) {
+        await db.insert(courseCourseTypes).values({
+          courseId: createdCourse.id,
+          courseTypeId: typeId,
+        });
+        console.log(`➡ Asociado tipo ${typeId} al curso ${createdCourse.id}`);
+      }
+    }
+
+    return createdCourse;
   } catch (error) {
-    console.error('Database error creating course:', error);
+    console.error('❌ Database error creating course:', error);
     throw error;
   }
 }
@@ -321,24 +342,44 @@ export const updateCourse = async (
     nivelid?: number;
     instructor?: string;
     rating?: number;
-    courseTypeId?: number;
     isActive?: boolean;
     coverVideoCourseKey?: string;
     individualPrice?: number | null;
+    courseTypeId?: number[];
   }
 ) => {
-  // Clean undefined values
-  const cleanedData = Object.fromEntries(
-    Object.entries(updateData).filter(([_, v]) => v !== undefined)
-  );
-
-  // Add updatedAt timestamp
-  const dataToUpdate = {
-    ...cleanedData,
-    updatedAt: new Date(),
-  };
-
   try {
+    // 🔄 Sincroniza courseTypeId en tabla intermedia si existe
+    if (Array.isArray(updateData.courseTypeId)) {
+      // Borra relaciones anteriores
+      await db
+        .delete(courseCourseTypes)
+        .where(eq(courseCourseTypes.courseId, courseId));
+
+      // Inserta nuevas relaciones
+      await db.insert(courseCourseTypes).values(
+        updateData.courseTypeId.map((typeId) => ({
+          courseId,
+          courseTypeId: typeId,
+        }))
+      );
+    }
+
+    // 🧼 Elimina courseTypeId para que no lo intente guardar en tabla principal
+    const { courseTypeId, ...rest } = updateData;
+
+    // 🧹 Limpia valores undefined
+    const cleanedData = Object.fromEntries(
+      Object.entries(rest).filter(([_, v]) => v !== undefined)
+    );
+
+    // ⏱️ Agrega updatedAt
+    const dataToUpdate = {
+      ...cleanedData,
+      updatedAt: new Date(),
+    };
+
+    // 📝 Actualiza el curso
     const result = await db
       .update(courses)
       .set(dataToUpdate)
@@ -357,7 +398,6 @@ export async function updateMateria(
   data: { courseid: number; title?: string; description?: string }
 ) {
   try {
-    // Buscar la materia por su ID
     const existingMateria = await db
       .select()
       .from(materias)
@@ -365,51 +405,113 @@ export async function updateMateria(
       .limit(1)
       .then((res) => res[0]);
 
-    if (!existingMateria) return;
+    if (!existingMateria) {
+      console.warn(`⚠️ No se encontró la materia con ID: ${id}`);
+      return;
+    }
 
-    if (existingMateria.courseid) {
-      // Ya tiene curso → crear nueva con el nuevo courseid
-      await db.insert(materias).values({
-        title: existingMateria.title,
-        description: existingMateria.description ?? '',
-        courseid: data.courseid,
-        programaId: existingMateria.programaId ?? 0,
-      });
-    } else {
-      // No tiene curso → actualizar
+    // 🔁 Si ya tiene mismo courseId, omitir
+    if (existingMateria.courseid === data.courseid) {
+      console.log(
+        `⏭️ Materia ID ${existingMateria.id} ya tiene el mismo courseId ${data.courseid}, se omite`
+      );
+      return;
+    }
+
+    // 🔎 Validar si ya existe duplicado exacto
+    const yaExiste = await db
+      .select()
+      .from(materias)
+      .where(
+        and(
+          eq(materias.title, existingMateria.title.trim()),
+          eq(materias.programaId, existingMateria.programaId ?? 0),
+          eq(materias.courseid, data.courseid)
+        )
+      )
+      .then((r) => r.length > 0);
+
+    // 🛠️ Si no tiene courseid → actualizar directamente
+    if (!existingMateria.courseid) {
       await db
         .update(materias)
         .set({ courseid: data.courseid })
         .where(eq(materias.id, id));
+
+      console.log(
+        `✅ Materia actualizada ID ${existingMateria.id} → courseId: ${data.courseid}`
+      );
+    }
+    // 🧬 Si ya tenía otro courseId → clonar si no existe
+    else if (!yaExiste) {
+      await db.insert(materias).values({
+        title: existingMateria.title,
+        description: existingMateria.description ?? '',
+        courseid: data.courseid,
+        ...(existingMateria.programaId
+          ? { programaId: existingMateria.programaId }
+          : {}),
+      });
+
+      console.log(
+        `📋 Materia duplicada desde ID ${existingMateria.id} → nuevo courseId: ${data.courseid}`
+      );
+    } else {
+      console.log(
+        `⏭️ Ya existe una materia con mismo título, programa y courseId. Se omite duplicado.`
+      );
     }
 
-    // 🔁 Propagar el curso a otras materias con el mismo título
-    const conditions = [
-      eq(materias.title, existingMateria.title),
-      neq(materias.id, existingMateria.id),
-      isNotNull(materias.programaId),
-    ];
-
+    // 🔁 Propagar a otras materias con mismo título y diferente courseId
     const materiasIguales = await db
       .select()
       .from(materias)
-      .where(and(...conditions));
+      .where(
+        and(
+          eq(materias.title, existingMateria.title),
+          neq(materias.id, existingMateria.id),
+          isNotNull(materias.programaId),
+          neq(materias.courseid, data.courseid)
+        )
+      );
 
     for (const materia of materiasIguales) {
-      if (!materia.courseid) {
-        // Si no tiene curso → actualizar
-        await db
-          .update(materias)
-          .set({ courseid: data.courseid })
-          .where(eq(materias.id, materia.id));
-      } else {
-        // Ya tiene curso → duplicar con el nuevo curso
+      // 🛑 Si ya tiene ese courseId → omitir
+      if (materia.courseid === data.courseid) {
+        console.log(
+          `⏭️ Materia ID ${materia.id} ya tiene courseId ${data.courseid}, se omite`
+        );
+        continue;
+      }
+
+      // 🧠 Verifica que no exista ya una clonada
+      const yaExisteRelacionada = await db
+        .select({ id: materias.id })
+        .from(materias)
+        .where(
+          and(
+            eq(materias.title, materia.title),
+            eq(materias.programaId, materia.programaId ?? 0),
+            eq(materias.courseid, data.courseid)
+          )
+        )
+        .then((r) => r.length > 0);
+
+      if (!yaExisteRelacionada) {
         await db.insert(materias).values({
           title: materia.title,
           description: materia.description ?? '',
-          programaId: materia.programaId ?? 0,
+          ...(materia.programaId ? { programaId: materia.programaId } : {}),
           courseid: data.courseid,
         });
+
+        console.log(
+          `🧬 Materia relacionada duplicada desde ID ${materia.id} → nuevo courseId: ${data.courseid}`
+        );
+      } else {
+        console.log(
+          `⏭️ Materia ID ${materia.id} ya fue clonada previamente para courseId ${data.courseid}, se omite`
+        );
       }
     }
   } catch (error: unknown) {

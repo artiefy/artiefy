@@ -12,11 +12,12 @@ import {
   getTotalDuration,
   getTotalStudents,
   updateCourse,
+  updateMateria,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { getSubjects } from '~/models/educatorsModels/subjectModels'; // Import the function to get subjects
-import { createUser,getUserById } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
+import { createUser, getUserById } from '~/models/educatorsModels/userModels'; // Importa las funciones necesarias para manejar usuarios
 import { db } from '~/server/db';
-import { materias } from '~/server/db/schema';
+import { materias, courses, courseCourseTypes } from '~/server/db/schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -121,8 +122,9 @@ export async function POST(request: NextRequest) {
       modalidadesid: number;
       nivelid: number;
       instructorId?: string;
-      courseTypeId?: number | null; // <-- AGREGAR ESTO
-      individualPrice?: number | null; // <-- AGREGAR ESTO
+      courseTypeId?: number[]; // ahora array
+      individualPrice?: number | null;
+      subjects?: { id: number }[]; // ✅ añadimos subjects
     };
 
     const {
@@ -134,31 +136,95 @@ export async function POST(request: NextRequest) {
       modalidadesid,
       nivelid,
       instructorId = userId,
-      courseTypeId = null,
+      courseTypeId = [],
       individualPrice = null,
+      subjects = [], // ✅ default vacío
     } = body;
 
-    const course = await createCourse({
+    const normalizedTypes = Array.isArray(courseTypeId) ? courseTypeId : [];
+
+    let finalCourseTypeId: number | null = null;
+    let finalPrice: number | null = null;
+
+    if (normalizedTypes.length === 1) {
+      finalCourseTypeId = normalizedTypes[0];
+      if (finalCourseTypeId === 4) {
+        finalPrice = individualPrice ?? 0;
+      }
+    } else if (normalizedTypes.length > 1) {
+      finalCourseTypeId = null; // Para tabla intermedia
+      if (normalizedTypes.includes(4)) {
+        finalPrice = individualPrice ?? 0;
+      }
+    }
+
+    const courseValues: any = {
       title,
       description,
-      creatorId: userId,
       coverImageKey,
       coverVideoCourseKey,
       categoryid,
       modalidadesid,
       nivelid,
       instructor: instructorId,
-      courseTypeId,
-      individualPrice,
-    });
+      creatorId: userId,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-    return NextResponse.json({ message: 'Curso creado exitosamente', course });
+    if (finalCourseTypeId !== null && finalCourseTypeId !== undefined) {
+      courseValues.courseTypeId = finalCourseTypeId;
+    }
+    if (
+      normalizedTypes.includes(4) &&
+      finalPrice !== null &&
+      finalPrice !== undefined
+    ) {
+      courseValues.individualPrice = finalPrice;
+    }
+
+console.log('🧪 Recibiendo payload en backend:', body);
+
+    const createdCourse = await db
+      .insert(courses)
+      .values(courseValues)
+      .returning()
+      .then((res) => res[0]);
+
+    // 🔥 Insertar en tabla intermedia courseCourseTypes si hay varios
+    if (normalizedTypes.length > 1) {
+      for (const typeId of normalizedTypes) {
+        await db.insert(courseCourseTypes).values({
+          courseId: createdCourse.id,
+          courseTypeId: typeId,
+        });
+      }
+    }
+
+    // 🔥 Asociar materias actualizando courseid en materia
+    if (subjects.length > 0) {
+      await Promise.all(
+        subjects.map(async (subject) => {
+          await updateMateria(subject.id, { courseid: createdCourse.id });
+          console.log(
+            `Materia actualizada: ${subject.id} -> courseId: ${createdCourse.id}`
+          );
+        })
+      );
+    } else {
+      console.log('No se proporcionaron materias para actualizar.');
+    }
+
+    return NextResponse.json({
+      message: 'Curso creado exitosamente',
+      course: createdCourse,
+    });
   } catch (error) {
-    return respondWithError(
-      `Error al crear el curso: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`,
-      500
+    console.error('❌ Error en POST /api/educadores/courses:', error);
+    return NextResponse.json(
+      { error: 'Error interno al crear el curso', details: String(error) },
+      { status: 500 }
     );
   }
 }
@@ -213,7 +279,11 @@ export async function PUT(request: NextRequest) {
       modalidadesid,
       instructor: instructorId, // Map instructorId to instructor
       nivelid,
-      courseTypeId: courseTypeId ?? undefined,
+      courseTypeId: Array.isArray(courseTypeId)
+        ? courseTypeId
+        : courseTypeId !== null && courseTypeId !== undefined
+          ? [courseTypeId]
+          : [],
       individualPrice,
     });
 
@@ -298,10 +368,9 @@ export async function PUT(request: NextRequest) {
           ? course.id
           : id,
     });
-} catch {
-	return respondWithError('Error al actualizar el curso', 500);
+  } catch {
+    return respondWithError('Error al actualizar el curso', 500);
   }
-  
 }
 
 // Eliminar un curso
@@ -320,10 +389,10 @@ export async function DELETE(request: NextRequest) {
     const parsedCourseId = parseInt(courseId);
     await deleteCourse(parsedCourseId);
     return NextResponse.json({ message: 'Curso eliminado exitosamente' });
-} catch {
-	return NextResponse.json(
-	  { error: 'Error al eliminar el curso' },
-	  { status: 500 }
-	);
-  }  
+  } catch {
+    return NextResponse.json(
+      { error: 'Error al eliminar el curso' },
+      { status: 500 }
+    );
+  }
 }

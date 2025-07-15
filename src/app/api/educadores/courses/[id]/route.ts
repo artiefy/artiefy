@@ -12,7 +12,12 @@ import {
   updateCourse,
 } from '~/models/educatorsModels/courseModelsEducator';
 import { db } from '~/server/db';
-import { materias } from '~/server/db/schema';
+import {
+  materias,
+  courses,
+  courseCourseTypes,
+  courseTypes,
+} from '~/server/db/schema';
 
 // Agregamos una interfaz para el cuerpo de la solicitud PUT
 interface PutRequestBody {
@@ -31,6 +36,37 @@ interface PutRequestBody {
   individualPrice?: number | null;
 }
 
+export async function getCourseByIdWithTypes(courseId: number) {
+  // Traemos el curso base
+  const course = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, courseId))
+    .then((res) => res[0]);
+
+  if (!course) return null;
+
+  // Traemos los tipos de curso (si hay en la tabla intermedia)
+  const courseTypesRows = await db
+    .select({
+      typeId: courseTypes.id,
+      typeName: courseTypes.name,
+    })
+    .from(courseCourseTypes)
+    .leftJoin(courseTypes, eq(courseCourseTypes.courseTypeId, courseTypes.id))
+    .where(eq(courseCourseTypes.courseId, courseId));
+
+  const courseTypesList = courseTypesRows.map((row) => ({
+    id: row.typeId,
+    name: row.typeName,
+  }));
+
+  return {
+    ...course,
+    courseTypes: courseTypesList, // 🔥 añadimos los tipos de curso
+  };
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -45,7 +81,7 @@ export async function GET(
       );
     }
 
-    const course = await getCourseById(courseId);
+    const course = await getCourseByIdWithTypes(courseId);
     if (!course) {
       return NextResponse.json(
         { error: 'Curso no encontrado' },
@@ -53,7 +89,6 @@ export async function GET(
       );
     }
 
-    // Return course directly without modifying the instructor name
     return NextResponse.json(course);
   } catch (error) {
     console.error('Error al obtener el curso:', error);
@@ -107,7 +142,7 @@ export async function PUT(
       nivelid: data.nivelid ? Number(data.nivelid) : undefined,
       instructor: data.instructorId, // Changed to match schema's instructor field
       rating: data.rating ? Number(data.rating) : undefined,
-      courseTypeId: data.courseTypeId !== null ? data.courseTypeId : undefined,
+courseTypeId: Array.isArray(data.courseTypeId) ? data.courseTypeId : [],
       isActive: typeof data.isActive === 'boolean' ? data.isActive : undefined,
     };
 

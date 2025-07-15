@@ -11,7 +11,7 @@ import {
   text,
   timestamp,
   unique,
-  varchar,
+  varchar
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -89,8 +89,8 @@ export const courses = pgTable('courses', {
     .references(() => nivel.id)
     .notNull(),
   courseTypeId: integer('course_type_id')
-    .references(() => courseTypes.id)
-    .notNull(),
+  .references(() => courseTypes.id)
+  .default(sql`NULL`),
   individualPrice: integer('individual_price'),
   requiresProgram: boolean('requires_program').default(false),
   isActive: boolean('is_active').default(true),
@@ -913,3 +913,31 @@ export const notifications = pgTable('notifications', {
   createdAt: timestamp('created_at').defaultNow(),
   metadata: jsonb('metadata'),
 });
+
+
+export const courseCourseTypes = pgTable(
+  'course_course_types',
+  {
+    courseId: integer('course_id')
+      .references(() => courses.id)
+      .notNull(),
+    courseTypeId: integer('course_type_id')
+      .references(() => courseTypes.id)
+      .notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.courseId, table.courseTypeId] })]
+);
+
+export const courseCourseTypesRelations = relations(
+  courseCourseTypes,
+  ({ one }) => ({
+    course: one(courses, {
+      fields: [courseCourseTypes.courseId],
+      references: [courses.id],
+    }),
+    courseType: one(courseTypes, {
+      fields: [courseCourseTypes.courseTypeId],
+      references: [courseTypes.id],
+    }),
+  })
+);

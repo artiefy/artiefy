@@ -56,6 +56,7 @@ interface Course {
   instructorName: string;
   coverVideoCourseKey?: string;
   individualPrice?: number | null;
+  courseTypes?: { id: number; name: string }[]; // <== añades esto
 }
 interface Materia {
   id: number;
@@ -173,7 +174,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
   const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores específicos
   const [materias, setMaterias] = useState<Materia[]>([]);
-  const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
+  const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<
     string | null
   >(null);
@@ -252,7 +253,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         if (response.ok && responseParametros.ok) {
           const data = (await response.json()) as Course;
           setCourse(data);
-          setCourseTypeId(data.courseTypeId ?? null);
+          setCourseTypeId(
+            Array.isArray(data.courseTypes)
+              ? data.courseTypes.map((type) => type.id)
+              : data.courseTypeId !== null && data.courseTypeId !== undefined
+                ? [data.courseTypeId]
+                : []
+          );
           setIndividualPrice(data.individualPrice ?? null);
           setCurrentInstructor(data.instructor); // Set current instructor when course loads
           setSelectedInstructor(data.instructor); // Set selected instructor when course loads
@@ -334,7 +341,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     addParametros: boolean,
     coverImageKey: string,
     fileName: string,
-    courseTypeId: number | null,
+    courseTypeId: number[],
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
@@ -539,7 +546,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       }))
     );
     setEditRating(course.rating);
-    setCourseTypeId(course.courseTypeId ?? null);
+    setCourseTypeId(
+      Array.isArray(course.courseTypes)
+        ? course.courseTypes.map((type) => type.id)
+        : course.courseTypeId !== null && course.courseTypeId !== undefined
+          ? [course.courseTypeId]
+          : []
+    );
     setIsActive(course.isActive ?? true);
     setCurrentInstructor(course.instructor);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
@@ -960,14 +973,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
-                    Tipo de curso:
+                    Tipos de curso:
                   </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                  >
-                    {course.courseTypeName ?? 'No especificado'}
-                  </Badge>
+                  {course.courseTypes && course.courseTypes.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {course.courseTypes.map((type) => (
+                        <Badge
+                          key={type.id}
+                          variant="outline"
+                          className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                        >
+                          {type.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    >
+                      No especificado
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

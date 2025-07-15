@@ -2,7 +2,7 @@
 /* editar curso en super admin*/
 'use client';
 
-import { type ChangeEvent,useEffect, useState } from 'react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -40,7 +40,7 @@ interface CourseFormProps {
     addParametros: boolean,
     coverImageKey: string,
     fileName: string,
-    courseTypeId: number | null,
+    courseTypeId: number[],
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
@@ -88,8 +88,8 @@ interface CourseFormProps {
   onCloseAction: () => void;
   rating: number;
   setRating: (rating: number) => void;
-  courseTypeId: number | null;
-  setCourseTypeId: (val: number | null) => void;
+  courseTypeId: number[];
+  setCourseTypeId: (val: number[]) => void;
   isActive: boolean;
   setIsActive: (val: boolean) => void;
   instructor: string;
@@ -211,6 +211,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   void isLoadingCategories;
   void isLoadingModalidades;
   const isVideo = file instanceof File && file.type.startsWith('video/');
+  const safeCourseTypeId = Array.isArray(courseTypeId) ? courseTypeId : [];
   const validFile = isFile(file) ? file : null;
   void validFile;
 
@@ -476,6 +477,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     setErrors(newErrors);
     if (Object.values(newErrors).some(Boolean)) {
       console.log('❌ Errores de validación:', newErrors);
+
+      const missingFields: string[] = [];
+
+      if (newErrors.title) missingFields.push('Título');
+      if (newErrors.description) missingFields.push('Descripción');
+      if (newErrors.categoryid) missingFields.push('Categoría');
+      if (newErrors.modalidadesid) missingFields.push('Modalidad');
+      if (newErrors.nivelid) missingFields.push('Nivel');
+      if (newErrors.rating) missingFields.push('Rating');
+      if (newErrors.file) missingFields.push('Archivo de portada');
+
+      const message = `Por favor completa: ${missingFields.join(', ')}.`;
+      toast.error('Faltan campos obligatorios', { description: message });
+
       return;
     }
 
@@ -578,7 +593,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       console.log('   - uploadedFileName:', finalUploadedFileName);
       console.log('   - videoKey:', finalVideoKey);
       if (
-        ( courseTypeId === 4) &&
+        courseTypeId.includes(4) &&
         (!individualPrice || individualPrice <= 0)
       ) {
         toast.error('Debe ingresar un precio válido para cursos individuales.');
@@ -595,7 +610,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         nivelid,
         rating,
         addParametros,
-        finalCoverImageKey, // ✅
+        finalCoverImageKey,
         finalUploadedFileName,
         courseTypeId,
         isActive,
@@ -662,7 +677,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   };
   useEffect(() => {
     if (editingCourseId) {
-      setCourseTypeId(courseTypeId);
+      setCourseTypeId(Array.isArray(courseTypeId) ? courseTypeId : []);
     }
   }, [editingCourseId]);
 
@@ -734,21 +749,43 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Efecto para manejar la carga de los inputs
   useEffect(() => {
     if (editingCourseId) {
+      console.log('📝 Cargando datos del curso para editar', {
+        title,
+        description,
+        categoryid,
+        modalidadesid,
+        nivelid,
+        coverImageKey,
+        courseTypeId,
+        isActive,
+        individualPrice,
+        coverVideoCourseKey,
+      });
+
       setTitle(title);
       setDescription(description);
       setCategoryid(categoryid);
-      setRating(rating); // Añadir esta línea
       setModalidadesid(modalidadesid);
-      setNivelid(Number(nivelid)); // Asegúrate de convertir a número
-      setCoverImage(coverImageKey);
+      setNivelid(nivelid);
+      setCoverImage(coverImageKey ?? null);
       setCourseTypeId(courseTypeId ?? null);
       setIsActive(isActive);
       setIndividualPrice(individualPrice ?? null);
-      if (setCoverVideoCourseKey) {
-        setCoverVideoCourseKey(coverVideoCourseKey);
-      }
+      setCoverVideoCourseKey(coverVideoCourseKey ?? null);
     }
-  }, [editingCourseId]);
+  }, [
+    editingCourseId,
+    title,
+    description,
+    categoryid,
+    modalidadesid,
+    nivelid,
+    coverImageKey,
+    courseTypeId,
+    isActive,
+    individualPrice,
+    coverVideoCourseKey,
+  ]);
 
   // Efecto para manejar la creacion o edicion de parametros
   const handleToggleParametro = () => {
@@ -766,6 +803,27 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setCoverImage('');
       setRating(NaN);
       setParametrosAction([]);
+      setIndividualPrice(null);
+      setCourseTypeId([]); // ✅ FIXED
+      setIsActive(true);
+    }
+  }, [isOpen, editingCourseId]);
+
+  useEffect(() => {
+    if (isOpen && editingCourseId) {
+      console.log('🔍 Modal abierto para editar curso', {
+        editingCourseId,
+        title,
+        description,
+        categoryid,
+        modalidadesid,
+        nivelid,
+        coverImageKey,
+        courseTypeId,
+        isActive,
+        individualPrice,
+        coverVideoCourseKey,
+      });
     }
   }, [isOpen, editingCourseId]);
 
@@ -796,7 +854,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           <DialogDescription className="text-sm text-white md:text-xl">
             {editingCourseId
               ? 'Edita los detalles del curso'
-              : 'Llena los detalles para crear un nuevo curso'}
+              : ' los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
         <div className="bg-background rounded-lg px-2 py-3 text-black shadow-md md:px-6 md:py-4">
@@ -907,45 +965,43 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   </p>
                 )}
               </div>
-              {editingCourseId && (
-                <>
+              <>
+                <div className="w-full">
+                  <label className="text-primary text-sm font-medium md:text-lg">
+                    Tipo de Curso
+                  </label>
+                  <CourseTypeDropdown
+                    courseTypeId={courseTypeId}
+                    setCourseTypeId={setCourseTypeId}
+                  />
+                </div>
+                {safeCourseTypeId.includes(4) && (
                   <div className="w-full">
                     <label className="text-primary text-sm font-medium md:text-lg">
-                      Tipo de Curso
+                      Precio Individual
                     </label>
-                    <CourseTypeDropdown
-                      courseTypeId={courseTypeId}
-                      setCourseTypeId={setCourseTypeId}
+                    <input
+                      type="number"
+                      placeholder="Ingrese el precio"
+                      value={individualPrice ?? ''}
+                      onChange={(e) =>
+                        setIndividualPrice(Number(e.target.value))
+                      }
+                      className="border-primary mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
                     />
                   </div>
-                  {( courseTypeId === 4) && (
-                    <div className="w-full">
-                      <label className="text-primary text-sm font-medium md:text-lg">
-                        Precio Individual
-                      </label>
-                      <input
-                        type="number"
-                        placeholder="Ingrese el precio"
-                        value={individualPrice ?? ''}
-                        onChange={(e) =>
-                          setIndividualPrice(Number(e.target.value))
-                        }
-                        className="border-primary mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
-                      />
-                    </div>
-                  )}
+                )}
 
-                  <div className="w-full">
-                    <label className="text-primary text-sm font-medium md:text-lg">
-                      Estado del Curso
-                    </label>
-                    <ActiveDropdown
-                      isActive={isActive}
-                      setIsActive={setIsActive}
-                    />
-                  </div>
-                </>
-              )}
+                <div className="w-full">
+                  <label className="text-primary text-sm font-medium md:text-lg">
+                    Estado del Curso
+                  </label>
+                  <ActiveDropdown
+                    isActive={isActive}
+                    setIsActive={setIsActive}
+                  />
+                </div>
+              </>
             </div>
             <div>
               <label
@@ -1279,7 +1335,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   htmlFor="subjects"
                   className="text-primary text-sm font-medium md:text-lg"
                 >
-                  Asignar Mateias
+                  Asignar Materias
                 </label>
                 <Select
                   isMulti

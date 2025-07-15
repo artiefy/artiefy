@@ -196,7 +196,18 @@ export default function Page() {
     rating: number,
     addParametros: boolean,
     coverImageKey: string,
-    fileName: string
+    fileName: string,
+    courseTypeId: number[],
+    isActive: boolean,
+    subjects: { id: number }[],
+    coverVideoCourseKey: string | null,
+    individualPrice: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+    }[]
   ) => {
     if (!user) return;
 
@@ -268,6 +279,12 @@ export default function Page() {
       );
       const instructorName = selectedEducator?.name ?? '';
 
+      // Declare individualPrice from editingCourse or set to null
+      const individualPrice =
+        editingCourse && 'individualPrice' in editingCourse
+          ? (editingCourse as any).individualPrice
+          : null;
+
       if (id) {
         response = await updateCourse(Number(id), {
           title,
@@ -289,12 +306,16 @@ export default function Page() {
             title,
             description,
             coverImageKey,
+            coverVideoCourseKey,
             categoryid,
             modalidadesid,
             nivelid,
             rating,
-            instructor: instructorName, // Use instructor name instead of ID
+            instructor: instructorName,
             subjects,
+            courseTypeId,
+            isActive,
+            individualPrice,
           }),
         });
 
@@ -598,9 +619,15 @@ export default function Page() {
             id: index,
           }))}
           setParametrosAction={setParametrosList}
-          courseTypeId={null}
-          setCourseTypeId={(courseTypeId: number | null) =>
-            console.log('Course Type ID set to:', courseTypeId)
+          courseTypeId={
+            Array.isArray(editingCourse?.courseTypeId)
+              ? editingCourse?.courseTypeId
+              : []
+          }
+          setCourseTypeId={(courseTypeId: number[]) =>
+            setEditingCourse((prev) =>
+              prev ? { ...prev, courseTypeId: courseTypeId[0] ?? 0 } : null
+            )
           }
           isActive={true}
           setIsActive={(isActive: boolean) =>

@@ -760,7 +760,7 @@ const Page: React.FC = () => {
                   </option>
                   {(Array.isArray(lessons) ? lessons : []).map((lesson) => (
                     <option key={lesson.id} value={lesson.id}>
-                      {lesson.title}
+                      {lesson.name}
                     </option>
                   ))}
                 </select>
