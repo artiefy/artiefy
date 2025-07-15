@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import Select from 'react-select';
+
 // Interfaz para los tipos de curso
 interface CourseType {
 	id: number;
@@ -9,8 +11,8 @@ interface CourseType {
 
 // Props que recibe el componente
 interface TypesCourseDropdownProps {
-	courseTypeId: number | null;
-	setCourseTypeId: (typeId: number | null) => void;
+	courseTypeId: number[]; // Now expects an array of numbers
+	setCourseTypeId: (typeIds: number[]) => void; // Now expects an array of numbers
 	errors?: {
 		type?: boolean;
 	};
@@ -19,7 +21,6 @@ interface TypesCourseDropdownProps {
 const TypesCourseDropdown: React.FC<TypesCourseDropdownProps> = ({
 	courseTypeId,
 	setCourseTypeId,
-	errors,
 }) => {
 	const [types, setTypes] = useState<CourseType[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -59,24 +60,26 @@ const TypesCourseDropdown: React.FC<TypesCourseDropdownProps> = ({
 			{isLoading ? (
 				<p className="text-primary">Cargando tipos de curso...</p>
 			) : (
-				<select
-					id="type-course-select"
-					value={courseTypeId ?? ''}
-					onChange={(e) => {
-						const value = e.target.value;
-						setCourseTypeId(value === '' ? null : Number(value));
-					  }}
-					className={`mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden ${
-						errors?.type ? 'border-red-500' : 'border-primary'
-					}`}
-				>
-					<option value="">Selecciona un tipo de curso</option>
-					{types.map((type) => (
-						<option key={type.id} value={type.id}>
-							{type.name}
-						</option>
-					))}
-				</select>
+				<Select
+	isMulti
+	options={types.map((type) => ({
+		value: type.id,
+		label: type.name,
+	}))}
+	value={courseTypeId.map((id) => {
+		const found = types.find((t) => t.id === id);
+		return found ? { value: found.id, label: found.name } : null;
+	}).filter(Boolean)}
+	onChange={(selectedOptions) => {
+		const selectedIds = (selectedOptions as { value: number; label: string }[])
+			.filter((option) => option !== null)
+			.map((option) => option.value);
+		setCourseTypeId(selectedIds);
+	}}
+	classNamePrefix="react-select"
+	className="mt-2 w-full"
+/>
+
 			)}
 		</div>
 	);

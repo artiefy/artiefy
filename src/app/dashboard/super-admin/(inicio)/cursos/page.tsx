@@ -18,7 +18,7 @@ import CourseListAdmin from './../../components/CourseListAdmin';
 
 type ExtendedCourseData = CourseData & {
   individualPrice?: number;
-  courseTypeId?: number;
+  courseTypeId?: number; // ✅
   isActive?: boolean;
 };
 
@@ -79,7 +79,7 @@ export default function Page() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const coursesPerPage = 6;
   // Estados globales para el formulario cuando CREAS un curso
-  const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
+  const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
 
@@ -215,7 +215,7 @@ export default function Page() {
     addParametros: boolean,
     coverImageKey: string,
     fileName: string,
-    courseTypeId: number | null,
+    courseTypeId: number[],
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
@@ -238,10 +238,14 @@ export default function Page() {
       nivelid: Number(nivelid),
       rating,
     });
-    if (courseTypeId === 4 && (!individualPrice || individualPrice <= 0)) {
+    if (
+      courseTypeId.includes(4) &&
+      (!individualPrice || individualPrice <= 0)
+    ) {
       toast.error('El precio individual es obligatorio y debe ser mayor a 0.');
       return;
     }
+
     if (!user) return;
     void fileName;
     void parametros;
@@ -312,6 +316,7 @@ export default function Page() {
           rating,
           instructor: instructorName,
         });
+        const instructorId = selectedEducator?.id ?? '';
         response = await fetch('/api/educadores/courses', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -324,7 +329,7 @@ export default function Page() {
             modalidadesid,
             nivelid,
             rating,
-            instructor: instructorName,
+            instructor: instructorId,
             subjects,
             courseTypeId, // <-- incluir si tu modelo lo soporta
             isActive,
@@ -333,7 +338,22 @@ export default function Page() {
         });
 
         if (response.ok) {
-          responseData = (await response.json()) as { id: number };
+          interface CreateCourseResponse { id?: number; course?: { id: number } }
+
+        const json: CreateCourseResponse = await response.json();
+        const courseId = json?.id ?? json?.course?.id;
+
+          if (!courseId || typeof courseId !== 'number') {
+            throw new Error('El backend no devolvió un ID válido del curso');
+          }
+
+          responseData = { id: courseId };
+
+          console.log('✅ Curso creado correctamente con ID:', responseData.id);
+        } else {
+          const errorJson = await response.json().catch(() => ({}));
+          console.error('❌ Error creando curso:', errorJson);
+          throw new Error('No se pudo crear el curso');
         }
       }
 
@@ -348,6 +368,12 @@ export default function Page() {
         if (addParametros) {
           for (const parametro of parametrosList) {
             try {
+              console.log(
+                '🧪 Enviando parámetro con courseId:',
+                responseData.id,
+                parametro
+              );
+
               const parametroResponse = await fetch(
                 '/api/educadores/parametros',
                 {
@@ -419,7 +445,7 @@ export default function Page() {
     });
 
     setParametrosList([]);
-    setCourseTypeId(null);
+    setCourseTypeId([]);
     setIsActive(true);
     setIndividualPrice(null);
     setIsModalOpen(true);
@@ -565,9 +591,12 @@ export default function Page() {
       {/* Course List with Loading Indicator */}
       <CourseListAdmin
         courses={displayedCourses}
-        onEditCourse={(course) =>
-          setEditingCourse(course as ExtendedCourseData)
-        }
+        onEditCourse={(course) => {
+          if (course) {
+            setEditingCourse(course as ExtendedCourseData);
+            setCourseTypeId(course.courseTypeId ? [course.courseTypeId] : []);
+          }
+        }}
         onDeleteCourse={(courseId) => {
           console.log(`Course with id ${courseId} deleted`);
         }}
@@ -643,17 +672,9 @@ export default function Page() {
             id: index,
           }))}
           setParametrosAction={setParametrosList}
-          courseTypeId={
-            editingCourse ? (editingCourse.courseTypeId ?? null) : courseTypeId
-          }
-          setCourseTypeId={(newTypeId: number | null) => {
-            if (editingCourse) {
-              setEditingCourse((prev) =>
-                prev ? { ...prev, courseTypeId: newTypeId ?? undefined } : null
-              );
-            } else {
-              setCourseTypeId(newTypeId);
-            }
+          courseTypeId={courseTypeId}
+          setCourseTypeId={(newTypeId: number[]) => {
+            setCourseTypeId(newTypeId);
           }}
           isActive={editingCourse ? (editingCourse.isActive ?? true) : isActive}
           setIsActive={(newActive: boolean) => {

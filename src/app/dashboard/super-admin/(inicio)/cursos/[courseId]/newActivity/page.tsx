@@ -1,8 +1,8 @@
 'use client';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
-import { useParams,useRouter, useSearchParams } from 'next/navigation'; // Cambiar la importación de useRouter
+import { useParams, useRouter, useSearchParams } from 'next/navigation'; // Cambiar la importación de useRouter
 
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -45,20 +45,6 @@ const getContrastYIQ = (hexcolor: string) => {
   return yiq >= 128 ? 'black' : 'white';
 };
 
-// Añádelo en la parte superior de tu archivo, junto a las demás interfaces:
-interface ActivityApiResponse {
-  id: number;
-  name: string;
-  description: string;
-  type?: { id: number } | null;
-  typeid?: number;
-  pesoNota?: number;
-  nota?: number;
-  parametroId?: number;
-  revisada?: boolean;
-  fechaMaximaEntrega?: string | null;
-}
-
 // Definir las interfaces de los datos
 interface Course {
   id: number;
@@ -75,6 +61,19 @@ interface Course {
   totalParametros: number;
 }
 
+interface ActivityDetailsAPI {
+  id: number;
+  name: string;
+  description: string;
+  type: { id: number; name: string; description: string } | null;
+  typeid?: number; // <-- si a veces viene así
+  revisada: boolean;
+  pesoNota?: number | null; // <-- hazlo opcional si a veces no viene
+  nota?: number | null; // <-- idem
+  parametroId?: number | null;
+  fechaMaximaEntrega?: string | null;
+}
+
 // Definir la interfaz de los parámetros
 interface Parametros {
   id: number;
@@ -86,6 +85,11 @@ interface Parametros {
   typeid: number;
   isUsed?: boolean;
 }
+
+interface LessonsResponse {
+  lessons: { id: number; name: string }[];
+}
+
 
 const Page: React.FC = () => {
   const { user } = useUser(); // Usar useUser de Clerk
@@ -120,9 +124,9 @@ const Page: React.FC = () => {
   const router = useRouter(); // Usar useRouter de next/navigation
 
   const [color, setColor] = useState<string>('#FFFFFF'); // Definir color
-  const [isActive, setIsActive] = useState(false); // Definir isActive
+  const [isActive, setIsActive] = useState(false);
+  const [showLongevidadForm, setShowLongevidadForm] = useState(false);
   const [fechaMaxima, setFechaMaxima] = useState(false); // Definir fechaMaxima
-  const [showLongevidadForm, setShowLongevidadForm] = useState(false); // Definir showLongevidadForm
   const [parametros, setParametros] = useState<Parametros[]>([]); // Definir setParametros
   const [porcentajeDisponible, setPorcentajeDisponible] = useState<
     number | null
@@ -134,72 +138,119 @@ const Page: React.FC = () => {
 
   const [loadingActivity, setLoadingActivity] = useState(isEditing);
 
+  const [lessons, setLessons] = useState<{ id: number; name: string }[]>([]);
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(
+    lessonIdNumber ?? null
+  );
+
   useEffect(() => {
-    if (!isEditing || !activityId) return;
+    const fetchLessons = async () => {
+      try {
+        const res = await fetch(
+          `/api/super-admin/courses/lessonsCourse?courseId=${courseIdNumber}`
+        );
+  const data = (await res.json()) as LessonsResponse;
+  setLessons(Array.isArray(data.lessons) ? data.lessons : []);
+      } catch (err) {
+        console.error('❌ Error al cargar clases:', err);
+        setLessons([]); // fallback seguro
+        toast('Error', { description: 'No se pudieron cargar las clases' });
+      }
+    };
+    if (courseIdNumber) fetchLessons();
+  }, [courseIdNumber]);
+
+  useEffect(() => {
+    console.log('🔍 Entró al useEffect de cargar actividad');
+    console.log(' - isEditing:', isEditing);
+    console.log(' - activityId:', activityId);
+
+    if (!isEditing || !activityId) {
+      console.log('✅ Es una creación nueva, no carga datos previos');
+      return;
+    }
+
+    console.log('🚀 Iniciando carga de datos para edición');
     setLoadingActivity(true);
 
-    console.log(
-      '▶ Iniciando carga de actividad. isEditing:',
-      isEditing,
-      'activityId:',
-      activityId
-    );
-
-    // …dentro de tu useEffect, reemplaza todo desde fetch hasta el segundo .then() por esto:
     fetch(`/api/educadores/actividades/${activityId}`)
-      .then((res) => {
+      .then((res): Promise<ActivityDetailsAPI> => {
+        console.log(
+          `▶ Respuesta del servidor: ${res.status} ${res.statusText}`
+        );
         if (!res.ok) throw new Error(res.statusText);
-        // Aquí tipamos el JSON con nuestra interfaz
-        return res.json() as Promise<ActivityApiResponse>;
+        return res.json();
       })
-      .then((data: ActivityApiResponse) => {
-        // desestructuramos CON TIPADO y valores por defecto
-        const {
-          id: fetchedId,
-          name: fetchedName,
-          description: fetchedDescription,
-          type,
-          typeid = 0,
-          pesoNota,
-          nota,
-          parametroId: rawParametroId = 0,
-          revisada = false,
-          fechaMaximaEntrega = null,
-        } = data;
+      .then((data: ActivityDetailsAPI) => {
+        console.log('✅ Datos recibidos de la actividad:', data);
+        console.log(
+          '   parametroId:',
+          data.parametroId,
+          '| pesoNota:',
+          data.pesoNota,
+          '| revisada:',
+          data.revisada,
+          '| fechaMaximaEntrega:',
+          data.fechaMaximaEntrega
+        );
 
-        // calculamos los valores correctos sin any
-        const tipoId = type?.id ?? typeid;
-        const pesoValor = pesoNota ?? nota ?? 0;
-        const parametroId = rawParametroId;
+        const tipoId = data.type?.id ?? data.typeid;
+        const pesoValor = Number(data.pesoNota ?? data.nota ?? 0);
+        const parametroId = data.parametroId ?? 0;
 
-        // seteamos el formulario usando variables tipadas
         setFormData({
-          id: fetchedId,
-          name: fetchedName,
-          description: fetchedDescription,
-          type: tipoId.toString(),
+          id: data.id,
+          name: data.name,
+          description: data.description,
+          type: String(tipoId),
           porcentaje: pesoValor,
-          revisada: revisada,
+          revisada: data.revisada,
           parametro: parametroId,
-          fechaMaximaEntrega: fechaMaximaEntrega,
+          fechaMaximaEntrega: data.fechaMaximaEntrega ?? null,
         });
 
-        // toggles y sección de parámetro
-        setIsActive(revisada);
-        setFechaMaxima(fechaMaximaEntrega !== null);
-        setShowLongevidadForm(revisada && parametroId > 0);
+        console.log('⏩ Estado tras setFormData:');
+        console.log({
+          id: data.id,
+          name: data.name,
+          description: data.description,
+          type: String(tipoId),
+          porcentaje: pesoValor,
+          revisada: data.revisada,
+          parametro: parametroId,
+          fechaMaximaEntrega: data.fechaMaximaEntrega ?? null,
+        });
 
-        // precargar % disponible (100 – peso asignado)
+        if (data.revisada || parametroId > 0) {
+          console.log(
+            '⚙️ Actividad revisada o con parámetro, activando toggle'
+          );
+          setIsActive(true);
+          setShowLongevidadForm(true);
+        } else {
+          console.log(
+            '🛑 Actividad NO revisada ni con parámetro, desactivando toggle'
+          );
+          setIsActive(false);
+          setShowLongevidadForm(false);
+        }
+
+        setFechaMaxima(!!data.fechaMaximaEntrega);
+        console.log('📅 Fecha máxima toggle:', !!data.fechaMaximaEntrega);
+
         if (parametroId > 0) {
           setPorcentajeDisponible(100 - pesoValor);
+          console.log('📊 Porcentaje disponible calculado:', 100 - pesoValor);
         }
       })
-      .catch((error: unknown) => {
-        console.error('❌ Error al cargar la actividad:', error);
-        const message = error instanceof Error ? error.message : String(error);
+      .catch((err: unknown) => {
+        console.error('❌ Error al cargar la actividad:', err);
+        const message =
+          err instanceof Error ? err.message : 'Error desconocido';
         toast('Error', { description: `No se pudo cargar: ${message}` });
       })
       .finally(() => {
+        console.log('🏁 Finalizó proceso de carga del activity');
         setLoadingActivity(false);
       });
   }, [isEditing, activityId]);
@@ -244,11 +295,14 @@ const Page: React.FC = () => {
         }));
 
         setParametros(parametrosActualizados);
-      } catch (error) {
-        console.error('Error:', error);
-        toast('Error', {
-          description: 'Error al cargar los parámetros',
-        });
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error('❌ Error al cargar los parámetros:', error);
+          toast('Error', { description: error.message });
+        } else {
+          console.error('❌ Error al cargar los parámetros (no Error):', error);
+          toast('Error', { description: 'Error al cargar los parámetros' });
+        }
       }
     };
 
@@ -293,6 +347,45 @@ const Page: React.FC = () => {
     };
     void fetchCourse();
   }, [user, courseIdNumber]);
+  useEffect(() => {
+    if (!isEditing && searchParams) {
+      const parametroIdFromUrl = searchParams.get('parametroId');
+      if (parametroIdFromUrl) {
+        const idNumber = parseInt(parametroIdFromUrl, 10);
+        console.log('🚀 Nueva actividad con parametroId desde URL:', idNumber);
+
+        setIsActive(true);
+        setShowLongevidadForm(true);
+
+        setFormData((prev) => ({
+          ...prev,
+          revisada: true,
+          parametro: idNumber,
+        }));
+
+        // Fetch porcentaje disponible para ese parametro
+        fetch('/api/educadores/actividades/actividadesByLesson', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ parametroId: idNumber, porcentaje: 0 }),
+        })
+          .then((res) => res.json())
+          .then((data: { totalActual: number; disponible: number }) => {
+            console.log('📊 % disponible para parametro:', data);
+            setPorcentajeDisponible(data.disponible);
+            toast('Porcentaje disponible', {
+              description: `Ya usado: ${data.totalActual}%, Disponible: ${data.disponible}%`,
+            });
+          })
+          .catch((err) => {
+            console.error('❌ Error al obtener %:', err);
+            toast('Error', {
+              description: 'No se pudo obtener el porcentaje disponible',
+            });
+          });
+      }
+    }
+  }, [isEditing, searchParams]);
 
   // Función para manejar el cambio de color y guardarlo
   const handleToggle = () => {
@@ -365,19 +458,22 @@ const Page: React.FC = () => {
       // Mostrar información detallada
       toast('Información del parámetro', {
         description: `
-					Porcentaje total actual: ${data.totalActual}%
-					Porcentaje disponible: ${data.disponible}%
-					${data.detalles?.length ? '\nActividades asignadas:' : ''}
-					${data.detalles?.map((act) => `\n- ${act.name}: ${act.porcentaje}%`).join('') ?? ''}
-				`,
+            Porcentaje total actual: ${data.totalActual}%
+            Porcentaje disponible: ${data.disponible}%
+            ${data.detalles?.length ? '\nActividades asignadas:' : ''}
+            ${data.detalles?.map((act) => `\n- ${act.name}: ${act.porcentaje}%`).join('') ?? ''}
+          `,
       });
 
       return nuevoPorcentaje <= data.disponible;
-    } catch (error) {
-      console.error('Error al validar porcentaje:', error);
-      toast('Error', {
-        description: 'Error al validar el porcentaje',
-      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('❌ Error al validar porcentaje:', error);
+        toast('Error', { description: error.message });
+      } else {
+        console.error('❌ Error al validar porcentaje (no Error):', error);
+        toast('Error', { description: 'Error al validar el porcentaje' });
+      }
       return false;
     }
   };
@@ -516,7 +612,7 @@ const Page: React.FC = () => {
           name: formData.name,
           description: formData.description,
           typeid: parseInt(formData.type, 10),
-          lessonsId: lessonsId ? parseInt(lessonsId, 10) : 0,
+          lessonsId: selectedLessonId ?? 0,
           revisada: formData.revisada,
           parametroId: formData.parametro || null,
           porcentaje: formData.revisada ? formData.porcentaje || 0 : 0,
@@ -542,14 +638,12 @@ const Page: React.FC = () => {
       });
 
       router.push(
-        `/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
+        `/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
       );
-    } catch (error) {
-      console.error('Error detallado:', error);
-      toast('Error', {
-        description:
-          error instanceof Error ? error.message : 'Error desconocido',
-      });
+    } catch (err: unknown) {
+      console.error('Error detallado:', err);
+      const message = err instanceof Error ? err.message : 'Error desconocido';
+      toast('Error', { description: message });
     } finally {
       setIsUploading(false);
     }
@@ -581,7 +675,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href="/dashboard/educadores"
+              href="/dashboard/super-admin"
             >
               Inicio
             </BreadcrumbLink>
@@ -590,7 +684,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href="/dashboard/educadores/cursos"
+              href="/dashboard/super-admin/cursos"
             >
               Lista de cursos
             </BreadcrumbLink>
@@ -599,7 +693,7 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-primary hover:text-gray-300"
-              href={`/dashboard/educadores/cursos/${courseIdNumber}`}
+              href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
             >
               Detalles curso
             </BreadcrumbLink>
@@ -650,6 +744,32 @@ const Page: React.FC = () => {
                   <p className="text-sm">Del curso: {course?.title}</p>
                 </h2>
               </div>
+              <div className="my-4">
+                <Label
+                  className={`mb-2 text-xl ${
+                    color === '#FFFFFF' ? 'text-black' : 'text-white'
+                  }`}
+                >
+                  Clase / lección del curso
+                </Label>
+                <select
+                  className="w-full rounded-lg border p-2 outline-none"
+                  value={selectedLessonId ?? ''}
+                  onChange={(e) =>
+                    setSelectedLessonId(parseInt(e.target.value, 10))
+                  }
+                >
+                  <option value="" disabled>
+                    Selecciona una clase
+                  </option>
+                  {(Array.isArray(lessons) ? lessons : []).map((lesson) => (
+                    <option key={lesson.id} value={lesson.id}>
+                      {lesson.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2">
                 {/* ───── Columna «Calificable» ───── */}
                 <div className="flex flex-col">

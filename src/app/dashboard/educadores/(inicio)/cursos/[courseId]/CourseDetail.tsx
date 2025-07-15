@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
-import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +26,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
+import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
   Breadcrumb,
@@ -56,6 +56,7 @@ interface Course {
   instructorName: string;
   coverVideoCourseKey?: string;
   individualPrice?: number | null;
+  courseTypes?: { id: number; name: string }[]; // <== añades esto
 }
 interface Materia {
   id: number;
@@ -95,47 +96,47 @@ const getContrastYIQ = (hexcolor: string) => {
 
 // Add this CSS block at the top of the file after imports:
 const styles = `
-	.svg-frame {
-		position: relative;
-		width: 300px;
-		height: 300px;
-		transform-style: preserve-3d;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
+    .svg-frame {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      transform-style: preserve-3d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-	.svg-frame svg {
-		position: absolute;
-		transition: .5s;
-		z-index: calc(1 - (0.2 * var(--j)));
-		transform-origin: center;
-		width: 344px;
-		height: 344px;
-		fill: none;
-	}
+    .svg-frame svg {
+      position: absolute;
+      transition: .5s;
+      z-index: calc(1 - (0.2 * var(--j)));
+      transform-origin: center;
+      width: 344px;
+      height: 344px;
+      fill: none;
+    }
 
-	.svg-frame:hover svg {
-		transform: rotate(-80deg) skew(30deg) translateX(calc(45px * var(--i))) translateY(calc(-35px * var(--i)));
-	}
+    .svg-frame:hover svg {
+      transform: rotate(-80deg) skew(30deg) translateX(calc(45px * var(--i))) translateY(calc(-35px * var(--i)));
+    }
 
-	#out2 {
-		animation: rotate16 7s ease-in-out infinite alternate;
-		transform-origin: center;
-	}
+    #out2 {
+      animation: rotate16 7s ease-in-out infinite alternate;
+      transform-origin: center;
+    }
 
-	#out3 {
-		animation: rotate16 3s ease-in-out infinite alternate;
-		transform-origin: center;
-		stroke: #ff0;
-	}
+    #out3 {
+      animation: rotate16 3s ease-in-out infinite alternate;
+      transform-origin: center;
+      stroke: #ff0;
+    }
 
-	@keyframes rotate16 {
-		to {
-		transform: rotate(360deg);
-		}
-	}
-	`;
+    @keyframes rotate16 {
+      to {
+      transform: rotate(360deg);
+      }
+    }
+    `;
 
 // Replace the stylesheet append code
 if (typeof document !== 'undefined') {
@@ -173,7 +174,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
   const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores específicos
   const [materias, setMaterias] = useState<Materia[]>([]);
-  const [courseTypeId, setCourseTypeId] = useState<number | null>(null);
+  const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<
     string | null
   >(null);
@@ -252,7 +253,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         if (response.ok && responseParametros.ok) {
           const data = (await response.json()) as Course;
           setCourse(data);
-          setCourseTypeId(data.courseTypeId ?? null);
+          setCourseTypeId(
+            Array.isArray(data.courseTypes)
+              ? data.courseTypes.map((type) => type.id)
+              : data.courseTypeId !== null && data.courseTypeId !== undefined
+                ? [data.courseTypeId]
+                : []
+          );
           setIndividualPrice(data.individualPrice ?? null);
           setCurrentInstructor(data.instructor); // Set current instructor when course loads
           setSelectedInstructor(data.instructor); // Set selected instructor when course loads
@@ -334,7 +341,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     addParametros: boolean,
     coverImageKey: string,
     fileName: string,
-    courseTypeId: number | null,
+    courseTypeId: number[],
     isActive: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
@@ -345,7 +352,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       description: string;
       porcentaje: number;
     }[],
-    courseTypeName?: string
+    courseTypeName?: string // Add the new argument, optional if not always present
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -355,7 +362,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       if (addParametros) {
         console.log('Se agregarán parámetros adicionales');
       }
-      void courseTypeName; // Use void operator to explicitly ignore the promise
 
       // Si viene un nuevo archivo, subimos el archivo
       if (file) {
@@ -369,6 +375,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             fileName: file.name,
           }),
         });
+        void courseTypeName; // Use void operator to explicitly ignore the promise
 
         if (!uploadResponse.ok) {
           throw new Error('Error al generar URL de carga');
@@ -433,6 +440,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           body: JSON.stringify(payload),
         }
       );
+
       if (addParametros && parametros.length) {
         console.log('📝 Se actualizarán o crearán parámetros...');
 
@@ -538,7 +546,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       }))
     );
     setEditRating(course.rating);
-    setCourseTypeId(course.courseTypeId ?? null);
+    setCourseTypeId(
+      Array.isArray(course.courseTypes)
+        ? course.courseTypes.map((type) => type.id)
+        : course.courseTypeId !== null && course.courseTypeId !== undefined
+          ? [course.courseTypeId]
+          : []
+    );
     setIsActive(course.isActive ?? true);
     setCurrentInstructor(course.instructor);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
@@ -596,7 +610,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       toast('Curso eliminado', {
         description: 'El curso se ha eliminado con éxito.',
       });
-      router.push('/dashboard/educadores/cursos');
+      router.push('/dashboard/super-admin/cursos');
     } catch (error) {
       console.error('Error:', error);
       toast('Error', {
@@ -959,14 +973,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
                     }`}
                   >
-                    Tipo de curso:
+                    Tipos de curso:
                   </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
-                  >
-                    {course.courseTypeName ?? 'No especificado'}
-                  </Badge>
+                  {course.courseTypes && course.courseTypes.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {course.courseTypes.map((type) => (
+                        <Badge
+                          key={type.id}
+                          variant="outline"
+                          className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                        >
+                          {type.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    >
+                      No especificado
+                    </Badge>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1057,7 +1085,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             id,
             title,
             description,
-            file, // ✅ ahora solo enviamos file (imagen/video combinado)
+            file,
             categoryid,
             modalidadesid,
             nivelid,

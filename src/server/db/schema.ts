@@ -11,7 +11,7 @@ import {
   text,
   timestamp,
   unique,
-  varchar,
+  varchar
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
