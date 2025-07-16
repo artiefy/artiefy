@@ -39,7 +39,7 @@ const rawTicketSchema = z.array(
     assigned_to_id: z.string().optional(),
     creator_name: z.string().optional(),
     creator_email: z.string().optional(),
-    comments: z.string().optional(),
+    comments: z.string().nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
     time_elapsed_ms: z.number(),
