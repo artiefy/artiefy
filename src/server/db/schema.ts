@@ -11,7 +11,7 @@ import {
   text,
   timestamp,
   unique,
-  varchar
+  varchar,
 } from 'drizzle-orm/pg-core';
 
 // Tabla de usuarios (con soporte para Clerk)
@@ -94,6 +94,8 @@ export const courses = pgTable('courses', {
   individualPrice: integer('individual_price'),
   requiresProgram: boolean('requires_program').default(false),
   isActive: boolean('is_active').default(true),
+  is_top: boolean('is_top').default(false),
+  is_featured: boolean('is_featured').default(false),
 });
 
 // Tabla de tipos de actividades
