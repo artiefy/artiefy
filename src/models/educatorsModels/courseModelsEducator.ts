@@ -514,6 +514,46 @@ export async function updateMateria(
         );
       }
     }
+    // ✅ Clonar la materia a todos los programas donde ya existe, si no está aún en el nuevo curso
+const programasConEsaMateria = await db
+  .selectDistinct({ programaId: materias.programaId })
+  .from(materias)
+  .where(
+    and(
+      eq(materias.title, existingMateria.title),
+      isNotNull(materias.programaId)
+    )
+  );
+
+for (const { programaId } of programasConEsaMateria) {
+  if (!programaId) continue;
+
+  const yaExisteEnCurso = await db
+    .select()
+    .from(materias)
+    .where(
+      and(
+        eq(materias.title, existingMateria.title),
+        eq(materias.programaId, programaId),
+        eq(materias.courseid, data.courseid)
+      )
+    )
+    .then((r) => r.length > 0);
+
+  if (!yaExisteEnCurso) {
+    await db.insert(materias).values({
+      title: existingMateria.title,
+      description: existingMateria.description ?? '',
+      programaId,
+      courseid: data.courseid,
+    });
+
+    console.log(
+      `📚 Materia '${existingMateria.title}' clonada para programaId ${programaId} y courseId ${data.courseid}`
+    );
+  }
+}
+
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.error('❌ Error al procesar materia:', error.message);
