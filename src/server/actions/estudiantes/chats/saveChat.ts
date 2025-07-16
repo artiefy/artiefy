@@ -27,7 +27,19 @@ export async function getOrCreateConversation({
     .limit(1)
     .then((rows) => rows[0]);
 
+  
   if (existing) return existing;
+
+  const byId = await db
+    .select()
+    .from(conversations)
+    .where(eq(conversations.id, cursoId))
+    .limit(1)
+    .then((rows) => rows[0]);
+
+  if( byId ) return byId;
+
+  
 
   // Si no existe, crearla
   const [created] = await db

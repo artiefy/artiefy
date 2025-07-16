@@ -13,7 +13,7 @@ import {getConversationByUserId} from '~/server/actions/estudiantes/chats/saveCh
 import React, { useEffect, useState } from "react";
 
 interface ChatListProps {
-    setChatMode: (mode: { idChat: number | null; status: boolean }) => void
+    setChatMode: React.Dispatch<React.SetStateAction<{ idChat: number | null; status: boolean; curso_title: string }>>;
     setShowChatList: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -22,9 +22,6 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
     const [chats, setChats] = useState<{ id: number; title: string; curso_id: number }[]>([]);
     const { user } = useUser();
     
-
-    console.log('User id:', user?.id);
-
     useEffect(() => {
         
         if (!user || !user.id) return;
@@ -81,8 +78,10 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
         
     }, [user]);
 
+    
 
     return (
+        <>
         <div className="w-full bg-white border-r border-gray-200 h-full flex flex-col">
             <div className="p-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-800 text-center">Chats Recientes</h2>
@@ -90,9 +89,10 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
             
             <ul className="flex-1 overflow-y-auto max-h-[calc(4*110px)] pr-2">
                 {chats.map((chat) => (
+                    
                     <li key={chat.id}>
                         <Button
-                            onClick={() => { chat.curso_id ? setChatMode({idChat: chat.curso_id, status: true}) : window.dispatchEvent(new CustomEvent('support-open-chat', { detail: chat })); }}
+                            onClick={() => { chat.curso_id ? setChatMode({idChat: chat.curso_id, status: true, curso_title: chat.title}) : window.dispatchEvent(new CustomEvent('support-open-chat', { detail: chat }));  }}
                             className="w-full px-4 py-3 bg-gray-50 border-b border-gray-100 text-left transition-transform duration-200 ease-in-out hover:scale-[1.02]"
 
                         >
@@ -213,5 +213,10 @@ export const ChatList = ({ setChatMode, setShowChatList }: ChatListProps) => {
             </li>
             
         </ul>
+
+        
+        
     </div>
+    
+    </>
 )};

@@ -27,7 +27,7 @@ interface ChatProps {
         idChat: number | null;
         status: boolean;
     };
-    setChatMode: React.Dispatch<React.SetStateAction<{ idChat: number | null; status: boolean }>>;
+    setChatMode: React.Dispatch<React.SetStateAction<{ idChat: number | null; status: boolean; curso_title: string }>>;
     setShowChatList: React.Dispatch<React.SetStateAction<boolean>>;
     inputText: string;
     setInputText: (text: string) => void;
@@ -44,8 +44,6 @@ interface ChatProps {
 }
 
 export const ChatMessages: React.FC<ChatProps> = ({
-    idea,
-    setIdea,
     setShowChatList,
     courseId,
     courseTitle,
@@ -72,10 +70,12 @@ export const ChatMessages: React.FC<ChatProps> = ({
 }) => {
 
     const [conversation] = useState<{ id: number }>({ id: (chatMode.idChat ?? courseId ?? 0) });
-    console.log('Chat mode:', chatMode);
+    
 
-    setShowChatList(false);
-
+    useEffect(() => {
+        setShowChatList(false);
+    }, []);
+    
     function handleBotButtonClick(action: string) {
     switch (action) {
         case 'show_toc':
@@ -100,10 +100,11 @@ export const ChatMessages: React.FC<ChatProps> = ({
         console.log('Acción no reconocida:', action);
     }
     }
+    
 
     useEffect(() => {
-        console.log(conversation);
-        console.log('Problems');
+        console.log('La conversación: ' + conversation);
+        
         if (!conversation) return;
 
         const fetchMessages = async () => {
@@ -130,11 +131,14 @@ export const ChatMessages: React.FC<ChatProps> = ({
                         id: -1,
                         text: isEnrolled == true ?  '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, Bienvenid@ al curso ' + courseTitle + ' , Si tienes alguna duda sobre el curso u otra, ¡Puedes hacermela! 😎' : '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
                         sender: 'bot',
+                        /* DOCUMENTADO POR SI ME PIDE VOLVERLO A PONER
                         buttons: [
                         { label: '📚 Crear Proyecto', action: 'new_project' },
                         { label: '💬 Nueva Idea', action: 'new_idea' },
                         { label: '🛠 Soporte Técnico', action: 'contact_support' },
+                         
                         ],
+                        */
                     };
 
                     const alreadyHasBot = loadedMessages.some(msg => msg.sender === 'bot' && msg.text === botMessage.text);
@@ -166,7 +170,8 @@ export const ChatMessages: React.FC<ChatProps> = ({
 
                             setChatMode({
                                 idChat: courseId,
-                                status: true
+                                status: true,
+                                curso_title: ''
                             });
                         }
                     }else{
@@ -185,7 +190,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
     }, [conversation]);
 
 
-    console.log('Mensaje', messages);
+    
     return (
         <>
             {/* Messages */}
@@ -227,6 +232,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                             >
                                 {renderMessage(message, idx)}
                                 {/* Renderizar botones si existen */}
+                                
                                 {message.sender === 'bot' && message.buttons && (
                                     <div className="mt-3 flex flex-wrap gap-2">
                                     {message.buttons.map((btn, index) => (
@@ -240,6 +246,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                                     ))}
                                     </div>
                                 )}
+                                
                             </div>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 'use client';
-
+import { useExtras } from '~/app/estudiantes/StudentContext';
 import { useState, useRef, useEffect } from 'react';
 
 import { useRouter } from 'next/navigation';
@@ -14,7 +14,13 @@ import { SaveTicketMessage } from '~/server/actions/estudiantes/chats/suportChat
 
 import '~/styles/ticketSupportButton.css';
 
+
+
 const TicketSupportChatbot = () => {
+	const { showExtras } = useExtras();
+
+	const [isDesktop, setIsDesktop] = useState(false);
+
 	const [isOpen, setIsOpen] = useState(false);
 	const [messages, setMessages] = useState([
 		{ id: 1, text: '¡Hola! ¿En qué puedo ayudarte?', sender: 'support' },
@@ -27,6 +33,16 @@ const TicketSupportChatbot = () => {
 	const { isSignedIn } = useAuth();
 	const { user } = useUser();
 	const router = useRouter();
+
+	useEffect(() => {
+			// Solo se ejecuta en el cliente
+			setIsDesktop(window.innerWidth > 768);
+		
+			// Si quieres que se actualice al redimensionar:
+			const handleResize = () => setIsDesktop(window.innerWidth > 768);
+			window.addEventListener('resize', handleResize);
+			return () => window.removeEventListener('resize', handleResize);
+	}, []);
 
 	useEffect(() => {
 		if (isOpen && inputRef.current) {
@@ -47,8 +63,7 @@ const TicketSupportChatbot = () => {
                 if (e.detail !== null || user?.id) {
 					
 					const ticketData = await getTicketWithMessages(e.detail.id, user?.id);
-					// Suponiendo que ticketData.ticket es un solo objeto de ticket, no un array de mensajes
-					// Debes adaptar esto si tu backend retorna los mensajes en otra propiedad
+				
 					if (ticketData && ticketData.ticket) {
 						// Si tienes un array de mensajes, usa ese array aquí
 						// Aquí se asume que los mensajes están en ticketData.ticket.messages
@@ -197,11 +212,13 @@ const TicketSupportChatbot = () => {
 		}, 300);
 	};
 
+	if (!showExtras && isDesktop) return null; // Solo se muestra si showExtras es true
+
 	return (
 		<>
 			{!hideButton && (
 				<>
-					<div className="fixed bottom-24 sm:bottom-36 right-25 sm:right-10 translate-x-1/2 sm:translate-x-0 z-50">
+					<div className="fixed bottom-24 sm:bottom-40 right-25 sm:right-10 translate-x-1/2 sm:translate-x-0 z-50">
 					<button
 						onClick={handleClick}
 						className={`relative px-5 py-2 rounded-full border border-blue-400 text-white bg-gradient-to-r from-blue-500 to-cyan-600 

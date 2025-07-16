@@ -9,9 +9,13 @@ const config = {
 		'./src/**/*.{js,ts,jsx,tsx,mdx}',
 	],
 	theme: {
-		extend: {},
+		extend: {
+			
+		}
 	},
 	plugins: [],
 };
+
+
 
 export default config;

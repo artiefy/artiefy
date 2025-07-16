@@ -11,7 +11,6 @@ import { ArrowRightCircleIcon } from '@heroicons/react/24/solid';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoMdClose } from 'react-icons/io';
 import { GoArrowLeft } from "react-icons/go";
-import { BiMessageAltAdd } from "react-icons/bi";
 import { ResizableBox } from 'react-resizable';
 import { toast } from 'sonner';
 import { usePathname } from 'next/navigation';
@@ -26,6 +25,12 @@ import { ChatList } from './StudentChatList';
 import { ChatMessages } from './StudentChat';
 
 import { saveMessages } from '~/server/actions/estudiantes/chats/saveMessages';
+
+import { getOrCreateConversation, getConversationWithMessages } from '~/server/actions/estudiantes/chats/saveChat';
+
+import { MessageCircle, Zap } from "lucide-react"
+
+import { useExtras } from '~/app/estudiantes/StudentContext';
 
 
 interface StudentChatbotProps {
@@ -57,6 +62,18 @@ interface Curso {
 	title: string;
 }
 
+// Añade la interfaz para los botones y actualiza el tipo de mensaje
+interface ChatButton {
+	label: string;
+	action: string;
+}
+interface ChatMessage {
+	id: number;
+	text: string;
+	sender: string;
+	buttons?: ChatButton[];
+}
+
 const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	className,
 	initialSearchQuery = '',
@@ -68,9 +85,17 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	isEnrolled, // Añadido para manejar el estado de inscripción
 }) => {
 	const [isOpen, setIsOpen] = useState(showChat);
-	const [messages, setMessages] = useState([
-		{ id: Date.now(), text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎', sender: 'bot' }
-	]);
+	const [isDesktop, setIsDesktop] = useState(false);
+	const [messages, setMessages] = useState<ChatMessage[]>(
+		[
+			{ id: Date.now(), text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎', sender: 'bot',
+                        buttons: [
+                        { label: '📚 Crear Proyecto', action: 'new_project' },
+                        { label: '💬 Nueva Idea', action: 'new_idea' },
+                        { label: '🛠 Soporte Técnico', action: 'contact_support' },
+                        ] }
+		]
+	);
 	const [inputText, setInputText] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [processingQuery, setProcessingQuery] = useState(false);
@@ -90,7 +115,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	const initialSearchDone = useRef(false);
 
 	// Pruebas para varios chats
-	const [chatMode, setChatMode] = useState<{ idChat: number | null; status: boolean }>({ idChat: null, status: true });
+	const [chatMode, setChatMode] = useState<{ idChat: number | null; status: boolean; curso_title: string }>({ idChat: null, status: true, curso_title: '' });
 
 	// Saber si el chatlist esta abierto
 
@@ -103,7 +128,22 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		idea: '',
 	})
 
+	const [isHovered, setIsHovered] = useState(false)
+  	const [isActive, setIsActive] = useState(false)
+
+	const { show } = useExtras();
+
 	const ideaRef = useRef(idea);
+
+	useEffect(() => {
+			// Solo se ejecuta en el cliente
+			setIsDesktop(window.innerWidth > 768);
+		
+			// Si quieres que se actualice al redimensionar:
+			const handleResize = () => setIsDesktop(window.innerWidth > 768);
+			window.addEventListener('resize', handleResize);
+			return () => window.removeEventListener('resize', handleResize);
+	}, []);
 
 	useEffect(() => {
 		ideaRef.current = idea;
@@ -126,14 +166,87 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		chatModeRef.current = chatMode;
 	}, [chatMode]);
 
+	
+
+
 	const pathname = usePathname();
 	const isChatPage = pathname === '/'
+
+	const newChatMessage = () => {
+
+		setChatMode({ idChat: null, status: true, curso_title: '' });
+		setShowChatList(false);
+		setMessages([
+			{
+				id: Date.now(),
+				text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+				sender: 'bot',
+				buttons: [
+					{ label: '📚 Crear Proyecto', action: 'new_project' },
+					{ label: '💬 Nueva Idea', action: 'new_idea' },
+					{ label: '🛠 Soporte Técnico', action: 'contact_support' },
+				],
+			},
+		]);
+
+		setInputText('');
+		setIsOpen(true);
+		initialSearchDone.current = false;
+		setProcessingQuery(false);
+		onSearchComplete?.();
+		if (inputRef.current) {
+			inputRef.current.focus();
+		}
+
+		console.log('Nuevo mensaje de chat creado');
+		if (ideaRef.current.selected) {
+			// Si se está esperando una idea, se guarda el mensaje del usuario como idea
+			setIdea({ selected: false, idea: '' });
+		}
+
+		if (chatContainerRef.current) {
+			chatContainerRef.current.scrollTop = 0; // Resetea el scroll al inicio
+		}
+
+		console.log('Nuevo mensaje de chat creado con ref', chatModeRef.current.idChat);
+		console.log('Nuevo mensaje de chat creado chatId', chatMode.idChat);
+
+
+		// Parseo fe fecha para el título del chat
+
+		const timestamp = Date.now();
+		const fecha = new Date(timestamp);
+
+		const dia = String(fecha.getDate()).padStart(2, '0');
+		const mes = String(fecha.getMonth() + 1).padStart(2, '0'); // ¡Ojo! Los meses van de 0 a 11
+		const anio = fecha.getFullYear();
+
+		const hora = String(fecha.getHours()).padStart(2, '0');
+		const minuto = String(fecha.getMinutes()).padStart(2, '0');
+
+		const resultado = `${dia}-${mes}-${anio} ${hora}:${minuto}`;
+
+		// Función para crear el nuevo chat en la base de datos
+
+
+
+		getOrCreateConversation({
+			senderId: user?.id ?? '',
+			cursoId: courseId ?? + Math.round((Math.random() * 100) + 1), // Genera un ID único si no hay cursoId
+			title: courseTitle ?? 'Nuevo Chat ' + resultado,
+		}).then((response) => {
+			console.log('Nuevo chat creado con ID:', response.id);
+			setChatMode({ idChat: response.id, status: true, curso_title: '' });
+		}).catch((error) => {
+			console.error('Error creando nuevo chat:', error)
+		});
+
+	}
 
 
 	const saveBotMessage = (trimmedInput: string) => {
 		const currentChatId = chatModeRef.current.idChat;
-		console.log('Mensaje bot prueba con ref' + chatModeRef.current.idChat);
-		console.log('Mensaje bot prueba chatId' + chatMode.idChat);
+		
 		if (currentChatId) {
 			console.log('Guardando mensaje del bot:', trimmedInput, 'en chat ID:', currentChatId);
 			void saveMessages(
@@ -147,8 +260,6 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 					},
 				]
 			);
-		} else {
-			console.log('No está entrando al chat ', currentChatId);
 		}
 	};
 
@@ -158,18 +269,46 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 			if (processingQuery || searchRequestInProgress.current) return;
 
-
+			let booleanVar = false;
 
 			searchRequestInProgress.current = true;
 			setProcessingQuery(true);
 			setIsLoading(true);
+			
+			const modoActual = chatModeRef.current;
+			const courseTitle = modoActual.curso_title;
 
-		
+			if(courseTitle.includes('Nuevo Chat')) {
+				console.log('Ingreso al titlenewChat');
+				booleanVar = true;
+			}
 
 			// Url para la petición según si hay courseTitle
-			const urlDefault = { url: 'http://3.131.99.140:5000/root_courses', body: { prompt: query } };
-			const urlCourses = { url: 'http://3.131.99.140:5000/root_courses', body: { user_id: user?.id, curso: courseTitle, user_message: query } };
-			const fetchConfig = courseTitle ? urlCourses : urlDefault;
+			const urlDefault = { url: 'http://18.191.230.0:5000/root_courses', body: { prompt: query } };
+			const urlCourses = { url: 'http://18.191.230.0:5000/get_classes', body: { user_id: user?.id, curso: courseTitle ? courseTitle: chatMode.curso_title, prompt: query } };
+
+			console.log('Titulo del chat de curso: ' + courseTitle);
+			let fetchConfig;
+
+			console.log('booleanVar:', booleanVar);
+
+			if(courseTitle && !booleanVar){
+				fetchConfig = urlCourses;
+			}else if(booleanVar){
+				fetchConfig = urlDefault;
+			}
+
+			if (fetchConfig) {
+				console.log('Fetching URL:', fetchConfig.url);
+				console.log('Fetching body:', fetchConfig.body);
+			} else {
+				console.error('fetchConfig is undefined. Cannot proceed with fetch.');
+				setIsLoading(false);
+				setProcessingQuery(false);
+				searchRequestInProgress.current = false;
+				onSearchComplete?.();
+				return;
+			}
 
 			try {
 				const result = await fetch(fetchConfig.url, {
@@ -184,24 +323,54 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 				console.log('respuesta del bot:', data.result);
 
-				const cursos: Curso[] = data.result;
+				
 
-				const cursosTexto = cursos
-					.map((curso, index) => `${index + 1}. ${curso.title} | ${curso.id}`)
-					.join('\n\n');
+				if (Array.isArray(data.result)) {
+					
+					const cursos: Curso[] = data.result;
 
-				const introText = cursosTexto.length !== 0 ? 'Aquí tienes algunos cursos recomendados:': 'No se encontraron cursos recomendados. Intenta con otra consulta.';
+					if (cursos.length > 0) {
+						const cursosTexto = cursos
+							.map((curso, index) => `${index + 1}. ${curso.title} | ${curso.id}`)
+							.join('\n\n');
 
-				setMessages((prev) => [
-					...prev,
-					{
-						id: Date.now() + Math.random(),
-						text: `${introText}\n\n${cursosTexto}`,
-						sender: 'bot' as const,
-					},
-				]);
+						const introText =
+							cursosTexto.length !== 0
+								? 'Aquí tienes algunos cursos recomendados:'
+								: 'No se encontraron cursos recomendados. Intenta con otra consulta.';
 
-				saveBotMessage(data.result); // Guarda la respuesta real del bot
+						setMessages((prev) => [
+							...prev,
+							{
+								id: Date.now() + Math.random(),
+								text: `${introText}\n\n${cursosTexto}`,
+								sender: 'bot' as const,
+							},
+						]);
+					} else {
+						setMessages((prev) => [
+							...prev,
+							{
+								id: Date.now() + Math.random(),
+								text: 'No se encontraron cursos.',
+								sender: 'bot' as const,
+							},
+						]);
+					}
+				} else {
+				
+					setMessages((prev) => [
+						...prev,
+						{
+							id: Date.now() + Math.random(),
+							text: String(data.result),
+							sender: 'bot' as const,
+						},
+					]);
+				}
+
+				saveBotMessage(data.result);
+
 
 			} catch (error) {
 				console.error('Error getting bot response:', error);
@@ -287,7 +456,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			initialSearchDone.current = false;
 			setProcessingQuery(false);
 		}
-	}, [showChat, processingQuery]);
+0	}, [showChat, processingQuery]);
 
 	useEffect(() => {
 		setIsOpen(showChat);
@@ -299,7 +468,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			width:
 				typeof window !== 'undefined' && window.innerWidth < 768 ? 350 : 500,
 			height:
-				typeof window !== 'undefined' && window.innerWidth < 768 ? 500 : window.innerHeight,
+				typeof window !== 'undefined' && window.innerWidth < 768 ? 620 : window.innerHeight,
 		};
 		setDimensions(initialDimensions);
 
@@ -323,8 +492,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
 	const saveUserMessage = (trimmedInput: string, sender: string) => {
 		const currentChatId = chatMode.idChat;
-		console.log('Mensaje usuario prueba con ref' + chatModeRef.current.idChat);
-		console.log('Mensaje usuario prueba chatId' + chatMode.idChat);
+		console.log('Guardando mensaje del usuario:', trimmedInput, 'en chat ID:', currentChatId);
 		if (currentChatId) {
 		
 			void saveMessages(
@@ -418,20 +586,36 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 		[]
 	);
 
-	const renderMessage = (message: {
-		id: number;
-		text: string;
-		sender: string;
-	}) => {
+	// Añade el manejador para los botones del mensaje inicial
+	const handleBotButtonClick = (action: string) => {
+		if (action === 'new_project') {
+			// Lógica para crear proyecto
+			toast.info('Funcionalidad para crear proyecto');
+		} else if (action === 'new_idea') {
+			setIdea({ selected: true, idea: '' });
+			setMessages((prev) => [
+				...prev,
+				{
+					id: Date.now(),
+					text: '¡Cuéntame tu nueva idea!',
+					sender: 'bot',
+				},
+			]);
+		} else if (action === 'contact_support') {
+			toast.info('Redirigiendo a soporte técnico');
+			// Aquí puedes redirigir o abrir modal de soporte
+		}
+	};
+
+	const renderMessage = (message: ChatMessage) => {
 		if (message.sender === 'bot') {
-			console.log('Mensaje del bot:', message);
+			
 
 			const parts = message.text.split('\n\n');
 			const introText = parts[0];
 			const courseTexts = parts.slice(1);
 
-			console.log('Texto intro:', introText);
-			console.log('Cursos en texto:', courseTexts);
+		
 
 			const courses = courseTexts
 				.map((text) => {
@@ -451,7 +635,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 						Boolean(course)
 				);
 
-				console.log('Cursos procesados:', courses);
+				
 
 			return (
 				<div className="flex flex-col space-y-4">
@@ -462,21 +646,23 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 							{courses.map((course) => (
 								<Card
 									key={course.id}
-									className="text-primary overflow-hidden bg-gray-800 transition-all hover:scale-[1.02]"
+									className="text-primary overflow-hidden bg-gray-800 transition-all hover:scale-[1.02] rounded-lg"
 								>
-									<div className="px-4 py-3">
-									<h4 className="mb-3 font-bold text-white text-base tracking-wide">
-										{course.number}. {course.title}
-									</h4>
-									<Link
-										href={`/estudiantes/cursos/${course.id}`}
-										className="group/button relative inline-flex items-center justify-between w-full h-11 px-4 rounded-lg border border-cyan-400 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-400/20 transition-all duration-300 ease-in-out shadow-md backdrop-blur-sm"
-									>
-										<span className="font-semibold tracking-wide">Ver Curso</span>
-										<ArrowRightCircleIcon className="ml-2 h-5 w-5 text-cyan-300 group-hover/button:translate-x-1 transition-transform duration-300 ease-in-out" />
-									</Link>
+									<div className="flex items-center justify-between px-4 py-3">
+										<h4 className="font-bold text-white text-base tracking-wide">
+											{course.number}. {course.title}
+										</h4>
+
+										<Link
+											href={`/estudiantes/cursos/${course.id}`}
+											className="group/button inline-flex items-center h-12 px-4 rounded-md border border-cyan-400 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-400/20 transition-all duration-300 ease-in-out shadow-md backdrop-blur-sm"
+										>
+											<span className="font-semibold tracking-wide">Ver Curso</span>
+											<ArrowRightCircleIcon className="ml-2 h-5 w-5 text-cyan-300 group-hover/button:translate-x-1 transition-transform duration-300 ease-in-out" />
+										</Link>
 									</div>
 								</Card>
+
 							))}
 							<button
 							className="group relative mt-3 w-full overflow-hidden rounded-lg border border-cyan-500 bg-gradient-to-br from-cyan-600 via-cyan-500 to-cyan-400 text-white py-2 text-sm font-semibold shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-cyan-500/50"
@@ -494,7 +680,25 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 			);
 		}
 
-		return <p>{message.text}</p>;
+		return (
+			<div className="flex flex-col space-y-4">
+				<p className="font-medium text-gray-800">{message.text}</p>
+				{message.buttons && (
+					<div className="flex flex-wrap gap-2 mt-2">
+						{message.buttons.map((btn) => (
+							<button
+								key={btn.action}
+								className="px-3 py-1 rounded bg-cyan-600 text-white font-semibold hover:bg-cyan-700 transition"
+								onClick={() => handleBotButtonClick(btn.action)}
+								type="button"
+							>
+								{btn.label}
+							</button>
+						))}
+					</div>
+				)}
+			</div>
+		);
 	};
 
 
@@ -510,42 +714,111 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 	return (
 		<div className={`${className} fixed`} style={{ zIndex: 99999 }}>
 			{isAlwaysVisible && (
-				<button
-					onClick={handleClick}
-					className={`button-circular ${!isSignedIn && pathname !== '/' && 'cursor-not-allowed opacity-50'} ${isOpen ? 'minimized' : ''
-						}`}
-					aria-label={
-						isSignedIn
-							? 'Abrir chat'
-							: 'Chat disponible solo para usuarios registrados'
-					}
-				>
-					<div className="button-circular__text">
-						{Array.from('-ARTIE-IA').map((char, i) => (
-							<span key={i} style={{ '--index': i } as React.CSSProperties}>
-								{char}
-							</span>
-						))}
-						{Array.from('-ARTIE-IA-ARTIE').map((char, i) => (
-							<span
-								key={i + 9}
-								style={{ '--index': i + 9 } as React.CSSProperties}
-							>
-								{char}
-							</span>
-						))}
+				
+				<div className="fixed bottom-6 right-6 z-50">
+					<button
+						className={`
+						relative w-16 h-16 rounded-full
+						bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600
+						shadow-lg shadow-cyan-500/25
+						transition-all duration-300 ease-out
+						hover:shadow-xl hover:shadow-cyan-400/40
+						hover:scale-110
+						${!isSignedIn && pathname !== '/' && 'cursor-not-allowed opacity-50'}
+						${isOpen ? 'minimized' : ''}
+						`}
+						onMouseEnter={() => {
+							setIsHovered(true);
+							show(); // Muestra tour y soporte por 5s
+						}}
+						onMouseLeave={() => setIsHovered(false)}
+						onClick={handleClick}
+					>
+						{/* Glow effect */}
+						<div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-md"></div>
+
+						{/* Inner circle with darker gradient */}
+						<div className="absolute inset-1 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+						{/* Icon container */}
+						<div className="relative">
+							<MessageCircle
+							className={`
+								w-6 h-6 text-cyan-300 
+								transition-all duration-300
+								${isHovered ? "scale-110" : ""}
+								${isActive ? "text-white" : ""}
+							`}
+							/>
+
+							{/* Animated spark effect */}
+							{isHovered && <Zap className="absolute -top-1 -right-1 w-3 h-3 text-yellow-400 animate-ping" />}
+						</div>
+						</div>
+
+						{/* Rotating border effect */}
+						<div
+						className={`
+						absolute inset-0 rounded-full
+						bg-gradient-to-r from-transparent via-cyan-400 to-transparent
+						opacity-0 group-hover:opacity-100
+						transition-opacity duration-500
+						${isActive ? "animate-spin" : ""}
+						`}
+						style={{
+							background: "conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)",
+							animation: isActive ? "spin 2s linear infinite" : "none",
+						}}
+						></div>
+
+						{/* Pulse ring */}
+						<div
+						className={`
+						absolute inset-0 rounded-full border-2 border-cyan-400
+						${isActive ? "animate-ping" : "opacity-0"}
+						transition-opacity duration-300
+						`}
+						></div>
+					</button>
+
+					{/* Tooltip with neon effect - always visible */}
+
+					{isDesktop && (
+					<div className="absolute bottom-full right-0 mb-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
+						<div className="relative">
+						{/* Main tooltip box */}
+						<div className="px-3 py-1 bg-slate-800/90 backdrop-blur-sm text-cyan-300 text-sm rounded-lg shadow-lg border border-cyan-400/50 whitespace-nowrap relative z-10">
+							Asistente IA
+						</div>
+
+						{/* Neon glow effects */}
+						<div className="absolute inset-0 px-3 py-1 bg-cyan-400/10 text-cyan-300 text-sm rounded-lg blur-sm animate-pulse">
+							Asistente IA
+						</div>
+						<div className="absolute inset-0 px-3 py-1 bg-cyan-400/5 text-cyan-300 text-sm rounded-lg blur-md">
+							Asistente IA
+						</div>
+
+						{/* Outer glow */}
+						<div className="absolute inset-0 bg-cyan-400/20 rounded-lg blur-lg scale-110"></div>
+
+						{/* Arrow with neon effect */}
+						<div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800 z-10"></div>
+						<div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-cyan-400/50 blur-sm"></div>
+						</div>
 					</div>
-					<div className="button-circular__inner">
-						<HiMiniCpuChip className="button-circular__icon fill-blue-500 text-2xl" />
-						<HiMiniCpuChip className="button-circular__icon button-circular__icon--copy fill-blue-500 text-2xl" />
+					)}
 					</div>
-				</button>
+
+				/*  Boton nuevo*/
+
+				
+
 			)}
 
 			{/* Mostrar el chat solo cuando isOpen es true */}
 			{isOpen && (isSignedIn || pathname === '/') && (
 				<div
-					className="fixed right-2 bottom-28 sm:right-0 sm:bottom-0" // Modificado bottom-28 para móviles
+					className="fixed right-2 bottom-5 sm:right-0 sm:bottom-0" // Modificado bottom-28 para móviles
 					ref={chatContainerRef}
 					style={{ zIndex: 110000 }} // Aumenta el z-index para que esté por encima del botón de soporte
 				>
@@ -583,6 +856,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 									<HiMiniCpuChip className="mt-1 text-4xl text-blue-500" />
 
 									<div className="-ml-6 flex flex-1 flex-col items-center">
+										
 										<h2 className="mt-1 text-lg font-semibold text-gray-800">
 											Artie IA
 										</h2>
@@ -607,12 +881,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 												chatMode.status ? (
 													<GoArrowLeft
 														className="text-xl text-gray-500"
-														onClick={() => setChatMode({ idChat: null, status: showChatList ? true : false })}
-													/>
-												) : showChatList ? (
-													<BiMessageAltAdd
-														className="text-xl text-gray-500"
-														onClick={() => setChatMode({ idChat: null, status: true })}
+														onClick={() => setChatMode({ idChat: null, status: showChatList ? true : false, curso_title: '' })}
 													/>
 												) : null
 											)}
@@ -655,117 +924,50 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 								<ChatList setChatMode={setChatMode} setShowChatList={setShowChatList} />
 							)}
 
-
-							{/* Messages */}
-							{/*
-							<div className="relative z-[3] flex-1 space-y-4 overflow-y-auto p-4">
-								
-								{messages.map((message, idx) => (
-									<div
-										key={message.id}
-										className={`flex ${
-											message.sender === 'user'
-												? 'justify-end'
-												: 'justify-start'
-										} mb-4`}
-									>
-										<div
-											className={`flex max-w-[80%] items-start space-x-2 ${
-												message.sender === 'user'
-													? 'flex-row-reverse space-x-reverse'
-													: 'flex-row'
-											}`}
-										>
-											{message.sender === 'bot' ? (
-												<HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />
-											) : user?.imageUrl ? (
-												<Image
-													src={user.imageUrl}
-													alt={user.fullName ?? 'User'}
-													width={24}
-													height={24}
-													className="mt-2 rounded-full"
-													priority
-												/>
-											) : (
-												<BsPersonCircle className="mt-2 text-xl text-gray-500" />
-											)}
-											<div
-												className={`rounded-lg p-3 ${
-													message.sender === 'user'
-														? 'bg-secondary text-white'
-														: 'bg-gray-300 text-gray-800'
-												}`}
-											>
-												{renderMessage(message, idx)}
-											</div>
-										</div>
-									</div>
-								))}
-								{isLoading && (
-									<div className="flex justify-start">
-										<div className="rounded-lg bg-gray-100 p-3">
-											<div className="loader">
-												<div className="circle">
-													<div className="dot" />
-													<div className="outline" />
-												</div>
-												<div className="circle">
-													<div className="dot" />
-													<div className="outline" />
-												</div>
-												<div className="circle">
-													<div className="dot" />
-													<div className="outline" />
-												</div>
-											</div>
-										</div>
-									</div>
-								)}
-								<div ref={messagesEndRef} />
-							</div>
-
-							{/* Input 
-							<div className="relative z-[5] border-t bg-white/95 p-4 backdrop-blur-sm">
-								<form onSubmit={handleSendMessage}>
-									<div className="flex gap-2">
-										<input
-											ref={inputRef}
-											type="text"
-											value={inputText}
-											onChange={(e) => setInputText(e.target.value)}
-											placeholder={
-												isSignedIn
-													? 'Escribe tu mensaje...'
-													: 'Inicia sesión para chatear'
-											}
-											className="text-background focus:ring-secondary flex-1 rounded-lg border p-2 focus:ring-2 focus:outline-none"
-											disabled={!isSignedIn || isLoading}
-										/>
-										<button
-											type="submit"
-											disabled={isLoading}
-											className="bg-secondary group relative flex h-10 w-14 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
-										>
-											<Image
-												src="/send-svgrepo-com.svg"
-												alt="Send message"
-												width={24}
-												height={24}
-												className="size-6 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12"
-												priority
-											/>
-										</button>
-									</div>
-								</form>
-							</div>
-							*/}
+							
+							
+							
 						</div>
+
+						{!chatMode.status && (
+
+								<button
+								className="fixed bottom-32 right-[4vh] md:bottom-10 md:right-10 z-50
+									w-12 h-12 md:w-16 md:h-16
+									text-[20px] md:text-[24px]
+									font-semibold text-[#3AF3EE] rounded-full
+									shadow-[0_0_0_2px_#3AF3EE] overflow-hidden
+									cursor-pointer transition-all duration-[600ms]
+									ease-[cubic-bezier(0.23,1,0.32,1)]
+									active:scale-[0.95] active:shadow-[0_0_0_4px_#3AF3EE]
+									group bg-[#0f172a] hover:bg-[#164d4a]"
+
+								onClick={() => newChatMessage()}
+								>
+								
+								<span className="relative z-[1] transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:text-black">
+									+
+								</span>
+
+						
+								<span className="absolute top-1/2 left-1/2 w-[20px] h-[20px] opacity-0 bg-[#3AF3EE] rounded-full transform -translate-x-1/2 -translate-y-1/2 transition-all duration-[800ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-[120px] group-hover:h-[120px] group-hover:opacity-100"></span>
+								</button>
+
+
+							)}
+						
 					</ResizableBox>
+					
+					
 				</div>
+				
 			)}
+
+			
 		</div>
 	);
 };
 
 export default StudentChatbot;
+
+
