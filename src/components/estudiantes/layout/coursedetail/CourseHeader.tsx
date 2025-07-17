@@ -113,15 +113,16 @@ export function CourseHeader({
   onEnrollAction,
   onUnenrollAction,
 }: CourseHeaderProps) {
-  const { user, isSignedIn } = useUser(); // Add isSignedIn here
+  const { user, isSignedIn } = useUser();
   const router = useRouter();
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  // Add a new state to track if program enrollment toast has been shown
   const [programToastShown, setProgramToastShown] = useState(false);
+  // Add state to track local enrollment status to hide the top button after enrolling
+  const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
 
   // Ref para controlar el video
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -888,6 +889,7 @@ export function CourseHeader({
         'Course is not purchasable - calling onEnrollAction directly'
       );
       await onEnrollAction();
+      setLocalIsEnrolled(true); // Mark as enrolled locally after successful enrollment
     } catch (error) {
       console.error('Error in handleEnrollClick:', error);
       const errorMessage =
@@ -1233,9 +1235,17 @@ export function CourseHeader({
     if (userHasActiveSubscription && renderUserCanAccessWithSubscription) {
       return (
         <div className="flex flex-col items-center gap-4">
-          <button onClick={handleEnrollClick} className="btn">
+          <button
+            onClick={handleEnrollClick}
+            className="btn"
+            disabled={isEnrolling || isEnrollClicked}
+          >
             <strong>
-              <span>Inscribirse al Curso</span>
+              {isEnrolling || isEnrollClicked ? (
+                <Icons.spinner className="h-6 w-6" />
+              ) : (
+                <span>Inscribirse al Curso</span>
+              )}
             </strong>
             <div id="container-stars">
               <div id="stars" />
@@ -1253,9 +1263,17 @@ export function CourseHeader({
     if (renderHasFreeType && !renderHasPremiumType && !renderHasProType) {
       return (
         <div className="flex flex-col items-center gap-4">
-          <button onClick={handleEnrollClick} className="btn">
+          <button
+            onClick={handleEnrollClick}
+            className="btn"
+            disabled={isEnrolling || isEnrollClicked}
+          >
             <strong>
-              <span>Inscribirse Gratis</span>
+              {isEnrolling || isEnrollClicked ? (
+                <Icons.spinner className="h-6 w-6" />
+              ) : (
+                <span>Inscribirse Gratis</span>
+              )}
             </strong>
             <div id="container-stars">
               <div id="stars" />
@@ -1335,6 +1353,11 @@ export function CourseHeader({
   const handlePlanBadgeClick = () => {
     window.open('/planes', '_blank', 'noopener,noreferrer');
   };
+
+  // Update local enrollment status when the prop changes
+  useEffect(() => {
+    setLocalIsEnrolled(isEnrolled);
+  }, [isEnrolled]);
 
   return (
     <Card className="overflow-hidden bg-gray-800 p-0 text-white">
@@ -1805,7 +1828,7 @@ export function CourseHeader({
         {/* Enrollment buttons with space theme */}
         <div className="flex justify-center pt-4">
           <div className="relative h-32">
-            {isEnrolled ? (
+            {localIsEnrolled ? (
               <div className="flex flex-col space-y-4">
                 {/* Wrap both buttons in a fragment or a div */}
                 <Button
