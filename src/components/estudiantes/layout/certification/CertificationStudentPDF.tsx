@@ -36,9 +36,36 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
   },
-  header: {
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 0,
+    width: '100%',
+    justifyContent: 'flex-start',
+    gap: 16,
+    position: 'relative',
+    minHeight: 50, // asegura espacio para el logo
+  },
+  logo: {
+    width: 100,
+    height: 50,
+    objectFit: 'contain',
+    marginBottom: 0,
+    marginRight: 0,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+  },
+  contentWrapper: {
+    marginTop: 60, // Aumenta el marginTop para separar el contenido del logo
+    // Elimina paddingTop, solo deja marginTop
+  },
+  headerTextCentered: {
+    fontSize: 14,
+    color: '#444',
     textAlign: 'center',
-    marginBottom: 16,
+    flex: 1,
+    marginLeft: 0,
   },
   title: {
     fontSize: 32,
@@ -127,58 +154,66 @@ export function CertificationStudentPDF({
     <Document>
       <Page size="A4" orientation="landscape" style={styles.page}>
         <View style={styles.border}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Constancia de Participación</Text>
-            <Text style={styles.subtitle}>
-              Por su dedicación y compromiso en el aprendizaje
-            </Text>
+          {/* Logo a la izquierda en posición absoluta y texto centrado */}
+          <View style={styles.headerRow}>
+            <Image src="/artiefy-logo2.png" style={styles.logo} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerTextCentered}>
+                Por medio de la presente se hace constar que
+              </Text>
+            </View>
           </View>
-          <Text style={styles.description}>
-            Por medio de la presente se hace constar que
-          </Text>
-          <Text style={styles.name}>{userName}</Text>
-          <Text style={styles.description}>
-            ha participado y completado exitosamente el curso
-          </Text>
-          <Text style={styles.course}>
-            {course?.title || 'Curso no encontrado'}
-          </Text>
-          <Text style={styles.description}>
-            desarrollando habilidades y conocimientos en el área, demostrando
-            compromiso y excelencia académica durante todo el proceso de
-            aprendizaje.
-          </Text>
-          {/* Grid layout for details and signatures */}
-          <View style={styles.grid}>
-            {/* Left signature */}
-            <View style={styles.gridCol}>
-              <Image src="/firma-rector.png" style={styles.signatureImg} />
-              <Text style={styles.signatureName}>Luis Antonio Ruíz Cicery</Text>
-              <Text style={styles.signatureRole}>
-                Rector Politécnico Nacional
-              </Text>
-              <Text style={styles.signatureRole}>de Artes y Oficios</Text>
-              <Text style={styles.signatureRole}>PONAO</Text>
-            </View>
-            {/* Center details */}
-            <View style={styles.gridCol}>
-              <Text style={styles.details}>
-                realizado a través de Artiefy, la educación del futuro
-              </Text>
-              <Text style={styles.details}>Finalizado el {date}</Text>
-              <Text style={styles.details}>
-                CC. {course.id.toString().padStart(6, '0')}
-              </Text>
-              <Text style={styles.verify}>Verificado en: {certificateUrl}</Text>
-            </View>
-            {/* Right signature */}
-            <View style={styles.gridCol}>
-              <Image src="/firma-director.png" style={styles.signatureImg} />
-              <Text style={styles.signatureName}>
-                Juan José Ruíz Artunduaga
-              </Text>
-              <Text style={styles.signatureRole}>Director de Tecnologías</Text>
-              <Text style={styles.signatureRole}>del Ciadet</Text>
+          <View style={styles.contentWrapper}>
+            <Text style={styles.name}>{userName}</Text>
+            <Text style={styles.description}>
+              ha participado y completado exitosamente el curso
+            </Text>
+            <Text style={styles.course}>
+              {course?.title || 'Curso no encontrado'}
+            </Text>
+            <Text style={styles.description}>
+              desarrollando habilidades y conocimientos en el área, demostrando
+              compromiso y excelencia académica durante todo el proceso de
+              aprendizaje.
+            </Text>
+            {/* Grid layout for details and signatures */}
+            <View style={styles.grid}>
+              {/* Left signature */}
+              <View style={styles.gridCol}>
+                <Image src="/firma-rector.png" style={styles.signatureImg} />
+                <Text style={styles.signatureName}>
+                  Luis Antonio Ruíz Cicery
+                </Text>
+                <Text style={styles.signatureRole}>
+                  Rector Politécnico Nacional
+                </Text>
+                <Text style={styles.signatureRole}>de Artes y Oficios</Text>
+                <Text style={styles.signatureRole}>PONAO</Text>
+              </View>
+              {/* Center details */}
+              <View style={styles.gridCol}>
+                <Text style={styles.details}>
+                  realizado a través de Artiefy, la educación del futuro
+                </Text>
+                <Text style={styles.details}>Finalizado el {date}</Text>
+                <Text style={styles.details}>
+                  CC. {course.id.toString().padStart(6, '0')}
+                </Text>
+                <Text style={styles.verify}>
+                  Verificado en: {certificateUrl}
+                </Text>
+              </View>
+              {/* Right signature */}
+              <View style={styles.gridCol}>
+                <Image src="/firma-director.png" style={styles.signatureImg} />
+                <Text style={styles.signatureName}>
+                  Juan José Ruíz Artunduaga
+                </Text>
+                <Text style={styles.signatureRole}>
+                  Director de Tecnologías
+                </Text>
+                <Text style={styles.signatureRole}>del Ciadet</Text>
+              </View>
             </View>
           </View>
         </View>
