@@ -778,34 +778,91 @@ export function CourseHeader({
     setIsEnrollClicked(true);
 
     try {
-      // HANDLE INDIVIDUAL PURCHASE (HIGHEST PRIORITY)
-      // Always prioritize direct purchase regardless of subscription status
-      if (course.courseTypeId === 4) {
-        console.log('Processing Type 4 course purchase');
-        if (!course.individualPrice) {
-          toast.error('Error en el precio del curso');
-          return;
-        }
+      // FIRST, CHECK IF USER CAN ACCESS VIA SUBSCRIPTION
+      const userPlanType = user?.publicMetadata?.planType as string;
 
-        // Generate a product from the course
-        const courseProduct = createProductFromCourse(course);
-        console.log('Created course product:', courseProduct);
-
-        // Set the product and show the modal
-        setSelectedProduct(courseProduct);
-        setShowPaymentModal(true);
-        return; // Early return to prevent enrollment logic
-      }
-
-      // Check for purchasable course types (new system)
-      const purchasableType = course.courseTypes?.find(
-        (type) => type.isPurchasableIndividually
+      // Check if the user's subscription level gives them access
+      const hasPremiumType = course.courseTypes?.some(
+        (type) => type.requiredSubscriptionLevel === 'premium'
+      );
+      const hasProType = course.courseTypes?.some(
+        (type) => type.requiredSubscriptionLevel === 'pro'
       );
 
-      if (purchasableType) {
-        console.log('Processing purchasable course type:', purchasableType);
-        // Use either individual price from course or from the course type
-        const price = course.individualPrice ?? purchasableType.price;
+      const userCanAccessWithSubscription =
+        (userPlanType === 'Premium' && hasPremiumType) ??
+        ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+
+      // If user has subscription access and subscription is active, proceed with direct enrollment
+      if (userCanAccessWithSubscription && isSubscriptionActive) {
+        console.log(
+          'User has subscription access to this course. Proceeding with direct enrollment.'
+        );
+
+        // Check if course requires program enrollment first
+        const programMateria = course.materias?.find(
+          (materia) => materia.programaId !== null
+        );
+
+        if (programMateria?.programaId) {
+          try {
+            const isProgramEnrolled = await isUserEnrolledInProgram(
+              programMateria.programaId,
+              user?.id ?? ''
+            );
+
+            if (!isProgramEnrolled) {
+              // Show toast and redirect to program page
+              setProgramToastShown(true);
+              toast.warning(
+                `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
+                {
+                  description:
+                    'Serás redirigido a la página del programa para inscribirte.',
+                  duration: 4000,
+                  id: 'program-enrollment',
+                }
+              );
+
+              // Wait a moment for the toast to be visible
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              router.push(
+                `/estudiantes/programas/${programMateria.programaId}`
+              );
+              return;
+            }
+          } catch (error) {
+            console.error('Error checking program enrollment:', error);
+            toast.error('Error al verificar la inscripción al programa');
+            return;
+          }
+        }
+
+        // If we get here, proceed with enrollment via subscription
+        console.log('Calling onEnrollAction for subscription user');
+        await onEnrollAction();
+        return;
+      }
+
+      // If user doesn't have subscription access, continue with individual purchase logic
+      // HANDLE INDIVIDUAL PURCHASE
+      const isPurchasable =
+        course.courseTypeId === 4 ||
+        course.courseTypes?.some((type) => type.isPurchasableIndividually);
+
+      if (isPurchasable) {
+        console.log('Course is purchasable - showing payment modal');
+
+        let price: number | null = null;
+
+        if (course.courseTypeId === 4) {
+          price = course.individualPrice;
+        } else {
+          const purchasableType = course.courseTypes?.find(
+            (type) => type.isPurchasableIndividually
+          );
+          price = course.individualPrice ?? purchasableType?.price ?? null;
+        }
 
         if (!price) {
           toast.error('Error en el precio del curso');
@@ -818,98 +875,18 @@ export function CourseHeader({
           individualPrice: price,
         });
 
-        console.log('Created course product from type:', courseProduct);
+        console.log('Created course product:', courseProduct);
 
         // Set the product and show the modal
         setSelectedProduct(courseProduct);
         setShowPaymentModal(true);
-        return; // Early return to prevent enrollment logic
-      }
-
-      // Rest of enrollment logic for subscription-based courses
-      const userPlanType = user?.publicMetadata?.planType as string;
-
-      // Only continue checking for non-purchasable course types
-      // Verificar si el usuario tiene acceso según su suscripción
-      const hasPremiumType = course.courseTypes?.some(
-        (type) => type.requiredSubscriptionLevel === 'premium'
-      );
-      const hasProType = course.courseTypes?.some(
-        (type) => type.requiredSubscriptionLevel === 'pro'
-      );
-      const hasFreeType = course.courseTypes?.some(
-        (type) =>
-          type.requiredSubscriptionLevel === 'none' &&
-          !type.isPurchasableIndividually
-      );
-
-      // Check for program requirement
-      const programMateria = course.materias?.find(
-        (materia) => materia.programaId !== null
-      );
-
-      // First check: If Pro user trying to access Premium course
-      if (
-        userPlanType === 'Pro' &&
-        hasPremiumType &&
-        !hasFreeType &&
-        !hasProType
-      ) {
-        toast.error('Acceso Restringido', {
-          description:
-            'Este curso requiere una suscripción Premium. Actualiza tu plan para acceder.',
-        });
-        window.open('/planes', '_blank', 'noopener,noreferrer');
         return;
       }
 
-      // Second check: If needs program enrollment
-      if (programMateria?.programaId && isSubscriptionActive) {
-        try {
-          const isProgramEnrolled = await isUserEnrolledInProgram(
-            programMateria.programaId,
-            user?.id ?? ''
-          );
-
-          if (!isProgramEnrolled) {
-            // Show toast first and mark as shown to prevent duplicates
-            setProgramToastShown(true);
-            toast.warning(
-              `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
-              {
-                description:
-                  'Serás redirigido a la página del programa para inscribirte.',
-                duration: 4000,
-                id: 'program-enrollment',
-              }
-            );
-
-            // Wait a moment for the toast to be visible
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            // Then redirect
-            router.push(`/estudiantes/programas/${programMateria.programaId}`);
-            return;
-          }
-        } catch (error) {
-          console.error('Error checking program enrollment:', error);
-          toast.error('Error al verificar la inscripción al programa');
-          return;
-        }
-      }
-
-      // Check if subscription is required for non-free courses
-      const requiresSubscription =
-        (hasPremiumType ?? hasProType) &&
-        !hasFreeType &&
-        !course.courseTypes?.some((type) => type.isPurchasableIndividually);
-
-      if (requiresSubscription && !isSubscriptionActive) {
-        window.open('/planes', '_blank', 'noopener,noreferrer');
-        return;
-      }
-
-      // If we got here, proceed with enrollment
+      // For free courses and other non-purchasable courses
+      console.log(
+        'Course is not purchasable - calling onEnrollAction directly'
+      );
       await onEnrollAction();
     } catch (error) {
       console.error('Error in handleEnrollClick:', error);
@@ -1166,26 +1143,27 @@ export function CourseHeader({
 
   // Get price display function - update to respect subscription status
   const getButtonPrice = (): string | null => {
-    const userPlanType = user?.publicMetadata?.planType as string;
-    const userHasActiveSubscription =
+    const buttonUserPlanType = user?.publicMetadata?.planType as string;
+    const buttonUserHasActiveSubscription =
       isSignedIn &&
       isSubscriptionActive &&
-      (userPlanType === 'Pro' || userPlanType === 'Premium');
+      (buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium');
 
     // Check if the user's subscription covers this course
-    const hasPremiumType = course.courseTypes?.some(
+    const buttonHasPremiumType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'premium'
     );
-    const hasProType = course.courseTypes?.some(
+    const buttonHasProType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'pro'
     );
 
     const userCanAccessWithSubscription =
-      (userPlanType === 'Premium' && hasPremiumType) ??
-      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+      (buttonUserPlanType === 'Premium' && buttonHasPremiumType) ??
+      ((buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium') &&
+        buttonHasProType);
 
     // Don't show price if user has subscription access
-    if (userHasActiveSubscription && userCanAccessWithSubscription) {
+    if (buttonUserHasActiveSubscription && userCanAccessWithSubscription) {
       return null;
     }
 
@@ -1221,28 +1199,30 @@ export function CourseHeader({
   // Extraer el botón de compra individual para reutilizarlo
   const renderBuyButton = () => {
     // Obtener información del usuario y suscripción
-    const userPlanType = user?.publicMetadata?.planType as string;
+    const renderUserPlanType = user?.publicMetadata?.planType as string;
     const userHasActiveSubscription =
       isSignedIn &&
       isSubscriptionActive &&
-      (userPlanType === 'Pro' || userPlanType === 'Premium');
+      (renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium');
 
     // Verificar si el curso tiene tipos que coinciden con la suscripción del usuario
-    const hasPremiumType = course.courseTypes?.some(
+    const renderHasPremiumType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'premium'
     );
-    const hasProType = course.courseTypes?.some(
+    const renderHasProType = course.courseTypes?.some(
       (type) => type.requiredSubscriptionLevel === 'pro'
     );
-    const hasFreeType = course.courseTypes?.some(
+    const renderHasFreeType = course.courseTypes?.some(
       (type) =>
         type.requiredSubscriptionLevel === 'none' &&
         !type.isPurchasableIndividually
     );
 
-    const userCanAccessWithSubscription =
-      (userPlanType === 'Premium' && hasPremiumType) ??
-      ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
+    // Calculate userCanAccessWithSubscription within this function scope
+    const renderUserCanAccessWithSubscription =
+      (renderUserPlanType === 'Premium' && renderHasPremiumType) ??
+      ((renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium') &&
+        renderHasProType);
 
     // Si el usuario ya está inscrito, no mostrar botón
     if (isEnrolled) {
@@ -1250,7 +1230,7 @@ export function CourseHeader({
     }
 
     // NUEVO: Si el usuario tiene acceso por suscripción, mostrar botón de inscripción
-    if (userHasActiveSubscription && userCanAccessWithSubscription) {
+    if (userHasActiveSubscription && renderUserCanAccessWithSubscription) {
       return (
         <div className="flex flex-col items-center gap-4">
           <button onClick={handleEnrollClick} className="btn">
@@ -1270,7 +1250,7 @@ export function CourseHeader({
     }
 
     // NUEVO: Si es un curso gratuito, mostrar botón de inscripción gratuita
-    if (hasFreeType && !hasPremiumType && !hasProType) {
+    if (renderHasFreeType && !renderHasPremiumType && !renderHasProType) {
       return (
         <div className="flex flex-col items-center gap-4">
           <button onClick={handleEnrollClick} className="btn">
