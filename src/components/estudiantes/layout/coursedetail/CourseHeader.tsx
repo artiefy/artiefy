@@ -1810,15 +1810,22 @@ export function CourseHeader({
             Materias asociadas:
           </h3>
           <div className="flex flex-wrap gap-2">
-            {course.materias?.map((materia: CourseMateria, index: number) => (
-              <Badge
-                key={materia.id}
-                variant="secondary"
-                className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
-              >
-                {materia.title}
-              </Badge>
-            ))}
+            {course.materias
+              ? // Filter to only show unique materia titles
+                Array.from(
+                  new Map(
+                    course.materias.map((materia) => [materia.title, materia])
+                  ).values()
+                ).map((materia: CourseMateria, index: number) => (
+                  <Badge
+                    key={materia.id}
+                    variant="secondary"
+                    className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
+                  >
+                    {materia.title}
+                  </Badge>
+                ))
+              : null}
           </div>
         </div>
 
