@@ -790,8 +790,11 @@ export function CourseHeader({
         (type) => type.requiredSubscriptionLevel === 'pro'
       );
 
+      // Fix this line - use logical OR instead of nullish coalescing
+
       const userCanAccessWithSubscription =
-        (userPlanType === 'Premium' && hasPremiumType) ??
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        (userPlanType === 'Premium' && hasPremiumType) ||
         ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
 
       // If user has subscription access and subscription is active, proceed with direct enrollment
@@ -1086,7 +1089,8 @@ export function CourseHeader({
     );
 
     const userCanAccessWithSubscription =
-      (userPlanType === 'Premium' && hasPremiumType) ??
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      (userPlanType === 'Premium' && hasPremiumType) ||
       ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasProType);
 
     // Always show "Comprar Curso" for individual courses without active subscription
@@ -1160,7 +1164,8 @@ export function CourseHeader({
     );
 
     const userCanAccessWithSubscription =
-      (buttonUserPlanType === 'Premium' && buttonHasPremiumType) ??
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      (buttonUserPlanType === 'Premium' && buttonHasPremiumType) ||
       ((buttonUserPlanType === 'Pro' || buttonUserPlanType === 'Premium') &&
         buttonHasProType);
 
@@ -1200,6 +1205,11 @@ export function CourseHeader({
 
   // Extraer el botón de compra individual para reutilizarlo
   const renderBuyButton = () => {
+    // Don't show the button if locally enrolled
+    if (localIsEnrolled) {
+      return null;
+    }
+
     // Obtener información del usuario y suscripción
     const renderUserPlanType = user?.publicMetadata?.planType as string;
     const userHasActiveSubscription =
@@ -1219,19 +1229,20 @@ export function CourseHeader({
         type.requiredSubscriptionLevel === 'none' &&
         !type.isPurchasableIndividually
     );
+    const _renderHasPurchasable = course.courseTypes?.some(
+      (type) => type.isPurchasableIndividually
+    );
 
     // Calculate userCanAccessWithSubscription within this function scope
+
     const renderUserCanAccessWithSubscription =
-      (renderUserPlanType === 'Premium' && renderHasPremiumType) ??
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+      (renderUserPlanType === 'Premium' && renderHasPremiumType) ||
       ((renderUserPlanType === 'Pro' || renderUserPlanType === 'Premium') &&
         renderHasProType);
 
-    // Si el usuario ya está inscrito, no mostrar botón
-    if (isEnrolled) {
-      return null;
-    }
-
-    // NUEVO: Si el usuario tiene acceso por suscripción, mostrar botón de inscripción
+    // IMPORTANT: Changed logic to prioritize subscription access over purchase options
+    // If user has active subscription and can access this course with it, show the enrollment button
     if (userHasActiveSubscription && renderUserCanAccessWithSubscription) {
       return (
         <div className="flex flex-col items-center gap-4">
@@ -1259,7 +1270,7 @@ export function CourseHeader({
       );
     }
 
-    // NUEVO: Si es un curso gratuito, mostrar botón de inscripción gratuita
+    // Free course enrollment button - only show if user doesn't have subscription access
     if (renderHasFreeType && !renderHasPremiumType && !renderHasProType) {
       return (
         <div className="flex flex-col items-center gap-4">
@@ -1287,6 +1298,7 @@ export function CourseHeader({
       );
     }
 
+    // Purchase buttons - only show if user doesn't have subscription access
     // Verificar si es un curso tipo 4 (sistema tradicional)
     if (course.courseTypeId === 4 && course.individualPrice) {
       return (
