@@ -43,6 +43,8 @@ const baseCoursesQuery = {
   requiresProgram: courses.requiresProgram,
   isActive: courses.isActive,
   individualPrice: courses.individualPrice,
+  is_featured: courses.is_featured, // Add this field
+  is_top: courses.is_top, // Add this field
 };
 
 export async function getAllCourses(): Promise<Course[]> {
@@ -85,8 +87,10 @@ export async function getAllCourses(): Promise<Course[]> {
           id: relation.courseType.id,
           name: relation.courseType.name,
           description: relation.courseType.description,
-          requiredSubscriptionLevel: relation.courseType.requiredSubscriptionLevel as SubscriptionLevel,
-          isPurchasableIndividually: relation.courseType.isPurchasableIndividually,
+          requiredSubscriptionLevel: relation.courseType
+            .requiredSubscriptionLevel as SubscriptionLevel,
+          isPurchasableIndividually:
+            relation.courseType.isPurchasableIndividually,
           price: relation.courseType.price,
         });
       });
@@ -123,8 +127,11 @@ export async function getAllCourses(): Promise<Course[]> {
       courseType: course.courseTypeId
         ? {
             name: course.courseTypeName ?? '',
-            requiredSubscriptionLevel: course.requiredSubscriptionLevel! || 'none',
-            isPurchasableIndividually: Boolean(course.isPurchasableIndividually),
+            requiredSubscriptionLevel:
+              course.requiredSubscriptionLevel! || 'none',
+            isPurchasableIndividually: Boolean(
+              course.isPurchasableIndividually
+            ),
             price: course.courseTypeId === 4 ? course.individualPrice : null,
           }
         : undefined,
@@ -132,12 +139,16 @@ export async function getAllCourses(): Promise<Course[]> {
       individualPrice: course.individualPrice ?? null,
       isActive: Boolean(course.isActive),
       requiresProgram: Boolean(course.requiresProgram),
+      is_featured: course.is_featured ?? false,
+      is_top: course.is_top ?? false,
     }));
 
     return transformedCourses;
   } catch (err) {
     console.error('Error al obtener todos los cursos:', err);
-    throw new Error(`Error al obtener todos los cursos: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+    throw new Error(
+      `Error al obtener todos los cursos: ${err instanceof Error ? err.message : 'Error desconocido'}`
+    );
   }
 }
 

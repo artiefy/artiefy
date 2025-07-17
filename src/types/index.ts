@@ -31,6 +31,8 @@ export interface BaseCourse {
   category?: Category;
   modalidad?: Modalidad;
   isActive: boolean | null; // Changed from optional boolean to nullable boolean
+  is_featured: boolean | null; // Add this new field
+  is_top: boolean | null; // Add this new field
 }
 
 // Add this type
