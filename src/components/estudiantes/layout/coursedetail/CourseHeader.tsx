@@ -254,6 +254,19 @@ export function CourseHeader({
 
       if (programMateria?.programaId && user?.id && !isEnrolled) {
         try {
+          // Check if course has both PRO and PREMIUM types
+          const hasPremiumType = course.courseTypes?.some(
+            (type) => type.requiredSubscriptionLevel === 'premium'
+          );
+          const hasProType = course.courseTypes?.some(
+            (type) => type.requiredSubscriptionLevel === 'pro'
+          );
+
+          // If course has both types, don't redirect to program
+          if (hasPremiumType && hasProType) {
+            return; // Skip program redirection for courses with both PRO and PREMIUM types
+          }
+
           const isProgramEnrolled = await isUserEnrolledInProgram(
             programMateria.programaId,
             user.id
@@ -276,7 +289,14 @@ export function CourseHeader({
     };
 
     void checkProgramEnrollment();
-  }, [course.materias, user?.id, isEnrolled, router, programToastShown]);
+  }, [
+    course.materias,
+    course.courseTypes,
+    user?.id,
+    isEnrolled,
+    router,
+    programToastShown,
+  ]);
 
   // Helper function to format dates
   const formatDateString = (date: string | number | Date): string => {
@@ -810,30 +830,38 @@ export function CourseHeader({
 
         if (programMateria?.programaId) {
           try {
-            const isProgramEnrolled = await isUserEnrolledInProgram(
-              programMateria.programaId,
-              user?.id ?? ''
-            );
-
-            if (!isProgramEnrolled) {
-              // Show toast and redirect to program page
-              setProgramToastShown(true);
-              toast.warning(
-                `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
-                {
-                  description:
-                    'Serás redirigido a la página del programa para inscribirte.',
-                  duration: 4000,
-                  id: 'program-enrollment',
-                }
+            // If course has both PRO and PREMIUM types, don't redirect to program
+            if (hasPremiumType && hasProType) {
+              // Skip program check for courses with both types
+              console.log(
+                'Course has both PRO and PREMIUM types - skipping program redirect'
+              );
+            } else {
+              const isProgramEnrolled = await isUserEnrolledInProgram(
+                programMateria.programaId,
+                user?.id ?? ''
               );
 
-              // Wait a moment for the toast to be visible
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-              router.push(
-                `/estudiantes/programas/${programMateria.programaId}`
-              );
-              return;
+              if (!isProgramEnrolled) {
+                // Show toast and redirect to program page
+                setProgramToastShown(true);
+                toast.warning(
+                  `Este curso requiere inscripción al programa "${programMateria.programa?.title}"`,
+                  {
+                    description:
+                      'Serás redirigido a la página del programa para inscribirte.',
+                    duration: 4000,
+                    id: 'program-enrollment',
+                  }
+                );
+
+                // Wait a moment for the toast to be visible
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                router.push(
+                  `/estudiantes/programas/${programMateria.programaId}`
+                );
+                return;
+              }
             }
           } catch (error) {
             console.error('Error checking program enrollment:', error);
