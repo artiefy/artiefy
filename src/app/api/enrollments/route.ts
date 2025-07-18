@@ -185,13 +185,12 @@ export async function POST(request: Request) {
         const lessonIds = sortedLessons.map((lesson) => lesson.id);
 
         for (const userId of newUsers) {
-          const existingProgress: { lessonId: string }[] =
-            await db.query.userLessonsProgress.findMany({
-              where: and(
-                eq(userLessonsProgress.userId, userId),
-                inArray(userLessonsProgress.lessonId, lessonIds)
-              ),
-            });
+          const existingProgress = await db.query.userLessonsProgress.findMany({
+            where: and(
+              eq(userLessonsProgress.userId, userId),
+              inArray(userLessonsProgress.lessonId, lessonIds)
+            ),
+          });
 
           const existingProgressSet = new Set(
             existingProgress.map((progress) => progress.lessonId)
