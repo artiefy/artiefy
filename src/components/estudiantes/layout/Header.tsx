@@ -159,7 +159,7 @@ export function Header() {
         isScrolled
           ? 'bg-opacity-80 bg-[#01142B] py-1 shadow-md backdrop-blur-sm'
           : 'py-4'
-      }`}
+      } md:py-4 -py-2`} // <-- Agrega py-2 para móviles, md:py-4 para desktop
     >
       <div className="container mx-auto max-w-7xl px-4">
         <div className="hidden w-full items-center md:flex md:justify-between">
@@ -279,7 +279,7 @@ export function Header() {
               </div>
             </Link>
           </div>
-          <label className="hamburger flex h-12 w-12 items-center justify-center">
+          <label className="hamburger flex h-10 w-10 items-center justify-center"> {/* h-10 w-10 para reducir tamaño */}
             <input
               type="checkbox"
               checked={mobileMenuOpen}
