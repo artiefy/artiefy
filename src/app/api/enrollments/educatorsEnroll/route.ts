@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { and,eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -18,7 +18,6 @@ interface EnrollmentRequestBody {
   planType?: string;
 }
 
-
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -31,20 +30,21 @@ function formatDateToClerk(date: Date): string {
 
 export async function POST(req: Request) {
   try {
-const body = (await req.json()) as EnrollmentRequestBody;
-const { courseId, userIds, planType } = body;
+    const body = (await req.json()) as EnrollmentRequestBody;
+    const { courseId, userIds, planType } = body;
 
-if (
-  typeof courseId !== 'string' && typeof courseId !== 'number' ||
-  !Array.isArray(userIds) || userIds.some(id => typeof id !== 'string')
-) {
-  return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
-}
+    if (
+      (typeof courseId !== 'string' && typeof courseId !== 'number') ||
+      !Array.isArray(userIds) ||
+      userIds.some((id) => typeof id !== 'string')
+    ) {
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+    }
 
-const parsedCourseId = Number(courseId);
-if (isNaN(parsedCourseId)) {
-  return NextResponse.json({ error: 'courseId inválido' }, { status: 400 });
-}
+    const parsedCourseId = Number(courseId);
+    if (isNaN(parsedCourseId)) {
+      return NextResponse.json({ error: 'courseId inválido' }, { status: 400 });
+    }
 
     if (
       !courseId ||
@@ -56,12 +56,12 @@ if (isNaN(parsedCourseId)) {
     }
 
     const validPlans = ['Pro', 'Premium', 'Enterprise'] as const;
-type PlanType = (typeof validPlans)[number] | 'none';
+    type ValidPlan = (typeof validPlans)[number];
+    type PlanType = ValidPlan | 'none';
 
-const normalizedPlan: PlanType = validPlans.includes(planType as PlanType)
-  ? (planType as PlanType)
-  : 'none';
-
+    const normalizedPlan: PlanType = validPlans.includes(planType as ValidPlan)
+      ? (planType as ValidPlan)
+      : 'none';
 
     const subscriptionEndDate = new Date();
     subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
